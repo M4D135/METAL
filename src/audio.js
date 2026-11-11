@@ -4,7 +4,7 @@
   window.FAudio = {
     create: function () {
       var ctx = null, master, effects, ambience, droneLevel, airFilter, noiseBuffer;
-      var muted = false, disposed = false, failed = false, threat = 0;
+      var muted = false, disposed = false, failed = false, threat = 0, stage = 0;
       var beatTime = 0, beat = 0, lastStep = -1, stepSide = 1, lastShot = -1;
       var persistent = [], voices = new Set(), noiseSeed = 0x96f3;
       function remember(node) { persistent.push(node); return node; }
@@ -131,19 +131,19 @@
         if (!available()) return;
         var now = ctx.currentTime;
         if (beatTime < now - .3) beatTime = now + .04;
-        droneLevel.gain.setTargetAtTime(.012 + threat * .008, now, .4);
-        airFilter.frequency.setTargetAtTime(380 + threat * 360, now, .5);
+        droneLevel.gain.setTargetAtTime(.012 + threat * .008 + stage * .002, now, .4);
+        airFilter.frequency.setTargetAtTime(380 + threat * 360 + stage * 100, now, .5);
         var guard = 0;
         while (beatTime < now + .13 && guard++ < 4) {
           var offset = Math.max(0, beatTime - now), index = beat % 16;
           if (index % 4 === 0) {
-            var bass = index === 8 ? 65.406 : 55;
+            var bass = (index === 8 ? 65.406 : 55) * [1, .891, .75][stage];
             tone(bass, bass * .994, .9, .028 + threat * .017, 'sine', offset, -.12, 300, ambience);
             noise(.1, .015 + threat * .018, 230, -.2, offset, 'lowpass', ambience);
           }
           if (index === 3 || index === 7 || index === 11 || index === 14) {
             var notes = [220, 329.627, 261.626, 293.665];
-            var n = notes[Math.floor(index / 4)];
+            var n = notes[Math.floor(index / 4)] * [1, .891, .75][stage];
             tone(n, n, 1.3, .012, 'sine', offset, Math.sin(beat) * .5, 1400, ambience);
             tone(n * 2.002, n * 2, .65, .004, 'sine', offset + .012, -.2, 1600, ambience);
           }
@@ -151,7 +151,8 @@
             tone(92, 46, .14, .026 * threat, 'sine', offset, 0, 500, ambience);
             noise(.026, .025 * threat, 3800, .25, offset, 'highpass', ambience);
           }
-          beat++; beatTime += .385;
+          if (stage > 0 && index % 4 === 2) noise(.12, .011 + threat * .012, 670, Math.sin(beat * .7) * .7, offset, 'bandpass', ambience);
+          beat++; beatTime += .385 - stage * .024;
         }
       }
       return {
@@ -162,6 +163,7 @@
           if (ctx && master && !disposed) master.gain.setTargetAtTime(muted ? 0 : .65, ctx.currentTime, .025);
         },
         setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); },
+        setStage: function (value) { stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); },
         tick: tick,
         shot: function () {
           if (!available() || ctx.currentTime - lastShot < .045) return;
@@ -170,6 +172,37 @@
           tone(1150, 180, .065, .07, 'triangle', 0, .02, 2800);
           noise(.095, .23, 2350, .1);
           noise(.026, .07, 4200, -.1, .035, 'highpass');
+        },
+        fracture: function () {
+          if (!available()) return;
+          tone(135, 27, .31, .29, 'sawtooth', 0, .05, 1350);
+          tone(65, 32, .42, .21, 'sine', 0, 0);
+          noise(.22, .3, 1500, -.14);
+          noise(.13, .12, 3100, .14, .035);
+          noise(.04, .06, 620, .1, .32, 'lowpass');
+        },
+        pulse: function () {
+          if (!available()) return;
+          tone(90, 520, .14, .18, 'sine', 0, -.25);
+          tone(240, 35, .55, .22, 'triangle', .07, .2, 1600);
+          noise(.55, .17, 580, 0, .04, 'lowpass');
+          tone(960, 120, .5, .055, 'sine', .06, -.3);
+        },
+        switchWeapon: function () {
+          noise(.045, .075, 2300, .2);
+          tone(170, 98, .065, .055, 'triangle', .025, .1, 1200);
+        },
+        enemyShot: function (event) {
+          event = event || {};
+          var level = (event.level || 1) * .075, pan = event.pan || 0;
+          tone(event.kind === 3 ? 180 : 430, 70, .19, level, 'triangle', 0, pan, 1900);
+          noise(.07, level * .8, 2100, pan);
+        },
+        bossPhase: function () {
+          [0, .18, .36].forEach(function (offset) {
+            tone(110, 55, .4, .09, 'sawtooth', offset, 0, 600);
+            tone(440, 220, .25, .04, 'triangle', offset, .2, 1200);
+          });
         },
         hit: function () {
           noise(.055, .11, 3600, -.1);

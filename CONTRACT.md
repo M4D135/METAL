@@ -1,5 +1,15 @@
 # FERRO procedural FPS — internal module contract
 
+## 0.2 integration additions (override original limits/ownership below)
+
+Budget stays 1,400,000 bytes for standalone HTML; improve play and art rather than chasing the 0.1 size. Static mesh budget 2600 and colliders 350 per stage. Three stages must have different connected topologies and distinct architecture; preserve walkable flat ground and existing APIs.
+
+World agent owns src/world.js and checks/world.test.mjs. World may add `machinery: [{type:'fan'|'piston'|'reactor',x,y,z,size,speed,axis:'x'|'y'|'z'}]`, `hazards:[{x,z,r,period,active,phase,type:'vent'}]`. Static nozzle etc is world geometry; root animates jets/fans. Hazards phase t=(time+phase)%period; hot when t<active, warning when t>period-.85. Keep them out of essential corridor centre lines and away from spawn/relays/exit. Third stage includes one enemy type3 (boss) with optional `boss:true`; normal types remain0..2. Root implements boss mesh. Exits require 3 relays plus boss destroyed if one exists.
+
+Simulation agent owns src/simulation.js and checks/simulation.test.mjs. Preserve old methods/state and add state `weapon:0|1` (0 Impulse,1 Fracture), player `pulseCooldown`, enemy `windup` seconds, `attackState`, `yaw`, `stun` optional, state `bossAlive`, `score`, `combo`, `comboTime`, `pulseVisual` seconds. Input `weapon:0|1` selects, `pulse:boolean` triggers radial shock with damage/knockback/projectile clearing and cooldown. Keep input.fire and dash. New audio event names may be `fracture`, `pulse`, `enemyShot`, `bossPhase`, `combo`; root routes optional methods safely. Shotgun has close range spread and slower fire, heat resource. Existing enemies retain default HP3,5,4; boss~30HP (3D height~1.8 radius~1.2). Give attacks readable windup, varied behaviour and dodgeable projectiles. Preserve pure simulation, clamp, collision, 3D ray semantics. Add `snapshot()` and `restore(snapshot)` on simulation object, validated serializable versioned state, no DOM/storage; root owns localStorage. Support optional world.hazards and boss. Add hazard state array if convenient. Tests must assert changes rather than trivially mirror them.
+
+Renderer agent exclusively owns src/renderer.js. Same API plus optional fx.pulse number. Improve depth/material contrast/metal detail and subtle glow; if adding shadows or passes, keep WebGL2 compatibility, qualitylow performance and Canvas2D fallback. All procedural. Root owns src/game.js, src/audio.js, index/style, build/docs/integration. No other file edits/commits/push by agents.
+
 All original code, no external engine, assets, fonts, images or audio files. Browser JavaScript, scripts concatenated inline by tools/build.py. Modules are IIFEs installing globals. True WebGL 3D geometry; no Doom-style raycaster. World units metres, floor y=0, eye y=1.6. Camera forward = [sin(yaw)*cos(pitch), sin(pitch), -cos(yaw)*cos(pitch)], right=[cos(yaw),0,sin(yaw)].
 
 ## Renderer, owner renderer agent

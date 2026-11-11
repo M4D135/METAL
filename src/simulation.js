@@ -1,14 +1,26 @@
-/* FERRO — deterministic world and real-time gameplay. No DOM or rendering dependencies. */
+/* FERRO — deterministic combat and checkpoints. No DOM, storage or rendering. */
 (function (G) {
   'use strict';
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const HP=[3,5,4,30], HEIGHT=[1.35,1.05,1.6,1.8], ATTACKS=['idle','aim','burst','rush','recover','stunned'];
+  const PLAYER=['x','z','yaw','pitch','hp','heat','overheated','dash','dashing','pulseCooldown'];
+  const ENEMY=['x','z','id','type','hp','maxHp','y','active','cooldown','hurt','windup','windupMax','attackState','yaw','stun','phase','aimX','aimY','aimZ','burstLeft','burstWait','rushTime','rushX','rushZ','rushHit'];
+  const NUMBERS=['time','elapsed','kills','shots','hits','relays','weapon','score','combo','comboTime'];
+  const pick=(value,keys)=>Object.fromEntries(keys.map(key=>[key,value[key]]));
   function create(world) {
-    const p={x:world.spawn.x,z:world.spawn.z,yaw:world.spawn.yaw,pitch:0,hp:100,heat:0,overheated:false,dash:0,dashing:0};
-    const s={world,player:p,time:0,elapsed:0,won:false,dead:false,kills:0,shots:0,hits:0,relays:0,flash:0,damage:0,hitMarker:0,events:[],bullets:[],particles:[],
-      enemies:world.enemies.map((e,i)=>({...e,id:i,hp:[3,5,4][e.type],maxHp:[3,5,4][e.type],y:[1.35,1.05,1.6][e.type],active:false,cooldown:1.2+i*.15,hurt:0})),
-      cores:world.cores.map(c=>({...c,taken:false})),pickups:world.pickups.map(c=>({...c,taken:false}))};
-    let fireWait=0,navWait=0;
+    const p={x:world.spawn.x,z:world.spawn.z,yaw:world.spawn.yaw,pitch:0,hp:100,heat:0,overheated:false,dash:0,dashing:0,pulseCooldown:0};
+    const s={world,player:p,time:0,elapsed:0,won:false,dead:false,kills:0,shots:0,hits:0,relays:0,weapon:0,score:0,combo:0,comboTime:0,pulseVisual:0,
+      flash:0,damage:0,hitMarker:0,events:[],bullets:[],particles:[],threat:0,moving:0,
+      enemies:world.enemies.map((e,i)=>({...e,id:i,hp:HP[e.type],maxHp:HP[e.type],y:HEIGHT[e.type],active:false,cooldown:1.2+i*.15,hurt:0,
+        windup:0,windupMax:0,attackState:'idle',yaw:0,stun:0,phase:0,aimX:p.x,aimY:1.45,aimZ:p.z,burstLeft:0,burstWait:0,rushTime:0,rushX:0,rushZ:0,rushHit:false})),
+      cores:world.cores.map(c=>({...c,taken:false})),pickups:world.pickups.map(c=>({...c,taken:false})),
+      hazards:(world.hazards||[]).map(h=>({...h,hot:false,warning:false}))};
+    s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);
+    let fireWait=0,navWait=0,hazardWait=0,recovery=0;
     const solids=world.colliders.filter(b=>b.minY<1.8&&b.maxY>.06),b=world.bounds;
+    let fingerprint=2166136261;
+    for(const c of JSON.stringify([world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[]]))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
+    fingerprint=(fingerprint>>>0).toString(36);
     function blocked(x,z,r=.28){
       if(x-r<b.minX||x+r>b.maxX||z-r<b.minZ||z+r>b.maxZ)return true;
       for(const q of solids){const dx=x-clamp(x,q.minX,q.maxX),dz=z-clamp(z,q.minZ,q.maxZ);if(dx*dx+dz*dz<r*r)return true;}
@@ -48,78 +60,259 @@
     function emit(name,data){s.events.push({name,...data});}
     function particles(x,y,z,kind,n=9){
       for(let i=0;i<n;i++){const angle=i*2.399963+s.time*9,v=.7+(i%5)*.43;s.particles.push({x,y,z,vx:Math.cos(angle)*v,vy:.4+(i%4)*.5,vz:Math.sin(angle)*v,life:.4+(i%4)*.09,kind});}
-      if(s.particles.length>160)s.particles.splice(0,s.particles.length-160);
+      if(s.particles.length>180)s.particles.splice(0,s.particles.length-180);
     }
-    function hurt(amount){if(p.dashing>0||s.dead||s.won)return;p.hp=Math.max(0,p.hp-amount);s.damage=1;emit('hurt');if(!p.hp){s.dead=true;emit('dead');}}
-    function fire(assist=false){
-      if(s.dead||s.won||fireWait>0||p.overheated)return false;
-      fireWait=.165;p.heat=Math.min(1,p.heat+.12);if(p.heat>=.99){p.overheated=true;emit('overheat');}
-      const dir=[Math.sin(p.yaw)*Math.cos(p.pitch),Math.sin(p.pitch),-Math.cos(p.yaw)*Math.cos(p.pitch)];
-      const origin=[p.x,1.62,p.z];let distance=ray(origin,dir,75),victim=null;
+    function hurt(amount){
+      if(!(amount>0)||p.dashing>0||recovery>0||s.dead||s.won)return;
+      p.hp=Math.max(0,p.hp-amount);s.damage=1;s.combo=0;s.comboTime=0;emit('hurt');
+      if(!p.hp){s.dead=true;emit('dead');}
+    }
+    function bossPhase(e){
+      if(e.type===3&&e.hp>0&&e.hp<=e.maxHp/2&&e.phase===0){
+        e.phase=1;e.cooldown=Math.min(e.cooldown,.65);emit('bossPhase',{id:e.id,phase:1});particles(e.x,e.y,e.z,6,24);
+      }
+    }
+    function damageEnemy(e,amount){
+      if(e.hp<=0)return;
+      e.hp=Math.max(0,e.hp-amount);e.hurt=.2;e.active=true;
+      if(e.hp<=0){
+        s.kills++;s.combo++;s.comboTime=4;
+        const multiplier=1+Math.min(4,s.combo-1)*.25,points=Math.round([100,150,125,2000][e.type]*multiplier);
+        s.score+=points;emit('kill',{kind:e.type,boss:e.type===3,points});particles(e.x,e.y,e.z,6,e.type===3?32:18);
+        if(s.combo>1)emit('combo',{count:s.combo,multiplier});
+        if(e.type===3)s.bossAlive=s.enemies.some(q=>q.type===3&&q.hp>0);
+      }else bossPhase(e);
+    }
+    function hitRay(origin,dir,far,assist){
+      let distance=ray(origin,dir,far),victim=null;
       for(const e of s.enemies)if(e.hp>0){
         const d=[e.x-origin[0],e.y-origin[1],e.z-origin[2]],along=d[0]*dir[0]+d[1]*dir[1]+d[2]*dir[2];
-        if(along<0||along>distance+.6)continue;
-        const radius=.67+(assist?Math.min(.38,along*.025):0),perp=d[0]*d[0]+d[1]*d[1]+d[2]*d[2]-along*along;
+        const radius=(e.type===3?1.15:.67)+(assist?Math.min(s.weapon?.16:.38,along*(s.weapon?.012:.025)):0);
+        if(along<0||along>distance+radius)continue;
+        const perp=d[0]*d[0]+d[1]*d[1]+d[2]*d[2]-along*along;
         if(perp>radius*radius)continue;
-        const hit=Math.max(0,along-Math.sqrt(radius*radius-perp));
+        const hit=Math.max(0,along-Math.sqrt(Math.max(0,radius*radius-perp)));
         if(hit<distance){distance=hit;victim=e;}
       }
-      s.flash=1;s.shots++;emit('shot');
-      if(victim){victim.hp--;victim.hurt=.2;victim.active=true;s.hits++;s.hitMarker=.18;emit('hit');particles(victim.x,victim.y,victim.z,5);
-        if(victim.hp<=0){s.kills++;emit('kill');particles(victim.x,victim.y,victim.z,6,18);}}
-      else particles(origin[0]+dir[0]*distance,origin[1]+dir[1]*distance,origin[2]+dir[2]*distance,5,4);
+      return {distance,victim};
+    }
+    function fire(assist=false){
+      if(s.dead||s.won||fireWait>0||p.overheated)return false;
+      const shotgun=s.weapon===1;
+      fireWait=shotgun?.78:.165;p.heat=Math.min(1,p.heat+(shotgun?.37:.12));
+      if(p.heat>=.99){p.overheated=true;emit('overheat');}
+      const cy=Math.cos(p.yaw),sy=Math.sin(p.yaw),cp=Math.cos(p.pitch),sp=Math.sin(p.pitch);
+      const forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],origin=[p.x,1.62,p.z];
+      let connected=false;
+      for(let i=0;i<(shotgun?7:1);i++){
+        const angle=(i-1)*Math.PI/3+s.shots*.71,spread=i?.088:0;
+        const a=Math.cos(angle)*spread,c=Math.sin(angle)*spread;
+        const dir=forward.map((v,k)=>v+right[k]*a+up[k]*c),length=Math.hypot(...dir);for(let k=0;k<3;k++)dir[k]/=length;
+        const hit=hitRay(origin,dir,shotgun?24:75,assist);
+        if(hit.victim){
+          connected=true;damageEnemy(hit.victim,shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):1);
+          particles(hit.victim.x,hit.victim.y,hit.victim.z,5,shotgun?3:7);
+        }else particles(origin[0]+dir[0]*hit.distance,origin[1]+dir[1]*hit.distance,origin[2]+dir[2]*hit.distance,5,shotgun?2:4);
+      }
+      s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon:s.weapon});
+      if(connected){s.hits++;s.hitMarker=.18;emit('hit');}
       return true;
     }
+    function pulse(){
+      if(s.dead||s.won||p.pulseCooldown>0)return false;
+      p.pulseCooldown=7;s.pulseVisual=.65;p.heat=Math.max(0,p.heat-.28);
+      let hits=0;
+      for(const e of s.enemies)if(e.hp>0){
+        const dx=e.x-p.x,dz=e.z-p.z,d=Math.hypot(dx,dz);
+        if(d>6.5||!sight(p.x,p.z,e.x,e.z))continue;
+        hits++;damageEnemy(e,e.type===3?3:d<3?3:2);
+        if(e.hp>0){
+          e.stun=e.type===3?.38:.85;e.windup=0;e.burstLeft=0;e.rushTime=0;e.attackState='stunned';e.cooldown=Math.max(e.cooldown,.7);
+          const push=e.type===3?.6:2.3*(1-d/9),n=Math.max(.01,d);
+          move(e,dx/n*push,dz/n*push,e.type===3?1.05:.38);
+        }
+      }
+      s.bullets=s.bullets.filter(q=>{if(Math.hypot(q.x-p.x,q.z-p.z)>7.5)return true;particles(q.x,q.y,q.z,4,3);return false;});
+      emit('pulse',{radius:6.5,hits});return true;
+    }
+    function projectile(e,angle=0,speed=7,damage=8){
+      const horizontal=Math.hypot(e.aimX-e.x,e.aimZ-e.z),pitch=Math.atan2(e.aimY-e.y,horizontal||.01),yaw=Math.atan2(e.aimX-e.x,e.z-e.aimZ)+angle;
+      const direction=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)],muzzle=e.type===3?1.2:.52;
+      s.bullets.push({x:e.x+direction[0]*muzzle,y:e.y+direction[1]*muzzle,z:e.z+direction[2]*muzzle,
+        dx:direction[0]*speed,dy:direction[1]*speed,dz:direction[2]*speed,life:5,damage,kind:e.type,owner:e.id});
+      if(s.bullets.length>160)s.bullets.shift();
+      emit('enemyShot',{x:e.x,z:e.z,kind:e.type});
+    }
+    function burst(e){
+      projectile(e,(e.burstLeft-2)*.055,7.7,6);e.burstLeft--;e.burstWait=.18;
+      if(!e.burstLeft)e.attackState='recover';
+    }
+    function attack(e){
+      e.attackState='recover';e.cooldown=[2.05,2.9,2.65,e.phase?2.15:2.85][e.type]-.08*(world.stage||0);
+      if(e.type===0)projectile(e,0,7.2,8);
+      else if(e.type===1){
+        const dx=e.aimX-e.x,dz=e.aimZ-e.z,d=Math.hypot(dx,dz);
+        if(d<11.5&&d>1){e.attackState='rush';e.rushTime=.68;e.rushX=dx/d;e.rushZ=dz/d;e.rushHit=false;}
+        else projectile(e,0,5.5,14);
+      }else if(e.type===2){e.attackState='burst';e.burstLeft=3;burst(e);}
+      else {
+        const half=e.phase?3:2;
+        for(let i=-half;i<=half;i++)projectile(e,i*.16,e.phase?6.3:5.5,e.phase?11:12);
+      }
+    }
+    function navigate(e,dx,dz,clear,d,dt){
+      if(e.type===2)return;
+      let vx=0,vz=0;
+      if(!clear){
+        const i=idx(e.x,e.z);let best=i;
+        for(let iz=-1;iz<=1;iz++)for(let ix=-1;ix<=1;ix++){
+          const j=i+iz*nx+ix;
+          if(j>=0&&j<nav.length&&nav[j]&&dist[j]>=0&&(dist[best]<0||dist[j]<dist[best])&&sight(e.x,e.z,...coord(j)))best=j;
+        }
+        const target=coord(best),x=target[0]-e.x,z=target[1]-e.z,n=Math.hypot(x,z);
+        if(n>.1){vx=x/n*(e.type===0?1.65:.85);vz=z/n*(e.type===0?1.65:.85);}
+      }else if(d>.01){
+        const nx=dx/d,nz=dz/d;
+        if(e.type===0){
+          const radial=d>8?1.65:d<4.2?-1.1:.12,strafe=d<13?Math.sin(s.time*.85+e.id*1.73)*1.35:0;
+          vx=nx*radial-nz*strafe;vz=nz*radial+nx*strafe;
+        }else if(e.type===1){if(d>4.1){vx=nx*.92;vz=nz*.92;}}
+        else {
+          const radial=d>14?.8:d<5?-.5:0,side=Math.sin(s.time*.6+e.id)*(e.phase?.75:.45);
+          vx=nx*radial-nz*side;vz=nz*radial+nx*side;
+        }
+      }
+      move(e,vx*dt,vz*dt,e.type===3?1.05:.38);
+    }
+    function updateEnemies(dt){
+      let threat=0;
+      for(const e of s.enemies){
+        if(e.hp<=0)continue;
+        e.hurt=Math.max(0,e.hurt-dt);e.cooldown=Math.max(0,e.cooldown-dt);e.burstWait=Math.max(0,e.burstWait-dt);bossPhase(e);
+        const dx=p.x-e.x,dz=p.z-e.z,d=Math.hypot(dx,dz),clear=d<25&&sight(e.x,e.z,p.x,p.z);
+        if(clear&&d<(e.type===3?23:18))e.active=true;
+        if(!e.active)continue;
+        if(d<19)threat++;
+        if(e.stun>0){e.stun=Math.max(0,e.stun-dt);e.attackState=e.stun>0?'stunned':'recover';continue;}
+        if(e.rushTime>0){
+          e.attackState='rush';e.rushTime=Math.max(0,e.rushTime-dt);move(e,e.rushX*7.3*dt,e.rushZ*7.3*dt,.38);
+          if(!e.rushHit&&Math.hypot(e.x-p.x,e.z-p.z)<.9&&sight(e.x,e.z,p.x,p.z)){e.rushHit=true;hurt(16);}
+          if(e.rushTime<=0)e.attackState='recover';continue;
+        }
+        if(e.burstLeft>0){if(e.burstWait<=0)burst(e);continue;}
+        if(e.windup>0){e.windup=Math.max(0,e.windup-dt);if(!e.windup)attack(e);continue;}
+        e.yaw=Math.atan2(dx,-dz);
+        if(clear&&d<22&&e.cooldown<=0){
+          e.aimX=p.x;e.aimY=1.45;e.aimZ=p.z;e.windupMax=[.65,.9,.75,e.phase?.9:1.15][e.type];
+          e.windup=e.windupMax;e.attackState='aim';continue;
+        }
+        e.attackState=e.cooldown>0?'recover':'idle';navigate(e,dx,dz,clear,d,dt);
+      }
+      s.threat=Math.min(1,threat/4);
+    }
+    function updateHazards(damage=true){
+      for(const h of s.hazards){
+        const period=Math.max(1.2,Number(h.period)||6),time=((s.time+(Number(h.phase)||0))%period+period)%period;
+        h.hot=time<clamp(Number(h.active)||0,0,period);h.warning=!h.hot&&time>period-.85;
+        if(damage&&h.hot&&hazardWait<=0&&Math.hypot(p.x-h.x,p.z-h.z)<(Number(h.r)||1)+.12){hazardWait=.65;hurt(8);}
+      }
+    }
     function step(dt,input={}){
-      dt=clamp(dt,0,.05);if(s.won||s.dead)return;
-      s.time+=dt;s.elapsed+=dt;fireWait-=dt;navWait-=dt;
-      s.flash=Math.max(0,s.flash-dt*9);s.damage=Math.max(0,s.damage-dt*1.9);s.hitMarker=Math.max(0,s.hitMarker-dt);
-      p.yaw+=(input.lookX||0);p.pitch=clamp(p.pitch+(input.lookY||0),-1.2,1.2);
+      dt=Number.isFinite(dt)?clamp(dt,0,.05):0;if(s.won||s.dead)return;
+      s.time+=dt;s.elapsed+=dt;fireWait=Math.max(0,fireWait-dt);navWait-=dt;hazardWait=Math.max(0,hazardWait-dt);recovery=Math.max(0,recovery-dt);
+      s.flash=Math.max(0,s.flash-dt*9);s.damage=Math.max(0,s.damage-dt*1.9);s.hitMarker=Math.max(0,s.hitMarker-dt);s.pulseVisual=Math.max(0,s.pulseVisual-dt);
+      s.comboTime=Math.max(0,s.comboTime-dt);if(!s.comboTime)s.combo=0;
+      if(input.weapon===0||input.weapon===1)s.weapon=input.weapon;
+      p.yaw+=Number.isFinite(input.lookX)?input.lookX:0;p.pitch=clamp(p.pitch+(Number.isFinite(input.lookY)?input.lookY:0),-1.2,1.2);
       p.heat=Math.max(0,p.heat-dt*(fireWait>0?.1:.35));if(p.overheated&&p.heat<.3){p.overheated=false;emit('cooled');}
-      p.dash=Math.max(0,p.dash-dt);p.dashing=Math.max(0,p.dashing-dt);
+      p.dash=Math.max(0,p.dash-dt);p.dashing=Math.max(0,p.dashing-dt);p.pulseCooldown=Math.max(0,p.pulseCooldown-dt);
       if(input.dash&&p.dash<=0){p.dash=1.7;p.dashing=.2;emit('dash');}
+      if(input.pulse)pulse();
       let mx=input.moveX||0,my=input.moveY||0,len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len;}
       if(p.dashing>0&&len<.1)my=1;
       const speed=p.dashing>0?12:input.sprint?5.8:4.2,dx=(Math.cos(p.yaw)*mx+Math.sin(p.yaw)*my)*speed*dt,dz=(Math.sin(p.yaw)*mx-Math.cos(p.yaw)*my)*speed*dt;
       move(p,dx,dz);s.moving=Math.hypot(dx,dz)/Math.max(dt,.001);
       if(input.fire)fire(input.assist);
       if(navWait<=0){rebuildNav();navWait=.6;}
-      let threat=0;
-      for(const e of s.enemies){
-        if(e.hp<=0)continue;e.hurt=Math.max(0,e.hurt-dt);e.cooldown-=dt;
-        let dx=p.x-e.x,dz=p.z-e.z,d=Math.hypot(dx,dz),clear=d<23&&sight(e.x,e.z,p.x,p.z);
-        if(clear&&d<18)e.active=true;
-        if(!e.active)continue;
-        if(d<18)threat++;
-        if(e.type!==2&&d>3.2){
-          if(!clear){const i=idx(e.x,e.z);let best=i;for(let iz=-1;iz<=1;iz++)for(let ix=-1;ix<=1;ix++){
-            const j=i+iz*nx+ix;if(j>=0&&j<nav.length&&nav[j]&&dist[j]>=0&&(dist[best]<0||dist[j]<dist[best])&&sight(e.x,e.z,...coord(j)))best=j;
-          }const target=coord(best);dx=target[0]-e.x;dz=target[1]-e.z;}
-          const n=Math.hypot(dx,dz);if(n>.1){const v=[1.45,.82,0][e.type];move(e,dx/n*v*dt,dz/n*v*dt,.38);}
-        }
-        if(clear&&d<19&&e.cooldown<=0){
-          e.cooldown=[2.2,2.8,2.05][e.type]-.15*world.stage;
-          const vx=p.x-e.x,vy=1.45-e.y,vz=p.z-e.z,n=Math.hypot(vx,vy,vz),v=[7.2,6,8][e.type];
-          s.bullets.push({x:e.x,y:e.y,z:e.z,dx:vx/n*v,dy:vy/n*v,dz:vz/n*v,life:4,damage:[8,13,10][e.type]});
-        }
-      }
-      s.threat=Math.min(1,threat/4);
+      updateEnemies(dt);
       for(const bullet of s.bullets){
-        const v=Math.hypot(bullet.dx,bullet.dy,bullet.dz),travel=v*dt,hit=ray([bullet.x,bullet.y,bullet.z],[bullet.dx/v,bullet.dy/v,bullet.dz/v],travel+.02);
+        const speed=Math.hypot(bullet.dx,bullet.dy,bullet.dz),travel=speed*dt;
+        if(!(speed>0)){bullet.life=0;continue;}
+        const hit=ray([bullet.x,bullet.y,bullet.z],[bullet.dx/speed,bullet.dy/speed,bullet.dz/speed],travel+.02);
+        const dx=bullet.dx*dt,dz=bullet.dz*dt,flat=dx*dx+dz*dz;
+        const t=flat>1e-10?clamp(((p.x-bullet.x)*dx+(p.z-bullet.z)*dz)/flat,0,1):0;
+        const y=bullet.y+bullet.dy*dt*t;
+        if(Math.hypot(bullet.x+dx*t-p.x,bullet.z+dz*t-p.z)<.42&&y>.1&&y<1.95&&hit>=travel*t){hurt(bullet.damage);bullet.life=0;continue;}
         if(hit<travel){bullet.life=0;continue;}
-        bullet.x+=bullet.dx*dt;bullet.y+=bullet.dy*dt;bullet.z+=bullet.dz*dt;bullet.life-=dt;
-        if(Math.hypot(bullet.x-p.x,bullet.z-p.z)<.42&&bullet.y>.1&&bullet.y<1.95){hurt(bullet.damage);bullet.life=0;}
+        bullet.x+=dx;bullet.y+=bullet.dy*dt;bullet.z+=dz;bullet.life-=dt;
       }
-      s.bullets=s.bullets.filter(v=>v.life>0);
-      if(s.dead)return;
-      for(const c of s.cores)if(!c.taken&&Math.hypot(p.x-c.x,p.z-c.z)<1.35){c.taken=true;s.relays++;p.hp=Math.min(100,p.hp+18);emit('core',{count:s.relays});particles(c.x,1.2,c.z,4,18);}
-      for(const c of s.pickups)if(!c.taken&&p.hp<99&&Math.hypot(p.x-c.x,p.z-c.z)<1){c.taken=true;p.hp=Math.min(100,p.hp+35);emit('pickup');}
+      s.bullets=s.bullets.filter(q=>q.life>0);
+      updateHazards();if(s.dead)return;
+      for(const c of s.cores)if(!c.taken&&Math.hypot(p.x-c.x,p.z-c.z)<1.35){c.taken=true;s.relays++;p.hp=Math.min(100,p.hp+18);s.score+=250;emit('core',{count:s.relays});particles(c.x,1.2,c.z,4,18);}
+      for(const c of s.pickups)if(!c.taken&&p.hp<99&&Math.hypot(p.x-c.x,p.z-c.z)<1){c.taken=true;p.hp=Math.min(100,p.hp+35);s.score+=25;emit('pickup');}
       for(const q of s.particles){q.life-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.z+=q.vz*dt;q.vy-=dt*3;}
       s.particles=s.particles.filter(q=>q.life>0);
-      if(s.relays===3&&Math.hypot(p.x-world.exit.x,p.z-world.exit.z)<1.5&&!s.dead){s.won=true;emit('win');}
+      s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);
+      if(s.relays===3&&!s.bossAlive&&Math.hypot(p.x-world.exit.x,p.z-world.exit.z)<1.5&&!s.dead){s.won=true;s.score+=500;emit('win');}
     }
-    rebuildNav();
-    return {state:s,step,fire,blocked,move,ray,sight,hurt,nav:{cells:nav,dist,nx,nz,cell,coord,idx,rebuild:rebuildNav}};
+    function snapshot(){
+      return {version:1,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
+        state:{...pick(s,NUMBERS),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
+          enemies:s.enemies.map(e=>pick(e,ENEMY)),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q}))},
+        timers:{fireWait,navWait:Math.max(0,navWait),hazardWait}};
+    }
+    function restore(data,options={}){
+      try{
+        const json=JSON.stringify(data);if(!json||json.length>160000)return false;data=JSON.parse(json);
+        const a=data.state,t=data.timers;
+        const number=(v,min,max)=>typeof v==='number'&&Number.isFinite(v)&&v>=min&&v<=max;
+        const integer=(v,min,max)=>number(v,min,max)&&Number.isInteger(v);
+        const bool=v=>typeof v==='boolean',require=condition=>{if(!condition)throw new Error('Invalid checkpoint');};
+        require(data.version===1&&data.format==='FERRO'&&data.seed===world.seed&&data.stage===(world.stage||0)&&data.fingerprint===fingerprint&&a&&t);
+        require(number(a.time,0,1e7)&&number(a.elapsed,0,1e7));
+        for(const key of ['kills','shots','hits','score'])require(integer(a[key],0,1e9));
+        require(a.hits<=a.shots&&integer(a.relays,0,3)&&integer(a.weapon,0,1)&&integer(a.combo,0,1000)&&number(a.comboTime,0,4));
+        require(bool(a.won)&&bool(a.dead)&&bool(a.bossAlive)&&!(a.won&&a.dead));
+        const v=a.player;require(v&&number(v.x,b.minX,b.maxX)&&number(v.z,b.minZ,b.maxZ)&&!blocked(v.x,v.z));
+        require(number(v.yaw,-1e6,1e6)&&number(v.pitch,-1.2,1.2)&&number(v.hp,0,100)&&number(v.heat,0,1)&&bool(v.overheated));
+        require(number(v.dash,0,1.7)&&number(v.dashing,0,.2)&&number(v.pulseCooldown,0,7)&&a.dead===(v.hp===0));
+        require(number(t.fireWait,0,.78)&&number(t.navWait,0,.6)&&number(t.hazardWait,0,.65));
+        require(Array.isArray(a.cores)&&a.cores.length===s.cores.length&&a.cores.every(bool)&&a.cores.filter(Boolean).length===a.relays);
+        require(Array.isArray(a.pickups)&&a.pickups.length===s.pickups.length&&a.pickups.every(bool));
+        require(Array.isArray(a.enemies)&&a.enemies.length===s.enemies.length);
+        const enemies=a.enemies.map((e,i)=>{
+          const type=world.enemies[i].type;
+          require(e&&e.id===i&&e.type===type&&e.maxHp===HP[type]&&e.y===HEIGHT[type]&&number(e.hp,0,HP[type]));
+          require(number(e.x,b.minX,b.maxX)&&number(e.z,b.minZ,b.maxZ)&&!blocked(e.x,e.z,type===3?1.05:.38));
+          require(bool(e.active)&&bool(e.rushHit)&&number(e.cooldown,0,30)&&number(e.hurt,0,.2));
+          require(number(e.windup,0,1.15)&&number(e.windupMax,0,1.15)&&e.windup<=e.windupMax&&ATTACKS.includes(e.attackState));
+          require(number(e.yaw,-1e6,1e6)&&number(e.stun,0,.85)&&integer(e.phase,0,type===3?1:0));
+          require(number(e.aimX,b.minX,b.maxX)&&number(e.aimZ,b.minZ,b.maxZ)&&number(e.aimY,0,3));
+          require(integer(e.burstLeft,0,3)&&number(e.burstWait,0,.18)&&number(e.rushTime,0,.68)&&number(e.rushX,-1,1)&&number(e.rushZ,-1,1));
+          return {...world.enemies[i],...pick(e,ENEMY)};
+        });
+        require(enemies.filter(e=>e.hp===0).length===a.kills&&enemies.some(e=>e.type===3&&e.hp>0)===a.bossAlive);
+        require(!a.won||(a.relays===3&&!a.bossAlive));
+        require(Array.isArray(a.bullets)&&a.bullets.length<=160);
+        const bullets=a.bullets.map(q=>{
+          require(q&&number(q.x,b.minX-150,b.maxX+150)&&number(q.z,b.minZ-150,b.maxZ+150)&&number(q.y,-150,150));
+          for(const key of ['dx','dy','dz'])require(number(q[key],-30,30));
+          require(number(q.life,0,5)&&number(q.damage,0,1000));
+          const bullet=pick(q,['x','y','z','dx','dy','dz','life','damage']);
+          if(q.kind!==undefined){require(integer(q.kind,0,3));bullet.kind=q.kind;}
+          if(q.owner!==undefined){require(integer(q.owner,0,Math.max(0,enemies.length-1)));bullet.owner=q.owner;}
+          return bullet;
+        });
+        Object.assign(p,pick(v,PLAYER));Object.assign(s,pick(a,NUMBERS),{won:a.won,dead:a.dead,bossAlive:a.bossAlive,enemies,bullets});
+        s.cores=world.cores.map((c,i)=>({...c,taken:a.cores[i]}));s.pickups=world.pickups.map((c,i)=>({...c,taken:a.pickups[i]}));
+        s.events=[];s.particles=[];s.pulseVisual=0;s.flash=0;s.damage=0;s.hitMarker=0;s.moving=0;s.threat=0;
+        fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;recovery=0;
+        if(options?.recover===true&&!s.dead&&!s.won){recovery=1.4;s.bullets=s.bullets.filter(q=>Math.hypot(q.x-p.x,q.z-p.z)>=2.4);}
+        rebuildNav();updateHazards(false);return true;
+      }catch(_){return false;}
+    }
+    rebuildNav();updateHazards(false);
+    return {state:s,step,fire,pulse,blocked,move,ray,sight,hurt,snapshot,restore,nav:{cells:nav,dist,nx,nz,cell,coord,idx,rebuild:rebuildNav}};
   }
   G.FSimulation={create,clamp};
 })(typeof window!=='undefined'?window:globalThis);

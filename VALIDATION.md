@@ -1,67 +1,108 @@
-# Validation de FERRO 0.1.0
+# Validation de FERRO 0.2.0 — Réactivation
 
 Date : 11 novembre 2026.
 
-## Livraison
+## Distribution
 
-Les sources, les tests et `dist/index.html` sont poussés dans le nouveau dépôt privé `M4D135/FERRO`, branche `main`.
+Sources, vérifications et fichier autonome livrés dans le dépôt privé **M4D135/FERRO**, branche **main**. Les identités et permissions existantes sont conservées.
 
-L'hébergement distinct a été créé, ses sources synchronisées et la version avec archive sauvegardée. Les opérations de déploiement ont ensuite renvoyé une erreur interne du service, sans identifiant de déploiement ni URL active. La visibilité privée est conservée. Cette limitation de publication ne change pas le fichier autonome distribué dans GitHub.
+La publication de la 0.2 a réussi le 11 novembre 2026. Le service confirme l'état **succeeded** pour le déploiement `appgdep_6af4e2725c408191a14dc7cd3af26574`.
 
-## Distribution mesurée
+**Jeu en ligne :** https://ferro-procedural-fps.garden-lake-2660.chatgpt.site
 
-- HTML autonome : **99 011 octets** (99,011 ko décimaux ; 96,69 Kio).
-- Compression gzip reproductible : **31 966 octets**.
-- Budget initial : 1 400 000 octets pour le fichier jouable non compressé.
-- Aucun asset externe ou paquet JavaScript d'exécution.
-- SHA-256 : `f58ac5d51246f3416cc0dd6df937472b7a03ae90bf615338e9c8680bf788ef31`.
-- Le navigateur et ses API ne sont pas inclus : cette mesure ne constitue pas un défi natif de 96 ko.
+L'accès reste privé, réservé au propriétaire. L'archive publiée provient du commit source `12cd36dabb80c5f042b108fdbad430c2bf766f49` ; la mise à jour documentaire qui enregistre ce succès ne change aucun octet du jeu. Le fichier autonome permet également de jouer sans cet hébergement.
 
-Le fichier `SIZE.json` est généré à chaque build et doit rester cohérent avec `dist/index.html`.
+## Mesure du build
 
-## Vérifications automatiques : PASS
+- HTML autonome : **149 698 octets**, soit **149,698 ko décimaux** ou **146,19 Kio**.
+- Gzip reproductible : **46 312 octets**.
+- Budget : **1 400 000 octets non compressés** ; environ **10,69 %** utilisés.
+- Aucun fichier de texture, modèle, police ou enregistrement audio importé ; aucune dépendance d'exécution.
+- SHA-256 : `b2bd7ef9830dcc6ca032850c58a48d3222dd7869efa794d7305503b1d9ddc138`.
+- Le navigateur et ses API sont exclus. Cette mesure n'est pas celle d'un exécutable natif.
 
-`npm test` exécute les trois vérifications disponibles sans installation de dépendances.
+`SIZE.json` est généré avec le build et vérifié contre les octets de `dist/index.html`.
 
-### Génération du monde
+## Génération : 18 mondes, PASS
 
-18 générations indépendantes : six graines, sur chacun des trois étages. Vérification des valeurs finies, du déterminisme et d'un parcours par flood fill indépendant, avec disque joueur de rayon 0,28 m et grille de 0,25 m. Les sols et les obstacles sont tous pris en compte, sans passage diagonal entre les coins.
+Six graines sur chacun des trois étages. Un flood fill indépendant emploie un disque joueur de rayon **0,28 m**, une grille de **0,25 m**, les sols et tous les obstacles, sans diagonale à travers les coins.
 
-**396 positions d'objectifs, de sortie, d'ennemis et de soins contrôlées : toutes accessibles.**
+**750 positions contrôlées**, de 29 010 à 41 366 cellules accessibles selon la carte. Les trois relais, la sortie, les soins et les positions initiales des ennemis restent accessibles. Chaque couloir est physiquement connecté, les trois graphes et leurs dimensions diffèrent, et les boucles restent présentes.
 
-### Simulation
+Les objectifs sont aussi vérifiés en traitant tous les évents comme dangereux en permanence : un chemin sûr reste disponible. Les fenêtres d'avertissement et le dégagement initial du boss sont contrôlés.
 
-Dix tests passent : collision contre un mur mince lors d'un grand déplacement ; glissement ; limites de carte ; plafond du temps d'une image ; occlusion des tirs ; cible devant un mur ; élimination unique ; tir au-dessus d'une couverture basse ; surchauffe et refroidissement ; invulnérabilité et recharge de l'esquive ; arrêt immédiat des collectes après un coup fatal ; collecte des trois relais et ouverture de la sortie ; parcours d'un niveau généré par des déplacements ordinaires.
+Pour la graine 96 :
 
-Le parcours de niveau désactive les ennemis uniquement pour isoler la navigation. Les comportements de tir, dégâts et mort sont testés séparément. Cela ne remplace pas une partie humaine complète sur les trois étages avec tous les ennemis actifs.
+| Étage | Primitives statiques | Colliders | Salles / liaisons |
+| --- | ---: | ---: | ---: |
+| Ateliers | 1 044 | 224 | 9 / 10 |
+| Fonderie | 1 654 | 184 | 8 / 9 |
+| Cœur | 1 340 | 218 | 9 / 12 |
 
-### Build
+Budgets : 2 600 primitives statiques et 350 colliders.
 
-Vérification de la taille brute, du SHA-256, de l'absence de ressources réseau et de marqueurs de construction non remplacés. Syntaxe des cinq modules JavaScript vérifiée avec Node.
+## Simulation : 23 tests, PASS
 
-## Vérifications visuelles et interactions
+Les dix régressions de la version précédente restent inchangées. Les contrôles couvrent :
 
-- Accueil et HUD observés dans Chromium.
-- Déplacement clavier observé dans la scène ; distance à l'objectif et position de carte actualisées.
-- Dégâts et écran de défaite observés.
-- Boutons démarrer, pause et reprendre utilisés.
-- Interface examinée dans des cadres de **390 × 844** et **844 × 390**, avec commandes tactiles activées : accueil, HUD, arme, joystick, boutons de tir/esquive et menus.
-- Suppression des glyphes non rendus dans les boutons et adaptation du menu pause en paysage pour éviter son défilement.
+- Arrêt contre un mur mince, glissement et grands déplacements ; plafond d'un pas.
+- Occlusion des tirs, sélection de la cible exposée, élimination comptée une seule fois et tir au-dessus d'une couverture basse.
+- Surchauffe, refroidissement, esquive et délais de récupération.
+- Arrêt des collectes après un dommage fatal.
+- Collecte des trois relais, déverrouillage et parcours d'un niveau généré par des déplacements ordinaires.
+- Fracture : portée, dispersion, récupération et précision comptée par tir, sans compter chaque pellet comme un tir distinct.
+- Onde : recharge immédiate, dissipation des projectiles, ligne de vue et recul respectant les murs.
+- Télégraphes, visée verrouillée, rafales esquivables, déplacement latéral des scouts et charge des marcheurs.
+- Boss de 30 PV, changement de phase unique à mi-vie et verrouillage de la sortie jusqu'à son élimination.
+- Score, séries, expiration du multiplicateur et dommages temporisés des évents.
+- Aller-retour des snapshots, conservation des références, signature des cartes et rejet atomique des états invalides.
+- Reprise avec projectile létal proche, protection temporaire et absence de persistance de cette protection dans le snapshot.
+- Charge qui ne peut plus toucher à travers une cloison fine.
 
-L'environnement Chromium de contrôle ne fournit pas de contexte WebGL 2. Ces essais utilisent donc le renderer logiciel Canvas 2D. Ils ne constituent pas un test sur iPhone physique, Safari iOS ou GPU matériel.
+Le test de parcours désactive les ennemis pour isoler la navigation. Les autres tests exercent le combat séparément. Ces contrôles ne remplacent pas une campagne humaine complète avec tous les ennemis actifs.
 
-## Validation du vrai chemin graphique
+## Vérifications navigateur
 
-Les vrais appels du renderer WebGL ont été capturés, puis rejoués avec les mêmes shaders, matrices, buffers et paramètres dans un contexte **EGL / OpenGL ES 3.2 Mesa llvmpipe**. Compilation et liaison des shaders réussies ; aucune erreur GLES pendant le dessin.
+Chromium, avec rendu de secours Canvas 2D dans l'environnement disponible :
 
-Les rendus du sas et de la chambre centrale ont été inspectés. Pour la scène statique : **974 instances, 18 188 triangles et quatre appels de dessin**. Ce contrôle valide la géométrie, les matériaux et le résultat du pipeline ; Mesa llvmpipe est un rasteriseur logiciel, pas un GPU physique ni le contexte WebGL d'un navigateur.
+- Accueil, démarrage, mouvement clavier, changement d'arme, onde et pause utilisés.
+- Tir de Fracture en situation de combat ; score d'élimination observé.
+- Fermeture logique par rechargement de page, bouton Continuer et restauration du point d'entrée vérifiés.
+- Premier relais récupéré par déplacement normal : **1 / 3**, intégrité restaurée, score **250** et message de point de reprise observés.
+- Défaite observée ensuite ; le bouton de reprise restaure le relais **1 / 3**, les **70 points d'intégrité** et le **score 250** enregistrés. La pause confirme le relais utilisé.
+- Accueil, HUD et pause examinés en cadres **390 × 844** et **844 × 390** ; boutons tactiles de changement d'arme, onde et pause utilisés.
+- Icônes dessinées en CSS ; menu pause en paysage sans débordement constaté.
+- Les scènes testées au premier étage affichaient environ 50 images/s au premier plan sur le renderer logiciel ; ce relevé ponctuel ne constitue pas un benchmark de la campagne.
 
-## Limites conservées explicitement
+WebGL 2 n'est pas disponible dans ce Chromium. Ces observations ne valident ni Safari iOS, ni un téléphone physique, ni le multitouch réel.
 
-- Première version jouable : aucune campagne narrative longue, aucun multijoueur.
-- Les trois étages partagent une topologie de base, avec variation de dimensions, détails, lumière et ennemis.
-- Sol horizontal ; tuyaux et structures hautes principalement décoratifs.
-- Éclairage sans shadow mapping.
-- Le rendu de secours est moins détaillé et utilise un tri de polygones qui peut montrer des imperfections aux intersections.
-- Le gameplay et le chronomètre peuvent ralentir si la machine reste sous vingt images par seconde.
-- Équilibrage, endurance de jeu, Safari iOS et contrôles multitouch sur appareil physique restent à qualifier.
+## Rendu avancé
+
+Les appels du vrai renderer ont été capturés puis rejoués, avec ses shaders, matrices, buffers et paramètres, dans **EGL / OpenGL ES 3.2 Mesa llvmpipe**.
+
+- Les trois programmes GLSL compilent et se lient ; les framebuffers couleur et profondeur sont complets.
+- Dessin sans erreur GLES, y compris objets dynamiques, arme en overlay, flash et onde.
+- Ombre portée confirmée par comparaison avec/sans shadowmap sur une scène d'occlusion.
+- Matériaux, relief, lumière et halo inspectés sur les images du sas et d'une chambre.
+- Pour la scène statique contrôlée : **9 appels de dessin en Auto**, **3 en Économie**.
+- Cinq changements de qualité puis destruction : **44 ressources créées et 44 détruites** dans le contrôle de cycle de vie.
+- Ombre et bloom désactivés en Économie ; le secours Canvas annonce correctement ces effets comme inactifs.
+
+Mesa llvmpipe est un rasteriseur logiciel. Ce contrôle est distinct d'un test WebGL dans un navigateur et d'un essai sur GPU physique. L'ombre couvre le cône sous une lumière proche ; les autres sources restent non ombrées.
+
+## Build et intégration
+
+- Syntaxe des cinq modules JavaScript vérifiée avec Node.
+- Taille brute, gzip, SHA-256, absence de chargement réseau et remplacement des marqueurs d'assemblage vérifiés.
+- Les événements de simulation sont traités après chaque sous-pas : un relais pris avant un coup fatal ultérieur dans la même image devient bien un point de reprise.
+- Les touches 1 / 2 répétées ne rejouent plus le son lorsque l'arme choisie est déjà active.
+- Les captures et pages de test temporaires ne font pas partie du jeu distribué.
+
+## Limites
+
+Le sol reste horizontal et les structures hautes sont principalement décoratives. Pas de saut, de multijoueur ni de longue campagne narrative. Les plans de base sont conçus ; la graine modifie les dimensions, placements et détails à l'intérieur de ces plans.
+
+Le rendu Canvas utilise un tri de polygones et peut montrer des imperfections aux intersections. Le temps réel est subdivisé en pas d'au plus 1/60 s, avec un rattrapage plafonné à 0,12 s par image : une machine durablement sous environ 8 images/s ralentit encore la simulation.
+
+L'équilibrage de la campagne entière, les performances prolongées, le comportement sur Safari iOS et les commandes multitouch sur appareil réel restent à qualifier. La sauvegarde est locale au navigateur et à l'origine, sans synchronisation entre appareils.
+

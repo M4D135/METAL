@@ -221,3 +221,255 @@ test('A real generated level can be completed using navigation and ordinary coll
   assert(frames > 500, 'The run should traverse the level rather than teleport');
   assert.equal(events(sim, 'win').length, 1);
 });
+
+test('Fracture rewards close range, preserves shot accuracy accounting and has a slower recovery', () => {
+  const close = FSimulation.create(fixture({ enemies: [{ x: 0, z: -3, type: 2 }] }));
+  close.step(.025, { weapon: 1 });
+  assert.equal(close.fire(), true);
+  assert.equal(close.state.enemies[0].hp, 0, 'A centred close shot should land enough pellets');
+  assert.equal(close.state.shots, 1);
+  assert.equal(close.state.hits, 1, 'Pellets must not inflate accuracy above 100%');
+  assert.equal(events(close, 'fracture').length, 1);
+  assert(close.state.player.heat > .3);
+  advance(close, .4);
+  assert.equal(close.fire(), false, 'Shotgun fired before its recovery finished');
+  advance(close, .4);
+  assert.equal(close.fire(), true);
+  const distant = FSimulation.create(fixture({ enemies: [{ x: 0, z: -18, type: 2 }] }));
+  distant.step(.025, { weapon: 1 }); distant.fire();
+  assert(distant.state.enemies[0].hp > 3, 'Spread and falloff should limit distant shotgun damage');
+  const wall = { minX: -6, maxX: 6, minZ: -5, maxZ: -4.8, minY: 0, maxY: 5 };
+  const covered = FSimulation.create(fixture({ colliders: [wall], enemies: [{ x: 0, z: -8, type: 2 }] }));
+  covered.step(.025, { weapon: 1 }); covered.fire();
+  assert.equal(covered.state.enemies[0].hp, 4, 'A spread pellet crossed a solid wall');
+});
+
+test('Pulse immediately enters cooldown, clears nearby projectiles, respects walls and pushes safely', () => {
+  const sim = FSimulation.create(fixture({
+    colliders: [
+      { minX: 2, maxX: 2.2, minZ: -2, maxZ: 2, minY: 0, maxY: 4 },
+      { minX: -3, maxX: 3, minZ: -6, maxZ: -5.8, minY: 0, maxY: 4 },
+    ],
+    enemies: [{ x: 0, z: -4, type: 1 }, { x: 4, z: 0, type: 2 }],
+  }));
+  sim.state.bullets.push(
+    { x: 1, y: 1.4, z: -2, dx: 0, dy: 0, dz: 1, life: 3, damage: 8 },
+    { x: 12, y: 1.4, z: -2, dx: 0, dy: 0, dz: 1, life: 3, damage: 8 },
+  );
+  assert.equal(sim.pulse(), true);
+  assert.equal(sim.state.player.pulseCooldown, 7);
+  assert.equal(sim.pulse(), false);
+  assert.equal(sim.state.enemies[0].hp, 3);
+  assert(sim.state.enemies[0].z < -4);
+  assert.equal(sim.blocked(sim.state.enemies[0].x, sim.state.enemies[0].z, .38), false);
+  assert(sim.state.enemies[0].stun > 0);
+  assert.equal(sim.state.enemies[1].hp, 4, 'Pulse damage crossed a wall');
+  assert.equal(sim.state.bullets.length, 1);
+  assert.equal(sim.state.bullets[0].x, 12);
+  advance(sim, .25, { pulse: true });
+  assert.equal(events(sim, 'pulse').length, 1, 'Held input retriggered pulse during cooldown');
+});
+
+test('Turret attacks have a readable windup and a dodgeable locked burst', () => {
+  const sim = FSimulation.create(fixture({ enemies: [{ x: 0, z: -10, type: 2 }] }));
+  const turret = sim.state.enemies[0]; turret.cooldown = 0;
+  sim.step(.025);
+  assert.equal(turret.attackState, 'aim');
+  assert(turret.windup >= .7);
+  advance(sim, .3);
+  assert.equal(sim.state.bullets.length, 0, 'Turret fired before the telegraph finished');
+  sim.move(sim.state.player, 5, 0);
+  advance(sim, 2.1);
+  assert.equal(events(sim, 'enemyShot').length, 3);
+  assert.equal(sim.state.player.hp, 100, 'Locked shots should be avoidable by leaving the aimed position');
+  assert.equal(turret.x, 0, 'Turret should remain a stationary threat');
+});
+
+test('Scouts strafe while heavies telegraph a committed charge that can be sidestepped', () => {
+  const scoutSim = FSimulation.create(fixture({ enemies: [{ x: 0, z: -6, type: 0 }] }));
+  scoutSim.state.enemies[0].cooldown = 10;
+  advance(scoutSim, 1);
+  assert(Math.abs(scoutSim.state.enemies[0].x) > .35, 'Scout only approached in a straight line');
+  const sim = FSimulation.create(fixture({ enemies: [{ x: 0, z: -5, type: 1 }] }));
+  const heavy = sim.state.enemies[0]; heavy.cooldown = 0;
+  sim.step(.025);
+  assert.equal(heavy.attackState, 'aim');
+  advance(sim, .45);
+  assert.equal(sim.state.player.hp, 100);
+  sim.move(sim.state.player, 3, 0);
+  let charged = false;
+  for (let frame = 0; frame < 40; frame++) { sim.step(.025); charged ||= heavy.attackState === 'rush'; }
+  assert(charged, 'Heavy never committed to its signalled charge');
+  assert.equal(sim.state.player.hp, 100);
+  assert(Math.abs(heavy.x) < .01, 'Charge followed the player after its target was locked');
+});
+
+test('A charging heavy cannot deal contact damage through a thin wall', () => {
+  const sim = FSimulation.create(fixture({
+    spawn: { x: 0, z: -.2, yaw: 0 },
+    colliders: [{ minX: -5, maxX: 5, minZ: -.6, maxZ: -.5, minY: 0, maxY: 4 }],
+    enemies: [{ x: 0, z: -1.1, type: 1 }],
+  }));
+  // Reproduce an already committed charge after the player moved behind cover.
+  const heavy = sim.state.enemies[0];
+  Object.assign(heavy, { active: true, attackState: 'rush', rushTime: .5, rushX: 0, rushZ: 1 });
+  advance(sim, .2);
+  assert(Math.hypot(heavy.x - sim.state.player.x, heavy.z - sim.state.player.z) < .9,
+    'Fixture must place the enemy inside contact range across the wall');
+  assert.equal(sim.sight(heavy.x, heavy.z, sim.state.player.x, sim.state.player.z), false);
+  assert.equal(sim.state.player.hp, 100, 'A heavy applied contact damage through solid cover');
+  assert.equal(heavy.rushHit, false);
+});
+
+test('Boss begins at 30 HP, telegraphs fan attacks and changes phase once at half health', () => {
+  const sim = FSimulation.create(fixture({ stage: 2, enemies: [{ x: 0, z: -12, type: 3, boss: true }] }));
+  const boss = sim.state.enemies[0];
+  assert.equal(boss.hp, 30); assert.equal(sim.state.bossAlive, true);
+  boss.cooldown = 0; sim.step(.025);
+  advance(sim, .9);
+  assert.equal(sim.state.bullets.length, 0);
+  advance(sim, .3);
+  assert.equal(events(sim, 'enemyShot').length, 5);
+  const angles = sim.state.bullets.map(q => Math.atan2(q.dx, -q.dz));
+  assert(Math.max(...angles) - Math.min(...angles) > .5, 'Boss volley did not spread into a dodgeable fan');
+  boss.hp = 15; sim.step(.025);
+  assert.equal(boss.phase, 1);
+  assert.equal(events(sim, 'bossPhase').length, 1);
+  advance(sim, 1.8);
+  assert.equal(events(sim, 'bossPhase').length, 1);
+  assert.equal(events(sim, 'enemyShot').length, 12, 'Second phase should send a seven-projectile fan');
+});
+
+test('All relays still leave the exit locked until the boss has been destroyed', () => {
+  const world = fixture({
+    stage: 2, cores: [0, 1, 2].map(id => ({ id, x: 0, z: 0 })), exit: { x: 0, z: 0 },
+    enemies: [{ x: 0, z: -8, type: 3, boss: true }],
+  });
+  const sim = FSimulation.create(world);
+  sim.step(.025);
+  assert.equal(sim.state.relays, 3);
+  assert.equal(sim.state.won, false);
+  sim.state.enemies[0].hp = 1;
+  sim.fire(); sim.step(.025);
+  assert.equal(sim.state.bossAlive, false);
+  assert.equal(sim.state.won, true);
+  assert.equal(events(sim, 'win').length, 1);
+});
+
+test('Kill chains increase score once and expire without erasing earned points', () => {
+  const sim = FSimulation.create(fixture({ enemies: [{ x: -1, z: -2, type: 0 }, { x: 1, z: -2, type: 0 }] }));
+  sim.pulse();
+  assert.equal(sim.state.kills, 2);
+  assert.equal(sim.state.combo, 2);
+  assert.equal(sim.state.score, 225);
+  assert.equal(events(sim, 'combo').length, 1);
+  const earned = sim.state.score;
+  advance(sim, 4.1);
+  assert.equal(sim.state.combo, 0);
+  assert.equal(sim.state.score, earned);
+  assert.equal(sim.state.kills, 2);
+});
+
+test('Vent phases warn before activation and apply timed damage instead of damage every frame', () => {
+  const sim = FSimulation.create(fixture({ hazards: [{ x: 0, z: 0, r: 1, period: 3, active: 1.5, phase: 0, type: 'vent' }] }));
+  advance(sim, .2);
+  assert.equal(sim.state.hazards[0].hot, true);
+  assert.equal(sim.state.player.hp, 92);
+  advance(sim, .4);
+  assert.equal(sim.state.player.hp, 92);
+  advance(sim, .1);
+  assert.equal(sim.state.player.hp, 84);
+  advance(sim, 1.65);
+  assert.equal(sim.state.hazards[0].hot, false);
+  assert.equal(sim.state.hazards[0].warning, true);
+  assert.equal(sim.state.player.hp, 76);
+  advance(sim, .3);
+  assert.equal(sim.state.player.hp, 76, 'A warning phase caused damage');
+});
+
+test('Checkpoint round-trip preserves combat, weapon, cooldowns and object references', () => {
+  const world = fixture({ enemies: [{ x: 0, z: -10, type: 2 }, { x: 6, z: -10, type: 0 }] });
+  const original = FSimulation.create(world);
+  original.step(.025, { weapon: 1, pulse: true, moveX: 1 }); original.fire();
+  advance(original, 2.2);
+  assert(original.state.bullets.length > 0, 'Checkpoint fixture must include live combat projectiles');
+  const data = JSON.parse(JSON.stringify(original.snapshot())), restored = FSimulation.create(world);
+  const stateRef = restored.state, playerRef = restored.state.player;
+  assert.equal(restored.restore(data), true);
+  assert.equal(restored.state, stateRef);
+  assert.equal(restored.state.player, playerRef);
+  assert.equal(JSON.stringify(restored.snapshot()), JSON.stringify(original.snapshot()));
+  assert.equal(restored.state.events.length, 0, 'Past sound/score events should not replay after loading');
+  for (let frame = 0; frame < 30; frame++) {
+    const input = { moveX: .25, lookX: .002 };
+    original.step(.025, input); restored.step(.025, input);
+  }
+  assert.equal(JSON.stringify(restored.snapshot()), JSON.stringify(original.snapshot()), 'Restored combat diverged from the same inputs');
+});
+
+test('Malformed or incompatible checkpoints are rejected atomically', () => {
+  const world = fixture({
+    enemies: [{ x: 0, z: -10, type: 2 }],
+    colliders: [{ minX: 2, maxX: 3, minZ: -3, maxZ: 3, minY: 0, maxY: 4 }],
+  });
+  const sim = FSimulation.create(world), good = sim.snapshot();
+  const mutations = [
+    d => { d.version = 999; }, d => { d.fingerprint = 'wrong'; },
+    d => { d.state.player.x = Infinity; }, d => { d.state.player.x = 2.5; },
+    d => { d.state.player.hp = -1; }, d => { d.state.weapon = 7; },
+    d => { d.state.enemies[0].hp = 50; }, d => { d.state.enemies.pop(); },
+    d => { d.state.relays = 3; }, d => { d.timers.fireWait = -1; },
+    d => { d.state.hits = 10; }, d => { d.state.bossAlive = true; },
+    d => { d.state.bullets = [{ x: 0, y: 1, z: 0, dx: 0, dy: 0, dz: 1, life: 1, damage: NaN }]; },
+  ];
+  const before = JSON.stringify(sim.snapshot());
+  for (const mutate of mutations) {
+    const damaged = JSON.parse(JSON.stringify(good)); mutate(damaged);
+    assert.equal(sim.restore(damaged), false);
+    assert.equal(JSON.stringify(sim.snapshot()), before, 'Rejected checkpoint partially changed the live game');
+  }
+  for (const invalid of [null, undefined, {}, { state: {} }]) assert.equal(sim.restore(invalid), false);
+  const otherWorld = FSimulation.create({ ...world, exit: { x: 20, z: 20 } });
+  assert.equal(otherWorld.restore(good), false, 'Checkpoint from changed geometry/objectives was accepted');
+});
+
+test('Fresh generated checkpoints round-trip for all three stages, including the boss world', () => {
+  for (let stage = 0; stage < 3; stage++) {
+    const world = FWorld.create('FERRO-02', stage), first = FSimulation.create(world), second = FSimulation.create(world);
+    assert.equal(second.restore(JSON.parse(JSON.stringify(first.snapshot()))), true, `Stage ${stage} checkpoint failed`);
+    assert.equal(JSON.stringify(second.snapshot()), JSON.stringify(first.snapshot()));
+  }
+});
+
+test('Recovery mode clears immediate projectile danger and grants only temporary unsaved protection', () => {
+  const world = fixture(), original = FSimulation.create(world);
+  original.hurt(92);
+  original.state.bullets.push(
+    { x: 0, y: 1.4, z: -.1, dx: 0, dy: 0, dz: 1, life: 3, damage: 20 },
+    { x: 4, y: 1.4, z: 0, dx: -.1, dy: 0, dz: 0, life: 3, damage: 20 },
+  );
+  const data = original.snapshot(), exact = FSimulation.create(world), recovered = FSimulation.create(world);
+  assert.equal(exact.restore(data), true); exact.step(.025);
+  assert.equal(exact.state.dead, true, 'The fixture must reproduce immediate death after an exact restore');
+  assert.equal(recovered.restore(data, { recover: true }), true);
+  assert.equal(recovered.state.bullets.length, 1);
+  assert.equal(recovered.state.bullets[0].x, 4, 'Recovery should not clear distant attacks');
+  recovered.hurt(100);
+  assert.equal(recovered.state.player.hp, 8);
+  advance(recovered, 1.2); recovered.snapshot(); recovered.hurt(100);
+  assert.equal(recovered.state.dead, false, 'Reading a snapshot cancelled an active recovery window');
+  advance(recovered, .25); recovered.hurt(8);
+  assert.equal(recovered.state.dead, true, 'Recovery immunity never expired');
+
+  assert.equal(recovered.restore(data, { recover: true }), true);
+  const transient = recovered.snapshot();
+  assert.equal(exact.restore(transient), true); exact.hurt(8);
+  assert.equal(exact.state.dead, true, 'Temporary recovery protection leaked into the saved state');
+  assert.equal(recovered.restore(data), true); recovered.hurt(8);
+  assert.equal(recovered.state.dead, true, 'Exact restore retained a previous recovery window');
+
+  const terminal = FSimulation.create(world); terminal.hurt(100);
+  assert.equal(exact.restore(terminal.snapshot(), { recover: true }), true);
+  assert.equal(exact.state.player.hp, 0);
+  assert.equal(exact.state.dead, true, 'Recovery resurrected a checkpoint whose player was already dead');
+});

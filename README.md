@@ -1,59 +1,91 @@
 # FERRO — Le complexe silencieux
 
-Un FPS 3D compact, inspiré par l'idée technique de `.kkrieger` : conserver les instructions qui fabriquent le contenu, plutôt qu'une collection de textures, de modèles et d'enregistrements audio.
+**Version 0.2.0 — Réactivation.** Un FPS 3D compact dont la géométrie, les matériaux, les machines et le son sont fabriqués par le code. Deux armes, trois étages industriels, neuf relais et un gardien final.
 
-**Tout le contenu du jeu est original.** Aucun code ni asset de `.kkrieger` n'est repris.
+L'idée technique s'inspire de la démarche de .kkrieger : conserver la recette du contenu dans un petit programme. **Tout le code et tout le contenu de FERRO sont originaux ; aucun asset du jeu historique n'est repris.**
 
 ## Jouer
 
 **Dépôt :** https://github.com/M4D135/FERRO
 
-La version autonome est **`dist/index.html`**. Téléchargez ce fichier et ouvrez-le dans un navigateur de bureau récent. Le jeu est également adapté aux commandes tactiles et peut être servi par n'importe quel hébergement statique.
+**Jouer en ligne :** https://ferro-procedural-fps.garden-lake-2660.chatgpt.site
 
-Le projet d'hébergement de démonstration a été préparé et sa version sauvegardée, mais la publication a renvoyé une erreur interne du service. **Aucun lien de démonstration hébergée n'est annoncé comme actif.** Le fichier autonome et les sources ci-dessous sont disponibles.
+La démonstration est publiée avec un accès privé réservé au propriétaire. Une authentification peut être demandée.
 
-Le fichier fonctionne sans CDN, sans téléchargement de modèle, sans police externe et sans connexion réseau après chargement. Le son ne démarre qu'après une interaction.
+Téléchargez **`dist/index.html`** et ouvrez-le dans un navigateur de bureau récent. Le fichier est autonome : aucun CDN, paquet JavaScript, modèle, police, texture ou enregistrement audio à télécharger. Il fonctionne hors ligne après chargement.
 
-### Mission
+Le jeu possède également des commandes tactiles et peut être servi par un hébergement statique. WebGL 2 est recommandé ; un rendu 3D logiciel prend le relais quand il est indisponible. Le son commence après une interaction.
 
-Explorez trois étages d'un complexe industriel. À chaque étage, récupérez les trois relais lumineux en vous approchant, puis rejoignez le portique de sortie. Les relais restaurent une partie de votre intégrité. Les soins se récupèrent automatiquement quand ils sont utiles.
+## Ce qui change en 0.2
 
-Les machines tirent des projectiles visibles que vous pouvez esquiver. L'arme n'a pas de munitions limitées, mais surchauffe si vous tirez sans relâche. Une carte et une indication de direction facilitent l'orientation.
+- **Trois plans distincts.** Ateliers à deux boucles, double galerie de fonderie, puis cœur central et arène finale. Les ventilateurs, presses et réacteurs s'animent ; les évents de la fonderie et du cœur annoncent leurs décharges.
+- **Deux armes complémentaires.** Impulse tire rapidement et précisément. Fracture disperse sept projectiles instantanés, efficace de près, avec une cadence plus lente et davantage de chaleur.
+- **Onde de choc.** Repousse et étourdit les machines proches, dissipe les projectiles et réduit la chaleur. Son délai de récupération impose de choisir son moment.
+- **Combat plus lisible.** Scouts mobiles, marcheurs qui préparent leur charge, tourelles à rafales et gardien à deux phases. Les yeux et les repères au sol annoncent l'attaque ; les tirs verrouillent leur direction avant de partir.
+- **Points de reprise.** L'entrée d'un étage et chaque relais sauvegardent l'état de la partie. On peut continuer après avoir fermé la page. Une brève protection évite de réapparaître directement dans un projectile.
+- **Score et séries.** Les éliminations rapprochées augmentent le score ; le bilan d'expédition rassemble les trois étages.
+- **Rendu enrichi.** Relief procédural des panneaux, métal brossé, reflets, halo lumineux et ombre dynamique depuis une lumière proche en Auto/Haute. Le mode Économie désactive les passes coûteuses.
+- **Ambiance par étage.** La synthèse musicale varie avec la profondeur et la menace ; les nouvelles armes, l'onde et le gardien ont leurs propres sons.
 
-| Commande | Ordinateur | Téléphone |
+## Mission et commandes
+
+À chaque étage, approchez-vous des trois relais lumineux, puis rejoignez le portique. Les relais restaurent une partie de votre intégrité et deviennent des points de reprise. Les soins se ramassent automatiquement lorsqu'ils sont utiles. Au troisième étage, le gardien doit également être neutralisé avant de sortir.
+
+Les armes utilisent la même jauge de chaleur, sans munitions limitées. Relâchez le tir pour refroidir. L'onde possède un rayon de 6,5 m et une recharge de 7 secondes. Une esquive accorde brièvement l'invulnérabilité. Les évents orange annoncent une décharge ; leur phase chaude reste évitable.
+
+| Action | Ordinateur | Téléphone |
 | --- | --- | --- |
 | Déplacement | ZQSD / WASD | Joystick gauche |
 | Visée | Souris ; glisser si capture indisponible | Glisser sur la droite |
-| Tir | Clic gauche / Entrée | Grand bouton rond |
+| Tir | Clic gauche / Entrée | Grand cercle |
+| Changer d'arme | 1 / 2, molette, ou nom de l'arme | Nom de l'arme en bas à droite |
+| Onde de choc | E | Bouton à anneaux |
+| Esquive | Espace | Bouton flèche |
 | Course | Maj | — |
-| Esquive | Espace | Bouton éclair |
 | Pause | Échap / P | Bouton pause |
 | Carte | M | Bouton carte |
-| Contrôle de secours | Flèches haut/bas avancer/reculer, gauche/droite tourner | — |
+| Secours clavier | Flèches haut/bas pour avancer/reculer, gauche/droite pour tourner | — |
 
-La pause contient les options de son, qualité graphique et mouvements de caméra. Les préférences sont enregistrées localement.
+Les réglages de son, qualité graphique et mouvements de caméra sont dans la pause. Le changement d'arme ne remet pas à zéro la surchauffe.
 
-## Ce qui est réellement procédural
+### Sauvegarde locale
 
-- **Architecture :** neuf salles et douze connexions par étage, dimensions et détails déterministes selon une graine.
-- **Géométrie :** boîtes, cylindres, sphères, octaèdres et anneaux générés mathématiquement ; personnages et arme assemblés à partir de ces primitives.
-- **Matériaux :** panneaux, joints, grain, béton, métal et zones émissives calculés dans les shaders WebGL.
-- **Son :** oscillateurs, bruit et filtres Web Audio pour l'ambiance, les tirs, les impacts, les pas et les relais.
-- **Effets :** particules, projectiles, animations et mouvements produits par le code.
+L'écran d'accueil propose **Continuer l'expédition** quand un point de reprise existe. **Nouvelle expédition** remplace ce point ; **Recommencer cet étage** repart de son entrée. La reprise conserve les relais, machines éliminées, score, arme et délais de récupération enregistrés.
 
-Le plan utilise une topologie conçue pour rester traversable. Procédural ne veut donc pas dire que chaque partie est un labyrinthe entièrement aléatoire. Les trois étages varient leur éclairage et la composition des ennemis ; la nouvelle expédition change la graine.
+La sauvegarde reste dans ce navigateur, sur cette origine, sans synchronisation ni compte de jeu. Effacer les données du navigateur l'efface aussi. Si le stockage local est indisponible, le point de reprise fonctionne pendant la session. Un changement incompatible de génération invalide proprement une ancienne sauvegarde.
 
-## Taille et comparaison honnête
+## Ce qui est procédural
 
-`SIZE.json` contient les mesures exactes du dernier build : taille du HTML autonome, taille gzip reproductible et SHA-256.
+| Élément | Construction |
+| --- | --- |
+| Architecture | Trois graphes conçus pour rester traversables ; dimensions, placement et détails déterministes selon une graine |
+| Géométrie | Boîtes, cylindres, sphères, octaèdres et anneaux générés mathématiquement |
+| Matériaux | Panneaux, joints, grain, béton, métal, normales et rugosité calculés dans les shaders |
+| Machines et personnages | Assemblages de primitives animés par leurs paramètres et états de combat |
+| Son | Oscillateurs, bruit synthétique et filtres Web Audio |
+| Effets | Particules, projectiles, onde, ombre et bloom calculés à l'exécution |
 
-Le budget initial est **1 400 000 octets pour le fichier jouable**. Le prototype est nettement plus petit. Le ZIP d'un dépôt, les commentaires et les fichiers de test ne sont pas la mesure utilisée pour le jeu distribué.
+| Étage | Plan | Salles / liaisons | Machines animées | Évents |
+| --- | --- | ---: | ---: | ---: |
+| Les ateliers silencieux | Deux boucles de maintenance | 9 / 10 | 13 | 0 |
+| La fonderie profonde | Deux longues galeries | 8 / 9 | 18 | 4 |
+| Le cœur du veilleur | Cœur central et arène | 9 / 12 | 5 | 5 |
 
-**Il s'agit d'un jeu web, pas d'un exécutable natif de 96 ko.** Le navigateur et ses implémentations WebGL/Web Audio ne sont pas inclus dans cette taille. La comparaison avec le défi historique de `.kkrieger` doit conserver cette distinction. La compression gzip n'est pas la taille non compressée du jeu.
+La graine change les dimensions et détails, tout en conservant le graphe propre à chaque étage. Il ne s'agit pas d'un labyrinthe dont la topologie entière est aléatoire à chaque lancement. Le sol reste horizontal ; les volumes en hauteur ne constituent pas des plateformes traversables.
+
+## Taille
+
+`SIZE.json` est produit par le build : taille brute du HTML, taille gzip reproductible et SHA-256.
+
+Pour la 0.2.0 : **149 698 octets bruts** (149,698 ko ; 146,19 Kio) et **46 312 octets gzip**.
+
+Le budget reste **1 400 000 octets non compressés** pour le fichier jouable. Le dépôt, ses tests et la documentation sont séparés de cette mesure. Gzip mesure une compression de transport ; ce n'est pas la taille brute.
+
+**FERRO est un jeu web.** Le navigateur, WebGL et Web Audio sont exclus du fichier. Ce résultat ne correspond donc pas au même défi qu'un exécutable natif de 96 ko.
 
 ## Développement
 
-Pas d'installation npm et aucune dépendance d'exécution. Python 3 assemble les fichiers ; Node.js exécute les vérifications.
+Aucune installation npm n'est nécessaire. Python 3 assemble le fichier ; Node.js exécute les contrôles.
 
 ```sh
 python3 tools/build.py
@@ -62,30 +94,33 @@ node --test checks/simulation.test.mjs
 node checks/build.test.mjs
 ```
 
-Ou : `npm run build` puis `npm test` si npm est disponible.
+Ou `npm run build` puis `npm test` si npm est disponible.
 
 | Fichier | Rôle |
 | --- | --- |
-| `src/renderer.js` | Géométrie, matrices, matériaux et rendu |
-| `src/world.js` | Génération déterministe et validation de la topologie |
-| `src/simulation.js` | Collisions, navigation, tirs, ennemis et progression |
-| `src/audio.js` | Synthèse sonore sans échantillons importés |
-| `src/game.js` | Commandes, personnages, interface et transitions |
-| `src/style.css` | Présentation responsive sans police externe |
+| `src/renderer.js` | Primitives, matrices, matériaux, ombres et passes de rendu |
+| `src/world.js` | Génération déterministe, architectures et placements |
+| `src/simulation.js` | Collisions, navigation, armes, IA, score et snapshots validés |
+| `src/audio.js` | Synthèse sonore et ambiance adaptative |
+| `src/game.js` | Commandes, personnages, interface et sauvegardes locales |
+| `src/style.css` | Présentation responsive et icônes sans assets |
 | `src/index.html` | Structure du jeu |
 | `tools/build.py` | Assemblage autonome et mesure de taille |
-| `checks/` | Vérifications de jouabilité et de distribution |
+| `checks/` | Vérifications de génération, combat, reprise et distribution |
 
-Le build est suivi dans Git pour permettre un téléchargement immédiat. Il faut relancer `tools/build.py` après toute modification de `src/`.
+Le build est suivi dans Git pour être immédiatement téléchargeable. Relancer `tools/build.py` après toute modification de `src/`.
 
-## État du projet
+## Validation et limites
 
-Version **0.1.0** : première tranche jouable, conçue pour vérifier le principe et servir de base à un projet plus ambitieux. Voir `VALIDATION.md` pour les contrôles effectués et leurs limites, et `docs/ARCHITECTURE.md` pour les décisions techniques.
+Voir `VALIDATION.md` pour les résultats et `docs/ARCHITECTURE.md` pour les décisions techniques.
 
-L'étape suivante peut enrichir les interactions de niveau, les silhouettes et les animations, diversifier réellement les étages, puis explorer un moteur natif compact. Aucun objectif de taille native n'est annoncé comme déjà atteint.
+Le rendu avancé a été vérifié avec les vrais shaders dans un contexte EGL / OpenGL ES logiciel. Les essais navigateur utilisent le secours Canvas 2D dans l'environnement disponible. Les performances sur GPU physique, Safari iOS, le multitouch réel et l'équilibrage complet de la campagne restent à confirmer. L'ombre couvre le cône sous une source proche, pas toutes les lumières du monde.
+
+Le prototype n'inclut pas de saut, d'étages superposés traversables, de multijoueur ou de longue campagne narrative. Un portage natif C/C++ serait un projet distinct pour explorer la contrainte de distribution historique.
 
 ### Référence historique
 
-Présentation de `.kkrieger` par Fabian Giesen : https://www.flipcode.com/archives/04-20-2004.shtml
+Présentation de .kkrieger par Fabian Giesen : https://www.flipcode.com/archives/04-20-2004.shtml
 
-Documentation originale du projet historique : https://www.pouet.net/prod_nfo.php?which=12036
+Documentation originale : https://www.pouet.net/prod_nfo.php?which=12036
+
