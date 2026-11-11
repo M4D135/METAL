@@ -6,11 +6,11 @@ Un FPS 3D compact, inspiré par l'idée technique de `.kkrieger` : conserver les
 
 ## Jouer
 
-**Démo hébergée :** https://ferro-procedural-fps.garden-lake-2660.chatgpt.site
-
 **Dépôt :** https://github.com/M4D135/FERRO
 
-La version autonome est **`dist/index.html`**. Téléchargez ce fichier et ouvrez-le dans un navigateur de bureau récent. Le jeu est également adapté aux commandes tactiles. L'hébergement de démonstration permet de le lancer directement sur téléphone.
+La version autonome est **`dist/index.html`**. Téléchargez ce fichier et ouvrez-le dans un navigateur de bureau récent. Le jeu est également adapté aux commandes tactiles et peut être servi par n'importe quel hébergement statique.
+
+Le projet d'hébergement de démonstration a été préparé et sa version sauvegardée, mais la publication a renvoyé une erreur interne du service. **Aucun lien de démonstration hébergée n'est annoncé comme actif.** Le fichier autonome et les sources ci-dessous sont disponibles.
 
 Le fichier fonctionne sans CDN, sans téléchargement de modèle, sans police externe et sans connexion réseau après chargement. Le son ne démarre qu'après une interaction.
 

@@ -2,6 +2,12 @@
 
 Date : 11 novembre 2026.
 
+## Livraison
+
+Les sources, les tests et `dist/index.html` sont poussés dans le nouveau dépôt privé `M4D135/FERRO`, branche `main`.
+
+L'hébergement distinct a été créé, ses sources synchronisées et la version avec archive sauvegardée. Les opérations de déploiement ont ensuite renvoyé une erreur interne du service, sans identifiant de déploiement ni URL active. La visibilité privée est conservée. Cette limitation de publication ne change pas le fichier autonome distribué dans GitHub.
+
 ## Distribution mesurée
 
 - HTML autonome : **99 011 octets** (99,011 ko décimaux ; 96,69 Kio).
