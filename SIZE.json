@@ -1,0 +1,17 @@
+{
+  "version": "0.1.0",
+  "html_bytes": 99011,
+  "html_decimal_kb": 99.01,
+  "html_kib": 96.69,
+  "gzip_bytes": 31966,
+  "sha256": "f58ac5d51246f3416cc0dd6df937472b7a03ae90bf615338e9c8680bf788ef31",
+  "external_assets": 0,
+  "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+  "source_bytes": {
+    "renderer.js": 28197,
+    "world.js": 13373,
+    "audio.js": 10883,
+    "simulation.js": 8321,
+    "game.js": 18891
+  }
+}

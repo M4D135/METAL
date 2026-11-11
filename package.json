@@ -1,0 +1,10 @@
+{
+  "name": "ferro-procedural-fps",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Original compact procedural 3D FPS, with no external game assets or runtime packages.",
+  "scripts": {
+    "build": "python3 tools/build.py",
+    "test": "node checks/world.test.mjs && node --test checks/simulation.test.mjs && node checks/build.test.mjs"
+  }
+}

@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const data=readFileSync(resolve(root,'dist/index.html')),html=data.toString('utf8'),report=JSON.parse(readFileSync(resolve(root,'SIZE.json'),'utf8'));
+assert.equal(data.length,report.html_bytes,'Size report must match build');
+assert.equal(createHash('sha256').update(data).digest('hex'),report.sha256,'Size report SHA must match distributed file');
+assert.ok(data.length<1_400_000,'Uncompressed executable web document must meet budget');
+assert.ok(!/<(?:script|img|audio|video|link)\b[^>]*(?:src|href)\s*=\s*["'](?:https?:|\/\/)/i.test(html),'No external runtime assets');
+assert.ok(!/\b(?:fetch\s*\(|XMLHttpRequest|WebSocket\s*\(|import\s*\(|@import)/.test(html),'No network-loaded code or assets');
+assert.ok(!html.includes('/*__CODE__*/')&&!html.includes('/*__STYLE__*/'),'No unresolved build placeholders');
+assert.ok(html.includes('FSimulation')&&html.includes('FRender')&&html.includes('FAudio'),'Bundled modules must be present');
+console.log(JSON.stringify({status:'PASS',html_bytes:data.length,external_assets:0,sha256:report.sha256},null,2));
