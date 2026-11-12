@@ -5,6 +5,7 @@
   const hash=(seed,k=0)=>{let n=Math.imul((seed|0)^Math.imul(k+17,374761393),668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967296;};
   const unit=v=>{const n=Math.hypot(...v)||1;return v.map(x=>x/n);},add=(p,d,k)=>p.map((x,i)=>x+d[i]*k);
   const orient=d=>[Math.acos(clamp(d[1],-1,1)),Math.atan2(d[0],d[2]),0];
+  const debrisShapes=['box','bevel','cylinder','sphere','octa','ring','foliage'];
   function rotate(p,r){let [x,y,z]=p;const c=r.map(Math.cos),s=r.map(Math.sin);[y,z]=[c[0]*y-s[0]*z,s[0]*y+c[0]*z];[x,z]=[c[1]*x+s[1]*z,-s[1]*x+c[1]*z];return [c[2]*x-s[2]*y,s[2]*x+c[2]*y,z];}
   const mesh=(shape,p,s,mat=7,color,r=[0,0,0],part='')=>({shape,p,s,r,mat,...(color?{color}:{}),surface:'object',effectPart:part});
   function build(state,world,camera,options={}){
@@ -165,13 +166,36 @@
         for(let i=0;i<count;i++){const f=(i+1)/(count+1),size=radius*(.7+f*1.7);puff(add(tail,d,-length*f),[size,size,size],[.45,.43,.38],.28*(1-f),0,'rocket-smoke');}
       }else if(num(q.fuse,2)<.7)puff(p,[radius*2.1,radius*2.1,radius*2.1],[1,.38,.08],.12+.1*Math.sin(time*35),.7,'grenade-warning');
     }
-    for(const q of close(state.debris,debrisBudget)){
-      const age=Math.max(0,num(q.age)),life=Math.max(.01,num(q.life,1.5));if(age>=life)continue;
-      const p=point(q);if(fade(p)<=0)continue;
-      const raw=Array.isArray(q.size)?q.size:[num(q.size,.12),num(q.size,.12),num(q.size,.12)],shrink=clamp((life-age)/(life*.24),0,1),s=raw.map(v=>clamp(num(v,.1),.015,3)*shrink);if(s.some(v=>v<.005))continue;
-      const seed=num(q.seed,1),r=q.resting?[0,hash(seed,2)*Math.PI*2,0]:[age*(hash(seed,1)*5-2.5),age*(hash(seed,2)*5-2.5),age*(hash(seed,3)*5-2.5)];
-      if(q.resting)p[1]-=(clamp(num(raw[1],.1),.015,3)-s[1])*.5;
-      solid('box',p,s,clamp(num(q.mat,3),0,12),q.color,r,'debris');
+    // Structural wreckage is real surviving geometry, not a short-lived
+    // particle. Simulation alone owns its pose, settlement and retirement.
+    // Filter before budgeting so expired chips cannot hide intact wreckage.
+    const wreckage=[],yaw=num(camera?.yaw),pitch=num(camera?.pitch),heading=Number.isFinite(camera?.yaw)||Number.isFinite(camera?.pitch)?[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)]:null;
+    for(const q of state.debris||[]){
+      if(![q.x,q.y,q.z].every(Number.isFinite))continue;
+      const structural=q.structural===true,age=Math.max(0,num(q.age)),life=Math.max(.01,num(q.life,1.5));if(!structural&&age>=life)continue;
+      const raw=Array.isArray(q.size)?q.size:[num(q.size,.12),num(q.size,.12),num(q.size,.12)];
+      if(structural&&(raw.length!==3||raw.some(v=>!Number.isFinite(v)||v<=0)))continue;
+      const s=structural?raw.slice():raw.map(v=>clamp(num(v,.1),.015,3)*clamp((life-age)/(life*.24),0,1));if(!structural&&s.some(v=>v<.005))continue;
+      const p=point(q),radius=Math.hypot(...s)*.5;if(fade(p,radius)<=0)continue;
+      const d=Math.max(0,distance(p)-radius),band=Math.floor(d/(software?12:24)),rear=heading&&p.reduce((n,v,k)=>n+(v-eye[k])*heading[k],0)<-radius?1:0;
+      wreckage.push({q,p,s,raw,structural,age,band,rear,score:d/(1+Math.min(radius,3)*.3),repeat:0});
+    }
+    const order=(a,b)=>Number(b.structural)-Number(a.structural)||a.rear-b.rear||a.band-b.band||a.repeat-b.repeat||a.score-b.score||num(a.q.id,num(a.q.seed))-num(b.q.id,num(b.q.seed));
+    wreckage.sort(order);
+    // Within the same nearby band, keep one recognizable piece of each source
+    // before filling the rest with one collapse's fragments. Rearward piles
+    // and tiny cosmetic chips cannot consume the visible structural slots.
+    const represented=new Set();
+    for(const item of wreckage)if(item.structural&&typeof item.q.sourceId==='string'){
+      const key=item.rear+'|'+item.band+'|'+item.q.sourceId;item.repeat=represented.has(key)?1:0;represented.add(key);
+    }
+    wreckage.sort(order);
+    for(const {q,p,s,raw,structural,age} of wreckage.slice(0,debrisBudget)){
+      const supplied=Array.isArray(q.rotation)&&q.rotation.length===3&&q.rotation.every(Number.isFinite),seed=num(q.seed,1);
+      const r=supplied?q.rotation.slice():structural?[0,0,0]:q.resting?[0,hash(seed,2)*Math.PI*2,0]:[age*(hash(seed,1)*5-2.5),age*(hash(seed,2)*5-2.5),age*(hash(seed,3)*5-2.5)];
+      if(!structural&&q.resting)p[1]-=(clamp(num(raw[1],.1),.015,3)-s[1])*.5;
+      const shape=structural&&debrisShapes.includes(q.shape)?q.shape:'box',color=Array.isArray(q.color)?q.color.slice():undefined,m=solid(shape,p,s,clamp(num(q.mat,3),0,12),color,r,'debris');
+      if(structural){m.structural=true;m.debrisId=q.id;m.sourceId=q.sourceId;m.material=q.material;}
     }
     return out;
   }

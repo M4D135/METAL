@@ -5,8 +5,8 @@ import vm from 'node:vm';
 
 const scope={window:{}};vm.runInNewContext(readFileSync(new URL('../src/effects.js',import.meta.url),'utf8'),scope);
 const Effects=scope.window.FEffects,camera={pos:[0,1.62,5],yaw:0,pitch:0,fov:74};
-const geometryScope={window:{}};vm.runInNewContext(readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8').replace('window.FRender={create,foliageTriangles};','window.FRender={create,foliageTriangles,geometry};'),geometryScope);
-const geometry=geometryScope.window.FRender.geometry(),plain=v=>JSON.parse(JSON.stringify(v));
+const geometryScope={window:{}};vm.runInNewContext(readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8').replace('window.FRender={create,foliageTriangles};','window.FRender={create,foliageTriangles,geometry,pack};'),geometryScope);
+const geometry=geometryScope.window.FRender.geometry(),pack=geometryScope.window.FRender.pack,plain=v=>JSON.parse(JSON.stringify(v));
 function freeze(v){if(v&&typeof v==='object'){Object.freeze(v);for(const x of Object.values(v))freeze(x);}return v;}
 function vertices(m){
   const range=geometry.ranges[m.shape],out=[],[rx,ry,rz]=m.r||[0,0,0],c=[rx,ry,rz].map(Math.cos),s=[rx,ry,rz].map(Math.sin),indices=new Set();
@@ -109,6 +109,71 @@ test('settled wide roof slabs keep their bottom on the floor throughout their fa
     assert.equal(m.r[0],0);assert.equal(m.r[2],0);yaw??=m.r[1];assert.equal(m.r[1],yaw);
     assert(Math.abs(Math.min(...vertices(m).map(p=>p[1]))-3.2)<1e-7,'a landed slab cannot spin through the floor or float upward while fading');
     if(age===.1)assert.equal(m.s[0],2.4,'rectangular destruction sizes stay intact');
+  }
+});
+
+test('structural debris keeps its full source geometry, material and authoritative pose after cosmetic lifetimes',()=>{
+  const shapes=['box','bevel','cylinder','sphere','octa','ring','foliage'];
+  for(const backend of ['canvas2d','webgl2'])for(const shape of shapes)for(const age of [.02,2.45,90]){
+    const q={id:17,sourceId:'barrier-3',structural:true,shape,x:1,y:2.1,z:-3,size:[6.4,.007,.62],rotation:[.28,.73,-.19],angularVelocity:[1,2,3],vx:8,vy:-4,vz:2,age,life:2.5,material:'metal',mat:1,color:[.28,.32,.37]};
+    const state=freeze({time:age+10,debris:[q]}),before=JSON.stringify(state),meshes=Effects.build(state,{},camera,{backend,quality:'low'}),m=meshes.find(m=>m.structural);
+    validate(meshes);assert(m,backend+' must retain the structural chunk after its old particle lifetime');
+    assert.equal(m.shape,shape);assert.equal(m.debrisId,q.id);assert.equal(m.sourceId,q.sourceId);assert.equal(m.material,q.material);assert.equal(m.mat,q.mat);
+    assert.deepEqual(plain(m.p),[q.x,q.y,q.z]);assert.deepEqual(plain(m.s),q.size);assert.deepEqual(plain(m.r),q.rotation);assert.deepEqual(plain(m.color),q.color);
+    assert.notEqual(m.s,q.size);assert.notEqual(m.r,q.rotation);assert.notEqual(m.color,q.color);assert(!m.fx);assert.equal(m.alpha,undefined,'wreckage stays an opaque material mesh');
+    assert.deepEqual(plain(meshes),plain(Effects.build({...state,time:1000}, {},camera,{backend,quality:'low'})),'render time cannot spin or integrate authoritative debris');
+    assert.equal(JSON.stringify(state),before);
+    // Both backends consume these same opaque descriptors. In WebGL packing,
+    // they retain the source material instead of switching to the FX material.
+    const gpu=pack([m],null,true);assert.equal(gpu.groups[0].name,shape);assert.equal(gpu.values[3],q.mat);assert.equal(gpu.values[11],4);
+    for(let k=0;k<3;k++){assert(Math.abs(gpu.values[4+k]-q.size[k])<1e-6);assert(Math.abs(gpu.values[8+k]-q.rotation[k])<1e-6);}
+  }
+  assert.equal(Effects.build({debris:[]},{},camera).length,0,'simulation removal remains the only lifetime authority for structural pieces');
+});
+
+test('settled structural slabs and fallen rails stay on their supplied floor without flattening or shrinking',()=>{
+  for(const backend of ['canvas2d','webgl2'])for(const sample of [
+    {shape:'box',size:[6.1,.06,1.3],rotation:[0,.7,0],mat:2,material:'stone'},
+    {shape:'bevel',size:[.08,2.2,1.1],rotation:[0,.4,Math.PI/2],mat:1,material:'metal'},
+    {shape:'cylinder',size:[.12,3.9,.12],rotation:[0,.6,Math.PI/2],mat:10,material:'wood'}
+  ]){
+    const floor=3.2,base={shape:sample.shape,p:[0,0,0],s:sample.size,r:sample.rotation},height=-Math.min(...vertices(base).map(p=>p[1]));
+    const q={...sample,id:8,structural:true,sourceId:'fallen-rail',x:0,y:floor+height,z:0,resting:true,life:2.5,vx:0,vy:0,vz:0};
+    for(const age of [.1,2.4,30,600]){
+      const m=Effects.build(freeze({debris:[{...q,age}]}),{},{pos:[0,5,4]},{backend}).find(m=>m.structural);assert(m);
+      assert.deepEqual(plain(m.s),q.size);assert.deepEqual(plain(m.r),q.rotation);assert.equal(m.p[1],q.y);
+      assert(Math.abs(Math.min(...vertices(m).map(p=>p[1]))-floor)<1e-7,'settled wreckage must neither float nor cross its floor as age advances');
+    }
+  }
+});
+
+test('structural draw budgets retain nearby source groups, visible poses and hazards amid chips and old wreckage',()=>{
+  const make=(id,sourceId,x,y,z,size=[.3,.2,.4])=>({id,sourceId,structural:true,shape:'box',x,y,z,size,rotation:[0,.2,0],material:'metal',mat:0,age:40,life:2.5,resting:true});
+  const state={time:40,debris:[
+    ...Array.from({length:96},(_,i)=>({x:0,y:1.6,z:4.7,size:[.1,.1,.1],age:i%2?5:.1,life:2,seed:i})),
+    ...Array.from({length:70},(_,i)=>make(100+i,'near-wall',(i%7)*.03,.1,2-Math.floor(i/7)*.03)),
+    make(9,'fallen-rail',-2,.2,-3,[3.8,.08,.12]),make(10,'roof-slab',2,.14,-2,[2.2,.28,1.3]),
+    ...Array.from({length:20},(_,i)=>make(200+i,'rear-wall',0,.1,7+i*.1))
+  ],projectiles:[{kind:'rocket',x:0,y:1,z:-4,vx:0,vy:0,vz:-18,age:1,radius:.24}],traps:[{kind:'press',box:{minX:1,maxX:3,minY:0,maxY:2,minZ:-4,maxZ:-2},hot:true}],bossAttacks:[{kind:'ring',x:0,y:0,z:-2,currentRadius:3,innerRadius:2.6,active:true}]};
+  freeze(state);const before=JSON.stringify(state);
+  for(const backend of ['canvas2d','webgl2'])for(const quality of ['low','auto','high']){
+    const meshes=Effects.build(state,{},camera,{backend,quality}),debris=meshes.filter(m=>m.effectPart==='debris'),tier={low:0,auto:1,high:2}[quality];validate(meshes);
+    assert(debris.length<=(backend==='canvas2d'?[8,18,28]:[18,38,60])[tier]);assert(debris.every(m=>m.structural));
+    for(const source of ['near-wall','fallen-rail','roof-slab'])assert(debris.some(m=>m.sourceId===source),source+' must retain visible wreckage amid another collapse');
+    assert(!debris.some(m=>m.sourceId==='rear-wall'),'rearward piles cannot consume the visible structural allowance');
+    assert(meshes.some(m=>m.effectPart==='rocket-body'));assert(meshes.some(m=>m.effectPart==='press-body'));assert(meshes.some(m=>m.effectPart==='boss-ring'&&m.fxPriority==='hazard'));
+    const reverse=Effects.build({...state,debris:[...state.debris].reverse()},{},camera,{backend,quality}).filter(m=>m.effectPart==='debris');
+    assert.deepEqual(plain(reverse),plain(debris),'stable IDs break equal-distance ties independently of insertion order');
+  }
+  assert.equal(JSON.stringify(state),before);
+});
+
+test('expired and invalid debris do not spend draw slots and long structural extents remain visible',()=>{
+  const q={id:3,sourceId:'long-pipe',structural:true,shape:'cylinder',x:0,y:1,z:-46,size:[.12,14,.12],rotation:[Math.PI/2,0,0],material:'metal',mat:0,age:100};
+  for(const backend of ['canvas2d','webgl2']){
+    const debris=[...Array.from({length:100},()=>({x:0,y:1,z:0,size:[.1,.1,.1],age:2,life:1})),{...q,x:0,z:-1,size:[NaN,.1,.1]},q];
+    const meshes=Effects.build(freeze({debris}),{},{pos:[0,1.6,0],yaw:0,pitch:0},{backend,quality:'low'});validate(meshes);
+    assert.equal(meshes.length,1);assert.equal(meshes[0].debrisId,3);assert.deepEqual(plain(meshes[0].s),q.size,'long source meshes cannot be clamped to the old 3 m chip size');
   }
 });
 

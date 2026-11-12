@@ -1,0 +1,149 @@
+{
+  "source": "Deterministic FSimulation shots, FDestruction geometry, FEffects.build high-quality descriptors. All meshes are code-generated. Door leaf rendering mirrors the ordinary dynamic gate.",
+  "manifest": [
+    {
+      "file": "wall-before.json",
+      "name": "wall",
+      "phase": "before",
+      "time": 0,
+      "counts": {
+        "static": 2,
+        "dynamic": 0,
+        "rubble": 0,
+        "resting": 0
+      }
+    },
+    {
+      "file": "wall-impact.json",
+      "name": "wall",
+      "phase": "impact",
+      "time": 0.21,
+      "counts": {
+        "static": 3,
+        "dynamic": 33,
+        "rubble": 8,
+        "resting": 0
+      }
+    },
+    {
+      "file": "wall-falling.json",
+      "name": "wall",
+      "phase": "falling",
+      "time": 0.6100000000000003,
+      "counts": {
+        "static": 3,
+        "dynamic": 39,
+        "rubble": 8,
+        "resting": 0
+      }
+    },
+    {
+      "file": "wall-settled.json",
+      "name": "wall",
+      "phase": "settled",
+      "time": 8.610000000000008,
+      "counts": {
+        "static": 3,
+        "dynamic": 8,
+        "rubble": 8,
+        "resting": 8
+      }
+    },
+    {
+      "file": "fence-before.json",
+      "name": "fence",
+      "phase": "before",
+      "time": 0,
+      "counts": {
+        "static": 5,
+        "dynamic": 0,
+        "rubble": 0,
+        "resting": 0
+      }
+    },
+    {
+      "file": "fence-impact.json",
+      "name": "fence",
+      "phase": "impact",
+      "time": 0,
+      "counts": {
+        "static": 6,
+        "dynamic": 3,
+        "rubble": 1,
+        "resting": 0
+      }
+    },
+    {
+      "file": "fence-falling.json",
+      "name": "fence",
+      "phase": "falling",
+      "time": 0.4,
+      "counts": {
+        "static": 6,
+        "dynamic": 3,
+        "rubble": 1,
+        "resting": 0
+      }
+    },
+    {
+      "file": "fence-settled.json",
+      "name": "fence",
+      "phase": "settled",
+      "time": 8.400000000000006,
+      "counts": {
+        "static": 6,
+        "dynamic": 1,
+        "rubble": 1,
+        "resting": 1
+      }
+    },
+    {
+      "file": "door-before.json",
+      "name": "door",
+      "phase": "before",
+      "time": 0,
+      "counts": {
+        "static": 4,
+        "dynamic": 5,
+        "rubble": 0,
+        "resting": 0
+      }
+    },
+    {
+      "file": "door-impact.json",
+      "name": "door",
+      "phase": "impact",
+      "time": 0.185,
+      "counts": {
+        "static": 4,
+        "dynamic": 29,
+        "rubble": 4,
+        "resting": 0
+      }
+    },
+    {
+      "file": "door-falling.json",
+      "name": "door",
+      "phase": "falling",
+      "time": 0.5850000000000002,
+      "counts": {
+        "static": 4,
+        "dynamic": 35,
+        "rubble": 4,
+        "resting": 0
+      }
+    },
+    {
+      "file": "door-settled.json",
+      "name": "door",
+      "phase": "settled",
+      "time": 8.585000000000008,
+      "counts": {
+        "static": 4,
+        "dynamic": 4,
+        "rubble": 4,
+        "resting": 4
+      }
+    }
+  ]
+}

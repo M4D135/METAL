@@ -168,3 +168,42 @@ test('a working pressure burst spares only its own source while external fire st
   assert(d.isAlive('wall')&&blocked(d,0,0),'operating burst destroyed its own pipe');assert.equal(burst.pipeLeaks.length,0);
   assert(d.isAlive('remote'));const hit=d.hit([0,1.2,-.31],5);assert(!d.isAlive('wall')&&hit.pipeLeaks.includes('hot'),'external fire no longer ruptures source');
 });
+
+test('a long decorative fence fractures only the struck rail and keeps its unrelated posts and rail',()=>{
+  const meshes=[box([-6,.9,0],[.10,1.8,.10],{mat:10,color:[.24,.18,.09]}),box([0,1.62,0],[12,.065,.07],{mat:0,color:[.13,.21,.27]}),box([0,.6,0],[12,.065,.07],{mat:1}),box([6,.9,0],[.10,1.8,.10],{mat:10})];
+  const world=deepFreeze({seed:17,meshes,colliders:[],destructibles:[{id:'fence',kind:'decor',strength:1,meshes:[0,1,2,3],colliders:[]}]}),d=FDestruction.create(world),hit=d.hit([0,1.62,-.035],2,[0,0,1]);
+  assert(hit.changed&&d.isAlive('fence'));
+  assert.equal(d.raycast([0,1.62,-2],[0,0,1],4),null,'the struck rail has no real local gap');
+  for(const [x,y] of [[-5,1.62],[5,1.62],[0,.6],[-6,.9],[6,.9]])assert(d.raycast([x,y,-2],[0,0,1],4),'an unrelated fence segment vanished');
+  const chunks=hit.debris.filter(q=>q.structural);assert.equal(chunks.length,1);
+  const q=chunks[0];assert.equal(q.shape,'box');assert.equal(q.material,'metal');assert.equal(q.mat,0);assert.deepEqual(Array.from(q.color),meshes[1].color,'debris inherited the first post instead of the struck rail material');
+  assert(Math.abs(q.size[1]-.065)<1e-10&&Math.abs(q.size[2]-.07)<1e-10&&q.size[0]>.7,'the severed rail became generic cube chips');
+  const surviving=d.meshes.filter(m=>m.mat===0).reduce((v,m)=>v+m.s.reduce((n,x)=>n*x,1),0),fallen=chunks.reduce((v,m)=>v+m.size.reduce((n,x)=>n*x,1),0);
+  assert(Math.abs(surviving+fallen-12*.065*.07)<1e-8,'fracture lost or invented rail geometry');
+  assert.equal(hit.events.filter(q=>q.name==='materialBreak'&&q.material==='metal').length,1);
+  const restored=FDestruction.create(world);assert(restored.restore(JSON.parse(JSON.stringify(d.snapshot())),{exactRevision:true}));assert.equal(JSON.stringify(restored.meshes),JSON.stringify(d.meshes));
+});
+
+test('whole detached primitives keep their source shape, tint, orientation and geometric volume',()=>{
+  const mesh={shape:'cylinder',p:[2,3,-1],s:[.32,4.8,.32],r:[.28,.61,-.35],mat:10,color:[.36,.23,.10]},world=deepFreeze({seed:18,meshes:[mesh],colliders:[],destructibles:[{id:'branch',kind:'tree',strength:1,meshes:[0],colliders:[]}]}),d=FDestruction.create(world),hit=d.hit([2,3,-1],4,[1,0,0]);
+  const chunks=hit.debris.filter(q=>q.structural);assert(chunks.length>=2);assert(chunks.every(q=>q.shape==='cylinder'&&q.material==='wood'&&q.sourceId==='branch'));
+  for(const q of chunks){assert.deepEqual(Array.from(q.rotation),mesh.r);assert.deepEqual(Array.from(q.color),mesh.color);assert(q.angularVelocity.every(Number.isFinite));}
+  assert(Math.abs(chunks.reduce((n,q)=>n+q.size.reduce((v,x)=>v*x,1),0)-mesh.s.reduce((v,x)=>v*x,1))<1e-8);
+  const center=[0,1,2].map(k=>chunks.reduce((n,q)=>n+[q.x,q.y,q.z][k],0)/chunks.length);for(let k=0;k<3;k++)assert(Math.abs(center[k]-mesh.p[k])<1e-8);
+});
+
+test('severing a decorative upright drops its unsupported upper part without removing the other post',()=>{
+  const meshes=[box([0,.9,0],[.1,1.8,.1],{mat:10}),box([4,.9,0],[.1,1.8,.1],{mat:10})],d=FDestruction.create({seed:20,meshes,colliders:[],destructibles:[{id:'posts',kind:'decor',strength:1,meshes:[0,1],colliders:[]}]});
+  const hit=d.hit([0,.9,-.05],2,[0,0,1]);assert.equal(d.raycast([0,1.7,-2],[0,0,1],4),null,'severed post top floats above its missing middle');
+  assert(d.raycast([0,.2,-2],[0,0,1],4));assert(d.raycast([4,1.7,-2],[0,0,1],4));
+  assert(hit.debris.some(q=>q.structural&&q.material==='wood'&&q.y-q.size[1]/2>.4&&q.y+q.size[1]/2>1.79));
+});
+
+test('thin wall cladding retains its intact sides and local cut budgets cannot erase untouched decorative segments',()=>{
+  const w=fixture(),d=FDestruction.create(w);d.blast([0,1.25,-.44],2.8,55);
+  assert(d.meshes.some(m=>Math.abs(m.s[2]-.025)<1e-8&&m.p[0]<-2),'a local breach discarded the intact thin facade');
+  const meshes=[box([0,1,0],[40,.08,.08],{mat:0}),box([0,.2,0],[40,.08,.08],{mat:1})],world={seed:19,meshes,colliders:[],destructibles:[{id:'long',kind:'decor',strength:1,meshes:[0,1],colliders:[]}]},fence=FDestruction.create(world);
+  for(let i=0;i<30;i++)fence.hit([-19+i*1.2,1,-.04],2,[0,0,1]);
+  assert(fence.isAlive('long'));assert(fence.raycast([19,.2,-2],[0,0,1],4),'cut-budget pressure erased a completely untouched rail');assert(fence.meshes.length<100);
+  const restored=FDestruction.create(world);assert(restored.restore(fence.snapshot()));
+});

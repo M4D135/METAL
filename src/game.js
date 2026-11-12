@@ -8,8 +8,8 @@
   try{prefs=FOptions.normalize(JSON.parse(localStorage.getItem('ferro-settings')||'{}'),touch);}catch{}
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)prefs.softMotion=false;
   let {muted,quality,softMotion}=prefs,bindingAction=null,optionsTab='game';
-  const audio=FAudio.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
-  let renderer,world,sim,stage=0,seed=96,campaignMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
+  const audio=FAudio.create(),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
+  let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'],ammoNames=['balles','cartouches','roquettes','grenades','balles'];
@@ -28,7 +28,7 @@
     const armor=value.armor===undefined?null:FSimulation.copyArmor?.(value.armor,inventory.shield&&equipment?.left==='shield'?200:100);if(value.armor!==undefined&&!armor)return null;
     return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice(),...(inventory.shield!==undefined?{shield:inventory.shield}:{})},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
   }
-  function cachedWorld(n,worldSeed,campaign=campaignMode){const key=(campaign?'campaign:':'classic:')+worldSeed+':'+n;if(!worldCache.has(key)){worldCache.set(key,FWorld.create(worldSeed,n,campaign?{campaign:true}:undefined));while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);}return worldCache.get(key);}
+  function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision){const key=(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;if(!worldCache.has(key)){worldCache.set(key,FWorld.create(worldSeed,n,campaign?{campaign:true,campaignVersion:revision}:undefined));while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);}return worldCache.get(key);}
   function trackLabel(){const t=window.FMusic?.getTrack?.(world?.stage??stage%3);return t?t.title+' · '+t.bpm+' BPM':'METAL · MOD PROCÉDURAL';}
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
@@ -75,7 +75,7 @@
   const savedIndex=v=>v?.version===3?v.index:v?.stage??0;
   function validSave(v){
     const identity=v&&(v.version===2&&Number.isInteger(v.stage)&&v.stage>=0&&v.stage<3&&v.campaign!==true||v.version===3&&v.campaign===true&&Number.isInteger(v.index)&&v.index>=0&&v.index<18&&v.stage===v.index%3);
-    if(!identity)return false;
+    if(!identity||v.campaignRevision!==undefined&&(v.version!==3||v.campaignRevision!==2||v.checkpoint?.campaignVersion!==2)||v.version===3&&v.campaignRevision===undefined&&v.checkpoint?.campaignVersion===2)return false;
     // Reject mixed classic/campaign checkpoints before load constructs a new
     // simulation. Reading an incompatible envelope leaves its source untouched.
     const campaign=v.version===3,state=v.checkpoint?.state;
@@ -96,7 +96,7 @@
     if(sim.state.player.airborne){checkpointPending=true;return;}
     checkpointPending=false;
     checkpoint=sim.snapshot();
-    savedRun={version:world.campaign?3:2,...(world.campaign?{campaign:true,index:stage}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
+    savedRun={version:world.campaign?3:2,...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
     try{localStorage.setItem(SAVE_KEY,JSON.stringify(savedRun));saveAvailable=true;}catch{saveAvailable=false;}
     $('checkpoint-status').textContent='Reprise au dernier point enregistré.'+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
     refreshContinue();
@@ -104,7 +104,7 @@
   function clearSave(){checkpoint=null;savedRun=null;try{localStorage.removeItem(SAVE_KEY);}catch{}refreshContinue();}
   function restoreRun(v){
     if(!validSave(v))return false;
-    load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3);
+    load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1);
     if((v.generation||3)!==(world.generation||3)||!sim.restore(v.checkpoint,{recover:true}))return false;
     sim.setDifficulty?.(prefs.difficulty);
     runStats={...v.runStats};checkpoint=v.checkpoint;savedRun=v;selectedWeapon=sim.state.weapon;
@@ -117,9 +117,9 @@
       // Retain the old point separately when the new terrain makes its position invalid.
       try{if(!localStorage.getItem(SAVE_KEY+'-before-ascension'))localStorage.setItem(SAVE_KEY+'-before-ascension',JSON.stringify(v));}catch{}
       runStats={...v.runStats};selectedWeapon=[0,1,2,3,4].includes(v.checkpoint?.state?.weapon)?v.checkpoint.state.weapon:0;
-      load(savedIndex(v),v.seed,undefined,v.version===3);saveCheckpoint();
+      load(savedIndex(v),v.seed,undefined,v.version===3,v.campaignRevision||1);saveCheckpoint();
       start(v.generation!==world.generation?'Les lieux ont changé. Reprise à l’entrée du même secteur ; progression précédente conservée.':'Point de reprise illisible. Reprise à l’entrée de ce secteur.');
-    }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true);saveCheckpoint();start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');}
+    }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2);saveCheckpoint();start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');}
   }
   function clearInput(){keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
@@ -128,11 +128,11 @@
     $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
     mode=value;bindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();audio.setMuted(muted||['menu','paused','options','shop','loading'].includes(value));audio.setPlaying?.(value==='playing');
     if(value==='paused'||value==='options'){$('pause-kicker').textContent=value==='options'?'CONSOLE DE RÉGLAGE':'SIGNAL EN ATTENTE';$('resume').innerHTML=(value==='options'?'Retour':'Reprendre')+' <span class="arrow-icon" aria-hidden="true"></span>';$('restart').hidden=$('pause-main').hidden=value==='options';selectTab(value==='options'?'image':optionsTab);}
-    if(value!=='playing'){audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
+    if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
-  function load(n,newSeed,loadout,asCampaign=campaignMode){
+  function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision){
     checkpointPending=false;
-    campaignMode=asCampaign;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode);
+    campaignMode=asCampaign;campaignRevision=revision;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale
     // 3/4/5-slot entry cannot block restoration of a healthy checkpoint.
@@ -142,10 +142,10 @@
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;
     motion.reset();leftMotion.reset();shieldLift=0;lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
-    audio.setStage?.(world.stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
+    soundscape.reset();audio.setStage?.(world.stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
     $('music-title').textContent=trackLabel();
-    $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaign?world.chapterTitle+' · ':'')+world.title;
-    $('mission-summary').innerHTML=world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';
+    $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaignVersion===2?(stage<6?'Équipement '+(stage+1)+' / 6':'Assaut '+(stage-5)+' / 12')+' · ':world.campaign?world.chapterTitle+' · ':'')+world.title;
+    $('mission-summary').innerHTML=world.campaignVersion===2?'<span><b>6</b> ÉQUIPEMENT</span><span><b>12</b> ASSAUT</span><span><b>18</b> MONDES</span>':world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';
     $('restart').textContent=world.campaign?'RECOMMENCER CE MONDE':'RECOMMENCER CE SECTEUR';
     document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=false;hudWait=0;renderHUD();weaponHint();
   }
@@ -160,9 +160,9 @@
   }
   function start(message){
     audio.start();audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});
-    toast(message||(world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 4.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
+    toast(message||(world.campaignVersion===2&&stage===0?'Pistolet + bouclier · clic droit : garde. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 4.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
-  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true);saveCheckpoint();start();}
+  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode){
     if(!window.FMusic?.warmup){action();return;}
     const ticket=++preparationSerial;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent=(asCampaign?'MONDE ':'SECTEUR ')+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
@@ -191,18 +191,16 @@
   }
   function formatTime(v){return Math.floor(v/60)+':'+String(Math.floor(v%60)).padStart(2,'0');}
   function events(){
-    let checkpointDue=false;const trophyIds=new Set(sim.state.events.filter(e=>e.name==='trophy').map(e=>e.id));
+    let checkpointDue=false;const trophyIds=new Set(sim.state.events.filter(e=>e.name==='trophy'||e.name==='bossReward').map(e=>e.id));
     for(const e of sim.state.events){
       const handMotion=e.hand==='left'?leftMotion:motion;
       if(e.name==='rocket'||e.name==='grenadeLaunch'){if(e.owner==='player')handMotion.impulse('rocket');}
       else if(e.name==='shieldBash')leftMotion.impulse('melee');
       else if(e.name==='explosion'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.y??p.y)-p.y,(e.z??p.z)-p.z);motion.impulse('blast',clamp(1-d/14,0,1));leftMotion.impulse('blast',clamp(1-d/14,0,1));}
       else handMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
-      const sound=e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
-      if(typeof audio[sound]==='function'&&!((e.name==='weaponPickup'||e.name==='shieldPickup')&&trophyIds.has(e.id))){
-        const p=sim.state.player,d=Number.isFinite(e.x)?Math.hypot(e.x-p.x,e.z-p.z):0;
-        const pan=Number.isFinite(e.x)?clamp(((e.x-p.x)*Math.cos(p.yaw)+(e.z-p.z)*Math.sin(p.yaw))/Math.max(1,d),-1,1):0;
-        audio[sound]({...e,pan,level:1/(1+d*.055)});
+      const sound=e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
+      if(e.name!=='win'&&typeof audio[sound]==='function'&&!((e.name==='weaponPickup'||e.name==='shieldPickup'||e.name==='lootPickup')&&trophyIds.has(e.id))){
+        const mix=soundscape.event(sim,e);if(mix.level>.0001)audio[sound](mix);
       }
       if(e.name==='core'){
         checkpointDue=true;
@@ -217,6 +215,7 @@
       if(e.name==='horror'&&e.kind==='alarm')toast('ALERTE LOCALE · des machines convergent',2.1);
       if(e.name==='pickup')toast('Intégrité restaurée',1.8);
       if(e.name==='armorPickup'){toast('+'+(Math.round(e.amount*10)/10)+' ARMURE · '+Math.ceil(e.points)+' / '+e.capacity,2.1);checkpointDue=true;}
+      if(e.name==='bossReward'){const parts=[];if(Number.isInteger(e.weapon))parts.push(weaponNames[e.weapon].toUpperCase());if(e.weaponUpgrade)parts.push(e.weaponUpgrade.label+' · RANG '+e.weaponUpgrade.rank);if(e.personalUpgrade)parts.push(e.personalUpgrade.label+' · RANG '+e.personalUpgrade.rank);encounter('BUTIN DU BOSS '+e.bossNumber,parts.join(' · '));encounterTime=6;checkpointDue=true;}
       if(e.name==='lootPickup'){const gains=[];if(e.credits)gains.push('+'+e.credits+' CR');if(e.cores)gains.push('+'+e.cores+' NOYAU');if(e.armor)gains.push('+'+(Math.round(e.armor*10)/10)+' ARMURE');for(let i=0;i<4;i++)if(e.ammo?.[i])gains.push('+'+e.ammo[i]+' '+ammoNames[i]);toast((e.boss?'BUTIN DU COLOSSE · ':'RÉCUPÉRATION · ')+gains.join(' · '),e.boss?4:2);if(e.boss||e.armor>0)checkpointDue=true;}
       if(e.name==='shopOpen'){currentShopId=e.id;setMode('shop');renderShop();}
       if(e.name==='ammoPickup')toast('+'+e.amount+' '+ammoNames[e.weapon]+' · '+weaponNames[e.weapon],1.8);
@@ -231,7 +230,7 @@
       if(e.name==='bossRoar'){const boss=sim.state.enemies.find(a=>a.id===e.id||a.id===e.bossId);if(boss)encounter(boss.bossName||'Le Colosse',e.phase>0?'PHASE '+(e.phase+1)+' · SURCHARGE':'COLOSSE ÉVEILLÉ · '+Math.round(3.325*(boss.bossScale||1))+' M');}
       if(e.name==='bossPhase')toast('SURCHARGE · le colosse change de rythme. Surveillez les zones au sol.',3.5);
       if(e.name==='bossDeath'){const boss=sim.state.enemies.find(a=>a.id===e.id);encounter(boss?.bossName||'Le Colosse','COLOSSE ABATTU');checkpointDue=true;}
-      if(e.name==='win'){result(false);break;}
+      if(e.name==='win'){result(false);audio.win?.();break;}
       if(e.name==='dead'){result(true,e.reason);break;}
     }
     sim.state.events.length=0;
@@ -248,7 +247,8 @@
     for(const q of offers||[]){const id=(q.item||q).id;$('buy-'+id).addEventListener('click',()=>{const result=sim.buy?.(currentShopId,id);if(result?.ok){events();saveCheckpoint();renderHUD();renderShop((q.item||q).label+' · achat enregistré.');}else renderShop(result?.message||result?.reason||'Achat indisponible.');});}
   }
   function systemsReady(){return (sim.state.mechanisms||[]).every(a=>!a.required||a.active);}
-  function exitReady(){return sim.state.relays===3&&systemsReady()&&!sim.state.bossAlive;}
+  function pendingBossReward(){return world.campaignVersion===2?(sim.state.loot||[]).find(q=>q.kind==='boss'&&q.rewardTaken===false):null;}
+  function exitReady(){return sim.state.relays===3&&systemsReady()&&!sim.state.bossAlive&&!pendingBossReward();}
   function isOutdoors(x,z){return (world?.environment?.outdoorZones||[]).some(a=>Math.abs(x-a.x)<=a.w/2&&Math.abs(z-a.z)<=a.d/2);}
   function machinery(out,t){
     const player=sim.state.player,range=quality==='low'?25:43;
@@ -379,12 +379,12 @@
   function supplyModel(out,c,t){
     const kind=c.kind||c.type||'health',weapon=c.weapon||0,y=(c.y||0)+.4+Math.sin(t*1.8+c.x)*.035,mat=kind==='health'?4:weapon===0?4:weapon===1?5:6;
     const frame=FMotion.mount({pos:[c.x,y,c.z],yaw:t*.3+c.x*.1,pitch:0,roll:0}),part=(shape,p,s,material=0,rx=0,glow=0)=>{const pose=FMotion.place(frame,p,rx),a=m(shape,pose.p,s,material,pose.r,glow);a.surface='object';out.push(a);};
-    out.push(m('ring',[c.x,(c.y||0)+.055,c.z],[kind==='weapon'?1.2:.7,.045,kind==='weapon'?1.2:.7],mat,[0,0,0],.45));
+    if(!c.displayOnly)out.push(m('ring',[c.x,(c.y||0)+.055,c.z],[kind==='weapon'?1.2:.7,.045,kind==='weapon'?1.2:.7],mat,[0,0,0],.45));
     if(kind==='salvage'||kind==='boss'){
       const boss=kind==='boss';part('box',[0,-.05,0],[boss?.75:.38,boss?.42:.23,boss?.55:.31],0);part('box',[0,boss?.18:.085,0],[boss?.62:.3,.045,boss?.45:.23],1);
       for(const side of [-1,1])part('box',[side*(boss?.26:.11),.01,0],[.035,boss?.39:.2,boss?.56:.32],5,0,.35);
       if(c.cores)part('octa',[0,.46,0],[.26,.42,.26],5,0,1.2);else if(c.credits)part('octa',[0,.25,0],[.18,.16,.18],5,0,.5);else if(c.armor>0)part('bevel',[0,.26,0],[.19,.22,.065],4,0,.65);
-      if(boss)part('ring',[0,.4,0],[.56,.04,.56],4,0,.6);return;
+      if(boss){part('ring',[0,.4,0],[.56,.04,.56],4,0,.6);if(c.rewardTaken===false){if(Number.isInteger(c.weapon))supplyModel(out,{kind:'weapon',weapon:c.weapon,x:c.x,y:(c.y||0)+.76,z:c.z,displayOnly:true},t);part('ring',[.53,.3,0],[.24,.075,.24],5,0,.6);part('bevel',[-.53,.3,0],[.2,.25,.07],4,0,.65);part('box',[-.53,.3,-.045],[.13,.035,.025],1);part('box',[-.53,.3,-.045],[.035,.17,.025],1);}}return;
     }
     if(kind==='health'){
       part('box',[0,0,0],[.45,.32,.4]);part('box',[0,.17,0],[.28,.035,.085],4,0,.8);part('box',[0,.17,0],[.085,.035,.28],4,0,.8);return;
@@ -594,7 +594,7 @@
     if(armor){$('armor-points').textContent=String(Math.ceil(armor.points));$('armor-cap').textContent='/ '+armor.capacity;$('armor-bar').style.width=clamp(armor.points/armor.capacity*100,0,100)+'%';$('armor-pool').title='Plaques à ramasser · absorbe un tiers des dégâts après la garde · blindage passif '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';$('armor-pool').setAttribute('aria-label','Armure : '+Math.ceil(armor.points)+' sur '+armor.capacity);document.body.dataset.armor=String(Math.ceil(armor.points));}
     $('wallet-credits').textContent=String(s.economy?.credits||0);$('wallet-cores').textContent=String(s.economy?.cores||0);
     $('heat-bar').style.width=p.heat*100+'%';$('heat-bar').style.background=p.overheated?'#ff795e':s.weapon===2?'#ee8d5d':s.weapon===1?'#e8ad66':'#6ce5d2';
-    $('weapon-label').textContent=weaponNames[s.weapon].toUpperCase();$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
+    const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0;$('weapon-label').textContent=weaponNames[s.weapon].toUpperCase()+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
     const inventory=s.inventory,owned=inventory?.weapons||[true,true,true],ammo=inventory?.ammo?.[s.weapon],limited=!!world.progression,infinite=world.campaign&&s.weapon===4;
     $('ammo-count').textContent=infinite?'∞':limited?String(ammo??0).padStart(2,'0'):'—';$('ammo-unit').textContent=ammoNames[s.weapon].toUpperCase();$('ammo-cap').textContent=infinite?'ILLIMITÉES':limited?'/ '+sim.ammoCaps[s.weapon]:'RÉSERVE';
     $('weapon-readout').classList.toggle('empty',!infinite&&limited&&ammo===0);$('heat-status').textContent=p.overheated?'REFROIDISSEMENT':!infinite&&limited&&ammo===0?'RÉSERVE ÉPUISÉE':'CHALEUR';
@@ -619,7 +619,7 @@
     $('relay-count').textContent=s.relays+' / 3';$('relays').querySelectorAll('i').forEach((el,i)=>el.classList.toggle('on',i<s.relays));
     const required=(s.mechanisms||[]).filter(a=>a.required),activated=required.filter(a=>a.active).length,operational=activated===required.length;
     $('mechanism-count').textContent=activated+' / '+required.length;$('enemy-count').textContent=s.kills+' / '+s.enemies.length;
-    $('objective-label').textContent=!operational?'ACTIVER LES COMMANDES':s.relays===3?(s.bossAlive?'NEUTRALISER LE GARDIEN':'REJOINDRE LA SORTIE'):'RÉCUPÉRER LES RELAIS';
+    const bossReward=pendingBossReward();$('objective-label').textContent=bossReward?'RÉCUPÉRER LE BUTIN DU BOSS':!operational?'ACTIVER LES COMMANDES':s.relays===3?(s.bossAlive?'NEUTRALISER LE GARDIEN':'REJOINDRE LA SORTIE'):'RÉCUPÉRER LES RELAIS';
     const encounters=(s.encounters||[]).filter(c=>c.status!=='dormant'&&Math.hypot((c.trigger?.x??0)-p.x,(c.trigger?.z??0)-p.z)<(c.leashRadius||38)+10).sort((a,b)=>Number(a.status==='cleared')-Number(b.status==='cleared')||Math.hypot(a.trigger.x-p.x,a.trigger.z-p.z)-Math.hypot(b.trigger.x-p.x,b.trigger.z-p.z)),current=encounters[0];
     $('wave-status').hidden=!current;$('wave-status').dataset.state=current?.status||'';
     if(current){$('wave-label').textContent=current.label||'ZONE DE COMBAT';$('wave-count').textContent=current.status==='cleared'?'ZONE SÉCURISÉE':'VAGUE '+(Math.max(current.wave,current.pendingWave)+1)+' / '+current.waves.length;$('wave-detail').textContent=current.status==='cleared'?'RÉCUPÉREZ LES RÉSERVES':current.status==='warning'?'RENFORTS EN APPROCHE':current.status==='waiting'?'SURVEILLEZ LES ACCÈS':current.active+' CONTACT'+(current.active===1?'':'S')+' ACTIF'+(current.active===1?'':'S');}
@@ -629,7 +629,7 @@
     const boss=s.enemies.find(e=>e.type===3&&e.hp>0),bossVisible=!!boss&&(boss.bossScale>1?boss.bossAwake&&(Math.hypot(boss.x-p.x,boss.z-p.z)<120):boss.active||boss.hp<boss.maxHp||Math.hypot(boss.x-p.x,boss.z-p.z)<22);
     $('boss-status').hidden=!bossVisible;document.body.dataset.boss=String(bossVisible);
     if(bossVisible){
-      $('boss-bar').style.width=boss.hp/boss.maxHp*100+'%';$('boss-name').textContent=boss.bossName||'LE GARDIEN';
+      $('boss-bar').style.width=boss.hp/boss.maxHp*100+'%';$('boss-name').textContent=boss.bossName||'LE GARDIEN';$('boss-health').textContent=Math.ceil(boss.hp)+' / '+boss.maxHp+' PV';
       $('boss-phase').textContent=boss.weakPointOpen?'CŒUR EXPOSÉ · '+Math.max(0,boss.weakTimer||0).toFixed(1)+' S':'PHASE '+((boss.phase||0)+1)+(boss.bossScale>1?' / 3':'');
       $('boss-attack').textContent=boss.weakPointOpen?'VISEZ LE CŒUR LUMINEUX':boss.attackLabel||'DÉFENSE ACTIVE';$('boss-status').classList.toggle('vulnerable',!!boss.weakPointOpen);
     }
@@ -639,12 +639,12 @@
     document.body.dataset.ammo=String(ammo??0);
     const supply=[...s.pickups,...(s.loot||[])].filter(c=>supplyVisible(c)&&Math.abs((c.y||0)-p.y)<1.1&&Math.hypot(c.x-p.x,c.z-p.z)<3.7).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z)).find(c=>{const a=[p.x,p.y+1.3,p.z],b=[c.x,(c.y||0)+.4,c.z],d=b.map((v,i)=>v-a[i]),length=Math.hypot(...d)||1;return sim.ray(a,d.map(v=>v/length),length)>=length-.2;});
     $('supply-hint').hidden=!supply;
-    if(supply){const kind=supply.kind||supply.type||'health',weapon=supply.weapon||0,salvage=kind==='salvage'||kind==='boss',full=kind==='shield'?!!inventory?.shield:kind==='health'?p.hp>=maxHp:kind==='armor'?!s.armor||s.armor.points>=s.armor.capacity:salvage?!supply.credits&&!supply.cores&&(!supply.armor||!s.armor||s.armor.points>=s.armor.capacity)&&supply.ammo.every((n,i)=>!n||(inventory?.ammo[i]??0)>=sim.ammoCaps[i]):kind==='weapon'&&!owned[weapon]?false:inventory?.ammo[weapon]>=sim.ammoCaps?.[weapon];$('supply-name').textContent=kind==='armor'?'PLAQUES D’ARMURE':kind==='shield'?'BOUCLIER':kind==='weapon'?weaponNames[weapon].toUpperCase():kind==='ammo'?ammoNames[weapon].toUpperCase():kind==='boss'?'BUTIN DU COLOSSE':salvage?'FERRAILLE & RÉSERVES':'INTÉGRITÉ';$('supply-detail').textContent=full?'RÉSERVE AU MAXIMUM':kind==='weapon'&&!owned[weapon]?'ARME À RÉCUPÉRER':'AVANCEZ POUR RAMASSER';}
+    if(supply){const kind=supply.kind||supply.type||'health',weapon=supply.weapon||0,salvage=kind==='salvage'||kind==='boss',full=kind==='shield'?!!inventory?.shield:kind==='health'?p.hp>=maxHp:kind==='armor'?!s.armor||s.armor.points>=s.armor.capacity:salvage?supply.rewardTaken!==false&&!supply.credits&&!supply.cores&&(!supply.armor||!s.armor||s.armor.points>=s.armor.capacity)&&supply.ammo.every((n,i)=>!n||(inventory?.ammo[i]??0)>=sim.ammoCaps[i]):kind==='weapon'&&!owned[weapon]?false:inventory?.ammo[weapon]>=sim.ammoCaps?.[weapon];$('supply-name').textContent=kind==='armor'?'PLAQUES D’ARMURE':kind==='shield'?'BOUCLIER':kind==='weapon'?weaponNames[weapon].toUpperCase():kind==='ammo'?ammoNames[weapon].toUpperCase():kind==='boss'?'BUTIN DU COLOSSE':salvage?'FERRAILLE & RÉSERVES':'INTÉGRITÉ';$('supply-detail').textContent=supply.rewardTaken===false?[Number.isInteger(supply.weapon)?weaponNames[supply.weapon]:'',supply.weaponUpgradeLabel,supply.personalUpgradeLabel].filter(Boolean).join(' · '):full?'RÉSERVE AU MAXIMUM':kind==='weapon'&&!owned[weapon]?'ARME À RÉCUPÉRER':'AVANCEZ POUR RAMASSER';}
     const bossTarget=s.relays===3&&operational&&boss;
-    const targets=s.relays===3&&operational?[bossTarget||world.exit]:[...required.filter(a=>!a.active),...s.cores.filter(c=>!c.taken)],target=targets.reduce((a,c)=>!a||Math.hypot(c.x-p.x,c.z-p.z)<Math.hypot(a.x-p.x,a.z-p.z)?c:a,null);
+    const targets=s.relays===3&&operational?[bossReward||bossTarget||world.exit]:[...required.filter(a=>!a.active),...s.cores.filter(c=>!c.taken)],target=targets.reduce((a,c)=>!a||Math.hypot(c.x-p.x,c.z-p.z)<Math.hypot(a.x-p.x,a.z-p.z)?c:a,null);
     if(target){
       const mechanism=required.includes(target),delta=(target.baseY??target.y??0)-(p.y||0);
-      $('target-label').textContent=mechanism?'COMMANDE':s.relays===3&&operational?(bossTarget?'GARDIEN':'SORTIE'):'RELAIS';
+      $('target-label').textContent=mechanism?'COMMANDE':s.relays===3&&operational?(bossReward?'BUTIN DU BOSS':bossTarget?'GARDIEN':'SORTIE'):'RELAIS';
       $('target-symbol').textContent=mechanism?'▣':'◇';$('target-distance').textContent=Math.round(Math.hypot(target.x-p.x,target.z-p.z))+' m'+(Math.abs(delta)>1?' · '+(delta>0?'+':'')+Math.round(delta)+' m':'');
       const angle=Math.atan2(target.x-p.x,p.z-target.z)-p.yaw;$('target-arrow').style.transform='rotate('+angle+'rad)';
     }
@@ -696,9 +696,9 @@
       }
       const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI),outside=isOutdoors(sim.state.player.x,sim.state.player.z);
       outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
-      let motor=0;for(const a of sim.state.lifts||[])if(a.moving)motor=Math.max(motor,Math.max(0,1-Math.hypot(a.x-sim.state.player.x,a.z-sim.state.player.z)/18));
-      audio.setMachinery?.(motor);
-      let steam=0,steamPan=0;for(const a of sim.state.pipes||[])if(a.hot&&!a.broken){const p=sim.state.player,origin=a.nozzle||[a.x,a.y||0,a.z],d=Math.hypot(origin[0]-p.x,origin[1]-p.y,origin[2]-p.z),level=Math.max(0,1-d/12)**2;if(level>steam){steam=level;steamPan=clamp(((origin[0]-p.x)*Math.cos(p.yaw)+(origin[2]-p.z)*Math.sin(p.yaw))/Math.max(1,d),-1,1);}}audio.setSteam?.(steam,steamPan);
+      const localSound=soundscape.sample(sim),motor=localSound.machinery,steam=localSound.steam;
+      audio.setMachinery?.(motor.level,motor.pan,motor.kind,motor.occluded);
+      audio.setSteam?.(steam.level,steam.pan,steam.occluded);
       audio.setThreat(sim.state.threat||0);audio.setPressure?.(sim.state.director?.pressure||0);audio.tick(dt);
       if(mode==='playing'&&!sim.state.player.airborne&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving,{outdoor:outside,biome:world.environment?.biome});
       lastFootstep=footstep;

@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'options', 'game'].map(name =>
+const sources = Object.fromEntries(['destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -52,7 +52,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
     FRender: { create: () => ({ stats: { backend: 'test' }, resize: noop, setWorld: (meshes, lights) => worlds.push({ meshes, lights, initial:true }), updateWorld: (meshes, revision, lights) => worlds.push({meshes,revision,lights}), draw: (camera, meshes, effects) => frames.push({ camera, meshes, effects }) }) },
   };
   context.window = context; vm.createContext(context);
-  for (const name of ['destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'options']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
+  for (const name of ['destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
   if(runtime.brain){vm.runInContext(sources.brain, context, {filename:'brain.js'});const createBrain=context.FBrain.create;context.FBrain.create=options=>{const brain=createBrain(options);brains.push(brain);return brain;};}
   const create = context.FSimulation.create;
   context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); return sim; };
@@ -101,6 +101,43 @@ function clearShellWorld(app) {
   for (const x of [6, 8, 10, 15]) { sim.move(sim.state.player, x - sim.state.player.x, 0); app.frame(100); }
 }
 function advanceShellTo(app, index) { while (app.simulations.at(-1).state.world.index < index) { clearShellWorld(app); app.element('continue').click(); } }
+
+function bossShellWorld(seed,index,options){
+  const value=campaignShellWorld(seed,index,options);if(options?.campaignVersion!==2)return value;
+  return {...value,campaignVersion:2,trophies:[],pickups:[],shops:[],
+    progression:{...value.progression,startShield:true},
+    enemies:[{x:0,y:0,z:-10,type:3,boss:true,bossScale:2,bossKind:'colossus',bossName:'Gardien de contrôle',maxHp:600,arena:{x:0,y:0,z:-10,r:28}}]};
+}
+
+test('V2 shell starts pistol and shield, shows physical boss rewards and resumes claimed upgrades exactly once',()=>{
+  const app=harness(null,{},bossShellWorld);app.element('start').click();const sim=app.simulations.at(-1),s=sim.state;
+  assert.equal(s.world.campaignVersion,2);assert.equal(s.weapon,4);assert.equal(s.equipment.left,'shield');assert.equal(s.inventory.shield,true);
+  assert.equal(JSON.parse(app.memory.get(key)).campaignRevision,2);assert.match(app.element('toast').textContent,/Pistolet \+ bouclier/);
+  // A wounded-boss fixture isolates the real final shot, drop and shell flow.
+  const boss=s.enemies[0];boss.hp=.2;s.player.pitch=Math.atan2(boss.y-(s.player.y+1.62),10);sim.fire();assert.equal(boss.hp,0);
+  app.frame(100);const crate=s.loot.find(q=>q.kind==='boss');assert(crate&&crate.rewardTaken===false);assert.equal(s.inventory.weapons[1],false);
+  assert.match(app.element('objective-label').textContent,/BUTIN/);
+  sim.move(s.player,crate.x-s.player.x,crate.z-s.player.z);app.frame(100);assert.equal(crate.rewardTaken,true);assert.equal(s.inventory.weapons[1],true);assert.equal(s.weapon,1);
+  const saved=JSON.parse(app.memory.get(key)),ranks=JSON.stringify(s.economy);assert.equal(saved.checkpoint.campaignVersion,2);assert.deepEqual(saved.checkpoint.state.campaign.claimedBossRewards,[0]);
+  assert.match(app.element('encounter-name').textContent,/BUTIN DU BOSS 1/);assert.match(app.element('encounter-caption').textContent,/DOUBLE POMPE/);
+  assert.equal(app.sounds.filter(q=>q.name==='weaponPickup').length,1,'The principal boss reward and its resource loot must play one fanfare');
+  const resumed=harness(saved,{},bossShellWorld);resumed.element('resume-expedition').click();const restored=resumed.simulations.at(-1);
+  assert.equal(restored.state.world.campaignVersion,2);assert.equal(JSON.stringify(restored.state.economy),ranks);resumed.frame(100);assert.equal(JSON.stringify(restored.state.economy),ranks);
+  assert.equal(resumed.sounds.filter(q=>q.name==='weaponPickup').length,0,'Resuming a claimed reward must not replay its fanfare');
+});
+
+test('V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world',()=>{
+  const legacy=harness(null,{},campaignShellWorld);legacy.element('start').click();const saved=JSON.parse(legacy.memory.get(key));assert.equal(saved.campaignRevision,undefined);
+  const app=harness(saved,{},bossShellWorld);app.element('resume-expedition').click();assert.equal(app.simulations.at(-1).state.world.campaignVersion,undefined);assert.equal(app.simulations.at(-1).state.inventory.shield,false);
+  app.element('pause-main').click();app.element('start').click();const s=app.simulations.at(-1).state;
+  assert.equal(s.world.campaignVersion,2);assert.equal(s.inventory.shield,true);assert.equal(s.equipment.left,'shield');assert.equal(s.weapon,4);assert.equal(s.campaign.claimedBossRewards.length,0);
+});
+
+test('Victory fanfare begins after the result screen has stopped active gameplay voices',()=>{
+  const app=harness(null,{},campaignShellWorld);app.element('start').click();app.sounds.length=0;clearShellWorld(app);
+  const victory=app.sounds.findIndex(q=>q.name==='win'),stop=app.sounds.findLastIndex(q=>q.name==='setPlaying'&&q.args[0]===false);
+  assert(victory>stop&&stop>=0);assert.equal(app.sounds.filter(q=>q.name==='win').length,1);assert.equal(app.element('body').dataset.state,'cleared');
+});
 
 function trophyShellWorld(seed,index,options) {
   const w=campaignShellWorld(seed,index,options),gift=w.pickups.find(q=>q.trophyId);if(!gift)return w;

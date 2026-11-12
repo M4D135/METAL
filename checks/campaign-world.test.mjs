@@ -261,3 +261,29 @@ test('all eighteen layouts and independent art passes retain their own campaign 
   for (let stage = 0; stage < 3; stage++) for (const [pass, values] of Object.entries(artSignatures[stage])) assert.equal(values.size, 6, `decor ${stage}: ${pass} repeats across chapters`);
   t.diagnostic(JSON.stringify({ campaignWorlds: 54, seeds, reachedTargets, accessibleCells: { min: minCells, max: maxCells }, legacyFingerprints: legacyHashes.length }));
 });
+
+const bossHitPoints=[600,850,1200,1550,1900,2400,2900,3400,4000,4650,5300,6050,6850,7700,8600,9600,10800,12000];
+let v2Targets=0;
+for(let index=0;index<18;index++)test(`boss campaign world ${String(index+1).padStart(2,'0')}: open routes and natural reserve entries on three seeds`,()=>{
+  for(const seed of seeds){
+    const label=`boss campaign seed ${seed}, world ${index+1}`,world=create(seed,index,{campaign:true,campaignVersion:2});
+    assert.equal(world.campaignVersion,2);assert.equal(world.campaignProfile.version,2);assert.equal(world.enemies.at(-1).maxHp,bossHitPoints[index]);assert.equal(world.progression.startShield,true);
+    assert.deepEqual(Array.from(world.progression.startWeapons),[false,false,false,false,true]);assert.equal(world.progression.maxActive,[6,8,10,12,14,16][world.chapter]);
+    assert.equal(world.enemies.length,Math.round([120,140,170][world.stage]*[.55,.70,.85,1,1.15,1.30][world.chapter]));
+    assert.equal(world.trophies.length,0);assert(!world.pickups.some(q=>q.kind==='weapon'||q.kind==='shield'||q.trophyId),'a free rack cannot bypass physical boss loot');
+    const forbidden=new Set(['reinforcement_baffle','reinforcement_frame','reinforcement_mark']);assert(!world.meshes.some(m=>forbidden.has(m.category)),'new worlds must not regenerate the removed artificial obstacle');
+    for(const bay of world.encounterBays){
+      assert.equal(bay.open,true);assert.equal(bay.coverMesh,null);assert(bay.spawnEntries.length>=4&&bay.spawnEntries.length<=8);
+      assert(!world.colliders.some(c=>touches(bay.x,bay.z,bay.y,c)),'the removed barrier cannot leave an invisible collider');
+    }
+    const unlock=[2,1,6,3,0];for(const q of world.pickups.filter(q=>q.kind==='ammo'))assert(q.weapon<4&&index>=unlock[q.weapon]&&q.requiresWeapon===q.weapon,'ammo cannot unlock a boss weapon early');
+    for(const enemy of world.enemies)if(enemy.drop)assert(index>=unlock[enemy.drop.weapon]);
+    for(const encounter of world.encounters)for(const wave of encounter.waves)assert(wave.enemyIds.length>=2&&wave.enemyIds.length<=6&&wave.enemyIds.length<=world.progression.maxActive);
+    assert(world.meshes.length<=18000&&world.colliders.length<=512);finite(world,label);
+    // Existing door-aware capsule routing also visits every selected natural
+    // reserve entry. These are the entries the simulation actually receives.
+    const reached=assertReachable(world,label);v2Targets+=reached.targets;
+    assert.equal(digest(world),digest(create(seed,index,{campaign:true,campaignVersion:2})),label+': nondeterministic boss campaign');
+  }
+});
+test('boss campaign route coverage',t=>{t.diagnostic(JSON.stringify({worlds:54,seeds,reachableTargets:v2Targets,firstBossHp:600,lastBossHp:12000}));});

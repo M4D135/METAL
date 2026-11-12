@@ -7,6 +7,29 @@ const plain=value=>JSON.parse(JSON.stringify(value));
 const make=(credits=1000,cores=3)=>({profile:{...plain(E.fresh()),credits,cores},inventory:{weapons:[true,false,false,false],ammo:[48,0,0,0],shield:false},hp:80});
 function freeze(value){if(value&&typeof value==='object'){Object.freeze(value);Object.values(value).forEach(freeze);}return value;}
 
+test('boss campaign profiles extend finite ranks without changing historical profile shape or armor bounds',()=>{
+ const legacy=E.fresh(),promoted=E.campaign(freeze(legacy));assert.equal(promoted.version,2);assert.deepEqual(plain(promoted.weaponUpgrades),[0,0,0,0,0]);assert.equal(Object.keys(legacy).length,3);
+ for(let rank=0;rank<=12;rank++){
+  const profile=E.fresh({campaignVersion:2});for(const key of Object.keys(profile.upgrades))profile.upgrades[key]=rank;profile.weaponUpgrades.fill(Math.min(8,rank));
+  assert(E.validate(profile));const stats=E.stats(profile),caps=E.ammoCaps(profile,{campaign:true});assert(stats.incomingMultiplier>=.5&&stats.incomingMultiplier<=1);assert(stats.maxHp<=340);assert(caps.every(Number.isInteger));assert.deepEqual(plain(caps),[180+45*rank,36+9*rank,12+3*rank,16+4*rank,1]);
+  const state={profile:{...profile,credits:100000,cores:99},inventory:{weapons:[true,true,true,true,true],ammo:[0,0,0,0,1],shield:true},hp:100},offer=E.quote(state,'power',{campaign:true});
+  assert.equal(offer.item.maxRank,12);assert.equal(offer.ok,rank<12);if(rank<12){assert(offer.cost.credits>0&&Number.isInteger(offer.cost.credits));assert.equal(E.transact(state,'power',{campaign:true}).state.profile.upgrades.power,rank+1);}
+ }
+ for(const change of [p=>p.weaponUpgrades[0]=9,p=>p.weaponUpgrades[0]=-1,p=>p.weaponUpgrades.pop(),p=>p.weaponUpgrades[1]=NaN,p=>p.upgrades.vitality=13,p=>p.version=3,p=>p.extra=true]){const invalid=E.fresh({campaignVersion:2});change(invalid);assert.equal(E.validate(invalid),false);}
+});
+
+test('eighteen deterministic boss awards retain weapon-specific growth and personal upgrades into the final chapter',()=>{
+ let profile=E.fresh({campaignVersion:2});const unlocks=[];
+ for(let index=0;index<18;index++){
+  const reward=E.bossReward(index),before=plain(profile);freeze(profile);const next=E.grantBossReward(profile,index);assert(next&&E.validate(next));assert.deepEqual(plain(profile),before);
+  assert.equal(next.weaponUpgrades[reward.weaponUpgrade],before.weaponUpgrades[reward.weaponUpgrade]+1);assert.equal(next.upgrades[reward.personalUpgrade],before.upgrades[reward.personalUpgrade]+1);
+  assert(reward.weaponUpgradeLabel.length>10&&reward.personalUpgradeLabel.length>3);unlocks.push(reward.weapon);profile=next;
+ }
+ assert.deepEqual(unlocks.slice(0,6),[1,0,3,3,null,2]);assert(unlocks.slice(6).every(q=>q===null));assert(profile.weaponUpgrades.every(r=>r>=3&&r<=4));assert(Object.values(profile.upgrades).every(r=>r>=3&&r<=4));
+ for(const index of [-1,18,.5,NaN]){assert.equal(E.bossReward(index),null);assert.equal(E.grantBossReward(profile,index),null);}
+ assert.equal(E.weaponStats(profile,1).damageMultiplier,1+profile.weaponUpgrades[1]*.40);assert(E.weaponStats(profile,1).heatMultiplier<1);assert.deepEqual(plain(E.weaponStats(E.fresh(),1)),{rank:0,damageMultiplier:1,heatMultiplier:1});
+});
+
 test('profiles are strict, independent and copyable without shared upgrades',()=>{
  const fresh=E.fresh();assert(E.validate(fresh));assert.deepEqual(plain(fresh),{credits:0,cores:0,upgrades:{vitality:0,armor:0,capacity:0,power:0,cooling:0}});
  const copy=E.copy(fresh);copy.upgrades.power=3;copy.credits=999;assert.equal(fresh.upgrades.power,0);assert.equal(fresh.credits,0);

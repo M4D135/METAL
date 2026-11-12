@@ -1880,3 +1880,118 @@ test('Periodic pipe bursts spare their physical source, but external destruction
   assert.equal(events(sim, 'explosion').length, count, 'A destroyed pipe cannot keep exploding from an invisible source');
   assert.equal(FSimulation.create(world).restore(sim.snapshot()), true);
 });
+
+function fenceDemolitionFixture(extra = {}) {
+  const meshes = [
+    { shape: 'box', p: [-6, .9, -6], s: [.1, 1.8, .1], mat: 10 },
+    { shape: 'box', p: [0, 1.62, -6], s: [12, .065, .07], mat: 0, color: [.13, .21, .27] },
+    { shape: 'box', p: [0, .6, -6], s: [12, .065, .07], mat: 1 },
+    { shape: 'box', p: [6, .9, -6], s: [.1, 1.8, .1], mat: 10 },
+    { shape: 'box', p: [0, 2, -6.3], s: [18, 4, .05], mat: 3 },
+  ];
+  return demolitionFixture({ meshes, colliders: [{ minX: -9, maxX: 9, minY: 0, maxY: 4, minZ: -6.325, maxZ: -6.275, mesh: 4 }],
+    destructibles: [{ id: 'fence', kind: 'decor', strength: 1, meshes: [0, 1, 2, 3], colliders: [] }, { id: 'back', kind: 'wall', strength: 100, meshes: [4], colliders: [0] }], ...extra });
+}
+// Independent rotated-corner calculation, shared by the physical assertions.
+function rubbleBounds(q) {
+  const points = [];
+  for (const a of [-1, 1]) for (const b of [-1, 1]) for (const c of [-1, 1]) {
+    let [x, y, z] = [a * q.size[0] / 2, b * q.size[1] / 2, c * q.size[2] / 2], r = q.rotation;
+    [y, z] = [y * Math.cos(r[0]) - z * Math.sin(r[0]), y * Math.sin(r[0]) + z * Math.cos(r[0])];
+    [x, z] = [x * Math.cos(r[1]) + z * Math.sin(r[1]), -x * Math.sin(r[1]) + z * Math.cos(r[1])];
+    [x, y] = [x * Math.cos(r[2]) - y * Math.sin(r[2]), x * Math.sin(r[2]) + y * Math.cos(r[2])];
+    points.push([x + q.x, y + q.y, z + q.z]);
+  }
+  return Object.fromEntries(['X', 'Y', 'Z'].flatMap((axis, i) => [['min' + axis, Math.min(...points.map(p => p[i]))], ['max' + axis, Math.max(...points.map(p => p[i]))]]));
+}
+
+test('a shot severs a real rail which falls, collides, bounces and persists in a coherent settled pose', () => {
+  const world = fenceDemolitionFixture(), sim = FSimulation.create(world); assert(sim.fire());
+  const chunks = sim.state.debris.filter(q => q.structural); assert.equal(chunks.length, 1);
+  const q = chunks[0], id = q.id, size = Array.from(q.size); assert.equal(q.sourceId, 'fence'); assert.equal(q.material, 'metal'); assert.equal(q.mat, 0);
+  assert.equal(events(sim, 'materialBreak').length, 1); assert.equal(events(sim, 'creak').length, 0);
+  let falling = false, bounce = false, wallContact = false;
+  for (let i = 0; i < 320; i++) {
+    sim.step(.025); const body = sim.state.debris.find(q => q.id === id); assert(body, 'a physical collision deleted the severed rail');
+    const extent = rubbleBounds(body); assert(extent.minY >= -1e-6, 'a rotated rail penetrated the floor'); assert(extent.minZ >= -6.275 - .0003, 'a rail tunneled through the solid wall behind it');
+    falling ||= body.vy < -1; bounce ||= body.y < .45 && body.vy > .3; wallContact ||= Math.abs(extent.minZ + 6.275) < .01;
+  }
+  assert(falling && bounce && wallContact, 'the actual rail never completed a fall, bounce and wall contact');
+  assert(q.resting); assert.deepEqual(Array.from(q.size), size); assert(Math.abs(q.rotation[0]) < .03 && Math.abs(q.rotation[2]) < .03);
+  const pose = [q.x, q.y, q.z, ...q.rotation]; advance(sim, 35); assert.deepEqual([q.x, q.y, q.z, ...q.rotation], pose); assert(sim.state.debris.includes(q));
+  assert(events(sim, 'debrisLand').some(e => e.material === 'metal' && e.energy > 0 && e.mass > 0 && e.sourceId === 'fence' && [e.x, e.y, e.z].every(Number.isFinite)));
+  assert(sim.destruction.raycast([5, 1.62, -3], [0, 0, -1], 3.1), 'the rest of the rail vanished');
+  assert(sim.destruction.raycast([0, .6, -3], [0, 0, -1], 3.1), 'the lower rail vanished');
+});
+
+test('persistent wreckage restores exactly in flight and at rest, while corrupt rubble checkpoints fail atomically', () => {
+  const world = fenceDemolitionFixture(), sim = FSimulation.create(world); sim.fire(); advance(sim, .3);
+  const flying = sim.snapshot(), restored = FSimulation.create(world); assert.equal(flying.rubbleVersion, 1); assert(flying.state.rubble.some(q => !q.resting));
+  assert(restored.restore(flying)); assert.equal(JSON.stringify(restored.snapshot()), JSON.stringify(flying));
+  advance(sim, 8); advance(restored, 8); assert.equal(JSON.stringify(restored.snapshot()), JSON.stringify(sim.snapshot()), 'saved physics diverged after continuing the same flight');
+  const good = JSON.stringify(restored.snapshot());
+  for (const corrupt of [
+    q => { q.state.rubble[0].size[0] = -1; }, q => { q.state.rubble[0].rotation[1] = NaN; }, q => { q.state.rubble[0].x = 1e8; }, q => { q.state.rubble[0].y += 5; }, q => { q.state.rubble[0].y = -1; },
+    q => { q.state.rubble[0].sourceId = 'invented'; }, q => { q.state.rubble[0].material = 'plastic'; }, q => { q.state.rubble[0].shape = 'script'; },
+    q => { q.state.rubble[0].vx = 1; }, q => { q.state.rubble.push({ ...q.state.rubble[0] }); }, q => { q.timers.rubbleSerial = 0; },
+    q => { q.state.rubble[0].size.push(1); }, q => { q.state.rubble[0].angularVelocity[2] = Infinity; }, q => { q.state.rubble[0].extra = 'unvalidated'; },
+    q => { q.rubbleVersion = 8; }, q => { delete q.rubbleVersion; },
+  ]) {
+    const invalid = JSON.parse(good); corrupt(invalid); assert.equal(restored.restore(invalid), false); assert.equal(JSON.stringify(restored.snapshot()), good, 'a rejected rubble save mutated the live game');
+  }
+  const legacy = JSON.parse(good); delete legacy.rubbleVersion; delete legacy.state.rubble; delete legacy.timers.rubbleSerial;
+  const old = FSimulation.create(world); assert(old.restore(legacy), 'pre-rubble saves stopped loading'); assert.equal(old.state.debris.length, 0); assert.equal(JSON.stringify(old.snapshot().destruction), JSON.stringify(legacy.destruction));
+});
+
+test('an actual breached wall keeps substantial rubble after landing without adding player collision blockers', () => {
+  const world = demolitionFixture(), sim = FSimulation.create(world); sim.step(.01, { weapon: 2, fire: true }); advance(sim, .6);
+  const debris = sim.state.debris.filter(q => q.structural); assert(debris.length >= 4); const ids = debris.map(q => q.id);
+  assert(debris.every(q => q.mat === 3 && q.material === 'stone' && Math.abs(q.size[2] - .18) < 1e-8));
+  advance(sim, 8); assert(ids.every(id => sim.state.debris.some(q => q.id === id)), 'major slabs faded out after a few seconds');
+  for (const q of sim.state.debris.filter(q => q.structural)) {
+    assert(q.resting); const a = rubbleBounds(q); assert(a.minY >= -1e-6 && a.minY < .005, 'rubble hovers or sinks after settling');
+    for (const b of sim.destruction.colliders) assert(!(a.minX < b.maxX - .001 && a.maxX > b.minX + .001 && a.minY < b.maxY - .001 && a.maxY > b.minY + .001 && a.minZ < b.maxZ - .001 && a.maxZ > b.minZ + .001), 'a settled slab clips an intact wall');
+  }
+  assert.equal(sim.blocked(0, -8), false); sim.move(sim.state.player, 0, -10); assert(sim.state.player.z < -9.8, 'cosmetic wreckage created an invisible route blocker');
+});
+
+test('a destroyed sliding gate becomes actual metal plates, retains its volume, and restores after settling', () => {
+  const world = fixture({ generation: 5, meshes: [], destructibles: [], doors: [{ id: 'gate', x: 0, y: 0, z: -5, w: 4, h: 3.1, d: .34, requires: 'locked' }] }), sim = FSimulation.create(world);
+  sim.step(.01, { weapon: 2, fire: true }); advance(sim, .6); assert(sim.state.doors[0].destroyed);
+  const plates = sim.state.debris.filter(q => q.structural && q.sourceId === 'door:gate'); assert.equal(plates.length, 4);
+  assert(Math.abs(plates.reduce((n, q) => n + q.size.reduce((v, x) => v * x, 1), 0) - 4 * 3.1 * .34) < 1e-8);
+  advance(sim, 8); assert(plates.every(q => q.resting && sim.state.debris.includes(q) && q.material === 'metal' && q.shape === 'box'));
+  assert.equal(sim.blocked(0, -5), false); const copy = FSimulation.create(world); assert(copy.restore(sim.snapshot())); assert.equal(JSON.stringify(copy.snapshot()), JSON.stringify(sim.snapshot()));
+});
+
+test('detached hollow hardware lands on its rendered torus instead of hovering on an invisible filled box', () => {
+  const mesh = { shape: 'ring', p: [0, 1.62, -6], s: [1.8, 1.8, 1.8], r: [Math.PI / 2, 0, 0], mat: 0 };
+  const world = demolitionFixture({ spawn: { x: .78, y: 0, z: 0, yaw: 0 }, meshes: [mesh], colliders: [], destructibles: [{ id: 'wheel', kind: 'decor', strength: 1, meshes: [0], colliders: [] }] }), sim = FSimulation.create(world);
+  assert(sim.fire()); const q = sim.state.debris.find(q => q.structural); assert(q && q.shape === 'ring'); advance(sim, 8);
+  assert(q.resting && q.y < .15 && q.y > .11, 'the thin torus is supported by a filled cube instead of its actual tube');
+  assert(Math.abs(Math.sin(q.rotation[0])) < .02 && Math.abs(q.rotation[2]) < .02); const copy = FSimulation.create(world); assert(copy.restore(sim.snapshot()));
+});
+
+test('settled wreckage wakes and falls when its real supporting platform is destroyed', () => {
+  const rail = { shape: 'box', p: [0, 4.62, -6], s: [5, .065, .07], mat: 0 }, platform = { shape: 'box', p: [0, 1.5, -6], s: [4, 3, 2], mat: 3 };
+  const world = demolitionFixture({ meshes: [rail, platform], colliders: [{ minX: -2, maxX: 2, minY: 0, maxY: 3, minZ: -7, maxZ: -5, mesh: 1 }], destructibles: [{ id: 'rail', kind: 'decor', strength: 1, meshes: [0], colliders: [] }, { id: 'platform', kind: 'support', strength: 18, meshes: [1], colliders: [0] }] }), sim = FSimulation.create(world);
+  sim.state.player.pitch = Math.atan2(3, 6); sim.fire(); advance(sim, 5); const q = sim.state.debris.find(q => q.structural && q.sourceId === 'rail');
+  assert(q?.resting && q.y > 3, 'rail did not land on the physical platform');
+  sim.destruction.blast([0, 1.5, -6], 3.2, 55); sim.step(.025); assert(!q.resting, 'wreckage floated after its support vanished');
+  advance(sim, 5); assert(q.resting && q.y < .1 && sim.state.debris.includes(q)); assert(rubbleBounds(q).minY >= -1e-6);
+});
+
+test('a demolition storm has a finite rubble budget and cannot retire settled wreckage at the player’s feet', () => {
+  const meshes = [], colliders = [], destructibles = [];
+  for (let x = -12; x <= 12; x += 1.5) for (let z = -12; z <= 12; z += 1.5) {
+    if (Math.hypot(x, z) < 2.5) continue; const i = meshes.length;
+    meshes.push({ shape: 'box', p: [x, .7, z], s: [.8, 1.4, .8], mat: 0 }); colliders.push({ minX: x - .4, maxX: x + .4, minY: 0, maxY: 1.4, minZ: z - .4, maxZ: z + .4, mesh: i }); destructibles.push({ id: 'crate-' + i, kind: 'prop', strength: 1, meshes: [i], colliders: [i] });
+  }
+  const sim = FSimulation.create(demolitionFixture({ meshes, colliders, destructibles }));
+  const detonate = (x, z) => { sim.state.projectiles.push({ id: 1, kind: 'grenade', owner: 'player', x, y: .8, z, vx: 0, vy: 0, vz: 0, age: 0, life: 4, fuse: .001, radius: .17, blastRadius: 3.6, damage: 0, terrainPower: 55, travel: 0, bounces: 0, resting: true }); sim.step(.025); };
+  detonate(-3, -3); advance(sim, 7); const protectedIds = sim.state.debris.filter(q => q.structural && q.resting && Math.hypot(q.x, q.z) < 8).map(q => q.id); assert(protectedIds.length > 4);
+  let peak = 0; for (const x of [-9, -3, 3, 9]) for (const z of [-9, -3, 3, 9]) { detonate(x, z); advance(sim, .1); peak = Math.max(peak, sim.state.debris.length); }
+  advance(sim, 8); assert(peak <= 192, 'debris grows without a finite memory/physics budget'); assert(protectedIds.every(id => sim.state.debris.some(q => q.id === id)), 'budget pressure popped visible settled rubble under the player');
+  assert(sim.state.debris.filter(q => q.structural).length > 80); assert(sim.state.debris.every(q => [q.x, q.y, q.z, ...q.rotation].every(Number.isFinite)));
+  const copy = FSimulation.create(sim.state.world); assert(copy.restore(sim.snapshot()), 'a saturated valid rubble state could not be restored');
+});

@@ -1,4 +1,59 @@
-# Validation de METAL v0.7.0 — 12 novembre 2026
+# Validation de METAL v0.8.0 — 12 novembre 2026
+
+Cette version retire les panneaux-obstacles de la nouvelle campagne, remplace la disparition des éléments cassés par des morceaux physiques persistants, reconstruit les bruitages et les ambiances, et place les armes et améliorations dans le butin des boss. Le relevé exact des sources finales est dans [docs/validation-v08.json](docs/validation-v08.json). Les sections 0.7 et antérieures conservées plus bas sont historiques.
+
+## Distribution finale et suite complète
+
+| Contrôle | Résultat |
+| --- | --- |
+| Suite finale `npm test` / `node:test` | **412 réussis, 0 échec, 0 annulé, 0 ignoré** |
+| Durée de la partie `node:test` | 268000.141 ms ; durée de banc, pas cadence du jeu |
+| Mondes classiques | **18 configurations, 4 800 cibles accessibles** |
+| Campagne historique v1 | **54 mondes**, 9 450 cibles accessibles |
+| Nouvelle campagne v2 | **54 mondes**, 13 740 cibles accessibles |
+| Géométrie classique | **6 empreintes complètes inchangées** |
+| HTML autonome final | **789 111 octets bruts**, 238 558 octets gzip |
+| Ressources externes / modules embarqués | **0 / 14** |
+
+SHA-256 : `6c430ede63cec3b0b34b3369997c96885745ad0c98a4b0a21a9a411e415f4b68`. Le fichier distribué reste sous **1 400 000 octets non compressés**, hors navigateur, pilotes, tests et documentation. La distribution a été reconstruite avant cette suite complète, sur les sources finales. Les contrôles classiques et sous-ensembles ciblés ne sont pas additionnés au total `node:test`. Le badge dynamique du titre affiche **V0.8.0** depuis `package.json`.
+
+## Panneaux supprimés et renforts réels
+
+Les panneaux `reinforcement_baffle`, leurs cadres, leurs marques et leurs collisions sont absents de la génération v2. Les 54 mondes vérifiés couvrent les 18 indices avec les graines 1, 96 et 2026 ; les objectifs, réserves et points d'arrivée restent atteignables par le parcours physique. Les variantes historiques conservent leur géométrie exacte.
+
+Le retrait des panneaux exposait les anciennes positions de renforts : les vagues pouvaient rester indéfiniment en attente. La sélection utilise maintenant les angles et pièces voisines déjà présents. Le contrôle runtime exige toujours la silhouette complète masquée, une distance suffisante, une place libre et un trajet praticable. Les arrivants suivent un véritable chemin vers le point de rencontre connu ; ils ne connaissent pas les coordonnées d'un joueur caché. Leur délai d'approche tient compte du trajet, sans contourner les plafonds d'engagement. Une entrée visible ou inaccessible reste refusée.
+
+Les nouveaux tests reproduisent les mondes 1, 8 et 18, différentes positions accessibles d'observation, les silhouettes de scouts et de lourds, de vrais déploiements à plus de 30 mètres et leur approche au-delà de l'ancien délai de cinq secondes. La reprise conserve l'approche en cours ; les délais corrompus sont refusés sans modifier l'état vivant. Ce contrôle ciblé ne prétend pas explorer toutes les positions possibles des 54 mondes.
+
+## Boss, butin et progression
+
+Les [profils des 18 mondes](docs/boss-progression-v08.json) proviennent du générateur final. La campagne démarre avec pistolet à droite et bouclier à gauche. Boss 1 : double pompe ; boss 2 : mitraillette ; boss 3 : lance-grenades ; boss 4 : nouveau calibrage du lance-grenades ; boss 5 : améliorations ; boss 6 : lance-roquettes. Les douze derniers mondes utilisent donc l'arsenal complet. Chaque boss donne aussi un rang propre à une arme et un rang personnel, appliqués au ramassage de sa caisse.
+
+Les tests couvrent les 18 récompenses, l'ordre des armes, la collecte partielle, les surplus laissés au sol, le journal portable empêchant les récompenses répétées, la sortie conditionnée au lot principal et les checkpoints avant/après ramassage. Le vrai shell vérifie le départ, les libellés, l'acquisition et la reprise sans doublon sonore. Le son de victoire est programmé après l'arrêt du mix de combat.
+
+Les PV progressent de **600 à 12 000**, et les plafonds d'engagement de 6 à 16. Les calibrages ajoutent **40 % des dégâts de base par rang**, y compris aux explosions réelles, et réduisent la chauffe. La validation des projectiles améliorés en vol utilise leur charge autorisée. Les fenêtres du cœur vulnérable restent entières.
+
+Le [banc contrôlé](docs/qa-v08/boss-ttk-final.json), réexécuté sur les sources finales sans substitution de paramètres, termine le boss 1 au pistolet en **116,8 s**, le boss 6 avant les roquettes en **215,225 s** et le boss 18 en **272,175 s**. Les deux derniers essais conservent respectivement 9 et 15 grenades. Conditions : 40 Hz, arène dégagée, visée idéale du cœur, position et PV du joueur maintenus, réserves pleines au départ, aucun ramassage pendant le combat. Chauffe, cadence, projectiles et fenêtres d'ouverture sont réellement simulés. **Ces mesures ne sont pas des durées de combat humain.**
+
+Les anciennes expéditions conservent leur progression et leurs ressources. Le cache distingue les variantes ; une nouvelle expédition après une reprise historique ne réutilise pas l'ancien monde. Les profils, journaux et métadonnées contradictoires sont rejetés atomiquement. Il faut choisir **Nouvelle expédition** pour jouer le parcours v2.
+
+## Destruction, acoustique et preuves visuelles
+
+Les morceaux reprennent forme, dimension, matériau et pose des parties réellement détachées. Les rails non touchés restent en place ; les portes donnent des plaques. Les collisions font rebondir et stabiliser les morceaux, sans les supprimer. Les tests incluent supports détruits après stabilisation, anneaux creux, reprise en vol et au repos, saturation des budgets et conservation des débris proches. Plafonds : 128 morceaux persistants et 64 éclats temporaires. Les gravats restent cosmétiques pour les déplacements, sans collisions entre morceaux.
+
+Les cinq rendus natifs archivés — panneau avant/après, mur, rambarde et porte au repos — passent avec **zéro erreur GL**, via Mesa llvmpipe / GLES en rasterisation logicielle. Les [captures et manifestes](docs/qa-v08/README.md) conservent leurs empreintes d'intégration. Ils montrent les états contrôlés décrits ; ils ne prouvent pas les performances d'un navigateur ou d'un GPU physique.
+
+La banque audio contient des sons PCM originaux préparés avant le combat. Les tests couvrent leurs durées, crêtes et signatures distinctes, les volumes indépendants, les plafonds de voix, la pause et l'essai du menu. Le drone continu et les oiseaux synthétiques sont retirés. Les machines et la vapeur dépendent de sources réelles encore actives ; le vent extérieur comporte des silences. `FSoundscape` calcule distance 3D, panoramique et occlusion avec au plus 12 sondes par 125 ms. Les murs, portes et suppressions de sources sont vérifiés avec les vraies collisions. Les [mesures PCM](docs/qa-v08/audio-pcm-metrics.json) concernent des signaux secs, pas une écoute humaine ni la sortie audio matérielle.
+
+## Contrôle limité dans le navigateur
+
+Chrome a chargé l'aperçu local : titre **V0.8.0**, nouvelle expédition **pistolet + bouclier**, armure **0 / 200**, arsenal **1 / 5** et phase **Équipement 1 / 6**. Les options indiquent 6 mondes d'équipement puis 12 d'assaut. Le bouton **Tester tirs et ambiances** a été actionné et son message de confirmation observé. Les journaux retournés filtrés sur METAL ne contiennent pas d'erreur ; les erreurs générales observées concernent des métadonnées d'extensions. Cette inspection est bornée.
+
+L'environnement distant utilisait **Canvas 2D**, WebGL2 et WebNN indisponibles, avec environ **1 FPS** observé. Aucune performance sur matériel réel, validation Safari, téléphone multitouch, écoute subjective ni partie humaine complète n'est revendiquée. Les captures précèdent les derniers ajustements de navigation et de dispatch sonore ; leurs hashes d'origine sont conservés, séparément de la suite finale sur les sources livrées.
+
+---
+
+# Validation de METAL v0.7.0 — 12 novembre 2026 (historique)
 
 Cette version regroupe la campagne de 18 mondes, le correctif de chute, les détails proches et reflets, le nouveau montage du bouclier, l’armure consommable et l’allègement des ambiances. Les sections conservées plus bas sont historiques. Le relevé structuré et les empreintes des sources finales figurent dans [docs/validation-v07.json](docs/validation-v07.json) ; le suivi par phases est dans [docs/CAMPAIGN_AUDIT.md](docs/CAMPAIGN_AUDIT.md).
 

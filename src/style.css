@@ -106,3 +106,5 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
 .armor-track i{display:block;height:100%;width:0;background:#78d9ed;transition:width .12s}
 @media(max-width:650px){.armor-pool{margin-top:5px}.armor-pool b{font-size:14px}.armor-pool>span{font-size:6px}.armor-pool small{font-size:7px}.armor-track{margin-top:2px;height:2px}}
 @media(max-height:650px) and (max-width:650px){.armor-pool{margin-top:2px}.armor-pool b{font-size:11px}.armor-track{height:2px;margin-top:1px}.vital .health-number{margin-bottom:2px}}
+
+#boss-health{display:block;font-size:9px;font-variant-numeric:tabular-nums;letter-spacing:.7px;color:#f0c08d;margin-top:6px}#boss-name{min-width:0}#supply-detail{max-width:320px;line-height:1.5}@media(max-width:650px){#boss-health{font-size:8px}#supply-detail{max-width:240px}}

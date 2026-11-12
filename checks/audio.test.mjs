@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
 const root=new URL('../',import.meta.url);
-const source=Object.fromEntries(['music','audio','economy','destruction','effects','simulation','motion','actors','options','game'].map(name=>
+const source=Object.fromEntries(['music','audio','soundscape','economy','destruction','effects','simulation','motion','actors','options','game'].map(name=>
   [name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 class Param{
   constructor(value=0){this.value=value;this.events=[];}
@@ -46,6 +46,81 @@ function rig({unavailable=false,noPan=false}={}){
   return {scope,contexts,music,timers,audio:scope.FAudio.create(),get ctx(){return contexts.at(-1);},get master(){return music.at(-1)?.output.connections[0];},get tracker(){return music.at(-1)?.instance;},advanceTimers(seconds){const end=contexts.at(-1).currentTime+seconds;let count=0;while(timers.size){const [id,timer]=[...timers].sort((a,b)=>a[1].at-b[1].at)[0];if(timer.at>end)break;assert(++count<1000,'timer pump is bounded');contexts.at(-1).advance(Math.max(0,timer.at-contexts.at(-1).currentTime));timers.delete(id);timer.fn();}contexts.at(-1).advance(Math.max(0,end-contexts.at(-1).currentTime));}};
 }
 function run(r,seconds,step=.04){for(let t=0;t<seconds;t+=step){r.audio.tick();r.ctx.advance(step);}}
+function waveform(pcm){let peak=0,sum=0,energy=0,difference=0,tail=0;for(let i=0;i<pcm.length;i++){const x=pcm[i];assert(Number.isFinite(x));peak=Math.max(peak,Math.abs(x));sum+=x;energy+=x*x;if(i)difference+=(x-pcm[i-1])**2;if(i>pcm.length*.85)tail+=x*x;}return {peak,rms:Math.sqrt(energy/pcm.length),dc:sum/pcm.length,brightness:difference/energy,tail:tail/energy};}
+function effectGain(source){let n=source.connections[0];if(n.kind==='filter')n=n.connections[0];return n;}
+function effectPeak(source){return Math.max(...effectGain(source).gain.events.map(e=>e.value));}
+
+test('original PCM has bounded peaks, quiet tails and distinct material and weapon signatures',()=>{
+  const r=rig(),render=r.scope.FAudio.synthesize,measure=new Map(),hashes=new Set();
+  for(const name of r.scope.FAudio.effectNames){
+    const a=render(name,0,22050),b=render(name,1,22050),m=waveform(a);measure.set(name,m);
+    assert(a.length<=22050,name+' must not create a sustained transient');assert.equal(a[0],0);assert.equal(a.at(-1),0);
+    assert(m.peak>.8&&m.peak<.85,name+' preserves digital headroom');assert(m.rms>.025&&m.rms<.4);assert(Math.abs(m.dc)<.003,name+' has no DC offset');
+    assert(!Buffer.from(a.buffer).equals(Buffer.from(b.buffer)),name+' has seeded variation');
+    const signature=Buffer.from(a.buffer).toString('base64');assert(!hashes.has(signature),name+' must have an independent waveform');hashes.add(signature);
+    if(!name.startsWith('motor:')&&name!=='swish')assert(m.tail<.04,name+' finishes with a decayed tail');
+  }
+  assert(Buffer.from(render('pistol',0,22050).buffer).equals(Buffer.from(render('pistol',0,22050).buffer)),'procedural generation is reproducible');
+  assert(measure.get('impact:glass').brightness>measure.get('impact:wood').brightness*4,'glass has a bright, brittle attack');
+  assert(measure.get('impact:metal').tail>measure.get('impact:stone').tail*20,'metal retains a short physical ring while stone is dry');
+  assert(measure.get('smg').rms<measure.get('rocket').rms,'automatic fire has a shorter, drier report than exhaust');
+  for(const [name,seconds] of [['pistol',.18],['smg',.12],['shotgun',.35],['rocket',.45],['grenade',.32]])assert(render(name,0,22050).length/22050<seconds);
+  assert.throws(()=>render('external-recording',0,22050),/Unknown procedural sound/);assert.equal(r.contexts.length,0,'offline synthesis needs no audio device');
+});
+
+test('empty rooms have no tonal bed, exterior wind has gaps, and every environmental layer silences on pause',async()=>{
+  const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);
+  const loops=r.ctx.sources.filter(n=>n.loop),sources=r.ctx.sources.length;assert.equal(loops.length,6);assert(!r.ctx.sources.some(n=>n.kind==='oscillator'));
+  r.audio.setPressure(1);r.audio.setThreat(1);r.audio.setEnvironment({wind:1},0);
+  for(let i=0;i<40;i++){r.ctx.currentTime=i*.5;r.audio.tick();assert.equal(r.audio.stats.windGain,0);assert.equal(r.audio.stats.steamGain,0);assert.equal(r.audio.stats.machineryGain,0);}
+  assert(loops.every(n=>effectGain(n).gain.value===0),'neither tension nor stage invents an indoor sound source');
+  r.audio.setPressure(0);r.audio.setThreat(0);r.audio.setEnvironment({wind:1,biome:'woodland'},1);let gaps=0,gusts=0,peak=0;
+  for(let i=0;i<180;i++){r.ctx.currentTime=i*.5;r.audio.tick();const gain=r.audio.stats.windGain;gaps+=gain===0;gusts+=gain>0;peak=Math.max(peak,gain);}
+  assert(gaps>50&&gusts>40,'outside texture includes long gaps and gusts');assert(peak>0&&peak<=.020001);assert.equal(r.ctx.sources.length,sources,'no phantom birds, notes or periodic new sources');
+  r.ctx.currentTime=92;r.audio.setMachinery(.8,-.6,'fan');r.audio.setSteam(.7,.4);r.audio.tick();assert(r.audio.stats.machineryGain>0&&r.audio.stats.steamGain>0);
+  r.audio.setMuted(true);assert.equal(r.audio.stats.windGain,0);assert.equal(r.audio.stats.machineryGain,0);assert.equal(r.audio.stats.steamGain,0);
+  r.audio.setMuted(false);r.audio.tick();assert(r.audio.stats.machineryGain>0);r.audio.setPlaying(false);assert(loops.every(n=>effectGain(n).gain.value===0));
+  r.audio.setPlaying(true);r.audio.setEnvironment({wind:0},1);r.audio.tick();assert.equal(r.audio.stats.windGain,0);r.audio.dispose();
+});
+
+test('nearby machinery and steam are spatial, occluded, source-dependent and controlled by ambience',async()=>{
+  const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);
+  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>n.connections[0].frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),count=r.ctx.sources.length,buffers=r.ctx.buffers.length;
+  const ambience=effectGain(steam).connections[0].connections[0];assert.equal(ambience.gain.value,.7);
+  r.audio.setMachinery(.75,-.7,'fan',0);let machine=machines.find(n=>effectGain(n).gain.value>0);assert(machine);assert.equal(effectGain(machine).connections[0].pan.value,-.7);
+  const open=machine.connections[0].frequency.value;r.audio.setMachinery(.75,.6,'fan',1);assert(machine.connections[0].frequency.value<open*.3);assert.equal(effectGain(machine).connections[0].pan.value,.6);
+  r.audio.setSteam(.8,-.45,0);const steamOpen=steam.connections[0].frequency.value;r.audio.setSteam(.8,-.45,1);assert(steam.connections[0].frequency.value<steamOpen*.4);assert.equal(effectGain(steam).connections[0].pan.value,-.45);
+  r.audio.setMachinery(.5,.1,'piston',0);assert.equal(effectGain(machine).gain.value,0);assert.equal(machines.filter(n=>effectGain(n).gain.value>0).length,1,'kind changes crossfade a fixed pool');
+  for(let i=0;i<120;i++){r.audio.setMachinery(.5,.1,'piston',.5);r.audio.setSteam(.8,-.45,.5);}assert.equal(r.ctx.sources.length,count);assert.equal(r.ctx.buffers.length,buffers);
+  r.audio.setMix({ambience:0});assert.equal(ambience.gain.value,0);assert.equal(r.audio.stats.steamGain,0);assert.equal(r.audio.stats.machineryGain,0);
+  const before=r.ctx.sources.length;r.audio.pipeLeak({level:1,pan:-.3});assert.equal(r.ctx.sources.length,before+1,'a discrete hazardous burst remains an effects cue');assert.notEqual(effectGain(r.ctx.sources.at(-1)).connections[0].connections[0],ambience);
+  r.audio.setMix({ambience:1,effects:0});assert(r.audio.stats.steamGain>0,'effects slider does not silence environmental steam');
+  r.audio.setMachinery(0);r.audio.setSteam(0);assert.equal(r.audio.stats.steamGain,0);assert.equal(r.audio.stats.machineryGain,0);
+  const delay=r.ctx.nodes.find(n=>n.kind==='delay'),send=r.ctx.nodes.find(n=>n.kind==='gain'&&n.connections.includes(delay));r.audio.setEnvironment({},0);r.audio.tick();const indoor=send.gain.value;r.audio.setEnvironment({},1);r.audio.tick();assert(send.gain.value<indoor*.2,'open sky does not accumulate a room echo');r.audio.dispose();
+});
+
+test('material collisions use their real material, energy and occlusion without allocating combat buffers',async()=>{
+  const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);const buffers=r.ctx.buffers.length,profiles=new Set();
+  for(const material of ['metal','stone','wood','glass','dirt'])for(const method of ['materialImpact','materialBreak','debrisLand']){
+    const before=r.ctx.sources.length;r.audio[method]({material,level:.8,pan:.6,energy:2,mass:1,seed:42});assert.equal(r.ctx.sources.length,before+1);
+    const source=r.ctx.sources.at(-1);assert(source.stopTime-r.ctx.currentTime<1.2);assert.equal(effectGain(source).connections[0].pan.value,.6);profiles.add(source.buffer);r.ctx.advance(1.3);
+  }
+  assert.equal(profiles.size,15);assert.equal(r.ctx.buffers.length,buffers);
+  r.audio.materialImpact({material:'metal',level:1,pan:-.6,energy:1,mass:1,seed:31,occluded:0});const open=r.ctx.sources.at(-1),gain=effectPeak(open);r.ctx.advance(1);
+  r.audio.materialImpact({material:'metal',level:.3,pan:-.6,energy:1,mass:1,seed:31,occluded:1});const hidden=r.ctx.sources.at(-1);assert.equal(hidden.buffer,open.buffer);assert(hidden.connections[0].frequency.value<1500);assert(effectPeak(hidden)<gain*.31);
+  r.ctx.advance(1);const silent=r.ctx.sources.length;r.audio.debrisLand({material:'stone',energy:0});assert.equal(r.ctx.sources.length,silent,'settled rubble does not make phantom collisions');
+  for(let i=0;i<120;i++){r.ctx.currentTime+=.04;r.audio.debrisLand({material:i%2?'metal':'stone',energy:30,pan:(i%7-3)/3,seed:i});assert(r.audio.stats.voices<=32);}
+  for(let i=0;i<30;i++){r.ctx.currentTime+=.06;r.audio.materialBreak({material:'stone',power:35,pan:.3,seed:i});assert(r.audio.stats.voices<=40);}
+  const busy=r.ctx.sources.length;r.audio.shot({weapon:4});r.audio.grenadeLaunch();assert.equal(r.ctx.sources.length,busy+2);assert(r.audio.stats.voices<=48);assert.equal(r.ctx.buffers.length,buffers);
+  r.audio.setMix({effects:0});const muted=r.ctx.sources.length;for(const method of ['materialImpact','materialBreak','debrisLand'])r.audio[method]({material:'glass',energy:4});assert.equal(r.ctx.sources.length,muted);
+  r.audio.setMix({effects:1});r.audio.setPlaying(false);assert.equal(r.audio.stats.voices,0);for(const method of ['materialImpact','materialBreak','debrisLand'])r.audio[method]({material:'wood',energy:4});assert.equal(r.ctx.sources.length,muted);r.audio.dispose();
+});
+
+test('effect preparation yields in bounded batches and disposal cancels its pending work',async()=>{
+  const r=rig();await r.audio.start();r.scope.FMusic.warmup=async()=>true;
+  const before=r.ctx.buffers.length,pending=r.audio.prepare(0);assert(!r.audio.stats.pcmReady);assert(r.ctx.buffers.length>before&&r.ctx.buffers.length<before+10);assert.equal(r.timers.size,1);
+  r.audio.dispose();assert.equal(await pending,false);assert.equal(r.timers.size,0);const buffers=r.ctx.buffers.length;r.advanceTimers(2);assert.equal(r.ctx.buffers.length,buffers);assert.equal(r.ctx.closes,1);
+});
 
 test('pre-start settings reach the tracker and independent buses through one lazily created context',async()=>{
   const r=rig();r.audio.setStage(2);r.audio.setThreat(1);r.audio.setMix({master:.7,music:.3,effects:.4,ambience:.2});r.audio.setMuted(true);r.audio.tick();
@@ -65,12 +140,13 @@ test('pre-start settings reach the tracker and independent buses through one laz
 test('distant salvos reserve player voices and never starve the independent tracker',async()=>{
   const r=rig();r.audio.setStage(1);r.audio.setPlaying(true);await r.audio.start();r.audio.tick();
   const before=r.ctx.sources.length;for(let i=0;i<200;i++)r.audio.enemyShot({kind:i%4,level:.6,pan:0});
-  assert.equal(r.ctx.sources.length-before,2,'simultaneous shots from one bearing share a transient');
+  assert.equal(r.ctx.sources.length-before,1,'simultaneous shots from one bearing share a prebuilt transient');
   // Keep ended callbacks delayed, and fill every bearing across two salvos.
-  for(let burst=0;burst<2;burst++){r.ctx.currentTime+=.065;for(let p=-4;p<=4;p++)r.audio.enemyShot({kind:1,level:.6,pan:p/4});}
+  for(let burst=0;burst<4;burst++){r.ctx.currentTime+=.065;for(let p=-4;p<=4;p++)r.audio.enemyShot({kind:1,level:.6,pan:p/4});}
   assert.equal(r.audio.stats.voices,32,'background attackers cannot consume the reserved slots');
-  let count=r.ctx.sources.length;r.audio.shot();assert.equal(r.ctx.sources.length-count,4,'all four components of the local weapon are retained');
+  let count=r.ctx.sources.length;r.audio.shot();assert.equal(r.ctx.sources.length-count,1,'the complete local report survives in one reserved voice');
   r.audio.fracture();r.audio.hurt();r.audio.bossImpact({level:1});r.audio.bossTell({level:1});
+  for(let i=0;i<16;i++){r.ctx.currentTime+=.06;r.audio.shot();}
   assert(r.audio.stats.voices<=48);assert(r.audio.stats.stolenVoices>0,'an urgent nearby cue can replace a distant voice');
   const notes=r.tracker.stats.scheduledNotes;r.ctx.currentTime+=.12;r.audio.tick();assert(r.tracker.stats.scheduledNotes>notes);
   assert(r.tracker.stats.activeVoices<=28);r.ctx.advance(.7);run(r,2);assert(r.tracker.stats.resyncs>=1);
@@ -108,8 +184,8 @@ test('final output guard preserves ordinary samples and bounds any finite overlo
 
 test('explosion/boss storms stay bounded and continuous steam follows actual play state with one source',async()=>{
   const r=rig();await r.audio.start();r.audio.setPlaying(true);r.audio.setStage(1);
-  const hiss=r.ctx.sources.find(n=>n.loop&&n.connections[0]?.frequency?.value===1850),gain=hiss.connections[0].connections[0];assert(hiss);
-  r.audio.setSteam(.7,.3);assert(Math.abs(gain.gain.value-.0595)<1e-9);const sources=r.ctx.sources.length;
+  const hiss=r.ctx.sources.find(n=>n.loop&&n.connections[0]?.frequency?.value===1950),gain=hiss.connections[0].connections[0];assert(hiss);
+  r.audio.setSteam(.7,.3);assert(Math.abs(gain.gain.value-.0385)<1e-9);const sources=r.ctx.sources.length;
   for(let i=0;i<100;i++)r.audio.setSteam(.7,.3);assert.equal(r.ctx.sources.length,sources,'pipes share one persistent source');
   for(let step=0;step<120;step++){
     for(let i=0;i<12;i++)for(const name of ['rocket','grenade','explosion','pipeLeak','trap','creak','bossTell','bossRoar','bossImpact','bossDeath'])r.audio[name]({level:.8,pan:.2,kind:'blade',radius:6});
@@ -131,7 +207,7 @@ test('horror pressure reuses ambience and the MOD mix while spatial cues remain 
     const pans=r.ctx.nodes.filter(n=>n.kind==='pan'&&n.pan.value===-.65);assert(pans.length>0);r.ctx.advance(1.1);
   }
   for(let i=0;i<120;i++){r.audio.horrorSting({intensity:1,level:1,tier:i%4});r.audio.metallicSlam({intensity:1});r.audio.alarm({intensity:1});r.audio.powerCut({intensity:1});assert(r.audio.stats.voices<=48);r.ctx.advance(.01);}
-  const sway=r.ctx.sources.find(n=>n.kind==='oscillator'&&n.frequency.value===.087);assert(sway.connections[0].gain.value>0);r.audio.setPlaying(false);assert.equal(sway.connections[0].gain.value,0,'ambient modulation cannot leak a bass bed through a paused gain');const stopped=r.ctx.sources.length;r.audio.horror({kind:'ambush',intensity:1});assert.equal(r.ctx.sources.length,stopped);r.audio.setStage(2);r.audio.setPlaying(true);assert(lead.gain.value<raised);r.audio.dispose();assert.equal(r.audio.stats.voices,0);
+  assert(!r.ctx.sources.some(n=>n.kind==='oscillator'&&n.stopTime===Infinity),'no persistent drone or modulation oscillator remains');r.audio.setPlaying(false);assert.equal(r.audio.stats.windGain,0);assert.equal(r.audio.stats.machineryGain,0);assert.equal(r.audio.stats.steamGain,0);assert.equal(r.audio.stats.voices,0,'pause releases existing world transients');const stopped=r.ctx.sources.length;r.audio.horror({kind:'ambush',intensity:1});assert.equal(r.ctx.sources.length,stopped);r.audio.setStage(2);r.audio.setPlaying(true);assert(lead.gain.value<raised);r.audio.dispose();assert.equal(r.audio.stats.voices,0);
 });
 
 function shell(){
@@ -153,7 +229,7 @@ function shell(){
     FRender:{create:()=>({stats:{backend:'test'},resize:noop,setWorld:noop,draw:noop})}});
   // The shell receives the same observed real audio instance as the direct API tests.
   r.scope.FAudio.create=()=>r.audio;
-  for(const name of ['economy','destruction','effects','simulation','motion','actors','options'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
+  for(const name of ['soundscape','economy','destruction','effects','simulation','motion','actors','options'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
   const create=r.scope.FSimulation.create;r.scope.FSimulation.create=value=>{const sim=create(value);simulations.push(sim);return sim;};
   vm.runInContext(source.game,r.scope,{filename:'game.js'});assert.deepEqual(errors,[],'game must initialize without an audio or DOM exception');
   return Object.assign(r,{element,listeners,documentListeners,simulations,downloads,blobs,timers,memory,frame(ms=40){now+=ms;if(r.ctx)r.advanceTimers(ms/1000);const batch=frames;frames=[];for(const fn of batch)fn(now);},async ready(){for(let i=0;i<40;i++){this.frame();await Promise.resolve();await Promise.resolve();if(this.mode()!=='loading')return;}throw new Error('loading did not finish');},mode:()=>element('body').dataset.state||'menu'});
@@ -200,7 +276,7 @@ test('two-second menu audition owns one bounded timer, uses the real mix and ret
   assert(r.audio.stats.preview&&r.tracker.stats.playing);assert.equal(r.timers.size,1);assert.equal(r.music[0].owned[0].gain.value,.3);
   assert(r.master.gain.events.some(e=>e.type==='target'&&Math.abs(e.value-.39)<1e-9));
   assert(r.master.gain.events.some(e=>e.type==='linear'&&e.value===0&&e.time===2),'the audio clock closes the menu output even if timers stall');
-  const initial=r.ctx.sources.length;r.advanceTimers(.65);assert(r.ctx.sources.length>initial+7,'the audition actually schedules both gunshots');assert(r.audio.stats.duckGain<.56);
+  const initial=r.ctx.sources.length;r.advanceTimers(.65);assert(r.ctx.sources.slice(initial).some(n=>n.buffer?.length===Math.ceil(.165*22050)),'audition schedules the pistol');assert(r.ctx.sources.slice(initial).some(n=>n.buffer?.length===Math.ceil(.105*22050)),'audition schedules the SMG');assert(r.audio.stats.duckGain<.56);
   r.advanceTimers(1.5);assert(!r.audio.stats.preview&&!r.tracker.stats.playing);assert.equal(r.timers.size,0);assert.equal(r.audio.stats.voices,0);assert.equal(r.tracker.stats.activeVoices,0);assert.equal(r.master.gain.value,0);
   const end=r.ctx.sources.length;r.advanceTimers(10);assert.equal(r.ctx.sources.length,end);r.audio.dispose();
 });
@@ -218,7 +294,7 @@ test('new arsenal cues are distinct, bounded and survive distant salvo saturatio
   const r=rig();await r.audio.start();r.audio.setPlaying(true);
   const signatures=[];for(const name of ['ammoPickup','weaponPickup','empty','melee','wave']){
     const before=r.ctx.sources.length;r.audio[name]({level:.8,pan:-.3,hit:true});const created=r.ctx.sources.slice(before);
-    assert(created.length>=2&&created.length<=5);signatures.push(created.map(n=>[n.kind,n.frequency.value,n.stopTime-r.ctx.currentTime]));
+    assert(created.length>=1&&created.length<=5);signatures.push(created.map(n=>[n.kind,n.frequency.value,n.stopTime-r.ctx.currentTime]));
     for(let i=0;i<30;i++)r.audio[name]({level:.8,pan:-.3,hit:true});assert.equal(r.ctx.sources.length,before+created.length,'repeated input observes the cue cooldown');r.ctx.advance(1);
   }
   assert.equal(new Set(signatures.map(JSON.stringify)).size,5);assert(r.audio.stats.peakVoices<=48);r.audio.dispose();
@@ -226,24 +302,24 @@ test('new arsenal cues are distinct, bounded and survive distant salvo saturatio
 
 test('device unlock is cheap and loading prepares future instrument buffers without changing play state',async()=>{
  const r=rig();r.scope.setTimeout=fn=>{queueMicrotask(fn);return 0;};await r.audio.start();assert.equal(r.ctx.buffers.length,1,'unlock only creates the shared noise buffer, not PCM instruments');assert.equal(r.tracker.stats.scheduledNotes,0);
- const sources=r.ctx.sources.length,nodes=r.ctx.nodes.length;assert(await r.audio.prepare(2));assert.equal(r.tracker.stats.stage,0);assert(!r.tracker.stats.playing);assert.equal(r.ctx.sources.length,sources);assert.equal(r.ctx.nodes.length,nodes);
- const buffers=r.ctx.buffers.length;assert.equal(buffers,16);r.audio.setStage(2);r.audio.setPlaying(true);run(r,9);assert.equal(r.ctx.buffers.length,buffers,'first combat notes do not allocate cached AudioBuffers');
+ const sources=r.ctx.sources.length,nodes=r.ctx.nodes.length;assert(await r.audio.prepare(2));assert.equal(r.tracker.stats.stage,0);assert(!r.tracker.stats.playing);assert.equal(r.ctx.sources.length,sources+4,'four fixed machine loops are prepared, all initially silent');assert.equal(r.ctx.nodes.length,nodes+4);assert.equal(r.audio.stats.machineryGain,0);assert(r.audio.stats.pcmReady);
+ const buffers=r.ctx.buffers.length;assert.equal(r.audio.stats.pcmBuffers,64);assert.equal(buffers,16+r.audio.stats.pcmBuffers);assert(r.audio.stats.pcmBytes<2*1024*1024);r.audio.setStage(2);r.audio.setPlaying(true);run(r,9);assert.equal(r.ctx.buffers.length,buffers,'first combat notes do not allocate cached AudioBuffers');
  r.audio.dispose();assert.equal(await r.audio.prepare(1),false);
  const cold=rig();cold.scope.setTimeout=fn=>{queueMicrotask(fn);return 0;};assert.equal(await cold.audio.prepare(0),false);assert.equal(cold.contexts.length,0,'preparation never opens a device without a user gesture');cold.audio.dispose();
 });
 
 test('explosions have bounded crack/body/debris tails, scale with power and preserve the player reserve',async()=>{
  async function burst(event){const r=rig();await r.audio.start();r.audio.setPlaying(true);const before=r.ctx.sources.length,firstNode=r.ctx.nodes.length;r.audio.explosion(event);const voices=r.ctx.sources.slice(before),nodes=r.ctx.nodes.slice(firstNode);return {r,voices,nodes,peak:Math.max(...nodes.flatMap(n=>n.gain?.events.filter(e=>e.type==='linear').map(e=>e.value)||[])),end:Math.max(...voices.map(n=>n.stopTime-r.ctx.currentTime))};}
- const close=await burst({level:1,pan:.4,radius:4.2,power:55,kind:'rocket',seed:96});assert.equal(close.voices.length,7);assert(close.voices.filter(n=>n.kind==='oscillator').length===3);assert(close.voices.filter(n=>n.kind==='source').length===4);assert(close.end>1.3&&close.end<2.1);assert(close.peak>.4&&close.peak<.5);assert(close.nodes.some(n=>n.kind==='filter'&&n.type==='lowpass'));assert(close.nodes.some(n=>n.kind==='filter'&&n.type==='bandpass'));
+ const close=await burst({level:1,pan:.4,radius:4.2,power:55,kind:'rocket',seed:96});assert.equal(close.voices.length,1,'one buffer contains crack, pressure and scatter');assert(close.voices.every(n=>n.kind==='source'));assert(close.end>.8&&close.end<1.2);assert(close.peak>.9&&close.peak<1.1);assert.equal(close.voices[0].buffer.sampleRate,22050);
  const far=await burst({level:.15,pan:.4,radius:4.2,power:55,kind:'rocket',seed:96});assert(far.peak<close.peak*.2);assert(far.r.audio.stats.duckGain>close.r.audio.stats.duckGain*2,'a distant blast does not deeply duck nearby action');
  const steam=await burst({level:1,pan:.4,radius:2.25,power:10,kind:'steam',seed:96});assert(steam.peak<close.peak*.5);assert(steam.end<close.end);
- const r=close.r;for(let i=0;i<20;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:1,radius:6,power:90,kind:'boss',seed:i});}assert(r.audio.stats.voices<=40,'explosion tails cannot consume the player reservation');const count=r.ctx.sources.length;r.audio.shot();assert.equal(r.ctx.sources.length-count,4);assert(r.audio.stats.voices<=48);assert(r.audio.stats.outputCeiling<.97);
+ const r=close.r;for(let i=0;i<20;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:1,radius:6,power:90,kind:'boss',seed:i});}assert(r.audio.stats.voices<=40,'explosion tails cannot consume the player reservation');const count=r.ctx.sources.length;r.audio.shot();assert.equal(r.ctx.sources.length-count,1);assert(r.audio.stats.voices<=48);assert(r.audio.stats.outputCeiling<.97);
  for(const q of [close,far,steam])q.r.audio.dispose();
 });
 
 test('simultaneous hands keep independent firing transients, stereo placement and cooldowns',async()=>{
   const r=rig();await r.audio.start();r.audio.setPlaying(true);
-  for(const [name,parts] of [['shot',4],['fracture',5],['rocket',3],['grenadeLaunch',4]]){
+  for(const [name,parts] of [['shot',1],['fracture',1],['rocket',1],['grenadeLaunch',1]]){
     const start=r.ctx.sources.length,nodes=r.ctx.nodes.length;
     r.audio[name]({hand:'left',owner:'player',level:.8,pan:0});assert.equal(r.ctx.sources.length-start,parts);
     const left=r.ctx.nodes.slice(nodes).filter(n=>n.kind==='pan');assert(left.length===parts&&left.every(n=>n.pan.value<0));
@@ -262,25 +338,25 @@ test('campaign pistol has its own short synthesized report and preserves indepen
   r.audio.setPlaying(true);
   const base=r.ctx.sources.length,first=r.ctx.nodes.length;
   r.audio.shot({weapon:4,hand:'right',level:.8});
-  const pistol=r.ctx.sources.slice(base);assert.equal(pistol.length,4);
+  const pistol=r.ctx.sources.slice(base);assert.equal(pistol.length,1);
   assert(pistol.every(n=>n.stopTime-r.ctx.currentTime<.18),'the compact report must not leave a long tail');
   assert(r.ctx.nodes.slice(first).filter(n=>n.kind==='pan').every(n=>n.pan.value>0));
   const left=r.ctx.nodes.length;r.audio.shot({weapon:0,hand:'left',level:.8});
-  const rifle=r.ctx.sources.slice(base+4);assert.equal(rifle.length,4,'the other hand keeps its simultaneous transient');
+  const rifle=r.ctx.sources.slice(base+1);assert.equal(rifle.length,1,'the other hand keeps its simultaneous transient');
   assert(r.ctx.nodes.slice(left).filter(n=>n.kind==='pan').every(n=>n.pan.value<0));
   const shape=voices=>voices.map(n=>[n.kind,n.type,n.frequency.value,n.stopTime-r.ctx.currentTime]);
   assert.notDeepEqual(shape(pistol),shape(rifle),'pistol and automatic rifle must have distinct synthesis');
   for(let i=0;i<20;i++)r.audio.shot({weapon:4,hand:'right',level:.8});
-  assert.equal(r.ctx.sources.length,base+8,'duplicate pistol cues in one frame stay bounded');
-  r.ctx.advance(.32);r.audio.shot({weapon:4,hand:'right',level:.8});assert.equal(r.ctx.sources.length,base+12,'the next legal pistol shot must sound');
+  assert.equal(r.ctx.sources.length,base+2,'duplicate pistol cues in one frame stay bounded');
+  r.ctx.advance(.32);r.audio.shot({weapon:4,hand:'right',level:.8});assert.equal(r.ctx.sources.length,base+3,'the next legal pistol shot must sound');
   assert(r.audio.stats.duckGain<.56);
   r.ctx.advance(1);r.audio.setMix({effects:0});const silent=r.ctx.sources.length;
   r.audio.shot({weapon:4,hand:'right'});assert.equal(r.ctx.sources.length,silent);
   r.ctx.advance(1);r.audio.setMix({effects:1});r.audio.setMuted(true);r.audio.shot({weapon:4,hand:'right'});assert.equal(r.ctx.sources.length,silent);
   r.audio.setMuted(false);r.audio.setPlaying(false);r.audio.shot({weapon:4,hand:'right'});assert.equal(r.ctx.sources.length,silent);
-  r.audio.setPlaying(true);for(let i=0;i<30;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}
+  r.audio.setPlaying(true);for(let i=0;i<55;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}
   assert(r.audio.stats.voices<=40);const crowded=r.ctx.sources.length;r.audio.shot({weapon:4,hand:'right'});
-  assert.equal(r.ctx.sources.length,crowded+4,'the pistol retains the player reservation during a blast storm');
+  assert.equal(r.ctx.sources.length,crowded+1,'the pistol retains the player reservation during a blast storm');
   assert(r.audio.stats.voices<=48);r.audio.dispose();assert.equal(r.audio.stats.voices,0);
 });
 
@@ -288,9 +364,9 @@ test('shield raise, impact, break and bash use distinct short cues and respect p
   const r=rig();await r.audio.start();const names=['grenadeLaunch','shieldRaise','shieldBlock','shieldBash'],idle=r.ctx.sources.length;
   for(const name of names)r.audio[name]({level:1,hit:true,absorbed:8});assert.equal(r.ctx.sources.length,idle,'menu state must not play the new combat cues');
   r.audio.setPlaying(true);const shapes=[];
-  for(const [name,data,parts] of [['shieldRaise',{},3],['shieldBlock',{absorbed:8},3],['shieldBlock',{absorbed:8,broken:true},5],['shieldBash',{hit:false},2],['shieldBash',{hit:true,count:2},4]]){
+  for(const [name,data,parts] of [['shieldRaise',{},2],['shieldBlock',{absorbed:8},1],['shieldBlock',{absorbed:8,broken:true},2],['shieldBash',{hit:false},1],['shieldBash',{hit:true,count:2},3]]){
     const start=r.ctx.sources.length;r.audio[name]({level:.8,pan:-.2,...data});const voices=r.ctx.sources.slice(start);assert.equal(voices.length,parts);
-    assert(voices.every(n=>n.stopTime-r.ctx.currentTime<.5));shapes.push(voices.map(n=>[n.kind,n.frequency.value,n.stopTime-r.ctx.currentTime]));
+    assert(voices.every(n=>n.stopTime-r.ctx.currentTime<.8));shapes.push(voices.map(n=>[n.kind,n.frequency.value,n.stopTime-r.ctx.currentTime]));
     r.audio[name]({level:.8,pan:-.2,...data});assert.equal(r.ctx.sources.length,start+parts,'duplicate impact shares its cue cooldown');r.ctx.advance(1);
   }
   assert.equal(new Set(shapes.map(JSON.stringify)).size,5);assert(r.audio.stats.duckGain<.56);
@@ -302,9 +378,9 @@ test('shield raise, impact, break and bash use distinct short cues and respect p
 
 test('a grenade launch and real shield block keep the player reservation during an explosion storm',async()=>{
   const r=rig();await r.audio.start();r.audio.setPlaying(true);
-  for(let i=0;i<30;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}assert.equal(r.audio.stats.voices,40);
+  for(let i=0;i<55;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}assert.equal(r.audio.stats.voices,40);
   const before=r.ctx.sources.length;r.audio.grenadeLaunch({level:1,hand:'right',owner:'player'});r.audio.shieldBlock({level:1,absorbed:8,energy:70});
-  assert.equal(r.ctx.sources.length-before,7);assert(r.audio.stats.voices<=48);assert(r.audio.stats.outputCeiling<.97);
+  assert.equal(r.ctx.sources.length-before,2);assert(r.audio.stats.voices<=48);assert(r.audio.stats.outputCeiling<.97);
   for(let i=0;i<100;i++){r.ctx.advance(.04);r.audio.shieldBlock({level:1,absorbed:6,broken:i%13===0});r.audio.grenadeLaunch({level:1,hand:i%2?'left':'right'});r.audio.tick();assert(r.audio.stats.voices<=48);assert(r.tracker.stats.activeVoices<=28);}
   assert(r.tracker.stats.scheduledRows>0);r.audio.dispose();
 });
@@ -329,7 +405,7 @@ test('trophy discovery has one bounded metal sting, survives a busy mix and stay
   r.ctx.advance(1.2);r.audio.setMix({effects:1});r.audio.setMuted(true);r.audio.trophy({key:'shield'});assert.equal(r.ctx.sources.length,silent);
   r.audio.setMuted(false);r.audio.setPlaying(false);r.audio.trophy({key:'shield'});assert.equal(r.ctx.sources.length,silent);
   r.audio.setPlaying(true);
-  for(let i=0;i<30;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}
+  for(let i=0;i<55;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}
   assert.equal(r.audio.stats.voices,40);const crowded=r.ctx.sources.length;r.audio.trophy({key:'shield'});
   assert.equal(r.ctx.sources.length,crowded+5);assert(r.audio.stats.voices<=48);
   r.audio.dispose();assert.equal(r.audio.stats.voices,0);

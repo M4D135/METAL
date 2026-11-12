@@ -1,0 +1,402 @@
+{
+  "method": "Controlled 40 Hz simulation in unobstructed synthetic arena; perfect core aim; stationary station restored each tick; player HP restored; real HP, heat, cooldowns, finite ammunition and actual core windows; no mid-fight pickups. Impact attribution is approximate for delayed ordnance; TTK/ammo are exact for these controls. Not human playtest.",
+  "hashes": {
+    "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+    "simulation": "44ad9e6a890b9ef343a631991e3359a8e0a3c9c310458b28a3a24112399af285"
+  },
+  "rankFactorOverride": null,
+  "rows": [
+    {
+      "boss": 1,
+      "initialHP": 600,
+      "strategy": "pistol",
+      "maxed": false,
+      "onlyWeapon": null,
+      "seconds": 116.8,
+      "killed": true,
+      "remainingHP": 0,
+      "remainingAmmo": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "initialAmmo": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "shots": [
+        0,
+        0,
+        0,
+        0,
+        308
+      ],
+      "damageAttributedToWeaponHeldAtImpact": [
+        0,
+        0,
+        0,
+        0,
+        600
+      ],
+      "ammoEmptyAt": 0,
+      "remainingHPAtAmmoEmpty": 599.64,
+      "coreOpenFraction": 0.4663955479451505,
+      "overheatFraction": 0.17059075342464322,
+      "playerDead": false,
+      "profile": {
+        "credits": 0,
+        "cores": 0,
+        "upgrades": {
+          "vitality": 0,
+          "armor": 0,
+          "capacity": 0,
+          "power": 0,
+          "cooling": 0
+        },
+        "version": 2,
+        "weaponUpgrades": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "milestones": [
+        {
+          "time": 0,
+          "phase": 0,
+          "hp": 599.64,
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "time": 36.3,
+          "phase": 1,
+          "hp": 400.0799999999993,
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "time": 60,
+          "hp": 277.2,
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "time": 72.5,
+          "phase": 2,
+          "hp": 202.67999999999947,
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        }
+      ],
+      "wallMs": 118.65011199999998
+    },
+    {
+      "boss": 6,
+      "initialHP": 2400,
+      "strategy": "arsenal",
+      "maxed": false,
+      "onlyWeapon": null,
+      "seconds": 215.225,
+      "killed": true,
+      "remainingHP": 0,
+      "remainingAmmo": [
+        0,
+        0,
+        0,
+        9,
+        1
+      ],
+      "initialAmmo": [
+        225,
+        45,
+        0,
+        20,
+        1
+      ],
+      "shots": [
+        225,
+        23,
+        0,
+        11,
+        297
+      ],
+      "damageAttributedToWeaponHeldAtImpact": [
+        1425.6,
+        723.34,
+        0,
+        39.23,
+        211.82
+      ],
+      "ammoEmptyAt": null,
+      "remainingHPAtAmmoEmpty": null,
+      "coreOpenFraction": 0.3578812870251551,
+      "overheatFraction": 0.29806016958990816,
+      "playerDead": false,
+      "profile": {
+        "credits": 0,
+        "cores": 0,
+        "upgrades": {
+          "vitality": 1,
+          "armor": 1,
+          "capacity": 1,
+          "power": 1,
+          "cooling": 1
+        },
+        "version": 2,
+        "weaponUpgrades": [
+          2,
+          1,
+          0,
+          2,
+          0
+        ]
+      },
+      "milestones": [
+        {
+          "time": 0,
+          "phase": 0,
+          "hp": 2399.604,
+          "ammo": [
+            225,
+            45,
+            0,
+            20,
+            1
+          ]
+        },
+        {
+          "time": 60,
+          "hp": 1786.57,
+          "ammo": [
+            225,
+            9,
+            0,
+            20,
+            1
+          ]
+        },
+        {
+          "time": 76.825,
+          "phase": 1,
+          "hp": 1605.7730314257142,
+          "ammo": [
+            221,
+            0,
+            0,
+            20,
+            1
+          ]
+        },
+        {
+          "time": 120,
+          "hp": 1058.11,
+          "ammo": [
+            138,
+            0,
+            0,
+            20,
+            1
+          ]
+        },
+        {
+          "time": 135.925,
+          "phase": 2,
+          "hp": 815.7530314257158,
+          "ammo": [
+            101,
+            0,
+            0,
+            20,
+            1
+          ]
+        },
+        {
+          "time": 180,
+          "hp": 266.5,
+          "ammo": [
+            18,
+            0,
+            0,
+            20,
+            1
+          ]
+        }
+      ],
+      "wallMs": 239.11709099999996
+    },
+    {
+      "boss": 18,
+      "initialHP": 12000,
+      "strategy": "arsenal",
+      "maxed": false,
+      "onlyWeapon": null,
+      "seconds": 272.175,
+      "killed": true,
+      "remainingHP": 0,
+      "remainingAmmo": [
+        0,
+        0,
+        0,
+        15,
+        1
+      ],
+      "initialAmmo": [
+        315,
+        63,
+        21,
+        28,
+        1
+      ],
+      "shots": [
+        315,
+        32,
+        21,
+        13,
+        423
+      ],
+      "damageAttributedToWeaponHeldAtImpact": [
+        3407.04,
+        4968.23,
+        3035.92,
+        75.66,
+        513.15
+      ],
+      "ammoEmptyAt": null,
+      "remainingHPAtAmmoEmpty": null,
+      "coreOpenFraction": 0.35023422430419887,
+      "overheatFraction": 0.09515936437952453,
+      "playerDead": false,
+      "profile": {
+        "credits": 0,
+        "cores": 0,
+        "upgrades": {
+          "vitality": 4,
+          "armor": 4,
+          "capacity": 3,
+          "power": 3,
+          "cooling": 3
+        },
+        "version": 2,
+        "weaponUpgrades": [
+          4,
+          4,
+          3,
+          4,
+          2
+        ]
+      },
+      "milestones": [
+        {
+          "time": 0,
+          "phase": 0,
+          "hp": 11999.1576,
+          "ammo": [
+            315,
+            63,
+            21,
+            28,
+            1
+          ]
+        },
+        {
+          "time": 43.825,
+          "phase": 1,
+          "hp": 7865.483050045809,
+          "ammo": [
+            315,
+            49,
+            8,
+            28,
+            1
+          ]
+        },
+        {
+          "time": 60,
+          "hp": 6464.4,
+          "ammo": [
+            315,
+            41,
+            4,
+            28,
+            1
+          ]
+        },
+        {
+          "time": 108.725,
+          "phase": 2,
+          "hp": 4034.6485366093866,
+          "ammo": [
+            315,
+            5,
+            0,
+            28,
+            1
+          ]
+        },
+        {
+          "time": 120,
+          "hp": 3737.74,
+          "ammo": [
+            305,
+            0,
+            0,
+            28,
+            1
+          ]
+        },
+        {
+          "time": 180,
+          "hp": 2002.87,
+          "ammo": [
+            152,
+            0,
+            0,
+            28,
+            1
+          ]
+        },
+        {
+          "time": 240,
+          "hp": 446.81,
+          "ammo": [
+            16,
+            0,
+            0,
+            28,
+            1
+          ]
+        }
+      ],
+      "wallMs": 258.67644099999995
+    }
+  ]
+}

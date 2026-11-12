@@ -1,0 +1,488 @@
+{
+  "method": "Same camera on actual generated world, game.models and renderer; recorded WebGL calls replayed with software Mesa GLES 3. These two captures are not browser or hardware performance evidence. Browser captures use the actual preview through the UI; WebGL2 unavailable, Canvas2D fallback.",
+  "barriers": {
+    "before": {
+      "path": "/workspace/scratch/d16f8771f40f/v08-qa/barrier-before-gles.json",
+      "hashes": {
+        "world": "ab4e37cd5c6bed8ce3dc0cba655d035fa056fd94103aaa5254821b2d4f1fc385",
+        "economy": "362863977e9ab6a9ddaf26f9d1ec6ec8f51eda25c58193d98b72abca4c2c08c9",
+        "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+        "simulation": "31ea989d0599e8c60f844c95b47a81315eb46d9dad0cad8a2811c742be239681",
+        "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+        "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+        "effects": "a9b87f021bc82f06ac22607689bc2bb0f9caddbfaa7bd0e9cf40c382bf94c341",
+        "soundscape": "e89dbf204d9891fea96e93f98e8a9d0d80c258655e5fcf25be38ad67ead037b3",
+        "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+        "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+        "game": "b0621d75272adff53cf105faa889d58db21964fa18b511de77bfbd961528e0f1"
+      },
+      "width": 960,
+      "height": 600,
+      "camera": {
+        "pos": [
+          -2.6000000000000005,
+          1.62,
+          41.6
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": -0.02777063659342106,
+        "fov": 74
+      },
+      "stage": 0,
+      "scene": "barrier",
+      "variant": "before",
+      "backend": "gles",
+      "environment": {
+        "biome": "woodland",
+        "skyTop": [
+          0.055,
+          0.105,
+          0.14
+        ],
+        "skyBottom": [
+          0.2,
+          0.25,
+          0.22
+        ],
+        "fog": [
+          0.15,
+          0.205,
+          0.18
+        ],
+        "sunDirection": [
+          -0.4877686086797539,
+          0.7926239891046002,
+          0.36582645650981543
+        ],
+        "sunColor": [
+          0.48,
+          0.62,
+          0.59
+        ],
+        "ambient": [
+          0.18,
+          0.23,
+          0.2
+        ],
+        "wind": 0.7,
+        "weather": "pollen",
+        "outdoorZones": [
+          {
+            "x": -41.6,
+            "z": 41.6,
+            "w": 22.33669337804895,
+            "d": 22.935519415326418
+          },
+          {
+            "x": 0,
+            "z": 41.6,
+            "w": 21.92051824403461,
+            "d": 22.782469382137062
+          },
+          {
+            "x": -41.6,
+            "z": 0,
+            "w": 22.447564815543593,
+            "d": 22.728674594545737
+          },
+          {
+            "x": -41.6,
+            "z": -41.6,
+            "w": 22.01555025514681,
+            "d": 22.589254453312606
+          },
+          {
+            "x": 0,
+            "z": -41.6,
+            "w": 22.579953471035697,
+            "d": 22.31775204804726
+          },
+          {
+            "x": -20.695956216496416,
+            "z": 41.6,
+            "w": 19.97139418895822,
+            "d": 5.68
+          },
+          {
+            "x": 22.546756931679557,
+            "z": 41.6,
+            "w": 23.672995619324503,
+            "d": 5.68
+          },
+          {
+            "x": -41.6,
+            "z": 20.74828879480483,
+            "w": 5.68,
+            "d": 19.267902995063924
+          },
+          {
+            "x": 0,
+            "z": 18.88104253154015,
+            "w": 5.68,
+            "d": 23.155445554782634
+          },
+          {
+            "x": -41.6,
+            "z": -20.834855035308284,
+            "w": 5.68,
+            "d": 19.44103547607083
+          },
+          {
+            "x": -20.941100803972223,
+            "z": -41.6,
+            "w": 19.80224813690875,
+            "d": 5.68
+          },
+          {
+            "x": 22.443586091691397,
+            "z": -41.6,
+            "w": 22.8072187123471,
+            "d": 5.68
+          },
+          {
+            "x": 92.55474980234868,
+            "z": 0,
+            "w": 60,
+            "d": 60
+          },
+          {
+            "x": 56.054749802348674,
+            "z": 0,
+            "w": 13.5,
+            "d": 5.68
+          }
+        ],
+        "longViewZones": [
+          {
+            "x": 92.55474980234868,
+            "z": 0,
+            "w": 60,
+            "d": 60,
+            "range": 100
+          }
+        ]
+      },
+      "boss": null,
+      "stats": {
+        "drawCalls": 54,
+        "triangles": 155464,
+        "instances": 1410,
+        "contextLost": false,
+        "webglVersion": 2,
+        "backend": "webgl2",
+        "bloom": true,
+        "shadows": true,
+        "renderScale": 1,
+        "pixelRatio": 1,
+        "width": 960,
+        "height": 600,
+        "staticTotal": 14077,
+        "biome": "woodland",
+        "worldRevision": 0,
+        "actorsCulled": 2,
+        "actorsConsidered": 5,
+        "actorFilterMode": "camera-and-shadow-frusta",
+        "actorFilterVolumes": 4,
+        "viewDistance": 64,
+        "staticVisible": 1079,
+        "staticCulled": 12998,
+        "dynamicLights": 0,
+        "blackoutLights": 0,
+        "shadowMaps": 3,
+        "shadowMode": "sun-atlas",
+        "uploadBytes": 21184,
+        "fxInstances": 0
+      },
+      "dynamicMeshes": 331,
+      "actorMeshes": 152,
+      "staticMeshes": 14077,
+      "native": {
+        "width": 960,
+        "height": 600,
+        "calls": 975,
+        "stats": {
+          "drawCalls": 54,
+          "triangles": 155464,
+          "instances": 1410,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 960,
+          "height": 600,
+          "staticTotal": 14077,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "actorsCulled": 2,
+          "actorsConsidered": 5,
+          "actorFilterMode": "camera-and-shadow-frusta",
+          "actorFilterVolumes": 4,
+          "viewDistance": 64,
+          "staticVisible": 1079,
+          "staticCulled": 12998,
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "uploadBytes": 21184,
+          "fxInstances": 0
+        },
+        "GL_errors": 0,
+        "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+        "GL_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)"
+      }
+    },
+    "current": {
+      "path": "/workspace/scratch/d16f8771f40f/v08-qa/barrier-current-gles.json",
+      "hashes": {
+        "world": "d7825d0b2711f37382fb1776484429ef4928a3ee4abf40e15828a5e9982cfae8",
+        "economy": "36beb015434ff4315961df0852553ab2922b0bb9f20d4d1d0a35a08c71bd1515",
+        "destruction": "fff83ba9d039368c3f551ef47662d0d9f33a6007aeccc3bdfe0f39c62ebd586d",
+        "simulation": "7820675171417bef896c4042c407efbfc44d8b8b0a9ec1601d954ce71e893ab0",
+        "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+        "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+        "effects": "9407c066b0543086cba6539eb8c2ab46c397d0ee240c2c44a718bafc3b699ef5",
+        "soundscape": "e89dbf204d9891fea96e93f98e8a9d0d80c258655e5fcf25be38ad67ead037b3",
+        "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+        "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+        "game": "6e9c7f561a8073926915b4da51e98bc10b10f22444aff6fa0aba4d7487146245"
+      },
+      "width": 960,
+      "height": 600,
+      "camera": {
+        "pos": [
+          -2.6000000000000005,
+          1.62,
+          41.6
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": -0.02777063659342106,
+        "fov": 74
+      },
+      "stage": 0,
+      "scene": "barrier",
+      "variant": "current",
+      "backend": "gles",
+      "environment": {
+        "biome": "woodland",
+        "skyTop": [
+          0.055,
+          0.105,
+          0.14
+        ],
+        "skyBottom": [
+          0.2,
+          0.25,
+          0.22
+        ],
+        "fog": [
+          0.15,
+          0.205,
+          0.18
+        ],
+        "sunDirection": [
+          -0.4877686086797539,
+          0.7926239891046002,
+          0.36582645650981543
+        ],
+        "sunColor": [
+          0.48,
+          0.62,
+          0.59
+        ],
+        "ambient": [
+          0.18,
+          0.23,
+          0.2
+        ],
+        "wind": 0.7,
+        "weather": "pollen",
+        "outdoorZones": [
+          {
+            "x": -41.6,
+            "z": 41.6,
+            "w": 22.33669337804895,
+            "d": 22.935519415326418
+          },
+          {
+            "x": 0,
+            "z": 41.6,
+            "w": 21.92051824403461,
+            "d": 22.782469382137062
+          },
+          {
+            "x": -41.6,
+            "z": 0,
+            "w": 22.447564815543593,
+            "d": 22.728674594545737
+          },
+          {
+            "x": -41.6,
+            "z": -41.6,
+            "w": 22.01555025514681,
+            "d": 22.589254453312606
+          },
+          {
+            "x": 0,
+            "z": -41.6,
+            "w": 22.579953471035697,
+            "d": 22.31775204804726
+          },
+          {
+            "x": -20.695956216496416,
+            "z": 41.6,
+            "w": 19.97139418895822,
+            "d": 5.68
+          },
+          {
+            "x": 22.546756931679557,
+            "z": 41.6,
+            "w": 23.672995619324503,
+            "d": 5.68
+          },
+          {
+            "x": -41.6,
+            "z": 20.74828879480483,
+            "w": 5.68,
+            "d": 19.267902995063924
+          },
+          {
+            "x": 0,
+            "z": 18.88104253154015,
+            "w": 5.68,
+            "d": 23.155445554782634
+          },
+          {
+            "x": -41.6,
+            "z": -20.834855035308284,
+            "w": 5.68,
+            "d": 19.44103547607083
+          },
+          {
+            "x": -20.941100803972223,
+            "z": -41.6,
+            "w": 19.80224813690875,
+            "d": 5.68
+          },
+          {
+            "x": 22.443586091691397,
+            "z": -41.6,
+            "w": 22.8072187123471,
+            "d": 5.68
+          },
+          {
+            "x": 92.55474980234868,
+            "z": 0,
+            "w": 60,
+            "d": 60
+          },
+          {
+            "x": 56.054749802348674,
+            "z": 0,
+            "w": 13.5,
+            "d": 5.68
+          }
+        ],
+        "longViewZones": [
+          {
+            "x": 92.55474980234868,
+            "z": 0,
+            "w": 60,
+            "d": 60,
+            "range": 100
+          }
+        ]
+      },
+      "boss": null,
+      "stats": {
+        "drawCalls": 58,
+        "triangles": 155160,
+        "instances": 1387,
+        "contextLost": false,
+        "webglVersion": 2,
+        "backend": "webgl2",
+        "bloom": true,
+        "shadows": true,
+        "renderScale": 1,
+        "pixelRatio": 1,
+        "width": 960,
+        "height": 600,
+        "staticTotal": 13989,
+        "biome": "woodland",
+        "worldRevision": 0,
+        "actorsCulled": 2,
+        "actorsConsidered": 5,
+        "actorFilterMode": "camera-and-shadow-frusta",
+        "actorFilterVolumes": 4,
+        "viewDistance": 64,
+        "staticVisible": 1046,
+        "staticCulled": 12943,
+        "dynamicLights": 0,
+        "blackoutLights": 0,
+        "shadowMaps": 3,
+        "shadowMode": "sun-atlas",
+        "uploadBytes": 21824,
+        "fxInstances": 4
+      },
+      "dynamicMeshes": 341,
+      "actorMeshes": 152,
+      "staticMeshes": 13989,
+      "native": {
+        "width": 960,
+        "height": 600,
+        "calls": 1047,
+        "stats": {
+          "drawCalls": 58,
+          "triangles": 155160,
+          "instances": 1387,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 960,
+          "height": 600,
+          "staticTotal": 13989,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "actorsCulled": 2,
+          "actorsConsidered": 5,
+          "actorFilterMode": "camera-and-shadow-frusta",
+          "actorFilterVolumes": 4,
+          "viewDistance": 64,
+          "staticVisible": 1046,
+          "staticCulled": 12943,
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "uploadBytes": 21824,
+          "fxInstances": 4
+        },
+        "GL_errors": 0,
+        "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+        "GL_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)"
+      }
+    }
+  },
+  "browser": {
+    "previewHtmlSha256": "ad25c3550d0f766a83b3b0b8be9f2f05c0f38c0de3f3d8312a8ca2081915b573",
+    "observations": [
+      "V0.8.0 title badge",
+      "New expedition pistol right, shield left, armor 0/200",
+      "Equipment 1/6 and 6+12 split",
+      "Audio preview control launched from pause",
+      "No METAL-labelled errors in returned console logs"
+    ],
+    "limitations": [
+      "No human listening claim",
+      "No real phone or GPU measurement",
+      "Remote browser about 1 FPS in Canvas fallback"
+    ]
+  }
+}

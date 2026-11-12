@@ -1,8 +1,26 @@
-# Architecture — METAL 0.7.0 — Campagne
+# Architecture — METAL 0.8.0 — Arsenal
+
+## Évolution 0.8 — progression, espaces ouverts, gravats et acoustique
+
+La variation `campaignVersion:2` est sélectionnée pour toute nouvelle expédition. Les chemins historiques restent générables pour les sauvegardes v1. Le cache du shell inclut la variation ; l’enveloppe sauvegardée ajoute `campaignRevision:2`. Les sections historiques de progression plus bas décrivent la variation v1 lorsque leurs règles diffèrent de celles-ci.
+
+`FEconomy` calcule les récompenses déterministes de boss et les calibrages propres à chaque arme. `FSimulation` crée leur caisse au sol, applique la récompense à portée, conserve le journal des boss déjà récompensés et exige la prise du lot principal avant la sortie. Les munitions/plaques restant dans le lot sont indépendantes de ce journal. Le chargement contrôle les invariants avant de modifier la simulation. Six mondes complètent les armes ; douze autres poursuivent l’assaut avec des améliorations et une pression accrue.
+
+`reinforcementBays` n’ajoute plus de panneaux, cadres, marques ou colliders en v2. Ses entrées utilisent les coins de pièces voisines et les virages des couloirs praticables ; `safeEntry` garde la vérification réelle de toute la silhouette et de la distance. Le runtime vérifie un chemin de navigation avant le déploiement. L’absence d’entrée cachée reporte un renfort. Les routes et chaque candidat sont vérifiés par le parcours capsule tenant compte des portes et des paliers.
+
+Les réservistes inactifs gardent leur emplacement d’origine. Les rencontres `naturalEntries` étendent leur rayon de retour aux candidats retenus et donnent aux arrivants un trajet vers le centre de rencontre connu. Le délai `entryGrace`, borné à 60 secondes et calculé depuis la distance, évite un retour prématuré pendant l’approche. Ces arrivants comptent dans le plafond de combat même au-delà de la distance ordinaire de sélection. Les snapshots v2 avec `reinforcementVersion:1` conservent le délai et le chemin ; les anciens snapshots restent acceptés sans ce nouveau champ. Aucune position cachée du joueur n’est utilisée pour leur ordre d’approche.
+
+`FDestruction` transmet les primitives réellement détachées, leur matériau, dimension et pose. `FSimulation` possède les positions, vitesses, rotations, contacts et temps de stabilisation ; `FEffects` ne simule rien et ne raccourcit pas leur durée. Les morceaux structurels sont persistants sous un plafond128 ; les petits éclats temporaires ont un plafond64. La sélection visuelle favorise les débris structurels proches et les groupes distincts. Les gravats ne deviennent pas des colliders pour le joueur ou la navigation. Les sauvegardes avec `rubbleVersion:1` conservent ces morceaux et leur prochaine continuation physique.
+
+`FAudio` prépare une banque PCM déterministe par petits lots. La boucle de combat ne synthétise ni ne crée de buffer audio. Les voix et les sons de collision sont limités/priorisés. Le vent extérieur varie jusqu’au silence ; la banque de ventilateur, piston, réacteur et ascenseur n’est audible qu’à la demande de la scène. Les quatre bus gardent les préférences existantes, et la vapeur continue suit le volume d’ambiance.
+
+Le nouveau module `FSoundscape` calcule distance3D, panoramique et atténuation par le décor intact. Il réutilise les rayons de la simulation, avec une marge au point d’impact pour éviter qu’une paroi masque son propre impact. Le cache inclut la source, la position de l’auditeur, les changements de destruction et les portes ; au plus12 sondes par125ms. Trois candidats proches par type de source suffisent pour comparer un moteur caché avec un autre audible. Les changements de monde vident le cache.
+
+Les éléments du HUD affichent l’armement initial, la phase6+12, les rangs, les récompenses du boss, les PV et la direction de la caisse à ramasser. Le numéro de titre vient du package au build. Les tests de scène, mesures DSP, reprises réelles du shell et captures navigateur/GLES ont chacun une portée distincte décrite dans `VALIDATION.md`.
 
 ## Distribution et identité
 
-`tools/build.py` assemble **treize modules JavaScript**, `index.html` et `style.css` dans un HTML autonome. Aucun chargement réseau de code, image, texture, modèle, police ou audio n’est nécessaire. `SIZE.json` mesure le HTML brut, son gzip reproductible et son SHA-256. Le budget est de 1 400 000 octets bruts ; navigateur, pilotes, tests et documentation sont exclus. Les mesures du build courant et les résultats de vérification sont référencés dans `SIZE.json` et `VALIDATION.md` ; ce document décrit les contrats.
+`tools/build.py` assemble **quatorze modules JavaScript**, `index.html` et `style.css` dans un HTML autonome. Aucun chargement réseau de code, image, texture, modèle, police ou audio n’est nécessaire. `SIZE.json` mesure le HTML brut, son gzip reproductible et son SHA-256. Le budget est de 1 400 000 octets bruts ; navigateur, pilotes, tests et documentation sont exclus. Les mesures du build courant et les résultats de vérification sont référencés dans `SIZE.json` et `VALIDATION.md` ; ce document décrit les contrats.
 
 Le titre public devient **METAL**. Les API `FWorld`, `FRender`, etc., le format de snapshot `FERRO`, les clés `ferro-settings` / `ferro-expedition-v2` et le dépôt GitHub historique restent inchangés pour préserver les références et les migrations.
 
@@ -19,10 +37,11 @@ Le titre public devient **METAL**. Les API `FWorld`, `FRender`, etc., le format 
 | `renderer.js` | Primitives, matériaux, ombres, WebGL 2 et secours Canvas 2D |
 | `music.js` | Générateur, exporteur et lecteur de modules ProTracker |
 | `audio.js` | Contexte audio, effets, ambiances, pression, mixage et protection de crête |
+| `soundscape.js` | Sources acoustiques locales, distance 3D, panoramique et occlusion bornée |
 | `options.js` | Préférences bornées, difficulté, touches et conflits |
 | `game.js` | Entrées, boucle, menus, HUD, montage des systèmes et sauvegardes navigateur |
 
-## Campagne optionnelle et identité
+## Campagne historique v1 et identité
 
 `FWorld.create(seed,index,{campaign:true})` borne index à 0–17, conserve `world.stage=index%3` et ajoute `campaign/index/chapter/chapterTitle`. Sans option, la génération historique reste identique. Les flux aléatoires de l’architecture, des détails, de la nature et de la botanique utilisent l’index campagne, en conservant les clés historiques 0–2. La génération reste 6.
 

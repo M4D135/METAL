@@ -1,0 +1,279 @@
+{
+  "version": "0.8.0",
+  "date": "2026-11-12",
+  "delivery": {
+    "repository": "https://github.com/M4D135/FERRO",
+    "targetBranch": "main",
+    "preparationBranch": "destruction-audio-v08",
+    "hostingDeploymentRequested": false
+  },
+  "build": {
+    "version": "0.8.0",
+    "html_bytes": 789111,
+    "html_decimal_kb": 789.11,
+    "html_kib": 770.62,
+    "gzip_bytes": 238558,
+    "sha256": "6c430ede63cec3b0b34b3369997c96885745ad0c98a4b0a21a9a411e415f4b68",
+    "external_assets": 0,
+    "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+    "source_bytes": {
+      "renderer.js": 106801,
+      "world.js": 133209,
+      "destruction.js": 26469,
+      "music.js": 20526,
+      "audio.js": 45997,
+      "soundscape.js": 4438,
+      "economy.js": 11994,
+      "brain.js": 8923,
+      "simulation.js": 202349,
+      "motion.js": 5280,
+      "actors.js": 27015,
+      "effects.js": 18725,
+      "options.js": 4349,
+      "game.js": 93153
+    }
+  },
+  "nodeTest": {
+    "tests": 412,
+    "pass": 412,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 268000.141059
+  },
+  "classicWorlds": {
+    "status": "PASS",
+    "cases": 18,
+    "targetsChecked": 4800
+  },
+  "legacyCampaignRoutes": {
+    "campaignWorlds": 54,
+    "seeds": [
+      1,
+      96,
+      2026
+    ],
+    "reachedTargets": 9450,
+    "accessibleCells": {
+      "min": 29088,
+      "max": 34335
+    },
+    "legacyFingerprints": 6
+  },
+  "bossCampaignRoutes": {
+    "worlds": 54,
+    "seeds": [
+      1,
+      96,
+      2026
+    ],
+    "reachableTargets": 13740,
+    "firstBossHp": 600,
+    "lastBossHp": 12000
+  },
+  "naturalReserveChecks": {
+    "file": "checks/natural-spawn.test.mjs",
+    "seed": 96,
+    "worldIndices": [
+      0,
+      7,
+      17
+    ],
+    "scope": "Generated natural cover, complete body and weapon silhouette, camera-independent visibility rejection, actual reserve deployment and navigation beyond the former five-second timeout, combat caps, checkpoint continuation and atomic invalid-timer rejection. Controlled observers; not a whole campaign."
+  },
+  "progression": {
+    "campaignVersion": 2,
+    "start": [
+      "pistol",
+      "shield"
+    ],
+    "arsenalCompleteAfterBoss": 6,
+    "worlds": 18,
+    "bossHpFirst": 600,
+    "bossHpLast": 12000,
+    "weaponDamagePerRank": 0.4,
+    "weaponRankCap": 8,
+    "personalRankCap": 12,
+    "profiles": "docs/boss-progression-v08.json",
+    "physicalPickup": true,
+    "oneTimeBossLedger": true,
+    "legacyWorldVariationPreserved": true
+  },
+  "controlledBossCombats": {
+    "method": "Controlled 40 Hz simulation in unobstructed synthetic arena; perfect core aim; stationary station restored each tick; player HP restored; real HP, heat, cooldowns, finite ammunition and actual core windows; no mid-fight pickups. Impact attribution is approximate for delayed ordnance; TTK/ammo are exact for these controls. Not human playtest.",
+    "file": "docs/qa-v08/boss-ttk-final.json",
+    "rows": [
+      {
+        "boss": 1,
+        "initialHP": 600,
+        "strategy": "pistol",
+        "seconds": 116.8,
+        "killed": true,
+        "remainingAmmo": [
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "boss": 6,
+        "initialHP": 2400,
+        "strategy": "arsenal",
+        "seconds": 215.225,
+        "killed": true,
+        "remainingAmmo": [
+          0,
+          0,
+          0,
+          9,
+          1
+        ]
+      },
+      {
+        "boss": 18,
+        "initialHP": 12000,
+        "strategy": "arsenal",
+        "seconds": 272.175,
+        "killed": true,
+        "remainingAmmo": [
+          0,
+          0,
+          0,
+          15,
+          1
+        ]
+      }
+    ]
+  },
+  "destruction": {
+    "structuralBudget": 128,
+    "temporaryBudget": 64,
+    "rubbleVersion": 1,
+    "cosmeticForPlayerAndNavigation": true,
+    "chunkToChunkStacking": false,
+    "fixtureManifest": "docs/qa-v08/destruction-scenes.json"
+  },
+  "audio": {
+    "metrics": "docs/qa-v08/audio-pcm-metrics.json",
+    "externalSamples": 0,
+    "proceduralPcmPreparedBeforeCombat": true,
+    "soundscape": {
+      "rayBudget": 12,
+      "intervalSeconds": 0.125,
+      "cacheBound": 128
+    },
+    "humanListeningPerformed": false
+  },
+  "nativeRenderChecks": {
+    "barrier-before": {
+      "width": 960,
+      "height": 600,
+      "GL_errors": 0,
+      "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+      "GL_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)"
+    },
+    "barrier-current": {
+      "width": 960,
+      "height": 600,
+      "GL_errors": 0,
+      "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+      "GL_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)"
+    },
+    "wall-settled": {
+      "width": 960,
+      "height": 600,
+      "GL_errors": 0,
+      "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+      "GL_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)"
+    },
+    "fence-settled": {
+      "width": 960,
+      "height": 600,
+      "GL_errors": 0,
+      "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+      "GL_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)"
+    },
+    "door-settled": {
+      "width": 960,
+      "height": 600,
+      "GL_errors": 0,
+      "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+      "GL_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)"
+    }
+  },
+  "browser": {
+    "previewHtmlSha256": "ad25c3550d0f766a83b3b0b8be9f2f05c0f38c0de3f3d8312a8ca2081915b573",
+    "observations": [
+      "V0.8.0 title badge",
+      "New expedition pistol right, shield left, armor 0/200",
+      "Equipment 1/6 and 6+12 split",
+      "Audio preview control launched from pause",
+      "No METAL-labelled errors in returned console logs"
+    ],
+    "limitations": [
+      "No human listening claim",
+      "No real phone or GPU measurement",
+      "Remote browser about 1 FPS in Canvas fallback"
+    ]
+  },
+  "captureScope": "Integration captures retain their original source and preview hashes. The final source hashes below and full test run reflect later navigation, calibration and event-dispatch fixes. Native GLES replay is software rasterization, not browser or physical-GPU evidence.",
+  "sourceHashes": {
+    "src/actors.js": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+    "src/audio.js": "5ea97d096360fb3999fa2c04b2f1f5950e855d0a2576f5d947749c18826815a0",
+    "src/brain.js": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "src/destruction.js": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "src/economy.js": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+    "src/effects.js": "9407c066b0543086cba6539eb8c2ab46c397d0ee240c2c44a718bafc3b699ef5",
+    "src/game.js": "dd1de4c02c0c44c9c94e57e9d806595aea2bc8b28a4771dd650ad54bdffb6ec8",
+    "src/index.html": "d28231d464cd4e5bf6da3e8b66511bed578f12ce0c507160b0baf532e2a5f866",
+    "src/motion.js": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+    "src/music.js": "f50361332f36c212461d3005489a5813f518ec65317f2f7c0727d9754f2f5d0b",
+    "src/options.js": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+    "src/renderer.js": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "src/simulation.js": "44ad9e6a890b9ef343a631991e3359a8e0a3c9c310458b28a3a24112399af285",
+    "src/soundscape.js": "e89dbf204d9891fea96e93f98e8a9d0d80c258655e5fcf25be38ad67ead037b3",
+    "src/style.css": "dad9dc91015b3e2e0865d6db0ae6cc03fbde3aad0ba4f6424b3b7252ae86c6d2",
+    "src/world.js": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e"
+  },
+  "testHashes": {
+    "checks/actor-visibility.test.mjs": "eba2baa8bfd2ae79d830f3dfc6785d88f3ef871444f5672c58ce14d7e716fbd7",
+    "checks/actors.test.mjs": "9839824eaea0c615fc163b014c0a6f034e25dea62d4e35887145b53fed950dd9",
+    "checks/armor.test.mjs": "36a7ba6be87d12edd835d3b35832d9206240a023434aea88d8dcd818eec08839",
+    "checks/audio.test.mjs": "4f5a8fabbbdcbd0946aefaf3005e468254f41bf8e1752b5597d47ff65f69e002",
+    "checks/boss-progression.test.mjs": "3b77cec654b0771594dd1747a2d91f424d70827696445f690fcc7face8ba0694",
+    "checks/brain.test.mjs": "f768cb5e6efe4621897c4c5e9fa24fa8c7c0162a7bffaede9f79af95c15824eb",
+    "checks/build.test.mjs": "c4c6aaba943f8c9f699b9c17ad154c7c880d7bd6006ef28648f99565eeab4c2a",
+    "checks/campaign-simulation.test.mjs": "a75b95ff553191df1c887ce404fd957a7a8a8e22cec574cd2c4782ae5fd04fd5",
+    "checks/campaign-world.test.mjs": "37413228d437a68fa8a996d31c6ab2bd69830bbe8d34d590cee4cfc511228ce7",
+    "checks/checkpoint.test.mjs": "80be29f3aec9889d0bd6bfd45dda43929a85745f1803f3448bfc37a0a395cd54",
+    "checks/destruction.test.mjs": "5f2dd3d83cf1754b75d835433376fcf414c8197c3ddfcc5de4b85c6662a62f19",
+    "checks/economy.test.mjs": "40889eb5e861e43e24be849c521c4087451e0d97aff51f2997f1371d72fbb766",
+    "checks/effects.test.mjs": "c1edde293596f3dce54e45a4e08743073a189a49b1bd89f49262d39498b8baba",
+    "checks/first-person-fixture.mjs": "16c8dc4eb150f28be9983bb923a850288cf0cd90c26c54dea6efc87c9ab28da8",
+    "checks/first-person.test.mjs": "88b7ad6f6942639ea1d85f2e35f94bf5aae7acc58c3f50fd9215cf44e17a4da9",
+    "checks/motion.test.mjs": "0f66218419d6ba07bc12d4250af5f16ffe7844ec19b7586638a1bdbd9159a906",
+    "checks/music.test.mjs": "d527d75aa6a4940e7a97d1f1a0014a97a0b71be13a5a784c41e0ad962b37a499",
+    "checks/natural-spawn.test.mjs": "054dbc9aa2b85b530968260aebfd8604f93c07519148b3f5eede5bfbabab32ce",
+    "checks/options.test.mjs": "8a2efdbb529aba9ff537258f79b6de644d5a8bbe000c633eb3a1c170f4061f62",
+    "checks/progression.test.mjs": "d8cb265ea3678a23c0ef2d7474159596e1ebbad688ef36d3db8acb9ef37e2c74",
+    "checks/renderer-destruction.test.mjs": "d8b20c91faf893b2dead6182a32e0e34ea47175f0a6ffb16c0b320b045f41c22",
+    "checks/simulation.test.mjs": "0555b69c6e807471f45bbdc31280b2d8ac8b68177dfb617ce991b59b62a49f6b",
+    "checks/soundscape.test.mjs": "3c36e2873c6618f3d2c5048815cfe0e8219530255af17669f39f65404ab70e5b",
+    "checks/world.test.mjs": "cf1246dbc4d017bca6b2b4628e381398adbcd727c93a8f68bf21dbf53d361772"
+  },
+  "buildInputs": {
+    "package.json": "e6df4c0493df939a37de842447835046e133495ff7dddfa1b45616cc8d037233",
+    "tools/build.py": "a7116c2ee346c2beb99cc4702c874c3cdcb68dd9836af67f68c98c9f561c5f18"
+  },
+  "finalSuiteLogSha256": "1ee8178352d4280ae404c3e574538177ab70fba51c4d7d37bea7477f84950072",
+  "limitations": [
+    "No human full-campaign playthrough or subjective listening.",
+    "No physical phone, multitouch, Safari, GPU or NPU validation.",
+    "Browser preview fell back to Canvas2D and showed about 1 FPS in this remote environment.",
+    "Controlled boss TTK is not a human difficulty or campaign duration measurement.",
+    "Old campaign saves deliberately retain their historical geometry and equipment calendar; start a new expedition for the v2 campaign."
+  ]
+}

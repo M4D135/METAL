@@ -1,0 +1,1270 @@
+{
+  "campaignVersion": 2,
+  "seed": 96,
+  "weaponOrder": [
+    "Mitraillette",
+    "Double pompe",
+    "Lance-roquettes",
+    "Lance-grenades",
+    "Pistolet"
+  ],
+  "calibration": {
+    "damagePerRank": 0.4,
+    "heatFormula": "1 / (1 + .08 * rank)",
+    "maxRank": 8
+  },
+  "personalMaxRank": 12,
+  "armorIncomingFloor": 0.5,
+  "profileAfter18Bosses": {
+    "credits": 0,
+    "cores": 0,
+    "upgrades": {
+      "vitality": 4,
+      "armor": 4,
+      "capacity": 4,
+      "power": 3,
+      "cooling": 3
+    },
+    "version": 2,
+    "weaponUpgrades": [
+      4,
+      4,
+      3,
+      4,
+      3
+    ]
+  },
+  "caveat": "Entry profile assumes mandatory boss rewards only, with no optional workshop purchases. Arena and enemy ammo are generated finite sources, not automatic refills.",
+  "rows": [
+    {
+      "world": 1,
+      "bossHp": 600,
+      "bossKind": "colossus",
+      "garrison": 66,
+      "combatCap": 6,
+      "enemyDamageMultiplier": 0.95,
+      "enemyCadenceMultiplier": 0.95,
+      "entryWeapons": [
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "entryPersonalRanks": {
+        "vitality": 0,
+        "armor": 0,
+        "capacity": 0,
+        "power": 0,
+        "cooling": 0
+      },
+      "entryStats": {
+        "maxHp": 100,
+        "damageMultiplier": 1,
+        "incomingMultiplier": 1,
+        "coolingMultiplier": 1
+      },
+      "entryAmmoCaps": [
+        180,
+        36,
+        12,
+        16,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 0,
+        "weapon": 1,
+        "weaponUpgrade": 1,
+        "personalUpgrade": "vitality",
+        "weaponUpgradeLabel": "Calibrage · Double pompe",
+        "personalUpgradeLabel": "Vitalité",
+        "weaponName": "Double pompe",
+        "weaponUpgradeName": "Double pompe"
+      },
+      "arenaAmmo": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "enemyAmmo": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 2,
+      "bossHp": 850,
+      "bossKind": "siegebreaker",
+      "garrison": 77,
+      "combatCap": 6,
+      "enemyDamageMultiplier": 0.985,
+      "enemyCadenceMultiplier": 0.967,
+      "entryWeapons": [
+        "Double pompe",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "entryPersonalRanks": {
+        "vitality": 1,
+        "armor": 0,
+        "capacity": 0,
+        "power": 0,
+        "cooling": 0
+      },
+      "entryStats": {
+        "maxHp": 120,
+        "damageMultiplier": 1,
+        "incomingMultiplier": 1,
+        "coolingMultiplier": 1
+      },
+      "entryAmmoCaps": [
+        180,
+        36,
+        12,
+        16,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 1,
+        "weapon": 0,
+        "weaponUpgrade": 0,
+        "personalUpgrade": "armor",
+        "weaponUpgradeLabel": "Calibrage · Mitraillette",
+        "personalUpgradeLabel": "Blindage",
+        "weaponName": "Mitraillette",
+        "weaponUpgradeName": "Mitraillette"
+      },
+      "arenaAmmo": [
+        0,
+        24,
+        0,
+        0,
+        0
+      ],
+      "enemyAmmo": [
+        0,
+        40,
+        0,
+        0,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 3,
+      "bossHp": 1200,
+      "bossKind": "custodian",
+      "garrison": 94,
+      "combatCap": 6,
+      "enemyDamageMultiplier": 1.02,
+      "enemyCadenceMultiplier": 0.985,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "entryPersonalRanks": {
+        "vitality": 1,
+        "armor": 1,
+        "capacity": 0,
+        "power": 0,
+        "cooling": 0
+      },
+      "entryStats": {
+        "maxHp": 120,
+        "damageMultiplier": 1,
+        "incomingMultiplier": 0.92,
+        "coolingMultiplier": 1
+      },
+      "entryAmmoCaps": [
+        180,
+        36,
+        12,
+        16,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 2,
+        "weapon": 3,
+        "weaponUpgrade": 3,
+        "personalUpgrade": "capacity",
+        "weaponUpgradeLabel": "Calibrage · Lance-grenades",
+        "personalUpgradeLabel": "Réserves",
+        "weaponName": "Lance-grenades",
+        "weaponUpgradeName": "Lance-grenades"
+      },
+      "arenaAmmo": [
+        168,
+        32,
+        0,
+        0,
+        0
+      ],
+      "enemyAmmo": [
+        180,
+        52,
+        0,
+        0,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 4,
+      "bossHp": 1550,
+      "bossKind": "colossus",
+      "garrison": 84,
+      "combatCap": 8,
+      "enemyDamageMultiplier": 1.055,
+      "enemyCadenceMultiplier": 1.003,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      "entryPersonalRanks": {
+        "vitality": 1,
+        "armor": 1,
+        "capacity": 1,
+        "power": 0,
+        "cooling": 0
+      },
+      "entryStats": {
+        "maxHp": 120,
+        "damageMultiplier": 1,
+        "incomingMultiplier": 0.92,
+        "coolingMultiplier": 1
+      },
+      "entryAmmoCaps": [
+        225,
+        45,
+        15,
+        20,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 3,
+        "weapon": 3,
+        "weaponUpgrade": 3,
+        "personalUpgrade": "power",
+        "weaponUpgradeLabel": "Calibrage · Lance-grenades",
+        "personalUpgradeLabel": "Puissance",
+        "weaponName": "Lance-grenades",
+        "weaponUpgradeName": "Lance-grenades"
+      },
+      "arenaAmmo": [
+        116,
+        20,
+        0,
+        3,
+        0
+      ],
+      "enemyAmmo": [
+        148,
+        42,
+        0,
+        3,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 5,
+      "bossHp": 1900,
+      "bossKind": "siegebreaker",
+      "garrison": 98,
+      "combatCap": 8,
+      "enemyDamageMultiplier": 1.09,
+      "enemyCadenceMultiplier": 1.02,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        1,
+        1,
+        0,
+        2,
+        0
+      ],
+      "entryPersonalRanks": {
+        "vitality": 1,
+        "armor": 1,
+        "capacity": 1,
+        "power": 1,
+        "cooling": 0
+      },
+      "entryStats": {
+        "maxHp": 120,
+        "damageMultiplier": 1.1,
+        "incomingMultiplier": 0.92,
+        "coolingMultiplier": 1
+      },
+      "entryAmmoCaps": [
+        225,
+        45,
+        15,
+        20,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 4,
+        "weapon": null,
+        "weaponUpgrade": 0,
+        "personalUpgrade": "cooling",
+        "weaponUpgradeLabel": "Calibrage · Mitraillette",
+        "personalUpgradeLabel": "Refroidissement",
+        "weaponName": null,
+        "weaponUpgradeName": "Mitraillette"
+      },
+      "arenaAmmo": [
+        140,
+        24,
+        0,
+        3,
+        0
+      ],
+      "enemyAmmo": [
+        196,
+        52,
+        0,
+        3,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 6,
+      "bossHp": 2400,
+      "bossKind": "custodian",
+      "garrison": 119,
+      "combatCap": 8,
+      "enemyDamageMultiplier": 1.125,
+      "enemyCadenceMultiplier": 1.037,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        2,
+        1,
+        0,
+        2,
+        0
+      ],
+      "entryPersonalRanks": {
+        "vitality": 1,
+        "armor": 1,
+        "capacity": 1,
+        "power": 1,
+        "cooling": 1
+      },
+      "entryStats": {
+        "maxHp": 120,
+        "damageMultiplier": 1.1,
+        "incomingMultiplier": 0.92,
+        "coolingMultiplier": 1.2
+      },
+      "entryAmmoCaps": [
+        225,
+        45,
+        15,
+        20,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 5,
+        "weapon": 2,
+        "weaponUpgrade": 2,
+        "personalUpgrade": "vitality",
+        "weaponUpgradeLabel": "Calibrage · Lance-roquettes",
+        "personalUpgradeLabel": "Vitalité",
+        "weaponName": "Lance-roquettes",
+        "weaponUpgradeName": "Lance-roquettes"
+      },
+      "arenaAmmo": [
+        168,
+        32,
+        0,
+        3,
+        0
+      ],
+      "enemyAmmo": [
+        232,
+        62,
+        0,
+        3,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 7,
+      "bossHp": 2900,
+      "bossKind": "colossus",
+      "garrison": 102,
+      "combatCap": 10,
+      "enemyDamageMultiplier": 1.16,
+      "enemyCadenceMultiplier": 1.055,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        2,
+        1,
+        1,
+        2,
+        0
+      ],
+      "entryPersonalRanks": {
+        "vitality": 2,
+        "armor": 1,
+        "capacity": 1,
+        "power": 1,
+        "cooling": 1
+      },
+      "entryStats": {
+        "maxHp": 140,
+        "damageMultiplier": 1.1,
+        "incomingMultiplier": 0.92,
+        "coolingMultiplier": 1.2
+      },
+      "entryAmmoCaps": [
+        225,
+        45,
+        15,
+        20,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 6,
+        "weapon": null,
+        "weaponUpgrade": 1,
+        "personalUpgrade": "armor",
+        "weaponUpgradeLabel": "Calibrage · Double pompe",
+        "personalUpgradeLabel": "Blindage",
+        "weaponName": null,
+        "weaponUpgradeName": "Double pompe"
+      },
+      "arenaAmmo": [
+        124,
+        20,
+        12,
+        3,
+        0
+      ],
+      "enemyAmmo": [
+        192,
+        52,
+        3,
+        5,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 8,
+      "bossHp": 3400,
+      "bossKind": "siegebreaker",
+      "garrison": 119,
+      "combatCap": 10,
+      "enemyDamageMultiplier": 1.195,
+      "enemyCadenceMultiplier": 1.073,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        2,
+        2,
+        1,
+        2,
+        0
+      ],
+      "entryPersonalRanks": {
+        "vitality": 2,
+        "armor": 2,
+        "capacity": 1,
+        "power": 1,
+        "cooling": 1
+      },
+      "entryStats": {
+        "maxHp": 140,
+        "damageMultiplier": 1.1,
+        "incomingMultiplier": 0.84,
+        "coolingMultiplier": 1.2
+      },
+      "entryAmmoCaps": [
+        225,
+        45,
+        15,
+        20,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 7,
+        "weapon": null,
+        "weaponUpgrade": 4,
+        "personalUpgrade": "capacity",
+        "weaponUpgradeLabel": "Calibrage · Pistolet",
+        "personalUpgradeLabel": "Réserves",
+        "weaponName": null,
+        "weaponUpgradeName": "Pistolet"
+      },
+      "arenaAmmo": [
+        148,
+        28,
+        12,
+        3,
+        0
+      ],
+      "enemyAmmo": [
+        228,
+        60,
+        3,
+        5,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 9,
+      "bossHp": 4000,
+      "bossKind": "custodian",
+      "garrison": 145,
+      "combatCap": 10,
+      "enemyDamageMultiplier": 1.23,
+      "enemyCadenceMultiplier": 1.09,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        2,
+        2,
+        1,
+        2,
+        1
+      ],
+      "entryPersonalRanks": {
+        "vitality": 2,
+        "armor": 2,
+        "capacity": 2,
+        "power": 1,
+        "cooling": 1
+      },
+      "entryStats": {
+        "maxHp": 140,
+        "damageMultiplier": 1.1,
+        "incomingMultiplier": 0.84,
+        "coolingMultiplier": 1.2
+      },
+      "entryAmmoCaps": [
+        270,
+        54,
+        18,
+        24,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 8,
+        "weapon": null,
+        "weaponUpgrade": 3,
+        "personalUpgrade": "power",
+        "weaponUpgradeLabel": "Calibrage · Lance-grenades",
+        "personalUpgradeLabel": "Puissance",
+        "weaponName": null,
+        "weaponUpgradeName": "Lance-grenades"
+      },
+      "arenaAmmo": [
+        176,
+        36,
+        12,
+        3,
+        0
+      ],
+      "enemyAmmo": [
+        268,
+        74,
+        3,
+        5,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 10,
+      "bossHp": 4650,
+      "bossKind": "colossus",
+      "garrison": 120,
+      "combatCap": 12,
+      "enemyDamageMultiplier": 1.265,
+      "enemyCadenceMultiplier": 1.108,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        2,
+        2,
+        1,
+        3,
+        1
+      ],
+      "entryPersonalRanks": {
+        "vitality": 2,
+        "armor": 2,
+        "capacity": 2,
+        "power": 2,
+        "cooling": 1
+      },
+      "entryStats": {
+        "maxHp": 140,
+        "damageMultiplier": 1.2,
+        "incomingMultiplier": 0.84,
+        "coolingMultiplier": 1.2
+      },
+      "entryAmmoCaps": [
+        270,
+        54,
+        18,
+        24,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 9,
+        "weapon": null,
+        "weaponUpgrade": 0,
+        "personalUpgrade": "cooling",
+        "weaponUpgradeLabel": "Calibrage · Mitraillette",
+        "personalUpgradeLabel": "Refroidissement",
+        "weaponName": null,
+        "weaponUpgradeName": "Mitraillette"
+      },
+      "arenaAmmo": [
+        144,
+        24,
+        12,
+        4,
+        0
+      ],
+      "enemyAmmo": [
+        220,
+        60,
+        5,
+        7,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 11,
+      "bossHp": 5300,
+      "bossKind": "siegebreaker",
+      "garrison": 140,
+      "combatCap": 12,
+      "enemyDamageMultiplier": 1.3,
+      "enemyCadenceMultiplier": 1.125,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        3,
+        2,
+        1,
+        3,
+        1
+      ],
+      "entryPersonalRanks": {
+        "vitality": 2,
+        "armor": 2,
+        "capacity": 2,
+        "power": 2,
+        "cooling": 2
+      },
+      "entryStats": {
+        "maxHp": 140,
+        "damageMultiplier": 1.2,
+        "incomingMultiplier": 0.84,
+        "coolingMultiplier": 1.4
+      },
+      "entryAmmoCaps": [
+        270,
+        54,
+        18,
+        24,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 10,
+        "weapon": null,
+        "weaponUpgrade": 2,
+        "personalUpgrade": "vitality",
+        "weaponUpgradeLabel": "Calibrage · Lance-roquettes",
+        "personalUpgradeLabel": "Vitalité",
+        "weaponName": null,
+        "weaponUpgradeName": "Lance-roquettes"
+      },
+      "arenaAmmo": [
+        176,
+        32,
+        12,
+        4,
+        0
+      ],
+      "enemyAmmo": [
+        264,
+        70,
+        5,
+        7,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 12,
+      "bossHp": 6050,
+      "bossKind": "custodian",
+      "garrison": 170,
+      "combatCap": 12,
+      "enemyDamageMultiplier": 1.335,
+      "enemyCadenceMultiplier": 1.143,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        3,
+        2,
+        2,
+        3,
+        1
+      ],
+      "entryPersonalRanks": {
+        "vitality": 3,
+        "armor": 2,
+        "capacity": 2,
+        "power": 2,
+        "cooling": 2
+      },
+      "entryStats": {
+        "maxHp": 160,
+        "damageMultiplier": 1.2,
+        "incomingMultiplier": 0.84,
+        "coolingMultiplier": 1.4
+      },
+      "entryAmmoCaps": [
+        270,
+        54,
+        18,
+        24,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 11,
+        "weapon": null,
+        "weaponUpgrade": 1,
+        "personalUpgrade": "armor",
+        "weaponUpgradeLabel": "Calibrage · Double pompe",
+        "personalUpgradeLabel": "Blindage",
+        "weaponName": null,
+        "weaponUpgradeName": "Double pompe"
+      },
+      "arenaAmmo": [
+        208,
+        40,
+        12,
+        4,
+        0
+      ],
+      "enemyAmmo": [
+        308,
+        92,
+        5,
+        7,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 13,
+      "bossHp": 6850,
+      "bossKind": "colossus",
+      "garrison": 138,
+      "combatCap": 14,
+      "enemyDamageMultiplier": 1.37,
+      "enemyCadenceMultiplier": 1.16,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        3,
+        3,
+        2,
+        3,
+        1
+      ],
+      "entryPersonalRanks": {
+        "vitality": 3,
+        "armor": 3,
+        "capacity": 2,
+        "power": 2,
+        "cooling": 2
+      },
+      "entryStats": {
+        "maxHp": 160,
+        "damageMultiplier": 1.2,
+        "incomingMultiplier": 0.76,
+        "coolingMultiplier": 1.4
+      },
+      "entryAmmoCaps": [
+        270,
+        54,
+        18,
+        24,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 12,
+        "weapon": null,
+        "weaponUpgrade": 4,
+        "personalUpgrade": "capacity",
+        "weaponUpgradeLabel": "Calibrage · Pistolet",
+        "personalUpgradeLabel": "Réserves",
+        "weaponName": null,
+        "weaponUpgradeName": "Pistolet"
+      },
+      "arenaAmmo": [
+        164,
+        28,
+        12,
+        5,
+        0
+      ],
+      "enemyAmmo": [
+        244,
+        66,
+        7,
+        9,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 14,
+      "bossHp": 7700,
+      "bossKind": "siegebreaker",
+      "garrison": 161,
+      "combatCap": 14,
+      "enemyDamageMultiplier": 1.405,
+      "enemyCadenceMultiplier": 1.178,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        3,
+        3,
+        2,
+        3,
+        2
+      ],
+      "entryPersonalRanks": {
+        "vitality": 3,
+        "armor": 3,
+        "capacity": 3,
+        "power": 2,
+        "cooling": 2
+      },
+      "entryStats": {
+        "maxHp": 160,
+        "damageMultiplier": 1.2,
+        "incomingMultiplier": 0.76,
+        "coolingMultiplier": 1.4
+      },
+      "entryAmmoCaps": [
+        315,
+        63,
+        21,
+        28,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 13,
+        "weapon": null,
+        "weaponUpgrade": 3,
+        "personalUpgrade": "power",
+        "weaponUpgradeLabel": "Calibrage · Lance-grenades",
+        "personalUpgradeLabel": "Puissance",
+        "weaponName": null,
+        "weaponUpgradeName": "Lance-grenades"
+      },
+      "arenaAmmo": [
+        204,
+        36,
+        12,
+        5,
+        0
+      ],
+      "enemyAmmo": [
+        296,
+        80,
+        7,
+        9,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 15,
+      "bossHp": 8600,
+      "bossKind": "custodian",
+      "garrison": 195,
+      "combatCap": 14,
+      "enemyDamageMultiplier": 1.44,
+      "enemyCadenceMultiplier": 1.195,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        3,
+        3,
+        2,
+        4,
+        2
+      ],
+      "entryPersonalRanks": {
+        "vitality": 3,
+        "armor": 3,
+        "capacity": 3,
+        "power": 3,
+        "cooling": 2
+      },
+      "entryStats": {
+        "maxHp": 160,
+        "damageMultiplier": 1.3,
+        "incomingMultiplier": 0.76,
+        "coolingMultiplier": 1.4
+      },
+      "entryAmmoCaps": [
+        315,
+        63,
+        21,
+        28,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 14,
+        "weapon": null,
+        "weaponUpgrade": 0,
+        "personalUpgrade": "cooling",
+        "weaponUpgradeLabel": "Calibrage · Mitraillette",
+        "personalUpgradeLabel": "Refroidissement",
+        "weaponName": null,
+        "weaponUpgradeName": "Mitraillette"
+      },
+      "arenaAmmo": [
+        240,
+        48,
+        12,
+        5,
+        0
+      ],
+      "enemyAmmo": [
+        340,
+        102,
+        7,
+        9,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 16,
+      "bossHp": 9600,
+      "bossKind": "colossus",
+      "garrison": 156,
+      "combatCap": 16,
+      "enemyDamageMultiplier": 1.475,
+      "enemyCadenceMultiplier": 1.213,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        4,
+        3,
+        2,
+        4,
+        2
+      ],
+      "entryPersonalRanks": {
+        "vitality": 3,
+        "armor": 3,
+        "capacity": 3,
+        "power": 3,
+        "cooling": 3
+      },
+      "entryStats": {
+        "maxHp": 160,
+        "damageMultiplier": 1.3,
+        "incomingMultiplier": 0.76,
+        "coolingMultiplier": 1.6
+      },
+      "entryAmmoCaps": [
+        315,
+        63,
+        21,
+        28,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 15,
+        "weapon": null,
+        "weaponUpgrade": 2,
+        "personalUpgrade": "vitality",
+        "weaponUpgradeLabel": "Calibrage · Lance-roquettes",
+        "personalUpgradeLabel": "Vitalité",
+        "weaponName": null,
+        "weaponUpgradeName": "Lance-roquettes"
+      },
+      "arenaAmmo": [
+        188,
+        32,
+        16,
+        5,
+        0
+      ],
+      "enemyAmmo": [
+        280,
+        72,
+        9,
+        11,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 17,
+      "bossHp": 10800,
+      "bossKind": "siegebreaker",
+      "garrison": 182,
+      "combatCap": 16,
+      "enemyDamageMultiplier": 1.51,
+      "enemyCadenceMultiplier": 1.23,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        4,
+        3,
+        3,
+        4,
+        2
+      ],
+      "entryPersonalRanks": {
+        "vitality": 4,
+        "armor": 3,
+        "capacity": 3,
+        "power": 3,
+        "cooling": 3
+      },
+      "entryStats": {
+        "maxHp": 180,
+        "damageMultiplier": 1.3,
+        "incomingMultiplier": 0.76,
+        "coolingMultiplier": 1.6
+      },
+      "entryAmmoCaps": [
+        315,
+        63,
+        21,
+        28,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 16,
+        "weapon": null,
+        "weaponUpgrade": 1,
+        "personalUpgrade": "armor",
+        "weaponUpgradeLabel": "Calibrage · Double pompe",
+        "personalUpgradeLabel": "Blindage",
+        "weaponName": null,
+        "weaponUpgradeName": "Double pompe"
+      },
+      "arenaAmmo": [
+        228,
+        40,
+        16,
+        5,
+        0
+      ],
+      "enemyAmmo": [
+        332,
+        88,
+        9,
+        11,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    },
+    {
+      "world": 18,
+      "bossHp": 12000,
+      "bossKind": "custodian",
+      "garrison": 221,
+      "combatCap": 16,
+      "enemyDamageMultiplier": 1.545,
+      "enemyCadenceMultiplier": 1.248,
+      "entryWeapons": [
+        "Mitraillette",
+        "Double pompe",
+        "Lance-roquettes",
+        "Lance-grenades",
+        "Pistolet"
+      ],
+      "entryWeaponRanks": [
+        4,
+        4,
+        3,
+        4,
+        2
+      ],
+      "entryPersonalRanks": {
+        "vitality": 4,
+        "armor": 4,
+        "capacity": 3,
+        "power": 3,
+        "cooling": 3
+      },
+      "entryStats": {
+        "maxHp": 180,
+        "damageMultiplier": 1.3,
+        "incomingMultiplier": 0.734,
+        "coolingMultiplier": 1.6
+      },
+      "entryAmmoCaps": [
+        315,
+        63,
+        21,
+        28,
+        1
+      ],
+      "reward": {
+        "rewardIndex": 17,
+        "weapon": null,
+        "weaponUpgrade": 4,
+        "personalUpgrade": "capacity",
+        "weaponUpgradeLabel": "Calibrage · Pistolet",
+        "personalUpgradeLabel": "Réserves",
+        "weaponName": null,
+        "weaponUpgradeName": "Pistolet"
+      },
+      "arenaAmmo": [
+        272,
+        52,
+        16,
+        5,
+        0
+      ],
+      "enemyAmmo": [
+        408,
+        112,
+        9,
+        11,
+        0
+      ],
+      "arenaArmor": 50,
+      "arenaWorkshop": true
+    }
+  ]
+}

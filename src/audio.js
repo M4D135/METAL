@@ -1,17 +1,105 @@
 /* METAL: original procedural audio. No imported recordings or external assets. */
 (function () {
   'use strict';
+  var materials = {
+    metal: {duration:.28,cut:3600,grain:.026,noise:.32,modes:[[393,.17,.34],[711,.11,.22],[1173,.085,.18],[1937,.055,.10],[3181,.035,.06]]},
+    stone: {duration:.18,cut:2300,grain:.022,noise:.92,modes:[[241,.023,.23],[517,.015,.12],[1103,.010,.06]]},
+    wood: {duration:.17,cut:1700,grain:.016,noise:.58,modes:[[183,.045,.37],[419,.025,.21],[937,.012,.10]]},
+    glass: {duration:.32,cut:6500,grain:.010,noise:.24,modes:[[2137,.095,.28],[3371,.073,.26],[5219,.051,.20],[7411,.033,.13]]},
+    dirt: {duration:.15,cut:1100,grain:.031,noise:1.05,modes:[]}
+  };
+  var effectNames = ['pistol','smg','shotgun','rocket','grenade','explosion','steam','body','swish','click'];
+  Object.keys(materials).forEach(function (m) { ['impact','break','land','step'].forEach(function (a) { effectNames.push(a+':'+m); }); });
+  ['fan','piston','reactor','lift'].forEach(function (m) { effectNames.push('motor:'+m); });
+
+  // Original PCM, generated once before play. Short noise
+  // impulses excite damped, inharmonic material modes. These are not pitch
+  // sweeps; every shot contains its crack, body and mechanical action in one
+  // voice. Two seeded variants avoid identical automatic-fire transients.
+  // The pure renderer is exposed for offline waveform/peak/duration checks.
+  function synthesize(name, variant, sampleRate) {
+    var exp=Math.exp,sin=Math.sin,abs=Math.abs,max=Math.max,min=Math.min,PI=Math.PI;
+    var rate = max(8000,min(48000,Number(sampleRate)||22050)), split=name.split(':'), action=split[0], material=materials[split[1]], motor=action==='motor';
+    if (effectNames.indexOf(name)<0) throw new Error('Unknown procedural sound: '+name);
+    var seed = (0x42a39f ^ Math.imul((variant|0)+1,0x9e3779b9))>>>0;
+    for (var h=0;h<name.length;h++) seed=(Math.imul(seed,33)^name.charCodeAt(h))>>>0;
+    function rand(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}
+    var tune=.975+rand()*.05, duration=motor?.8:material?(action==='break'?material.duration+(.33+(split[1]==='glass'?.10:0)):action==='step'?.17:action==='land'?material.duration+.07:material.duration):({pistol:.165,smg:.105,shotgun:.32,rocket:.41,grenade:.29,explosion:.86,steam:.36,body:.16,swish:.14,click:.07}[name]);
+    var out=new Float32Array(Math.ceil(duration*rate)), low=0, soft=0, previous=0, highpass=0, peak=0;
+    var cutoff=material?material.cut:motor?1800:1900, alpha=1-exp(-2*PI*min(rate*.35,cutoff)/rate), slow=1-exp(-2*PI*460/rate);
+    var starts=[0], weights=[1];
+    if(material&&(action==='break'||action==='land')){
+      var count=action==='break'?7:3;
+      for(var b=1;b<count;b++){starts.push(action==='land'?b*.052+rand()*.009:[0,.022,.054,.096,.16,.25,.38][b]+rand()*.012);weights.push((action==='land'?.32:.64)*exp(-b*(action==='land'?.5:.24)));}
+    }
+    for(var i=0;i<out.length;i++){
+      var t=i/rate,white=rand()*2-1;low+=alpha*(white-low);soft+=slow*(white-soft);
+      var bright=white-low,band=low-soft,x=0,u,j;
+      if(material){
+        for(var k=0;k<starts.length;k++){
+          u=t-starts[k];if(u<0)continue;
+          var decay=action==='step'?.019:material.grain, color=split[1]==='glass'?bright*.75+band:split[1]==='dirt'?soft*.7+band*.7:low;
+          x+=weights[k]*material.noise*color*exp(-u/decay);
+          for(j=0;j<material.modes.length;j++){
+            var mode=material.modes[j],frequency=min(rate*.4,mode[0]*tune*(action==='step'?.82:1));
+            x+=weights[k]*mode[2]*(action==='step'?.24:1)*sin(2*PI*frequency*u)*exp(-u/(mode[1]*(action==='step'?.42:1)));
+          }
+          if(action==='break')x+=weights[k]*band*.27*exp(-u/.050);
+        }
+        if(action==='step')x+=.38*sin(2*PI*128*t)*exp(-t/.017)+soft*.6*exp(-max(0,t-.035)/.023)*(t>.035?1:0);
+      }else if(motor){
+        // Only a real nearby machine opens these gains. Filtered friction and
+        // cyclic load give a location, without the old room-wide bass chord.
+        var cycle=t/.8,kind=split[1];
+        if(kind==='fan')x=band*(.38+.08*sin(2*PI*8*cycle))+soft*.10;
+        else if(kind==='piston'){u=t%.4;x=(band*.65+soft*.45)*exp(-u/.075)+.10*sin(2*PI*152.5*t)*exp(-u/.045);}
+        else if(kind==='reactor')x=band*(.26+.14*Math.pow(sin(2*PI*19*cycle),2))+soft*.11;
+        else x=band*.30+soft*.19+.035*sin(2*PI*237.5*t)*(1+.3*sin(2*PI*7*cycle));
+      }else if(name==='pistol'||name==='smg'||name==='shotgun'){
+        var pistol=name==='pistol',shotgun=name==='shotgun',body=pistol?166:shotgun?119:205,tail=pistol?.025:shotgun?.052:.017;
+        x=(bright*.70+band*.7)*exp(-t/(shotgun?.013:pistol?.006:.0045));
+        x+=(soft*1.7+.30*sin(2*PI*body*t*tune))*exp(-t/tail);
+        if(shotgun)for(j=1;j<4;j++){u=t-j*.0027;if(u>=0)x+=.25*bright*exp(-u/.006);}
+        u=t-(shotgun?.18:pistol?.044:.025);
+        if(u>=0)x+=(band*.34+.07*sin(2*PI*(shotgun?613:1287)*u))*exp(-u/(shotgun?.023:.006));
+      }else if(name==='rocket'){
+        x=(band*.92+soft*.45)*(1-exp(-t/.004))*exp(-t/.108)+bright*.45*exp(-t/.004);
+        x+=.16*sin(2*PI*132*t)*exp(-t/.037);
+      }else if(name==='grenade'){
+        x=(soft*1.4+band*.45)*exp(-t/.043)+.46*sin(2*PI*109*t)*exp(-t/.041);
+        x+=.20*sin(2*PI*317*t)*exp(-t/.026)+bright*.5*exp(-t/.004);
+        u=t-.065;if(u>=0)x+=(band*.38+.08*sin(2*PI*947*u))*exp(-u/.012);
+      }else if(name==='explosion'){
+        x=bright*.9*exp(-t/.007)+soft*2.7*exp(-t/.115)+band*.7*exp(-t/.17);
+        x+=.24*sin(2*PI*96*t)*exp(-t/.052);
+        for(j=1;j<5;j++){u=t-[0,.064,.15,.28,.43][j];if(u>=0)x+=band*(.24/j)*exp(-u/.033);}
+      }else if(name==='steam')x=(band*.65+bright*.25)*(1-exp(-t/.002))*exp(-t/.075)+soft*.18*exp(-t/.018);
+      else if(name==='body')x=(soft*1.2+.20*sin(2*PI*142*t))*exp(-t/.026)+band*.15*exp(-t/.009);
+      else if(name==='swish')x=band*Math.pow(sin(PI*t/duration),2)*.7;
+      else x=(band*.8+bright*.3+.11*sin(2*PI*731*t))*exp(-t/.008);
+      // Remove DC/subsonic drift, make both ends exactly zero, preserve the
+      // natural crest factor. No clipping/normalization runs during combat.
+      highpass=.991*(highpass+x-previous);previous=x;
+      var fade=min(1,t/(motor?.006:.00045),(duration-t)/.009);out[i]=highpass*max(0,fade);peak=max(peak,abs(out[i]));
+    }
+    var normal=peak>0?.84/peak:0;
+    for(i=0;i<out.length;i++)out[i]*=normal;
+    out[0]=0;out[out.length-1]=0;return out;
+  }
   window.FAudio = {
+    synthesize: synthesize,
+    effectNames: effectNames.slice(),
     create: function () {
-      var ctx = null, master, effects, ambience, musicBus, droneLevel, droneSway, airFilter, airVolume, echoSend, noiseBuffer, motorLevel, motorOscillator, steamLevel, steamPan;
+      var ctx = null, master, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
-      var lastStep = -1, stepSide = 1, lastAlert = -1, natureTime = 0;
-      var environment = {}, outside = 0, machinery = 0, steam = 0, steamSide = 0, music = null, playing = false;
+      var lastStep = -1, stepSide = 1, lastAlert = -1;
+      var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false;
+      var bank = Object.create(null), motors = [], ambientDuckUntil = 0, variation = 0, warming = null, warmTimer = null, warmResolve = null;
       var mix = {master:1,music:.45,effects:1,ambience:1};
       var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null);
       var priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
       var MUSIC_GAIN = .56, EFFECTS_GAIN = .9, AMBIENCE_GAIN = .7;
-      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,outputCeiling:1};
+      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
       function remember(node) { persistent.push(node); return node; }
       function random() {
         noiseSeed = (Math.imul(noiseSeed, 1664525) + 1013904223) | 0;
@@ -53,6 +141,7 @@
         strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
         cueDucked = true;
         var now = ctx.currentTime, hold = strength < .4 ? .28 : .14;
+        ambientDuckUntil = Math.max(ambientDuckUntil,now+.20);
         duckDepth = now < duckUntil ? Math.min(duckDepth, strength) : strength;
         duckUntil = Math.max(duckUntil, now + hold);
         musicBus.gain.cancelScheduledValues(now);
@@ -90,8 +179,21 @@
       }
       function updateSteam() {
         if (!ctx || !steamLevel || disposed) return;
-        steamLevel.gain.setTargetAtTime(playing ? steam * .085 : 0, ctx.currentTime, steam ? .09 : .025);
+        var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
+        stats.steamGain=audible?steam*.055*mask:0;
+        steamLevel.gain.setTargetAtTime(stats.steamGain, ctx.currentTime, steam ? .06 : .018);
         if (steamPan.pan) steamPan.pan.setTargetAtTime(steamSide, ctx.currentTime, .12);
+        steamFilter.frequency.setTargetAtTime(1950-steamOccluded*1250,ctx.currentTime,.12);
+      }
+      function updateMachinery() {
+        if(!ctx||disposed)return;
+        var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
+        stats.machineryGain=audible?machinery*.075*mask:0;
+        motors.forEach(function(m){
+          m.gain.gain.setTargetAtTime(m.kind===machineKind?stats.machineryGain:0,ctx.currentTime,.055);
+          if(m.pan.pan)m.pan.pan.setTargetAtTime(machineSide,ctx.currentTime,.09);
+          m.filter.frequency.setTargetAtTime(4200-machineOccluded*3400,ctx.currentTime,.12);
+        });
       }
       function horrorCue(kind,value) {
         if (!playing) return;
@@ -99,15 +201,13 @@
         var e=effectEvent('horror:'+kind,{level:(Number.isFinite(event.level)?event.level:1)*intensity,pan:event.pan},.5);
         if (!e) return; var g=e.level,tier=Math.max(0,Math.min(4,Number(event.tier)||0)),tune=1+tier*.025;
         if (kind==='metallicSlam') {
-          tone(102,34,.47,.12*g,'triangle',0,e.pan,1100);noise(.055,.08*g,2200,e.pan,0,'highpass');
-          [480,719,1173].forEach(function(f,i){tone(f*tune,f*.79,.42+i*.10,.043*g/(1+i*.6),'sine',.015,e.pan);});
+          pcm('impact:metal',.40*g,e.pan,event,.78);pcm('break:metal',.19*g,e.pan,event,.94);
         } else if (kind==='blackout') {
-          tone(120,34,.24,.045*g,'sawtooth',0,e.pan,650);noise(.035,.04*g,1900,e.pan,0,'bandpass');tone(72,26,.26,.05*g,'sine',.07,e.pan);
+          pcm('click',.20*g,e.pan,event,.74);pcm('steam',.095*g,e.pan,event,1.3);
         } else if (kind==='alarm') {
           for(var i=0;i<2;i++){tone(340*tune,450*tune,.24,.055*g,'triangle',i*.34,e.pan,1250);tone(680*tune,880*tune,.15,.018*g,'sine',i*.34+.025,e.pan);}
         } else if (kind==='ambush') {
-          tone(70,31,.43,.11*g,'sine',0,e.pan);tone(155*tune,206*tune,.23,.055*g,'sawtooth',0,e.pan,850);
-          tone(196*tune,183*tune,.34,.04*g,'triangle',.02,-e.pan*.3,1250);noise(.09,.065*g,1700,e.pan,0,'bandpass');
+          pcm('impact:stone',.32*g,e.pan,event,.85);pcm('break:metal',.19*g,e.pan,event,1.08);
         }
       }
       function panNode(value) {
@@ -154,6 +254,54 @@
         track(s, [s, f, g, p], level);
         s.start(t, random() * .7); s.stop(t + duration + .02);
       }
+      function pcm(name,level,pan,event,rate,bus) {
+        if(!reserve(level,bus))return;
+        var choices=bank[name];if(!choices)return;
+        duckMusic();event=event||{};
+        var seed=Number.isFinite(event.seed)?event.seed>>>0:(variation++*2654435761)>>>0;
+        var buffer=choices[seed%choices.length],pitch=Math.max(.65,Math.min(1.4,(rate||1)*(1+((seed>>>5)%13-6)*.0025)));
+        var source=ctx.createBufferSource(),gain=ctx.createGain(),panorama=panNode(pan),nodes=[source,gain,panorama],t=ctx.currentTime;
+        source.buffer=buffer;source.playbackRate.value=pitch;
+        var occluded=Math.max(0,Math.min(1,Number(event.occluded)||0)),distance=Math.max(0,Math.min(1,Number.isFinite(event.level)?event.level:1));
+        if(occluded>0||distance<.7){var filter=ctx.createBiquadFilter();filter.type='lowpass';filter.Q.value=.55;filter.frequency.value=Math.max(650,(4200+distance*9000)*(1-occluded*.88));source.connect(filter);filter.connect(gain);nodes.push(filter);}else source.connect(gain);
+        gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(level,t+.0006);
+        gain.gain.setValueAtTime(level,t+buffer.duration/pitch-.006);gain.gain.linearRampToValueAtTime(0,t+buffer.duration/pitch);
+        gain.connect(panorama);panorama.connect(bus||effects);track(source,nodes,level);
+        source.start(t);source.stop(t+buffer.duration/pitch+.005);
+      }
+      function materialCue(action,value) {
+        if(!playing&&!preview)return;
+        value=value||{};var kind=materials[value.material]?value.material:'stone',pan=Number(value.pan)||0;
+        var e=effectEvent(action+':'+kind+':'+Math.round(pan*3),value,action==='break'?.045:action==='land'?.032:.022);if(!e)return;
+        var energy=Number.isFinite(value.energy)?Math.max(0,value.energy):Number.isFinite(value.power)?Math.max(0,value.power)/18:1;
+        if(energy<=.001)return;
+        var force=Math.min(1.25,.28+Math.sqrt(energy)*.55),mass=Math.max(.15,Math.min(8,Number(value.mass)||1));
+        pcm(action+':'+kind,e.level*force*(action==='break'?.36:action==='land'?.15:.22),e.pan,value,Math.max(.74,Math.min(1.18,1.04-Math.log2(mass)*.055)));
+      }
+      function warmBank(yieldWork) {
+        if(!ctx||disposed)return Promise.resolve(false);
+        if(stats.pcmReady)return Promise.resolve(true);
+        function build(name){
+          if(bank[name]||!ctx||disposed)return;
+          var variants=name.indexOf('motor:')===0?1:2;bank[name]=[];
+          for(var v=0;v<variants;v++){
+            var data=synthesize(name,v,22050),buffer=ctx.createBuffer(1,data.length,22050);
+            buffer.getChannelData(0).set(data);bank[name].push(buffer);stats.pcmBuffers++;stats.pcmBytes+=data.byteLength;
+          }
+        }
+        function finish(){
+          if(!ctx||disposed)return false;
+          motors.forEach(function(m){if(m.source)return;var source=remember(ctx.createBufferSource());source.buffer=bank['motor:'+m.kind][0];source.loop=true;source.connect(m.filter);source.start();m.source=source;});
+          stats.pcmReady=true;return true;
+        }
+        // Loading yields between small batches. A legacy caller which starts
+        // play without prepare gets the same complete bank before play begins.
+        if(!yieldWork||typeof setTimeout!=='function'){effectNames.forEach(build);return Promise.resolve(finish());}
+        if(warming)return warming;
+        var index=0;
+        warming=new Promise(function(resolve){warmResolve=resolve;function batch(){warmTimer=null;if(!ctx||disposed){warmResolve=null;resolve(false);return;}for(var i=0;i<2&&index<effectNames.length;i++)build(effectNames[index++]);if(index<effectNames.length)warmTimer=setTimeout(batch,0);else{warmResolve=null;resolve(finish());}}batch();});
+        return warming;
+      }
       function initialize() {
         if (ctx || disposed || failed) return;
         var Audio = window.AudioContext || window.webkitAudioContext;
@@ -179,12 +327,13 @@
           ambience = remember(ctx.createGain()); ambience.gain.value = AMBIENCE_GAIN * mix.ambience; ambience.connect(master);
           musicBus = remember(ctx.createGain()); musicBus.gain.value = MUSIC_GAIN; musicBus.connect(master);
 
-          // A small filtered echo gives the metal chambers a sense of space.
+          // A short, dark room reflection. Open sky gets almost no return;
+          // repeated automatic fire must not build a second blanket of noise.
           var send = remember(ctx.createGain()), delay = remember(ctx.createDelay(.5));
           echoSend = send;
           var damping = remember(ctx.createBiquadFilter()), feedback = remember(ctx.createGain());
-          send.gain.value = .11; delay.delayTime.value = .183;
-          damping.type = 'lowpass'; damping.frequency.value = 1700; feedback.gain.value = .23;
+          send.gain.value = .065; delay.delayTime.value = .117;
+          damping.type = 'lowpass'; damping.frequency.value = 1450; feedback.gain.value = .14;
           effects.connect(send); send.connect(delay); delay.connect(damping);
           damping.connect(master); damping.connect(feedback); feedback.connect(delay);
 
@@ -195,32 +344,24 @@
             smooth = smooth * .96 + white * .04;
             data[i] = white * .64 + smooth * .55;
           }
-          var hiss = remember(ctx.createBufferSource()), hissFilter = remember(ctx.createBiquadFilter());
+          var hiss = remember(ctx.createBufferSource());steamFilter = remember(ctx.createBiquadFilter());
           steamLevel = remember(ctx.createGain()); steamPan = remember(panNode(0));
-          hiss.buffer = noiseBuffer; hiss.loop = true; hissFilter.type = 'bandpass'; hissFilter.frequency.value = 1850; hissFilter.Q.value = .45; steamLevel.gain.value = 0;
-          hiss.connect(hissFilter); hissFilter.connect(steamLevel); steamLevel.connect(steamPan); steamPan.connect(effects); hiss.start();
+          hiss.buffer = noiseBuffer; hiss.loop = true; steamFilter.type = 'bandpass'; steamFilter.frequency.value = 1950; steamFilter.Q.value = .6; steamLevel.gain.value = 0;
+          hiss.connect(steamFilter); steamFilter.connect(steamLevel); steamLevel.connect(steamPan); steamPan.connect(ambience); hiss.start();
           var air = remember(ctx.createBufferSource()); airVolume = remember(ctx.createGain());
           airFilter = remember(ctx.createBiquadFilter());
           air.buffer = noiseBuffer; air.loop = true;
-          airFilter.type = 'bandpass'; airFilter.frequency.value = 650; airFilter.Q.value = .45;
+          airFilter.type = 'bandpass'; airFilter.frequency.value = 780; airFilter.Q.value = .55;
           airVolume.gain.value = 0;
           air.connect(airFilter); airFilter.connect(airVolume); airVolume.connect(ambience); air.start();
 
-          droneLevel = remember(ctx.createGain()); droneLevel.gain.value = 0;
-          droneLevel.connect(ambience);
-          [58.27, 87.307, 176.1].forEach(function (frequency, index) {
-            var oscillator = remember(ctx.createOscillator()), level = remember(ctx.createGain());
-            oscillator.type = index === 0 ? 'sine' : 'triangle';
-            oscillator.frequency.value = frequency; level.gain.value = index === 2 ? .33 : .5;
-            oscillator.connect(level); level.connect(droneLevel); oscillator.start();
+          ['fan','piston','reactor','lift'].forEach(function(kind){
+            var gain=remember(ctx.createGain()),filter=remember(ctx.createBiquadFilter()),pan=remember(panNode(0));
+            gain.gain.value=0;filter.type='lowpass';filter.frequency.value=4200;filter.Q.value=.55;
+            filter.connect(gain);gain.connect(pan);pan.connect(ambience);motors.push({kind:kind,source:null,gain:gain,filter:filter,pan:pan});
           });
-          var sway = remember(ctx.createOscillator()); droneSway = remember(ctx.createGain());
-          sway.frequency.value = .087; droneSway.gain.value = 0;
-          sway.connect(droneSway); droneSway.connect(droneLevel.gain); sway.start();
-          motorLevel = remember(ctx.createGain()); motorLevel.gain.value = 0;
-          motorOscillator = remember(ctx.createOscillator()); motorOscillator.type = 'triangle'; motorOscillator.frequency.value = 48;
-          motorOscillator.connect(motorLevel); motorLevel.connect(ambience); motorOscillator.start();
           if (window.FMusic) { music = FMusic.create(ctx, musicBus); music.setStage(stage); music.setVolume(mix.music); music.setThreat(Math.max(threat,pressure*.65)); music.setPlaying(playing); }
+          if(playing)warmBank(false);
         } catch (_) {
           failed = true;
           if (ctx) { try { ctx.close().catch(function () {}); } catch (_) {} }
@@ -239,37 +380,20 @@
         // Tracker scheduling has its own bounded voices; gunfire never starves it.
         if (music) music.tick();
         updateSteam();
+        updateMachinery();
         if (!available()) return;
         var now = ctx.currentTime;
-        var active = playing || preview;
+        var active = playing;
         if (now >= duckUntil + 1) stats.duckGain = MUSIC_GAIN;
-        // Keep the continuous bed behind actionable sounds; pressure changes color,
-        // not an ever-growing bass floor. The modulation also silences on pause.
-        droneLevel.gain.setTargetAtTime(active ? (.011 + threat * .005 + pressure*.008 + stage * .001) * (1 - outside * .55) : 0, now, .25);
-        droneSway.gain.setTargetAtTime(active ? .0012 : 0, now, .25);
-        airFilter.frequency.setTargetAtTime(650 + threat * 120 + pressure*80 + stage * 60 + outside * 550, now, .4);
-        var wind = Math.max(.2, Math.min(2, Number(environment.wind) || 1));
-        airVolume.gain.setTargetAtTime(active ? .025 + pressure*.012 + outside * wind * (.010 + .004 * Math.sin(now * .23)) : 0, now, .3);
-        echoSend.gain.setTargetAtTime(.11 - outside * .075, now, .65);
-        motorLevel.gain.setTargetAtTime(active ? machinery * .042 : 0, now, .18);
-        motorOscillator.frequency.setTargetAtTime(48 + machinery * 18 + Math.sin(now * 5) * machinery, now, .12);
-        if (active && outside > .5 && now >= natureTime) {
-          natureTime = now + 4 + random() * 5;
-          var side = random() * 1.4 - .7, calm = (1 - Math.max(threat,pressure)*.75) * outside, oldPriority = priority;
-          priority = 1;
-          if (stage === 0) {
-            var chirp = 1600 + random() * 900;
-            tone(chirp, chirp * 1.32, .095, .044 * calm, 'sine', 0, side, 3500, ambience);
-            tone(chirp * 1.12, chirp * .77, .17, .034 * calm, 'sine', .16, side, 3000, ambience);
-          } else if (stage === 1) {
-            noise(.9, .028 * calm, 1500, side, 0, 'bandpass', ambience);
-            tone(310, 290, .35, .011 * calm, 'triangle', .12, -side, 900, ambience);
-          } else {
-            for (var j = 0; j < 3; j++) tone(2400, 2700, .055, .008 * calm, 'sine', j * .1, side, 3200, ambience);
-            tone(520, 490, .38, .009 * calm, 'sine', .45, -side, 900, ambience);
-          }
-          priority = oldPriority;
-        }
+        // No indoor bed and no synthetic birds or ominous bass chord. Wind
+        // follows the exterior exposure and has long, genuinely silent gaps.
+        var wind=Math.max(0,Math.min(2,Number.isFinite(environment.wind)?environment.wind:1));
+        var gust=Math.max(0,Math.min(1,(Math.sin(now*.19+1.2)+.28*Math.sin(now*.53)-.28)*1.25));
+        var mask=(1-Math.max(threat,pressure)*.45)*(now<ambientDuckUntil?.55:1);
+        airFilter.frequency.setTargetAtTime(780+stage*180+(environment.biome==='woodland'?-100:0),now,.4);
+        stats.windGain=active&&mix.ambience>0?outside*wind*gust*.020*mask:0;
+        airVolume.gain.setTargetAtTime(stats.windGain,now,stats.windGain?.22:.045);
+        echoSend.gain.setTargetAtTime(.065-outside*.055,now,.45);
 
       }
       function cancelTestMix() {
@@ -283,7 +407,7 @@
         if (musicBus && ctx) { musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setTargetAtTime(MUSIC_GAIN,ctx.currentTime,.03); }
         duckUntil = 0; duckDepth = 1; stats.duckGain = MUSIC_GAIN;
         updateMaster();
-        if (ctx && !playing) for (var node of [airVolume,droneLevel,motorLevel,droneSway]) if (node) node.gain.setTargetAtTime(0,ctx.currentTime,.025);
+        if (ctx && !playing) {airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;updateSteam();updateMachinery();}
       }
       function testMix(options) {
         cancelTestMix();
@@ -291,16 +415,17 @@
         if (disposed || options && options.muted || mix.master <= 0 || typeof setTimeout !== 'function') return Promise.resolve(false);
         return resume().then(function () {
           if (!ctx || disposed || serial !== previewSerial || ctx.state !== 'running') return false;
+          warmBank(false);
           var start = ctx.currentTime, audition = {id:serial,end:start+2,timer:null,index:0};
           preview = audition; stats.preview = true; updateMaster();
           if (music) music.setPlaying(true);
           // These use the real buses, samples and cue methods. Volume sliders,
           // including an intentionally silent effects/ambience/music bus, hold.
           var events = [
-            {at:0,run:function(){noise(1.7,.06,900,-.4,0,'bandpass',ambience);tone(146,115,1.5,.022,'triangle',0,.4,600,ambience);}},
-            {at:.25,run:function(){api.shot();}},
+            {at:0,run:function(){noise(.75,.035,1100,-.35,0,'bandpass',ambience);}},
+            {at:.25,run:function(){api.shot({weapon:4});}},
             {at:.55,run:function(){api.shot();}},
-            {at:.9,run:function(){api.fracture();}},
+            {at:.9,run:function(){api.materialBreak({material:'stone',level:.8,seed:9});}},
             {at:1.45,run:function(){api.ammoPickup();}}
           ];
           function pump() {
@@ -320,112 +445,98 @@
           // The user gesture opens the shared context through start/resume.
           // This method only prepares existing player buffers after pure PCM
           // warmup; it neither opens a device nor changes the active score.
-          if (!window.FMusic || disposed) return Promise.resolve(false);
-          return FMusic.warmup(next).then(function () { return !!(ctx && music && !disposed && music.prepare(next)); });
+          if (disposed) return Promise.resolve(false);
+          var fx=warmBank(true),score=window.FMusic?FMusic.warmup(next):Promise.resolve(false);
+          return Promise.all([fx,score]).then(function () { return !!(ctx && !disposed && stats.pcmReady && (!music || music.prepare(next))); });
         },
         setMuted: function (value) {
           var next = !!value;
           if (next !== muted) cancelTestMix();
           muted = next;
           updateMaster();
+          updateSteam();updateMachinery();
+          if(muted&&!preview&&ctx&&airVolume){airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;}
         },
         setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(Math.max(threat,pressure*.65)); },
         setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(Math.max(threat,pressure*.65)); },
-        setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; updateSteam(); if (music) { music.setStage(stage); music.setThreat(threat); } },
-        setPlaying: function (value) { cancelTestMix(); playing = !!value; updateSteam(); if (music) music.setPlaying(playing); if (!playing && ctx) for (var node of [airVolume,droneLevel,motorLevel,droneSway]) if (node) node.gain.setTargetAtTime(0,ctx.currentTime,.025); },
+        setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); if (music) { music.setStage(stage); music.setThreat(threat); } },
+        setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing&&ctx)warmBank(false); updateSteam();updateMachinery(); if (music) music.setPlaying(playing); if (!playing && ctx && airVolume) {airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
         setMix: function (value) {
           for (var key in mix) if (Number.isFinite(value && value[key])) mix[key] = Math.max(0, Math.min(1, value[key]));
           if (!ctx || disposed) return;
           updateMaster();
           effects.gain.setTargetAtTime(EFFECTS_GAIN * mix.effects, ctx.currentTime, .025);
           ambience.gain.setTargetAtTime(AMBIENCE_GAIN * mix.ambience, ctx.currentTime, .025);
+          updateSteam();updateMachinery();
+          if(mix.ambience<=0){airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;}
           if (music) music.setVolume(mix.music);
         },
         setEnvironment: function (value, amount) { environment = value || {}; outside = Math.max(0, Math.min(1, Number(amount) || 0)); },
-        setMachinery: function (value) { machinery = Math.max(0, Math.min(1, Number(value) || 0)); },
-        setSteam: function (value, pan) { steam = Math.max(0,Math.min(1,Number(value)||0)); steamSide = Math.max(-1,Math.min(1,Number(pan)||0)); updateSteam(); },
+        setMachinery: function (value, pan, kind, occluded) { machinery = Math.max(0,Math.min(1,Number(value)||0));machineSide=Math.max(-1,Math.min(1,Number(pan)||0));machineKind=['fan','piston','reactor','lift'].indexOf(kind)>=0?kind:'lift';machineOccluded=Math.max(0,Math.min(1,Number(occluded)||0));updateMachinery(); },
+        setSteam: function (value, pan, occluded) { steam = Math.max(0,Math.min(1,Number(value)||0)); steamSide = Math.max(-1,Math.min(1,Number(pan)||0));steamOccluded=Math.max(0,Math.min(1,Number(occluded)||0)); updateSteam(); },
         stats: stats,
         tick: tick,
         testMix: testMix,
         cancelTestMix: cancelTestMix,
+        materialImpact: function(value){materialCue('impact',value);},
+        materialBreak: function(value){materialCue('break',value);},
+        debrisLand: function(value){materialCue('land',value);},
         horror: function (event) { horrorCue(event&&event.kind,event); },
         metallicSlam: function (event) { horrorCue('metallicSlam',event); },
         horrorSting: function (event) { horrorCue('ambush',event); },
         powerCut: function (event) { horrorCue('blackout',event); },
         alarm: function (event) { horrorCue('alarm',event); },
         rocket: function (value) {
-          var e = handEvent('rocket',value,.055); if (!e) return; var g = e.level;
-          tone(190,53,.2,.11*g,'sawtooth',0,e.pan,1100);
-          noise(.19,.12*g,1800,e.pan,0,'bandpass');tone(52,34,.22,.07*g,'sine',0,e.pan);
+          if(!playing&&!preview)return;
+          var e = handEvent('rocket',value,.055); if (e)pcm('rocket',.57*e.level,e.pan,e.event);
         },
         grenade: function (value) {
-          var e = effectEvent('grenade',value,.085); if (!e) return; var g = e.level;
-          noise(.06,.075*g,2600,e.pan,0,'highpass');tone(220,110,.1,.055*g,'triangle',0,e.pan,1800);tone(110,50,.17,.08*g,'sine',.015,e.pan);
+          if(!playing&&!preview)return;
+          var e = effectEvent('grenade',value,.085); if(e)pcm('grenade',.54*e.level,e.pan,e.event,1.08);
         },
         grenadeLaunch: function(value){
           if(!playing&&!preview)return;
-          var e=handEvent('grenadeLaunch',value,.075);if(!e)return;var g=e.level;
-          // A short barrel thump, compressed gas and the spring-loaded breech.
-          tone(105,31,.29,.19*g,'sine',0,e.pan);
-          noise(.16,.17*g,780,e.pan,0,'lowpass');
-          tone(260,88,.14,.095*g,'triangle',.012,e.pan,1400);
-          noise(.035,.065*g,3200,e.pan,.045,'bandpass');
+          var e=handEvent('grenadeLaunch',value,.075);if(e)pcm('grenade',.66*e.level,e.pan,e.event);
         },
         shieldRaise: function(value){
           if(!playing&&!preview)return;
           var e=effectEvent('shieldRaise',value,.15);if(!e)return;var g=e.level;
-          tone(165,410,.23,.075*g,'triangle',0,e.pan,1500);
-          noise(.11,.052*g,1650,e.pan,.015,'bandpass');
-          tone(700,520,.09,.048*g,'sine',.11,e.pan);
+          pcm('click',.19*g,e.pan,e.event,.8);pcm('impact:metal',.105*g,e.pan,e.event,1.2);
         },
         shieldBlock: function(value){
           if(!playing&&!preview)return;
           var broken=!!(value&&value.broken),e=effectEvent(broken?'shieldBreak':'shieldBlock',value,.035);if(!e)return;
           var absorbed=Number(e.event.absorbed),force=Number.isFinite(absorbed)?Math.max(0,absorbed):4;
           var g=e.level*(.65+.35*Math.min(1,Math.sqrt(force/8)));
-          noise(.055,.13*g,2300,e.pan,0,'bandpass');
-          tone(920,280,.19,.10*g,'triangle',0,e.pan,2400);
-          tone(110,44,.15,.13*g,'sine',0,e.pan);
-          if(broken){noise(.22,.09*g,4400,e.pan,.025,'highpass');tone(400,65,.30,.065*g,'sawtooth',.035,e.pan,1400);}
+          pcm('impact:metal',.40*g,e.pan,e.event,1.12);
+          if(broken)pcm('break:glass',.23*g,e.pan,e.event,1.15);
         },
         shieldBash: function(value){
           if(!playing&&!preview)return;
           var e=effectEvent('shieldBash',value,.25);if(!e)return;var g=e.level;
-          noise(.15,.085*g,850,e.pan,0,'bandpass');
-          tone(180,57,.17,.10*g,'triangle',0,e.pan,1100);
-          if(e.event.hit||e.event.count>0){tone(95,29,.24,.17*g,'sine',.035,e.pan);noise(.07,.11*g,1450,e.pan,.035,'bandpass');}
+          pcm('swish',.17*g,e.pan,e.event);
+          if(e.event.hit||e.event.count>0){pcm('body',.42*g,e.pan,e.event,.83);pcm('impact:metal',.16*g,e.pan,e.event,.87);}
         },
         explosion: function (value) {
           var e = effectEvent('explosion',value,.095); if (!e) return;
           var kind=e.event.kind,steamBlast=kind==='steam',boss=kind==='boss';
           var size=Math.max(.7,Math.min(1.8,(Number(e.event.radius)||3.5)/3.5*(boss?1.12:1)));
           var power=Math.max(.72,Math.min(1.35,Math.sqrt(Math.max(0,Number(e.event.power)||32)/32)));
-          var g=e.level*power*(steamBlast?.68:1),bright=.45+.55*e.level,tune=.96+((Number(e.event.seed)||0)>>>0)%9*.01;
-          var spread=.22*e.level,left=Math.max(-1,e.pan-spread),right=Math.min(1,e.pan+spread);
-          // Crack → low-frequency pressure → audible cabinet/body → debris.
-          // Seven short/decaying voices reuse the existing noise buffer. The
-          // normal-effects pool leaves eight slots for player shots/warnings.
-          noise(.045,.22*g,1000+2700*e.level,e.pan,0,'bandpass');
-          tone(78/Math.sqrt(size),25,.72*size,.245*g,'sine',0,e.pan);
-          noise(.43*size,.36*g,520+540*e.level,e.pan,0,'lowpass');
-          tone(170*tune/size,48,.40*size,.145*g,'triangle',.008,e.pan,920*bright);
-          noise(.24*size,.105*g,(steamBlast?2600:2300)*bright,right,.075,'bandpass');
-          noise(1.05*size,.135*g,(steamBlast?1700:1150)*bright,left,.12,steamBlast?'bandpass':'lowpass');
-          tone((kind==='grenade'?470:340)*tune,92,.55*size,.055*g,'triangle',.085,right,1500*bright);
+          // One non-tonal crack/pressure/debris buffer, without a sustained
+          // sub-bass glide. Size stretches the decay; distance removes highs.
+          pcm(steamBlast?'steam':'explosion',e.level*power*(steamBlast?.40:.75),e.pan,e.event,1/Math.sqrt(size));
         },
         pipeLeak: function (value) {
-          var e = effectEvent('pipeLeak',value,.13); if (!e) return; var g = e.level;
-          noise(.5,.12*g,2200,e.pan,0,'bandpass');tone(210,90,.23,.055*g,'triangle',0,e.pan,1300);noise(.055,.06*g,4400,e.pan,0,'highpass');
+          var e = effectEvent('pipeLeak',value,.13); if(e)pcm('steam',.32*e.level,e.pan,e.event);
         },
         creak: function (value) {
-          var e = effectEvent('creak',value,.15); if (!e) return; var g = e.level;
-          tone(185,66,.42,.065*g,'sawtooth',0,e.pan,650);tone(380,160,.27,.035*g,'triangle',.04,-e.pan*.4,1200);noise(.16,.06*g,820,e.pan,.09,'bandpass');
+          var e = effectEvent('creak',value,.15); if(e)pcm('break:metal',.15*e.level,e.pan,e.event,.78);
         },
         trap: function (value) {
           var e = effectEvent('trap',value,.1); if (!e) return; var g = e.level, kind = e.event.kind;
-          if (kind === 'blade') { tone(680,180,.22,.085*g,'triangle',0,e.pan,2200);noise(.09,.06*g,3200,e.pan,0,'highpass'); }
-          else if (kind === 'spikes') { tone(1350,280,.11,.075*g,'triangle',0,e.pan,2800);noise(.08,.06*g,2400,e.pan,0,'bandpass'); }
-          else { tone(105,29,.25,.16*g,'triangle',0,e.pan,650);noise(.13,.11*g,520,e.pan,0,'lowpass'); }
+          if (kind === 'blade') { pcm('swish',.27*g,e.pan,e.event,1.25);pcm('click',.16*g,e.pan,e.event); }
+          else if (kind === 'spikes') pcm('impact:metal',.31*g,e.pan,e.event,1.35);
+          else { pcm('impact:metal',.29*g,e.pan,e.event,.75);pcm('body',.37*g,e.pan,e.event,.78); }
         },
         bossTell: function (value) {
           var e = effectEvent('bossTell',value,.25); if (!e) return; var g = e.level;
@@ -433,45 +544,25 @@
         },
         bossRoar: function (value) {
           var e = effectEvent('bossRoar',value,.6); if (!e) return; var g = e.level;
-          tone(55,25,.85,.15*g,'sawtooth',0,e.pan,520);tone(83,39,.65,.09*g,'triangle',.04,-e.pan*.5,700);noise(.65,.13*g,450,e.pan,0,'lowpass');noise(.4,.035*g,1300,e.pan,.14,'bandpass');
+          pcm('break:metal',.39*g,e.pan,e.event,.74);pcm('steam',.21*g,e.pan,e.event,.8);
         },
         bossImpact: function (value) {
           var e = effectEvent('bossImpact',value,.12); if (!e) return; var g = e.level;
-          tone(48,20,.7,.2*g,'sine',0,e.pan);noise(.28,.19*g,460,e.pan,0,'lowpass');noise(.065,.08*g,2800,e.pan,0,'highpass');tone(115,36,.45,.07*g,'triangle',.08,-e.pan*.4,700);
+          pcm('explosion',.58*g,e.pan,e.event,1.12);pcm('impact:stone',.23*g,e.pan,e.event,.85);
         },
         bossDeath: function (value) {
           var e = effectEvent('bossDeath',value,1.4); if (!e) return; var g = e.level;
-          tone(78,19,1.15,.15*g,'sawtooth',0,e.pan,440);noise(.65,.12*g,360,e.pan,0,'lowpass');
-          for (var i = 0; i < 3; i++) {
-            var delay = .22 + i*.26;
-            tone(160-i*27,31,.32,.06*g,'triangle',delay,e.pan*(i%2?-.5:1),850);
-            noise(.22,.085*g,620+i*280,e.pan,delay,'bandpass');
-          }
+          pcm('explosion',.62*g,e.pan,e.event,.87);pcm('break:metal',.33*g,e.pan,e.event,.8);
         },
         shot: function (value) {
           var pistol=!!value&&value.weapon===4;
-          if(pistol&&!playing&&!preview)return;
+          if(!playing&&!preview)return;
           var e=handEvent(pistol?'pistol':'shot',value,pistol?.08:.045);if(!e)return;var g=e.level;
-          if(pistol){
-            // A compact crack, a short body and the closing slide; no sample asset.
-            tone(260,68,.115,.18*g,'triangle',0,e.pan,2200);
-            tone(1560,240,.045,.065*g,'sawtooth',0,e.pan,3400);
-            noise(.058,.19*g,2900,e.pan,0,'highpass');
-            noise(.024,.065*g,4600,e.pan,.048,'highpass');
-            return;
-          }
-          tone(185, 45, .16, .24*g, 'sawtooth', 0, e.pan+.08, 1800);
-          tone(1150, 180, .065, .07*g, 'triangle', 0, e.pan+.02, 2800);
-          noise(.095, .23*g, 2350, e.pan+.1);
-          noise(.026, .07*g, 4200, e.pan-.1, .035, 'highpass');
+          pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g,e.pan,e.event);
         },
         fracture: function (value) {
-          var e=handEvent('fracture',value,.075);if(!e)return;var g=e.level;
-          tone(135, 27, .31, .29*g, 'sawtooth', 0, e.pan+.05, 1350);
-          tone(65, 32, .42, .21*g, 'sine', 0, e.pan);
-          noise(.22, .3*g, 1500, e.pan-.14);
-          noise(.13, .12*g, 3100, e.pan+.14, .035);
-          noise(.04, .06*g, 620, e.pan+.1, .32, 'lowpass');
+          if(!playing&&!preview)return;
+          var e=handEvent('fracture',value,.075);if(e)pcm('shotgun',.77*e.level,e.pan,e.event);
         },
         pulse: function () {
           if (!available()) return;
@@ -481,14 +572,11 @@
           tone(960, 120, .5, .055, 'sine', .06, -.3);
         },
         switchWeapon: function () {
-          noise(.045, .075, 2300, .2);
-          tone(170, 98, .065, .055, 'triangle', .025, .1, 1200);
+          pcm('click',.14,.10,null,.85);
         },
         dash: function () {
           if (!available()) return;
-          noise(.17, .075, 1850, -.18, 0, 'highpass');
-          noise(.12, .055, 850, .18, .04, 'lowpass');
-          tone(180, 65, .18, .035, 'sine', 0, 0, 500);
+          pcm('swish',.19,0,null,.9);
         },
         alerted: function (event) {
           if (!available() || ctx.currentTime - lastAlert < .45) return;
@@ -501,9 +589,7 @@
           event = event || {};
           var pan = Math.max(-1,Math.min(1,Number(event.pan)||0)), e = effectEvent('enemyShot:'+Math.round(pan*4),event,.06);
           if (!e || e.level < .055) return;
-          var level = e.level * .115;
-          tone(event.kind === 3 ? 180 : 430, 70, .19, level, 'triangle', 0, pan, 1900);
-          noise(.07, level * .8, 2100, pan);
+          pcm(event.kind===3?'grenade':'smg',e.level*(event.kind===3?.28:.24),pan,event,event.kind===3?1.13:1);
         },
         bossPhase: function () {
           [0, .18, .36].forEach(function (offset) {
@@ -512,17 +598,13 @@
           });
         },
         hit: function () {
-          noise(.055, .11, 3600, -.1);
-          tone(1780, 660, .065, .055, 'sine', 0, .1);
+          pcm('click',.12,0,null,1.3);
         },
         hurt: function () {
-          tone(82, 33, .26, .2, 'triangle', 0, -.12, 850);
-          noise(.2, .12, 750, .12, 0, 'lowpass');
+          pcm('body',.45,0,null,.85);
         },
         kill: function () {
-          tone(370, 43, .32, .12, 'triangle', 0, -.18, 1800);
-          noise(.32, .18, 1250, .18);
-          noise(.08, .06, 2900, -.2, .14);
+          pcm('body',.19,0,null,.94);pcm('impact:dirt',.09,0,null);
         },
         pickup: function () {
           tone(659.255, 659.255, .18, .075, 'sine', 0, -.18);
@@ -552,12 +634,12 @@
         },
         empty: function (value) {
           var e=effectEvent('empty',value,.18);if(!e)return;
-          noise(.025,.10*e.level,3400,.08,0,'highpass');tone(390,170,.055,.065*e.level,'triangle',0,.06,1800);
+          pcm('click',.24*e.level,e.pan,e.event,1.2);
         },
         melee: function (value) {
           var e=effectEvent('melee',value,.12);if(!e)return;
-          noise(.12,.12*e.level,1100,e.pan,0,'bandpass');tone(155,48,.14,.14*e.level,'triangle',.035,e.pan,900);
-          if(e.event.hit){noise(.06,.15*e.level,2800,e.pan,.055,'highpass');tone(88,33,.18,.14*e.level,'sine',.055,e.pan);}
+          pcm('swish',.22*e.level,e.pan,e.event,.94);
+          if(e.event.hit)pcm('body',.40*e.level,e.pan,e.event,.9);
         },
         wave: function (value) {
           var e=effectEvent('wave',value,.8);if(!e)return;
@@ -571,11 +653,7 @@
           });
         },
         mechanism: function (event) {
-          event = event || {}; var level = (event.level || 1) * .13, pan = event.pan || 0;
-          noise(.13, level, 620, pan, 0, 'lowpass');
-          tone(130, 72, .19, level * .65, 'triangle', 0, pan, 1100);
-          tone(220, 440, .45, level * .45, 'sine', .1, pan);
-          tone(660, 660, .3, level * .35, 'sine', .42, pan);
+          var e=effectEvent('mechanism',event,.12);if(e){pcm('click',.20*e.level,e.pan,e.event,.78);pcm('impact:metal',.14*e.level,e.pan,e.event,.85);}
         },
         jumpPad: function (event) {
           event = event || {}; var level = (event.level || 1) * (event.actor === 'enemy' ? .06 : .16), pan = event.pan || 0;
@@ -584,20 +662,15 @@
           tone(42, 90, .22, level, 'sine', 0, pan);
         },
         land: function (event) {
-          event = event || {}; var impact = Math.min(1, (event.impact || 4) / 10), level = (event.level || 1) * impact * (event.actor === 'enemy' ? .035 : .12), pan = event.pan || 0;
-          tone(70, 28, .14, level, 'sine', 0, pan); noise(.12, level * .8, 480, pan, 0, 'lowpass');
+          event=event||{};var e=effectEvent('land:'+Math.round((event.pan||0)*3),event,.05);if(!e)return;
+          var impact=Math.min(1,(Number.isFinite(event.impact)?event.impact:4)/10),kind=materials[event.material]?event.material:event.outdoor?'dirt':'stone';
+          pcm('step:'+kind,e.level*impact*(event.actor==='enemy'?.12:.28),e.pan,event,.78);
         },
         liftStart: function (event) {
-          event = event || {}; var level = (event.level || 1) * .1, pan = event.pan || 0;
-          noise(.2, level, 720, pan, 0, 'lowpass');
-          tone(35, 75, .7, level * .7, 'triangle', .04, pan, 420);
+          var e=effectEvent('liftStart',event,.2);if(e)pcm('impact:metal',.19*e.level,e.pan,e.event,.75);
         },
         liftStop: function (event) {
-          event = event || {}; var level = (event.level || 1) * .08, pan = event.pan || 0;
-          noise(.13, level, 580, pan, 0, 'lowpass');
-          tone(75, 36, .24, level * .7, 'triangle', 0, pan, 360);
-          tone(523.25, 523.25, .22, level * .5, 'sine', .12, pan);
-          tone(783.99, 783.99, .35, level * .4, 'sine', .26, pan);
+          var e=effectEvent('liftStop',event,.2);if(e){pcm('click',.19*e.level,e.pan,e.event,.85);pcm('impact:metal',.12*e.level,e.pan,e.event,.95);}
         },
         win: function () {
           [220, 329.627, 440, 523.251, 659.255, 880].forEach(function (n, i) {
@@ -605,26 +678,18 @@
           });
         },
         step: function (speed, surface) {
-          if (!available() || !(speed > .2)) return;
+          if (!available() || !playing || !(speed > .2)) return;
           // The measured stride in game.js schedules steps; this only rejects duplicates.
           if (ctx.currentTime - lastStep < .1) return;
           lastStep = ctx.currentTime; stepSide *= -1;
-          var weight = Math.max(.55, Math.min(1.2, speed / 4.5));
-          if (surface && surface.outdoor) {
-            noise(.095, .074 * weight, stage === 1 ? 1850 : 1050, stepSide * .24, 0, 'bandpass');
-            noise(.055, .024 * weight, 3700, stepSide * .2, .025, 'highpass');
-            tone(53 + random() * 7, 29, .065, .026 * weight, 'sine', 0, stepSide * .15);
-            return;
-          }
-          noise(.075, .09 * weight, 430 + random() * 120, stepSide * .24, 0, 'lowpass');
-          tone(67 + random() * 8, 34, .07, .055 * weight, 'sine', 0, stepSide * .18);
-          noise(.035, .018 * weight, 2600, stepSide * .25, .025);
-          noise(.055, .009 * weight, 1500, -stepSide * .12, .055, 'highpass');
+          var weight=Math.max(.4,Math.min(1.15,speed/4.5)),kind=surface&&materials[surface.material]?surface.material:surface&&surface.outdoor?'dirt':'metal';
+          pcm('step:'+kind,.13*weight,stepSide*.16,surface,1+(weight-1)*.035);
         },
         dispose: function () {
           if (disposed) return;
           cancelTestMix();
           disposed = true;
+          if(warmTimer!==null)clearTimeout(warmTimer);warmTimer=null;if(warmResolve)warmResolve(false);warmResolve=null;
           if (music) { music.dispose(); music = null; }
           voices.forEach(function (entry) {
             try { entry.source.stop(); } catch (_) {}
@@ -636,7 +701,7 @@
           });
           persistent.length = 0;
           if (ctx) { try { ctx.close().catch(function () {}); } catch (_) {} }
-          ctx = null; noiseBuffer = null;
+          ctx = null; noiseBuffer = null;bank=Object.create(null);motors.length=0;
         }
       };
       // Priority belongs to a cue, not its waveform. A rocket's click, body
@@ -649,7 +714,7 @@
         api[name] = function () {
           var event = arguments[0], previousPriority=priority, previousCue=cue, previousLevel=cueLevel, previousDucked=cueDucked;
           if (event && typeof event==='object' && Number.isFinite(event.level) && event.level<=.008) return;
-          priority = name==='enemyShot'||name==='alerted' ? 1 : urgent.test(name) ? 3 : 2;
+          priority = name==='enemyShot'||name==='alerted'||name==='debrisLand'||name==='step' ? 1 : urgent.test(name) ? 3 : 2;
           if ((name==='rocket'||name==='grenade') && event && event.owner !== undefined && event.owner !== 'player') priority=2;
           cue=name;cueLevel=event&&typeof event==='object'&&Number.isFinite(event.level)?Math.max(0,Math.min(1,event.level)):1;
           if(event&&typeof event==='object'&&Number.isFinite(event.intensity))cueLevel*=Math.max(0,Math.min(1,event.intensity));

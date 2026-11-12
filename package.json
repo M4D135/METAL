@@ -1,10 +1,10 @@
 {
   "name": "ferro-procedural-fps",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
-  "description": "METAL — fully procedural campaign FPS: eighteen worlds, arsenal discoveries, adaptive waves, collectible armor and original metal MOD music.",
+  "description": "METAL \u2014 procedural FPS: boss weapon drops, eighteen harder worlds, persistent destruction and spatial procedural sound.",
   "scripts": {
     "build": "python3 tools/build.py",
-    "test": "node checks/world.test.mjs && node --test checks/campaign-world.test.mjs checks/campaign-simulation.test.mjs checks/simulation.test.mjs checks/progression.test.mjs checks/economy.test.mjs checks/brain.test.mjs checks/destruction.test.mjs checks/renderer-destruction.test.mjs checks/effects.test.mjs checks/motion.test.mjs checks/actors.test.mjs checks/actor-visibility.test.mjs checks/music.test.mjs checks/audio.test.mjs checks/options.test.mjs checks/checkpoint.test.mjs checks/armor.test.mjs checks/first-person.test.mjs && node checks/build.test.mjs"
+    "test": "node checks/world.test.mjs && node --test --test-reporter=tap checks/campaign-world.test.mjs checks/campaign-simulation.test.mjs checks/boss-progression.test.mjs checks/natural-spawn.test.mjs checks/simulation.test.mjs checks/progression.test.mjs checks/economy.test.mjs checks/brain.test.mjs checks/destruction.test.mjs checks/renderer-destruction.test.mjs checks/effects.test.mjs checks/motion.test.mjs checks/actors.test.mjs checks/actor-visibility.test.mjs checks/music.test.mjs checks/audio.test.mjs checks/soundscape.test.mjs checks/options.test.mjs checks/checkpoint.test.mjs checks/armor.test.mjs checks/first-person.test.mjs && node checks/build.test.mjs"
   }
 }

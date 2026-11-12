@@ -2,7 +2,7 @@
 
 **Des ennemis de métal. Une bande-son metal.** Un FPS d’horreur et d’action entièrement procédural : 18 mondes, six chapitres, un arsenal à découvrir, des colosses, des territoires destructibles et des musiques MOD originales. Modèles, matériaux, animations, effets, instruments et compositions sont produits par le code. Aucun asset de jeu importé.
 
-**Version 0.7.0 — Campagne.** Les découvertes et les combats sont séquencés, la difficulté suit l’arsenal réellement trouvé, et le rendu gagne des détails proches, des reflets filtrés et des particules travaillées. Le bouclier est repositionné, l’armure se recharge par objets et les ambiances continues sont allégées. Le correctif de chute sous les terrasses est intégré. Le nom historique FERRO reste celui du dépôt et des clés de sauvegarde. Le titre affiche aussi **V0.7.0**, à partir de la version du package, en conservant l’ajout de version effectué en parallèle.
+**Version 0.8.0 — Arsenal.** Départ au pistolet et au bouclier, armes et améliorations laissées par les boss, premier tiers consacré à l’équipement, douze mondes supplémentaires avec l’arsenal complet. Les grands panneaux-obstacles ajoutés devant les renforts sont supprimés de la nouvelle campagne. Les débris conservent leur forme, tombent et restent au sol. Les bruitages et les ambiances sont reconstruits avec des sons procéduraux distincts et des sources locales. **V0.8.0** est affiché sur le titre à partir de `package.json`. Le nom historique FERRO reste celui du dépôt et des clés de sauvegarde.
 
 ## Jouer
 
@@ -11,72 +11,36 @@
 
 WebGL 2 est recommandé ; le rendu Canvas 2D sert de secours. Aucun CDN, paquet JavaScript, modèle, texture, police ou fichier audio externe n’est téléchargé. Le son commence après une interaction.
 
-## Dix-huit mondes, six chapitres
+## Dix-huit mondes : six pour s’équiper, douze pour l’assaut
 
-Une nouvelle expédition traverse six chapitres de trois mondes. **Les trois décors existants reviennent avec des graines propres et une garnison progressive**. Les chapitres sont L’Éveil des forges, La Garde de fer, La Chasse mécanique, Les Forges brisées, La Fournaise et Le Dernier signal. La campagne se termine au monde 18.
+Une nouvelle expédition démarre avec le **pistolet à droite et le bouclier à gauche**. Le pistolet a des munitions illimitées. Les autres armes sont récupérées dans les caisses des boss, pas dans les anciennes salles-trophées. Les trois environnements procéduraux alternent à travers les dix-huit mondes.
 
-Le tableau décrit une progression où tous les trophées précédents ont été trouvés. Une flèche indique le changement **entrée → après la découverte locale**. Les dégâts sont le facteur d’adaptation seul, avant difficulté choisie, décor et blindage. Les PV du boss sont les valeurs réellement instanciées à l’entrée : ils ne remontent pas après une découverte.
+| Étape | Arme / amélioration principale |
+| --- | --- |
+| Départ | Pistolet + bouclier |
+| Boss 1 | Double pompe |
+| Boss 2 | Mitraillette |
+| Boss 3 | Lance-grenades |
+| Boss 4 | Second lance-grenades : calibrage du lance-grenades possédé, avec réserves |
+| Boss 5 | Calibrage de la mitraillette et amélioration personnelle |
+| Boss 6 | Lance-roquettes : arsenal complet, premier tiers terminé |
+| Boss 7–18 | Calibrages d’armes et améliorations personnelles supplémentaires |
 
-| Monde | Décor | Découverte | Garnison | Engagés max. | Dégâts × | Boss · PV |
-| ---: | --- | --- | ---: | ---: | ---: | --- |
-| 01 | Lisière rouillée | Pistolet (départ) | 42 | 4 | 0,58 | Colosse de Fer · 33 |
-| 02 | Carrière des braises | — | 49 | 4 | 0,58 | Brise-siège · 45 |
-| 03 | Jardins du veilleur | — | 60 | 4 | 0,58 | Veilleur primordial · 60 |
-| 04 | Lisière rouillée | Bouclier | 54 | 4 → 5 | 0,58 → 0,66 | Colosse de Fer · 38 |
-| 05 | Carrière des braises | — | 63 | 5 | 0,66 | Brise-siège · 58 |
-| 06 | Jardins du veilleur | — | 77 | 5 | 0,66 | Veilleur primordial · 77 |
-| 07 | Lisière rouillée | Mitraillette | 66 | 5 → 6 | 0,66 → 0,75 | Colosse de Fer · 54 |
-| 08 | Carrière des braises | — | 77 | 6 | 0,75 | Brise-siège · 81 |
-| 09 | Jardins du veilleur | — | 94 | 6 | 0,75 | Veilleur primordial · 108 |
-| 10 | Lisière rouillée | Double pompe | 84 | 6 → 8 | 0,75 → 0,84 | Colosse de Fer · 74 |
-| 11 | Carrière des braises | — | 98 | 8 | 0,84 | Brise-siège · 112 |
-| 12 | Jardins du veilleur | — | 119 | 8 | 0,84 | Veilleur primordial · 149 |
-| 13 | Lisière rouillée | Lance-grenades | 102 | 8 → 10 | 0,84 → 0,92 | Colosse de Fer · 95 |
-| 14 | Carrière des braises | — | 119 | 10 | 0,92 | Brise-siège · 144 |
-| 15 | Jardins du veilleur | — | 145 | 10 | 0,92 | Veilleur primordial · 192 |
-| 16 | Lisière rouillée | Lance-roquettes | 120 | 10 → 12 | 0,92 → 1 | Colosse de Fer · 118 |
-| 17 | Carrière des braises | — | 140 | 12 | 1 | Brise-siège · 180 |
-| 18 | Jardins du veilleur | — | 170 | 12 | 1 | Veilleur primordial · 240 |
+La répétition du lance-grenades au quatrième boss suit la demande : elle améliore l’arme existante au lieu de créer un deuxième inventaire de la même arme. Le lance-roquettes clôt l’équipement au sixième boss. Chaque boss donne aussi **un calibrage d’arme et une amélioration personnelle**, avec munitions, crédits, noyau et plaques d’armure selon les réserves disponibles.
 
-Les **1 679 identités finies** comprennent les dix-huit boss, leurs renforts et quinze gardes d’épreuves conditionnelles. Ce total ne désigne pas des ennemis simultanés. L’effectif revient légèrement en arrière au début d’un nouveau chapitre, lorsque le décor change ; la progression renforce ensuite le chapitre. On peut terminer un monde sans éliminer toute sa garnison.
+Le butin apparaît physiquement au pied du colosse. Il faut s’en approcher pour le prendre ; tuer à distance ne crédite pas automatiquement l’équipement. Une arme apparaît sur la caisse et les deux modules représentent les améliorations. Le HUD indique les récompenses, le rang de l’arme en main et les PV numériques du boss. La sortie attend la prise de la récompense principale : l’ordre d’équipement ne peut pas être perdu en passant trop vite au monde suivant.
 
-Le parcours s’adapte à l’arsenal réellement possédé, selon sa quantité et sa qualité. Manquer une découverte limite les engagés, les dégâts et la cadence ennemie. Les grenadiers ordinaires attendent le bouclier pour leurs explosifs ; les lance-roquettes ordinaires attendent aussi une arme lourde. Les barrages des boss suivent leurs propres scripts annoncés. Changer simplement l’arme équipée ne change pas la difficulté. Les PV du boss sont fixés une fois à l’entrée ; les nouvelles acquisitions ne le soignent pas.
+Les boss ont **600 PV au premier monde**, puis une courbe croissante jusqu’à **12 000 PV au dernier**. Ils ne se soignent pas quand une arme est ramassée. Les garnisons et la pression augmentent ; le plafond de machines ordinaires engagées monte de **6 à 16**, hors colosse. Les modes Standard, Brutal et Cauchemar restent disponibles. Les annonces d’attaques, les fenêtres d’esquive et le cœur vulnérable sont conservés.
 
-### Découvrir les trophées
+### Des parcours ouverts
 
-Le **pistolet est équipé au monde 1**, avec une réserve illimitée affichée **∞**. Les premières acquisitions suivantes se trouvent dans une alcôve dédiée : **bouclier au 4, mitraillette au 7, double pompe au 10, lance-grenades au 13, lance-roquettes au 16**. Les salles sont optionnelles, signalées sur la carte, et physiquement accessibles.
+Les grands panneaux `reinforcement_baffle`, leurs cadres et leurs marques ne sont plus générés dans la nouvelle campagne. Leurs collisions sont également absentes. Les réservistes utilisent les coins, les pièces adjacentes et les virages des couloirs du décor existant, puis suivent un vrai chemin vers la rencontre. Une entrée doit toujours être éloignée, libre, accessible et entièrement masquée par un véritable obstacle avant qu’un ennemi puisse s’y matérialiser. Tourner le dos ne suffit pas. Si aucune entrée n’est sûre, la vague attend.
 
-Un piédestal et son éclairage soutenu par un portique présentent l’équipement. La prise déclenche un bandeau d’usage, un accent musical synthétisé, un changement de lumière et **trois secondes de grâce**, puis une épreuve de trois gardes avec une réserve adaptée. Leur arrivée respecte les couverts et le budget global : un garde peut attendre qu’une place se libère. La reprise conserve la découverte et l’épreuve sans rejouer la récompense.
+Les structures architecturales, terrasses, ponts, rampes, ascenseurs et tremplins gardent leurs fonctions. Les commandes, les trois relais, le boss et la récupération de son équipement ouvrent la sortie ; aucune vague optionnelle n’est imposée pour terminer le monde.
 
-Les ennemis et les ateliers ne donnent pas accès à une arme encore inconnue. Les caches et offres de munitions correspondantes restent masquées. Le pistolet n’a aucune munition à acheter ou à ramasser.
+### Reprises et anciennes expéditions
 
-### Compatibilité classique
-
-Les anciennes sauvegardes à trois secteurs continuent dans leur mode historique : 120 / 140 / 170 machines, quatre armes et les anciens ateliers. L’API `FWorld.create(seed,stage)` conserve ce comportement ; `FWorld.create(seed,index,{campaign:true})` active les 18 mondes. Une nouvelle expédition utilise la campagne.
-
-Les régions agrandies mêlent bâtiments, cours, arbres, falaises, installations industrielles et ruines. Les terrasses se trouvent à 0, 3,2 et 6,4 m. Les rampes ont une pente physique ; les ascenseurs transportent réellement le joueur. Les tremplins suivent une trajectoire balistique, avec contrôle aérien et collisions contre les plafonds, murs et plateformes.
-
-Chaque géant possède une arène à ciel ouvert de **60 × 60 m**, reliée au territoire par une passerelle. Les portes monumentales, piliers et frontons restent en périphérie ; le centre permet au boss de se mouvoir sans entrer dans les bâtiments. Les petites machines donnent un repère d’échelle. Les silhouettes des trois colosses diffèrent : cornes métalliques, cheminées de siège, couronne et halo mécanique.
-
-### Vagues et exploration
-
-Les rencontres se déclenchent par zone. Les premières patrouilles sont préplacées ; le reste de la garnison attend en réserve, **sans modèle visible, collision, tir ni dégâts** avant son déploiement. Une annonce précède les renforts. Les petites vagues successives remplacent le grand paquet d’ennemis concentré au départ.
-
-Le budget de combat ordinaire progresse de **4 à 12 adversaires engagés simultanément** selon l’arsenal possédé, hors colosse. Les rencontres voisines partagent ce plafond. Les machines déjà déployées restent physiques ; lorsqu’elles se désengagent, elles regagnent leur poste à pied. Une vague plus grande que le plafond se déploie en plusieurs fois.
-
-Un renfort arrive seulement par une entrée libre, assez éloignée et réellement masquée par le décor. Tourner la caméra ne suffit pas à autoriser son apparition. Si les couverts ont été détruits ou l’accès bloqué, la vague attend. **La sortie dépend des commandes, des trois relais et du colosse**, sans exiger d’éliminer toute la garnison : une vague optionnelle en attente ne bloque pas la mission.
-
-### Combats scriptés
-
-Le colosse s’éveille à l’entrée de son arène. Chaque combat comporte trois phases, des renforts préplacés et des attaques préparées :
-
-- **Colosse de Fer :** écrasements et ondes de choc.
-- **Brise-siège :** barrages de roquettes physiques et balayages de zone.
-- **Veilleur primordial :** combinaison d’anneaux, barrages et balayages.
-
-Les disques, anneaux creux et bandes au sol décrivent les véritables zones de dégâts. Sortez du disque, restez dans l’ouverture d’un anneau ou quittez la bande avant l’impact. Après ses attaques, le boss expose son cœur pendant une courte fenêtre. **Visez le cœur lumineux** : les impacts y sont beaucoup plus efficaces. L’armure résiste davantage hors de cette fenêtre, sans rendre le boss entièrement invulnérable.
-
-Le HUD affiche le nom, la vie, la phase, l’attaque et le temps d’exposition du cœur. La marche et le niveau de détail tiennent compte de la taille : un colosse ne se réduit pas à quelques cubes de soldat au fond de son arène.
+**Nouvelle expédition** utilise cette progression dès le départ. Une sauvegarde de la campagne 0.7 conserve ses anciens lieux et sa progression par trophées ; les sauvegardes classiques gardent leurs trois secteurs. Elles restent reprenables sans perdre leurs ressources. Les nouvelles expéditions sont identifiées par `campaignVersion:2` dans le monde et `campaignRevision:2` dans l’enveloppe locale. `FWorld.create(seed,index,{campaign:true,campaignVersion:2})` crée ce parcours ; l’option historique `{campaign:true}` reste reproductible pour les anciens points de reprise.
 
 ## Horreur et difficulté progressive
 
@@ -90,7 +54,7 @@ La pression monte avec les secteurs et les objectifs activés. Les premières se
 
 **Rupture**, le lance-roquettes, ouvre des brèches dans les murs et fait tomber des morceaux. Fracture et les tirs répétés endommagent aussi le décor. Les morceaux restants ont des collisions correspondant à leur géométrie ; une ouverture visible peut être traversée. Les tirs vérifient le trajet jusqu’à la bouche du canon et les projectiles balaient leur volume pour éviter de passer à travers une paroi fine.
 
-Les structures peuvent perdre leurs panneaux, leurs équipements, leurs lampes et leurs supports. Les éléments privés de support s’effondrent ; les débris sont animés avec un nombre et une durée bornés. Les arbres et accessoires appartiennent à des ensembles destructibles. La suppression d’un obstacle met à jour les collisions, la navigation, le rendu et les ombres.
+Les structures peuvent perdre leurs panneaux, leurs équipements, leurs lampes et leurs supports. Les éléments privés de support s’effondrent. Les morceaux structurels reprennent la géométrie réellement retirée, son matériau et sa pose ; ils tombent, rebondissent, basculent puis se stabilisent. Une collision ne les efface plus. Les portes détruites produisent aussi des plaques métalliques. Jusqu’à 128 morceaux structurels persistent et sont inclus dans les points de reprise ; 64 petits éclats temporaires ont leur propre budget. Les morceaux proches et récents sont prioritaires lorsque le budget est atteint. Le rendu applique des plafonds supplémentaires selon le matériel et la qualité. Ces gravats restent cosmétiques pour les déplacements, sans nouveaux obstacles invisibles ni empilement physique morceau contre morceau. Les arbres et accessoires appartiennent à des ensembles destructibles. La suppression d’un obstacle met à jour les collisions, la navigation, le rendu et les ombres.
 
 Les **sols, rampes et plateformes de circulation restent portants**. Il existe un substrat visible sous les territoires, à −0,25 m, pour qu’une brèche extérieure ne donne pas sur un vide sans sol. Cette version réalise une destruction locale par morceaux ; elle n’est pas une simulation structurelle universelle de chaque matériau. Détruire une console libère son circuit, et casser une porte ouvre son passage, afin de conserver une mission terminable.
 
@@ -105,11 +69,11 @@ Lames latérales, presses verticales et dalles à piques ont de vrais volumes mo
 | Arme / action | Usage |
 | --- | --- |
 | **Pistolet — 5** | Arme initiale. Tir précis, cadence 0,32 s, réserve illimitée ; utile pour conserver les munitions lourdes. |
-| **Mitraillette — 1** | Trophée du monde 7. Tir automatique plus rapide que le pistolet ; une balle par tir. |
-| **Double pompe — 2** | Trophée du monde 10. Deux cartouches et quatorze rayons par tir ; une cartouche restante utilise un seul canon. |
-| **Lance-roquettes — 3** | Trophée du monde 16. Roquette et souffle contre groupes, murs et supports ; reculez avant le tir. |
-| **Lance-grenades — 4** | Trophée du monde 13. Trajectoire en cloche, rebonds et fusée de 1,8 s. |
-| **Bouclier — main gauche** | Trophée du monde 4. Garde translucide directionnelle et énergie à gérer. |
+| **Mitraillette — 1** | Récompense du boss 2. Tir automatique plus rapide que le pistolet ; une balle par tir. |
+| **Double pompe — 2** | Récompense du boss 1. Deux cartouches et quatorze rayons par tir ; une cartouche restante utilise un seul canon. |
+| **Lance-roquettes — 3** | Récompense du boss 6. Roquette et souffle contre groupes, murs et supports ; reculez avant le tir. |
+| **Lance-grenades — 4** | Récompense du boss 3. Trajectoire en cloche, rebonds et fusée de 1,8 s. |
+| **Bouclier — main gauche** | Équipé dès le départ. Garde translucide directionnelle et énergie à gérer. |
 | **Onde — E** | Repousse, étourdit, dissipe les projectiles et refroidit l’arme ; recharge de sept secondes. |
 | **Coup de crosse — V** | Attaque courte, sans munition ni chaleur. Un tir à vide utilise aussi ce secours. |
 
@@ -117,7 +81,7 @@ Les munitions des quatre armes trouvées sont **finies** : une balle, une ou deu
 
 Vous pouvez équiper **deux armes différentes**, une dans chaque main, ou garder le bouclier à gauche. Chaque arme conserve sa cadence, et les armes partagent la chaleur : changer d’emplacement ne contourne pas une surchauffe ou un délai de tir. Les réserves appartiennent au type de munition, sans duplication au changement de main. Les deux montages possèdent leur propre recul amorti, leurs pièces, prises, viseurs et canons.
 
-La première acquisition du bouclier dans son alcôve (ou à l’atelier en mode classique), l’équipe automatiquement à gauche. Il réduit les impacts venant de face, dans la limite de son énergie ; il ne protège pas des attaques arrière ni des dangers sans direction bloquable. Avec assez d’énergie, la garde absorbe 80 % d’un impact direct ou 55 % d’un souffle frontal. **Espace remplace l’esquive par un coup de bouclier lorsque celui-ci est équipé** : coût de 24 énergie, recharge de frappe de 1,1 s, repoussement et bref étourdissement des machines ordinaires proches. La garde consomme aussi lentement de l’énergie ; relâchée, elle se recharge après le délai éventuel d’un impact ou d’une frappe. Changer d’équipement ne recharge pas son énergie.
+Le bouclier est équipé dès le départ dans la nouvelle campagne. Les anciennes campagnes conservent leur mode d’acquisition. Il réduit les impacts venant de face, dans la limite de son énergie ; il ne protège pas des attaques arrière ni des dangers sans direction bloquable. Avec assez d’énergie, la garde absorbe 80 % d’un impact direct ou 55 % d’un souffle frontal. **Espace remplace l’esquive par un coup de bouclier lorsque celui-ci est équipé** : coût de 24 énergie, recharge de frappe de 1,1 s, repoussement et bref étourdissement des machines ordinaires proches. La garde consomme aussi lentement de l’énergie ; relâchée, elle se recharge après le délai éventuel d’un impact ou d’une frappe. Changer d’équipement ne recharge pas son énergie.
 
 L’onde reste défensive : ses dégâts sont faibles contre les machines ordinaires et n’entament pas le colosse en mode Survie. Le coup de crosse permet de récupérer des ressources sur une machine proche même à zéro munition. Les projectiles et le souffle respectent les couverts, y compris le trajet entre le regard et la bouche de chaque arme.
 
@@ -149,29 +113,13 @@ La pose du bouclier libère le centre et l’arme droite : panneau plus compact,
 
 ## Butin, ateliers et améliorations
 
-Les machines ordinaires laissent **6 à 12 crédits**, avec des munitions uniquement pour les armes possédées ; celles dont l’identité est multiple de quatre ajoutent **10 points d’armure**. Chaque colosse laisse un butin physique accessible : **160 crédits, un noyau, 50 points d’armure**, et des réserves parmi **24 balles, 6 cartouches, 2 roquettes, 3 grenades**, filtrées selon l’arsenal réellement connu. Le contenu ramassé n’est pas recréé à la reprise ; le surplus reste disponible au sol.
+Chaque boss laisse une **récompense déterministe**, collectable une seule fois. Le journal des boss récompensés accompagne le profil entre les mondes. Les ressources restant dans une caisse sont sauvegardées séparément ; quitter puis reprendre ne redonne ni arme, ni rang, ni crédit déjà reçu. Une sauvegarde incohérente entre inventaire, rangs et journal est refusée atomiquement.
 
-Chaque monde possède trois ateliers : départ, zone intermédiaire et arène. Approchez-vous et utilisez **F**. Le monde se met en pause ; les achats réussis sont enregistrés. En campagne, les offres couvrent réparation, réserves déjà utilisables et cinq améliorations ; les premières armes et le bouclier viennent exclusivement des trophées. Les quatorze offres historiques, dont l’achat d’armes, restent propres au mode classique.
+Les **calibrages propres à chaque arme** ajoutent 40 % de dégâts de base par rang et réduisent sa production de chaleur. Les armes ne partagent pas ces rangs. La mitraillette, le pompe, les deux lanceurs et le pistolet continuent d’obtenir leurs calibrages au cours des dix-huit mondes. Les impacts directs et les explosions utilisent les dégâts correspondants.
 
-| Achat | Contenu | Prix de base |
-| --- | --- | ---: |
-| Réparation | Jusqu’à 25 points d’intégrité | 24 crédits |
-| Balles | Jusqu’à 24 | 18 crédits |
-| Cartouches | Jusqu’à 6 | 24 crédits |
-| Roquettes | Jusqu’à 2 | 36 crédits |
-| Grenades | Jusqu’à 4 | 36 crédits |
+Les améliorations personnelles alternent entre **Vitalité, Blindage, Réserves, Puissance et Refroidissement**. Les plafonds de la nouvelle campagne sont de 8 rangs par arme et 12 rangs par amélioration personnelle ; les anciennes économies à trois rangs restent compatibles. Le blindage passif reste plafonné et ne remplace pas les plaques d’armure consommables. Augmenter la vitalité maximale ne répare pas gratuitement les dégâts reçus ; augmenter les réserves ne remplit pas les munitions.
 
-Pour la réparation et les packs, le prix suit la quantité réellement reçue, arrondie au crédit supérieur. Une réserve pleine, une arme déjà possédée ou un rang maximal désactive l’achat. Un refus ne prélève rien.
-
-| Amélioration | Effet par rang, jusqu’au rang 3 | Prix du premier rang |
-| --- | --- | ---: |
-| Vitalité | +20 points de santé maximale, jusqu’à 160 | 90 crédits |
-| Blindage | 8 points de pourcentage de réduction des dégâts, jusqu’à 24 % | 120 crédits |
-| Réserves | +25 % de la capacité de base, jusqu’à 315 / 63 / 21 / 28 munitions | 100 crédits |
-| Puissance | +10 % de dégâts, jusqu’à +30 % | 140 crédits |
-| Refroidissement | +20 % de vitesse de refroidissement, jusqu’à +60 % | 110 crédits |
-
-Les rangs 2 et 3 coûtent davantage de crédits et **un noyau chacun**. Les noyaux gagnés sur les colosses imposent des choix d’amélioration. Augmenter la vitalité ne soigne pas ; augmenter les réserves ne les remplit pas. Armes trouvées, quantités de munitions, crédits, noyaux, rangs, équipement des mains, points d’armure et énergie du bouclier sont transmis exactement au secteur suivant. Un redémarrage volontaire du secteur restaure l’équipement de son entrée.
+Les ateliers utilisent les crédits et les noyaux pour réparer, recharger les armes déjà connues et améliorer le personnage. Une transaction recalcule son prix et ses quantités depuis l’état actuel. Ils ne permettent pas d’acheter une arme de boss encore inconnue. Les quantités au-delà de la capacité restent au sol.
 
 ## Machines et déplacements
 
@@ -191,7 +139,7 @@ Le menu comporte quatre rubriques :
 
 - **Partie :** difficulté, reprise, redémarrage du secteur, retour à l’accueil et aide.
 - **Image :** Auto / Économie / Haute, plafond 30 / 60 / 120 FPS ou sans limite, FOV 60–110°, luminosité, ombres, éclat lumineux, FPS, filtre rétro, visière et mouvements de caméra.
-- **Audio :** volumes général, musique, armes/machines et ambiances ; essai sonore de deux secondes, rétablissement explicite du mix recommandé, coupure et export MOD.
+- **Audio :** volumes général, musique, armes et impacts, ambiances ; essai sonore de deux secondes, rétablissement explicite du mix recommandé, coupure et export MOD.
 - **Commandes :** sensibilité, inversion verticale, viseur et attribution des touches avec détection des conflits.
 
 Les réglages s’appliquent immédiatement. Les menus défilent sur petit écran ; le retour reste accessible. Le mode Économie et le secours Canvas offrent une présentation simplifiée. Un plafond de FPS n’est pas une promesse de cadence.
@@ -206,11 +154,11 @@ Le jeu génère de **vrais modules ProTracker à quatre canaux**, signature `M.K
 
 Chaque morceau possède **32 mesures**, six patterns distincts et huit phrases ordonnées. Les guitares sont synthétisées à partir de cordes à harmoniques, de bruits d’attaque et de distorsion ; la batterie combine ses frappes dans des instruments de mesure pour conserver le format à quatre canaux. Le lecteur Web Audio utilise les mêmes patterns et données PCM que l’export. La menace influe sur le mix, la pause arrête les notes programmées et une reprise se recale sur une mesure. **Options → Audio → Exporter le MOD** enregistre `METAL-01.mod`, `METAL-02.mod` ou `METAL-03.mod`.
 
-Les budgets des voix de musique et des effets sont indépendants. Les sons distants ne prennent pas les places réservées aux tirs du joueur et aux alertes proches. La musique baisse brièvement pendant les impacts importants. Le grondement, les moteurs et le vent continus sont atténués ; le vent utilise un filtre moins chargé en graves. La vapeur décroît plus vite avec la distance et devient inaudible au-delà de 12 m. Les tirs, impacts, alertes et explosions conservent leurs niveaux. Le mix final conserve sa protection de crête et les réglages de volume existants.
+Les nouveaux bruitages utilisent des **buffers PCM calculés par le code**, avec des attaques et des résonances propres au pistolet, à la mitraillette, au pompe et aux lanceurs. Les impacts et les morceaux qui retombent distinguent métal, pierre, bois, verre et terre. Leur énergie règle l’intensité ; les variantes sont déterministes. La banque est préparée par petits lots sur l’écran de chargement et réutilisée pendant le combat.
 
-Les tirs simultanés des deux mains restent audibles, avec un léger placement stéréo. Le lance-grenades possède son départ sourd ; le bouclier distingue levée, blocage, rupture et frappe réussie. Les effets respectent les volumes, la pause et les limites de voix.
+Le drone tonal permanent et les pépiements synthétiques ont été supprimés. L’intérieur est silencieux en l’absence d’une source locale. À l’extérieur, le vent comporte des accalmies. Ventilateurs, pistons, réacteurs, ascenseurs en mouvement et fuites chaudes ont une portée locale, une position stéréo et un filtrage lorsque des murs ou des portes les masquent. Une machine détruite cesse de sonner. Les moteurs et la vapeur continue passent par **Ambiances** ; les tirs, impacts et alertes passent par **Armes et impacts**. Les compositions MOD et les préférences de volume sont conservées.
 
-Les préférences existantes sont conservées, y compris un volume d’effets ou d’ambiance à zéro. Le bouton d’essai fait entendre les véritables bus pendant deux secondes ; les quatre curseurs restent réglables pendant cette écoute. **Rétablir le mix** est une action volontaire. Aucun son ne force un curseur coupé à remonter.
+Les voix restent bornées et priorisées pour que les débris éloignés ne coupent pas les tirs du joueur. Le mixage inclut un plafond de sortie, et la pause coupe les sources de jeu. **Tester tirs et ambiances** permet un essai depuis les options. Les mesures PCM et les contrôles Web Audio sont documentés ; ils ne constituent pas une appréciation d’écoute sur des enceintes ou un casque réels.
 
 ## Moteur, sauvegardes et taille
 
@@ -222,11 +170,11 @@ Auto adapte progressivement la résolution WebGL à la cadence. Les retours arri
 
 Les instruments MOD sont préparés par étapes au menu ou sur l’écran de chargement. Après le geste qui déverrouille le son, les AudioBuffers du secteur sont chargés avant l’entrée en combat. Les banques préparées sont réutilisées ; la préparation d’un secteur futur ne change pas la musique active. Un cache borné garde aussi les descriptions de deux mondes, et l’écran de fin de secteur peut anticiper le suivant. Cette préparation réduit les travaux de première utilisation ; elle ne garantit pas une cadence matérielle.
 
-Les points de reprise comprennent terrain détruit, systèmes, physique aérienne, projectiles, boss, directeur de tension, vagues, réservistes, inventaire, équipement des mains, bouclier, butin restant et profil d’améliorations. Les relais, commandes, arrivées d’ascenseur avec le joueur, armes et bouclier découverts, zones sécurisées, boss abattus, butins de boss ramassés et achats enregistrent la progression.
+Les points de reprise comprennent gravats persistants, récompenses de boss déjà acquises, terrain détruit, systèmes, physique aérienne, projectiles, boss, directeur de tension, vagues, réservistes, inventaire, équipement des mains, bouclier, butin restant et profil d’améliorations. Les relais, commandes, arrivées d’ascenseur avec le joueur, armes et bouclier découverts, zones sécurisées, boss abattus, butins de boss ramassés et achats enregistrent la progression.
 
 Les enveloppes de campagne sont en **version 3**, avec index 0–17 ; les anciennes enveloppes version 2 continuent explicitement leurs trois secteurs. Les points compatibles conservent les ressources, les découvertes et la phase de chaque épreuve. Une métadonnée d’inventaire d’entrée à 3, 4 ou 5 emplacements incompatible avec le monde ne bloque pas la reprise d’un checkpoint sain. Un checkpoint incompatible est refusé ou reprend proprement à l’entrée selon le cas, sans conversion silencieuse ; une copie précédente est conservée lorsque le stockage le permet. Les clés internes restent `ferro-settings` et `ferro-expedition-v2`.
 
-La distribution 0.7.0 vérifiée mesure **739 903 octets bruts**, **223 144 octets gzip** ; SHA-256 : `7ef8815703ce09fe7140c412c87b6aa57a6262f58fcda7566bbb4a788a5c8bb6`. `SIZE.json` contient ces mesures et l’empreinte du fichier courant. Le budget est **1 400 000 octets non compressés**. Documentation, tests, navigateur et pilotes sont exclus de cette taille ; ce n’est pas la mesure d’un exécutable natif.
+`SIZE.json` contient la taille brute, la taille gzip et le SHA-256 de la distribution courante. Le budget reste **1 400 000 octets non compressés**. Documentation, tests, navigateur et pilotes sont exclus de cette taille ; ce n’est pas la mesure d’un exécutable natif.
 
 ## Développement et validation
 
@@ -235,8 +183,10 @@ Aucune installation npm n’est nécessaire : Python 3 assemble la distribution,
 ```sh
 python3 tools/build.py
 npm test
+node tools/boss-profiles.mjs
+node tools/boss-ttk.cjs
+# Le rapport historique reste disponible pour la campagne v1.
 node tools/campaign-profiles.mjs docs/campaign-world-profiles.json
-node tools/campaign-balance.mjs docs/campaign-balance.json
 ```
 
 | Source | Responsabilité |
@@ -249,12 +199,11 @@ node tools/campaign-balance.mjs docs/campaign-balance.json
 | `actors.js`, `motion.js` | Modèles articulés, LOD, caméra et montage des armes |
 | `effects.js` | Projectiles, vapeur, fragments et annonces de danger |
 | `renderer.js` | WebGL 2, ombres, matériaux et secours Canvas |
-| `music.js`, `audio.js` | MOD, synthèse, mixage, ambiances et horreur |
+| `music.js`, `audio.js` | MOD, banque PCM procédurale, mixage et lecture sonore |
+| `soundscape.js` | Sources locales, distance3D, panoramique et occlusion |
 | `options.js`, `game.js` | Préférences, contrôles, HUD, menus et sauvegardes |
 | `index.html`, `style.css` | Interface responsive et tactile |
 
-La suite finale passe **351 tests, sans échec**. Un [contrôle dans Chrome](docs/qa-v07/browser-smoke.json) vérifie le titre, le démarrage de campagne, le HUD, la première commande physique, les menus et la reprise du point enregistré après rechargement complet à **1363 × 936**. Le navigateur utilisait le secours Canvas 2D et l’IA CPU ; le contrôle ne valide ni WebGL2 ni l’interface mobile.
-
-Les résultats et leurs limites figurent dans **[VALIDATION.md](VALIDATION.md)** et **[docs/validation-v07.json](docs/validation-v07.json)** ; les contrats sont dans **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**. Les [captures de contrôle](docs/qa-v07/README.md) sont des preuves de rendu et restent hors du jeu. Les mesures logicielles, les fixtures de simulation et les cadres mobiles ne démontrent pas des FPS sur un GPU physique ni une campagne équilibrée par des joueurs. Aucun débit stable n’est promis pour un Mac, Safari ou un téléphone réel.
+Les résultats et leurs limites figurent dans **[VALIDATION.md](VALIDATION.md)** et **[docs/validation-v08.json](docs/validation-v08.json)** ; les contrats sont dans **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**. Les [captures de contrôle](docs/qa-v08/README.md) sont des preuves de rendu et restent hors du jeu. Les mesures logicielles, les fixtures de simulation et les cadres mobiles ne démontrent pas des FPS sur un GPU physique ni une campagne équilibrée par des joueurs. Aucun débit stable n’est promis pour un Mac, Safari ou un téléphone réel.
 
 METAL reste un prototype compact de science-fiction procédurale. Il ne contient pas de multijoueur, de saut libre sur une touche ni de terrain entièrement excavable. La démarche de distribution s’inspire de `.kkrieger`, sans reprendre son code ou ses assets : [présentation de Fabian Giesen](https://www.flipcode.com/archives/04-20-2004.shtml), [documentation originale](https://www.pouet.net/prod_nfo.php?which=12036).
