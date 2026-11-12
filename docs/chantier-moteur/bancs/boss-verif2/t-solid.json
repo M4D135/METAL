@@ -1,0 +1,332 @@
+{
+ "index": 1,
+ "kind": "siegebreaker",
+ "policy": "skilled",
+ "shield": false,
+ "seed": "96",
+ "simSeconds": 60,
+ "perf": {
+  "steps": 3600,
+  "avg": 0.456,
+  "p50": 0.191,
+  "p95": 1.096,
+  "p99": 5.488,
+  "max": 49.3,
+  "over4": 57,
+  "over8": 27,
+  "over16": 10
+ },
+ "topSpikes": [
+  {
+   "i": 676,
+   "t": 11.27,
+   "ms": 49.3,
+   "ev": [],
+   "debris": 41,
+   "proj": 0,
+   "attacks": 2,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 10,
+    "reserve": 66,
+    "combat": 0,
+    "combatCap": 6,
+    "alive": 77,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 43,
+    "neuralApplied": 43,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 768,
+    "navPending": 29266
+   }
+  },
+  {
+   "i": 1920,
+   "t": 32,
+   "ms": 39.2,
+   "ev": [],
+   "debris": 33,
+   "proj": 0,
+   "attacks": 1,
+   "routes": [
+    {
+     "e": 72,
+     "type": 0,
+     "found": false,
+     "explored": 2401,
+     "ms": 35.76,
+     "knownBefore": 0,
+     "from": [
+      99.9,
+      32
+     ],
+     "to": [
+      90.49,
+      32.6
+     ],
+     "endNav": 1,
+     "startNav": 1,
+     "tactic": "flank",
+     "t": 32.02,
+     "tdy": -6.65,
+     "caller": "cover"
+    }
+   ],
+   "aiStats": {
+    "awake": 4,
+    "dormant": 7,
+    "reserve": 66,
+    "combat": 3,
+    "combatCap": 6,
+    "alive": 77,
+    "pathSearches": 1,
+    "pathDeferred": 0,
+    "neuralBatches": 121,
+    "neuralApplied": 169,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  },
+  {
+   "i": 658,
+   "t": 10.97,
+   "ms": 39,
+   "ev": [
+    "explosion:steam",
+    "materialBreak"
+   ],
+   "debris": 41,
+   "proj": 0,
+   "attacks": 2,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 10,
+    "reserve": 66,
+    "combat": 0,
+    "combatCap": 6,
+    "alive": 77,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 42,
+    "neuralApplied": 42,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  },
+  {
+   "i": 661,
+   "t": 11.02,
+   "ms": 30.8,
+   "ev": [],
+   "debris": 41,
+   "proj": 0,
+   "attacks": 2,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 10,
+    "reserve": 66,
+    "combat": 0,
+    "combatCap": 6,
+    "alive": 77,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 42,
+    "neuralApplied": 42,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 768,
+    "navPending": 40786
+   }
+  },
+  {
+   "i": 431,
+   "t": 7.18,
+   "ms": 27.2,
+   "ev": [],
+   "debris": 0,
+   "proj": 0,
+   "attacks": 0,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 10,
+    "reserve": 66,
+    "combat": 0,
+    "combatCap": 6,
+    "alive": 77,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 28,
+    "neuralApplied": 28,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  },
+  {
+   "i": 667,
+   "t": 11.12,
+   "ms": 20.8,
+   "ev": [
+    "bossImpact:sweep"
+   ],
+   "debris": 41,
+   "proj": 0,
+   "attacks": 2,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 10,
+    "reserve": 66,
+    "combat": 0,
+    "combatCap": 6,
+    "alive": 77,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 42,
+    "neuralApplied": 42,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 768,
+    "navPending": 36178
+   }
+  },
+  {
+   "i": 1022,
+   "t": 17.03,
+   "ms": 20.6,
+   "ev": [],
+   "debris": 29,
+   "proj": 2,
+   "attacks": 2,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 10,
+    "reserve": 66,
+    "combat": 0,
+    "combatCap": 6,
+    "alive": 77,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 64,
+    "neuralApplied": 64,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  },
+  {
+   "i": 1091,
+   "t": 18.18,
+   "ms": 20.2,
+   "ev": [],
+   "debris": 37,
+   "proj": 0,
+   "attacks": 2,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 10,
+    "reserve": 66,
+    "combat": 0,
+    "combatCap": 6,
+    "alive": 77,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 69,
+    "neuralApplied": 69,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  }
+ ],
+ "fight": {
+  "attacks": {
+   "rocketZone": 3,
+   "sweep": 6
+  },
+  "hitsTaken": {
+   "guards/other": 1
+  },
+  "damageTaken": {
+   "guards/other": 8.2
+  },
+  "shieldAbsorbed": 0,
+  "armorStart": 0,
+  "dmgBody": 24.5,
+  "dmgWeak": 687.8,
+  "openTime": 25.02,
+  "phaseAt": [
+   27.93,
+   44.28
+  ],
+  "awakeAt": 27.93,
+  "deathAt": null,
+  "guardsReleasedAt": [],
+  "shots": 101,
+  "hpMin": 111.8442,
+  "playerDeadAt": null,
+  "outOfCircle": 0,
+  "bossMoves": 0.7,
+  "nav": {
+   "revisions": 6,
+   "pumpSteps": 114,
+   "breaks": {
+    "decor-room-#:#,#,-#:dressing": 3,
+    "solid-#": 2,
+    "decor-vent:#,#,-#:dressing": 3,
+    "decor-room-#:#,#,#:dressing": 4
+   },
+   "maxDebris": 46,
+   "structural": 41,
+   "navCells": 43090,
+   "lastRevision": 6,
+   "revAt": [
+    10.97,
+    17.43,
+    17.7,
+    42.98,
+    55.02,
+    55.33
+   ]
+  },
+  "hitLog": [
+   {
+    "t": 31.47,
+    "kind": "guards/other",
+    "lost": 8.2,
+    "d": 16.4,
+    "fromCentre": 17,
+    "shield": null,
+    "dashing": false
+   }
+  ],
+  "bossHpLeft": 137.8,
+  "bossMaxHp": 850,
+  "bossPhase": 2,
+  "playerHp": 111.8,
+  "armor": 0,
+  "ammo": [
+   0,
+   0,
+   0,
+   0,
+   1
+  ],
+  "heat": 0.33
+ }
+}

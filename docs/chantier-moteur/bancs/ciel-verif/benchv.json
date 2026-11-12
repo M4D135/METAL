@@ -1,0 +1,316 @@
+{
+ "stats": {
+  "bruit3dMs": 30.2,
+  "compileMs": {
+   "old": 7.6,
+   "flat": 3.4,
+   "noise": 5.1,
+   "sky": 5.8,
+   "cloud": 9.9,
+   "blur": 3.5,
+   "comp": 9.1,
+   "direct": 13.4,
+   "compPlein": 403.9,
+   "pts": 0
+  }
+ },
+ "bench": {
+  "cuissonAtmosphere192x128Ms": 1.7,
+  "cuissonDome1024Ms": 18.9,
+  "lectureVide": 0.1,
+  "2560x1440": {
+   "plat": {
+    "n": 20,
+    "mediane": 0.3,
+    "p10": 0.25,
+    "p90": 0.983,
+    "ecartApparieAuPlat": 0,
+    "ecartP10": 0,
+    "ecartP90": 0
+   },
+   "actuel": {
+    "n": 20,
+    "mediane": 2.717,
+    "p10": 2.117,
+    "p90": 3.25,
+    "ecartApparieAuPlat": 2.317,
+    "ecartP10": 1.25,
+    "ecartP90": 2.983
+   },
+   "textures": {
+    "n": 20,
+    "mediane": 1.7,
+    "p10": 0.85,
+    "p90": 1.983,
+    "ecartApparieAuPlat": 0.833,
+    "ecartP10": 0.517,
+    "ecartP90": 1.683
+   },
+   "texturesNuit": {
+    "n": 20,
+    "mediane": 2.817,
+    "p10": 2.6,
+    "p90": 3.233,
+    "ecartApparieAuPlat": 2.467,
+    "ecartP10": 1.783,
+    "ecartP90": 2.933
+   },
+   "texturesPlein": {
+    "n": 20,
+    "mediane": 2.7,
+    "p10": 2.383,
+    "p90": 3.267,
+    "ecartApparieAuPlat": 2.367,
+    "ecartP10": 1.617,
+    "ecartP90": 2.7
+   },
+   "nuitSansEtoiles": {
+    "n": 20,
+    "mediane": 1.133,
+    "p10": 0.85,
+    "p90": 1.967,
+    "ecartApparieAuPlat": 0.683,
+    "ecartP10": 0.333,
+    "ecartP90": 1.7
+   },
+   "nuitPoints": {
+    "n": 20,
+    "mediane": 1.367,
+    "p10": 0.883,
+    "p90": 1.683,
+    "ecartApparieAuPlat": 0.717,
+    "ecartP10": 0.05,
+    "ecartP90": 1.25
+   },
+   "texturesTranche64": {
+    "n": 20,
+    "mediane": 2.05,
+    "p10": 1.283,
+    "p90": 2.433,
+    "ecartApparieAuPlat": 1.317,
+    "ecartP10": 0.983,
+    "ecartP90": 2.1
+   },
+   "texturesTranche256": {
+    "n": 20,
+    "mediane": 1.733,
+    "p10": 1.417,
+    "p90": 2.317,
+    "ecartApparieAuPlat": 1.4,
+    "ecartP10": 0.817,
+    "ecartP90": 1.983
+   },
+   "directAtmosphere": {
+    "n": 5,
+    "mediane": 39.9,
+    "p10": 33.3,
+    "p90": 43.2,
+    "ecartApparieAuPlat": 38.917,
+    "ecartP10": 32.3,
+    "ecartP90": 42.333
+   },
+   "directComplet": {
+    "n": 5,
+    "mediane": 61.1,
+    "p10": 52,
+    "p90": 66.2,
+    "ecartApparieAuPlat": 60.117,
+    "ecartP10": 51.133,
+    "ecartP90": 65.333
+   },
+   "textures-moins-actuel": {
+    "mediane": -1.35,
+    "p10": -1.867,
+    "p90": -0.3,
+    "ratio": 0.36
+   },
+   "plein-moins-actuel": {
+    "mediane": -0.05,
+    "p10": -0.317,
+    "p90": 0.517,
+    "ratio": 1.022
+   },
+   "nuitPoints-moins-actuel": {
+    "mediane": -1.417,
+    "p10": -2.2,
+    "p90": -1.117,
+    "ratio": 0.309
+   },
+   "nuitSansEtoiles-moins-actuel": {
+    "mediane": -1.5,
+    "p10": -2.05,
+    "p90": -0.55,
+    "ratio": 0.295
+   },
+   "tranche64-moins-actuel": {
+    "mediane": -0.9,
+    "p10": -1.517,
+    "p90": -0.033,
+    "ratio": 0.568
+   },
+   "tranche256-moins-actuel": {
+    "mediane": -0.967,
+    "p10": -1.6,
+    "p90": -0.233,
+    "ratio": 0.604
+   },
+   "nuit-moins-actuel": {
+    "mediane": 0.083,
+    "p10": -0.217,
+    "p90": 0.7,
+    "ratio": 1.065
+   }
+  },
+  "1792x1008": {
+   "plat": {
+    "n": 20,
+    "mediane": 0.25,
+    "p10": 0.167,
+    "p90": 0.9,
+    "ecartApparieAuPlat": 0,
+    "ecartP10": 0,
+    "ecartP90": 0
+   },
+   "actuel": {
+    "n": 20,
+    "mediane": 0.983,
+    "p10": 0.917,
+    "p90": 1.683,
+    "ecartApparieAuPlat": 0.717,
+    "ecartP10": 0.283,
+    "ecartP90": 1.517
+   },
+   "textures": {
+    "n": 20,
+    "mediane": 0.517,
+    "p10": 0.5,
+    "p90": 1.033,
+    "ecartApparieAuPlat": 0.333,
+    "ecartP10": -0.2,
+    "ecartP90": 0.817
+   },
+   "texturesNuit": {
+    "n": 20,
+    "mediane": 1.183,
+    "p10": 1.017,
+    "p90": 1.6,
+    "ecartApparieAuPlat": 0.867,
+    "ecartP10": 0.567,
+    "ecartP90": 1.383
+   },
+   "texturesPlein": {
+    "n": 20,
+    "mediane": 1.1,
+    "p10": 0.933,
+    "p90": 1.483,
+    "ecartApparieAuPlat": 0.783,
+    "ecartP10": 0.4,
+    "ecartP90": 1.267
+   },
+   "nuitSansEtoiles": {
+    "n": 20,
+    "mediane": 0.567,
+    "p10": 0.467,
+    "p90": 0.933,
+    "ecartApparieAuPlat": 0.3,
+    "ecartP10": -0.2,
+    "ecartP90": 0.75
+   },
+   "nuitPoints": {
+    "n": 20,
+    "mediane": 0.583,
+    "p10": 0.483,
+    "p90": 1.15,
+    "ecartApparieAuPlat": 0.3,
+    "ecartP10": -0.05,
+    "ecartP90": 0.883
+   },
+   "texturesTranche64": {
+    "n": 20,
+    "mediane": 0.967,
+    "p10": 0.833,
+    "p90": 1.567,
+    "ecartApparieAuPlat": 0.65,
+    "ecartP10": 0.283,
+    "ecartP90": 1.383
+   },
+   "texturesTranche256": {
+    "n": 20,
+    "mediane": 0.8,
+    "p10": 0.667,
+    "p90": 1.283,
+    "ecartApparieAuPlat": 0.6,
+    "ecartP10": 0,
+    "ecartP90": 1.067
+   },
+   "directAtmosphere": {
+    "n": 5,
+    "mediane": 18.1,
+    "p10": 13.5,
+    "p90": 18.7,
+    "ecartApparieAuPlat": 17.5,
+    "ecartP10": 12.6,
+    "ecartP90": 17.933
+   },
+   "directComplet": {
+    "n": 5,
+    "mediane": 25.9,
+    "p10": 22.7,
+    "p90": 27.2,
+    "ecartApparieAuPlat": 25,
+    "ecartP10": 22,
+    "ecartP90": 27.033
+   },
+   "textures-moins-actuel": {
+    "mediane": -0.467,
+    "p10": -1.15,
+    "p90": 0.083,
+    "ratio": 0.465
+   },
+   "plein-moins-actuel": {
+    "mediane": 0.033,
+    "p10": -0.25,
+    "p90": 0.517,
+    "ratio": 1.093
+   },
+   "nuitPoints-moins-actuel": {
+    "mediane": -0.4,
+    "p10": -0.683,
+    "p90": 0.033,
+    "ratio": 0.419
+   },
+   "nuitSansEtoiles-moins-actuel": {
+    "mediane": -0.483,
+    "p10": -1.05,
+    "p90": 0,
+    "ratio": 0.419
+   },
+   "tranche64-moins-actuel": {
+    "mediane": -0.017,
+    "p10": -0.65,
+    "p90": 0.55,
+    "ratio": 0.907
+   },
+   "tranche256-moins-actuel": {
+    "mediane": -0.25,
+    "p10": -0.917,
+    "p90": 0.317,
+    "ratio": 0.837
+   },
+   "nuit-moins-actuel": {
+    "mediane": 0.2,
+    "p10": -0.567,
+    "p90": 0.65,
+    "ratio": 1.209
+   }
+  }
+ },
+ "errors": [],
+ "info": {
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+  "float": true,
+  "half": true,
+  "dpr": 1,
+  "max3d": 2048
+ }
+}

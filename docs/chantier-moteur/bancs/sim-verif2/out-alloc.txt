@@ -1,0 +1,4 @@
+0    orig 531 Ko/pas (fenêtres rejetées 0) | all-v2 225 Ko/pas (fenêtres rejetées 0) | full-v2 148 Ko/pas (fenêtres rejetées 0)
+2    orig 874 Ko/pas (fenêtres rejetées 0) | all-v2 311 Ko/pas (fenêtres rejetées 0) | full-v2 239 Ko/pas (fenêtres rejetées 0)
+c9   orig 685 Ko/pas (fenêtres rejetées 0) | all-v2 267 Ko/pas (fenêtres rejetées 0) | full-v2 193 Ko/pas (fenêtres rejetées 0)
+c15  orig 733 Ko/pas (fenêtres rejetées 0) | all-v2 246 Ko/pas (fenêtres rejetées 0) | full-v2 196 Ko/pas (fenêtres rejetées 0)

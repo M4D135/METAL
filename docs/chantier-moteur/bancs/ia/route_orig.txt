@@ -1,0 +1,42 @@
+    function nearestNode(x,z,r){
+      const center=idx(x,z),cx=center%nx,cz=Math.floor(center/nx);let best=-1,distance=Infinity;
+      for(let dz=-3;dz<=3;dz++)for(let dx=-3;dx<=3;dx++){
+        const ix=cx+dx,iz=cz+dz;if(ix<0||ix>=nx||iz<0||iz>=nz)continue;
+        const j=iz*nx+ix;if(!nav[j])continue;
+        const [px,pz]=coord(j),d=(px-x)**2+(pz-z)**2;
+        if(d<distance&&segmentFree(x,z,px,pz,r)){best=j;distance=d;}
+      }
+      return best;
+    }
+    function route(e,x,z){
+      const r=radius(e);
+      if(blocked(x,z,r))return null;
+      if(segmentFree(e.x,e.z,x,z,r))return [];
+      if(routeBudget<=0){routeDeferred++;return null;}routeBudget--;routeSearches++;
+      const start=nearestNode(e.x,e.z,r),end=nearestNode(x,z,r);if(start<0||end<0)return null;
+      const stamp=++routeSerial,heap=[];
+      const heuristic=i=>Math.abs(i%nx-end%nx)+Math.abs(Math.floor(i/nx)-Math.floor(end/nx));
+      function push(i,cost){let at=heap.length;heap.push([i,cost]);while(at){const parent=(at-1)>>1;if(heap[parent][1]<=cost)break;heap[at]=heap[parent];at=parent;}heap[at]=[i,cost];}
+      function pop(){const value=heap[0],last=heap.pop();if(heap.length){let at=0;while(at*2+1<heap.length){let child=at*2+1;if(child+1<heap.length&&heap[child+1][1]<heap[child][1])child++;if(heap[child][1]>=last[1])break;heap[at]=heap[child];at=child;}heap[at]=last;}return value[0];}
+      routeStamp[start]=stamp;routeCost[start]=0;routePrev[start]=-1;push(start,heuristic(start));
+      let explored=0,found=false;
+      while(heap.length&&explored++<2400){
+        const i=pop();if(routeClosed[i]===stamp)continue;routeClosed[i]=stamp;if(i===end){found=true;break;}
+        const ix=i%nx,neighbors=[ix?i-1:-1,ix<nx-1?i+1:-1,i-nx,i+nx];
+        for(let k=0;k<4;k++){
+          const j=neighbors[k];if(j<0||j>=nav.length||!nav[j]||routeClosed[j]===stamp)continue;
+          const mask=1<<k;
+          if(!(edgeKnown[i]&mask)){edgeKnown[i]|=mask;if(segmentFree(...coord(i),...coord(j),.4))edgeOpen[i]|=mask;}
+          if(!(edgeOpen[i]&mask)||r>.4&&!segmentFree(...coord(i),...coord(j),r))continue;
+          const cost=routeCost[i]+1;if(routeStamp[j]===stamp&&routeCost[j]<=cost)continue;
+          routeStamp[j]=stamp;routeCost[j]=cost;routePrev[j]=i;push(j,cost+heuristic(j));
+        }
+      }
+      if(!found)return null;
+      const raw=[];for(let i=end;i>=0;i=routePrev[i])raw.push(i);raw.reverse();
+      // String-pull this bounded local route once, rather than trace many rays every frame.
+      const result=[];let ax=e.x,az=e.z,at=0;
+      while(at<raw.length){let far=at;for(let k=Math.min(raw.length-1,at+14);k>at;k--)if(segmentFree(ax,az,...coord(raw[k]),r)){far=k;break;}
+        result.push(raw[far]);[ax,az]=coord(raw[far]);at=far+1;}
+      return result.length<=512?result:null;
+    }

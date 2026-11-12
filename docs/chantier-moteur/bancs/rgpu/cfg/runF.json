@@ -1,0 +1,15 @@
+{"name":"runF-high","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":560,"measureFrames":200,"skip":10,"reps":3,"dumpFrames":true,
+ "variants":[
+  {"id":"high","code":"base","quality":"high"},
+  {"id":"auto","code":"base","quality":"auto"},
+  {"id":"low","code":"base","quality":"low"},
+  {"id":"high-noshadow","code":"base","quality":"high","fx":{"shadows":false}},
+  {"id":"high-nobloom","code":"base","quality":"high","fx":{"bloom":false}},
+  {"id":"high-l0","code":"l0","quality":"high"},
+  {"id":"high-spec4","code":"spec4","quality":"high"},
+  {"id":"high-lightcull2","code":"lightcull2","quality":"high"},
+  {"id":"high-nomat","code":"nomat","quality":"high"},
+  {"id":"high-hwpcf","code":"hwpcf","quality":"high"},
+  {"id":"high-combo3","code":"combo3","quality":"high"},
+  {"id":"high-stress","code":"base","quality":"high","inject":{"count":48,"near":2.5,"far":12,"spread":7,"size":2.6,"alpha":0.55,"fire":true}}]}

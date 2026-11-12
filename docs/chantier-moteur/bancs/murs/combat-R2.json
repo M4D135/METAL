@@ -1,0 +1,73 @@
+[
+ {
+  "label": "w01 pistolet",
+  "index": 0,
+  "weapon": 4,
+  "def": "R2",
+  "seconds": 30,
+  "A": {
+   "revPerMin": 6,
+   "breaks": 4,
+   "impacts": 20,
+   "deflected": 0,
+   "fallen": 16,
+   "rubbleMax": 16,
+   "rubbleMean": 10.6,
+   "shots": 50,
+   "hits": 18,
+   "kills": 5,
+   "stepMean": 0.991,
+   "p99": 18.21,
+   "max": 49.8,
+   "over4": 80,
+   "over8": 56,
+   "revStepMean": 20.35,
+   "revStepMax": 32.1,
+   "doors": {
+    "hit": 0,
+    "broken": 0,
+    "deflected": 0
+   },
+   "states": 20
+  },
+  "B": {
+   "revPerMin": 6,
+   "breaks": 4,
+   "impacts": 9,
+   "deflected": 11,
+   "fallen": 16,
+   "rubbleMax": 16,
+   "rubbleMean": 10.6,
+   "shots": 50,
+   "hits": 18,
+   "kills": 5,
+   "stepMean": 0.831,
+   "p99": 12.49,
+   "max": 54.5,
+   "over4": 77,
+   "over8": 40,
+   "revStepMean": 18.81,
+   "revStepMax": 28,
+   "doors": {
+    "hit": 0,
+    "broken": 0,
+    "deflected": 0
+   },
+   "states": 13
+  },
+  "breaksA": {
+   "joueur:balle -> decor|hill": 2,
+   "vapeur:steam -> prop|combat_cover": 1,
+   "vapeur:steam -> decor|trail": 1
+  },
+  "breaksB": {
+   "joueur:balle -> decor|hill": 2,
+   "vapeur:steam -> prop|combat_cover": 1,
+   "vapeur:steam -> decor|trail": 1
+  },
+  "deflectedB": {
+   "joueur:balle -> wall|mat3": 8,
+   "joueur:balle -> wall|mat0": 3
+  }
+ }
+]

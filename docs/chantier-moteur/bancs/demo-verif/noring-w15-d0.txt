@@ -1,0 +1,1 @@
+{"noRing":true,"won":0,"worlds":[{"i":16,"won":false,"s":360,"boss":"1169/9600","hp":154}],"world":16,"difficulty":0,"incoming":1,"deaths":0,"hurts":1,"bySource":{"bullet":{"n":1,"sum":6,"max":6,"kills":0}},"lastHitsBeforeEachDeath":[]}

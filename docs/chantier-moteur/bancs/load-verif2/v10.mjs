@@ -1,0 +1,26 @@
+// LOAD-10 / LOAD-07: where the explosion step goes (main realm, min over reps), and create/restore breakdown.
+import {loadFast,makeWorld,med} from './lib.mjs';
+const [spec='l:0',repsArg='6']=process.argv.slice(2);
+const P={destruction:[['    function rebuild(next=states){\n','    function rebuild(next=states){const __t=performance.now();try{return rebuild0(next);}finally{G.__s.rebuild=(G.__s.rebuild||0)+performance.now()-__t;G.__s.rebuilds=(G.__s.rebuilds||0)+1;}}\n    function rebuild0(next=states){\n']],
+ simulation:[['solids=destruction.colliders;seenDestructionRevision=destruction.revision;s.destructionRevision++;rebuildCollision();navDirty=terrainDirty=true;unsupportedBodies();','solids=destruction.colliders;seenDestructionRevision=destruction.revision;s.destructionRevision++;{const __t=performance.now();rebuildCollision();G.__s.coll=(G.__s.coll||0)+performance.now()-__t;}navDirty=terrainDirty=true;{const __t=performance.now();unsupportedBodies();G.__s.unsup=(G.__s.unsup||0)+performance.now()-__t;}'],
+ ['      if(navDirty){refreshNav();navDirty=terrainDirty=false;}','      if(navDirty){const __t=performance.now();refreshNav();G.__s.refresh=(G.__s.refresh||0)+performance.now()-__t;navDirty=terrainDirty=false;}']]};
+const W=loadFast({patches:P});const world=makeWorld(W,spec);const campaign=spec.startsWith('c:');
+const opts=()=>{const o={brain:W.FBrain.create({mode:'cpu'}),armorSystem:true};o.inventory=campaign?{weapons:[true,true,true,true,true],ammo:[180,36,12,16,1],shield:false}:{weapons:[true,true,true,true],ammo:[180,36,12,16],shield:false};if(campaign){o.campaign={version:2,discovered:['pistol','smg','shotgun','grenade','rocket'],claimedBossRewards:[]};o.equipment={right:2,left:null,shieldEnergy:100};}return o;};
+const probe=W.FSimulation.create(world,opts()),walls=[];
+for(const g of world.destructibles.filter(g=>g.kind==='wall'&&g.colliders.length)){const b=g.bounds,cx=(b.minX+b.maxX)/2,cz=(b.minZ+b.maxZ)/2,thinX=b.maxX-b.minX<b.maxZ-b.minZ;
+  for(const sign of [-1,1]){const nx=thinX?sign:0,nz=thinX?0:sign,x=cx+nx*7,z=cz+nz*7,y=probe.ground(x,z);if(!Number.isFinite(y)||Math.abs(y-b.minY)>.1||probe.blocked(x,z,.28))continue;const hit=probe.ray([x,y+1.62,z],[-nx,0,-nz],9);if(hit<6||hit>7.4)continue;walls.push({x,y,z,yaw:Math.atan2(-nx,nz)});break;}}
+const out=[];
+for(const wall of walls.slice(3,7)){
+  const best={step:Infinity,rebuild:Infinity,coll:Infinity,unsup:Infinity,refresh:Infinity,before:Infinity};
+  for(let r=0;r<+repsArg;r++){
+    const sim=W.FSimulation.create(world,opts()),s=sim.state;Object.assign(s.player,{x:wall.x,z:wall.z,y:wall.y,yaw:wall.yaw,pitch:0});const r0=s.destructionRevision;let prev=0;
+    for(let i=0;i<120;i++){W.__s.rebuild=W.__s.coll=W.__s.unsup=W.__s.refresh=0;W.__s.rebuilds=0;const t=performance.now();sim.step(1/60,i===0?{weapon:2,fire:true}:{});const d=performance.now()-t;s.events.length=0;
+      if(s.destructionRevision!==r0){best.step=Math.min(best.step,d);best.rebuild=Math.min(best.rebuild,W.__s.rebuild);best.coll=Math.min(best.coll,W.__s.coll);best.unsup=Math.min(best.unsup,W.__s.unsup);best.refresh=Math.min(best.refresh,W.__s.refresh);best.before=Math.min(best.before,prev);best.rebuilds=W.__s.rebuilds;best.colliders=sim.destruction.colliders.length;best.debris=s.debris.length;break;}prev=d;}
+  }
+  out.push(Object.fromEntries(Object.entries(best).map(([k,v])=>[k,+(+v).toFixed(2)])));
+}
+console.log(JSON.stringify({spec,explosionStep:out}));
+// create / restore breakdown
+const T={destr:[],sim:[],restore:[],fp:[]};const s0=W.FSimulation.create(world,opts());for(let i=0;i<60;i++){s0.step(1/60,{});s0.state.events.length=0;}const snap=JSON.stringify(s0.snapshot());
+for(let r=0;r<+repsArg;r++){let t=performance.now();W.FDestruction.create(world);T.destr.push(performance.now()-t);t=performance.now();const sim=W.FSimulation.create(world,opts());T.sim.push(performance.now()-t);t=performance.now();const ok=sim.restore(JSON.parse(snap),{recover:true});T.restore.push(performance.now()-t);if(!ok)T.fail=1;}
+console.log(JSON.stringify({spec,chars:snap.length,minMs:{FDestructionCreate:+Math.min(...T.destr).toFixed(1),FSimulationCreate:+Math.min(...T.sim).toFixed(1),restore:+Math.min(...T.restore).toFixed(1)},restoreFail:!!T.fail}));

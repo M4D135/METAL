@@ -1,0 +1,10 @@
+import {readFileSync} from 'node:fs'; import vm from 'node:vm';
+const root=process.argv[2], idx=+(process.argv[3]||0);
+const ctx={window:{},performance,console,Math,Date}; vm.createContext(ctx);
+for(const n of ['renderer','world','destruction','economy','brain','simulation'])vm.runInContext(readFileSync(root+'/src/'+n+'.js','utf8'),ctx,{filename:n+'.js'});
+const w=ctx.window.FWorld.create(96,idx,{campaign:true,campaignVersion:2});
+console.log('keys',Object.keys(w).join(','));
+const rooms=w.rooms||[];console.log('rooms',rooms.length,'outdoor',rooms.filter(r=>r.outdoor).length);
+console.log(JSON.stringify(rooms.slice(0,40).map(r=>({x:+r.x.toFixed(1),z:+r.z.toFixed(1),w:r.w,d:r.d,o:!!r.outdoor,y:r.y,kind:r.kind||r.type}))));
+console.log('spawn',JSON.stringify(w.spawn),'exit',JSON.stringify(w.exit));
+console.log('env', JSON.stringify({biome:w.environment.biome,fog:w.environment.fogDensity,ambient:w.environment.ambient,sun:w.environment.sunColor,zones:w.environment.outdoorZones.length}));

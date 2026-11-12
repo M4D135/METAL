@@ -1,0 +1,1 @@
+DIAG {"segmentFree":416,"routes":1,"explored":161,"astarSF":337,"astarMs":8.729041999999936,"pullMs":0,"edgeWipes":6}

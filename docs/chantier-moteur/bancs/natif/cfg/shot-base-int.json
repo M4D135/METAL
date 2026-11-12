@@ -1,0 +1,1 @@
+{"name": "shot", "runFile": "run-shot.js", "scenes": [{"kind": "capture"}], "variants": [{"id": "base", "code": "base", "quality": 1}], "inside": 2.2}

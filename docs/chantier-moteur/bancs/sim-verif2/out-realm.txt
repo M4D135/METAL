@@ -1,0 +1,2 @@
+index 0: step CPU ms main 1.732/1.607/1.256 vs vm 4.460/4.816/4.641 (x3.7) | ground ns/call main 181.452/448.829/287.694 vs vm 2656.439/4327.984/2479.008 (x8.6) | checksum equal true
+index 9 campaign: step CPU ms main 1.010/0.798/0.852 vs vm 4.652/4.338/4.444 (x5.2) | ground ns/call main 420.049/181.252/177.891 vs vm 2762.055/2734.091/2492.480 (x14.0) | checksum equal true

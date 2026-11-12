@@ -1,0 +1,1 @@
+{"pilot":"v2","world":4,"minutes":4.6,"won":1,"stalls":0,"deaths":0,"jumpPadEvents":0,"worlds":[{"i":4,"won":true,"s":275.4,"stalls":0,"pilot":{"astar":96,"astarFail":2,"edgeTests":71803,"padRoutes":0}},{"i":5,"won":false,"s":0,"stalls":0,"pilot":{"astar":0,"astarFail":0,"edgeTests":0,"padRoutes":0}}]}

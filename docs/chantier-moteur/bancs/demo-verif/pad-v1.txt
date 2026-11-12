@@ -1,0 +1,1 @@
+{"pilot":"v1","world":4,"minutes":6,"won":1,"stalls":1,"deaths":0,"jumpPadEvents":11,"worlds":[{"i":4,"won":true,"s":359.7,"stalls":1,"stallLog":[{"t":124,"goal":"arena","x":-41,"y":1.2,"z":-18.5,"relays":3,"mech":3}],"pilot":{"astar":140,"astarFail":1,"edgeTests":203946}},{"i":5,"won":false,"s":0,"stalls":0,"pilot":{"astar":0,"astarFail":0,"edgeTests":0}}]}

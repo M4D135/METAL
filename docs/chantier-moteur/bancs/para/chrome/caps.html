@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><title>para-caps</title></head><body><pre id="out">pending</pre>
+<canvas id="c" width="320" height="180"></canvas>
+<script>
+(async()=>{
+  const out={};const done=()=>{document.getElementById('out').textContent=JSON.stringify(out);};
+  try{
+    out.ua=navigator.userAgent;out.protocol=location.protocol;out.crossOriginIsolated=self.crossOriginIsolated;out.SharedArrayBuffer=typeof SharedArrayBuffer;out.cores=navigator.hardwareConcurrency;
+    out.page={OffscreenCanvas:typeof OffscreenCanvas,transferControlToOffscreen:typeof HTMLCanvasElement.prototype.transferControlToOffscreen,AudioWorklet:typeof AudioWorklet,schedulerPostTask:typeof (self.scheduler&&scheduler.postTask),schedulerYield:typeof (self.scheduler&&scheduler.yield),requestIdleCallback:typeof requestIdleCallback,isInputPending:typeof (navigator.scheduling&&navigator.scheduling.isInputPending),webgpu:!!navigator.gpu,measureMemory:typeof performance.measureUserAgentSpecificMemory};
+    const src=`
+      let sim=null;
+      self.onmessage=async e=>{const m=e.data;
+        if(m.t==='ping'){self.postMessage(m,m.buf?[m.buf]:[]);}
+        else if(m.t==='caps'){const r={SharedArrayBuffer:typeof SharedArrayBuffer,crossOriginIsolated:self.crossOriginIsolated,OffscreenCanvas:typeof OffscreenCanvas,requestAnimationFrame:typeof requestAnimationFrame,indexedDB:typeof indexedDB,localStorage:typeof localStorage,AudioContext:typeof AudioContext,OfflineAudioContext:typeof OfflineAudioContext,webgpu:!!navigator.gpu,nestedWorker:typeof Worker,AtomicsWait:typeof Atomics.wait,location:String(self.location.href).slice(0,24)};
+          try{if(m.canvas){const gl=m.canvas.getContext('webgl2',{antialias:false,powerPreference:'high-performance'});r.transferredCanvasWebGL2=!!gl;if(gl){const d=gl.getExtension('WEBGL_debug_renderer_info');r.renderer=d?gl.getParameter(d.UNMASKED_RENDERER_WEBGL):'?';gl.clearColor(1,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT);const px=new Uint8Array(4);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);r.pixel=[...px];r.timerQuery=!!gl.getExtension('EXT_disjoint_timer_query_webgl2');r.colorFloat=!!gl.getExtension('EXT_color_buffer_float');}}}catch(err){r.glError=String(err);}
+          try{const oc=new OffscreenCanvas(64,64);r.newOffscreenWebGL2=!!oc.getContext('webgl2');}catch(err){r.ocError=String(err);}
+          self.postMessage({t:'caps',r});}
+        else if(m.t==='timers'){const ts=[];let last=performance.now(),n=0;const tick=()=>{const now=performance.now();ts.push(now-last);last=now;if(++n<120)setTimeout(tick,1000/60);else self.postMessage({t:'timers',ts});};setTimeout(tick,1000/60);}
+        else if(m.t==='spin'){const t=performance.now();let x=0;while(performance.now()-t<m.ms)x+=Math.sqrt(x+1);self.postMessage({t:'spin',x});}
+      };`;
+    const url=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));
+    const w=new Worker(url,{name:'para'});out.blobWorkerCreated=true;
+    const ask=(msg,tr)=>new Promise((res,rej)=>{w.onmessage=e=>res(e.data);w.onerror=e=>rej(new Error('worker: '+e.message));w.postMessage(msg,tr||[]);});
+    const off=document.getElementById('c').transferControlToOffscreen();
+    out.worker=(await ask({t:'caps',canvas:off},[off])).r;
+    const stat=a=>{const s=[...a].sort((x,y)=>x-y),q=p=>+s[Math.min(s.length-1,Math.floor(s.length*p))].toFixed(4);return {n:s.length,p10:q(.1),p50:q(.5),p90:q(.9),p99:q(.99),max:+s[s.length-1].toFixed(3)};};
+    // aller-retour avec transfert d'un tampon de 16 Ko
+    {let buf=new ArrayBuffer(16384);const rtt=[];for(let i=0;i<1500;i++){const t0=performance.now();const r=await ask({t:'ping',buf,i},[buf]);rtt.push(performance.now()-t0);buf=r.buf;}out.allerRetourTransfert16Ko=stat(rtt.slice(200));}
+    // aller-retour avec clonage structure d'un etat en objets (120 ennemis x 22 champs + 60 objets x 9)
+    {const state={enemies:Array.from({length:120},(_,i)=>Object.fromEntries(Array.from({length:22},(_,k)=>['f'+k,i*.37+k]))),pickups:Array.from({length:60},(_,i)=>Object.fromEntries(Array.from({length:9},(_,k)=>['g'+k,i+k*.5])))};
+      const rtt=[];for(let i=0;i<600;i++){const t0=performance.now();await ask({t:'ping',state,i});rtt.push(performance.now()-t0);}out.allerRetourCloneObjets=stat(rtt.slice(100));}
+    // regularite d'une boucle a 60 Hz par setTimeout dans le worker
+    {const r=await ask({t:'timers'});out.minuterieWorker60Hz=stat(r.ts);}
+    // rAF de la page pendant que le worker calcule 400 ms
+    {const iv=[];let last=0,n=0;const p=new Promise(res=>{const f=t=>{if(last)iv.push(t-last);last=t;if(++n<40)requestAnimationFrame(f);else res();};requestAnimationFrame(f);});const spin=ask({t:'spin',ms:400});await p;await spin;out.rafPendantCalculWorker=stat(iv);}
+    // AudioWorklet charge depuis un Blob
+    try{const oac=new OfflineAudioContext(1,4096,22050);const aw=URL.createObjectURL(new Blob(['class P extends AudioWorkletProcessor{process(i,o){const c=o[0][0];for(let k=0;k<c.length;k++)c[k]=.5;return true;}}registerProcessor("p",P);'],{type:'text/javascript'}));await oac.audioWorklet.addModule(aw);const node=new AudioWorkletNode(oac,'p');node.connect(oac.destination);const b=await oac.startRendering();out.audioWorkletBlob={ok:true,sample:b.getChannelData(0)[2000]};}catch(err){out.audioWorkletBlob={ok:false,error:String(err)};}
+    // module ES en worker depuis un Blob
+    try{const mw=new Worker(URL.createObjectURL(new Blob(['self.postMessage(1)'],{type:'text/javascript'})),{type:'module'});out.moduleWorkerBlob=await new Promise((res,rej)=>{mw.onmessage=()=>res(true);mw.onerror=e=>res('erreur: '+e.message);});mw.terminate();}catch(err){out.moduleWorkerBlob=String(err);}
+    w.terminate();
+  }catch(err){out.error=String(err&&err.stack||err);}
+  out.finished=true;done();
+})();
+</script>
+<script src="gate.js"></script>
+</body></html>

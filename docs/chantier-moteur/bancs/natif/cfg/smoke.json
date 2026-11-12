@@ -1,0 +1,3 @@
+{"name":"smoke","block":10,"rounds":1,"diffEvery":20,"ref":"base",
+ "scenes":[{"id":"w0cap","world":0,"kind":"capture"},{"id":"w0in","world":0,"kind":"inside","pos":[1.5,4.82,0.5],"n":20},{"id":"w6walk","world":6,"kind":"walk","steps":300,"every":15}],
+ "variants":[{"id":"base","code":"base","quality":2,"cssW":960,"cssH":540},{"id":"base2","code":"base","quality":2,"cssW":960,"cssH":540},{"id":"auto","code":"base","quality":"auto","cssW":960,"cssH":540},{"id":"skylate","code":"skylate","quality":2,"cssW":960,"cssH":540}]}

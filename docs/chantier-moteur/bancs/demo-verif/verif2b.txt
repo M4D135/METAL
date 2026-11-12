@@ -1,0 +1,80 @@
+{
+ "simSeconds": 60,
+ "world": 7,
+ "sessionDeaths": 0,
+ "continuousWithSnapshotsEqualsWithout": true,
+ "playerEnd": [
+  36.606,
+  0.552,
+  138.364
+ ],
+ "rows": [
+  {
+   "K": 180,
+   "tS": 3,
+   "revision": 1,
+   "debris": 16,
+   "airborne": false,
+   "restoreAccepted": true,
+   "snapshotBytes": 131586,
+   "finalStateEqual": false,
+   "diffKeys": [
+    "player",
+    "kills",
+    "hits",
+    "relays",
+    "score",
+    "combo",
+    "comboTime",
+    "loot",
+    "encounters",
+    "director",
+    "bullets",
+    "particles"
+   ]
+  },
+  {
+   "K": 360,
+   "tS": 6,
+   "revision": 1,
+   "debris": 14,
+   "airborne": false,
+   "restoreAccepted": true,
+   "snapshotBytes": 131121,
+   "finalStateEqual": false,
+   "diffKeys": [
+    "player",
+    "hits",
+    "loot",
+    "enemies",
+    "debris",
+    "traps",
+    "locomotion"
+   ]
+  },
+  {
+   "K": 900,
+   "tS": 15,
+   "revision": 3,
+   "debris": 31,
+   "airborne": false,
+   "restoreAccepted": true,
+   "snapshotBytes": 138030,
+   "finalStateEqual": false,
+   "diffKeys": [
+    "player",
+    "kills",
+    "hits",
+    "score",
+    "loot",
+    "encounters",
+    "director",
+    "bullets",
+    "threat",
+    "enemies",
+    "explosions",
+    "debris"
+   ]
+  }
+ ]
+}

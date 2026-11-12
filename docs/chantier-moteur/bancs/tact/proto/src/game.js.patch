@@ -1,0 +1,70 @@
+--- a/src/game.js
++++ b/src/game.js
+@@ -16,6 +16,9 @@
+   const worldCache=new Map();let preparationSerial=0,shieldLift=0;
+   const actorMotion=new Map(),systemMotion=new Map();
+   const keys=new Set(),input={moveX:0,moveY:0,lookX:0,lookY:0,fire:false,fireLeft:false,dash:false,pulse:false,melee:false,interact:false,weapon:0,sprint:false,assist:touch};
++  let firePressed=false,touchSprint=false,fireLook=null,leftLook=null;
++  const TOUCH={radius:56,dead:.12,sprintOn:1.25,sprintOff:1.05,follow:1.6,sens:.004,accel:2.2,v0:400,v1:2200,pitch:1};
++  function touchLook(state,e){const now=e.timeStamp||performance.now(),dx=e.clientX-state.x,dy=e.clientY-state.y,dtm=Math.max(4,Math.min(50,now-state.t)),v=Math.hypot(dx,dy)/dtm*1000;state.v=state.v===undefined?v:state.v+(v-state.v)*.5;const u=Math.max(0,Math.min(1,(state.v-TOUCH.v0)/(TOUCH.v1-TOUCH.v0))),gain=1+TOUCH.accel*u*u*(3-2*u);lookDX+=dx*TOUCH.sens*prefs.sensitivity*gain;lookDY-=dy*TOUCH.sens*TOUCH.pitch*prefs.sensitivity*gain*(prefs.invertY?-1:1);state.x=e.clientX;state.y=e.clientY;state.t=now;}
+   let mouseFire=false,mouseLeftFire=false,touchFire=false,touchLeftFire=false,dragLook=null,moveTouch=null,stick={x:0,y:0},lookDX=0,lookDY=0,dashQueued=false,pulseQueued=false,meleeQueued=false,interactQueued=false;
+   function copyLoadout(value){
+     if(!value)return null;const inventory=value.inventory||value,economy=window.FEconomy?.copy(value.economy||window.FEconomy?.fresh());
+@@ -121,7 +124,7 @@
+       start(v.generation!==world.generation?'Les lieux ont changé. Reprise à l’entrée du même secteur ; progression précédente conservée.':'Point de reprise illisible. Reprise à l’entrée de ce secteur.');
+     }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2);saveCheckpoint();start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');}
+   }
+-  function clearInput(){keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
++  function clearInput(){keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;firePressed=touchSprint=false;fireLook=leftLook=null;$('move-stick').style.transform='';}
+   function setMode(value){
+     audio.cancelTestMix?.();
+     last=performance.now();perfStart=0;perfFrames=0;
+@@ -683,13 +686,13 @@
+       input.moveX=Number(held('right'))-Number(held('left'))+stick.x;
+       input.moveY=Number(held('forward'))-Number(held('back'))-stick.y;
+       input.lookX=lookDX+(Number(held('turnRight'))-Number(held('turnLeft')))*dt*1.9;input.lookY=lookDY;
+-      input.fire=mouseFire||touchFire||held('fire');input.fireLeft=mouseLeftFire||touchLeftFire||held('fireLeft');input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');
++      input.fire=mouseFire||touchFire||held('fire')||firePressed;input.fireLeft=mouseLeftFire||touchLeftFire||held('fireLeft');input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint')||touchSprint;
+       signals.lookYaw=dt>0?input.lookX/dt:0;signals.lookPitch=dt>0?input.lookY/dt:0;signals.firing=input.fire;
+       lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;
+       // Bounded substeps preserve movement/combat timing when rendering is slower than 60 Hz.
+       const steps=Math.max(1,Math.ceil(dt*60)),part=dt/steps;
+       for(let i=0;i<steps;i++){
+-        sim.step(part,input);input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=false;
++        sim.step(part,input);if(firePressed){firePressed=false;input.fire=mouseFire||touchFire||held('fire');}input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=false;
+         events();
+         input.weapon=selectedWeapon;
+         if(mode!=='playing')break;
+@@ -817,20 +820,23 @@
+   canvas.addEventListener('pointerdown',e=>{
+     if(mode!=='playing')return;
+     if(e.pointerType==='mouse'){if(!document.pointerLockElement){dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}}
+-    else if(e.clientX>innerWidth*.36){dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}
++    else if(e.clientX>innerWidth*.4){if(!dragLook){dragLook={id:e.pointerId,x:e.clientX,y:e.clientY,t:e.timeStamp||performance.now()};canvas.setPointerCapture(e.pointerId);}}
++    else if(!moveTouch){moveTouch={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);joystick(e);}
+   });
+-  canvas.addEventListener('pointermove',e=>{if(dragLook?.id===e.pointerId&&!document.pointerLockElement&&mode==='playing'){const sensitivity=(touch?.004:.003)*prefs.sensitivity;lookDX+=(e.clientX-dragLook.x)*sensitivity;lookDY-=(e.clientY-dragLook.y)*sensitivity*(prefs.invertY?-1:1);dragLook.x=e.clientX;dragLook.y=e.clientY;}});
++  canvas.addEventListener('pointermove',e=>{joystick(e);if(e.pointerType==='touch'){if(dragLook?.id===e.pointerId&&mode==='playing')touchLook(dragLook,e);return;}if(dragLook?.id===e.pointerId&&!document.pointerLockElement&&mode==='playing'){const sensitivity=(touch?.004:.003)*prefs.sensitivity;lookDX+=(e.clientX-dragLook.x)*sensitivity;lookDY-=(e.clientY-dragLook.y)*sensitivity*(prefs.invertY?-1:1);dragLook.x=e.clientX;dragLook.y=e.clientY;}});
+   function endMouse(e){if(e.button===0)mouseFire=false;else if(e.button===2)mouseLeftFire=false;if(!mouseFire&&!mouseLeftFire)dragLook=null;}
+   addEventListener('mouseup',endMouse);
+-  function endPointer(e){if(e.pointerType==='mouse'&&(e.type==='pointercancel'||e.buttons===0))mouseFire=mouseLeftFire=false;if(dragLook?.id===e.pointerId&&!mouseFire&&!mouseLeftFire)dragLook=null;if(moveTouch?.id===e.pointerId){moveTouch=null;stick.x=stick.y=0;$('move-stick').style.transform='';}}
++  function endPointer(e){if(e.pointerType==='mouse'&&(e.type==='pointercancel'||e.buttons===0))mouseFire=mouseLeftFire=false;if(dragLook?.id===e.pointerId&&!mouseFire&&!mouseLeftFire)dragLook=null;if(moveTouch?.id===e.pointerId){moveTouch=null;touchSprint=false;stick.x=stick.y=0;$('move-stick').style.transform='';}}
+   addEventListener('pointerup',endPointer);addEventListener('pointercancel',endPointer);canvas.addEventListener('contextmenu',e=>e.preventDefault());
+-  $('move-zone').addEventListener('pointerdown',e=>{if(mode!=='playing'||moveTouch)return;e.preventDefault();const rect=$('move-zone').getBoundingClientRect();moveTouch={id:e.pointerId,x:rect.left+rect.width/2,y:rect.top+rect.height/2};$('move-zone').setPointerCapture(e.pointerId);joystick(e);});
+-  function joystick(e){if(moveTouch?.id!==e.pointerId)return;const dx=e.clientX-moveTouch.x,dy=e.clientY-moveTouch.y,n=Math.max(1,Math.hypot(dx,dy)/34);stick.x=dx/n/34;stick.y=dy/n/34;$('move-stick').style.transform='translate('+dx/n+'px,'+dy/n+'px)';}
++  $('move-zone').addEventListener('pointerdown',e=>{if(mode!=='playing'||moveTouch)return;e.preventDefault();moveTouch={id:e.pointerId,x:e.clientX,y:e.clientY};$('move-zone').setPointerCapture(e.pointerId);joystick(e);});
++  function joystick(e){if(moveTouch?.id!==e.pointerId)return;let dx=e.clientX-moveTouch.x,dy=e.clientY-moveTouch.y,m=Math.hypot(dx,dy),raw=m/TOUCH.radius;if(raw>TOUCH.follow){const k=1-TOUCH.follow/raw;moveTouch.x+=dx*k;moveTouch.y+=dy*k;dx-=dx*k;dy-=dy*k;m=Math.hypot(dx,dy);raw=TOUCH.follow;}const n=Math.max(0,Math.min(1,(raw-TOUCH.dead)/(1-TOUCH.dead)));stick.x=m?dx/m*n:0;stick.y=m?dy/m*n:0;touchSprint=touchSprint?raw>=TOUCH.sprintOff:raw>=TOUCH.sprintOn;$('move-stick').style.transform='translate('+stick.x*TOUCH.radius+'px,'+stick.y*TOUCH.radius+'px)';}
+   $('move-zone').addEventListener('pointermove',joystick);
+-  $('fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();touchFire=true;$('fire-button').setPointerCapture(e.pointerId);});
+-  for(const name of ['pointerup','pointercancel','lostpointercapture'])$('fire-button').addEventListener(name,()=>{touchFire=false;});
+-  $('left-fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||$('left-fire-button').disabled)return;e.preventDefault();touchLeftFire=true;$('left-fire-button').setPointerCapture(e.pointerId);});
+-  for(const name of ['pointerup','pointercancel','lostpointercapture'])$('left-fire-button').addEventListener(name,()=>{touchLeftFire=false;});
++  $('fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();touchFire=true;firePressed=true;fireLook={id:e.pointerId,x:e.clientX,y:e.clientY,t:e.timeStamp||performance.now()};$('fire-button').setPointerCapture(e.pointerId);});
++  $('fire-button').addEventListener('pointermove',e=>{if(fireLook?.id===e.pointerId&&mode==='playing')touchLook(fireLook,e);});
++  for(const name of ['pointerup','pointercancel','lostpointercapture'])$('fire-button').addEventListener(name,()=>{touchFire=false;fireLook=null;});
++  $('left-fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||$('left-fire-button').disabled)return;e.preventDefault();touchLeftFire=true;leftLook={id:e.pointerId,x:e.clientX,y:e.clientY,t:e.timeStamp||performance.now()};$('left-fire-button').setPointerCapture(e.pointerId);});
++  $('left-fire-button').addEventListener('pointermove',e=>{if(leftLook?.id===e.pointerId&&mode==='playing')touchLook(leftLook,e);});
++  for(const name of ['pointerup','pointercancel','lostpointercapture'])$('left-fire-button').addEventListener(name,()=>{touchLeftFire=false;leftLook=null;});
+   $('dash-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();dashQueued=true;});
+   $('pulse-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();pulseQueued=true;});
+   $('melee-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();meleeQueued=true;});

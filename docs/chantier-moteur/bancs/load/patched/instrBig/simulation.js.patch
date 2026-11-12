@@ -1,0 +1,41 @@
+--- a/src/simulation.js
++++ b/src/simulation.js
+@@ -1346,7 +1346,7 @@
+       return true;
+     }
+     function radius(e){return giant(e)?1.5*scale(e):e.type===3?1.05:.38;}
+-    function segmentFree(ax,az,bx,bz,r=.4){
++    function segmentFree(ax,az,bx,bz,r=.4){G.__s.sf++;
+       if(blocked(ax,az,r)||blocked(bx,bz,r))return false;
+       const dx=bx-ax,dz=bz-az,ay=groundAt(ax,az),by=groundAt(bx,bz),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
+       // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
+@@ -1399,11 +1399,12 @@
+       }
+       return best;
+     }
+-    function route(e,x,z){
++    function route(e,x,z){const t0=performance.now(),sf0=G.__s.sf;G.__s.explored=-1;G.__s.astar=false;const res=route0(e,x,z);G.__s.routes.push({t:G.__s.t,ms:performance.now()-t0,sf:G.__s.sf-sf0,explored:G.__s.explored,astar:G.__s.astar,found:!!res,len:res?res.length:-1,dist:Math.hypot(x-e.x,z-e.z)});return res;}
++    function route0(e,x,z){
+       const r=radius(e);
+       if(blocked(x,z,r))return null;
+       if(segmentFree(e.x,e.z,x,z,r))return [];
+-      if(routeBudget<=0){routeDeferred++;return null;}routeBudget--;routeSearches++;
++      if(routeBudget<=0){routeDeferred++;return null;}routeBudget--;routeSearches++;G.__s.astar=true;
+       const start=nearestNode(e.x,e.z,r),end=nearestNode(x,z,r);if(start<0||end<0)return null;
+       const stamp=++routeSerial,heap=[];
+       const heuristic=i=>Math.abs(i%nx-end%nx)+Math.abs(Math.floor(i/nx)-Math.floor(end/nx));
+@@ -1418,12 +1419,12 @@
+           const j=neighbors[k];if(j<0||j>=nav.length||!nav[j]||routeClosed[j]===stamp)continue;
+           const mask=1<<k;
+           if(!(edgeKnown[i]&mask)){edgeKnown[i]|=mask;if(segmentFree(...coord(i),...coord(j),.4))edgeOpen[i]|=mask;}
+-          if(!(edgeOpen[i]&mask)||r>.4&&!segmentFree(...coord(i),...coord(j),r))continue;
++          if(!(edgeOpen[i]&mask)||r>.4&&(G.__s.big=(G.__s.big||0)+1,!segmentFree(...coord(i),...coord(j),r)))continue;
+           const cost=routeCost[i]+1;if(routeStamp[j]===stamp&&routeCost[j]<=cost)continue;
+           routeStamp[j]=stamp;routeCost[j]=cost;routePrev[j]=i;push(j,cost+heuristic(j));
+         }
+       }
+-      if(!found)return null;
++      G.__s.explored=explored;if(!found)return null;
+       const raw=[];for(let i=end;i>=0;i=routePrev[i])raw.push(i);raw.reverse();
+       // String-pull this bounded local route once, rather than trace many rays every frame.
+       const result=[];let ax=e.x,az=e.z,at=0;

@@ -1,0 +1,24 @@
+{
+ "stats": {
+  "bruit3dMs": 24,
+  "compileMs": {
+   "old": 7.7,
+   "flat": 2.9,
+   "noise": 5.8,
+   "sky": 16.1,
+   "cloud": 15,
+   "blur": 281.8,
+   "comp": 19.4,
+   "direct": 16.4
+  }
+ },
+ "bench": {},
+ "errors": [],
+ "info": {
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+  "float": true,
+  "half": true,
+  "dpr": 1,
+  "max3d": 2048
+ }
+}

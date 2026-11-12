@@ -1,0 +1,17 @@
+{"name":"runA-auto","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":560,"measureFrames":260,"skip":10,"reps":2,"dumpFrames":true,
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"noshadow","code":"base","fx":{"shadows":false}},
+  {"id":"nobloom","code":"base","fx":{"bloom":false}},
+  {"id":"nosky","code":"nosky"},
+  {"id":"muzzle","code":"muzzle"},
+  {"id":"shbranch","code":"shbranch"},
+  {"id":"lightcull","code":"lightcull"},
+  {"id":"skylate","code":"skylate"},
+  {"id":"bloomq","code":"bloomq"},
+  {"id":"hwpcf","code":"hwpcf"},
+  {"id":"nomat","code":"nomat"},
+  {"id":"l6","code":"l6"},
+  {"id":"l0","code":"l0"},
+  {"id":"combo","code":"combo"}]}

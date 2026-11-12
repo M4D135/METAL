@@ -1,0 +1,162 @@
+--- a/src/destruction.js
++++ b/src/destruction.js
+@@ -33,12 +33,10 @@
+   function union(boxes){return Object.fromEntries(KEYS.map(k=>[k,Math[k.startsWith('min')?'min':'max'](...boxes.map(b=>b[k]))]));}
+   // A box minus one box is at most six disjoint solids. Keeping the exact same
+   // bounds for render pieces and collision pieces makes the breach physical.
+-  function subtract(a,b,minimum=EPS){
++  function subtract(a,b){
+     if(!overlaps(a,b))return [a];
+     const lo=[Math.max(a.minX,b.minX),Math.max(a.minY,b.minY),Math.max(a.minZ,b.minZ)],hi=[Math.min(a.maxX,b.maxX),Math.min(a.maxY,b.maxY),Math.min(a.maxZ,b.maxZ)];
+-    // Thin rails, sheet metal and cladding are real geometry too. A fixed .035 m
+-    // minimum used to erase the entire sheet as soon as one small cut touched it.
+-    const pieces=[],push=(x0,x1,y0,y1,z0,z1)=>{if(x1-x0>minimum&&y1-y0>minimum&&z1-z0>minimum)pieces.push({minX:x0,maxX:x1,minY:y0,maxY:y1,minZ:z0,maxZ:z1});};
++    const pieces=[],push=(x0,x1,y0,y1,z0,z1)=>{if(x1-x0>.035&&y1-y0>.035&&z1-z0>.035)pieces.push({minX:x0,maxX:x1,minY:y0,maxY:y1,minZ:z0,maxZ:z1});};
+     push(a.minX,lo[0],a.minY,a.maxY,a.minZ,a.maxZ);push(hi[0],a.maxX,a.minY,a.maxY,a.minZ,a.maxZ);
+     push(lo[0],hi[0],a.minY,lo[1],a.minZ,a.maxZ);push(lo[0],hi[0],hi[1],a.maxY,a.minZ,a.maxZ);
+     push(lo[0],hi[0],lo[1],hi[1],a.minZ,lo[2]);push(lo[0],hi[0],lo[1],hi[1],hi[2],a.maxZ);
+@@ -139,7 +137,7 @@
+       if(record?.removed)return {active:[],solids:[]};
+       const cuts=record?.cuts||[],active=[],solids=[];
+       for(const ci of g.colliders){
+-        const c=originalColliders[ci];let pieces=[copyBox(c)];for(const cut of cuts)pieces=pieces.flatMap(p=>subtract(p,cut,.035));
++        const c=originalColliders[ci];let pieces=[copyBox(c)];for(const cut of cuts)pieces=pieces.flatMap(p=>subtract(p,cut));
+         if(g.kind!=='roof'&&g.kind!=='decor')pieces=anchored(pieces,c.minY);
+         for(const b of pieces)solids.push({bounds:b,source:ci,meshIndex:c.mesh});
+       }
+@@ -150,7 +148,7 @@
+         }
+         if(!cuts.length){active.push(e);continue;}
+         const axisBox=(m.shape||'box')==='box'&&(!m.r||m.r.every(x=>Math.abs(x)<1e-8));
+-        if(axisBox){let boxes=[e.bounds];for(const c of cuts)boxes=boxes.flatMap(p=>subtract(p,c));if(g.kind==='decor'&&m.s[1]>Math.max(m.s[0],m.s[2])*4)boxes=anchored(boxes,e.bounds.minY);for(const b of boxes){const mesh=meshBox(m,b,g.id);active.push({mesh,source:i,bounds:b,rotation:rotation(mesh.r)});}}
++        if(axisBox){let boxes=[e.bounds];for(const c of cuts)boxes=boxes.flatMap(p=>subtract(p,c));for(const b of boxes){const mesh=meshBox(m,b,g.id);active.push({mesh,source:i,bounds:b,rotation:rotation(mesh.r)});}}
+         else if(!cuts.some(c=>overlaps(e.bounds,c)))active.push(e);
+       }
+       const attached=record?.cuts.length&&g.colliders.length&&g.kind!=='roof'?active.filter(e=>e.solid||solids.some(q=>Math.hypot(Math.max(q.bounds.minX-e.bounds.maxX,0,e.bounds.minX-q.bounds.maxX),Math.max(q.bounds.minY-e.bounds.maxY,0,e.bounds.minY-q.bounds.maxY),Math.max(q.bounds.minZ-e.bounds.maxZ,0,e.bounds.minZ-q.bounds.maxZ))<.4)):active;
+@@ -185,48 +183,17 @@
+       for(const g of candidates){if(!isAlive(g.id)||!rayBox(origin,dir,g.bounds,limit))continue;for(const e of g.active){const h=rayMesh(origin,dir,e,limit);if(h&&h.distance<limit){limit=h.distance;nearest={...h,id:g.id,point:origin.map((v,i)=>v+dir[i]*h.distance)};}}}
+       return nearest;
+     }
+-    const materialOf=m=>['metal','stone','wood','glass','dirt'].includes(m.material)?m.material:m.mat===3||m.mat===9?'stone':m.mat===10?'wood':m.mat===8||m.mat===11?'dirt':m.mat===12?'glass':'metal';
+-    function randomFor(seed){let n=(seed|0)||1;return ()=>{n=Math.imul(n^n>>>15,2246822519);n=Math.imul(n^n>>>13,3266489917);return ((n^n>>>16)>>>0)/4294967296;};}
+-    function chipsFor(g,e,point,power,out){
+-      const m=e.mesh,seed=e.source*977+revision*911+Math.round(power*13),random=randomFor(seed);
+-      for(let i=0;i<Math.min(3,Math.ceil(power/8)+1)&&out.length<12;i++){
+-        const span=.025+random()*.075,a=random()*Math.PI*2,speed=1+random()*2;
+-        out.push({x:point[0],y:point[1],z:point[2],size:[span,span*(.4+random()),span*(.6+random())],mat:m.mat||0,color:m.color?.slice(),material:materialOf(m),sourceId:g.id,velocity:[Math.cos(a)*speed,1+random()*2,Math.sin(a)*speed],life:.65+random()*.8,seed:seed+i});
++    function debrisFor(g,point,power,out){
++      const material=entries[g.meshes[0]].mesh,seed=g.meshes[0]+revision*911;let n=seed|0;
++      const random=()=>{n=Math.imul(n^n>>>15,2246822519);n=Math.imul(n^n>>>13,3266489917);return ((n^n>>>16)>>>0)/4294967296;};
++      const count=Math.min(8,Math.max(3,Math.ceil(power/10)),MAX_DEBRIS-out.length);
++      for(let i=0;i<count;i++){
++        const span=g.kind==='roof'?1.1+random()*1.3:g.kind==='wall'?.25+random()*.55:g.kind==='tree'?.2+random()*.45:.09+random()*.30,a=random()*Math.PI*2,speed=1.8+random()*3.2;
++        out.push({x:point[0]+(random()-.5)*.4,y:point[1]+(random()-.5)*.3,z:point[2]+(random()-.5)*.4,size:[span,g.kind==='roof'?.18+random()*.18:span*(.6+random()),span*(.6+random())],mat:material.mat||0,color:material.color?material.color.slice():undefined,velocity:[Math.cos(a)*speed,g.kind==='roof'?-1-random():2+random()*3,Math.sin(a)*speed],life:1.4+random()*1.3,seed:seed+i});
+       }
+     }
+-    function removedGeometry(g,before,after,point,power,direction,out){
+-      // Diff the visible pieces, not the group's bounding box. A shot through a
+-      // fence must drop the severed rail and keep the other rail and posts.
+-      for(const e of before){
+-        const keep=after.filter(q=>q.source===e.source);
+-        if(keep.some(q=>q.mesh===e.mesh||KEYS.every(k=>Math.abs(q.bounds[k]-e.bounds[k])<EPS)))continue;
+-        const m=e.mesh,axisBox=(m.shape||'box')==='box'&&(!m.r||m.r.every(v=>Math.abs(v)<EPS));
+-        if(axisBox||e.solid&&keep.length){
+-          let lost=[e.bounds];for(const q of keep)lost=lost.flatMap(b=>subtract(b,q.bounds));
+-          for(const b of lost)out.push({mesh:meshBox(m,b,g.id),source:e.source,sourceId:g.id,kind:g.kind,point,power,direction});
+-        }else if(!keep.length)out.push({mesh:m,source:e.source,sourceId:g.id,kind:g.kind,point,power,direction});
+-      }
+-    }
+-    function fallingDebris(raw){
+-      const worth=q=>Math.pow(q.mesh.s.reduce((v,n)=>v*n,1),.35)*Math.max(...q.mesh.s),ordered=raw.sort((a,b)=>worth(b)-worth(a)),selected=[],seen=new Set();
+-      // Give each collapsed body a representative piece before spending the
+-      // remaining finite budget on detail. Small chips have a separate allowance.
+-      for(const q of ordered)if(!seen.has(q.sourceId)&&selected.length<MAX_DEBRIS-8){seen.add(q.sourceId);selected.push(q);}
+-      for(const q of ordered)if(selected.length<MAX_DEBRIS-8&&!selected.includes(q))selected.push(q);
+-      const splitAxis=q=>{if(!['box','bevel','cylinder'].includes(q.mesh.shape||'box'))return -1;const s=q.mesh.s;let axis=-1,ratio=1;for(let k=0;k<3;k++){if(q.mesh.shape==='cylinder'&&k!==1)continue;const target=q.kind==='roof'&&k===1&&s[1]<1.2?.35:2.4,r=s[k]/target;if(r>ratio){ratio=r;axis=k;}}return axis;};
+-      while(selected.length<MAX_DEBRIS-8){
+-        let at=-1,axis=-1,best=0;for(let i=0;i<selected.length;i++){const k=splitAxis(selected[i]);if(k>=0&&worth(selected[i])>best){at=i;axis=k;best=worth(selected[i]);}}
+-        if(at<0)break;const q=selected[at],m=q.mesh,s=m.s.slice(),a=rotation(m.r);s[axis]/=2;
+-        const pieces=[-1,1].map(sign=>({...q,mesh:{...m,s:s.slice(),p:m.p.map((v,k)=>v+sign*a[k*3+axis]*s[axis]/2)}}));selected.splice(at,1,...pieces);
+-      }
+-      return selected.map((q,i)=>{
+-        const m=q.mesh,seed=(q.source*977+(revision+1)*911+i*131)>>>0,random=randomFor(seed),material=materialOf(m),volume=m.s.reduce((v,n)=>v*n,1)*({sphere:Math.PI/6,cylinder:Math.PI/4,octa:1/6,ring:2*Math.PI*Math.PI*.435*.065*.065,foliage:.55}[m.shape]||1),mass=clamp(volume*({metal:65,stone:28,wood:8,glass:25,dirt:12}[material]),.035,160);
+-        const angle=random()*Math.PI*2,dx=m.p[0]-q.point[0],dz=m.p[2]-q.point[2],length=Math.hypot(dx,dz),speed=clamp(Math.sqrt(q.power)*.30/Math.pow(Math.max(1,mass),.22),.35,3.2),dir=q.direction||[length>.03?dx/length:Math.cos(angle),0,length>.03?dz/length:Math.sin(angle)],spin=Math.max(...m.s)>Math.min(...m.s)*8?.55:1.4;
+-        return {structural:true,sourceId:q.sourceId,shape:m.shape||'box',x:m.p[0],y:m.p[1],z:m.p[2],size:m.s.slice(),rotation:(m.r||[0,0,0]).slice(),angularVelocity:[(random()-.5)*spin,(random()-.5)*spin,(random()-.5)*spin],velocity:[dir[0]*speed,q.kind==='roof'?-.25:.35+random()*.9+dir[1]*speed,dir[2]*speed],resting:false,mat:m.mat||0,color:m.color?.slice(),material,mass,life:1e7,seed};
+-      });
+-    }
+-    function damage(point,radius,power,bullet,ignoreId,direction){
+-      const result={changed:false,revision,debris:[],events:[],pipeLeaks:[],collapsed:[]},fallen=[];
++    function damage(point,radius,power,bullet,ignoreId){
++      const result={changed:false,revision,debris:[],pipeLeaks:[],collapsed:[]};
+       if(!validPoint(point)||!finite(radius)||!finite(power)||radius<=0||power<=0)return result;
+       radius=clamp(radius,.05,12);power=clamp(power,0,1000);
+       const reach={minX:point[0]-radius,maxX:point[0]+radius,minY:point[1]-radius,maxY:point[1]+radius,minZ:point[2]-radius,maxZ:point[2]+radius};
+@@ -235,40 +202,35 @@
+       const touched=[];
+       for(const g of targets){
+         const nearest=g.active.reduce((best,e)=>!best||distance(point,e.bounds)<distance(point,best.bounds)?e:best,null),d=distance(point,nearest.bounds),impact=[Math.max(nearest.bounds.minX,Math.min(point[0],nearest.bounds.maxX)),Math.max(nearest.bounds.minY,Math.min(point[1],nearest.bounds.maxY)),Math.max(nearest.bounds.minZ,Math.min(point[2],nearest.bounds.maxZ))],amount=power*(bullet?1:Math.pow(Math.max(0,1-d/radius),.45));if(amount<=.02)continue;
+-        const old=states.get(g.id)||{damage:0,cuts:[],removed:false},record={...old,cuts:old.cuts.slice(),damage:old.damage+amount},event={x:impact[0],y:impact[1],z:impact[2],sourceId:g.id,material:materialOf(nearest.mesh),power:amount,seed:nearest.source*977+(revision+1)*911};
+-        chipsFor(g,nearest,impact,amount,result.debris);
+-        if(record.damage<g.strength){states.set(g.id,record);result.events.push({name:'materialImpact',...event});continue;}
+-        record.damage=0;
++        const record=states.get(g.id)||{damage:0,cuts:[],removed:false};record.damage+=amount;states.set(g.id,record);
++        if(record.damage<g.strength){debrisFor(g,point,Math.min(5,amount),result.debris);continue;}
++        record.damage=0;debrisFor(g,point,amount,result.debris);
+         const before=g.solids.reduce((v,q)=>v+volume(q.bounds),0),r=bullet?clamp(.30+Math.sqrt(power)*.13,.40,.85):radius*.66;
+         const cut={minX:impact[0]-r,maxX:impact[0]+r,minY:impact[1]-r,maxY:impact[1]+r,minZ:impact[2]-r,maxZ:impact[2]+r};
+-        if(['tree','pipe'].includes(g.kind))record.removed=true;
++        if(['tree','decor','pipe'].includes(g.kind)||!g.colliders.length&&g.kind!=='roof')record.removed=true;
+         else record.cuts.push(cut);
+         let built=compile(g,record);
+         const remains=built.solids.reduce((v,q)=>v+volume(q.bounds),0);
+-        // Decorative groups can span a whole fence. Reaching their cut budget
+-        // must never erase unrelated posts/rails to save a handful of polygons.
+-        if(!g.colliders.length&&(record.cuts.length>MAX_CUTS||built.active.length>64)){states.set(g.id,{...old,damage:0});result.events.push({name:'materialImpact',...event});continue;}
+-        if(built.solids.length>MAX_PARTS||record.cuts.length>MAX_CUTS||!built.active.length||g.colliders.length&&(!built.solids.length||remains<g.originalVolume*.035))record.removed=true;
++        if(built.solids.length>MAX_PARTS||record.cuts.length>MAX_CUTS||g.colliders.length&&(!built.solids.length||remains<g.originalVolume*.035))record.removed=true;
+         if(record.removed){record.cuts=[];built={active:[],solids:[]};result.collapsed.push(g.id);}
+         // A grazing explosion must not create a fake revision or damage hole.
+-        if(record.removed||remains<before-EPS||built.active.length!==g.active.length||record.cuts.length){removedGeometry(g,g.active,built.active,impact,amount,direction,fallen);states.set(g.id,record);result.changed=true;touched.push(g.id);g.active=built.active;g.solids=built.solids;result.events.push({name:'materialBreak',...event});}
++        if(record.removed||remains<before-EPS||built.active.length!==g.active.length||record.cuts.length){result.changed=true;touched.push(g.id);g.active=built.active;g.solids=built.solids;}
+         for(const p of world.pipes||[])if(p.destructibleId===g.id&&!leaked.has(p.id)){leaked.add(p.id);result.pipeLeaks.push(p.id);}
+       }
+       if(result.changed){
+         for(const roof of groups.values())if(roof.supports?.length&&isAlive(roof.id)){
+           const supports=roof.supports.map(id=>groups.get(String(id))).filter(Boolean),original=supports.reduce((v,g)=>v+g.originalVolume,0),remaining=supports.reduce((v,g)=>v+g.solids.reduce((n,q)=>n+volume(q.bounds),0),0);
+           if(original>0&&remaining/original<(roof.supportRatio||.38)){
+-            const point=[(roof.bounds.minX+roof.bounds.maxX)/2,roof.bounds.minY,(roof.bounds.minZ+roof.bounds.maxZ)/2];removedGeometry(roof,roof.active,[],point,45,undefined,fallen);
+             states.set(roof.id,{damage:0,cuts:[],removed:true});roof.active=[];roof.solids=[];result.collapsed.push(roof.id);
+-            for(const id of roof.dependents||[]){const g=groups.get(id);if(g&&isAlive(id)){removedGeometry(g,g.active,[],point,45,undefined,fallen);states.set(id,{damage:0,cuts:[],removed:true});g.active=[];g.solids=[];result.collapsed.push(id);}}
+-            result.events.push({name:'materialBreak',x:point[0],y:point[1],z:point[2],sourceId:roof.id,material:materialOf(entries[roof.meshes[0]].mesh),power:45,seed:roof.meshes[0]*977+(revision+1)*911});
++            for(const id of roof.dependents||[]){const g=groups.get(id);if(g&&isAlive(id)){states.set(id,{damage:0,cuts:[],removed:true});g.active=[];g.solids=[];result.collapsed.push(id);}}
++            if(result.debris.length>MAX_DEBRIS-5)result.debris.length=MAX_DEBRIS-5;
++            debrisFor(roof,[(roof.bounds.minX+roof.bounds.maxX)/2,roof.bounds.minY,(roof.bounds.minZ+roof.bounds.maxZ)/2],45,result.debris);
+           }
+         }
+         // Collapse only a locally over-fragmented body; never erase unrelated
+         // scenery to meet a global budget or emit blocking cosmetic debris.
+         let total=Array.from(groups.values()).reduce((n,g)=>n+g.solids.length,0),limit=Math.max(512,originalColliders.length+384);
+-        for(const id of touched)if(total>limit){const g=groups.get(id);total-=g.solids.length;removedGeometry(g,g.active,[],point,power,direction,fallen);states.set(id,{damage:0,cuts:[],removed:true});g.active=[];g.solids=[];if(!result.collapsed.includes(id))result.collapsed.push(id);}
+-        result.debris=[...fallingDebris(fallen),...result.debris].slice(0,MAX_DEBRIS);
++        for(const id of touched)if(total>limit){const g=groups.get(id);total-=g.solids.length;states.set(id,{damage:0,cuts:[],removed:true});g.active=[];g.solids=[];if(!result.collapsed.includes(id))result.collapsed.push(id);}
+         rebuild();revision++;result.revision=revision;
+       }
+       return result;
+@@ -281,7 +243,7 @@
+         if(!s||typeof s.id!=='string'||!groups.has(s.id)||next.has(s.id)||!finite(s.damage)||s.damage<0||s.damage>=groups.get(s.id).strength||typeof s.removed!=='boolean'||!Array.isArray(s.cuts)||s.cuts.length>MAX_CUTS||s.removed&&s.cuts.length)return false;
+         const cuts=[];
+         for(const b of s.cuts){if(!b||!KEYS.every(k=>finite(b[k]))||!(b.maxX>b.minX&&b.maxY>b.minY&&b.maxZ>b.minZ)||Math.max(b.maxX-b.minX,b.maxY-b.minY,b.maxZ-b.minZ)>24||!overlaps(b,groups.get(s.id).bounds))return false;cuts.push(copyBox(b));}
+-        const record={damage:s.damage,removed:s.removed,cuts},g=groups.get(s.id),built=compile(g,record);if(built.solids.length>MAX_PARTS||cuts.length&&!g.colliders.length&&built.active.length>64)return false;next.set(s.id,record);
++        const record={damage:s.damage,removed:s.removed,cuts},built=compile(groups.get(s.id),record);if(built.solids.length>MAX_PARTS)return false;next.set(s.id,record);
+       }
+       for(const id of value.leaks){if(!pipeIds.has(id)||nextLeaks.has(id))return false;nextLeaks.add(id);}
+       const total=Array.from(groups.values()).reduce((n,g)=>n+compile(g,next.get(g.id)).solids.length,0);
+@@ -291,7 +253,7 @@
+       rebuild();revision=options.exactRevision?value.revision:Math.max(revision+1,value.revision);return true;
+     }
+     return {get meshes(){return meshes;},get colliders(){return colliders;},get lights(){return lights;},get revision(){return revision;},isAlive,raycast,
+-      hit:(point,power,direction)=>damage(point,.22,power,true,undefined,validPoint(direction)?direction:undefined),blast:(point,radius,power,ignoreId)=>damage(point,radius,power,false,ignoreId),snapshot,restore};
++      hit:(point,power,direction)=>damage(point,.22,power,true),blast:(point,radius,power,ignoreId)=>damage(point,radius,power,false,ignoreId),snapshot,restore};
+   }
+   G.FDestruction={create};
+ })(typeof window!=='undefined'?window:globalThis);

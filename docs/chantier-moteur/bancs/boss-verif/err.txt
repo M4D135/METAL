@@ -1,0 +1,5 @@
+CPU {"steps":3600,"avg":0.256,"p50":0.172,"p95":0.668,"p99":2.095,"max":5.42,"over4":3,"over8":0,"over16":0} [{"t":10.97,"cpu":5.4,"ms":5.5},{"t":10.9,"cpu":5.3,"ms":5.3},{"t":10.98,"cpu":4.5,"ms":4.6},{"t":11.12,"cpu":3.9,"ms":3.9},{"t":35.45,"cpu":3.7,"ms":3.7},{"t":11.15,"cpu":3.4,"ms":3.5}]
+TIMERS {"pumpNav":53.7,"tickBoss":43.8,"updateEnemies":176.5,"updateBossAttacks":8.5,"updateDebris":365.1,"updateProjectiles":435.5,"step":924.2,"refreshNav":0.9} DEB [3601,45769,44165]
+REFRESH [10.93,11,35.48,35.75,59.1,59.35]
+REV [{"t":10.92,"solidChanged":false,"before":496,"after":496},{"t":10.98,"solidChanged":true,"before":496,"after":496},{"t":35.47,"solidChanged":false,"before":496,"after":496},{"t":35.73,"solidChanged":false,"before":496,"after":496},{"t":59.08,"solidChanged":false,"before":496,"after":496},{"t":59.33,"solidChanged":false,"before":496,"after":496}]
+ROUTES {"n":0,"failed":0,"totalMs":0,"explored":0,"worst":[]}

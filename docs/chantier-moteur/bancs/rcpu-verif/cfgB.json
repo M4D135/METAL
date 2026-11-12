@@ -1,0 +1,9 @@
+{"name":"rcpu-verif-B","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":420,"measureFrames":300,"skip":10,"reps":2,
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"pool","code":"pool"},
+  {"id":"grid","code":"grid"},
+  {"id":"sun","code":"sun"},
+  {"id":"exact","code":"exact"},
+  {"id":"cache","code":"cache"}]}

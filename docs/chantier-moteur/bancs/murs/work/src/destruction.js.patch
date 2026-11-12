@@ -1,0 +1,53 @@
+--- a/src/destruction.js
++++ b/src/destruction.js
+@@ -117,7 +117,8 @@
+     }
+     return parts.filter((_,i)=>keep.has(i));
+   }
+-  function create(world){
++  function create(world,options={}){
++    const armorOf=typeof options.armor==='function'?options.armor:null;
+     const originalMeshes=world.meshes||[],originalColliders=world.colliders||[],groups=new Map(),meshOwner=new Map(),states=new Map(),leaked=new Set();
+     let meshes=originalMeshes.slice(),colliders=originalColliders.map(c=>({...c})),lights=(world.lights||[]).slice(),revision=0;
+     const definitions=world.destructibles||originalMeshes.map((m,i)=>m.ground||m.terrain?null:{id:'mesh-'+i,kind:'prop',strength:5,meshes:[i],colliders:originalColliders.flatMap((c,j)=>c.mesh===i?[j]:[])}).filter(Boolean);
+@@ -126,7 +127,7 @@
+     for(const d of definitions){
+       const members=d.meshes.filter(i=>entries[i]);if(!members.length)continue;
+       const g={...d,id:String(d.id),strength:d.strength||6,meshes:members,colliders:(d.colliders||[]).filter(i=>originalColliders[i]),bounds:d.bounds||union(members.map(i=>entries[i].bounds)),active:members.map(i=>entries[i]),solids:[],originalVolume:0};
+-      g.originalVolume=g.colliders.reduce((v,i)=>v+volume(originalColliders[i]),0);groups.set(g.id,g);for(const i of members)meshOwner.set(i,g.id);
++      g.originalVolume=g.colliders.reduce((v,i)=>v+volume(originalColliders[i]),0);g.armor=armorOf?Math.max(0,Math.min(2,armorOf(g,world)|0)):0;groups.set(g.id,g);for(const i of members)meshOwner.set(i,g.id);
+     }
+     const cells=new Map(),size=8;
+     for(const g of groups.values())for(let x=Math.floor(g.bounds.minX/size);x<=Math.floor(g.bounds.maxX/size);x++)for(let z=Math.floor(g.bounds.minZ/size);z<=Math.floor(g.bounds.maxZ/size);z++){
+@@ -225,8 +226,8 @@
+         return {structural:true,sourceId:q.sourceId,shape:m.shape||'box',x:m.p[0],y:m.p[1],z:m.p[2],size:m.s.slice(),rotation:(m.r||[0,0,0]).slice(),angularVelocity:[(random()-.5)*spin,(random()-.5)*spin,(random()-.5)*spin],velocity:[dir[0]*speed,q.kind==='roof'?-.25:.35+random()*.9+dir[1]*speed,dir[2]*speed],resting:false,mat:m.mat||0,color:m.color?.slice(),material,mass,life:1e7,seed};
+       });
+     }
+-    function damage(point,radius,power,bullet,ignoreId,direction){
+-      const result={changed:false,revision,debris:[],events:[],pipeLeaks:[],collapsed:[]},fallen=[];
++    function damage(point,radius,power,bullet,ignoreId,direction,heavy=!bullet){
++      const result={changed:false,revision,debris:[],events:[],pipeLeaks:[],collapsed:[],deflected:0},fallen=[];
+       if(!validPoint(point)||!finite(radius)||!finite(power)||radius<=0||power<=0)return result;
+       radius=clamp(radius,.05,12);power=clamp(power,0,1000);
+       const reach={minX:point[0]-radius,maxX:point[0]+radius,minY:point[1]-radius,maxY:point[1]+radius,minZ:point[2]-radius,maxZ:point[2]+radius};
+@@ -235,6 +236,10 @@
+       const touched=[];
+       for(const g of targets){
+         const nearest=g.active.reduce((best,e)=>!best||distance(point,e.bounds)<distance(point,best.bounds)?e:best,null),d=distance(point,nearest.bounds),impact=[Math.max(nearest.bounds.minX,Math.min(point[0],nearest.bounds.maxX)),Math.max(nearest.bounds.minY,Math.min(point[1],nearest.bounds.maxY)),Math.max(nearest.bounds.minZ,Math.min(point[2],nearest.bounds.maxZ))],amount=power*(bullet?1:Math.pow(Math.max(0,1-d/radius),.45));if(amount<=.02)continue;
++        // Armour 1 yields only to heavy ordnance, armour 2 to nothing. A refused
++        // blow is feedback only: chips and an impact event, no accumulated
++        // damage, no cut, no revision and no saved state.
++        if(g.armor>(heavy?1:0)){if(bullet||g.armor<2)chipsFor(g,nearest,impact,amount,result.debris);result.events.push({name:'materialImpact',x:impact[0],y:impact[1],z:impact[2],sourceId:g.id,material:materialOf(nearest.mesh),power:amount,seed:nearest.source*977+(revision+1)*911+Math.imul(Math.round(impact[0]*97)+Math.round(impact[1]*193)+Math.round(impact[2]*389),2654435761),deflected:true});result.deflected++;continue;}
+         const old=states.get(g.id)||{damage:0,cuts:[],removed:false},record={...old,cuts:old.cuts.slice(),damage:old.damage+amount},event={x:impact[0],y:impact[1],z:impact[2],sourceId:g.id,material:materialOf(nearest.mesh),power:amount,seed:nearest.source*977+(revision+1)*911};
+         chipsFor(g,nearest,impact,amount,result.debris);
+         if(record.damage<g.strength){states.set(g.id,record);result.events.push({name:'materialImpact',...event});continue;}
+@@ -291,7 +296,8 @@
+       rebuild();revision=options.exactRevision?value.revision:Math.max(revision+1,value.revision);return true;
+     }
+     return {get meshes(){return meshes;},get colliders(){return colliders;},get lights(){return lights;},get revision(){return revision;},isAlive,raycast,
+-      hit:(point,power,direction)=>damage(point,.22,power,true,undefined,validPoint(direction)?direction:undefined),blast:(point,radius,power,ignoreId)=>damage(point,radius,power,false,ignoreId),snapshot,restore};
++      armor:id=>groups.get(String(id))?.armor||0,
++      hit:(point,power,direction,options)=>damage(point,.22,power,true,undefined,validPoint(direction)?direction:undefined,options?.heavy===true),blast:(point,radius,power,ignoreId,options)=>damage(point,radius,power,false,ignoreId,undefined,options?.heavy!==false),snapshot,restore};
+   }
+   G.FDestruction={create};
+ })(typeof window!=='undefined'?window:globalThis);

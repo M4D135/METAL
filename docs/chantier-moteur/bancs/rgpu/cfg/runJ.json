@@ -1,0 +1,10 @@
+{"name":"runJ-package","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":560,"measureFrames":200,"skip":10,"reps":2,"dumpFrames":true,"compareEvery":10,"compareRef":"base",
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"combo6","code":"combo6","compare":true},
+  {"id":"spec4","code":"spec4","compare":true},
+  {"id":"high","code":"base","quality":"high"},
+  {"id":"high-combo6","code":"combo6","quality":"high"},
+  {"id":"hicap","code":"hicap","quality":"high"},
+  {"id":"hicap6","code":"hicap6","quality":"high"}]}

@@ -1,0 +1,176 @@
+== legacy-s0 steps 1800 floors 26 colliders 448 enemies 120 traps 3 debris max 54 avg 31.5 bullets max 6 projectiles max 0
+  calls/step: name mean p50 p99 max
+   ground                  561.2    258    3313   34367
+   blocked                 176.9      4     774   24208
+   debrisFloor              72.7     50     507     513
+   debrisSupport            41.4     50     151     159
+   debrisBoxes              31.5     50      52      54
+   checkPad                 14.0     14      14      14
+   debrisSweep               9.0      4     112     115
+   segmentFree               8.4      0      46    4680
+   support                   4.4      4       8      20
+   checkPlayerBounds         4.0      4       4       4
+   beneathTerrain            4.0      4       4       4
+   nearby                    4.0      4       6       9
+   trapPose                  3.0      3       3       3
+   move                      2.1      2       3       3
+   encounterCounts           2.0      2       2       2
+   rebuildNeighbors          2.0      2       2       2
+   actorBlocked              1.7      2       4       8
+   ray                       1.7      1       6       8
+   syncDestruction           1.0      1       2       2
+   step                      1.0      1       1       1
+   updateShield              1.0      1       1       1
+   updateSystems             1.0      1       1       1
+   pumpNav                   1.0      1       1       1
+   updateDirector            1.0      1       1       1
+   updateEnvironment         1.0      1       1       1
+   locomote                  1.0      1       1       1
+   updateTrophies            1.0      1       1       1
+   updateEnemies             1.0      1       1       1
+   updateEncounters          1.0      1       1       1
+   tickBoss                  1.0      1       1       1
+  ground by parent: debrisFloor 64.7% | pumpNav 22.9% | segmentFree 7.8% | blocked 3.0% | support 0.8% | beneathTerrain 0.7%
+  ground by phase : updateProjectiles 64.7% | pumpNav 22.9% | updateEnemies 10.9% | locomote 0.7% | checkPlayerBounds 0.7% | fire 0.0% | updateEnvironment 0.0%
+  blocked by parent: pumpNav 72.7% | segmentFree 24.8% | move 2.5% | route 0.0%
+  blocked by phase : pumpNav 72.7% | updateEnemies 24.9% | locomote 2.3%
+  ray by parent: step 90.0% | hitRay 5.1% | sight 4.5% | burst 0.4%
+  ray by phase : (step-body) 90.0% | fire 5.3% | updateEnemies 4.4% | collectSupplies 0.2%
+  segmentFree by parent: route 94.3% | nearestNode 5.7%
+  segmentFree by phase : updateEnemies 100.0%
+  debrisFloor by parent: debrisSupport 57.0% | debrisSweep 24.8% | updateDebris 18.2%
+  debrisFloor by phase : updateProjectiles 100.0%
+  sight by parent: perceive 78.7% | updateBrain 8.8% | reactToShot 5.1% | collectSupplies 4.4% | canShoot 2.9%
+  sight by phase : updateEnemies 90.4% | fire 5.1% | collectSupplies 4.4%
+== legacy-s2 steps 1800 floors 28 colliders 504 enemies 170 traps 3 debris max 135 avg 61.6 bullets max 0 projectiles max 0
+  calls/step: name mean p50 p99 max
+   ground                 1275.9    998    4526   33642
+   blocked                 335.5      4     776   22741
+   debrisFloor             184.3    152     716     829
+   debrisSupport            91.7     76     250     266
+   debrisBoxes              61.6     52     134     135
+   debrisSweep              26.2     16     150     180
+   checkPad                 16.0     16      16      16
+   segmentFree               7.5      0       0    4422
+   support                   4.2      4       8      20
+   checkPlayerBounds         4.0      4       4       4
+   beneathTerrain            4.0      4       4       4
+   nearby                    3.5      3       6       7
+   trapPose                  3.0      3       3       3
+   actorBlocked              2.7      2       6       8
+   move                      2.0      2       2       2
+   encounterCounts           2.0      2       2       2
+   rebuildNeighbors          2.0      2       2       2
+   syncDestruction           1.0      1       2       2
+   step                      1.0      1       1       1
+   updateShield              1.0      1       1       1
+   updateSystems             1.0      1       1       1
+   pumpNav                   1.0      1       1       1
+   updateDirector            1.0      1       1       1
+   updateEnvironment         1.0      1       1       1
+   locomote                  1.0      1       1       1
+   updateTrophies            1.0      1       1       1
+   updateEnemies             1.0      1       1       1
+   updateEncounters          1.0      1       1       1
+   tickBoss                  1.0      1       1       1
+   separate                  1.0      1       1       1
+  ground by parent: debrisFloor 72.2% | pumpNav 23.1% | segmentFree 2.9% | blocked 1.2% | support 0.3% | beneathTerrain 0.3%
+  ground by phase : updateProjectiles 72.2% | pumpNav 23.1% | updateEnemies 4.1% | locomote 0.3% | checkPlayerBounds 0.3% | fire 0.0% | updateEnvironment 0.0%
+  blocked by parent: pumpNav 87.7% | segmentFree 11.0% | move 1.2% | route 0.0%
+  blocked by phase : pumpNav 87.7% | updateEnemies 11.0% | locomote 1.2%
+  ray by parent: hitRay 91.9% | sight 8.1%
+  ray by phase : fire 91.9% | collectSupplies 8.1%
+  segmentFree by parent: route 97.9% | nearestNode 2.1%
+  segmentFree by phase : updateEnemies 100.0%
+  debrisFloor by parent: debrisSupport 49.8% | debrisSweep 28.4% | updateDebris 21.8%
+  debrisFloor by phase : updateProjectiles 100.0%
+  sight by parent: collectSupplies 100.0%
+  sight by phase : collectSupplies 100.0%
+== campaign-w10 steps 1800 floors 26 colliders 454 enemies 84 traps 3 debris max 54 avg 29.9 bullets max 3 projectiles max 0
+  calls/step: name mean p50 p99 max
+   ground                  749.0    420    2638   35117
+   blocked                 291.1      6     776   24392
+   debrisFloor              86.2     74     356     380
+   debrisSupport            44.2     49     118     126
+   debrisBoxes              29.9     41      53      54
+   checkPad                 13.0     13      13      13
+   debrisSweep              11.5      8      67      80
+   segmentFree              11.4      0      55    4703
+   support                   4.9      4      10      19
+   nearby                    4.0      4       7       9
+   checkPlayerBounds         4.0      4       4       4
+   beneathTerrain            4.0      4       4       4
+   trapPose                  3.0      3       3       3
+   move                      2.4      2       4       4
+   actorBlocked              2.2      2       6       8
+   encounterCounts           2.0      2       2       2
+   rebuildNeighbors          2.0      2       2       2
+   ray                       1.7      3       7       8
+   syncDestruction           1.0      1       2       2
+   step                      1.0      1       1       1
+   updateShield              1.0      1       1       1
+   updateSystems             1.0      1       1       1
+   pumpNav                   1.0      1       1       1
+   updateDirector            1.0      1       1       1
+   updateEnvironment         1.0      1       1       1
+   locomote                  1.0      1       1       1
+   updateTrophies            1.0      1       1       1
+   updateEnemies             1.0      1       1       1
+   updateEncounters          1.0      1       1       1
+   tickBoss                  1.0      1       1       1
+  ground by parent: debrisFloor 57.5% | pumpNav 30.4% | segmentFree 7.8% | blocked 3.1% | support 0.7% | beneathTerrain 0.5%
+  ground by phase : updateProjectiles 57.5% | pumpNav 30.4% | updateEnemies 11.0% | locomote 0.5% | checkPlayerBounds 0.5% | fire 0.0% | updateEnvironment 0.0%
+  blocked by parent: pumpNav 78.1% | segmentFree 20.2% | move 1.7% | route 0.0%
+  blocked by phase : pumpNav 78.1% | updateEnemies 20.5% | locomote 1.4%
+  ray by parent: step 87.4% | hitRay 7.3% | sight 5.0% | burst 0.3%
+  ray by phase : (step-body) 87.4% | fire 8.2% | updateEnemies 4.3% | collectSupplies 0.2%
+  segmentFree by parent: route 96.1% | nearestNode 3.9%
+  segmentFree by phase : updateEnemies 100.0%
+  debrisFloor by parent: debrisSupport 51.2% | debrisSweep 26.6% | updateDebris 22.2%
+  debrisFloor by phase : updateProjectiles 100.0%
+  sight by parent: perceive 67.1% | reactToShot 17.4% | updateBrain 9.0% | collectSupplies 3.9% | canShoot 2.6%
+  sight by phase : updateEnemies 78.7% | fire 17.4% | collectSupplies 3.9%
+== campaign-w16 steps 1800 floors 26 colliders 454 enemies 120 traps 3 debris max 59 avg 29.6 bullets max 3 projectiles max 0
+  calls/step: name mean p50 p99 max
+   ground                  800.7    448    2441   33973
+   blocked                 326.6      6     959   23994
+   debrisFloor              87.3     77     325     344
+   debrisSupport            44.1     46     117     128
+   debrisBoxes              29.6     32      58      59
+   segmentFree              16.7      0      58    4620
+   checkPad                 14.0     14      14      14
+   debrisSweep              12.0      8      62      70
+   support                   4.6      4       8      20
+   nearby                    4.5      4       8      11
+   checkPlayerBounds         4.0      4       4       4
+   beneathTerrain            4.0      4       4       4
+   trapPose                  3.0      3       3       3
+   move                      2.2      2       3       3
+   encounterCounts           2.0      2       2       2
+   rebuildNeighbors          2.0      2       2       2
+   actorBlocked              1.9      2       6       8
+   navigate                  1.1      1       3       3
+   syncDestruction           1.0      1       2       2
+   step                      1.0      1       1       1
+   updateShield              1.0      1       1       1
+   updateSystems             1.0      1       1       1
+   pumpNav                   1.0      1       1       1
+   updateDirector            1.0      1       1       1
+   updateEnvironment         1.0      1       1       1
+   locomote                  1.0      1       1       1
+   updateTrophies            1.0      1       1       1
+   updateEnemies             1.0      1       1       1
+   updateEncounters          1.0      1       1       1
+   tickBoss                  1.0      1       1       1
+  ground by parent: debrisFloor 54.5% | pumpNav 29.9% | segmentFree 10.3% | blocked 4.2% | support 0.6% | beneathTerrain 0.5%
+  ground by phase : updateProjectiles 54.5% | pumpNav 29.9% | updateEnemies 14.5% | locomote 0.5% | checkPlayerBounds 0.5% | fire 0.0% | updateEnvironment 0.0%
+  blocked by parent: pumpNav 73.3% | segmentFree 25.3% | move 1.4% | route 0.0%
+  blocked by phase : pumpNav 73.3% | updateEnemies 25.4% | locomote 1.3%
+  ray by parent: step 64.7% | hitRay 22.6% | sight 12.2% | burst 0.3% | attack 0.1%
+  ray by phase : (step-body) 64.7% | fire 24.9% | updateEnemies 9.7% | collectSupplies 0.6%
+  segmentFree by parent: route 89.6% | nearestNode 10.4%
+  segmentFree by phase : updateEnemies 100.0%
+  debrisFloor by parent: debrisSupport 50.5% | debrisSweep 27.5% | updateDebris 22.0%
+  debrisFloor by phase : updateProjectiles 100.0%
+  sight by parent: perceive 45.9% | updateBrain 28.7% | reactToShot 18.9% | collectSupplies 4.9% | canShoot 1.6%
+  sight by phase : updateEnemies 76.2% | fire 18.9% | collectSupplies 4.9%

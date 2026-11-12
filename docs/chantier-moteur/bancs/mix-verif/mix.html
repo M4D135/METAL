@@ -1,0 +1,106 @@
+<!doctype html><meta charset="utf-8"><title>Banc MIX</title>
+<script src="src.js"></script><script src="scenes.js"></script><script src="mix.js"></script>
+<script>
+(async () => {
+  const M = window.MIX, Q = new URLSearchParams(location.search), job = Q.get('job') || 'calib', out = {job, sr: M.SR, ua: navigator.userAgent, errors: []};
+  try {
+    (0, eval)(SRC.music);
+    const cal = async v => ({...(await M.calib(v.comp || 'cur')), musicGain: .56 * (v.musicGain || 1)});
+    const scenes = {...SCENES, iso: M.isoScene(), p: M.pumpScene()};
+    if (job === 'calib') { out.comp = []; for (const k of Object.keys(M.COMP)) out.comp.push(await M.calib(k)); }
+    if (job === 'matrix') {
+      const list = (Q.get('scenes') || 'a,b,c,d').split(','), recipes = (Q.get('recipes') || 'cur,doom').split(','), comps = (Q.get('comps') || 'cur,feel07').split(','), ducks = (Q.get('ducks') || 'cur,feel07,shelf').split(',');
+      out.rows = [];
+      for (const sc of list) for (const recipe of recipes) for (const comp of comps) for (const duck of ducks) {
+        const v = {recipe, comp, duck}; if (Q.get('tell')) v.tell = Q.get('tell'); if (Q.get('musicGain')) v.musicGain = +Q.get('musicGain'); if (Q.get('weaponGain')) v.weaponGain = +Q.get('weaponGain'); if (Q.get('duckTau')) v.duckTau = +Q.get('duckTau');
+        const R = await M.render(scenes[sc], v), a = M.analyse(R, scenes[sc], await cal(v)); out.rows.push({scene: sc, ...v, ...a});
+      }
+    }
+    if (job === 'iso') { // tirs isolés : facteur de crête en sortie contre tampon isolé, réduction de gain
+      out.rows = []; const sc = scenes.iso, sr = M.SR;
+      for (const recipe of ['cur', 'doom']) for (const comp of (Q.get('comps') || 'cur,feel07,lim,lim2,off').split(',')) for (const music of [0, .45]) {
+        const v = {recipe, comp, duck: 'cur'}, R = await M.render(sc, v, {music}), c = await cal(v), b = R.buffer, O = [b.getChannelData(0), b.getChannelData(1)], L = [b.getChannelData(2), b.getChannelData(3)], Mi = [b.getChannelData(4), b.getChannelData(5)], FX = [b.getChannelData(8), b.getChannelData(9)];
+        for (const [f, cue] of sc.cues) {
+          const t = Math.ceil((M.K0 + f) / M.HZ * sr / 128) * 128, name = cue === 'shot' ? 'smg' : cue === 'shot:pistol' ? 'pistol' : cue === 'fracture' ? 'shotgun' : cue === 'grenadeLaunch' ? 'grenade' : cue;
+          const raw = window.__SYNTH(name, 1, 22050, null), rawPeak = M.peakRange(raw, 0, raw.length), rawRms = M.rmsRange(raw, 0, raw.length), dur = raw.length / 22050 / .985, w = Math.round(dur * sr);
+          const a = t + c.delay, pk = Math.max(M.peakRange(O[0], a, a + w), M.peakRange(O[1], a, a + w)), rms = Math.hypot(M.rmsRange(O[0], a, a + w), M.rmsRange(O[1], a, a + w)) / Math.SQRT2;
+          const fxPk = Math.max(M.peakRange(FX[0], t, t + w), M.peakRange(FX[1], t, t + w)), fxRms = Math.hypot(M.rmsRange(FX[0], t, t + w), M.rmsRange(FX[1], t, t + w)) / Math.SQRT2;
+          const prePk = Math.max(M.peakRange(L[0], a, a + w), M.peakRange(L[1], a, a + w)), inPk = Math.max(M.peakRange(Mi[0], t, t + w), M.peakRange(Mi[1], t, t + w));
+          let above = 0; for (let i = a; i < a + w; i++) if (Math.abs(L[0][i]) > .875 || Math.abs(L[1][i]) > .875) above++;
+          let grMin = 0, grAt = 0; for (let i = a; i < a + w; i += 64) { const x = Math.hypot(M.rmsRange(Mi[0], i - c.delay, i - c.delay + 128), M.rmsRange(Mi[1], i - c.delay, i - c.delay + 128)), y = Math.hypot(M.rmsRange(L[0], i, i + 128), M.rmsRange(L[1], i, i + 128)); if (x > 1e-3) { const g = M.dB(y / x) - c.makeupDb; if (g < grMin) { grMin = g; grAt = (i - a) / sr * 1000; } } }
+          // gain subi par la crête du transitoire : crête de sortie (avant écrêteur) / crête d'entrée, moins le rattrapage
+          let redMin = 0; for (let k = M.K0 + f; k < M.K0 + f + Math.ceil(dur * M.HZ) + 6; k++) redMin = Math.min(redMin, R.red[k]);
+          if (music === 0) out.rows.push({recipe, comp, cue: name, ms: Math.round(dur * 1000), rawCrestDb: M.r2(M.dB(rawPeak / rawRms)), busCrestDb: M.r2(M.dB(fxPk / fxRms)), outCrestDb: M.r2(M.dB(pk / rms)), crestLossDb: M.r2(M.dB(fxPk / fxRms) - M.dB(pk / rms)),
+            inPeak: M.r3(inPk), preGuardPeak: M.r3(prePk), outPeak: M.r3(pk), peakGainDb: M.r2(M.dB(prePk / inPk) - c.makeupDb), grMinDb: M.r2(grMin), grMinAtMs: Math.round(grAt), reductionAttrMinDb: M.r2(redMin), aboveKnee: above, outRmsDb: M.r2(M.dB(rms))});
+          else out.rows.push({recipe, comp, cue: name, withMusic: true, preGuardPeak: M.r3(prePk), outPeak: M.r3(pk), grMinDb: M.r2(grMin), aboveKnee: above});
+        }
+      }
+    }
+    if (job === 'tell') { // BOSS-04 : niveau de l'annonce du boss dans le mixage complet de la scène (d)
+      out.rows = []; const sc = scenes.d, sr = M.SR, only = {...sc, frames: sc.frames.map(f => ({...f, c: f.c.filter(c => c[0] === 'bossTell'), f: null}))};
+      for (const tell of ['', 'boss04']) for (const recipe of ['cur', 'doom']) {
+        const v = {recipe, tell}, full = await M.render(sc, v), solo = await M.render(only, v, {music: 0}), mono = (b, c) => { const x = b.getChannelData(c), y = b.getChannelData(c + 1), o = new Float32Array(x.length); for (let i = 0; i < x.length; i++) o[i] = (x[i] + y[i]) * .5; return o; };
+        const tl = mono(solo.buffer, 8), mu = mono(full.buffer, 6), fx = mono(full.buffer, 8);
+        sc.frames.forEach((fr, f) => { for (const [name, o] of fr.c) if (name === 'bossTell') { const t = Math.ceil((M.K0 + f) / M.HZ * sr / 128) * 128, w = Math.round(.52 * sr), a = M.rmsRange(tl, t, t + w), m = M.rmsRange(mu, t, t + w), x = M.rmsRange(fx, t, t + w);
+          out.rows.push({tell: tell || 'actuel', recipe, frame: f, kind: o.kind, distance: o.distance, level: o.level, tellRmsDb: M.r2(M.dB(a)), musicRmsDb: M.r2(M.dB(m)), allFxRmsDb: M.r2(M.dB(x)), tellMinusMusicDb: M.r2(M.dB(a / m)), tellMinusAllFxDb: M.r2(M.dB(a / x)), tellPeak: M.r3(M.peakRange(tl, t, t + w))}); } });
+      }
+    }
+    if (job === 'bands') { // spectre de la musique seule (après FMusic .45 et bus .56, avant le maître), par morceau
+      out.rows = []; const sr = M.SR, edges = [60, 120, 250, 500, 1000, 2000, 4000, 8000];
+      for (const stage of [0, 1, 2]) {
+        const sc = {name: 'm' + stage, stage, env: {}, frames: M.isoScene().frames.map(f => ({...f, c: []})).concat(M.pumpScene().frames.map(f => ({...f, c: []})))}, R = await M.render(sc, {}, {silent: true}), b = R.buffer, x = b.getChannelData(6), y = b.getChannelData(7), m = new Float32Array(x.length);
+        for (let i = 0; i < m.length; i++) m[i] = (x[i] + y[i]) * .5;
+        const from = sr * 2, tot = M.rmsRange(m, from, m.length) ** 2, cum = edges.map(hz => M.rmsRange(M.lowpass(m, hz, sr), from, m.length) ** 2), row = {stage, seconds: M.r2((m.length - from) / sr), musicRmsDb: M.r2(M.dB(Math.sqrt(tot))), outPeak: M.r3(Math.max(M.peakRange(b.getChannelData(0), from, m.length), M.peakRange(b.getChannelData(1), from, m.length))), outRmsDb: M.r2(M.dB(Math.hypot(M.rmsRange(b.getChannelData(0), from, m.length), M.rmsRange(b.getChannelData(1), from, m.length)) / Math.SQRT2)), bandsPct: {}};
+        let prev = 0; edges.forEach((hz, i) => { row.bandsPct['<' + hz] = M.r2(100 * Math.max(0, cum[i] - prev) / tot); prev = Math.max(prev, cum[i]); }); row.bandsPct['>8000'] = M.r2(100 * Math.max(0, tot - prev) / tot);
+        let redMin = 0; for (let k = M.K0; k < R.red.length; k++) redMin = Math.min(redMin, R.red[k]); row.grMusicAloneMinDb = M.r2(redMin); row.musicPeakVoices = null; out.rows.push(row);
+      }
+    }
+    if (job === 'shelfk') { // étagère du duck : automatisation a-rate contre k-rate (coût et différence audible), alterné
+      const reps = +Q.get('reps') || 3, vars = [['actuel', {}], ['prop a-rate', {recipe: 'doom', duck: 'prop'}], ['prop k-rate', {recipe: 'doom', duck: 'prop', shelfK: true}]], t = {}; out.rows = [];
+      for (const sc of ['a', 'p']) { for (const [k] of vars) t[k] = []; let A = null, K = null;
+        for (let r = 0; r < reps; r++) for (const [k, v] of vars) { const R = await M.render(scenes[sc], v); t[k].push((R.ms - R.replayMs) / R.seconds); if (k === 'prop a-rate') A = R; if (k === 'prop k-rate') K = R; }
+        let pk = 0, e = 0, n = 0; for (const c of [0, 1]) { const x = A.buffer.getChannelData(c), y = K.buffer.getChannelData(c); for (let i = 0; i < x.length; i++) { const d = Math.abs(x[i] - y[i]); if (d > pk) pk = d; e += d * d; n++; } }
+        const row = {scene: sc, diffKvsA_peakDbFS: M.r2(M.dB(pk)), diffKvsA_rmsDbFS: M.r2(M.dB(Math.sqrt(e / n)))}; for (const k in t) row[k] = {minMsPerS: M.r2(Math.min(...t[k])), medMsPerS: M.r2(M.quant(t[k], .5))}; out.rows.push(row); }
+    }
+    if (job === 'idle') { // décomposition de la charge du fil audio : banc nu, graphe FAudio au repos, + musique, + scène
+      const reps = +Q.get('reps') || 3, sr = M.SR, empty = {...scenes.a, frames: scenes.a.frames.map(f => ({c: [], s: [0, 0, 0, 'lift', 0, 0, 0, 0, 0, 0], f: null}))}, t = {nu: [], repos: [], musique: [], sceneA: [], sceneC: []};
+      async function bare() { const seconds = (M.K0 + 1800) / M.HZ + 1.5, ctx = new OfflineAudioContext(12, Math.ceil(seconds * sr), sr), m = ctx.createChannelMerger(12); m.connect(ctx.destination); const one = ctx.createConstantSource(); one.offset.value = 0; one.connect(m, 0, 10); one.start(); for (let k = 1; k < M.K0 + 1800; k++) ctx.suspend(k / M.HZ).then(() => ctx.resume()); const t0 = performance.now(); await ctx.startRendering(); return (performance.now() - t0) / seconds; }
+      for (let r = 0; r < reps; r++) { t.nu.push(await bare()); let R = await M.render(empty, {}, {silent: true, music: 0}); t.repos.push((R.ms - R.replayMs) / R.seconds); R = await M.render(empty, {}, {silent: true}); t.musique.push((R.ms - R.replayMs) / R.seconds); R = await M.render(scenes.a, {}); t.sceneA.push((R.ms - R.replayMs) / R.seconds); R = await M.render(scenes.c, {}); t.sceneC.push((R.ms - R.replayMs) / R.seconds); }
+      out.rows = Object.keys(t).map(k => ({cas: k, minMsPerS: M.r2(Math.min(...t[k])), medMsPerS: M.r2(M.quant(t[k], .5))}));
+    }
+    if (job === 'attrib') { // attribution du coût du graphe au repos (sans prises de mesure)
+      const reps = +Q.get('reps') || 3, empty = {...scenes.a, frames: scenes.a.frames.map(f => ({c: [], s: [0, 0, 0, 'lift', 0, 0, 0, 0, 0, 0], f: null}))};
+      const vars = [['repos avec prises', {}], ['repos', {noTaps: 1}], ['sans boucles d ambiance', {noTaps: 1, noLoops: 1}], ['sans compresseur', {noTaps: 1, noComp: 1}], ['sans ecreteur', {noTaps: 1, noGuard: 1}], ['sans boucles ni compresseur', {noTaps: 1, noLoops: 1, noComp: 1}]], t = {};
+      for (const [k] of vars) t[k] = []; t['scene c sans prises'] = []; t['musique sans prises'] = [];
+      for (let r = 0; r < reps; r++) { for (const [k, v] of vars) { const R = await M.render(empty, v, {silent: true, music: 0}); t[k].push((R.ms - R.replayMs) / R.seconds); }
+        let R = await M.render(scenes.c, {noTaps: 1}); t['scene c sans prises'].push((R.ms - R.replayMs) / R.seconds); R = await M.render(empty, {noTaps: 1}, {silent: true}); t['musique sans prises'].push((R.ms - R.replayMs) / R.seconds); }
+      out.rows = Object.keys(t).map(k => ({cas: k, minMsPerS: M.r2(Math.min(...t[k])), medMsPerS: M.r2(M.quant(t[k], .5))}));
+    }
+    if (job === 'wav') { // extraits A/B du mixage complet (scène p, 16 bits stéréo) pour l'écoute
+      const vars = {'1-actuel': {}, '2-recettes-doom-chaine-actuelle': {recipe: 'doom'}, '3-prereglage-doom': {recipe: 'doom', comp: 'lim2', duck: 'prop', weaponGain: 1.41}, '4-actuel-duck-etagere': {duck: 'prop'}}; out.files = {};
+      for (const k in vars) { const R = await M.render(scenes.p, {...vars[k], noTaps: 1}), L = R.buffer.getChannelData(0), Rr = R.buffer.getChannelData(1), from = Math.round(1.5 * M.SR), n = L.length - from, bytes = new Uint8Array(44 + n * 4), dv = new DataView(bytes.buffer);
+        const str = (o, t) => { for (let i = 0; i < t.length; i++) bytes[o + i] = t.charCodeAt(i); }; str(0, 'RIFF'); dv.setUint32(4, 36 + n * 4, true); str(8, 'WAVEfmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 2, true); dv.setUint32(24, M.SR, true); dv.setUint32(28, M.SR * 4, true); dv.setUint16(32, 4, true); dv.setUint16(34, 16, true); str(36, 'data'); dv.setUint32(40, n * 4, true);
+        for (let i = 0; i < n; i++) { dv.setInt16(44 + i * 4, Math.max(-32767, Math.min(32767, Math.round(L[from + i] * 32767))), true); dv.setInt16(46 + i * 4, Math.max(-32767, Math.min(32767, Math.round(Rr[from + i] * 32767))), true); }
+        let b = ''; for (let i = 0; i < bytes.length; i += 30000) b += String.fromCharCode.apply(null, bytes.subarray(i, i + 30000)); out.files[k] = btoa(b); }
+    }
+    if (job === 'null') { // LOOP-14 : différence avec le rendu actuel
+      out.rows = [];
+      for (const sc of (Q.get('scenes') || 'c,a').split(',')) {
+        const base = await M.render(scenes[sc], {}), b0 = [base.buffer.getChannelData(0), base.buffer.getChannelData(1)], ref = Math.max(M.peakRange(b0[0], 0, b0[0].length), M.peakRange(b0[1], 0, b0[1].length));
+        const again = await M.render(scenes[sc], {});
+        for (const [tag, R] of [['rendu actuel, 2e passe (bruit de fond du banc)', again], ['LOOP-14 exact (dédoublonnage strict)', await M.render(scenes[sc], {loop14: 'exact'})], ['LOOP-14 seuils (0,003 / 1 % / 0,01, 100 ms)', await M.render(scenes[sc], {loop14: 'seuil'})]]) {
+          let pk = 0, e = 0, n = 0; for (const c of [0, 1]) { const d = R.buffer.getChannelData(c), r = b0[c]; for (let i = 0; i < d.length; i++) { const x = Math.abs(d[i] - r[i]); if (x > pk) pk = x; e += x * x; n++; } }
+          out.rows.push({scene: sc, variant: tag, diffPeakDbFS: M.r2(M.dB(pk)), diffRmsDbFS: M.r2(M.dB(Math.sqrt(e / n))), refPeak: M.r3(ref), audioParamCalls: R.params, baseParamCalls: base.params, l14: R.l14});
+        }
+      }
+    }
+    if (job === 'perf') { // temps de rendu hors ligne par seconde d'audio, variantes alternées dans le même processus
+      const reps = +Q.get('reps') || 4, list = (Q.get('scenes') || 'a,b,c,d').split(','), vars = [['actuel', {}], ['doom+feel07', {recipe: 'doom', comp: 'feel07', duck: 'feel07'}], ['doom+shelf', {recipe: 'doom', comp: 'feel07', duck: 'shelf'}]]; out.rows = [];
+      for (const sc of list) { const t = {silence: []}; for (const [k] of vars) t[k] = [];
+        for (let r = 0; r < reps; r++) { const S = await M.render(scenes[sc], {}, {silent: true}); t.silence.push(S.ms / S.seconds); for (const [k, v] of vars) { const R = await M.render(scenes[sc], v); t[k].push((R.ms - R.replayMs) / R.seconds); } }
+        const row = {scene: sc}; for (const k in t) row[k] = {minMsPerS: M.r2(Math.min(...t[k])), medMsPerS: M.r2(M.quant(t[k], .5))}; out.rows.push(row); }
+    }
+  } catch (e) { out.errors.push(String(e && e.stack || e)); }
+  M.emit(out);
+})();
+</script>

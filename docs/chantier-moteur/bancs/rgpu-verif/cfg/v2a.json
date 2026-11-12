@@ -1,0 +1,6 @@
+{"name":"v2a","runFile":"vrun2.js","world":0,"cssW":1440,"cssH":932,"inPos":[1.5,4.82,0.5],"block":10,"rounds":3,"latRounds":1,
+ "thrScenes":["out","in"],"latScenes":[],"diffScenes":["out","in"],"diffEvery":6,"ref":"base",
+ "variants":[{"id":"base","code":"base"},{"id":"skylate","code":"skylate"},
+  {"id":"stress","code":"base","stress":{"count":48,"near":2.5,"far":12,"spread":7,"size":2.6,"alpha":0.55,"fire":true}},
+  {"id":"stressN0","code":"fxnoise0","stress":{"count":48,"near":2.5,"far":12,"spread":7,"size":2.6,"alpha":0.55,"fire":true}},
+  {"id":"puffOut","code":"base","puff":2.4},{"id":"puffIn","code":"base","puff":0.6}]}

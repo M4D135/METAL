@@ -1,0 +1,15 @@
+{"name":"runD-shadows","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":560,"measureFrames":220,"skip":10,"reps":2,"dumpFrames":true,
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"noshadow","code":"base","fx":{"shadows":false}},
+  {"id":"notorch","code":"notorch"},
+  {"id":"nolamp","code":"nolamp"},
+  {"id":"nosun","code":"nosun"},
+  {"id":"dynsh","code":"dynsh"},
+  {"id":"spec4","code":"spec4"},
+  {"id":"combo3","code":"combo3"},
+  {"id":"high","code":"base","quality":"high"},
+  {"id":"high-notorch","code":"notorch","quality":"high"},
+  {"id":"high-combo3","code":"combo3","quality":"high"},
+  {"id":"high-spec4","code":"spec4","quality":"high"}]}
