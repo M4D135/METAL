@@ -154,3 +154,51 @@ test('melodic harmony uses thirds belonging to its dark mode, not arbitrary para
  const s=parse(Music.getModule(2)),periods=[856,808,762,720,678,640,604,570,538,508,480,453,428,404,381,360,339,320,302,285,269,254,240,226,214,202,190,180,170,160,151,143,135,127,120,113],mode=new Set([4,5,7,9,11,0,2]);
  for(const note of s.events.filter(e=>e.channel===2&&(e.sample===5||e.sample===6))){const midi=36+periods.indexOf(note.period),third=note.sample===5?3:4;assert(mode.has(midi%12));assert(mode.has((midi+third)%12));}
 });
+
+test('the original title thrash starts immediately, evolves for a full loop and leaves the three world scores unchanged',()=>{
+ const title=Music.getTrack('title'),song=parse(Music.getModule('title'));
+ assert.equal(title.title,'Furie d’acier');assert.equal(title.bpm,212);assert.equal(title.channels,4);
+ assert.equal(song.patterns,8);assert.equal(song.order.length,12);assert.equal(title.duration,song.order.length*64*15/title.bpm);
+ assert.equal(song.events.filter(e=>e.p===0&&e.row===0&&e.period).length,4,'guitars, bass and drums attack together instead of an ambient intro');
+ assert.equal(new Set(Array.from({length:song.patterns},(_,p)=>bytesHash(song.bytes.slice(1084+p*1024,1084+(p+1)*1024)))).size,8);
+ const density=p=>song.events.filter(e=>e.p===p&&e.channel===0&&e.period).length;
+ assert(density(4)>=56,'the assault has rapid picked sixteenths');assert(density(3)<density(1)*.5,'the breakdown contains real rhythmic space');
+ assert(song.events.filter(e=>e.p===3&&e.effect===12&&e.param===0).length>=30);
+ assert(song.events.some(e=>e.channel===2&&e.sample===16));assert(song.events.some(e=>e.channel===2&&e.sample===17));
+ assert.notEqual(bytesHash(song.samples[0].pcm),bytesHash(song.samples[15].pcm),'left and right palm guitars use independent synthesized pick attacks');
+ assert.notEqual(bytesHash(song.samples[1].pcm),bytesHash(song.samples[16].pcm));
+ for(const sample of song.samples.filter(s=>s.pcm.length)){
+  const peak=sample.pcm.reduce((n,x)=>Math.max(n,Math.abs(x)),0)/128,dc=sample.pcm.reduce((n,x)=>n+x,0)/sample.pcm.length/128;
+  assert(peak>.7&&peak<.92,'each synthesized instrument retains digital headroom');assert(Math.abs(dc)<.035);
+ }
+ const fresh={};vm.runInNewContext(source,fresh);assert.equal(bytesHash(fresh.FMusic.getModule('title')),bytesHash(song.bytes));
+ const exportCopy=Music.getModule('title');exportCopy.fill(0);assert.equal(bytesHash(Music.getModule('title')),bytesHash(song.bytes));
+ const worldHashes=['50d88a07744be3d2e51a98c15f5367351f4238c504644e5475aebf64d8758cd0','c12b06dab600fbc391299f10b6b1814db39b6c8bc7e23569c2bd1f204b81fcbd','738adaa5a8460e6f8fb8a3f6b11f05d25034dede0845553587b87ea03d7a6c39'];
+ worldHashes.forEach((expected,stage)=>assert.equal(bytesHash(Music.getModule(stage)),expected,'world '+stage+' is byte-identical to the established composition'));
+ assert.equal(Music.getTrack(3).bpm,145,'numeric out-of-range stage compatibility is preserved');assert.equal(Music.getTrack(-1).bpm,100);
+});
+
+test('title preparation and playback reuse a separate bank, loop and switch cleanly back to every world',()=>{
+ const r=rig();for(const stage of [0,1,2,'title'])assert(r.music.prepare(stage));
+ assert.equal(r.ctx.buffers.length,62);assert.equal(r.ctx.sources.length,0);assert.equal(r.music.stats.stage,0);
+ r.music.setStage('title');r.music.setPlaying(true);run(r,Music.getTrack('title').duration+1);
+ assert.equal(r.music.stats.stage,'title');assert.equal(r.music.stats.tempo,212);assert.equal(r.music.stats.order,0,'the 48-measure arrangement wraps to its opening');
+ assert(r.music.stats.scheduledRows>768&&r.music.stats.scheduledRows<800);assert(r.music.stats.peakVoices<=28);assert.equal(r.music.stats.resyncs,0);
+ assert.equal(r.ctx.buffers.length,62,'looping adds no AudioBuffers');
+ for(const stage of [0,1,2,'title']){
+  const before=r.ctx.sources.length;r.music.setStage(stage);r.music.tick();assert.equal(r.music.stats.stage,stage);assert.equal(r.music.stats.tempo,Music.getTrack(stage).bpm);
+  const song=parse(Music.getModule(stage)),first=song.events.find(e=>e.p===0&&e.row===0&&e.channel===0&&e.period),actual=r.ctx.sources[before].buffer.getChannelData(0),expected=song.samples[first.sample-1].pcm;
+  assert.equal(actual.length,expected.length);for(let i=0;i<actual.length;i+=127)assert.equal(actual[i],expected[i]/128,'symbolic and numeric cache keys must not collide');
+  run(r,.3);assert.equal(r.ctx.buffers.length,62);
+ }
+ r.music.setPlaying(false);r.ctx.advance(.1);assert.equal(r.music.stats.activeVoices,0);const notes=r.music.stats.scheduledNotes;run(r,1);assert.equal(r.music.stats.scheduledNotes,notes);
+ r.music.dispose();assert(r.ctx.nodes.slice(1).every(n=>n.disconnected));assert(!r.output.disconnected&&!r.ctx.closed);
+});
+
+test('title warmup is shared, yields its instrument work and needs no audio device',async()=>{
+ let yields=0,contexts=0;const cold={setTimeout:fn=>{yields++;queueMicrotask(fn);},AudioContext:class{constructor(){contexts++;}}};vm.runInNewContext(source,cold);
+ const first=cold.FMusic.warmup('title');assert.equal(first,cold.FMusic.warmup('title'));const meta=await first;
+ assert.equal(meta.bpm,212);assert.equal(meta.title,'Furie d’acier');assert.equal(meta.bytes,cold.FMusic.getModule('title').length);assert(yields>=10);assert.equal(contexts,0);
+ const before=yields;await cold.FMusic.warmup('title');assert.equal(yields,before);await cold.FMusic.warmup(0);assert.equal(yields,before+1,'world preparation reuses the shared instruments');
+ assert.equal(bytesHash(cold.FMusic.getModule('title')),bytesHash(Music.getModule('title')));assert.equal(contexts,0);
+});

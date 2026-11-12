@@ -14,6 +14,7 @@
   let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'],ammoNames=['balles','cartouches','roquettes','grenades','balles'];
   const worldCache=new Map();let preparationSerial=0,shieldLift=0;
+  let titleGesture=false,titleReady=false,titlePending=null,titleSerial=0,titleWaiting=false,titleBlocked=false,windowFocused=document.hasFocus?.()!==false;
   const actorMotion=new Map(),systemMotion=new Map();
   const keys=new Set(),input={moveX:0,moveY:0,lookX:0,lookY:0,fire:false,fireLeft:false,dash:false,pulse:false,melee:false,interact:false,weapon:0,sprint:false,assist:touch};
   let mouseFire=false,mouseLeftFire=false,touchFire=false,touchLeftFire=false,dragLook=null,moveTouch=null,stick={x:0,y:0},lookDX=0,lookDY=0,dashQueued=false,pulseQueued=false,meleeQueued=false,interactQueued=false;
@@ -29,7 +30,59 @@
     return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice(),...(inventory.shield!==undefined?{shield:inventory.shield}:{})},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
   }
   function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision){const key=(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;if(!worldCache.has(key)){worldCache.set(key,FWorld.create(worldSeed,n,campaign?{campaign:true,campaignVersion:revision}:undefined));while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);}return worldCache.get(key);}
-  function trackLabel(){const t=window.FMusic?.getTrack?.(world?.stage??stage%3);return t?t.title+' · '+t.bpm+' BPM':'METAL · MOD PROCÉDURAL';}
+  const titleScreen=()=>mode==='menu'||mode==='options';
+  const currentTrack=()=>titleScreen()?'title':world?.stage??stage%3;
+  function trackLabel(){const t=window.FMusic?.getTrack?.(currentTrack());return t?t.title+' · '+t.bpm+' BPM':'METAL · MOD PROCÉDURAL';}
+  const wantsTitle=()=>titleScreen()&&titleGesture&&windowFocused&&!document.hidden&&!muted&&prefs.masterVolume>0&&prefs.musicVolume>0;
+  function titleControls(){
+    const zero=prefs.masterVolume===0||prefs.musicVolume===0,active=!!audio.stats?.titlePlaying;
+    $('intro-sound').textContent=zero&&!muted?'RÉGLER LE VOLUME':muted||!titleGesture||titleBlocked?'ÉCOUTER LE THRASH':'COUPER LE SON';
+    $('intro-sound').setAttribute('aria-pressed',String(active&&!muted&&!zero));
+    $('intro-sound').setAttribute('aria-label',zero&&!muted?'Régler le volume pour écouter Furie d’acier':muted||!titleGesture||titleBlocked?'Écouter Furie d’acier, musique thrash metal de l’accueil':'Couper le son');
+    $('intro-music-status').textContent=muted?'Son coupé':zero?'Volume général ou musique à zéro':!windowFocused||document.hidden?'Musique en pause':titleWaiting?'Préparation du morceau…':titleBlocked?'Touchez ou cliquez pour réessayer':active?'Lecture · thrash metal original':'Cliquez ou touchez pour écouter';
+    $('intro-audio').classList.toggle('is-playing',active&&!muted&&!zero&&windowFocused&&!document.hidden);
+    $('music-title').textContent=trackLabel();
+    $('export-mod').textContent=titleScreen()?'EXPORTER LE MOD DU TITRE ↓':'EXPORTER LE MOD DE CE SECTEUR ↓';
+  }
+  function audioGate(){
+    const audibleScene=mode==='playing'||['dead','cleared','complete'].includes(mode)||titleScreen()&&audio.stats?.titlePlaying;
+    audio.setMuted(muted||document.hidden||!windowFocused||!audibleScene);
+  }
+  function activateTitle(){
+    if(!wantsTitle()||!titleReady||audio.stats?.preview||audio.stats?.titlePlaying)return;
+    audio.setTitlePlaying?.(true);audioGate();titleControls();
+  }
+  function syncTitle(){
+    if(!wantsTitle()){
+      ++titleSerial;titleReady=false;titleWaiting=false;
+      audio.setTitlePlaying?.(false);audioGate();titleControls();return;
+    }
+    if(audio.stats?.titlePlaying){audioGate();titleControls();return;}
+    if(titleReady){activateTitle();titleControls();return;}
+    if(titleBlocked){audioGate();titleControls();return;}
+    const ticket=++titleSerial;
+    // resume belongs to the original gesture. The asynchronous instrument
+    // preparation is shared, but only the latest eligible scene may play it.
+    const resumed=audio.resume();titleWaiting=true;titleControls();
+    if(!titlePending){
+      const pending=Promise.resolve(resumed).then(()=>audio.prepareTitle?.()||false).catch(()=>false);
+      titlePending=pending;pending.then(()=>{if(titlePending===pending)titlePending=null;});
+    }
+    titlePending.then(ready=>{
+      if(ticket!==titleSerial||!wantsTitle())return;
+      titleWaiting=false;titleReady=!!ready;titleBlocked=!ready;
+      activateTitle();audioGate();titleControls();
+    });
+  }
+  function titleUserGesture(event){
+    if(!titleScreen()||document.hidden||!windowFocused||event?.isTrusted===false||event?.button>0)return;
+    // These controls own their intent: a mute tap must never start a note,
+    // and the launch controls prepare the world track directly.
+    if(['intro-sound','sound-toggle','start','resume-expedition','test-audio'].includes(event?.target?.closest?.('button')?.id||event?.target?.id))return;
+    titleGesture=true;titleBlocked=false;
+    if(wantsTitle())audio.resume();
+    syncTitle();
+  }
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
   function bindingLabel(id){return (prefs.bindings[id]||[]).map(FOptions.keyName).join(' / ');}
@@ -48,7 +101,6 @@
   }
   function settings(){
     Object.assign(prefs,{muted,quality,softMotion});
-    $('intro-sound').textContent=muted?'SON COUPÉ':'SON ACTIVÉ';
     $('sound-toggle').querySelector('strong').textContent=muted?'Coupé':'Activé';
     $('quality-toggle').querySelector('strong').textContent={auto:'Auto',low:'Économie',high:'Haute'}[quality];
     $('difficulty-setting').value=String(prefs.difficulty);$('difficulty-hint').textContent=['Standard · apprenez à lire les attaques ; la pression monte avec les secteurs et les objectifs.','Brutal · des machines plus agressives, des tirs plus rapprochés et moins de répit.','Cauchemar · des attaques plus rapides, des impacts plus durs et une forte pression.'][prefs.difficulty];brainStatus();
@@ -68,7 +120,7 @@
     if(!touch)$('help-text').innerHTML=bindingLabel('forward')+' / '+bindingLabel('left')+' / '+bindingLabel('back')+' / '+bindingLabel('right')+' : déplacer · Souris : viser<br>Clic / '+bindingLabel('fire')+' : tirer · '+bindingLabel('weapon1')+' / '+bindingLabel('weapon2')+' / '+bindingLabel('weapon3')+' / '+bindingLabel('weapon4')+' / '+bindingLabel('weapon5')+' : armes trouvées<br>Clic droit / '+bindingLabel('fireLeft')+' : main gauche · '+bindingLabel('leftHand')+' : équipement gauche<br>'+bindingLabel('interact')+' : commandes et ascenseurs · '+bindingLabel('pulse')+' : onde défensive<br>'+bindingLabel('melee')+' : coup de crosse · '+bindingLabel('dash')+' : esquive / coup de bouclier<br>'+bindingLabel('sprint')+' : courir · '+bindingLabel('map')+' : carte · Échap : pause';
     const silent=[['musicVolume','Musique coupée'],['effectsVolume','Effets coupés'],['ambienceVolume','Ambiances coupées']].filter(([key])=>prefs[key]===0).map(([,label])=>label);
     $('audio-status').textContent=muted||prefs.masterVolume===0?'Son coupé. Activez le son et le volume général pour écouter.':silent.length?silent.join(' · ')+'. Réglez les curseurs pour les entendre.':'Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.';
-    document.body.classList.toggle('low-motion',!softMotion);audio.setMuted(muted||['menu','paused','options','shop','loading'].includes(mode));audio.setMix?.({master:prefs.masterVolume,music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});saveSettings();renderBindings();
+    document.body.classList.toggle('low-motion',!softMotion);audio.setMix?.({master:prefs.masterVolume,music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});audioGate();syncTitle();saveSettings();renderBindings();
   }
   function toast(message,seconds=2.8){$('toast').textContent=message;$('toast').classList.add('visible');toastTime=seconds;}
   function encounter(name,caption){$('encounter-name').textContent=name;$('encounter-caption').textContent=caption;$('encounter').classList.add('visible');encounterTime=4.2;}
@@ -126,7 +178,7 @@
     audio.cancelTestMix?.();
     last=performance.now();perfStart=0;perfFrames=0;
     $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
-    mode=value;bindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();audio.setMuted(muted||['menu','paused','options','shop','loading'].includes(value));audio.setPlaying?.(value==='playing');
+    mode=value;bindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing');audioGate();syncTitle();
     if(value==='paused'||value==='options'){$('pause-kicker').textContent=value==='options'?'CONSOLE DE RÉGLAGE':'SIGNAL EN ATTENTE';$('resume').innerHTML=(value==='options'?'Retour':'Reprendre')+' <span class="arrow-icon" aria-hidden="true"></span>';$('restart').hidden=$('pause-main').hidden=value==='options';selectTab(value==='options'?'image':optionsTab);}
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
@@ -159,13 +211,13 @@
     try{const result=canvas.requestPointerLock?.();if(result?.catch)result.catch(()=>{if(toastTime<=0)toast('Maintenez et glissez pour regarder. Flèches : tourner.',4);});}catch{if(toastTime<=0)toast('Glissez pour regarder. Flèches : tourner.',4);}
   }
   function start(message){
-    audio.start();audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});
+    titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode(document.hidden||!windowFocused?'paused':'playing');if(mode==='playing'){lock();canvas.focus({preventScroll:true});}
     toast(message||(world.campaignVersion===2&&stage===0?'Pistolet + bouclier · clic droit : garde. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 4.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
   function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode){
     if(!window.FMusic?.warmup){action();return;}
-    const ticket=++preparationSerial;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent=(asCampaign?'MONDE ':'SECTEUR ')+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
+    const ticket=++preparationSerial;titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent=(asCampaign?'MONDE ':'SECTEUR ')+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
     try{
       // Two animation frames show the preparation screen before any substantial work.
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
@@ -712,7 +764,7 @@
       encounterTime-=dt;if(encounterTime<=0)$('encounter').classList.remove('visible');
       hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.09;}
       $('crosshair').classList.toggle('hit',sim.state.hitMarker>0);$('damage').style.opacity=String(sim.state.damage*.45);
-    }else{$('damage').style.opacity='0';}
+    }else{$('damage').style.opacity='0';if(titleScreen()){activateTitle();audio.tick(dt);}}
     syncDestruction();
     const p=sim.state.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
     signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);leftMotion.update(mode==='playing'?dt:0,sim.state.locomotion||{},{...signals,firing:input.fireLeft},softMotion);
@@ -759,7 +811,12 @@
   });
   $('back-menu').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
   $('pause-main').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
-  for(const id of ['intro-sound','sound-toggle'])$(id).addEventListener('click',()=>{audio.cancelTestMix?.();muted=!muted;settings();});
+  $('intro-sound').addEventListener('click',()=>{
+    audio.cancelTestMix?.();
+    if(prefs.masterVolume===0||prefs.musicVolume===0){titleGesture=true;titleBlocked=false;muted=false;settings();setMode('options');selectTab('audio');$(prefs.masterVolume===0?'master-setting':'music-setting').focus();return;}
+    muted=titleGesture&&!titleBlocked&&!muted;titleGesture=true;titleBlocked=false;settings();
+  });
+  $('sound-toggle').addEventListener('click',()=>{audio.cancelTestMix?.();titleGesture=true;titleBlocked=false;muted=!muted;settings();});
   $('quality-toggle').addEventListener('click',()=>{quality={auto:'low',low:'high',high:'auto'}[quality];renderer.resize(quality);settings();});
   $('difficulty-setting').addEventListener('change',()=>{prefs.difficulty=clamp(Math.round(Number($('difficulty-setting').value)||0),0,2);sim?.setDifficulty?.(prefs.difficulty);settings();});
   $('ai-setting').addEventListener('change',async()=>{prefs.aiAcceleration=$('ai-setting').value==='cpu'?'cpu':'auto';settings();await brain?.setMode(prefs.aiAcceleration);brainStatus();});
@@ -773,15 +830,17 @@
   $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','crosshairScale','bindings'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
   $('reset-audio').addEventListener('click',()=>{audio.cancelTestMix?.();const d=FOptions.defaults(touch);for(const key of ['masterVolume','musicVolume','effectsVolume','ambienceVolume'])prefs[key]=d[key];muted=false;settings();$('audio-status').textContent='Mix recommandé rétabli. Testez les tirs et les ambiances.';});
   $('test-audio').addEventListener('click',async()=>{
+    if(audio.stats?.preview){audio.cancelTestMix?.();activateTitle();$('audio-status').textContent='Test audio arrêté.';return;}
     if(muted||prefs.masterVolume===0){$('audio-status').textContent='Son coupé. Activez le son et le volume général pour écouter.';return;}
     if(prefs.effectsVolume===0&&prefs.ambienceVolume===0){$('audio-status').textContent='Effets et ambiances sont à zéro. Montez ces deux curseurs pour les tester.';return;}
-    audio.start();audio.resume();$('audio-status').textContent='Test : tir, impact et souffle d’ambiance…';
+    titleGesture=true;titleBlocked=false;audio.start();audio.resume();$('audio-status').textContent='Test : tir, impact et souffle d’ambiance…';
     const played=await audio.testMix?.({muted:prefs.muted});
+    if(titleScreen())syncTitle();
     if(['paused','options'].includes(mode)&&optionsTab==='audio')$('audio-status').textContent=played?'Test lancé : tir, impact et ambiance. Les quatre volumes restent indépendants.':'Le test audio a été interrompu ou le son est indisponible.';
   });
   $('export-mod').addEventListener('click',()=>{
-    const data=window.FMusic?.getModule(world.stage);if(!data){$('audio-status').textContent='Le module audio est indisponible.';return;}
-    const url=URL.createObjectURL(new Blob([data],{type:'audio/mod'})),link=document.createElement('a');link.href=url;link.download='METAL-'+String(stage+1).padStart(2,'0')+'.mod';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('audio-status').textContent='Module généré : '+Math.round(data.byteLength/1000)+' ko. Téléchargement lancé.';
+    const track=currentTrack(),data=window.FMusic?.getModule(track);if(!data){$('audio-status').textContent='Le module audio est indisponible.';return;}
+    const url=URL.createObjectURL(new Blob([data],{type:'audio/mod'})),link=document.createElement('a');link.href=url;link.download=track==='title'?'METAL-titre.mod':'METAL-'+String(stage+1).padStart(2,'0')+'.mod';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('audio-status').textContent='Module généré : '+Math.round(data.byteLength/1000)+' ko. Téléchargement lancé.';
   });
   $('map-button').addEventListener('click',()=>{$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();});
   $('weapon-switch').addEventListener('click',()=>switchWeapon());
@@ -790,6 +849,7 @@
   $('shop-close').addEventListener('click',()=>{if(mode==='shop')togglePause();});
   $('reload').addEventListener('click',()=>location.reload());
   addEventListener('keydown',e=>{
+    if(!e.repeat&&!e.metaKey&&!e.altKey&&!e.ctrlKey&&!['ShiftLeft','ShiftRight','ControlLeft','ControlRight','AltLeft','AltRight','MetaLeft','MetaRight','Escape'].includes(e.code))titleUserGesture(e);
     if(bindingAction){
       e.preventDefault();if(e.repeat)return;
       if(e.code==='Escape'){bindingAction=null;renderBindings();$('binding-status').textContent='Modification annulée.';return;}
@@ -808,6 +868,8 @@
     if(match('map')&&!e.repeat){$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();}
   });
   addEventListener('keyup',e=>keys.delete(e.code));
+  addEventListener('click',titleUserGesture,{capture:true,passive:true});
+  addEventListener('pointerup',titleUserGesture,{capture:true,passive:true});
   addEventListener('wheel',e=>{if(mode==='playing'&&e.deltaY){e.preventDefault();switchWeapon(undefined,e.deltaY>0?1:-1);}},{passive:false});
   document.addEventListener('pointerlockchange',()=>{const locked=document.pointerLockElement===canvas;if(wasLocked&&!locked&&mode==='playing')setMode('paused');wasLocked=locked;});
   document.addEventListener('mousemove',e=>{if(mode==='playing'&&document.pointerLockElement===canvas){lookDX+=e.movementX*.0022*prefs.sensitivity;lookDY-=e.movementY*.0022*prefs.sensitivity*(prefs.invertY?-1:1);}});
@@ -835,14 +897,16 @@
   $('pulse-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();pulseQueued=true;});
   $('melee-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();meleeQueued=true;});
   $('interact-button').addEventListener('click',e=>{if(mode!=='playing'||$('interact-button').disabled)return;e.preventDefault();interactQueued=true;canvas.focus({preventScroll:true});});
-  addEventListener('blur',()=>{if(mode==='playing')setMode('paused');});document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='playing')setMode('paused');});
+  addEventListener('blur',()=>{windowFocused=false;audio.cancelTestMix?.();if(mode==='playing')setMode('paused');else{audioGate();syncTitle();}});
+  addEventListener('focus',()=>{windowFocused=true;syncTitle();audioGate();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
   addEventListener('resize',()=>renderer?.resize(quality));
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   if(touch){$('intro-controls').textContent='Déplacez-vous à gauche · Visez à droite';$('help-text').innerHTML='Joystick gauche : déplacer · Glisser à droite : viser<br>Grand cercle : main droite · TIR G / GARDE : main gauche<br>Flèche : esquive ou coup de bouclier<br>Anneaux : onde · Crosse : attaque au contact<br>Emplacement : main droite · Menu main gauche : arme ou bouclier<br>Bouton contextuel : commande ou ascenseur<br>Ramassez armes et munitions. Les réserves sont limitées.';}
   try{
     renderer=FRender.create(canvas);renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
     savedRun=readSave();refreshContinue();load(0);settings();requestAnimationFrame(frame);
-    window.FMusic?.warmup?.(0).catch(error=>console.error('METAL audio preparation:',error));
+    window.FMusic?.warmup?.('title').catch(error=>console.error('METAL audio preparation:',error));
   }catch(error){$('intro').hidden=true;$('error').hidden=false;$('error-copy').textContent='Le moteur graphique n’a pas pu démarrer. Essayez de recharger la page ou d’utiliser un navigateur récent.';console.error('METAL initialization:',error);}
 })();
 

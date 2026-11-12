@@ -1,3 +1,9 @@
+# Validation de METAL v0.8.1 — 12 novembre 2026
+
+La mise à jour de musique d’accueil ajoute « Furie d’acier », une composition thrash originale à 212 BPM, avec déverrouillage au geste utilisateur, isolation de la partie et transitions de visibilité. **422 tests réussis, 0 échec** ; build autonome de **803 375 octets bruts**, aucune ressource externe. Le [rapport 0.8.1](docs/qa-title-v081.md) précise les tests, le SHA-256, la vérification navigateur et ses limites. Les résultats 0.8.0 et antérieurs ci-dessous sont historiques.
+
+---
+
 # Validation de METAL v0.8.0 — 12 novembre 2026
 
 Cette version retire les panneaux-obstacles de la nouvelle campagne, remplace la disparition des éléments cassés par des morceaux physiques persistants, reconstruit les bruitages et les ambiances, et place les armes et améliorations dans le butin des boss. Le relevé exact des sources finales est dans [docs/validation-v08.json](docs/validation-v08.json). Les sections 0.7 et antérieures conservées plus bas sont historiques.
