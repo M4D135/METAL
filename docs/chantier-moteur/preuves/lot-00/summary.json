@@ -1,0 +1,453 @@
+{
+  "schema": "metal-lot00-summary-v1",
+  "scope": {
+    "lot": "00",
+    "task": "T1",
+    "ids": [
+      "SIM-11",
+      "IA-06"
+    ],
+    "deferred": "Lot 00 T2 et suivants, après le lot 05 selon le master.",
+    "versionBefore": "0.8.1",
+    "versionAfter": "0.8.1",
+    "sourceCommit": "63668aca7045e62cd524973b226f21e9ec5703e8"
+  },
+  "environment": {
+    "node": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "platform": "linux",
+    "arch": "x64",
+    "release": "6.18.57",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "logicalCpus": 9,
+    "loadAverage": [
+      0.4,
+      0.28,
+      0.15
+    ]
+  },
+  "validation": {
+    "tests": [
+      {
+        "archive": "baseline-main-tests.log.gz",
+        "tests": 422,
+        "pass": 422,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "nodeTestDurationMs": 149635.962422,
+        "distributionSha256": "d9503acf09a33a9b2d0f90d598c0ac881250131ce0b3f70b74e1afc8c5df1b3b"
+      },
+      {
+        "archive": "lot00-tests.log.gz",
+        "tests": 422,
+        "pass": 422,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "nodeTestDurationMs": 149479.55711,
+        "distributionSha256": "d9503acf09a33a9b2d0f90d598c0ac881250131ce0b3f70b74e1afc8c5df1b3b"
+      }
+    ],
+    "build": {
+      "htmlBytesBefore": 803375,
+      "htmlBytesAfter": 803375,
+      "sha256Before": "d9503acf09a33a9b2d0f90d598c0ac881250131ce0b3f70b74e1afc8c5df1b3b",
+      "sha256After": "d9503acf09a33a9b2d0f90d598c0ac881250131ce0b3f70b74e1afc8c5df1b3b",
+      "byteIdentical": true,
+      "externalAssets": 0,
+      "browserExcludedFromSize": true
+    }
+  },
+  "profiles": {
+    "checksumA": "09a3eca48720a54628e92b5133100ae66df5e156026047c228ac818057d98acf",
+    "checksumB": "09a3eca48720a54628e92b5133100ae66df5e156026047c228ac818057d98acf",
+    "stateIdentical": true,
+    "perStepCountersIdentical": true,
+    "scenarios": [
+      {
+        "id": "legacy-s0",
+        "steps": 1800,
+        "chainHash": "4c43a6fb",
+        "snapshot": {
+          "sha256": "efa43a89bb30801f96646375fd3d1c53e49540efa2e854ad6897a8f4af511b9c",
+          "fnv1a32": "3ca95503",
+          "bytes": 166623
+        },
+        "cpuA": {
+          "samples": 3600,
+          "totalUs": 1352724,
+          "meanUs": 375.75666666666666,
+          "medianUs": 175,
+          "p95Us": 887,
+          "p99Us": 4264,
+          "maxUs": 61387
+        },
+        "cpuB": {
+          "samples": 3600,
+          "totalUs": 1305591,
+          "meanUs": 362.6641666666667,
+          "medianUs": 139,
+          "p95Us": 787,
+          "p99Us": 3407,
+          "maxUs": 84907
+        },
+        "counterTotals": {
+          "ground": 1010229,
+          "blocked": 318467,
+          "segmentFree": 15210,
+          "astarPops": 81453,
+          "astarNodes": 81121,
+          "revisions": 8
+        }
+      },
+      {
+        "id": "legacy-s2",
+        "steps": 1800,
+        "chainHash": "c8706f53",
+        "snapshot": {
+          "sha256": "5c0b01c3ddafb7ccfe15e34efd8829d53d4001c7fb3faacfcaad4ecb7a7daee3",
+          "fnv1a32": "6274f6d8",
+          "bytes": 266848
+        },
+        "cpuA": {
+          "samples": 3600,
+          "totalUs": 1929462,
+          "meanUs": 535.9616666666667,
+          "medianUs": 347,
+          "p95Us": 1209,
+          "p99Us": 4213,
+          "maxUs": 28615
+        },
+        "cpuB": {
+          "samples": 3600,
+          "totalUs": 1390195,
+          "meanUs": 386.16527777777776,
+          "medianUs": 258,
+          "p95Us": 812,
+          "p99Us": 3275,
+          "maxUs": 12082
+        },
+        "counterTotals": {
+          "ground": 2296649,
+          "blocked": 603871,
+          "segmentFree": 13452,
+          "astarPops": 19200,
+          "astarNodes": 19016,
+          "revisions": 15
+        }
+      },
+      {
+        "id": "campaign-w10",
+        "steps": 1800,
+        "chainHash": "59e36477",
+        "snapshot": {
+          "sha256": "9f783b8b0912dbd9609a4fc43f586df5b3585737c1d27c0acd3617e70325edce",
+          "fnv1a32": "0a42a72e",
+          "bytes": 124912
+        },
+        "cpuA": {
+          "samples": 3600,
+          "totalUs": 1270209,
+          "meanUs": 352.8358333333333,
+          "medianUs": 190,
+          "p95Us": 814,
+          "p99Us": 3834,
+          "maxUs": 30384
+        },
+        "cpuB": {
+          "samples": 3600,
+          "totalUs": 1277066,
+          "meanUs": 354.74055555555555,
+          "medianUs": 213,
+          "p95Us": 760,
+          "p99Us": 3458,
+          "maxUs": 21084
+        },
+        "counterTotals": {
+          "ground": 1348172,
+          "blocked": 523957,
+          "segmentFree": 20603,
+          "astarPops": 58810,
+          "astarNodes": 58507,
+          "revisions": 13
+        }
+      },
+      {
+        "id": "campaign-w16",
+        "steps": 1800,
+        "chainHash": "b4e5f58e",
+        "snapshot": {
+          "sha256": "4a7dcd70963ed815255e2accb93fed0b2414ea722b780e9ed792baf6662cfa60",
+          "fnv1a32": "393319ba",
+          "bytes": 168196
+        },
+        "cpuA": {
+          "samples": 3600,
+          "totalUs": 1222885,
+          "meanUs": 339.6902777777778,
+          "medianUs": 182,
+          "p95Us": 756,
+          "p99Us": 2595,
+          "maxUs": 27342
+        },
+        "cpuB": {
+          "samples": 3600,
+          "totalUs": 1173338,
+          "meanUs": 325.9272222222222,
+          "medianUs": 165,
+          "p95Us": 629,
+          "p99Us": 2966,
+          "maxUs": 20754
+        },
+        "counterTotals": {
+          "ground": 1441338,
+          "blocked": 587901,
+          "segmentFree": 30016,
+          "astarPops": 61759,
+          "astarNodes": 60783,
+          "revisions": 13
+        }
+      }
+    ]
+  },
+  "aa": {
+    "checksum": "036225c2090ec06c02c923a0d09e08e3972c833706f4716aa119af1b2af7baca",
+    "identical": true,
+    "scenarios": [
+      {
+        "id": "legacy-s0",
+        "timing": {
+          "a": {
+            "samples": 3600,
+            "totalUs": 1175244,
+            "meanUs": 326.45666666666665,
+            "medianUs": 149,
+            "p95Us": 749,
+            "p99Us": 3147,
+            "maxUs": 65763
+          },
+          "b": {
+            "samples": 3600,
+            "totalUs": 1263748,
+            "meanUs": 351.0411111111111,
+            "medianUs": 159,
+            "p95Us": 755,
+            "p99Us": 3721,
+            "maxUs": 69865
+          },
+          "medianPairedRatio": 1.0517241379310345,
+          "pairedSamples": 3600,
+          "excludedQuantizedPairs": 0,
+          "totalRatio": 1.0753069149895682
+        },
+        "identical": true
+      },
+      {
+        "id": "legacy-s2",
+        "timing": {
+          "a": {
+            "samples": 3600,
+            "totalUs": 1742168,
+            "meanUs": 483.93555555555554,
+            "medianUs": 304,
+            "p95Us": 953,
+            "p99Us": 4179,
+            "maxUs": 26595
+          },
+          "b": {
+            "samples": 3600,
+            "totalUs": 1818969,
+            "meanUs": 505.26916666666665,
+            "medianUs": 318,
+            "p95Us": 1001,
+            "p99Us": 4365,
+            "maxUs": 25825
+          },
+          "medianPairedRatio": 1.0513552068473608,
+          "pairedSamples": 3600,
+          "excludedQuantizedPairs": 0,
+          "totalRatio": 1.0440835786215796
+        },
+        "identical": true
+      },
+      {
+        "id": "campaign-w10",
+        "timing": {
+          "a": {
+            "samples": 3600,
+            "totalUs": 1212497,
+            "meanUs": 336.8047222222222,
+            "medianUs": 193,
+            "p95Us": 696,
+            "p99Us": 3308,
+            "maxUs": 12079
+          },
+          "b": {
+            "samples": 3600,
+            "totalUs": 1329695,
+            "meanUs": 369.3597222222222,
+            "medianUs": 207,
+            "p95Us": 771,
+            "p99Us": 3480,
+            "maxUs": 28520
+          },
+          "medianPairedRatio": 1.0526315789473684,
+          "pairedSamples": 3600,
+          "excludedQuantizedPairs": 0,
+          "totalRatio": 1.0966583834846602
+        },
+        "identical": true
+      },
+      {
+        "id": "campaign-w16",
+        "timing": {
+          "a": {
+            "samples": 3600,
+            "totalUs": 1472517,
+            "meanUs": 409.0325,
+            "medianUs": 250,
+            "p95Us": 983,
+            "p99Us": 3326,
+            "maxUs": 29228
+          },
+          "b": {
+            "samples": 3600,
+            "totalUs": 1653405,
+            "meanUs": 459.27916666666664,
+            "medianUs": 279,
+            "p95Us": 1081,
+            "p99Us": 3694,
+            "maxUs": 42347
+          },
+          "medianPairedRatio": 1.1019736842105263,
+          "pairedSamples": 3600,
+          "excludedQuantizedPairs": 0,
+          "totalRatio": 1.1228427243963908
+        },
+        "identical": true
+      }
+    ]
+  },
+  "v2Short": {
+    "checksum": "b6d49769dd65c91d3160711ec00681912125e2925e89f31116264585460b1db3",
+    "identical": true,
+    "scenarios": [
+      {
+        "id": "campaign2-w1",
+        "options": {
+          "campaign": true,
+          "campaignVersion": 2
+        },
+        "steps": 120,
+        "chainHash": "2d73cf2a",
+        "snapshot": {
+          "sha256": "18904d503893d0b701c36957fc5332db780249bb6765d29c576d12a76798c317",
+          "fnv1a32": "cac8a2b6",
+          "bytes": 82293
+        }
+      },
+      {
+        "id": "campaign2-w10",
+        "options": {
+          "campaign": true,
+          "campaignVersion": 2
+        },
+        "steps": 120,
+        "chainHash": "65883f09",
+        "snapshot": {
+          "sha256": "b1f167045fcd64d95ce8b39ce1b01eeb71204980d2549fd660b973a55eef94bc",
+          "fnv1a32": "2d986911",
+          "bytes": 144845
+        }
+      }
+    ]
+  },
+  "realms": {
+    "checksum": "be8c42f6d0ae4b68f5cc645fbbcc1b6b72bf3f7b323158ec018e9f1f0802a915",
+    "scenarios": [
+      {
+        "id": "legacy-s0",
+        "groundMedianVmOverMain": 12.658695344559218,
+        "stepMedianVmOverMain": 5.228958812995651,
+        "measuredPasses": [
+          {
+            "pass": 1,
+            "groundMainNsPerCall": 107.8338623046875,
+            "groundVmNsPerCall": 1365.0360107421875,
+            "stepsMain": 1200,
+            "stepsVm": 1200,
+            "stepMainCpuMeanUs": 496.4091666666667,
+            "stepVmCpuMeanUs": 2207.2541666666666
+          },
+          {
+            "pass": 2,
+            "groundMainNsPerCall": 368.377685546875,
+            "groundVmNsPerCall": 2502.288818359375,
+            "stepsMain": 1200,
+            "stepsVm": 1200,
+            "stepMainCpuMeanUs": 394.1575,
+            "stepVmCpuMeanUs": 2061.0333333333333
+          }
+        ]
+      },
+      {
+        "id": "campaign-w10",
+        "groundMedianVmOverMain": 12.41503809208347,
+        "stepMedianVmOverMain": 5.879650969491495,
+        "measuredPasses": [
+          {
+            "pass": 1,
+            "groundMainNsPerCall": 104.67529296875,
+            "groundVmNsPerCall": 1292.144775390625,
+            "stepsMain": 1200,
+            "stepsVm": 1200,
+            "stepMainCpuMeanUs": 396.94666666666666,
+            "stepVmCpuMeanUs": 2215.9025
+          },
+          {
+            "pass": 2,
+            "groundMainNsPerCall": 92.132568359375,
+            "groundVmNsPerCall": 1143.829345703125,
+            "stepsMain": 1200,
+            "stepsVm": 1200,
+            "stepMainCpuMeanUs": 368.44916666666666,
+            "stepVmCpuMeanUs": 2166.3525
+          }
+        ]
+      }
+    ]
+  },
+  "migration": [
+    {
+      "tool": "campaign-profiles",
+      "jsonIdentical": true,
+      "bytesIdentical": true,
+      "bytes": 36819,
+      "sha256": "547f52b071579bee39b9700c27e352b9bd4b768d422f32246370918a1078e717"
+    },
+    {
+      "tool": "campaign-balance",
+      "jsonIdentical": true,
+      "bytesIdentical": true,
+      "bytes": 49966,
+      "sha256": "2dc0f40d9ac5e0c38a376340d87813ce4fb9ddee483b0e03b76fb25f5d597b77"
+    },
+    {
+      "tool": "boss-profiles",
+      "jsonIdentical": true,
+      "bytesIdentical": true,
+      "bytes": 25558,
+      "sha256": "4a789e0274932796291b256900a9f5d21ad09995321d104bb6ccb0bb3462a621"
+    }
+  ],
+  "limitations": [
+    "A/A median B/A CPU asymmetry is 5.1–10.2%; it is not an optimization gain.",
+    "Node CPU includes process GC/JIT; no browser/GPU/frame-rate claim.",
+    "FNV32 is collisionable; the explicit per-step field schema and final SHA-256 snapshot complement functional tests.",
+    "all still selects the four historical audit scenarios; full V2 campaign measurements belong to lot 02.",
+    "Historical Mac audit thresholds are not portable acceptance criteria."
+  ]
+}

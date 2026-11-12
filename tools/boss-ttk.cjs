@@ -1,7 +1,8 @@
 // Controlled open-arena simulation, not a human playthrough.
 // Same boss HP/kind/scale and reward rules as the v2 progression checks.
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),{performance}=require('node:perf_hooks');
-const ROOT=path.resolve(__dirname,'..'),OUT=path.resolve(ROOT,'docs/qa-v08'),G={},hashes={};
+const args=process.argv.slice(2),option=(name,fallback)=>{const i=args.indexOf(name);if(i<0)return fallback;if(!args[i+1]||args[i+1].startsWith('--'))throw new Error('Missing value for '+name);return path.resolve(args[i+1]);};
+const ROOT=option('--root',path.resolve(__dirname,'..')),OUT=option('--out-dir',path.resolve(ROOT,'docs/qa-v08')),G={},hashes={};
 for(const name of ['destruction','economy','simulation']){const s=fs.readFileSync(ROOT+'/src/'+name+'.js','utf8');hashes[name]=crypto.createHash('sha256').update(s).digest('hex');new Function('window',s)(G);}
 const {FEconomy:E,FSimulation:S}=G,HP=[600,850,1200,1550,1900,2400,2900,3400,4000,4650,5300,6050,6850,7700,8600,9600,10800,12000];
 const rankFactor=null; // Always measure the unmodified release code.

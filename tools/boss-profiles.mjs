@@ -1,9 +1,9 @@
 // Deterministic v2 boss profiles from the actual generated worlds and economy.
-import {readFileSync,writeFileSync} from 'node:fs';
-import vm from 'node:vm';
-const context={window:{}};vm.createContext(context);
-for(const name of ['world','economy','simulation'])vm.runInContext(readFileSync(new URL('../src/'+name+'.js',import.meta.url),'utf8'),context,{filename:name+'.js'});
-const {FWorld:W,FEconomy:E,FSimulation:S}=context.window,weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'];
+import {writeFileSync} from 'node:fs';
+import {loadRealm} from './realm-loader.mjs';
+import {parseToolArgs} from './proof/common.mjs';
+const {root,output:outputPath}=parseToolArgs(process.argv.slice(2));
+const {FWorld:W,FEconomy:E,FSimulation:S}=loadRealm({root,modules:['world','economy','simulation']}).window,weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'];
 let profile=E.fresh({campaignVersion:2});const weapons=[false,false,false,false,true],rows=[];
 for(let index=0;index<18;index++){
   const world=W.create(96,index,{campaign:true,campaignVersion:2}),boss=world.enemies.at(-1),arena=world.rooms.find(r=>r.bossArena),reward=E.bossReward(index),inventory={weapons,shield:true},policy=S.campaignPolicy(index,inventory,world.progression.maxActive,2);
@@ -17,6 +17,6 @@ for(let index=0;index<18;index++){
 }
 const result={campaignVersion:2,seed:96,weaponOrder:weaponNames,calibration:{damagePerRank:.4,heatFormula:'1 / (1 + .08 * rank)',maxRank:8},personalMaxRank:12,armorIncomingFloor:.5,profileAfter18Bosses:profile,
   caveat:'Entry profile assumes mandatory boss rewards only, with no optional workshop purchases. Arena and enemy ammo are generated finite sources, not automatic refills.',rows};
-const output=process.argv[2]||new URL('../docs/boss-progression-v08.json',import.meta.url);
+const output=outputPath||new URL('../docs/boss-progression-v08.json',import.meta.url);
 writeFileSync(output,JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify({worlds:rows.length,firstBossHp:rows[0].bossHp,lastBossHp:rows.at(-1).bossHp,campaignVersion:2}));
