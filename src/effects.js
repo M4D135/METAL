@@ -18,7 +18,7 @@
     const close=(list,limit=Infinity)=>Array.from(list||[]).filter(e=>[e.x,e.y,e.z].every(Number.isFinite)).sort((a,b)=>distance(point(a))-distance(point(b))).slice(0,limit);
     function puff(p,s,color,alpha,emissive=0,part='dust',shape='sphere',r=[0,0,0],mandatory=false){
       alpha*=fade(p,Math.hypot(...s)*.5);if(!mandatory&&particles>=budget||alpha<.008||s.some(v=>!(v>.002)))return;
-      const m=mesh(shape,p,s,7,color,r,part);m.fx=true;m.alpha=clamp(alpha,0,.94);m.emissive=emissive;if(mandatory)m.fxPriority='hazard';out.push(m);particles++;return m;
+      const m=mesh(shape,p,s,7,color,r,part);m.fx=true;m.alpha=clamp(alpha,0,.94);m.emissive=emissive;if(part==='blast-core'||part==='fire-cloud')m.fxFire=true;if(mandatory)m.fxPriority='hazard';out.push(m);particles++;return m;
     }
     function solid(shape,p,s,mat,color,r,part){const m=mesh(shape,p,s,mat,color,r,part);out.push(m);return m;}
 
@@ -88,7 +88,7 @@
     // A hot pipe's cloud stays inside its directed hazard volume. Warnings
     // show a nozzle glow; they never draw a damaging-looking full jet early.
     for(const pipe of close(state.pipes,software?4:8)){
-      if(!pipe.active||(!pipe.hot&&!pipe.warning))continue;
+      if(pipe.broken||!pipe.active||(!pipe.hot&&!pipe.warning))continue;
       const p=Array.isArray(pipe.nozzle)&&pipe.nozzle.length===3&&pipe.nozzle.every(Number.isFinite)?pipe.nozzle.slice():point(pipe),d=unit([num(pipe.dx,1),num(pipe.dy),num(pipe.dz)]),length=Math.max(.05,num(pipe.length,3)),radius=Math.max(.04,num(pipe.radius,.45)),r=orient(d),seed=num(pipe.id,1);
       if(fade(p)<=0)continue;
       const collar=solid('ring',p,[radius*.64,.035,radius*.64],pipe.hot?5:1,pipe.hot?[.85,.31,.08]:[.88,.55,.12],r,'pipe-warning');collar.emissive=pipe.hot?.25:.12;
@@ -100,22 +100,41 @@
       }
     }
 
-    // Ages and centres are authoritative simulation values. The additional
-    // lobes/sparks are deterministic visual detail; they cannot deal damage.
-    for(const e of close((state.explosions||[]).filter(e=>num(e.age)>=0),software?6:12)){
-      const age=Math.max(0,num(e.age)),life=Math.max(.01,num(e.life,.8)),t=age/life;if(t>=1)continue;
-      const p=point(e),radius=Math.max(.1,num(e.radius,3)),seed=num(e.seed,num(e.id,1)),near=distance(p)<(software?18:42),density=near?(software?tier+2:tier*2+3):1;
-      const expansion=radius*(.17+.57*(1-Math.exp(-t*7))),heat=clamp(1-t*1.8,0,1);
-      if(age<.16)puff(p,[expansion*1.15,expansion*1.15,expansion*1.15],[1,.83,.38],.9*(1-age/.16),3.5,'blast-core');
-      if(t<.6){const wave=radius*(.35+1.55*Math.sqrt(t));puff(p,[wave*2,Math.max(.025,radius*.025),wave*2],[1,.48,.12],.52*(1-t/.6),1.1,'shock-ring','ring');}
-      for(let i=0;i<density;i++){
-        const a=hash(seed,i)*Math.PI*2,h=hash(seed,i+19),reach=expansion*(.15+hash(seed,i+31)*.28),center=[p[0]+Math.cos(a)*reach,p[1]+(.15+h*.4)*radius*t,p[2]+Math.sin(a)*reach];
-        const size=expansion*(.72+hash(seed,i+61)*.58),color=heat?[.36+.64*heat,.19+.38*heat,.08+.1*heat]:[.26,.245,.21];
-        puff(center,[size,size*(.9+h*.3),size],color,(.68-t*.51)/Math.sqrt(density),heat*2.2,'fire-cloud');
+    // Seconds, rather than normalized lifetime, keep the detonation sharp even
+    // while its smoke survives. These deterministic cosmetics never deal damage.
+    const blasts=close((state.explosions||[]).filter(e=>num(e.age)>=0&&num(e.age)<num(e.life,2.4)),software?6:12);
+    for(let index=0;index<blasts.length;index++){
+      const e=blasts[index],age=Math.max(0,num(e.age)),life=Math.max(.01,num(e.life,2.4)),t=age/life;
+      const p=point(e),radius=Math.max(.1,num(e.radius,3)),seed=num(e.seed,num(e.id,1)),near=distance(p)<(software?20:48);
+      // Share remaining cosmetics across simultaneous blasts; one fireball must
+      // not consume every later explosion's flash and pressure front.
+      const allowance=Math.max(0,Math.floor((budget-particles)/(blasts.length-index))),start=particles;
+      const emit=(...args)=>particles-start<allowance?puff(...args):undefined;
+      const expansion=radius*(.14+.72*(1-Math.exp(-age*9))),fireTime=Math.min(.86,life*.9),heat=clamp(1-age/fireTime,0,1);
+      if(age<.14)emit(p,[expansion*1.28,expansion*1.28,expansion*1.28],[1,.91,.59],.94*(1-age/.14),4.8,'blast-core');
+      if(age<.48){
+        const wave=radius*(.1+1.24*Math.sqrt(age/.48)),strength=1-age/.48;
+        const front=emit(p,[wave*2,.035+radius*.018,wave*2],[1,.67,.3],.65*strength,1.8*strength,'shock-ring','ring',orient(unit(eye.map((v,k)=>v-p[k]))));
+        if(front)front.innerRatio=.92+.05*(1-strength);
+        if(near&&tier>0)emit(p,[wave*2,wave*2,wave*2],[.78,.72,.61],.12*strength,.18,'pressure-shell');
       }
-      if(t>.12)for(let i=0;i<Math.max(1,density-1);i++){
-        const a=hash(seed,i+91)*Math.PI*2,spread=radius*(.12+t*.46),center=[p[0]+Math.cos(a)*spread,p[1]+radius*(t*.5+hash(seed,i+111)*.2),p[2]+Math.sin(a)*spread],size=radius*(.2+t*.55)*(1+hash(seed,i+131)*.3);
-        puff(center,[size,size*.8,size],[.25,.24,.22],Math.sin(Math.PI*t)*.26/Math.sqrt(density),0,'blast-dust');
+      const density=near?(software?tier+3:tier*2+4):2;
+      if(heat>0)for(let i=0;i<density;i++){
+        const a=hash(seed,i)*Math.PI*2,h=hash(seed,i+19),reach=expansion*(.18+hash(seed,i+31)*.36),center=[p[0]+Math.cos(a)*reach,p[1]+radius*age*(.4+h*.65),p[2]+Math.sin(a)*reach];
+        const size=expansion*(.8+hash(seed,i+61)*.72),flicker=.88+.12*Math.sin(age*27+i*2.4),color=[1,.12+.43*heat,.018+.11*heat*heat];
+        emit(center,[size,size*(1.02+h*.5),size],color,(.38+.2*heat)*Math.sqrt(heat)*flicker,1.5+heat*2.4,'fire-cloud','sphere',[age*.5,a,0]);
+      }
+      if(age>.12){
+        const count=Math.max(2,density-1),smoke=clamp((age-.12)/.4,0,1)*Math.pow(1-t,.72);
+        for(let i=0;i<count;i++){
+          const a=hash(seed,i+91)*Math.PI*2,spread=radius*(.16+age*.22),center=[p[0]+Math.cos(a)*spread,p[1]+radius*(.1+age*(.32+hash(seed,i+111)*.13)),p[2]+Math.sin(a)*spread],size=radius*(.38+age*.38)*(1+hash(seed,i+131)*.35);
+          emit(center,[size,size*(1.05+hash(seed,i+151)*.35),size],[.16+.08*heat,.145+.06*heat,.12+.025*heat],smoke*.32,heat*.16,'blast-dust');
+        }
+      }
+      if(near&&age<1.05)for(let i=0;i<(software?3:5+tier*3);i++){
+        const a=hash(seed,i+171)*Math.PI*2,speed=radius*(1.15+hash(seed,i+191)*1.1),up=radius*(.55+hash(seed,i+211)*1.2),velocity=[Math.cos(a)*speed,up-6*age,Math.sin(a)*speed];
+        const center=[p[0]+velocity[0]*age,p[1]+up*age-3*age*age,p[2]+velocity[2]*age],width=.025+radius*.009,trail=Math.min(radius*.42,Math.hypot(...velocity)*.035);
+        emit(center,[width,Math.max(width,trail),width],[1,.44,.035],.84*(1-age/1.05),3.2,'blast-ember','octa',orient(unit(velocity)));
       }
     }
 
@@ -161,5 +180,18 @@
     for(const e of state?.explosions||[]){const age=num(e.age);if(age<0||age>.18)continue;const distance=Math.hypot(num(e.x)-eye[0],num(e.y)-eye[1],num(e.z)-eye[2]);value=Math.max(value,Math.exp(-age*22)/(1+distance*distance*.045));}
     return Math.min(.85,value);
   }
-  G.FEffects={build,flash};
+  function lights(state){
+    const p=state?.player||{},eye=[num(p.x),num(p.y)+1.62,num(p.z)],sources=[];
+    for(const e of state?.explosions||[]){
+      const age=num(e.age);if(age<0||age>=Math.min(1.05,num(e.life,2.4)))continue;
+      const radius=Math.max(.1,num(e.radius,3)),heat=Math.exp(-age*5),power=clamp(radius*7+num(e.power)*.08,12,52)*heat;
+      if(power<.25)continue;sources.push({p:[num(e.x),num(e.y),num(e.z)],color:[1,.31+.28*heat,.045+.09*heat],power,range:clamp(radius*3.2,6,35)});
+    }
+    for(const q of state?.projectiles||[])if(q.kind==='rocket'&&num(q.age)>=0&&num(q.life,1)>0){
+      sources.push({p:[num(q.x),num(q.y),num(q.z)],color:[1,.28,.055],power:3.5+.5*Math.sin(num(q.age)*24),range:5.5});
+    }
+    const score=l=>l.power/(1+l.p.reduce((n,v,k)=>n+(v-eye[k])**2,0)*.06);
+    return sources.filter(l=>l.p.every(Number.isFinite)&&l.p.reduce((n,v,k)=>n+(v-eye[k])**2,0)<(l.range+45)**2).sort((a,b)=>score(b)-score(a)).slice(0,4);
+  }
+  G.FEffects={build,flash,lights};
 })(typeof window!=='undefined'?window:globalThis);

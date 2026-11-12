@@ -7,6 +7,7 @@ const options=context.window.FOptions;
 test('Older preferences migrate while new controls have safe bounded values',()=>{
   const v=options.normalize({muted:true,quality:'high',softMotion:false,fov:300,sensitivity:NaN,musicVolume:-2,brightness:Infinity,showFps:'false'});
   assert.equal(v.muted,true);assert.equal(v.quality,'high');assert.equal(v.softMotion,false);assert.equal(v.fov,110);assert.equal(v.sensitivity,1);assert.equal(v.musicVolume,0);assert.equal(v.brightness,1);assert.equal(v.showFps,true);assert.equal(options.defaults(true).fov,79);
+  assert.equal(v.aiAcceleration,'auto');assert.equal(options.normalize({aiAcceleration:'cpu'}).aiAcceleration,'cpu');assert.equal(options.normalize({aiAcceleration:'npu-active'}).aiAcceleration,'auto');
 });
 test('Rebinding changes the real input map, preserves other actions and survives JSON storage',()=>{
   const a=options.defaults(),r=options.assign(a.bindings,'interact','KeyR');assert.equal(r.ok,true);
@@ -20,4 +21,12 @@ test('Conflicts and reserved keys never silently disable another action',()=>{
   assert.equal(options.assign(a.bindings,'fire','MetaLeft').ok,false);assert.equal(options.assign(a.bindings,'sprint','ControlLeft').ok,false);assert.equal(JSON.stringify(a),original);
   const tampered={...a,bindings:{...a.bindings,fire:['KeyW']}};
   assert.equal(options.normalize(tampered).bindings.fire[0],'Enter');
+});
+test('Adding melee preserves an existing custom V binding and finds a free default key',()=>{
+  const old=options.defaults();for(const id of ['melee','fireLeft','leftHand','weapon4'])delete old.bindings[id];old.bindings.interact=['KeyV'];old.bindings.fire=['KeyC'];
+  const v=options.normalize(JSON.parse(JSON.stringify(old)));
+  assert.deepEqual(Array.from(v.bindings.interact),['KeyV']);assert.deepEqual(Array.from(v.bindings.fire),['KeyC']);
+  assert.deepEqual(Array.from(v.bindings.melee),['KeyB']);
+  const r=options.assign(v.bindings,'melee','KeyH');assert.equal(r.ok,true);
+  assert.equal(options.down(r.bindings,new Set(['KeyH']),'melee'),true);
 });

@@ -115,3 +115,42 @@ test('volume, threat, stage changes and unavailable audio respect lifecycle owne
   r.music.dispose();r.music.dispose();const nodes=r.ctx.nodes.length;r.music.setPlaying(true);r.music.setStage(0);r.music.tick();assert.equal(r.ctx.nodes.length,nodes);
   const silent=Music.create(null,null);silent.setPlaying(true);silent.tick();silent.dispose();assert.equal(silent.stats.activeVoices,0);
 });
+
+test('public track metadata matches the playable MOD, without loading audio or exposing mutable settings',()=>{
+  for(let stage=0;stage<3;stage++){
+    const track=Music.getTrack(stage),s=parse(Music.getModule(stage));assert.equal(track.channels,4);assert.equal(track.bpm,[100,170,145][stage]);assert(track.title.length>3&&track.style.length>3);
+    assert(Math.abs(track.duration-s.order.length*64*15/track.bpm)<1e-9);assert(Buffer.from(s.bytes.slice(0,20)).toString().startsWith('METAL'));
+    track.title='changed';track.bpm=0;assert.notEqual(Music.getTrack(stage).title,'changed');assert(Music.getTrack(stage).bpm>0);
+  }
+});
+
+test('arrangements contain genuine stop/drop sections and substantial rhythm guitar sustain',()=>{
+  for(let stage=0;stage<3;stage++){
+    const s=parse(Music.getModule(stage)),count=p=>s.events.filter(e=>e.p===p&&e.channel===0&&e.period).length;
+    assert(count(3)<count(1)*.75,'the breakdown changes the notes, not just an output fader');
+    assert(s.events.filter(e=>e.p===3&&e.effect===12&&e.param===0).length>=12,'rests explicitly stop the sustained strings');
+    assert(s.events.filter(e=>e.channel===2&&e.sample===15).length===4,'an original dissonant texture marks the four-bar tension passage');
+    const palm=s.samples[0].pcm,open=s.samples[1].pcm,rms=(a,start,end)=>Math.sqrt(a.slice(start,end).reduce((sum,x)=>sum+(x/128)**2,0)/(end-start));
+    assert(rms(palm,80,700)>.07);assert(rms(open,1000,4000)>.07,'open power chords retain body instead of an inaudible pluck');
+    for(const sample of s.samples.filter(s=>s.pcm.length)){const mean=sample.pcm.reduce((sum,v)=>sum+v,0)/sample.pcm.length/128;assert(Math.abs(mean)<.035,'generated instruments must not carry a large DC offset');}
+  }
+});
+
+test('warmup yields between instruments, shares pending work and opens no audio device',async()=>{
+  let yields=0,contexts=0;const cold={setTimeout:fn=>{yields++;queueMicrotask(fn);},AudioContext:class{constructor(){contexts++;}}};vm.runInNewContext(source,cold);
+  const first=cold.FMusic.warmup(0);assert.equal(first,cold.FMusic.warmup(0),'concurrent requests share synthesis');const meta=await first;
+  assert(yields>=7,'PCM generation is split into loading-screen tasks');assert.equal(contexts,0);assert.equal(meta.bpm,100);assert.equal(meta.bytes,cold.FMusic.getModule(0).length);assert.equal(bytesHash(cold.FMusic.getModule(0)),bytesHash(Music.getModule(0)));
+  const before=yields;await cold.FMusic.warmup(0);assert.equal(yields,before,'cached modules add no new jobs');await cold.FMusic.warmup(1);await cold.FMusic.warmup(2);assert(yields<=before+2,'other stages reuse the same instrument bank');assert.equal(contexts,0);
+});
+
+test('preparing future AudioBuffers never switches the score and avoids first-use buffer work in combat',()=>{
+ const r=rig();const nodeCount=r.ctx.nodes.length;assert(r.music.prepare(0));assert(r.music.prepare(1));assert(r.music.prepare(2));const prepared=r.ctx.buffers.length;
+ assert.equal(prepared,45);assert.equal(r.ctx.nodes.length,nodeCount);assert.equal(r.ctx.sources.length,0);assert.equal(r.music.stats.stage,0);assert(!r.music.stats.playing);
+ for(let stage=0;stage<3;stage++){r.music.setStage(stage);r.music.setPlaying(true);run(r,9);assert.equal(r.ctx.buffers.length,prepared,'every pattern uses the bank prepared outside combat');r.music.setPlaying(false);}
+ r.music.dispose();assert.equal(r.music.prepare(1),false);
+});
+
+test('melodic harmony uses thirds belonging to its dark mode, not arbitrary parallel intervals',()=>{
+ const s=parse(Music.getModule(2)),periods=[856,808,762,720,678,640,604,570,538,508,480,453,428,404,381,360,339,320,302,285,269,254,240,226,214,202,190,180,170,160,151,143,135,127,120,113],mode=new Set([4,5,7,9,11,0,2]);
+ for(const note of s.events.filter(e=>e.channel===2&&(e.sample===5||e.sample===6))){const midi=36+periods.indexOf(note.period),third=note.sample===5?3:4;assert(mode.has(midi%12));assert(mode.has((midi+third)%12));}
+});

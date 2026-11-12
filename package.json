@@ -1,10 +1,10 @@
 {
   "name": "ferro-procedural-fps",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
-  "description": "METAL — original procedural FPS: destructible worlds, colossal machines and generated metal MOD music.",
+  "description": "METAL — procedural survival FPS: sequenced waves, scavenged weapons, finite ammunition and massive original metal MOD music.",
   "scripts": {
     "build": "python3 tools/build.py",
-    "test": "node checks/world.test.mjs && node --test checks/simulation.test.mjs checks/destruction.test.mjs checks/renderer-destruction.test.mjs checks/effects.test.mjs checks/motion.test.mjs checks/actors.test.mjs checks/actor-visibility.test.mjs checks/music.test.mjs checks/audio.test.mjs checks/options.test.mjs checks/checkpoint.test.mjs && node checks/build.test.mjs"
+    "test": "node checks/world.test.mjs && node --test checks/simulation.test.mjs checks/progression.test.mjs checks/economy.test.mjs checks/brain.test.mjs checks/destruction.test.mjs checks/renderer-destruction.test.mjs checks/effects.test.mjs checks/motion.test.mjs checks/actors.test.mjs checks/actor-visibility.test.mjs checks/music.test.mjs checks/audio.test.mjs checks/options.test.mjs checks/checkpoint.test.mjs && node checks/build.test.mjs"
   }
 }

@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['destruction', 'simulation', 'motion', 'actors', 'effects', 'options', 'game'].map(name =>
+const sources = Object.fromEntries(['destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'options', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -22,10 +22,10 @@ function world(seed, stage) {
   };
 }
 
-function harness(saved, initial = {}, createWorld = world) {
+function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   const memory = new Map(Object.entries(initial));
   if (saved) memory.set(key, JSON.stringify(saved));
-  const elements = new Map(), errors = [], simulations = [], listeners = new Map(), frames = [], sounds = [], worlds = [];
+  const elements = new Map(), errors = [], simulations = [], listeners = new Map(), frames = [], sounds = [], worlds = [], brains = [], simulationOptions = [];
   let nextFrame, now = 0;
   const noop = () => {}, draw = new Proxy({}, { get: () => noop });
   function element(id) {
@@ -39,12 +39,12 @@ function harness(saved, initial = {}, createWorld = world) {
       click: () => events.get('click')?.({ preventDefault: noop }),
       querySelector: selector => element(id + selector),
       querySelectorAll: () => [0, 1, 2].map(n => element(id + n)),
-      setAttribute: noop, focus: noop, getContext: () => draw, requestPointerLock: noop,
+      setAttribute: noop, focus: noop, setPointerCapture: noop, getContext: () => draw, requestPointerLock: noop,
     };
     elements.set(id, value); return value;
   }
   const context = { console: { error: (...args) => errors.push(args) }, performance: { now: () => now }, innerWidth: 1280, innerHeight: 800,
-    URLSearchParams, navigator: { maxTouchPoints: 0 }, location: { search: '' },
+    URLSearchParams, setTimeout, clearTimeout, navigator: { maxTouchPoints: 0 }, location: { search: '' },
     matchMedia: () => ({ matches: false }), requestAnimationFrame: callback => { nextFrame = callback; }, addEventListener: (name, callback) => listeners.set(name, callback),
     document: { body: element('body'), getElementById: element, addEventListener: noop, hasFocus: () => true },
     localStorage: { getItem: name => memory.get(name) ?? null, setItem: (name, value) => memory.set(name, String(value)), removeItem: name => memory.delete(name) },
@@ -52,24 +52,150 @@ function harness(saved, initial = {}, createWorld = world) {
     FRender: { create: () => ({ stats: { backend: 'test' }, resize: noop, setWorld: (meshes, lights) => worlds.push({ meshes, lights, initial:true }), updateWorld: (meshes, revision, lights) => worlds.push({meshes,revision,lights}), draw: (camera, meshes, effects) => frames.push({ camera, meshes, effects }) }) },
   };
   context.window = context; vm.createContext(context);
-  for (const name of ['destruction', 'simulation', 'motion', 'actors', 'effects', 'options']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
+  for (const name of ['destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'options']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
+  if(runtime.brain){vm.runInContext(sources.brain, context, {filename:'brain.js'});const createBrain=context.FBrain.create;context.FBrain.create=options=>{const brain=createBrain(options);brains.push(brain);return brain;};}
   const create = context.FSimulation.create;
-  context.FSimulation.create = value => { const sim = create(value); simulations.push(sim); return sim; };
+  context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); return sim; };
   vm.runInContext(sources.game, context, { filename: 'game.js' });
   assert.deepEqual(errors, [], 'Browser shell initialization must succeed');
-  return { memory, element, simulations, context, frames, sounds, worlds,
+  return { memory, element, simulations, context, frames, sounds, worlds, brains, simulationOptions,
     frame: ms => { now += ms; nextFrame(now); },
+    emit: (name,event={}) => listeners.get(name)?.({type:name,preventDefault:noop,...event}),
     key: (code, down = true, repeat = false) => listeners.get(down ? 'keydown' : 'keyup')?.({ code, repeat, preventDefault: noop }) };
 }
 
 function savedPoint(generation = 5) {
-  const context = { window: {} }; vm.createContext(context); vm.runInContext(sources.destruction, context); vm.runInContext(sources.simulation, context);
+  const context = { window: {} }; vm.createContext(context); vm.runInContext(sources.destruction, context); vm.runInContext(sources.economy, context); vm.runInContext(sources.simulation, context);
   const sim = context.window.FSimulation.create(world(96, 2));
   sim.state.player.x = 6; sim.step(.025, {}); // Take a relay through the real interaction.
   sim.state.weapon = 1;
   assert.equal(sim.state.relays, 1);
   return { version: 2, generation, seed: 96, stage: 2, runStats: { ...previousStats }, checkpoint: sim.snapshot() };
 }
+
+function survivalWorld(seed,stage){
+  return {...world(seed,stage),generation:6,walkable:[{x:0,y:0,z:0,w:40,d:40}],
+    progression:{version:1,startWeapons:stage?[true,true,true]:[true,false,false],startAmmo:stage?[72,12,4]:[48,0,0],ammoCaps:[180,36,12],maxActive:8},
+    shops:[{id:'workshop',name:'Atelier de test',x:-1,y:0,z:0}],
+    pickups:[{id:'fracture',kind:'weapon',weapon:1,amount:8,x:3,y:0,z:0},{id:'rupture',kind:'weapon',weapon:2,amount:3,x:6,y:0,z:0}],
+  };
+}
+const plain=value=>JSON.parse(JSON.stringify(value));
+
+function arsenalWorld(seed,stage){
+  const w=survivalWorld(seed,stage);return {...w,progression:{...w.progression,weaponSlots:4,startWeapons:[true,false,false,false],startAmmo:[48,0,0,0],ammoCaps:[180,36,12,16],startShield:false},
+    pickups:[...w.pickups,{id:'grenade-launcher',kind:'weapon',weapon:3,amount:5,x:9,y:0,z:0},{id:'shield',kind:'shield',amount:1,x:12,y:0,z:0}]};
+}
+function collectArsenal(app){const sim=app.simulations.at(-1);for(const x of [3,6,8,9,10,12]){sim.move(sim.state.player,x-sim.state.player.x,0);app.frame(100);}return sim;}
+
+test('Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together',()=>{
+  const app=harness(null,{},arsenalWorld);app.element('start').click();app.frame(100);
+  assert.equal(app.element('arsenal-count').textContent,'1 / 4');assert.equal(app.element('weapon-slot-3').disabled,true);
+  const sim=collectArsenal(app);assert.equal(app.element('arsenal-count').textContent,'4 / 4');assert.equal(sim.state.inventory.shield,true);
+  app.element('weapon-slot-0').click();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
+  assert.deepEqual(plain(sim.state.equipment),{right:0,left:1});assert.equal(app.element('slot-hand-1').textContent,'G');
+  const before=sim.state.inventory.ammo.slice();
+  app.element('world').emit('mousedown',{button:0});app.element('world').emit('mousedown',{button:2});app.frame(100);
+  assert(sim.state.inventory.ammo[0]<before[0]);assert.equal(sim.state.inventory.ammo[1],before[1]-2);
+  assert(app.sounds.some(q=>q.name==='shot'&&q.args[0]?.hand==='right'));assert(app.sounds.some(q=>q.name==='fracture'&&q.args[0]?.hand==='left'));
+  const afterBoth=sim.state.inventory.ammo.slice();app.emit('mouseup',{button:2});for(let i=0;i<7;i++)app.frame(100);
+  assert(sim.state.inventory.ammo[0]<afterBoth[0],'Releasing right mouse must leave left mouse firing');assert.equal(sim.state.inventory.ammo[1],afterBoth[1]);
+  app.emit('mouseup',{button:0});const released=sim.state.inventory.ammo.slice();for(let i=0;i<3;i++)app.frame(100);assert.deepEqual(sim.state.inventory.ammo,released);
+  app.element('weapon-slot-1').click();assert.deepEqual(plain(sim.state.equipment),{right:1,left:0});assert.equal(app.element('left-hand-setting').value,'0');
+  const overlays=app.frames.at(-1).meshes.filter(m=>m.overlay);assert(overlays.length>50);for(const mesh of overlays)assert(mesh.p.concat(mesh.s,mesh.r).every(Number.isFinite));
+});
+
+test('Mouse and touch guard inputs raise the real translucent shield and Space bashes instead of dashing',()=>{
+  const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app);
+  assert.equal(sim.state.equipment.left,'shield');app.element('world').emit('mousedown',{button:2});app.frame(100);
+  assert.equal(sim.state.shield.raised,true);assert.equal(app.element('left-hand-status').textContent,'GARDE LEVÉE');
+  const shield=app.frames.at(-1).meshes.filter(m=>m.overlay&&m.fx&&m.alpha<.4);assert(shield.length>=1,'Shield panel must enter the translucent overlay renderer');
+  const charge=sim.state.shield.energy,ammo=sim.state.inventory.ammo.slice();app.key('Space');app.frame(100);app.key('Space',false);
+  assert.equal(sim.state.shield.energy,charge-24);assert(sim.state.shield.bashCooldown>0);assert.equal(sim.state.player.dash,0);assert.deepEqual(sim.state.inventory.ammo,ammo);
+  assert(app.sounds.some(q=>q.name==='shieldBash'));app.emit('mouseup',{button:2});app.frame(100);assert.equal(sim.state.shield.raised,false);
+  app.element('left-fire-button').emit('pointerdown',{pointerId:8});app.frame(100);assert.equal(sim.state.shield.raised,true);
+  app.element('left-fire-button').emit('lostpointercapture');app.frame(100);assert.equal(sim.state.shield.raised,false);
+  app.element('left-hand-setting').value='none';app.element('left-hand-setting').emit('change');app.key('Space');app.frame(100);app.key('Space',false);assert(sim.state.player.dash>0);
+});
+
+test('Shield charge, both hands and fourth-calibre ammunition survive sector Continue and entry restart',()=>{
+  const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app);
+  app.element('weapon-slot-3').click();app.key('Space');app.frame(100);app.key('Space',false);assert.equal(sim.state.shield.energy,76);
+  const carried=plain(sim.exportLoadout());assert.deepEqual(carried.equipment,{right:3,left:'shield',shieldEnergy:76});
+  sim.move(sim.state.player,15-sim.state.player.x,0);app.frame(100);assert.equal(app.element('body').dataset.state,'cleared');
+  app.element('continue').click();const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('left-hand-stock').textContent,'76 %');
+  next.state.inventory.ammo[3]--;app.key('KeyP');app.key('KeyP',false);app.element('restart').click();assert.deepEqual(plain(app.simulations.at(-1).exportLoadout()),carried);
+});
+
+test('Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint',()=>{
+  const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app),expected=plain(sim.exportLoadout()),saved=JSON.parse(app.memory.get(key));
+  for(const corrupt of [entry=>delete entry.inventory.shield,entry=>{entry.inventory.ammo[2]=null;}]){
+    const value=plain(saved);corrupt(value.entryLoadout);const resumed=harness(value,{},arsenalWorld);resumed.element('resume-expedition').click();
+    assert.equal(resumed.element('body').dataset.state,'playing');assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),expected);
+  }
+});
+
+test('The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations',async()=>{
+  const app=harness(null,{'ferro-settings':JSON.stringify({aiAcceleration:'cpu'})},arsenalWorld,{brain:true});
+  const brain=app.brains[0];assert.equal(brain.status.mode,'cpu');assert.equal(app.simulationOptions.at(-1).brain,brain);
+  app.element('intro-options').click();app.element('tab-game').click();assert.match(app.element('ai-status').textContent,/CPU/);
+  const sim=app.simulations.at(-1),elapsed=sim.state.elapsed;app.element('ai-setting').value='auto';await app.element('ai-setting').emit('change');
+  assert.equal(brain.status.backend,'cpu');assert.match(app.element('ai-status').textContent,/CPU/);assert.equal(sim.state.elapsed,elapsed);
+  assert.equal(JSON.parse(app.memory.get('ferro-settings')).aiAcceleration,'auto');
+  app.element('resume').click();app.element('start').click();assert.equal(app.brains.length,1);assert.equal(app.simulationOptions.at(-1).brain,brain);
+  app.key('KeyP');app.key('KeyP',false);app.element('ai-setting').value='cpu';await app.element('ai-setting').emit('change');assert.equal(brain.status.mode,'cpu');brain.dispose();
+});
+
+test('The real arsenal HUD locks missing guns, equips found weapons across substeps and reports spent ammunition',()=>{
+  const app=harness(null,{},survivalWorld);app.element('start').click();app.frame(100);
+  const sim=app.simulations.at(-1);assert.equal(app.element('arsenal-count').textContent,'1 / 3');assert.equal(app.element('ammo-count').textContent,'48');
+  assert.equal(app.element('weapon-slot-1').disabled,true);assert.equal(app.element('weapon-slot-2').disabled,true);
+  app.key('Digit3');app.key('Digit3',false);assert.equal(sim.state.weapon,0);assert.match(app.element('toast').textContent,/arme à trouver/);
+  sim.move(sim.state.player,3,0);app.frame(100);app.frame(100);
+  assert.equal(sim.state.weapon,1,'Later substeps and frames must preserve automatic pickup selection');assert.equal(app.element('weapon-slot-1').disabled,false);assert.equal(app.element('ammo-count').textContent,'08');
+  assert.equal(app.sounds.filter(q=>q.name==='weaponPickup').length,1);
+  app.key('Enter');app.frame(100);app.key('Enter',false);app.frame(100);
+  assert.equal(sim.state.inventory.ammo[1],7);assert.equal(app.element('ammo-count').textContent,'07');assert.equal(app.element('slot-ammo-1').textContent,'7');
+  app.element('weapon-switch').click();assert.equal(sim.state.weapon,0,'Cycling skips the undiscovered launcher');
+  for(let i=0;i<6;i++)app.frame(100); // Let the Fracture discharge recovery finish.
+  app.key('KeyV');app.frame(100);app.key('KeyV',false);assert(app.sounds.some(q=>q.name==='melee'));
+});
+
+test('Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill',()=>{
+  const app=harness(null,{},survivalWorld);app.element('start').click();const sim=app.simulations.at(-1);
+  // A funded, wounded customer fixture isolates the UI transaction; kill/drop
+  // provenance and immutable transactions are exercised in progression/economy.
+  sim.state.economy.credits=500;sim.state.economy.cores=2;sim.state.player.hp=63;
+  app.key('KeyF');app.frame(100);app.key('KeyF',false);assert.equal(app.element('body').dataset.state,'shop');assert.equal(app.element('shop').hidden,false);
+  const elapsed=sim.state.elapsed;app.frame(100);assert.equal(sim.state.elapsed,elapsed);assert.match(app.element('shop-offers').innerHTML,/buy-vitality/);
+  app.element('buy-vitality').click();assert.equal(sim.state.maxHp,120);assert.equal(sim.state.player.hp,63);assert.equal(app.element('health-max').textContent,'/ 120');
+  app.element('buy-capacity').click();assert.deepEqual(plain(sim.ammoCaps),[225,45,15]);assert.equal(sim.state.inventory.ammo[0],48);
+  app.element('buy-repair').click();assert.equal(sim.state.player.hp,88);app.element('buy-ammo0').click();assert.equal(sim.state.inventory.ammo[0],72);assert.equal(sim.state.economy.credits,268);
+  const saved=JSON.parse(app.memory.get(key)),restored=harness(saved,{},survivalWorld);restored.element('resume-expedition').click();const resumed=restored.simulations.at(-1);
+  assert.deepEqual(plain(resumed.exportLoadout()),plain(sim.exportLoadout()));assert.equal(resumed.state.player.hp,88);assert.equal(restored.element('wallet-credits').textContent,'268');
+  app.element('shop-close').click();assert.equal(app.element('body').dataset.state,'playing');app.frame(100);assert(sim.state.elapsed>elapsed);
+  app.key('KeyP');app.key('KeyP',false);app.element('restart').click();const restarted=app.simulations.at(-1);
+  assert.equal(restarted.state.economy.credits,0);assert.equal(restarted.state.maxHp,100);assert.deepEqual(plain(restarted.exportInventory()),{weapons:[true,false,false],ammo:[48,0,0]},'A sector restart restores its entry equipment rather than farming purchased stock');
+});
+
+test('Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue action',()=>{
+  const app=harness(null,{},survivalWorld);app.element('start').click();const sim=app.simulations.at(-1);sim.state.economy.credits=300;
+  app.key('KeyF');app.frame(100);app.key('KeyF',false);app.element('buy-capacity').click();app.element('shop-close').click();
+  for(const x of [3,6,8,10]){sim.move(sim.state.player,x-sim.state.player.x,0);app.frame(100);}
+  app.key('Enter');app.frame(100);app.key('Enter',false);app.frame(100);
+  const carried=plain(sim.exportLoadout());assert.equal(carried.inventory.ammo[2],2);
+  sim.move(sim.state.player,15-sim.state.player.x,0);app.frame(100);assert.equal(app.element('body').dataset.state,'cleared');
+  app.element('continue').click();const next=app.simulations.at(-1);assert.equal(app.element('body').dataset.stage,'2');assert.deepEqual(plain(next.exportLoadout()),carried);
+  const entry=JSON.parse(app.memory.get(key)).entryLoadout;assert.deepEqual(entry,carried);
+  next.state.inventory.ammo[0]--;app.key('KeyP');app.key('KeyP',false);app.element('restart').click();assert.deepEqual(plain(app.simulations.at(-1).exportLoadout()),carried);
+});
+
+test('Reserved enemies remain absent from character geometry and animation until physically deployed',()=>{
+  const make=(seed,stage)=>({...survivalWorld(seed,stage),enemies:[{x:0,y:0,z:-8,type:2,deployed:false}],encounters:[{id:'future',trigger:{x:14,y:0,z:14,w:3,d:3},maxActive:4,spawnEntries:[{x:0,y:0,z:-8}],waves:[{enemyIds:[0]}]}]});
+  const app=harness(null,{},make),build=app.context.FActors.build,drawn=[];app.context.FActors.build=(enemy,options)=>{drawn.push(enemy.id);return build(enemy,options);};
+  app.element('start').click();for(let i=0;i<3;i++)app.frame(100);
+  assert.equal(app.simulations.at(-1).state.enemies[0].deployed,false);assert.deepEqual(drawn,[]);
+});
 
 test('Continue restores a current-generation checkpoint at its relay', () => {
   const saved = savedPoint(), app = harness(saved);

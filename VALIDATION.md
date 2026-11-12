@@ -1,3 +1,60 @@
+# Validation de METAL v0.6.0 — 12 novembre 2026
+
+Cette section décrit **0.6.0 Survie**, génération **6**, avec quatre armes, deux mains, bouclier, vagues, économie et inférence tactique optionnelle. Les validations 0.5 et antérieures conservées plus bas sont historiques. Les résultats structurés et les empreintes des sources sont dans [docs/validation-v06.json](docs/validation-v06.json).
+
+## Distribution et régressions
+
+| Contrôle | Résultat |
+| --- | --- |
+| Génération et accès physiques | **18 configurations, 4 800 cibles, PASS** |
+| Suite complète `node:test` | **262 réussis, 0 échec, 0 annulé, 0 ignoré**, 25 786,547 ms |
+| Shell et options après les derniers ajustements visuels | **25/25**, 1 064,842 ms |
+| HTML autonome final | **690,042 octets bruts**, **208,105 octets gzip** |
+| Ressources externes à l’exécution | **0** |
+| Modules embarqués | **13**, dont économie et réseau tactique |
+
+SHA-256 final : `f8194770ab4f12cddad79d63728eb5986ab9898499b0556f100b3c57bb094293`. La taille est vérifiée par `checks/build.test.mjs` et reste sous **1 400 000 octets non compressés** ; navigateur, pilotes et documentation sont exclus. Les 18 mondes et les 25 régressions ciblées sont des contrôles distincts ; ils ne s’ajoutent pas artificiellement au total des 262 tests. La suite complète a précédé les derniers ajustements de libellés tactiles, de disposition CSS et de jonction des montants du bouclier ; les 25 tests du shell/options et le contrôle de distribution ont été réexécutés ensuite.
+
+Les régressions exercent les tirs réellement simultanés des deux mains, les relâchements de souris indépendants, les échanges sans duplication ni réinitialisation de cadence, les deux cartouches du double pompe et sa dernière cartouche utilisable seule, les bouches obstruées à un coin, les grenades balayées contre murs/plafonds et restaurées en vol. Elles contrôlent la garde frontale, les dégâts arrière/sol, l’énergie, la frappe collisionnée, ainsi que les stocks et mains exactement transmis entre secteurs. Un inventaire d’entrée malformé ne peut plus empêcher de reprendre un checkpoint valide.
+
+Les tests couvrent également les réservistes absents du rendu et de la physique, les entrées de vagues réellement occultées, les stocks partiels, le butin unique et les achats atomiques. Toutes les anciennes régressions de relief, ascenseurs, tremplins, destruction, couverts, géants et directeur de tension restent actives.
+
+## Parcours du monde
+
+Le parcours final utilise `FSimulation.move/step` dans les trois secteurs de la graine 96 : **4 539,8 m avec les aller-retours du banc, 18 370 pas**, neuf découvertes d’armes, trois boucliers, six caches de grenades, neuf ateliers, neuf commandes, neuf relais et trois sorties. Les ennemis sont retirés avant `create` pour isoler la traversabilité ; portes, ascenseurs, pièges et fuites restent réels. Aucune position, aucun événement ni PV n’est injecté durant le parcours. Ce test prouve les routes et les ramassages, pas l’équilibrage d’une campagne humaine.
+
+Les **588 arbres de 18 mondes** ont des branches raccordées, sans nouveau segment à hauteur de marche. Le post-traitement conserve les emplacements et collisions de jeu. Le maximum reste **17 506 meshes statiques**. Graine96 : 14 077 / 12 555 / 17 377 meshes et 448 / 421 / 504 colliders. Les 72 triangles canoniques du feuillage servent aux tirs, aux ombres et au rendu ; les tests visent toutes les faces sous plusieurs transformations et vérifient destruction puis restauration.
+
+## Interface et rendu
+
+Dans le navigateur, une fixture locale à un véritable atelier fournit uniquement un financement et une blessure initiaux. Les achats utilisent le vrai catalogue : **1 200 → 390 crédits** pour double pompe, roquettes, grenades et bouclier ; les armes deviennent disponibles dans le HUD. Le tir gauche fait passer les cartouches **6 → 4** et Espace la charge du bouclier **100 → 76**. La reprise conserve l’arsenal acheté. Ces fichiers de contrôle et leurs clés de stockage isolées sont exclus de la distribution.
+
+Le HUD est inspecté à **1363×936**, puis dans des cadres **390×844**, **320×568** et **844×390**, avec commandes tactiles forcées. Les libellés, stocks, choix gauche, garde, interface d’atelier et options restent utilisables. Les chevauchements constatés entre commandes, carte et santé ont été corrigés ; le petit indicateur de direction est masqué en portrait compact au profit de la carte et de l’objectif. Cela ne constitue pas un essai sur téléphone multitouch réel.
+
+Les shaders ont été exécutés dans **Mesa llvmpipe / GLES**, avec **zéro erreur GL** dans les scènes métal, arbres, feu et bouclier. Les captures finales du vrai modèle `game.models()` confirment le panneau transparent, sa monture opaque jointe, le décor visible à travers la garde et l’arme droite sans grille architecturale parasite. Trois cartes d’ombre demeurent actives. La lumière de détonation chauffe les surfaces à sa source puis disparaît ; les flammes ont une animation de température et de bruit procédural.
+
+Les reflets sont procéduraux : ils ne reflètent pas chaque objet de la scène comme un miroir ou du ray tracing. Les ombres dynamiques conservent leur budget local. Le secours Canvas reste plus simple ; l’amélioration des pins augmente d’environ17% les commandes Canvas dans une vue de départ mesurée, sans augmenter le nombre de meshes du monde. Aucun gain général de rendu n’est déduit de la seule simplification des anciennes sphères.
+
+## Audio et accélération
+
+Les trois MOD générés sont décodés indépendamment avec FFmpeg/libopenmpt : **76,8 /45,18 /52,97 s**, crêtes **0,640 /0,662 /0,677**, **aucun échantillon saturé**. Les morceaux utilisent riffs graves, palm-mutes, galops, ruptures et batteries originales. Les tirs de chaque main ont des délais audio indépendants ; explosions, garde, rupture et frappe possèdent leurs sons synthétisés.
+
+Un diagnostic DSP reconstruit le mix programmé avant compresseur : rapport tir/musique **−13,7 → +1,1 dB**, ambiance/musique au calme **−18,4 → −8,0 dB**. Ce calcul utilise des filtres/oscillateurs approchés et n’est pas une capture de sortie matérielle. Les tests vérifient volumes nuls, pause, plafonds de voix et protection finale. Aucune écoute humaine n’est revendiquée.
+
+Le réseau tactique **16→20→8** est construit dans le code, sans modèle importé. Les tests vérifient les sorties numériques avec un graphe indépendant, les déplacements de flanc et choix d’attaque réels, ainsi que pertes de contexte, délais, changement de backend et résultats périmés. Le navigateur de QA affiche honnêtement **« CPU · WebNN indisponible »**. L’accélération n’est annoncée qu’après contexte accéléré et inférence de contrôle réussie ; l’API ne révèle pas le type exact GPU/NPU. Aucun NPU physique n’a été mesuré.
+
+## Performances : ce qui est mesuré
+
+Le profilage intermédiaire a identifié des rafales d’activation et de recherche de chemins dans la0.5. Les populations actives ont ensuite été séquencées. Les vues d’entrée fixes de ce profil n’éveillaient aucun ennemi0.6 : leur temps plus faible ne constitue donc pas un comparatif équitable de débit IA.
+
+Un second banc utilise de vraies vagues et les renforts des boss : six scénarios de900pas, cinq à sept acteurs éveillés, tirs et munitions finis. Avant les derniers ajouts WebNN/arsenal, les médianes de simulation vont de **0,149 à0,202 ms**, les99e percentiles de **1,61 à2,87 ms**, mais les maxima atteignent encore **4,88 à57,25 ms** selon le scénario. Génération, rendu et sélection de cible du banc sont exclus. Ces mesures intermédiaires, avec leurs empreintes et limites, sont conservées dans le rapport JSON ; ce ne sont pas les FPS de la livraison finale.
+
+La version finale prépare instruments et buffers audio avant combat, garde au plus deux descriptions de monde, répartit les entrées de vagues, limite travail de navigation, inférences, effets et voix, et évite de construire les modèles des réservistes. Elle conserve un rendu3D, des collisions réelles et les contrôles conservateurs de visibilité. Le rendu WebGL utilise le GPU disponible ; le mode CPU reste le secours.
+
+Le navigateur distant limite ici le RAF à environ **1Hz** et utilise Canvas. Les relevés GLES sont ceux d’un rasteriseur logiciel. Aucun débit minimal, gain FPS sur le Mac de l’utilisateur, essai Safari, GPU/NPU physique ou campagne complète jouée par une personne n’est revendiqué. Les sols et plateformes restent portants, la destruction est locale par morceaux, et la simulation conserve son budget temporel maximal par image. La qualité et la difficulté ressenties restent des questions de jeu réel.
+
+---
+
 # Validation de METAL v0.5.0 — 12 novembre 2026
 
 Cette section décrit la version **0.5.0**, génération **5**. Les sections FERRO 0.4.1 et 0.4.0 conservées intégralement plus bas constituent l’historique ; leurs tailles et mesures ne décrivent pas la version courante.

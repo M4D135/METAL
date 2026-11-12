@@ -62,6 +62,7 @@
   uniform vec3 uForward;
   uniform vec3 uLightPosition[12];
   uniform vec3 uLightColor[12];
+  uniform float uLightRange[12];
   uniform int uLightCount;
   uniform vec2 uResolution;
   uniform vec4 uEffects;
@@ -74,6 +75,8 @@
   uniform vec3 uSunColor;
   uniform vec3 uAmbient;
   uniform vec3 uFogColor;
+  uniform vec3 uSkyTop;
+  uniform vec3 uSkyBottom;
   uniform vec2 uEnvironment;
   out vec4 fragColor;
   float hash(vec2 p) {
@@ -100,6 +103,19 @@
     float scale=max(abs(determinant),.000001);
     gradient*=min(1.,scale*.35/max(length(gradient),.000001));
     return normalize(scale*n-gradient);
+  }
+  vec3 fresnelSchlick(float cosine,vec3 f0){
+    float q=1.-clamp(cosine,0.,1.),q2=q*q;
+    return f0+(1.-f0)*q2*q2*q;
+  }
+  vec3 metalHighlight(vec3 n,vec3 view,vec3 l,float roughness,vec3 f0){
+    vec3 h=normalize(view+l);
+    float nv=max(dot(n,view),.001),nl=max(dot(n,l),0.),nh=max(dot(n,h),0.);
+    float a=max(.055,roughness*roughness),a2=a*a,d=nh*nh*(a2-1.)+1.;
+    float distribution=a2/max(3.141593*d*d,.00001);
+    float k=(roughness+1.)*(roughness+1.)*.125;
+    float visibility=1./max(4.*(nv*(1.-k)+k)*(nl*(1.-k)+k),.001);
+    return fresnelSchlick(max(dot(view,h),0.),f0)*min(distribution*visibility,12.)*nl;
   }
   float depthSample(vec2 uv,vec2 offset,float depth,vec2 slope) {
     float texel=uShadowSettings.y;
@@ -143,7 +159,7 @@
     vec2 uv=an.y>.65?vSurface.xz:(an.x>an.z?vSurface.zy:vSurface.xy);
     float m=vMaterial, emission=vEmission;
     vec3 base=vec3(.105,.135,.15);
-    float roughness=.47,metalness=.65;
+    float roughness=.47,metalness=.65,organicHeight=0.;
     float pixelSpan=max(fwidth(uv).x,fwidth(uv).y);
     float fineDetail=1.-smoothstep(.015,.10,pixelSpan);
     float grain=noise(uv*23.)*.5+mix(.5,noise(uv*71.),fineDetail)*.2;
@@ -219,12 +235,29 @@
       base=mix(vec3(.23,.24,.22),vec3(.42,.40,.33),broad)*(.8+strata*.17+grain*.15);
       roughness=.91;metalness=0.;
     } else if(m<10.5) {
-      float bark=noise(vec2((uv.x+sin(vWorld.y*.8)*.08)*9.,vWorld.y*.8));
-      base=mix(vec3(.065,.036,.018),vec3(.27,.16,.065),bark)*(.82+grain*.35);
+      vec2 barkUV=vec2(uv.x+sin(uv.y*.8)*.055,uv.y);
+      float bark=noise(barkUV*vec2(7.,.72));
+      float fibres=noise(barkUV*vec2(39.,1.5));
+      vec2 knotCell=floor(barkUV*vec2(1.2,.45)),knot=fract(barkUV*vec2(1.2,.45))-.5;
+      knot.x+=.17*sin(knot.y*3.+hash(knotCell)*6.);
+      float knotRadius=length(knot*vec2(2.5,1.3));
+      float knotMask=(1.-smoothstep(.12,.48,knotRadius))*step(.76,hash(knotCell+4.));
+      float knotRings=.5+.5*sin(knotRadius*48.);
+      float crevice=smoothstep(.28,.43,bark);
+      base=mix(vec3(.045,.025,.013),vec3(.25,.145,.06),bark)*(.60+.40*crevice);
+      base*=1.+(fibres-.5)*.30*fineDetail-knotMask*(.16+knotRings*.20)*fineDetail;
+      organicHeight=bark*.022+(fibres-.5)*.005*fineDetail-knotMask*.012;
       roughness=.97;metalness=0.;
     } else if(m<11.5) {
-      float leaves=noise(uv*8.)*.7+noise(uv*19.)*.3;
-      base=mix(vec3(.035,.12,.035),vec3(.20,.34,.08),leaves);
+      float clump=noise(uv*2.8),leaves=noise(uv*8.)*.7+noise(uv*19.)*.3;
+      vec2 leafUV=uv*13.+vec2(clump,noise(uv*2.8+7.))*1.3;
+      vec2 leaf=fract(leafUV)-.5;float angle=hash(floor(leafUV))*6.283185;
+      leaf=mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*leaf;
+      float leafShape=1.-smoothstep(.20,.51,length(leaf*vec2(1.1,2.25)));
+      float vein=(1.-smoothstep(.012,.045,abs(leaf.y)))*leafShape;
+      base=mix(vec3(.025,.075,.022),vec3(.19,.31,.075),leaves)*(.78+clump*.32);
+      base*=1.+(leafShape-.4)*.32*fineDetail+vein*.10*fineDetail;
+      organicHeight=clump*.014+leafShape*.007*fineDetail;
       roughness=.88;metalness=0.;
     } else {
       base=vec3(.035,.12,.15)*(.9+sin(uv.x*9.+uEffects.x)*sin(uv.y*7.-uEffects.x*.7)*.1);
@@ -241,7 +274,8 @@
       height=(1.-grid(uv*.5,.007)*architectural)*.006+tread*.0018*fineDetail;
     }
     if(m<3.5)n=reliefNormal(n,height);
-    if(m>7.5&&m<10.5)n=reliefNormal(n,(noise(uv*(m<9.5?vec2(7.):vec2(12.,1.)))-.5)*.009*fineDetail);
+    if(m>7.5&&m<9.5)n=reliefNormal(n,(noise(uv*7.)-.5)*.009*fineDetail);
+    if(m>9.5&&m<11.5)n=reliefNormal(n,organicHeight*fineDetail);
     vec3 view=normalize(uEye-vWorld);
     float distanceToEye=length(uEye-vWorld);
     vec3 light=vec3(.075,.10,.12)*(.72+.28*n.y);
@@ -249,8 +283,7 @@
     light*=1.-panel*.18;
     float outdoors=clamp(vOutdoor,0.,1.)*uEnvironment.x;
     light=mix(light,uAmbient*(.72+.28*max(n.y,0.)),outdoors);
-    float specularPower=mix(180.,10.,roughness);
-    vec3 specularTint=mix(vec3(.32),base*1.45+vec3(.10),metalness);
+    vec3 f0=mix(vec3(.04),clamp(base,vec3(.025),vec3(.92)),metalness);
     vec3 specular=vec3(0.);
     for(int i=0;i<12;i++) {
       if(i>=uLightCount) break;
@@ -258,29 +291,43 @@
       float d=length(toLight);
       vec3 l=toLight/max(d,.001);
       float attenuation=(i<2?.27:.13)/(1.+d*d*.26);
+      if(uLightRange[i]>0.)attenuation*=1.-smoothstep(uLightRange[i]*.35,uLightRange[i],d);
       float diffuse=max(dot(n,l),0.);
       float visibility=i==0?shadow(geometricNormal,l,0):i==1&&uEnvironment.x<.5?shadow(geometricNormal,l,1):1.;
       light+=uLightColor[i]*attenuation*(diffuse*visibility+.035);
-      vec3 halfVector=normalize(l+view);
-      specular+=uLightColor[i]*attenuation*visibility*pow(max(dot(n,halfVector),0.),specularPower)*specularTint*(1.35-roughness*.7);
+      specular+=uLightColor[i]*attenuation*visibility*metalHighlight(n,view,l,roughness,f0)*2.4;
     }
     float sunlight=outdoors>.5?shadow(geometricNormal,uSunDirection,1):0.;
     float leafBack=m>10.5&&m<11.5?max(dot(-n,uSunDirection),0.)*.24:0.;
     light+=uSunColor*(max(dot(n,uSunDirection),0.)+leafBack)*sunlight;
-    specular+=uSunColor*sunlight*pow(max(dot(n,normalize(uSunDirection+view)),0.),specularPower)*specularTint*.35;
+    specular+=uSunColor*sunlight*metalHighlight(n,view,uSunDirection,roughness,f0);
     vec3 torchVector=uTorchPosition-vWorld;
     float torchDistance=length(torchVector);
     vec3 torchDirection=normalize(torchVector);
     float cone=smoothstep(.59,.96,dot(-torchDirection,uForward));
     float torch=cone/(1.+torchDistance*torchDistance*.045)*shadow(geometricNormal,torchDirection,2);
     light+=vec3(.44,.52,.56)*torch*max(dot(n,torchDirection),0.);
-    light+=vec3(1.,.48,.12)*uEffects.y*2.2/(1.+distanceToEye*distanceToEye*.14);
+    specular+=vec3(.44,.52,.56)*torch*metalHighlight(n,view,torchDirection,roughness,f0)*1.5;
+    vec3 muzzleVector=uTorchPosition+uForward*.8-vWorld;
+    float muzzleDistance=length(muzzleVector),muzzlePower=uEffects.y*2.2/(1.+muzzleDistance*muzzleDistance*.14);
+    vec3 muzzleDirection=muzzleVector/max(muzzleDistance,.001);
+    light+=vec3(1.,.48,.12)*muzzlePower*(.22+.78*max(dot(n,muzzleDirection),0.));
+    specular+=vec3(1.,.48,.12)*muzzlePower*metalHighlight(n,view,muzzleDirection,roughness,f0);
     if(vOverlay>.5) light+=vec3(.18,.22,.25);
     vec3 color=base*light+specular;
+    // Analytic environment reflection: the biome's sky/ground hemisphere and
+    // a soft indoor ceiling. This is intentionally not a scene-mirror pass.
+    vec3 reflected=reflect(-view,n);
+    vec3 sky=mix(uSkyBottom,uSkyTop,smoothstep(0.,1.,reflected.y));
+    vec3 outside=mix(uAmbient*.20,sky,smoothstep(-.16,.18,reflected.y));
+    vec3 inside=mix(vec3(.02,.03,.035),vec3(.18,.24,.27),smoothstep(-.45,.75,reflected.y));
+    vec3 environmentReflection=mix(inside,outside,outdoors);
+    environmentReflection=mix(environmentReflection,uAmbient*.85,roughness*roughness*.8);
+    float nv=max(dot(n,view),0.),grazing=pow(1.-nv,5.);
+    vec3 environmentFresnel=f0+(max(vec3(1.-roughness),f0)-f0)*grazing;
+    color+=environmentReflection*environmentFresnel*(.18+1.3*(1.-roughness)*(1.-roughness))*(.5+metalness*2.5);
     float pulse=.94+.06*sin(uEffects.x*2.2+vWorld.y*3.);
     color+=base*emission*pulse*1.55;
-    float fresnel=pow(1.-max(dot(n,view),0.),4.);
-    color+=vec3(.035,.09,.1)*fresnel*(1.-roughness);
     vec3 fogColor=mix(vec3(.009,.018,.024),uFogColor,outdoors);
     float fog=1.-exp(-distanceToEye*mix(.014+.008*exp(-max(vWorld.y,0.)*.7),uEnvironment.y,outdoors));
     if(vOverlay>.5) fog=0.;
@@ -334,9 +381,16 @@
     // Only cosmetic volumes soften toward their silhouette.
     float edge=vMaterial>=15.5?1.:pow(max(dot(normalize(vNormal),toEye/distanceToEye),0.),.65);
     float grain=clamp(noise(vSurface),.1,1.);
-    float alpha=clamp(vColor.a*edge*(.58+grain*.42),0.,.94);
+    bool fire=vMaterial>13.5&&vMaterial<14.5;
+    float heat=fire?smoothstep(.22,.83,noise(vSurface*vec3(1.65,.72,1.65)-vec3(0.,uTime*2.7,0.))):0.;
+    float alpha=clamp(vColor.a*edge*(.58+grain*.42)*(fire?mix(.28,1.,heat):1.),0.,.94);
     if(alpha<.004)discard;
     vec3 color=vColor.rgb*(uAmbient*.65+vec3(.34)+max(vEmission,0.)*1.25);
+    if(fire){
+      vec3 temperature=mix(vec3(.72,.025,.002),vec3(1.8,.23,.008),smoothstep(.10,.65,heat));
+      temperature=mix(temperature,vec3(2.7,1.45,.23),smoothstep(.60,1.,heat));
+      color=temperature*(.55+max(vEmission,0.)*.45)*(.7+grain*.3);
+    }
     float fog=1.-exp(-distanceToEye*mix(.018,uEnvironment.y,clamp(vOutdoor,0.,1.)));
     color=mix(color,uFogColor,min(.86,fog));
     color=pow(max(color/(color+vec3(.76)),vec3(0.)),vec3(.4545));
@@ -422,7 +476,47 @@
     fragColor=vec4(c,1.);
   }`;
 
-  const names = ['box','sphere','cylinder','octa','ring','bevel'];
+  // A closed, asymmetric crown shared with collision raycasts. Its canonical
+  // 72 triangles are smaller than the old GPU sphere and remain identical in
+  // every quality mode: a visual hollow never turns into a hidden solid box.
+  const FOLIAGE=(()=>{
+    const points=[[.018,.5,-.012]],faces=[],sides=12;
+    for(let j=1;j<4;j++)for(let i=0;i<sides;i++){
+      const u=i*Math.PI*2/sides,v=j*Math.PI/4;
+      const radius=.5*Math.pow(Math.sin(v),.88)*(.79+.16*Math.cos(u*3)+.055*Math.sin(u*5+.7));
+      const angle=u+.045*Math.sin(u*2+1);
+      // Parallel, irregular rings keep the connecting quadrilaterals planar.
+      // Canvas can merge each triangle pair without changing a single pixel
+      // of silhouette or the canonical geometry used by rays and GPU shadows.
+      points.push([Math.cos(angle)*radius+.024*Math.cos(v),.5*Math.cos(v),Math.sin(angle)*radius-.018*Math.cos(v)]);
+    }
+    points.push([-.025,-.5,.015]);
+    // Keep exactly the existing p/s/r envelope, without widening the trunk's
+    // physical footprint or the spatial index bounds of a replaced canopy.
+    for(let axis=0;axis<3;axis++){
+      const lo=Math.min(...points.map(p=>p[axis])),hi=Math.max(...points.map(p=>p[axis]));
+      for(const p of points)p[axis]=(p[axis]-lo)/(hi-lo)-.5;
+    }
+    const ring=(j,i)=>1+j*sides+(i+sides)%sides;
+    for(let i=0;i<sides;i++){
+      faces.push([0,ring(0,i+1),ring(0,i)]);
+      for(let j=0;j<2;j++)faces.push([ring(j,i),ring(j,i+1),ring(j+1,i+1)],[ring(j,i),ring(j+1,i+1),ring(j+1,i)]);
+      faces.push([points.length-1,ring(2,i),ring(2,i+1)]);
+    }
+    const normals=points.map(()=>[0,0,0]);
+    for(const face of faces){
+      const [a,b,c]=face.map(i=>points[i]),ab=b.map((v,k)=>v-a[k]),ac=c.map((v,k)=>v-a[k]);
+      let n=[ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]];
+      if(n.reduce((sum,v,k)=>sum+v*(a[k]+b[k]+c[k]),0)<0){[face[1],face[2]]=[face[2],face[1]];n=n.map(v=>-v);}
+      for(const i of face)for(let k=0;k<3;k++)normals[i][k]+=n[k];
+    }
+    for(const n of normals){const length=Math.hypot(...n)||1;for(let k=0;k<3;k++)n[k]/=length;Object.freeze(n);}
+    points.forEach(Object.freeze);faces.forEach(Object.freeze);
+    const triangles=Object.freeze(faces.map(face=>Object.freeze(face.map(i=>points[i]))));
+    return Object.freeze({points:Object.freeze(points),faces:Object.freeze(faces),normals:Object.freeze(normals),triangles});
+  })();
+  function foliageTriangles(){return FOLIAGE.triangles;}
+  const names = ['box','sphere','cylinder','octa','ring','bevel','foliage'];
   function geometry(low) {
     const data=[], indices=[], ranges={};
     function vertex(p,n) {const i=data.length/6;data.push(...p,...n);return i;}
@@ -453,6 +547,9 @@
       if(j<latitude-1) triangle(p[0],p[2],p[3],p[0].map(v=>v*2),p[2].map(v=>v*2),p[3].map(v=>v*2));
     }
     end('sphere');
+    begin('foliage');
+    for(const [a,b,c] of FOLIAGE.faces)triangle(FOLIAGE.points[a],FOLIAGE.points[b],FOLIAGE.points[c],FOLIAGE.normals[a],FOLIAGE.normals[b],FOLIAGE.normals[c]);
+    end('foliage');
     begin('cylinder');
     const cylinderSides=low===2?6:low?8:16;
     for(let i=0;i<cylinderSides;i++) {
@@ -515,6 +612,20 @@
   function outdoorAt(p,environment){
     return !!environment&&environment.outdoorZones.some(zone=>Math.abs(p[0]-zone.x)<=zone.w*.5+.08&&Math.abs(p[2]-zone.z)<=zone.d*.5+.08);
   }
+  function transientLights(value,eye,limit){
+    if(!Array.isArray(value))return [];
+    const valid=[];
+    for(const source of value.slice(0,16)){
+      if(!source||!Array.isArray(source.p)||source.p.length!==3||!source.p.every(Number.isFinite)||!Number.isFinite(source.power)||source.power<=0||!Number.isFinite(source.range)||source.range<=0)continue;
+      const range=Math.min(48,source.range),power=Math.min(64,source.power),p=source.p;
+      const distance=(p[0]-eye[0])**2+(p[1]-eye[1])**2+(p[2]-eye[2])**2;
+      if(distance>(180+range)**2)continue;
+      const color=Array.isArray(source.color)&&source.color.length===3?source.color.map(v=>Number.isFinite(v)?Math.max(0,Math.min(3,v)):0):[1,.42,.09];
+      if(!color.some(v=>v>0))continue;
+      valid.push({p,color,power,range,score:power/(1+distance*.1)});
+    }
+    return valid.sort((a,b)=>b.score-a.score).slice(0,limit);
+  }
   function outdoorMesh(mesh,environment){
     return !!environment&&(mesh.outdoor===undefined?((mesh.mat||0)>=8||outdoorAt(mesh.p||[0,0,0],environment)):!!mesh.outdoor);
   }
@@ -549,7 +660,7 @@
       const name=mesh.shape||'sphere',last=groups[groups.length-1];
       if(last&&last.name===name)last.count++;else groups.push({name,offset:offset*4,count:1});
       const p=mesh.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[.5,.5,.5];
-      const material=mesh.shape==='ring'&&Number.isFinite(mesh.innerRatio)?20+Math.min(.999,Math.max(0,mesh.innerRatio)):mesh.fxPriority==='hazard'?16:7;
+      const material=mesh.shape==='ring'&&Number.isFinite(mesh.innerRatio)?20+Math.min(.999,Math.max(0,mesh.innerRatio)):mesh.fxPriority==='hazard'?16:mesh.fxFire?14:7;
       values.set([p[0],p[1],p[2],material,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment,true),c[0],c[1],c[2],Math.min(1,Math.max(0,mesh.alpha))],offset);offset+=16;
     }
     return {values,groups};
@@ -795,7 +906,7 @@
           const nearby=lights.map(light=>({light,d:(light.p[0]-center[0])**2+(light.p[1]-center[1])**2+(light.p[2]-center[2])**2})).sort((a,b)=>a.d-b.d).slice(0,4);
           for(const {light,d} of nearby){const vector=subtract(light.p,center),power=(light.power===undefined?1:light.power)*.24/(1+d*.26)*(Math.max(0,dot(n,vector)/(Math.sqrt(d)||.001))+.035),c=light.color||[1,1,1];for(let k=0;k<3;k++)fixedLight[k]+=power*c[k];fixedLampParts.push(light,power);}
         }
-        return {points,indices,n,center,plane,grain,lines,color,emission,mat,ground,fixedLight,fixedLampParts,outdoor,region:mesh.region,overlay:!!mesh.overlay,fx:!!mesh.fx,fxHazard:mesh.fxPriority==='hazard',alpha:mesh.fx?Math.min(1,Math.max(0,mesh.alpha||0)):1};
+        return {points,indices,n,center,plane,grain,lines,color,emission,mat,ground,fixedLight,fixedLampParts,outdoor,region:mesh.region,overlay:!!mesh.overlay,fx:!!mesh.fx,fxFire:!!mesh.fxFire,fxHazard:mesh.fxPriority==='hazard',alpha:mesh.fx?Math.min(1,Math.max(0,mesh.alpha||0)):1};
       });
       return {p,radius:Math.hypot(...s)*.5,faces,vertices,sway:mat===11,s};
     }
@@ -867,6 +978,7 @@
         return transformed.length>2?transformed.map(project):[];
       }
       const nearest=lights.map(light=>({light,d:dot(subtract(light.p,eye),subtract(light.p,eye))})).sort((a,b)=>a.d-b.d).slice(0,quality==='low'?4:6).map(entry=>entry.light);
+      const transient=transientLights(fx.lights,eye,quality==='low'?1:2);stats.dynamicLights=transient.length;
       const blackout=horrorLights(fx.horror,lights);stats.blackoutLights=blackout?.size||0;
       const faces=[],overlays=[],grounds=[];
       stats.drawCalls=0;stats.triangles=0;stats.instances=0;
@@ -985,9 +1097,29 @@
           const power=(light.power===undefined?1:light.power)*factor*.24/(1+d2*.26)*(Math.max(0,dot(n,l)/d)+.065),color=light.color||[1,1,1];
           for(let k=0;k<3;k++)lit[k]+=power*color[k];
         }
+        for(const light of transient){
+          const dx=light.p[0]-face.center[0],dy=light.p[1]-face.center[1],dz=light.p[2]-face.center[2],d2=dx*dx+dy*dy+dz*dz;
+          if(d2>=light.range*light.range)continue;
+          const d=Math.sqrt(d2)||.001,q=Math.max(0,Math.min(1,(d/light.range-.35)/.65)),falloff=1-q*q*(3-2*q);
+          const power=light.power*.24*falloff/(1+d2*.26)*(Math.max(0,(n[0]*dx+n[1]*dy+n[2]*dz)/d)+.035);
+          for(let k=0;k<3;k++)lit[k]+=power*light.color[k];
+        }
+        let reflection=null;
+        if(face.mat<3||face.mat===12){
+          const nv=Math.max(0,dot(n,toEye)/distance),ry=-toEye[1]/distance+2*nv*n[1],roughness=[.48,.60,.35][face.mat]||.13;
+          const skyMix=Math.max(0,Math.min(1,ry)),hemisphere=Math.max(0,Math.min(1,(ry+.45)/1.2));
+          const strength=(.04+.35*(1-nv)**5)*(.45+.8*(1-roughness));
+          reflection=[0,1,2].map(k=>{
+            const sky=face.outdoor?environment.skyBottom[k]*(1-skyMix)+environment.skyTop[k]*skyMix:[.18,.24,.27][k];
+            const ground=face.outdoor?environment.ambient[k]*.2:[.02,.03,.035][k];
+            return (ground*(1-hemisphere)+sky*hemisphere)*strength;
+          });
+        }
         const fog=face.overlay?0:Math.min(.9,1-Math.exp(-distance*(face.outdoor?environment.fogDensity:.027))),fogColor=face.outdoor?environment.fog:[.009,.018,.024];
         const rgb=lit.map((value,k)=>{
           let color=face.color[k]*(value*face.grain+face.emission*1.55*(.94+.06*Math.sin(t*2.2+face.center[1]*3)));
+          if(reflection)color+=reflection[k];
+          if(face.fxFire)color*=.72+.28*Math.sin(face.center[0]*5.3+face.center[1]*7.1-face.center[2]*3.7-t*11.);
           color=color*(1-fog)+fogColor[k]*fog;
           return Math.round(Math.pow(Math.max(0,color)/(Math.max(0,color)+.76),.4545)*255);
         });
@@ -1061,7 +1193,7 @@
     }
     function shadowCaster(m){
       const s=m.s||[1,1,1],mat=m.mat||0,limit=m.actorPart&&m.actorScale>1?44:10;
-      return !m.fx&&(m.shape==='box'||m.shape==='bevel'||m.shape==='cylinder'||m.shape==='sphere'||m.shape==='octa')&&s[0]>.45&&s[2]>.45&&s[1]>.4&&s[0]<limit&&s[2]<limit&&(mat<4||mat>7);
+      return !m.fx&&(m.shape==='box'||m.shape==='bevel'||m.shape==='cylinder'||m.shape==='sphere'||m.shape==='foliage'||m.shape==='octa')&&s[0]>.45&&s[2]>.45&&s[1]>.4&&s[0]<limit&&s[2]<limit&&(mat<4||mat>7);
     }
     function staticCasters(eye){
       if(staticCasterPlan&&eye.every((v,k)=>v===staticCasterPlan.eye[k]))return staticCasterPlan.meshes;
@@ -1103,7 +1235,7 @@
     if(!gl) return createSoftware(canvas);
     const source=geometry(),view=new Float32Array(16),projection=new Float32Array(16),vp=new Float32Array(16);
     const shadowView=new Float32Array(16),shadowProjection=new Float32Array(16),shadowMatrix=new Float32Array(16),shadowMatrices=new Float32Array(48);
-    const lightPositions=new Float32Array(36),lightColors=new Float32Array(36);
+    const lightPositions=new Float32Array(36),lightColors=new Float32Array(36),lightRanges=new Float32Array(12);
     const stats={drawCalls:0,triangles:0,instances:0,contextLost:false,webglVersion:2,backend:'webgl2',bloom:false,shadows:false};
     let program,depthProgram,postProgram,skyProgram,fxProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer,uniforms,postUniforms,skyUniforms,fxUniforms,depthMatrix,depthWind;
     let post=null,shadowTarget=null,whiteTexture=null,targetKey='',shadowKey='',shadowLight=null;
@@ -1162,7 +1294,7 @@
     }
     function initialize() {
       program=link(VERT,FRAG);depthProgram=link(VERT,DEPTH_FRAG);postProgram=link(POST_VERT,POST_FRAG);skyProgram=link(POST_VERT,SKY_FRAG);fxProgram=link(FX_VERT,FX_FRAG);
-      uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uEnvironment']) uniforms[name]=gl.getUniformLocation(program,name);
+      uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightRange','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uSkyTop','uSkyBottom','uEnvironment']) uniforms[name]=gl.getUniformLocation(program,name);
       postUniforms={};for(const name of ['uScene','uBloom','uTexel','uPass'])postUniforms[name]=gl.getUniformLocation(postProgram,name);
       skyUniforms={};for(const name of ['uSkyRight','uSkyUp','uSkyForward','uSkyTop','uSkyBottom','uSkyFog','uSunDirection','uSunColor','uSkyFov','uSkyMotion'])skyUniforms[name]=gl.getUniformLocation(skyProgram,name);
       fxUniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uAmbient','uFogColor','uEnvironment','uTime'])fxUniforms[name]=gl.getUniformLocation(fxProgram,name);
@@ -1238,7 +1370,7 @@
       renderBatch(cache.batch,cache.buffer,!same,shadow);
     }
     function renderEffects(meshes,eye,time){
-      const batch=packEffects(meshes,environment,eye);stats.fxInstances=batch.values.length/16;if(!batch.groups.length)return;
+      const batch=packEffects(meshes,environment,eye);stats.fxInstances+=batch.values.length/16;if(!batch.groups.length)return;
       gl.useProgram(fxProgram);gl.uniformMatrix4fv(fxUniforms.uViewProjection,false,vp);gl.uniform2f(fxUniforms.uWindTime,0,time);
       gl.uniform3fv(fxUniforms.uEye,eye);gl.uniform3fv(fxUniforms.uAmbient,environment?environment.ambient:[.12,.15,.16]);
       gl.uniform3fv(fxUniforms.uFogColor,environment?environment.fog:[.009,.018,.024]);gl.uniform2f(fxUniforms.uEnvironment,environment?1:0,environment?environment.fogDensity:.018);gl.uniform1f(fxUniforms.uTime,time);
@@ -1373,11 +1505,12 @@
       stats.staticVisible=shown.length;stats.staticCulled=world.length-shown.length;
       const planned=actorLightPlan&&actorLightPlan.previous===shadowLight&&eye.every((v,k)=>v===actorLightPlan.eye[k])?actorLightPlan.plan:lightPlan(eye);actorLightPlan=null;
       const {sorted,distanceTo,chosen,shadowLights}=planned;shadowLight=chosen;
-      const selected=shadowLights.map(light=>({light,d:distanceTo(light)})).concat(sorted.filter(entry=>!shadowLights.includes(entry.light)).slice(0,(quality==='low'?6:12)-shadowLights.length));
+      const transient=transientLights(fx.lights,eye,quality==='low'?2:3);stats.dynamicLights=transient.length;
+      const selected=shadowLights.map(light=>({light,d:distanceTo(light)})).concat(transient.map(light=>({light,d:distanceTo(light)})),sorted.filter(entry=>!shadowLights.includes(entry.light)).slice(0,(quality==='low'?6:12)-shadowLights.length-transient.length));
       const blackout=horrorLights(fx.horror,lights);stats.blackoutLights=blackout?.size||0;
-      lightPositions.fill(0);lightColors.fill(0);
-      selected.forEach(({light},i)=>{lightPositions.set(light.p,i*3);const c=light.color||[1,1,1],power=(light.power===undefined?1:light.power)*(blackout?.get(light)??1);lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});
-      const ordinary=[],overlay=[],particles=[];for(const mesh of dynamic||[]) (mesh.overlay?overlay:mesh.fx?particles:ordinary).push(mesh);
+      lightPositions.fill(0);lightColors.fill(0);lightRanges.fill(0);
+      selected.forEach(({light},i)=>{lightPositions.set(light.p,i*3);lightRanges[i]=light.range||0;const c=light.color||[1,1,1],power=(light.power===undefined?1:light.power)*(blackout?.get(light)??1);lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});
+      const ordinary=[],overlay=[],particles=[],overlayParticles=[];for(const mesh of dynamic||[]) (mesh.overlay?(mesh.fx?overlayParticles:overlay):mesh.fx?particles:ordinary).push(mesh);
       const dynamicBatch=pack(ordinary,environment,true);
       const torchPosition=eye.map((v,i)=>v+right[i]*.16-up[i]*.08);
       stats.drawCalls=0;stats.triangles=0;stats.instances=0;stats.bloom=!!post&&fx.bloom!==false;stats.shadows=!!shadowTarget&&fx.shadows!==false;stats.shadowMaps=stats.shadows?shadowLights.length+1+(environment?1:0):0;stats.shadowMode=environment?'sun-atlas':'atlas';
@@ -1393,16 +1526,18 @@
       gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);gl.uniform3fv(uniforms.uEye,eye);gl.uniform3fv(uniforms.uForward,forward);
       gl.uniform2f(uniforms.uWindTime,environment?environment.wind:0,t);gl.uniform3fv(uniforms.uSunDirection,environment?environment.sunDirection:[.4,.8,.3]);gl.uniform3fv(uniforms.uSunColor,environment?environment.sunColor:[0,0,0]);
       gl.uniform3fv(uniforms.uAmbient,environment?environment.ambient:[.075,.10,.12]);gl.uniform3fv(uniforms.uFogColor,environment?environment.fog:[.009,.018,.024]);gl.uniform2f(uniforms.uEnvironment,environment?1:0,environment?environment.fogDensity:.014);
-      gl.uniform3fv(uniforms.uLightPosition,lightPositions);gl.uniform3fv(uniforms.uLightColor,lightColors);gl.uniform1i(uniforms.uLightCount,selected.length);
+      gl.uniform3fv(uniforms.uSkyTop,environment?environment.skyTop:[.05,.08,.10]);gl.uniform3fv(uniforms.uSkyBottom,environment?environment.skyBottom:[.16,.20,.22]);
+      gl.uniform3fv(uniforms.uLightPosition,lightPositions);gl.uniform3fv(uniforms.uLightColor,lightColors);gl.uniform1fv(uniforms.uLightRange,lightRanges);gl.uniform1i(uniforms.uLightCount,selected.length);
       gl.uniform2f(uniforms.uResolution,canvas.width,canvas.height);gl.uniform4f(uniforms.uEffects,t,fx.flash||0,fx.damage||0,Math.max(0,Math.min(1,fx.pulse||0)));
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,stats.shadows?shadowTarget.texture:whiteTexture);gl.uniform1i(uniforms.uShadowMap,2);
       gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrices);gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,stats.shadows&&environment?1:0);gl.uniform3fv(uniforms.uTorchPosition,torchPosition);
       renderStatic(shown,0);
       renderBatch(dynamicBatch,dynamicBuffer,false);
       if(particles.length)renderEffects(particles,eye,t);
-      if(overlay.length) {
+      if(overlay.length||overlayParticles.length) {
         if(blackout){selected.forEach(({light},i)=>{const c=light.color||[1,1,1],power=light.power===undefined?1:light.power;lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});gl.uniform3fv(uniforms.uLightColor,lightColors);}
-        gl.clear(gl.DEPTH_BUFFER_BIT);renderBatch(pack(overlay,environment,true),overlayBuffer,true);
+        gl.clear(gl.DEPTH_BUFFER_BIT);if(overlay.length)renderBatch(pack(overlay,environment,true),overlayBuffer,true);
+        if(overlayParticles.length)renderEffects(overlayParticles,eye,t);
       }
       if(stats.bloom)postPass();
     }
@@ -1419,5 +1554,5 @@
     }
     return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter};
   }
-  window.FRender={create};
+  window.FRender={create,foliageTriangles};
 })();

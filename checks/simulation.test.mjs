@@ -7,7 +7,7 @@ import vm from 'node:vm';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const context = { window: {} };
 vm.createContext(context);
-for (const name of ['world', 'destruction', 'simulation']) {
+for (const name of ['renderer', 'world', 'destruction', 'economy', 'simulation']) {
   vm.runInContext(readFileSync(`${root}src/${name}.js`, 'utf8'), context, { filename: `${name}.js` });
 }
 const { FSimulation, FWorld } = context.window;
@@ -1573,8 +1573,8 @@ test('Grenade trajectories respect a low ceiling even when the bot repositions f
 
 function pipeFixture(extra = {}) {
   return fixture({ generation: 5, spawn: { x: 0, z: 0, yaw: 0 }, colliders: [{ minX: -.3, maxX: .3, minY: 0, maxY: 1.6, minZ: -2.3, maxZ: -1.7, mesh: 0 }],
-    meshes: [{ shape: 'box', p: [0, .8, -2], s: [.6, 1.6, .6], r: [0, 0, 0], mat: 1 }],
-    destructibles: [{ id: 'pipe', kind: 'pipe', strength: 3, meshes: [0], colliders: [0] }],
+    meshes: [{ shape: 'box', p: [0, .8, -2], s: [.6, 1.6, .6], r: [0, 0, 0], mat: 1 }, { shape: 'box', p: [0, 1, -1.72], s: [.24, .24, .36], r: [0, 0, 0], mat: 1 }],
+    destructibles: [{ id: 'pipe', kind: 'pipe', strength: 3, meshes: [0, 1], colliders: [0] }],
     pipes: [{ id: 'hot', destructibleId: 'pipe', x: 0, y: 1, z: -2, dx: 0, dy: 0, dz: 1, length: 3, radius: .45, delay: 1, duration: 3, damage: 8, period: 0 }], ...extra });
 }
 

@@ -3,8 +3,8 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {test} from 'node:test';
 const context={window:{}};
-for(const name of ['world','destruction'])vm.runInNewContext(readFileSync(new URL('../src/'+name+'.js',import.meta.url),'utf8'),context);
-const {FWorld,FDestruction}=context.window;
+for(const name of ['renderer','world','destruction'])vm.runInNewContext(readFileSync(new URL('../src/'+name+'.js',import.meta.url),'utf8'),context);
+const {FRender,FWorld,FDestruction}=context.window;
 const box=(p,s,extra={})=>({shape:'box',p,s,mat:3,...extra});
 const bounds=m=>({minX:m.p[0]-m.s[0]/2,maxX:m.p[0]+m.s[0]/2,minY:m.p[1]-m.s[1]/2,maxY:m.p[1]+m.s[1]/2,minZ:m.p[2]-m.s[2]/2,maxZ:m.p[2]+m.s[2]/2});
 const vol=c=>(c.maxX-c.minX)*(c.maxY-c.minY)*(c.maxZ-c.minZ);
@@ -68,6 +68,46 @@ test('raycast follows visible cylinders, spheres, octahedra and hollow torus ins
     const d=FDestruction.create({seed:0,meshes:[{shape,p,s,mat:0}],colliders:[]});
     assert.equal(!!d.raycast(origin,dir,6),shouldHit,shape+' incorrect primitive ray');
   }
+});
+
+test('foliage shots follow every shared triangle after rotation and non-uniform scaling',()=>{
+  const triangles=FRender.foliageTriangles();assert.equal(triangles.length,72);assert.equal(triangles,FRender.foliageTriangles());
+  assert(Object.isFrozen(triangles)&&triangles.every(t=>Object.isFrozen(t)&&t.every(Object.isFrozen)));
+  for(let axis=0;axis<3;axis++){const values=triangles.flatMap(t=>t.map(p=>p[axis]));assert.equal(Math.min(...values),-.5);assert.equal(Math.max(...values),.5);}
+  // Apply Euler rotations directly, independently of destruction's matrix.
+  const rotate=(v,r)=>{
+    let [x,y,z]=v;[y,z]=[y*Math.cos(r[0])-z*Math.sin(r[0]),y*Math.sin(r[0])+z*Math.cos(r[0])];
+    [x,z]=[x*Math.cos(r[1])+z*Math.sin(r[1]),-x*Math.sin(r[1])+z*Math.cos(r[1])];
+    [x,y]=[x*Math.cos(r[2])-y*Math.sin(r[2]),x*Math.sin(r[2])+y*Math.cos(r[2])];return [x,y,z];
+  };
+  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],unit=v=>{const length=Math.hypot(...v);return v.map(n=>n/length);};
+  for(const r of [[0,0,0],[.37,1.13,-.28]]){
+    const mesh={shape:'foliage',p:[4,7,-3],s:[3.2,1.4,2.1],r,mat:11},d=FDestruction.create({seed:1,meshes:[mesh],colliders:[]});
+    const transform=p=>rotate(p.map((v,i)=>v*mesh.s[i]),r).map((v,i)=>v+mesh.p[i]);
+    for(const triangle of triangles){
+      const points=triangle.map(transform),centre=[0,1,2].map(i=>points.reduce((n,p)=>n+p[i],0)/3),a=points[1].map((v,i)=>v-points[0][i]),b=points[2].map((v,i)=>v-points[0][i]),normal=unit(cross(a,b));
+      const hit=d.raycast(centre.map((v,i)=>v+normal[i]*.02),normal.map(v=>-v),.04);
+      assert(hit&&Math.abs(hit.distance-.02)<1e-7,'visible crown facet is not targetable');
+      assert(hit.normal.reduce((n,v,i)=>n+v*normal[i],0)>.999999,'crown normal ignores non-uniform scaling');
+      const inside=d.raycast(centre.map((v,i)=>v-normal[i]*.02),normal,.04);assert(inside&&Math.abs(inside.distance-.02)<1e-7,'inside face is one-sided');
+    }
+    const direction=unit(rotate([0,0,1],r));
+    assert(d.raycast(transform([0,0,-2]),direction,10),'centre of the crown cannot be hit');
+    assert.equal(d.raycast(transform([.49,.49,-2]),direction,10),null,'empty crown corner became a filled AABB');
+    assert.equal(d.raycast(transform([-.49,-.49,-2]),direction,10),null,'opposite empty crown corner became a filled AABB');
+  }
+});
+
+test('a foliage hit removes its attached tree and cannot leave a ghost trunk after restore or reindex',()=>{
+  const trunk=box([0,1.45,0],[.7,2.9,.7],{mat:10}),crown={shape:'foliage',p:[0,4,0],s:[3,2.5,2.8],r:[.15,.48,0],mat:11};
+  const remote=box([5,1,0],[1,2,1]),world=deepFreeze({seed:7,stage:0,generation:6,meshes:[trunk,crown,remote],colliders:[{...bounds(trunk),mesh:0},{...bounds(remote),mesh:2}],destructibles:[{id:'tree',kind:'tree',strength:8,meshes:[0,1],colliders:[0]},{id:'remote',kind:'prop',strength:4,meshes:[2],colliders:[1]}]});
+  const d=FDestruction.create(world),hit=d.raycast([0,4,-6],[0,0,1],10);assert(hit&&hit.id==='tree');
+  assert(d.hit(Array.from(hit.point),8,[0,0,1]).changed);assert(!d.isAlive('tree'));
+  assert.equal(d.raycast([0,4,-6],[0,0,1],10),null);assert(!blocked(d,0,0));assert(blocked(d,5,0));
+  assert.equal(d.meshes.length,1);assert.equal(d.colliders[0].mesh,0);matching(d);
+  const snapshot=JSON.parse(JSON.stringify(d.snapshot())),copy=FDestruction.create(world);assert(copy.restore(snapshot,{exactRevision:true}));
+  assert.equal(JSON.stringify(copy.snapshot()),JSON.stringify(snapshot));assert.equal(copy.raycast([0,4,-6],[0,0,1],10),null);assert(!blocked(copy,0,0));matching(copy);
+  assert(copy.blast([5,1,-.5],2,55).changed);assert.equal(copy.meshes.length,0);assert.equal(copy.colliders.length,0);
 });
 
 test('pressure leaks happen once and survive an exact-revision snapshot round trip',()=>{

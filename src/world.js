@@ -649,14 +649,21 @@
     const environment={...environments[stage],outdoorZones:rooms.concat(corridors).filter(r=>r.outdoor).map(({x,z,w,d})=>({x,z,w,d}))};
     const sunLength=Math.hypot(...environment.sunDirection);
     environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
-    const world={ seed, stage, generation:5, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
+    const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
     detailWorld(world,theme,aperture,doorHeight);
     naturalDetails(world,theme);
     elevateWorld(world);
     arenaWorld(world,theme,aperture);
     demolitionWorld(world,theme);
+    shopsWorld(world,theme);
+    reinforcementBays(world,theme);
+    suppliesWorld(world);
     populate(world);
+    armoryWorld(world);
+    polishTrees(world);
     demolitionMetadata(world);
+    world.detailStats.added=world.meshes.length-world.detailStats.base;
+    world.detailStats.tiers=[0,1,2].map(level=>world.meshes.filter(m=>(m.detail||0)===level).length);
     return world;
   }
   // This independent art pass does not consume the layout/combat RNG. Interior
@@ -1137,6 +1144,51 @@
     for(const r of world.walkable||world.rooms.concat(world.corridors||[]))if(Math.abs(x-r.x)<=r.w/2+1e-7&&Math.abs(z-r.z)<=r.d/2+1e-7){if(r.substrate||r.fallback){fallback=r.y||0;continue;}return (r.y||0)+(x-r.x)*(r.slopeX||0)+(z-r.z)*(r.slopeZ||0);}
     return fallback;
   }
+  // A separate botanical pass preserves the layout RNG, every collider and all
+  // mesh identities. Existing pieces become a bent trunk, connected forks and
+  // irregular leaf clusters; the scene gains no additional draw instances.
+  function polishTrees(w){
+    for(const t of w.trees){
+      const random=randomFor('METAL-botanical:'+w.seed+':'+t.mesh,w.stage),parts=w.meshes.slice(t.mesh,t.mesh+t.meshCount);
+      const originals=parts.map(m=>({...m,p:m.p.slice(),s:m.s.slice(),r:(m.r||[0,0,0]).slice()}));
+      const endpoints=m=>{const [rx,ry,rz]=m.r,cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry),cz=Math.cos(rz),sz=Math.sin(rz),axis=[cz*sy*sx-sz*cx,sz*sy*sx+cz*cx,cy*sx];return [-1,1].map(q=>m.p.map((v,i)=>v+q*axis[i]*m.s[1]/2));};
+      const wood=t.species==='birch'?[.57,.58,.49]:t.species==='dead'?[.35,.29,.23]:[.27,.23,.16];
+      const segment=(m,a,b,diameter,category)=>{const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2];m.shape='cylinder';m.p=a.map((v,i)=>(v+b[i])/2);m.s=[diameter,Math.hypot(dx,dy,dz),diameter];m.r=[Math.atan2(dz,Math.hypot(dx,dy)),0,Math.atan2(-dx,dy)];m.category=category;m.mat=10;m.color=wood.map(v=>v*(.91+random()*.15));};
+      const [base,top]=endpoints(originals[1]),bend=base.map((v,i)=>v+(top[i]-v)*.54),angle=random()*TAU;
+      bend[0]+=Math.cos(angle)*.14;bend[2]+=Math.sin(angle)*.14;
+      segment(parts[1],base,bend,originals[1].s[0],'trunk');
+      segment(parts[2],bend,top,originals[1].s[0]*.63,'trunk');
+      const spine=y=>{const a=y<=bend[1]?base:bend,b=y<=bend[1]?bend:top,q=Math.max(0,Math.min(1,(y-a[1])/(b[1]-a[1])));return [a[0]+(b[0]-a[0])*q,y,a[2]+(b[2]-a[2])*q];};
+      const branches=originals.flatMap((m,i)=>m.category==='branch'?[i]:[]),crowns=originals.flatMap((m,i)=>m.category==='canopy'?[i]:[]);
+      if(t.species==='pine'){
+        for(let k=0;k<4;k++){
+          const canopy=parts[crowns[k]],old=originals[crowns[k]],spread=old.s[0],direction=t.phase+k*2.399+(random()-.5)*.42;
+          canopy.shape='foliage';canopy.s=[old.s[0],old.s[1]*.74,old.s[2]];
+          const y=Math.min(top[1]-.1,Math.max(t.y+2.25,old.p[1]-.35)),a=spine(y),hub=[a[0]+Math.cos(direction)*spread*.19,y+.21,a[2]+Math.sin(direction)*spread*.19];
+          segment(parts[branches[k*3]],a,hub,.13-k*.016,'branch');
+          for(let j=0;j<2;j++){const q=direction+(j?.55:-.62),reach=spread*(j?.37:.40),end=[a[0]+Math.cos(q)*reach,y+.27+j*.12,a[2]+Math.sin(q)*reach];segment(parts[branches[k*3+j+1]],hub,end,.078-k*.009,'twig');}
+        }
+      }else{
+        const bare=t.species==='dead';
+        for(const [j,i] of branches.entries()){
+          const [oldA,joint]=endpoints(originals[i]),[,tip]=endpoints(originals[i+1]),a=spine(Math.max(t.y+2.3,oldA[1])),dx=joint[0]-a[0],dz=joint[2]-a[2],length=Math.hypot(dx,dz)||1,bow=(random()-.5)*t.height*.10;
+          const knee=a.map((v,k)=>v+(joint[k]-v)*.58);knee[0]-=dz/length*bow;knee[2]+=dx/length*bow;knee[1]+=.10+random()*.10;
+          segment(parts[i],a,knee,originals[i].s[0], 'branch');
+          segment(parts[i+1],knee,tip,originals[i].s[0]*.54,'twig');
+          if(!bare){
+            parts[i+2].shape='foliage';
+            if(j%2){
+              const fork=knee.map((v,k)=>v+(tip[k]-v)*.34),end=[joint[0]-dz/length*.58,joint[1]+.42,joint[2]+dx/length*.58];
+              segment(parts[i+3],fork,end,.068,'twig');
+            }else{parts[i+3].shape='foliage';parts[i+3].s=originals[i+3].s.map((v,k)=>v*(k===1?.81:.73));}
+          }
+        }
+      }
+      t.modelVersion=2;
+    }
+    w.natureStats.vegetation=w.meshes.filter(m=>m.mat===11).length;
+    w.natureStats.treeModelVersion=2;
+  }
   function arenaWorld(w,theme,aperture){
     const access=w.rooms[[5,3,5][w.stage]],edge=access.x+access.w/2,gap=13,size=60;
     const arena={id:w.rooms.length,x:edge+gap+size/2,z:access.z,y:access.y,w:size,d:size,h:0,outdoor:true,bossArena:true,archetype:'colossal-arena',name:['L’enclos du Colosse','La fosse du Brise-siège','Le parvis du Veilleur'][w.stage],openings:{w:true}};
@@ -1264,9 +1316,14 @@
       if(!point)throw new Error('No safe pressure pipe position');
       const {x,z}=point,y=room.y,dx=room.x-x,dz=room.z-z,len=Math.hypot(dx,dz),id='pipe-'+i,region='room-'+room.id,assembly='pressure-'+i;
       const pipe={id,x,y:y+1.03,z,dx:dx/len,dy:0,dz:dz/len,length:3,radius:.45,r:1.6,delay:i===3?1.4:1,duration:i===3?3:7,damage:8,period:i===3?16:0,phase:i===3?5:0};
+      pipe.nozzle=[x+pipe.dx*.46,pipe.y,z+pipe.dz*.46];
       w.pipes.push(pipe);chosen.push({...point,r:.8});
       box([x,y+.66,z],[.55,1.32,.55],0,'pressure_manifold',{region,assembly},true);
       add('cylinder',[x,y+1.03,z],[.27,2.25,.27],1,'pressure_pipe',{region,assembly,r:[0,0,Math.PI/2]});
+      // The discharge has a real metal mouth, including in the unbroken scene.
+      // Its rear end enters the manifold; its front cap is the physical nozzle.
+      pipe.nozzleMesh=w.meshes.length;
+      add('cylinder',[x+pipe.dx*.28,pipe.y,z+pipe.dz*.28],[.24,.36,.24],0,'pressure_nozzle',{region,assembly,r:[Math.PI/2,Math.atan2(pipe.dx,pipe.dz),0]});
       for(const q of [-1,1]){
         add('cylinder',[x+q*.85,y+1.03,z],[.43,.1,.43],0,'pressure_flange',{region,assembly,r:[0,0,Math.PI/2]});
         box([x+q*.85,y+.46,z],[.12,.92,.16],1,'pressure_support',{region,assembly});
@@ -1287,16 +1344,17 @@
     out.forEach((m,i)=>{if(m.assembly){if(!explicit.has(m.assembly))explicit.set(m.assembly,[]);explicit.get(m.assembly).push(i);}});
     for(const [id,members] of explicit){const colliders=w.colliders.flatMap((c,i)=>members.includes(c.mesh)?[i]:[]);group(id,id.startsWith('pressure')?'pipe':'prop',members,colliders,id.startsWith('pressure')?3:12);}
     for(const [ci,c] of w.colliders.entries()){
-      const m=out[c.mesh];if(m.terrain||m.ground||owners.has(c.mesh))continue;
+      const m=out[c.mesh];if(m.terrain||m.ground||m.indestructible||owners.has(c.mesh))continue;
       const [x,h,z]=m.s,kind=m.category==='ceiling'?'roof':m.category==='arena_pier'?'support':Math.min(x,z)<1.2&&Math.max(x,z)>2.5&&h>1.8?'wall':h>2.5&&x<1.5&&z<1.5?'support':'prop';
       const g=group('solid-'+c.mesh,kind,[c.mesh],[ci],kind==='wall'?18:kind==='roof'?16:kind==='support'?14:6);
+      if(m.category==='reinforcement_baffle')g.freestanding=true;
       if(!byRegion.has(m.region))byRegion.set(m.region,[]);byRegion.get(m.region).push(g);
     }
     // Attach fittings to their actual nearby solid. Ceiling networks belong to
     // the roof, wall cladding to wall segments, roots and canopies to one tree.
     const loose=new Map();
     for(const [i,m] of out.entries()){
-      if(owners.has(i)||m.terrain||m.ground)continue;
+      if(owners.has(i)||m.terrain||m.ground||m.indestructible)continue;
       const candidates=(byRegion.get(m.region)||[]).map(g=>({g,d:distance(m.p,g.bounds)})).sort((a,b)=>a.d-b.d),near=candidates[0];
       if(near&&near.d<(m.detail?1.45:.85)){near.g.meshes.push(i);owners.set(i,near.g);continue;}
       const key=(m.region||'free')+':'+Math.floor(m.p[0]/2)+','+Math.floor(m.p[1]/2)+','+Math.floor(m.p[2]/2)+':'+(m.mat===11?'plant':'dressing');
@@ -1306,7 +1364,7 @@
     for(const g of groups){g.meshes.sort((a,b)=>a-b);g.bounds=union(g.meshes.map(i=>boxes[i]));for(const i of g.meshes)out[i].destructibleId=g.id;}
     for(const roof of groups.filter(g=>g.kind==='roof')){
       const room=w.rooms.find(r=>'room-'+r.id===roof.region),base=room?.y??Math.min(...(byRegion.get(roof.region)||[]).map(g=>g.bounds.minY));
-      roof.supports=groups.filter(g=>g.region===roof.region&&['wall','support'].includes(g.kind)&&g.bounds.minY<base+.5).map(g=>g.id);roof.supportRatio=.38;roof.dependents=groups.filter(g=>g!==roof&&g.region===roof.region&&!['wall','support'].includes(g.kind)&&g.bounds.minY>base+2.7).map(g=>g.id);
+      roof.supports=groups.filter(g=>g.region===roof.region&&!g.freestanding&&['wall','support'].includes(g.kind)&&g.bounds.minY<base+.5).map(g=>g.id);roof.supportRatio=.38;roof.dependents=groups.filter(g=>g!==roof&&g.region===roof.region&&!['wall','support'].includes(g.kind)&&g.bounds.minY>base+2.7).map(g=>g.id);
     }
     const nearest=(x,y,z,region)=>groups.filter(g=>(!region||g.region===region)&&g.kind!=='decor').map(g=>({g,d:distance([x,y,z],g.bounds)})).sort((a,b)=>a.d-b.d)[0]?.g;
     for(const a of (w.machinery||[]).concat(w.ambience||[])){const g=nearest(a.x,a.y,a.z,a.room===undefined?undefined:'room-'+a.room);if(g)a.destructibleId=g.id;}
@@ -1319,64 +1377,183 @@
     w.horrorSites=w.pipes.map(p=>({id:'horror-'+p.id,x:p.x,y:p.y-1.03,z:p.z,kind:'steam',radius:3,destructibleId:p.destructibleId})).concat(w.traps.map(t=>({id:'horror-'+t.id,x:t.x,y:t.baseY,z:t.z,kind:t.kind==='press'?'collapse':'alarm',radius:3,destructibleId:t.destructibleId}))).filter(q=>Math.hypot(q.x-w.spawn.x,q.z-w.spawn.z)>16);
     w.destructibles=groups;w.destructionVersion=1;
   }
-  // All 430 opponents are real, individually addressable simulation entities.
-  // Independent room squads activate locally rather than running map-wide vision.
-  function populate(w) {
-    const random=randomFor('FERRO-garrisons-05:'+w.seed,w.stage),target=[120,140,170][w.stage];
-    const reserved=[w.spawn,w.exit,...w.cores,...w.pickups,...w.mechanisms,...w.jumpPads.flatMap(p=>[{x:p.x,z:p.z,r:2},{...p.target,r:2}]),...(w.traps||[]).map(t=>({...t,r:2.8})),...(w.pipes||[]).map(t=>({...t,r:1.5}))];
-    const queues=[];
-    for(const r of w.rooms.slice(1).filter(r=>!r.bossArena)) {
+  function roomDepths(w){
+    const depth=new Map([[0,0]]);
+    for(let pass=0;pass<w.rooms.length;pass++)for(const c of w.connections)for(const [a,b] of [[c.from,c.to],[c.to,c.from]])if(depth.has(a)&&(!depth.has(b)||depth.get(b)>depth.get(a)+1))depth.set(b,depth.get(a)+1);
+    return depth;
+  }
+  function pointSegment(x,z,a,b){const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1)));return Math.hypot(x-a.x-dx*t,z-a.z-dz*t);}
+  function nearBox(x,z,b,r){return Math.hypot(Math.max(b.minX-x,0,x-b.maxX),Math.max(b.minZ-z,0,z-b.maxZ))<r;}
+  function safeSupply(w,x,z,r=.6){
+    const y=floorHeight(w,x,z);if(y===null||!isWalkable(w,x,z,r))return false;
+    if(w.hazards.some(h=>Math.abs(h.y-y)<.5&&Math.hypot(x-h.x,z-h.z)<h.r+r+.45))return false;
+    if(w.traps.some(t=>Math.abs(t.baseY-y)<.5&&Math.hypot(x-t.x,z-t.z)<(t.kind==='blade'?3:1.8)+r))return false;
+    for(const p of w.pipes)if(Math.abs(p.y-1.03-y)<.5){const a={x:p.nozzle[0],z:p.nozzle[2]},b={x:a.x+p.dx*p.length,z:a.z+p.dz*p.length};if(Math.hypot(x-p.x,z-p.z)<2+r||pointSegment(x,z,a,b)<1.8+r||p.period&&Math.hypot(x-a.x,z-a.z)<3.2+r)return false;}
+    return true;
+  }
+  function shopsWorld(w,theme){
+    const arena=w.rooms.find(r=>r.bossArena),rooms=[w.rooms[0],w.rooms[[6,6,7][w.stage]],arena];w.shops=[];
+    const reserved=[w.spawn,w.exit,...w.cores,...w.pickups,...w.mechanisms,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target])];
+    for(const [i,r] of rooms.entries()){
+      const candidates=i===2?[[-23,-17],[-23,17],[-22,-23],[-22,23]]:[[-2.8,1.8],[-4.8,1.8],[4.8,-1.8],[-5.8,-4.2],[5.8,4.2],[-6.8,4.2],[6.8,-4.2]];
+      let spot;
+      for(const [dx,dz] of candidates){const p={x:r.x+dx,y:r.y,z:r.z+dz},front={x:p.x,y:p.y,z:p.z+1.05};if(safeSupply(w,p.x,p.z,.75)&&safeSupply(w,front.x,front.z,.42)&&[p,front].every(a=>reserved.every(q=>Math.hypot(a.x-q.x,a.z-q.z)>1.2))){spot=p;break;}}
+      if(!spot)throw new Error('No safe workshop '+w.stage+'/'+i);
+      const {x,y,z}=spot,region='room-'+r.id,add=(p,s,mat,category,extra={})=>{const m={shape:'box',p,s,mat,region,category,outdoor:r.outdoor,structural:true,indestructible:true,...extra};w.meshes.push(m);return m;};
+      const mesh=w.meshes.length;add([x,y+.72,z],[1.02,1.44,.66],0,'shop_terminal',{solid:true});
+      w.colliders.push({minX:x-.51,maxX:x+.51,minY:y,maxY:y+1.44,minZ:z-.33,maxZ:z+.33,mesh});
+      add([x,y+.10,z],[1.18,.20,.84],1,'shop_foot');add([x,y+1.49,z],[1.12,.10,.76],1,'shop_frame');
+      add([x,y+1.09,z+.342],[.76,.46,.022],7,'shop_display');
+      add([x,y+1.1,z+.358],[.60,.31,.012],4,'shop_signal',{color:theme.main,emissive:.35});
+      for(const q of [-1,1])add([x+q*.34,y+.65,z+.35],[.17,.08,.06],5,'shop_switch',{color:theme.alt,emissive:.25});
+      const shop={id:'shop-'+i,name:['Atelier de campagne','Comptoir de maintenance','Forge du colosse'][i],x,y,z:z+1.05,terminal:{x,y,z},yaw:0,zoneId:r.id};w.shops.push(shop);reserved.push(shop,spot);
+    }
+  }
+  // Each reserve arrives from an actual service bay, behind one opaque wall.
+  // Four reusable places, spaced at least 1.5 m apart, fit the entire weapon silhouette.
+  // The flood fill tests that every place has a physical way around the screen.
+  function reinforcementBays(w,theme){
+    const overlap=(a,b)=>a.minX<b.maxX&&a.maxX>b.minX&&a.minZ<b.maxZ&&a.maxZ>b.minZ;
+    const depths=roomDepths(w);
+    const choose=r=>{
+      const bounds={minX:r.x-r.w/2,maxX:r.x+r.w/2,minZ:r.z-r.d/2,maxZ:r.z+r.d/2};
+      const boxes=w.colliders.filter(c=>c.minY<r.y+3.1&&c.maxY>r.y+.05&&overlap(c,bounds));
+      const points=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall])].filter(p=>Math.abs((p.y||0)-r.y)<.5);
+      const avoid=[...w.traps.map(t=>({x:t.x,y:t.baseY,z:t.z,r:t.kind==='blade'?2.85:1.75})),...w.pipes.map(p=>({x:p.x,y:p.y-1.03,z:p.z,r:1.5})),...w.hazards.map(h=>({...h,r:h.r+.6}))].filter(p=>Math.abs(p.y-r.y)<.5);
+      const step=.4,nx=Math.ceil(r.w/step),nz=Math.ceil(r.d/step),count=nx*nz,px=i=>bounds.minX+(i+.5)*step,pz=i=>bounds.minZ+(i+.5)*step;
+      const free=(x,z,rad=.42)=>Math.abs(x-r.x)<r.w/2-rad-.08&&Math.abs(z-r.z)<r.d/2-rad-.08&&!boxes.some(c=>c.minY<r.y+2.2&&nearBox(x,z,c,rad));
+      const base=new Uint8Array(count);for(let z=0;z<nz;z++)for(let x=0;x<nx;x++)base[z*nx+x]=free(px(x),pz(z));
+      const nearest=(p,mask)=>{const a=[];for(let i=0;i<count;i++)if(mask[i]&&Math.hypot(px(i%nx)-p.x,pz(Math.floor(i/nx))-p.z)<.6)a.push(i);return a;};
+      const parents=w.connections.flatMap(c=>c.from===r.id?[c.to]:c.to===r.id?[c.from]:[]).filter(id=>depths.get(id)<depths.get(r.id)).sort((a,b)=>a-b),parent=w.rooms[parents[0]],preferred=[Math.sign(r.x-parent.x),Math.sign(r.z-parent.z)];
+      const normals=[preferred,...[[0,1],[0,-1],[1,0],[-1,0]].filter(n=>n[0]!==preferred[0]||n[1]!==preferred[1])];
+      for(const normal of normals)for(const width of [5.4,5.1,4.8])for(const depth of [4.6,3.8,3.0,2.6,5.4,6.3,7.3,8.3])for(const lateral of [0,1.4,-1.4,3.6,-3.6,4.8,-4.8]){
+        const tangent=[normal[1],-normal[0]],x=r.x+normal[0]*depth+tangent[0]*lateral,z=r.z+normal[1]*depth+tangent[1]*lateral;
+        const panel={minX:x-(normal[0]?.42:width)/2,maxX:x+(normal[0]?.42:width)/2,minZ:z-(normal[1]?.42:width)/2,maxZ:z+(normal[1]?.42:width)/2,minY:r.y,maxY:r.y+3.05};
+        if(boxes.some(c=>overlap(panel,c))||avoid.some(p=>nearBox(p.x,p.z,panel,p.r))||points.some(p=>nearBox(p.x,p.z,panel,.7))||w.jumpPads.some(p=>pointSegment(x,z,p,p.target)<width/2+1.5))continue;
+        const entries=[[-.85,1.9],[.85,1.9],[-.85,3.4],[.85,3.4]].map(([t,d])=>({x:x+normal[0]*d+tangent[0]*t,y:r.y,z:z+normal[1]*d+tangent[1]*t}));
+        if(entries.some(p=>!free(p.x,p.z,.70)||avoid.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<q.r+.6)||points.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<.9)||w.jumpPads.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<2||Math.hypot(p.x-q.target.x,p.z-q.target.z)<2)))continue;
+        const mask=base.map((v,i)=>v&&!nearBox(px(i%nx),pz(Math.floor(i/nx)),panel,.42)),starts=nearest(r,mask);if(!starts.length)continue;
+        const seen=new Uint8Array(count),queue=starts.slice();for(const i of starts)seen[i]=1;
+        for(let j=0;j<queue.length;j++){const i=queue[j],ix=i%nx,iz=Math.floor(i/nx);for(const k of [ix?i-1:-1,ix+1<nx?i+1:-1,iz?i-nx:-1,iz+1<nz?i+nx:-1])if(k>=0&&mask[k]&&!seen[k]){seen[k]=1;queue.push(k);}}
+        if(entries.some(p=>!nearest(p,seen).length))continue;
+        return {x,y:r.y,z,width,normal,tangent,entries,panel};
+      }
+      throw new Error('No safe reinforcement bay '+w.seed+'/'+w.stage+'/'+r.id);
+    };
+    w.encounterBays=[];
+    for(const r of w.rooms.filter(r=>r.id&&!r.bossArena)){
+      const b=choose(r),region='room-'+r.id,mesh=w.meshes.length,extra={outdoor:r.outdoor,region,structural:true};
+      const add=(u,y,d,s,mat,category,props={})=>{const p=[b.x+b.tangent[0]*u+b.normal[0]*d,b.y+y,b.z+b.tangent[1]*u+b.normal[1]*d];w.meshes.push({shape:'box',p,s:b.normal[0]?[s[2],s[1],s[0]]:s,mat,category,...extra,...props});};
+      add(0,1.525,0,[b.width,3.05,.42],0,'reinforcement_baffle',{solid:true,color:theme.wall.map(v=>v*.72)});
+      w.colliders.push({...b.panel,mesh});
+      for(const q of [-1,1]){
+        add(q*(b.width/2-.13),1.525,-.23,[.15,3.05,.06],1,'reinforcement_frame');
+        add(0,.18,q*.23,[b.width-.10,.16,.05],1,'reinforcement_frame');
+      }
+      for(const q of [-1,0,1]){add(q*1.18,1.54,-.224,[.62,.07,.03],5,'reinforcement_mark',{color:theme.alt,emissive:.12});add(q*1.18,1.20,-.224,[.04,.42,.03],1,'reinforcement_mark');}
+      w.encounterBays.push({zoneId:r.id,x:b.x,y:b.y,z:b.z,width:b.width,normal:b.normal,coverMesh:mesh,spawnEntries:b.entries});
+    }
+  }
+  function suppliesWorld(w){
+    const depths=roomDepths(w),initial=new Set(w.connections.flatMap(c=>c.from===0?[c.to]:c.to===0?[c.from]:[]));
+    w.progression={version:1,weaponSlots:4,startWeapons:w.stage===0?[true,false,false,false]:[true,true,true,false],startAmmo:[[48,0,0,0],[72,12,4,0],[84,16,5,0]][w.stage],startShield:false,ammoCaps:[180,36,12,16],maxActive:[8,10,12][w.stage]};
+    w.pickups=w.pickups.filter(p=>{const r=w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);return r&&(r.id===0||r.bossArena||Math.hypot(p.x-r.x-2.5,p.z-r.z-1.5)<.1);}).map((p,i)=>({...p,id:'health-'+i,kind:'health',amount:28,zoneId:w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2).id}));
+    const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target])];
+    // Service-bay cover follows the real incoming corridor. A small health case
+    // may move to a nearby free tile rather than force its screen to face sideways.
+    for(const p of w.pickups)if(!isWalkable(w,p.x,p.z,.6)){
+      const r=w.rooms[p.zoneId],candidates=[[-2.1,-1.5],[2.8,-4.7],[-.7,1.7],[1.4,-1.5],[-1.4,-3.0]];
+      const q=candidates.map(([dx,dz])=>({x:r.x+dx,z:r.z+dz})).find(q=>safeSupply(w,q.x,q.z,.6)&&reserved.every(a=>Math.hypot(q.x-a.x,q.z-a.z)>1.2)&&w.pickups.every(a=>a===p||Math.hypot(q.x-a.x,q.z-a.z)>1.12)&&w.encounterBays.every(b=>b.spawnEntries.every(a=>Math.hypot(q.x-a.x,q.z-a.z)>1.2)));
+      if(!q)throw new Error('No clear health case '+w.stage+'/'+p.zoneId);p.x=q.x;p.z=q.z;p.y=floorHeight(w,q.x,q.z);
+    }
+    const free=(p,radius=.65)=>safeSupply(w,p.x,p.z,radius)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.2)&&w.pickups.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.12)&&w.encounterBays.every(b=>b.spawnEntries.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.2));
+    const place=(room,kind,weapon,amount,candidates,label)=>{
+      const p=candidates.find(p=>free(p,kind==='weapon'?.75:.57));if(!p)throw new Error('No supply position '+w.seed+'/'+w.stage+'/'+room.id+'/'+label);
+      const value={id:'supply-'+room.id+'-'+label,kind,weapon,amount,x:p.x,y:floorHeight(w,p.x,p.z),z:p.z,zoneId:room.id};w.pickups.push(value);return value;
+    };
+    for(const r of w.rooms.filter(r=>r.id&&!r.bossArena)){
+      const parents=w.connections.flatMap(c=>c.from===r.id?[c.to]:c.to===r.id?[c.from]:[]).filter(id=>depths.get(id)<depths.get(r.id)).map(id=>w.rooms[id]).sort((a,b)=>a.id-b.id);
       const candidates=[];
-      for(let dz=-r.d/2+1.9;dz<r.d/2-1.6;dz+=1.9)for(let dx=-r.w/2+1.9;dx<r.w/2-1.6;dx+=1.9) {
-        const x=r.x+dx+(random()-.5)*.28,z=r.z+dz+(random()-.5)*.28;
-        if(!isWalkable(w,x,z,.67)||reserved.some(p=>Math.hypot(x-p.x,z-p.z)<(p.r||1.3))||w.hazards.some(h=>Math.hypot(x-h.x,z-h.z)<h.r+.85))continue;
-        candidates.push({x,y:r.y,z,zoneId:r.id});
+      for(const parent of parents){const nx=Math.sign(parent.x-r.x),nz=Math.sign(parent.z-r.z),tx=nz,tz=-nx,extent=nx?r.w/2:r.d/2;
+        for(const d of [3.7,2.4,1.0,-1.4,-2.6])for(const lateral of [-1.2,1.2,0]){const x=r.x+nx*(extent+d)+tx*lateral,z=r.z+nz*(extent+d)+tz*lateral;if(Math.abs(floorHeight(w,x,z)-r.y)<2.1)candidates.push({x,z});}
       }
-      for(let i=candidates.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[candidates[i],candidates[j]]=[candidates[j],candidates[i]];}
-      queues.push(candidates);
-    }
-    // Patrols also occupy the longer ramp galleries, leaving the start chamber
-    // safe and the approaches to machinery unobstructed.
-    for(const [i,c] of w.corridors.entries()) {
-      if(c.liftId||c.arenaPath)continue;
-      const link=w.connections[i],alongX=link.z1===link.z2,length=alongX?c.w:c.d,candidates=[];
-      for(let u=-length/2+3;u<length/2-2;u+=4.2) {
-        const x=c.x+(alongX?u:1.1),z=c.z+(alongX?1.1:u);
-        if(Math.hypot(x-w.spawn.x,z-w.spawn.z)<18||!isWalkable(w,x,z,.67)||w.doors.some(d=>Math.hypot(x-d.x,z-d.z)<2.2))continue;
-        candidates.push({x,y:floorHeight(w,x,z),z,zoneId:Math.max(link.from,link.to)});
+      // A raised lift dock can consume an entire approach. Nearby floor cells
+      // remain reachable before any mandatory combat or objective quota.
+      for(const dz of [-1.5,1.5,-3,3,0,-5,5])for(const dx of [-1.5,1.5,-3,3,0,-5,5])candidates.push({x:r.x+dx,z:r.z+dz});
+      if(initial.has(r.id)){
+        place(r,'ammo',0,40,candidates,'cells');
+        const discovery=[{x:r.x-.7,z:r.z+1.7},{x:r.x+.6,z:r.z-1.8},...candidates.slice().reverse()];
+        place(r,'weapon',1,8,discovery,'fracture');
+      }else{
+        place(r,'ammo',0,[80,104,112][w.stage],candidates,'cells');
+        place(r,'ammo',1,[12,16,16][w.stage],candidates,'shells');
+        if(depths.get(r.id)===2)place(r,'weapon',2,4,candidates,'rupture');
+        else place(r,'ammo',2,w.stage===0?2:3,candidates,'rockets');
       }
-      if(candidates.length)queues.push(candidates);
     }
-    const arena=w.bossArena;
-    w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault'});
-    let pass=0;
-    while(w.enemies.length<target) {
-      let added=0;
-      for(const q of queues) {
-        while(q.length) {
-          const p=q.pop();
-          if(w.enemies.some(e=>Math.hypot(e.x-p.x,e.z-p.z)<(e.boss?2.4:1.5)))continue;
-          const type=(w.enemies.length+p.zoneId+w.stage)%3;
-          w.enemies.push({...p,type,squadId:p.zoneId*10+Math.floor(pass/4),role:type===1?'assault':type===2?'suppressor':['flanker','assault','suppressor'][pass%3]});added++;break;
+    const arena=w.rooms.find(r=>r.bossArena);
+    for(const side of [-1,1])for(const dz of [-20,20]){
+      const candidates=[];for(const x of [22,20.5,23.5,21])for(const z of [dz,dz-1.4,dz+1.4,dz-2.8,dz+2.8])candidates.push({x:arena.x+side*x,z:arena.z+z});
+      const key=(side<0?'w':'e')+(dz<0?'n':'s');
+      place(arena,'ammo',0,[36,44,52][w.stage],candidates,'boss-cells-'+key);
+      place(arena,'ammo',1,[6,8,10][w.stage],candidates,'boss-shells-'+key);
+      place(arena,'ammo',2,3,candidates,'boss-rockets-'+key);
+    }
+  }
+  // The additional equipment occupies clear tiles after the original supply
+  // and patrol pass. Existing patrols, route pickups and entry cover never move.
+  function armoryWorld(w){
+    const depths=roomDepths(w),opening=w.rooms.filter(r=>depths.get(r.id)===1).sort((a,b)=>a.id-b.id)[0],middle=w.rooms[w.shops[1].zoneId],late=w.rooms.filter(r=>r.id&&!r.bossArena).sort((a,b)=>depths.get(b.id)-depths.get(a.id)||b.id-a.id)[0],arena=w.rooms.find(r=>r.bossArena);
+    const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target]),...w.encounters.flatMap(e=>e.spawnEntries),...w.enemies.filter(e=>e.deployed)];
+    const add=(room,kind,amount,label,preferred=[])=>{
+      const candidates=preferred.slice();for(const z of [-1.8,1.8,-3.6,3.6,0,-5.4,5.4])for(const x of [-1.8,1.8,-3.6,3.6,0,-5.4,5.4])candidates.push({x:room.x+x,z:room.z+z});
+      const point=candidates.find(p=>Math.abs(p.x-room.x)<room.w/2-1&&Math.abs(p.z-room.z)<room.d/2-1&&Math.abs(floorHeight(w,p.x,p.z)-room.y)<.01&&safeSupply(w,p.x,p.z,.75)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.65)&&w.pickups.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.35));
+      if(!point)throw new Error('No equipment position '+w.seed+'/'+w.stage+'/'+label);
+      w.pickups.push({id:'arsenal-'+label,kind,...(kind==='shield'?{}:{weapon:3}),amount,x:point.x,y:room.y,z:point.z,zoneId:room.id});
+    };
+    add(opening,'shield',1,'shield');
+    const shop=w.shops[1];add(middle,'weapon',4,'grenade-launcher',[{x:shop.x+2.1,z:shop.z},{x:shop.x-2.1,z:shop.z},{x:shop.x,z:shop.z+2.1}]);
+    add(late,'ammo',4,'grenades-late');
+    const outer=[];for(const x of [-22,-20.5,-23.5])for(const z of [-17.2,-15.8,17.2,15.8])outer.push({x:arena.x+x,z:arena.z+z});
+    add(arena,'ammo',4,'grenades-boss',outer);
+  }
+  // All 430 IDs stay stable in the save. Only the opening patrols and the
+  // colossus's six scripted guards exist physically before their wave deploys.
+  function populate(w) {
+    const target=[120,140,170][w.stage],depths=roomDepths(w),counts=[[6,15,7,17,18,16,17,17],[8,22,24,9,22,24,24],[10,23,11,25,23,24,24,23]][w.stage];
+    const early=new Set(w.connections.flatMap(c=>c.from===0?[c.to]:c.to===0?[c.from]:[]));w.encounters=[];
+    const candidates=[];
+    function waveSizes(n,opening){const out=[];if(opening){const k=w.stage===0?3:4;out.push(k);n-=k;}const k=Math.ceil(n/6);for(let i=0;i<k;i++)out.push(Math.floor(n/k)+(i>=k-n%k?1:0));return out;}
+    for(const r of w.rooms.filter(r=>r.id&&!r.bossArena)){
+      const bay=w.encounterBays.find(b=>b.zoneId===r.id),opening=early.has(r.id),sizes=waveSizes(counts[r.id-1],opening),patrol=[];
+      if(opening)for(const dz of [0,2.4,-2.4,4.8,-4.8])for(const dx of [-2.4,0,2.4,-4.8,4.8]){
+        const x=r.x+dx,z=r.z+dz;if(!safeSupply(w,x,z,.7)||Math.hypot(x-w.spawn.x,z-w.spawn.z)<18||(x-bay.x)*bay.normal[0]+(z-bay.z)*bay.normal[1]>-.8||w.pickups.some(p=>Math.hypot(x-p.x,z-p.z)<1.3)||w.mechanisms.some(p=>Math.hypot(x-p.x,z-p.z)<1.3)||w.jumpPads.some(p=>Math.hypot(x-p.x,z-p.z)<2||Math.hypot(x-p.target.x,z-p.target.z)<2))continue;
+        patrol.push({x,y:r.y,z});
+      }
+      const encounter={id:'encounter-'+r.id,label:r.name,zoneId:r.id,trigger:{x:r.x,y:r.y,z:r.z,w:r.w+4,d:r.d+4},leashRadius:38,maxActive:Math.max(...sizes),waveGap:4,spawnEntries:bay.spawnEntries.map(p=>({...p})),waves:[]};
+      if(opening&&patrol.length<sizes[0])throw new Error('No opening patrol positions '+w.stage+'/'+r.id);
+      for(const [wave,n] of sizes.entries()){
+        const ids=[];
+        for(let j=0;j<n;j++){
+          const index=w.enemies.length,deployed=opening&&wave===0,p=deployed?patrol[j]:bay.spawnEntries[j%bay.spawnEntries.length];
+          const type=opening?(j%3===2?2:0):(j+wave+r.id)%3;
+          const e={...p,type,zoneId:r.id,squadId:r.id*10+wave,encounterId:encounter.id,wave,deployed,role:type===1?'assault':type===2?'suppressor':['flanker','assault','suppressor'][(j+wave)%3],yaw:Math.atan2(r.x-p.x,p.z-r.z)};
+          w.enemies.push(e);ids.push(index);
         }
-        if(w.enemies.length===target)break;
+        encounter.waves.push({enemyIds:ids});
+        if(!opening&&(depths.get(r.id)>2||wave>0))candidates.push({enemy:w.enemies[ids[0]],depth:depths.get(r.id),wave,room:r.id});
       }
-      if(!added)throw new Error('Insufficient safe garrison positions in stage '+w.stage);
-      pass++;
+      w.encounters.push(encounter);
     }
-    // Heavy specialists are distributed across squads, with readable weapon
-    // silhouettes. Keep the total garrison and the other families unchanged.
-    const squads=new Set(),specialists=w.enemies.filter(e=>e.type===1).sort((a,b)=>a.squadId-b.squadId||a.zoneId-b.zoneId);
     let grenades=0,rockets=0;
-    for(const e of specialists){
-      if(squads.has(e.squadId))continue;
-      const weapon=grenades<8&&(grenades<=rockets||rockets===6)?'grenade':rockets<6?'rocket':null;
-      if(!weapon)break;e.weapon=weapon;squads.add(e.squadId);if(weapon==='grenade')grenades++;else rockets++;
-    }
-    if(grenades!==8||rockets!==6)throw new Error('Insufficient distinct heavy squads for demolition combat');
-    const bossIndex=w.enemies.findIndex(e=>e.boss),boss=w.enemies.splice(bossIndex,1)[0];w.enemies.push(boss);
-    const guards=w.enemies.filter(e=>e.type===0).slice(-6);
-    guards.forEach((e,i)=>{const a=(i+.5)*TAU/6;e.x=arena.x+Math.cos(a)*26;e.z=arena.z+Math.sin(a)*26;e.y=arena.y;e.zoneId=arena.room;e.squadId=200+Math.floor(i/3);e.bossWave=1+Math.floor(i/3);e.bossId=w.enemies.length-1;});
+    candidates.sort((a,b)=>a.wave-b.wave||a.depth-b.depth||a.room-b.room);
+    for(const {enemy:e} of candidates){const weapon=grenades<8&&(grenades<=rockets||rockets===6)?'grenade':rockets<6?'rocket':null;if(!weapon)break;e.type=1;e.role='assault';e.weapon=weapon;if(weapon==='grenade')grenades++;else rockets++;}
+    if(grenades!==8||rockets!==6)throw new Error('Insufficient later heavy waves');
+    const arena=w.bossArena;
+    for(let i=0;i<6;i++){const a=(i+.5)*TAU/6;w.enemies.push({x:arena.x+Math.cos(a)*26,y:arena.y,z:arena.z+Math.sin(a)*26,type:0,zoneId:arena.room,squadId:200+Math.floor(i/3),role:'flanker',bossWave:1+Math.floor(i/3),bossId:target-1,deployed:true});}
+    w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
+    for(const [i,e] of w.enemies.entries())e.drop=e.type===3?false:e.weapon==='rocket'?{weapon:2,amount:1}:e.weapon==='grenade'?{weapon:3,amount:1}:e.type===1?{weapon:1,amount:2}:e.type===2||i%2===0?{weapon:0,amount:4}:false;
+    if(w.enemies.length!==target)throw new Error('Incorrect finite garrison size');
   }
   function isWalkable(world, x, z, radius) {
     const r = radius === undefined ? 0.35 : radius;
@@ -1406,11 +1583,11 @@
         if (j >= 0 && cells[j] && !seen[j] && Math.abs(heights[j]-heights[i])<=.4) { seen[j] = 1; queue[tail++] = j; }
       }
     }
-    const targets = [world.spawn, ...world.cores, world.exit, ...world.enemies, ...world.pickups,...(world.lifts||[]).flatMap(l=>[l.lowerCall,l.upperCall]),...(world.mechanisms||[]).map(m=>({x:m.x,z:m.z+.95})),...(world.jumpPads||[]).flatMap(p=>[p,p.target])];
+    const targets = [world.spawn, ...world.cores, world.exit, ...world.enemies, ...world.pickups,...(world.shops||[]),...(world.lifts||[]).flatMap(l=>[l.lowerCall,l.upperCall]),...(world.mechanisms||[]).map(m=>({x:m.x,z:m.z+.95})),...(world.jumpPads||[]).flatMap(p=>[p,p.target])];
     const errors = [];
     targets.forEach((p, i) => { if (!isWalkable(world, p.x, p.z, 0.38) || !seen[index(p.x, p.z)]) errors.push('Unreachable target ' + i); });
     if (world.meshes.length > 18000) errors.push('Mesh budget exceeded');
-    if (world.colliders.length > 500) errors.push('Collider budget exceeded');
+    if (world.colliders.length > 512) errors.push('Collider budget exceeded');
     if (world.cores.length !== 3) errors.push('Expected three relays');
     if(world.enemies.length<[120,140,170][world.stage])errors.push('Garrison below tenfold target');
     if(world.mechanisms.length!==3||world.lifts.length!==2)errors.push('Missing interactive machinery');

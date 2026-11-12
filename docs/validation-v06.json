@@ -1,0 +1,631 @@
+{
+  "version": "0.6.0",
+  "date": "2026-11-12",
+  "generation": 6,
+  "distribution": {
+    "version": "0.6.0",
+    "html_bytes": 690042,
+    "html_decimal_kb": 690.04,
+    "html_kib": 673.87,
+    "gzip_bytes": 208105,
+    "sha256": "f8194770ab4f12cddad79d63728eb5986ab9898499b0556f100b3c57bb094293",
+    "external_assets": 0,
+    "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+    "source_bytes": {
+      "renderer.js": 104386,
+      "world.js": 114751,
+      "destruction.js": 21634,
+      "music.js": 20526,
+      "audio.js": 38587,
+      "economy.js": 8922,
+      "brain.js": 8923,
+      "simulation.js": 165206,
+      "motion.js": 5225,
+      "actors.js": 23496,
+      "effects.js": 15546,
+      "options.js": 4305,
+      "game.js": 81689
+    }
+  },
+  "tests": {
+    "full_node_test": {
+      "passed": 262,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 25786.547305
+    },
+    "worlds": 18,
+    "physical_targets": 4800,
+    "final_shell_after_visual_adjustments": {
+      "passed": 25,
+      "failed": 0,
+      "duration_ms": 1064.84223
+    },
+    "full_test_log_sha256": "f7cd5718e2fe7a194ae8ea7f00648578443f5685206364226ba048db01f439cf"
+  },
+  "world": {
+    "actors": [
+      120,
+      140,
+      170
+    ],
+    "static_meshes_seed96": [
+      14077,
+      12555,
+      17377
+    ],
+    "colliders_seed96": [
+      448,
+      421,
+      504
+    ],
+    "maximum_meshes_in_18_worlds": 17506,
+    "trees_checked": 588,
+    "route_check": {
+      "sectors": 3,
+      "metres_with_test_backtracking": 4539.8,
+      "steps": 18370,
+      "weapons_found": 9,
+      "shields_found": 3,
+      "grenade_caches_found": 6,
+      "shops": 9,
+      "mechanisms": 9,
+      "relays": 9,
+      "exits": 3,
+      "enemies_removed_before_create": true,
+      "position_or_health_injected_during_route": false
+    }
+  },
+  "audio": {
+    "modules": [
+      {
+        "stage": 0,
+        "decoder": "ffmpeg/libopenmpt",
+        "seconds": 76.8,
+        "peak": 0.6398065090179443,
+        "rms": 0.13107430934906006,
+        "clippedSamples": 0,
+        "moduleSha256": "50d88a07744be3d2e51a98c15f5367351f4238c504644e5475aebf64d8758cd0"
+      },
+      {
+        "stage": 1,
+        "decoder": "ffmpeg/libopenmpt",
+        "seconds": 45.18,
+        "peak": 0.662316083908081,
+        "rms": 0.1593809723854065,
+        "clippedSamples": 0,
+        "moduleSha256": "c12b06dab600fbc391299f10b6b1814db39b6c8bc7e23569c2bd1f204b81fcbd"
+      },
+      {
+        "stage": 2,
+        "decoder": "ffmpeg/libopenmpt",
+        "seconds": 52.97,
+        "peak": 0.6771412491798401,
+        "rms": 0.16703912615776062,
+        "clippedSamples": 0,
+        "moduleSha256": "738adaa5a8460e6f8fb8a3f6b11f05d25034dede0845553587b87ea03d7a6c39"
+      }
+    ],
+    "mix_method": "diagnostic DSP reconstruction of actual scheduling, before compressor; approximate RBJ filters / analytic oscillators",
+    "mix_before": {
+      "shot_vs_music_db": -13.709300107124045,
+      "ambience_vs_music_db": -18.390286676516297
+    },
+    "mix_after": {
+      "shot_vs_music_db": 1.130032416586994,
+      "ambience_vs_music_db": -7.998601969941416
+    },
+    "limits": [
+      "No human listening claim.",
+      "No installed native OfflineAudioContext; mix reconstruction uses RBJ filters, analytic oscillators and omits echo / low-level gain modulation. It measures separate buses before compression and is not a browser or hardware rendering proof.",
+      "Independent full-song WAVs are actual FFmpeg/libopenmpt decodes of the generated MOD bytes.",
+      "Final output guard remains bounded below 0.97 in the real WebAudio graph; this is a transfer-function bound, not a loudness guarantee."
+    ],
+    "music_sha256": "f50361332f36c212461d3005489a5813f518ec65317f2f7c0727d9754f2f5d0b"
+  },
+  "renderer": {
+    "software": "Mesa llvmpipe GLES",
+    "comparisons": {
+      "metal-before-native": {
+        "GL_errors": 0,
+        "warm_median_ms": 71.2730819996068,
+        "triangles": 239592,
+        "instances": 1752,
+        "samples": [
+          128.59244399987801,
+          69.7322060004808,
+          67.7045829997951,
+          71.2730819996068,
+          71.28254100098275,
+          75.50585300123203
+        ]
+      },
+      "trees-current-native": {
+        "GL_errors": 0,
+        "warm_median_ms": 44.553977000759915,
+        "triangles": 93372,
+        "instances": 329,
+        "samples": [
+          71.0372270004882,
+          49.18167399955564,
+          47.43269400023564,
+          44.553977000759915,
+          41.6261559985287,
+          41.89453500111995
+        ]
+      },
+      "trees-before-native": {
+        "GL_errors": 0,
+        "warm_median_ms": 44.625889999224455,
+        "triangles": 93332,
+        "instances": 334,
+        "samples": [
+          80.61043199995765,
+          49.09176699948148,
+          45.75184500026808,
+          44.625889999224455,
+          43.11131800022849,
+          42.10809300093388
+        ]
+      },
+      "explosion-current-native": {
+        "GL_errors": 0,
+        "warm_median_ms": 74.98275900070439,
+        "triangles": 241160,
+        "instances": 1770,
+        "samples": [
+          224.83304799970938,
+          74.17583599999489,
+          88.22284100097022,
+          103.65027600164467,
+          71.27332200070668,
+          74.98275900070439
+        ]
+      },
+      "metal-current-native": {
+        "GL_errors": 0,
+        "warm_median_ms": 71.72999200156482,
+        "triangles": 237352,
+        "instances": 1749,
+        "samples": [
+          117.4337150005158,
+          81.07666599971708,
+          71.72999200156482,
+          69.74279200039746,
+          64.19112399998994,
+          80.22067300044
+        ]
+      },
+      "tree-gallery-native": {
+        "GL_errors": 0,
+        "warm_median_ms": null,
+        "triangles": 26032,
+        "instances": 103,
+        "samples": []
+      },
+      "shield-current-native": {
+        "GL_errors": 0,
+        "warm_median_ms": 73.40373400074895,
+        "triangles": 237396,
+        "instances": 1750,
+        "samples": [
+          126.66587999956391,
+          82.96045099996263,
+          76.67360699997516,
+          70.73526999920432,
+          66.29423999947903,
+          73.40373400074895
+        ]
+      },
+      "limits": "Mesa llvmpipe software GLES; Python replay overhead included; not browser or hardware FPS. Before uses the exact old tree generator by skipping only polishTrees(world), plus the saved renderer. Current uses the same captured simulation/actors/game sources. Canvas timing is native NAPI, not a browser."
+    },
+    "final_shield": {
+      "source_game_sha256": "3fd9574aea7e49d1346172128853af0231ca1c362264ee0ea8927c2fa21549b1",
+      "gl_errors": 0,
+      "fx_shield_parts": 4,
+      "shadow_maps": 3,
+      "frame_joined": true,
+      "native_gpu_hardware": false
+    }
+  },
+  "intermediate_performance": {
+    "warning": "Measured before the final WebNN and four-weapon additions. Simulation only, not final browser FPS. First encounter/demolition profile had no awake v0.6 actors and is not a fair throughput comparison. Combat benchmark below has actual waves/boss reinforcements and retains observed peaks.",
+    "method": "Native Node simulation; real generated worlds, destruction and economy loaded. Setup places player on clear encounter or arena ground; health reset each step solely to keep the workload running. Weapons are unlocked for the benchmark, ammunition starts180/36/12 and is never refilled. Player aims and fires actual Impulse shots at exposed ordinary enemies. Boss starts at32% health to exercise phase3 and both preplaced reserve squads. World generation, initialization and dummy-input target selection excluded from step timings. No renderer, browser or GPU included.",
+    "sourceHashes": {
+      "world": "c70c2cbac19ce171d85e564ad23ea35228bebc7175f837c500f70188e0bc43de",
+      "destruction": "25ed4ae3aaa3dab6f4a527e3086a37d74875e69e445da6822f31c2ea22e8b881",
+      "economy": "9a6cf3944cc1d109a380690b16698d6dd505202ee68150379b580e8fb5892cc0",
+      "simulation": "8b053f6d15815953258765eabfafc26136a949d339ce7d10b040ecb426eaab93"
+    },
+    "results": [
+      {
+        "stage": 0,
+        "scenario": "encounter",
+        "encounter": "encounter-2",
+        "actorCount": 120,
+        "steps": 900,
+        "seconds": 15.000000000000325,
+        "generationMs": 213.645846,
+        "initializationMs": 226.02577800000006,
+        "medianMs": 0.1758750000001328,
+        "meanMs": 0.34767757222222373,
+        "p95Ms": 0.6515219999998862,
+        "p99Ms": 2.869295999999963,
+        "maxMs": 57.25215800000001,
+        "maxActive": 5,
+        "maxAwake": 5,
+        "maxPaths": 1,
+        "maxNavUpdates": 768,
+        "maxNewDeployed": 1,
+        "maxDeploymentsPer200ms": 1,
+        "minimumDeploymentInterval": 0.2166666666666659,
+        "initialReserve": 107,
+        "reserveAtEnd": 100,
+        "deployed": 7,
+        "kills": 6,
+        "shots": 23,
+        "ammo": [
+          157,
+          36,
+          12
+        ],
+        "boss": [
+          {
+            "phase": 0,
+            "awake": false,
+            "hp": 130,
+            "released": 0
+          }
+        ],
+        "events": {
+          "waveStart": 3,
+          "alerted": 8,
+          "shot": 23,
+          "hit": 23,
+          "kill": 6,
+          "combo": 4,
+          "trap": 4,
+          "enemyShot": 4,
+          "overheat": 1,
+          "hurt": 1,
+          "cooled": 1,
+          "pipeLeak": 1,
+          "explosion": 1,
+          "creak": 1
+        }
+      },
+      {
+        "stage": 0,
+        "scenario": "boss-reinforcements",
+        "encounter": null,
+        "actorCount": 120,
+        "steps": 900,
+        "seconds": 15.000000000000325,
+        "generationMs": 153.93560200000002,
+        "initializationMs": 81.65294400000016,
+        "medianMs": 0.20158400000013899,
+        "meanMs": 0.31364647777777943,
+        "p95Ms": 0.741027000000031,
+        "p99Ms": 1.6055099999998674,
+        "maxMs": 14.904138000000103,
+        "maxActive": 6,
+        "maxAwake": 7,
+        "maxPaths": 0,
+        "maxNavUpdates": 768,
+        "maxNewDeployed": 0,
+        "maxDeploymentsPer200ms": 0,
+        "minimumDeploymentInterval": null,
+        "initialReserve": 107,
+        "reserveAtEnd": 107,
+        "deployed": 0,
+        "kills": 6,
+        "shots": 26,
+        "ammo": [
+          154,
+          36,
+          12
+        ],
+        "boss": [
+          {
+            "phase": 2,
+            "awake": true,
+            "hp": 37.40000000000004,
+            "released": 6
+          }
+        ],
+        "events": {
+          "alerted": 7,
+          "shot": 26,
+          "hit": 26,
+          "bossRoar": 2,
+          "bossPhase": 1,
+          "kill": 6,
+          "combo": 2,
+          "overheat": 3,
+          "bossTell": 3,
+          "enemyShot": 1,
+          "bossImpact": 4,
+          "explosion": 3,
+          "hurt": 4,
+          "creak": 3,
+          "trap": 4,
+          "cooled": 3,
+          "pipeLeak": 1
+        }
+      },
+      {
+        "stage": 1,
+        "scenario": "encounter",
+        "encounter": "encounter-2",
+        "actorCount": 140,
+        "steps": 900,
+        "seconds": 15.000000000000325,
+        "generationMs": 107.96132399999988,
+        "initializationMs": 48.53560900000002,
+        "medianMs": 0.14858399999957328,
+        "meanMs": 0.24392265777778044,
+        "p95Ms": 0.49946300000010524,
+        "p99Ms": 1.747573999999986,
+        "maxMs": 15.143129000000044,
+        "maxActive": 5,
+        "maxAwake": 5,
+        "maxPaths": 2,
+        "maxNavUpdates": 768,
+        "maxNewDeployed": 1,
+        "maxDeploymentsPer200ms": 1,
+        "minimumDeploymentInterval": 0.2166666666666659,
+        "initialReserve": 125,
+        "reserveAtEnd": 118,
+        "deployed": 7,
+        "kills": 7,
+        "shots": 38,
+        "ammo": [
+          142,
+          36,
+          12
+        ],
+        "boss": [
+          {
+            "phase": 0,
+            "awake": false,
+            "hp": 180,
+            "released": 0
+          }
+        ],
+        "events": {
+          "waveStart": 3,
+          "alerted": 9,
+          "shot": 38,
+          "hit": 26,
+          "kill": 7,
+          "combo": 3,
+          "overheat": 5,
+          "trap": 4,
+          "enemyShot": 12,
+          "cooled": 4,
+          "hurt": 6,
+          "pipeLeak": 1,
+          "explosion": 1,
+          "creak": 1
+        }
+      },
+      {
+        "stage": 1,
+        "scenario": "boss-reinforcements",
+        "encounter": null,
+        "actorCount": 140,
+        "steps": 900,
+        "seconds": 15.000000000000325,
+        "generationMs": 127.57305899999983,
+        "initializationMs": 52.875940999999784,
+        "medianMs": 0.19705699999985882,
+        "meanMs": 0.31337523555555286,
+        "p95Ms": 0.8029999999998836,
+        "p99Ms": 2.1041000000000167,
+        "maxMs": 4.882550999999694,
+        "maxActive": 6,
+        "maxAwake": 7,
+        "maxPaths": 0,
+        "maxNavUpdates": 768,
+        "maxNewDeployed": 0,
+        "maxDeploymentsPer200ms": 0,
+        "minimumDeploymentInterval": null,
+        "initialReserve": 125,
+        "reserveAtEnd": 125,
+        "deployed": 0,
+        "kills": 4,
+        "shots": 38,
+        "ammo": [
+          142,
+          36,
+          12
+        ],
+        "boss": [
+          {
+            "phase": 2,
+            "awake": true,
+            "hp": 49.800000000000075,
+            "released": 6
+          }
+        ],
+        "events": {
+          "alerted": 7,
+          "shot": 38,
+          "hit": 38,
+          "bossRoar": 2,
+          "bossPhase": 1,
+          "kill": 4,
+          "combo": 3,
+          "overheat": 5,
+          "bossTell": 2,
+          "enemyShot": 1,
+          "trap": 4,
+          "bossImpact": 7,
+          "rocket": 4,
+          "cooled": 4,
+          "explosion": 5,
+          "creak": 5,
+          "hurt": 4,
+          "pipeLeak": 1
+        }
+      },
+      {
+        "stage": 2,
+        "scenario": "encounter",
+        "encounter": "encounter-4",
+        "actorCount": 170,
+        "steps": 900,
+        "seconds": 15.000000000000325,
+        "generationMs": 198.82851100000016,
+        "initializationMs": 93.33940799999982,
+        "medianMs": 0.19295000000010987,
+        "meanMs": 0.334671636666671,
+        "p95Ms": 0.746429000000262,
+        "p99Ms": 2.151777999999922,
+        "maxMs": 24.268363000000136,
+        "maxActive": 6,
+        "maxAwake": 6,
+        "maxPaths": 2,
+        "maxNavUpdates": 768,
+        "maxNewDeployed": 1,
+        "maxDeploymentsPer200ms": 1,
+        "minimumDeploymentInterval": 0.2166666666666659,
+        "initialReserve": 155,
+        "reserveAtEnd": 150,
+        "deployed": 5,
+        "kills": 8,
+        "shots": 31,
+        "ammo": [
+          149,
+          36,
+          12
+        ],
+        "boss": [
+          {
+            "phase": 0,
+            "awake": false,
+            "hp": 240,
+            "released": 0
+          }
+        ],
+        "events": {
+          "waveStart": 2,
+          "alerted": 9,
+          "shot": 31,
+          "hit": 31,
+          "kill": 8,
+          "combo": 6,
+          "overheat": 4,
+          "trap": 4,
+          "cooled": 4,
+          "enemyShot": 8,
+          "hurt": 4,
+          "pipeLeak": 1,
+          "explosion": 1,
+          "creak": 1
+        }
+      },
+      {
+        "stage": 2,
+        "scenario": "boss-reinforcements",
+        "encounter": null,
+        "actorCount": 170,
+        "steps": 900,
+        "seconds": 15.000000000000325,
+        "generationMs": 177.29729000000043,
+        "initializationMs": 86.959562,
+        "medianMs": 0.1973680000000968,
+        "meanMs": 0.2889206688888943,
+        "p95Ms": 0.5497009999999136,
+        "p99Ms": 2.339936999999736,
+        "maxMs": 12.94829000000027,
+        "maxActive": 6,
+        "maxAwake": 7,
+        "maxPaths": 0,
+        "maxNavUpdates": 768,
+        "maxNewDeployed": 0,
+        "maxDeploymentsPer200ms": 0,
+        "minimumDeploymentInterval": null,
+        "initialReserve": 155,
+        "reserveAtEnd": 155,
+        "deployed": 0,
+        "kills": 4,
+        "shots": 38,
+        "ammo": [
+          142,
+          36,
+          12
+        ],
+        "boss": [
+          {
+            "phase": 2,
+            "awake": true,
+            "hp": 69.00000000000007,
+            "released": 6
+          }
+        ],
+        "events": {
+          "alerted": 7,
+          "shot": 38,
+          "hit": 38,
+          "bossRoar": 2,
+          "bossPhase": 1,
+          "kill": 4,
+          "combo": 3,
+          "overheat": 5,
+          "bossTell": 2,
+          "bossImpact": 6,
+          "trap": 4,
+          "cooled": 4,
+          "hurt": 4,
+          "pipeLeak": 1,
+          "explosion": 5,
+          "creak": 5,
+          "rocket": 4
+        }
+      }
+    ]
+  },
+  "browser": {
+    "backend": "Canvas 2D fallback",
+    "raf_about_hz": 1,
+    "desktop": "1363x936",
+    "responsive_frames": [
+      "390x844",
+      "320x568",
+      "844x390"
+    ],
+    "verified": [
+      "real workshop purchase debits1200to390",
+      "four firearms and shield unlock",
+      "left shotgun6to4 shells",
+      "shield bash100to76 energy",
+      "CPU WebNN unavailable status",
+      "checkpoint reload",
+      "responsive equipment controls"
+    ],
+    "limitations": [
+      "Remote browser, no physical GPU/NPU, Safari or multitouch device.",
+      "CPU fallback was observed; accelerated WebNN arithmetic and failure modes use an independent graph mock.",
+      "No human listening or full human combat campaign claimed."
+    ]
+  },
+  "source_sha256": {
+    "src/actors.js": "eeb06a022a162d820403b925fc50499d250b2ff9cfe873b8029e6f3c6fd3904f",
+    "src/audio.js": "dd7f62fcdac8e9ec5c8de9aa54b23a8f25552e350e42e3a01d0eeaa344badbb7",
+    "src/brain.js": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "src/destruction.js": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+    "src/economy.js": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+    "src/effects.js": "eae5d9a26667e6e86661ff99a16a27ff39d444cd4aeafd4943da5a682fc4a6d8",
+    "src/game.js": "3fd9574aea7e49d1346172128853af0231ca1c362264ee0ea8927c2fa21549b1",
+    "src/index.html": "bdb6bb0f9664643cce3ba1b8e4f920ca59cee2f66c83877d2e97dcc37135b266",
+    "src/motion.js": "09368ee2c60e68589d78ea268f98b2065eba7db2fcab95455af9c38fc5439009",
+    "src/music.js": "f50361332f36c212461d3005489a5813f518ec65317f2f7c0727d9754f2f5d0b",
+    "src/options.js": "213e6ffa6f1373637de6dbbd6d3a3a06c74f3600ca7b646ecbc4fa7469a9c98c",
+    "src/renderer.js": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
+    "src/simulation.js": "80a0f1a1d92d2580ac2cf2d4a5dde62a1f676c847dd4dff282eb12bfe1a37f72",
+    "src/style.css": "17e54ed894129703a49918ff0fe971a609ace2137fde8711fabb678b3593bae7",
+    "src/world.js": "b749868d8fd4069ad9c37af7435f25707a14d42c46a1de4610dae0bc21742ce5"
+  }
+}

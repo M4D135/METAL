@@ -3,7 +3,7 @@
 from pathlib import Path
 import gzip, hashlib, json
 ROOT=Path(__file__).resolve().parents[1]
-modules=['renderer.js','world.js','destruction.js','music.js','audio.js','simulation.js','motion.js','actors.js','effects.js','options.js','game.js']
+modules=['renderer.js','world.js','destruction.js','music.js','audio.js','economy.js','brain.js','simulation.js','motion.js','actors.js','effects.js','options.js','game.js']
 css=(ROOT/'src/style.css').read_text()
 code='\n;\n'.join((ROOT/'src'/name).read_text() for name in modules)
 html=(ROOT/'src/index.html').read_text().replace('/*__STYLE__*/',css).replace('/*__CODE__*/',code)

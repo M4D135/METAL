@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const scope={window:{}};vm.runInNewContext(readFileSync(new URL('../src/effects.js',import.meta.url),'utf8'),scope);
 const Effects=scope.window.FEffects,camera={pos:[0,1.62,5],yaw:0,pitch:0,fov:74};
-const geometryScope={window:{}};vm.runInNewContext(readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8').replace('window.FRender={create};','window.FRender={create,geometry};'),geometryScope);
+const geometryScope={window:{}};vm.runInNewContext(readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8').replace('window.FRender={create,foliageTriangles};','window.FRender={create,foliageTriangles,geometry};'),geometryScope);
 const geometry=geometryScope.window.FRender.geometry(),plain=v=>JSON.parse(JSON.stringify(v));
 function freeze(v){if(v&&typeof v==='object'){Object.freeze(v);for(const x of Object.values(v))freeze(x);}return v;}
 function vertices(m){
@@ -57,7 +57,30 @@ test('steam starts at the exposed nozzle and remains within the actual directed 
     for(const m of steam){const delta=m.p.map((v,k)=>v-pipe.nozzle[k]),along=delta.reduce((n,v,k)=>n+v*d[k],0),radial=Math.hypot(...delta.map((v,k)=>v-along*d[k])),r=m.s[0]/2;assert(along-r>=-1e-7&&along+r<=pipe.length+1e-7);assert(radial+r<=pipe.radius+1e-7);}
     assert(!Effects.build({pipes:[{...pipe,hot:false,warning:true}]},{},camera).some(m=>m.effectPart==='steam'));
     assert.equal(Effects.build({pipes:[{...pipe,active:false}]},{},camera).length,0);
+    assert.equal(Effects.build({pipes:[{...pipe,broken:true}]},{},camera).length,0,'A missing nozzle cannot render residual steam even if old active flags remain');
   }
+});
+
+test('detonations separate a fast expanding pressure front, hot fire, ballistic embers and lingering cold smoke',()=>{
+  const blast={id:8,x:0,y:2,z:-8,life:2.4,radius:4.5,power:55,seed:887},make=age=>Effects.build({time:10,explosions:[{...blast,age}]},{},camera,{quality:'high'});
+  const first=make(.04),early=make(.25),late=make(1.4);for(const meshes of [first,early,late])validate(meshes);
+  assert(first.some(m=>m.effectPart==='blast-core'));assert(!early.some(m=>m.effectPart==='blast-core'));
+  const front=age=>make(age).find(m=>m.effectPart==='shock-ring');assert(front(.3).s[0]>front(.05).s[0]*1.8);assert(front(.3).innerRatio>.9);
+  assert(early.some(m=>m.effectPart==='fire-cloud'&&m.emissive>2));assert(early.some(m=>m.effectPart==='blast-ember'));
+  assert(late.some(m=>m.effectPart==='blast-dust'));assert(!late.some(m=>['blast-core','shock-ring','fire-cloud'].includes(m.effectPart)));
+  assert.equal(make(2.4).length,0);assert.deepEqual(plain(early),plain(make(.25)),'Rendering must not add independent timers or physics');
+  const many=Array.from({length:12},(_,i)=>({...blast,id:i,x:(i%4)*2-3,z:-8-Math.floor(i/4)*2,age:.04,seed:i}));
+  const storm=Effects.build({explosions:many},{},camera,{quality:'auto'});assert(storm.filter(m=>m.effectPart==='shock-ring').length===12,'Each simultaneous visible explosion retains its pressure front');assert(storm.filter(m=>m.fx).length<=96);
+});
+
+test('blast lighting is anchored to live sources, fades independently of smoke and retains a fixed light budget',()=>{
+  const blast={id:1,x:4,y:1.3,z:-8,age:.04,life:2.4,radius:4.5,power:55},state=freeze({player:{x:0,y:0,z:0},explosions:[blast]});
+  const light=Effects.lights(state)[0];assert.deepEqual(plain(light.p),[4,1.3,-8]);assert(light.power>20);assert(light.range>10);
+  assert(Effects.lights({...state,explosions:[{...blast,age:.5}]})[0].power<light.power*.2);
+  assert.equal(Effects.lights({...state,explosions:[{...blast,age:1.4}]}).length,0,'Lingering smoke must not keep glowing');
+  assert.equal(Effects.lights({...state,explosions:[{...blast,age:-.1}]}).length,0);
+  const storm={player:state.player,explosions:Array.from({length:24},(_,i)=>({...blast,id:i,x:i+2})),projectiles:Array.from({length:48},(_,i)=>({kind:'rocket',x:i,y:1,z:-12,age:.2,life:3}))};
+  assert.equal(Effects.lights(storm).length,4);assert.deepEqual(plain(Effects.lights(state)),plain([light]));
 });
 
 test('settled wide roof slabs keep their bottom on the floor throughout their fade',()=>{

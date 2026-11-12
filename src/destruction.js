@@ -8,6 +8,20 @@
   const copyBox=b=>Object.fromEntries(KEYS.map(k=>[k,b[k]]));
   const overlaps=(a,b)=>a.minX<b.maxX-EPS&&a.maxX>b.minX+EPS&&a.minY<b.maxY-EPS&&a.maxY>b.minY+EPS&&a.minZ<b.maxZ-EPS&&a.maxZ>b.minZ+EPS;
   const distance=(p,b)=>Math.hypot(Math.max(b.minX-p[0],0,p[0]-b.maxX),Math.max(b.minY-p[1],0,p[1]-b.maxY),Math.max(b.minZ-p[2],0,p[2]-b.maxZ));
+  let foliageSource,foliageFaces;
+  function sharedFoliage(){
+    const triangles=G.FRender?.foliageTriangles?.();
+    if(!Array.isArray(triangles)||!triangles.length)throw new Error('Foliage destruction requires the shared FRender geometry.');
+    if(triangles===foliageSource)return foliageFaces;
+    foliageSource=triangles;
+    // One shared set of edges for the whole scene, not 72 copied triangles per
+    // tree. The renderer and shots use exactly the same irregular silhouette.
+    foliageFaces=triangles.map(([a,b,c])=>{
+      const ab=b.map((v,i)=>v-a[i]),ac=c.map((v,i)=>v-a[i]);
+      return {a,ab,ac,n:[ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]]};
+    });
+    return foliageFaces;
+  }
   function rotation(r=[0,0,0]){
     const [x,y,z]=r,a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);
     return [e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a];
@@ -52,6 +66,24 @@
       const b=rayBox(q,v,{minX:-.5,maxX:.5,minY:-.5,maxY:.5,minZ:-.5,maxZ:.5},limit);
       if(!b)return null;const n=b.normal,t=b.distance;return {distance:t,normal:[0,1,2].map(i=>a[i*3]*n[0]+a[i*3+1]*n[1]+a[i*3+2]*n[2])};
     }
+    if(shape==='foliage'){
+      let nearest=limit,face=null;
+      // Two-sided Möller–Trumbore in local coordinates. Keeping v unnormalised
+      // preserves world-space distances under rotation and non-uniform scale.
+      for(const f of e.triangles){
+        const u=f.ab,w=f.ac,h=[v[1]*w[2]-v[2]*w[1],v[2]*w[0]-v[0]*w[2],v[0]*w[1]-v[1]*w[0]],det=u[0]*h[0]+u[1]*h[1]+u[2]*h[2];
+        if(Math.abs(det)<1e-10)continue;
+        const iq=1/det,dx=q[0]-f.a[0],dy=q[1]-f.a[1],dz=q[2]-f.a[2],b=(dx*h[0]+dy*h[1]+dz*h[2])*iq;
+        if(b< -1e-8||b>1+1e-8)continue;
+        const cross=[dy*u[2]-dz*u[1],dz*u[0]-dx*u[2],dx*u[1]-dy*u[0]],c=(v[0]*cross[0]+v[1]*cross[1]+v[2]*cross[2])*iq;
+        if(c< -1e-8||b+c>1+1e-8)continue;
+        const at=(w[0]*cross[0]+w[1]*cross[1]+w[2]*cross[2])*iq;
+        if(at>=0&&at<=nearest){nearest=at;face=f;}
+      }
+      if(!face)return null;
+      const n=face.n.map((v,i)=>v/s[i]),out=[0,1,2].map(i=>a[i*3]*n[0]+a[i*3+1]*n[1]+a[i*3+2]*n[2]),length=Math.hypot(...out)||1;
+      return {distance:nearest,normal:out.map(v=>v/length)};
+    }
     if(shape==='sphere'||shape==='cylinder'){
       const axes=shape==='sphere'?[0,1,2]:[0,2],aa=axes.reduce((n,i)=>n+v[i]*v[i],0),bb=axes.reduce((n,i)=>n+q[i]*v[i],0),cc=axes.reduce((n,i)=>n+q[i]*q[i],0)-.25,disc=bb*bb-aa*cc;
       const roots=[];if(aa>EPS&&disc>=0)roots.push((-bb-Math.sqrt(disc))/aa,(-bb+Math.sqrt(disc))/aa);
@@ -87,7 +119,8 @@
     const originalMeshes=world.meshes||[],originalColliders=world.colliders||[],groups=new Map(),meshOwner=new Map(),states=new Map(),leaked=new Set();
     let meshes=originalMeshes.slice(),colliders=originalColliders.map(c=>({...c})),lights=(world.lights||[]).slice(),revision=0;
     const definitions=world.destructibles||originalMeshes.map((m,i)=>m.ground||m.terrain?null:{id:'mesh-'+i,kind:'prop',strength:5,meshes:[i],colliders:originalColliders.flatMap((c,j)=>c.mesh===i?[j]:[])}).filter(Boolean);
-    const entries=originalMeshes.map((mesh,source)=>({mesh,source,bounds:bounds(mesh),rotation:rotation(mesh.r)}));
+    const foliage=originalMeshes.some(m=>m.shape==='foliage')?sharedFoliage():null;
+    const entries=originalMeshes.map((mesh,source)=>({mesh,source,bounds:bounds(mesh),rotation:rotation(mesh.r),triangles:mesh.shape==='foliage'?foliage:null}));
     for(const d of definitions){
       const members=d.meshes.filter(i=>entries[i]);if(!members.length)continue;
       const g={...d,id:String(d.id),strength:d.strength||6,meshes:members,colliders:(d.colliders||[]).filter(i=>originalColliders[i]),bounds:d.bounds||union(members.map(i=>entries[i].bounds)),active:members.map(i=>entries[i]),solids:[],originalVolume:0};

@@ -41,6 +41,7 @@
       else if(kind==='switch')channel('equip').v-=2.5;
       else if(kind==='hurt')channel('impact').v+=.7;
       else if(kind==='pulse')channel('equip').v-=1.1;
+      else if(kind==='melee')channel('melee').v=Math.max(channel('melee').v,5.8);
     }
     function reset(){
       for(const key of Object.keys(springs))delete springs[key];
@@ -53,21 +54,21 @@
       const run=clamp(finite(loc.sprintBlend),0,1),dash=clamp(finite(loc.dashBlend),0,1),phase=finite(loc.stridePhase);
       const strafe=clamp(finite(loc.strafe)/5,-1,1),forward=clamp(finite(loc.forward)/5,-1,1);
       const yawRate=clamp(finite(signals.lookYaw),-8,8),pitchRate=clamp(finite(signals.lookPitch),-6,6),time=finite(signals.time);
-      const kick=damp('kick',0,25,dt),equip=damp('equip',0,17,dt),impact=damp('impact',0,23,dt),blast=damp('blast',0,17,dt);
-      const intensity=enabled?1:.22,runPose=run*(signals.firing?.3:1);
+      const kick=damp('kick',0,27,dt),equip=damp('equip',0,21,dt),impact=damp('impact',0,23,dt),blast=damp('blast',0,17,dt),melee=damp('melee',0,19,dt);
+      const intensity=enabled?1:.22,runPose=run*(signals.firing?.18:1);
       const breathing=Math.sin(time*1.45)*.002*(1-move);
-      const x=damp('x',Math.sin(phase)*.018*move-strafe*.021-yawRate*.0045,18,dt);
-      const y=damp('y',Math.cos(phase*2)*.012*move-runPose*.035-dash*.035+breathing,19,dt);
-      const z=damp('z',runPose*.018+dash*.04-forward*.006,16,dt);
-      const pitch=damp('pitch',runPose*-.12-pitchRate*.012-clamp(finite(loc.accelForward),-20,20)*.0016,18,dt);
-      const yaw=damp('yaw',-yawRate*.014-strafe*.018,19,dt);
-      const roll=damp('weaponRoll',-strafe*.065-Math.sin(phase)*.018*move-yawRate*.004,18,dt);
-      view.weapon.offset[0]=x*intensity;
+      const x=damp('x',Math.sin(phase)*.014*move-strafe*.014-yawRate*.003,25,dt);
+      const y=damp('y',Math.cos(phase*2)*.009*move-runPose*.024-dash*.028+breathing,25,dt);
+      const z=damp('z',runPose*.012+dash*.032-forward*.004,23,dt);
+      const pitch=damp('pitch',runPose*-.085-pitchRate*.008-clamp(finite(loc.accelForward),-20,20)*.0011,25,dt);
+      const yaw=damp('yaw',-yawRate*.01-strafe*.013,25,dt);
+      const roll=damp('weaponRoll',-strafe*.043-Math.sin(phase)*.014*move-yawRate*.003,25,dt);
+      view.weapon.offset[0]=x*intensity-melee*.45;
       view.weapon.offset[1]=(y+equip-impact*.24)*intensity;
-      view.weapon.offset[2]=z*intensity+kick*(enabled?1:.55);
+      view.weapon.offset[2]=z*intensity+kick*(enabled?1:.55)-melee*.9;
       view.weapon.rotation[0]=pitch*intensity+kick*.85;
-      view.weapon.rotation[1]=yaw*intensity;
-      view.weapon.rotation[2]=roll*intensity;
+      view.weapon.rotation[1]=yaw*intensity-melee*1.4;
+      view.weapon.rotation[2]=roll*intensity+melee*2;
       view.weapon.slide=clamp(kick*1.1,0,.075);
       if(enabled){
         view.height=damp('height',Math.cos(phase*2)*.010*move-dash*.022,21,dt)+Math.sin(time*37)*blast*.06;

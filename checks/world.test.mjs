@@ -12,9 +12,9 @@ const { create } = sandbox.window.FWorld;
 const seeds = [1, 7, 42, 96, 2026, 65535];
 const radius = .28, spacing = .25;
 
-// Generation 5 adds physical elevation, machinery and much longer circulation.
+// Generation 6 adds staged encounters, physical entry cover and finite supplies.
 // Checkpoint compatibility is explicit, rather than asserting the old coordinates.
-const generation = 5;
+const generation = 6;
 const softGroundDetails = new Set(['grass','fern','fern_leaf','undergrowth','pebble',
   'mineral','mushroom','flower','flower_stem','ivy']);
 
@@ -144,6 +144,30 @@ function outdoorIntegrity(world,label) {
   }
   assert(substantial>=5,`${label}: no substantial tree cover`);
   assert(trees.some(t=>t.z<world.spawn.z&&Math.abs(t.x-world.spawn.x)<(world.spawn.z-t.z)*.9&&Math.hypot(t.x-world.spawn.x,t.z-world.spawn.z)<20),`${label}: no tree in initial forward view`);
+  botanicalIntegrity(world,label);
+}
+function botanicalIntegrity(world,label){
+  assert.equal(world.natureStats.treeModelVersion,2);
+  const endpoints=m=>{
+    const [x,y,z]=m.r||[0,0,0],axis=[Math.cos(z)*Math.sin(y)*Math.sin(x)-Math.sin(z)*Math.cos(x),Math.sin(z)*Math.sin(y)*Math.sin(x)+Math.cos(z)*Math.cos(x),Math.cos(y)*Math.sin(x)];
+    return [-1,1].map(sign=>m.p.map((v,i)=>v+sign*axis[i]*m.s[1]/2));
+  };
+  const segmentDistance=(p,a,b)=>{const axis=b.map((v,i)=>v-a[i]),length=axis.reduce((n,v)=>n+v*v,0),u=Math.max(0,Math.min(1,p.reduce((n,v,i)=>n+(v-a[i])*axis[i],0)/length));return Math.hypot(...p.map((v,i)=>v-a[i]-u*axis[i]));};
+  for(const tree of world.trees){
+    assert.equal(tree.modelVersion,2);
+    const parts=world.meshes.slice(tree.mesh,tree.mesh+tree.meshCount),bare=tree.species==='dead',pine=tree.species==='pine';
+    assert.equal(parts.length,bare?17:pine?23:31,`${label}: botanical polish adds draw instances`);
+    const crowns=parts.filter(m=>m.category==='canopy');assert.equal(crowns.length,bare?0:pine?4:9);
+    assert(crowns.every(m=>m.shape==='foliage'&&m.mat===11&&!m.detail),`${label}: a crown still uses a primitive blob or vanishes at low quality`);
+    assert.equal(parts.filter(m=>m.category==='trunk').length,3,`${label}: upper trunk has no natural bend`);
+    const stems=parts.filter(m=>m.mat===10&&m.shape==='cylinder'),ends=stems.map(endpoints),base=parts[0];
+    const attached=new Set();
+    for(let i=0;i<stems.length;i++)if(ends[i].some(p=>p.every((v,k)=>Math.abs(v-base.p[k])<=base.s[k]/2+.02)))attached.add(i);
+    for(let pass=0;pass<stems.length;pass++)for(let i=0;i<stems.length;i++)if(!attached.has(i)&&ends[i].some(p=>Array.from(attached).some(j=>segmentDistance(p,...ends[j])<=stems[j].s[0]/2+.015)))attached.add(i);
+    assert.equal(attached.size,stems.length,`${label}: branch or fork floats away from its tree`);
+    assert(parts.filter(m=>m.category==='twig').length>=(bare?5:8),`${label}: branches have no smaller forks`);
+    for(let i=0;i<stems.length;i++)if(['branch','twig'].includes(stems[i].category))assert(Math.min(...ends[i].map(p=>p[1]))-stems[i].s[0]/2>=tree.y+2.1,`${label}: new branch clips a walking body`);
+  }
 }
 function machineryAndTerrain(world,label) {
   assert.equal(world.enemies.length,[120,140,170][world.stage],`${label}: not exactly tenfold actual enemies`);
@@ -218,18 +242,103 @@ function jumpPadIntegrity(world,label) {
 function reachability(world,label,avoidHazards=false) {
   const grid=physicalGrid(world,label,{avoidHazards,sealed:!avoidHazards});
   for(const d of world.doors)assert(grid.free(d.x,d.z),`${label}: opened gate still blocked by static geometry`);
-  const targets=[...world.cores,world.exit,...world.enemies,...world.pickups,...world.rooms,...world.corridors,...world.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...world.mechanisms.map(m=>({x:m.x,z:m.z+.95})),...world.jumpPads.flatMap(p=>[p,p.target])];
+  const targets=[...world.cores,world.exit,...world.enemies,...world.pickups,...world.rooms,...world.corridors,...world.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...world.mechanisms.map(m=>({x:m.x,z:m.z+.95})),...world.jumpPads.flatMap(p=>[p,p.target]),...world.shops,...world.encounters.flatMap(q=>q.spawnEntries)];
   for(const [i,p] of targets.entries())assert(grid.reachable(p),`${label}: target ${i} unreachable at ${p.x},${heightAt(world,p.x,p.z)},${p.z}`);
   for(const [i,c] of world.connections.entries()) {
     if(c.liftId)continue;
     const steps=Math.ceil(Math.hypot(c.x2-c.x1,c.z2-c.z1)/spacing);let prior=null;
     for(let j=0;j<=steps;j++) {
       const x=c.x1+(c.x2-c.x1)*j/steps,z=c.z1+(c.z2-c.z1)*j/steps,y=heightAt(world,x,z);
-      assert(grid.free(x,z),`${label}: corridor ${i} centre line physically blocked`);
+      const inChamber=world.rooms.some(r=>Math.abs(x-r.x)<r.w/2-.1&&Math.abs(z-r.z)<r.d/2-.1);
+      if(!inChamber)assert(grid.free(x,z),`${label}: corridor ${i} centre line physically blocked`);
       if(prior!==null)assert(Math.abs(y-prior)<.4,`${label}: corridor ${i} contains a step instead of a ramp`);prior=y;
     }
   }
   return {accessibleCells:grid.accessibleCells,targets:targets.length};
+}
+
+function encountersAndSupplies(world,label){
+  const depth=new Map([[0,0]]);for(let pass=0;pass<world.rooms.length;pass++)for(const edge of world.connections)for(const [a,b] of [[edge.from,edge.to],[edge.to,edge.from]])if(depth.has(a)&&(!depth.has(b)||depth.get(b)>depth.get(a)+1))depth.set(b,depth.get(a)+1);
+  const initial=new Set([...depth].filter(([id,n])=>id&&n===1).map(([id])=>id)),ordinary=world.enemies.filter(e=>!e.boss&&!e.bossWave),ids=new Set(),budget=[];
+  assert.equal(world.progression.version,1);assert.equal(world.progression.maxActive,[8,10,12][world.stage]);
+  assert.equal(world.progression.weaponSlots,4);assert.equal(world.progression.startShield,false);
+  assert.deepEqual(Array.from(world.progression.ammoCaps),[180,36,12,16]);
+  if(world.stage===0){assert.deepEqual(Array.from(world.progression.startWeapons),[true,false,false,false]);assert.deepEqual(Array.from(world.progression.startAmmo),[48,0,0,0]);}
+  assert.equal(world.encounters.length,world.rooms.length-2);assert.equal(world.encounterBays.length,world.encounters.length);
+  assert.equal(ordinary.filter(e=>e.deployed).length,[6,8,8][world.stage],`${label}: initial crowd is not paced`);
+  const hit=(a,b,c)=>{let low=0,high=1;for(const [k,min,max] of [[0,c.minX,c.maxX],[1,c.minY,c.maxY],[2,c.minZ,c.maxZ]]){const d=b[k]-a[k];if(Math.abs(d)<1e-9){if(a[k]<min||a[k]>max)return false;}else{const x=(min-a[k])/d,y=(max-a[k])/d;low=Math.max(low,Math.min(x,y));high=Math.min(high,Math.max(x,y));if(low>high)return false;}}return high>0&&low<.999;};
+  const clear=(x,y,z,r=.38)=>!world.colliders.some(c=>c.minY<y+1.8&&c.maxY>y+.05&&Math.hypot(Math.max(c.minX-x,0,x-c.maxX),Math.max(c.minZ-z,0,z-c.maxZ))<r);
+  for(const q of world.encounters){
+    const room=world.rooms[q.zoneId],bay=world.encounterBays.find(b=>b.zoneId===q.zoneId),cover=world.colliders.find(c=>c.mesh===bay.coverMesh),mesh=world.meshes[bay.coverMesh];
+    assert(room&&!room.bossArena&&room.id!==0&&cover&&mesh.solid&&mesh.destructibleId&&mesh.category==='reinforcement_baffle',`${label}: reinforcement has no real destructible entry cover`);
+    assert(world.destructibles.find(g=>g.id===mesh.destructibleId)?.freestanding,`${label}: a low service screen incorrectly supports the roof`);
+    assert(world.destructibles.filter(g=>g.kind==='roof').every(g=>!g.supports.includes(mesh.destructibleId)),`${label}: a roof hangs from a disconnected service screen`);
+    const parentId=world.connections.flatMap(c=>c.from===room.id?[c.to]:c.to===room.id?[c.from]:[]).filter(id=>depth.get(id)<depth.get(room.id)).sort((a,b)=>a-b)[0],parent=world.rooms[parentId];
+    assert.deepEqual(Array.from(bay.normal),[Math.sign(room.x-parent.x),Math.sign(room.z-parent.z)],`${label}: entry cover faces away from the actual approach`);
+    assert(q.waveGap>=3&&q.maxActive>=Math.max(...q.waves.map(w=>w.enemyIds.length))&&q.maxActive<=6);
+    assert.equal(q.spawnEntries.length,4);
+    for(const [j,p] of q.spawnEntries.entries()){
+      assert.equal(p.y,room.y);assert(clear(p.x,p.y,p.z,.38));assert(Math.abs(heightAt(world,p.x,p.z)-p.y)<.001);
+      assert((p.x-bay.x)*bay.normal[0]+(p.z-bay.z)*bay.normal[1]>=1.89,`${label}: a heavy barrel can emerge through entry cover`);
+      for(const other of q.spawnEntries.slice(j+1))assert(Math.hypot(p.x-other.x,p.z-other.z)>=1.5-1e-7,`${label}: reserve entries overlap`);
+    }
+    // Independently find a real, walkable observation position that hides every
+    // body/head sample behind the screen. Turning the camera cannot reveal it.
+    let hidden=false;
+    for(const d of [9,10,11,12,13,14])for(const t of [0,-1.2,1.2,-2.4,2.4]){
+      const x=bay.x-bay.normal[0]*d+bay.normal[1]*t,z=bay.z-bay.normal[1]*d-bay.normal[0]*t,y=heightAt(world,x,z);
+      if(y===null||Math.abs(y-room.y)>.01||!clear(x,y,z,.28)||q.spawnEntries.some(p=>Math.hypot(x-p.x,z-p.z)<10))continue;
+      const origin=[x,y+1.62,z];
+      if(q.spawnEntries.every(p=>[.2,1.1,2.15].every(h=>[[-.9,0],[.9,0],[0,-.9],[0,.9],[0,0]].every(([dx,dz])=>hit(origin,[p.x+dx,p.y+h,p.z+dz],cover)))))hidden=true;
+    }
+    assert(hidden,`${label}: ${q.id} has no safely occluded observation/entry pair`);
+    let hp=0;const drops=[0,0,0,0];
+    for(const [wave,w] of q.waves.entries()){
+      assert(w.enemyIds.length>=3&&w.enemyIds.length<=6,`${label}: combat wave is packed or singleton`);
+      for(const id of w.enemyIds){assert(Number.isInteger(id)&&id>=0&&id<world.enemies.length&&!ids.has(id),`${label}: duplicate or invalid finite enemy ID`);ids.add(id);
+        const e=world.enemies[id];assert(!e.boss&&!e.bossWave&&e.encounterId===q.id&&e.wave===wave&&e.zoneId===q.zoneId);
+        assert.equal(e.deployed,initial.has(q.zoneId)&&wave===0,`${label}: reserve is physical before deployment`);
+        if(initial.has(q.zoneId)||depth.get(q.zoneId)===2&&wave===0)assert(!e.weapon,`${label}: explosive specialist precedes the available launcher`);
+        if(!e.deployed)assert(q.spawnEntries.some(p=>Math.hypot(p.x-e.x,p.z-e.z)<.001&&p.y===e.y));
+        hp+=[3,5,4][e.type];if(e.drop){assert([0,1,2,3].includes(e.drop.weapon)&&Number.isInteger(e.drop.amount)&&e.drop.amount>0&&e.drop.amount<=4);drops[e.drop.weapon]+=e.drop.amount;}
+      }
+    }
+    const supplies=world.pickups.filter(p=>p.zoneId===q.zoneId&&['ammo','weapon'].includes(p.kind)),ammo=[0,0,0,0];for(const p of supplies)ammo[p.weapon]+=p.amount;
+    // Expected usable damage assumes 45% missed cells, only 2.4 damage from a
+    // 5.74-pellet shell and 5.5 from an 8.5 blast. No future loot, incoming ammo,
+    // store purchase, upgrade or free melee damage is needed for this reserve.
+    // Grenades and the shield are extra choices; no perfect rebound or dual
+    // firing is required to make the original per-portion budget sufficient.
+    const expected=ammo[0]*.55+ammo[1]*2.4+ammo[2]*5.5;
+    assert(expected>=hp*1.10,`${label}: ${q.id} ammo budget assumes perfect aim or future kills (${expected}/${hp})`);
+    const firstHP=q.waves[0].enemyIds.reduce((n,id)=>n+[3,5,4][world.enemies[id].type],0);
+    assert(ammo[0]*.55>=firstHP,`${label}: first wave needs a weapon that has not been found`);
+    budget.push({zone:q.zoneId,waves:q.waves.map(w=>w.enemyIds.length),hp,ammo,finiteDrops:drops,conservativeDamage:+expected.toFixed(1),margin:+(expected/hp-1).toFixed(3)});
+  }
+  assert.equal(ids.size,ordinary.length);for(const [i,e] of world.enemies.entries())if(!e.boss&&!e.bossWave)assert(ids.has(i));
+  for(const [i,e] of ordinary.filter(e=>e.deployed).entries())for(const other of ordinary.filter(e=>e.deployed).slice(i+1))assert(Math.hypot(e.x-other.x,e.z-other.z)>1.8,`${label}: opening patrol bodies are packed`);
+  const pickupIds=new Set();for(const p of world.pickups){assert(!pickupIds.has(p.id)&&typeof p.id==='string');pickupIds.add(p.id);assert(['health','ammo','weapon','shield'].includes(p.kind));assert(Number.isInteger(p.amount)&&p.amount>0&&p.amount<=180);if(['ammo','weapon'].includes(p.kind))assert([0,1,2,3].includes(p.weapon));if(p.kind==='shield')assert(!Object.hasOwn(p,'weapon')&&p.amount===1);assert(Math.abs(heightAt(world,p.x,p.z)-p.y)<.01,`${label}: supply floats above its actual floor`);}
+  const weapons=world.pickups.filter(p=>p.kind==='weapon');assert.equal(weapons.filter(p=>p.weapon===1).length,2);for(const zone of initial)assert(weapons.some(p=>p.weapon===1&&p.zoneId===zone));
+  for(const [zone,n] of depth)if(n===2&&!world.rooms[zone].bossArena)assert(weapons.some(p=>p.weapon===2&&p.zoneId===zone),`${label}: branch has explosive threats before a reachable Rupture rack`);
+  for(const p of weapons)assert(p.weapon===1?depth.get(p.zoneId)===1:p.weapon===2?depth.get(p.zoneId)===2:depth.get(p.zoneId)>=2&&p.zoneId===world.shops[1].zoneId);
+  const shield=world.pickups.filter(p=>p.kind==='shield'),grenades=world.pickups.filter(p=>p.weapon===3);assert.equal(shield.length,1);assert.equal(depth.get(shield[0].zoneId),1);
+  assert.equal(grenades.length,3);assert.equal(grenades.filter(p=>p.kind==='weapon').length,1);assert.equal(grenades.filter(p=>p.kind==='ammo').length,2);assert.equal(grenades.reduce((n,p)=>n+p.amount,0),12);
+  assert(world.enemies.filter(e=>e.weapon==='grenade').every(e=>e.drop.weapon===3&&e.drop.amount===1));
+  const newSupplies=world.pickups.filter(p=>p.id.startsWith('arsenal-'));assert.equal(newSupplies.length,4);
+  for(const p of newSupplies){assert(clear(p.x,p.y,p.z,.75));for(const q of world.pickups)if(p!==q)assert(Math.hypot(p.x-q.x,p.z-q.z)>1.35,`${label}: new equipment overlaps an old pickup`);for(const q of world.encounters.flatMap(e=>e.spawnEntries))assert(Math.hypot(p.x-q.x,p.z-q.z)>1.65,`${label}: new equipment blocks a reserve entry`);}
+  const arena=world.rooms.find(r=>r.bossArena),boss=world.enemies.at(-1),bossAmmo=[0,0,0,0];
+  for(const p of world.pickups.filter(p=>p.zoneId===arena.id&&p.kind==='ammo'))bossAmmo[p.weapon]+=p.amount;
+  assert.equal(world.pickups.filter(p=>p.zoneId===arena.id&&p.kind==='ammo').length,13);assert.equal(bossAmmo[3],4);
+  assert(bossAmmo[0]*1.6>=boss.maxHp+18*1.8,`${label}: boss plus guards lack a conservative heart-shot resupply`);
+  assert.equal(world.shops.length,3);assert.equal(new Set(world.shops.map(s=>s.id)).size,3);
+  for(const shop of world.shops){assert(shop.name&&Number.isFinite(shop.y));assert(clear(shop.x,shop.y,shop.z,.38));assert(Math.abs(heightAt(world,shop.x,shop.z)-shop.y)<.01);assert.equal(shop.z,shop.terminal.z+1.05);const m=world.meshes.find(m=>m.category==='shop_terminal'&&m.p[0]===shop.terminal.x&&m.p[2]===shop.terminal.z);assert(m&&m.indestructible&&m.solid&&!m.destructibleId,`${label}: a destroyed building can remove the shop`);assert(world.colliders.some(c=>world.meshes[c.mesh]===m));}
+  for(const pipe of world.pipes){
+    const m=world.meshes[pipe.nozzleMesh];assert(m&&m.category==='pressure_nozzle'&&m.destructibleId===pipe.destructibleId);
+    const rx=m.r[0],ry=m.r[1],axis=[Math.sin(ry)*Math.sin(rx),Math.cos(rx),Math.cos(ry)*Math.sin(rx)];
+    for(let j=0;j<3;j++)assert(Math.abs(m.p[j]+axis[j]*m.s[1]/2-pipe.nozzle[j])<1e-7,`${label}: hot jet starts in empty air`);
+    const base=[m.p[0]-axis[0]*m.s[1]/2,m.p[1]-axis[1]*m.s[1]/2,m.p[2]-axis[2]*m.s[1]/2];assert(Math.abs(base[0]-pipe.x)<.275&&Math.abs(base[2]-pipe.z)<.275,`${label}: nozzle is disconnected from its pressure manifold`);
+  }
+  return {budget,bossAmmo,arsenal:{slots:4,shield:shield[0].zoneId,grenadeRack:grenades.find(p=>p.kind==='weapon').zoneId,grenadeCaches:grenades.filter(p=>p.kind==='ammo').map(p=>p.zoneId),floorGrenades:12,finiteGrenadierDrops:8}};
 }
 
 const summary = [], signatures = new Set(), topologyIds = new Set(), topologyGraphs = new Map(), footprints = new Map(), biomes = new Set();
@@ -241,11 +350,12 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   assert.equal(serialized, JSON.stringify(repeated), `${label}: nondeterministic generation`);
   signatures.add(createHash('sha256').update(serialized).digest('hex'));
   assert.equal(world.cores.length, 3, `${label}: expected three required relays`);
-  assert(world.meshes.length<=18000&&world.colliders.length<=500,`${label}: stage exceeds geometry budget`);
+  assert(world.meshes.length<=18000&&world.colliders.length<=512,`${label}: stage exceeds geometry budget`);
   assert.equal(world.generation,generation,`${label}: changed topology lacks a checkpoint generation marker`);
   outdoorIntegrity(world,label);
   machineryAndTerrain(world,label);
   jumpPadIntegrity(world,label);
+  const economy=encountersAndSupplies(world,label);
   biomes.add(world.environment.biome);
   const details=world.detailStats;
   assert(details&&Number.isInteger(details.base)&&details.base>0&&details.base<world.meshes.length,`${label}: no layered art pass`);
@@ -359,7 +469,7 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   assert.equal(world.traps.length,3);assert.deepEqual(Array.from(world.traps,t=>t.kind),['blade','press','spikes']);assert.equal(world.pipes.length,4);
   const ids=new Set(world.destructibles.map(d=>d.id)),owned=new Set();
   for(const d of world.destructibles){assert(d.meshes.length>0&&d.strength>0);for(const i of d.meshes){assert(!owned.has(i),`${label}: decoration belongs to two destructible bodies`);owned.add(i);assert.equal(world.meshes[i].destructibleId,d.id);}}
-  for(const [i,m] of world.meshes.entries())if(!m.terrain&&!m.ground)assert(owned.has(i),`${label}: undestroyable loose object`);
+  for(const [i,m] of world.meshes.entries())if(!m.terrain&&!m.ground&&!m.indestructible)assert(owned.has(i),`${label}: undestroyable loose object`);
   for(const a of world.traps.concat(world.pipes)){assert(ids.has(a.destructibleId));assert(!inEntry(a));assert(a.damage>0);}
   for(const roof of world.destructibles.filter(g=>g.kind==='roof'))assert(roof.supports.length&&roof.supports.every(id=>ids.has(id)),`${label}: roof has no physical support graph`);
   const monuments=world.meshes.filter(m=>m.region?.startsWith('arena-monument-'));
@@ -378,7 +488,7 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
 
   const entry = reachability(world, label);
   if(world.hazards.length)reachability(world,label+' with every vent hot',true);
-  summary.push({ seed, stage,meshes:world.meshes.length,colliders:world.colliders.length,trees:world.natureStats.trees,outdoorRooms:world.natureStats.outdoorRooms,tiers,ambientSources:world.ambience.length, ...entry });
+  summary.push({ seed, stage, economy,meshes:world.meshes.length,colliders:world.colliders.length,trees:world.natureStats.trees,outdoorRooms:world.natureStats.outdoorRooms,tiers,ambientSources:world.ambience.length, ...entry });
 }
 assert.equal(signatures.size, seeds.length * 3, 'Seeds/stages unexpectedly produce identical worlds');
 assert.equal(topologyIds.size,3,'Stages must have distinct topology identities');
@@ -392,13 +502,13 @@ console.log(JSON.stringify({
     'distinct stage graphs and footprints', 'every corridor physically connected',
     'all objectives accessible with every vent hot', 'safe hazard warning windows',
     'three colossal guardians, open arenas and scripted-wave clearance', 'geometry budgets',
-    'explicit generation 5 checkpoint identity', 'LOD silhouettes preserved',
+    'explicit generation 6 checkpoint identity', 'LOD silhouettes preserved',
     'collision geometry visible', 'solid trunks at eye height', 'real open sky at spawn',
     'three distinct outdoor biomes', 'sealed visible outdoor boundaries',
     'continuous 3D ramps and terraces', 'tenfold individually simulated garrisons', 'progressive mechanism unlock reachability', 'two unobstructed elevator shafts with ramp alternatives', 'ballistic launch discs and 3m landing zones', 'real ceilings stop airborne bodies', 'industrial and natural detail systems',
-    'wall-attached rigid details', 'ambient surface orientation', 'monumental arena silhouettes outside giant envelope', 'ambient explosions preserve mission controls', 'seven real horror cue anchors'],
+    'wall-attached rigid details', 'ambient surface orientation', 'monumental arena silhouettes outside giant envelope', 'ambient explosions preserve mission controls', 'seven real horror cue anchors', 'small sequenced encounters and four physically hidden entries', 'finite per-encounter ammo budgets with missed-shot margin', 'progressive weapon racks on both opening branches', 'three reachable persistent workshops', 'real connected steam nozzles', 'branched trees with shared irregular crown geometry', 'four firearms, an early shield and two finite grenade caches'],
   meshes:{min:Math.min(...summary.map(s=>s.meshes)),max:Math.max(...summary.map(s=>s.meshes))},
-  representativeStages:summary.filter(s=>s.seed===96).map(s=>({stage:s.stage,meshes:s.meshes,colliders:s.colliders,trees:s.trees,outdoorRooms:s.outdoorRooms,tiers:s.tiers,ambientSources:s.ambientSources})),
+  representativeStages:summary.filter(s=>s.seed===96).map(s=>({stage:s.stage,meshes:s.meshes,colliders:s.colliders,trees:s.trees,outdoorRooms:s.outdoorRooms,tiers:s.tiers,ambientSources:s.ambientSources,economy:s.economy})),
   accessibleCells: { min: Math.min(...summary.map(s => s.accessibleCells)),
     max: Math.max(...summary.map(s => s.accessibleCells)) },
   targetsChecked: summary.reduce((sum, s) => sum + s.targets, 0)
