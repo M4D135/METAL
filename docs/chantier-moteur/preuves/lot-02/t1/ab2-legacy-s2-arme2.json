@@ -1,0 +1,148 @@
+{
+ "schema": "metal-lot02-t1-ab2-summary-v1",
+ "source": {
+  "schema": "metal-ab2-v1",
+  "checksum": "c5aa7f6fff671206faa7fd7f9fd99197fa9e3d5aa5bafa62d7ba6ab77ec76ed5",
+  "identical": false
+ },
+ "environment": {
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadBefore": [
+   3.546875,
+   5.04345703125,
+   5.505859375
+  ],
+  "loadAfter": [
+   4.1630859375,
+   5.0703125,
+   5.5009765625
+  ]
+ },
+ "method": {
+  "realm": "main",
+  "clock": "process.cpuUsage per sim.step; user + system microseconds",
+  "dt": 0.016666666666666666,
+  "seed": 96,
+  "weapon": 2,
+  "requestedSteps": 1800,
+  "warmupPasses": 1,
+  "measuredPasses": 2,
+  "pairing": "AB then BA at each step; first order also reverses with the pass number. Each side has independent module closures, window, world, brain and simulation.",
+  "warmup": "Full first scenario passes are retained as raw evidence and excluded from every timing aggregate.",
+  "ratio": "B/A median of paired per-step CPU values where both sides meet minCpuUs; total ratio is reported separately.",
+  "minCpuUs": 5,
+  "counters": "Separate untimed instrumented A/B replay, verified against the matching uninstrumented variant.",
+  "limits": "Node process CPU includes GC/JIT; does not prove browser frame time, GPU speed or device FPS. FNV32 is a regression signal, not a collision-free proof; final snapshots also use SHA-256."
+ },
+ "variants": {
+  "a": {
+   "label": "avant 71eca61",
+   "sourceSha256": {
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+    "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "simulation": "96544ee94904791cc223e19c510065407e8f9ac7b333ff5771a0de73485c9ca4"
+   }
+  },
+  "b": {
+   "label": "après T1",
+   "sourceSha256": {
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+    "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "simulation": "985aa31c8d8109461d553955347da0ddf88649ff3d962ce7662fd10905b25cd8"
+   }
+  }
+ },
+ "scenarios": [
+  {
+   "id": "legacy-s2",
+   "identical": false,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": 1651,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "a081121a",
+    "4cb96028"
+   ],
+   "snapshotSha256": [
+    "903a02007b77a49a8e495898917767d75cf9fa769c50282d4beecfe906987722",
+    "0a6ee1f4ed05d32444d70b8782fde2a19a64718c1243e3005cd14a6f6140c1c4"
+   ],
+   "timing": {
+    "totalMs": [
+     2209.217,
+     2103.499
+    ],
+    "totalRatio": 0.9521,
+    "medianPairedRatio": 0.9922,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.614,
+     0.584
+    ],
+    "p99Ms": [
+     2.885,
+     2.536
+    ],
+    "maxMs": [
+     12.629,
+     13.244
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 2929277,
+     "blocked": 247680,
+     "segmentFree": 3301,
+     "astarPops": 4522,
+     "astarNodes": 4471,
+     "revisions": 6
+    },
+    "b": {
+     "ground": 2709144,
+     "blocked": 27515,
+     "segmentFree": 3309,
+     "astarPops": 4590,
+     "astarNodes": 4539,
+     "revisions": 6
+    },
+    "identical": false
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      1045,
+      878,
+      387,
+      221,
+      210
+     ],
+     [
+      1046,
+      822,
+      389,
+      238,
+      235
+     ]
+    ],
+    "blockedMax": [
+     5212,
+     5235
+    ]
+   }
+  }
+ ]
+}

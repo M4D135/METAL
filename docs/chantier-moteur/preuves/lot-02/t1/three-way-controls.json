@@ -1,0 +1,255 @@
+{
+ "schema": "metal-lot02-t1-three-way-v1",
+ "clock": "performance.now par sim.step",
+ "note": "Contrôles : ordre de chargement A,T,P ; copies identiques A,P,P2 et A,T,T2 ; reprise A,P,T. 300 pas, 8 répétitions mesurées.",
+ "rows": [
+  {
+   "scenario": "campaign-w16",
+   "steps": 300,
+   "measuredReps": 8,
+   "load": [
+    "A",
+    "T",
+    "P"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 213.4,
+    "T": 156.2,
+    "P": 180.8
+   },
+   "totalRatio": {
+    "T/A": 0.732,
+    "P/A": 0.847,
+    "P/T": 1.157
+   },
+   "medianStepRatio": {
+    "T/A": 0.94,
+    "P/A": 0.992,
+    "P/T": 1.076
+   },
+   "maxMs": {
+    "A": 16.26,
+    "T": 1.82,
+    "P": 3.64
+   }
+  },
+  {
+   "scenario": "legacy-s2",
+   "steps": 300,
+   "measuredReps": 8,
+   "load": [
+    "A",
+    "T",
+    "P"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 365.3,
+    "T": 256.8,
+    "P": 296
+   },
+   "totalRatio": {
+    "T/A": 0.703,
+    "P/A": 0.81,
+    "P/T": 1.153
+   },
+   "medianStepRatio": {
+    "T/A": 0.858,
+    "P/A": 0.968,
+    "P/T": 1.069
+   },
+   "maxMs": {
+    "A": 1.85,
+    "T": 2.14,
+    "P": 3.08
+   }
+  },
+  {
+   "scenario": "campaign-w16",
+   "steps": 300,
+   "measuredReps": 8,
+   "load": [
+    "A",
+    "P",
+    "P2"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 208.1,
+    "P": 173.9,
+    "P2": 167
+   },
+   "totalRatio": {
+    "P/A": 0.835,
+    "P2/A": 0.803,
+    "P2/P": 0.961
+   },
+   "medianStepRatio": {
+    "P/A": 0.965,
+    "P2/A": 0.957,
+    "P2/P": 0.986
+   },
+   "maxMs": {
+    "A": 1.48,
+    "P": 1.67,
+    "P2": 2.12
+   }
+  },
+  {
+   "scenario": "legacy-s2",
+   "steps": 300,
+   "measuredReps": 8,
+   "load": [
+    "A",
+    "P",
+    "P2"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 320.4,
+    "P": 273.3,
+    "P2": 266.8
+   },
+   "totalRatio": {
+    "P/A": 0.853,
+    "P2/A": 0.833,
+    "P2/P": 0.976
+   },
+   "medianStepRatio": {
+    "P/A": 0.96,
+    "P2/A": 0.956,
+    "P2/P": 0.994
+   },
+   "maxMs": {
+    "A": 2.48,
+    "P": 2.5,
+    "P2": 2.63
+   }
+  },
+  {
+   "scenario": "campaign-w16",
+   "steps": 300,
+   "measuredReps": 8,
+   "load": [
+    "A",
+    "T",
+    "T2"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 224.5,
+    "T": 167.3,
+    "T2": 196.7
+   },
+   "totalRatio": {
+    "T/A": 0.745,
+    "T2/A": 0.876,
+    "T2/T": 1.176
+   },
+   "medianStepRatio": {
+    "T/A": 0.959,
+    "T2/A": 1.023,
+    "T2/T": 1.119
+   },
+   "maxMs": {
+    "A": 3.89,
+    "T": 1.64,
+    "T2": 1.61
+   }
+  },
+  {
+   "scenario": "legacy-s2",
+   "steps": 300,
+   "measuredReps": 8,
+   "load": [
+    "A",
+    "T",
+    "T2"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 465.6,
+    "T": 333.6,
+    "T2": 354.2
+   },
+   "totalRatio": {
+    "T/A": 0.716,
+    "T2/A": 0.761,
+    "T2/T": 1.062
+   },
+   "medianStepRatio": {
+    "T/A": 0.784,
+    "T2/A": 0.858,
+    "T2/T": 1.044
+   },
+   "maxMs": {
+    "A": 2.9,
+    "T": 5.66,
+    "T2": 5.37
+   }
+  },
+  {
+   "scenario": "campaign-w16",
+   "steps": 300,
+   "measuredReps": 8,
+   "load": [
+    "A",
+    "P",
+    "T"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 269.1,
+    "P": 235.3,
+    "T": 223.2
+   },
+   "totalRatio": {
+    "P/A": 0.875,
+    "T/A": 0.83,
+    "T/P": 0.948
+   },
+   "medianStepRatio": {
+    "P/A": 0.956,
+    "T/A": 0.952,
+    "T/P": 0.993
+   },
+   "maxMs": {
+    "A": 1.62,
+    "P": 14.75,
+    "T": 3.2
+   }
+  },
+  {
+   "scenario": "legacy-s2",
+   "steps": 300,
+   "measuredReps": 8,
+   "load": [
+    "A",
+    "P",
+    "T"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 439.7,
+    "P": 306.9,
+    "T": 340
+   },
+   "totalRatio": {
+    "P/A": 0.698,
+    "T/A": 0.773,
+    "T/P": 1.108
+   },
+   "medianStepRatio": {
+    "P/A": 0.854,
+    "T/A": 0.893,
+    "T/P": 1.041
+   },
+   "maxMs": {
+    "A": 2.61,
+    "P": 2.9,
+    "T": 3.07
+   }
+  }
+ ]
+}

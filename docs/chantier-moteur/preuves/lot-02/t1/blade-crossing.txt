@@ -1,0 +1,17 @@
+course 0.6 m, période 3 s, phase 0 | avant : non traversé, z final 0.79 (tué par la lame), bloqué au plus 0 s | après : non traversé, z final 0.79 (tué par la lame), bloqué au plus 0 s
+course 0.6 m, période 3 s, phase 0.25 | avant : non traversé, z final -7 (immobile, tactique hold), bloqué au plus 0 s | après : non traversé, z final -0.02 (tué par la lame), bloqué au plus 0 s
+course 0.6 m, période 3 s, phase 0.5 | avant : non traversé, z final -7 (immobile, tactique hold), bloqué au plus 0 s | après : non traversé, z final -0.93 (tué par la lame), bloqué au plus 0 s
+course 0.6 m, période 3 s, phase 0.75 | avant : non traversé, z final -7 (immobile, tactique hold), bloqué au plus 0 s | après : traversé en 4.875 s, z final 1.51, bloqué au plus 0.4 s
+course 0.6 m, période 7 s, phase 0 | avant : non traversé, z final -1.04 (tué par la lame), bloqué au plus 0 s | après : traversé en 5.05 s, z final 1.51, bloqué au plus 1.15 s
+course 0.6 m, période 7 s, phase 0.25 | avant : traversé en 5.025 s, z final 1.55, bloqué au plus 0.63 s | après : traversé en 4.675 s, z final 1.53, bloqué au plus 0.63 s
+course 0.6 m, période 7 s, phase 0.5 | avant : non traversé, z final -7 (immobile, tactique hold), bloqué au plus 0 s | après : traversé en 4.3 s, z final 1.55, bloqué au plus 0 s
+course 0.6 m, période 7 s, phase 0.75 | avant : non traversé, z final -7 (immobile, tactique hold), bloqué au plus 0 s | après : traversé en 4.125 s, z final 1.54, bloqué au plus 0 s
+course 0.9 m, période 3 s, phase 0 | avant : non traversé, z final 0.79 (tué par la lame), bloqué au plus 0 s | après : non traversé, z final 0.79 (tué par la lame), bloqué au plus 0 s
+course 0.9 m, période 3 s, phase 0.25 | avant : non traversé, z final 0.09 (tué par la lame), bloqué au plus 0 s | après : non traversé, z final 0.09 (tué par la lame), bloqué au plus 0 s
+course 0.9 m, période 3 s, phase 0.5 | avant : non traversé, z final -7 (immobile, tactique hold), bloqué au plus 0 s | après : non traversé, z final -0.61 (tué par la lame), bloqué au plus 0 s
+course 0.9 m, période 3 s, phase 0.75 | avant : non traversé, z final -0.4 (tué par la lame), bloqué au plus 0 s | après : non traversé, z final -0.12 (tué par la lame), bloqué au plus 0.2 s
+course 0.9 m, période 7 s, phase 0 | avant : non traversé, z final -0.25 (tué par la lame), bloqué au plus 0 s | après : non traversé, z final -0.66 (tué par la lame), bloqué au plus 0 s
+course 0.9 m, période 7 s, phase 0.25 | avant : non traversé, z final -0.81 (tué par la lame), bloqué au plus 0 s | après : traversé en 4.65 s, z final 1.5, bloqué au plus 0.8 s
+course 0.9 m, période 7 s, phase 0.5 | avant : traversé en 4.475 s, z final 1.55, bloqué au plus 0.17 s | après : traversé en 4.35 s, z final 1.52, bloqué au plus 0.4 s
+course 0.9 m, période 7 s, phase 0.75 | avant : non traversé, z final -7 (immobile, tactique hold), bloqué au plus 0 s | après : traversé en 4.05 s, z final 1.53, bloqué au plus 0 s
+total 16 réglages | avant : 2 traversées, 7 tués, 7 immobiles, blocage max 0.63 s | après : 8 traversées, 8 tués, 0 immobiles, blocage max 1.15 s

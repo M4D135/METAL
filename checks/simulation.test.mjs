@@ -1859,15 +1859,98 @@ test('Director pressure, difficulty and event timing round-trip exactly and malf
   }
 });
 
-test('A breach changes collision immediately while a large navigation grid is refreshed in bounded batches', () => {
+// Lot 02 T1 (SIM-01, SIM-V1, BOSS-08): the walking map follows changes locally. This test
+// replaces the former 'navPending > 0' requirement on a local breach, which now fits a step.
+test('A breach changes collision immediately; the walking map follows it locally in bounded batches, and a change beyond a quarter of the grid stays amortised', () => {
   const world = demolitionFixture({ bounds: { minX: -100, maxX: 100, minZ: -100, maxZ: 100 }, walkable: [{ x: 0, z: 0, w: 200, d: 200, y: 0 }] });
   const sim = FSimulation.create(world); sim.step(.01, { weapon: 2, fire: true });
-  let pending = false;
-  for (let i = 0; i < 50; i++) { sim.step(.01); assert(sim.state.aiStats.navUpdates <= 768); pending ||= sim.state.aiStats.navPending > 0; }
-  assert(pending, 'Large-grid maintenance must actually be amortised'); assert.equal(sim.blocked(0, -8), false);
+  let pending = 0, updates = 0;
+  for (let i = 0; i < 50; i++) { sim.step(.01); assert(sim.state.aiStats.navUpdates <= 768); updates += sim.state.aiStats.navUpdates; pending = Math.max(pending, sim.state.aiStats.navPending); }
+  assert(sim.state.destructionRevision > 0); assert.equal(sim.blocked(0, -8), false);
+  assert.equal(pending, 0, 'A local breach must not queue the whole large grid again'); assert(updates > 0 && updates < 200, 'Only cells beside the changed boxes are evaluated');
+  assert.equal(sim.nav.cells[sim.nav.idx(0, -8)], 1, 'The walking map must follow the breach without waiting for a queue');
   sim.move(sim.state.player, 0, -10); assert(sim.state.player.z < -9.8, 'Physical passage must not wait for the advisory navigation queue');
-  const point = sim.snapshot(); assert.equal(FSimulation.create(world).restore(point), true);
-  assert.equal(sim.nav.cells[sim.nav.idx(0, -8)], 1, 'A checkpoint must materialise the updated walking map');
+  const restored = FSimulation.create(world); assert.equal(restored.restore(sim.snapshot()), true);
+  assert.deepEqual(restored.nav.cells, sim.nav.cells, 'The local walking map must equal the full rebuild of a restored checkpoint');
+  // A wall across a smaller level: the marked area exceeds a quarter of the grid, which is queued again as a whole.
+  const wide = demolitionFixture({ bounds: { minX: -10, maxX: 10, minZ: -12, maxZ: 12 }, walkable: [{ x: 0, z: 0, w: 20, d: 24, y: 0 }],
+    colliders: [{ minX: -10, maxX: 10, minY: 0, maxY: 4, minZ: -8.09, maxZ: -7.91, mesh: 0 }], meshes: [{ shape: 'box', p: [0, 2, -8], s: [20, 4, .18], r: [0, 0, 0], mat: 3 }] });
+  const amortised = FSimulation.create(wide); assert(amortised.nav.cells.length > 768); amortised.step(.01, { weapon: 2, fire: true });
+  for (let i = 0; i < 50 && !amortised.state.aiStats.navPending; i++) { amortised.step(.01); assert(amortised.state.aiStats.navUpdates <= 768); }
+  assert(amortised.state.aiStats.navPending > 0, 'Large-area maintenance must actually be amortised'); assert.equal(amortised.blocked(0, -8), false);
+  const copy = FSimulation.create(wide); assert.equal(copy.restore(amortised.snapshot()), true);
+  assert.equal(amortised.state.aiStats.navPending, 0, 'A checkpoint must materialise the queued walking map');
+  assert.deepEqual(copy.nav.cells, amortised.nav.cells); assert.equal(amortised.nav.cells[amortised.nav.idx(0, -8)], 1);
+});
+
+// Compares the live walking map and every cached A* edge with a full recomputation from the
+// static map (the walking cells and the cached edges both ignore moving trap poses).
+function navAgainstRebuild(sim) {
+  const { cells, nx, coord, edgeKnown, edgeOpen, canTraverse } = sim.nav;
+  let cellErrors = 0, known = 0, edgeErrors = 0;
+  for (let i = 0; i < cells.length; i++) {
+    const [x, z] = coord(i), free = sim.blocked(x, z, .4, sim.ground(x, z), undefined, undefined, []) ? 0 : 1;
+    if (cells[i] !== free) cellErrors++;
+    const ix = i % nx, neighbors = [ix ? i - 1 : -1, ix < nx - 1 ? i + 1 : -1, i - nx, i + nx];
+    for (let k = 0; k < 4; k++) {
+      const j = neighbors[k], mask = 1 << k;
+      if (j < 0 || j >= cells.length || !(edgeKnown[i] & mask)) continue;
+      known++; if (Boolean(edgeOpen[i] & mask) !== canTraverse(...coord(i), ...coord(j), .4)) edgeErrors++;
+    }
+  }
+  return { cellErrors, known, edgeErrors };
+}
+function gateFixture(extra = {}) {
+  const wall = (minX, maxX) => ({ minX, maxX, minY: 0, maxY: 4, minZ: -6.09, maxZ: -5.91 }), colliders = [{ ...wall(-12, -2), mesh: 0 }, { ...wall(2, 12), mesh: 1 }];
+  return fixture({ generation: 5, bounds: { minX: -12, maxX: 12, minZ: -14, maxZ: 6 }, walkable: [{ x: 0, z: -4, w: 24, d: 20, y: 0 }], lights: [], colliders,
+    meshes: colliders.map(q => ({ shape: 'box', p: [(q.minX + q.maxX) / 2, 2, -6], s: [q.maxX - q.minX, 4, .18], r: [0, 0, 0], mat: 3 })),
+    destructibles: [{ id: 'west', kind: 'wall', strength: 18, meshes: [0], colliders: [0] }, { id: 'east', kind: 'wall', strength: 18, meshes: [1], colliders: [1] }],
+    mechanisms: [{ id: 'power', x: 0, y: 0, z: 1, name: 'Alimentation', kind: 'breaker', required: true }],
+    doors: [{ id: 'gate', x: 0, y: 0, z: -6, w: 4, d: .34, h: 3.1, requires: 'power' }],
+    enemies: [{ x: 0, z: -9.5, type: 0 }], ...extra });
+}
+
+test('After several breaches and a door opening, the walking map and every cached edge at rest equal a full rebuild', () => {
+  const world = gateFixture({ enemies: [{ x: 0, z: -9.5, type: 0 }, { x: -7, z: -11, type: 0 }],
+    traps: [{ id: 'blade', kind: 'blade', x: 7, y: .8, z: -10, w: .3, d: 1.35, h: .3, axis: 'x', travel: 1.65, period: 3, active: 2, warning: 1.2, phase: 0, damage: 18 }] });
+  const sim = FSimulation.create(world); let pending = 0;
+  const calm = () => { for (const e of sim.state.enemies) e.cooldown = 30; pending = Math.max(pending, sim.state.aiStats.navPending || 0); };
+  const run = seconds => { for (let t = 0; t < seconds - 1e-8; t += .025) { calm(); sim.step(.025); } calm(); };
+  sim.fire(); run(1); assert(navAgainstRebuild(sim).known > 0, 'An investigating enemy must have searched routes behind the wall');
+  for (const x of [-7, 7]) { const revision = sim.state.destructionRevision; aimAt(sim, x, 1.5, -6); sim.step(.01, { weapon: 2, fire: true }); run(1.6); assert(sim.state.destructionRevision > revision); assert.equal(sim.blocked(x, -6), false); }
+  assert.equal(sim.interact(), true); run(1.5); assert.equal(sim.state.doors[0].open, true); run(2);
+  assert.equal(pending, 0, 'Small breaches and a door must stay local'); assert.equal(sim.state.aiStats.navPending, 0);
+  const rest = navAgainstRebuild(sim); assert(rest.known > 0);
+  assert.equal(rest.cellErrors, 0, 'Walking cells at rest must equal a full rebuild'); assert.equal(rest.edgeErrors, 0, 'Cached edges at rest must equal a fresh test');
+  const copy = FSimulation.create(world); assert.equal(copy.restore(sim.snapshot()), true); assert.deepEqual(copy.nav.cells, sim.nav.cells);
+});
+
+test('A door opened by progression updates the walking map beside it as soon as it clears a body, matching a full rebuild at every step', () => {
+  const world = gateFixture(), sim = FSimulation.create(world), e = sim.state.enemies[0], { cells, idx } = sim.nav;
+  sim.fire(); for (let i = 0; i < 40; i++) { e.cooldown = 30; sim.step(.025); }
+  assert(navAgainstRebuild(sim).known > 0, 'Edges beside the closed door must be cached before it opens'); assert.equal(cells[idx(0, -6)], 0);
+  assert.equal(sim.interact(), true); let early = false;
+  for (let i = 0; i < 60; i++) {
+    e.cooldown = 30; sim.step(.025); const check = navAgainstRebuild(sim), door = sim.state.doors[0];
+    assert.equal(check.cellErrors, 0, `Walking cells at door progress ${door.progress}`); assert.equal(check.edgeErrors, 0, `Cached edges at door progress ${door.progress}`);
+    early ||= door.progress < 1 && cells[idx(0, -6)] === 1;
+  }
+  assert(early, 'The passage must enter the walking map once the door clears a body, before it is fully open');
+  assert.equal(sim.state.doors[0].open, true); assert.equal(cells[idx(0, -6)], 1);
+  const copy = FSimulation.create(world); assert.equal(copy.restore(sim.snapshot()), true); assert.deepEqual(copy.nav.cells, cells);
+});
+
+test('Route tests and cached edges read the static map only; a moving blade still blocks bodies (SIM-V1)', () => {
+  const world = fixture({ generation: 5, walkable: [{ x: 0, z: 0, w: 60, d: 60, y: 0 }],
+    traps: [{ id: 'blade', kind: 'blade', x: 0, y: .8, z: -4, w: .3, d: 1.35, h: .3, axis: 'x', travel: 1.65, period: 7, active: 2, warning: 1.2, phase: 0, damage: 18 }] });
+  const sim = FSimulation.create(world); let seen = 0;
+  for (let i = 0; i < 280; i++) {
+    sim.step(.025); const q = sim.state.traps[0].box; if (!q) continue;
+    const x = (q.minX + q.maxX) / 2, z = (q.minZ + q.maxZ) / 2; if (!sim.blocked(x, z)) continue; seen++;
+    assert.equal(sim.nav.canTraverse(x, z - 1.2, x, z + 1.2), true, 'A momentary trap pose must not enter a route test or the edge cache');
+    assert.equal(sim.nav.cells[sim.nav.idx(x, z)], 1);
+  }
+  assert(seen > 0, 'The blade must actually block a body during the test');
 });
 
 test('Periodic pipe bursts spare their physical source, but external destruction ends future autonomous bursts', () => {

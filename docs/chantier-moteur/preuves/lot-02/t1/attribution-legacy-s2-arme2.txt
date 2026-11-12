@@ -1,0 +1,1 @@
+legacy-s2 arme 2, 1800 pas | premier pas d'état différent : A/B 1651, A/C 1651, B/C null | première route différente : A/B 1651, A/C 1651, B/C null | arêtes de A dépendant d'un piège juste avant : 7

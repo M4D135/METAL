@@ -198,8 +198,12 @@
     const b=world.bounds,trapBoxes=[];let bossAttackSerial=0,explosionSerial=0,projectileSerial=0,rubbleSerial=0,terrainDirty=false,seenDestructionRevision=destruction?.revision||0;
     const doorBoxes=s.doors.map(d=>({minX:d.x-d.w/2,maxX:d.x+d.w/2,minZ:d.z-d.d/2,maxZ:d.z+d.d/2,minY:0,maxY:0}));
     let navDirty=false,routeBudget=Infinity,routeSearches=0,routeDeferred=0;
+    // Local nav invalidation (SIM-01): [minX,maxX,minZ,maxZ] of what changed since the last refresh.
+    const navRects=[],noTraps=[];
+    function navMark(q){if(advanced&&q)navRects.push(q.minX,q.maxX,q.minZ,q.maxZ);}
     function updateDoorBoxes(doors=s.doors){
-      for(let i=0;i<doors.length;i++){const d=doors[i],q=doorBoxes[i];q.minY=(d.y||0)+(d.destroyed?1000:d.progress*(d.h+.25));q.maxY=q.minY+d.h;}
+      // Mutated in place: any vertical move (progression, opening, destruction) marks the door.
+      for(let i=0;i<doors.length;i++){const d=doors[i],q=doorBoxes[i],y=(d.y||0)+(d.destroyed?1000:d.progress*(d.h+.25));if(q.minY!==y)navMark(q);q.minY=y;q.maxY=q.minY+d.h;}
     }
     updateDoorBoxes();
     const powered=id=>id===undefined||s.mechanisms.some(m=>m.id===id&&m.active);
@@ -228,10 +232,29 @@
     rebuildCollision();
     function syncDestruction(){
       if(!destruction||seenDestructionRevision===destruction.revision)return;
-      solids=destruction.colliders;seenDestructionRevision=destruction.revision;s.destructionRevision++;rebuildCollision();navDirty=terrainDirty=true;unsupportedBodies();
+      navDiff(solids,destruction.colliders);solids=destruction.colliders;seenDestructionRevision=destruction.revision;s.destructionRevision++;rebuildCollision();navDirty=terrainDirty=true;unsupportedBodies();
       for(const m of s.mechanisms)if(!destruction.isAlive(m.destructibleId)){m.shellHp=0;activateMechanism(m,true);}
       for(const t of s.traps)if(!destruction.isAlive(t.destructibleId)){t.hp=0;t.destroyed=true;t.box=null;t.hot=t.warning=false;}
       for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}
+    }
+    // SIM-01: multiset diff by exact bounds (all navigation reads) of two collider revisions,
+    // a new array each time. The revision delta of lot 03 replaces it.
+    const navF64=new Float64Array(6),navU32=new Uint32Array(navF64.buffer);
+    function navHash(q){
+      navF64[0]=q.minX;navF64[1]=q.maxX;navF64[2]=q.minY;navF64[3]=q.maxY;navF64[4]=q.minZ;navF64[5]=q.maxZ;
+      let h=2166136261;for(let k=0;k<12;k++)h=Math.imul(h^navU32[k],16777619);return h|0;
+    }
+    function navDiff(before,after){
+      if(!advanced)return;
+      if(before===after){navMark(b);return;}// Mutated in place: changes cannot be told apart.
+      const pool=new Map();
+      for(const q of before){const h=navHash(q),list=pool.get(h);if(list)list.push(q);else pool.set(h,[q]);}
+      for(const q of after){
+        const list=pool.get(navHash(q));let at=-1;
+        if(list)for(let j=0;j<list.length;j++){const o=list[j];if(o.minX===q.minX&&o.maxX===q.maxX&&o.minY===q.minY&&o.maxY===q.maxY&&o.minZ===q.minZ&&o.maxZ===q.maxZ){at=j;break;}}
+        if(at>=0){list[at]=list[list.length-1];list.pop();}else navMark(q);
+      }
+      for(const list of pool.values())for(const q of list)navMark(q);
     }
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
@@ -313,7 +336,7 @@
         for(const e of passengers){putHeight(e,feet(e)+delta);if(e===p)l.carrying=true;}
         if(Math.abs(l.y-l.target)<1e-7){l.y=l.target;l.moving=false;emit('liftStop',{id:l.id,x:l.x,y:l.y,z:l.z,carrying:l.carrying&&onLift(l,p.x,p.z)&&Math.abs(p.y-l.y)<.25});l.carrying=false;}
       }
-      if(navDirty){refreshNav();navDirty=terrainDirty=false;}
+      if(navDirty){refreshNav();navDirty=terrainDirty=false;}else if(navRects.length)navInvalidate();
     }
     function landingAt(x,z,ceiling,r){
       let y=ground(x,z);if(y>ceiling+.08)y=-Infinity;
@@ -513,7 +536,7 @@
     const nav=new Uint8Array(nx*nz),dist=new Int16Array(nx*nz),queue=new Int32Array(nx*nz);
     const coord=i=>[b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell];
     const idx=(x,z)=>clamp(Math.round((z-b.minZ)/cell),0,nz-1)*nx+clamp(Math.round((x-b.minX)/cell),0,nx-1);
-    for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}
+    for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}navRects.length=0;
     function rebuildNav(){
       dist.fill(-1);let start=idx(p.x,p.z);
       if(!nav[start]){let best=Infinity;for(let i=0;i<nav.length;i++)if(nav[i]){const [x,z]=coord(i),d=(x-p.x)**2+(z-p.z)**2;if(d<best){best=d;start=i;}}}
@@ -1347,7 +1370,9 @@
     }
     function radius(e){return giant(e)?1.5*scale(e):e.type===3?1.05:.38;}
     function segmentFree(ax,az,bx,bz,r=.4){
-      if(blocked(ax,az,r)||blocked(bx,bz,r))return false;
+      // Static map only, like the walking cells (SIM-V1): trap poses never enter routes or the
+      // edge cache; traps still block bodies in move() and still hurt.
+      if(blocked(ax,az,r,ground(ax,az),doorBoxes,solids,noTraps)||blocked(bx,bz,r,ground(bx,bz),doorBoxes,solids,noTraps))return false;
       const dx=bx-ax,dz=bz-az,ay=groundAt(ax,az),by=groundAt(bx,bz),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
       // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
       const short=Math.max(Math.abs(dx),Math.abs(dz))/2+r<=bucketRadius;
@@ -1368,7 +1393,7 @@
         const count=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.3));let previous=ay;
         for(let j=1;j<=count;j++){
           const x=ax+dx*j/count,z=az+dz*j/count,y=ground(x,z);
-          if(!Number.isFinite(y)||Math.abs(y-previous)>.42||blocked(x,z,r,y))return false;
+          if(!Number.isFinite(y)||Math.abs(y-previous)>.42||blocked(x,z,r,y,doorBoxes,solids,noTraps))return false;
           previous=y;
         }
       }
@@ -1380,13 +1405,35 @@
       let work=0;while(navPending&&work<limit){const i=navQueue[navHead];navHead=(navHead+1)%nav.length;navPending--;navQueued[i]=0;const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;work++;}
       s.aiStats.navUpdates=work;s.aiStats.navPending=navPending;
     }
+    function navEnqueue(i){if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}}
+    const navWindow=new Int32Array(4);
+    function navReach(k){// Cells within 1.2 m (+1e-6) of rectangle k, per axis.
+      const ax=navRects[k],bx=navRects[k+1],az=navRects[k+2],bz=navRects[k+3];
+      if(!(ax<=bx&&az<=bz&&Number.isFinite(ax+bx+az+bz)))return Infinity;
+      navWindow[0]=clamp(Math.floor((ax-1.2-1e-6-b.minX)/cell),0,nx-1);navWindow[1]=clamp(Math.ceil((bx+1.2+1e-6-b.minX)/cell),0,nx-1);
+      navWindow[2]=clamp(Math.floor((az-1.2-1e-6-b.minZ)/cell),0,nz-1);navWindow[3]=clamp(Math.ceil((bz+1.2+1e-6-b.minZ)/cell),0,nz-1);
+      return (navWindow[1]-navWindow[0]+1)*(navWindow[3]-navWindow[2]+1);
+    }
+    function navInvalidate(){
+      // Colliders/rays change at once; the advisory grid follows through the amortised queue.
+      // A cell (r=.4) only changes within .4 m of a mark, a cached edge (.8 m swept at r=.4)
+      // within 1.2 m of its source cell. Past a quarter of the grid (BOSS-08), all is redone.
+      let reach=0;for(let k=0;k<navRects.length&&reach*4<=nav.length;k+=4)reach+=navReach(k);
+      if(reach*4>nav.length){for(let i=0;i<nav.length;i++)navEnqueue(i);edgeKnown.fill(0);edgeOpen.fill(0);}
+      else for(let k=0;k<navRects.length;k+=4){
+        const ax=navRects[k]-.4-1e-6,bx=navRects[k+1]+.4+1e-6,az=navRects[k+2]-.4-1e-6,bz=navRects[k+3]+.4+1e-6;navReach(k);
+        for(let iz=navWindow[2];iz<=navWindow[3];iz++)for(let ix=navWindow[0];ix<=navWindow[1];ix++){
+          const i=iz*nx+ix,x=b.minX+ix*cell,z=b.minZ+iz*cell;edgeKnown[i]=0;edgeOpen[i]=0;
+          if(x>=ax&&x<=bx&&z>=az&&z<=bz)navEnqueue(i);
+        }
+      }
+      navRects.length=0;
+    }
     function refreshNav(reset=true){
-      if(advanced&&reset){
-        // Colliders/rays change immediately. Updating the advisory walking grid is
-        // amortised; another blast appends dirty cells instead of restarting work.
-        for(let i=0;i<nav.length;i++)if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}
-      }else{navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}}
-      edgeKnown.fill(0);edgeOpen.fill(0);if(reset)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
+      // A gameplay change re-plans every route; restore and simple worlds rebuild at once.
+      if(advanced&&reset)navInvalidate();
+      else{navRects.length=0;navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}edgeKnown.fill(0);edgeOpen.fill(0);}
+      if(reset)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
       if(!advanced)rebuildNav();
     }
     function nearestNode(x,z,r){
@@ -2216,7 +2263,7 @@
       }catch(_){return false;}
     }
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
-    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,shieldBash,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
+    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,shieldBash,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
   G.FSimulation={create,clamp,copyCampaign,campaignPolicy,copyArmor};
 })(typeof window!=='undefined'?window:globalThis);
