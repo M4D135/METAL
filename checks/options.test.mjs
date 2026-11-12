@@ -1,0 +1,23 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const context={window:{}};vm.createContext(context);vm.runInContext(readFileSync(new URL('../src/options.js',import.meta.url),'utf8'),context);
+const options=context.window.FOptions;
+test('Older preferences migrate while new controls have safe bounded values',()=>{
+  const v=options.normalize({muted:true,quality:'high',softMotion:false,fov:300,sensitivity:NaN,musicVolume:-2,brightness:Infinity,showFps:'false'});
+  assert.equal(v.muted,true);assert.equal(v.quality,'high');assert.equal(v.softMotion,false);assert.equal(v.fov,110);assert.equal(v.sensitivity,1);assert.equal(v.musicVolume,0);assert.equal(v.brightness,1);assert.equal(v.showFps,true);assert.equal(options.defaults(true).fov,79);
+});
+test('Rebinding changes the real input map, preserves other actions and survives JSON storage',()=>{
+  const a=options.defaults(),r=options.assign(a.bindings,'interact','KeyR');assert.equal(r.ok,true);
+  const stored=options.normalize(JSON.parse(JSON.stringify({...a,bindings:r.bindings})));
+  assert.equal(options.matches(stored.bindings,'interact','KeyR'),true);assert.equal(options.matches(stored.bindings,'interact','KeyF'),false);
+  assert.equal(options.down(stored.bindings,new Set(['KeyR']),'interact'),true);assert.equal(options.matches(stored.bindings,'pulse','KeyE'),true);
+});
+test('Conflicts and reserved keys never silently disable another action',()=>{
+  const a=options.defaults(),original=JSON.stringify(a);
+  assert.equal(options.assign(a.bindings,'interact','KeyE').conflict,'pulse');assert.equal(options.assign(a.bindings,'fire','Escape').ok,false);
+  assert.equal(options.assign(a.bindings,'fire','MetaLeft').ok,false);assert.equal(options.assign(a.bindings,'sprint','ControlLeft').ok,false);assert.equal(JSON.stringify(a),original);
+  const tampered={...a,bindings:{...a.bindings,fire:['KeyW']}};
+  assert.equal(options.normalize(tampered).bindings.fire[0],'Enter');
+});

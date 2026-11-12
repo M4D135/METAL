@@ -33,9 +33,11 @@
       const q=channel(key),x=q.x-target,e=Math.exp(-omega*dt),t=(q.v+omega*x)*dt;
       q.x=target+(x+t)*e;q.v=(q.v-omega*t)*e;return q.x;
     }
-    function impulse(kind){
+    function impulse(kind,amount=1){
       if(kind==='shot')channel('kick').v+=1.9;
       else if(kind==='fracture')channel('kick').v+=3.5;
+      else if(kind==='rocket')channel('kick').v+=5.5;
+      else if(kind==='blast')channel('blast').v=Math.min(3,channel('blast').v+clamp(finite(amount),0,1)*1.4);
       else if(kind==='switch')channel('equip').v-=2.5;
       else if(kind==='hurt')channel('impact').v+=.7;
       else if(kind==='pulse')channel('equip').v-=1.1;
@@ -51,7 +53,7 @@
       const run=clamp(finite(loc.sprintBlend),0,1),dash=clamp(finite(loc.dashBlend),0,1),phase=finite(loc.stridePhase);
       const strafe=clamp(finite(loc.strafe)/5,-1,1),forward=clamp(finite(loc.forward)/5,-1,1);
       const yawRate=clamp(finite(signals.lookYaw),-8,8),pitchRate=clamp(finite(signals.lookPitch),-6,6),time=finite(signals.time);
-      const kick=damp('kick',0,25,dt),equip=damp('equip',0,17,dt),impact=damp('impact',0,23,dt);
+      const kick=damp('kick',0,25,dt),equip=damp('equip',0,17,dt),impact=damp('impact',0,23,dt),blast=damp('blast',0,17,dt);
       const intensity=enabled?1:.22,runPose=run*(signals.firing?.3:1);
       const breathing=Math.sin(time*1.45)*.002*(1-move);
       const x=damp('x',Math.sin(phase)*.018*move-strafe*.021-yawRate*.0045,18,dt);
@@ -68,8 +70,8 @@
       view.weapon.rotation[2]=roll*intensity;
       view.weapon.slide=clamp(kick*1.1,0,.075);
       if(enabled){
-        view.height=damp('height',Math.cos(phase*2)*.010*move-dash*.022,21,dt);
-        view.roll=damp('cameraRoll',-strafe*.008+clamp(yawRate*.0007,-.004,.004),13,dt);
+        view.height=damp('height',Math.cos(phase*2)*.010*move-dash*.022,21,dt)+Math.sin(time*37)*blast*.06;
+        view.roll=damp('cameraRoll',-strafe*.008+clamp(yawRate*.0007,-.004,.004),13,dt)+Math.sin(time*31)*blast*.025;
         view.fov=damp('fov',run*4.5+dash*5.5,12,dt);
       }else{
         view.height=view.roll=view.fov=0;

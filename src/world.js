@@ -8,7 +8,7 @@
     { title: 'Les jardins du veilleur', main: [0.20, 0.67, 1], alt: [0.67, 0.42, 1], wall: [0.33, 0.36, 0.46] }
   ];
   // Different circulation graphs, outdoor silhouettes and built landmarks. The
-  // flat paths stay continuous while the surrounding landscape supplies relief.
+  // traversable terraces are joined by ramps; lift shortcuts retain alternate routes.
   const layouts = [
     { id: 'woodland-maintenance-loops', xs: [-26, 0, 26], zs: [26, 0, -26], aperture: 5.2, outdoors:[0,1,3,6,7],
       edges: [[0,1],[1,2],[0,3],[1,4],[2,5],[3,6],[4,5],[5,8],[6,7],[7,8]],
@@ -35,17 +35,21 @@
   }
   function create(seed, stage) {
     stage = Math.max(0, Math.min(2, Math.floor(stage || 0)));
-    const rand = randomFor(seed, stage), theme = themes[stage], layout = layouts[stage];
+    const rand = randomFor(seed, stage), theme = themes[stage], original = layouts[stage];
+    const layout = {...original, xs:original.xs.map(x=>x*1.6), zs:original.zs.map(z=>z*1.6)};
+    const levels = [[0,0,3.2,0,3.2,3.2,3.2,6.4,6.4],[0,0,3.2,6.4,0,6.4,3.2,6.4],[0,0,3.2,0,3.2,6.4,3.2,6.4,6.4]][stage];
+    const liftEdges = [[[1,4],[6,7]],[[1,2],[2,3]],[[1,4],[4,7]]][stage];
+    const mechanisms=[], doors=[], lifts=[], jumpPads=[], surfaces=[];
     const meshes = [], lights = [], colliders = [], rooms = [], corridors = [], connections = [];
     const cores = [], enemies = [], pickups = [], machinery = [], hazards = [], trees=[], outdoorBoundaries=[], aperture = layout.aperture;
-    let outdoorContext=false;
+    let outdoorContext=false,regionContext='';
     const doorHeight = [3.7,4.8,4.4][stage];
     const mesh = (shape, p, s, mat, r, emissive, color) => {
       const m = { shape, p, s, mat };
       if (r) m.r = r;
       if (emissive) m.emissive = emissive;
       if (color) m.color = color;
-      m.outdoor=outdoorContext;
+      m.outdoor=outdoorContext;if(regionContext)m.region=regionContext;
       meshes.push(m); return m;
     };
     const box = (x, y, z, w, h, d, mat, solid, color, emit) => {
@@ -54,7 +58,7 @@
       return m;
     };
     const pipe = (x, y, z, length, radius, axis, mat) => mesh('cylinder', [x, y, z], [radius * 2, length, radius * 2], mat, axis === 'x' ? [0, 0, Math.PI / 2] : axis === 'z' ? [Math.PI / 2, 0, 0] : null);
-    const light = (x, y, z, color, power) => lights.push({ p: [x, y, z], color, power });
+    const light = (x, y, z, color, power) => lights.push({ p: [x, y, z], color, power, region:regionContext });
     const mark=(m,category,region)=>{m.category=category;if(region!==undefined)m.region=region;return m;};
     function limb(a,b,radius,mat=10,category='branch',region) {
       const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz);
@@ -95,7 +99,7 @@
           }
         }
       }
-      trees.push({x,z,height,species,region,solid,mesh:first,phase:rand()*TAU});
+      trees.push({x,z,height,species,region,solid,mesh:first,meshCount:meshes.length-first,phase:rand()*TAU});
     }
     function boulder(x,z,w,h,d,region,solid=true) {
       // A low square rock core is the exact collision shape; faceted caps sit
@@ -246,7 +250,13 @@
       mark(box(c.x,.007,c.z,horizontal?length:4.3,.012,horizontal?4.3:length,9,false,stage===1?[.49,.42,.31]:[.48,.47,.38]),'trail',region);
       for(const q of [-1,1]) {
         const x=c.x+(horizontal?0:q*(aperture/2+.24)),z=c.z+(horizontal?q*(aperture/2+.24):0);
-        boundary(x,z,length,horizontal,region,q<0?'left':'right');
+        // Short retaining sections follow a ramp without a single tall wall
+        // obscuring its entire lower end. Their solids remain exact visible boxes.
+        const segments=Math.max(1,Math.ceil(length/4.5));
+        for(let j=0;j<segments;j++) {
+          const offset=((j+.5)/segments-.5)*length;
+          boundary(x+(horizontal?offset:0),z+(horizontal?0:offset),length/segments+.015,horizontal,region,q<0?'left':'right');
+        }
         if(length>7)lamp(x, z,region,2.8);
       }
     }
@@ -268,7 +278,7 @@
       }
       const outdoor=layout.outdoors.includes(id);
       if(outdoor){w=(stage===0?21.8:stage===1?22.6:23.3)+rand()*.9;d=(stage===0?22.1:stage===1?24.1:23.5)+rand()*.9;h=0;archetype=stage===0?(id===0?'woodland':'forest-yard'):stage===1?'quarry-yard':'garden';}
-      rooms.push({ id, x: layout.xs[col], z: layout.zs[row], w, d, h, name: layout.names[id], archetype, outdoor, openings: {} });
+      rooms.push({ id, x: layout.xs[col], z: layout.zs[row], y:levels[id], w, d, h, name: layout.names[id], archetype, outdoor, openings: {} });
     }
     for (const [aId, bId] of layout.edges) {
       const a = rooms[aId], b = rooms[bId];
@@ -277,6 +287,9 @@
       else if (a.z > b.z) { a.openings.n = true; b.openings.s = true; }
       else { a.openings.s = true; b.openings.n = true; }
     }
+    // The colossal guardian has its own open-air branch, outside the compact
+    // service rooms. This opening is authored with the wall, never hidden later.
+    rooms[[5,3,5][stage]].openings.e=true;
     // Wall segments include solid collision; inset panels are kept inside those bounds.
     function wall(r, side, opening) {
       const alongX = side === 'n' || side === 's';
@@ -322,9 +335,10 @@
       }
     }
     for (const r of rooms) {
+      regionContext='room-'+r.id;
       if(r.outdoor){outdoorContext=true;exterior(r);outdoorContext=false;continue;}
-      box(r.x, -0.22, r.z, r.w + 0.48, 0.44, r.d + 0.48, 2, false);
-      box(r.x, r.h + 0.17, r.z, r.w + 0.5, 0.34, r.d + 0.5, 0, false);
+      mark(box(r.x, -0.22, r.z, r.w + 0.48, 0.44, r.d + 0.48, 2, false),'floor',regionContext);
+      mark(box(r.x, r.h + 0.17, r.z, r.w + 0.5, 0.34, r.d + 0.5, 0, true),'ceiling',regionContext);
       for (const side of ['n','s','e','w']) wall(r, side, r.openings[side]);
       // Three overhead ribs and four supply lines create depth above the player.
       for (const k of [-1, 0, 1]) {
@@ -443,6 +457,51 @@
         }
       }
     }
+    function liftPath(c,a,b,horizontal,index) {
+      outdoorContext=true;
+      const minY=Math.min(a.y,b.y),maxY=Math.max(a.y,b.y),shaft=3.6;
+      const aLow=a.y<b.y,axisSign=horizontal?1:-1,lowSign=aLow?-axisSign:axisSign;
+      const length=horizontal?c.w:c.d,halfS=shaft/2;
+      const at=(u,v=0)=>({x:c.x+(horizontal?u:v),z:c.z+(horizontal?v:u)});
+      const low=at(lowSign*(halfS+1.1)),high=at(-lowSign*(halfS+1.1));
+      const l={id:c.liftId,x:c.x,z:c.z,w:horizontal?shaft:aperture,d:horizontal?aperture:shaft,axis:horizontal?'x':'z',minY,maxY,speed:1.6,requires:'mechanism-'+index,lowerCall:{...low,y:minY},upperCall:{...high,y:maxY}};
+      lifts.push(l);c.slopeX=0;c.slopeZ=0;c.y=minY;c.lowSign=lowSign;c.axis=horizontal?'x':'z';
+      const fixed=m=>{m.fixedHeight=true;return m;};
+      for(const sign of [-1,1]) {
+        const len=(length-shaft)/2,center=sign*(halfS+len/2),p=at(center),y=sign===lowSign?minY:maxY;
+        const f={...p,w:horizontal?len:c.w,d:horizontal?c.d:len,y,slopeX:0,slopeZ:0};surfaces.push(f);
+        const floor=fixed(mark(box(p.x,y-.22,p.z,f.w,.44,f.d,2,false),'lift_dock',regionContext));floor.ground=true;
+        for(const q of [-1,1]) {
+          const edge=at(center,q*(aperture/2+.24));
+          const m=fixed(mark(box(edge.x,y+.5,edge.z,horizontal?len:.48,1,horizontal?.48:len,9,true),'boundary',regionContext));
+          outdoorBoundaries.push({x:edge.x,z:edge.z,length:len,alongX:horizontal,height:1,thickness:.48,region:regionContext,side:q,mesh:meshes.length-1});
+          fixed(mark(box(edge.x,y+1.06,edge.z,horizontal?len:.55,.12,horizontal?.55:len,1,false),'dock_rail',regionContext));
+        }
+        for(const q of [-1,1]) {
+          const p=at(sign*(halfS+.7),q*(aperture/2-.13));
+          fixed(mark(box(p.x,y+1.05,p.z,.16,2.1,.16,1,false),'lift_indicator',regionContext));
+          fixed(mark(box(p.x,y+1.97,p.z,.2,.14,.2,5,false,theme.alt,.7),'lift_indicator',regionContext));
+        }
+        for(let j=0;j<8;j++) {
+          const p=at(sign*(halfS+.3),(j-3.5)*aperture/9);
+          fixed(mark(box(p.x,y+.014,p.z,horizontal?.23:.12,.025,horizontal?.12:.23,5,false,theme.alt,.25),'dock_warning',regionContext));
+        }
+      }
+      surfaces.push({x:c.x,z:c.z,w:l.w,d:l.d,y:minY,slopeX:0,slopeZ:0,liftId:l.id});
+      const floor=fixed(mark(box(c.x,minY-.22,c.z,l.w,.44,l.d,0,false),'lift_shaft_floor',regionContext));floor.ground=true;
+      for(const q of [-1,1]) {
+        const p=at(0,q*(aperture/2+.24)),h=maxY-minY+1.2;
+        fixed(mark(box(p.x,minY+h/2,p.z,horizontal?shaft:.48,h,horizontal?.48:shaft,0,true),'lift_shaft',regionContext));
+        for(const sign of [-1,1]) {
+          const p=at(sign*(halfS-.2),q*(aperture/2+.04));
+          fixed(mark(box(p.x,minY+(maxY-minY+3)/2,p.z,.14,maxY-minY+3,.14,1,false),'lift_guide',regionContext));
+          for(let j=0;j<10;j++)fixed(mark(box(p.x,minY+.3+j*(maxY-minY+2.4)/9,p.z,.22,.07,.22,3,false),'lift_guide_clamp',regionContext));
+        }
+        const p2=at(0,q*(aperture/2+.30));
+        machinery.push({type:'piston',x:p2.x,y:minY+1.8,z:p2.z,size:.8,speed:.55,axis:'y',fixedHeight:true});
+      }
+      outdoorContext=false;
+    }
     function connect(a, b, horizontal) {
       const start = horizontal ? a.x + a.w / 2 : a.z - a.d / 2;
       const end = horizontal ? b.x - b.w / 2 : b.z + b.d / 2;
@@ -452,11 +511,24 @@
       const w = horizontal ? length : aperture + 0.48, d = horizontal ? aperture + 0.48 : length;
       const ceiling = doorHeight+.2;
       const outdoor=a.outdoor||b.outdoor;
-      corridors.push({ x, z, w, d, outdoor });
-      connections.push({ from: a.id, to: b.id, x1: a.x, z1: a.z, x2: b.x, z2: b.z, width: aperture });
+      const gap=length-.5,dy=b.y-a.y;
+      const liftIndex=liftEdges.findIndex(e=>e.includes(a.id)&&e.includes(b.id));
+      const c={x,z,w,d,outdoor,y:(a.y+b.y)/2,slopeX:horizontal?dy/gap:0,slopeZ:horizontal?0:-dy/gap};
+      regionContext='corridor-'+corridors.length;
+      if(liftIndex>=0)c.liftId='lift-'+liftIndex;
+      corridors.push(c);
+      connections.push({ from: a.id, to: b.id, x1: a.x, z1: a.z, x2: b.x, z2: b.z, width: aperture, y1:a.y, y2:b.y, ...(liftIndex>=0?{liftId:c.liftId}:{}) });
+      if(liftIndex>=0){liftPath(c,a,b,horizontal,liftIndex);return;}
+      surfaces.push({x,z,w,d,y:c.y,slopeX:c.slopeX,slopeZ:c.slopeZ});
       if(outdoor){outdoorContext=true;outsidePath({x,z,w,d},horizontal,length);outdoorContext=false;return;}
-      box(x, -0.22, z, w, 0.44, d, 2, false);
-      box(x, ceiling+.15, z, w, 0.3, d, 0, false);
+      mark(box(x, -0.22, z, w, 0.44, d, 2, false),'floor',regionContext);
+      // A stepped physical roof follows the sloping passage. Short matching
+      // visible boxes give airborne bodies a real ceiling at every height.
+      const roofSections=Math.max(1,Math.ceil(length/2.5)),roofLength=length/roofSections;
+      for(let j=0;j<roofSections;j++){
+        const u=((j+.5)/roofSections-.5)*length;
+        mark(box(x+(horizontal?u:0),ceiling+.15,z+(horizontal?0:u),horizontal?roofLength+.01:w,.3,horizontal?d:roofLength+.01,0,true),'ceiling',regionContext);
+      }
       for (const q of [-1, 1]) {
         box(x + (horizontal ? 0 : q * (aperture / 2 + 0.24)), ceiling/2, z + (horizontal ? q * (aperture / 2 + 0.24) : 0), horizontal ? length : 0.48, ceiling, horizontal ? 0.48 : length, 0, true);
         box(x + (horizontal ? 0 : q * (aperture / 2 - 0.02)), 0.32, z + (horizontal ? q * (aperture / 2 - 0.02) : 0), horizontal ? length : 0.05, 0.06, horizontal ? 0.05 : length, 4, false, theme.main, 0.8);
@@ -476,48 +548,115 @@
       if((horizontal&&a.x>b.x)||(!horizontal&&a.z<b.z))[a,b]=[b,a];
       connect(a,b,horizontal);
     }
-    for (const [i, roomId] of layout.relays.entries()) cores.push({ id: i, x: rooms[roomId].x, z: rooms[roomId].z });
-    for (const r of rooms.slice(1)) {
-      enemies.push({ x: r.x - 2.6, z: r.z - 1.7, type: (r.id + stage) % 3 });
-      if (stage > 0 || r.id % 2 === 0) {
-        enemies.push({ x: r.x + 2.8, z: r.z + 2.6, type: (r.id + stage + 1) % 3 });
+    for (const [i, roomId] of layout.relays.entries()) cores.push({ id:i, x:rooms[roomId].x, y:rooms[roomId].y, z:rooms[roomId].z });
+    const spawn={x:rooms[0].x,y:rooms[0].y,z:rooms[0].z+3.2,yaw:0};
+    const exitRoom=rooms[layout.exit],exit={x:exitRoom.x,y:exitRoom.y,z:exitRoom.z-exitRoom.d*.27};
+    // Health caches and solid firing positions support the larger, distributed
+    // garrisons. Clear central crosses remain available to both player and AI.
+    for(const r of rooms) {
+      regionContext='room-'+r.id;outdoorContext=r.outdoor;
+      for(const q of [-1,1]) {
+        const x=r.x+q*3.6,z=r.z-q*3.4;
+        mark(box(x,.6,z,1.35,1.2,1.55,0,true),'combat_cover',regionContext);
+        mark(box(x,1.24,z,1.48,.08,1.66,1,false),'cover_cap',regionContext);
+        mark(box(x,.88,z+q*.79,.8,.12,.025,4,false,theme.main,.45),'cover_signal',regionContext);
       }
+      for(const [dx,dz] of [[2.5,1.5],[-2.1,-1.5],[2.8,-4.7]])pickups.push({x:r.x+dx,y:r.y,z:r.z+dz,type:'health'});
+      // Each hub has a visible animated mechanism, including outside areas.
+      const x=r.x+3.6,z=r.z+5.4;
+      mark(box(x,.48,z,1.05,.96,1.05,1,true),'ventilator_base',regionContext);
+      mark(mesh('ring',[x,1.25,z],[1.35,.2,1.35],0),'ventilator_ring',regionContext);
+      machinery.push({type:stage===1?'piston':'fan',x,y:1.3,z,size:1.05,speed:.5+(r.id%3)*.25,axis:'y'});
     }
-    for (const id of [0, 3, 5, 7]) pickups.push({ x: rooms[id].x + 3.5, z: rooms[id].z + 0.7, type: 'health' });
-    const spawn = { x: rooms[0].x, z: rooms[0].z + 3.2, yaw: 0 };
-    const exitRoom=rooms[layout.exit];
-    const exit = { x: exitRoom.x, z: exitRoom.z - exitRoom.d*.27 };
-    if(stage===2){
-      enemies.push({x:exitRoom.x,z:exitRoom.z+1,type:3,boss:true});
-      pickups.push({x:exitRoom.x,z:exitRoom.z+5.5,type:'health'});
-    }
+    const mechanismRooms=[0,[3,4,3][stage],[5,6,5][stage]];
+    const labels=[['Réseau de la lisière','Vanne des pompes','Accès de la carrière'],['Alimentation des treuils','Purge du creuset','Accès des jardins'],['Réveil des jardins','Circuit de l’observatoire','Verrou du veilleur']][stage];
+    mechanismRooms.forEach((roomId,i)=>{
+      const r=rooms[roomId],x=r.x+(i===0?1.45:-2.0),z=r.z+(i===0?1.4:3.0);
+      const m={id:'mechanism-'+i,x,y:r.y,z,name:labels[i],kind:['breaker','valve','console'][i],yaw:0,required:true};
+      mechanisms.push(m);regionContext='room-'+r.id;outdoorContext=r.outdoor;
+      mark(box(x,.58,z,.72,1.16,.6,0,true),'mechanism_housing',regionContext);
+      mark(box(x,1.18,z,.85,.11,.72,1,false),'mechanism_frame',regionContext);
+      mark(box(x,.80,z+.308,.57,.40,.026,7,false),'mechanism_panel',regionContext);
+      for(const q of [-1,1])mark(box(x+q*.32,1.48,z,.055,.55,.055,1,false),'mechanism_frame',regionContext);
+      light(x,1.5,z+.3,theme.main,1.5);
+    });
+    // Doors occupy full corridor widths, with no static duplicate leaf. Every
+    // control is reachable before its own barrier; the final gate is mandatory.
+    const gateEdges=[[[0,1],[4,5],[5,8]],[[0,1],[5,6],[6,7]],[[0,1],[4,5],[7,8]]][stage];
+    gateEdges.forEach((edge,i)=>{
+      const index=connections.findIndex(c=>edge.includes(c.from)&&edge.includes(c.to)),c=corridors[index],link=connections[index];
+      const horizontal=link.z1===link.z2;
+      const y=c.y;
+      doors.push({id:'door-'+i,x:c.x,y,z:c.z,w:horizontal?.34:aperture,d:horizontal?aperture:.34,h:3.1,requires:'mechanism-'+i});
+      regionContext='corridor-'+index;outdoorContext=c.outdoor;
+      for(const q of [-1,1])mark(box(c.x+(horizontal?0:q*(aperture/2+.08)),1.8,c.z+(horizontal?q*(aperture/2+.08):0),horizontal?.55:.16,3.6,horizontal?.16:.55,1,false),'gate_jamb',regionContext);
+      // The bridge across the opening stays well above head height.
+      mark(box(c.x,3.6,c.z,horizontal?.65:aperture+.4,.2,horizontal?aperture+.4:.65,0,false),'gate_header',regionContext);
+    });
+    // Auto-launch pads have real unobstructed ballistic arcs. Their destinations
+    // are fixed terraces with alternate walking routes, never moving platforms.
+    // The first one sits visibly ahead of the entry, outside the initial trigger.
+    const padRoutes=[
+      [[0,3,0,-8.4,0,5.4,1.5],[3,6,0,-8.4,0,5.4,1.65],[1,4,0,-8.4,0,5.4,1.5]],
+      [[0,4,0,-8.4,0,5.4,1.5],[4,5,8.4,0,-5.4,0,1.75],[2,6,0,-8.4,0,5.4,1.5]],
+      [[0,3,0,-8.4,0,5.4,1.5],[3,4,8.4,0,-5.4,0,1.45],[5,8,0,-8.4,0,5.4,1.5]]
+    ][stage];
+    padRoutes.forEach(([from,to,dx,dz,tx,tz,flightTime],i)=>{
+      const a=rooms[from],b=rooms[to],x=a.x+dx,z=a.z+dz,target={x:b.x+tx,y:b.y,z:b.z+tz};
+      const yaw=Math.atan2(target.x-x,z-target.z),c=Math.cos(yaw),sn=Math.sin(yaw);
+      const pad={id:'pad-'+i,x,y:a.y,z,r:1.15,target,flightTime,yaw};jumpPads.push(pad);
+      regionContext='room-'+a.id;outdoorContext=a.outdoor;
+      mark(mesh('cylinder',[x,.035,z],[2.45,.07,2.45],0,null,0,[.20,.24,.27]),'jump_pad_base',regionContext);
+      mark(mesh('cylinder',[x,.075,z],[1.94,.035,1.94],7),'jump_pad_deck',regionContext);
+      mark(mesh('ring',[x,.086,z],[2.28,.11,2.28],1,null,0,[.42,.36,.25]),'jump_pad_rim',regionContext);
+      for(const v of [.30,-.10,-.50])for(const q of [-1,1]){
+        const u=q*.12,px=x+c*u-sn*v,pz=z+sn*u+c*v;
+        mark(mesh('box',[px,.106,pz],[.075,.018,.36],4,[0,-yaw+q*.58,0],.65,theme.main),'jump_pad_arrow',regionContext);
+      }
+      for(let j=0;j<3;j++){
+        const angle=j*TAU/3+.4,px=x+Math.cos(angle)*1.10,pz=z+Math.sin(angle)*1.10;
+        mark(mesh('box',[px,.06,pz],[.34,.08,.30],1,[0,-angle,0],0,[.43,.38,.29]),'jump_pad_clamp',regionContext);
+        mark(mesh('box',[px,.105,pz],[.20,.018,.075],5,[0,-angle,0],.45,theme.alt),'jump_pad_signal',regionContext);
+      }
+      for(let j=0;j<6;j++){
+        const angle=j*TAU/6;
+        mark(mesh('cylinder',[x+Math.cos(angle)*.90,.11,z+Math.sin(angle)*.90],[.055,.03,.055],3),'jump_pad_bolt',regionContext);
+      }
+      regionContext='room-'+b.id;outdoorContext=b.outdoor;
+      mark(mesh('ring',[target.x,.024,target.z],[3.55,.045,3.55],4,null,.22,theme.main),'jump_landing',regionContext);
+    });
     // Vent danger is avoidable: all central circulation axes remain clear even
     // when every vent is hot. Players may take the outer corners at their risk.
     if(stage>0)for(const [i,roomId] of (stage===1?[1,2,5,6]:[2,3,4,5,6]).entries()){
       const r=rooms[roomId],x=r.x+(i%2?-1:1)*4.35,z=r.z+3.65,rad=stage===1?.82:.95;
-      outdoorContext=r.outdoor;
-      hazards.push({type:'vent',x,z,r:rad,period:6.8+stage*.5+(i%3)*.6,active:1.45+stage*.15,phase:(i*1.7+rand()*1.1)});
+      outdoorContext=r.outdoor;regionContext='room-'+r.id;
+      hazards.push({type:'vent',x,y:r.y,z,r:rad,period:6.8+stage*.5+(i%3)*.6,active:1.45+stage*.15,phase:(i*1.7+rand()*1.1)});
       mesh('cylinder',[x,.023,z],[rad*2+.35,.045,rad*2+.35],0);
       mesh('ring',[x,.055,z],[rad*2+.48,.11,rad*2+.48],1);
       for(let j=-2;j<=2;j++)box(x+j*.25,.055,z,.10,.045,rad*1.5,7,false);
       for(const q of [-1,1])box(x+q*(rad+.21),.035,z,.07,.04,rad*1.5,5,false,theme.main,.45);
     }
-    outdoorContext=false;
+    outdoorContext=false;regionContext='room-'+exitRoom.id;
     // Low energy rails frame the exit without putting a solid door on its trigger.
     for (const q of [-1, 1]) box(exit.x + q * 1.8, 1.5, exit.z, 0.16, 3, 0.35, 4, true, theme.main, 1);
     box(exit.x, 3, exit.z, 3.75, 0.16, 0.35, 4, false, theme.main, 1);
     const bounds={minX:Math.floor(Math.min(...rooms.map(r=>r.x-r.w/2))-.8),maxX:Math.ceil(Math.max(...rooms.map(r=>r.x+r.w/2))+.8),minZ:Math.floor(Math.min(...rooms.map(r=>r.z-r.d/2))-.8),maxZ:Math.ceil(Math.max(...rooms.map(r=>r.z+r.d/2))+.8)};
     const environments=[
-      {biome:'woodland',skyTop:[.26,.47,.56],skyBottom:[.72,.78,.63],fog:[.36,.49,.43],sunDirection:[-.48,.78,.36],sunColor:[1,.88,.62],ambient:[.24,.32,.25],wind:.7,weather:'pollen'},
-      {biome:'quarry',skyTop:[.32,.35,.42],skyBottom:[.84,.57,.32],fog:[.48,.34,.23],sunDirection:[-.65,.56,-.36],sunColor:[1,.68,.36],ambient:[.32,.24,.18],wind:1.1,weather:'ash'},
-      {biome:'garden',skyTop:[.10,.17,.31],skyBottom:[.52,.49,.63],fog:[.26,.31,.43],sunDirection:[.42,.45,-.79],sunColor:[.78,.69,1],ambient:[.23,.28,.35],wind:.45,weather:'motes'}
+      {biome:'woodland',skyTop:[.055,.105,.14],skyBottom:[.20,.25,.22],fog:[.15,.205,.18],sunDirection:[-.48,.78,.36],sunColor:[.48,.62,.59],ambient:[.18,.23,.20],wind:.7,weather:'pollen'},
+      {biome:'quarry',skyTop:[.11,.07,.08],skyBottom:[.35,.16,.09],fog:[.23,.13,.09],sunDirection:[-.65,.56,-.36],sunColor:[.66,.33,.15],ambient:[.22,.15,.12],wind:1.1,weather:'ash'},
+      {biome:'garden',skyTop:[.025,.035,.08],skyBottom:[.14,.16,.26],fog:[.10,.135,.22],sunDirection:[.42,.45,-.79],sunColor:[.36,.48,.74],ambient:[.14,.18,.26],wind:.45,weather:'motes'}
     ];
     const environment={...environments[stage],outdoorZones:rooms.concat(corridors).filter(r=>r.outdoor).map(({x,z,w,d})=>({x,z,w,d}))};
     const sunLength=Math.hypot(...environment.sunDirection);
     environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
-    const world={ seed, stage, generation:4, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, walkable:rooms.concat(corridors).map(({x,z,w,d})=>({x,z,w,d})) };
+    const world={ seed, stage, generation:5, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
     detailWorld(world,theme,aperture,doorHeight);
     naturalDetails(world,theme);
+    elevateWorld(world);
+    arenaWorld(world,theme,aperture);
+    demolitionWorld(world,theme);
+    populate(world);
+    demolitionMetadata(world);
     return world;
   }
   // This independent art pass does not consume the layout/combat RNG. Interior
@@ -529,7 +668,7 @@
     const axes={x:[0,0,-Math.PI/2],y:[0,0,0],z:[Math.PI/2,0,0]};
     let owner='',outside=false;
     function add(shape,p,s,mat=0,r=[0,0,0],detail=1,category='pipe',emissive=0,color) {
-      const mesh={shape,p,s,mat,r,detail,category,outdoor:outside};
+      const mesh={shape,p,s,mat,r,detail,category,outdoor:outside,region:owner};
       if(emissive)mesh.emissive=emissive;if(color)mesh.color=color;
       out.push(mesh);categories[category]=(categories[category]||0)+1;
       if(owner)roomCounts[owner]=(roomCounts[owner]||0)+1;
@@ -766,7 +905,7 @@
     // Corridors use the same systems at a smaller scale, including dense frame
     // detailing: the player sees the improvement while travelling, not only at hubs.
     for(let index=0;index<w.corridors.length;index++) {
-      if(w.corridors[index].outdoor)continue;
+      if(w.corridors[index].outdoor||w.corridors[index].liftId)continue;
       owner='corridor-'+index;
       const c=w.corridors[index],link=w.connections[index],alongX=link.z1===link.z2,length=alongX?c.w:c.d,height=doorHeight+.2;
       const along=(u,v,y)=>[c.x+(alongX?u:v),y,c.z+(alongX?v:u)];
@@ -927,7 +1066,7 @@
       }
     }
     for(const [i,c] of w.corridors.entries()) {
-      if(!c.outdoor)continue;
+      if(!c.outdoor||c.liftId)continue;
       region='corridor-'+i;
       const alongX=c.w>c.d,length=alongX?c.w:c.d,half=(alongX?c.d:c.w)/2;
       for(const q of [-1,1])for(let j=0;j<Math.max(4,Math.ceil(length*2));j++) {
@@ -942,12 +1081,309 @@
       outdoorRooms:w.rooms.filter(r=>r.outdoor).length,outdoorPaths:w.corridors.filter(c=>c.outdoor).length,
       vegetation:out.filter(m=>m.mat===11).length,rocks:out.filter(m=>m.category==='boulder'||m.category==='cliff').length};
   }
+  // Art is authored in local floor coordinates, then lifted as a coherent region.
+  // Ramps are actual tilted boxes with coplanar floor markings. Retaining walls
+  // remain vertical visible solids, matching their exact axis-aligned colliders.
+  function elevateWorld(w) {
+    // Assemblies may share a local position. Each mesh receives altitude once.
+    for(const m of w.meshes)m.p=m.p.slice();
+    const regions=new Map(w.rooms.map(r=>['room-'+r.id,r]));
+    w.corridors.forEach((c,i)=>regions.set('corridor-'+i,c));
+    const at=(r,x,z)=>{
+      if(!r)return 0;
+      if(r.liftId){const l=w.lifts.find(l=>l.id===r.liftId),u=r.axis==='x'?x-r.x:z-r.z;return u*r.lowSign< -1.8?l.maxY:l.minY;}
+      return (r.y||0)+(x-r.x)*(r.slopeX||0)+(z-r.z)*(r.slopeZ||0);
+    };
+    const regionAt=(x,z)=>w.rooms.concat(w.corridors).find(r=>Math.abs(x-r.x)<=r.w/2+.3&&Math.abs(z-r.z)<=r.d/2+.3);
+    for(const m of w.meshes) {
+      if(m.fixedHeight){delete m.fixedHeight;continue;}
+      const r=regions.get(m.region)||regionAt(m.p[0],m.p[2]);
+      if(!r)continue;
+      const y=at(r,m.p[0],m.p[2]),k=r.slopeX||r.slopeZ||0,axis=r.slopeX?0:2;
+      const ground=['floor','outdoor_floor','trail'].includes(m.category)&&m.shape==='box';
+      if(ground){m.ground=true;m.surface='architecture';}
+      if(m.solid) {
+        // A continuous vertical skirt follows both ends of each ramp. Narrow
+        // posts only grow by the small height change across their footprint.
+        const span=m.s[axis]*Math.abs(k);
+        m.p[1]+=y;m.s[1]+=span;
+      } else if(k&&m.shape==='box'&&(!(m.r)||m.r.every(v=>Math.abs(v)<1e-8))&&(ground||m.s[axis]>(axis===0?r.w:r.d)*.55)) {
+        const angle=Math.atan(k),cos=Math.cos(angle),thickness=m.s[1];
+        m.p[1]+=y+(ground?thickness/2-thickness/(2*cos):0);
+        m.s[axis]/=cos;m.r=axis===0?[0,0,angle]:[-angle,0,0];
+      } else if(k&&m.shape==='cylinder'&&m.s[1]>(axis===0?r.w:r.d)*.55) {
+        const dx=axis===0?1:0,dz=axis===2?1:0;
+        m.p[1]+=y;m.s[1]*=Math.sqrt(1+k*k);
+        m.r=[Math.atan2(dz,Math.hypot(dx,k)),0,Math.atan2(-dx,k)];
+      } else m.p[1]+=y;
+    }
+    for(const c of w.colliders) {
+      const m=w.meshes[c.mesh];
+      c.minX=m.p[0]-m.s[0]/2;c.maxX=m.p[0]+m.s[0]/2;
+      c.minY=m.p[1]-m.s[1]/2;c.maxY=m.p[1]+m.s[1]/2;
+      c.minZ=m.p[2]-m.s[2]/2;c.maxZ=m.p[2]+m.s[2]/2;
+    }
+    for(const l of w.lights)l.p[1]+=at(regions.get(l.region)||regionAt(l.p[0],l.p[2]),l.p[0],l.p[2]);
+    for(const a of w.machinery.concat(w.ambience||[])) {
+      if(a.fixedHeight){delete a.fixedHeight;continue;}
+      a.y+=at(a.room===undefined?regionAt(a.x,a.z):w.rooms[a.room],a.x,a.z);
+    }
+    for(const t of w.trees)t.y=at(regions.get(t.region),t.x,t.z);
+    for(const b of w.outdoorBoundaries){const m=w.meshes[b.mesh];b.y=m.p[1]-m.s[1]/2;b.height=m.s[1];}
+    w.routeLength=w.connections.reduce((n,c)=>n+Math.hypot(c.x2-c.x1,c.z2-c.z1,c.y2-c.y1),0);
+  }
+  function floorHeight(world,x,z) {
+    let fallback=null;
+    for(const r of world.walkable||world.rooms.concat(world.corridors||[]))if(Math.abs(x-r.x)<=r.w/2+1e-7&&Math.abs(z-r.z)<=r.d/2+1e-7){if(r.substrate||r.fallback){fallback=r.y||0;continue;}return (r.y||0)+(x-r.x)*(r.slopeX||0)+(z-r.z)*(r.slopeZ||0);}
+    return fallback;
+  }
+  function arenaWorld(w,theme,aperture){
+    const access=w.rooms[[5,3,5][w.stage]],edge=access.x+access.w/2,gap=13,size=60;
+    const arena={id:w.rooms.length,x:edge+gap+size/2,z:access.z,y:access.y,w:size,d:size,h:0,outdoor:true,bossArena:true,archetype:'colossal-arena',name:['L’enclos du Colosse','La fosse du Brise-siège','Le parvis du Veilleur'][w.stage],openings:{w:true}};
+    const c={x:edge+gap/2,z:access.z,w:gap+.5,d:aperture+.48,y:access.y,slopeX:0,slopeZ:0,outdoor:true,arenaPath:true};
+    const corridorId=w.corridors.length;w.rooms.push(arena);w.corridors.push(c);w.connections.push({from:access.id,to:arena.id,x1:access.x,z1:access.z,x2:arena.x,z2:arena.z,width:aperture,y1:access.y,y2:arena.y});
+    w.walkable.push({x:arena.x,z:arena.z,w:size,d:size,y:arena.y,slopeX:0,slopeZ:0},{...c});
+    w.environment.outdoorZones.push({x:arena.x,z:arena.z,w:size,d:size},{x:c.x,z:c.z,w:c.w,d:c.d});
+    w.bossArena={x:arena.x,y:arena.y,z:arena.z,r:28,room:arena.id};
+    w.environment.longViewZones=[{x:arena.x,z:arena.z,w:size,d:size,range:100}];
+    const add=(p,s,mat,category,region,solid=false,extra={})=>{
+      const m={shape:'box',p,s,mat,category,region,outdoor:true,structural:true,...extra};w.meshes.push(m);
+      if(solid){m.solid=true;w.colliders.push({minX:p[0]-s[0]/2,maxX:p[0]+s[0]/2,minY:p[1]-s[1]/2,maxY:p[1]+s[1]/2,minZ:p[2]-s[2]/2,maxZ:p[2]+s[2]/2,mesh:w.meshes.length-1});}return m;
+    };
+    const groundColor=w.stage===1?[.39,.30,.22]:[.28,.33,.28],region='room-'+arena.id;
+    for(let x=-30;x<30;x+=10)for(let z=-30;z<30;z+=10)add([arena.x+x+5,arena.y-.22,arena.z+z+5],[10,.44,10],8,'outdoor_floor',region,false,{ground:true,surface:'architecture',color:groundColor});
+    add([c.x,c.y-.22,c.z],[c.w,.44,c.d],2,'floor','corridor-'+corridorId,false,{ground:true,surface:'architecture'});
+    function boundary(x,z,wid,depth,owner){
+      add([x,arena.y+.5,z],[wid,1,depth],9,'boundary',owner,true,{color:groundColor.map(v=>v*1.2)});
+      w.outdoorBoundaries.push({x,z,y:arena.y,length:Math.max(wid,depth),alongX:wid>depth,height:1,thickness:Math.min(wid,depth),region:owner,mesh:w.meshes.length-1});
+      add([x,arena.y+1.08,z],[wid+.04,.16,depth+.04],1,'arena_rail',owner);
+    }
+    for(const side of [-1,1]){
+      boundary(c.x,c.z+side*(aperture/2+.24),c.w,.48,'corridor-'+corridorId);
+      for(let x=-25;x<=25;x+=10)boundary(arena.x+x,arena.z+side*30,10,.52,region);
+      for(let z=-25;z<=25;z+=10)if(side===1||Math.abs(z)>5)boundary(arena.x+side*30,arena.z+z,.52,10,region);
+      if(side===-1){const length=10-aperture/2;for(const sign of [-1,1])boundary(arena.x-30,arena.z+sign*(aperture/2+length/2),.52,length,region);}
+    }
+    // Flat segmented inlays describe a vast ceremonial machine circle without
+    // adding obstacles or one enormous mesh to the spatial render index.
+    for(const radius of [12,20,26])for(let i=0;i<72;i++){
+      const a=i*TAU/72,length=TAU*radius/72*.72;
+      add([arena.x+Math.cos(a)*radius,arena.y+.014,arena.z+Math.sin(a)*radius],[.075,.022,length],i%6===0?4:1,'arena_inlay',region,false,{r:[0,-a,0],emissive:i%6===0?.17:0,color:i%6===0?theme.main:undefined});
+    }
+    for(const side of [-1,1])for(let i=0;i<13;i++){
+      const x=edge+(i+.5)*gap/13,z=c.z+side*(aperture/2+.24);
+      add([x,c.y+1.14,z],[.08,.30,.08],1,'arena_post','corridor-'+corridorId);
+      add([x,c.y+.014,c.z+side*(aperture/2-.2)],[.28,.022,.12],5,'arena_path_mark','corridor-'+corridorId,false,{color:theme.alt});
+    }
+    // Only the outer ring holds cover. The centre and the guardian's complete
+    // motion envelope remain free of props, roofs and ordinary spawn points.
+    for(const side of [-1,1])for(const z of [-20,20]){
+      add([arena.x+side*26,arena.y+.65,arena.z+z],[2,1.3,3],0,'arena_cover',region,true);
+      add([arena.x+side*26,arena.y+1.34,arena.z+z],[2.12,.08,3.12],1,'arena_cover_cap',region);
+      w.pickups.push({x:arena.x+side*23.8,y:arena.y,z:arena.z+z,type:'health'});
+    }
+    for(const q of [-1,1])for(const k of [-1,1]){
+      const x=arena.x+q*28,z=arena.z+k*27;
+      add([x,arena.y+2.25,z],[.18,4.5,.18],1,'arena_lamp',region,true);
+      add([x,arena.y+4.43,z],[.7,.12,.7],4,'arena_lamp_head',region,false,{emissive:.5,color:theme.main});
+      w.lights.push({p:[x,arena.y+4.2,z],color:theme.main,power:8,region});
+    }
+    // Three colossal gateways frame the open arena. Their complete geometry is
+    // beyond the guardian's widest movement envelope, including the sidearms.
+    // Each lintel belongs to its own pair of pillars for real local collapse.
+    const monumentColor=w.stage===1?[.26,.25,.23]:w.stage===2?[.42,.48,.43]:[.35,.39,.32];
+    for(let i=0;i<3;i++){
+      const entrance=i===2,axis=entrance?'z':'x',height=(entrance?10:18)+w.stage*(entrance?2:3),half=entrance?7:15;
+      const centre={x:arena.x+(entrance?-29.4:0),z:arena.z+(entrance?0:(i===0?-29.4:29.4))},owner='arena-monument-'+i;
+      for(const side of [-1,1]){
+        const x=centre.x+(axis==='x'?side*half:0),z=centre.z+(axis==='z'?side*half:0);
+        add([x,arena.y+height/2,z],[2.2,height,2.2],w.stage===1?0:9,'arena_pier',owner,true,{color:monumentColor});
+        for(const y of [.8,height*.35,height*.68,height-.45])add([x,arena.y+y,z],[2.8,.36,2.8],1,'arena_buttress_band',owner,false,{color:monumentColor.map(v=>v*1.16)});
+        add([x,arena.y+height+.34,z],[3.2,.68,3.2],w.stage===1?1:9,'arena_capstone',owner,false,{color:monumentColor});
+        for(const q of [-1,1])add([x+(axis==='x'?0:q*.94),arena.y+height*.52,z+(axis==='z'?0:q*.94)],axis==='x'?[.2,height*.65,.1]:[.1,height*.65,.2],1,'arena_vertical_inlay',owner,false,{color:theme.alt});
+        if(w.stage!==1)for(const q of [-1,1])add([x+q*.7,arena.y+height*.42,z+1.13],[.24,height*.52,.055],11,'arena_ivy',owner,false,{color:w.stage===2?[.22,.35,.27]:[.26,.31,.19]});
+      }
+      add([centre.x,arena.y+height-.7,centre.z],axis==='x'?[half*2,1.5,1.6]:[1.6,1.5,half*2],w.stage===1?0:9,'ceiling',owner,true,{color:monumentColor});
+      for(const side of [-1,1])add([centre.x+(axis==='x'?side*half*.48:0),arena.y+height+.22,centre.z+(axis==='z'?side*half*.48:0)],axis==='x'?[3,.35,2.05]:[2.05,.35,3],1,'arena_lintel_coping',owner,false,{color:monumentColor.map(v=>v*1.1)});
+      // Distant warning lenses supply a readable vertical landmark in all biomes.
+      add([centre.x+(entrance?.86:0),arena.y+height-.65,centre.z+(entrance?0:(i===0?.86:-.86))],entrance?[.08,.45,1.3]:[1.3,.45,.08],4,'arena_high_beacon',owner,false,{emissive:.22,color:theme.main});
+    }
+    w.bounds.maxX=Math.ceil(arena.x+30+.8);w.bounds.minZ=Math.min(w.bounds.minZ,Math.floor(arena.z-30-.8));w.bounds.maxZ=Math.max(w.bounds.maxZ,Math.ceil(arena.z+30+.8));
+    w.natureStats.outdoorRooms++;w.natureStats.outdoorPaths++;
+    w.detailStats.regions[region]=w.meshes.filter(m=>m.region===region).length;w.detailStats.regions['corridor-'+corridorId]=w.meshes.filter(m=>m.region==='corridor-'+corridorId).length;
+    w.routeLength=w.connections.reduce((n,c)=>n+Math.hypot(c.x2-c.x1,c.z2-c.z1,c.y2-c.y1),0);
+  }
+  // A continuous, visible terrain bed makes a demolished boundary a usable
+  // opening. Tiles keep the render spatial index local; no map-sized mesh.
+  function demolitionWorld(w,theme){
+    const old=w.bounds,widen=7;
+    w.bounds={minX:old.minX-widen,maxX:old.maxX+widen,minZ:old.minZ-widen,maxZ:old.maxZ+widen};
+    const b=w.bounds,add=(shape,p,s,mat,category,extra={})=>{const m={shape,p,s,mat,category,outdoor:true,region:'terrain',structural:true,...extra};w.meshes.push(m);return m;};
+    const box=(p,s,mat,category,extra={},solid=false)=>{const m=add('box',p,s,mat,category,extra);if(solid){m.solid=true;w.colliders.push({minX:p[0]-s[0]/2,maxX:p[0]+s[0]/2,minY:p[1]-s[1]/2,maxY:p[1]+s[1]/2,minZ:p[2]-s[2]/2,maxZ:p[2]+s[2]/2,mesh:w.meshes.length-1});}return m;};
+    const color=w.stage===1?[.36,.29,.20]:w.stage===2?[.23,.29,.25]:[.26,.31,.21];
+    w.walkable.push({x:(b.minX+b.maxX)/2,z:(b.minZ+b.maxZ)/2,w:b.maxX-b.minX,d:b.maxZ-b.minZ,y:-.25,slopeX:0,slopeZ:0,substrate:true,fallback:true});
+    for(let x=b.minX;x<b.maxX;x+=10)for(let z=b.minZ;z<b.maxZ;z+=10){const dx=Math.min(10,b.maxX-x),dz=Math.min(10,b.maxZ-z);box([x+dx/2,-.55,z+dz/2],[dx,.6,dz],8,'substrate',{ground:true,surface:'architecture',terrain:true,color});}
+    // The finite map ends in an exposed bedrock rim, a visible piece of the
+    // carrying terrain, rather than an invisible wall behind a destroyed fence.
+    for(const side of ['n','s','e','w']){
+      const along=side==='n'||side==='s',low=side==='n'||side==='w',start=along?b.minX:b.minZ,end=along?b.maxX:b.maxZ;
+      for(let u=start;u<end;u+=10){const length=Math.min(10,end-u),x=along?u+length/2:(low?b.minX+.45:b.maxX-.45),z=along?(low?b.minZ+.45:b.maxZ-.45):u+length/2;
+        box([x,.75,z],along?[length,2,.9]:[.9,2,length],9,'terrain_edge',{terrain:true,color:color.map(v=>v*1.2)},true);
+        add('octa',[x,1.4,z],along?[length,1.5,1.5]:[1.5,1.5,length],9,'terrain_edge',{terrain:true,color:color.map(v=>v*1.25)});
+      }
+    }
+    const segmentDistance=(x,z,a,c)=>{const dx=c.x-a.x,dz=c.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1)));return Math.hypot(x-a.x-dx*t,z-a.z-dz*t);};
+    const reserved=[w.spawn,w.exit,...w.cores,...w.pickups,...w.mechanisms,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(j=>[j,j.target])],chosen=[];
+    function spot(room,radius,ambient=false){
+      const candidates=[];for(const dx of [-4.5,4.5,-2.8,2.8,-6,6,0])for(const dz of [-1.8,1.8,-5.6,5.6,-3.4,3.4])candidates.push({x:room.x+dx,z:room.z+dz});
+      return candidates.find(p=>Math.abs(p.x-room.x)<room.w/2-radius-.3&&Math.abs(p.z-room.z)<room.d/2-radius-.3&&isWalkable(w,p.x,p.z,radius)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>radius+1.8)&&chosen.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>radius+q.r+1)&&w.jumpPads.every(j=>segmentDistance(p.x,p.z,j,j.target)>radius+1.5)&&(!ambient||reserved.every(q=>{const dx=room.x-p.x,dz=room.z-p.z,n=Math.hypot(dx,dz),a={x:p.x+dx/n*.54,z:p.z+dz/n*.54},c={x:p.x+dx/n*3.46,z:p.z+dz/n*3.46};return Math.hypot(q.x-a.x,q.z-a.z)>3.2&&segmentDistance(q.x,q.z,a,c)>1.8;})));
+    }
+    w.traps=[];w.pipes=[];
+    const yards=w.rooms.filter(r=>r.outdoor&&r.id!==0&&!r.bossArena);
+    for(const [i,kind] of ['blade','press','spikes'].entries()){
+      let room,point;
+      for(const r of yards.slice(i).concat(yards.slice(0,i))){const q=spot(r,kind==='blade'?2.2:1.4);if(q){room=r;point=q;break;}}
+      if(!point)throw new Error('No safe trap position '+w.stage+'/'+kind);
+      const {x,z}=point,y=room.y,id='trap-'+i,region='room-'+room.id,assembly='trap-frame-'+i;
+      const trap={id,kind,x,y:kind==='blade'?y+.84:y,baseY:y,z,w:kind==='blade'?.3:1.6,d:kind==='blade'?1.35:1.6,h:kind==='blade'?.32:kind==='press'?.65:1.1,axis:'x',travel:kind==='blade'?1.65:kind==='press'?2.6:0,period:7.8+i*.8,active:1.6+i*.15,warning:1.3,phase:2.1+i*1.7,damage:kind==='press'?24:18};
+      w.traps.push(trap);chosen.push({...point,r:2.4});
+      box([x,y+.015,z],[kind==='blade'?4.3:2.1,.03,2.1],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
+      for(const q of [-1,1])for(let k=0;k<8;k++)box([x+(k-3.5)*.22,y+.037,z+q*1],[.12,.018,.17],5,'trap_warning',{region,assembly,color:theme.alt});
+      if(kind!=='spikes'){
+        const span=kind==='blade'?2.22:1.25;
+        for(const q of [-1,1])box([x+q*span,y+1.8,z],[.16,3.6,.24],1,'trap_support',{region,assembly},true);
+        box([x,y+3.54,z],[span*2+.25,.22,.42],0,'trap_beam',{region,assembly});
+        add('cylinder',[x,y+3.36,z],[.48,.24,.48],1,'trap_motor',{region,assembly,r:[Math.PI/2,0,0]});
+      }
+    }
+    // Clearly marked pressure conduits. Ordinary dry service tubing can also
+    // break, while these valves identify the hot, damaging gas system.
+    for(let i=0;i<4;i++){
+      let room,point;
+      for(const r of yards.slice(i%yards.length).concat(w.rooms.filter(r=>r.id!==0&&!r.bossArena))){const q=spot(r,.7,i===3);if(q){room=r;point=q;break;}}
+      if(!point)throw new Error('No safe pressure pipe position');
+      const {x,z}=point,y=room.y,dx=room.x-x,dz=room.z-z,len=Math.hypot(dx,dz),id='pipe-'+i,region='room-'+room.id,assembly='pressure-'+i;
+      const pipe={id,x,y:y+1.03,z,dx:dx/len,dy:0,dz:dz/len,length:3,radius:.45,r:1.6,delay:i===3?1.4:1,duration:i===3?3:7,damage:8,period:i===3?16:0,phase:i===3?5:0};
+      w.pipes.push(pipe);chosen.push({...point,r:.8});
+      box([x,y+.66,z],[.55,1.32,.55],0,'pressure_manifold',{region,assembly},true);
+      add('cylinder',[x,y+1.03,z],[.27,2.25,.27],1,'pressure_pipe',{region,assembly,r:[0,0,Math.PI/2]});
+      for(const q of [-1,1]){
+        add('cylinder',[x+q*.85,y+1.03,z],[.43,.1,.43],0,'pressure_flange',{region,assembly,r:[0,0,Math.PI/2]});
+        box([x+q*.85,y+.46,z],[.12,.92,.16],1,'pressure_support',{region,assembly});
+      }
+      add('ring',[x,y+1.03,z+.31],[.45,.08,.45],6,'pressure_valve',{region,assembly,r:[Math.PI/2,0,0],emissive:.15});
+      box([x,y+1.41,z],[.62,.09,.62],5,'pressure_warning',{region,assembly,color:theme.alt});
+    }
+    const stats=w.detailStats;stats.added=w.meshes.length-stats.base;stats.tiers=[w.meshes.filter(m=>!m.detail).length,w.meshes.filter(m=>m.detail===1).length,w.meshes.filter(m=>m.detail===2).length];
+  }
+  function demolitionMetadata(w){
+    const out=w.meshes,groups=[],owners=new Map(),byRegion=new Map(),explicit=new Map();
+    const bbox=m=>{const [rx,ry,rz]=m.r||[0,0,0],a=Math.cos(rx),b=Math.sin(rx),c=Math.cos(ry),d=Math.sin(ry),e=Math.cos(rz),f=Math.sin(rz),r=[e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a],h=[0,1,2].map(k=>(Math.abs(r[k*3]*m.s[0])+Math.abs(r[k*3+1]*m.s[1])+Math.abs(r[k*3+2]*m.s[2]))/2);return {minX:m.p[0]-h[0],maxX:m.p[0]+h[0],minY:m.p[1]-h[1],maxY:m.p[1]+h[1],minZ:m.p[2]-h[2],maxZ:m.p[2]+h[2]};};
+    const boxes=out.map(bbox),keys=['minX','maxX','minY','maxY','minZ','maxZ'];
+    const union=list=>Object.fromEntries(keys.map(k=>[k,Math[k.startsWith('min')?'min':'max'](...list.map(b=>b[k]))]));
+    const distance=(p,b)=>Math.hypot(Math.max(b.minX-p[0],0,p[0]-b.maxX),Math.max(b.minY-p[1],0,p[1]-b.maxY),Math.max(b.minZ-p[2],0,p[2]-b.maxZ));
+    function group(id,kind,members,colliders=[],strength=6){const g={id,kind,meshes:members,colliders,strength,region:out[members[0]].region,bounds:union(members.map(i=>boxes[i]))};groups.push(g);for(const i of members)owners.set(i,g);return g;}
+    for(const t of w.trees){const members=Array.from({length:t.meshCount},(_,j)=>t.mesh+j),indices=w.colliders.flatMap((c,i)=>members.includes(c.mesh)?[i]:[]);const g=group('tree-'+t.mesh,'tree',members,indices,7);t.destructibleId=g.id;}
+    out.forEach((m,i)=>{if(m.assembly){if(!explicit.has(m.assembly))explicit.set(m.assembly,[]);explicit.get(m.assembly).push(i);}});
+    for(const [id,members] of explicit){const colliders=w.colliders.flatMap((c,i)=>members.includes(c.mesh)?[i]:[]);group(id,id.startsWith('pressure')?'pipe':'prop',members,colliders,id.startsWith('pressure')?3:12);}
+    for(const [ci,c] of w.colliders.entries()){
+      const m=out[c.mesh];if(m.terrain||m.ground||owners.has(c.mesh))continue;
+      const [x,h,z]=m.s,kind=m.category==='ceiling'?'roof':m.category==='arena_pier'?'support':Math.min(x,z)<1.2&&Math.max(x,z)>2.5&&h>1.8?'wall':h>2.5&&x<1.5&&z<1.5?'support':'prop';
+      const g=group('solid-'+c.mesh,kind,[c.mesh],[ci],kind==='wall'?18:kind==='roof'?16:kind==='support'?14:6);
+      if(!byRegion.has(m.region))byRegion.set(m.region,[]);byRegion.get(m.region).push(g);
+    }
+    // Attach fittings to their actual nearby solid. Ceiling networks belong to
+    // the roof, wall cladding to wall segments, roots and canopies to one tree.
+    const loose=new Map();
+    for(const [i,m] of out.entries()){
+      if(owners.has(i)||m.terrain||m.ground)continue;
+      const candidates=(byRegion.get(m.region)||[]).map(g=>({g,d:distance(m.p,g.bounds)})).sort((a,b)=>a.d-b.d),near=candidates[0];
+      if(near&&near.d<(m.detail?1.45:.85)){near.g.meshes.push(i);owners.set(i,near.g);continue;}
+      const key=(m.region||'free')+':'+Math.floor(m.p[0]/2)+','+Math.floor(m.p[1]/2)+','+Math.floor(m.p[2]/2)+':'+(m.mat===11?'plant':'dressing');
+      if(!loose.has(key))loose.set(key,[]);loose.get(key).push(i);
+    }
+    for(const [key,members] of loose)group('decor-'+key,'decor',members,[],1);
+    for(const g of groups){g.meshes.sort((a,b)=>a-b);g.bounds=union(g.meshes.map(i=>boxes[i]));for(const i of g.meshes)out[i].destructibleId=g.id;}
+    for(const roof of groups.filter(g=>g.kind==='roof')){
+      const room=w.rooms.find(r=>'room-'+r.id===roof.region),base=room?.y??Math.min(...(byRegion.get(roof.region)||[]).map(g=>g.bounds.minY));
+      roof.supports=groups.filter(g=>g.region===roof.region&&['wall','support'].includes(g.kind)&&g.bounds.minY<base+.5).map(g=>g.id);roof.supportRatio=.38;roof.dependents=groups.filter(g=>g!==roof&&g.region===roof.region&&!['wall','support'].includes(g.kind)&&g.bounds.minY>base+2.7).map(g=>g.id);
+    }
+    const nearest=(x,y,z,region)=>groups.filter(g=>(!region||g.region===region)&&g.kind!=='decor').map(g=>({g,d:distance([x,y,z],g.bounds)})).sort((a,b)=>a.d-b.d)[0]?.g;
+    for(const a of (w.machinery||[]).concat(w.ambience||[])){const g=nearest(a.x,a.y,a.z,a.room===undefined?undefined:'room-'+a.room);if(g)a.destructibleId=g.id;}
+    for(const light of w.lights){const g=nearest(...light.p,light.region);if(g)light.destructibleId=g.id;}
+    for(const p of w.pipes)p.destructibleId='pressure-'+p.id.slice(5);
+    for(const t of w.traps)t.destructibleId='trap-frame-'+t.id.slice(5);
+    for(const m of w.mechanisms){const g=nearest(m.x,m.y+.6,m.z);if(g)m.destructibleId=g.id;}
+    // Anchors are existing pressure systems and trap machinery, never invisible
+    // colliders or freshly spawned props. The director may only play real cues.
+    w.horrorSites=w.pipes.map(p=>({id:'horror-'+p.id,x:p.x,y:p.y-1.03,z:p.z,kind:'steam',radius:3,destructibleId:p.destructibleId})).concat(w.traps.map(t=>({id:'horror-'+t.id,x:t.x,y:t.baseY,z:t.z,kind:t.kind==='press'?'collapse':'alarm',radius:3,destructibleId:t.destructibleId}))).filter(q=>Math.hypot(q.x-w.spawn.x,q.z-w.spawn.z)>16);
+    w.destructibles=groups;w.destructionVersion=1;
+  }
+  // All 430 opponents are real, individually addressable simulation entities.
+  // Independent room squads activate locally rather than running map-wide vision.
+  function populate(w) {
+    const random=randomFor('FERRO-garrisons-05:'+w.seed,w.stage),target=[120,140,170][w.stage];
+    const reserved=[w.spawn,w.exit,...w.cores,...w.pickups,...w.mechanisms,...w.jumpPads.flatMap(p=>[{x:p.x,z:p.z,r:2},{...p.target,r:2}]),...(w.traps||[]).map(t=>({...t,r:2.8})),...(w.pipes||[]).map(t=>({...t,r:1.5}))];
+    const queues=[];
+    for(const r of w.rooms.slice(1).filter(r=>!r.bossArena)) {
+      const candidates=[];
+      for(let dz=-r.d/2+1.9;dz<r.d/2-1.6;dz+=1.9)for(let dx=-r.w/2+1.9;dx<r.w/2-1.6;dx+=1.9) {
+        const x=r.x+dx+(random()-.5)*.28,z=r.z+dz+(random()-.5)*.28;
+        if(!isWalkable(w,x,z,.67)||reserved.some(p=>Math.hypot(x-p.x,z-p.z)<(p.r||1.3))||w.hazards.some(h=>Math.hypot(x-h.x,z-h.z)<h.r+.85))continue;
+        candidates.push({x,y:r.y,z,zoneId:r.id});
+      }
+      for(let i=candidates.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[candidates[i],candidates[j]]=[candidates[j],candidates[i]];}
+      queues.push(candidates);
+    }
+    // Patrols also occupy the longer ramp galleries, leaving the start chamber
+    // safe and the approaches to machinery unobstructed.
+    for(const [i,c] of w.corridors.entries()) {
+      if(c.liftId||c.arenaPath)continue;
+      const link=w.connections[i],alongX=link.z1===link.z2,length=alongX?c.w:c.d,candidates=[];
+      for(let u=-length/2+3;u<length/2-2;u+=4.2) {
+        const x=c.x+(alongX?u:1.1),z=c.z+(alongX?1.1:u);
+        if(Math.hypot(x-w.spawn.x,z-w.spawn.z)<18||!isWalkable(w,x,z,.67)||w.doors.some(d=>Math.hypot(x-d.x,z-d.z)<2.2))continue;
+        candidates.push({x,y:floorHeight(w,x,z),z,zoneId:Math.max(link.from,link.to)});
+      }
+      if(candidates.length)queues.push(candidates);
+    }
+    const arena=w.bossArena;
+    w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault'});
+    let pass=0;
+    while(w.enemies.length<target) {
+      let added=0;
+      for(const q of queues) {
+        while(q.length) {
+          const p=q.pop();
+          if(w.enemies.some(e=>Math.hypot(e.x-p.x,e.z-p.z)<(e.boss?2.4:1.5)))continue;
+          const type=(w.enemies.length+p.zoneId+w.stage)%3;
+          w.enemies.push({...p,type,squadId:p.zoneId*10+Math.floor(pass/4),role:type===1?'assault':type===2?'suppressor':['flanker','assault','suppressor'][pass%3]});added++;break;
+        }
+        if(w.enemies.length===target)break;
+      }
+      if(!added)throw new Error('Insufficient safe garrison positions in stage '+w.stage);
+      pass++;
+    }
+    // Heavy specialists are distributed across squads, with readable weapon
+    // silhouettes. Keep the total garrison and the other families unchanged.
+    const squads=new Set(),specialists=w.enemies.filter(e=>e.type===1).sort((a,b)=>a.squadId-b.squadId||a.zoneId-b.zoneId);
+    let grenades=0,rockets=0;
+    for(const e of specialists){
+      if(squads.has(e.squadId))continue;
+      const weapon=grenades<8&&(grenades<=rockets||rockets===6)?'grenade':rockets<6?'rocket':null;
+      if(!weapon)break;e.weapon=weapon;squads.add(e.squadId);if(weapon==='grenade')grenades++;else rockets++;
+    }
+    if(grenades!==8||rockets!==6)throw new Error('Insufficient distinct heavy squads for demolition combat');
+    const bossIndex=w.enemies.findIndex(e=>e.boss),boss=w.enemies.splice(bossIndex,1)[0];w.enemies.push(boss);
+    const guards=w.enemies.filter(e=>e.type===0).slice(-6);
+    guards.forEach((e,i)=>{const a=(i+.5)*TAU/6;e.x=arena.x+Math.cos(a)*26;e.z=arena.z+Math.sin(a)*26;e.y=arena.y;e.zoneId=arena.room;e.squadId=200+Math.floor(i/3);e.bossWave=1+Math.floor(i/3);e.bossId=w.enemies.length-1;});
+  }
   function isWalkable(world, x, z, radius) {
     const r = radius === undefined ? 0.35 : radius;
-    const floor = world.rooms.concat(world.corridors || []).some(a => x >= a.x - a.w / 2 && x <= a.x + a.w / 2 && z >= a.z - a.d / 2 && z <= a.z + a.d / 2);
-    if (!floor) return false;
+    const floor=floorHeight(world,x,z);
+    if(floor===null)return false;
     for (const c of world.colliders) {
-      if (c.minY >= 1.85 || c.maxY <= 0.05) continue;
+      if (c.minY >= floor+1.85 || c.maxY <= floor+0.05) continue;
       const dx = Math.max(c.minX - x, 0, x - c.maxX), dz = Math.max(c.minZ - z, 0, z - c.maxZ);
       if (dx * dx + dz * dz <= r * r) return false;
     }
@@ -955,27 +1391,32 @@
   }
   function validate(world) {
     const cell = 0.5, b = world.bounds, nx = Math.ceil((b.maxX - b.minX) / cell), nz = Math.ceil((b.maxZ - b.minZ) / cell);
-    const cells = new Uint8Array(nx * nz), seen = new Uint8Array(nx * nz), queue = new Int32Array(nx * nz);
+    const cells = new Uint8Array(nx * nz), heights = new Float32Array(nx*nz), seen = new Uint8Array(nx * nz), queue = new Int32Array(nx * nz);
     const index = (x, z) => Math.min(nz - 1, Math.max(0, Math.floor((z - b.minZ) / cell))) * nx + Math.min(nx - 1, Math.max(0, Math.floor((x - b.minX) / cell)));
-    for (let iz = 0; iz < nz; iz++) for (let ix = 0; ix < nx; ix++) cells[iz * nx + ix] = isWalkable(world, b.minX + (ix + 0.5) * cell, b.minZ + (iz + 0.5) * cell, 0.38) ? 1 : 0;
+    for (let iz = 0; iz < nz; iz++) for (let ix = 0; ix < nx; ix++) {
+      const x=b.minX+(ix+.5)*cell,z=b.minZ+(iz+.5)*cell,i=iz*nx+ix;
+      cells[i]=isWalkable(world,x,z,.38)?1:0;heights[i]=floorHeight(world,x,z)??NaN;
+    }
     let head = 0, tail = 0;
     const start = index(world.spawn.x, world.spawn.z);
     if (cells[start]) { queue[tail++] = start; seen[start] = 1; }
     while (head < tail) {
       const i = queue[head++], x = i % nx, z = Math.floor(i / nx);
       for (const j of [x > 0 ? i - 1 : -1, x < nx - 1 ? i + 1 : -1, z > 0 ? i - nx : -1, z < nz - 1 ? i + nx : -1]) {
-        if (j >= 0 && cells[j] && !seen[j]) { seen[j] = 1; queue[tail++] = j; }
+        if (j >= 0 && cells[j] && !seen[j] && Math.abs(heights[j]-heights[i])<=.4) { seen[j] = 1; queue[tail++] = j; }
       }
     }
-    const targets = [world.spawn, ...world.cores, world.exit, ...world.enemies, ...world.pickups];
+    const targets = [world.spawn, ...world.cores, world.exit, ...world.enemies, ...world.pickups,...(world.lifts||[]).flatMap(l=>[l.lowerCall,l.upperCall]),...(world.mechanisms||[]).map(m=>({x:m.x,z:m.z+.95})),...(world.jumpPads||[]).flatMap(p=>[p,p.target])];
     const errors = [];
     targets.forEach((p, i) => { if (!isWalkable(world, p.x, p.z, 0.38) || !seen[index(p.x, p.z)]) errors.push('Unreachable target ' + i); });
-    if (world.meshes.length > 16000) errors.push('Mesh budget exceeded');
+    if (world.meshes.length > 18000) errors.push('Mesh budget exceeded');
     if (world.colliders.length > 500) errors.push('Collider budget exceeded');
     if (world.cores.length !== 3) errors.push('Expected three relays');
+    if(world.enemies.length<[120,140,170][world.stage])errors.push('Garrison below tenfold target');
+    if(world.mechanisms.length!==3||world.lifts.length!==2)errors.push('Missing interactive machinery');
     const safeRoom = world.rooms[0];
     if (world.enemies.some(e => Math.abs(e.x - safeRoom.x) < safeRoom.w / 2 && Math.abs(e.z - safeRoom.z) < safeRoom.d / 2)) errors.push('Enemy in spawn chamber');
-    return { ok: errors.length === 0, errors, seed: world.seed, stage: world.stage, meshes: world.meshes.length, colliders: world.colliders.length, enemies: world.enemies.length, reachableCells: tail, objectiveCount: world.cores.length + 1 };
+    return { ok: errors.length === 0, errors, seed: world.seed, stage: world.stage, meshes: world.meshes.length, colliders: world.colliders.length, enemies: world.enemies.length, reachableCells: tail, objectiveCount: world.cores.length + world.mechanisms.filter(m=>m.required).length + 1 };
   }
-  window.FWorld = { create, validate, isWalkable };
+  window.FWorld = { create, validate, isWalkable, floorHeight };
 }());

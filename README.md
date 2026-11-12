@@ -1,154 +1,151 @@
-# FERRO — Le complexe silencieux
+# METAL
 
-**Version 0.4.1 — Horizons.** Un FPS 3D compact dont la géométrie, les matériaux, les machines et le son sont fabriqués par le code. Deux armes, trois territoires mêlant nature et installations industrielles, neuf relais et un gardien final.
+**Des ennemis de métal. Une bande-son metal.** Un FPS d’horreur et d’action entièrement procédural : 430 machines, trois colosses, des territoires destructibles et des musiques MOD originales. Modèles, matériaux, animation, effets, instruments et compositions sont produits par le code. Aucun asset de jeu importé.
 
-L'idée technique s'inspire de la démarche de .kkrieger : conserver la recette du contenu dans un petit programme. **Tout le code et tout le contenu de FERRO sont originaux ; aucun asset du jeu historique n'est repris.**
+**Version 0.5.0 — Colosses.** Le projet auparavant nommé FERRO conserve son dépôt et son adresse pour préserver les liens et les sauvegardes.
 
 ## Jouer
 
-**Dépôt :** https://github.com/M4D135/FERRO
+- **Jeu :** https://ferro-procedural-fps.garden-lake-2660.chatgpt.site/
+- **Dépôt :** https://github.com/M4D135/FERRO
+- **Distribution autonome :** `dist/index.html`, utilisable hors ligne dans un navigateur récent.
 
-**Jouer en ligne :** https://ferro-procedural-fps.garden-lake-2660.chatgpt.site
+L’hébergement garde son accès privé réservé au propriétaire. WebGL 2 est recommandé ; le rendu Canvas 2D sert de secours. Aucun CDN, paquet JavaScript, modèle, texture, police ou fichier audio externe n’est téléchargé. Le son commence après une interaction.
 
-La démonstration est publiée avec un accès privé réservé au propriétaire. Une authentification peut être demandée.
+## Trois territoires, trois colosses
 
-Téléchargez **`dist/index.html`** et ouvrez-le dans un navigateur de bureau récent. Le fichier est autonome : aucun CDN, paquet JavaScript, modèle, police, texture ou enregistrement audio à télécharger. Il fonctionne hors ligne après chargement.
+| Secteur | Machines | Colosse | Hauteur visuelle approximative |
+| --- | ---: | --- | ---: |
+| La lisière rouillée | 120 | Le Colosse de Fer | 18 m |
+| La carrière des braises | 140 | Le Brise-siège | 24 m |
+| Les jardins du veilleur | 170 | Le Veilleur primordial | 30 m |
 
-Le jeu possède également des commandes tactiles et peut être servi par un hébergement statique. WebGL 2 est recommandé ; un rendu 3D logiciel prend le relais quand il est indisponible. Le son commence après une interaction.
+Les populations sont dix fois celles de la version initiale : 120 / 140 / 170 au lieu de 12 / 14 / 17. Ce sont des acteurs distincts, présents dans la simulation. Chaque secteur comprend huit grenadiers et six spécialistes des roquettes, trois commandes, deux ascenseurs, trois tremplins et trois relais.
 
-## Ce qui change en 0.4.1
+Les régions agrandies mêlent bâtiments, cours, arbres, falaises, installations industrielles et ruines. Les terrasses se trouvent à 0, 3,2 et 6,4 m. Les rampes ont une pente physique ; les ascenseurs transportent réellement le joueur. Les tremplins suivent une trajectoire balistique, avec contrôle aérien et collisions contre les plafonds, murs et plateformes.
 
-- **FPS visibles.** Le compteur en haut à droite, près de la carte et de la pause, indique le nombre réel d’images par seconde. Sa moyenne se rafraîchit environ toutes les 0,75 seconde ; un onglet masqué ne fausse pas la mesure au retour.
-- **Arme et ennemis sans grille parasite.** Les joints, vis et grandes rainures des panneaux restent sur le bâtiment. Le métal des objets emploie des coordonnées locales : ses détails suivent l’arme ou l’armure au lieu de les traverser pendant le déplacement. Les véritables ombres restent actives en Auto/Haute.
-- **Moins de travail graphique répété.** Les lots statiques identiques restent dans leurs buffers entre deux images. Les instances animées sont envoyées une fois puis partagées entre les passes de couleur et d’ombre. Le secours Canvas conserve aussi la géométrie des ombres statiques.
-- **Résolution Auto adaptative en WebGL.** Après une baisse de fluidité durable, la résolution diminue par paliers, jusqu’à 65 % de son échelle initiale ; elle remonte plus lentement quand la marge revient. Le budget initial est limité à 1,8 million de pixels, utile sur les écrans à forte densité. Haute et Économie gardent une résolution fixe. Les textes de l’interface restent nets.
-- **Collisions moins coûteuses.** Un index spatial limite les obstacles examinés sans changer le test physique exact, les décisions tactiques ou leurs cadences. Les modèles très éloignés ne sont plus assemblés pour l’affichage ; leur simulation continue.
-- **Reprises compatibles.** Cette mise à jour conserve la génération de terrain 4 et les formats de sauvegarde de la 0.4.0.
+Chaque géant possède une arène à ciel ouvert de **60 × 60 m**, reliée au territoire par une passerelle. Les portes monumentales, piliers et frontons restent en périphérie ; le centre permet au boss de se mouvoir sans entrer dans les bâtiments. Les petites machines donnent un repère d’échelle. Les silhouettes des trois colosses diffèrent : cornes métalliques, cheminées de siège, couronne et halo mécanique.
 
-Les mesures comparables et les limites des tests sont détaillées dans `VALIDATION.md`.
+### Combats scriptés
 
-## Territoires et IA de Horizons
+Le colosse s’éveille à l’entrée de son arène. Chaque combat comporte trois phases, des renforts préplacés et des attaques préparées :
 
-- **De vrais extérieurs.** Chaque secteur possède cinq espaces à ciel ouvert, des chemins praticables et des bâtiments à explorer. Les barrières, murets et fronts rocheux délimitent visiblement le terrain. Le premier départ se fait dans une lisière boisée.
-- **Trois paysages.** Pins et bouleaux autour des postes de maintenance ; falaises, minerais et installations dans la carrière ; feuillus, fleurs, lierre et ruines dans les jardins du veilleur. Les reliefs de fond donnent de la profondeur sans transformer le sol en plateformes.
-- **Une nature construite en 3D.** Troncs et branches, plusieurs formes de canopée, racines, fougères, buissons, herbes, champignons, brindilles et petits cailloux. Les gros troncs et les rochers ont des collisions et servent de couverts.
-- **Ciel et éclairage.** Ciel dégradé, nuages, soleil, brume et palette propre à chaque paysage. Le soleil entre dans l'atlas d'ombres ; le feuillage bouge légèrement avec le vent. Terre, pierre, écorce et feuilles ont leurs propres matériaux procéduraux.
-- **Des machines qui observent.** Patrouille, champ de vision, écoute des tirs et alertes entre voisins. Après avoir perdu la vue, elles cherchent autour de la dernière position connue, puis abandonnent la recherche. Elles ne connaissent pas en permanence la position du joueur.
-- **Des décisions tactiques.** Les éclaireurs cherchent un chemin de flanc ; blessés, ils peuvent rejoindre un couvert qui bloque réellement la vue, attendre puis ressortir pour viser. Les lourds avancent et chargent, les tourelles tiennent leur position. La séparation limite les attroupements. Les PV et dégâts ne sont pas gonflés pour simuler une meilleure IA.
-- **Ambiance extérieure.** Vent, oiseaux synthétiques dans la lisière, sons secs dans la carrière et insectes dans les jardins ; pas et réverbération changent en passant une porte. Les yeux des ennemis et leurs signaux sonores rendent l'alerte lisible.
-- **Reprise adaptée aux nouveaux plans.** Une sauvegarde antérieure repart à l'entrée du même secteur avec les résultats des secteurs déjà terminés. Son ancien point est conservé séparément. Les sauvegardes de la nouvelle génération reprennent normalement au dernier relais.
+- **Colosse de Fer :** écrasements et ondes de choc.
+- **Brise-siège :** barrages de roquettes physiques et balayages de zone.
+- **Veilleur primordial :** combinaison d’anneaux, barrages et balayages.
 
-Le déplacement amorti, les armes animées, les réglages de confort, les détails industriels et les corrections d'ombres de la 0.3 sont conservés. Les résultats observés figurent dans `VALIDATION.md`.
+Les disques, anneaux creux et bandes au sol décrivent les véritables zones de dégâts. Sortez du disque, restez dans l’ouverture d’un anneau ou quittez la bande avant l’impact. Après ses attaques, le boss expose son cœur pendant une courte fenêtre. **Visez le cœur lumineux** : les impacts y sont beaucoup plus efficaces. L’armure résiste davantage hors de cette fenêtre, sans rendre le boss entièrement invulnérable.
 
-## La campagne
+Le HUD affiche le nom, la vie, la phase, l’attaque et le temps d’exposition du cœur. La marche et le niveau de détail tiennent compte de la taille : un colosse ne se réduit pas à quelques cubes de soldat au fond de son arène.
 
-- **Trois plans distincts.** Deux boucles de maintenance dans la lisière, doubles galeries autour de la carrière, puis jardins et observatoire central avant l'arène. Les ventilateurs, presses et réacteurs s'animent ; les évents annoncent leurs décharges.
-- **Deux armes complémentaires.** Impulse tire rapidement et précisément. Fracture disperse sept projectiles instantanés, efficace de près, avec une cadence plus lente et davantage de chaleur.
-- **Onde de choc.** Repousse et étourdit les machines proches, dissipe les projectiles et réduit la chaleur. Son délai de récupération impose de choisir son moment.
-- **Combat plus lisible.** Scouts mobiles, marcheurs qui préparent leur charge, tourelles à rafales et gardien à deux phases. Les yeux et les repères au sol annoncent l'attaque ; les tirs verrouillent leur direction avant de partir.
-- **Points de reprise.** L'entrée d'un secteur et chaque relais sauvegardent l'état de la partie. On peut continuer après avoir fermé la page. Une brève protection évite de réapparaître directement dans un projectile.
-- **Score et séries.** Les éliminations rapprochées augmentent le score ; le bilan d'expédition rassemble les trois secteurs.
-- **Rendu procédural.** Relief des panneaux, métal brossé, reflets et éclairage industriel. Le mode Économie réduit les passes graphiques coûteuses.
-- **Ambiance par secteur.** La synthèse musicale varie avec le paysage et la menace ; les armes, l'onde et le gardien ont leurs propres sons.
+## Horreur et difficulté progressive
 
-## Mission et commandes
+Un directeur de tension orchestre des chocs de métal, coupures locales d’éclairage, alarmes et mouvements d’escouades. Ses événements partent de conduites, boîtiers ou pièges réellement présents dans le décor. Les adversaires attirés par une alarme se dirigent vers ce bruit ; ils ne reçoivent pas automatiquement la position d’un joueur caché.
 
-Dans chaque secteur, approchez-vous des trois relais lumineux, puis rejoignez le portique. Les relais restaurent une partie de votre intégrité et deviennent des points de reprise. Les soins se ramassent automatiquement lorsqu'ils sont utiles. Dans le troisième secteur, le gardien doit également être neutralisé avant de sortir.
+La pression monte avec les secteurs et les objectifs activés. Les premières secondes du premier secteur donnent le temps de comprendre les commandes ; ensuite, les événements alternent préparation, impact et courte accalmie. Les rencontres proches, le son spatialisé, les fuites, les pièges et les spécialistes maintiennent la menace. Les sons d’horreur et la musique sont synthétisés, comme le reste du jeu.
 
-Les armes utilisent la même jauge de chaleur, sans munitions limitées. Relâchez le tir pour refroidir. L'onde possède un rayon de 6,5 m et une recharge de 7 secondes. Une esquive accorde brièvement l'invulnérabilité. Les évents orange annoncent une décharge ; leur phase chaude reste évitable.
+**Options → Partie → Difficulté** propose **Standard**, **Brutal** et **Cauchemar**. Les niveaux renforcent l’agressivité, la cadence et les dégâts ; ils n’ajoutent pas artificiellement des PV aux 430 machines. Le réglage s’applique immédiatement et reste enregistré sur l’appareil. L’équilibrage complet nécessite encore des parties humaines : les tests de comportement ne mesurent pas la peur ressentie.
+
+## Destruction et dangers
+
+**Rupture**, le lance-roquettes, ouvre des brèches dans les murs et fait tomber des morceaux. Fracture et les tirs répétés endommagent aussi le décor. Les morceaux restants ont des collisions correspondant à leur géométrie ; une ouverture visible peut être traversée. Les tirs vérifient le trajet jusqu’à la bouche du canon et les projectiles balaient leur volume pour éviter de passer à travers une paroi fine.
+
+Les structures peuvent perdre leurs panneaux, leurs équipements, leurs lampes et leurs supports. Les éléments privés de support s’effondrent ; les débris sont animés avec un nombre et une durée bornés. Les arbres et accessoires appartiennent à des ensembles destructibles. La suppression d’un obstacle met à jour les collisions, la navigation, le rendu et les ombres.
+
+Les **sols, rampes et plateformes de circulation restent portants**. Il existe un substrat visible sous les territoires, à −0,25 m, pour qu’une brèche extérieure ne donne pas sur un vide sans sol. Cette version réalise une destruction locale par morceaux ; elle n’est pas une simulation structurelle universelle de chaque matériau. Détruire une console libère son circuit, et casser une porte ouvre son passage, afin de conserver une mission terminable.
+
+Les conduites percées émettent de la vapeur brûlante. Des cycles de pression animent aussi le décor ; les avertissements précèdent les décharges dangereuses. Lames latérales, presses verticales et dalles à piques ont de vrais volumes mobiles, des annonces et un passage alternatif. Les grenades possèdent une trajectoire, des rebonds et une fusée ; les roquettes parcourent physiquement leur trajectoire. Le couvert arrête le souffle avant que l’explosion ne le détruise : casser un mur n’inflige pas rétroactivement les dégâts de cette même explosion derrière lui.
+
+## Armes et commandes
+
+| Arme / action | Usage |
+| --- | --- |
+| **Impulse — 1** | Tir rapide et précis ; viser les points faibles. |
+| **Fracture — 2** | Sept rayons dispersés ; efficace de près, chaleur plus élevée. |
+| **Rupture — 3** | Roquette et souffle ; murs, supports, groupes d’ennemis. Reculez avant de tirer : une roquette trop proche de son point de départ reste non armée. |
+| **Onde — E** | Repousse et étourdit à proximité, dissipe les projectiles et refroidit l’arme ; recharge de sept secondes. |
+
+Les trois armes partagent la chaleur. Changer d’arme ne contourne pas une surchauffe. Les projectiles et le souffle respectent les couverts. Les modèles de première personne sont assemblés dans un même repère, avec prise gantée, viseurs, capots, canon et recul amorti.
 
 | Action | Ordinateur | Téléphone |
 | --- | --- | --- |
 | Déplacement | ZQSD / WASD | Joystick gauche |
-| Visée | Souris ; glisser si capture indisponible | Glisser sur la droite |
+| Visée | Souris ; glisser si capture indisponible ; flèches pour tourner | Glisser à droite |
 | Tir | Clic gauche / Entrée | Grand cercle |
-| Changer d'arme | 1 / 2, molette, ou nom de l'arme | Nom de l'arme en bas à droite |
-| Onde de choc | E | Bouton à anneaux |
-| Esquive | Espace | Bouton flèche |
 | Course | Maj | — |
-| Pause | Échap / P | Bouton pause |
+| Esquive | Espace | Bouton flèche |
+| Onde de choc | E | Bouton anneaux |
+| Commande / ascenseur | F | Bouton contextuel |
+| Arme | 1 / 2 / 3 ou molette | Nom de l’arme |
 | Carte | M | Bouton carte |
-| Secours clavier | Flèches haut/bas pour avancer/reculer, gauche/droite pour tourner | — |
+| Pause | Échap / P | Bouton pause |
 
-Les réglages de son, qualité graphique et mouvements de caméra sont dans la pause. Le changement d'arme ne remet pas à zéro la surchauffe.
+Les touches sont personnalisables. **Les FPS restent visibles par défaut**, en haut à droite. Le HUD indique aussi altitude, objectifs, machines neutralisées, chaleur et état du boss.
 
-### Sauvegarde locale
+## Machines et déplacements
 
-L'écran d'accueil propose **Continuer l'expédition** quand un point de reprise existe. **Nouvelle expédition** remplace ce point ; **Recommencer ce secteur** repart de son entrée. Pour un point compatible, la reprise conserve les relais, machines éliminées, score, arme et délais de récupération enregistrés.
+Les escouades combinent assaut, contournement et suppression. Elles voient, entendent, mémorisent le dernier contact, partagent localement les observations et cherchent des couverts. La visée prédictive utilise le mouvement observé. Un tir vérifie les obstacles et les alliés ; les spécialistes évitent de viser leur propre groupe avec une grenade ou une roquette.
 
-La sauvegarde reste dans ce navigateur, sur cette origine, sans synchronisation ni compte de jeu. Effacer les données du navigateur l'efface aussi. Si le stockage local est indisponible, le point de reprise fonctionne pendant la session.
+Les sentinelles à trois pieds se déplacent et cherchent une distance de tir. Les bots alternent poursuite, mouvements latéraux et repositionnement, et certains utilisent les tremplins. Une esquive réagit après un délai à un tir observé ; elle n’annule pas un impact déjà reçu. Les machines éloignées peuvent dormir sans perdre leur identité ou leurs PV.
 
-**Passage à Horizons :** les nouveaux plans utilisent la génération 4. Une ancienne sauvegarde reprend à l'entrée du même secteur et conserve la graine, l'arme ainsi que les statistiques cumulées des secteurs terminés. Les relais et ennemis du secteur en cours repartent de zéro. L'ancien point est copié dans `ferro-expedition-v2-before-horizons` lorsque le stockage le permet, sans écraser une copie déjà présente.
+Les modèles proches possèdent plaques chanfreinées, optiques, pistons, membres articulés et armes distinctes. Les pieds suivent la marche réelle ; les membres se replient en vol. La séparation entre matériaux d’architecture et d’objets retire le motif de grille parasite des armes et des ennemis, tout en gardant l’éclairage et les vraies ombres.
 
-## Ce qui est procédural
+Les [sources officielles de Quake III Arena](https://github.com/id-Software/Quake-III-Arena) ont servi à étudier des principes de déplacement et de combat. Aucun code de ce moteur n’est incorporé. Les personnages, lieux, scripts et compositions de METAL sont originaux.
 
-| Élément | Construction |
-| --- | --- |
-| Architecture | Trois graphes conçus pour rester traversables ; dimensions, placement et détails déterministes selon une graine |
-| Géométrie | Boîtes, cylindres, sphères, octaèdres et anneaux générés mathématiquement |
-| Matériaux | Panneaux, joints, métal, terre, roche, écorce, feuillage, normales et rugosité calculés dans les shaders |
-| Nature et ciel | Assemblages d'arbres et plantes ; vent, nuages, soleil et brume paramétrés par secteur |
-| Machines et personnages | Assemblages de primitives animés par leurs paramètres et états de combat |
-| Son | Oscillateurs, bruit synthétique et filtres Web Audio |
-| Effets | Particules, projectiles, onde, ombre et bloom calculés à l'exécution |
+## Options et musique MOD
 
-| Secteur | Plan | Zones / liaisons | Zones à ciel ouvert | Chemins extérieurs |
-| --- | --- | ---: | ---: | ---: |
-| La lisière rouillée | Deux boucles de maintenance | 9 / 10 | 5 | 7 |
-| La carrière des braises | Deux longues galeries | 8 / 9 | 5 | 9 |
-| Les jardins du veilleur | Observatoire central et arène | 9 / 12 | 5 | 12 |
+Le menu comporte quatre rubriques :
 
-La graine change les dimensions et détails, tout en conservant le graphe propre à chaque secteur. Il ne s'agit pas d'un labyrinthe dont la topologie entière est aléatoire à chaque lancement. Le sol reste horizontal ; les collines, falaises et volumes en hauteur sont décoratifs, sans plateformes traversables.
+- **Partie :** difficulté, reprise, redémarrage du secteur, retour à l’accueil et aide.
+- **Image :** Auto / Économie / Haute, plafond 30 / 60 / 120 FPS ou sans limite, FOV 60–110°, luminosité, ombres, éclat lumineux, FPS, filtre rétro, visière et mouvements de caméra.
+- **Audio :** volumes général, musique, armes/machines et ambiances ; coupure et export MOD.
+- **Commandes :** sensibilité, inversion verticale, viseur et attribution des touches avec détection des conflits.
 
-## Taille
+Les réglages s’appliquent immédiatement. Les menus défilent sur petit écran ; le retour reste accessible. Le mode Économie et le secours Canvas offrent une présentation simplifiée. Un plafond de FPS n’est pas une promesse de cadence.
 
-`SIZE.json` est produit par le build : taille brute du HTML, taille gzip reproductible et SHA-256.
+Le jeu génère de **vrais modules ProTracker à quatre canaux**, signature `M.K.`, avec instruments PCM synthétisés mathématiquement, notes, ordres et patterns. Aucun échantillon enregistré, fichier MOD ou morceau commercial n’est importé.
 
-Pour la 0.4.1 : **255 973 octets bruts** (255,97 ko ; 249,97 Kio) et **78 478 octets gzip**. `SIZE.json` contient aussi le SHA-256 du fichier distribué.
+| Composition | Tempo | Direction musicale |
+| --- | ---: | --- |
+| Fer noir | 100 BPM | Heavy / doom, riffs pesants |
+| Fracture | 170 BPM | Thrash, doubles grosses caisses |
+| Braise | 145 BPM | Metal mélodique, galops et harmonies |
 
-Le budget reste **1 400 000 octets non compressés** pour le fichier jouable. Le dépôt, ses tests et la documentation sont séparés de cette mesure. Gzip mesure une compression de transport ; ce n'est pas la taille brute.
+Chaque morceau possède 32 mesures avec variations. Le lecteur Web Audio utilise les mêmes patterns et données PCM que l’export. La menace influe sur le mix, la pause arrête les notes programmées et une reprise se recale sur une mesure. **Options → Audio → Exporter le MOD** enregistre `METAL-01.mod`, `METAL-02.mod` ou `METAL-03.mod`.
 
-**FERRO est un jeu web.** Le navigateur, WebGL et Web Audio sont exclus du fichier. Ce résultat ne correspond donc pas au même défi qu'un exécutable natif de 96 ko.
+Les budgets des voix de musique et des effets sont indépendants. Le mix final dispose d’une protection de crête, et les souffles de vapeur sont produits par une source continue dont le niveau suit les conduites proches.
 
-## Développement
+## Moteur, sauvegardes et taille
 
-Aucune installation npm n'est nécessaire. Python 3 assemble le fichier ; Node.js exécute les contrôles.
+Le moteur conserve la vraie 3D : il n’a pas été remplacé par un raycaster. Les descriptions du monde sont générées au chargement ; la construction des modèles et la préparation des géométries se concentrent sur ce qui peut contribuer à la vue ou aux ombres. Une exclusion incertaine conserve l’objet. Les instances inchangées réutilisent leurs buffers. Les géants et les volumes essentiels de leurs arènes bénéficient d’une portée adaptée, sans étendre tous les petits détails.
+
+Auto adapte progressivement la résolution WebGL à la cadence. Les retours arrière après destruction invalident les caches concernés ; ils restaurent aussi les collisions et la navigation. Le champ de distance global inutilisé par l’IA avancée n’est plus recalculé à chaque porte ou brèche.
+
+Les points de reprise comprennent terrain détruit, systèmes, physique aérienne, projectiles, boss et directeur de tension. Les relais, commandes, arrivées d’ascenseur avec le joueur et boss abattus enregistrent la progression. Une ancienne génération incompatible reprend à l’entrée du même secteur, en gardant graine, arme et statistiques des secteurs précédents ; une copie du point précédent est conservée si le stockage le permet. Le changement de titre garde les clés internes `ferro-settings` et `ferro-expedition-v2`.
+
+`SIZE.json` contient les tailles brutes et gzip et le SHA-256 du fichier courant. Le budget est **1 400 000 octets non compressés**. Documentation, tests, navigateur et pilotes sont exclus de cette taille ; ce n’est pas la mesure d’un exécutable natif.
+
+## Développement et validation
+
+Aucune installation npm n’est nécessaire : Python 3 assemble la distribution, Node.js exécute les tests.
 
 ```sh
 python3 tools/build.py
-node checks/world.test.mjs
-node --test checks/simulation.test.mjs checks/motion.test.mjs checks/checkpoint.test.mjs
-node checks/build.test.mjs
+npm test
 ```
 
-Ou `npm run build` puis `npm test` si npm est disponible.
-
-| Fichier | Rôle |
+| Source | Responsabilité |
 | --- | --- |
-| `src/renderer.js` | Primitives, matrices, matériaux, ombres et passes de rendu |
-| `src/world.js` | Génération déterministe, architectures et placements |
-| `src/simulation.js` | Collisions, navigation, armes, IA, score et snapshots validés |
-| `src/motion.js` | Ressorts de présentation, caméra et montage articulé de l'arme |
-| `src/audio.js` | Synthèse sonore et ambiance adaptative |
-| `src/game.js` | Commandes, personnages, interface et sauvegardes locales |
-| `src/style.css` | Présentation responsive et icônes sans assets |
-| `src/index.html` | Structure du jeu |
-| `tools/build.py` | Assemblage autonome et mesure de taille |
-| `checks/` | Vérifications de génération, combat, reprise et distribution |
+| `world.js` | Terrain, architecture, population, arènes, systèmes et dangers |
+| `destruction.js` | Découpes, supports, collisions et état persistant de démolition |
+| `simulation.js` | Physique, IA, combat, scripts, progression et snapshots |
+| `actors.js`, `motion.js` | Modèles articulés, LOD, caméra et montage des armes |
+| `effects.js` | Projectiles, vapeur, fragments et annonces de danger |
+| `renderer.js` | WebGL 2, ombres, matériaux et secours Canvas |
+| `music.js`, `audio.js` | MOD, synthèse, mixage, ambiances et horreur |
+| `options.js`, `game.js` | Préférences, contrôles, HUD, menus et sauvegardes |
+| `index.html`, `style.css` | Interface responsive et tactile |
 
-Le build est suivi dans Git pour être immédiatement téléchargeable. Relancer `tools/build.py` après toute modification de `src/`.
+Les résultats vérifiés figurent dans **`VALIDATION.md`**, et les contrats dans **`docs/ARCHITECTURE.md`**. Les images GLES des essais proviennent d’un vrai contexte logiciel Mesa ; elles ne démontrent pas une performance sur un GPU physique. Le navigateur de test utilise Canvas, avec une cadence RAF parfois limitée par son environnement. Aucun débit stable n’est promis pour le Mac de l’utilisateur, Safari ou un téléphone réel. Le test humain d’une campagne entière et l’évaluation de la peur ressentie restent à faire.
 
-## Validation et limites
-
-Voir `VALIDATION.md` pour les résultats et `docs/ARCHITECTURE.md` pour les décisions techniques.
-
-Le rendu avancé est contrôlé avec les vrais shaders dans un contexte EGL / OpenGL ES logiciel. Les essais navigateur utilisent le secours Canvas 2D dans l'environnement disponible. Les performances sur GPU physique, Safari macOS/iOS, le multitouch réel et l'équilibrage complet de la campagne restent à confirmer. L'ombre solaire couvre le voisinage de la caméra ; la lampe retenue et la torche couvrent leurs cônes. Les autres lumières ne calculent pas d'occlusion complète.
-
-Le prototype n'inclut pas de saut, d'étages superposés traversables, de multijoueur ou de longue campagne narrative. Un portage natif C/C++ serait un projet distinct pour explorer la contrainte de distribution historique.
-
-### Référence historique
-
-Présentation de .kkrieger par Fabian Giesen : https://www.flipcode.com/archives/04-20-2004.shtml
-
-Documentation originale : https://www.pouet.net/prod_nfo.php?which=12036
-
+METAL reste un prototype compact de science-fiction procédurale. Il ne contient pas de multijoueur, de saut libre sur une touche ni de terrain entièrement excavable. La démarche de distribution s’inspire de `.kkrieger`, sans reprendre son code ou ses assets : [présentation de Fabian Giesen](https://www.flipcode.com/archives/04-20-2004.shtml), [documentation originale](https://www.pouet.net/prod_nfo.php?which=12036).

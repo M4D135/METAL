@@ -71,3 +71,10 @@ test('Arbitrary yaw/pitch/roll mounts remain orthonormal, including the Euler si
     assert.ok(item.p.every(Number.isFinite));assert.ok(item.r.every(Number.isFinite));
   }
 });
+
+test('Rocket recoil and nearby blast settle, with all camera shake disabled by reduced motion',()=>{
+  const motion=M.create(),loc={};motion.impulse('rocket');motion.impulse('blast',1);let kick=0,shake=0;
+  for(let i=0;i<120;i++){const v=motion.update(1/60,loc,{time:i/60},true);kick=Math.max(kick,v.weapon.offset[2]);shake=Math.max(shake,Math.abs(v.height)+Math.abs(v.roll));assert(v.weapon.offset.every(Number.isFinite));}
+  assert(kick>.065&&kick<.10);assert(shake>0&&shake<.02);assert(Math.abs(motion.view.weapon.offset[2])<1e-8);
+  motion.impulse('blast',1);const reduced=motion.update(1/60,moving,{time:1},false);assert.equal(reduced.height,0);assert.equal(reduced.roll,0);assert.equal(reduced.fov,0);
+});

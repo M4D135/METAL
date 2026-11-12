@@ -1,13 +1,15 @@
-/* FERRO: original procedural audio. No recordings, samples or external assets. */
+/* FERRO: original procedural audio. No imported recordings or external assets. */
 (function () {
   'use strict';
   window.FAudio = {
     create: function () {
-      var ctx = null, master, effects, ambience, droneLevel, airFilter, airVolume, echoSend, noiseBuffer;
-      var muted = false, disposed = false, failed = false, threat = 0, stage = 0;
-      var beatTime = 0, beat = 0, lastStep = -1, stepSide = 1, lastShot = -1, lastAlert = -1, natureTime = 0;
-      var environment = {}, outside = 0;
-      var persistent = [], voices = new Set(), noiseSeed = 0x96f3;
+      var ctx = null, master, effects, ambience, droneLevel, airFilter, airVolume, echoSend, noiseBuffer, motorLevel, motorOscillator, steamLevel, steamPan;
+      var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
+      var lastStep = -1, stepSide = 1, lastShot = -1, lastAlert = -1, natureTime = 0;
+      var environment = {}, outside = 0, machinery = 0, steam = 0, steamSide = 0, music = null, playing = false;
+      var mix = {master:1,music:.45,effects:1,ambience:1};
+      var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null);
+      var stats = {voices:0,peakVoices:0,fxSkipped:0,outputCeiling:1};
       function remember(node) { persistent.push(node); return node; }
       function random() {
         noiseSeed = (Math.imul(noiseSeed, 1664525) + 1013904223) | 0;
@@ -16,14 +18,48 @@
       function clean(entry) {
         entry.nodes.forEach(function (n) { try { n.disconnect(); } catch (_) {} });
         voices.delete(entry);
+        stats.voices = voices.size;
       }
       function track(source, nodes) {
         var entry = { source: source, nodes: nodes };
         voices.add(entry);
+        stats.voices = voices.size; stats.peakVoices = Math.max(stats.peakVoices, voices.size);
         source.onended = function () { clean(entry); };
       }
       function available() {
         return ctx && !disposed && !muted && ctx.state === 'running' && voices.size < 48;
+      }
+      function effectEvent(name, value, interval) {
+        if (!available()) return null;
+        var event = value || {}, level = Math.max(0, Math.min(1, Number.isFinite(event.level) ? event.level : 1));
+        var previous = fxLast[name], now = ctx.currentTime;
+        // Simultaneous distant blasts share a transient; a much nearer/louder
+        // event may still replace it. Music is never counted in this budget.
+        if (level < .018 || previous && now - previous.time < interval && level <= previous.level * 1.45) { stats.fxSkipped++; return null; }
+        fxLast[name] = {time:now,level:level};
+        return {level:level,pan:Math.max(-1,Math.min(1,Number(event.pan)||0)),event:event};
+      }
+      function updateSteam() {
+        if (!ctx || !steamLevel || disposed) return;
+        steamLevel.gain.setTargetAtTime(playing ? steam * .085 : 0, ctx.currentTime, .09);
+        if (steamPan.pan) steamPan.pan.setTargetAtTime(steamSide, ctx.currentTime, .12);
+      }
+      function horrorCue(kind,value) {
+        if (!playing) return;
+        var event=value||{},intensity=Math.max(0,Math.min(1,Number.isFinite(event.intensity)?event.intensity:.75));
+        var e=effectEvent('horror:'+kind,{level:(Number.isFinite(event.level)?event.level:1)*intensity,pan:event.pan},.5);
+        if (!e) return; var g=e.level,tier=Math.max(0,Math.min(4,Number(event.tier)||0)),tune=1+tier*.025;
+        if (kind==='metallicSlam') {
+          tone(102,34,.47,.12*g,'triangle',0,e.pan,1100);noise(.055,.08*g,2200,e.pan,0,'highpass');
+          [480,719,1173].forEach(function(f,i){tone(f*tune,f*.79,.42+i*.10,.043*g/(1+i*.6),'sine',.015,e.pan);});
+        } else if (kind==='blackout') {
+          tone(120,34,.24,.045*g,'sawtooth',0,e.pan,650);noise(.035,.04*g,1900,e.pan,0,'bandpass');tone(72,26,.26,.05*g,'sine',.07,e.pan);
+        } else if (kind==='alarm') {
+          for(var i=0;i<2;i++){tone(340*tune,450*tune,.24,.055*g,'triangle',i*.34,e.pan,1250);tone(680*tune,880*tune,.15,.018*g,'sine',i*.34+.025,e.pan);}
+        } else if (kind==='ambush') {
+          tone(70,31,.43,.11*g,'sine',0,e.pan);tone(155*tune,206*tune,.23,.055*g,'sawtooth',0,e.pan,850);
+          tone(196*tune,183*tune,.34,.04*g,'triangle',.02,-e.pan*.3,1250);noise(.09,.065*g,1700,e.pan,0,'bandpass');
+        }
       }
       function panNode(value) {
         if (ctx.createStereoPanner) {
@@ -72,13 +108,22 @@
         try {
           ctx = new Audio();
           master = remember(ctx.createGain());
-          master.gain.value = muted ? 0 : .65;
+          master.gain.value = muted ? 0 : .65 * mix.master;
           var limiter = remember(ctx.createDynamicsCompressor());
           limiter.threshold.value = -19; limiter.knee.value = 18;
           limiter.ratio.value = 5; limiter.attack.value = .004; limiter.release.value = .18;
-          master.connect(limiter); limiter.connect(ctx.destination);
-          effects = remember(ctx.createGain()); effects.gain.value = .8; effects.connect(master);
-          ambience = remember(ctx.createGain()); ambience.gain.value = .6; ambience.connect(master);
+          // The existing compressor/mix stays intact. This final soft ceiling
+          // is exactly linear below .875 and mathematically bounded above it,
+          // including coincident rockets, debris and the MOD soundtrack.
+          var guard = remember(ctx.createWaveShaper()), curve = new Float32Array(2049);
+          for (var ci = 0; ci < curve.length; ci++) {
+            var input = ci / 1024 - 1, magnitude = Math.abs(input);
+            curve[ci] = Math.sign(input) * (magnitude <= .875 ? magnitude : .875 + .095 * (1 - Math.exp(-(magnitude - .875) / .095)));
+          }
+          guard.curve = curve; guard.oversample = 'none'; stats.outputCeiling = curve[curve.length-1];
+          master.connect(limiter); limiter.connect(guard); guard.connect(ctx.destination);
+          effects = remember(ctx.createGain()); effects.gain.value = .8 * mix.effects; effects.connect(master);
+          ambience = remember(ctx.createGain()); ambience.gain.value = .6 * mix.ambience; ambience.connect(master);
 
           // A small filtered echo gives the metal chambers a sense of space.
           var send = remember(ctx.createGain()), delay = remember(ctx.createDelay(.5));
@@ -96,6 +141,10 @@
             smooth = smooth * .96 + white * .04;
             data[i] = white * .64 + smooth * .55;
           }
+          var hiss = remember(ctx.createBufferSource()), hissFilter = remember(ctx.createBiquadFilter());
+          steamLevel = remember(ctx.createGain()); steamPan = remember(panNode(0));
+          hiss.buffer = noiseBuffer; hiss.loop = true; hissFilter.type = 'bandpass'; hissFilter.frequency.value = 1850; hissFilter.Q.value = .45; steamLevel.gain.value = 0;
+          hiss.connect(hissFilter); hissFilter.connect(steamLevel); steamLevel.connect(steamPan); steamPan.connect(effects); hiss.start();
           var air = remember(ctx.createBufferSource()); airVolume = remember(ctx.createGain());
           airFilter = remember(ctx.createBiquadFilter());
           air.buffer = noiseBuffer; air.loop = true;
@@ -114,7 +163,10 @@
           var sway = remember(ctx.createOscillator()), swayDepth = remember(ctx.createGain());
           sway.frequency.value = .087; swayDepth.gain.value = .004;
           sway.connect(swayDepth); swayDepth.connect(droneLevel.gain); sway.start();
-          beatTime = ctx.currentTime + .25;
+          motorLevel = remember(ctx.createGain()); motorLevel.gain.value = 0;
+          motorOscillator = remember(ctx.createOscillator()); motorOscillator.type = 'triangle'; motorOscillator.frequency.value = 48;
+          motorOscillator.connect(motorLevel); motorLevel.connect(ambience); motorOscillator.start();
+          if (window.FMusic) { music = FMusic.create(ctx, master); music.setStage(stage); music.setVolume(mix.music); music.setThreat(Math.max(threat,pressure*.65)); music.setPlaying(playing); }
         } catch (_) {
           failed = true;
           if (ctx) { try { ctx.close().catch(function () {}); } catch (_) {} }
@@ -130,17 +182,21 @@
         return Promise.resolve();
       }
       function tick() {
+        // Tracker scheduling has its own bounded voices; gunfire never starves it.
+        if (music) music.tick();
+        updateSteam();
         if (!available()) return;
         var now = ctx.currentTime;
-        if (beatTime < now - .3) beatTime = now + .04;
-        droneLevel.gain.setTargetAtTime((.012 + threat * .008 + stage * .002) * (1 - outside * .5), now, .4);
-        airFilter.frequency.setTargetAtTime(380 + threat * 360 + stage * 100 + outside * 540, now, .5);
+        droneLevel.gain.setTargetAtTime((.012 + threat * .008 + pressure*.009 + stage * .002) * (1 - outside * .5), now, .4);
+        airFilter.frequency.setTargetAtTime(380 + threat * 360 + pressure*160 + stage * 100 + outside * 540, now, .5);
         var wind = Math.max(.2, Math.min(2, Number(environment.wind) || 1));
-        airVolume.gain.setTargetAtTime(.022 + outside * wind * (.022 + .012 * Math.sin(now * .31)), now, .45);
+        airVolume.gain.setTargetAtTime(.022 + pressure*.006 + outside * wind * (.022 + .012 * Math.sin(now * .31)), now, .45);
         echoSend.gain.setTargetAtTime(.11 - outside * .075, now, .65);
+        motorLevel.gain.setTargetAtTime(machinery * .065, now, .18);
+        motorOscillator.frequency.setTargetAtTime(48 + machinery * 18 + Math.sin(now * 5) * machinery, now, .12);
         if (outside > .5 && now >= natureTime) {
           natureTime = now + 4 + random() * 5;
-          var side = random() * 1.4 - .7, calm = (1 - threat * .75) * outside;
+          var side = random() * 1.4 - .7, calm = (1 - Math.max(threat,pressure)*.75) * outside;
           if (stage === 0) {
             var chirp = 1600 + random() * 900;
             tone(chirp, chirp * 1.32, .095, .022 * calm, 'sine', 0, side, 3500, ambience);
@@ -153,39 +209,87 @@
             tone(520, 490, .38, .009 * calm, 'sine', .45, -side, 900, ambience);
           }
         }
-        var guard = 0;
-        while (beatTime < now + .13 && guard++ < 4) {
-          var offset = Math.max(0, beatTime - now), index = beat % 16;
-          if (index % 4 === 0) {
-            var bass = (index === 8 ? 65.406 : 55) * [1, .891, .75][stage];
-            tone(bass, bass * .994, .9, .028 + threat * .017, 'sine', offset, -.12, 300, ambience);
-            noise(.1, .015 + threat * .018, 230, -.2, offset, 'lowpass', ambience);
-          }
-          if (index === 3 || index === 7 || index === 11 || index === 14) {
-            var notes = [220, 329.627, 261.626, 293.665];
-            var n = notes[Math.floor(index / 4)] * [1, .891, .75][stage];
-            tone(n, n, 1.3, .012, 'sine', offset, Math.sin(beat) * .5, 1400, ambience);
-            tone(n * 2.002, n * 2, .65, .004, 'sine', offset + .012, -.2, 1600, ambience);
-          }
-          if (threat > .35 && index % 2 === 0) {
-            tone(92, 46, .14, .026 * threat, 'sine', offset, 0, 500, ambience);
-            noise(.026, .025 * threat, 3800, .25, offset, 'highpass', ambience);
-          }
-          if (stage > 0 && index % 4 === 2) noise(.12, .011 + threat * .012, 670, Math.sin(beat * .7) * .7, offset, 'bandpass', ambience);
-          beat++; beatTime += .385 - stage * .024;
-        }
+
       }
       return {
         start: resume,
         resume: resume,
         setMuted: function (value) {
           muted = !!value;
-          if (ctx && master && !disposed) master.gain.setTargetAtTime(muted ? 0 : .65, ctx.currentTime, .025);
+          if (ctx && master && !disposed) master.gain.setTargetAtTime(muted ? 0 : .65 * mix.master, ctx.currentTime, .025);
         },
-        setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); },
-        setStage: function (value) { stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); },
+        setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(Math.max(threat,pressure*.65)); },
+        setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(Math.max(threat,pressure*.65)); },
+        setStage: function (value) { stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; updateSteam(); if (music) { music.setStage(stage); music.setThreat(threat); } },
+        setPlaying: function (value) { playing = !!value; updateSteam(); if (music) music.setPlaying(playing); },
+        setMix: function (value) {
+          for (var key in mix) if (Number.isFinite(value && value[key])) mix[key] = Math.max(0, Math.min(1, value[key]));
+          if (!ctx || disposed) return;
+          master.gain.setTargetAtTime(muted ? 0 : .65 * mix.master, ctx.currentTime, .025);
+          effects.gain.setTargetAtTime(.8 * mix.effects, ctx.currentTime, .025);
+          ambience.gain.setTargetAtTime(.6 * mix.ambience, ctx.currentTime, .025);
+          if (music) music.setVolume(mix.music);
+        },
         setEnvironment: function (value, amount) { environment = value || {}; outside = Math.max(0, Math.min(1, Number(amount) || 0)); },
+        setMachinery: function (value) { machinery = Math.max(0, Math.min(1, Number(value) || 0)); },
+        setSteam: function (value, pan) { steam = Math.max(0,Math.min(1,Number(value)||0)); steamSide = Math.max(-1,Math.min(1,Number(pan)||0)); updateSteam(); },
+        stats: stats,
         tick: tick,
+        horror: function (event) { horrorCue(event&&event.kind,event); },
+        metallicSlam: function (event) { horrorCue('metallicSlam',event); },
+        horrorSting: function (event) { horrorCue('ambush',event); },
+        powerCut: function (event) { horrorCue('blackout',event); },
+        alarm: function (event) { horrorCue('alarm',event); },
+        rocket: function (value) {
+          var e = effectEvent('rocket',value,.055); if (!e) return; var g = e.level;
+          tone(190,53,.2,.11*g,'sawtooth',0,e.pan,1100);
+          noise(.19,.12*g,1800,e.pan,0,'bandpass');tone(52,34,.22,.07*g,'sine',0,e.pan);
+        },
+        grenade: function (value) {
+          var e = effectEvent('grenade',value,.085); if (!e) return; var g = e.level;
+          noise(.06,.075*g,2600,e.pan,0,'highpass');tone(220,110,.1,.055*g,'triangle',0,e.pan,1800);tone(110,50,.17,.08*g,'sine',.015,e.pan);
+        },
+        explosion: function (value) {
+          var e = effectEvent('explosion',value,.055); if (!e) return;
+          var g = e.level, size = Math.max(.65,Math.min(1.8,(Number(e.event.radius)||3)/3));
+          tone(70/size,23,.55,.2*g,'sine',0,e.pan);noise(.22,.22*g,650,e.pan,0,'lowpass');
+          noise(.055,.13*g,3600,e.pan,0,'highpass');noise(.32,.07*g,2100,-e.pan*.5,.12,'bandpass');tone(130,34,.3,.08*g,'triangle',.04,e.pan,700);
+        },
+        pipeLeak: function (value) {
+          var e = effectEvent('pipeLeak',value,.13); if (!e) return; var g = e.level;
+          noise(.5,.12*g,2200,e.pan,0,'bandpass');tone(210,90,.23,.055*g,'triangle',0,e.pan,1300);noise(.055,.06*g,4400,e.pan,0,'highpass');
+        },
+        creak: function (value) {
+          var e = effectEvent('creak',value,.15); if (!e) return; var g = e.level;
+          tone(185,66,.42,.065*g,'sawtooth',0,e.pan,650);tone(380,160,.27,.035*g,'triangle',.04,-e.pan*.4,1200);noise(.16,.06*g,820,e.pan,.09,'bandpass');
+        },
+        trap: function (value) {
+          var e = effectEvent('trap',value,.1); if (!e) return; var g = e.level, kind = e.event.kind;
+          if (kind === 'blade') { tone(680,180,.22,.085*g,'triangle',0,e.pan,2200);noise(.09,.06*g,3200,e.pan,0,'highpass'); }
+          else if (kind === 'spikes') { tone(1350,280,.11,.075*g,'triangle',0,e.pan,2800);noise(.08,.06*g,2400,e.pan,0,'bandpass'); }
+          else { tone(105,29,.25,.16*g,'triangle',0,e.pan,650);noise(.13,.11*g,520,e.pan,0,'lowpass'); }
+        },
+        bossTell: function (value) {
+          var e = effectEvent('bossTell',value,.25); if (!e) return; var g = e.level;
+          tone(92,180,.52,.09*g,'triangle',0,e.pan,1100);tone(370,530,.28,.035*g,'sine',.08,-e.pan*.3);noise(.16,.035*g,720,e.pan,.12,'bandpass');
+        },
+        bossRoar: function (value) {
+          var e = effectEvent('bossRoar',value,.6); if (!e) return; var g = e.level;
+          tone(55,25,.85,.15*g,'sawtooth',0,e.pan,520);tone(83,39,.65,.09*g,'triangle',.04,-e.pan*.5,700);noise(.65,.13*g,450,e.pan,0,'lowpass');noise(.4,.035*g,1300,e.pan,.14,'bandpass');
+        },
+        bossImpact: function (value) {
+          var e = effectEvent('bossImpact',value,.12); if (!e) return; var g = e.level;
+          tone(48,20,.7,.2*g,'sine',0,e.pan);noise(.28,.19*g,460,e.pan,0,'lowpass');noise(.065,.08*g,2800,e.pan,0,'highpass');tone(115,36,.45,.07*g,'triangle',.08,-e.pan*.4,700);
+        },
+        bossDeath: function (value) {
+          var e = effectEvent('bossDeath',value,1.4); if (!e) return; var g = e.level;
+          tone(78,19,1.15,.15*g,'sawtooth',0,e.pan,440);noise(.65,.12*g,360,e.pan,0,'lowpass');
+          for (var i = 0; i < 3; i++) {
+            var delay = .22 + i*.26;
+            tone(160-i*27,31,.32,.06*g,'triangle',delay,e.pan*(i%2?-.5:1),850);
+            noise(.22,.085*g,620+i*280,e.pan,delay,'bandpass');
+          }
+        },
         shot: function () {
           if (!available() || ctx.currentTime - lastShot < .045) return;
           lastShot = ctx.currentTime;
@@ -261,6 +365,35 @@
             tone(n * 2, n * 2, .42, .025, 'sine', i * .13 + .01, 0);
           });
         },
+        mechanism: function (event) {
+          event = event || {}; var level = (event.level || 1) * .13, pan = event.pan || 0;
+          noise(.13, level, 620, pan, 0, 'lowpass');
+          tone(130, 72, .19, level * .65, 'triangle', 0, pan, 1100);
+          tone(220, 440, .45, level * .45, 'sine', .1, pan);
+          tone(660, 660, .3, level * .35, 'sine', .42, pan);
+        },
+        jumpPad: function (event) {
+          event = event || {}; var level = (event.level || 1) * (event.actor === 'enemy' ? .06 : .16), pan = event.pan || 0;
+          tone(80, 650, .36, level, 'sawtooth', 0, pan, 1200);
+          noise(.27, level * .8, 1800, pan, 0, 'bandpass');
+          tone(42, 90, .22, level, 'sine', 0, pan);
+        },
+        land: function (event) {
+          event = event || {}; var impact = Math.min(1, (event.impact || 4) / 10), level = (event.level || 1) * impact * (event.actor === 'enemy' ? .035 : .12), pan = event.pan || 0;
+          tone(70, 28, .14, level, 'sine', 0, pan); noise(.12, level * .8, 480, pan, 0, 'lowpass');
+        },
+        liftStart: function (event) {
+          event = event || {}; var level = (event.level || 1) * .1, pan = event.pan || 0;
+          noise(.2, level, 720, pan, 0, 'lowpass');
+          tone(35, 75, .7, level * .7, 'triangle', .04, pan, 420);
+        },
+        liftStop: function (event) {
+          event = event || {}; var level = (event.level || 1) * .08, pan = event.pan || 0;
+          noise(.13, level, 580, pan, 0, 'lowpass');
+          tone(75, 36, .24, level * .7, 'triangle', 0, pan, 360);
+          tone(523.25, 523.25, .22, level * .5, 'sine', .12, pan);
+          tone(783.99, 783.99, .35, level * .4, 'sine', .26, pan);
+        },
         win: function () {
           [220, 329.627, 440, 523.251, 659.255, 880].forEach(function (n, i) {
             tone(n, n, .9, .085, 'triangle', i * .14, Math.sin(i) * .3, 1900);
@@ -286,6 +419,7 @@
         dispose: function () {
           if (disposed) return;
           disposed = true;
+          if (music) { music.dispose(); music = null; }
           voices.forEach(function (entry) {
             try { entry.source.stop(); } catch (_) {}
             clean(entry);

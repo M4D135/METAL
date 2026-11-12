@@ -1,3 +1,56 @@
+# Validation de METAL v0.5.0 — 12 novembre 2026
+
+Cette section décrit la version **0.5.0**, génération **5**. Les sections FERRO 0.4.1 et 0.4.0 conservées intégralement plus bas constituent l’historique ; leurs tailles et mesures ne décrivent pas la version courante.
+
+## Résultats finaux et distribution
+
+Le dernier **`npm test` se termine avec le code 0** sur le fichier autonome final.
+
+| Contrôle | Résultat exact |
+| --- | --- |
+| Génération et accessibilité indépendantes | **18 configurations réussies, 3 804 cibles vérifiées** |
+| Suite `node:test` | **182 tests réussis, 0 échec, 0 annulé, 0 ignoré, 0 à faire** |
+| Durée rapportée par `node:test` | **29 308,11542 ms** |
+| Contrôle de distribution | **PASS**, modules, taille, hash et absence de ressources externes |
+| HTML autonome | **522 832 octets bruts**, **159 773 octets gzip** |
+| Assets externes à l’exécution | **0** |
+
+SHA-256 du HTML, identique dans le journal final et `SIZE.json` : `e6e928d91a126ddccc557532a479b942c7058aa10f5a606f23c3ed2d3ea05afc`. Le fichier reste sous le budget de **1 400 000 octets non compressés** ; navigateur, pilotes, documentation et tests sont exclus de cette taille. Les 18 configurations de génération sont un contrôle distinct des 182 tests, sans les additionner artificiellement.
+
+Les régressions couvrent notamment les **120 / 140 / 170 ennemis réels**, leurs observations et lignes de tir, les reliefs, ascenseurs et tremplins, les collisions aériennes, les brèches et leur restauration, les explosifs et couverts, les pièges, les trois géants et leurs phases, ainsi que difficulté, directeur de tension et migration des sauvegardes. Les fenêtres d’attaque, noyaux ciblables et renforts préplacés sont contrôlés par la simulation ; ce résultat ne remplace pas une campagne jouée par une personne.
+
+## Parcours, navigateur et rendu
+
+Un parcours indépendant sur les trois secteurs de la graine **96** utilise les véritables `move`, `step` et tirs, sans affectation de position ni injection d’événement : **3 brèches ouvertes par roquette**, sortie sur le sol extérieur à **−0,25 m** puis retour par chaque brèche, **9 commandes activées manuellement**, **9 relais** et **3 sorties atteintes**. Les traces totalisent **2 173,6 m**, **8 875 pas** et **442,9 secondes simulées**. Les ennemis ont été retirés avant création pour isoler l’accessibilité ; plafonds, dangers et portes générés sont conservés. Ce parcours valide les routes et la progression, pas la difficulté des combats.
+
+Dans le navigateur, les contrôles réels ont confirmé le titre **METAL**, la sélection du lance-roquettes par **Digit3**, un tir ouvrant une brèche, sa traversée avec altitude extérieure **−0,25 m**, l’éveil d’un géant en **phase 1/3** et la difficulté **Cauchemar** sélectionnée dans les options.
+
+Le rendu a été contrôlé dans un vrai contexte logiciel **OpenGL ES 3.2 / Mesa llvmpipe** : **16 scènes**, puis **2 vues finales avec l’éclairage assombri**, avec **zéro erreur GL**. Les scènes comprennent terrain intact, brèche, explosion, poussière, effondrement, restauration, géants à plusieurs distances et coupure d’éclairage. Les comparaisons intact/restauré et avant/après rétablissement de la lumière sont **identiques pixel par pixel**, en GLES et, pour la lumière, en Canvas. Les captures intermédiaires des géants précèdent l’ajout des monuments périphériques ; les deux vues finales contrôlent la présentation assombrie du départ et du géant.
+
+L’audio est vérifié par les tests de génération et de programmation du graphe Web Audio : **48 voix d’effets maximum**, **28 voix musicales maximum**, une source de bruit persistante pour la vapeur. La protection finale est vérifiée mathématiquement et par le graphe. Aucune écoute humaine ni mesure du mix complet sur un périphérique audio n’est revendiquée.
+
+## Coût de simulation et limite des mesures FPS
+
+Banc **Node v24.22.1**, `FDestruction` chargé, graine 96 : **900 pas à 1/60 s par secteur**, soit 2 700 pas au total. Le joueur reste au départ après activation de la première commande ; sa santé est rétablie à chaque pas pour maintenir le scénario. Le rendu est exclu.
+
+| Secteur | Acteurs / éveillés en fin de mesure | Médiane par pas | Moyenne | 95e percentile | Maximum |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | 120 / 42 | 0,589 ms | 1,396 ms | 4,620 ms | 81,137 ms |
+| 2 | 140 / 45 | 0,763 ms | 1,141 ms | 2,106 ms | 59,929 ms |
+| 3 | 170 / 47 | 0,710 ms | 1,121 ms | 1,962 ms | 64,064 ms |
+
+Les médianes sont inférieures à 1 ms dans ce scénario, mais les pointes mesurées atteignent **60 à 81 ms**. Le rafraîchissement de navigation après destruction est réparti en lots bornés ; les collisions changent dès la brèche. Ces chiffres ne décrivent ni un combat avec tous les acteurs éveillés, ni les FPS du jeu complet.
+
+Dans le navigateur de contrôle, le rappel `requestAnimationFrame` était limité à environ **1 par seconde**, alors que les appels de rendu mesurés prenaient **14–19 ms près de la brèche** et **31–38 ms face au géant**. Cette cadence de l’environnement ne permet pas de conclure à un débit stable. Aucun résultat sur GPU physique, Mac de l’utilisateur, Safari ou téléphone réel n’est revendiqué.
+
+## Limites conservées et provenance
+
+La destruction est locale, par morceaux : **sols, rampes et plateformes d’ascenseur restent portants**. Le terrain n’est pas entièrement excavable et le moteur ne simule pas universellement la résistance de chaque matériau. Les gros restes solides conservent leurs collisions ; les débris cosmétiques animés ne bloquent pas le joueur. Une console détruite libère son circuit pour préserver la progression. Le secours Canvas et le mode Économie simplifient la présentation. Il n’y a ni multijoueur ni saut libre sur une touche. L’équilibrage d’une campagne entière et l’effet de peur ressenti restent à évaluer par une personne.
+
+Sources de contrôle : `SIZE.json`, `qa-ferro-v05/final-release-tests.txt`, `qa-ferro-v05/metal-final-benchmark.json`, `qa-ferro-destruction/FINAL-QA.json`, les captures `final-night-spawn` / `final-night-giant`, et `ferro-world-v05/integrated-demolition.json`. Cette section rassemble les résultats existants ; sa rédaction n’a relancé aucun test ni build.
+
+---
+
 # Validation de FERRO 0.4.1 — FPS, matériaux et performances
 
 Vérifications finales réalisées le **12 novembre 2026**, sur la source restaurée depuis le dépôt officiel puis le fichier autonome assemblé. Les résultats historiques de la 0.4.0 sont conservés plus bas et identifiés comme tels.

@@ -1,187 +1,148 @@
-# Architecture et décisions — FERRO 0.4.1
+# Architecture — METAL 0.5.0
 
-## Une distribution autonome et procédurale
+## Distribution et identité
 
-`python3 tools/build.py` rassemble six modules JavaScript, l’interface et les styles dans `dist/index.html`. Ce fichier contient le jeu autonome. Il n’utilise aucune image, texture, police, piste audio ou géométrie téléchargée, aucun CDN et aucune bibliothèque d’exécution externe.
+`tools/build.py` assemble **onze modules JavaScript**, `index.html` et `style.css` dans un HTML autonome. Aucun chargement réseau de code, image, texture, modèle, police ou audio n’est nécessaire. `SIZE.json` mesure le HTML brut, son gzip reproductible et son SHA-256. Le budget est de 1 400 000 octets bruts ; navigateur, pilotes, tests et documentation sont exclus.
 
-Le code décrit les opérations qui construisent les primitives, leurs assemblages, les matériaux et les sons. Les dimensions des salles, les placements et les variations restent déterministes pour une même graine et un même étage. Cette petite distribution s’appuie sur les API du navigateur ; elle n’inclut donc ni le navigateur, ni les pilotes graphiques, ni le système. `SIZE.json` distingue les tailles brutes et compressées.
+Le titre public devient **METAL**. Les API `FWorld`, `FRender`, etc., le format de snapshot `FERRO`, les clés `ferro-settings` / `ferro-expedition-v2` et le dépôt GitHub historique restent inchangés pour préserver les références et les migrations.
 
 | Module | Responsabilité |
 | --- | --- |
-| [`world.js`](../src/world.js) | Topologie, architecture, collisions, placements, machines et dangers déterministes. |
-| [`simulation.js`](../src/simulation.js) | Déplacements, tirs, ennemis, objectifs, score et checkpoints, sans DOM ni stockage. |
-| [`motion.js`](../src/motion.js) | Présentation amortie indépendante de la visée et des collisions ; montage cohérent des pièces de l'arme. |
-| [`renderer.js`](../src/renderer.js) | Géométries, matériaux, éclairage et rendu WebGL 2 ; secours logiciel Canvas 2D. |
-| [`audio.js`](../src/audio.js) | Synthèse Web Audio, musique, ambiances et effets. |
-| [`game.js`](../src/game.js) | Écrans, entrées clavier/tactiles, boucle d’animation, modèles animés, HUD et stockage local. |
+| `world.js` | Monde déterministe, terrain, arènes, population, systèmes, danger et métadonnées de démolition |
+| `destruction.js` | Découpe, assemblages, dépendances structurelles, collisions et snapshots de terrain |
+| `simulation.js` | Physique, IA, projectiles, objectifs, boss, directeur de tension et validation des reprises |
+| `actors.js` | Modèles articulés, poses et LOD des quatre familles et des trois colosses |
+| `motion.js` | Présentation amortie, caméra et repère unique des armes |
+| `effects.js` | Représentation des projectiles, explosions, vapeur, débris, pièges et attaques de boss |
+| `renderer.js` | Primitives, matériaux, ombres, WebGL 2 et secours Canvas 2D |
+| `music.js` | Générateur, exporteur et lecteur de modules ProTracker |
+| `audio.js` | Contexte audio, effets, ambiances, pression, mixage et protection de crête |
+| `options.js` | Préférences bornées, difficulté, touches et conflits |
+| `game.js` | Entrées, boucle, menus, HUD, montage des systèmes et sauvegardes navigateur |
 
-## Trois territoires et des chemins garantis
+## Monde et circulation
 
-Les secteurs possèdent des graphes de circulation distincts, avec des boucles qui permettent de contourner les rencontres. La génération 4 espace les régions et mêle zones extérieures et bâtiments. Le joueur commence dehors dans les trois secteurs.
+La génération 5 agrandit les territoires par rapport à la génération 4 et ajoute terrasses, systèmes, tremplins, substrat et arènes. Les graphes possèdent des boucles et des rampes alternatives aux ascenseurs. Les métriques suivantes concernent la graine 96 :
 
-| Secteur | Régions | Liaisons | Régions extérieures | Liaisons extérieures |
-| --- | ---: | ---: | ---: | ---: |
-| Lisière rouillée | 9 | 10 | 5 | 7 |
-| Carrière des braises | 8 | 9 | 5 | 9 |
-| Jardins du veilleur | 9 | 12 | 5 | 12 |
+| Secteur | Régions | Liaisons | Somme des liaisons | Meshes statiques | Colliders |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Lisière | 10 | 11 | 467,6 m | 13 964 | 437 |
+| Carrière | 9 | 10 | 477,7 m | 12 453 | 411 |
+| Jardins | 10 | 13 | 612,7 m | 17 264 | 493 |
 
-Les murs et équipements solides possèdent des volumes de collision cohérents avec leur géométrie. Les positions du joueur, des relais, des soins, des ennemis et de la sortie sont vérifiées sur le sol accessible. Les ventilateurs, pistons et réacteurs exposent des paramètres d’animation dans `world.machinery` ; l’habillage animé est construit par `game.js`.
+La somme des liaisons n’est pas une distance minimale de campagne ni une durée de jeu. Le nombre de meshes est le nombre de descriptions du monde, pas le nombre de pièces affichées simultanément.
 
-Le déplacement reste sur un sol horizontal. Les structures élevées sont décoratives : cette version n’a pas de plateformes traversables à plusieurs hauteurs, de saut ou de multijoueur. Les vents de vapeur sont des dangers temporels, placés à l’écart des axes indispensables. Le troisième étage contient le boss et ses couverts.
+Le terrain combine plans plats et rampes `{x,z,w,d,y,slopeX,slopeZ}`. La hauteur vaut `y+(px-x)*slopeX+(pz-z)*slopeZ`. Les sols de salle sont prioritaires dans les petits recouvrements de raccord ; le **substrat `fallback:true,substrate:true` n’intervient qu’en l’absence de sol local**, afin de ne jamais aplatir une rampe. Ce terrain inférieur visible est à −0,25 m. Les sols et rampes sont portants et ne sont pas excavés par la destruction.
 
-Les troncs, grands rochers et limites extérieures appartiennent à la géométrie physique. Chaque collider pointe vers son mesh visible avec `mesh`, et ce dernier porte `solid:true`. Les centres des cours et des chemins extérieurs n'ont ni plafond ni habillage suspendu. Murets, clôtures et fronts rocheux ferment visiblement les limites du parcours ; le flood fill de contrôle vérifie aussi l'absence de sortie vers le vide sans utiliser le masque de sol.
+`player.y` et `enemy.baseY` désignent les pieds. `enemy.y` désigne le centre de visée historique, adapté à l’échelle des géants. Les meshes de sols portent `ground:true`. Les surfaces inclinées visuelles et physiques coïncident. Les gros troncs, rochers, parois, portes et équipements possèdent des collisions ; les détails fins restent décoratifs.
 
-Les passes `detailWorld` et `naturalDetails` s'exécutent après la génération physique avec leurs générateurs déterministes indépendants. L'habillage industriel saute les extérieurs ; la passe naturelle ajoute herbes, fougères, brindilles, champignons, fleurs, lierre et petits éléments de surface. Les silhouettes essentielles, notamment troncs et grandes canopées, restent en `detail:0`. Les ajouts sont répartis entre `detail:1` (habillage) et `detail:2` (microdétails). Les plafonds sont de 16 000 primitives statiques et 500 colliders par monde.
+Chaque secteur possède trois commandes, trois portes, deux ascenseurs, trois tremplins, trois relais, quatre conduites et trois pièges. Un boss et six renforts de boss sont compris dans les totaux de 120 / 140 / 170 acteurs. Huit lourds par secteur utilisent un lance-grenades, six un lance-roquettes. Les autres conservent leurs rôles ordinaires.
 
-`world.environment` décrit le biome, les couleurs du ciel, du brouillard, de l'ambiance et du soleil, sa direction normalisée, le vent et les rectangles `outdoorZones`. Chaque mesh statique possède un booléen `outdoor`. `world.walkable` décrit l'union des sols horizontaux ; `trees`, `outdoorBoundaries` et `natureStats` rendent les éléments naturels contrôlables dans les tests.
+Les arènes font 60 × 60 m, avec un rayon de combat de 28 m et une passerelle d’accès de 13 m. Les frontons monumentaux restent au-delà de 27 m du centre. Leur géométrie est destructible et leurs linteaux possèdent de vrais supports. Le centre est dégagé ; les couverts restent périphériques.
 
-`world.ambience` décrit les balises, écrans et petits effets près des machines. Les écrans donnent leur normale, largeur et hauteur pour garder leur animation sur leur face. Ces effets n'infligent aucun dégât ; les évents dangereux restent dans `world.hazards` avec leurs annonces distinctes.
+## Systèmes et physique
 
-## Simulation et temps
+`nearestInteraction()` choisit une action à moins de 2,6 m, au bon palier et sans obstruction. F ou l’action tactile déclenche `input.interact` au premier sous-pas seulement. Les commandes alimentent les systèmes par `requires` ; une console détruite active son circuit pour éviter un verrouillage de mission. Une porte détruite cesse de bloquer immédiatement.
 
-Les collisions statiques disposent d’un index en cellules de 8 m, élargi au rayon maximal usuel de 1,05 m. Les objets candidats conservent le calcul disque/rectangle exact ; un rayon plus grand utilise le parcours exhaustif. Les balayages de navigation rejettent d’abord les rectangles hors de l’enveloppe du segment. La cadence de perception, les choix tactiques et le format des snapshots ne changent pas.
+Une porte mobile utilise le même `progress` pour son battant visuel et physique. Les lifts exposent `y`, `target`, `powered`, `moving` et `carrying`. Les passagers restent posés sur leur plateau, avec vérification des murs et de l’espace au-dessus de la tête. `liftStop.carrying` distingue l’arrivée du joueur d’un rappel à vide.
 
-Le compteur FPS du shell utilise les intervalles RAF non tronqués, indépendamment du pas physique borné. Il compte les intervalles terminés sur une fenêtre d’au moins 750 ms, se réinitialise aux transitions d’écran et ignore les périodes où le document est masqué. Le DOM est mis à jour au plus deux fois par seconde et le compteur n’est pas une région annoncée en permanence par un lecteur d’écran.
+Les tremplins exposent `{id,x,y,z,r,target:{x,y,z},flightTime,yaw}`. Le contact calcule une impulsion depuis la position réelle, avec gravité de 12 m/s², sans recentrer ni téléporter l’acteur. Les champs `airborne`, `airVX/Y/Z`, `airTime`, `padCooldown` et `padId` sont sauvegardés. Les plafonds, murs et atterrissages sont physiques ; le cooldown empêche une relance involontaire au même contact.
 
-`FSimulation.create(world)` retourne `state`, `step(dt,input)`, `fire(assist)`, `pulse()`, les méthodes de collision et de visibilité, la grille de navigation, `snapshot()` et `restore(data,options)`.
+Le shell conserve au plus 0,12 s de temps écoulé par image, divisée en sous-pas d’au plus 1/60 s. Les entrées ponctuelles sont consommées une seule fois ; les tirs et déplacements tenus continuent. Une suspension plus longue ne déclenche pas un rattrapage illimité. Les déplacements sont eux-mêmes subdivisés pour ne pas franchir une paroi mince.
 
-La boucle du navigateur conserve jusqu’à **0,12 seconde** de temps écoulé par image puis le divise en sous-pas d’au plus **1/60 seconde**. Le déplacement et le tir continu sont appliqués à chaque sous-pas ; le mouvement de souris, l’esquive et l’onde sont consommés au premier. La boucle s’arrête si le joueur meurt ou termine l’étage. Les événements de relais sont traités à chaque sous-pas afin d’enregistrer le checkpoint avant un éventuel dégât létal ultérieur.
+Le disque du joueur a un rayon de 0,28 m. L’index de collision en cellules de 8 m sert aux acteurs ordinaires ; les grands rayons conservent une requête exhaustive exacte. Les géants ont un rayon de corps `1.5*bossScale` et une hauteur de `3.18*bossScale`. Leur centre reste dans `max(1,arena.r-2.1*bossScale-5)` autour du centre de l’arène : cette marge inclut les longs canons et préserve les couverts périphériques.
 
-Le plafond interne de `step()` à 0,05 seconde demeure une protection pour les appels directs. Il ne limite plus toute une image du jeu à 0,05 seconde. Les images dépassant 0,12 seconde perdent volontairement le temps excédentaire pour éviter une longue rafale de simulation après une suspension ; ce n’est pas une simulation à pas fixe avec rattrapage illimité.
+## Destruction persistante
 
-Les déplacements sont eux-mêmes subdivisés en segments courts pour éviter de traverser les cloisons fines. Le joueur utilise un disque horizontal de rayon 0,28 m ; les ennemis ordinaires utilisent 0,38 m et le boss 1,05 m. L’esquive, le recul de l’onde et les charges passent par les mêmes collisions.
-
-Les ennemis calculent des chemins A* vers leurs propres objectifs sur une grille de 0,8 m : patrouille, observation mémorisée, flanc, couvert ou sortie de couvert. Une recherche explore au plus 2 400 entrées, conserve au plus 512 points et simplifie une fois le chemin avec balayage du volume physique. Les passages tiennent compte des obstacles bas et de l'union des sols ; la visibilité seule ne suffit pas à déclarer un passage praticable. Les arêtes déjà contrôlées sont mises en cache. Le champ `nav.dist` demeure disponible pour la compatibilité des contrôles, mais ne guide plus les ennemis vers la position cachée du joueur.
-
-### Mouvement et présentation
-
-L'inertie du joueur est intégrée dans la simulation, avec accélération progressive et freinage plus rapide. La direction de visée est appliquée immédiatement. `state.locomotion` expose la vitesse effectivement obtenue après collision, ses composantes locales, l'accélération, les transitions de marche/course/esquive et une phase de foulée fondée sur la distance parcourue. Ce sont ces valeurs qui animent la marche et déclenchent les pas, jamais la seule présence d'une touche pressée.
-
-`FMotion.create()` fournit `update`, `impulse` et `reset`. Les canaux de présentation utilisent des ressorts à amortissement critique intégrés analytiquement. Les événements de tir, changement d'arme, impact et onde excitent leurs ressorts. `update` retourne une petite translation/inclinaison de caméra, une variation de champ de vision et une pose de l'arme. Cette couche ne change ni le joueur ni la direction des tirs. Une reprise remet ces canaux au repos.
-
-Les pièces de l'arme sont placées dans un même repère avec `mount` et `place`, qui composent correctement lacet, tangage et roulis. La rotation déplace les centres des pièces et leurs orientations ensemble. Les cylindres des canons conservent leur rotation locale ; ils ne se désassemblent pas lorsque le joueur regarde sur le côté ou penche la caméra.
-
-Le réglage de mouvement désactivé remet immédiatement hauteur, roulis et variation de champ de vision à zéro. Il réduit aussi le mouvement décoratif de l'arme. Les tests dédiés comparent le résultat des ressorts à 20, 60 et 120 images/s et vérifient la rigidité du montage, y compris près d'une singularité d'angles d'Euler.
-
-### Armes et onde
-
-Les tirs du joueur utilisent de véritables rayons en trois dimensions, arrêtés par le premier obstacle. Les ennemis sont touchés au moyen de volumes sphériques approximant leur corps ; ce ne sont pas des collisions avec chaque triangle du modèle. L’assistance tactile élargit légèrement les volumes de visée.
-
-| Action | Comportement |
-| --- | --- |
-| **Impulsion — `weapon:0`** | Un rayon, portée de 75 m, récupération de 0,165 s, +0,12 de chaleur. |
-| **Fracture — `weapon:1`** | Sept rayons dispersés, portée de 24 m et dégâts décroissants, récupération de 0,78 s, +0,37 de chaleur. |
-| **Onde — `input.pulse`** | Rayon de dégâts de 6,5 m, interruption des attaques, étourdissement et recul avec collisions ; dissipation des projectiles à moins de 7,5 m. |
-
-La chaleur est commune aux deux armes. Une surchauffe bloque les tirs jusqu’au refroidissement ; changer d’arme ne contourne donc pas cette ressource. Fracture récompense les tirs proches et centrés, sans remplacer la précision d’Impulsion à distance.
-
-L’onde prend immédiatement un délai de récupération de **7 secondes**, réduit la chaleur et n’endommage pas les ennemis derrière un mur. `player.pulseCooldown` donne le délai restant et `state.pulseVisual` anime l’effet pendant 0,65 seconde. `state.shots` compte les déclenchements ; `state.hits` compte au maximum un tir réussi par déclenchement, même si plusieurs pellets touchent.
-
-### Ennemis et télégraphes
-
-| Type | PV initiaux | Comportement |
-| --- | ---: | --- |
-| 0 — éclaireur | 3 | Patrouille, investigation et recherche de flanc ; blessé, couvert puis sortie latérale. Tir précédé d’une visée de 0,65 s. |
-| 1 — lourd | 5 | Patrouille puis pression sur la dernière position observée ; charge engagée après 0,9 s de préparation, ou projectile lent si la cible est éloignée. |
-| 2 — tourelle | 4 | Position fixe ; préparation de 0,75 s puis rafale de trois projectiles. |
-| 3 — boss | 30 | Déplacements limités dans l’arène ; éventails de cinq projectiles, puis sept après le passage à mi-vie. |
-
-Chaque ennemi expose `windup`, `windupMax`, `attackState`, `yaw`, `stun` et `phase`. `attackState` vaut `idle`, `aim`, `burst`, `rush`, `recover` ou `stunned`. L’orientation suit la même convention que celle du joueur : **zéro regarde vers −Z**. Pendant une préparation ou une charge, la cible est verrouillée pour que l’animation annonce une direction que le joueur peut éviter.
-
-La perception est réévaluée toutes les 0,15 s ; les décisions sont espacées de 0,65 à 0,75 s selon l'identifiant. Un ennemi au repos doit voir la cible dans son champ de vision et à portée ; la proximité immédiate ou une alerte élargit sa vigilance. Les murs continuent à couper la vue. Les tirs et l'onde peuvent transmettre une position sonore, avec portée atténuée par un obstacle. Un observateur partage sa dernière observation avec les voisins à moins de 12 m ; recevoir une alerte ne déclenche pas une propagation infinie dans le groupe.
-
-`awareness` vaut `patrol`, `investigate`, `engage` ou `search`. `lastSeenX/Z` conserve l'observation, et `memory` expire sans nouvelle information. Une cible cachée ne met pas à jour le but de navigation. Les machines inspectent les alentours de leur dernière observation puis reprennent leur patrouille. `tactic` vaut `hold`, `advance`, `flank` ou `cover` et décrit le choix de déplacement.
-
-Un éclaireur blessé examine les faces de solides assez hauts, vérifie qu'elles bloquent la vue depuis sa dernière observation et trouve un chemin praticable vers le couvert. Il y attend 1,1 à 1,4 s, puis cherche un point latéral d'où viser. Les machines mobiles se séparent par déplacements soumis aux collisions. `moveSpeed` mesure le déplacement obtenu et anime les jambes des lourds. Les PV, dégâts et télégraphes conservent leurs valeurs précédentes.
-
-Les tirs ennemis sont des projectiles simulés, avec tests de collision sur leur déplacement. Le segment entre le corps et la bouche du canon est également contrôlé : un canon près d'un mur ne peut pas créer son projectile de l'autre côté. Une charge doit avoir une ligne de vue au moment du contact : elle ne peut pas blesser à travers une cloison fine. La seconde phase du boss est annoncée une seule fois. La sortie exige les trois relais **et** la destruction de tout boss encore vivant.
-
-### Dangers, score et événements
-
-Un vent expose `period`, `active` et `phase`. Il est actif lorsque `(time+phase)%period < active`, et annonce son activation pendant les 0,85 dernières secondes du cycle. La simulation expose `state.hazards[].hot` et `.warning`. Les dégâts ont un intervalle de 0,65 seconde, ce qui empêche de les appliquer à chaque image.
-
-Le score récompense les ennemis, les relais, les soins et la sortie. Les éliminations successives dans une fenêtre de quatre secondes augmentent le multiplicateur ; subir des dégâts ou laisser expirer cette fenêtre coupe la série sans retirer les points acquis. Le boss rapporte davantage qu’un adversaire ordinaire.
-
-La simulation ajoute les événements à `state.events` ; le module navigateur les consomme pour l’audio, les messages et les changements d’écran. Les nouveaux événements incluent `fracture`, `pulse`, `enemyShot`, `bossPhase` et `combo`. Les données des projectiles conservent leurs positions et vitesses, avec `kind` pour le type d’ennemi et `owner` pour son identifiant.
-
-## Checkpoints validés et reprise
-
-La simulation ne lit ni n’écrit `localStorage`. `snapshot()` produit un objet sérialisable indépendant du monde graphique :
+`FDestruction.create(world)` garde le monde original immuable et expose :
 
 ```js
 {
-  version: 1, aiVersion: 1,
-  format: 'FERRO',
-  seed, stage, fingerprint,
-  state: { /* joueur, ennemis et mémoire tactique, objectifs, armes, score, projectiles */ },
-  timers: { fireWait, navWait, hazardWait }
+  meshes, colliders, lights, revision,
+  isAlive(id), raycast(origin,direction,maxDistance),
+  hit([x,y,z],power,direction), blast([x,y,z],radius,power),
+  snapshot(), restore(data,options)
 }
 ```
 
-`fingerprint` décrit les collisions, les placements, la sortie et les dangers. Le chargement vérifie la version, l’identité du monde, les types, les bornes numériques, les volumes occupés, les compteurs, les relais pris et la cohérence des états vivant/mort/boss. Les objets incomplets ou incompatibles sont refusés. Cette empreinte sert à détecter un monde différent ; ce n’est pas une signature de sécurité ou un mécanisme contre la triche.
+Les groupes `world.destructibles` rassemblent solides et détails attachés, avec identifiant, résistance, limites et dépendances. Les arbres réunissent tronc et canopée. Les éléments statiques animés et les lampes indiquent leur propriétaire destructible.
 
-`restore(data)` renvoie `true` ou `false`. Un refus ne modifie pas la partie. Une restauration valide conserve les références de `state` et `state.player`, restaure les états de combat puis reconstruit la navigation. Les particules, flashes et anciens événements ne sont pas rejoués. Le mode par défaut restaure exactement le combat enregistré, notamment les projectiles et les préparations d’attaque.
+Une boîte moins une boîte produit au plus six solides disjoints. Les fragments survivants utilisent **les mêmes limites pour le rendu et les collisions**. Les éléments séparés de leur support disparaissent de la structure et émettent des débris. Les pièces et découpes par groupe sont bornées ; il ne s’agit ni d’un monde voxel ni d’un solveur structurel complet.
 
-Pour le bouton de reprise, le navigateur utilise **`restore(data,{recover:true})`**. Après validation, une partie active reçoit **1,4 seconde de protection contre les dégâts**, et les projectiles situés à moins de **2,4 m** sont dissipés. Cela évite de recharger directement dans une collision létale. Cette protection est transitoire, n’est pas sérialisée et est supprimée par une restauration sans option. Lire un snapshot ne change pas une protection en cours. Le mode de reprise ne ressuscite pas un checkpoint dont l’état est déjà mort ou terminé.
+Le raycast des accessoires respecte les primitives, notamment le trou d’un tore, au lieu d’utiliser systématiquement sa boîte pleine. Les fittings retirés cessent aussi d’être animés. Les lampes détruites sont retirées de la liste d’éclairage.
 
-Le module navigateur enveloppe ce snapshot dans le format suivant :
+La simulation compare la révision du contrôleur pour reconstruire collisions et navigation après changement. `state.destructionRevision` est un compteur de présentation monotone, y compris lorsqu’un restore remplace le contrôleur par un candidat atomiquement validé. **Le shell utilise ce compteur**, car deux contrôleurs différents peuvent avoir la même révision logique.
 
-```js
-{ version: 2, generation: 4, seed, stage, runStats, checkpoint: sim.snapshot() }
-```
+`renderer.updateWorld(meshes,revision,lights)` invalide sélections et caches d’ombre/couleur nécessaires, conserve caméra et réglages, et réutilise les allocations GPU et la géométrie inchangée. Il est appelé après les sous-pas, une fois par image au plus.
 
-Il l’enregistre sous **`ferro-expedition-v2`** à l’entrée d’un étage et après chaque relais. La version 2 de l’enveloppe et la version 1 du snapshot désignent deux formats distincts. Les statistiques des étages précédents restent dans `runStats`. La reprise revient au dernier point enregistré ; les actions postérieures à ce point ne sont pas conservées. Si le stockage local est indisponible, le checkpoint reste utilisable pendant la session courante.
+## Armes, projectiles et dommages
 
-`aiVersion:1` indique la présence d'une mémoire tactique validée, de chemins et de leurs temporisateurs. Pour un ancien snapshot compatible sans champs IA, la migration importe au plus la visée qui y était déjà enregistrée, sans inventer une observation de la position actuelle du joueur. Une mémoire mal formée provoque le même refus atomique que les autres données.
+Impulse est un tir précis ; Fracture disperse sept rayons ; Rupture crée une roquette physique. Les trois armes partagent chaleur et surchauffe. L’onde a un rayon de 6,5 m, une recharge de sept secondes et respecte le couvert.
 
-La génération du terrain est indépendante du format de sauvegarde. Pour une enveloppe antérieure à la génération 4, ou un snapshot devenu incompatible, le shell redémarre à l'entrée du **même secteur**, en conservant graine, arme et statistiques des secteurs terminés. Il sauvegarde ce nouveau point et explique la reprise dans un message. L'ancien point est copié sous `ferro-expedition-v2-before-horizons` si possible, sans écraser une sauvegarde de migration déjà présente. Les tests du shell actionnent le vrai bouton Continuer et vérifient les écritures de stockage.
+La bouche nominale de Rupture est à `eye + right*.255 + up*(-.23) + forward*1.228`. Le trajet œil → bouche est vérifié avant le lancement ; la roquette vise ensuite l’intersection du viseur. Trop proche, un impact non armé produit un choc local de terrain et `rocketDud`, sans explosion créée derrière le mur.
 
-## Rendu WebGL et secours logiciel
+Les roquettes et grenades balaient leur rayon physique sur tout leur déplacement. Les grenades suivent une parabole, rebondissent et possèdent un délai d’explosion. Les spécialistes préparent leur attaque à partir d’une observation, contrôlent la trajectoire et refusent une zone cible occupée par leur groupe.
 
-### Surfaces des objets et grille parasite
+Le souffle évalue le couvert **avant** de démolir la scène. Il ne profite donc pas rétroactivement de sa propre brèche pour traverser une protection. `state.projectiles`, `explosions` et `debris` sont distincts des anciennes balles et particules. `age` avance tandis que `life` garde la durée totale des effets.
 
-Le même matériau de métal servait aux murs et aux acteurs. Ses joints de panneaux en coordonnées mondiales traversaient donc l’arme et les ennemis même avec les shadow maps désactivées. Le bit 4 du champ d’instance de présentation distingue maintenant une surface d’objet. Le lot dynamique reçoit ce rôle par défaut ; `surface: 'architecture'` permet une exception et `surface: 'object'` marque explicitement un élément statique. L’arme overlay reste toujours un objet.
+## IA et charge de calcul
 
-Le shader utilise alors les coordonnées et normales locales pour le grain du métal, et réserve les joints, grandes rainures et vis au décor. Les normales géométriques mondiales servent toujours à l’éclairage et aux ombres. Le secours Canvas suit cette même séparation. Ce correctif ne remplace pas les vrais tests d’occlusion par un éclairage constant.
+Les ennemis alternent patrouille, investigation, engagement et recherche. Vue, son, mémoire, observation verticale et partage local déterminent ce qu’ils savent. Un joueur caché ne transmet pas sa position actuelle. Flanc, couverture, suppression et visée prédictive utilisent cette information observée.
 
-### Travail par image et résolution
+Les machines mobiles se séparent physiquement. Les tripodes se repositionnent. Les esquives ont un délai de réaction et ne retirent pas un dégât déjà résolu. Certaines machines prennent un tremplin si son arrivée rapproche de leur dernier contact mémorisé. Les principes de Quake III ont été consultés dans le dépôt officiel ; aucun code GPL n’a été repris.
 
-Quatre buffers distincts conservent les instances statiques de la vue couleur, de la lampe, du soleil et de la torche. Une sélection identique réutilise son lot préparé ; un changement d’ensemble reconstruit et envoie uniquement ce lot. Le frustum couleur et les sélections de casters restent recalculés quand nécessaire. La liste des casters d’une lampe fixe peut être réutilisée. Les meshes dynamiques sont préparés et envoyés une fois pour toutes les passes d’une même image. `setWorld`, un changement de sélection et la restauration du contexte invalident correctement ces caches.
+Les routes A* utilisent une grille de 0,8 m, un budget de deux recherches par sous-pas, des passages testés avec le volume de l’acteur et un cache de segments. Un index de voisins évite une comparaison quadratique de toute la population. Les acteurs éloignés peuvent dormir sans perdre leur identité ou leurs PV ; il n’y a pas de quota d’ennemis proches effacés.
 
-En WebGL Auto, un gouverneur observe les intervalles RAF réels fournis par le shell, uniquement en partie visible et active. Il lisse sur environ 0,65 s, exige plus de 1,3 s de lenteur au-delà de 25 ms, puis baisse l’échelle de 0,1 avec 2 s de temporisation. Le retour demande plus de 5 s sous 18,5 ms et remonte par 0,05. L’échelle reste entre 0,65 et 1. Le plafond initial de 1,8 million de pixels s’applique avant cette échelle, y compris aux grandes fenêtres ; les modes fixes ne passent pas par ce gouverneur. Le changement de résolution recrée les cibles couleur mais conserve un atlas d’ombre de taille identique.
+La démolition invalide les passages concernés. **Le champ global BFS `nav.dist` n’est plus calculé automatiquement pour les mondes avancés** : l’IA emploie ses routes locales. Une lecture explicite de l’API historique le reconstruit à la demande. Cela retire un gel important après portes et brèches, sans changer la décision de parcours.
 
-Le shell construit les modèles visuels proches, avec une marge plus grande que la portée visible du renderer et des ombres. L’IA, les projectiles et les collisions de toute la carte continuent de s’exécuter. Le Canvas conserve les géométries statiques utilisées pour les ombres au sol, sans mettre en cache la position des objets dynamiques.
+## Colosses et directeur de tension
 
-### Éclairage et passes
+Les boss possèdent `bossScale` 5,4 / 7,2 / 9, `bossKind`, `bossName` et `arena`. Les états sauvegardés comprennent `bossAwake`, `phase` 0–2, `bossClock`, `bossStep`, `attackLabel`, `weakPointOpen` et `weakTimer`. Les renforts restent des acteurs préplacés, libérés par phase.
 
-Le chemin principal utilise **WebGL 2** et le dessin instancié de primitives. La géométrie statique est préparée une fois ; les personnages, machines, projectiles et effets sont actualisés à chaque image. Les matériaux calculent joints, grain, motifs métalliques et reflets, avec brouillard et éclairage directionnel/local.
+Les seuils de phase sont 67 % et 34 % des PV. L’entrée dans l’arène déclenche l’éveil ; un boss n’attaque pas à travers le territoire avant activation. Les scripts emploient disques d’écrasement, anneaux creux, capsules de balayage et barrages de vraies roquettes. La cible d’une attaque annoncée est engagée à partir du dernier contact observé.
 
-Les modes **Auto** et **Haute** emploient un atlas de profondeur pour **une lampe locale, le soleil directionnel et une torche décalée**. Chaque vue mesure respectivement **512×512** ou **1024×1024**, dans un atlas de deux cases de côté. Le soleil couvre un voisinage de 56 m en Auto et 72 m en Haute, stabilisé sur la grille de texels. Les mondes sans environnement conservent les deux plafonniers et la torche. Les microdétails sont exclus des casters. Le halo lumineux utilise des cibles **RGBA8**. Ce dispositif ne calcule pas des ombres omnidirectionnelles pour toutes les lampes ; les passes restent conditionnées à des framebuffers complets.
+Le cœur local est **`[0,1.93,-.90]*bossScale`**, rayon **`.36*bossScale`**. Il ressort devant le plastron et reste enregistré sur le torse, indépendamment de la marche. La fenêtre après récupération dure 3 / 2,7 / 2,4 s selon phase. Les dégâts au cœur ouvert sont multipliés par 3,2 ; les autres impacts subissent le facteur d’armure de 0,30. Torse, casque et jambes restent ciblables en dehors de la fenêtre.
 
-La profondeur des ombres est lue par un **sampler explicitement `highp`**. La comparaison GLES a montré que la précision implicite produisait des bandes sur les murs ; changer seulement le bias ne corrigeait pas la cause. Le bias et le déplacement du récepteur utilisent la normale géométrique, indépendamment du microrelief. Chaque lecture PCF compense aussi la différence de profondeur du plan récepteur au centre du texel échantillonné. Les bords du cône et sa limite de portée sont fondus progressivement.
+`state.bossAttacks` constitue la vérité physique et visuelle. `FEffects` dessine les mêmes rayons, ouvertures et bandes, sans remplir le trou d’un anneau. Les marqueurs de danger passent avant les effets cosmétiques. `bossRoar`, `bossTell`, `bossImpact`, `bossPhase` et `bossDeath` alimentent audio et HUD.
 
-Le soleil utilise neuf lectures PCF pondérées pour adoucir les contours ; lampe et torche en conservent quatre. Les feuilles bougent avec un vent léger, calculé avec les mêmes paramètres et le même temps dans les passes de couleur et d'ombre. Les matériaux naturels séparent terre/herbe, roche, écorce, feuillage et petites surfaces d'eau des motifs industriels. Le ciel est une passe procédurale sans texture, avec nuages, soleil et horizon. Les volumes opaques des bâtiments le masquent normalement.
+Le directeur utilise les sites réels de `world.horrorSites`. Son état contient pression, tension, progression, palier, prochain événement, type, âge, position et intensité. Les chocs métalliques, alarmes, coupures locales et embuscades sont déterministes. Une embuscade réoriente une escouade existante vers un bruit de site, jamais vers des coordonnées secrètes du joueur.
 
-La torche reste dans le rayon de collision du joueur : décalage de 0,16 m à droite et 0,08 m vers le bas. Cela évite de placer sa source de l'autre côté d'une cloison lorsque le joueur la longe. La normale de relief est bornée et les motifs fins sont atténués avec la taille du pixel pour limiter les artefacts à angle rasant.
+Une grâce initiale de dix secondes protège le voisinage du départ du premier secteur. La pression augmente avec secteur, objectifs et combat proche. Les événements conservent un intervalle borné et de courtes accalmies. `setDifficulty(0|1|2)` sélectionne Standard, Brutal ou Cauchemar ; cadence, vitesse de projectiles et dégâts changent, sans gonfler les PV ni ajouter des ennemis.
 
-Le mode **Économie** désactive l’ombre et le halo et réduit le nombre de lumières retenues. Les compteurs du renderer indiquent le backend et les passes réellement actifs ; le réglage demandé ne constitue pas à lui seul une preuve que chaque effet a été créé.
+## Modèles, rendu et absence de grille parasite
 
-Si WebGL 2 est indisponible, le secours **Canvas 2D** projette les mêmes géométries 3D avec découpage au plan proche, élimination des faces arrière, tri de profondeur, éclairage simplifié et joints projetés. Les sols sont traités avant les faces et leurs joints partagent une grille mondiale. En Auto/Haute, il projette jusqu'à 18 silhouettes simplifiées sur les sols, puis les découpe au domaine visible des sols ; il ne reproduit ni les cartes d'ombre WebGL ni le halo. Le tri de surfaces peut présenter des imperfections aux intersections.
+Les personnages regardent localement vers −Z ; leur rotation globale vaut −yaw, cohérente avec `[sin(yaw),0,-cos(yaw)]`. Les membres sont construits entre leurs articulations et les supports suivent la vitesse réelle. La présentation utilise des ressorts amortis indépendants de la visée et de la physique. Un repère unique `FMotion.mount/place` porte toutes les pièces de l’arme. Désactiver les mouvements fixe hauteur, roulis et variation de FOV.
 
-Les deux chemins emploient un index spatial par cellules de 8 m, des portées distinctes pour l'architecture, l'habillage et les microdétails, et un rejet hors champ. Le Canvas construit les géométries à la demande, rejette les très petits détails en pixels et borne leur nombre visible. Il emploie deux niveaux de facettes, regroupe les chapeaux de cylindres en faces et projette une fois les sommets partagés. Les canopées essentielles conservent leurs silhouettes ; la géométrie GPU n'est pas simplifiée. Le monde généré complet reste inchangé ; ces choix ne concernent que son affichage.
+`FActors.build` choisit le niveau de détail selon distance, qualité et backend. Pour un géant, la distance est divisée par son échelle avant ce choix ; sa phase de marche progresse aussi moins vite. Les trois colosses ajoutent des silhouettes distinctes, un cœur et des volets mobiles. Le nombre de pièces est borné indépendamment de leur taille.
 
-## Audio, stockage et portée des vérifications
+Les matériaux `surface:'object'` utilisent le grain métallique local ; seuls les bâtiments reçoivent joints et motifs architecturaux. Les normales géométriques mondiales restent utilisées pour éclairage et ombres. L’arme overlay appartient toujours aux objets. Cette séparation corrige le motif de grille sur armes et ennemis sans retirer les vraies ombres.
 
-Le son démarre sur un geste utilisateur. Oscillateurs, bruit synthétique, filtres, modulation et échos produisent toutes les ambiances et tous les effets. Les étages changent la palette musicale et la menace modifie son intensité. Fracture, l’onde, les tirs ennemis, la seconde phase du boss et les séries possèdent leurs effets. La pause coupe le son ; la reprise respecte le réglage du joueur. Le jeu reste utilisable si Web Audio est absent ou bloqué.
+WebGL 2 utilise des primitives instanciées et des buffers persistants. Les objets dynamiques sont préparés une fois par image pour toutes les passes. Soleil, lampe locale et torche emploient un atlas de profondeur en Auto/Haute. Les lectures de profondeur sont explicitement `highp`, avec bias géométrique, correction du plan récepteur et filtrage PCF. Le microrelief est borné et filtré selon la taille du pixel. Le ciel, les nuages et le vent sont procéduraux.
 
-Le shell amortit la transition entre intérieur et extérieur et transmet l'environnement à l'audio. Vent et bruissement augmentent dehors, la réverbération diminue et les pas changent de timbre. Des appels d'oiseaux, sons secs ou insectes sont synthétisés selon le secteur ; leur niveau baisse avec la menace. L'événement `alerted` déclenche un signal de machine spatialisé, limité globalement à une fois toutes les 0,45 s pour éviter la superposition d'un groupe entier.
+`renderer.actorFilter` est conservatif sur l’union de la vue couleur et des volumes d’ombre. La sphère ordinaire a un rayon de 3,5 m ; celle des géants est centrée à `baseY+1.6*scale` et a un rayon `4.5*scale`. Un doute conserve l’acteur. Les arènes déclarent `longViewZones` : les volumes essentiels peuvent porter jusqu’à 100 m, sans élargir tous les détails secondaires.
 
-`ferro-settings` conserve les réglages ; `ferro-expedition-v2` conserve l’expédition. Aucune donnée de jeu n’est envoyée à un service : aucune télémétrie, aucun formulaire ni compte de jeu propre au projet. Une éventuelle authentification de l’hébergement relève de la plateforme de publication.
+La vapeur, la fumée et les explosions utilisent une passe translucide testée en profondeur. Elles ne projettent pas d’ombres opaques fantômes. La géométrie des projectiles reste dans le volume physique ; les pièges utilisent leur boîte simulée. Les budgets cosmétiques bornent la charge et ne suppriment pas une annonce dangereuse.
 
-Les vérifications de [`checks/simulation.test.mjs`](../checks/simulation.test.mjs) couvrent les collisions, la visée 3D, les armes, les télégraphes, les dangers, la condition de victoire et la reprise validée, y compris le cas d’un projectile létal au chargement. Les vérifications de monde contrôlent séparément la connectivité et les placements. Ces tests ne remplacent ni une partie humaine complète ni un essai sur un téléphone réel.
+Une coupure d’horreur réduit temporairement les contributions de quelques vraies lampes proches de son origine, puis les rétablit en 1,2 s au plus. Elle n’ajoute pas de tache noire ni de cache géométrique. Veilleuses, torche, arme et annonces restent lisibles.
 
-Une exécution du chemin GLES par **Mesa llvmpipe** permet d’inspecter les shaders et leurs images sans GPU physique. Elle ne démontre ni les performances matérielles, ni la compatibilité d’un pilote donné, ni celle de Safari. Les résultats de validation doivent conserver cette distinction.
+Le secours Canvas découpe les faces au plan proche, trie la profondeur, projette des ombres simplifiées sur les sols réels et masque les faces derrière les terrasses. Il n’équivaut pas à l’atlas WebGL et peut conserver des imperfections aux intersections. Les mesures Canvas ne représentent pas les performances GPU.
 
-## Vers une version native
+## Reprises atomiques et interface
 
-Un défi natif de type `.kkrieger` demanderait un portage des primitives, du rendu, du synthétiseur, des contrôles et du build vers les API du système. Il constituerait un chantier distinct : la taille du HTML autonome ne peut pas être présentée comme celle d’un exécutable natif équivalent.
+Le snapshot conserve `version:1`, `aiVersion:3`, `systemsVersion:1`, `physicsVersion:1`, ainsi que `destructionVersion:1`, `bossVersion:1` et `directorVersion:1`. Il comprend terrain détruit, projectiles, portes, mécanismes, lifts, vols, boss et directeur. L’empreinte du monde détecte une configuration incompatible ; ce n’est pas une signature cryptographique.
+
+`restore()` valide un candidat complet avant mutation. Un refus laisse la partie intacte. Une réussite conserve les références de `state` et `player`, remet les données et reconstruit les index nécessaires. Les effets purement cosmétiques ne sont pas rejoués. Le mode `{recover:true}` ajoute une protection transitoire de reprise et dissipe les projectiles immédiats dangereux.
+
+Le shell utilise l’enveloppe `{version:2,generation:5,seed,stage,runStats,checkpoint}`. Il sauvegarde entrée, relais, commandes, arrivée de lift avec le joueur et boss abattu. Les générations incompatibles repartent à l’entrée du même secteur en conservant graine, arme et statistiques antérieures ; une sauvegarde précédente est préservée séparément lorsque le stockage le permet.
+
+Le menu possède quatre onglets accessibles depuis l’accueil et la pause. Il applique directement FOV, résolution, luminosité, ombres, mixage et touches. Le mode options n’avance pas la simulation. Les conflits de touches sont refusés et Échap reste réservé. La difficulté courante du joueur est réappliquée après reprise sans régénérer sa santé ni créer un checkpoint gratuit.
+
+## Audio et portée des preuves
+
+Les MOD ont quatre canaux, signature `M.K.`, 31 emplacements dont 14 instruments synthétisés, six patterns de 64 lignes et huit positions de lecture. Les tempos sont 100 / 170 / 145 BPM. Le lecteur et l’export emploient les mêmes données. `FMusic.getModule(stage)` fonctionne sans AudioContext ; le son réel attend une interaction.
+
+Le budget musique de 28 voix est indépendant des 48 voix d’effets. La pause annule les notes programmées et la reprise se recale sur une mesure. Moteur et vapeur utilisent des sources persistantes, avec niveau selon distance ; ils ne créent pas une voix par objet et par image. `audio.setPressure` agit sur l’ambiance, `audio.horror` produit les événements spatialisés.
+
+Le mix final applique une courbe de protection identique à l’entrée jusqu’à 0,875, puis bornée sous pleine échelle. Les limites numériques et les décodages MOD indépendants sont testés ; cela ne constitue pas une écoute humaine.
+
+Les contrôles de `checks/` et les mesures de `VALIDATION.md` distinguent tests unitaires, parcours physiques, commandes navigateur et pixels GLES logiciels. Ils ne prouvent ni cadence sur un Mac précis, ni compatibilité Safari, ni ressenti d’horreur, ni équilibrage humain complet. Un portage natif de type `.kkrieger` reste un chantier distinct de ce fichier web autonome.
