@@ -232,6 +232,18 @@ for (let index = 0; index < 18; index++) test(`campaign world ${String(index + 1
     if (equipment.length) { const item = equipment[0]; assert(item.id.startsWith('trophy-')); assert.equal(item.trophyId, item.id); assert.equal(item.kind === 'shield' ? 'shield' : item.weapon, novelty.get(index)); }
     for (const q of world.pickups.filter(q => q.kind === 'ammo')) assert(q.weapon < 4 && unlock[q.weapon] <= index && q.requiresWeapon === q.weapon, `${label}: premature or unconditional ammunition cache`);
     for (const e of world.enemies) if (e.drop) assert(e.drop.weapon < 4 && unlock[e.drop.weapon] <= index, `${label}: enemy drops ammunition before its weapon is introduced`);
+    const armor = world.pickups.filter(q => q.kind === 'armor');
+    assert.deepEqual(Array.from(armor, q => q.id), ['armor-start', 'armor-middle', 'armor-boss']);
+    assert.deepEqual(Array.from(armor, q => q.amount), [25, 25, 50]);
+    assert.deepEqual(Array.from(armor, q => q.zoneId), [0, world.shops[1].zoneId, world.rooms.find(r => r.bossArena).id]);
+    const armorReserved = [world.spawn, world.exit, ...world.cores, ...world.mechanisms, ...world.shops, ...world.shops.map(q => q.terminal), ...world.doors, ...world.lifts.flatMap(q => [q, q.lowerCall, q.upperCall]), ...world.jumpPads.flatMap(q => [q, q.target]), ...world.encounters.flatMap(q => q.spawnEntries), ...world.trophies];
+    for (const q of armor) {
+      assert.equal(q.y, heightAt(world, q.x, q.z));
+      assert(!Object.hasOwn(q, 'weapon') && !Object.hasOwn(q, 'requiresWeapon') && !Object.hasOwn(q, 'trophyId'), `${label}: armor must not depend on a weapon discovery`);
+      assert(world.pickups.every(p => p === q || Math.hypot(q.x - p.x, q.z - p.z) > 2.1), `${label}: armor overlaps another pickup`);
+      assert(armorReserved.every(p => Math.hypot(q.x - p.x, q.z - p.z) > 1.8), `${label}: armor overlaps a gameplay interaction`);
+      assert(!world.colliders.some(box => touches(q.x, q.z, q.y, box)), `${label}: armor blocks its own collection point`);
+    }
     assertTrophy(world, label);
     const result = assertReachable(world, label); reachedTargets += result.targets; minCells = Math.min(minCells, result.accessibleCells); maxCells = Math.max(maxCells, result.accessibleCells);
     if (seed === 96) {

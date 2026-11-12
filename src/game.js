@@ -25,7 +25,8 @@
     if((inventory.weapons.length>=4||inventory.shield!==undefined)&&typeof inventory.shield!=='boolean')return null;
     const campaign=value.campaign===undefined?null:FSimulation.copyCampaign?.(value.campaign,inventory);if(value.campaign!==undefined&&!campaign)return null;
     let equipment;if(value.equipment){const q=value.equipment,left=q.left??null;if(!Number.isInteger(q.right)||!inventory.weapons[q.right]||left!==null&&left!=='shield'&&(!Number.isInteger(left)||!inventory.weapons[left]||left===q.right)||left==='shield'&&!inventory.shield||q.shieldEnergy!==undefined&&(!Number.isFinite(q.shieldEnergy)||q.shieldEnergy<0||q.shieldEnergy>100))return null;equipment={right:q.right,left,shieldEnergy:q.shieldEnergy??100};}
-    return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice(),...(inventory.shield!==undefined?{shield:inventory.shield}:{})},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{})};
+    const armor=value.armor===undefined?null:FSimulation.copyArmor?.(value.armor,inventory.shield&&equipment?.left==='shield'?200:100);if(value.armor!==undefined&&!armor)return null;
+    return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice(),...(inventory.shield!==undefined?{shield:inventory.shield}:{})},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
   }
   function cachedWorld(n,worldSeed,campaign=campaignMode){const key=(campaign?'campaign:':'classic:')+worldSeed+':'+n;if(!worldCache.has(key)){worldCache.set(key,FWorld.create(worldSeed,n,campaign?{campaign:true}:undefined));while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);}return worldCache.get(key);}
   function trackLabel(){const t=window.FMusic?.getTrack?.(world?.stage??stage%3);return t?t.title+' · '+t.bpm+' BPM':'METAL · MOD PROCÉDURAL';}
@@ -136,7 +137,7 @@
     // Optional entry metadata must fit the actual generated arsenal. A stale
     // 3/4/5-slot entry cannot block restoration of a healthy checkpoint.
     const carry=entry&&(entry.inventory.weapons.length===slots||slots===4&&entry.inventory.weapons.length===3)?entry:null;
-    sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),...(brain?{brain}:{})});sim.setDifficulty?.(prefs.difficulty);
+    sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),armorSystem:true,...(brain?{brain}:{})});sim.setDifficulty?.(prefs.difficulty);
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;
@@ -197,7 +198,7 @@
       else if(e.name==='shieldBash')leftMotion.impulse('melee');
       else if(e.name==='explosion'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.y??p.y)-p.y,(e.z??p.z)-p.z);motion.impulse('blast',clamp(1-d/14,0,1));leftMotion.impulse('blast',clamp(1-d/14,0,1));}
       else handMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
-      const sound=e.name==='waveStart'?'wave':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
+      const sound=e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
       if(typeof audio[sound]==='function'&&!((e.name==='weaponPickup'||e.name==='shieldPickup')&&trophyIds.has(e.id))){
         const p=sim.state.player,d=Number.isFinite(e.x)?Math.hypot(e.x-p.x,e.z-p.z):0;
         const pan=Number.isFinite(e.x)?clamp(((e.x-p.x)*Math.cos(p.yaw)+(e.z-p.z)*Math.sin(p.yaw))/Math.max(1,d),-1,1):0;
@@ -215,7 +216,8 @@
       if(e.name==='trap'&&Math.hypot(e.x-sim.state.player.x,e.z-sim.state.player.z)<10)toast('PIÈGE ACTIVÉ · quittez la dalle',1.5);
       if(e.name==='horror'&&e.kind==='alarm')toast('ALERTE LOCALE · des machines convergent',2.1);
       if(e.name==='pickup')toast('Intégrité restaurée',1.8);
-      if(e.name==='lootPickup'){const gains=[];if(e.credits)gains.push('+'+e.credits+' CR');if(e.cores)gains.push('+'+e.cores+' NOYAU');for(let i=0;i<4;i++)if(e.ammo?.[i])gains.push('+'+e.ammo[i]+' '+ammoNames[i]);toast((e.boss?'BUTIN DU COLOSSE · ':'RÉCUPÉRATION · ')+gains.join(' · '),e.boss?4:2);if(e.boss)checkpointDue=true;}
+      if(e.name==='armorPickup'){toast('+'+(Math.round(e.amount*10)/10)+' ARMURE · '+Math.ceil(e.points)+' / '+e.capacity,2.1);checkpointDue=true;}
+      if(e.name==='lootPickup'){const gains=[];if(e.credits)gains.push('+'+e.credits+' CR');if(e.cores)gains.push('+'+e.cores+' NOYAU');if(e.armor)gains.push('+'+(Math.round(e.armor*10)/10)+' ARMURE');for(let i=0;i<4;i++)if(e.ammo?.[i])gains.push('+'+e.ammo[i]+' '+ammoNames[i]);toast((e.boss?'BUTIN DU COLOSSE · ':'RÉCUPÉRATION · ')+gains.join(' · '),e.boss?4:2);if(e.boss||e.armor>0)checkpointDue=true;}
       if(e.name==='shopOpen'){currentShopId=e.id;setMode('shop');renderShop();}
       if(e.name==='ammoPickup')toast('+'+e.amount+' '+ammoNames[e.weapon]+' · '+weaponNames[e.weapon],1.8);
       if(e.name==='weaponPickup'){selectedWeapon=sim.state.weapon;motion.impulse('switch');if(!trophyIds.has(e.id))toast(weaponNames[e.weapon].toUpperCase()+' RÉCUPÉRÉE'+(e.amount?' · +'+e.amount+' '+ammoNames[e.weapon]:''),3);checkpointDue=true;}
@@ -373,7 +375,7 @@
       }
     }
   }
-  function supplyVisible(c){return !c.taken&&(!world.campaign||(!(Number.isInteger(c.requiresWeapon)&&!sim.state.inventory.weapons[c.requiresWeapon])&&((c.kind||c.type)!=='ammo'||sim.state.inventory.weapons[c.weapon])));}
+  function supplyVisible(c){return !c.taken&&((c.kind||c.type)!=='armor'||!!sim.state.armor)&&(!world.campaign||(!(Number.isInteger(c.requiresWeapon)&&!sim.state.inventory.weapons[c.requiresWeapon])&&((c.kind||c.type)!=='ammo'||sim.state.inventory.weapons[c.weapon])));}
   function supplyModel(out,c,t){
     const kind=c.kind||c.type||'health',weapon=c.weapon||0,y=(c.y||0)+.4+Math.sin(t*1.8+c.x)*.035,mat=kind==='health'?4:weapon===0?4:weapon===1?5:6;
     const frame=FMotion.mount({pos:[c.x,y,c.z],yaw:t*.3+c.x*.1,pitch:0,roll:0}),part=(shape,p,s,material=0,rx=0,glow=0)=>{const pose=FMotion.place(frame,p,rx),a=m(shape,pose.p,s,material,pose.r,glow);a.surface='object';out.push(a);};
@@ -381,11 +383,16 @@
     if(kind==='salvage'||kind==='boss'){
       const boss=kind==='boss';part('box',[0,-.05,0],[boss?.75:.38,boss?.42:.23,boss?.55:.31],0);part('box',[0,boss?.18:.085,0],[boss?.62:.3,.045,boss?.45:.23],1);
       for(const side of [-1,1])part('box',[side*(boss?.26:.11),.01,0],[.035,boss?.39:.2,boss?.56:.32],5,0,.35);
-      if(c.cores)part('octa',[0,.46,0],[.26,.42,.26],5,0,1.2);else if(c.credits)part('octa',[0,.25,0],[.18,.16,.18],5,0,.5);
+      if(c.cores)part('octa',[0,.46,0],[.26,.42,.26],5,0,1.2);else if(c.credits)part('octa',[0,.25,0],[.18,.16,.18],5,0,.5);else if(c.armor>0)part('bevel',[0,.26,0],[.19,.22,.065],4,0,.65);
       if(boss)part('ring',[0,.4,0],[.56,.04,.56],4,0,.6);return;
     }
     if(kind==='health'){
       part('box',[0,0,0],[.45,.32,.4]);part('box',[0,.17,0],[.28,.035,.085],4,0,.8);part('box',[0,.17,0],[.085,.035,.28],4,0,.8);return;
+    }
+    if(kind==='armor'){
+      part('bevel',[0,.035,0],[.38,.38,.14],1);part('bevel',[0,-.18,.012],[.25,.12,.13],0);
+      for(const side of [-1,1]){part('bevel',[side*.23,.17,0],[.16,.11,.18],1);part('box',[side*.13,.04,-.077],[.026,.25,.016],4,0,.65);}
+      part('octa',[0,.06,-.085],[.075,.09,.035],4,0,.85);return;
     }
     if(kind==='shield'){
       part('bevel',[0,.05,0],[.43,.6,.06],4,0,.5);for(const side of [-1,1])part('bevel',[side*.215,.05,.02],[.04,.47,.06],0);part('ring',[0,.05,.05],[.18,.035,.18],1,Math.PI/2);part('box',[0,-.1,.09],[.08,.21,.06]);return;
@@ -564,11 +571,15 @@
       if(Number.isInteger(left))drawGun(left,-1);
       else if(left==='shield'){
         const guard=shieldLift,energy=clamp((s.shield?.energy??100)/100,0,1),bash=clamp((s.shield?.bashVisual||0)/.35,0,1),pose=leftMotion.view.weapon;
-        const mount=FMotion.mount(camera,[-.42+guard*.27+pose.offset[0]*.25,-.27+guard*.20+pose.offset[1]*.5,-.68-Math.sin(bash*Math.PI)*.32],[pose.rotation[0]*.25,-.28*(1-guard),.12*(1-guard)]),color=energy<.25?[1,.42,.12]:[.12,.7,.85];
+        // Keep the guard beside the right-hand assembly. Its former tall frame
+        // crossed both the sight line and the firearm when raised.
+        const narrow=clamp((innerWidth/innerHeight)/1.2,.45,1),thrust=Math.sin(bash*Math.PI),right=motion.view.weapon;
+        const clearance=Math.max(0,-right.offset[0])+.6*Math.abs(right.rotation[1])+.3*Math.abs(right.rotation[2]);
+        const mount=FMotion.mount(camera,[-.48+guard*.09-(1-narrow)*.11-thrust*.08-clearance+pose.offset[0]*.18,-.43+guard*.45+pose.offset[1]*.35,-.82-guard*.16-thrust*.24],[pose.rotation[0]*.2,-.26*(1-guard),.10*(1-guard)]),color=energy<.25?[1,.42,.12]:[.12,.7,.85];
         function shieldPart(shape,point,size,mat,alpha,rotation=0){const q=FMotion.place(mount,point,rotation),part=m(shape,q.p,size,mat,q.r,alpha!==undefined?.22:.04);part.overlay=true;part.surface='object';if(alpha!==undefined){part.fx=true;part.alpha=alpha;part.color=color;}out.push(part);}
-        shieldPart('bevel',[0,0,0],[.72,.94,.05],7,.1+energy*.09+guard*.05);
-        for(const side of [-1,1]){shieldPart('bevel',[side*.34,0,.025],[.045,.87,.055],0);shieldPart('box',[side*.34,0,-.008],[.012,.61,.012],4,.45+energy*.3);shieldPart('bevel',[0,side*.435,.025],[.72,.045,.055],0);}
-        shieldPart('ring',[0,-.03,.032],[.19,.025,.19],4,.24+energy*.25,Math.PI/2);shieldPart('bevel',[-.055,-.25,.12],[.16,.11,.21],7);shieldPart('bevel',[-.15,-.40,.18],[.15,.26,.18],0);
+        shieldPart('bevel',[0,0,0],[.52,.66,.035],7,.08+energy*.07+guard*.035);
+        for(const side of [-1,1]){shieldPart('bevel',[side*.25,0,.019],[.026,.64,.035],0);shieldPart('box',[side*.25,0,-.006],[.008,.45,.008],4,.4+energy*.3);shieldPart('bevel',[0,side*.315,.019],[.52,.026,.035],0);}
+        shieldPart('ring',[0,-.09,.026],[.13,.018,.13],4,.2+energy*.2,Math.PI/2);shieldPart('bevel',[-.025,-.20,.11],[.14,.10,.18],7);shieldPart('bevel',[-.10,-.32,.16],[.13,.22,.16],0);
       }
     }
     return out;
@@ -578,6 +589,9 @@
     const stats=sim.stats||{maxHp:100},maxHp=s.maxHp||stats.maxHp||100,healthRatio=p.hp/maxHp;
     $('hp').textContent=String(Math.ceil(p.hp));$('health-max').textContent='/ '+maxHp;$('hp-bar').style.width=clamp(healthRatio*100,0,100)+'%';$('hp-bar').style.background=healthRatio<.3?'#ff795e':'var(--acid)';
     $('health-state').textContent=healthRatio<.25?'INTÉGRITÉ CRITIQUE':healthRatio<.55?'STRUCTURE ENDOMMAGÉE':'SYSTÈMES OPÉRATIONNELS';$('health-panel').classList.toggle('critical',healthRatio<.25);$('armor-rating').textContent='BLINDAGE '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';
+    const armor=s.armor;
+    $('armor-pool').hidden=!armor;$('health-state').hidden=!!armor;$('armor-rating').hidden=!!armor;
+    if(armor){$('armor-points').textContent=String(Math.ceil(armor.points));$('armor-cap').textContent='/ '+armor.capacity;$('armor-bar').style.width=clamp(armor.points/armor.capacity*100,0,100)+'%';$('armor-pool').title='Plaques à ramasser · absorbe un tiers des dégâts après la garde · blindage passif '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';$('armor-pool').setAttribute('aria-label','Armure : '+Math.ceil(armor.points)+' sur '+armor.capacity);document.body.dataset.armor=String(Math.ceil(armor.points));}
     $('wallet-credits').textContent=String(s.economy?.credits||0);$('wallet-cores').textContent=String(s.economy?.cores||0);
     $('heat-bar').style.width=p.heat*100+'%';$('heat-bar').style.background=p.overheated?'#ff795e':s.weapon===2?'#ee8d5d':s.weapon===1?'#e8ad66':'#6ce5d2';
     $('weapon-label').textContent=weaponNames[s.weapon].toUpperCase();$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
@@ -595,7 +609,7 @@
       $('left-option-'+i).disabled=!owned[i]||i===s.weapon;$('left-option-'+i).hidden=slot.hidden;
     }
     $('left-option-shield').disabled=!inventory?.shield;$('left-hand-setting').disabled=!sim.selectLeftWeapon;$('left-hand-setting').value=left===null?'none':String(left);
-    $('left-hand-key').textContent=FOptions.keyName(prefs.bindings.leftHand[0]);$('left-hand-stock').textContent=shield?Math.ceil(s.shield?.energy??100)+' %':world.campaign&&left===4?'∞ BALLES':Number.isInteger(left)?String(inventory.ammo[left])+' '+ammoNames[left]:'LIBRE';
+    $('left-hand-key').textContent=FOptions.keyName(prefs.bindings.leftHand[0]);$('left-hand-stock').textContent=shield?'GARDE '+Math.ceil(s.shield?.energy??100)+' %':world.campaign&&left===4?'∞ BALLES':Number.isInteger(left)?String(inventory.ammo[left])+' '+ammoNames[left]:'LIBRE';
     $('left-hand-status').textContent=shield?(s.shield?.raised?'GARDE LEVÉE':(s.shield?.energy??100)<1?'BOUCLIER ÉPUISÉ':(touch?'GARDE · MAINTENIR':'CLIC DROIT · GARDE')):left!==null?(touch?'TIR G · MAINTENIR':'CLIC DROIT · TIR'):(touch?'CHOISISSEZ UN ÉQUIPEMENT':'X · CHANGER');
     $('shield-meter').hidden=!shield;$('shield-energy').style.width=(s.shield?.energy??100)+'%';$('left-fire-button').disabled=left===null;$('left-fire-button').setAttribute('aria-label',shield?'Maintenir le bouclier':'Tirer avec la main gauche');$('left-fire-label').textContent=shield?'GARDE':'TIR G';
     $('dash-button').setAttribute('aria-label',shield?'Coup de bouclier':'Esquiver');
@@ -625,7 +639,7 @@
     document.body.dataset.ammo=String(ammo??0);
     const supply=[...s.pickups,...(s.loot||[])].filter(c=>supplyVisible(c)&&Math.abs((c.y||0)-p.y)<1.1&&Math.hypot(c.x-p.x,c.z-p.z)<3.7).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z)).find(c=>{const a=[p.x,p.y+1.3,p.z],b=[c.x,(c.y||0)+.4,c.z],d=b.map((v,i)=>v-a[i]),length=Math.hypot(...d)||1;return sim.ray(a,d.map(v=>v/length),length)>=length-.2;});
     $('supply-hint').hidden=!supply;
-    if(supply){const kind=supply.kind||supply.type||'health',weapon=supply.weapon||0,salvage=kind==='salvage'||kind==='boss',full=kind==='shield'?!!inventory?.shield:kind==='health'?p.hp>=maxHp:salvage?!supply.credits&&!supply.cores&&supply.ammo.every((n,i)=>!n||(inventory?.ammo[i]??0)>=sim.ammoCaps[i]):kind==='weapon'&&!owned[weapon]?false:inventory?.ammo[weapon]>=sim.ammoCaps?.[weapon];$('supply-name').textContent=kind==='shield'?'BOUCLIER':kind==='weapon'?weaponNames[weapon].toUpperCase():kind==='ammo'?ammoNames[weapon].toUpperCase():kind==='boss'?'BUTIN DU COLOSSE':salvage?'FERRAILLE & RÉSERVES':'INTÉGRITÉ';$('supply-detail').textContent=full?'RÉSERVE AU MAXIMUM':kind==='weapon'&&!owned[weapon]?'ARME À RÉCUPÉRER':'AVANCEZ POUR RAMASSER';}
+    if(supply){const kind=supply.kind||supply.type||'health',weapon=supply.weapon||0,salvage=kind==='salvage'||kind==='boss',full=kind==='shield'?!!inventory?.shield:kind==='health'?p.hp>=maxHp:kind==='armor'?!s.armor||s.armor.points>=s.armor.capacity:salvage?!supply.credits&&!supply.cores&&(!supply.armor||!s.armor||s.armor.points>=s.armor.capacity)&&supply.ammo.every((n,i)=>!n||(inventory?.ammo[i]??0)>=sim.ammoCaps[i]):kind==='weapon'&&!owned[weapon]?false:inventory?.ammo[weapon]>=sim.ammoCaps?.[weapon];$('supply-name').textContent=kind==='armor'?'PLAQUES D’ARMURE':kind==='shield'?'BOUCLIER':kind==='weapon'?weaponNames[weapon].toUpperCase():kind==='ammo'?ammoNames[weapon].toUpperCase():kind==='boss'?'BUTIN DU COLOSSE':salvage?'FERRAILLE & RÉSERVES':'INTÉGRITÉ';$('supply-detail').textContent=full?'RÉSERVE AU MAXIMUM':kind==='weapon'&&!owned[weapon]?'ARME À RÉCUPÉRER':'AVANCEZ POUR RAMASSER';}
     const bossTarget=s.relays===3&&operational&&boss;
     const targets=s.relays===3&&operational?[bossTarget||world.exit]:[...required.filter(a=>!a.active),...s.cores.filter(c=>!c.taken)],target=targets.reduce((a,c)=>!a||Math.hypot(c.x-p.x,c.z-p.z)<Math.hypot(a.x-p.x,a.z-p.z)?c:a,null);
     if(target){
@@ -684,7 +698,7 @@
       outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
       let motor=0;for(const a of sim.state.lifts||[])if(a.moving)motor=Math.max(motor,Math.max(0,1-Math.hypot(a.x-sim.state.player.x,a.z-sim.state.player.z)/18));
       audio.setMachinery?.(motor);
-      let steam=0,steamPan=0;for(const a of sim.state.pipes||[])if(a.hot&&!a.broken){const p=sim.state.player,origin=a.nozzle||[a.x,a.y||0,a.z],d=Math.hypot(origin[0]-p.x,origin[1]-p.y,origin[2]-p.z),level=Math.max(0,1-d/20);if(level>steam){steam=level;steamPan=clamp(((origin[0]-p.x)*Math.cos(p.yaw)+(origin[2]-p.z)*Math.sin(p.yaw))/Math.max(1,d),-1,1);}}audio.setSteam?.(steam,steamPan);
+      let steam=0,steamPan=0;for(const a of sim.state.pipes||[])if(a.hot&&!a.broken){const p=sim.state.player,origin=a.nozzle||[a.x,a.y||0,a.z],d=Math.hypot(origin[0]-p.x,origin[1]-p.y,origin[2]-p.z),level=Math.max(0,1-d/12)**2;if(level>steam){steam=level;steamPan=clamp(((origin[0]-p.x)*Math.cos(p.yaw)+(origin[2]-p.z)*Math.sin(p.yaw))/Math.max(1,d),-1,1);}}audio.setSteam?.(steam,steamPan);
       audio.setThreat(sim.state.threat||0);audio.setPressure?.(sim.state.director?.pressure||0);audio.tick(dt);
       if(mode==='playing'&&!sim.state.player.airborne&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving,{outdoor:outside,biome:world.environment?.biome});
       lastFootstep=footstep;
@@ -745,7 +759,7 @@
   });
   $('back-menu').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
   $('pause-main').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
-  for(const id of ['intro-sound','sound-toggle'])$(id).addEventListener('click',()=>{muted=!muted;settings();});
+  for(const id of ['intro-sound','sound-toggle'])$(id).addEventListener('click',()=>{audio.cancelTestMix?.();muted=!muted;settings();});
   $('quality-toggle').addEventListener('click',()=>{quality={auto:'low',low:'high',high:'auto'}[quality];renderer.resize(quality);settings();});
   $('difficulty-setting').addEventListener('change',()=>{prefs.difficulty=clamp(Math.round(Number($('difficulty-setting').value)||0),0,2);sim?.setDifficulty?.(prefs.difficulty);settings();});
   $('ai-setting').addEventListener('change',async()=>{prefs.aiAcceleration=$('ai-setting').value==='cpu'?'cpu':'auto';settings();await brain?.setMode(prefs.aiAcceleration);brainStatus();});

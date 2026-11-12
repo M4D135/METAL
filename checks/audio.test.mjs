@@ -54,7 +54,7 @@ test('pre-start settings reach the tracker and independent buses through one laz
   const {owned}=r.music[0],output=r.master;assert.equal(output.gain.value,0);assert.equal(r.tracker.stats.stage,2);assert(!r.tracker.stats.playing);
   const limiter=output.connections[0];assert.equal(limiter.kind,'limiter');assert.equal(limiter.connections[0].kind,'guard');assert.equal(limiter.connections[0].connections[0],r.ctx.destination);
   const direct=r.ctx.nodes.filter(n=>n.kind==='gain'&&n.connections.includes(output));
-  assert(direct.some(n=>Math.abs(n.gain.value-.36)<1e-9));assert(direct.some(n=>Math.abs(n.gain.value-.18)<1e-9));
+  assert(direct.some(n=>Math.abs(n.gain.value-.36)<1e-9));assert(direct.some(n=>Math.abs(n.gain.value-.14)<1e-9));
   const before=r.ctx.sources.length;run(r,.4);assert.equal(r.ctx.sources.length,before);
   r.audio.setMuted(false);r.audio.setPlaying(true);r.audio.tick();assert(Math.abs(output.gain.value-.455)<1e-9);assert.equal(owned[0].gain.value,.3);assert.equal(r.tracker.stats.tempo,145);assert(r.tracker.stats.scheduledNotes>0);
   const leadPan=owned.find(n=>n.pan?.value===.32),lead=owned.find(n=>n.connections.includes(leadPan));assert.equal(lead.gain.value,.52);
@@ -109,7 +109,7 @@ test('final output guard preserves ordinary samples and bounds any finite overlo
 test('explosion/boss storms stay bounded and continuous steam follows actual play state with one source',async()=>{
   const r=rig();await r.audio.start();r.audio.setPlaying(true);r.audio.setStage(1);
   const hiss=r.ctx.sources.find(n=>n.loop&&n.connections[0]?.frequency?.value===1850),gain=hiss.connections[0].connections[0];assert(hiss);
-  r.audio.setSteam(.7,.3);assert(Math.abs(gain.gain.value-.0805)<1e-9);const sources=r.ctx.sources.length;
+  r.audio.setSteam(.7,.3);assert(Math.abs(gain.gain.value-.0595)<1e-9);const sources=r.ctx.sources.length;
   for(let i=0;i<100;i++)r.audio.setSteam(.7,.3);assert.equal(r.ctx.sources.length,sources,'pipes share one persistent source');
   for(let step=0;step<120;step++){
     for(let i=0;i<12;i++)for(const name of ['rocket','grenade','explosion','pipeLeak','trap','creak','bossTell','bossRoar','bossImpact','bossDeath'])r.audio[name]({level:.8,pan:.2,kind:'blade',radius:6});
@@ -131,7 +131,7 @@ test('horror pressure reuses ambience and the MOD mix while spatial cues remain 
     const pans=r.ctx.nodes.filter(n=>n.kind==='pan'&&n.pan.value===-.65);assert(pans.length>0);r.ctx.advance(1.1);
   }
   for(let i=0;i<120;i++){r.audio.horrorSting({intensity:1,level:1,tier:i%4});r.audio.metallicSlam({intensity:1});r.audio.alarm({intensity:1});r.audio.powerCut({intensity:1});assert(r.audio.stats.voices<=48);r.ctx.advance(.01);}
-  r.audio.setPlaying(false);const stopped=r.ctx.sources.length;r.audio.horror({kind:'ambush',intensity:1});assert.equal(r.ctx.sources.length,stopped);r.audio.setStage(2);r.audio.setPlaying(true);assert(lead.gain.value<raised);r.audio.dispose();assert.equal(r.audio.stats.voices,0);
+  const sway=r.ctx.sources.find(n=>n.kind==='oscillator'&&n.frequency.value===.087);assert(sway.connections[0].gain.value>0);r.audio.setPlaying(false);assert.equal(sway.connections[0].gain.value,0,'ambient modulation cannot leak a bass bed through a paused gain');const stopped=r.ctx.sources.length;r.audio.horror({kind:'ambush',intensity:1});assert.equal(r.ctx.sources.length,stopped);r.audio.setStage(2);r.audio.setPlaying(true);assert(lead.gain.value<raised);r.audio.dispose();assert.equal(r.audio.stats.voices,0);
 });
 
 function shell(){
@@ -333,4 +333,28 @@ test('trophy discovery has one bounded metal sting, survives a busy mix and stay
   assert.equal(r.audio.stats.voices,40);const crowded=r.ctx.sources.length;r.audio.trophy({key:'shield'});
   assert.equal(r.ctx.sources.length,crowded+5);assert(r.audio.stats.voices<=48);
   r.audio.dispose();assert.equal(r.audio.stats.voices,0);
+});
+
+
+test('actual menu audition survives live volume sliders and stops on explicit mute or navigation',async()=>{
+  const app=shell();app.element('intro-options').click();app.element('tab-audio').click();
+  const elapsed=app.simulations.at(-1).state.elapsed;
+  await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,true);
+  for(const [id,key,value] of [['master','masterVolume','60'],['music','musicVolume','35'],['effects','effectsVolume','55'],['ambience','ambienceVolume','45']]){
+    app.element(id+'-setting').value=value;app.element(id+'-setting').dispatch('input');
+    assert.equal(app.audio.stats.preview,true,id+' must adjust the active audition without cancelling it');
+    assert.equal(JSON.parse(app.memory.get('ferro-settings'))[key],Number(value)/100);
+  }
+  assert.equal(app.music[0].owned[0].gain.value,.35);app.frame(300);assert.equal(app.simulations.at(-1).state.elapsed,elapsed);
+  app.element('sound-toggle').click();assert.equal(app.audio.stats.preview,false);assert.equal(app.master.gain.value,0);assert.equal(app.tracker.stats.playing,false);
+  await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,false,'Explicit mute forbids a new audition');
+  app.element('sound-toggle').click();await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,true);
+  app.element('tab-image').click();assert.equal(app.audio.stats.preview,false);assert.equal(app.master.gain.value,0);
+  app.element('tab-audio').click();await app.element('test-audio').dispatch('click');app.frame(2100);
+  assert.equal(app.audio.stats.preview,false);assert.equal(app.master.gain.value,0);assert.equal(app.tracker.stats.playing,false);
+  assert.equal(app.simulations.at(-1).state.elapsed,elapsed,'Audition and slider changes never unpause the game');
+  app.element('resume').click();app.element('start').click();await app.ready();app.element('pause-button').click();app.element('tab-audio').click();
+  await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,true);
+  app.element('resume').click();assert.equal(app.audio.stats.preview,false);assert.equal(app.mode(),'playing');assert.equal(app.tracker.stats.playing,true);
+  app.audio.dispose();
 });

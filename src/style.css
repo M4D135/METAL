@@ -96,3 +96,13 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
 
 /* Campaign slots only display collected weapons; legacy keeps four slots. */
 .weapon-slot[hidden]{display:none!important}body[data-campaign=true] .weapon-slot svg{max-width:100%}body[data-campaign=true] .weapon-slot .slot-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Consumable armor replaces the two small health captions, preserving HUD height. */
+.armor-pool{margin-top:7px;color:#8edeea}
+.armor-pool>span{display:flex;align-items:baseline;gap:5px;font-size:7px;letter-spacing:.8px}
+.armor-pool b{margin-left:auto;font-size:18px;font-weight:600;letter-spacing:0}
+.armor-pool small{font-size:8px;letter-spacing:0;color:#adc6ce}
+.armor-track{height:3px;margin-top:3px;background:#61b0bd24;overflow:hidden}
+.armor-track i{display:block;height:100%;width:0;background:#78d9ed;transition:width .12s}
+@media(max-width:650px){.armor-pool{margin-top:5px}.armor-pool b{font-size:14px}.armor-pool>span{font-size:6px}.armor-pool small{font-size:7px}.armor-track{margin-top:2px;height:2px}}
+@media(max-height:650px) and (max-width:650px){.armor-pool{margin-top:2px}.armor-pool b{font-size:11px}.armor-track{height:2px;margin-top:1px}.vital .health-number{margin-bottom:2px}}

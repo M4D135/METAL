@@ -663,7 +663,7 @@
     suppliesWorld(world);
     populate(world);
     armoryWorld(world);
-    if(campaign){campaignArmory(world);campaignTrophies(world,theme);}
+    if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);}
     polishTrees(world);
     demolitionMetadata(world);
     world.detailStats.added=world.meshes.length-world.detailStats.base;
@@ -1606,6 +1606,25 @@
     const bossId=w.enemies.length;w.enemies.push(boss);for(const e of w.enemies)if(e.bossWave)e.bossId=bossId;
     w.encounters.push({id:encounterId,label:'Épreuve — '+name,zoneId:r.id,trigger:{x:r.x,y:r.y,z:r.z,w:r.w+4,d:r.d+4},leashRadius:38,maxActive:3,waveGap:4,spawnEntries:bay.spawnEntries.map(q=>({...q})),waves:[{enemyIds:ids}],requiresTrophy:id});
     w.trophies.push({id,key,name,usage:usage[key],pickupId:gift.id,encounterId,grace:3,...p,zoneId:r.id,...(key==='shield'?{shield:true}:{weapon:gift.weapon}),meshStart,meshCount:w.meshes.length-meshStart,lightIndex,cacheId:'trial-cache-'+key,coverMesh:bay.coverMesh});
+  }
+  // Armor reserves are real nonblocking pickups. The shell draws their cases
+  // and markers; placing them last preserves all existing supplies and trials.
+  function campaignArmor(w){
+    const arena=w.rooms.find(r=>r.bossArena),middle=w.shops[1],plans=[
+      {id:'armor-start',amount:25,room:w.rooms[0],anchor:w.spawn},
+      {id:'armor-middle',amount:25,room:w.rooms[middle.zoneId],anchor:middle},
+      {id:'armor-boss',amount:50,room:arena,anchor:w.shops[2]}
+    ];
+    const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.shops.map(s=>s.terminal),...w.doors,...w.lifts.flatMap(l=>[l,l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target]),...w.encounters.flatMap(q=>q.spawnEntries),...w.trophies];
+    for(const plan of plans){
+      const {room:r,anchor:a}=plan,candidates=[];
+      for(const [x,z] of [[2.4,0],[-2.4,0],[0,-2.4],[0,2.4],[2.4,-2.4],[-2.4,2.4]])candidates.push({x:a.x+x,z:a.z+z});
+      if(r.bossArena)for(const x of [-20,20,-22,22])for(const z of [-11,11,-16,16,-20,20])candidates.push({x:r.x+x,z:r.z+z});
+      for(const z of [-1.8,1.8,-3.6,3.6,-5.4,5.4,-7.2,7.2,0])for(const x of [-1.8,1.8,-3.6,3.6,-5.4,5.4,-7.2,7.2,0])candidates.push({x:r.x+x,z:r.z+z});
+      const point=candidates.find(p=>Math.abs(p.x-r.x)<r.w/2-1&&Math.abs(p.z-r.z)<r.d/2-1&&Math.abs(floorHeight(w,p.x,p.z)-r.y)<.01&&safeSupply(w,p.x,p.z,.65)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.8)&&w.pickups.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>2.1)&&w.enemies.filter(e=>e.deployed).every(e=>Math.hypot(p.x-e.x,p.z-e.z)>(e.bossScale?1.5*e.bossScale+1.1:1.8))&&w.jumpPads.every(q=>pointSegment(p.x,p.z,q,q.target)>2));
+      if(!point)throw new Error('No safe armor reserve '+w.seed+'/'+w.index+'/'+plan.id);
+      w.pickups.push({id:plan.id,kind:'armor',amount:plan.amount,x:point.x,y:r.y,z:point.z,zoneId:r.id});
+    }
   }
   // All 430 IDs stay stable in the save. Only the opening patrols and the
   // colossus's six scripted guards exist physically before their wave deploys.

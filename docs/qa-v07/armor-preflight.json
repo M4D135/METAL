@@ -1,0 +1,78 @@
+{
+  "simulationSHA256": "31ea989d0599e8c60f844c95b47a81315eb46d9dad0cad8a2811c742be239681",
+  "worldSHA256": "ab4e37cd5c6bed8ce3dc0cba655d035fa056fd94103aaa5254821b2d4f1fc385",
+  "results": [
+    {
+      "seed": 96,
+      "index": 0,
+      "world": 1,
+      "id": "armor-start",
+      "amount": 25,
+      "setup": "local unblocked spawn at actual generated cache; not a traversal test",
+      "originalSpawn": {
+        "x": -41.6,
+        "y": 0,
+        "z": 44.800000000000004,
+        "yaw": 0
+      },
+      "position": {
+        "x": -41.6,
+        "y": 0,
+        "z": 47.2
+      },
+      "points": 100,
+      "remaining": 22.5,
+      "restored": true,
+      "eventCount": 1,
+      "ok": true
+    },
+    {
+      "seed": 96,
+      "index": 9,
+      "world": 10,
+      "id": "armor-middle",
+      "amount": 25,
+      "setup": "local unblocked spawn at actual generated cache; not a traversal test",
+      "originalSpawn": {
+        "x": -41.6,
+        "y": 0,
+        "z": 44.800000000000004,
+        "yaw": 0
+      },
+      "position": {
+        "x": -34.400000000000006,
+        "y": 3.2,
+        "z": -42.35
+      },
+      "points": 100,
+      "remaining": 22.5,
+      "restored": true,
+      "eventCount": 1,
+      "ok": true
+    },
+    {
+      "seed": 96,
+      "index": 15,
+      "world": 16,
+      "id": "armor-boss",
+      "amount": 50,
+      "setup": "local unblocked spawn at actual generated cache; not a traversal test",
+      "originalSpawn": {
+        "x": -41.6,
+        "y": 0,
+        "z": 44.800000000000004,
+        "yaw": 0
+      },
+      "position": {
+        "x": 71.50032221373405,
+        "y": 3.2,
+        "z": -15.95
+      },
+      "points": 100,
+      "remaining": 47.5,
+      "restored": true,
+      "eventCount": 1,
+      "ok": true
+    }
+  ]
+}

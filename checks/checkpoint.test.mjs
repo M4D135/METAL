@@ -280,16 +280,51 @@ test('Shield charge, both hands and fourth-calibre ammunition survive sector Con
   app.element('weapon-slot-3').click();app.key('Space');app.frame(100);app.key('Space',false);assert.equal(sim.state.shield.energy,76);
   const carried=plain(sim.exportLoadout());assert.deepEqual(carried.equipment,{right:3,left:'shield',shieldEnergy:76});
   sim.move(sim.state.player,15-sim.state.player.x,0);app.frame(100);assert.equal(app.element('body').dataset.state,'cleared');
-  app.element('continue').click();const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('left-hand-stock').textContent,'76 %');
+  app.element('continue').click();const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('left-hand-stock').textContent,'GARDE 76 %');
   next.state.inventory.ammo[3]--;app.key('KeyP');app.key('KeyP',false);app.element('restart').click();assert.deepEqual(plain(app.simulations.at(-1).exportLoadout()),carried);
 });
 
 test('Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint',()=>{
   const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app),expected=plain(sim.exportLoadout()),saved=JSON.parse(app.memory.get(key));
-  for(const corrupt of [entry=>delete entry.inventory.shield,entry=>{entry.inventory.ammo[2]=null;}]){
+  for(const corrupt of [entry=>delete entry.inventory.shield,entry=>{entry.inventory.ammo[2]=null;},entry=>{entry.armor={version:1,points:201};}]){
     const value=plain(saved);corrupt(value.entryLoadout);const resumed=harness(value,{},arsenalWorld);resumed.element('resume-expedition').click();
     assert.equal(resumed.element('body').dataset.state,'playing');assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),expected);
   }
+});
+
+test('Physical armor pickups update the HUD, retain excess and gain capacity only from the equipped shield',()=>{
+  const make=(seed,stage)=>{const w=arsenalWorld(seed,stage);return {...w,pickups:[...w.pickups,{id:'plates',kind:'armor',amount:150,x:0,y:0,z:3}]};};
+  const app=harness(null,{},make);app.element('start').click();app.frame(100);const sim=app.simulations.at(-1);
+  assert.equal(app.simulationOptions.at(-1).armorSystem,true,'The real shell enables consumable armor for classic saves too');
+  assert.equal(app.element('armor-pool').hidden,false);assert.equal(app.element('armor-points').textContent,'0');assert.equal(app.element('armor-cap').textContent,'/ 100');
+  sim.move(sim.state.player,0,3);app.frame(100);
+  assert.deepEqual(plain(sim.state.armor),{points:100,capacity:100});assert.equal(sim.state.pickups.at(-1).remaining,50);
+  assert.equal(app.element('supply-name').textContent,'PLAQUES D’ARMURE');
+  assert.equal(app.element('armor-points').textContent,'100');assert.equal(app.element('armor-bar').style.width,'100%');assert.equal(app.element('supply-detail').textContent,'RÉSERVE AU MAXIMUM');
+  assert.match(app.element('toast').textContent,/100 ARMURE/);assert.equal(app.sounds.filter(s=>s.name==='ammoPickup').length,1);
+  const saved=JSON.parse(app.memory.get(key)),resumed=harness(saved,{},make);resumed.element('resume-expedition').click();resumed.frame(100);
+  assert.deepEqual(plain(resumed.simulations.at(-1).state.armor),{points:100,capacity:100});assert.equal(resumed.simulations.at(-1).state.pickups.at(-1).remaining,50);
+  assert.equal(resumed.sounds.filter(s=>s.name==='ammoPickup').length,0,'A restored partial pickup must not replay or refill');
+  sim.move(sim.state.player,12,-3);app.frame(100);
+  assert.equal(sim.state.equipment.left,'shield');assert.deepEqual(plain(sim.state.armor),{points:100,capacity:200});assert.equal(app.element('armor-cap').textContent,'/ 200');
+  sim.move(sim.state.player,-12,3);app.frame(100);
+  assert.equal(sim.state.armor.points,150);assert.equal(sim.state.pickups.at(-1).taken,true);assert.equal(app.element('armor-bar').style.width,'75%');
+  app.element('left-hand-setting').value='none';app.element('left-hand-setting').emit('change');assert.deepEqual(plain(sim.state.armor),{points:100,capacity:100});
+  app.element('left-hand-setting').value='shield';app.element('left-hand-setting').emit('change');assert.deepEqual(plain(sim.state.armor),{points:100,capacity:200});
+  app.key('Space');app.frame(100);app.key('Space',false);assert.equal(sim.state.shield.energy,76);assert.equal(sim.state.armor.points,100);assert.equal(app.element('left-hand-stock').textContent,'GARDE 76 %');
+});
+
+test('The browser shell carries fractional armor through Continue, resume and entry restart without refilling',()=>{
+  const make=(seed,stage)=>{const w=arsenalWorld(seed,stage);return {...w,pickups:[...w.pickups,{id:'plates',kind:'armor',amount:150,x:12,y:0,z:0}]};};
+  const app=harness(null,{},make);app.element('start').click();const sim=collectArsenal(app);
+  assert.deepEqual(plain(sim.state.armor),{points:150,capacity:200});sim.hurt(7.5);app.frame(100);
+  assert.equal(sim.state.armor.points,147.5);const carried=plain(sim.exportLoadout());
+  sim.move(sim.state.player,15-sim.state.player.x,0);app.frame(100);assert.equal(app.element('body').dataset.state,'cleared');app.element('continue').click();
+  const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('armor-points').textContent,'148');assert.equal(app.element('armor-cap').textContent,'/ 200');
+  const saved=JSON.parse(app.memory.get(key));assert.deepEqual(saved.entryLoadout.armor,{version:1,points:147.5});
+  const resumed=harness(saved,{},make);resumed.element('resume-expedition').click();assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),carried);
+  next.hurt(15);assert.equal(next.state.armor.points,142.5);app.key('KeyP');app.key('KeyP',false);app.element('restart').click();
+  assert.deepEqual(plain(app.simulations.at(-1).exportLoadout()),carried,'Restart restores the original entry points, not a full reserve');
 });
 
 test('The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations',async()=>{

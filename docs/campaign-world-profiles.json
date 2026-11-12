@@ -9,11 +9,11 @@
     "simulation": "src/simulation.js"
   },
   "sourceSha256": {
-    "renderer": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
-    "world": "7b69071af2df15734bf6dbab86db00f051e8dca367e42e72138c8f7f405aef65",
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "ab4e37cd5c6bed8ce3dc0cba655d035fa056fd94103aaa5254821b2d4f1fc385",
     "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
     "economy": "362863977e9ab6a9ddaf26f9d1ec6ec8f51eda25c58193d98b72abca4c2c08c9",
-    "simulation": "d2e7ae6349ba4e5969448aba6891e06e7032b54968d76d15b2caa475cb1921eb"
+    "simulation": "31ea989d0599e8c60f844c95b47a81315eb46d9dad0cad8a2811c742be239681"
   },
   "method": {
     "entryInventory": "Pistol from the start; only scheduled gifts at strictly earlier indices are owned. Owned finite-ammo weapons start at their base capacity for this profile measurement; these are controlled inputs, not measured combat ammunition.",

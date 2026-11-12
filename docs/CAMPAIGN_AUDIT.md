@@ -90,8 +90,21 @@ La passe G de détails/reflets/particules précède maintenant F pour que la doc
 
 Suite complète : 333 tests réussis, 0 échec, node:test en 121 253,354 ms. Les 54 mondes passent avec les supports physiques ajoutés aux cinq présentations de trophée. Cinq parcours ciblés supplémentaires traversent ces portiques avec move/step, collecte et reprise ; un vrai kill libère la place manquante du troisième garde au monde 4. Les ouvertures restent praticables.
 
-Les détails proches WebGL ajoutent 14 pièces par machine, 18 par géant ; Canvas, Économie et les niveaux éloignés restent inchangés. Le filtrage du métal, les reflets analytiques et les silhouettes des fumées/étincelles n’ajoutent aucune passe d’ombre ni aucun quota de particules. La pièce de comparaison passe de 238 888 à 241 224 triangles toutes passes (+0,98 %), avec 51 appels opaques dans les deux cas. Ce coût ponctuel ne constitue pas une mesure de FPS matériels.
+Les détails proches WebGL ajoutent 14 pièces par machine, 18 par géant ; Canvas, Économie et les niveaux éloignés restent inchangés. Le filtrage du métal, les reflets analytiques et les silhouettes des fumées/étincelles n’ajoutent aucune passe d’ombre ni aucun quota de particules. La pièce de comparaison passe de 238 888 à 241 224 triangles toutes passes (+0,98 %), avec 51 appels de dessin dans les deux cas. Ce coût ponctuel ne constitue pas une mesure de FPS matériels.
 
 Les 16 comparaisons GLES et les trois captures D+G ont rendu sans erreur GL sur Mesa llvmpipe. Les PNG et empreintes dans docs/qa-v07 sont uniquement des preuves, jamais des assets chargés par le jeu. Le prévol Chromium a échoué avant ouverture de page (socket IPC interdit) : aucune capture ni validation du HUD en navigateur n’en découle.
 
 Build : 729 973 octets bruts, 220 490 gzip, SHA-256 `36b663a78a3e5d246e2fcac4de1dabc43c07bc6e19e9bd2ace37d9b8ca4287dd`, aucun asset externe.
+
+
+## Validation de phase H
+
+Suite complète intégrée : **351 tests réussis, 0 échec, 0 annulé, 0 ignoré**, node:test en 125 973,268 ms. Les 18 configurations classiques et les 54 mondes campagne passent ; les six empreintes classiques sont inchangées. Le nouvel ensemble comprend douze régressions d’armure, trois de montage des mains, deux raccords de HUD/reprise et une régression audio supplémentaire.
+
+La réserve d’armure commence à zéro et absorbe un tiers des dégâts résiduels. Son plafond vaut 100, ou 200 avec le bouclier équipé à gauche. Équiper ou acheter ne recharge rien ; retirer le bouclier borne l’excédent. Trois plaques de 25/25/50 sont placées par monde de campagne ; certains ennemis donnent 10, les boss 50. Les fractions, restes au sol, butins et passages de monde restent persistants. Les anciens checkpoints compatibles migrent avec zéro point et zéro ajout dans les anciens butins. Les campagnes intermédiaires pré-H dont la disposition de pickups a changé peuvent suivre le fallback d’entrée documenté ; le monde classique conserve son empreinte.
+
+Le cadre du bouclier est plus compact, plus loin et monté à gauche ; son dégagement suit les mouvements de la main droite. 3 500 poses des cinq armes, quatre formats et les FOV 60/110 ne présentent aucun chevauchement visible du cadre opaque avec l’arme. Le test échoue sur l’ancienne pose. Le canon et la simulation des tirs restent inchangés. Sept rendus Mesa passent sans erreur GL ; dans la comparaison SMG, instances et triangles sont identiques, les appels de dessin passent de 52 à 53 par tri transparent, sans nouvelle passe. Ces captures ne comprennent pas le HUD DOM.
+
+Le drone, le vent, les moteurs et la vapeur continue sont atténués ; la portée sonore des buses devient 12 m avec décroissance quadratique. La modulation du drone se coupe aussi en pause. Une revue a reproduit l’annulation de l’aperçu audio dès un mouvement de curseur : le rappel de mute idempotent ne l’annule plus, tandis que les boutons Son l’arrêtent explicitement. Le nouveau test utilise le vrai shell et FAudio, contrôle les quatre curseurs, leur persistance, la sortie d’onglet, l’arrêt à deux secondes et la reprise. Les 21 tests audio passent. Aucune écoute humaine ni nouvelle validation navigateur n’est revendiquée.
+
+Les rapports de profils et de 36 combats ont été régénérés sur les sources H finales ; 18 profils, cinq collectes locales et 23 reprises exactes. Build : **739 682 octets bruts**, **223 076 gzip**, SHA-256 `ea583a03cadd661272a08aff6d41307c1c1d6059eabae22a809d7000b5ee3516`, aucun asset externe.
