@@ -1,0 +1,1256 @@
+{
+  "schema": "metal-render-self-check-v1",
+  "date": "2026-11-12T22:57:22.224Z",
+  "tool": {
+    "node": "v24.18.0",
+    "platform": "darwin arm64",
+    "chromePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "angle": "metal",
+    "probe": "/Users/david/claude/metal-chantier/render/tools/render/pages/probe.html"
+  },
+  "diffSynthetic": {
+    "same": {
+      "differentPixels": 0,
+      "psnrDb": null,
+      "verdict": "identical"
+    },
+    "onePixel": {
+      "x": 123,
+      "y": 32,
+      "differentPixels": 1,
+      "maxChannelDelta": 1,
+      "bbox": {
+        "x0": 123,
+        "y0": 32,
+        "x1": 123,
+        "y1": 32
+      },
+      "psnrDb": 92.1695552077731,
+      "verdict": "visually-identical"
+    }
+  },
+  "chrome": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/157.0.8103.39",
+    "revision": "@9a31f0acec1854d44e49a73fbf8017598151a583",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "jsVersion": "15.7.112.23"
+  },
+  "gpu": {
+    "vendor": "WebKit",
+    "renderer": "WebKit WebGL",
+    "unmaskedVendor": "Google Inc. (Apple)",
+    "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "shadingLanguage": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+    "system": {
+      "modelName": "Mac",
+      "modelVersion": "17.4",
+      "devices": [
+        {
+          "vendorId": 4203,
+          "deviceId": 0,
+          "vendorString": "Google Inc. (Apple)",
+          "deviceString": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Version 27.2.1 (Build 26B131))",
+          "driverVendor": "Apple",
+          "driverVersion": "27.2.1"
+        }
+      ],
+      "featureStatus": {
+        "2d_canvas": "enabled",
+        "direct_rendering_display_compositor": "disabled_off_ok",
+        "gpu_compositing": "enabled",
+        "multiple_raster_threads": "enabled_on",
+        "opengl": "enabled_on",
+        "rasterization": "enabled",
+        "skia_graphite": "enabled_on",
+        "trees_in_viz": "disabled_off",
+        "video_decode": "enabled",
+        "video_encode": "enabled",
+        "webgl": "enabled",
+        "webgpu": "enabled",
+        "webnn": "disabled_off"
+      },
+      "driverBugWorkarounds": 3
+    }
+  },
+  "extensions": [
+    "EXT_clip_control",
+    "EXT_color_buffer_float",
+    "EXT_color_buffer_half_float",
+    "EXT_conservative_depth",
+    "EXT_depth_clamp",
+    "EXT_disjoint_timer_query_webgl2",
+    "EXT_float_blend",
+    "EXT_polygon_offset_clamp",
+    "EXT_render_snorm",
+    "EXT_texture_compression_bptc",
+    "EXT_texture_compression_rgtc",
+    "EXT_texture_filter_anisotropic",
+    "EXT_texture_mirror_clamp_to_edge",
+    "EXT_texture_norm16",
+    "KHR_parallel_shader_compile",
+    "NV_shader_noperspective_interpolation",
+    "OES_draw_buffers_indexed",
+    "OES_sample_variables",
+    "OES_shader_multisample_interpolation",
+    "OES_texture_float_linear",
+    "WEBGL_blend_func_extended",
+    "WEBGL_clip_cull_distance",
+    "WEBGL_compressed_texture_astc",
+    "WEBGL_compressed_texture_etc",
+    "WEBGL_compressed_texture_etc1",
+    "WEBGL_compressed_texture_pvrtc",
+    "WEBGL_compressed_texture_s3tc",
+    "WEBGL_compressed_texture_s3tc_srgb",
+    "WEBGL_debug_renderer_info",
+    "WEBGL_debug_shaders",
+    "WEBGL_lose_context",
+    "WEBGL_multi_draw",
+    "WEBGL_polygon_mode",
+    "WEBGL_provoking_vertex",
+    "WEBGL_render_shared_exponent",
+    "WEBGL_stencil_texturing"
+  ],
+  "features": {
+    "timerQuery": true,
+    "parallelShaderCompile": true,
+    "colorBufferFloat": true,
+    "floatLinear": true,
+    "anisotropic": true,
+    "multiDraw": true,
+    "debugRendererInfo": true
+  },
+  "limits": {
+    "MAX_TEXTURE_SIZE": 16384,
+    "MAX_RENDERBUFFER_SIZE": 16384,
+    "MAX_VIEWPORT_DIMS": [
+      16384,
+      16384
+    ],
+    "MAX_SAMPLES": 8,
+    "MAX_DRAW_BUFFERS": 8,
+    "MAX_COLOR_ATTACHMENTS": 8,
+    "MAX_3D_TEXTURE_SIZE": 2048,
+    "MAX_ARRAY_TEXTURE_LAYERS": 2048,
+    "MAX_VERTEX_ATTRIBS": 16,
+    "MAX_VERTEX_UNIFORM_VECTORS": 1024,
+    "MAX_FRAGMENT_UNIFORM_VECTORS": 1024,
+    "MAX_UNIFORM_BUFFER_BINDINGS": 32,
+    "MAX_UNIFORM_BLOCK_SIZE": 16384,
+    "MAX_COMBINED_TEXTURE_IMAGE_UNITS": 32,
+    "MAX_TEXTURE_IMAGE_UNITS": 16,
+    "MAX_VARYING_VECTORS": 30
+  },
+  "performanceNow": {
+    "minStepMs": 0.1,
+    "medianStepMs": 0.1,
+    "maxStepMs": 0.2,
+    "changes": 248,
+    "reads": 136958
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "page": {
+      "innerWidth": 800,
+      "innerHeight": 600,
+      "devicePixelRatio": 1,
+      "screen": [
+        800,
+        600
+      ]
+    },
+    "secureContext": true,
+    "crossOriginIsolated": false,
+    "offlineAudioContext": true,
+    "offlineAudioSampleRate": 48000,
+    "sharedArrayBuffer": false,
+    "webgpu": true,
+    "hardwareConcurrency": 10
+  },
+  "fingerprints": {
+    "legacy-1.5": {
+      "width": 320,
+      "height": 200,
+      "sha256": "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5",
+      "sourceSha256": "1eb2798a7b431f38f04bd2ff0614ba692a3a2a893a42be448e2057a015f86ffe"
+    },
+    "legacy-2.5": {
+      "width": 320,
+      "height": 200,
+      "sha256": "7c0df53b8feb70f0cf8493639cf4affa7330ac19fc0023fef0b33304891c92c7",
+      "sourceSha256": "34008411a9b4a831ba0348b84864f3d1607dc859fd7bfe1d93cfa7c1ec413de6"
+    },
+    "scene3d": {
+      "width": 480,
+      "height": 270,
+      "sha256": "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70",
+      "sourceSha256": "595b7d1b3e9a80f6c2ac1a2edd318f053e11ab30a4def1d193ed149acd0f4d41"
+    },
+    "scene3d-wide": {
+      "width": 640,
+      "height": 360,
+      "sha256": "c5209079995d072fb37406088cecd357b0413f76f643572f3ba4028808e48dc7",
+      "sourceSha256": "93e4c41f13dd7db05b09e87c158493db436687f392e2ec7af73dcde6466a5b95"
+    },
+    "canvas2d": {
+      "width": 320,
+      "height": 200,
+      "sha256": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88",
+      "sourceSha256": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+    }
+  },
+  "prototype": {
+    "seed": 1.5,
+    "sourceSha256": "1eb2798a7b431f38f04bd2ff0614ba692a3a2a893a42be448e2057a015f86ffe",
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+    "product": "Chrome/157.0.8103.39",
+    "actualSourceSha256": "1eb2798a7b431f38f04bd2ff0614ba692a3a2a893a42be448e2057a015f86ffe",
+    "applicable": true,
+    "matches": true
+  },
+  "diffScene": {
+    "same": {
+      "differentPixels": 0,
+      "psnrDb": null,
+      "verdict": "identical"
+    },
+    "onePixel": {
+      "x": 123,
+      "y": 45,
+      "differentPixels": 1,
+      "maxChannelDelta": 1,
+      "bbox": {
+        "x0": 123,
+        "y0": 45,
+        "x1": 123,
+        "y1": 45
+      },
+      "psnrDb": 104.02806617122147,
+      "verdict": "visually-identical"
+    },
+    "repeat": "identical"
+  },
+  "launches": [
+    {
+      "index": 1,
+      "pid": 62163,
+      "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-hkkT3G",
+      "profileExisted": true,
+      "sweptProfiles": [],
+      "product": "Chrome/157.0.8103.39",
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.39",
+        "revision": "@9a31f0acec1854d44e49a73fbf8017598151a583",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.23"
+      },
+      "args": [
+        "--headless=new",
+        "--ignore-gpu-blocklist",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--metrics-recording-only",
+        "--disable-domain-reliability",
+        "--host-resolver-rules=MAP * ~NOTFOUND",
+        "--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions",
+        "--disable-background-timer-throttling",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
+        "--mute-audio",
+        "--user-data-dir=/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-hkkT3G",
+        "--use-angle=metal",
+        "--window-size=800,600",
+        "--force-device-scale-factor=1",
+        "--remote-debugging-pipe",
+        "about:blank"
+      ],
+      "launchMs": 607.1205,
+      "openMs": 154.00845800000002,
+      "renderMs": 235.03887499999996,
+      "scene3dBlocks": {
+        "scene": "scene3d",
+        "width": 480,
+        "height": 270,
+        "warmupFrames": 30,
+        "framesPerBlock": 60,
+        "msPerFrame": [
+          0.08166666676600774,
+          0.04499999980131785,
+          0.041666666666666664,
+          0.038333333532015484,
+          0.034999999900658926
+        ],
+        "medianMsPerFrame": 0.041666666666666664
+      },
+      "processes": [
+        62163,
+        62173,
+        62174,
+        62179,
+        62186,
+        62189,
+        62190,
+        62202,
+        62206,
+        62207,
+        62208
+      ],
+      "sockets": {
+        "tool": "lsof",
+        "pids": [
+          62163,
+          62173,
+          62174,
+          62179,
+          62186,
+          62189,
+          62190,
+          62202,
+          62206,
+          62207,
+          62208
+        ],
+        "lines": []
+      },
+      "commandLine": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-hkkT3G --use-angle=metal --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe about:blank",
+      "system": {
+        "modelName": "Mac",
+        "modelVersion": "17.4",
+        "devices": [
+          {
+            "vendorId": 4203,
+            "deviceId": 0,
+            "vendorString": "Google Inc. (Apple)",
+            "deviceString": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Version 27.2.1 (Build 26B131))",
+            "driverVendor": "Apple",
+            "driverVersion": "27.2.1"
+          }
+        ],
+        "featureStatus": {
+          "2d_canvas": "enabled",
+          "direct_rendering_display_compositor": "disabled_off_ok",
+          "gpu_compositing": "enabled",
+          "multiple_raster_threads": "enabled_on",
+          "opengl": "enabled_on",
+          "rasterization": "enabled",
+          "skia_graphite": "enabled_on",
+          "trees_in_viz": "disabled_off",
+          "video_decode": "enabled",
+          "video_encode": "enabled",
+          "webgl": "enabled",
+          "webgpu": "enabled",
+          "webnn": "disabled_off"
+        },
+        "driverBugWorkarounds": 3
+      },
+      "console": [],
+      "pageErrors": [],
+      "close": {
+        "reason": "close requested",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "profileRemoved": true
+      },
+      "totalMs": 2091.736625,
+      "profileRemoved": true,
+      "processesGone": true
+    },
+    {
+      "index": 2,
+      "pid": 62290,
+      "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-h6uXyn",
+      "profileExisted": true,
+      "sweptProfiles": [],
+      "product": "Chrome/157.0.8103.39",
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.39",
+        "revision": "@9a31f0acec1854d44e49a73fbf8017598151a583",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.23"
+      },
+      "args": [
+        "--headless=new",
+        "--ignore-gpu-blocklist",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--metrics-recording-only",
+        "--disable-domain-reliability",
+        "--host-resolver-rules=MAP * ~NOTFOUND",
+        "--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions",
+        "--disable-background-timer-throttling",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
+        "--mute-audio",
+        "--user-data-dir=/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-h6uXyn",
+        "--use-angle=metal",
+        "--window-size=800,600",
+        "--force-device-scale-factor=1",
+        "--remote-debugging-pipe",
+        "about:blank"
+      ],
+      "launchMs": 1015.6762079999999,
+      "openMs": 287.05750000000035,
+      "renderMs": 359.7099999999996,
+      "scene3dBlocks": {
+        "scene": "scene3d",
+        "width": 480,
+        "height": 270,
+        "warmupFrames": 30,
+        "framesPerBlock": 60,
+        "msPerFrame": [
+          0.09666666661699613,
+          0.04833333343267441,
+          0.039999999850988385,
+          0.04000000009934108,
+          0.0383333332836628
+        ],
+        "medianMsPerFrame": 0.04000000009934108
+      },
+      "processes": [
+        62290,
+        62306,
+        62307,
+        62312,
+        62333,
+        62338,
+        62339,
+        62348,
+        62355,
+        62357,
+        62358
+      ],
+      "sockets": {
+        "tool": "lsof",
+        "pids": [
+          62290,
+          62306,
+          62307,
+          62312,
+          62333,
+          62338,
+          62339,
+          62348,
+          62355,
+          62357,
+          62358
+        ],
+        "lines": []
+      },
+      "commandLine": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-h6uXyn --use-angle=metal --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe about:blank",
+      "close": {
+        "reason": "close requested",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "profileRemoved": true
+      },
+      "totalMs": 2044.5127920000004,
+      "profileRemoved": true,
+      "processesGone": true
+    }
+  ],
+  "cleanup": {
+    "error": {
+      "pid": 62412,
+      "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-D0dH5V",
+      "profileExisted": true,
+      "rejected": "erreur volontaire",
+      "profileRemoved": true,
+      "chromeGone": true
+    },
+    "timeout": {
+      "pid": 62480,
+      "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-oguMRM",
+      "profileExisted": true,
+      "rejected": "DevTools timeout: Runtime.evaluate after 500 ms",
+      "code": "TIMEOUT",
+      "ms": 554,
+      "closed": true,
+      "profileRemoved": true,
+      "chromeGone": true
+    },
+    "notFound": {
+      "code": "CHROME_NOT_FOUND",
+      "message": "Chrome not found: /var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-absent/chrome (set CHROME_PATH or chromePath)",
+      "profilesBefore": 0,
+      "profilesAfter": 0
+    },
+    "sigint": {
+      "mode": "signal",
+      "signal": "SIGINT",
+      "chromePid": 62547,
+      "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62542-TiedXV",
+      "profileExisted": true,
+      "before": {
+        "profileExists": true,
+        "chromeAlive": true,
+        "sockets": {
+          "tool": "lsof",
+          "pids": [
+            62547,
+            62551,
+            62552,
+            62553,
+            62556,
+            62562,
+            62563,
+            62568,
+            62574,
+            62575,
+            62576
+          ],
+          "lines": []
+        }
+      },
+      "exit": {
+        "code": null,
+        "signal": "SIGINT"
+      },
+      "after": {
+        "profileExists": false,
+        "chromeGone": true
+      },
+      "stderrTail": ""
+    },
+    "sigterm": {
+      "mode": "signal",
+      "signal": "SIGTERM",
+      "chromePid": 62610,
+      "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62609-PdR9NO",
+      "profileExisted": true,
+      "before": {
+        "profileExists": true,
+        "chromeAlive": true,
+        "sockets": {
+          "tool": "lsof",
+          "pids": [
+            62610,
+            62616,
+            62617,
+            62618,
+            62629,
+            62632,
+            62633,
+            62642,
+            62647,
+            62648,
+            62649
+          ],
+          "lines": []
+        }
+      },
+      "exit": {
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "after": {
+        "profileExists": false,
+        "chromeGone": true
+      },
+      "stderrTail": ""
+    },
+    "uncaught": {
+      "mode": "crash",
+      "signal": null,
+      "chromePid": 62681,
+      "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62679-9TlEgM",
+      "profileExisted": true,
+      "before": {
+        "profileExists": true,
+        "chromeAlive": true,
+        "sockets": {
+          "tool": "lsof",
+          "pids": [
+            62681,
+            62686,
+            62687,
+            62688,
+            62694,
+            62699,
+            62700,
+            62707,
+            62713,
+            62714,
+            62715
+          ],
+          "lines": []
+        }
+      },
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "after": {
+        "profileExists": false,
+        "chromeGone": true
+      },
+      "stderrTail": "    at process.processTimers (node:internal/timers:541:7)\n\nNode.js v24.18.0"
+    },
+    "dumpDom": {
+      "probe": "metal-render-probe-v1",
+      "images": [
+        {
+          "scene": "legacy",
+          "width": 320,
+          "height": 200,
+          "sha256": "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5"
+        },
+        {
+          "scene": "scene3d",
+          "width": 480,
+          "height": 270,
+          "sha256": "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70"
+        }
+      ]
+    }
+  },
+  "comparedWith": {
+    "file": "/Users/david/claude/metal-chantier/render/docs/chantier-moteur/preuves/lot-00/r1/self-check-a.json",
+    "date": "2026-11-12T22:57:12.788Z",
+    "product": "Chrome/157.0.8103.39",
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+    "scenes": 5,
+    "differences": []
+  },
+  "checks": [
+    {
+      "name": "png.roundtrip.synthetic",
+      "ok": true,
+      "detail": {
+        "roundtrips": 30,
+        "failures": []
+      }
+    },
+    {
+      "name": "png.encode.deterministic",
+      "ok": true
+    },
+    {
+      "name": "png.flipRows.involution",
+      "ok": true
+    },
+    {
+      "name": "png.decode.rejectsCorruption",
+      "ok": true
+    },
+    {
+      "name": "png.decode.colourTypes",
+      "ok": true,
+      "detail": {
+        "cases": [
+          "grey+tRNS",
+          "grey+alpha",
+          "rgb+tRNS",
+          "palette+tRNS"
+        ]
+      }
+    },
+    {
+      "name": "png.decode.rejectsUnsupported",
+      "ok": true
+    },
+    {
+      "name": "diff.synthetic.same",
+      "ok": true,
+      "detail": {
+        "differentPixels": 0,
+        "psnrDb": null,
+        "verdict": "identical"
+      }
+    },
+    {
+      "name": "diff.synthetic.onePixel",
+      "ok": true,
+      "detail": {
+        "x": 123,
+        "y": 32,
+        "differentPixels": 1,
+        "maxChannelDelta": 1,
+        "bbox": {
+          "x0": 123,
+          "y0": 32,
+          "x1": 123,
+          "y1": 32
+        },
+        "psnrDb": 92.1695552077731,
+        "verdict": "visually-identical"
+      }
+    },
+    {
+      "name": "diff.synthetic.map",
+      "ok": true,
+      "detail": {
+        "marked": 1
+      }
+    },
+    {
+      "name": "diff.synthetic.alphaOnly",
+      "ok": true,
+      "detail": {
+        "verdict": "different"
+      }
+    },
+    {
+      "name": "diff.synthetic.size",
+      "ok": true
+    },
+    {
+      "name": "launch1.repeat.legacy-1.5",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5",
+          "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5"
+        ]
+      }
+    },
+    {
+      "name": "launch1.repeat.legacy-2.5",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "7c0df53b8feb70f0cf8493639cf4affa7330ac19fc0023fef0b33304891c92c7",
+          "7c0df53b8feb70f0cf8493639cf4affa7330ac19fc0023fef0b33304891c92c7"
+        ]
+      }
+    },
+    {
+      "name": "launch1.repeat.scene3d",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70",
+          "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70"
+        ]
+      }
+    },
+    {
+      "name": "launch1.repeat.scene3d-wide",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "c5209079995d072fb37406088cecd357b0413f76f643572f3ba4028808e48dc7",
+          "c5209079995d072fb37406088cecd357b0413f76f643572f3ba4028808e48dc7"
+        ]
+      }
+    },
+    {
+      "name": "launch1.repeat.canvas2d",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88",
+          "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+        ]
+      }
+    },
+    {
+      "name": "launch1.noInternetSocket",
+      "ok": true,
+      "detail": {
+        "tool": "lsof",
+        "pids": [
+          62163,
+          62173,
+          62174,
+          62179,
+          62186,
+          62189,
+          62190,
+          62202,
+          62206,
+          62207,
+          62208
+        ],
+        "lines": []
+      }
+    },
+    {
+      "name": "launch1.pipeNotPort",
+      "ok": true,
+      "detail": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-hkkT3G --use-angle=metal --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe about:blank"
+    },
+    {
+      "name": "page.exceptionReported",
+      "ok": true,
+      "detail": "Page exception: TypeError: Cannot read properties of undefined (reading 'x')\n    at <anonymous>:1:11"
+    },
+    {
+      "name": "page.refusesNetworkUrl",
+      "ok": true,
+      "detail": "Only file:// pages are allowed: https://example.com/"
+    },
+    {
+      "name": "page.bytes.chunked",
+      "ok": true,
+      "detail": {
+        "length": 3145745
+      }
+    },
+    {
+      "name": "png.chromeDecodesOurs",
+      "ok": true,
+      "detail": {
+        "pngBytes": 33804
+      }
+    },
+    {
+      "name": "png.oursDecodesChrome",
+      "ok": true,
+      "detail": {
+        "pngBytes": 88261,
+        "colourType": 6
+      }
+    },
+    {
+      "name": "png.roundtrip.scenes",
+      "ok": true
+    },
+    {
+      "name": "launch1.cleanup",
+      "ok": true,
+      "detail": {
+        "close": {
+          "reason": "close requested",
+          "exit": {
+            "code": 0,
+            "signal": null
+          },
+          "profileRemoved": true
+        },
+        "profileRemoved": true,
+        "processesGone": true
+      }
+    },
+    {
+      "name": "launch2.repeat.legacy-1.5",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5",
+          "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5"
+        ]
+      }
+    },
+    {
+      "name": "launch2.repeat.legacy-2.5",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "7c0df53b8feb70f0cf8493639cf4affa7330ac19fc0023fef0b33304891c92c7",
+          "7c0df53b8feb70f0cf8493639cf4affa7330ac19fc0023fef0b33304891c92c7"
+        ]
+      }
+    },
+    {
+      "name": "launch2.repeat.scene3d",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70",
+          "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70"
+        ]
+      }
+    },
+    {
+      "name": "launch2.repeat.scene3d-wide",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "c5209079995d072fb37406088cecd357b0413f76f643572f3ba4028808e48dc7",
+          "c5209079995d072fb37406088cecd357b0413f76f643572f3ba4028808e48dc7"
+        ]
+      }
+    },
+    {
+      "name": "launch2.repeat.canvas2d",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88",
+          "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+        ]
+      }
+    },
+    {
+      "name": "launch2.noInternetSocket",
+      "ok": true,
+      "detail": {
+        "tool": "lsof",
+        "pids": [
+          62290,
+          62306,
+          62307,
+          62312,
+          62333,
+          62338,
+          62339,
+          62348,
+          62355,
+          62357,
+          62358
+        ],
+        "lines": []
+      }
+    },
+    {
+      "name": "launch2.pipeNotPort",
+      "ok": true,
+      "detail": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-h6uXyn --use-angle=metal --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe about:blank"
+    },
+    {
+      "name": "launch2.cleanup",
+      "ok": true,
+      "detail": {
+        "close": {
+          "reason": "close requested",
+          "exit": {
+            "code": 0,
+            "signal": null
+          },
+          "profileRemoved": true
+        },
+        "profileRemoved": true,
+        "processesGone": true
+      }
+    },
+    {
+      "name": "prototype.legacyIdentical",
+      "ok": true,
+      "detail": {
+        "seed": 1.5,
+        "sourceSha256": "1eb2798a7b431f38f04bd2ff0614ba692a3a2a893a42be448e2057a015f86ffe",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+        "product": "Chrome/157.0.8103.39",
+        "actualSourceSha256": "1eb2798a7b431f38f04bd2ff0614ba692a3a2a893a42be448e2057a015f86ffe",
+        "applicable": true,
+        "matches": true
+      }
+    },
+    {
+      "name": "scenes.distinct",
+      "ok": true
+    },
+    {
+      "name": "diff.seedsDiffer",
+      "ok": true,
+      "detail": {
+        "psnrDb": 13.826142748960367,
+        "differentRatio": 0.6075
+      }
+    },
+    {
+      "name": "diff.scene3d.same",
+      "ok": true,
+      "detail": {
+        "differentPixels": 0,
+        "psnrDb": null,
+        "verdict": "identical"
+      }
+    },
+    {
+      "name": "diff.scene3d.onePixel",
+      "ok": true,
+      "detail": {
+        "x": 123,
+        "y": 45,
+        "differentPixels": 1,
+        "maxChannelDelta": 1,
+        "bbox": {
+          "x0": 123,
+          "y0": 45,
+          "x1": 123,
+          "y1": 45
+        },
+        "psnrDb": 104.02806617122147,
+        "verdict": "visually-identical"
+      }
+    },
+    {
+      "name": "diff.scene3d.map",
+      "ok": true,
+      "detail": {
+        "marked": 1
+      }
+    },
+    {
+      "name": "diff.scene3d.alphaOnly",
+      "ok": true,
+      "detail": {
+        "verdict": "different"
+      }
+    },
+    {
+      "name": "diff.scene3d.size",
+      "ok": true
+    },
+    {
+      "name": "diff.scene3d.repeat",
+      "ok": true
+    },
+    {
+      "name": "launches.legacy-1.5",
+      "ok": true,
+      "detail": {
+        "launch1": "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5",
+        "launch2": "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5"
+      }
+    },
+    {
+      "name": "launches.legacy-2.5",
+      "ok": true,
+      "detail": {
+        "launch1": "7c0df53b8feb70f0cf8493639cf4affa7330ac19fc0023fef0b33304891c92c7",
+        "launch2": "7c0df53b8feb70f0cf8493639cf4affa7330ac19fc0023fef0b33304891c92c7"
+      }
+    },
+    {
+      "name": "launches.scene3d",
+      "ok": true,
+      "detail": {
+        "launch1": "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70",
+        "launch2": "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70"
+      }
+    },
+    {
+      "name": "launches.scene3d-wide",
+      "ok": true,
+      "detail": {
+        "launch1": "c5209079995d072fb37406088cecd357b0413f76f643572f3ba4028808e48dc7",
+        "launch2": "c5209079995d072fb37406088cecd357b0413f76f643572f3ba4028808e48dc7"
+      }
+    },
+    {
+      "name": "launches.canvas2d",
+      "ok": true,
+      "detail": {
+        "launch1": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88",
+        "launch2": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+      }
+    },
+    {
+      "name": "cleanup.error",
+      "ok": true,
+      "detail": {
+        "pid": 62412,
+        "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-D0dH5V",
+        "profileExisted": true,
+        "rejected": "erreur volontaire",
+        "profileRemoved": true,
+        "chromeGone": true
+      }
+    },
+    {
+      "name": "cleanup.timeout",
+      "ok": true,
+      "detail": {
+        "pid": 62480,
+        "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62161-oguMRM",
+        "profileExisted": true,
+        "rejected": "DevTools timeout: Runtime.evaluate after 500 ms",
+        "code": "TIMEOUT",
+        "ms": 554,
+        "closed": true,
+        "profileRemoved": true,
+        "chromeGone": true
+      }
+    },
+    {
+      "name": "cleanup.notFound",
+      "ok": true,
+      "detail": {
+        "code": "CHROME_NOT_FOUND",
+        "message": "Chrome not found: /var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-absent/chrome (set CHROME_PATH or chromePath)",
+        "profilesBefore": 0,
+        "profilesAfter": 0
+      }
+    },
+    {
+      "name": "launch.refusesPortFlag",
+      "ok": true,
+      "detail": "Refused Chrome argument: --remote-debugging-port=9222"
+    },
+    {
+      "name": "cleanup.sigint",
+      "ok": true,
+      "detail": {
+        "mode": "signal",
+        "signal": "SIGINT",
+        "chromePid": 62547,
+        "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62542-TiedXV",
+        "profileExisted": true,
+        "before": {
+          "profileExists": true,
+          "chromeAlive": true,
+          "sockets": {
+            "tool": "lsof",
+            "pids": [
+              62547,
+              62551,
+              62552,
+              62553,
+              62556,
+              62562,
+              62563,
+              62568,
+              62574,
+              62575,
+              62576
+            ],
+            "lines": []
+          }
+        },
+        "exit": {
+          "code": null,
+          "signal": "SIGINT"
+        },
+        "after": {
+          "profileExists": false,
+          "chromeGone": true
+        },
+        "stderrTail": ""
+      }
+    },
+    {
+      "name": "cleanup.sigterm",
+      "ok": true,
+      "detail": {
+        "mode": "signal",
+        "signal": "SIGTERM",
+        "chromePid": 62610,
+        "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62609-PdR9NO",
+        "profileExisted": true,
+        "before": {
+          "profileExists": true,
+          "chromeAlive": true,
+          "sockets": {
+            "tool": "lsof",
+            "pids": [
+              62610,
+              62616,
+              62617,
+              62618,
+              62629,
+              62632,
+              62633,
+              62642,
+              62647,
+              62648,
+              62649
+            ],
+            "lines": []
+          }
+        },
+        "exit": {
+          "code": null,
+          "signal": "SIGTERM"
+        },
+        "after": {
+          "profileExists": false,
+          "chromeGone": true
+        },
+        "stderrTail": ""
+      }
+    },
+    {
+      "name": "cleanup.uncaught",
+      "ok": true,
+      "detail": {
+        "mode": "crash",
+        "signal": null,
+        "chromePid": 62681,
+        "profileDir": "/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-62679-9TlEgM",
+        "profileExisted": true,
+        "before": {
+          "profileExists": true,
+          "chromeAlive": true,
+          "sockets": {
+            "tool": "lsof",
+            "pids": [
+              62681,
+              62686,
+              62687,
+              62688,
+              62694,
+              62699,
+              62700,
+              62707,
+              62713,
+              62714,
+              62715
+            ],
+            "lines": []
+          }
+        },
+        "exit": {
+          "code": 1,
+          "signal": null
+        },
+        "after": {
+          "profileExists": false,
+          "chromeGone": true
+        },
+        "stderrTail": "    at process.processTimers (node:internal/timers:541:7)\n\nNode.js v24.18.0"
+      }
+    },
+    {
+      "name": "dumpDom.samePixels",
+      "ok": true,
+      "detail": {
+        "probe": "metal-render-probe-v1",
+        "images": [
+          {
+            "scene": "legacy",
+            "width": 320,
+            "height": 200,
+            "sha256": "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5"
+          },
+          {
+            "scene": "scene3d",
+            "width": 480,
+            "height": 270,
+            "sha256": "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cleanup.noProfileLeft",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "compare.previous",
+      "ok": true,
+      "detail": {
+        "file": "/Users/david/claude/metal-chantier/render/docs/chantier-moteur/preuves/lot-00/r1/self-check-a.json",
+        "date": "2026-11-12T22:57:12.788Z",
+        "product": "Chrome/157.0.8103.39",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+        "scenes": 5,
+        "differences": []
+      }
+    }
+  ],
+  "summary": {
+    "checks": 57,
+    "passed": 57,
+    "failed": [],
+    "seconds": 14.959
+  },
+  "ok": true
+}

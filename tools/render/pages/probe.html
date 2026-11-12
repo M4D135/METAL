@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<title>METAL render probe</title>
+<!-- Probe page of the render tools (lot 00 / R1). Self-contained: no fetch, no network,
+     opened in file:// by tools/render/chrome.mjs. Exposes window.probe:
+       probe.environment()           browser, GPU, extensions, limits, performance.now step
+       probe.render(scene, params)   {width, height, data, origin, ...} for page.image()
+         'legacy'   320x200, the verified prototype's shaders (params.seed, default 1.5)
+         'scene3d'  instanced boxes, depth, blending, fixed camera (seed, width, height, eye, target, fov)
+         'canvas2d' Canvas 2D paths and gradients, software rasterised (seed, width, height)
+       probe.timeBlocks(params, opts) scene3d frames in blocks, one 1x1 readPixels per block
+       probe.decodePng(base64)       Chrome's own PNG decoder, to check tools/render/png.mjs
+     With ?dump=1 the page writes base64(JSON) of two renders in <pre id="out"> (chrome --dump-dom). -->
+<style>html,body{margin:0;background:#000;color:#ccc}canvas{display:block}pre{display:none}</style>
+<canvas id="legacy" width="320" height="200"></canvas>
+<pre id="out"></pre>
+<script>
+'use strict';
+(function () {
+  const VERSION = 'metal-render-probe-v1';
+
+  // Shaders of the verified prototype (pipe-probe.mjs, page.html), kept byte for byte.
+  const LEGACY_VS = `#version 300 es
+  in vec2 p; out vec2 v; uniform float uSeed;
+  void main(){ v=p*.5+.5; gl_Position=vec4(p*(.8+.1*sin(uSeed)),0.,1.); }`;
+  const LEGACY_FS = `#version 300 es
+  precision highp float; in vec2 v; out vec4 o; uniform float uSeed;
+  float h(vec2 q){ return fract(sin(dot(q,vec2(12.9898,78.233))+uSeed)*43758.5453); }
+  void main(){ float n=h(floor(v*64.)); o=vec4(v.x, v.y*n, 0.5+0.5*sin(uSeed+v.x*9.), 1.); }`;
+
+  const SCENE_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec4 iPosYaw;
+layout(location=3) in vec3 iScale;
+layout(location=4) in vec3 iColor;
+uniform mat4 uViewProj;
+out vec3 vWorld; out vec3 vNormal; out vec3 vColor;
+void main() {
+  float c = cos(iPosYaw.w), s = sin(iPosYaw.w);
+  vec3 p = aPos * iScale;
+  p = vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z);
+  vNormal = vec3(c * aNormal.x + s * aNormal.z, aNormal.y, -s * aNormal.x + c * aNormal.z);
+  vWorld = p + iPosYaw.xyz;
+  vColor = iColor;
+  gl_Position = uViewProj * vec4(vWorld, 1.0);
+}`;
+  const SCENE_FS = `#version 300 es
+precision highp float;
+in vec3 vWorld; in vec3 vNormal; in vec3 vColor;
+uniform vec3 uEye; uniform vec3 uSun; uniform vec3 uFog; uniform float uFogDensity; uniform float uAlpha;
+out vec4 outColor;
+void main() {
+  vec3 n = normalize(vNormal);
+  float diffuse = max(dot(n, uSun), 0.0);
+  float hemi = 0.5 + 0.5 * n.y;
+  vec2 cell = floor(vWorld.xz * 0.5);
+  float checker = mod(cell.x + cell.y, 2.0);
+  vec3 color = vColor * (0.85 + 0.15 * checker) * (0.22 + 0.33 * hemi + 0.85 * diffuse);
+  vec3 toEye = normalize(uEye - vWorld);
+  color += vec3(0.22) * pow(max(dot(n, normalize(toEye + uSun)), 0.0), 32.0);
+  color = mix(color, uFog, 1.0 - exp(-uFogDensity * length(uEye - vWorld)));
+  outColor = vec4(color, uAlpha);
+}`;
+
+  function compile(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error('shader: ' + gl.getShaderInfoLog(shader));
+    return shader;
+  }
+  function program(gl, vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('program: ' + gl.getProgramInfoLog(p));
+    return p;
+  }
+
+  // Integer PRNG (mulberry32): exact, no Math.random.
+  function prng(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // ---- legacy: the prototype's scene on the canvas default framebuffer ----
+  const legacy = {};
+  function renderLegacy(params) {
+    const seed = params.seed === undefined ? 1.5 : Number(params.seed);
+    const c = document.getElementById('legacy');
+    const gl = c.getContext('webgl2', {alpha: false, antialias: false, depth: true, preserveDrawingBuffer: false, powerPreference: 'high-performance'});
+    if (!gl) throw new Error('WebGL2 unavailable');
+    if (!legacy.program) {
+      legacy.program = program(gl, LEGACY_VS, LEGACY_FS);
+      legacy.vao = gl.createVertexArray();
+      gl.bindVertexArray(legacy.vao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, 0, 1, -1, 1, 1, 1, 0, -1]), gl.STATIC_DRAW);
+      const location = gl.getAttribLocation(legacy.program, 'p');
+      gl.enableVertexAttribArray(location);
+      gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+      legacy.seed = gl.getUniformLocation(legacy.program, 'uSeed');
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, c.width, c.height);
+    gl.clearColor(.1, .2, .3, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(legacy.program);
+    gl.bindVertexArray(legacy.vao);
+    gl.uniform1f(legacy.seed, seed);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    const data = new Uint8Array(c.width * c.height * 4);
+    gl.readPixels(0, 0, c.width, c.height, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    return {width: c.width, height: c.height, data, origin: 'bottom-left', scene: 'legacy', seed};
+  }
+
+  // ---- scene3d: instanced boxes rendered into an RGBA8 + depth framebuffer ----
+  let s3 = null;
+  function setup3d() {
+    if (s3) return s3;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const gl = canvas.getContext('webgl2', {alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance'});
+    if (!gl) throw new Error('WebGL2 unavailable');
+    const prog = program(gl, SCENE_VS, SCENE_FS);
+    const pos = [], nor = [], idx = [];
+    for (const [nx, ny, nz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) {
+      const u = ny !== 0 ? [1, 0, 0] : [0, 1, 0];
+      const v = [ny * u[2] - nz * u[1], nz * u[0] - nx * u[2], nx * u[1] - ny * u[0]];
+      const base = pos.length / 3;
+      for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+        pos.push(0.5 * (nx + a * u[0] + b * v[0]), 0.5 * (ny + a * u[1] + b * v[1]), 0.5 * (nz + a * u[2] + b * v[2]));
+        nor.push(nx, ny, nz);
+      }
+      idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    }
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const attribute = (location, data, size) => {
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(location);
+      gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
+    };
+    attribute(0, pos, 3);
+    attribute(1, nor, 3);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(idx), gl.STATIC_DRAW);
+    const instances = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, instances);
+    for (const [location, size, offset] of [[2, 4, 0], [3, 3, 16], [4, 3, 28]]) {
+      gl.enableVertexAttribArray(location);
+      gl.vertexAttribPointer(location, size, gl.FLOAT, false, 40, offset);
+      gl.vertexAttribDivisor(location, 1);
+    }
+    const uniforms = {};
+    for (const name of ['uViewProj', 'uEye', 'uSun', 'uFog', 'uFogDensity', 'uAlpha']) uniforms[name] = gl.getUniformLocation(prog, name);
+    s3 = {canvas, gl, prog, vao, instances, uniforms, indexCount: idx.length, fbo: null, size: '', layoutSeed: null, counts: null};
+    return s3;
+  }
+
+  function target3d(s, width, height) {
+    const key = width + 'x' + height;
+    if (s.size === key) return;
+    const gl = s.gl;
+    if (s.fbo) { gl.deleteFramebuffer(s.fbo); gl.deleteRenderbuffer(s.color); gl.deleteRenderbuffer(s.depth); }
+    s.fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, s.fbo);
+    s.color = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, s.color);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.RGBA8, width, height);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, s.color);
+    s.depth = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, s.depth);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, width, height);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, s.depth);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('incomplete framebuffer');
+    s.size = key;
+  }
+
+  function layout3d(s, seed) {
+    if (s.layoutSeed === seed) return;
+    const rnd = prng(seed), rows = [];
+    const palette = [[0.80, 0.32, 0.20], [0.25, 0.55, 0.80], [0.85, 0.75, 0.30], [0.35, 0.70, 0.40], [0.70, 0.70, 0.75], [0.55, 0.35, 0.70]];
+    rows.push([0, -0.25, 0, 0, 80, 0.5, 80, 0.42, 0.44, 0.40]);
+    for (let i = 0; i < 72; i++) {
+      const x = (rnd() * 2 - 1) * 22, z = (rnd() * 2 - 1) * 22;
+      const sx = 0.6 + rnd() * 2.4, sy = 0.5 + rnd() * rnd() * 7, sz = 0.6 + rnd() * 2.4, yaw = rnd() * Math.PI;
+      const c = palette[Math.floor(rnd() * palette.length)], shade = 0.75 + rnd() * 0.25;
+      rows.push([x, sy / 2, z, yaw, sx, sy, sz, c[0] * shade, c[1] * shade, c[2] * shade]);
+    }
+    const opaque = rows.length;
+    for (let i = 0; i < 8; i++) {
+      const x = (rnd() * 2 - 1) * 14, z = (rnd() * 2 - 1) * 14, sy = 2 + rnd() * 4;
+      rows.push([x, sy / 2, z, rnd() * Math.PI, 1.5 + rnd() * 2, sy, 0.3 + rnd() * 0.4, 0.30, 0.75, 0.95]);
+    }
+    const gl = s.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, s.instances);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rows.flat()), gl.STATIC_DRAW);
+    s.counts = {opaque, glass: rows.length - opaque};
+    s.layoutSeed = seed;
+  }
+
+  function matrix(eye, target, fovDeg, aspect, near, far) {
+    const f = 1 / Math.tan(fovDeg * Math.PI / 360);
+    const P = [f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) / (near - far), -1, 0, 0, 2 * far * near / (near - far), 0];
+    const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+    const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const norm = a => { const l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };
+    const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const z = norm(sub(eye, target)), x = norm(cross([0, 1, 0], z)), y = cross(z, x);
+    const V = [x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -dot(x, eye), -dot(y, eye), -dot(z, eye), 1];
+    const M = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      let sum = 0;
+      for (let k = 0; k < 4; k++) sum += P[k * 4 + r] * V[c * 4 + k];
+      M[c * 4 + r] = sum;
+    }
+    return M;
+  }
+
+  function params3d(params) {
+    const width = params.width === undefined ? 480 : params.width, height = params.height === undefined ? 270 : params.height;
+    if (![width, height].every(n => Number.isInteger(n) && n > 0 && n <= 8192)) throw new RangeError('scene3d: invalid size');
+    return {width, height, seed: params.seed === undefined ? 7 : params.seed >>> 0, eye: params.eye || [16, 10, 20], target: params.target || [0, 1.5, 0], fov: params.fov || 55};
+  }
+
+  function draw3d(s, p) {
+    const gl = s.gl, u = s.uniforms;
+    target3d(s, p.width, p.height);
+    layout3d(s, p.seed);
+    const fog = [0.62, 0.68, 0.74], sunLength = Math.hypot(0.45, 0.8, 0.35);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, s.fbo);
+    gl.viewport(0, 0, p.width, p.height);
+    gl.clearColor(fog[0], fog[1], fog[2], 1);
+    gl.clearDepth(1);
+    gl.depthMask(true);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
+    gl.useProgram(s.prog);
+    gl.bindVertexArray(s.vao);
+    gl.uniformMatrix4fv(u.uViewProj, false, matrix(p.eye, p.target, p.fov, p.width / p.height, 0.1, 200));
+    gl.uniform3fv(u.uEye, p.eye);
+    gl.uniform3f(u.uSun, 0.45 / sunLength, 0.8 / sunLength, 0.35 / sunLength);
+    gl.uniform3fv(u.uFog, fog);
+    gl.uniform1f(u.uFogDensity, 0.018);
+    gl.uniform1f(u.uAlpha, 1);
+    gl.disable(gl.BLEND);
+    gl.drawElementsInstanced(gl.TRIANGLES, s.indexCount, gl.UNSIGNED_SHORT, 0, s.counts.opaque);
+    // Translucent boxes: blended colour, destination alpha kept at 1, no depth writes.
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+    gl.depthMask(false);
+    gl.uniform1f(u.uAlpha, 0.45);
+    // The translucent instances follow the opaque ones in the buffer: offset the instanced
+    // attributes, draw them in order (primitive order is guaranteed inside a draw), restore.
+    gl.bindBuffer(gl.ARRAY_BUFFER, s.instances);
+    const pointers = base => { for (const [location, size, offset] of [[2, 4, 0], [3, 3, 16], [4, 3, 28]]) gl.vertexAttribPointer(location, size, gl.FLOAT, false, 40, base * 40 + offset); };
+    pointers(s.counts.opaque);
+    gl.drawElementsInstanced(gl.TRIANGLES, s.indexCount, gl.UNSIGNED_SHORT, 0, s.counts.glass);
+    pointers(0);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    return 2;
+  }
+
+  function renderScene3d(params) {
+    const s = setup3d(), p = params3d(params), drawCalls = draw3d(s, p), gl = s.gl;
+    const data = new Uint8Array(p.width * p.height * 4);
+    gl.readPixels(0, 0, p.width, p.height, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    return {width: p.width, height: p.height, data, origin: 'bottom-left', scene: 'scene3d', seed: p.seed, eye: p.eye, target: p.target, fov: p.fov, drawCalls, instances: s.counts.opaque + s.counts.glass};
+  }
+
+  // Frames in blocks: performance.now is coarse (0.1 ms without cross-origin isolation),
+  // so time N frames with a single synchronisation (1x1 readPixels) at the end of each block.
+  function timeBlocks(params, options) {
+    const o = Object.assign({warmup: 30, blocks: 5, frames: 60}, options || {});
+    const s = setup3d(), p = params3d(params || {}), gl = s.gl, pixel = new Uint8Array(4);
+    const sync = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+    for (let i = 0; i < o.warmup; i++) draw3d(s, p);
+    sync();
+    const msPerFrame = [];
+    for (let b = 0; b < o.blocks; b++) {
+      const t0 = performance.now();
+      for (let f = 0; f < o.frames; f++) draw3d(s, p);
+      sync();
+      msPerFrame.push((performance.now() - t0) / o.frames);
+    }
+    const sorted = msPerFrame.slice().sort((a, b) => a - b);
+    return {scene: 'scene3d', width: p.width, height: p.height, warmupFrames: o.warmup, framesPerBlock: o.frames, msPerFrame, medianMsPerFrame: sorted[sorted.length >> 1]};
+  }
+
+  // ---- canvas2d: Canvas 2D paths and gradients (willReadFrequently: software raster) ----
+  function renderCanvas2d(params) {
+    const width = params.width || 320, height = params.height || 200, rnd = prng(params.seed === undefined ? 3 : params.seed);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', {alpha: false, willReadFrequently: true});
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#16324a');
+    gradient.addColorStop(1, '#a8572b');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    for (let i = 0; i < 40; i++) {
+      const r = Math.round(rnd() * 255), g = Math.round(rnd() * 255), b = Math.round(rnd() * 255), a = Math.round((0.35 + rnd() * 0.5) * 100) / 100;
+      ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+      ctx.beginPath();
+      ctx.arc(rnd() * width, rnd() * height, 4 + rnd() * 28, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#e8e2c8';
+    ctx.beginPath();
+    ctx.moveTo(8, height - 16);
+    for (let k = 0; k < 6; k++) ctx.bezierCurveTo(rnd() * width, rnd() * height, rnd() * width, rnd() * height, (k + 1) * width / 6, rnd() * height);
+    ctx.stroke();
+    const image = ctx.getImageData(0, 0, width, height);
+    return {width, height, data: image.data, origin: 'top-left', scene: 'canvas2d', seed: params.seed === undefined ? 3 : params.seed};
+  }
+
+  function render(scene, params) {
+    params = params || {};
+    if (scene === 'legacy') return renderLegacy(params);
+    if (scene === 'scene3d') return renderScene3d(params);
+    if (scene === 'canvas2d') return renderCanvas2d(params);
+    throw new Error('unknown scene: ' + scene);
+  }
+
+  function timerStep(durationMs) {
+    const deltas = [], end = performance.now() + (durationMs || 25);
+    let last = performance.now(), now, reads = 0;
+    while ((now = performance.now()) < end) { reads++; if (now !== last) { deltas.push(now - last); last = now; } }
+    deltas.sort((a, b) => a - b);
+    const round = x => Math.round(x * 1e6) / 1e6;
+    return {minStepMs: deltas.length ? round(deltas[0]) : null, medianStepMs: deltas.length ? round(deltas[deltas.length >> 1]) : null, maxStepMs: deltas.length ? round(deltas[deltas.length - 1]) : null, changes: deltas.length, reads};
+  }
+
+  function environment() {
+    const gl = setup3d().gl, info = gl.getExtension('WEBGL_debug_renderer_info');
+    const extensions = (gl.getSupportedExtensions() || []).slice().sort();
+    const value = name => { const v = gl.getParameter(gl[name]); return v && typeof v === 'object' && 'length' in v ? Array.from(v) : v; };
+    const limits = {};
+    for (const name of ['MAX_TEXTURE_SIZE', 'MAX_RENDERBUFFER_SIZE', 'MAX_VIEWPORT_DIMS', 'MAX_SAMPLES', 'MAX_DRAW_BUFFERS', 'MAX_COLOR_ATTACHMENTS',
+      'MAX_3D_TEXTURE_SIZE', 'MAX_ARRAY_TEXTURE_LAYERS', 'MAX_VERTEX_ATTRIBS', 'MAX_VERTEX_UNIFORM_VECTORS', 'MAX_FRAGMENT_UNIFORM_VECTORS',
+      'MAX_UNIFORM_BUFFER_BINDINGS', 'MAX_UNIFORM_BLOCK_SIZE', 'MAX_COMBINED_TEXTURE_IMAGE_UNITS', 'MAX_TEXTURE_IMAGE_UNITS', 'MAX_VARYING_VECTORS']) limits[name] = value(name);
+    const has = name => extensions.includes(name);
+    let audioSampleRate = null;
+    try { audioSampleRate = new OfflineAudioContext(1, 128, 48000).sampleRate; } catch (e) { audioSampleRate = null; }
+    return {
+      probe: VERSION, userAgent: navigator.userAgent, url: location.href,
+      page: {innerWidth, innerHeight, devicePixelRatio, screen: [screen.width, screen.height]},
+      secureContext: isSecureContext, crossOriginIsolated: !!self.crossOriginIsolated, sharedArrayBuffer: typeof SharedArrayBuffer === 'function',
+      offlineAudioContext: typeof OfflineAudioContext === 'function', offlineAudioSampleRate: audioSampleRate,
+      webgpu: 'gpu' in navigator, hardwareConcurrency: navigator.hardwareConcurrency,
+      webgl2: {
+        vendor: value('VENDOR'), renderer: value('RENDERER'), version: value('VERSION'), shadingLanguage: value('SHADING_LANGUAGE_VERSION'),
+        unmaskedVendor: info ? gl.getParameter(info.UNMASKED_VENDOR_WEBGL) : null, unmaskedRenderer: info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : null,
+        features: {timerQuery: has('EXT_disjoint_timer_query_webgl2'), parallelShaderCompile: has('KHR_parallel_shader_compile'), colorBufferFloat: has('EXT_color_buffer_float'),
+          floatLinear: has('OES_texture_float_linear'), anisotropic: has('EXT_texture_filter_anisotropic'), multiDraw: has('WEBGL_multi_draw'), debugRendererInfo: !!info},
+        extensions, limits,
+      },
+      performanceNow: timerStep(25),
+    };
+  }
+
+  // Chrome's PNG decoder, no colour conversion, no premultiplication: an independent reader.
+  async function decodePng(base64) {
+    const binary = atob(base64), bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const bitmap = await createImageBitmap(new Blob([bytes], {type: 'image/png'}), {premultiplyAlpha: 'none', colorSpaceConversion: 'none'});
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d', {willReadFrequently: true});
+    ctx.drawImage(bitmap, 0, 0);
+    const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    return {width: image.width, height: image.height, data: image.data, origin: 'top-left'};
+  }
+
+  // Chrome's PNG encoder (canvas.toDataURL) on a deterministic Canvas 2D image: the opposite check.
+  function encodePngWithChrome(params) {
+    const image = renderCanvas2d(params || {}), canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    canvas.getContext('2d').putImageData(new ImageData(image.data, image.width, image.height), 0, 0);
+    return {width: image.width, height: image.height, data: image.data, origin: 'top-left', png: canvas.toDataURL('image/png').split(',')[1]};
+  }
+
+  function base64(bytes) {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 32768) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+    return btoa(s);
+  }
+
+  window.probe = Object.freeze({version: VERSION, environment, render, timeBlocks, timerStep, decodePng, encodePngWithChrome});
+
+  if (new URLSearchParams(location.search).get('dump') === '1') {
+    let text;
+    try {
+      const images = [render('legacy', {seed: 1.5}), render('scene3d', {})].map(image => ({scene: image.scene, width: image.width, height: image.height, origin: image.origin, pixels: base64(image.data)}));
+      text = JSON.stringify({probe: VERSION, environment: environment(), images});
+    } catch (error) { text = JSON.stringify({probe: VERSION, error: String(error && error.stack || error)}); }
+    document.getElementById('out').textContent = base64(new TextEncoder().encode(text));
+  }
+  document.title = 'ready';
+})();
+</script>
+</html>
