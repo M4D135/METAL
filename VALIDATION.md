@@ -1,3 +1,56 @@
+# Validation du chantier moteur — lot 01 / T1 — 12 novembre 2026
+
+**LOAD-01, LOOP-01 et LOOP-V2 : reprise corrigée, version 0.8.1 inchangée.**
+La suppression du seul rejet d'intersection des gravats conserve les autres
+validations et l'atomicité. Le shell retente une copie sans débris visuels,
+préserve l'équipement d'entrée lors du repli et conserve le dernier point
+refusé avant tout remplacement de la sauvegarde active, y compris après un
+échec temporaire du stockage.
+
+| Contrôle | Avant, main propre `63668ac` | Après T1 |
+|---|---|---|
+| Suite complète `npm test` | **422/422, zéro échec** | **432/432, zéro échec** |
+| Reprises LOAD acceptées | 7/31 | **31/31** |
+| Refus LOOP | 17/44 | **0/44** |
+| HTML autonome brut | 803 375 octets | **804 329 octets** |
+| Ressources externes | 0 | 0 |
+| Version | 0.8.1 | 0.8.1 |
+
+Les 31 snapshots restaurés sont identiques en valeurs et structure JSON ;
+**30/31 sont identiques octet pour octet**. L'écart restant est seulement
+l'ordre de deux propriétés d'un butin, dans un chemin de sérialisation
+inchangé. Les six cas générés contractuels (l:0/c:9, trois murs, roquette et
+300 pas) restaurent un snapshot exactement identique.
+
+Le build et la suite complète ont réussi sur le worktree T1 ; les contrôles
+de génération (18 cas) et du document distribué passent aussi. Les 44
+fichiers de sources, tests, configuration et build comparés sont identiques
+après intégration du commit d'outillage lot 00 / T1 `8098725`. Le build
+d'intégration a le même SHA-256 :
+`f52b93562b0566dbe167410e5099af18860190ffc14dd8a7575bed722e62ebfd`.
+`SIZE.json` fait foi ; navigateur, pilotes, tests et documentation sont
+exclus des 804 329 octets bruts.
+
+**Préflight MURS-V1 : les huit échecs signalés sur le Mac d'audit ne sont pas
+reproduits.** Les huit tests ciblés passent sur `673d6b2` et son parent
+`79e6e35`, sous Linux x86-64 / Node 24.22.1 ; main intact passe 422/422.
+Les fichiers de génération et de tests campagne de main sont identiques à
+ceux de `673d6b2`, les six `legacyHashes` sont inchangés et le retrait des
+panneaux / `openEntries` est conditionné par `w.campaignVersion===2`.
+L'attribution au retrait des murs n'est donc pas confirmée ici ; le résultat
+macOS arm64 reste inexpliqué. Aucune empreinte régénérée ni correction de
+`world.js` n'a été nécessaire sur ces preuves.
+
+Le [rapport](docs/chantier-moteur/RAPPORT.md) cite le master de la PR #2 au
+commit `6a17e08281b70feae33015d7059ef21717666ba3`. Les
+[preuves T1](docs/chantier-moteur/preuves/lot-01/t1/README.md) et le
+[préflight](docs/chantier-moteur/preuves/lot-01/preflight/README.md) conservent
+les journaux gzip, mesures et manifestes. Aucun nouveau contrôle de
+navigateur, appareil réel ou écoute subjective n'est revendiqué. Les autres
+tâches du lot 01 restent distinctes ; le lot complet n'est pas déclaré fini.
+
+---
+
 # Validation du chantier moteur — lot 00 / T1 — 12 novembre 2026
 
 **SIM-11, IA-06 : outillage de preuve livré, version 0.8.1 inchangée.** Les

@@ -2078,7 +2078,7 @@
             if(q.resting){
               const h=debrisHalf(q),bottom=q.y-h[1],floor=Math.max(ground(q.x,q.z,traps),ground(q.x-h[0],q.z-h[2],traps),ground(q.x+h[0],q.z-h[2],traps),ground(q.x-h[0],q.z+h[2],traps),ground(q.x+h[0],q.z+h[2],traps));
               require(Math.abs(bottom-floor)<.03||supportBoxes.some(box=>Math.abs(bottom-box.maxY)<.03&&q.x+h[0]>box.minX+.002&&q.x-h[0]<box.maxX-.002&&q.z+h[2]>box.minZ+.002&&q.z-h[2]<box.maxZ-.002));
-              require(!supportBoxes.some(box=>debrisOverlaps(q,h,box)));
+              // Resting visual rubble may overlap geometry after depenetration or a trap's movement.
             }
             return {...rubbleCopy(q),structural:true,life:1e7};
           });

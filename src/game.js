@@ -11,7 +11,7 @@
   const audio=FAudio.create(),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
-  let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
+  let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'],ammoNames=['balles','cartouches','roquettes','grenades','balles'];
   const worldCache=new Map();let preparationSerial=0,shieldLift=0;
   let titleGesture=false,titleReady=false,titlePending=null,titleSerial=0,titleWaiting=false,titleBlocked=false,windowFocused=document.hasFocus?.()!==false;
@@ -143,35 +143,52 @@
     $('save-label').textContent=savedRun?(savedRun.version===3?'MONDE ':'SECTEUR ')+String(savedIndex(savedRun)+1).padStart(2,'0'):'';
     $('start').firstChild.textContent=savedRun?'Nouvelle expédition ':'Lancer l’assaut ';
   }
+  function preserveRefusedSave(){
+    if(refusedSave!==null){localStorage.setItem(SAVE_KEY+'-refuse',refusedSave);refusedSave=null;}
+  }
   function saveCheckpoint(){
     if(!sim||sim.state.dead||sim.state.won)return;
     if(sim.state.player.airborne){checkpointPending=true;return;}
     checkpointPending=false;
     checkpoint=sim.snapshot();
     savedRun={version:world.campaign?3:2,...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
-    try{localStorage.setItem(SAVE_KEY,JSON.stringify(savedRun));saveAvailable=true;}catch{saveAvailable=false;}
+    try{preserveRefusedSave();localStorage.setItem(SAVE_KEY,JSON.stringify(savedRun));saveAvailable=true;}catch{saveAvailable=false;}
     $('checkpoint-status').textContent='Reprise au dernier point enregistré.'+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
     refreshContinue();
   }
-  function clearSave(){checkpoint=null;savedRun=null;try{localStorage.removeItem(SAVE_KEY);}catch{}refreshContinue();}
+  function clearSave(){checkpoint=null;savedRun=null;try{preserveRefusedSave();localStorage.removeItem(SAVE_KEY);}catch{}refreshContinue();}
+  function acceptRestoredRun(v,point=v.checkpoint){
+    sim.setDifficulty?.(prefs.difficulty);
+    runStats={...v.runStats};checkpoint=point;savedRun={...v,checkpoint};selectedWeapon=sim.state.weapon;
+    $('checkpoint-status').textContent='Reprise au dernier point enregistré.'+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
+    renderHUD();return true;
+  }
   function restoreRun(v){
     if(!validSave(v))return false;
     load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1);
     if((v.generation||3)!==(world.generation||3)||!sim.restore(v.checkpoint,{recover:true}))return false;
-    sim.setDifficulty?.(prefs.difficulty);
-    runStats={...v.runStats};checkpoint=v.checkpoint;savedRun=v;selectedWeapon=sim.state.weapon;
-    $('checkpoint-status').textContent='Reprise au dernier point enregistré.'+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
-    renderHUD();return true;
+    return acceptRestoredRun(v);
   }
   function resumeSaved(v){
     if(restoreRun(v)){start('Signal retrouvé. Reprise au dernier point enregistré.');return;}
     if(validSave(v)){
-      // Retain the old point separately when the new terrain makes its position invalid.
+      // Preserve each refused source before any replacement, even when storage fails temporarily.
+      if(refusedSave===null)refusedSave=JSON.stringify(v);
+      try{preserveRefusedSave();}catch{}
       try{if(!localStorage.getItem(SAVE_KEY+'-before-ascension'))localStorage.setItem(SAVE_KEY+'-before-ascension',JSON.stringify(v));}catch{}
+      if((v.generation||3)===(world.generation||3)){
+        const point=JSON.parse(JSON.stringify(v.checkpoint));
+        delete point.rubbleVersion;if(point.state)delete point.state.rubble;if(point.timers)delete point.timers.rubbleSerial;
+        if(sim.restore(point,{recover:true})){
+          acceptRestoredRun(v,point);
+          start('Signal retrouvé. Progression conservée ; débris visuels retirés du point de reprise.');saveCheckpoint();return;
+        }
+      }
       runStats={...v.runStats};selectedWeapon=[0,1,2,3,4].includes(v.checkpoint?.state?.weapon)?v.checkpoint.state.weapon:0;
-      load(savedIndex(v),v.seed,undefined,v.version===3,v.campaignRevision||1);saveCheckpoint();
+      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1);
       start(v.generation!==world.generation?'Les lieux ont changé. Reprise à l’entrée du même secteur ; progression précédente conservée.':'Point de reprise illisible. Reprise à l’entrée de ce secteur.');
-    }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2);saveCheckpoint();start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');}
+      saveCheckpoint();
+    }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
   }
   function clearInput(){keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
