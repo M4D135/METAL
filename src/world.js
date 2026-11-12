@@ -652,6 +652,7 @@
     environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
     const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
     if(campaign)Object.assign(world,{campaign:true,index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
+    if(campaign)world.campaignProfile=campaignProfile(world);
     detailWorld(world,theme,aperture,doorHeight);
     naturalDetails(world,theme);
     elevateWorld(world);
@@ -1460,7 +1461,7 @@
   function suppliesWorld(w){
     const depths=roomDepths(w),initial=new Set(w.connections.flatMap(c=>c.from===0?[c.to]:c.to===0?[c.from]:[]));
     w.progression={version:1,weaponSlots:4,startWeapons:w.stage===0?[true,false,false,false]:[true,true,true,false],startAmmo:[[48,0,0,0],[72,12,4,0],[84,16,5,0]][w.stage],startShield:false,ammoCaps:[180,36,12,16],maxActive:[8,10,12][w.stage]};
-    if(w.campaign)Object.assign(w.progression,{weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],ammoCaps:[180,36,12,16,1]});
+    if(w.campaign)Object.assign(w.progression,{weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],ammoCaps:[180,36,12,16,1],maxActive:w.campaignProfile.maxActive});
     w.pickups=w.pickups.filter(p=>{const r=w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);return r&&(r.id===0||r.bossArena||Math.hypot(p.x-r.x-2.5,p.z-r.z-1.5)<.1);}).map((p,i)=>({...p,id:'health-'+i,kind:'health',amount:28,zoneId:w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2).id}));
     const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target])];
     // Service-bay cover follows the real incoming corridor. A small health case
@@ -1521,6 +1522,18 @@
     const outer=[];for(const x of [-22,-20.5,-23.5])for(const z of [-17.2,-15.8,17.2,15.8])outer.push({x:arena.x+x,z:arena.z+z});
     add(arena,'ammo',4,'grenades-boss',outer);
   }
+  function campaignProfile(w){
+    const chapter=w.chapter,percent=[35,45,55,70,85,100][chapter],garrisonScale=percent/100;
+    return {version:1,garrison:Math.round([120,140,170][w.stage]*percent/100),garrisonScale,maxActive:[4,5,6,8,10,12][chapter],grenadiers:[0,2,3,5,6,8][chapter],rocketeers:[0,0,0,2,4,6][chapter],bossHpScale:[.25,.32,.45,.62,.8,1][chapter],trialEnemies:[3,6,9,12,15].includes(w.index)?3:0};
+  }
+  function campaignCounts(weights,budget){
+    const sum=weights.reduce((a,b)=>a+b,0),shares=weights.map(n=>n*budget/sum),counts=shares.map(n=>Math.max(2,Math.floor(n)));
+    let left=budget-counts.reduce((a,b)=>a+b,0);
+    const order=shares.map((n,i)=>({i,fraction:n-Math.floor(n)})).sort((a,b)=>b.fraction-a.fraction||a.i-b.i);
+    for(let i=0;left>0;i++,left--)counts[order[i%order.length].i]++;
+    for(let i=order.length-1;left<0;i--){const q=order[(i%order.length+order.length)%order.length];if(counts[q.i]>2){counts[q.i]--;left++;}}
+    return counts;
+  }
   // Campaign discoveries occupy one reserved, physically reachable equipment
   // point. The legacy racks remain untouched in worlds without the opt-in flag.
   function campaignArmory(w){
@@ -1531,7 +1544,7 @@
       {index:12,key:'grenade',kind:'weapon',weapon:3,amount:6},
       {index:15,key:'rocket',kind:'weapon',weapon:2,amount:4}
     ],discovery=schedule.find(q=>q.index===w.index),reserved=w.pickups.find(q=>q.id==='arsenal-shield');
-    w.pickups=w.pickups.filter(q=>q.kind==='health'||q.kind==='ammo'&&q.weapon<4&&unlock[q.weapon]<=w.index).map(q=>q.kind==='ammo'?{...q,requiresWeapon:q.weapon}:q);
+    w.pickups=w.pickups.filter(q=>q.kind==='health'||q.kind==='ammo'&&q.weapon<4&&unlock[q.weapon]<=w.index).map(q=>q.kind==='ammo'?{...q,amount:Math.max(q.weapon===0?8:q.weapon===1?2:1,Math.round(q.amount*w.campaignProfile.garrisonScale)),requiresWeapon:q.weapon}:q);
     for(const e of w.enemies)if(e.drop&&(e.drop.weapon>=4||unlock[e.drop.weapon]>w.index))e.drop=false;
     if(discovery){
       if(!reserved)throw new Error('Missing campaign equipment reservation '+w.index);
@@ -1588,10 +1601,13 @@
   // All 430 IDs stay stable in the save. Only the opening patrols and the
   // colossus's six scripted guards exist physically before their wave deploys.
   function populate(w) {
-    const target=[120,140,170][w.stage],depths=roomDepths(w),counts=[[6,15,7,17,18,16,17,17],[8,22,24,9,22,24,24],[10,23,11,25,23,24,24,23]][w.stage];
+    const target=w.campaign?w.campaignProfile.garrison:[120,140,170][w.stage],trialCount=w.campaign?w.campaignProfile.trialEnemies:0,depths=roomDepths(w),baseCounts=[[6,15,7,17,18,16,17,17],[8,22,24,9,22,24,24],[10,23,11,25,23,24,24,23]][w.stage],counts=w.campaign?campaignCounts(baseCounts,target-7-trialCount):baseCounts;
     const early=new Set(w.connections.flatMap(c=>c.from===0?[c.to]:c.to===0?[c.from]:[]));w.encounters=[];
     const candidates=[];
-    function waveSizes(n,opening){const out=[];if(opening){const k=w.stage===0?3:4;out.push(k);n-=k;}const k=Math.ceil(n/6);for(let i=0;i<k;i++)out.push(Math.floor(n/k)+(i>=k-n%k?1:0));return out;}
+    function waveSizes(n,opening){
+      if(w.campaign){const out=[],limit=[3,3,4,4,5,6][w.chapter];if(opening){let k=Math.min(n,w.chapter<2?2:3);if(n-k===1)k=k>2?k-1:k+1;out.push(k);n-=k;}const groups=Math.ceil(n/limit);for(let i=0;i<groups;i++)out.push(Math.floor(n/groups)+(i>=groups-n%groups?1:0));return out;}
+      const out=[];if(opening){const k=w.stage===0?3:4;out.push(k);n-=k;}const k=Math.ceil(n/6);for(let i=0;i<k;i++)out.push(Math.floor(n/k)+(i>=k-n%k?1:0));return out;
+    }
     for(const r of w.rooms.filter(r=>r.id&&!r.bossArena)){
       const bay=w.encounterBays.find(b=>b.zoneId===r.id),opening=early.has(r.id),sizes=waveSizes(counts[r.id-1],opening),patrol=[];
       if(opening)for(const dz of [0,2.4,-2.4,4.8,-4.8])for(const dx of [-2.4,0,2.4,-4.8,4.8]){
@@ -1613,15 +1629,15 @@
       }
       w.encounters.push(encounter);
     }
-    let grenades=0,rockets=0;
+    let grenades=0,rockets=0;const grenadeGoal=w.campaign?w.campaignProfile.grenadiers:8,rocketGoal=w.campaign?w.campaignProfile.rocketeers:6;
     candidates.sort((a,b)=>a.wave-b.wave||a.depth-b.depth||a.room-b.room);
-    for(const {enemy:e} of candidates){const weapon=grenades<8&&(grenades<=rockets||rockets===6)?'grenade':rockets<6?'rocket':null;if(!weapon)break;e.type=1;e.role='assault';e.weapon=weapon;if(weapon==='grenade')grenades++;else rockets++;}
-    if(grenades!==8||rockets!==6)throw new Error('Insufficient later heavy waves');
+    for(const {enemy:e} of candidates){const weapon=grenades<grenadeGoal&&(grenades<=rockets||rockets===rocketGoal)?'grenade':rockets<rocketGoal?'rocket':null;if(!weapon)break;e.type=1;e.role='assault';e.weapon=weapon;if(weapon==='grenade')grenades++;else rockets++;}
+    if(grenades!==grenadeGoal||rockets!==rocketGoal)throw new Error('Insufficient later heavy waves');
     const arena=w.bossArena;
     for(let i=0;i<6;i++){const a=(i+.5)*TAU/6;w.enemies.push({x:arena.x+Math.cos(a)*26,y:arena.y,z:arena.z+Math.sin(a)*26,type:0,zoneId:arena.room,squadId:200+Math.floor(i/3),role:'flanker',bossWave:1+Math.floor(i/3),bossId:target-1,deployed:true});}
-    w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
+    w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:w.campaign?Math.max(30,Math.round([130,180,240][w.stage]*w.campaignProfile.bossHpScale)):[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
     for(const [i,e] of w.enemies.entries())e.drop=e.type===3?false:e.weapon==='rocket'?{weapon:2,amount:1}:e.weapon==='grenade'?{weapon:3,amount:1}:e.type===1?{weapon:1,amount:2}:e.type===2||i%2===0?{weapon:0,amount:4}:false;
-    if(w.enemies.length!==target)throw new Error('Incorrect finite garrison size');
+    if(w.enemies.length!==target-trialCount)throw new Error('Incorrect finite garrison size');
   }
   function isWalkable(world, x, z, radius) {
     const r = radius === undefined ? 0.35 : radius;
@@ -1657,7 +1673,7 @@
     if (world.meshes.length > 18000) errors.push('Mesh budget exceeded');
     if (world.colliders.length > 512) errors.push('Collider budget exceeded');
     if (world.cores.length !== 3) errors.push('Expected three relays');
-    if(world.enemies.length<[120,140,170][world.stage])errors.push('Garrison below tenfold target');
+    if(world.campaign?world.enemies.length!==world.campaignProfile.garrison:world.enemies.length<[120,140,170][world.stage])errors.push(world.campaign?'Incorrect campaign garrison':'Garrison below tenfold target');
     if(world.mechanisms.length!==3||world.lifts.length!==2)errors.push('Missing interactive machinery');
     const safeRoom = world.rooms[0];
     if (world.enemies.some(e => Math.abs(e.x - safeRoom.x) < safeRoom.w / 2 && Math.abs(e.z - safeRoom.z) < safeRoom.d / 2)) errors.push('Enemy in spawn chamber');

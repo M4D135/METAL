@@ -173,11 +173,11 @@ test('campaign mode is strictly opt-in and keeps historical clamping otherwise',
 test('the first three campaign worlds preserve historical geometry outside campaign supplies and loadout', () => {
   for (let stage = 0; stage < 3; stage++) {
     const world = create(96, stage, { campaign: true });
-    for (const key of ['campaign', 'index', 'chapter', 'chapterTitle', 'trophies']) delete world[key];
+    for (const key of ['campaign', 'index', 'chapter', 'chapterTitle', 'trophies', 'campaignProfile']) delete world[key];
     const legacy = create(96, stage);
-    for (const key of ['weaponSlots', 'startWeapons', 'startAmmo', 'ammoCaps']) world.progression[key] = legacy.progression[key];
+    for (const key of ['weaponSlots', 'startWeapons', 'startAmmo', 'ammoCaps', 'maxActive']) world.progression[key] = legacy.progression[key];
     world.pickups = legacy.pickups;
-    for (let i = 0; i < world.enemies.length; i++) world.enemies[i].drop = legacy.enemies[i].drop;
+    world.enemies = legacy.enemies; world.encounters = legacy.encounters;
     assert.equal(digest(world), legacyHashes.find(([seed, sector]) => seed === 96 && sector === stage)[2]);
   }
 });
@@ -199,7 +199,13 @@ for (let index = 0; index < 18; index++) test(`campaign world ${String(index + 1
     assert.deepEqual(Array.from(world.progression.startAmmo), [0, 0, 0, 0, 1]);
     assert.deepEqual(Array.from(world.progression.ammoCaps), [180, 36, 12, 16, 1]);
     assert.equal(world.progression.startShield, false);
-    assert.equal(world.enemies.length, [120, 140, 170][world.stage] + (world.trophies.length ? 3 : 0));
+    assert.equal(world.enemies.length, [[42,49,60],[54,63,77],[66,77,94],[84,98,119],[102,119,145],[120,140,170]][world.chapter][world.stage]);
+    assert.equal(world.campaignProfile.garrison, world.enemies.length);
+    assert.equal(world.progression.maxActive, [4, 5, 6, 8, 10, 12][world.chapter]);
+    assert.equal(world.enemies.filter(e => e.weapon === 'grenade').length, [0, 2, 3, 5, 6, 8][world.chapter]);
+    assert.equal(world.enemies.filter(e => e.weapon === 'rocket').length, [0, 0, 0, 2, 4, 6][world.chapter]);
+    assert.equal(world.enemies.at(-1).maxHp, Math.max(30, Math.round([130, 180, 240][world.stage] * [.25, .32, .45, .62, .8, 1][world.chapter])));
+    for (const q of world.encounters) for (const wave of q.waves) assert(wave.enemyIds.length >= 2 && wave.enemyIds.length <= 6 && wave.enemyIds.length <= world.progression.maxActive, `${label}: unreasonable or permanently gated combat wave`);
     const unlock = [6, 9, 15, 12, 0], novelty = new Map([[3, 'shield'], [6, 0], [9, 1], [12, 3], [15, 2]]), equipment = world.pickups.filter(q => q.kind === 'weapon' || q.kind === 'shield');
     assert.equal(equipment.length, novelty.has(index) ? 1 : 0, `${label}: campaign equipment is duplicated or out of schedule`);
     if (equipment.length) { const item = equipment[0]; assert(item.id.startsWith('trophy-')); assert.equal(item.trophyId, item.id); assert.equal(item.kind === 'shield' ? 'shield' : item.weapon, novelty.get(index)); }

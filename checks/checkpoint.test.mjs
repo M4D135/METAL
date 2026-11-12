@@ -566,3 +566,77 @@ test('difficulty settings affect the real simulation, persist, and preserve heal
   assert.equal(sim.state.difficulty,0);assert.equal(sim.state.player.hp,61,'changing difficulty must not refill health');
   const restarted=harness(null,Object.fromEntries(app.memory));assert.equal(restarted.simulations.at(-1).state.difficulty,0);
 });
+
+
+test('audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint',async()=>{
+  const original=harness(null,{},campaignShellWorld);original.element('start').click();advanceShellTo(original,6);
+  const sim=original.simulations.at(-1);sim.move(sim.state.player,3,0);original.frame(100);
+  sim.state.player.hp=63;sim.state.inventory.ammo[0]=19;
+  const expected=plain(sim.exportLoadout()),saved=JSON.parse(original.memory.get(key));saved.checkpoint=sim.snapshot();
+  saved.entryLoadout={inventory:{weapons:[true,false,false,false],ammo:[48,0,0,0],shield:false},equipment:{right:0,left:null,shieldEnergy:100}};
+  const value=JSON.stringify(saved),resumed=harness(saved,{},campaignShellWorld);
+  assert.equal(resumed.element('resume-expedition').hidden,false);
+  await assert.doesNotReject(resumed.element('resume-expedition').click());
+  const recovered=resumed.simulations.at(-1);
+  assert.equal(resumed.element('body').dataset.state,'playing');assert.equal(recovered.state.world.index,6);
+  assert.equal(recovered.state.player.hp,63);assert.equal(recovered.state.inventory.ammo[0],19);
+  assert.deepEqual(plain(recovered.exportLoadout()),expected,'ownership, equipment and discoveries come from the healthy checkpoint');
+  assert.equal(resumed.memory.get(key),value,'successful recovery cannot overwrite the original save');
+  assert.equal(resumed.simulations.length,2);
+});
+
+test('audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources',async()=>{
+  const original=harness(null,{},arsenalWorld);original.element('start').click();
+  const sim=original.simulations.at(-1);sim.state.player.hp=58;sim.state.inventory.ammo[0]=17;
+  const expected=plain(sim.exportLoadout()),saved=JSON.parse(original.memory.get(key));saved.checkpoint=sim.snapshot();
+  saved.entryLoadout={inventory:{weapons:[false,false,false,false,true],ammo:[0,0,0,0,1],shield:false},equipment:{right:4,left:null,shieldEnergy:100},campaign:{version:1,discovered:['pistol']}};
+  const value=JSON.stringify(saved),resumed=harness(saved,{},arsenalWorld);
+  assert.equal(resumed.element('resume-expedition').hidden,false);
+  await assert.doesNotReject(resumed.element('resume-expedition').click());
+  const recovered=resumed.simulations.at(-1);
+  assert.equal(resumed.element('body').dataset.state,'playing');assert.equal(recovered.state.world.campaign,undefined);
+  assert.equal(recovered.state.player.hp,58);assert.equal(recovered.state.inventory.ammo[0],17);
+  assert.deepEqual(plain(recovered.exportLoadout()),expected);assert.equal(resumed.element('weapon-slot-4').hidden,true);
+  assert.equal(resumed.memory.get(key),value);assert.equal(resumed.simulations.length,2);
+});
+
+test('audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout',async()=>{
+  const original=harness(null,{},arsenalWorld);original.element('start').click();
+  const sim=original.simulations.at(-1);sim.state.player.hp=57;sim.state.inventory.ammo[0]=13;
+  const expected=plain(sim.exportLoadout()),saved=JSON.parse(original.memory.get(key));saved.checkpoint=sim.snapshot();
+  saved.entryLoadout={inventory:{weapons:[true,true,false],ammo:[9,2,0]}};
+  const value=JSON.stringify(saved),resumed=harness(saved,{},arsenalWorld);
+  await assert.doesNotReject(resumed.element('resume-expedition').click());
+  assert.equal(resumed.element('body').dataset.state,'playing');
+  assert.equal(resumed.simulations.at(-1).state.player.hp,57);
+  assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),expected);
+  assert.equal(resumed.memory.get(key),value);
+  resumed.key('KeyP');resumed.key('KeyP',false);await resumed.element('restart').click();
+  assert.deepEqual(plain(resumed.simulations.at(-1).exportInventory()),{weapons:[true,true,false,false],ammo:[9,2,0,0],shield:false});
+});
+
+test('audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage',()=>{
+  for(const campaign of [false,true]){
+    const factory=campaign?campaignShellWorld:arsenalWorld,original=harness(null,{},factory);original.element('start').click();
+    const saved=JSON.parse(original.memory.get(key));
+    saved.checkpoint.state.inventory=campaign?{weapons:[true,false,false,false],ammo:[48,0,0,0],shield:false}:{weapons:[false,false,false,false,true],ammo:[0,0,0,0,1],shield:false};
+    const value=JSON.stringify(saved),resumed=harness(saved,{},factory);
+    assert.equal(resumed.element('resume-expedition').hidden,true);
+    assert.equal(resumed.memory.get(key),value);assert.equal(resumed.simulations.length,1,'the invalid checkpoint never reaches load');
+  }
+});
+
+test('audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule',async()=>{
+  const app=harness(null,{},campaignShellWorld);app.element('start').click();
+  assert.equal(app.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 / 5 ou molette');
+  assert.match(app.element('toast').textContent,/premier trophée au monde 4/);
+  const preferences=app.context.FOptions.defaults(false);preferences.bindings.weapon5=['KeyB'];
+  const custom=harness(null,{'ferro-settings':JSON.stringify(preferences)},campaignShellWorld);
+  assert.equal(custom.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 / B ou molette');
+  const classic=harness(null,{},arsenalWorld);classic.element('start').click();
+  const resumed=harness(JSON.parse(classic.memory.get(key)),{},campaignShellWorld);
+  assert.equal(resumed.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 / 5 ou molette','the menu initially previews a new campaign');
+  await resumed.element('resume-expedition').click();
+  assert.equal(resumed.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 ou molette','resuming classic mode refreshes the hint immediately');
+  assert.equal(resumed.element('weapon-slot-4').hidden,true);
+});

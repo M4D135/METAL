@@ -32,6 +32,7 @@
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
   function bindingLabel(id){return (prefs.bindings[id]||[]).map(FOptions.keyName).join(' / ');}
+  function weaponHint(){const keys=Array.from({length:world?.campaign?5:4},(_,i)=>bindingLabel('weapon'+(i+1)));$('weapon-switch').title='Armes : '+keys.join(' / ')+' ou molette';}
   function renderBindings(){
     $('key-bindings').innerHTML=FOptions.actions.map(a=>'<div class="binding-row"><span>'+a.label+'</span><button id="bind-'+a.id+'" class="'+(bindingAction===a.id?'listening':'')+'" aria-label="Modifier la touche : '+a.label+'">'+(bindingAction===a.id?'Touche…':bindingLabel(a.id))+'</button></div>').join('');
     for(const a of FOptions.actions)$('bind-'+a.id).addEventListener('click',()=>{bindingAction=a.id;$('binding-status').textContent='Appuyez sur une touche pour « '+a.label+' ». Échap pour annuler.';renderBindings();$('bind-'+a.id).focus();});
@@ -58,7 +59,7 @@
     $('fps-limit').value=String(prefs.fpsLimit);$('fps-counter').hidden=!prefs.showFps;$('scanlines').hidden=!prefs.crt;$('vignette').hidden=!prefs.vignette;
     $('crosshair').style.scale=String(prefs.crosshairScale);canvas.style.filter=prefs.brightness===1?'none':'brightness('+prefs.brightness+')';
     $('interact-key').textContent=FOptions.keyName(prefs.bindings.interact[0]);
-    $('map-button').title='Carte ('+bindingLabel('map')+')';$('weapon-switch').title='Armes : '+bindingLabel('weapon1')+' / '+bindingLabel('weapon2')+' / '+bindingLabel('weapon3')+' / '+bindingLabel('weapon4')+' ou molette';
+    $('map-button').title='Carte ('+bindingLabel('map')+')';weaponHint();
     if(!touch)$('intro-controls').textContent=JSON.stringify(prefs.bindings)===JSON.stringify(FOptions.defaults(false).bindings)?'ZQSD / WASD · Souris · Clic pour tirer':'Commandes personnalisées · Souris · Clic pour tirer';
     $('music-title').textContent=trackLabel();
     const software=renderer?.stats.backend==='canvas2d';
@@ -73,7 +74,13 @@
   const savedIndex=v=>v?.version===3?v.index:v?.stage??0;
   function validSave(v){
     const identity=v&&(v.version===2&&Number.isInteger(v.stage)&&v.stage>=0&&v.stage<3&&v.campaign!==true||v.version===3&&v.campaign===true&&Number.isInteger(v.index)&&v.index>=0&&v.index<18&&v.stage===v.index%3);
-    return identity&&Number.isInteger(v.seed)&&v.seed>=0&&v.seed<=0xffffffff&&v.checkpoint&&v.runStats&&Object.keys(emptyStats()).every(k=>Number.isFinite(v.runStats[k])&&v.runStats[k]>=0&&v.runStats[k]<1e9);
+    if(!identity)return false;
+    // Reject mixed classic/campaign checkpoints before load constructs a new
+    // simulation. Reading an incompatible envelope leaves its source untouched.
+    const campaign=v.version===3,state=v.checkpoint?.state;
+    const fits=inventory=>!Array.isArray(inventory?.weapons)||(campaign?inventory.weapons.length===5:[3,4].includes(inventory.weapons.length));
+    if(!fits(state?.inventory)||!campaign&&(state?.campaign!==undefined||v.checkpoint?.campaignVersion!==undefined))return false;
+    return Number.isInteger(v.seed)&&v.seed>=0&&v.seed<=0xffffffff&&v.checkpoint&&v.runStats&&Object.keys(emptyStats()).every(k=>Number.isFinite(v.runStats[k])&&v.runStats[k]>=0&&v.runStats[k]<1e9);
   }
   function readSave(){
     try{const raw=localStorage.getItem(SAVE_KEY);if(!raw||raw.length>2200000)return null;const v=JSON.parse(raw);return validSave(v)?v:null;}catch{return null;}
@@ -124,7 +131,12 @@
   }
   function load(n,newSeed,loadout,asCampaign=campaignMode){
     checkpointPending=false;
-    campaignMode=asCampaign;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode);const carry=copyLoadout(loadout);sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),...(brain?{brain}:{})});sim.setDifficulty?.(prefs.difficulty);
+    campaignMode=asCampaign;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode);
+    const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
+    // Optional entry metadata must fit the actual generated arsenal. A stale
+    // 3/4/5-slot entry cannot block restoration of a healthy checkpoint.
+    const carry=entry&&(entry.inventory.weapons.length===slots||slots===4&&entry.inventory.weapons.length===3)?entry:null;
+    sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),...(brain?{brain}:{})});sim.setDifficulty?.(prefs.difficulty);
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;
@@ -134,7 +146,7 @@
     $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaign?world.chapterTitle+' · ':'')+world.title;
     $('mission-summary').innerHTML=world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';
     $('restart').textContent=world.campaign?'RECOMMENCER CE MONDE':'RECOMMENCER CE SECTEUR';
-    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=false;hudWait=0;renderHUD();
+    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=false;hudWait=0;renderHUD();weaponHint();
   }
   function syncDestruction(){
     const d=sim?.destruction,revision=sim?.state.destructionRevision??d?.revision;if(!d||revision===renderRevision)return;
@@ -147,7 +159,7 @@
   }
   function start(message){
     audio.start();audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});
-    toast(message||(world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; explorez pour découvrir le premier trophée.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
+    toast(message||(world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 4.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
   function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode){

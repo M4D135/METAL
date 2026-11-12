@@ -166,7 +166,7 @@ test('A trophy grants one discovery, local grace and a real hidden-entry trial t
   const world = trophyWorld(), sim = FSimulation.create(world);
   advance(sim, 6); assert.equal(sim.state.enemies.every(e => !e.deployed && !e.encounterReleased), true);
   assert.equal(sim.state.encounters[0].status, 'dormant'); assert.equal(sim.state.campaign.trophies[0].phase, 'sealed');
-  sim.hurt(15); sim.move(sim.state.player, 3, 0); sim.step(.025);
+  sim.hurt(15, false); sim.move(sim.state.player, 3, 0); sim.step(.025);
   assert.equal(sim.state.inventory.shield, true); assert.deepEqual(plain(sim.state.campaign.discovered), ['pistol', 'shield']);
   assert.equal(sim.state.campaign.trophies[0].phase, 'grace'); assert.equal(sim.state.campaign.trophies[0].timer, 3);
   const trophy = sim.state.events.filter(e => e.name === 'trophy'); assert.equal(trophy.length, 1); assert.equal(trophy[0].key, 'shield'); assert.equal(trophy[0].shield, true);
@@ -178,7 +178,7 @@ test('A trophy grants one discovery, local grace and a real hidden-entry trial t
   assert.equal(sim.state.campaign.trophies[0].phase, 'trial'); assert.equal(sim.state.enemies.every(e => e.deployed && e.encounterReleased), true, 'The real hidden entrances must release each preassigned guard');
   assert.deepEqual(plain(resumed.snapshot()), plain(sim.snapshot()));
   assert.equal(sim.state.events.filter(e => e.name === 'trophy').length, 1); assert.equal(resumed.state.events.filter(e => e.name === 'trophy').length, 0);
-  sim.hurt(10); assert.equal(sim.state.player.hp, 75, 'Grace must expire instead of leaving permanent immunity');
+  sim.hurt(10, false); assert.equal(sim.state.player.hp, 75, 'Grace must expire instead of leaving permanent immunity');
   const midway = sim.snapshot(), trialRestore = FSimulation.create(world); assert.equal(trialRestore.restore(midway), true);
   assert.deepEqual(plain(trialRestore.snapshot()), plain(midway));
 });
@@ -207,4 +207,102 @@ test('Corrupted trophy history, grace and premature trial saves fail atomically 
     const bad = plain(saved); change(bad); assert.equal(sim.restore(bad), false); assert.equal(JSON.stringify(sim.snapshot()), untouched);
   }
   sim.state.player.y = -15; sim.step(0); assert.equal(sim.state.dead, true); assert.equal(sim.state.events.at(-1).reason, 'fall');
+});
+
+function fullInventory() { return { weapons: [true, true, true, true, true], ammo: [80, 16, 8, 8, 1], shield: true }; }
+
+test('Campaign pressure uses both owned quantity and quality, ignores weapon swaps, and multiplies the selected difficulty', () => {
+  const pistol = { weapons: [false, false, false, false, true], ammo: [0, 0, 0, 0, 1], shield: false };
+  const rocketOnly = { ...plain(pistol), weapons: [false, false, true, false, true] };
+  const weak = FSimulation.campaignPolicy(17, pistol), partial = FSimulation.campaignPolicy(17, rocketOnly), complete = FSimulation.campaignPolicy(17, fullInventory());
+  assert.equal(weak.tier, 0); assert.equal(weak.maxActive, 4); assert.equal(complete.tier, 5); assert.equal(complete.maxActive, 12);
+  assert(partial.tier > weak.tier && partial.tier < complete.tier, 'Owning a late weapon must not pretend the missing arsenal is complete');
+  assert(weak.damageMultiplier < partial.damageMultiplier && partial.damageMultiplier < complete.damageMultiplier);
+  const owned = fullInventory(), world = campaignWorld(17), sim = FSimulation.create(world, { inventory: owned });
+  const policy = JSON.stringify(sim.state.adaptation);
+  for (let id = 0; id < 5; id++) { sim.selectWeapon(id); sim.step(0); assert.equal(JSON.stringify(sim.state.adaptation), policy); }
+  const normal = FSimulation.create(world), hard = FSimulation.create(world); hard.setDifficulty(2);
+  normal.hurt(10); hard.hurt(10);
+  assert(Math.abs((100 - hard.state.player.hp) - (100 - normal.state.player.hp) * 1.3) < 1e-9);
+  const restored = FSimulation.create(world); assert.equal(restored.restore(sim.snapshot()), true);
+  assert.deepEqual(plain(restored.state.adaptation), plain(sim.state.adaptation));
+  const empty = FSimulation.create(world).snapshot();
+  normal.state.inventory.weapons[2] = true; normal.step(0); assert.equal(normal.state.adaptation.tier, 3.4, 'A direct fixture inventory change must invalidate the ownership cache');
+  assert.equal(normal.restore(empty), true); normal.step(0); assert.equal(normal.state.adaptation.tier, 0, 'Restore must reset the cache to its validated inventory');
+});
+
+function campaignBossWorld(extra = {}) {
+  const world = campaignWorld(15, {
+    spawn: { x: 0, y: 0, z: 18, yaw: 0 }, bounds: { minX: -40, maxX: 40, minZ: -45, maxZ: 45 }, walkable: [{ x: 0, y: 0, z: 0, w: 80, d: 90 }],
+    enemies: [{ x: 0, y: 0, z: -10, type: 3, bossScale: 5.4, bossKind: 'colossus', bossName: 'Test', maxHp: 130, arena: { x: 0, z: -10, r: 30 } },
+      ...[1, 2].flatMap(wave => [-18, -14, -10].map(z => ({ x: wave === 1 ? -20 : 20, y: 0, z, type: 0, bossWave: wave, bossId: 0 })))], ...extra,
+  });
+  world.progression.maxActive = 12; return world;
+}
+
+test('A missed arsenal reduces boss HP once at entry; later discovery and save recovery never heal or rescale that boss', () => {
+  const pickup = { id: 'trophy-rocket', trophyId: 'trophy-rocket', kind: 'weapon', weapon: 2, amount: 4, x: 1.1, y: 0, z: 18 };
+  const world = campaignBossWorld({ pickups: [pickup] }), weaker = FSimulation.create(world), nominal = FSimulation.create(world, { inventory: fullInventory() });
+  assert.equal(weaker.state.enemies[0].maxHp, 72); assert.equal(nominal.state.enemies[0].maxHp, 130);
+  assert.equal(weaker.state.adaptation.entryTier, 0); assert.equal(weaker.state.adaptation.bossHpFactor, .55);
+  const boss = weaker.state.enemies[0];
+  weaker.state.player.pitch = Math.atan2(boss.y - 1.62, 28); weaker.fire();
+  const hp = boss.hp, maxHp = boss.maxHp; assert(hp < maxHp, 'The baseline damage must come from a real shot');
+  weaker.move(weaker.state.player, .3, 0); weaker.step(.025);
+  assert.equal(weaker.state.inventory.weapons[2], true); assert(weaker.state.adaptation.tier > 0);
+  assert.equal(boss.hp, hp); assert.equal(boss.maxHp, maxHp); assert.equal(weaker.state.adaptation.bossHpFactor, .55);
+  const saved = weaker.snapshot(), restored = FSimulation.create(world);
+  assert.equal(restored.restore(saved), true); assert.deepEqual(plain(restored.snapshot()), plain(saved));
+  const unchanged = JSON.stringify(restored.snapshot());
+  for (const change of [q => q.state.adaptation.bossHpFactor = 1, q => q.state.adaptation.entryTier = 5, q => q.state.adaptation.maxActive = 16, q => q.state.enemies[0].maxHp = 130]) {
+    const bad = plain(saved); change(bad); assert.equal(restored.restore(bad), false); assert.equal(JSON.stringify(restored.snapshot()), unchanged);
+  }
+});
+
+test('Both boss reinforcement phases respect a pistol-only combat cap and restore during the real boss encounter', () => {
+  const world = campaignBossWorld(), sim = FSimulation.create(world), boss = sim.state.enemies[0];
+  sim.step(.025); assert.equal(boss.bossAwake, true); assert.equal(sim.state.aiStats.combatCap, 4);
+  // Select the two phase-boundary states; the actual release, budget selection
+  // and checkpoint validation then run through normal simulation steps.
+  for (const fraction of [.6, .3]) {
+    boss.hp = boss.maxHp * fraction; sim.step(.025);
+    assert.equal(sim.state.enemies.filter(e => e.bossWave && e.bossReleased).length, fraction === .6 ? 3 : 6);
+    assert(sim.state.enemies.filter(e => e.type !== 3 && e.combatEnabled).length <= 4);
+    const saved = sim.snapshot(), restored = FSimulation.create(world);
+    assert.equal(restored.restore(saved), true); assert.deepEqual(plain(restored.snapshot()), plain(saved));
+  }
+});
+
+test('A wave larger than the actual arsenal cap deploys partially, saves, then admits another real guard after a kill', () => {
+  const original = trophyWorld(), world = campaignWorld(15, { ...original, campaign: true, index: 15, chapter: 5, stage: 0, trophies: [], pickups: [],
+    enemies: [-3, 0, 3].flatMap(x => [-14, -17].map(z => ({ x, y: 0, z, type: 0, deployed: false, drop: false }))),
+    encounters: [{ id: 'large-wave', trigger: { x: 0, y: 0, z: -4, w: 18, d: 22 }, maxActive: 6, waveGap: 4,
+      spawnEntries: [{ x: -3, y: 0, z: -14 }, { x: 0, y: 0, z: -14 }, { x: 3, y: 0, z: -14 }, { x: -3, y: 0, z: -17 }, { x: 0, y: 0, z: -17 }, { x: 3, y: 0, z: -17 }], waves: [{ enemyIds: [0, 1, 2, 3, 4, 5] }] }],
+  });
+  const sim = FSimulation.create(world); advance(sim, 3.5);
+  assert.equal(sim.state.aiStats.combatCap, 4); assert.equal(sim.state.enemies.filter(e => e.encounterReleased).length, 4);
+  assert.equal(sim.state.encounters[0].pendingWave, 0); assert.equal(sim.state.enemies.length, 6);
+  const saved = sim.snapshot(), restored = FSimulation.create(world); assert.equal(restored.restore(saved), true); assert.deepEqual(plain(restored.snapshot()), plain(saved));
+  sim.move(sim.state.player, 8, 0); sim.move(sim.state.player, 0, -16);
+  for (let shot = 0; shot < 20 && sim.state.kills === 0 && !sim.state.dead; shot++) {
+    const target = sim.state.enemies.filter(e => e.deployed && e.hp > 0).sort((a, b) => Math.hypot(a.x - sim.state.player.x, a.z - sim.state.player.z) - Math.hypot(b.x - sim.state.player.x, b.z - sim.state.player.z))[0];
+    aim(sim, target); sim.fire(); advance(sim, .4);
+  }
+  assert(sim.state.kills > 0, 'An actual pistol shot must free a combat slot');
+  sim.move(sim.state.player, 8 - sim.state.player.x, 0); sim.move(sim.state.player, 0, -sim.state.player.z); sim.move(sim.state.player, -sim.state.player.x, 0); advance(sim, 1.5);
+  assert(sim.state.enemies.filter(e => e.encounterReleased).length > 4, 'A partial wave must not remain permanently blocked');
+  assert(sim.state.enemies.filter(e => e.hp > 0 && e.combatEnabled).length <= 4);
+  assert.equal(FSimulation.create(world).restore(sim.snapshot()), true);
+});
+
+test('Explosive infantry waits for actual shield and heavy-weapon ownership while keeping its generated identity', () => {
+  for (const weapon of ['grenade', 'rocket'])for (const level of [0, 1, 2]) {
+    const inventory = { weapons: [false, level === 2, false, false, true], ammo: [0, level === 2 ? 6 : 0, 0, 0, 1], shield: level > 0 };
+    const world = campaignWorld(17, { enemies: [{ x: 0, y: 0, z: -14, type: 1, weapon, role: 'suppressor' }] }), sim = FSimulation.create(world, { inventory });
+    let launched = false;
+    for (let frame = 0; frame < 200; frame++) { sim.step(.025); launched ||= sim.state.projectiles.some(q => q.kind === weapon && q.owner === 0); }
+    assert.equal(launched, level > 0 && (weapon === 'grenade' || level === 2), `${weapon}, ownership level ${level}`);
+    assert.equal(sim.state.enemies.length, 1); assert.equal(sim.state.enemies[0].id, 0); assert.equal(sim.state.enemies[0].weapon, weapon);
+    assert.equal(FSimulation.create(world).restore(sim.snapshot()), true);
+  }
 });
