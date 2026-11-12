@@ -1,0 +1,136 @@
+{
+  "schema": "metal-lot01-final-v1",
+  "baseMain": "63668aca7045e62cd524973b226f21e9ec5703e8",
+  "auditSource": "6a17e08281b70feae33015d7059ef21717666ba3",
+  "version": "0.8.1",
+  "tests": {
+    "main": 422,
+    "final": 470,
+    "fail": 0,
+    "skipped": 0,
+    "worldSeparateCases": 18
+  },
+  "build": {
+    "version": "0.8.1",
+    "html_bytes": 812696,
+    "html_decimal_kb": 812.7,
+    "html_kib": 793.65,
+    "gzip_bytes": 245325,
+    "sha256": "4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a",
+    "external_assets": 0,
+    "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+    "source_bytes": {
+      "renderer.js": 106801,
+      "world.js": 133209,
+      "destruction.js": 26469,
+      "music.js": 26522,
+      "audio.js": 47822,
+      "soundscape.js": 4438,
+      "economy.js": 11994,
+      "brain.js": 8923,
+      "simulation.js": 202378,
+      "motion.js": 5280,
+      "actors.js": 27015,
+      "effects.js": 18725,
+      "options.js": 7108,
+      "game.js": 104096
+    }
+  },
+  "frameGate": {
+    "syntheticScenarios": 63,
+    "stableScenarios": 63,
+    "physicalDisplayValidation": false
+  },
+  "sourceSha256": {
+    "SIZE.json": "4221722ac3099aa28dd1972d61b157f84aa99748939cc21cf3ae08673062c972",
+    "checks/actor-visibility.test.mjs": "eba2baa8bfd2ae79d830f3dfc6785d88f3ef871444f5672c58ce14d7e716fbd7",
+    "checks/actors.test.mjs": "9839824eaea0c615fc163b014c0a6f034e25dea62d4e35887145b53fed950dd9",
+    "checks/armor.test.mjs": "36a7ba6be87d12edd835d3b35832d9206240a023434aea88d8dcd818eec08839",
+    "checks/audio.test.mjs": "c9bc180b5e551fb714e1c2d94dec365b7abd7668bd0a47b19036c9db0e0c32e9",
+    "checks/boss-progression.test.mjs": "3b77cec654b0771594dd1747a2d91f424d70827696445f690fcc7face8ba0694",
+    "checks/brain.test.mjs": "f768cb5e6efe4621897c4c5e9fa24fa8c7c0162a7bffaede9f79af95c15824eb",
+    "checks/build.test.mjs": "c4c6aaba943f8c9f699b9c17ad154c7c880d7bd6006ef28648f99565eeab4c2a",
+    "checks/cadence.test.mjs": "b46e32cc0a65d257b9b62346a04b1ccd39c6145e456b57a7efaa94703185e3c3",
+    "checks/campaign-simulation.test.mjs": "a75b95ff553191df1c887ce404fd957a7a8a8e22cec574cd2c4782ae5fd04fd5",
+    "checks/campaign-world.test.mjs": "37413228d437a68fa8a996d31c6ab2bd69830bbe8d34d590cee4cfc511228ce7",
+    "checks/checkpoint.test.mjs": "71a62525e24b2320b69c8e63aa76af29ed0f392605418c631021cb7a2491a05d",
+    "checks/destruction.test.mjs": "5f2dd3d83cf1754b75d835433376fcf414c8197c3ddfcc5de4b85c6662a62f19",
+    "checks/economy.test.mjs": "40889eb5e861e43e24be849c521c4087451e0d97aff51f2997f1371d72fbb766",
+    "checks/effects.test.mjs": "c1edde293596f3dce54e45a4e08743073a189a49b1bd89f49262d39498b8baba",
+    "checks/first-person-fixture.mjs": "16c8dc4eb150f28be9983bb923a850288cf0cd90c26c54dea6efc87c9ab28da8",
+    "checks/first-person.test.mjs": "88b7ad6f6942639ea1d85f2e35f94bf5aae7acc58c3f50fd9215cf44e17a4da9",
+    "checks/input.test.mjs": "e37236f93d8bb0d569c78b6082f483ea7a77e2cb9a51a4659af0fc3f7cbda9c7",
+    "checks/motion.test.mjs": "0f66218419d6ba07bc12d4250af5f16ffe7844ec19b7586638a1bdbd9159a906",
+    "checks/music.test.mjs": "9f3a12c7ab49331f2f34bf2c1aeaec1996c1732fa2720f8935601d61d52a29b8",
+    "checks/natural-spawn.test.mjs": "054dbc9aa2b85b530968260aebfd8604f93c07519148b3f5eede5bfbabab32ce",
+    "checks/options.test.mjs": "4ecc7298a4b4e8185a937bc5a0c2f926bb66947e77e91837903276134b2df25e",
+    "checks/progression.test.mjs": "d8cb265ea3678a23c0ef2d7474159596e1ebbad688ef36d3db8acb9ef37e2c74",
+    "checks/renderer-destruction.test.mjs": "d8b20c91faf893b2dead6182a32e0e34ea47175f0a6ffb16c0b320b045f41c22",
+    "checks/simulation.test.mjs": "0555b69c6e807471f45bbdc31280b2d8ac8b68177dfb617ce991b59b62a49f6b",
+    "checks/soundscape.test.mjs": "3c36e2873c6618f3d2c5048815cfe0e8219530255af17669f39f65404ab70e5b",
+    "checks/world.test.mjs": "cf1246dbc4d017bca6b2b4628e381398adbcd727c93a8f68bf21dbf53d361772",
+    "dist/index.html": "4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a",
+    "package.json": "19cd6f35837a9a0338d1d3e943b1d06185eefc8834c66f6aca98820971323e3f",
+    "src/actors.js": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+    "src/audio.js": "4b36fde20d003c7a785c05f1315cd568d309dd08dd6bdc30ec2283bdbe452b6d",
+    "src/brain.js": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "src/destruction.js": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "src/economy.js": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+    "src/effects.js": "9407c066b0543086cba6539eb8c2ab46c397d0ee240c2c44a718bafc3b699ef5",
+    "src/game.js": "2b5a50aee125fc7acd8fefad782a97ea94d9556b0268b906b26fdcd49f16de3c",
+    "src/index.html": "334453660082853d2b6775550ccc8fee1ef25bd9623da62eb9190b4d67b68135",
+    "src/motion.js": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+    "src/music.js": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74",
+    "src/options.js": "46a02bba9a6e83942a0ea37abf2eda8024dc20b70665cbc1c48c84cdd0a4a3fd",
+    "src/renderer.js": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "src/simulation.js": "96544ee94904791cc223e19c510065407e8f9ac7b333ff5771a0de73485c9ca4",
+    "src/soundscape.js": "e89dbf204d9891fea96e93f98e8a9d0d80c258655e5fcf25be38ad67ead037b3",
+    "src/style.css": "5fac4844ea19cd8ab0eae39c88626b1fd8c585ca9851de6dc51ca0093bdf31be",
+    "src/world.js": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+    "tools/cadence-profile.mjs": "2b5e5da3fa63a4d8d9383f82adb31ee28c62f576083551f54d65ffceec16144c",
+    "tools/frame-gate-profile.mjs": "8d8db3c6d78cbdd35c4881adc3006817105e1a7beb3d849b334fc2bd329f31ee"
+  },
+  "files": [
+    {
+      "path": "npm-test.log.gz",
+      "rawBytes": 135309,
+      "rawSha256": "53228bb6206c9d52cece8816436e4856af549f1239bfa737f09faaf2a7a76aa3",
+      "gzipBytes": 27021,
+      "gzipSha256": "588e3fb092a297aa6c2ca5896bb74c0e792faefb0b44a4f7e838db49c8652712"
+    },
+    {
+      "path": "frame-gate-final.json.gz",
+      "rawBytes": 26322,
+      "rawSha256": "84cf57d5dbc4c7e9fe7c8ad947fcbf839f354ff24dd59eb96454a37269473f51",
+      "gzipBytes": 1600,
+      "gzipSha256": "632176d7e4d5cecee4449d203fa327129321d624da7848c3dca63a897fceac6a"
+    },
+    {
+      "path": "navigateur/controls.jpg",
+      "bytes": 50174,
+      "sha256": "6044dd372038a2200b1337eb30405c52be6e2046730d6e52a2fb193467454a12"
+    },
+    {
+      "path": "navigateur/gameplay-cpu.jpg",
+      "bytes": 74533,
+      "sha256": "dcd16c5a7a6ddeb0bbf4d0f726f3c86401a63a99fed12811f8da537943274649"
+    },
+    {
+      "path": "navigateur/paused-image.jpg",
+      "bytes": 53566,
+      "sha256": "ec2327193e617e2414eb02de1bb752803b7c8cd2c79f310a41f9b293d156f36b"
+    },
+    {
+      "path": "navigateur/paused-ax.txt.gz",
+      "rawBytes": 5707,
+      "rawSha256": "4c19a9f002fd7d268c69c2aaee7894dc2241912047094315e6a4494667c52ba9",
+      "gzipBytes": 2311,
+      "gzipSha256": "c8121b6b1793abde9fc61ce55b6cf3ec6a6c93131f52de111a058a2eea9df162"
+    },
+    {
+      "path": "navigateur/console-summary.json",
+      "bytes": 218,
+      "sha256": "8e94483c9e7e9b2e4b00ece0fe0c5070f5d164fa7f8b5586376502755438d15f"
+    }
+  ]
+}

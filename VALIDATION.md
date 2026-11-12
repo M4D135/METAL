@@ -1,3 +1,25 @@
+# Validation du chantier moteur — lot 01 terminé — 12 novembre 2026
+
+**LOAD-01, LOOP-01/LOOP-V2, STAB-V1, LOOP-06, LOOP-10 et LOOP-09.** La branche réunit les reprises compatibles, le tampon de tir par main, la capture/annulation du pointeur, la molette seuillée et le limiteur stabilisé avec indication de la cadence choisie.
+
+| Contrôle | Résultat |
+|---|---|
+| `npm test` complet | **470/470**, zéro échec, zéro ignoré ; baseline 422/422 |
+| Vérification indépendante du monde | **18 cas**, PASS |
+| Build autonome | **812 696 octets bruts**, zéro ressource externe |
+| Version | **0.8.1** |
+| Limiteur sur sources finales | **63/63 scénarios synthétiques stables** |
+
+SHA-256 : `4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a`. Les journaux des étapes ci-dessous sont historiques ; la présente entrée porte sur leur réunion finale. [Rapport et arbitrages](docs/chantier-moteur/RAPPORT.md), [preuves finales et captures](docs/chantier-moteur/preuves/lot-01/final/README.md).
+
+Le navigateur Chrome disponible valide l’affichage des réglages, l’activation/remise à zéro de l’accélération système, le lancement d’une partie et la pause. **WebGL 2 indisponible, rendu CPU de secours autour de 1 FPS** : calibration de cadence non obtenue, capture physique non validée, aucune conclusion NVIDIA/GPU/écran réel. Les tests déterministes couvrent séparément ces contrats. Téléphone, Windows/NVIDIA, Safari et Firefox restent à essayer.
+
+Les reprises acceptées passent de 7/31 à 31/31 ; les 17 refus LOOP sur 44 disparaissent. À 60 Hz quantifié, 900 images font 900 pas au lieu de 1 500. Les douze combinaisons de clic bref testées produisent un tir chacune. Le limiteur choisit une cadence régulière par diviseur entier : la cible 60 donne 75 i/s sur 75 Hz, 72 sur 144 Hz, 55 sur 165 Hz ; le libellé exprime ce choix et ne promet pas un plafond strict. Le futur gouverneur natif 60/30 est réservé aux lots 06/07/15.
+
+Aucune fusion de main, aucun déploiement, aucun changement de version ni format de sauvegarde. Les lots 02 et suivants restent à réaliser. Le navigateur, les pilotes, les outils et les preuves sont exclus de la taille brute du jeu.
+
+---
+
 # Validation du chantier moteur — lot 01 / T3 — 12 novembre 2026
 
 **LOOP-10 : capture, visée et molette.** Capture dans le geste, mouvement brut par défaut avec repli, préférence d’accélération persistée, clic d’acquisition sans tir. Une annulation empêche aussi les réponses tardives, sans invalider un relâchement normal. Trente événements de molette de 4 px donnent **30 → 1 changement d’arme**.

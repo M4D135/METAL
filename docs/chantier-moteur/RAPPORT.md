@@ -184,7 +184,7 @@ fonctionnels, sans les remplacer. Les tâches différées du lot 00 — harnais 
 boucle, census, trace, overlay et comparaison de pixels notamment — restent
 nécessaires après le lot 05 selon le master.
 
-## Lot 01 — préflight et T1 : points de reprise — 12 novembre 2026
+## Lot 01 — bugs bloquants — 12 novembre 2026
 
 **T1 terminé — LOAD-01, LOOP-01 et LOOP-V2 absorbés selon les arbitrages.**
 Cette section ne déclare pas le lot 01 entier terminé. Les autres tâches du
@@ -342,3 +342,40 @@ La molette cumule les déplacements normalisés (pixels, lignes et pages), avec 
 [Preuves avant/après, sources API et annulation tardive](preuves/lot-01/t3/PROOF.md). Validation cumulative ciblée : **85/85** (entrées, checkpoints, options, cadence), build et contrôle de distribution PASS. HTML **806 474 → 809 176 octets**, SHA-256 `9a935866e0f1b64bda17fc5e5092cd534deeab38fc0d44367bf44e6fbba950e2` ; version 0.8.1. Les horloges restent hors de la simulation. Aucun essai de souris Windows, de Safari/Firefox ou de téléphone physique n’est déduit du harnais.
 
 Valeur par défaut appliquée : mouvement brut activé. Question de ressenti conservée pour David : maintenir cette valeur après essai de la sensibilité sur sa souris ? L’option permet déjà le mouvement traité par le système.
+
+### T4 — cadence régulière et indication explicite [LOOP-09]
+
+Le limiteur observe tous les callbacks, mesure leur période et présente une image tous les N rafraîchissements. La première calibration, le changement d’écran/cible et les suspensions réinitialisent proprement la décision. Une tolérance numérique et une bande d’hystérésis évitent les oscillations du diviseur aux demi-entiers. Le texte est aussi rafraîchi dans l’onglet Image **en pause**.
+
+La fiche contient une contradiction : sa formule `round(fréquence/cible)` ne peut pas produire à la fois 60 i/s sur 75 Hz et 48 sur 144 Hz. La contre-vérification LOOP-09 prime. Le libellé est donc **« Cadence visée »**, accompagné de la cadence estimée réellement choisie. Il ne s’agit pas d’un plafond strict.
+
+| Écran / cible | Limiteur historique | Candidat final |
+|---|---:|---:|
+| 75 Hz / 60 | 37,5 i/s | 75 i/s, un rafraîchissement |
+| 90 Hz / 60 | 45 i/s | 45 i/s, deux rafraîchissements |
+| 144 Hz / 60 | 48 i/s | 72 i/s, deux rafraîchissements |
+| 165 Hz / 60 | 55 i/s | 55 i/s, trois rafraîchissements |
+| 75 Hz / 30 | 25 i/s | 25 i/s, trois rafraîchissements |
+
+Les **63 scénarios** exacts, arrondis et avec faible gigue sont stables après chauffe. Les trois défauts de stabilisation et le texte de pause ont leurs tests rouges avant/verts après. [Preuves T4](preuves/lot-01/t4/README.md) et [nouvelle mesure sur l’intégration finale](preuves/lot-01/final/README.md).
+
+La décision nouvelle de PR #2 est déjà tranchée : **60 i/s constantes à résolution native, 30 en repli calibré**, sans oscillation en combat. Le gouverneur, le défaut 60/30 et la suppression de l’adaptation automatique de résolution appartiennent aux **lots 06/07/15**. La préférence actuelle sans limite et l’ancien gouverneur ne réalisent pas encore cette cible ; T4 ne prétend pas les avoir remplacés.
+
+### Clôture du lot 01
+
+**Préflight, T1, STAB-V1, T2, T3 et T4 terminés.** Les variantes physiques de LOOP-01, le changement de format des sauvegardes et la boucle fixe restent écartés ou différés conformément aux arbitrages ; aucun format n’a été ajouté. Les seuls fichiers de production modifiés sont `game.js`, `simulation.js`, `options.js` et le balisage des options dans `index.html`.
+
+| Validation finale | Résultat |
+|---|---|
+| Suite complète avant / après | **422/422 → 470/470**, zéro échec ni test ignoré |
+| Contrôle de monde séparé | **18 cas**, PASS |
+| Build et contrôle de distribution | PASS, zéro ressource externe |
+| HTML brut | **803 375 → 812 696 octets** (+9 321), limite 1 400 000 |
+| Version | **0.8.1**, conservée |
+| Limiteur synthétique sur les sources réunies | **63/63** scénarios stables |
+
+SHA-256 du HTML final : `4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a`. [Journal complet, empreintes et captures](preuves/lot-01/final/README.md).
+
+Le contrôle Chrome distant a vérifié les nouveaux réglages, leur remise à zéro, le lancement et la pause. **WebGL 2 y est indisponible et le rendu CPU affichait environ 1 FPS** : la cadence n’a pas pu y être calibrée, et le pointeur est resté en mode de visée par glisser. L’essai ne prouve aucune performance GPU, aucune fréquence d’écran physique ni l’absence d’accélération d’une souris réelle. Téléphone, Windows/NVIDIA, Safari et Firefox restent à vérifier. Aucune égalité de pixels ni écoute physique n’est annoncée.
+
+Le lot 00 / T1 est publié dans la PR #3. Le lot 01 dépend de cet outillage ; sa branche garde une tâche par commit. Aucune fusion de main, aucun déploiement et aucun changement de version n’ont été effectués. **Les lots 02 et suivants ne sont pas réalisés dans cette livraison.** La prochaine étape est l’invalidation locale de navigation et les optimisations de simulation du lot 02, avec sa comparaison principale appariée ; la replanification sélective demeure réservée au lot 03/T4.

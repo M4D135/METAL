@@ -51,3 +51,93 @@ test('campaign pistol selection migrates without stealing a customized Digit5 bi
   const defaultOld=options.defaults();delete defaultOld.bindings.weapon5;
   assert.equal(options.normalize(defaultOld).bindings.weapon5[0],'Digit5');
 });
+
+test('The frame gate keeps a regular whole-vsync cadence and exposes the actual rate',()=>{
+  // Rates in the counter-audit, not the contradictory 48/60 fps examples in the lot sheet.
+  for(const [hz,limit,expected,stride] of [[75,60,75,1],[90,60,45,2],[100,60,50,2],[120,60,60,2],[144,60,72,2],[165,60,55,3],[240,60,60,4],[75,30,25,3],[144,120,144,1]]){
+    const gate=options.createFrameGate(),shown=[];let previous=0;
+    for(let frame=0;frame<hz*22;frame++){
+      const now=Math.round(frame*10000/hz)/10,yes=options.frameGate(gate,now,limit);
+      if(frame>=hz*2&&yes)shown.push(frame);
+      if(frame>=hz*2)assert(Math.abs(gate.effectiveHz-expected)<1.1);
+      previous=now;
+    }
+    assert.equal(shown.length/20,expected,`${hz} Hz, target ${limit}`);
+    assert.equal(gate.stride,stride);
+    for(let i=1;i<shown.length;i++)assert.equal(shown[i]-shown[i-1],stride,'cadence varied despite stable vsync');
+    assert.equal(gate.last,previous,'skipped callbacks must still update the estimator');
+  }
+});
+
+test('Unlimited and near-native rates never discard a valid callback after calibration',()=>{
+  for(const [hz,limit] of [[59.94,60],[60,60],[120,120],[144,0]]){
+    const gate=options.createFrameGate();
+    for(let frame=0;frame<1200;frame++){
+      const shown=options.frameGate(gate,frame*1000/hz,limit);
+      if(frame>30)assert.equal(shown,true);
+    }
+  }
+});
+
+test('The frame gate recalibrates on display changes, long suspension and clock restart',()=>{
+  const gate=options.createFrameGate();let now=0;
+  for(let i=0;i<120;i++)options.frameGate(gate,now+=1000/144,60);
+  assert.equal(gate.stride,2);
+  for(let i=0;i<120;i++)options.frameGate(gate,now+=1000/165,60);
+  assert.equal(gate.stride,3);assert(Math.abs(gate.effectiveHz-55)<1e-8);
+  assert.equal(options.frameGate(gate,now+=10000,60),true);
+  assert.equal(gate.count,0);
+  for(let i=0;i<60;i++)options.frameGate(gate,now+=1000/60,60);
+  assert.equal(gate.stride,1);assert(Math.abs(gate.effectiveHz-60)<1e-8);
+  assert.equal(options.frameGate(gate,0,60),true);
+  assert.equal(gate.count,0);assert.equal(options.frameGate(gate,0,60),false);
+});
+
+test('Changing the target is immediate and malformed timestamps cannot poison the gate',()=>{
+  const gate=options.createFrameGate();let now=0;
+  for(let i=0;i<120;i++)options.frameGate(gate,now+=1000/120,30);
+  assert.equal(gate.stride,4);
+  assert.equal(options.frameGate(gate,now+=1000/120,120),true);
+  assert.equal(gate.stride,1);
+  const before=JSON.stringify(gate);
+  assert.equal(options.frameGate(gate,NaN,120),false);assert.equal(options.frameGate(gate,Infinity,120),false);
+  assert.equal(JSON.stringify(gate),before);
+  assert.equal(options.frameGate(gate,now+=1000/120,0),true);
+});
+
+test('Exact half-integer ratios choose their measured divisor on the first calibration and never oscillate',()=>{
+  for(const origin of [0,1e6,1e9])for(const [hz,limit,stride] of [[90,60,2],[75,30,3],[150,60,3]]){
+    const gate=options.createFrameGate();let lastShown;
+    for(let frame=0;frame<2000;frame++){
+      const shown=options.frameGate(gate,origin+frame*1000/hz,limit);
+      if(frame<6)continue;
+      assert.equal(gate.stride,stride,`${hz} Hz, target ${limit}, origin ${origin}, frame ${frame}`);
+      if(shown){if(lastShown!==undefined)assert.equal(frame-lastShown,stride);lastShown=frame;}
+    }
+  }
+});
+
+test('Small timestamp jitter around a divider boundary cannot restart the display phase',()=>{
+  const jitter=[0,.03,-.02,.01,-.03,.02];
+  for(const phase of [0,1,2,3,4,5])for(const quantized of [false,true])for(const [hz,limit,stride] of [[90,60,2],[75,30,3],[150,60,3]]){
+    const gate=options.createFrameGate();let lastShown;
+    for(let frame=0;frame<1200;frame++){
+      const stamp=frame*1000/hz+jitter[(frame+phase)%jitter.length],now=quantized?Math.round(stamp*10)/10:stamp;
+      const shown=options.frameGate(gate,now,limit);
+      if(frame<30)continue;
+      assert.equal(gate.stride,stride,`${hz} Hz, phase ${phase}, quantized ${quantized}`);
+      if(shown){if(lastShown!==undefined)assert.equal(frame-lastShown,stride,'a noisy estimate reset the phase');lastShown=frame;}
+    }
+  }
+});
+
+test('Divider hysteresis yields to a changed display, target or suspended clock',()=>{
+  const gate=options.createFrameGate();let now=0;
+  const settle=(hz,limit,stride)=>{for(let i=0;i<120;i++)options.frameGate(gate,now+=1000/hz,limit);assert.equal(gate.stride,stride,`${hz} Hz, target ${limit}`);};
+  settle(75,60,1);settle(90,60,2);settle(60,60,1);
+  settle(60,30,2);settle(75,30,3);settle(72,30,2);settle(75,30,3);
+  settle(144,60,2);settle(150,60,3);settle(144,60,2);settle(165,60,3);
+  assert.equal(options.frameGate(gate,now+=10000,60),true);assert.equal(gate.count,0);
+  settle(90,60,2);settle(90,30,3);
+  assert.equal(options.frameGate(gate,now+=1000/90,60),true);assert.equal(gate.stride,2);
+});

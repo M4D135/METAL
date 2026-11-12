@@ -11,6 +11,7 @@
   const audio=FAudio.create(),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
+  const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
   let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'],ammoNames=['balles','cartouches','roquettes','grenades','balles'];
   const worldCache=new Map();let preparationSerial=0,shieldLift=0;
@@ -124,7 +125,7 @@
     for(const [id,key,multiplier,suffix] of [['fov','fov',1,'°'],['brightness','brightness',100,' %'],['sensitivity','sensitivity',100,' ×'],['crosshair','crosshairScale',100,' %'],['master','masterVolume',100,' %'],['music','musicVolume',100,' %'],['effects','effectsVolume',100,' %'],['ambience','ambienceVolume',100,' %']]){
       $(id+'-setting').value=String(Math.round(prefs[key]*multiplier));$(id+'-value').textContent=(id==='sensitivity'?prefs[key].toFixed(2).replace('.',','):Math.round(prefs[key]*multiplier))+suffix;
     }
-    $('fps-limit').value=String(prefs.fpsLimit);$('fps-counter').hidden=!prefs.showFps;$('scanlines').hidden=!prefs.crt;$('vignette').hidden=!prefs.vignette;
+    $('fps-limit').value=String(prefs.fpsLimit);cadenceHint();$('fps-counter').hidden=!prefs.showFps;$('scanlines').hidden=!prefs.crt;$('vignette').hidden=!prefs.vignette;
     $('crosshair').style.scale=String(prefs.crosshairScale);canvas.style.filter=prefs.brightness===1?'none':'brightness('+prefs.brightness+')';
     $('interact-key').textContent=FOptions.keyName(prefs.bindings.interact[0]);
     $('map-button').title='Carte ('+bindingLabel('map')+')';weaponHint();
@@ -774,8 +775,15 @@
     ctx.strokeStyle=exitReady()?'#71e1cc':'#b08449';ctx.strokeRect(X(world.exit.x)-3,Z(world.exit.z)-3,6,6);
     const p=sim.state.player;ctx.save();ctx.translate(X(p.x),Z(p.z));ctx.rotate(p.yaw);ctx.fillStyle='#f2f5e5';ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(3.5,3.2);ctx.lineTo(0,1.5);ctx.lineTo(-3.5,3.2);ctx.closePath();ctx.fill();ctx.restore();
   }
+  function cadenceHint(){
+    const hz=framePacer.refreshHz,ready=hz>0&&framePacer.limit===prefs.fpsLimit;
+    const text=ready?(prefs.fpsLimit?'Cadence régulière : ≈ '+Math.round(framePacer.effectiveHz)+' i/s · écran ≈ '+Math.round(hz)+' Hz.':'Sans limite · écran mesuré à ≈ '+Math.round(hz)+' Hz.'):'Mesure de la cadence de l’écran…';
+    if($('fps-effective').textContent!==text)$('fps-effective').textContent=text;
+  }
   function frame(now){
-    requestAnimationFrame(frame);if(prefs.fpsLimit&&now-last<1000/prefs.fpsLimit-.5)return;
+    requestAnimationFrame(frame);const present=FOptions.frameGate(framePacer,now,prefs.fpsLimit);
+    if((mode==='options'||mode==='paused')&&optionsTab==='image'&&now-cadenceHintAt>=500){cadenceHintAt=now;cadenceHint();}
+    if(!present)return;
     const frameMs=Math.max(0,now-last),dt=clamp(frameMs/1000,0,.12);last=now;clock+=dt;
     if(!renderer||!sim||document.hidden){perfStart=0;perfFrames=0;return;}
     if(mode==='loading')return;

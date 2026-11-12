@@ -33,5 +33,53 @@
     return {ok:true,bindings:{...bindings,[action]:[code]}};
   }
   function keyName(code){return ({Space:'Espace',Enter:'Entrée',ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',ShiftLeft:'Maj G',ShiftRight:'Maj D',ControlLeft:'Ctrl G',ControlRight:'Ctrl D',Backspace:'Retour',Tab:'Tab'})[code]||String(code).replace(/^(Key|Digit)/,'');}
-  window.FOptions={defaults,normalize,assign,keyName,fireBufferMs:150,actions:actions.map(([id,label])=>({id,label})),down:(bindings,keys,id)=>(bindings[id]||[]).some(code=>keys.has(code)),matches:(bindings,id,code)=>(bindings[id]||[]).includes(code)};
+  // LOOP-09: observe every rAF, including callbacks whose drawing is skipped.
+  // The nearest whole-vsync cadence is deliberate; effectiveHz is exposed so
+  // the host never labels 72 rendered frames/s as a strict 60 frames/s cap.
+  function createFrameGate(){return {samples:new Float64Array(30).fill(Infinity),sorted:new Float64Array(30),count:0,at:0,last:NaN,period:0,refreshHz:0,effectiveHz:0,stride:1,strideHz:0,phase:0,limit:NaN,due:NaN};}
+  function frameGate(g,now,limit=0){
+    if(!Number.isFinite(now))return false;
+    limit=Number.isFinite(limit)&&limit>0?limit:0;
+    const gap=now-g.last;
+    if(Number.isFinite(g.last)&&gap>0&&gap<=250){
+      g.samples[g.at]=gap;g.at=(g.at+1)%30;g.count=Math.min(30,g.count+1);
+      if(g.count>=6){
+        g.sorted.set(g.samples);g.sorted.sort();const middle=g.count>>1;
+        g.period=g.count%2?g.sorted[middle]:(g.sorted[middle-1]+g.sorted[middle])/2;
+        g.refreshHz=1000/g.period;
+      }
+    }else if(Number.isFinite(g.last)&&gap===0)return false;
+    else{
+      g.samples.fill(Infinity);g.count=g.at=0;g.period=g.refreshHz=g.effectiveHz=g.strideHz=0;g.phase=0;g.due=NaN;
+    }
+    g.last=now;
+    let stride=1;
+    if(limit&&g.period&&limit<g.refreshHz*.95){
+      const ratio=g.refreshHz/limit,nearest=Math.max(1,Math.round(ratio+1e-7));
+      const fresh=limit!==g.limit||!g.strideHz||Math.abs(g.refreshHz/g.strideHz-1)>.02;
+      if(fresh){
+        // A measured half-integer tie favors the longer interval. Do not keep
+        // the uncalibrated stride=1 merely because the first estimate jitters.
+        const half=Math.floor(ratio)+.5;
+        stride=Math.abs(ratio-half)<=.02?Math.ceil(half):nearest;g.strideHz=g.refreshHz;
+      }else{
+        // ±0.02 around the half-integer prevents timestamp noise from changing
+        // the divider and restarting its phase. A >2% refresh shift reselects it.
+        stride=g.stride;
+        if(ratio<stride-.52||ratio>stride+.52){stride=nearest;g.strideHz=g.refreshHz;}
+      }
+    }else g.strideHz=g.refreshHz;
+    if(limit!==g.limit||stride!==g.stride){g.phase=0;g.due=NaN;}
+    g.limit=limit;g.stride=stride;g.effectiveHz=g.period?g.refreshHz/stride:0;
+    if(!limit)return true;
+    if(g.period){const show=g.phase===0;g.phase=(g.phase+1)%stride;return show;}
+    // During the short calibration window, retain accumulated deadlines rather
+    // than resetting to each rendered callback and losing fractional periods.
+    const target=1000/limit,half=gap>0&&gap<=250?gap/2:0;
+    if(!Number.isFinite(g.due))g.due=now;
+    if(now<g.due-half)return false;
+    g.due+=target;if(g.due<now-target)g.due=now+target;
+    return true;
+  }
+  window.FOptions={defaults,normalize,assign,keyName,createFrameGate,frameGate,fireBufferMs:150,actions:actions.map(([id,label])=>({id,label})),down:(bindings,keys,id)=>(bindings[id]||[]).some(code=>keys.has(code)),matches:(bindings,id,code)=>(bindings[id]||[]).includes(code)};
 })();

@@ -288,3 +288,19 @@ test('A normal mouse release keeps an asynchronous pointer-lock request valid',a
     app.frame(20);assert.equal(app.sim.state.shots,0);tap(app);app.frame(20);assert.equal(app.sim.state.shots,1);
   }
 });
+
+test('The paused image options refresh the displayed cadence after target and display changes',()=>{
+  const app=shell();for(let i=0;i<90;i++)app.frame(1000/144);
+  app.key('KeyP');app.key('KeyP',false);app.element('tab-image').click();
+  assert.equal(app.element('body').dataset.state,'paused');
+  app.element('fps-limit').value='60';app.element('fps-limit').emit('change');
+  for(let i=0;i<120;i++)app.frame(1000/144);
+  assert.match(app.element('fps-effective').textContent,/72 i\/s.*144 Hz/);
+  app.element('fps-limit').value='30';app.element('fps-limit').emit('change');
+  for(let i=0;i<120;i++)app.frame(1000/144);
+  assert.match(app.element('fps-effective').textContent,/29 i\/s.*144 Hz/);
+  app.element('fps-limit').value='60';app.element('fps-limit').emit('change');
+  for(let i=0;i<240;i++)app.frame(1000/165);
+  assert.match(app.element('fps-effective').textContent,/55 i\/s.*165 Hz/);
+  assert.equal(app.element('body').dataset.state,'paused','Measuring cadence must never resume gameplay');
+});
