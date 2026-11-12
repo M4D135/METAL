@@ -1,3 +1,43 @@
+# Validation du chantier moteur — lot 00 / T1 — 12 novembre 2026
+
+**SIM-11, IA-06 : outillage de preuve livré, version 0.8.1 inchangée.** Les
+profils et rapports de performance utilisent désormais le domaine principal
+de Node avec des variantes isolées. Les empreintes Float64 par pas, snapshots,
+compteurs en mémoire et comparaisons AB/BA sont conservés dans le dépôt.
+Les tests fonctionnels gardent leur chargeur VM ; aucun fichier `src/` ou
+`checks/` n'a été modifié.
+
+| Contrôle | Avant, main propre `63668ac` | Après T1 |
+|---|---|---|
+| Suite complète `npm test` | **422 réussis, 0 échec** | **422 réussis, 0 échec** |
+| HTML autonome brut | **803 375 octets** | **803 375 octets, identique octet à octet** |
+| Ressources externes | 0 | 0 |
+| Version | 0.8.1 | 0.8.1 |
+
+Le build et la suite complète ont été exécutés par l'intégrateur ; leurs
+journaux avant/après sont archivés. Les huit échecs `campaign-world` mentionnés
+pour le Mac d'audit ne sont pas reproduits ici. SHA-256 inchangé du HTML :
+`d9503acf09a33a9b2d0f90d598c0ac881250131ce0b3f70b74e1afc8c5df1b3b`.
+`SIZE.json` reste inchangé ; navigateur, pilotes, tests et documentation sont
+exclus de la taille brute du jeu.
+
+Deux profils indépendants des quatre scénarios historiques, 1 800 pas chacun,
+donnent le même checksum, les mêmes états, snapshots et compteurs par pas.
+L'A/A et le rejeu instrumenté conservent ces états. Les trois rapports migrés
+sont identiques octet à octet à leurs sorties antérieures. Le chemin V2 a reçu
+un A/A court de 120 pas sur les mondes 1 et 10 ; ses campagnes complètes restent
+à mesurer au lot 02.
+
+**L'A/A présente une asymétrie CPU médiane de 5,1 à 10,2 %** : aucun gain de
+jeu n'est revendiqué. Ce lot mesure le CPU Node, sans nouvelle vérification de
+navigateur, GPU, téléphone, Windows/NVIDIA, Safari ou Firefox. Les tâches
+**T2 et suivantes du lot 00 sont différées après le lot 05 selon le master**.
+Le [rapport](docs/chantier-moteur/RAPPORT.md) détaille les chiffres et limites ;
+les [preuves](docs/chantier-moteur/preuves/lot-00/README.md) conservent 16 archives
+gzip déterministes, leur manifeste et un résumé lisible.
+
+---
+
 # Validation de METAL v0.8.1 — 12 novembre 2026
 
 La mise à jour de musique d’accueil ajoute « Furie d’acier », une composition thrash originale à 212 BPM, avec déverrouillage au geste utilisateur, isolation de la partie et transitions de visibilité. **422 tests réussis, 0 échec** ; build autonome de **803 375 octets bruts**, aucune ressource externe. Le [rapport 0.8.1](docs/qa-title-v081.md) précise les tests, le SHA-256, la vérification navigateur et ses limites. Les résultats 0.8.0 et antérieurs ci-dessous sont historiques.

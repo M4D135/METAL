@@ -1,19 +1,17 @@
 import fs from 'node:fs';
-import vm from 'node:vm';
+import {loadRealm} from './realm-loader.mjs';
+import {parseToolArgs} from './proof/common.mjs';
+import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 
-const root = new URL('../', import.meta.url);
-const sources = Object.fromEntries(['renderer', 'world', 'destruction', 'economy', 'simulation'].map(name => [name, 'src/' + name + '.js']));
-const context = { window: {} };
-vm.createContext(context);
-const hashes = {};
-for (const [name, path] of Object.entries(sources)) {
-  const source = fs.readFileSync(new URL(path, root), 'utf8');
-  hashes[name] = crypto.createHash('sha256').update(source).digest('hex');
-  vm.runInContext(source, context, { filename: path });
-}
-const { FWorld, FSimulation } = context.window;
+const {root:rootPath,output} = parseToolArgs(process.argv.slice(2));
+const root = pathToFileURL(rootPath + '/');
+const modules = ['renderer','world','destruction','economy','simulation'];
+const sources = Object.fromEntries(modules.map(name=>[name,'src/'+name+'.js']));
+const loaded = loadRealm({root:rootPath,modules});
+const hashes = loaded.sourceSha256;
+const {FWorld,FSimulation} = loaded.window;
 const plain = value => JSON.parse(JSON.stringify(value));
 const acquisitions = [
   { index: 0, key: 'pistol', weapon: 4, name: 'Pistolet (départ)' },
@@ -139,4 +137,4 @@ const report = {
   worlds: rows,
 };
 const json = JSON.stringify(report, null, 2) + '\n';
-if (process.argv[2]) fs.writeFileSync(process.argv[2], json); else process.stdout.write(json);
+if (output) fs.writeFileSync(output, json); else process.stdout.write(json);

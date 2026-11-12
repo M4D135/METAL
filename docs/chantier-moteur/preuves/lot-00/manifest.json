@@ -1,0 +1,184 @@
+{
+  "schema": "metal-lot00-proof-manifest-v1",
+  "sourceCommit": "63668aca7045e62cd524973b226f21e9ec5703e8",
+  "encoding": {
+    "format": "gzip",
+    "level": 9,
+    "mtime": 0,
+    "filename": "",
+    "osByte": 255,
+    "policy": "Original evidence bytes preserved; only gzip encoding is applied."
+  },
+  "files": [
+    {
+      "file": "profile-steps-a.json.gz",
+      "purpose": "Profil complet A, tous les pas et compteurs",
+      "compressedBytes": 450896,
+      "compressedSha256": "c402fb1ab995f5acb527a0bae82d1adf4ea7116d79b722028eaa808062414e97",
+      "uncompressedName": "profile-steps-a.json",
+      "uncompressedBytes": 7045417,
+      "uncompressedSha256": "6c5dfaae4463b79d735d1753c04c36e63f08aca23540ba14e5152a672fde7fad"
+    },
+    {
+      "file": "profile-steps-b.json.gz",
+      "purpose": "Profil complet B indépendant, tous les pas et compteurs",
+      "compressedBytes": 446486,
+      "compressedSha256": "9bf2498409f445d033d040c7925852baa657f580c5501a8cdc7354fd702eea08",
+      "uncompressedName": "profile-steps-b.json",
+      "uncompressedBytes": 7043950,
+      "uncompressedSha256": "109904fd192b23ea5e590ebcca29a03cc5eec9d7d7d7c0d2c8d44694834cd8b6"
+    },
+    {
+      "file": "aa.json.gz",
+      "purpose": "A/A apparié alterné sur les quatre scénarios historiques",
+      "compressedBytes": 895143,
+      "compressedSha256": "faa131ae72cbb0f6fe82bf2fd52bbcb6ddd1826b8eaee91cfc55d6832ff8434e",
+      "uncompressedName": "aa.json",
+      "uncompressedBytes": 15664607,
+      "uncompressedSha256": "f08df9b5eae8f55df63efc2403e4414eb72fa956f8f0f0a3042c37a59e785a84"
+    },
+    {
+      "file": "aa-v2-short.json.gz",
+      "purpose": "A/A court des mondes V2 1 et 10",
+      "compressedBytes": 20928,
+      "compressedSha256": "ea8f51a6695e67d6d8cd46a5ec104d2875190af0477e8e34180dd6e618561557",
+      "uncompressedName": "aa-v2-short.json",
+      "uncompressedBytes": 423202,
+      "uncompressedSha256": "9d7f3a93b81c26ba74d9ae2823181b5f7f6ccf148bdb9739c954cbd1b04b7d0f"
+    },
+    {
+      "file": "realm-check.json.gz",
+      "purpose": "Comparaison principale/VM avec mesures brutes",
+      "compressedBytes": 232839,
+      "compressedSha256": "141b0c77b1eee6e28d752255932d8023515fc69e4e1ddcd921f56c1ddf164d58",
+      "uncompressedName": "realm-check.json",
+      "uncompressedBytes": 3610907,
+      "uncompressedSha256": "c71d0ba35dd1e00a220e9f309c5d8fe6cced2e8ea65378bf223ec448b22fcb19"
+    },
+    {
+      "file": "loader-self-check.json.gz",
+      "purpose": "Isolation du chargeur et préservation des globales",
+      "compressedBytes": 269,
+      "compressedSha256": "078ac85ac1f60baa65a69908cff18e176ccae7f0ed681e4ad773560904ea0a7b",
+      "uncompressedName": "loader-self-check.json",
+      "uncompressedBytes": 351,
+      "uncompressedSha256": "4ce0967e995edecff19267aec27b242e64d39b1bef5b30f9bb2daabe093616d8"
+    },
+    {
+      "file": "tool-self-check.json.gz",
+      "purpose": "Intégrité des empreintes et de l’instrumentation",
+      "compressedBytes": 420,
+      "compressedSha256": "28575cc2296fd0a5b785e18cbb0ff966b1b9180fe858c8afcf822a7d4c0977f4",
+      "uncompressedName": "tool-self-check.json",
+      "uncompressedBytes": 722,
+      "uncompressedSha256": "1e46770459fcd4059a3a33c09eaccd131062eb80f14f0d20bdda857b2c836f4c"
+    },
+    {
+      "file": "migration-check.json.gz",
+      "purpose": "Identité des trois rapports migrés",
+      "compressedBytes": 318,
+      "compressedSha256": "057fad83e8c45fc0aa36bac424fe0166fffbf115c7ad4acc7b751b018fca6b9a",
+      "uncompressedName": "migration-check.json",
+      "uncompressedBytes": 698,
+      "uncompressedSha256": "111a08aa038e2e737b7e8516829b04d33c450011cd5b3b6a7bf9b78d68df6ccc"
+    },
+    {
+      "file": "reference-environment.json.gz",
+      "purpose": "Environnement de la reproduction préalable",
+      "compressedBytes": 351,
+      "compressedSha256": "a68ffd5f3f00eb4bbf7cf35b38e8271ad5e49a1d25f4d31626bf5374f15749b7",
+      "uncompressedName": "reference-environment.json",
+      "uncompressedBytes": 474,
+      "uncompressedSha256": "423cf572dd4555fec7637ea9683929461e8390c6b2efd28e3cb9d464ecd45648"
+    },
+    {
+      "file": "reference-realm-check.stdout.txt.gz",
+      "purpose": "Sortie brute du banc historique VM/VM",
+      "compressedBytes": 106,
+      "compressedSha256": "7925eccb88e08b24fdb2a6700ba00ade81bbdba0f2c302477ca473d71f19748d",
+      "uncompressedName": "reference-realm-check.stdout.txt",
+      "uncompressedBytes": 150,
+      "uncompressedSha256": "9165c4dfeb02fc67a4dd3c6395e263c76bc354487e243160a2ea59f4c84788a1"
+    },
+    {
+      "file": "reference-counter-realm.stdout.txt.gz",
+      "purpose": "Sortie brute du contre-banc historique principale/VM",
+      "compressedBytes": 239,
+      "compressedSha256": "287a9445743e8dac86bf7a59fb4200de7d55613287d5789d194401a6f674f4f8",
+      "uncompressedName": "reference-counter-realm.stdout.txt",
+      "uncompressedBytes": 375,
+      "uncompressedSha256": "ef66e009415f444d78cf76936aa7c7afb4400cecf88fd2d0aeff9202413471e3"
+    },
+    {
+      "file": "campaign-profiles.json.gz",
+      "purpose": "Rapport identique avant et après migration",
+      "compressedBytes": 3312,
+      "compressedSha256": "c0fb7931c027c899f94f49c73a8e281d660bb0a34c8bc8ff2705f76e06a07d8d",
+      "uncompressedName": "campaign-profiles.json",
+      "uncompressedBytes": 36819,
+      "uncompressedSha256": "547f52b071579bee39b9700c27e352b9bd4b768d422f32246370918a1078e717",
+      "identicalOriginals": [
+        "campaign-profiles-before.json",
+        "campaign-profiles-after.json"
+      ]
+    },
+    {
+      "file": "campaign-balance.json.gz",
+      "purpose": "Rapport identique avant et après migration",
+      "compressedBytes": 2154,
+      "compressedSha256": "2a6754a4cbbce6fd89037b4ddb0404bab1d6224bb01a7521e000ec25e96b58ae",
+      "uncompressedName": "campaign-balance.json",
+      "uncompressedBytes": 49966,
+      "uncompressedSha256": "2dc0f40d9ac5e0c38a376340d87813ce4fb9ddee483b0e03b76fb25f5d597b77",
+      "identicalOriginals": [
+        "campaign-balance-before.json",
+        "campaign-balance-after.json"
+      ]
+    },
+    {
+      "file": "boss-profiles.json.gz",
+      "purpose": "Rapport identique avant et après migration",
+      "compressedBytes": 1929,
+      "compressedSha256": "6b554abafb1f8af2dd0d85c12da83a0f7854fb6e3097662004ee29c372fd880e",
+      "uncompressedName": "boss-profiles.json",
+      "uncompressedBytes": 25558,
+      "uncompressedSha256": "4a789e0274932796291b256900a9f5d21ad09995321d104bb6ccb0bb3462a621",
+      "identicalOriginals": [
+        "boss-profiles-before.json",
+        "boss-profiles-after.json"
+      ]
+    },
+    {
+      "file": "baseline-main-tests.log.gz",
+      "purpose": "npm test sur main propre 63668ac, avant T1",
+      "compressedBytes": 24912,
+      "compressedSha256": "90f2ef32a7f69b862bf1f577a6fc84375e1da695391716e2f903ac638657fe7b",
+      "uncompressedName": "baseline-main-tests.log",
+      "uncompressedBytes": 123975,
+      "uncompressedSha256": "be001dcdb076d64e1e9e1911eea57983215c277eb2511717ebc6a9c027845091"
+    },
+    {
+      "file": "lot00-tests.log.gz",
+      "purpose": "npm test après T1, exécuté par l’intégrateur",
+      "compressedBytes": 24799,
+      "compressedSha256": "a8b65e7d34634f802b9cfaa342f47d67b1762416991d0ccf56d09738d67ba90b",
+      "uncompressedName": "lot00-tests.log",
+      "uncompressedBytes": 123772,
+      "uncompressedSha256": "ad851e7e224a1c48fd7e7ddfd575e5954a98e04d112487976a53949b3c9df018"
+    }
+  ],
+  "compressedBytes": 2105101,
+  "uncompressedBytes": 34150943,
+  "derivedFiles": [
+    {
+      "file": "summary.json",
+      "bytes": 12678,
+      "sha256": "d6a228126759d69dcb7ea388d5321f1fa429d0925b68917a2c44bcb928e62739"
+    },
+    {
+      "file": "README.md",
+      "bytes": 4925,
+      "sha256": "d5919d5350e0977bc47fb0b4a23735ed99469c2a1182c1447417462318c13192"
+    }
+  ]
+}

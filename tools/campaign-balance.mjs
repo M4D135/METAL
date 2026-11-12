@@ -1,14 +1,12 @@
 // Reproducible combat measurements, not a playthrough or a hardware benchmark.
 // Four real generated infantry definitions fight a moving input-driven bot in
 // the same small arena. No health, position or enemy state changes during combat.
-import { readFileSync, writeFileSync } from 'node:fs';
-import vm from 'node:vm';
+import { writeFileSync } from 'node:fs';
+import {loadRealm} from './realm-loader.mjs';
+import {parseToolArgs} from './proof/common.mjs';
 
-const context = { window: {} }; vm.createContext(context);
-for (const name of ['renderer', 'world', 'destruction', 'economy', 'brain', 'simulation']) {
-  vm.runInContext(readFileSync(new URL(`../src/${name}.js`, import.meta.url), 'utf8'), context, { filename: `${name}.js` });
-}
-const { FWorld, FSimulation, FBrain } = context.window;
+const {root,output:outputPath} = parseToolArgs(process.argv.slice(2));
+const {FWorld,FSimulation,FBrain} = loadRealm({root}).window;
 const clone = value => JSON.parse(JSON.stringify(value));
 const round = value => Math.round(value * 1000) / 1000;
 const angle = value => Math.atan2(Math.sin(value), Math.cos(value));
@@ -87,4 +85,4 @@ const output = { version: 1, seed: 96, simulationHz: 40, difficulty: 0, limitSec
   methodology: 'Four infantry definitions sampled deterministically from each generated world. Identical small 3D arena with two physical covers. A bot moves, aims, selects owned weapons, fires and raises its owned shield through normal step inputs. CPU tactical network; no imported assets. No health or enemy-state mutation during combat. Initial spawn grace is disabled. Nominal assumes scheduled trophies have been found; pistol-only omits every optional discovery. These are controlled simulations, not complete campaign runs, human playtests, FPS measurements or real-device validation.',
   weaponOrder: ['smg', 'shotgun', 'rocket', 'grenade', 'pistol'], rows };
 const json = JSON.stringify(output, null, 2) + '\n';
-if (process.argv[2])writeFileSync(process.argv[2], json); else process.stdout.write(json);
+if (outputPath)writeFileSync(outputPath, json); else process.stdout.write(json);
