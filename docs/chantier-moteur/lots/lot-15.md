@@ -1,4 +1,12 @@
 # Lot 15 — Résolution native : coût GPU par passe
+
+> **Décision de David (12 novembre) — elle prime sur les valeurs par défaut de cette fiche.** « 60 c'est ok par défaut, même 30 si on a une petite config, tant que c'est constant. »
+> - La cible par défaut est **60 images par seconde constantes, à la résolution native**. Une cadence plus haute (120, 144 Hz) est une option du joueur, pas la cible.
+> - Sur une machine qui ne tient pas 60 de façon constante à la résolution native, le jeu se cale sur **30 images par seconde constantes**.
+> - **La constance passe avant la cadence.** Jamais d'oscillation entre deux cadences en cours de jeu, jamais de baisse de résolution. Le choix se fait par mesure (au lancement, révisable entre deux secteurs, jamais en plein combat), avec une marge pour ne pas basculer sans cesse. Le joueur peut le forcer dans les options.
+> - Le limiteur affiche une image tous les N rafraîchissements de l'écran (LOOP-09). Avec le pas fixe de 1/60 s, 30 images par seconde font toujours deux pas de simulation par image.
+> - Les critères d'acceptation du type « 120 Hz tenus » deviennent des mesures d'information, pas des objectifs. La question laissée ouverte par NATIF-V1 est tranchée : natif, 60 par défaut, 30 en repli.
+
 ## But
 Rendre le tampon du canvas égal aux pixels physiques de l'écran, sans jamais le modifier en cours de partie. Remplacer le gouverneur qui baisse la résolution par une vigie qui consigne et verrouille la cadence. Livrer le seul gain sans perte mesuré sur GPU Apple (−4,9 %) et un banc intégré pour valider sur les PC de David.
 ## Tâches, dans l'ordre

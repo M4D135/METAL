@@ -1,4 +1,7 @@
 # Lot 16 — Ciel
+
+> **Décision de David (12 novembre).** 18 ciels distincts, un par monde : confirmé.
+
 ## But
 Remplacer la passe de ciel procédurale par un ciel physique en textures amorties (tables d'atmosphère + dôme de nuages cuit), coût par pixel ×0,36 à ×0,60 mesuré, bandes divisées par 40.
 Donner 18 ciels distincts aux 18 mondes de METAL via une API `atmosphere.sky` ; sans ce champ, l'image actuelle reste identique au bit près.

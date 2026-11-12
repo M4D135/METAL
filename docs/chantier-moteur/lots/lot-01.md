@@ -1,4 +1,11 @@
 # Lot 01 — Bugs bloquants : points de reprise, tir, pointeur, limiteur
+
+> **Décision de David (12 novembre) — à faire en premier, avant T1.** Sur `main`, `checks/campaign-world.test.mjs` a 8 tests rouges sur 46 (constat MURS-V1) : les 6 empreintes de mondes historiques et 2 tests liés. David te confie ce point.
+> - Établis la cause. La 0.8.0 a modifié `src/world.js` (retrait des murs-obstacles) sans mettre à jour `legacyHashes`. Vérifie si l'écart vient bien de ce commit, ou de la plateforme : rejoue le test sur `673d6b2` et sur son parent.
+> - Si le changement de génération devait toucher aussi les mondes historiques, régénère les empreintes dans un commit à part, et vérifie que les points de reprise de mondes historiques d'avant la 0.8 se chargent encore, ou sont refusés proprement.
+> - Sinon, corrige `world.js` pour retrouver les mondes historiques à l'identique.
+> - Dans les deux cas, écris dans le rapport ce que tu as trouvé et ce que tu as choisi. Ensuite seulement, `npm test` entièrement vert devient la référence de tout le chantier.
+
 ## But
 Supprimer la cause unique des points de reprise refusés (ligne 2081), verrouiller le tir ponctuel, corriger le verrouillage du pointeur et le limiteur d'images hors multiples exacts. Le joueur garde son arsenal à la mort ; l'arme répond à chaque clic ; la visée est 1:1 ; la cadence demandée est obtenue.
 

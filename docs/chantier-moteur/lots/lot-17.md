@@ -1,4 +1,7 @@
 # Lot 17 — Physique de corps rigides
+
+> **Décision de David (12 novembre) — elle prime sur les valeurs par défaut de cette fiche.** Pas de saisie ni de lancer d'objets pour le moment : retire-les de l'étape D. Tout le reste est voulu : objets qui réagissent aux tirs et aux explosions, décor cassé qui devient des débris physiques, machines détruites qui se disloquent ou s'effondrent sur leurs articulations. Ordre : noyau, étape A (accessoires), étape B (gravats), étape C (machines détruites), puis ce qu'il reste de l'étape D (pousser les objets, monter dessus) et l'étape E.
+
 ## But
 Introduire un noyau de corps rigides (FPhys) dans METAL et l'intégrer en cinq étapes : accessoires poussables, gravats physiques, épaves de machines, contrôleur de personnage, articulations. Les objets réagissent aux tirs, explosions et au joueur ; les empilements tiennent puis s'écroulent ; les points de reprise passent sans refus.
 

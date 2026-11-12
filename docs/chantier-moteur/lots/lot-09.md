@@ -1,4 +1,7 @@
 # Lot 09 — Ressenti : déplacement, bouclier, armes
+
+> **Décision de David (12 novembre).** Schéma par défaut accepté : Espace saute, R esquive, V frappe. Toutes ces actions doivent rester **reconfigurables**, au clavier comme à la manette, dans les options existantes et avec leur détection de conflits.
+
 ## But
 Rendre le déplacement vif (élan, saut, contrôle aérien), le bouclier réellement protecteur (arc horizontal, absorption 100 %, parade) et les armes réactives (cadence exacte, chaleur par arme, recul distinct). Aucun asset importé, aucune dépendance, 60/120/144 Hz sans saccade.
 ## Tâches, dans l'ordre

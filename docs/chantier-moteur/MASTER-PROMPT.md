@@ -53,7 +53,7 @@ Ce sont les demandes de David.
 - Respecte `AGENTS.md` : tout est généré par le code (aucun asset importé, aucun CDN, aucune bibliothèque externe, aucun WASM importé) ; vraie scène 3D, avec un rendu de secours qui suit la même scène ; page autonome `dist/index.html` reconstruite par `python3 tools/build.py` ; `SIZE.json` fait foi, 1 400 000 octets bruts au plus (803 375 aujourd'hui) ; téléphone, tactile, AZERTY et QWERTY.
 - **Déterminisme.** La simulation n'utilise ni `Math.random`, ni horloge. Garde-la ainsi. Une tâche dite « état identique » se prouve par l'égalité de l'empreinte d'état sur les rejeux de référence.
 - **Sauvegardes.** Les points de reprise existants doivent rester lisibles. Tous les changements de format sont regroupés en **une seule révision**, en fin de chantier simulation (lot 12).
-- **Tests.** Avant tout changement, lance `npm test` sur `main` intact et archive la liste des échecs : c'est ta référence. Sur la machine d'audit (Node 24.18, macOS arm64), `checks/campaign-world.test.mjs` a **8 tests rouges sur 46** sur `main` : les 6 empreintes de mondes historiques, « campaign mode is strictly opt-in… » et « the first three campaign worlds preserve historical geometry… » (constat MURS-V1). La 0.8.0 a modifié `src/world.js` sans mettre à jour ces empreintes. Ne régénère pas les empreintes et ne modifie pas `world.js` pour les retrouver sans la décision de David : signale-le dans ton compte rendu, et dis si ces 8 tests sont rouges aussi chez toi.
+- **Tests.** Avant tout changement, lance `npm test` sur `main` intact et archive la liste des échecs : c'est ta référence. Sur la machine d'audit (Node 24.18, macOS arm64), `checks/campaign-world.test.mjs` a **8 tests rouges sur 46** sur `main` : les 6 empreintes de mondes historiques, « campaign mode is strictly opt-in… » et « the first three campaign worlds preserve historical geometry… » (constat MURS-V1). La 0.8.0 a modifié `src/world.js` sans mettre à jour ces empreintes. David te confie ce point : traite-le en premier (lot 01, décision en tête de fiche), et dis dans ton compte rendu si ces 8 tests sont rouges aussi chez toi.
 - Ensuite, aucun commit ne doit ajouter d'échec à cette référence. N'affaiblis jamais un test pour le faire passer. Si une tâche change volontairement un comportement testé, mets le test à jour dans le même commit et dis-le.
 - **Mesure.** Un contexte `node:vm`, celui des tests, ralentit le code de 4,5 à 9 fois et fausse les profils. Mesure dans le domaine principal de Node (voir `bancs/sim/fast.mjs`). Sur une machine chargée, n'utilise que des comparaisons appariées et alternées dans un même processus.
 
@@ -85,9 +85,20 @@ Pour les bancs :
 - **Boucle à pas fixe.** La simulation passe à un pas fixe de 1/60 s, avec accumulateur, verrouillage sur la période de l'écran, rattrapage borné à 5 pas et interpolation de rendu. La rotation de la vue reste appliquée à chaque image, pour ne pas ajouter de latence. C'est la conception mesurée de STAB-06 (lot 07) : une seule empreinte d'état quel que soit l'écran, et 15 à 49 % de calcul de simulation en moins selon la fréquence de l'écran. Elle remplace l'arbitrage antérieur en faveur d'un pas variable (LOOP-05, dans `constats/ARBITRAGES.md`). Le déplacement du joueur et la physique se sous-divisent en interne à 1/120 s. Le lot 07 vient après les lots 02 à 04, et avant le déplacement, la physique et le rejeu de démo.
 - **En attendant le lot 07**, corrige la formule actuelle en une ligne (STAB-V1, dans le lot 01) : aujourd'hui, à 60 Hz, deux images sur trois font deux pas de simulation au lieu d'un.
 - **Destruction.** Une seule interface de « delta de révision » (ajoutés, retirés, zone touchée, numéro), consommée par la navigation, les gravats, l'index du rendu et les caches d'ombre. C'est le lot 03.
-- **Résolution.** Rendu à la résolution native, jamais modifiée en cours de partie. Le gouverneur de qualité ne touche plus à la résolution : il n'agit que sur des leviers prouvés invisibles, sinon il laisse tomber la cadence et le consigne. Le joueur garde une option explicite pour la baisser. Un point reste à trancher par David : sur un écran très dense (Retina, 4K) avec une carte modeste, le natif ne tient pas toujours la cadence de l'écran (NATIF-V1). Tant qu'il n'a pas tranché, garde le natif et n'ajoute aucun calibrage automatique.
+- **Résolution et cadence.** Rendu à la résolution native, jamais modifiée. La cible par défaut est 60 images par seconde constantes. Sur une machine qui ne les tient pas à la résolution native, le jeu se cale sur 30 images par seconde constantes. La constance passe avant la cadence : jamais d'oscillation entre deux cadences en cours de jeu. Une cadence plus haute (120, 144 Hz) est une option du joueur. Le gouverneur de qualité ne touche plus à la résolution ; le joueur garde une option explicite pour la baisser.
 - **Hors du fil principal.** Sortent du fil principal : la génération du monde, la cuisson de la navigation, les points de reprise et la synthèse des sons. La simulation, elle, reste sur le fil principal : dans un worker, elle ajoute une image de latence (mesuré, PARA-V1). La page doit continuer à marcher ouverte en `file://`, sans `SharedArrayBuffer`, avec repli complet sur le fil principal.
 - **Modules moteur.** Chaque nouvelle brique générique est un script autonome qui expose un global `F…` (boucle, entrées, mesure, démo, physique, ciel), sans rien savoir du contenu de METAL.
+
+## 6 bis. Décisions de David du 12 novembre
+
+Elles priment sur les valeurs par défaut des fiches. Les fiches concernées les rappellent en tête.
+
+1. **Tests rouges sur `main`.** C'est à toi de t'en charger, avant tout le reste (lot 01).
+2. **Cadence.** « 60 c'est ok par défaut, même 30 si on a une petite config, tant que c'est constant. » Toujours à la résolution native (lots 06, 07 et 15).
+3. **Destruction.** « Avec roquette et grenade on peut vraiment tout péter sauf le sol. » Aux explosifs, tout casse sauf le sol, relief compris. Les armes légères ne cassent ni les murs, ni les murets, ni les toits, ni les piliers porteurs, ni le relief (lot 14).
+4. **Touches.** Espace saute, R esquive, V frappe, et tout reste reconfigurable au clavier comme à la manette (lots 08 et 09).
+5. **Physique.** Pas de saisie ni de lancer d'objets pour le moment. Tout le reste est voulu : explosions, décor cassé en débris physiques, machines détruites qui se disloquent ou s'effondrent (lot 17).
+6. **Ciel.** 18 ciels distincts, un par monde (lot 16).
 
 ## 7. Les lots, dans l'ordre
 
@@ -102,7 +113,7 @@ Si `lots/lot-NN.md` n'existe pas encore, n'invente pas son contenu : finis le lo
 | 14 | Murs cassables seulement aux armes lourdes | 03 | La règle de jeu, et beaucoup moins de révisions de destruction. |
 | 04 | Navigation et IA des ennemis | 02, 03 | Plus aucun pas de simulation bloqué par une recherche de chemin ; ennemis plus vifs. |
 | 05 | Rendu : coût processeur, image identique | 00 | `draw()` réduit de plus de 70 %, dix fois moins d'allocations par image. |
-| 06, 15 | Rendu : carte graphique, à résolution native | 05 | Résolution native tenue, plus aucune baisse automatique. |
+| 06, 15 | Rendu : carte graphique, à résolution native | 05 | Résolution native tenue, 60 images par seconde constantes (30 en repli), plus aucune baisse automatique. |
 | 07 | Cadence, échauffement, chargement | 02 à 05 | Pas fixe, plus de saccade « de première fois », chargement sans gel. |
 | 08, 08b | Entrées : manette et tactile | 07 | Jeu et menus jouables à la manette ; tactile revu. |
 | 09, 09b | Ressenti : déplacement, saut, bouclier, armes | 07, 08 | Les demandes de David sur le ressenti. |
@@ -111,7 +122,7 @@ Si `lots/lot-NN.md` n'existe pas encore, n'invente pas son contenu : finis le lo
 | 12 | Sauvegardes : une seule révision de format | 02, 09, 10, 17 | Voir ci-dessous. |
 | 13 | Mode démo qui dure, rejeu d'entrées | 01, 04, 07, 09 | Démo sur l'écran titre, qui tourne des heures ; rejeu servant de banc reproductible. |
 | 16 | Ciel | 06 | Ciel moderne, distinct par monde, sans coût par image notable. |
-| 17 | Physique de corps rigides | 03, 07 | Moteur maison, déterministe, par étapes. |
+| 17 | Physique de corps rigides | 03, 07 | Moteur maison, déterministe, par étapes. Sans saisie ni lancer d'objets pour le moment. |
 | 18 | Image haut de gamme, PC NVIDIA | 06, 16 | Feuille de route : HDR, éclairage physique, anticrénelage temporel. À lancer sur décision de David. |
 
 **Lot 12, sans fiche.** Regroupe en une révision de format tout ce que les autres lots demandent de changer dans les points de reprise : gravats (LOAD-05, point 2), fabriques à ordre de clés stable (SIM-05), version de physique du déplacement (FEEL-08, FEEL-09), attaques de colosse (BOSS-02), état des corps rigides (lot 17). La nouvelle version relit les anciennes. La validation dans `restore` reste atomique. Un seul lot de tests dans `checks/checkpoint.test.mjs`.
@@ -121,7 +132,7 @@ Si `lots/lot-NN.md` n'existe pas encore, n'invente pas son contenu : finis le lo
 **Pour la première séance, qui est courte :**
 
 1. Lot 00, tâche T1 seulement (chargeur dans le domaine principal, comparaison appariée, empreinte d'état). Pour le reste, sers-toi des bancs du dossier. Les autres tâches du lot 00 se feront après le lot 05.
-2. Lot 01, en commençant par T1 (les points de reprise refusés sont le bug le plus grave), puis la correction d'une ligne de STAB-V1.
+2. Lot 01 : d'abord les 8 tests rouges (décision en tête de fiche), puis T1 (les points de reprise refusés sont le bug le plus grave), puis la correction d'une ligne de STAB-V1.
 3. Lots 02, 03 et 04, dans cet ordre.
 4. Lot 05 s'il reste du temps.
 

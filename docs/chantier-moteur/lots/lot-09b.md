@@ -1,4 +1,7 @@
 # Lot 09b — Saut libre et élan (complément)
+
+> **Décision de David (12 novembre).** Schéma par défaut accepté : Espace saute, R esquive, V frappe. Toutes ces actions doivent rester **reconfigurables**, au clavier comme à la manette, dans les options existantes et avec leur détection de conflits.
+
 ## But
 Livrer le saut moderne (apex 0,961 m, portée 4,69 m à 7,6 m/s) sans sortie, sans raccourci gratuit, sans mort sur dénivelé < 1,5 m.
 Clip joueur sans plafond lié au muret debout, règle de chute par hauteur d'appel, reprise en bunny-hop < 0,2 s.

@@ -1,4 +1,12 @@
 # Lot 14 — Murs cassables seulement aux armes lourdes
+
+> **Décision de David (12 novembre) — elle prime sur les valeurs par défaut de cette fiche.** « Avec roquette et grenade on peut vraiment tout péter sauf le sol. »
+> - **Explosifs** (lance-grenades et lance-roquettes, quel que soit le tireur, et attaques lourdes des colosses) : tout casse, sauf le sol. Murs, murets, toits, piliers, portes, décor, et aussi le relief (collines, falaises). Le relief doit céder localement : une roquette l'entame, elle ne le fait pas tomber d'un bloc. Corrige pour cela l'effondrement en chaîne décrit par MURS-04.
+> - **Sol** (sols, dallages, marquages, terrain plat) : incassable, pour toutes les armes.
+> - **Armes légères** : elles cassent le reste du décor, mais ni les murs, ni les murets, ni les toits, ni les piliers porteurs, ni le relief.
+> - N'ajoute aucune nouvelle catégorie incassable. Liste dans ton rapport les éléments aujourd'hui marqués indestructibles (`src/world.js:1406`) avec leur raison d'être. Ne les rends cassables aux explosifs que si la partie reste jouable (joueur jamais bloqué, relais et sortie accessibles) ; sinon, signale-le.
+> - Les autres valeurs par défaut de la fiche restent valables.
+
 ## But
 Les balles (pistolet, mitraillette, pompe) ne percent plus murs, toits, piliers porteurs, murets, relief ni sols. Seuls les explosifs du joueur et des ennemis, les écrasements et barrages de colosse ouvrent le bâti. Le reste du décor (caisses, couverts, arbres, conduites, poteaux fins) casse comme avant.
 ## Tâches, dans l'ordre

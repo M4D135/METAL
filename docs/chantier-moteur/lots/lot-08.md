@@ -1,4 +1,7 @@
 # Lot 08 — Entrées : manette et tactile
+
+> **Décision de David (12 novembre).** Schéma par défaut accepté : Espace saute, R esquive, V frappe. Toutes ces actions doivent rester **reconfigurables**, au clavier comme à la manette, dans les options existantes et avec leur détection de conflits.
+
 ## But
 Rendre le jeu entièrement jouable à la manette (mapping standard, courbes mesurées, vibration, menus navigables). Un module FERRO générique (lecture, zones mortes, fronts, vibration) sert METAL et le prototype ; le mapping FPS reste dans METAL.
 ## Tâches, dans l'ordre
