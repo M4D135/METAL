@@ -1,3 +1,13 @@
+# Validation du chantier moteur — lot 01 / T2 — 12 novembre 2026
+
+**LOOP-06 : tir ponctuel conservé.** Tampon indépendant de 150 ms par main, proposé au premier sous-pas jusqu’au tir ou à expiration ; annulation lors des changements de contexte. Les treize tests dédiés passaient de **5 verts / 8 rouges** à **13 verts**. Les douze combinaisons de périphérique et de cadence produisent exactement un tir entre deux images.
+
+Après réunion avec T1 et STAB-V1 : **73/73 tests ciblés**, build et contrôle de distribution verts. HTML **806 474 octets bruts**, aucune ressource externe, version **0.8.1** ; SHA-256 `2aa738e123901c4616dac5ec569d07016071d7cfeeed64f94410eaf4d862f8be`.
+
+[Preuves T2](docs/chantier-moteur/preuves/lot-01/t2/PROOF.md). Les surfaces de périphériques sont factices ; la validation matérielle ne se déduit pas de ces tests. La suite complète et l’essai navigateur sont réservés à la clôture du lot.
+
+---
+
 # Validation du chantier moteur — lot 01 / STAB-V1 — 12 novembre 2026
 
 Le correctif provisoire de subdivision est intégré après T1. **1 500 → 900 pas** pour 900 images à 60 Hz quantifiées, **1 800 → 900** à 59,94 Hz ; zéro double pas dans ces motifs, aucun temps écoulé perdu, pas borné à 17,7 ms. Les cinq tests ajoutés vérifient également une session longue et le passage d’un joueur contre un mur mince.

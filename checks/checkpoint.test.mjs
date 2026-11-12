@@ -39,14 +39,14 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
       click: () => events.get('click')?.({ preventDefault: noop }),
       querySelector: selector => element(id + selector),
       querySelectorAll: () => [0, 1, 2].map(n => element(id + n)),
-      setAttribute: noop, focus: noop, setPointerCapture: noop, getContext: () => draw, requestPointerLock: noop,
+      setAttribute: noop, focus: noop, setPointerCapture: noop, getContext: () => draw, requestPointerLock() { context.document.pointerLockElement = value; },
     };
     elements.set(id, value); return value;
   }
   const context = { console: { error: (...args) => errors.push(args) }, performance: { now: () => now }, innerWidth: 1280, innerHeight: 800,
     URLSearchParams, setTimeout, clearTimeout, navigator: { maxTouchPoints: 0 }, location: { search: '' },
     matchMedia: () => ({ matches: false }), requestAnimationFrame: callback => { nextFrame = callback; }, addEventListener: (name, callback) => listeners.set(name, callback),
-    document: { body: element('body'), getElementById: element, addEventListener: noop, hasFocus: () => true },
+    document: { body: element('body'), getElementById: element, addEventListener: noop, hasFocus: () => true, exitPointerLock() { this.pointerLockElement = null; } },
     localStorage: { getItem: name => memory.get(name) ?? null, setItem: (name, value) => { const write = { name, value: String(value), mode: element('body').dataset.state || 'menu' }; runtime.beforeWrite?.(write); memory.set(name, write.value); writes.push(write); }, removeItem: name => memory.delete(name) },
     FWorld: { create: createWorld }, FAudio: { create: () => new Proxy({}, { get: (_, name) => (...args) => { runtime.audioCall?.(name,args); sounds.push({ name, args }); } }) },
     FRender: { create: () => ({ stats: { backend: 'test' }, resize: noop, setWorld: (meshes, lights) => worlds.push({ meshes, lights, initial:true }), updateWorld: (meshes, revision, lights) => worlds.push({meshes,revision,lights}), draw: (camera, meshes, effects) => frames.push({ camera, meshes, effects }) }) },

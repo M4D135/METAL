@@ -1,0 +1,44 @@
+{
+  "task": "t2",
+  "baseline": "63668aca7045e62cd524973b226f21e9ec5703e8",
+  "finding": "LOOP-06",
+  "scope": "Individual task measurements; integrated build and tests recorded in RAPPORT.md",
+  "sourceSha256": {
+    "checks/options.test.mjs": "8a2efdbb529aba9ff537258f79b6de644d5a8bbe000c633eb3a1c170f4061f62",
+    "checks/checkpoint.test.mjs": "72597159c3aafdd02b391fb9eaeceaaf231fff17efc9ebe2b669fbf3bba5f747",
+    "checks/input.test.mjs": "07cc30085ddba2581d057d81be9d8c32fee8fb0b6ca466492f9d781c8d85c067",
+    "src/game.js": "d5cbfa8b71e9a0cb8c96ec2e6c1bed0bc7adc9ef6b8dc3cd2fa652cc38b6fcb5",
+    "src/options.js": "8d6d18985bceee27afea4b7c80cfed4d701aca17595104b051faf2011d6df0d5",
+    "src/index.html": "84255c6e73d2b800cf91d529a642b6a3a1b6cfcd8af3107e77923e3c33fb8145"
+  },
+  "files": [
+    {
+      "path": "logs/lot01-t2-clicks-before.txt.gz",
+      "rawBytes": 5799,
+      "rawSha256": "876edaf117d5282e8c8fdb1055004a65b041c3cf247a1b2fdaeac95bd3e60d9b",
+      "gzipBytes": 667,
+      "gzipSha256": "c23b1f7bfd157905734f464e0ff0e5040e324b93233c88aa8a17a947f606d567"
+    },
+    {
+      "path": "logs/lot01-t2-shell-before.log.gz",
+      "rawBytes": 9449,
+      "rawSha256": "ba2779a7dfe396f50bf18198dd5801b9995850546b799bfb360d4c146a989eab",
+      "gzipBytes": 1396,
+      "gzipSha256": "a98c2477808c594f4116b6035418eed7dcb5ea725ba76e626834a083ee812c8c"
+    },
+    {
+      "path": "logs/lot01-t2-shell-after.log.gz",
+      "rawBytes": 14743,
+      "rawSha256": "55d5292ed409f988e4944280121ac613b6ad2edf465d5c859968fe0377d53ab3",
+      "gzipBytes": 3441,
+      "gzipSha256": "97c8696696889836572b6c06bbbd63fc193d2d309ac180b6550a416612d05e09"
+    },
+    {
+      "path": "logs/integration-tests.log.gz",
+      "rawBytes": 18308,
+      "rawSha256": "bc73893be7cd25ccfcdbb99b2f50fdd2c1d9be2f3b45e5005ef145ce6a9554b9",
+      "gzipBytes": 4075,
+      "gzipSha256": "5b2d9ff1ed1609c3ff16ce2f3647ab59f2475a1b3bcd40ff811da49b17cb7a00"
+    }
+  ]
+}

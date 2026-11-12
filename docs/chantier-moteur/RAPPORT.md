@@ -318,3 +318,15 @@ Le calcul des sous-pas tolère maintenant les imprécisions de l’horloge : `ce
 [Les mesures appariées et leurs limites](preuves/lot-01/stab-v1/README.md) sont jointes. Cinq paires, chauffe exclue, domaine principal, alternance AB/BA : ratios CPU médians après/avant **0,800 / 0,957 / 0,841** pour q60, ms60 et 59,94 Hz. Les contrôles 120/144 Hz, dont le nombre de pas reste identique, montrent également du bruit. La promesse de gain CPU de 18 à 48 % n’est **pas reproduite uniformément** ; le correctif est conservé pour la subdivision erronée effectivement corrigée, sans revendiquer ce gain universel.
 
 Les cinq nouveaux tests de cadence sont inclus dans `npm test`. Validation d’intégration ciblée : **55/55** tests cadence + checkpoints, puis contrôle de build PASS. Distribution **804 329 → 804 421 octets**, version 0.8.1 ; SHA-256 `3aa68a79c28e19ed982605a557c8e35585bf3478ad54de05ea3cbadc3ddc4f50`. La suite complète du lot sera exécutée après assemblage T2–T4 ; elle n’est pas présentée comme relancée ici. La boucle fixe et l’interpolation restent au lot 07.
+
+### T2 — intention de tir conservée [LOOP-06]
+
+Le shell conserve séparément un appui droit et gauche pendant **150 ms**, jusqu’au tir de la main concernée. Il propose l’intention au premier sous-pas et conserve l’état tenu sur les suivants. Clavier reconfiguré, souris et tactile utilisent le même contrat. Le changement d’arme, la pause, la perte de focus ou l’annulation de capture effacent l’intention ; le bouclier reste une garde tenue. Le clic utilisé pour capturer la souris ne tire pas. Aucune horloge n’entre dans la simulation.
+
+Les treize nouveaux tests du vrai shell avec vraie simulation donnaient **5 réussites / 8 échecs avant**, puis **13/13** après. Les douze combinaisons de clic entièrement entre deux images (souris/clavier/tactile × 20/30/60/144 Hz) produisent chacune exactement un tir. Le modèle d’audit reproduit **20,3 à 26,7 %** de clics prêts perdus avant, zéro pour les modèles verrouillé/tamponné ; ce modèle ne remplace pas les tests du code livré. [Preuves et limites](preuves/lot-01/t2/PROOF.md).
+
+Le harnais de checkpoints représente maintenant un vrai verrou de pointeur acquis et libéré. La résolution d’intégration conserve aussi les injections d’échec de stockage et de relance introduites par T1. Aucun attendu de checkpoint n’a été affaibli.
+
+Validation cumulative T1 + STAB-V1 + T2 : **73/73** tests entrées, checkpoints, options et cadence ; build et contrôle de distribution PASS. `checks/input.test.mjs` est ajouté à `npm test`. HTML **804 421 → 806 474 octets**, SHA-256 `2aa738e123901c4616dac5ec569d07016071d7cfeeed64f94410eaf4d862f8be`, version 0.8.1.
+
+Valeur par défaut appliquée : tampon 150 ms, exposé par `FOptions.fireBufferMs`. Question de ressenti conservée pour David : maintenir cette durée après essai réel ? Le lot 01 ne la transforme pas en format de sauvegarde.
