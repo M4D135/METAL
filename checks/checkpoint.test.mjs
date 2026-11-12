@@ -102,6 +102,16 @@ function clearShellWorld(app) {
 }
 function advanceShellTo(app, index) { while (app.simulations.at(-1).state.world.index < index) { clearShellWorld(app); app.element('continue').click(); } }
 
+function trophyShellWorld(seed,index,options) {
+  const w=campaignShellWorld(seed,index,options),gift=w.pickups.find(q=>q.trophyId);if(!gift)return w;
+  const encounterId='trial-'+gift.key,points=[-2,0,2].map(z=>({x:-13,y:0,z}));
+  return {...w,shops:[],colliders:[{minX:-8,maxX:-7.5,minY:0,maxY:3,minZ:-5,maxZ:5}],
+    trophies:[{id:gift.id,key:gift.key,name:gift.kind==='shield'?'Bouclier':'Mitraillette',usage:'Enchaînez les rafales et surveillez la chauffe.',pickupId:gift.id,encounterId,grace:3,x:gift.x,y:0,z:0,...(gift.kind==='shield'?{shield:true}:{weapon:gift.weapon})}],
+    enemies:points.map((q,id)=>({...q,type:0,id,encounterId,wave:0,deployed:false,role:'assault'})),
+    encounters:[{id:encounterId,label:'Épreuve — équipement',trigger:{x:3,y:0,z:0,w:8,d:8},maxActive:3,leashRadius:40,spawnEntries:points,waves:[{enemyIds:[0,1,2]}],requiresTrophy:gift.id}],
+  };
+}
+
 test('The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen', () => {
   const app = harness(null, {}, campaignShellWorld); app.element('start').click();
   for (let index = 0; index < 18; index++) {
@@ -206,6 +216,33 @@ test('Campaign ammunition stays absent from the scene and pickup hint until its 
   assert.equal(app.element('supply-name').textContent,'BALLES');
   const before=sim.state.inventory.ammo[0];sim.move(sim.state.player,0,3);app.frame(100);
   assert.equal(sim.state.inventory.ammo[0],before+12);
+});
+
+test('A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial', () => {
+  const app=harness(null,{},trophyShellWorld);app.element('start').click();advanceShellTo(app,6);
+  const sim=app.simulations.at(-1);sim.move(sim.state.player,3,0);app.frame(100);
+  assert.equal(sim.state.inventory.weapons[0],true);
+  assert.deepEqual(plain(sim.state.campaign.discovered),['pistol','smg']);
+  assert.equal(app.element('encounter-name').textContent,'Mitraillette');
+  assert.match(app.element('encounter-caption').textContent,/rafales/);
+  assert.equal(app.element('wave-status').dataset.state,'trophy');
+  assert.equal(app.sounds.filter(q=>q.name==='trophy').length,1);
+  assert.equal(app.sounds.filter(q=>q.name==='weaponPickup').length,0,'One dedicated discovery sting replaces the ordinary pickup cue');
+  const saved=JSON.parse(app.memory.get(key)),trophy=saved.checkpoint.state.campaign.trophies[0];
+  assert.equal(trophy.phase,'grace');assert(trophy.timer>0&&trophy.timer<=3);
+  const resumed=harness(saved,{},trophyShellWorld);resumed.element('resume-expedition').click();resumed.frame(100);
+  const next=resumed.simulations.at(-1);
+  assert.equal(resumed.sounds.filter(q=>q.name==='trophy').length,0);
+  assert.equal(next.state.inventory.ammo[0],sim.state.inventory.ammo[0]);
+  assert.equal(next.state.campaign.trophies[0].phase,'grace');
+  for(let i=0;i<65&&next.state.enemies.filter(e=>e.deployed).length<3;i++)resumed.frame(100);
+  assert.equal(next.state.campaign.trophies[0].phase,'trial');
+  assert.equal(next.state.enemies.filter(e=>e.deployed).length,3);
+  assert.equal(next.state.dead,false);
+  assert.equal(resumed.sounds.filter(q=>q.name==='trophy').length,0);
+  assert.equal(next.state.inventory.ammo[0],sim.state.inventory.ammo[0]);
+  clearShellWorld(resumed);resumed.element('continue').click();
+  assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout().campaign),{version:1,discovered:['pistol','smg']});
 });
 
 test('Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together',()=>{

@@ -27,6 +27,14 @@
   const TRAP=['progress','angle','box','hot','warning','damageWait','triggered','triggerAge','cycle','hp','destroyed'];
   const SHIELD=['energy','raised','rechargeDelay','bashCooldown','bashVisual'];
   const CAMPAIGN_GEAR=[{key:'pistol',weapon:4,index:0},{key:'shield',index:3},{key:'smg',weapon:0,index:6},{key:'shotgun',weapon:1,index:9},{key:'grenade',weapon:3,index:12},{key:'rocket',weapon:2,index:15}];
+  const TROPHY_PHASES=['sealed','grace','trial','complete'];
+  const ownsGear=(gear,inventory)=>gear.key==='shield'?inventory.shield:inventory.weapons[gear.weapon];
+  function copyCampaign(value,inventory){
+    if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==2||value.version!==1||!Array.isArray(value.discovered)||!inventory||!Array.isArray(inventory.weapons)||inventory.weapons.length!==5||typeof inventory.shield!=='boolean')return null;
+    const keys=CAMPAIGN_GEAR.filter(g=>ownsGear(g,inventory)).map(g=>g.key);
+    if(value.discovered.length!==keys.length||new Set(value.discovered).size!==keys.length||!value.discovered.every(key=>keys.includes(key)))return null;
+    return {version:1,discovered:keys};
+  }
   const NUMBERS=['time','elapsed','kills','shots','hits','relays','weapon','score','combo','comboTime'];
   const pick=(value,keys)=>Object.fromEntries(keys.map(key=>[key,value[key]]));
   function create(world,options={}) {
@@ -46,6 +54,9 @@
     }
     const initialInventory=inventoryValue(options.inventory===undefined?{weapons:progression?(world.progression.startWeapons||weaponIds.map(i=>i===(pistol?4:0))):weaponIds.map(()=>true),ammo:progression?(world.progression.startAmmo||weaponIds.map(i=>pistol?i===4?1:0:i===0?48:0)):ammoCaps,...(arsenal?{shield:world.progression.startShield===true}:{})}:options.inventory);
     if(!initialInventory)throw new Error('Invalid inventory');
+    const initialCampaign=campaign?copyCampaign(options.campaign===undefined?{version:1,discovered:CAMPAIGN_GEAR.filter(g=>ownsGear(g,initialInventory)).map(g=>g.key)}:options.campaign,initialInventory):null;
+    if(campaign&&!initialCampaign)throw new Error('Invalid campaign');
+    const trophyDefs=campaign?world.trophies||[]:[];
     function equipmentValue(value,inventory){
       if(!value||!Number.isInteger(value.right)||!inventory.weapons[value.right]||!(value.left===null||value.left==='shield'&&inventory.shield||Number.isInteger(value.left)&&value.left!==value.right&&inventory.weapons[value.left])||!Number.isFinite(value.shieldEnergy)||value.shieldEnergy<0||value.shieldEnergy>100)return null;
       return {right:value.right,left:value.left,shieldEnergy:value.shieldEnergy};
@@ -89,6 +100,7 @@
     const elevated=floors.some(f=>f.y||f.slopeX||f.slopeZ)||(world.lifts||[]).length>0;
     const p={x:world.spawn.x,y:world.spawn.y??groundAt(world.spawn.x,world.spawn.z),z:world.spawn.z,yaw:world.spawn.yaw,pitch:0,hp:stats.maxHp,heat:0,overheated:false,dash:0,dashing:0,pulseCooldown:0,...freshAir()};
     const s={world,player:p,time:0,elapsed:0,won:false,dead:false,kills:0,shots:0,hits:0,relays:0,weapon:initialEquipment?.right||0,score:0,combo:0,comboTime:0,pulseVisual:0,
+      ...(campaign?{campaign:{...initialCampaign,trophies:trophyDefs.map(t=>({id:t.id,phase:'sealed',timer:0}))}}:{}),
       ...(arsenal?{equipment:{right:initialEquipment.right,left:initialEquipment.left},shield:{energy:initialEquipment.shieldEnergy,raised:false,rechargeDelay:0,bashCooldown:0,bashVisual:0},leftFlash:0}:{}),
       economy:initialEconomy,maxHp:stats.maxHp,inventory:initialInventory,loot:[],encounters:(progression?world.encounters||[]:[]).map(q=>({...q,waves:q.waves.map(w=>({enemyIds:w.enemyIds.filter(id=>Number.isInteger(id)&&id>=0&&id<world.enemies.length)})),status:'dormant',wave:-1,pendingWave:-1,timer:0,active:0,remaining:0,total:0})),
       difficulty:0,director:{pressure:0,tension:0,eventType:'',eventAge:0,nextEvent:horror?(world.stage?6:11):1e7,events:0,progress:0,tier:world.stage||0,grace:horror&&!world.stage?10:0,eventX:p.x,eventY:p.y,eventZ:p.z,eventIntensity:0},
@@ -168,7 +180,7 @@
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
     if(progression)identity.push(world.progression,world.encounters||[],world.shops||[]);
-    if(world.campaign===true)identity.push({campaign:true,index:world.index,chapter:world.chapter});
+    if(world.campaign===true)identity.push({campaign:true,index:world.index,chapter:world.chapter,trophies:trophyDefs});
     for(const c of JSON.stringify(identity))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
     fingerprint=(fingerprint>>>0).toString(36);
     function blocked(x,z,r=.28,y=ground(x,z),doors=doorBoxes,staticBoxes=solids,traps=trapBoxes,height=1.8){
@@ -460,7 +472,7 @@
 
     function setDifficulty(level){if(!Number.isInteger(level)||level<0||level>2)return false;s.difficulty=level;return true;}
     function exportInventory(){return {weapons:s.inventory.weapons.slice(),ammo:s.inventory.ammo.slice(),...(arsenal?{shield:s.inventory.shield}:{})};}
-    function exportLoadout(){return {inventory:exportInventory(),economy:economyEnabled?G.FEconomy.copy(s.economy):null,...(arsenal?{equipment:{right:s.weapon,left:s.equipment.left,shieldEnergy:s.shield.energy}}:{})};}
+    function exportLoadout(){return {inventory:exportInventory(),economy:economyEnabled?G.FEconomy.copy(s.economy):null,...(arsenal?{equipment:{right:s.weapon,left:s.equipment.left,shieldEnergy:s.shield.energy}}:{}),...(campaign?{campaign:{version:1,discovered:s.campaign.discovered.slice()}}:{})};}
     function shopAccessible(q){return economyEnabled&&!s.dead&&!s.won&&p.hp>0&&Math.hypot(p.x-q.x,p.z-q.z)<=2.6&&Math.abs(p.y-(q.y||0))<1.05&&(!q.destructibleId||!destruction||destruction.isAlive(q.destructibleId))&&sight(p.x,p.z,q.x,q.z,p.y+1.4,(q.y||0)+1.4);}
     function shopOffers(id){const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return null;const state={profile:s.economy,inventory:s.inventory,hp:p.hp};return G.FEconomy.catalog().filter(item=>(arsenal||item.weapon!==3&&item.kind!=='shield')&&(!pistol||item.kind!=='weapon'&&item.kind!=='shield'&&(item.kind!=='ammo'||s.inventory.weapons[item.weapon]))).map(item=>({...item,...G.FEconomy.quote(state,item.id,{campaign:pistol})}));}
     function buy(id,itemId){
@@ -484,13 +496,34 @@
       const gear=CAMPAIGN_GEAR.find(g=>kind==='shield'?g.key==='shield':g.weapon===q.weapon),id=gear&&'trophy-'+gear.key;
       return !!gear&&gear.key!=='pistol'&&world.index===gear.index&&q.id===id&&q.trophyId===id;
     }
+    function trophyState(id){return campaign?s.campaign.trophies.find(t=>t.id===id):null;}
+    function claimTrophy(q){
+      if(!campaign)return;
+      const def=trophyDefs.find(t=>t.id===q.trophyId&&t.pickupId===q.id),state=def&&trophyState(def.id),first=def&&!s.campaign.discovered.includes(def.key);
+      s.campaign.discovered=CAMPAIGN_GEAR.filter(g=>ownsGear(g,s.inventory)).map(g=>g.key);
+      if(!state||state.phase!=='sealed')return;
+      if(!first){state.phase='complete';state.timer=0;return;}
+      state.phase='grace';state.timer=clamp(Number(def.grace)||3,1,5);
+      emit('trophy',{id:def.id,key:def.key,label:def.name,usage:def.usage,...(def.shield?{shield:true}:{weapon:def.weapon}),x:def.x,y:def.y||0,z:def.z,grace:state.timer});
+    }
+    function updateTrophies(dt){
+      if(!campaign)return;
+      for(const state of s.campaign.trophies){
+        const def=trophyDefs.find(t=>t.id===state.id),encounter=encounterMap.get(def.encounterId);
+        if(state.phase==='grace'){
+          state.timer=Math.max(0,state.timer-dt);
+          if(state.timer<=0){state.phase='trial';if(encounter&&encounter.waves.length){announceWave(encounter,0);emit('trophyTrial',{id:def.id,key:def.key,encounterId:def.encounterId});}}
+        }
+        if(state.phase==='trial'&&(!encounter||encounter.status==='cleared')){state.phase='complete';state.timer=0;emit('trophyComplete',{id:def.id,key:def.key});}
+      }
+    }
     function collectSupplies(){
       for(const q of s.pickups){
         if(q.taken||Math.abs(p.y-(q.y||0))>=.8||Math.hypot(p.x-q.x,p.z-q.z)>=1||!sight(p.x,p.z,q.x,q.z,p.y+.8,(q.y||0)+.45))continue;
         const kind=pickupKind(q);
         if(!campaignPickupAllowed(q,kind)||pistol&&Number.isInteger(q.requiresWeapon)&&!s.inventory.weapons[q.requiresWeapon])continue;
         if(kind==='health'){if(p.hp>=stats.maxHp-.01)continue;q.taken=true;p.hp=Math.min(stats.maxHp,p.hp+(q.amount||35));s.score+=25;emit('pickup');continue;}
-        if(arsenal&&kind==='shield'){q.taken=true;q.remaining=0;if(!s.inventory.shield){s.inventory.shield=true;selectLeftWeapon('shield');emit('shieldPickup',{id:q.id,x:q.x,y:q.y||0,z:q.z});}continue;}
+        if(arsenal&&kind==='shield'){q.taken=true;q.remaining=0;if(!s.inventory.shield){s.inventory.shield=true;selectLeftWeapon('shield');emit('shieldPickup',{id:q.id,x:q.x,y:q.y||0,z:q.z});}claimTrophy(q);continue;}
         if(!progression||!Number.isInteger(q.weapon)||q.weapon<0||q.weapon>=weaponSlots)continue;
         const weapon=q.weapon,found=kind==='weapon'&&!s.inventory.weapons[weapon];
         if(pistol&&(weapon===4||kind!=='weapon'&&!s.inventory.weapons[weapon]))continue;
@@ -498,6 +531,7 @@
         const amount=Math.min(q.remaining,ammoCaps[weapon]-s.inventory.ammo[weapon]);
         if(amount>0){s.inventory.ammo[weapon]+=amount;q.remaining-=amount;}
         if(found||amount>0)emit(found?'weaponPickup':'ammoPickup',{id:q.id,weapon,amount,x:q.x,y:q.y||0,z:q.z});
+        if(found||q.trophyId)claimTrophy(q);
         if(q.remaining===0&&(kind!=='weapon'||s.inventory.weapons[weapon]))q.taken=true;
       }
       for(const q of s.loot){
@@ -562,6 +596,7 @@
       if(encounterWait<=0){
         encounterWait=.2;let probes=8;
         for(const q of s.encounters){
+          if(campaign&&q.requiresTrophy&&trophyState(q.requiresTrophy)?.phase!=='trial')continue;
           const ids=q.waves.flatMap(w=>w.enemyIds),remaining=ids.filter(id=>s.enemies[id].hp>0);
           if(!remaining.length){if(q.status!=='cleared'){q.status='cleared';q.pendingWave=-1;q.timer=0;emit('encounterClear',{id:q.id,label:q.label||'Zone sécurisée'});}continue;}
           if(q.status==='dormant'&&inEncounter(q))announceWave(q,0);
@@ -606,7 +641,7 @@
       const home=world.enemies[e.id];if(e.planWait<=0){if(!setGoal(e,home.x,home.z,'advance',2.4)){e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;e.planWait=.4;}}
       navigate(e,dt);if(Math.hypot(e.x-home.x,e.z-home.z)<.5){e.returning=false;clearEvidence(e);}
     }
-    const introSafe=()=>horror&&s.director.grace>0&&Math.hypot(p.x-world.spawn.x,p.z-world.spawn.z)<14;
+    const introSafe=()=>campaign&&s.campaign.trophies.some(t=>t.phase==='grace'&&t.timer>0)||horror&&s.director.grace>0&&Math.hypot(p.x-world.spawn.x,p.z-world.spawn.z)<14;
     const enemySpeed=()=>1+s.difficulty*.09+(horror?(world.stage||0)*.025:0);
     const enemyCadence=()=>(progression?1.15:1)/(1+s.difficulty*.13+(horror?(world.stage||0)*.045+s.director.progress*.05:0));
     function updateDirector(dt){
@@ -1682,7 +1717,7 @@
       if(input.fire)fire(input.assist);
       if(arsenal&&input.fireLeft&&Number.isInteger(s.equipment.left))fire(input.assist,'left');
       if(navWait<=0){if(!advanced)rebuildNav();navWait=.6;}
-      updateEnemies(dt);updateBossAttacks(dt);updateProjectiles(dt);if(checkPlayerBounds())return;
+      updateTrophies(dt);updateEnemies(dt);updateBossAttacks(dt);updateProjectiles(dt);if(checkPlayerBounds())return;
       for(const bullet of s.bullets){
         const speed=Math.hypot(bullet.dx,bullet.dy,bullet.dz),travel=speed*dt;
         if(!(speed>0)){bullet.life=0;continue;}
@@ -1708,9 +1743,10 @@
       // same routes as a freshly restored world. No actor or gameplay timer moves.
       if(navPending)pumpNav(nav.length);
       invalidateBrain();
-      return {version:1,aiVersion:3,systemsVersion:1,physicsVersion:1,directorVersion:1,bossVersion:1,destructionVersion:1,...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
+      return {version:1,aiVersion:3,systemsVersion:1,physicsVersion:1,directorVersion:1,bossVersion:1,destructionVersion:1,...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
         state:{...pick(s,NUMBERS),difficulty:s.difficulty,director:pick(s.director,DIRECTOR),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
           ...(economyEnabled?{economy:G.FEconomy.copy(s.economy)}:{}),
+          ...(campaign?{campaign:{version:1,discovered:s.campaign.discovered.slice(),trophies:s.campaign.trophies.map(t=>({...t}))}}:{}),
           ...(arsenal?{equipment:{...s.equipment},shield:pick(s.shield,SHIELD)}:{}),
           ...(progression?{inventory:exportInventory(),encounters:s.encounters.map(q=>({id:q.id,...pick(q,ENCOUNTER_STATE)})),pickupRemaining:s.pickups.map(q=>q.remaining),loot:s.loot.map(q=>({...q,ammo:q.ammo.slice()}))}:{}),
           enemies:s.enemies.map(e=>({...pick(e,ENEMY),...pick(e,AI),...pick(e,AI2),...pick(e,AI3),...pick(e,BOSS),...(progression?pick(e,ENCOUNTER_AI):{}),path:e.path.slice()})),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q})),
@@ -1736,9 +1772,10 @@
         require(progression?data.progressionVersion===1:data.progressionVersion===undefined);
         require(economyEnabled?data.economyVersion===1:data.economyVersion===undefined);
         require(arsenal?data.arsenalVersion===(pistol?2:1):data.arsenalVersion===undefined);
+        require(campaign?data.campaignVersion===1:data.campaignVersion===undefined);
         const economy=economyEnabled?G.FEconomy.copy(a.economy):null;if(economyEnabled)require(economy);else require(a.economy===undefined);
         const savedCaps=economyEnabled?G.FEconomy.ammoCaps(economy,{campaign:pistol}).slice(0,weaponSlots):ammoCaps,savedStats=economyEnabled?G.FEconomy.stats(economy):{...baseStats};
-        let inventory=exportInventory(),encounters=null,pickupRemaining=null,loot=[];
+        let inventory=exportInventory(),encounters=null,pickupRemaining=null,loot=[],campaignState=null;
         if(progression){
           inventory=inventoryValue(a.inventory,savedCaps);require(inventory&&inventory.weapons[a.weapon]);
           if(arsenal)require(a.inventory.weapons.length===weaponSlots&&a.inventory.ammo.length===weaponSlots);
@@ -1747,6 +1784,12 @@
           require(Array.isArray(a.pickupRemaining)&&a.pickupRemaining.length===s.pickups.length);
           pickupRemaining=a.pickupRemaining.map((v,i)=>{const q=world.pickups[i],kind=pickupKind(q),amount=Math.max(0,Math.floor(q.amount||0));require(integer(v,0,amount));if(kind==='health')require(v===amount);else{require(!a.pickups?.[i]||v===0);if(kind==='weapon'&&a.pickups?.[i])require(inventory.weapons[q.weapon]);if(kind==='shield'&&a.pickups?.[i])require(inventory.shield===true);}return v;});
         }else require(a.inventory===undefined&&a.encounters===undefined&&a.pickupRemaining===undefined&&a.loot===undefined&&t.encounterWait===undefined&&t.emptyWait===undefined);
+        if(campaign){
+          const state=a.campaign,profile=state&&copyCampaign({version:state.version,discovered:state.discovered},inventory);
+          require(profile&&Object.keys(state).length===3&&Array.isArray(state.trophies)&&state.trophies.length===trophyDefs.length);
+          const trophies=state.trophies.map((entry,i)=>{const def=trophyDefs[i];require(entry&&Object.keys(entry).length===3&&entry.id===def.id&&TROPHY_PHASES.includes(entry.phase)&&number(entry.timer,0,clamp(Number(def.grace)||3,1,5))&&((entry.phase==='grace')===(entry.timer>0)));if(entry.phase!=='sealed')require(profile.discovered.includes(def.key));return {id:entry.id,phase:entry.phase,timer:entry.timer};});
+          campaignState={...profile,trophies};
+        }else require(a.campaign===undefined);
         let equipment=null,shield=null,savedWeaponWait=null;
         if(arsenal){
           require(a.shield&&number(a.shield.energy,0,100)&&bool(a.shield.raised)&&number(a.shield.rechargeDelay,0,2.2)&&number(a.shield.bashCooldown,0,1.1)&&number(a.shield.bashVisual,0,.24));
@@ -1866,6 +1909,11 @@
         if(progression){
           require(enemies.filter(e=>alive(e)&&!giant(e)&&e.combatEnabled&&(!e.bossWave||e.bossReleased)).length<=maxCombat);
           for(let i=0;i<encounters.length;i++){const q=encounters[i],home=s.encounters[i],ids=home.waves.flatMap(w=>w.enemyIds);require(ids.filter(id=>alive(enemies[id])&&enemies[id].combatEnabled).length<=(home.maxActive||6));if(q.status==='cleared')require(ids.every(id=>enemies[id].hp===0));for(let wave=0;wave<home.waves.length;wave++)for(const id of home.waves[wave].enemyIds)if(wave>Math.max(q.wave,q.pendingWave))require(!enemies[id].encounterReleased);}
+          if(campaign)for(const state of campaignState.trophies){
+            const def=trophyDefs.find(d=>d.id===state.id),pickup=world.pickups.findIndex(q=>q.id===def.pickupId),at=s.encounters.findIndex(q=>q.id===def.encounterId),q=encounters[at],home=s.encounters[at];
+            require(pickup>=0);if(state.phase==='sealed')require(!a.pickups[pickup]);
+            if(q){const inactive=q.status==='dormant'&&q.wave===-1&&q.pendingWave===-1&&home.waves.every(w=>w.enemyIds.every(id=>!enemies[id].encounterReleased));if(state.phase==='sealed'||state.phase==='grace')require(inactive);else if(state.phase==='trial')require(q.status!=='dormant');else require(inactive||q.status==='cleared');}
+          }
           require(Array.isArray(a.loot)&&a.loot.length<=enemies.length);const sources=new Set();
           loot=a.loot.map(q=>{require(q&&integer(q.sourceEnemy,0,enemies.length-1)&&!sources.has(q.sourceEnemy));sources.add(q.sourceEnemy);const enemy=enemies[q.sourceEnemy],reward=enemyReward(enemy,inventory);require(enemy.hp===0&&reward&&q.id==='enemy-'+q.sourceEnemy&&q.kind===(giant(enemy)?'boss':'salvage')&&integer(q.credits,0,reward.credits)&&integer(q.cores,0,reward.cores)&&Array.isArray(q.ammo)&&q.ammo.length===weaponSlots&&weaponIds.every(i=>integer(q.ammo[i],0,reward.ammo[i]))&&bool(q.taken)&&q.taken===(!q.credits&&!q.cores&&q.ammo.every(n=>n===0))&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-1000,1000)&&Math.abs(q.y-ground(q.x,q.z))<.061);return {...pick(q,['id','sourceEnemy','kind','credits','cores','x','y','z','taken']),ammo:q.ammo.slice()};});
           for(const e of enemies)if(e.hp===0&&enemyReward(e,inventory))require(sources.has(e.id));
@@ -1895,6 +1943,7 @@
           return bullet;
         });
         Object.assign(p,pick(v,PLAYER));Object.assign(s,pick(a,NUMBERS),{difficulty,director,economy,inventory,loot,won:a.won,dead:a.dead,bossAlive:a.bossAlive,enemies,bullets,mechanisms,doors,lifts,pipes,traps,projectiles,bossAttacks});stats=savedStats;ammoCaps=savedCaps;s.maxHp=stats.maxHp;
+        if(campaign)s.campaign=campaignState;
         if(arsenal){s.equipment={right:equipment.right,left:equipment.left};s.shield=shield;for(let i=0;i<weaponSlots;i++)weaponWait[i]=savedWeaponWait[i];s.leftFlash=0;}
         invalidateBrain();
         s.cores=world.cores.map((c,i)=>({...c,taken:a.cores[i]}));s.pickups=world.pickups.map((c,i)=>({...c,taken:a.pickups[i],remaining:pickupRemaining?pickupRemaining[i]:Math.max(0,Math.floor(c.amount||0))}));if(encounters)for(let i=0;i<encounters.length;i++)Object.assign(s.encounters[i],encounters[i]);
@@ -1910,5 +1959,5 @@
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
     return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,shieldBash,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
-  G.FSimulation={create,clamp};
+  G.FSimulation={create,clamp,copyCampaign};
 })(typeof window!=='undefined'?window:globalThis);

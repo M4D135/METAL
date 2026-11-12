@@ -110,6 +110,50 @@ function assertReachable(world, label) {
   return { targets: targets.length, accessibleCells: grid.accessibleCells };
 }
 
+function crossesScreen(from, to, box) {
+  const intervals = [['minX', 'maxX'], ['minY', 'maxY'], ['minZ', 'maxZ']].map(([low, high], axis) => {
+    const delta = to[axis] - from[axis];
+    if (Math.abs(delta) < 1e-10) return from[axis] >= box[low] && from[axis] <= box[high] ? [-Infinity, Infinity] : [Infinity, -Infinity];
+    const a = (box[low] - from[axis]) / delta, b = (box[high] - from[axis]) / delta;
+    return [Math.min(a, b), Math.max(a, b)];
+  });
+  return Math.max(0, ...intervals.map(q => q[0])) < Math.min(.999, ...intervals.map(q => q[1]));
+}
+function assertTrophy(world, label) {
+  const expected = [3, 6, 9, 12, 15].includes(world.index);
+  assert.equal(world.trophies.length, expected ? 1 : 0, `${label}: trophy calendar mismatch`);
+  const boss = world.enemies.at(-1); assert.equal(boss.type, 3);
+  for (const e of world.enemies.filter(e => e.bossWave)) assert.equal(e.bossId, world.enemies.length - 1);
+  const membership = world.encounters.flatMap(q => q.waves.flatMap(v => v.enemyIds));
+  assert.equal(new Set(membership).size, membership.length, `${label}: duplicate encounter identity`);
+  assert.equal(membership.length, world.enemies.filter(e => e.type !== 3 && !e.bossWave).length, `${label}: orphan trial/encounter body`);
+  if (!expected) return;
+  const trophy = world.trophies[0], gift = world.pickups.find(q => q.id === trophy.pickupId), trial = world.encounters.find(q => q.id === trophy.encounterId), cache = world.pickups.find(q => q.id === trophy.cacheId), room = world.rooms[trophy.zoneId];
+  assert(gift && trial && cache && room && room.id !== 0 && room.y === 0);
+  assert.equal(gift.trophyId, trophy.id); assert.equal(trial.requiresTrophy, trophy.id); assert.equal(trophy.grace, 3);
+  assert.equal(gift.x, trophy.x); assert.equal(gift.z, trophy.z); assert.equal(trophy.y, heightAt(world, trophy.x, trophy.z));
+  assert(trophy.name && trophy.usage && trophy.meshCount >= 20 && trophy.meshCount <= 32);
+  const presentation = world.meshes.slice(trophy.meshStart, trophy.meshStart + trophy.meshCount);
+  assert(presentation.every(m => m.trophyId === trophy.id && m.indestructible && !m.destructibleId));
+  assert(presentation.some(m => m.category === 'trophy_plinth')); assert(presentation.some(m => m.category === 'trophy_lens'));
+  assert.equal(world.lights[trophy.lightIndex].trophyId, trophy.id); assert(!world.lights[trophy.lightIndex].destructibleId);
+  assert.equal(trial.waves.length, 1); assert.equal(trial.waves[0].enemyIds.length, 3); assert.equal(trial.maxActive, 3);
+  for (const id of trial.waves[0].enemyIds) {
+    const e = world.enemies[id]; assert(!e.deployed && e.trophyGuard === trophy.id && e.encounterId === trial.id);
+    assert(trial.spawnEntries.some(q => q.x === e.x && q.z === e.z && q.y === e.y));
+  }
+  if (gift.kind === 'weapon') assert(cache.kind === 'ammo' && cache.weapon === gift.weapon && cache.requiresWeapon === gift.weapon);
+  else assert.equal(cache.kind, 'health');
+  const screen = world.colliders.find(q => q.mesh === trophy.coverMesh), origin = [trophy.x, trophy.y + 1.62, trophy.z];
+  assert(screen && world.meshes[trophy.coverMesh].category === 'reinforcement_baffle');
+  for (const entry of trial.spawnEntries) {
+    assert(Math.hypot(entry.x - trophy.x, entry.z - trophy.z) >= 10, `${label}: trial cannot deploy while standing at the trophy`);
+    const yaw = Math.atan2(trial.trigger.x - entry.x, entry.z - trial.trigger.z);
+    const samples = [[0, 0], [-.9, 0], [.9, 0], [0, -.9], [0, .9], [-.65, -.65], [-.65, .65], [.65, -.65], [.65, .65], [Math.sin(yaw) * 1.5, -Math.cos(yaw) * 1.5]];
+    for (const height of [.2, 1.1, 2.15]) for (const [dx, dz] of samples) assert(crossesScreen(origin, [entry.x + dx, entry.y + height, entry.z + dz], screen), `${label}: visible trial silhouette or barrel`);
+  }
+}
+
 for (const [seed, stage, expected] of legacyHashes) test(`legacy seed ${seed}, sector ${stage}: exact pre-campaign world fingerprint`, () => {
   assert.equal(digest(create(seed, stage)), expected);
 });
@@ -129,7 +173,7 @@ test('campaign mode is strictly opt-in and keeps historical clamping otherwise',
 test('the first three campaign worlds preserve historical geometry outside campaign supplies and loadout', () => {
   for (let stage = 0; stage < 3; stage++) {
     const world = create(96, stage, { campaign: true });
-    for (const key of ['campaign', 'index', 'chapter', 'chapterTitle']) delete world[key];
+    for (const key of ['campaign', 'index', 'chapter', 'chapterTitle', 'trophies']) delete world[key];
     const legacy = create(96, stage);
     for (const key of ['weaponSlots', 'startWeapons', 'startAmmo', 'ammoCaps']) world.progression[key] = legacy.progression[key];
     world.pickups = legacy.pickups;
@@ -155,12 +199,13 @@ for (let index = 0; index < 18; index++) test(`campaign world ${String(index + 1
     assert.deepEqual(Array.from(world.progression.startAmmo), [0, 0, 0, 0, 1]);
     assert.deepEqual(Array.from(world.progression.ammoCaps), [180, 36, 12, 16, 1]);
     assert.equal(world.progression.startShield, false);
-    assert.equal(world.enemies.length, [120, 140, 170][world.stage]);
+    assert.equal(world.enemies.length, [120, 140, 170][world.stage] + (world.trophies.length ? 3 : 0));
     const unlock = [6, 9, 15, 12, 0], novelty = new Map([[3, 'shield'], [6, 0], [9, 1], [12, 3], [15, 2]]), equipment = world.pickups.filter(q => q.kind === 'weapon' || q.kind === 'shield');
     assert.equal(equipment.length, novelty.has(index) ? 1 : 0, `${label}: campaign equipment is duplicated or out of schedule`);
     if (equipment.length) { const item = equipment[0]; assert(item.id.startsWith('trophy-')); assert.equal(item.trophyId, item.id); assert.equal(item.kind === 'shield' ? 'shield' : item.weapon, novelty.get(index)); }
     for (const q of world.pickups.filter(q => q.kind === 'ammo')) assert(q.weapon < 4 && unlock[q.weapon] <= index && q.requiresWeapon === q.weapon, `${label}: premature or unconditional ammunition cache`);
     for (const e of world.enemies) if (e.drop) assert(e.drop.weapon < 4 && unlock[e.drop.weapon] <= index, `${label}: enemy drops ammunition before its weapon is introduced`);
+    assertTrophy(world, label);
     const result = assertReachable(world, label); reachedTargets += result.targets; minCells = Math.min(minCells, result.accessibleCells); maxCells = Math.max(maxCells, result.accessibleCells);
     if (seed === 96) {
       const art = artSignatures[world.stage];

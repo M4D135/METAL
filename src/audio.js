@@ -48,7 +48,7 @@
       }
       function duckMusic() {
         if (cueDucked || !musicBus || !cue || mix.effects <= 0) return;
-        var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|wave|core|mechanism|shieldRaise)$/.test(cue) ? .68 : 1;
+        var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism|shieldRaise)$/.test(cue) ? .68 : 1;
         if (strength === 1) return;
         strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
         cueDucked = true;
@@ -535,6 +535,17 @@
           noise(.09,.13*e.level,1800,e.pan,0,'bandpass');tone(120,52,.21,.13*e.level,'triangle',0,e.pan,900);
           tone(330,440,.23,.075*e.level,'sawtooth',.08,-.16,1200);tone(660,880,.26,.055*e.level,'triangle',.18,.16,1800);
         },
+        // A new campaign discovery has one short forged-metal fanfare. It is
+        // dispatched only by the discovery event, never by snapshot restore.
+        trophy: function (value) {
+          if(!playing&&!preview)return;
+          var e=effectEvent('trophy',value,1.1);if(!e)return;var g=e.level;
+          noise(.095,.13*g,1900,e.pan,0,'bandpass');
+          tone(88,55,.24,.12*g,'triangle',0,e.pan,950);
+          tone(164.81,164.81,.32,.085*g,'sawtooth',.035,-.12,1400);
+          tone(246.94,246.94,.36,.07*g,'sawtooth',.13,.12,1600);
+          tone(329.63,329.63,.48,.06*g,'triangle',.25,0,2200);
+        },
         empty: function (value) {
           var e=effectEvent('empty',value,.18);if(!e)return;
           noise(.025,.10*e.level,3400,.08,0,'highpass');tone(390,170,.055,.065*e.level,'triangle',0,.06,1800);
@@ -626,7 +637,7 @@
       };
       // Priority belongs to a cue, not its waveform. A rocket's click, body
       // and exhaust keep the same reservation and cause one short music dip.
-      var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|wave|core|win)$/;
+      var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
       var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose)/;
       Object.keys(api).forEach(function (name) {
         if (typeof api[name] !== 'function' || helpers.test(name)) return;

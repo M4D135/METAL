@@ -662,7 +662,7 @@
     suppliesWorld(world);
     populate(world);
     armoryWorld(world);
-    if(campaign)campaignArmory(world);
+    if(campaign){campaignArmory(world);campaignTrophies(world,theme);}
     polishTrees(world);
     demolitionMetadata(world);
     world.detailStats.added=world.meshes.length-world.detailStats.base;
@@ -1371,7 +1371,7 @@
     }
     const nearest=(x,y,z,region)=>groups.filter(g=>(!region||g.region===region)&&g.kind!=='decor').map(g=>({g,d:distance([x,y,z],g.bounds)})).sort((a,b)=>a.d-b.d)[0]?.g;
     for(const a of (w.machinery||[]).concat(w.ambience||[])){const g=nearest(a.x,a.y,a.z,a.room===undefined?undefined:'room-'+a.room);if(g)a.destructibleId=g.id;}
-    for(const light of w.lights){const g=nearest(...light.p,light.region);if(g)light.destructibleId=g.id;}
+    for(const light of w.lights){if(light.trophyId)continue;const g=nearest(...light.p,light.region);if(g)light.destructibleId=g.id;}
     for(const p of w.pipes)p.destructibleId='pressure-'+p.id.slice(5);
     for(const t of w.traps)t.destructibleId='trap-frame-'+t.id.slice(5);
     for(const m of w.mechanisms){const g=nearest(m.x,m.y+.6,m.z);if(g)m.destructibleId=g.id;}
@@ -1538,6 +1538,52 @@
       const {key,kind,weapon,amount}=discovery;
       w.pickups.push({id:'trophy-'+key,trophyId:'trophy-'+key,kind,...(kind==='weapon'?{weapon}:{}),amount,x:reserved.x,y:reserved.y,z:reserved.z,zoneId:reserved.zoneId});
     }
+  }
+  // The trophy is a detour inside an existing low room. Its approach can see
+  // the equipment but every reserve silhouette stays behind a real service wall.
+  function campaignTrophies(w,theme){
+    w.trophies=[];
+    const gift=w.pickups.find(q=>q.trophyId);if(!gift)return;
+    const key=gift.trophyId.slice(7),names={shield:'Bouclier',smg:'Mitraillette',shotgun:'Double pompe',grenade:'Lance-grenades',rocket:'Lance-roquettes'},usage={shield:'Protégez-vous, puis frappez au contact.',smg:'Enchaînez les rafales et surveillez la chauffe.',shotgun:'Approchez, frappez fort, reprenez votre distance.',grenade:'Faites rebondir les grenades derrière les couverts.',rocket:'Visez les groupes et gardez vos distances.'},depths=roomDepths(w);
+    const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target]),...w.pickups.filter(q=>q!==gift),...w.enemies.filter(e=>e.deployed)];
+    const segmentHit=(a,b,c)=>{let low=0,high=1;for(const [i,min,max] of [[0,c.minX,c.maxX],[1,c.minY,c.maxY],[2,c.minZ,c.maxZ]]){const d=b[i]-a[i];if(Math.abs(d)<1e-9){if(a[i]<min||a[i]>max)return false;}else{const x=(min-a[i])/d,y=(max-a[i])/d;low=Math.max(low,Math.min(x,y));high=Math.min(high,Math.max(x,y));if(low>high)return false;}}return high>0&&low<.999;};
+    const safe=(p,r,rad)=>Math.abs(p.x-r.x)<r.w/2-rad-.3&&Math.abs(p.z-r.z)<r.d/2-rad-.3&&Math.abs(floorHeight(w,p.x,p.z)-r.y)<.01&&safeSupply(w,p.x,p.z,rad)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>rad+.7)&&w.jumpPads.every(q=>pointSegment(p.x,p.z,q,q.target)>rad+1.6);
+    let chosen;
+    const rooms=w.rooms.filter(r=>r.id&&!r.bossArena&&r.y===0&&depths.get(r.id)===1).sort((a,b)=>(a.id===3?-1:0)-(b.id===3?-1:0)||a.id-b.id);
+    for(const r of rooms){
+      const bay=w.encounterBays.find(q=>q.zoneId===r.id),screen=w.colliders.find(q=>q.mesh===bay.coverMesh);
+      search:for(const d of [10,11,9,12,13,14,9.5,10.5,11.5,12.5,13.5])for(const lateral of [2.4,-2.4,3,-3,1.8,-1.8,3.6,-3.6,1.2,-1.2,0]){
+        const p={x:bay.x-bay.normal[0]*d+bay.normal[1]*lateral,y:r.y,z:bay.z-bay.normal[1]*d-bay.normal[0]*lateral};
+        if(Math.abs(p.x-r.x)<1.2||Math.abs(p.z-r.z)<1.2||!safe(p,r,.95))continue;
+        const origin=[p.x,p.y+1.62,p.z];
+        if(!bay.spawnEntries.every(q=>Math.hypot(q.x-p.x,q.z-p.z)>=10&&[.2,1.1,2.15].every(h=>[[0,0],[-1.5,0],[1.5,0],[0,-1.5],[0,1.5],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65]].every(([dx,dz])=>segmentHit(origin,[q.x+dx,q.y+h,q.z+dz],screen)))))continue;
+        const cache=[[-2.4,0],[2.4,0],[-2.4,1.2],[2.4,1.2],[0,2.4],[0,-2.4]].map(([u,v])=>({x:p.x+bay.normal[1]*u+bay.normal[0]*v,y:r.y,z:p.z-bay.normal[0]*u+bay.normal[1]*v})).find(q=>safe(q,r,.57));
+        if(!cache)continue;chosen={r,bay,p,cache};break search;
+      }
+      if(chosen)break;
+    }
+    if(!chosen)throw new Error('No safe trophy alcove '+w.seed+'/'+w.index);
+    const {r,bay,p,cache}=chosen,id=gift.trophyId,name=names[key],encounterId='trial-'+key,meshStart=w.meshes.length,region='room-'+r.id;
+    Object.assign(gift,p,{zoneId:r.id});r.trophyId=id;
+    const add=(shape,pos,size,mat,category,extra={})=>{w.meshes.push({shape,p:pos,s:size,mat,category,region,outdoor:r.outdoor,indestructible:true,trophyId:id,...extra});};
+    add('box',[p.x,p.y+.02,p.z],[1.85,.04,1.85],1,'trophy_plinth',{solid:true,color:[.34,.30,.22]});
+    w.colliders.push({minX:p.x-.925,maxX:p.x+.925,minY:p.y,maxY:p.y+.04,minZ:p.z-.925,maxZ:p.z+.925,mesh:meshStart});
+    add('cylinder',[p.x,p.y+.055,p.z],[1.45,.03,1.45],3,'trophy_deck');
+    add('ring',[p.x,p.y+.079,p.z],[1.68,.035,1.68],4,'trophy_signal',{color:theme.alt,emissive:.45});
+    for(const side of [-1,1])for(const end of [-1,1]){
+      add('box',[p.x+side*.78,p.y+.065,p.z+end*.78],[.19,.05,.19],3,'trophy_corner');
+      add('box',[p.x+side*.66,p.y+.095,p.z+end*.78],[.16,.018,.055],4,'trophy_inlay',{color:theme.alt,emissive:.35});
+    }
+    for(let i=0;i<12;i++){const a=i*TAU/12;add('box',[p.x+Math.cos(a)*1.14,p.y+.016,p.z+Math.sin(a)*1.14],[.12,.022,.27],5,'trophy_floor_mark',{r:[0,-a,0],color:theme.alt,emissive:.15});}
+    add('ring',[p.x,p.y+2.72,p.z],[1.2,.055,1.2],1,'trophy_lamp');
+    add('cylinder',[p.x,p.y+2.69,p.z],[.64,.035,.64],4,'trophy_lens',{color:theme.alt,emissive:.7});
+    const lightIndex=w.lights.length;w.lights.push({p:[p.x,p.y+2.45,p.z],color:theme.alt.slice(),power:5.5,region,trophyId:id});
+    w.pickups.push({id:'trial-cache-'+key,kind:key==='shield'?'health':'ammo',...(key==='shield'?{}:{weapon:gift.weapon,requiresWeapon:gift.weapon}),amount:key==='shield'?24:Math.max(2,Math.ceil(gift.amount/2)),...cache,zoneId:r.id,trophyCache:id});
+    const boss=w.enemies.pop(),ids=[];
+    for(let i=0;i<3;i++){const point=bay.spawnEntries[i],type=key==='shotgun'||key==='rocket'?1:0;ids.push(w.enemies.length);w.enemies.push({...point,type,zoneId:r.id,squadId:1000+w.index,encounterId,wave:0,deployed:false,role:'assault',yaw:Math.atan2(p.x-point.x,point.z-p.z),drop:key==='shield'?false:{weapon:gift.weapon,amount:gift.weapon===0?4:gift.weapon===1?2:1},trophyGuard:id});}
+    const bossId=w.enemies.length;w.enemies.push(boss);for(const e of w.enemies)if(e.bossWave)e.bossId=bossId;
+    w.encounters.push({id:encounterId,label:'Épreuve — '+name,zoneId:r.id,trigger:{x:r.x,y:r.y,z:r.z,w:r.w+4,d:r.d+4},leashRadius:38,maxActive:3,waveGap:4,spawnEntries:bay.spawnEntries.map(q=>({...q})),waves:[{enemyIds:ids}],requiresTrophy:id});
+    w.trophies.push({id,key,name,usage:usage[key],pickupId:gift.id,encounterId,grace:3,...p,zoneId:r.id,...(key==='shield'?{shield:true}:{weapon:gift.weapon}),meshStart,meshCount:w.meshes.length-meshStart,lightIndex,cacheId:'trial-cache-'+key,coverMesh:bay.coverMesh});
   }
   // All 430 IDs stay stable in the save. Only the opening patrols and the
   // colossus's six scripted guards exist physically before their wave deploys.

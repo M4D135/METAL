@@ -119,3 +119,19 @@ test('cosmetic storm budgets keep hazards/projectile bodies and do not mutate or
   }
   assert.equal(JSON.stringify(state),before);
 });
+
+test('trophy lighting follows persisted discoveries and grace, retains its ground anchor and yields to combat lights',()=>{
+  const world={trophies:[{id:7,key:'rifle',x:2,y:3.5,z:-4}]};
+  const make=(phase,discovered=[])=>freeze({player:{x:2,y:3.5,z:0},world,campaign:{version:1,discovered,trophies:[{id:7,phase,timer:phase==='grace'?3:0}]}});
+  assert.equal(Effects.lights(make('sealed')).length,0,'sealed trophies cannot reveal themselves through a live light');
+  const state=make('grace',['rifle']),saved=JSON.stringify(state),light=Effects.lights(state)[0];
+  assert.deepEqual(plain(light.p),[2,5.6,-4]);assert(light.power>0&&light.range>0);
+  assert.equal(JSON.stringify(state),saved);assert.deepEqual(plain(Effects.lights(JSON.parse(saved))),plain([light]));
+  for(const phase of ['trial','complete']){const permanent=Effects.lights(make(phase,['rifle']))[0];assert(permanent.power>0&&permanent.power<light.power);assert.deepEqual(plain(permanent.p),[2,5.6,-4]);}
+  assert(Effects.lights(make('sealed',['rifle']))[0].power>0,'loadout discovery also lights a revisited pedestal');
+  assert.equal(Effects.lights({...state,player:{x:300,y:0,z:300}}).length,0,'offscreen remote trophy lights do not occupy the pool');
+  assert.equal(Effects.lights({world}).length,0,'the legacy path does not activate campaign light');
+  const blasts=Array.from({length:4},(_,i)=>({id:i,x:i+1,y:4,z:-3,age:.04,life:2.4,radius:4,power:55}));
+  const crowded=Effects.lights({...state,explosions:blasts});assert.equal(crowded.length,4);assert(crowded.every(l=>!l.trophy),'combat transients retain all four existing slots');
+  const one=Effects.lights({...state,explosions:blasts.slice(0,1)});assert.equal(one.length,2);assert(!one[0].trophy&&one[1].trophy);
+});

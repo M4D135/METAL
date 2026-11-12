@@ -190,8 +190,19 @@
     for(const q of state?.projectiles||[])if(q.kind==='rocket'&&num(q.age)>=0&&num(q.life,1)>0){
       sources.push({p:[num(q.x),num(q.y),num(q.z)],color:[1,.28,.055],power:3.5+.5*Math.sin(num(q.age)*24),range:5.5});
     }
+    // Discovery permanently wakes the pedestal. It uses persisted campaign
+    // state, so reloads restore the light without replaying an audio event.
+    // Cosmetic shrine lights share the fixed pool and yield to live combat.
+    const campaign=state?.campaign,discovered=campaign?.discovered||[];
+    for(const trophy of state?.world?.trophies||[]){
+      if(![trophy.x,trophy.y,trophy.z].every(Number.isFinite))continue;
+      const current=campaign?.trophies?.find(t=>t.id===trophy.id),phase=current?.phase;
+      if(!(phase&&phase!=='sealed')&&!discovered.includes(trophy.key))continue;
+      const grace=phase==='grace';
+      sources.push({p:[trophy.x,trophy.y+2.1,trophy.z],color:grace?[.68,.89,1]:[.26,.66,.80],power:grace?10:3.2,range:grace?10:7,trophy:true});
+    }
     const score=l=>l.power/(1+l.p.reduce((n,v,k)=>n+(v-eye[k])**2,0)*.06);
-    return sources.filter(l=>l.p.every(Number.isFinite)&&l.p.reduce((n,v,k)=>n+(v-eye[k])**2,0)<(l.range+45)**2).sort((a,b)=>score(b)-score(a)).slice(0,4);
+    return sources.filter(l=>l.p.every(Number.isFinite)&&l.p.reduce((n,v,k)=>n+(v-eye[k])**2,0)<(l.range+45)**2).sort((a,b)=>(!!a.trophy-!!b.trophy)||score(b)-score(a)).slice(0,4);
   }
   G.FEffects={build,flash,lights};
 })(typeof window!=='undefined'?window:globalThis);

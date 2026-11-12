@@ -148,3 +148,63 @@ test('First campaign equipment pickups require the exact calendar world and its 
   const sim = FSimulation.create(campaignWorld(6, { pickups: [{ id: 'dependent-cache', kind: 'ammo', weapon: 4, requiresWeapon: 0, amount: 1, x: .5, y: 0, z: 0 }] }));
   sim.step(.025); assert.equal(sim.state.pickups[0].taken, false); assert.equal(sim.state.inventory.ammo[4], 1);
 });
+
+function trophyWorld(extra = {}) {
+  const id = 'trophy-shield', wall = { minX: -5, maxX: 5, minY: 0, maxY: 4, minZ: -10.25, maxZ: -9.75, mesh: 0 };
+  return campaignWorld(3, {
+    meshes: [{ shape: 'box', p: [0, 2, -10], s: [10, 4, .5], r: [0, 0, 0], mat: 1 }], colliders: [wall],
+    destructibles: [{ id: 'trial-screen', kind: 'wall', strength: 6, meshes: [0], colliders: [0] }],
+    pickups: [{ id, trophyId: id, kind: 'shield', amount: 1, x: 3, y: 0, z: 0 }],
+    trophies: [{ id, key: 'shield', name: 'Bouclier', usage: 'Protégez votre flanc gauche.', pickupId: id, encounterId: 'trial-shield', grace: 3, shield: true, x: 3, y: 0, z: 0 }],
+    enemies: [-2, 0, 2].map(x => ({ x, y: 0, z: -14, type: 0, deployed: false, drop: false, trophyGuard: id })),
+    encounters: [{ id: 'trial-shield', requiresTrophy: id, label: 'Épreuve du bouclier', trigger: { x: 0, y: 0, z: -4, w: 18, d: 22 }, maxActive: 3, waveGap: 4,
+      spawnEntries: [{ x: -2, y: 0, z: -14 }, { x: 0, y: 0, z: -14 }, { x: 2, y: 0, z: -14 }, { x: 2, y: 0, z: -16 }], waves: [{ enemyIds: [0, 1, 2] }] }], ...extra,
+  });
+}
+
+test('A trophy grants one discovery, local grace and a real hidden-entry trial that resumes without replaying the sting', () => {
+  const world = trophyWorld(), sim = FSimulation.create(world);
+  advance(sim, 6); assert.equal(sim.state.enemies.every(e => !e.deployed && !e.encounterReleased), true);
+  assert.equal(sim.state.encounters[0].status, 'dormant'); assert.equal(sim.state.campaign.trophies[0].phase, 'sealed');
+  sim.hurt(15); sim.move(sim.state.player, 3, 0); sim.step(.025);
+  assert.equal(sim.state.inventory.shield, true); assert.deepEqual(plain(sim.state.campaign.discovered), ['pistol', 'shield']);
+  assert.equal(sim.state.campaign.trophies[0].phase, 'grace'); assert.equal(sim.state.campaign.trophies[0].timer, 3);
+  const trophy = sim.state.events.filter(e => e.name === 'trophy'); assert.equal(trophy.length, 1); assert.equal(trophy[0].key, 'shield'); assert.equal(trophy[0].shield, true);
+  sim.hurt(100); assert.equal(sim.state.player.hp, 85, 'Discovery grace must apply at the trophy, without a spawn radius rule');
+  advance(sim, 1.1); const saved = sim.snapshot(), resumed = FSimulation.create(world);
+  assert.equal(saved.campaignVersion, 1); assert.equal(resumed.restore(saved), true);
+  assert.deepEqual(plain(resumed.snapshot()), plain(saved)); assert.equal(resumed.state.events.some(e => e.name === 'trophy'), false);
+  advance(sim, 4.3); advance(resumed, 4.3);
+  assert.equal(sim.state.campaign.trophies[0].phase, 'trial'); assert.equal(sim.state.enemies.every(e => e.deployed && e.encounterReleased), true, 'The real hidden entrances must release each preassigned guard');
+  assert.deepEqual(plain(resumed.snapshot()), plain(sim.snapshot()));
+  assert.equal(sim.state.events.filter(e => e.name === 'trophy').length, 1); assert.equal(resumed.state.events.filter(e => e.name === 'trophy').length, 0);
+  sim.hurt(10); assert.equal(sim.state.player.hp, 75, 'Grace must expire instead of leaving permanent immunity');
+  const midway = sim.snapshot(), trialRestore = FSimulation.create(world); assert.equal(trialRestore.restore(midway), true);
+  assert.deepEqual(plain(trialRestore.snapshot()), plain(midway));
+});
+
+test('Trophy discovery profiles cross worlds, reject inconsistent histories and preserve the old economy profile shape', () => {
+  const sim = FSimulation.create(trophyWorld()); sim.move(sim.state.player, 3, 0); sim.step(.025);
+  const loadout = sim.exportLoadout(); assert.deepEqual(plain(loadout.campaign), { version: 1, discovered: ['pistol', 'shield'] });
+  assert.deepEqual(Object.keys(loadout.economy).sort(), ['cores', 'credits', 'upgrades']);
+  const next = FSimulation.create(campaignWorld(4), loadout); assert.deepEqual(plain(next.exportLoadout()), plain(loadout));
+  assert.deepEqual(plain(next.state.campaign.trophies), []);
+  assert.deepEqual(plain(FSimulation.copyCampaign(loadout.campaign, loadout.inventory)), plain(loadout.campaign));
+  for (const campaign of [null, { version: 2, discovered: ['pistol', 'shield'] }, { version: 1, discovered: ['pistol'] }, { version: 1, discovered: ['pistol', 'shield', 'rocket'] }, { version: 1, discovered: ['pistol', 'shield', 'shield'] }, { version: 1, discovered: ['pistol', 'shield'], credits: 100 }]) {
+    assert.equal(FSimulation.copyCampaign(campaign, loadout.inventory), null);
+    assert.throws(() => FSimulation.create(campaignWorld(4), { ...loadout, campaign }));
+  }
+  const replay = FSimulation.create(trophyWorld(), loadout); replay.move(replay.state.player, 3, 0); replay.step(.025);
+  assert.equal(replay.state.events.some(e => e.name === 'trophy'), false); assert.equal(replay.state.campaign.trophies[0].phase, 'complete');
+  advance(replay, 5); assert.equal(replay.state.enemies.every(e => !e.deployed), true);
+  assert.equal(FSimulation.create(replay.state.world).restore(replay.snapshot()), true);
+});
+
+test('Corrupted trophy history, grace and premature trial saves fail atomically while falls still bypass trophy immunity', () => {
+  const world = trophyWorld(), sim = FSimulation.create(world); sim.move(sim.state.player, 3, 0); sim.step(.025);
+  const saved = sim.snapshot(), untouched = JSON.stringify(saved);
+  for (const change of [q => q.state.campaign.discovered = ['pistol'], q => q.state.campaign.trophies[0].timer = 30, q => q.state.campaign.trophies[0].id = 'invented', q => q.state.campaign.trophies[0].phase = 'trial', q => q.state.campaign.trophies[0].phase = 'sealed', q => delete q.campaignVersion, q => q.state.campaign.extra = true]) {
+    const bad = plain(saved); change(bad); assert.equal(sim.restore(bad), false); assert.equal(JSON.stringify(sim.snapshot()), untouched);
+  }
+  sim.state.player.y = -15; sim.step(0); assert.equal(sim.state.dead, true); assert.equal(sim.state.events.at(-1).reason, 'fall');
+});

@@ -308,3 +308,29 @@ test('a grenade launch and real shield block keep the player reservation during 
   for(let i=0;i<100;i++){r.ctx.advance(.04);r.audio.shieldBlock({level:1,absorbed:6,broken:i%13===0});r.audio.grenadeLaunch({level:1,hand:i%2?'left':'right'});r.audio.tick();assert(r.audio.stats.voices<=48);assert(r.tracker.stats.activeVoices<=28);}
   assert(r.tracker.stats.scheduledRows>0);r.audio.dispose();
 });
+
+test('trophy discovery has one bounded metal sting, survives a busy mix and stays silent when paused or muted',async()=>{
+  const r=rig();await r.audio.start();const idle=r.ctx.sources.length;
+  r.audio.trophy({key:'rifle'});assert.equal(r.ctx.sources.length,idle,'menus cannot sound a trophy');
+  r.audio.setPlaying(true);
+  const start=r.ctx.sources.length;r.audio.trophy({key:'rifle',level:.9});const sting=r.ctx.sources.slice(start);
+  assert.equal(sting.length,5);assert(sting.every(n=>n.stopTime-r.ctx.currentTime<.8));
+  assert(sting.filter(n=>n.kind==='oscillator').length===4);
+  assert(sting.some(n=>n.type==='sawtooth'),'discovery retains a rough metal interval');
+  assert(r.audio.stats.duckGain<.56,'the short melody must emerge above the tracker');
+  for(let i=0;i<20;i++)r.audio.trophy({key:'rifle',level:.9});assert.equal(r.ctx.sources.length,start+5);
+  assert.equal(r.timers.size,0,'sting scheduling belongs to the audio clock');
+  r.ctx.advance(1.2);assert.equal(r.audio.stats.voices,0,'the cue fully releases its voices');
+  const pickup=r.ctx.sources.length;r.audio.weaponPickup({level:.9});const other=r.ctx.sources.slice(pickup);
+  const shape=voices=>voices.map(n=>[n.kind,n.type,n.frequency.value]);
+  assert.notDeepEqual(shape(sting),shape(other),'ordinary drops keep their own cue');
+  r.ctx.advance(1.2);r.audio.setMix({effects:0});const silent=r.ctx.sources.length;
+  r.audio.trophy({key:'shield'});assert.equal(r.ctx.sources.length,silent);
+  r.ctx.advance(1.2);r.audio.setMix({effects:1});r.audio.setMuted(true);r.audio.trophy({key:'shield'});assert.equal(r.ctx.sources.length,silent);
+  r.audio.setMuted(false);r.audio.setPlaying(false);r.audio.trophy({key:'shield'});assert.equal(r.ctx.sources.length,silent);
+  r.audio.setPlaying(true);
+  for(let i=0;i<30;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}
+  assert.equal(r.audio.stats.voices,40);const crowded=r.ctx.sources.length;r.audio.trophy({key:'shield'});
+  assert.equal(r.ctx.sources.length,crowded+5);assert(r.audio.stats.voices<=48);
+  r.audio.dispose();assert.equal(r.audio.stats.voices,0);
+});
