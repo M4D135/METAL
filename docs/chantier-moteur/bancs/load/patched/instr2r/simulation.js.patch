@@ -1,0 +1,40 @@
+--- a/src/simulation.js
++++ b/src/simulation.js
+@@ -1025,7 +1025,8 @@
+       [q.vx,q.vy,q.vz]=velocity.map((v,k)=>(v-dot*n[k])*friction+n[k]*(response<.45?0:response));
+       q.angularVelocity=q.angularVelocity.map(v=>v*(n[1]>.5?.32:.55));
+     }
+-    function updateDebris(dt){
++    function updateDebris(dt){const __t=performance.now();updateDebris0(dt);G.__s.debris+=performance.now()-__t;}
++    function updateDebris0(dt){
+       const dynamic=[...doorBoxes,...trapBoxes,...s.lifts.map(l=>({minX:l.x-l.w/2,maxX:l.x+l.w/2,minY:l.y-.22,maxY:l.y,minZ:l.z-l.d/2,maxZ:l.z+l.d/2}))],skin=.001;
+       for(const q of s.debris){
+         q.age=Math.min(1e7,q.age+dt);q.impactWait=Math.max(0,(q.impactWait||0)-dt);if(!q.structural&&q.age>=q.life||dt<=0)continue;
+@@ -1376,7 +1377,8 @@
+     }
+     const routeCost=new Float64Array(nav.length),routePrev=new Int32Array(nav.length),routeStamp=new Uint32Array(nav.length),routeClosed=new Uint32Array(nav.length);
+     const edgeKnown=new Uint8Array(nav.length),edgeOpen=new Uint8Array(nav.length),navQueued=new Uint8Array(nav.length),navQueue=new Int32Array(nav.length);let routeSerial=0,navHead=0,navTail=0,navPending=0;
+-    function pumpNav(limit=768){
++    function pumpNav(limit=768){const __t=performance.now();pumpNav0(limit);G.__s.pump+=performance.now()-__t;}
++    function pumpNav0(limit=768){
+       let work=0;while(navPending&&work<limit){const i=navQueue[navHead];navHead=(navHead+1)%nav.length;navPending--;navQueued[i]=0;const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;work++;}
+       s.aiStats.navUpdates=work;s.aiStats.navPending=navPending;
+     }
+@@ -1963,7 +1965,7 @@
+         const a=data.state,t=data.timers;
+         const number=(v,min,max)=>typeof v==='number'&&Number.isFinite(v)&&v>=min&&v<=max;
+         const integer=(v,min,max)=>number(v,min,max)&&Number.isInteger(v);
+-        const bool=v=>typeof v==='boolean',require=condition=>{if(!condition)throw new Error('Invalid checkpoint');};
++        const bool=v=>typeof v==='boolean',require=condition=>{if(!condition){const e=new Error('Invalid checkpoint');G.__s.restoreError=e.stack.split('\n').slice(1,3).join(' | ');throw e;}};
+         require(data.version===1&&data.format==='FERRO'&&data.seed===world.seed&&data.stage===(world.stage||0)&&data.fingerprint===fingerprint&&a&&t);
+         require(data.aiVersion===undefined||data.aiVersion===1||data.aiVersion===2||data.aiVersion===3);
+         require(data.systemsVersion===undefined||data.systemsVersion===1);
+@@ -2213,7 +2215,7 @@
+         Object.assign(s.aiStats,{awake:enemies.filter(e=>alive(e)&&!e.sleeping).length,dormant:enemies.filter(e=>alive(e)&&e.sleeping).length,alive:enemies.filter(e=>e.hp>0).length,pathSearches:0,pathDeferred:0});if(progression)encounterCounts();
+         if(options?.recover===true&&!s.dead&&!s.won){recovery=1.4;s.bullets=s.bullets.filter(q=>Math.hypot(q.x-p.x,q.z-p.z)>=2.4);}
+         updateDoorBoxes();refreshNav(false);rebuildNeighbors();updateHazards(false);return true;
+-      }catch(_){return false;}
++      }catch(_){G.__s.restoreCatch=String(_&&_.message);return false;}
+     }
+     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
+     return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,shieldBash,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};

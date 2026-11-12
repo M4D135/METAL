@@ -1,0 +1,1 @@
+{"noRing":true,"won":1,"worlds":[{"i":13,"won":true,"s":317.8,"boss":"0/6850","hp":160},{"i":14,"won":false,"s":42.2,"boss":"7700/7700","hp":160}],"world":13,"difficulty":1,"incoming":1,"deaths":0,"hurts":1,"bySource":{"?":{"n":1,"sum":1,"max":1.4,"kills":0}},"lastHitsBeforeEachDeath":[]}

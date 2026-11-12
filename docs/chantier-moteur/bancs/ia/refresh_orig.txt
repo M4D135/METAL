@@ -1,0 +1,9 @@
+    function refreshNav(reset=true){
+      if(advanced&&reset){
+        // Colliders/rays change immediately. Updating the advisory walking grid is
+        // amortised; another blast appends dirty cells instead of restarting work.
+        for(let i=0;i<nav.length;i++)if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}
+      }else{navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}}
+      edgeKnown.fill(0);edgeOpen.fill(0);if(reset)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
+      if(!advanced)rebuildNav();
+    }

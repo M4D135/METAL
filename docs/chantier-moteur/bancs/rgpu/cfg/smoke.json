@@ -1,0 +1,3 @@
+{"name":"smoke","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true,"showFps":true,"vignette":true,"crt":false,"fpsLimit":0},
+ "warmFrames":300,"measureFrames":40,"skip":10,"segments":true,
+ "variants":[{"id":"base","code":"base","quality":"auto"},{"id":"base-seg","code":"base","quality":"auto","segments":true},{"id":"combo","code":"combo","quality":"auto"},{"id":"od","code":"overdraw","quality":"auto","fx":{"bloom":false},"readback":true}]}

@@ -1,0 +1,11 @@
+file://docs/chantier-moteur/bancs/sim-verif2/stale.mjs:8
+  const campaign=t[0]==='c',index=+(campaign?t.slice(1):t);globalThis.__EL.length=0;
+                                                                                 ^
+
+TypeError: Cannot set properties of undefined (setting 'length')
+    at file://docs/chantier-moteur/bancs/sim-verif2/stale.mjs:8:82
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.18.0

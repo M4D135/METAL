@@ -1,0 +1,11 @@
+--- a/src/simulation.js
++++ b/src/simulation.js
+@@ -2078,7 +2078,7 @@
+             if(q.resting){
+               const h=debrisHalf(q),bottom=q.y-h[1],floor=Math.max(ground(q.x,q.z,traps),ground(q.x-h[0],q.z-h[2],traps),ground(q.x+h[0],q.z-h[2],traps),ground(q.x-h[0],q.z+h[2],traps),ground(q.x+h[0],q.z+h[2],traps));
+               require(Math.abs(bottom-floor)<.03||supportBoxes.some(box=>Math.abs(bottom-box.maxY)<.03&&q.x+h[0]>box.minX+.002&&q.x-h[0]<box.maxX-.002&&q.z+h[2]>box.minZ+.002&&q.z-h[2]<box.maxZ-.002));
+-              require(!supportBoxes.some(box=>debrisOverlaps(q,h,box)));
++              {const box=supportBoxes.find(box=>debrisOverlaps(q,h,box));if(box){(G.__s.rubbleFail||(G.__s.rubbleFail=[])).push({id:q.id,sourceId:q.sourceId,shape:q.shape,pos:[q.x,q.y,q.z],half:h,box:{...box},pen:[Math.min(q.x+h[0]-box.minX,box.maxX-(q.x-h[0])),Math.min(q.y+h[1]-box.minY,box.maxY-(q.y-h[1])),Math.min(q.z+h[2]-box.minZ,box.maxZ-(q.z-h[2]))]});}require(!box);}
+             }
+             return {...rubbleCopy(q),structural:true,life:1e7};
+           });

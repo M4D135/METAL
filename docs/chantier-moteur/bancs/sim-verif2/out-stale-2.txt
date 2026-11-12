@@ -1,0 +1,1 @@
+2: traps=[blade,press,spikes] state diverges@-1 | nav grids differ on 139 steps (max 24 cells) | stale cached edges per check (mean known / stale / stale-open): original 1104 / 0.0 / 0.0 max 0 ; nav-local 2366 / 0.9 / 0.9 max 19

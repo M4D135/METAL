@@ -1,0 +1,8 @@
+{"name":"rcpu-verif-A","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":420,"measureFrames":300,"skip":10,"reps":2,"compareEvery":15,"compareRef":"base",
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"exact","code":"exact","compare":true},
+  {"id":"sun","code":"sun","compare":true},
+  {"id":"cache","code":"cache","compare":true},
+  {"id":"all","code":"all","compare":true}]}

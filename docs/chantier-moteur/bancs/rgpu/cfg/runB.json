@@ -1,0 +1,15 @@
+{"name":"runB-high","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":560,"measureFrames":200,"skip":10,"reps":2,"dumpFrames":true,
+ "variants":[
+  {"id":"base","code":"base","quality":"auto"},
+  {"id":"low","code":"base","quality":"low"},
+  {"id":"high","code":"base","quality":"high"},
+  {"id":"high-noshadow","code":"base","quality":"high","fx":{"shadows":false}},
+  {"id":"high-nobloom","code":"base","quality":"high","fx":{"bloom":false}},
+  {"id":"high-l0","code":"l0","quality":"high"},
+  {"id":"high-l6","code":"l6","quality":"high"},
+  {"id":"high-nomat","code":"nomat","quality":"high"},
+  {"id":"high-nosky","code":"nosky","quality":"high"},
+  {"id":"high-hwpcf","code":"hwpcf","quality":"high"},
+  {"id":"high-lightcull","code":"lightcull","quality":"high"},
+  {"id":"high-combo","code":"combo","quality":"high"}]}

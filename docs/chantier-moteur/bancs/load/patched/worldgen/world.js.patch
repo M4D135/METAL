@@ -1,0 +1,38 @@
+--- a/src/world.js
++++ b/src/world.js
+@@ -1359,7 +1359,7 @@
+     const loose=new Map();
+     for(const [i,m] of out.entries()){
+       if(owners.has(i)||m.terrain||m.ground||m.indestructible)continue;
+-      const candidates=(byRegion.get(m.region)||[]).map(g=>({g,d:distance(m.p,g.bounds)})).sort((a,b)=>a.d-b.d),near=candidates[0];
++      let near=null;for(const g of byRegion.get(m.region)||[]){const d=distance(m.p,g.bounds);if(!near||d<near.d)near={g,d};}
+       if(near&&near.d<(m.detail?1.45:.85)){near.g.meshes.push(i);owners.set(i,near.g);continue;}
+       const key=(m.region||'free')+':'+Math.floor(m.p[0]/2)+','+Math.floor(m.p[1]/2)+','+Math.floor(m.p[2]/2)+':'+(m.mat===11?'plant':'dressing');
+       if(!loose.has(key))loose.set(key,[]);loose.get(key).push(i);
+@@ -1370,7 +1370,7 @@
+       const room=w.rooms.find(r=>'room-'+r.id===roof.region),base=room?.y??Math.min(...(byRegion.get(roof.region)||[]).map(g=>g.bounds.minY));
+       roof.supports=groups.filter(g=>g.region===roof.region&&!g.freestanding&&['wall','support'].includes(g.kind)&&g.bounds.minY<base+.5).map(g=>g.id);roof.supportRatio=.38;roof.dependents=groups.filter(g=>g!==roof&&g.region===roof.region&&!['wall','support'].includes(g.kind)&&g.bounds.minY>base+2.7).map(g=>g.id);
+     }
+-    const nearest=(x,y,z,region)=>groups.filter(g=>(!region||g.region===region)&&g.kind!=='decor').map(g=>({g,d:distance([x,y,z],g.bounds)})).sort((a,b)=>a.d-b.d)[0]?.g;
++    const nearest=(x,y,z,region)=>{const p=[x,y,z];let best=null,bd=0;for(const g of groups)if((!region||g.region===region)&&g.kind!=='decor'){const d=distance(p,g.bounds);if(!best||d<bd){best=g;bd=d;}}return best||undefined;};
+     for(const a of (w.machinery||[]).concat(w.ambience||[])){const g=nearest(a.x,a.y,a.z,a.room===undefined?undefined:'room-'+a.room);if(g)a.destructibleId=g.id;}
+     for(const light of w.lights){if(light.trophyId)continue;const g=nearest(...light.p,light.region);if(g)light.destructibleId=g.id;}
+     for(const p of w.pipes)p.destructibleId='pressure-'+p.id.slice(5);
+@@ -1427,7 +1427,7 @@
+       const step=.4,nx=Math.ceil(r.w/step),nz=Math.ceil(r.d/step),count=nx*nz,px=i=>bounds.minX+(i+.5)*step,pz=i=>bounds.minZ+(i+.5)*step;
+       const free=(x,z,rad=.42)=>Math.abs(x-r.x)<r.w/2-rad-.08&&Math.abs(z-r.z)<r.d/2-rad-.08&&!boxes.some(c=>c.minY<r.y+2.2&&nearBox(x,z,c,rad));
+       const base=new Uint8Array(count);for(let z=0;z<nz;z++)for(let x=0;x<nx;x++)base[z*nx+x]=free(px(x),pz(z));
+-      const nearest=(p,mask)=>{const a=[];for(let i=0;i<count;i++)if(mask[i]&&Math.hypot(px(i%nx)-p.x,pz(Math.floor(i/nx))-p.z)<.6)a.push(i);return a;};
++      const nearest=(p,mask)=>{const a=[],x0=Math.max(0,Math.floor((p.x-.6-bounds.minX)/step-.5)),x1=Math.min(nx-1,Math.ceil((p.x+.6-bounds.minX)/step-.5)),z0=Math.max(0,Math.floor((p.z-.6-bounds.minZ)/step-.5)),z1=Math.min(nz-1,Math.ceil((p.z+.6-bounds.minZ)/step-.5));for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){const i=z*nx+x;if(mask[i]&&Math.hypot(px(x)-p.x,pz(z)-p.z)<.6)a.push(i);}return a;};
+       const parents=w.connections.flatMap(c=>c.from===r.id?[c.to]:c.to===r.id?[c.from]:[]).filter(id=>depths.get(id)<depths.get(r.id)).sort((a,b)=>a-b),parent=w.rooms[parents[0]],preferred=[Math.sign(r.x-parent.x),Math.sign(r.z-parent.z)];
+       const normals=[preferred,...[[0,1],[0,-1],[1,0],[-1,0]].filter(n=>n[0]!==preferred[0]||n[1]!==preferred[1])];
+       for(const normal of normals)for(const width of [5.4,5.1,4.8])for(const depth of [4.6,3.8,3.0,2.6,5.4,6.3,7.3,8.3])for(const lateral of [0,1.4,-1.4,3.6,-3.6,4.8,-4.8]){
+@@ -1436,7 +1436,7 @@
+         if(boxes.some(c=>overlap(panel,c))||avoid.some(p=>nearBox(p.x,p.z,panel,p.r))||points.some(p=>nearBox(p.x,p.z,panel,.7))||w.jumpPads.some(p=>pointSegment(x,z,p,p.target)<width/2+1.5))continue;
+         const entries=[[-.85,1.9],[.85,1.9],[-.85,3.4],[.85,3.4]].map(([t,d])=>({x:x+normal[0]*d+tangent[0]*t,y:r.y,z:z+normal[1]*d+tangent[1]*t}));
+         if(entries.some(p=>!free(p.x,p.z,.70)||avoid.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<q.r+.6)||points.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<.9)||w.jumpPads.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<2||Math.hypot(p.x-q.target.x,p.z-q.target.z)<2)))continue;
+-        const mask=base.map((v,i)=>v&&!nearBox(px(i%nx),pz(Math.floor(i/nx)),panel,.42)),starts=nearest(r,mask);if(!starts.length)continue;
++        const mask=base.slice();{const x0=Math.max(0,Math.floor((panel.minX-.42-bounds.minX)/step-.5)),x1=Math.min(nx-1,Math.ceil((panel.maxX+.42-bounds.minX)/step-.5)),z0=Math.max(0,Math.floor((panel.minZ-.42-bounds.minZ)/step-.5)),z1=Math.min(nz-1,Math.ceil((panel.maxZ+.42-bounds.minZ)/step-.5));for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){const i=z*nx+x;if(mask[i]&&nearBox(px(x),pz(z),panel,.42))mask[i]=0;}}const starts=nearest(r,mask);if(!starts.length)continue;
+         const seen=new Uint8Array(count),queue=starts.slice();for(const i of starts)seen[i]=1;
+         for(let j=0;j<queue.length;j++){const i=queue[j],ix=i%nx,iz=Math.floor(i/nx);for(const k of [ix?i-1:-1,ix+1<nx?i+1:-1,iz?i-nx:-1,iz+1<nz?i+nx:-1])if(k>=0&&mask[k]&&!seen[k]){seen[k]=1;queue.push(k);}}
+         if(entries.some(p=>!nearest(p,seen).length))continue;

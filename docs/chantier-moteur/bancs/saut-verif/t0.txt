@@ -1,0 +1,7 @@
+sprint jump: v0 7.60 apex 0.961 air 0.617 dist 4.69 speed after 0.00 HK {"frozen":0,"frozenNear":0,"head":0,"clipHits":0,"clipMaxRel":-1,"jumps":1,"rebounds":0,"lands":1,"maxFeetOverClip":-1,"lastImpact":6.300000000000004,"lastFallback":false}
+bhop turn 0 rad/s: max 7.60 groundedStepEnds 31 hops 31 speed/s 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 7.6 0.0 7.6
+bhop turn 1.2 rad/s: max 10.50 groundedStepEnds 31 hops 31 speed/s 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 0.0 10.5
+bhop turn 2 rad/s: max 10.50 groundedStepEnds 31 hops 31 speed/s 10.0 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 0.0 10.5
+bhop turn 3 rad/s: max 10.50 groundedStepEnds 31 hops 31 speed/s 8.7 10.4 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 10.5 0.0 10.5
+stop 0.242 s 0.67 m
+node $S/t0.mjs  0.14s user 0.01s system 142% cpu 0.109 total

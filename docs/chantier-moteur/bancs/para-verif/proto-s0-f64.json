@@ -1,0 +1,222 @@
+{
+ "scenario": "legacy-s0",
+ "ticks": 1800,
+ "charge": [
+  22.3,
+  48.5,
+  58.1
+ ],
+ "B": [
+  {
+   "mode": "packed",
+   "digest": 652171223,
+   "createCpu": 298,
+   "workerAcc": {
+    "stepCpuMoy": 0.538,
+    "packCpuMoy": 0.106,
+    "postCpuMoy": 0.0128,
+    "octetsMoy": 32960,
+    "tamponsAlloues": 2
+   },
+   "tailleFinale": {
+    "t": "size",
+    "packedBytes": 18048,
+    "subsetBytes": 60150,
+    "naiveBytes": 186284,
+    "counts": {
+     "loot": 0,
+     "encounters": 8,
+     "events": 0,
+     "bullets": 2,
+     "particles": 0,
+     "enemies": 120,
+     "cores": 3,
+     "pickups": 53,
+     "hazards": 0,
+     "jumpPads": 3,
+     "projectiles": 0,
+     "explosions": 0,
+     "debris": 50,
+     "bossAttacks": 0,
+     "pipes": 4,
+     "traps": 3,
+     "mechanisms": 3,
+     "doors": 3,
+     "lifts": 2,
+     "weaponCooldowns": 4
+    }
+   },
+   "snapshotChars": 166623,
+   "workerStepCpu": {
+    "n": 1800,
+    "moy": 0.538,
+    "p50": 0.354,
+    "p95": 1.344,
+    "p99": 2.582,
+    "max": 42.858
+   },
+   "miroirContreEtatFilPrincipal": {
+    "format": "Float64",
+    "valeursComparees": 3984,
+    "differentes": 0,
+    "erreurMax": 0
+   },
+   "filPrincipalCpuParImage": {
+    "n": 1800,
+    "moy": 0.0725,
+    "p50": 0.058,
+    "p95": 0.157,
+    "p99": 0.204,
+    "max": 1.241
+   },
+   "dontEnvoiEntree": 0.0064,
+   "dontDepaquetage": 0.0371,
+   "dontReceptionDeserialisation": 0.0266,
+   "imagesEnRetard": {
+    ">=1 tick": 0,
+    ">=2": 0,
+    ">=4": 0,
+    "max": 0
+   },
+   "ageMessageMs": {
+    "n": 1800,
+    "moy": 0.0851,
+    "p50": 0.0146,
+    "p95": 0.0669,
+    "p99": 2.1362,
+    "max": 22.263
+   },
+   "dureeMurale": 1975,
+   "seuilsFilPrincipal": {
+    ">1ms": 1,
+    ">2ms": 0,
+    ">4ms": 0,
+    ">8ms": 0
+   }
+  },
+  {
+   "mode": "naive",
+   "digest": 652171223,
+   "createCpu": 289,
+   "workerAcc": {
+    "stepCpuMoy": 0.5285,
+    "packCpuMoy": 0.009,
+    "postCpuMoy": 0.5663,
+    "octetsMoy": 0,
+    "tamponsAlloues": 0
+   },
+   "tailleFinale": {
+    "t": "size",
+    "packedBytes": 18048,
+    "subsetBytes": 60150,
+    "naiveBytes": 186284,
+    "counts": {
+     "loot": 0,
+     "encounters": 8,
+     "events": 0,
+     "bullets": 2,
+     "particles": 0,
+     "enemies": 120,
+     "cores": 3,
+     "pickups": 53,
+     "hazards": 0,
+     "jumpPads": 3,
+     "projectiles": 0,
+     "explosions": 0,
+     "debris": 50,
+     "bossAttacks": 0,
+     "pipes": 4,
+     "traps": 3,
+     "mechanisms": 3,
+     "doors": 3,
+     "lifts": 2,
+     "weaponCooldowns": 4
+    }
+   },
+   "snapshotChars": 166623,
+   "workerStepCpu": {
+    "n": 1800,
+    "moy": 0.5285,
+    "p50": 0.36,
+    "p95": 1.249,
+    "p99": 2.275,
+    "max": 50.77
+   },
+   "filPrincipalCpuParImage": {
+    "n": 1800,
+    "moy": 0.9205,
+    "p50": 0.914,
+    "p95": 1.124,
+    "p99": 1.206,
+    "max": 2.038
+   },
+   "dontEnvoiEntree": 0.0102,
+   "dontDepaquetage": 0,
+   "dontReceptionDeserialisation": 0.9078,
+   "imagesEnRetard": {
+    ">=1 tick": 0,
+    ">=2": 0,
+    ">=4": 0,
+    "max": 0
+   },
+   "ageMessageMs": {
+    "n": 1800,
+    "moy": 1.4919,
+    "p50": 1.4673,
+    "p95": 1.7903,
+    "p99": 2.2085,
+    "max": 5.697
+   },
+   "dureeMurale": 3870,
+   "seuilsFilPrincipal": {
+    ">1ms": 275,
+    ">2ms": 1,
+    ">4ms": 0,
+    ">8ms": 0
+   }
+  }
+ ],
+ "A": {
+  "digest": 652171223,
+  "memeDigestRejoue": true,
+  "stepCpu1": {
+   "n": 1800,
+   "moy": 0.4982,
+   "p50": 0.295,
+   "p95": 1.347,
+   "p99": 2.759,
+   "max": 38.391
+  },
+  "stepCpu2": {
+   "n": 1800,
+   "moy": 0.4464,
+   "p50": 0.269,
+   "p95": 1.187,
+   "p99": 2.196,
+   "max": 31.444
+  },
+  "seuils1": {
+   ">1ms": 143,
+   ">2ms": 30,
+   ">4ms": 12,
+   ">8ms": 6,
+   ">16ms": 3
+  },
+  "seuils2": {
+   ">1ms": 122,
+   ">2ms": 25,
+   ">4ms": 3,
+   ">8ms": 3,
+   ">16ms": 3
+  },
+  "stepWall1": {
+   "n": 1800,
+   "moy": 0.5526,
+   "p50": 0.3034,
+   "p95": 1.5468,
+   "p99": 3.9203,
+   "max": 41.367
+  }
+ },
+ "etatsIdentiques": true
+}

@@ -1,0 +1,6 @@
+{"mode":"run","deadline":0,"dues":3,"saves":3,"forcedInAir":0,"pendingAtEnd":false,"maxDelay":0,"groundedStepEnds":3410,"steps":3600,"jumps":0,"metres":107,"dueList":"mechanism@0.02 mechanism@2.97 core@6.17","saveTimes":"0.02 2.97 6.17"}
+{"mode":"bhop-V1","deadline":0,"dues":3,"saves":3,"forcedInAir":0,"pendingAtEnd":false,"maxDelay":0.13,"groundedStepEnds":99,"steps":3600,"jumps":96,"metres":255,"dueList":"mechanism@0.02 mechanism@5.77 core@13.2(vol)","saveTimes":"0.02 5.77 13.33"}
+{"mode":"bhop-V0","deadline":0,"dues":3,"saves":3,"forcedInAir":0,"pendingAtEnd":false,"maxDelay":10.4,"groundedStepEnds":6,"steps":3600,"jumps":96,"metres":255,"dueList":"mechanism@0.02 mechanism@5.77 core@13.2(vol)","saveTimes":"0.02 5.77 23.6"}
+{"mode":"bhop-V0","deadline":1.5,"dues":3,"saves":3,"forcedInAir":1,"pendingAtEnd":false,"maxDelay":1.5,"groundedStepEnds":6,"steps":3600,"jumps":96,"metres":255,"dueList":"mechanism@0.02 mechanism@5.77 core@13.2(vol)","saveTimes":"0.02 5.77 14.7(vol)"}
+snapshot en vol (validAir 0.8.0): [{"step":5,"airVY":4.2,"restoreOK":false},{"step":30,"airVY":-4.13,"restoreOK":true}]
+node $S/checkpoint.mjs  3.61s user 0.14s system 196% cpu 1.905 total

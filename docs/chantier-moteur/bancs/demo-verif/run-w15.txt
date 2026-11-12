@@ -1,0 +1,119 @@
+{
+ "simMinutes": 6,
+ "wallS": 84.6,
+ "worldsWon": 0,
+ "worldsOpened": 1,
+ "deaths": 1,
+ "restoresOk": 0,
+ "restoresRefused": 1,
+ "stalls": 0,
+ "timeouts": 0,
+ "exceptions": 0,
+ "relays": 6,
+ "mechanisms": 6,
+ "bossKills": 0,
+ "kills": 0,
+ "weaponsFired": [
+  229,
+  49,
+  42,
+  56,
+  0
+ ],
+ "destructionRevisions": 45,
+ "assistHp": 397,
+ "step": {
+  "mean": 0.879,
+  "p50": 0.724,
+  "p95": 1.786,
+  "p99": 3.149,
+  "p999": 13.98,
+  "max": 34.8,
+  "over8": 39,
+  "over16": 17,
+  "over33": 4
+ },
+ "hist": {
+  "edgesMs": [
+   0.125,
+   0.25,
+   0.5,
+   1,
+   2,
+   4,
+   8,
+   16,
+   33
+  ],
+  "counts": [
+   0,
+   897,
+   2068,
+   14021,
+   3819,
+   663,
+   93,
+   22,
+   13,
+   4
+  ]
+ },
+ "thinkMsPerStep": 0.0975,
+ "think": {
+  "p50": 0.055,
+  "p99": 0.309,
+  "p999": 2.38,
+  "max": 100.1,
+  "over4": 12
+ },
+ "wallOverCpu": 3.68,
+ "cpuClock": "thread",
+ "checkpoint": {
+  "n": 14,
+  "p50": 4.07,
+  "max": 14
+ },
+ "worldGenMs": {
+  "p50": 318,
+  "max": 318
+ },
+ "simCreateMs": {
+  "p50": 138,
+  "max": 288
+ },
+ "memory": {
+  "first": {
+   "t": 0,
+   "heapMB": 23.23,
+   "rssMB": 147.4,
+   "abMB": 2.09
+  },
+  "last": {
+   "t": 360,
+   "heapMB": 27.94,
+   "rssMB": 294.6,
+   "abMB": 2.09
+  },
+  "min": 23.23,
+  "max": 27.94,
+  "slopeMBperHour": 18.57,
+  "samples": 13
+ },
+ "caps": {
+  "enemies": 156,
+  "debris": 148,
+  "particles": 71,
+  "projectiles": 2,
+  "explosions": 4,
+  "bullets": 10,
+  "loot": 31,
+  "bossAttacks": 2,
+  "pickups": 49
+ },
+ "finalDigest": "75ce95d2",
+ "wallStopped": false,
+ "startIndex": 15
+}
+MONDES
+{"i":16,"why":"départ","won":false,"s":360,"deaths":1,"stalls":0,"relays":3,"mech":3,"kills":31,"boss":"3962/9600","hp":30,"refused":1,"timeout":false,"goal":"hp:health-12","pilot":{"astar":61,"astarFail":2,"astarNoEnd":0,"astarCap":0,"astarNodes":43076,"edgeTests":49324,"replans":87,"unstick":0,"interacts":3,"think":9957,"topology":29,"nearestLoose":0,"padRoutes":0}}
+POINTES [{"step":15152,"t":252.5,"ms":34.8,"world":15,"ev":[],"nav":768},{"step":14995,"t":249.9,"ms":34.3,"world":15,"ev":[],"nav":768},{"step":937,"t":15.6,"ms":34,"world":15,"ev":[],"nav":768},{"step":1783,"t":29.7,"ms":34,"world":15,"ev":["materialBreak","materialImpact","kill","fracture","hit"],"nav":0},{"step":15182,"t":253,"ms":31.9,"world":15,"ev":["explosion"],"nav":768},{"step":3293,"t":54.9,"ms":31.6,"world":15,"ev":["enemyShot"],"nav":768},{"step":3509,"t":58.5,"ms":31.5,"world":15,"ev":[],"nav":768},{"step":14936,"t":248.9,"ms":31.1,"world":15,"ev":["enemyShot"],"nav":768},{"step":3539,"t":59,"ms":30.4,"world":15,"ev":["explosion"],"nav":768},{"step":3352,"t":55.9,"ms":30.1,"world":15,"ev":[],"nav":768},{"step":12580,"t":209.7,"ms":27.3,"world":15,"ev":[],"nav":768},{"step":3613,"t":60.2,"ms":26.9,"world":15,"ev":[],"nav":768}]

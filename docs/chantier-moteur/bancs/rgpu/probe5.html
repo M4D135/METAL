@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><title>probe4</title>
+<style>html,body{margin:0;height:100%;background:#000}canvas{width:100vw;height:100vh;display:block}</style></head><body><pre id="out">pending</pre>
+<canvas id="c"></canvas>
+<script>
+(function(){
+  const c=document.getElementById('c');c.width=Math.round(c.clientWidth*devicePixelRatio);c.height=Math.round(c.clientHeight*devicePixelRatio);
+  const gl=c.getContext('webgl2',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
+  const vs=`#version 300 es
+  void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.-1.,0.,1.);}`;
+  const fs=`#version 300 es
+  precision highp float;out vec4 o;uniform float uN;
+  void main(){vec2 p=gl_FragCoord.xy*.01;float a=0.;for(int i=0;i<256;i++){if(float(i)>=uN)break;a+=sin(p.x*float(i)+cos(p.y+a));}o=vec4(a*.01,0.,0.,1.);}`;
+  function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(x);return x;}
+  const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);gl.useProgram(p);
+  gl.bindVertexArray(gl.createVertexArray());
+  const uN=gl.getUniformLocation(p,'uN');const px=new Uint8Array(4);
+  function sync(){if(location.hash==="#finish")gl.finish();else gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);}
+  const out={w:c.width,h:c.height,dpr:devicePixelRatio,res:{}};
+  sync();
+  for(const n of [0,16,64,128,256]){
+    gl.uniform1f(uN,n);for(let w=0;w<5;w++){gl.drawArrays(gl.TRIANGLES,0,3);}sync();
+    const times=[];
+    for(let f=0;f<30;f++){const t0=performance.now();gl.drawArrays(gl.TRIANGLES,0,3);sync();times.push(performance.now()-t0);}
+    times.sort((a,b)=>a-b);out.res[n]={median:+times[15].toFixed(3),min:+times[0].toFixed(3),p90:+times[27].toFixed(3)};
+  }
+  document.getElementById('out').textContent=JSON.stringify(out);
+})();
+</script></body></html>

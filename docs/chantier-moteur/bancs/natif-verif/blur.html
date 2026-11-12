@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><title>blur</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{position:absolute;top:20px;width:300px;height:300px;display:block}</style></head><body>
+<script>
+// Meme dessin vectoriel (traits d'un pixel physique, damier d'un pixel physique) rendu dans 5 tampons de tailles differentes,
+// tous affiches sur 300x300 px CSS (600x600 pixels physiques a DPR 2). Le navigateur reechantillonne tout tampon != 600.
+const sizes=[600,599,559,330,300];
+sizes.forEach((n,i)=>{const c=document.createElement('canvas');c.width=c.height=n;c.style.left=(20+i*320)+'px';document.body.appendChild(c);
+  const x=c.getContext('2d'),s=n/300;x.fillStyle='#fff';x.fillRect(0,0,n,n);x.setTransform(s,0,0,s,0,0);
+  x.strokeStyle='#000';x.lineWidth=.5;for(let k=0;k<36;k++){const a=k*Math.PI/36;x.beginPath();x.moveTo(150,75);x.lineTo(150+Math.cos(a)*140,75+Math.sin(a)*70);x.stroke();}
+  x.setTransform(1,0,0,1,0,0);const h=Math.round(n*.48),y0=n-h,img=x.createImageData(n,h);
+  // moitie basse : damier dont la periode vaut 1 pixel physique de l'ecran quand le tampon est natif (600).
+  for(let y=0;y<h;y++)for(let X=0;X<n;X++){const u=Math.floor(X*600/n),v=Math.floor((y+y0)*600/n),on=(u+v)&1,o=(y*n+X)*4;img.data[o]=img.data[o+1]=img.data[o+2]=on?255:0;img.data[o+3]=255;}
+  x.putImageData(img,0,y0);});
+</script></body></html>

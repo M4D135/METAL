@@ -1,0 +1,297 @@
+{
+ "scenario": "campaign-w10",
+ "ticks": 1800,
+ "charge": [
+  179.7,
+  105.9,
+  72
+ ],
+ "B": [
+  {
+   "mode": "packed",
+   "digest": 4058880467,
+   "createCpu": 312,
+   "workerAcc": {
+    "stepCpuMoy": 0.7656,
+    "packCpuMoy": 0.117,
+    "postCpuMoy": 0.0235,
+    "octetsMoy": 12809,
+    "tamponsAlloues": 1
+   },
+   "tailleFinale": {
+    "t": "size",
+    "packedBytes": 14304,
+    "subsetBytes": 48193,
+    "naiveBytes": 143159,
+    "counts": {
+     "loot": 0,
+     "encounters": 9,
+     "events": 0,
+     "bullets": 3,
+     "particles": 3,
+     "enemies": 84,
+     "cores": 3,
+     "pickups": 42,
+     "hazards": 0,
+     "jumpPads": 3,
+     "projectiles": 0,
+     "explosions": 0,
+     "debris": 47,
+     "bossAttacks": 0,
+     "pipes": 4,
+     "traps": 3,
+     "mechanisms": 3,
+     "doors": 3,
+     "lifts": 2,
+     "weaponCooldowns": 5
+    }
+   },
+   "snapshotChars": 124915,
+   "workerStepCpu": {
+    "n": 1800,
+    "moy": 0.7656,
+    "p50": 0.535,
+    "p95": 1.526,
+    "p99": 4.552,
+    "max": 38.763
+   },
+   "filPrincipalCpuParImage": {
+    "n": 1800,
+    "moy": 0.0963,
+    "p50": 0.085,
+    "p95": 0.182,
+    "p99": 0.252,
+    "max": 1.539
+   },
+   "dontEnvoiEntree": 0.0084,
+   "dontDepaquetage": 0.0514,
+   "dontReceptionDeserialisation": 0.0036,
+   "imagesEnRetard": {
+    ">=1 tick": 0,
+    ">=2": 0,
+    ">=4": 0,
+    "max": 0
+   },
+   "ageMessageMs": {
+    "n": 1800,
+    "moy": 1.5946,
+    "p50": 0.0581,
+    "p95": 8.2754,
+    "p99": 25.0212,
+    "max": 137.573
+   },
+   "dureeMurale": 7092,
+   "seuilsFilPrincipal": {
+    ">1ms": 1,
+    ">2ms": 0,
+    ">4ms": 0,
+    ">8ms": 0
+   }
+  },
+  {
+   "mode": "subset",
+   "digest": 4058880467,
+   "createCpu": 280,
+   "workerAcc": {
+    "stepCpuMoy": 0.7334,
+    "packCpuMoy": 0.0546,
+    "postCpuMoy": 0.1943,
+    "octetsMoy": 0,
+    "tamponsAlloues": 0
+   },
+   "tailleFinale": {
+    "t": "size",
+    "packedBytes": 14304,
+    "subsetBytes": 48193,
+    "naiveBytes": 143159,
+    "counts": {
+     "loot": 0,
+     "encounters": 9,
+     "events": 0,
+     "bullets": 3,
+     "particles": 3,
+     "enemies": 84,
+     "cores": 3,
+     "pickups": 42,
+     "hazards": 0,
+     "jumpPads": 3,
+     "projectiles": 0,
+     "explosions": 0,
+     "debris": 47,
+     "bossAttacks": 0,
+     "pipes": 4,
+     "traps": 3,
+     "mechanisms": 3,
+     "doors": 3,
+     "lifts": 2,
+     "weaponCooldowns": 5
+    }
+   },
+   "snapshotChars": 124915,
+   "workerStepCpu": {
+    "n": 1800,
+    "moy": 0.7334,
+    "p50": 0.542,
+    "p95": 1.437,
+    "p99": 3.747,
+    "max": 35.943
+   },
+   "filPrincipalCpuParImage": {
+    "n": 1800,
+    "moy": 0.0348,
+    "p50": 0.031,
+    "p95": 0.055,
+    "p99": 0.072,
+    "max": 0.567
+   },
+   "dontEnvoiEntree": 0.0168,
+   "dontDepaquetage": 0,
+   "dontReceptionDeserialisation": 0.0044,
+   "imagesEnRetard": {
+    ">=1 tick": 0,
+    ">=2": 0,
+    ">=4": 0,
+    "max": 0
+   },
+   "ageMessageMs": {
+    "n": 1800,
+    "moy": 2.791,
+    "p50": 0.5725,
+    "p95": 13.9058,
+    "p99": 31.2925,
+    "max": 63.656
+   },
+   "dureeMurale": 7884,
+   "seuilsFilPrincipal": {
+    ">1ms": 0,
+    ">2ms": 0,
+    ">4ms": 0,
+    ">8ms": 0
+   }
+  },
+  {
+   "mode": "naive",
+   "digest": 4058880467,
+   "createCpu": 280,
+   "workerAcc": {
+    "stepCpuMoy": 0.8382,
+    "packCpuMoy": 0.0152,
+    "postCpuMoy": 0.536,
+    "octetsMoy": 0,
+    "tamponsAlloues": 0
+   },
+   "tailleFinale": {
+    "t": "size",
+    "packedBytes": 14304,
+    "subsetBytes": 48193,
+    "naiveBytes": 143159,
+    "counts": {
+     "loot": 0,
+     "encounters": 9,
+     "events": 0,
+     "bullets": 3,
+     "particles": 3,
+     "enemies": 84,
+     "cores": 3,
+     "pickups": 42,
+     "hazards": 0,
+     "jumpPads": 3,
+     "projectiles": 0,
+     "explosions": 0,
+     "debris": 47,
+     "bossAttacks": 0,
+     "pipes": 4,
+     "traps": 3,
+     "mechanisms": 3,
+     "doors": 3,
+     "lifts": 2,
+     "weaponCooldowns": 5
+    }
+   },
+   "snapshotChars": 124915,
+   "workerStepCpu": {
+    "n": 1800,
+    "moy": 0.8382,
+    "p50": 0.636,
+    "p95": 1.577,
+    "p99": 4.105,
+    "max": 38.955
+   },
+   "filPrincipalCpuParImage": {
+    "n": 1800,
+    "moy": 0.0465,
+    "p50": 0.042,
+    "p95": 0.067,
+    "p99": 0.098,
+    "max": 1.127
+   },
+   "dontEnvoiEntree": 0.0229,
+   "dontDepaquetage": 0,
+   "dontReceptionDeserialisation": 0.0069,
+   "imagesEnRetard": {
+    ">=1 tick": 0,
+    ">=2": 0,
+    ">=4": 0,
+    "max": 0
+   },
+   "ageMessageMs": {
+    "n": 1800,
+    "moy": 4.7807,
+    "p50": 1.6589,
+    "p95": 17.6245,
+    "p99": 44.5364,
+    "max": 86.17
+   },
+   "dureeMurale": 11563,
+   "seuilsFilPrincipal": {
+    ">1ms": 1,
+    ">2ms": 0,
+    ">4ms": 0,
+    ">8ms": 0
+   }
+  }
+ ],
+ "A": {
+  "digest": 4058880467,
+  "memeDigestRejoue": true,
+  "stepCpu1": {
+   "n": 1800,
+   "moy": 0.7208,
+   "p50": 0.467,
+   "p95": 1.624,
+   "p99": 4.561,
+   "max": 37.946
+  },
+  "stepCpu2": {
+   "n": 1800,
+   "moy": 0.6486,
+   "p50": 0.417,
+   "p95": 1.422,
+   "p99": 3.752,
+   "max": 32.989
+  },
+  "seuils1": {
+   ">1ms": 263,
+   ">2ms": 50,
+   ">4ms": 20,
+   ">8ms": 8,
+   ">16ms": 4
+  },
+  "seuils2": {
+   ">1ms": 215,
+   ">2ms": 34,
+   ">4ms": 15,
+   ">8ms": 4,
+   ">16ms": 4
+  },
+  "stepWall1": {
+   "n": 1800,
+   "moy": 3.16,
+   "p50": 0.5483,
+   "p95": 14.6081,
+   "p99": 42.4682,
+   "max": 351.799
+  }
+ },
+ "etatsIdentiques": true
+}

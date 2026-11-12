@@ -1,0 +1,2 @@
+Copie de travail de METAL 0.8.0 (commit 673d6b2), réduite aux patchs de ce dossier.
+La reconstituer : python3 docs/chantier-moteur/bancs/reconstituer.py

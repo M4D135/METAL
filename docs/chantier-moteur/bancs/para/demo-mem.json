@@ -1,0 +1,67 @@
+{
+ "rows": [
+  {
+   "cycle": -1,
+   "heapMo": 6.1
+  },
+  {
+   "cycle": 0,
+   "monde": "campaign2-w6",
+   "heapVivantMo": 28.9,
+   "heapApresLiberationMo": 28.9
+  },
+  {
+   "cycle": 1,
+   "monde": "campaign2-w10",
+   "heapVivantMo": 25.1,
+   "heapApresLiberationMo": 25.1
+  },
+  {
+   "cycle": 2,
+   "monde": "legacy-s0",
+   "heapVivantMo": 25,
+   "heapApresLiberationMo": 25
+  },
+  {
+   "cycle": 3,
+   "monde": "campaign2-w6",
+   "heapVivantMo": 29,
+   "heapApresLiberationMo": 29
+  },
+  {
+   "cycle": 4,
+   "monde": "campaign2-w10",
+   "heapVivantMo": 25.3,
+   "heapApresLiberationMo": 25.3
+  },
+  {
+   "cycle": 5,
+   "monde": "legacy-s0",
+   "heapVivantMo": 25.2,
+   "heapApresLiberationMo": 25.2
+  },
+  {
+   "cycle": 6,
+   "monde": "campaign2-w6",
+   "heapVivantMo": 29.1,
+   "heapApresLiberationMo": 29.1
+  },
+  {
+   "cycle": 7,
+   "monde": "campaign2-w10",
+   "heapVivantMo": 25.2,
+   "heapApresLiberationMo": 25.2
+  },
+  {
+   "cycle": 8,
+   "monde": "legacy-s0",
+   "heapVivantMo": 25.2,
+   "heapApresLiberationMo": 25.2
+  }
+ ],
+ "rssMo": {
+  "avant": 47,
+  "workerVivant": 255,
+  "apresTerminate": 251
+ }
+}

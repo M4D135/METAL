@@ -1,0 +1,1 @@
+{"world":16,"minutes":6,"difficulty":0,"incoming":1,"assist":false,"won":0,"opened":1,"deaths":3,"restoresRefused":3,"restoresOk":0,"stalls":0,"exceptions":0,"assistHp":0,"worlds":[{"i":16,"won":false,"s":360,"deaths":3,"boss":"9600/9600","hp":160}],"events":{"hurt":24,"shieldBlock":0,"dead":3}}

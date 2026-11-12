@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset="utf-8"><title>probe2</title>
+<style>html,body{margin:0;height:100%;background:#000}canvas{width:100vw;height:100vh;display:block}</style></head><body><pre id="out">pending</pre>
+<canvas id="c"></canvas>
+<script>
+(function(){
+  const log=[];const t0=performance.now();
+  const c=document.getElementById('c');c.width=Math.round(c.clientWidth*devicePixelRatio);c.height=Math.round(c.clientHeight*devicePixelRatio);
+  const gl=c.getContext('webgl2',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
+  const ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
+  const vs=`#version 300 es
+  void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.-1.,0.,1.);}`;
+  const fs=`#version 300 es
+  precision highp float;out vec4 o;uniform float uN;
+  void main(){vec2 p=gl_FragCoord.xy*.01;float a=0.;for(int i=0;i<64;i++){if(float(i)>=uN)break;a+=sin(p.x*float(i)+cos(p.y+a));}o=vec4(a*.01,0.,0.,1.);}`;
+  function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(x);return x;}
+  const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);gl.useProgram(p);
+  gl.bindVertexArray(gl.createVertexArray());
+  const uN=gl.getUniformLocation(p,'uN');
+  const queries=[];
+  for(let f=0;f<40;f++){
+    const n=f<20?16:64;gl.uniform1f(uN,n);
+    const q=gl.createQuery();gl.beginQuery(ext.TIME_ELAPSED_EXT,q);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    gl.endQuery(ext.TIME_ELAPSED_EXT);queries.push({q,n});
+  }
+  gl.flush();
+  let polls=0;
+  function poll(){
+    polls++;
+    const ready=queries.every(e=>gl.getQueryParameter(e.q,gl.QUERY_RESULT_AVAILABLE));
+    const disjoint=gl.getParameter(ext.GPU_DISJOINT_EXT);
+    if(!ready&&polls<2000){setTimeout(poll,5);return;}
+    const res=queries.map(e=>({n:e.n,ms:gl.getQueryParameter(e.q,gl.QUERY_RESULT_AVAILABLE)?gl.getQueryParameter(e.q,gl.QUERY_RESULT)/1e6:null}));
+    document.getElementById('out').textContent=JSON.stringify({w:c.width,h:c.height,dpr:devicePixelRatio,polls,disjoint,realMs:performance.now()-t0,res});
+  }
+  setTimeout(poll,0);
+})();
+</script></body></html>

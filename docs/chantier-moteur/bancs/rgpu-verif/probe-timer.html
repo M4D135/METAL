@@ -1,0 +1,44 @@
+<!doctype html><html><head><meta charset="utf-8"><title>probe-timer</title>
+<style>html,body{margin:0;background:#000}canvas{width:1440px;height:900px;display:block}</style></head><body><pre id="vout">pending</pre>
+<canvas id="c"></canvas>
+<script>
+(function(){
+  // Une requête TIME_ELAPSED par « image », chaque image dans sa propre tâche (comme une boucle rAF),
+  // lecture des résultats plusieurs tâches plus tard. Le temps réel avance par une boucle de calcul
+  // (le temps virtuel de --virtual-time-budget ne fait pas avancer le GPU).
+  const c=document.getElementById('c');c.width=Math.round(1440*devicePixelRatio);c.height=Math.round(900*devicePixelRatio);
+  const gl=c.getContext('webgl2',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
+  const ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
+  const out={ext:!!ext,w:c.width,h:c.height,frames:[],polls:0};
+  if(!ext){document.getElementById('vout').textContent=JSON.stringify(out);return;}
+  const vs=`#version 300 es
+  void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.-1.,0.,1.);}`;
+  const fs=`#version 300 es
+  precision highp float;out vec4 o;uniform float uN;
+  void main(){vec2 p=gl_FragCoord.xy*.01;float a=0.;for(int i=0;i<256;i++){if(float(i)>=uN)break;a+=sin(p.x*float(i)+cos(p.y+a));}o=vec4(a*.01,0.,0.,1.);}`;
+  function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);return x;}
+  const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);gl.useProgram(p);
+  gl.bindVertexArray(gl.createVertexArray());const uN=gl.getUniformLocation(p,'uN');const px=new Uint8Array(4);
+  function spin(ms){const t=Date.now();let x=0;for(let i=0;i<ms*400000;i++)x+=Math.sqrt(i);return x;} // ~ms de calcul réel
+  const plan=[];for(let f=0;f<36;f++)plan.push([8,32,128][f%3]);
+  let f=0;
+  function frame(){
+    if(f<plan.length){
+      const n=plan[f];gl.uniform1f(uN,n);const q=gl.createQuery();
+      const t0=performance.now();gl.beginQuery(ext.TIME_ELAPSED_EXT,q);gl.drawArrays(gl.TRIANGLES,0,3);gl.endQuery(ext.TIME_ELAPSED_EXT);
+      gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);const sync=performance.now()-t0;
+      out.frames.push({n,q,sync:+sync.toFixed(3)});f++;spin(4);setTimeout(frame,0);return;
+    }
+    poll();
+  }
+  function poll(){
+    out.polls++;spin(5);
+    const ready=out.frames.filter(e=>gl.getQueryParameter(e.q,gl.QUERY_RESULT_AVAILABLE)).length;
+    if(ready<out.frames.length&&out.polls<400){setTimeout(poll,0);return;}
+    out.disjoint=gl.getParameter(ext.GPU_DISJOINT_EXT);out.ready=ready;
+    out.frames=out.frames.map(e=>({n:e.n,sync:e.sync,ms:gl.getQueryParameter(e.q,gl.QUERY_RESULT_AVAILABLE)?+(gl.getQueryParameter(e.q,gl.QUERY_RESULT)/1e6).toFixed(3):null}));
+    document.getElementById('vout').textContent=JSON.stringify(out);
+  }
+  setTimeout(frame,0);
+})();
+</script></body></html>

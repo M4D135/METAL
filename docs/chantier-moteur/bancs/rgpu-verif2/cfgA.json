@@ -1,0 +1,4 @@
+{"name":"A","runFile":"vrun-b.js","world":0,"cssW":1440,"cssH":932,"inPos":[1.5,4.82,0.5],"block":10,"rounds":3,"latRounds":1,"walk":600,
+ "thrScenes":["out","in","inT"],"latScenes":["out"],"diffScenes":["out","in","inT","inA","walk","walkT","walkA"],"diffEvery":6,"ref":"base","refHigh":"high","reallocCycles":16,
+ "pairs":[["in","inFar","base"],["walk","walkFar","base"],["in","inT","base"]],
+ "variants":[{"id":"base","code":"base"},{"id":"spec4","code":"spec4"},{"id":"notorch","code":"notorch"},{"id":"nolamp","code":"nolamp"},{"id":"suncache","code":"suncache"},{"id":"combo7","code":"combo7"},{"id":"msaa4","code":"msaa4"},{"id":"skylate","code":"skylate"},{"id":"high","code":"base","quality":"high"},{"id":"hicap","code":"hicap","quality":"high"}]}

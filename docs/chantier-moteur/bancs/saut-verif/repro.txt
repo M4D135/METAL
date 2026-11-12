@@ -1,0 +1,2 @@
+essais 168 {"x0":2.7,"z0":18,"strafeAt":24,"side":-1,"perch":[2.74,1,25.67],"out":[6.43,-0.25,25.67],"dead":false}
+node $S/repro-wall2.mjs  7.80s user 0.24s system 176% cpu 4.566 total

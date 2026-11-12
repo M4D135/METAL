@@ -1,0 +1,121 @@
+{
+ "simMinutes": 8,
+ "wallS": 66,
+ "worldsWon": 2,
+ "worldsOpened": 3,
+ "deaths": 0,
+ "restoresOk": 0,
+ "restoresRefused": 0,
+ "stalls": 0,
+ "timeouts": 0,
+ "exceptions": 0,
+ "relays": 6,
+ "mechanisms": 8,
+ "bossKills": 2,
+ "kills": 38,
+ "weaponsFired": [
+  26,
+  17,
+  0,
+  0,
+  842
+ ],
+ "destructionRevisions": 43,
+ "assistHp": 423,
+ "step": {
+  "mean": 0.485,
+  "p50": 0.382,
+  "p95": 1.097,
+  "p99": 1.902,
+  "p999": 6.4,
+  "max": 52,
+  "over8": 20,
+  "over16": 10,
+  "over33": 3
+ },
+ "hist": {
+  "edgesMs": [
+   0.125,
+   0.25,
+   0.5,
+   1,
+   2,
+   4,
+   8,
+   16,
+   33
+  ],
+  "counts": [
+   228,
+   3476,
+   17478,
+   5858,
+   1519,
+   159,
+   62,
+   10,
+   7,
+   3
+  ]
+ },
+ "thinkMsPerStep": 0.0607,
+ "think": {
+  "p50": 0.036,
+  "p99": 0.227,
+  "p999": 2.03,
+  "max": 61.2,
+  "over4": 14
+ },
+ "wallOverCpu": 3.88,
+ "cpuClock": "thread",
+ "checkpoint": {
+  "n": 20,
+  "p50": 1.84,
+  "max": 3.2
+ },
+ "worldGenMs": {
+  "p50": 201,
+  "max": 315
+ },
+ "simCreateMs": {
+  "p50": 83,
+  "max": 138
+ },
+ "memory": {
+  "first": {
+   "t": 0,
+   "heapMB": 22.93,
+   "rssMB": 147,
+   "abMB": 2.09
+  },
+  "last": {
+   "t": 480,
+   "heapMB": 30.92,
+   "rssMB": 271.3,
+   "abMB": 4.7
+  },
+  "min": 22.93,
+  "max": 30.92,
+  "slopeMBperHour": 16.79,
+  "samples": 17
+ },
+ "caps": {
+  "enemies": 94,
+  "debris": 150,
+  "particles": 51,
+  "projectiles": 2,
+  "explosions": 13,
+  "bullets": 4,
+  "loot": 23,
+  "bossAttacks": 4,
+  "pickups": 40
+ },
+ "finalDigest": "b44f0e81",
+ "wallStopped": false,
+ "startIndex": 0
+}
+MONDES
+{"i":1,"why":"départ","won":true,"s":235.6,"deaths":0,"stalls":0,"relays":3,"mech":3,"kills":23,"boss":"0/600","hp":58,"refused":0,"timeout":false,"goal":"exit","pilot":{"astar":88,"astarFail":10,"astarNoEnd":0,"astarCap":0,"astarNodes":53588,"edgeTests":45587,"replans":208,"unstick":0,"interacts":3,"think":14136,"topology":15,"nearestLoose":0,"padRoutes":0}}
+{"i":2,"why":"monde suivant","won":true,"s":235.4,"deaths":0,"stalls":0,"relays":3,"mech":3,"kills":15,"boss":"0/850","hp":120,"refused":0,"timeout":false,"goal":"exit","pilot":{"astar":44,"astarFail":10,"astarNoEnd":0,"astarCap":0,"astarNodes":55137,"edgeTests":16793,"replans":216,"unstick":0,"interacts":2,"think":14127,"topology":33,"nearestLoose":2,"padRoutes":0}}
+{"i":3,"why":"monde suivant","won":false,"s":8.9,"deaths":0,"stalls":0,"relays":0,"mech":2,"kills":2,"boss":"1200/1200","hp":120,"refused":0,"timeout":false,"goal":"core:1","pilot":{"astar":8,"astarFail":0,"astarNoEnd":0,"astarCap":0,"astarNodes":613,"edgeTests":1307,"replans":8,"unstick":0,"interacts":2,"think":537,"topology":8,"nearestLoose":0,"padRoutes":0}}
+POINTES [{"step":42,"t":0.7,"ms":52,"world":0,"ev":["waveStart","alerted","shot","hit"],"nav":0},{"step":1791,"t":29.9,"ms":36.9,"world":0,"ev":["alerted","shot","hit"],"nav":0},{"step":2982,"t":49.7,"ms":33.2,"world":0,"ev":["shot","hit"],"nav":0},{"step":70,"t":1.2,"ms":25.7,"world":0,"ev":[],"nav":768},{"step":3341,"t":55.7,"ms":25.2,"world":0,"ev":["alerted"],"nav":768},{"step":16415,"t":273.6,"ms":24.2,"world":1,"ev":["alerted","shot","hit"],"nav":0},{"step":16584,"t":276.4,"ms":23.7,"world":1,"ev":[],"nav":768},{"step":3328,"t":55.5,"ms":23.3,"world":0,"ev":["alerted"],"nav":0},{"step":4081,"t":68,"ms":23.3,"world":0,"ev":[],"nav":0},{"step":4843,"t":80.7,"ms":21.8,"world":0,"ev":["shot","hit"],"nav":0},{"step":4910,"t":81.8,"ms":14.3,"world":0,"ev":["shot","hit"],"nav":0},{"step":14628,"t":243.8,"ms":13.8,"world":1,"ev":["kill","combo","materialBreak","mechanism","materialImpact","fracture","hit"],"nav":0}]

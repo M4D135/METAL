@@ -1,0 +1,49 @@
+--- a/src/simulation.js
++++ b/src/simulation.js
+@@ -1346,7 +1346,7 @@
+       return true;
+     }
+     function radius(e){return giant(e)?1.5*scale(e):e.type===3?1.05:.38;}
+-    function segmentFree(ax,az,bx,bz,r=.4){
++    function segmentFree(ax,az,bx,bz,r=.4){G.__diag&&(G.__diag.segmentFree++);
+       if(blocked(ax,az,r)||blocked(bx,bz,r))return false;
+       const dx=bx-ax,dz=bz-az,ay=groundAt(ax,az),by=groundAt(bx,bz),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
+       // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
+@@ -1386,7 +1386,7 @@
+         // amortised; another blast appends dirty cells instead of restarting work.
+         for(let i=0;i<nav.length;i++)if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}
+       }else{navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}}
+-      edgeKnown.fill(0);edgeOpen.fill(0);if(reset)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
++      edgeKnown.fill(0);edgeOpen.fill(0);G.__diag&&(G.__diag.edgeWipes++);if(reset)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
+       if(!advanced)rebuildNav();
+     }
+     function nearestNode(x,z,r){
+@@ -1410,8 +1410,9 @@
+       function push(i,cost){let at=heap.length;heap.push([i,cost]);while(at){const parent=(at-1)>>1;if(heap[parent][1]<=cost)break;heap[at]=heap[parent];at=parent;}heap[at]=[i,cost];}
+       function pop(){const value=heap[0],last=heap.pop();if(heap.length){let at=0;while(at*2+1<heap.length){let child=at*2+1;if(child+1<heap.length&&heap[child+1][1]<heap[child][1])child++;if(heap[child][1]>=last[1])break;heap[at]=heap[child];at=child;}heap[at]=last;}return value[0];}
+       routeStamp[start]=stamp;routeCost[start]=0;routePrev[start]=-1;push(start,heuristic(start));
+-      let explored=0,found=false;
+-      while(heap.length&&explored++<2400){
++      let explored=0,found=false;G.__diag&&(G.__diag.routes++);const __t0=performance.now(),__sf0=G.__diag?G.__diag.segmentFree:0;
++      const __limit=G.__boundedAstar?Math.min(2400,64+8*heuristic(start)):2400;
++      while(heap.length&&explored++<__limit){
+         const i=pop();if(routeClosed[i]===stamp)continue;routeClosed[i]=stamp;if(i===end){found=true;break;}
+         const ix=i%nx,neighbors=[ix?i-1:-1,ix<nx-1?i+1:-1,i-nx,i+nx];
+         for(let k=0;k<4;k++){
+@@ -1423,12 +1424,14 @@
+           routeStamp[j]=stamp;routeCost[j]=cost;routePrev[j]=i;push(j,cost+heuristic(j));
+         }
+       }
+-      if(!found)return null;
+-      const raw=[];for(let i=end;i>=0;i=routePrev[i])raw.push(i);raw.reverse();
++      if(G.__diag){G.__diag.astarMs+=performance.now()-__t0;G.__diag.explored+=explored;G.__diag.astarSF+=G.__diag.segmentFree-__sf0;}
++      if(!found){G.__diag&&G.__diag.log.push({e:e.id,found:false,explored,ms:+(performance.now()-__t0).toFixed(1)});return null;}
++      const raw=[];for(let i=end;i>=0;i=routePrev[i])raw.push(i);raw.reverse();const __t1=performance.now(),__sf1=G.__diag?G.__diag.segmentFree:0;
+       // String-pull this bounded local route once, rather than trace many rays every frame.
+       const result=[];let ax=e.x,az=e.z,at=0;
+       while(at<raw.length){let far=at;for(let k=Math.min(raw.length-1,at+14);k>at;k--)if(segmentFree(ax,az,...coord(raw[k]),r)){far=k;break;}
+         result.push(raw[far]);[ax,az]=coord(raw[far]);at=far+1;}
++      if(G.__diag){G.__diag.pullMs+=performance.now()-__t1;G.__diag.log.push({e:e.id,type:e.type,bossWave:e.bossWave||0,found:true,explored,raw:raw.length,pulled:result.length,astarSF:__sf1-__sf0,pullSF:G.__diag.segmentFree-__sf1,ms:+(performance.now()-__t0).toFixed(1),pullMs:+(performance.now()-__t1).toFixed(1)});}
+       return result.length<=512?result:null;
+     }
+     function setGoal(e,x,z,tactic,commit=0){

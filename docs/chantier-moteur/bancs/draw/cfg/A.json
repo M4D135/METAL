@@ -1,0 +1,17 @@
+{"name":"draw-A-w0","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":420,"measureFrames":130,"skip":10,"reps":2,"dumpFrames":true,"compareEvery":10,"compareRef":"base",
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"vdedup","code":"vdedup","compare":true},
+  {"id":"inv","code":"inv","compare":true},
+  {"id":"wfirst","code":"wfirst","compare":true},
+  {"id":"wfirst2","code":"wfirst2","compare":true},
+  {"id":"order","code":"order","compare":true},
+  {"id":"suncull","code":"suncull","compare":true},
+  {"id":"texlod","code":"texlod","compare":true},
+  {"id":"rgb10","code":"rgb10","compare":true},
+  {"id":"dithersrc","code":"dithersrc","compare":true},
+  {"id":"depthfalse","code":"depthfalse","compare":true},
+  {"id":"prepass","code":"prepass","compare":true},
+  {"id":"shnostat","code":"shnostat"},
+  {"id":"shnodyn","code":"shnodyn"}]}

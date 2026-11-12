@@ -1,0 +1,84 @@
+r1 camp:6 frames 400 | allocated 420.3 MB = 1075.9 KB/frame | scavenges 14 (2.10/s at 60 fps, total 1013.6 ms, max 434.00 ms) | major 4 (272.8 ms) | wall 31567 ms
+  CAT  26.2%    282.4 KB/frame  sim.step
+  CAT  22.4%    241.3 KB/frame  models>supplyModel
+  CAT  16.8%    180.5 KB/frame  models>FActors.build
+  CAT  11.8%    127.4 KB/frame  game.models
+  CAT  11.4%    122.9 KB/frame  renderer.draw
+  CAT   5.0%     53.4 KB/frame  models>FEffects.build
+  CAT   3.8%     41.2 KB/frame  models>machinery/systems
+  CAT   1.7%     17.9 KB/frame  renderer.updateWorld
+  CAT   0.8%      8.5 KB/frame  view.other
+  CAT   0.0%      0.4 KB/frame  (other)
+   11.7%   128519 B/frame  place P_motion.js:20
+    4.5%    49546 B/frame  place P_motion.js:20 > map
+    3.8%    42114 B/frame  limb P_actors.js:48
+    3.0%    33449 B/frame  supplyModel game-models.js:133
+    2.3%    25065 B/frame  piece P_actors.js:39
+    2.2%    24491 B/frame  query P_renderer.js:783
+    2.0%    22107 B/frame  part game-models.js:135
+    1.9%    21084 B/frame  build P_effects.js:11
+    1.9%    20905 B/frame  pack P_renderer.js:682
+    1.8%    19346 B/frame  drone P_actors.js:153
+    1.6%    17716 B/frame  draw P_renderer.js:1566 > next
+    1.6%    17236 B/frame  build P_actors.js:16
+    1.6%    17176 B/frame  updateDebris P_simulation.js:1119
+    1.5%    16937 B/frame  limb P_actors.js:48 > map
+r1 camp:6 frames 1800 | allocated 2460.0 MB = 1399.5 KB/frame | scavenges 54 (1.80/s at 60 fps, total 2096.1 ms, max 246.76 ms) | major 6 (397.3 ms) | wall 67977 ms
+  CAT  25.4%    356.1 KB/frame  sim.step
+  CAT  24.3%    339.5 KB/frame  models>supplyModel
+  CAT  16.3%    228.3 KB/frame  models>FActors.build
+  CAT  14.1%    197.2 KB/frame  models>FEffects.build
+  CAT   8.4%    117.9 KB/frame  renderer.draw
+  CAT   8.1%    113.1 KB/frame  game.models
+  CAT   1.5%     21.0 KB/frame  models>machinery/systems
+  CAT   1.3%     18.7 KB/frame  renderer.updateWorld
+  CAT   0.5%      7.3 KB/frame  view.other
+  CAT   0.0%      0.4 KB/frame  (other)
+   14.2%   204039 B/frame  place P_motion.js:20
+    6.4%    91584 B/frame  supplyModel game-models.js:133
+    5.5%    79465 B/frame  build P_effects.js:11
+    3.2%    45692 B/frame  updateDebris P_simulation.js:1119
+    3.1%    44409 B/frame  build P_actors.js:16
+    2.4%    34243 B/frame  limb P_actors.js:48
+    1.9%    27828 B/frame  (anon) P_simulation.js:71
+    1.8%    25215 B/frame  mount P_motion.js:16
+    1.7%    24744 B/frame  pack P_renderer.js:682
+    1.7%    23965 B/frame  query P_renderer.js:783
+    1.6%    23338 B/frame  draw P_renderer.js:1566 > next
+    1.6%    23092 B/frame  debrisHalf P_simulation.js:68
+    1.5%    20789 B/frame  limb P_actors.js:48 > map
+    1.4%    20572 B/frame  part game-models.js:135
+orig camp:6 frames 400 | allocated 1102.9 MB = 2823.3 KB/frame | scavenges 35 (5.25/s at 60 fps, total 470.9 ms, max 134.99 ms) | major 4 (109.0 ms) | wall 18114 ms
+  CAT  40.3%   1138.7 KB/frame  renderer.draw
+  CAT  35.9%   1014.7 KB/frame  sim.step
+  CAT   8.6%    242.7 KB/frame  models>supplyModel
+  CAT   6.4%    181.2 KB/frame  models>FActors.build
+  CAT   4.5%    127.2 KB/frame  game.models
+  CAT   1.9%     53.4 KB/frame  models>FEffects.build
+  CAT   1.4%     40.6 KB/frame  models>machinery/systems
+  CAT   0.6%     16.1 KB/frame  renderer.updateWorld
+  CAT   0.3%      8.3 KB/frame  view.other
+  CAT   0.0%      0.4 KB/frame  (other)
+   16.3%   470050 B/frame  (anon) O_renderer.js:1454
+    9.5%   275163 B/frame  query O_renderer.js:779
+    9.1%   263503 B/frame  ground O_simulation.js:126
+    5.5%   159046 B/frame  pack O_renderer.js:678
+    5.4%   157165 B/frame  blocked O_simulation.js:242
+    4.4%   128005 B/frame  place O_motion.js:20
+r1 camp:6 frames 400 | allocated 349.3 MB = 894.3 KB/frame | scavenges 11 (1.65/s at 60 fps, total 68.4 ms, max 20.98 ms) | major 4 (36.5 ms) | wall 3570 ms
+  CAT  30.6%    273.4 KB/frame  sim.step
+  CAT  20.2%    180.5 KB/frame  models>FActors.build
+  CAT  14.2%    126.6 KB/frame  renderer.draw
+  CAT  13.3%    118.9 KB/frame  models>supplyModel
+  CAT   8.3%     74.6 KB/frame  game.models
+  CAT   6.0%     53.4 KB/frame  models>FEffects.build
+  CAT   4.5%     40.1 KB/frame  models>machinery/systems
+  CAT   2.0%     18.2 KB/frame  renderer.updateWorld
+  CAT   0.9%      8.4 KB/frame  view.other
+  CAT   0.0%      0.4 KB/frame  (other)
+    4.6%    42221 B/frame  limb P_actors.js:48
+    3.8%    34597 B/frame  place P_motion.js:21
+    3.5%    32106 B/frame  supplyModel game-models.js:133
+    2.8%    25270 B/frame  piece P_actors.js:39
+    2.7%    24764 B/frame  query P_renderer.js:783
+    2.4%    22282 B/frame  part game-models.js:135

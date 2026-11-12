@@ -1,0 +1,124 @@
+--- a/src/world.js
++++ b/src/world.js
+@@ -651,7 +651,7 @@
+     const sunLength=Math.hypot(...environment.sunDirection);
+     environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
+     const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
+-    if(campaign)Object.assign(world,{campaign:true,...(options.campaignVersion===2?{campaignVersion:2}:{}),index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
++    if(campaign)Object.assign(world,{campaign:true,index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
+     if(campaign)world.campaignProfile=campaignProfile(world);
+     detailWorld(world,theme,aperture,doorHeight);
+     naturalDetails(world,theme);
+@@ -1444,54 +1444,9 @@
+       }
+       throw new Error('No safe reinforcement bay '+w.seed+'/'+w.stage+'/'+r.id);
+     };
+-    function openEntries(r,b){
+-      // Natural cover may be a full adjoining room away: layout centres are
+-      // 41–52 m apart. Lifts are not infantry routes; use actual walking links.
+-      const links=w.connections.filter(c=>!c.liftId&&(c.from===r.id||c.to===r.id)),neighbors=links.map(c=>w.rooms[c.from===r.id?c.to:c.from]).filter(q=>q&&!q.bossArena),rooms=[r,...neighbors];
+-      const approach=(q,room)=>Math.hypot(q.x-room.x,q.z-room.z)+Math.hypot(room.x-r.x,room.y-r.y,room.z-r.z)+4;
+-      const avoid=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.jumpPads.flatMap(q=>[q,q.target])],candidates=b.entries.map(q=>({...q,room:r.id,travel:approach(q,r),mask:0,rank:0}));
+-      const incoming=(b.normal[0]?r.w:r.d)/2-1.5,probes=[[r.x,r.z],[r.x-b.normal[0]*incoming,r.z-b.normal[1]*incoming],[r.x-r.w*.27,r.z+r.d*.23],[r.x+r.w*.27,r.z-r.d*.23]].filter(([x,z])=>isWalkable(w,x,z,.28)&&Math.abs((floorHeight(w,x,z)??-999)-r.y)<.08).map(([x,z])=>[x,r.y+1.62,z]);
+-      function covers(eye,target,boxes){
+-        return boxes.some(c=>{let lo=0,hi=1;for(const [i,min,max] of [[0,c.minX,c.maxX],[1,c.minY,c.maxY],[2,c.minZ,c.maxZ]]){const d=target[i]-eye[i];if(Math.abs(d)<1e-8){if(eye[i]<min||eye[i]>max)return false;}else{const a=(min-eye[i])/d,z=(max-eye[i])/d;lo=Math.max(lo,Math.min(a,z));hi=Math.min(hi,Math.max(a,z));if(lo>hi)return false;}}return hi>0&&lo<.98;});
+-      }
+-      function maskFor(q){
+-        const yaw=Math.atan2(r.x-q.x,q.z-r.z),samples=[[0,0],[-.9,0],[.9,0],[0,-.9],[0,.9],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65],[Math.sin(yaw)*1.5,-Math.cos(yaw)*1.5]];let mask=0;
+-        for(let i=0;i<probes.length;i++){
+-          const eye=probes[i];if(Math.hypot(q.x-eye[0],q.z-eye[2])<10)continue;
+-          const boxes=w.colliders.filter(c=>c.maxX>=Math.min(eye[0],q.x-1.5)&&c.minX<=Math.max(eye[0],q.x+1.5)&&c.maxZ>=Math.min(eye[2],q.z-1.5)&&c.minZ<=Math.max(eye[2],q.z+1.5)&&c.maxY>=Math.min(eye[1],q.y+.2)&&c.minY<=Math.max(eye[1],q.y+2.15));
+-          if([.2,1.1,2.15].every(h=>samples.every(([dx,dz])=>covers(eye,[q.x+dx,q.y+h,q.z+dz],boxes))))mask|=1<<i;
+-        }
+-        return mask;
+-      }
+-      const bits=n=>{let count=0;for(;n;n&=n-1)count++;return count;};
+-      function offer(q,room,travel=approach(q,room)){
+-        if(!Number.isFinite(q.y)||Math.hypot(q.x-r.x,q.z-r.z)>80||!isWalkable(w,q.x,q.z,.85)||Math.abs((floorHeight(w,q.x,q.z)??-999)-q.y)>.08||avoid.some(a=>Math.hypot(a.x-q.x,a.z-q.z)<2)||!w.walkable.some(f=>!f.substrate&&!f.fallback&&Math.abs(q.x-f.x)<=f.w/2&&Math.abs(q.z-f.z)<=f.d/2))return;
+-        if(candidates.some(a=>Math.hypot(a.x-q.x,a.z-q.z)<.2))return;
+-        q.room=room.id;q.travel=travel;q.mask=maskFor(q);q.rank=bits(q.mask)*20+(room!==r?3:0)+(depths.get(room.id)<depths.get(r.id)?2:0)-q.travel*.015;candidates.push(q);
+-      }
+-      for(const room of rooms)for(const sx of [-1,1])for(const sz of [-1,1])for(const inset of [2.6,4.5,1.7,6.3,7.8]){
+-        if(inset>Math.min(room.w,room.d)/2-1)continue;
+-        const q={x:room.x+sx*(room.w/2-inset),y:room.y,z:room.z+sz*(room.d/2-inset)};
+-        offer(q,room);
+-      }
+-      // Quarry corners can be occupied by natural rock. Existing corridor turns
+-      // beyond the adjacent room provide cover without planting a new baffle.
+-      for(const room of neighbors)for(const link of w.connections.filter(c=>!c.liftId&&(c.from===room.id||c.to===room.id))){
+-        const other=w.rooms[link.from===room.id?link.to:link.from];if(!other||other===r||other.bossArena)continue;
+-        const length=Math.hypot(other.x-room.x,other.z-room.z),dx=(other.x-room.x)/length,dz=(other.z-room.z)/length,near=(dx?room.w:room.d)/2,far=length-(dx?other.w:other.d)/2-1.3;
+-        for(const at of [near+2,near+6,near+10])if(at<far)for(const side of [-.8,.8]){const q={x:room.x+dx*at-dz*side,z:room.z+dz*at+dx*side};q.y=floorHeight(w,q.x,q.z);offer(q,room,Math.hypot(room.x-r.x,room.z-r.z)+at+4);}
+-      }
+-      const selected=[];let covered=0;
+-      while(selected.length<8){
+-        const q=candidates.filter(q=>selected.every(a=>Math.hypot(a.x-q.x,a.z-q.z)>=1.75)).sort((a,b)=>(bits(b.mask&~covered)*40+b.rank-selected.filter(q=>q.room===b.room).length*2)-(bits(a.mask&~covered)*40+a.rank-selected.filter(q=>q.room===a.room).length*2))[0];
+-        if(!q)break;selected.push(q);covered|=q.mask;
+-      }
+-      return (selected.length>=4?selected:candidates.slice(0,4)).map(q=>({x:q.x,y:q.y,z:q.z,travel:q.travel}));
+-    }
+     w.encounterBays=[];
+     for(const r of w.rooms.filter(r=>r.id&&!r.bossArena)){
+       const b=choose(r),region='room-'+r.id,mesh=w.meshes.length,extra={outdoor:r.outdoor,region,structural:true};
+-      if(w.campaignVersion===2){w.encounterBays.push({zoneId:r.id,x:b.x,y:b.y,z:b.z,width:b.width,normal:b.normal,coverMesh:null,open:true,reserveEntries:b.entries.map(q=>({...q})),spawnEntries:openEntries(r,b)});continue;}
+       const add=(u,y,d,s,mat,category,props={})=>{const p=[b.x+b.tangent[0]*u+b.normal[0]*d,b.y+y,b.z+b.tangent[1]*u+b.normal[1]*d];w.meshes.push({shape:'box',p,s:b.normal[0]?[s[2],s[1],s[0]]:s,mat,category,...extra,...props});};
+       add(0,1.525,0,[b.width,3.05,.42],0,'reinforcement_baffle',{solid:true,color:theme.wall.map(v=>v*.72)});
+       w.colliders.push({...b.panel,mesh});
+@@ -1506,7 +1461,7 @@
+   function suppliesWorld(w){
+     const depths=roomDepths(w),initial=new Set(w.connections.flatMap(c=>c.from===0?[c.to]:c.to===0?[c.from]:[]));
+     w.progression={version:1,weaponSlots:4,startWeapons:w.stage===0?[true,false,false,false]:[true,true,true,false],startAmmo:[[48,0,0,0],[72,12,4,0],[84,16,5,0]][w.stage],startShield:false,ammoCaps:[180,36,12,16],maxActive:[8,10,12][w.stage]};
+-    if(w.campaign)Object.assign(w.progression,{weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],startShield:w.campaignVersion===2,ammoCaps:[180,36,12,16,1],maxActive:w.campaignProfile.maxActive});
++    if(w.campaign)Object.assign(w.progression,{weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],ammoCaps:[180,36,12,16,1],maxActive:w.campaignProfile.maxActive});
+     w.pickups=w.pickups.filter(p=>{const r=w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);return r&&(r.id===0||r.bossArena||Math.hypot(p.x-r.x-2.5,p.z-r.z-1.5)<.1);}).map((p,i)=>({...p,id:'health-'+i,kind:'health',amount:28,zoneId:w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2).id}));
+     const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target])];
+     // Service-bay cover follows the real incoming corridor. A small health case
+@@ -1568,10 +1523,6 @@
+     add(arena,'ammo',4,'grenades-boss',outer);
+   }
+   function campaignProfile(w){
+-    if(w.campaignVersion===2){
+-      const chapter=w.chapter,garrisonScale=[.55,.70,.85,1,1.15,1.30][chapter];
+-      return {version:2,garrison:Math.round([120,140,170][w.stage]*garrisonScale),garrisonScale,maxActive:[6,8,10,12,14,16][chapter],grenadiers:[1,3,5,7,9,11][chapter],rocketeers:[0,1,3,5,7,9][chapter],bossHp:[600,850,1200,1550,1900,2400,2900,3400,4000,4650,5300,6050,6850,7700,8600,9600,10800,12000][w.index],trialEnemies:0};
+-    }
+     const chapter=w.chapter,percent=[35,45,55,70,85,100][chapter],garrisonScale=percent/100;
+     return {version:1,garrison:Math.round([120,140,170][w.stage]*percent/100),garrisonScale,maxActive:[4,5,6,8,10,12][chapter],grenadiers:[0,2,3,5,6,8][chapter],rocketeers:[0,0,0,2,4,6][chapter],bossHpScale:[.25,.32,.45,.62,.8,1][chapter],trialEnemies:[3,6,9,12,15].includes(w.index)?3:0};
+   }
+@@ -1586,14 +1537,6 @@
+   // Campaign discoveries occupy one reserved, physically reachable equipment
+   // point. The legacy racks remain untouched in worlds without the opt-in flag.
+   function campaignArmory(w){
+-    if(w.campaignVersion===2){
+-      // Bosses 1, 2, 3 and 6 supply the arsenal. A duplicate grenade launcher
+-      // on boss 4 is a calibration; no free rack can bypass a boss reward.
+-      const unlock=[2,1,6,3,0];
+-      w.pickups=w.pickups.filter(q=>q.kind==='health'||q.kind==='ammo'&&q.weapon<4&&unlock[q.weapon]<=w.index).map(q=>q.kind==='ammo'?{...q,amount:Math.max(q.weapon===0?12:q.weapon===1?4:2,Math.round(q.amount*Math.max(.8,w.campaignProfile.garrisonScale))),requiresWeapon:q.weapon}:q);
+-      for(const e of w.enemies)if(e.drop&&(e.drop.weapon>=4||unlock[e.drop.weapon]>w.index))e.drop=false;
+-      return;
+-    }
+     const unlock=[6,9,15,12,0],schedule=[
+       {index:3,key:'shield',kind:'shield',amount:1},
+       {index:6,key:'smg',kind:'weapon',weapon:0,amount:60},
+@@ -1700,12 +1643,11 @@
+         patrol.push({x,y:r.y,z});
+       }
+       const encounter={id:'encounter-'+r.id,label:r.name,zoneId:r.id,trigger:{x:r.x,y:r.y,z:r.z,w:r.w+4,d:r.d+4},leashRadius:38,maxActive:Math.max(...sizes),waveGap:4,spawnEntries:bay.spawnEntries.map(p=>({...p})),waves:[]};
+-      if(w.campaignVersion===2){encounter.naturalEntries=true;encounter.leashRadius=Math.max(38,...bay.spawnEntries.map(p=>Math.hypot(p.x-r.x,p.z-r.z)+8));}
+       if(opening&&patrol.length<sizes[0])throw new Error('No opening patrol positions '+w.stage+'/'+r.id);
+       for(const [wave,n] of sizes.entries()){
+         const ids=[];
+         for(let j=0;j<n;j++){
+-          const homes=w.campaignVersion===2?bay.reserveEntries:bay.spawnEntries,index=w.enemies.length,deployed=opening&&wave===0,p=deployed?patrol[j]:homes[j%homes.length];
++          const index=w.enemies.length,deployed=opening&&wave===0,p=deployed?patrol[j]:bay.spawnEntries[j%bay.spawnEntries.length];
+           const type=opening?(j%3===2?2:0):(j+wave+r.id)%3;
+           const e={...p,type,zoneId:r.id,squadId:r.id*10+wave,encounterId:encounter.id,wave,deployed,role:type===1?'assault':type===2?'suppressor':['flanker','assault','suppressor'][(j+wave)%3],yaw:Math.atan2(r.x-p.x,p.z-r.z)};
+           w.enemies.push(e);ids.push(index);
+@@ -1721,7 +1663,7 @@
+     if(grenades!==grenadeGoal||rockets!==rocketGoal)throw new Error('Insufficient later heavy waves');
+     const arena=w.bossArena;
+     for(let i=0;i<6;i++){const a=(i+.5)*TAU/6;w.enemies.push({x:arena.x+Math.cos(a)*26,y:arena.y,z:arena.z+Math.sin(a)*26,type:0,zoneId:arena.room,squadId:200+Math.floor(i/3),role:'flanker',bossWave:1+Math.floor(i/3),bossId:target-1,deployed:true});}
+-    w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:w.campaignVersion===2?w.campaignProfile.bossHp:w.campaign?Math.max(30,Math.round([130,180,240][w.stage]*w.campaignProfile.bossHpScale)):[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
++    w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:w.campaign?Math.max(30,Math.round([130,180,240][w.stage]*w.campaignProfile.bossHpScale)):[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
+     for(const [i,e] of w.enemies.entries())e.drop=e.type===3?false:e.weapon==='rocket'?{weapon:2,amount:1}:e.weapon==='grenade'?{weapon:3,amount:1}:e.type===1?{weapon:1,amount:2}:e.type===2||i%2===0?{weapon:0,amount:4}:false;
+     if(w.enemies.length!==target-trialCount)throw new Error('Incorrect finite garrison size');
+   }

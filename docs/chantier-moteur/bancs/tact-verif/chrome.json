@@ -1,0 +1,72 @@
+{
+ "playing": true,
+ "rects": {
+  "fire": {
+   "x": 329.5,
+   "y": 555.5,
+   "w": 77,
+   "h": 77
+  },
+  "mz": {
+   "x": 74,
+   "y": 544,
+   "w": 102,
+   "h": 102
+  }
+ },
+ "A_tirEnGlissant": {
+  "pasDeTir": 252,
+  "avecVisee": 0,
+  "lacetDeg": 0,
+  "tirs": 8,
+  "evenements": {
+   "fire-button:pointerdown/touch": 1,
+   "fire-button:pointermove/touch": 45,
+   "fire-button:pointerup/touch": 1,
+   "fire-button:lostpointercapture/touch": 1
+  }
+ },
+ "B_glisser100pxCanvas": {
+  "lacetDeg": 22.918311805232936,
+  "attenduDeg": 22.91831180523293,
+  "evenements": {
+   "world:pointerdown/touch": 1,
+   "world:pointermove/touch": 20,
+   "world:pointerup/touch": 1,
+   "world:lostpointercapture/touch": 1
+  }
+ },
+ "C_deuxiemeDoigt": {
+  "apres30pxDeg": 6.875493541569882,
+  "apres60pxDePlusDeg": 20.626480624709654,
+  "attenduSansVolDeg": 20.626480624709636,
+  "evenements": {
+   "world:pointerdown/touch": 1,
+   "world:pointermove/touch": 18,
+   "world:pointerup/touch": 1,
+   "world:lostpointercapture/touch": 1
+  }
+ },
+ "D_manche": {
+  "vmax60px": 5.399999999999703,
+  "vmax120px": 5.400000000000291,
+  "sprintVu": false,
+  "evenements": {
+   "move-zone:pointerdown/touch": 1,
+   "move-zone:pointermove/touch": 2,
+   "move-zone:pointerup/touch": 1,
+   "move-zone:lostpointercapture/touch": 1
+  },
+  "amplitudeAppuiAuBord": 1,
+  "bandeGaucheHorsManche": {
+   "deplacement": false,
+   "lacetDeg": 0
+  }
+ },
+ "E_tapCanvas": {
+  "actuel": "pointerdown/touch pointerup/touch lostpointercapture/touch mousedown mouseup click/touch",
+  "avecPreventDefault": "pointerdown/touch pointerup/touch lostpointercapture/touch click/touch",
+  "viseeApresPreventDefaultDeg": 22.918311805232943
+ },
+ "etat": "playing"
+}

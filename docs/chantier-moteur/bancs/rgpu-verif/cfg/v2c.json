@@ -1,0 +1,1 @@
+{"name": "v2c", "runFile": "vrun3.js", "world": 0, "cssW": 1440, "cssH": 932, "inPos": [1.5, 4.82, 0.5], "block": 10, "rounds": 0, "latRounds": 0, "thrScenes": [], "latScenes": [], "diffScenes": [], "ref": "base", "timerVariants": ["base", "high"], "timerRounds": 2, "variants": [{"id": "base", "code": "base"}, {"id": "high", "code": "base", "quality": "high"}], "timerSpin": 30}

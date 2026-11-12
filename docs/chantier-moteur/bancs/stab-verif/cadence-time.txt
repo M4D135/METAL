@@ -1,0 +1,1 @@
+node $S/bench/stab/cadence.mjs $S/ferro c0 15 > $V/cadence-c0-15.jsonl 2>   23.30s user 1.35s system 27% cpu 1:30.12 total

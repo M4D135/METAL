@@ -1,0 +1,17 @@
+world enemies 102 pickups 49 route 106
+   600 loot 0 untaken 0 nearLoot/frame 0.0 alive 102 deployed 13 debris 48 part 22 list 384 | models med 417 p10 281 draw p10 146 sim p10 144 | heap MB 34.7 rev 1 meshes 13927 coll 439 kills 0 ammo 160/36/9/16/200
+  1200 loot 0 untaken 0 nearLoot/frame 0.0 alive 102 deployed 16 debris 133 part 0 list 658 | models med 805 p10 634 draw p10 240 sim p10 241 | heap MB 36.2 rev 7 meshes 13706 coll 449 kills 0 ammo 160/32/9/13/200
+  1800 loot 4 untaken 4 nearLoot/frame 2.4 alive 98 deployed 12 debris 128 part 0 list 614 | models med 752 p10 579 draw p10 198 sim p10 231 | heap MB 36.5 rev 9 meshes 13699 coll 449 kills 4 ammo 145/32/6/13/200
+  2400 loot 6 untaken 6 nearLoot/frame 5.8 alive 96 deployed 10 debris 138 part 0 list 527 | models med 579 p10 479 draw p10 152 sim p10 239 | heap MB 36.6 rev 15 meshes 13678 coll 455 kills 6 ammo 145/28/6/10/200
+  3000 loot 6 untaken 6 nearLoot/frame 5.7 alive 96 deployed 13 debris 136 part 22 list 668 | models med 792 p10 663 draw p10 220 sim p10 227 | heap MB 36.2 rev 20 meshes 13157 coll 462 kills 6 ammo 130/28/3/10/200
+  3600 loot 6 untaken 6 nearLoot/frame 2.7 alive 96 deployed 16 debris 136 part 0 list 577 | models med 769 p10 498 draw p10 159 sim p10 247 | heap MB 36.2 rev 23 meshes 12873 coll 459 kills 6 ammo 130/24/5/7/200
+  4200 loot 6 untaken 6 nearLoot/frame 1.2 alive 96 deployed 19 debris 130 part 0 list 537 | models med 454 p10 342 draw p10 130 sim p10 214 | heap MB 36.3 rev 25 meshes 12539 coll 461 kills 6 ammo 115/24/2/7/200
+  4800 loot 6 untaken 6 nearLoot/frame 0.0 alive 96 deployed 22 debris 135 part 0 list 414 | models med 402 p10 316 draw p10 107 sim p10 284 | heap MB 36.2 rev 29 meshes 12142 coll 459 kills 6 ammo 115/30/2/4/200
+  5400 loot 6 untaken 6 nearLoot/frame 0.0 alive 96 deployed 22 debris 131 part 0 list 455 | models med 444 p10 333 draw p10 111 sim p10 294 | heap MB 36.0 rev 31 meshes 12019 coll 459 kills 6 ammo 100/30/0/4/200
+  6000 loot 6 untaken 6 nearLoot/frame 1.3 alive 96 deployed 22 debris 128 part 0 list 552 | models med 543 p10 425 draw p10 138 sim p10 310 | heap MB 36.5 rev 34 meshes 12011 coll 461 kills 6 ammo 100/24/0/0/200
+  6600 loot 6 untaken 6 nearLoot/frame 5.3 alive 96 deployed 22 debris 126 part 0 list 705 | models med 609 p10 477 draw p10 155 sim p10 238 | heap MB 36.4 rev 37 meshes 11957 coll 457 kills 6 ammo 89/24/0/0/200
+  7200 loot 6 untaken 6 nearLoot/frame 6.0 alive 96 deployed 22 debris 124 part 0 list 547 | models med 511 p10 401 draw p10 109 sim p10 182 | heap MB 36.1 rev 37 meshes 11957 coll 457 kills 6 ammo 89/18/0/0/200
+  7800 loot 6 untaken 6 nearLoot/frame 6.0 alive 96 deployed 22 debris 127 part 0 list 543 | models med 523 p10 417 draw p10 133 sim p10 224 | heap MB 36.1 rev 39 meshes 11961 coll 460 kills 6 ammo 69/18/0/0/200
+  8400 loot 6 untaken 6 nearLoot/frame 5.1 alive 96 deployed 22 debris 128 part 0 list 775 | models med 906 p10 719 draw p10 213 sim p10 310 | heap MB 35.9 rev 41 meshes 11966 coll 467 kills 6 ammo 69/12/0/0/200
+  9000 loot 6 untaken 6 nearLoot/frame 2.1 alive 96 deployed 22 debris 128 part 0 list 683 | models med 828 p10 630 draw p10 223 sim p10 381 | heap MB 36.0 rev 42 meshes 11966 coll 469 kills 6 ammo 49/12/0/0/200
+node --expose-gc endure.mjs r1 9000 camp:6 600  21.96s user 0.42s system 128% cpu 17.473 total

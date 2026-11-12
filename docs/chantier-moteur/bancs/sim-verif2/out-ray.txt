@@ -1,0 +1,1 @@
+2    steps=1800 identical=true | CPU 6665->6180 ms (-7%) cpuMax 90.1->146.2 warm(>=600) 4683->4098 (-12%) cpuMedRatio 0.92 cpu>2ms 924->853 | wall total 17261->14213 ms (-18%) medRatio 0.92 | mean 9.589->7.896 p99 127.42->92.86 max 241.4->271.5 >4ms 630->571 | materialBreak=47 doorOpen=0 waveStart=1 explosion=5 rocket=5 grenade=0 kill=0 trap=8

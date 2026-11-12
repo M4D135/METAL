@@ -1,0 +1,89 @@
+--- a/src/simulation.js
++++ b/src/simulation.js
+@@ -197,7 +197,7 @@
+     let solids=destruction?.colliders||world.colliders;
+     const b=world.bounds,trapBoxes=[];let bossAttackSerial=0,explosionSerial=0,projectileSerial=0,rubbleSerial=0,terrainDirty=false,seenDestructionRevision=destruction?.revision||0;
+     const doorBoxes=s.doors.map(d=>({minX:d.x-d.w/2,maxX:d.x+d.w/2,minZ:d.z-d.d/2,maxZ:d.z+d.d/2,minY:0,maxY:0}));
+-    let navDirty=false,routeBudget=Infinity,routeSearches=0,routeDeferred=0;
++    let navDirty=false,routeBudget=Infinity,routeSearches=0,routeDeferred=0;const navDirtyBoxes=[];
+     function updateDoorBoxes(doors=s.doors){
+       for(let i=0;i<doors.length;i++){const d=doors[i],q=doorBoxes[i];q.minY=(d.y||0)+(d.destroyed?1000:d.progress*(d.h+.25));q.maxY=q.minY+d.h;}
+     }
+@@ -228,6 +228,7 @@
+     rebuildCollision();
+     function syncDestruction(){
+       if(!destruction||seenDestructionRevision===destruction.revision)return;
++      {const key=q=>q.minX+','+q.maxX+','+q.minY+','+q.maxY+','+q.minZ+','+q.maxZ,next=new Set(destruction.colliders.map(key));for(const q of solids)if(!next.has(key(q)))navDirtyBoxes.push(q);}
+       solids=destruction.colliders;seenDestructionRevision=destruction.revision;s.destructionRevision++;rebuildCollision();navDirty=terrainDirty=true;unsupportedBodies();
+       for(const m of s.mechanisms)if(!destruction.isAlive(m.destructibleId)){m.shellHp=0;activateMechanism(m,true);}
+       for(const t of s.traps)if(!destruction.isAlive(t.destructibleId)){t.hp=0;t.destroyed=true;t.box=null;t.hot=t.warning=false;}
+@@ -297,7 +298,7 @@
+     function updateSystems(dt){
+       for(const d of s.doors){
+         const was=d.open;if(powered(d.requires))d.progress=Math.min(1,d.progress+dt/1.1);
+-        d.open=d.progress>=1;if(d.open&&!was){navDirty=true;emit('doorOpen',{id:d.id,x:d.x,y:d.y||0,z:d.z});}
++        d.open=d.progress>=1;if(d.open&&!was){navDirty=true;navDirtyBoxes.push({minX:d.x-d.w/2,maxX:d.x+d.w/2,minZ:d.z-d.d/2,maxZ:d.z+d.d/2});emit('doorOpen',{id:d.id,x:d.x,y:d.y||0,z:d.z});}
+       }
+       updateDoorBoxes();
+       for(const l of s.lifts){
+@@ -909,7 +910,7 @@
+         if(!d.hp){
+           const across=d.w>d.d,sourceId='door:'+d.id,y=(d.y||0)+d.h/2+d.progress*(d.h+.25),size=[across?d.w/2:d.w,d.h/2,across?d.d:d.d/2];
+           for(const side of [-1,1])for(const row of [-1,1])appendDebris({structural:true,sourceId,shape:'box',material:'metal',mat:0,size,rotation:[0,0,0],angularVelocity:[.28*side,.15*row,.25*side],x:d.x+(across?side*d.w/4:0),y:y+row*d.h/4,z:d.z+(across?0:side*d.d/4),velocity:[across?side*.35:Math.sign(d.x-point[0]||1)*1.3,.6,across?Math.sign(d.z-point[2]||1)*1.3:side*.35],mass:Math.min(160,size.reduce((v,n)=>v*n,1)*65),seed:(i*977+row*131+side*911)>>>0});
+-          d.destroyed=true;d.progress=1;d.open=true;navDirty=true;emit('materialBreak',{sourceId,x:d.x,y,z:d.z,material:'metal',power,seed:i*977});emit('doorOpen',{id:d.id,destroyed:true,x:d.x,y:d.y||0,z:d.z});
++          d.destroyed=true;d.progress=1;d.open=true;navDirty=true;navDirtyBoxes.push({minX:d.x-d.w/2,maxX:d.x+d.w/2,minZ:d.z-d.d/2,maxZ:d.z+d.d/2});emit('materialBreak',{sourceId,x:d.x,y,z:d.z,material:'metal',power,seed:i*977});emit('doorOpen',{id:d.id,destroyed:true,x:d.x,y:d.y||0,z:d.z});
+         }
+       }
+       updateDoorBoxes();
+@@ -1346,7 +1347,7 @@
+       return true;
+     }
+     function radius(e){return giant(e)?1.5*scale(e):e.type===3?1.05:.38;}
+-    function segmentFree(ax,az,bx,bz,r=.4){
++    function segmentFree(ax,az,bx,bz,r=.4){G.__s.sf++;
+       if(blocked(ax,az,r)||blocked(bx,bz,r))return false;
+       const dx=bx-ax,dz=bz-az,ay=groundAt(ax,az),by=groundAt(bx,bz),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
+       // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
+@@ -1381,6 +1382,18 @@
+       s.aiStats.navUpdates=work;s.aiStats.navPending=navPending;
+     }
+     function refreshNav(reset=true){
++      if(advanced&&reset){
++        // LOCAL: only cells whose .4 m probe can touch a changed box, and edges whose capsule can (1.2 m = .4 + one cell).
++        const range=(q,m)=>[Math.max(0,Math.ceil((q.minX-m-b.minX)/cell-1e-9)),Math.min(nx-1,Math.floor((q.maxX+m-b.minX)/cell+1e-9)),Math.max(0,Math.ceil((q.minZ-m-b.minZ)/cell-1e-9)),Math.min(nz-1,Math.floor((q.maxZ+m-b.minZ)/cell+1e-9))];
++        for(const q of navDirtyBoxes){
++          let [x0,x1,z0,z1]=range(q,.41);for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){const i=z*nx+x;if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}}
++          [x0,x1,z0,z1]=range(q,1.25);for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){const i=z*nx+x;edgeKnown[i]=0;edgeOpen[i]=0;}
++        }
++        navDirtyBoxes.length=0;
++        if(true)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
++        return;
++      }
++      navDirtyBoxes.length=0;
+       if(advanced&&reset){
+         // Colliders/rays change immediately. Updating the advisory walking grid is
+         // amortised; another blast appends dirty cells instead of restarting work.
+@@ -1399,11 +1412,12 @@
+       }
+       return best;
+     }
+-    function route(e,x,z){
++    function route(e,x,z){const t0=performance.now(),sf0=G.__s.sf;G.__s.explored=-1;G.__s.astar=false;const res=route0(e,x,z);G.__s.routes.push({t:G.__s.t,ms:performance.now()-t0,sf:G.__s.sf-sf0,explored:G.__s.explored,astar:G.__s.astar,found:!!res,len:res?res.length:-1,dist:Math.hypot(x-e.x,z-e.z)});return res;}
++    function route0(e,x,z){
+       const r=radius(e);
+       if(blocked(x,z,r))return null;
+       if(segmentFree(e.x,e.z,x,z,r))return [];
+-      if(routeBudget<=0){routeDeferred++;return null;}routeBudget--;routeSearches++;
++      if(routeBudget<=0){routeDeferred++;return null;}routeBudget--;routeSearches++;G.__s.astar=true;
+       const start=nearestNode(e.x,e.z,r),end=nearestNode(x,z,r);if(start<0||end<0)return null;
+       const stamp=++routeSerial,heap=[];
+       const heuristic=i=>Math.abs(i%nx-end%nx)+Math.abs(Math.floor(i/nx)-Math.floor(end/nx));
+@@ -1423,7 +1437,7 @@
+           routeStamp[j]=stamp;routeCost[j]=cost;routePrev[j]=i;push(j,cost+heuristic(j));
+         }
+       }
+-      if(!found)return null;
++      G.__s.explored=explored;if(!found)return null;
+       const raw=[];for(let i=end;i>=0;i=routePrev[i])raw.push(i);raw.reverse();
+       // String-pull this bounded local route once, rather than trace many rays every frame.
+       const result=[];let ax=e.x,az=e.z,at=0;

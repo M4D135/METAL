@@ -1,0 +1,3 @@
+{"name":"scout2","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":0,"measureFrames":900,"skip":0,"reps":1,"dumpFrames":true,
+ "variants":[{"id":"base","code":"base","quality":"auto"}]}

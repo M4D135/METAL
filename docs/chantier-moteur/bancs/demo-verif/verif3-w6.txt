@@ -1,0 +1,51 @@
+{
+ "world": 7,
+ "simSeconds": 60,
+ "manualLoopEqualsRunSession": true,
+ "rows": [
+  {
+   "snapshotAt": 360,
+   "digestFirstDivergenceStep": null,
+   "finalFullStateEqual": true,
+   "finalDiffKeys": null,
+   "immediate": null
+  },
+  {
+   "snapshotAt": 900,
+   "digestFirstDivergenceStep": null,
+   "finalFullStateEqual": true,
+   "finalDiffKeys": null,
+   "immediate": null
+  },
+  {
+   "snapshotAt": 1800,
+   "digestFirstDivergenceStep": null,
+   "finalFullStateEqual": true,
+   "finalDiffKeys": null,
+   "immediate": null
+  },
+  {
+   "snapshotAt": 2700,
+   "digestFirstDivergenceStep": null,
+   "finalFullStateEqual": false,
+   "finalDiffKeys": [
+    "enemies"
+   ],
+   "immediate": null
+  },
+  {
+   "snapshotAt": 3240,
+   "digestFirstDivergenceStep": null,
+   "finalFullStateEqual": true,
+   "finalDiffKeys": null,
+   "immediate": null
+  },
+  {
+   "snapshotAt": "100..800",
+   "digestFirstDivergenceStep": null,
+   "finalFullStateEqual": true,
+   "finalDiffKeys": null,
+   "immediate": null
+  }
+ ]
+}

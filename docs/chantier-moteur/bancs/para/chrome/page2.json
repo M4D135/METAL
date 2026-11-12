@@ -1,0 +1,126 @@
+{
+ "audioWorkletDataUrl": {
+  "ok": true,
+  "sample": 0.5
+ },
+ "octetsSourceWorker": 496710,
+ "generationDansWorker": {
+  "mondeMs": 134,
+  "simulationMs": 81,
+  "imagePageMaxMs": 16.8,
+  "imagesPendant": 14
+ },
+ "transfertMonde": {
+  "packed": {
+   "preparationWorkerMs": 6.8,
+   "postWorkerMs": 0,
+   "transitEtDeserialisationMs": 0.2,
+   "imagePageMaxMs": 16.7,
+   "maillages": 13956
+  },
+  "render": {
+   "preparationWorkerMs": 0,
+   "postWorkerMs": 13.9,
+   "transitEtDeserialisationMs": 29.9,
+   "imagePageMaxMs": 16.7,
+   "maillages": 13956
+  },
+  "world": {
+   "preparationWorkerMs": 0.1,
+   "postWorkerMs": 16.2,
+   "transitEtDeserialisationMs": 32.2,
+   "imagePageMaxMs": 16.7,
+   "maillages": 13956
+  }
+ },
+ "simDansWorker": {
+  "images": 1800,
+  "intervalleRAF": {
+   "n": 1800,
+   "moy": 16.685,
+   "p50": 16.7,
+   "p95": 16.7,
+   "p99": 16.8,
+   "max": 33.4
+  },
+  "imagesLongues": {
+   ">20ms": 2,
+   ">25ms": 2,
+   ">34ms": 0,
+   ">50ms": 0
+  },
+  "pasWorkerMs": {
+   "n": 1800,
+   "moy": 0.516,
+   "p50": 0.4,
+   "p95": 1.1,
+   "p99": 2.3,
+   "max": 19.5
+  },
+  "pasLongs": {
+   ">4ms": 8,
+   ">8ms": 2,
+   ">16ms": 1
+  },
+  "etatEnRetard": {
+   ">=1 tick": 1,
+   ">=2": 0,
+   "max": 1
+  },
+  "allerRetourMs": {
+   "n": 1800,
+   "moy": 0.73,
+   "p50": 0.6,
+   "p95": 1.5,
+   "p99": 2.7,
+   "max": 19.8
+  },
+  "allerRetourSous": {
+   "<=1ms": 1520,
+   "<=2ms": 1762,
+   "<=4ms": 1791,
+   "total": 1800
+  },
+  "octetsParTick": 12809,
+  "finalX": -36.529926131722384,
+  "kills": 0
+ },
+ "generationSurFilPrincipal": {
+  "mondeMs": 69,
+  "simulationMs": 32,
+  "imagePageMaxMs": 100
+ },
+ "simSurFilPrincipal": {
+  "images": 1800,
+  "intervalleRAF": {
+   "n": 1800,
+   "moy": 16.675,
+   "p50": 16.7,
+   "p95": 16.7,
+   "p99": 16.8,
+   "max": 33.3
+  },
+  "imagesLongues": {
+   ">20ms": 1,
+   ">25ms": 1,
+   ">34ms": 0,
+   ">50ms": 0
+  },
+  "pasMs": {
+   "n": 1800,
+   "moy": 0.681,
+   "p50": 0.6,
+   "p95": 1.4,
+   "p99": 2.5,
+   "max": 24.5
+  },
+  "pasLongs": {
+   ">4ms": 9,
+   ">8ms": 4,
+   ">16ms": 3
+  },
+  "finalX": -36.529926131722384,
+  "kills": 0
+ },
+ "finished": true
+}

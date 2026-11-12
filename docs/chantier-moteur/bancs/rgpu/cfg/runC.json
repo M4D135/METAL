@@ -1,0 +1,16 @@
+{"name":"runC-auto","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":560,"measureFrames":200,"skip":10,"reps":2,"dumpFrames":true,
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"l0","code":"l0"},
+  {"id":"lightcull2","code":"lightcull2"},
+  {"id":"spec4","code":"spec4"},
+  {"id":"sun4","code":"sun4"},
+  {"id":"hwpcf","code":"hwpcf"},
+  {"id":"f2b","code":"f2b"},
+  {"id":"prepass","code":"prepass"},
+  {"id":"combo2","code":"combo2"},
+  {"id":"stress","code":"base","inject":{"count":48,"near":2.5,"far":12,"spread":7,"size":2.6,"alpha":0.55,"fire":true}},
+  {"id":"od","code":"overdraw","fx":{"bloom":false},"readback":true,"readbackEvery":10},
+  {"id":"odf2b","code":"overdrawf2b","fx":{"bloom":false},"readback":true,"readbackEvery":10},
+  {"id":"lcount","code":"lcount","fx":{"bloom":false},"readback":"lcount","readbackEvery":10}]}

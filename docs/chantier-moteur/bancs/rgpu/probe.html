@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"><title>probe</title></head><body><pre id="out">pending</pre>
+<canvas id="c" width="256" height="256"></canvas>
+<script>
+(function(){
+  const out={};
+  try{
+    const c=document.getElementById('c');
+    const gl=c.getContext('webgl2',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
+    out.webgl2=!!gl;
+    if(gl){
+      const dbg=gl.getExtension('WEBGL_debug_renderer_info');
+      out.vendor=dbg?gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR);
+      out.renderer=dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
+      out.timer=!!gl.getExtension('EXT_disjoint_timer_query_webgl2');
+      out.exts=gl.getSupportedExtensions();
+      out.maxFragUniformVectors=gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
+      out.maxTex=gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    }
+    out.dpr=window.devicePixelRatio;out.inner=[innerWidth,innerHeight];
+  }catch(e){out.error=String(e);}
+  document.getElementById('out').textContent=JSON.stringify(out);
+})();
+</script></body></html>
