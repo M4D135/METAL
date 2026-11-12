@@ -1,3 +1,13 @@
+# Validation du chantier moteur — lot 01 / T3 — 12 novembre 2026
+
+**LOOP-10 : capture, visée et molette.** Capture dans le geste, mouvement brut par défaut avec repli, préférence d’accélération persistée, clic d’acquisition sans tir. Une annulation empêche aussi les réponses tardives, sans invalider un relâchement normal. Trente événements de molette de 4 px donnent **30 → 1 changement d’arme**.
+
+**85/85 tests ciblés cumulés**, dont 24 tests d’entrées ; build et contrôle de distribution verts. HTML **809 176 octets bruts**, version 0.8.1, zéro ressource externe. SHA-256 `9a935866e0f1b64bda17fc5e5092cd534deeab38fc0d44367bf44e6fbba950e2`.
+
+[Preuves initiales et régression pointercancel](docs/chantier-moteur/preuves/lot-01/t3/PROOF.md). Le changement voulu de seuil de molette et la nouvelle acquisition après annulation sont expliqués dans le rapport ; les tests ne sont pas affaiblis pour masquer un échec. La suite globale et l’interface seront vérifiées après T4.
+
+---
+
 # Validation du chantier moteur — lot 01 / T2 — 12 novembre 2026
 
 **LOOP-06 : tir ponctuel conservé.** Tampon indépendant de 150 ms par main, proposé au premier sous-pas jusqu’au tir ou à expiration ; annulation lors des changements de contexte. Les treize tests dédiés passaient de **5 verts / 8 rouges** à **13 verts**. Les douze combinaisons de périphérique et de cadence produisent exactement un tir entre deux images.

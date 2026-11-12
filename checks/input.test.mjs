@@ -20,8 +20,8 @@ function inputWorld(seed,index,options){
     progression:{version:1,weaponSlots:5,startWeapons:[true,true,true,true,true],startAmmo:[180,36,12,16,1],ammoCaps:[180,36,12,16,1],startShield:true,maxActive:8}};
 }
 
-function shell({touch=false,settings={},bufferMs}={}){
-  const elements=new Map(),listeners=new Map(),documentListeners=new Map(),simulations=[],steps=[],sounds=[],errors=[];
+function shell({touch=false,settings={},bufferMs,requestLock,pointerLockAvailable=true}={}){
+  const elements=new Map(),listeners=new Map(),documentListeners=new Map(),simulations=[],steps=[],sounds=[],errors=[],lockCalls=[];
   const memory=new Map([['ferro-settings',JSON.stringify(settings)]]);
   let now=0,nextFrame,focused=true,lockRequests=0;
   const draw=new Proxy({},{get:()=>noop});
@@ -35,7 +35,8 @@ function shell({touch=false,settings={},bufferMs}={}){
       addEventListener:(name,fn)=>on(events,name,fn),emit:(name,event={})=>emit(events,name,{target:value,...event}),
       click:()=>emit(events,'click',{target:value}),querySelector:selector=>element(id+selector),querySelectorAll:()=>[0,1,2].map(n=>element(id+n)),
       setAttribute:noop,focus:noop,setPointerCapture:noop,getContext:()=>draw,getBoundingClientRect:()=>({left:0,top:0,width:100,height:100}),
-      requestPointerLock(){lockRequests++;context.document.pointerLockElement=value;emit(documentListeners,'pointerlockchange');}};
+      requestPointerLock(...args){lockRequests++;lockCalls.push(args);const acquire=()=>{context.document.pointerLockElement=value;emit(documentListeners,'pointerlockchange');};return requestLock?requestLock(args,acquire):acquire();}};
+    if(!pointerLockAvailable&&id==='world')value.requestPointerLock=undefined;
     elements.set(id,value);return value;
   }
   const context={console:{error:(...args)=>errors.push(args)},performance:{now:()=>now},innerWidth:1280,innerHeight:800,URLSearchParams,
@@ -58,12 +59,13 @@ function shell({touch=false,settings={},bufferMs}={}){
   vm.runInContext(sources.game,context,{filename:'game.js'});assert.deepEqual(errors,[]);
   element('start').click();element('weapon-slot-4').click();
   assert.equal(element('body').dataset.state,'playing');assert.equal(simulations.at(-1).state.weapon,4);
-  return {context,element,simulations,steps,sounds,get sim(){return simulations.at(-1);},get now(){return now;},get lockRequests(){return lockRequests;},
+  return {context,element,simulations,steps,sounds,memory,lockCalls,get sim(){return simulations.at(-1);},get now(){return now;},get lockRequests(){return lockRequests;},
     frame(ms=1000/60){now+=ms;nextFrame(now);assert.deepEqual(errors,[]);},
     advance(ms){now+=ms;},
     key(code,down=true,repeat=false){emit(listeners,down?'keydown':'keyup',{code,repeat});},
     mouse(button=0,down=true){down?element('world').emit('mousedown',{button}):emit(listeners,'mouseup',{button});},
     emit:(name,event={})=>emit(listeners,name,event),
+    documentEvent:(name,event={})=>emit(documentListeners,name,event),
     blur(){focused=false;emit(listeners,'blur');},focus(){focused=true;emit(listeners,'focus');},
     visible(value){context.document.hidden=!value;emit(documentListeners,'visibilitychange');},
     unlock(){context.document.pointerLockElement=null;},
@@ -159,4 +161,130 @@ test('Pointer cancellation clears pending fire while normal touch release preser
 test('Shield guard remains a held action and is not latched as a firearm',()=>{
   const app=shell();app.element('left-hand-setting').value='shield';app.element('left-hand-setting').emit('change');tap(app,'key',true);app.frame(20);
   assert.equal(app.sim.state.shield.raised,false);app.key('KeyC');app.frame(20);assert.equal(app.sim.state.shield.raised,true);app.key('KeyC',false);app.frame(20);assert.equal(app.sim.state.shield.raised,false);
+});
+
+test('Thirty small wheel events cross the threshold only once and respect the 150 ms cooldown',()=>{
+  const app=shell(),before=app.sounds.filter(s=>s.name==='switchWeapon').length;
+  for(let i=0;i<30;i++)app.emit('wheel',{deltaY:4,deltaMode:0});
+  assert.equal(app.sounds.filter(s=>s.name==='switchWeapon').length-before,1);assert.equal(app.sim.state.weapon,0);
+  app.advance(149);app.emit('wheel',{deltaY:100,deltaMode:0});assert.equal(app.sim.state.weapon,0);
+  app.advance(1);app.emit('wheel',{deltaY:100,deltaMode:0});assert.equal(app.sim.state.weapon,1);
+});
+
+test('Wheel direction changes reset partial travel, line/page modes normalize and pause clears accumulation',()=>{
+  const app=shell();app.emit('wheel',{deltaY:80,deltaMode:0});app.emit('wheel',{deltaY:-40,deltaMode:0});assert.equal(app.sim.state.weapon,4);
+  app.emit('wheel',{deltaY:-60,deltaMode:0});assert.equal(app.sim.state.weapon,3);
+  app.advance(150);app.emit('wheel',{deltaY:3,deltaMode:1});assert.equal(app.sim.state.weapon,3,'Three lines = 99 px, below threshold');app.emit('wheel',{deltaY:1,deltaMode:1});assert.equal(app.sim.state.weapon,4);
+  app.advance(150);app.emit('wheel',{deltaY:1,deltaMode:2});assert.equal(app.sim.state.weapon,0);
+  app.advance(150);app.emit('wheel',{deltaY:80,deltaMode:0});app.key('KeyP');app.key('KeyP',false);app.element('resume').click();app.emit('wheel',{deltaY:40,deltaMode:0});assert.equal(app.sim.state.weapon,0);
+  for(const deltaY of [0,NaN,Infinity,-Infinity])app.emit('wheel',{deltaY,deltaMode:0});assert.equal(app.sim.state.weapon,0);
+});
+
+test('Pointer capture is requested in the canvas gesture and its matching mouse press never fires',()=>{
+  const app=shell();app.unlock();const before=app.lockRequests;
+  app.element('world').emit('pointerdown',{pointerId:5,pointerType:'mouse',button:0,clientX:700,clientY:300});
+  assert.equal(app.lockRequests,before+1);assert.equal(app.context.document.pointerLockElement,app.element('world'));
+  app.mouse();app.frame(30);assert.equal(app.sim.state.shots,0,'Capture may succeed synchronously before compatibility mousedown');
+  app.mouse(0,false);tap(app);app.frame(20);assert.equal(app.sim.state.shots,1);
+});
+
+test('Raw mouse input is the default; the saved system-acceleration preference and reset control change the request',()=>{
+  const app=shell();assert.equal(app.lockCalls.at(-1)[0]?.unadjustedMovement,true);
+  app.key('KeyP');app.key('KeyP',false);app.element('pointer-acceleration-toggle').click();
+  assert.equal(JSON.parse(app.memory.get('ferro-settings')).systemPointerAcceleration,true);app.element('resume').click();assert.equal(app.lockCalls.at(-1).length,0);
+  const restored=shell({settings:JSON.parse(app.memory.get('ferro-settings'))});assert.equal(restored.lockCalls.at(-1).length,0);
+  restored.key('KeyP');restored.key('KeyP',false);restored.element('reset-controls').click();restored.element('resume').click();assert.equal(restored.lockCalls.at(-1)[0]?.unadjustedMovement,true);
+  assert.match(readFileSync(new URL('src/index.html',root),'utf8'),/id="pointer-acceleration-toggle"[^>]*>Accélération du système/);
+});
+
+test('Unsupported raw input retries exactly once without options for synchronous and promise APIs',async()=>{
+  for(const promise of [false,true]){
+    const unsupported=()=>Object.assign(new Error('raw unsupported'),{name:'NotSupportedError'});
+    const app=shell({requestLock(args,acquire){if(args[0]?.unadjustedMovement){if(promise)return Promise.reject(unsupported());throw unsupported();}acquire();return promise?Promise.resolve():undefined;}});
+    for(let i=0;i<8;i++)await Promise.resolve();
+    assert.equal(app.lockCalls.length,2);assert.equal(app.lockCalls[0][0]?.unadjustedMovement,true);assert.equal(app.lockCalls[1].length,0);
+    assert.equal(app.context.document.pointerLockElement,app.element('world'));
+  }
+});
+
+test('A failed lock keeps drag-look usable without mouse firing and leaves touch gestures unchanged',async()=>{
+  for(const available of [false,true]){
+    const app=shell({pointerLockAvailable:available,requestLock(){return Promise.reject(Object.assign(new Error('denied'),{name:'NotAllowedError'}));}});
+    for(let i=0;i<8;i++)await Promise.resolve();const initial=app.sim.state.player.yaw,before=app.lockRequests;
+    app.element('world').emit('pointerdown',{pointerId:9,pointerType:'mouse',button:0,clientX:700,clientY:300});app.mouse();
+    app.element('world').emit('pointermove',{pointerId:9,pointerType:'mouse',clientX:730,clientY:300});app.frame(20);
+    for(let i=0;i<8;i++)await Promise.resolve();
+    assert(app.sim.state.player.yaw>initial);assert.equal(app.sim.state.shots,0);assert.equal(app.lockRequests,before+(available?1:0));assert.match(app.element('toast').textContent,/gliss/i);
+  }
+  const touch=shell({touch:true});const before=touch.sim.state.player.yaw;
+  touch.element('world').emit('pointerdown',{pointerId:3,pointerType:'touch',clientX:700,clientY:300});touch.element('world').emit('pointermove',{pointerId:3,pointerType:'touch',clientX:730,clientY:300});tap(touch,'touch');touch.frame(20);
+  assert(touch.sim.state.player.yaw>before);assert.equal(touch.sim.state.shots,1);assert.equal(touch.lockRequests,0);
+});
+
+test('Late lock failure or success after pause cannot recapture the pointer in a menu',async()=>{
+  for(const succeeds of [false,true]){
+    let settle;
+    const app=shell({requestLock(args,acquire){return new Promise((resolve,reject)=>{settle=()=>{if(succeeds){acquire();resolve();}else reject(Object.assign(new Error('unsupported'),{name:'NotSupportedError'}));};});}});
+    app.key('KeyP');app.key('KeyP',false);settle();for(let i=0;i<8;i++)await Promise.resolve();
+    assert.equal(app.element('body').dataset.state,'paused');assert.equal(app.context.document.pointerLockElement,null);assert.equal(app.lockRequests,1);
+  }
+});
+
+test('Legacy pointer-lock error events give a usable fallback and cancelling capture cannot block the next click',()=>{
+  const app=shell({requestLock(){}});app.documentEvent('pointerlockerror');assert.match(app.element('toast').textContent,/gliss/i);
+  app.element('world').emit('pointerdown',{pointerId:8,pointerType:'mouse',button:0,clientX:700,clientY:300});
+  app.emit('pointercancel',{pointerId:8,pointerType:'mouse'});const before=app.lockRequests;
+  app.element('world').emit('pointerdown',{pointerId:9,pointerType:'mouse',button:0,clientX:700,clientY:300});assert.equal(app.lockRequests,before+1);
+  app.context.document.pointerLockElement=app.element('world');app.documentEvent('pointerlockchange');app.mouse(0,false);
+  tap(app);app.frame(20);assert.equal(app.sim.state.shots,1);
+});
+
+test('Pointer cancellation invalidates a pending raw-input retry',async()=>{
+  let reject;
+  const app=shell({requestLock(args,acquire){
+    if(args[0]?.unadjustedMovement)return new Promise((_resolve,fail)=>{reject=fail;});
+    acquire();return Promise.resolve();
+  }});
+  app.element('world').emit('pointerdown',{pointerId:8,pointerType:'mouse',button:0,clientX:700,clientY:300});
+  const before=app.lockRequests;app.emit('pointercancel',{pointerId:8,pointerType:'mouse'});
+  reject(Object.assign(new Error('raw unsupported'),{name:'NotSupportedError'}));
+  for(let i=0;i<8;i++)await Promise.resolve();
+  assert.equal(app.lockRequests,before,'A cancelled gesture must not retry without raw input');
+  assert.equal(app.context.document.pointerLockElement,null);assert.equal(app.element('body').dataset.state,'playing');
+});
+
+test('Late pointer-lock success after pointer cancellation is released for promise and void APIs',async()=>{
+  for(const promise of [false,true]){
+    let acquireLater;
+    const app=shell({requestLock(_args,acquire){
+      if(promise)return new Promise(resolve=>{acquireLater=()=>{acquire();resolve();};});
+      acquireLater=acquire;
+    }});
+    app.element('world').emit('pointerdown',{pointerId:8,pointerType:'mouse',button:0,clientX:700,clientY:300});
+    app.emit('pointercancel',{pointerId:8,pointerType:'mouse'});acquireLater();
+    for(let i=0;i<8;i++)await Promise.resolve();
+    assert.equal(app.context.document.pointerLockElement,null,`${promise?'Promise':'Void'} success belongs to a cancelled gesture`);
+    assert.equal(app.element('body').dataset.state,'playing');
+    const before=app.lockRequests;
+    app.element('world').emit('pointerdown',{pointerId:9,pointerType:'mouse',button:0,clientX:700,clientY:300});app.mouse();acquireLater();
+    for(let i=0;i<8;i++)await Promise.resolve();
+    assert.equal(app.lockRequests,before+1);assert.equal(app.context.document.pointerLockElement,app.element('world'));
+    app.frame(20);assert.equal(app.sim.state.shots,0,'The fresh capture click still must not fire');
+    app.mouse(0,false);tap(app);app.frame(20);assert.equal(app.sim.state.shots,1);
+  }
+});
+
+test('A normal mouse release keeps an asynchronous pointer-lock request valid',async()=>{
+  for(const promise of [false,true]){
+    let acquireLater;
+    const app=shell({requestLock(_args,acquire){
+      if(promise)return new Promise(resolve=>{acquireLater=()=>{acquire();resolve();};});
+      acquireLater=acquire;
+    }});
+    app.element('world').emit('pointerdown',{pointerId:8,pointerType:'mouse',button:0,clientX:700,clientY:300});app.mouse();
+    app.emit('pointerup',{pointerId:8,pointerType:'mouse',buttons:0});app.mouse(0,false);acquireLater();
+    for(let i=0;i<8;i++)await Promise.resolve();
+    assert.equal(app.context.document.pointerLockElement,app.element('world'),'A release is not a cancelled gesture');
+    app.frame(20);assert.equal(app.sim.state.shots,0);tap(app);app.frame(20);assert.equal(app.sim.state.shots,1);
+  }
 });

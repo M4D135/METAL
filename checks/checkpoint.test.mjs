@@ -210,7 +210,8 @@ test('The campaign pistol HUD, keyboard, wheel, touch button and left hand use t
   sim.move(sim.state.player, 3, 0); app.frame(100);
   assert.equal(sim.state.inventory.weapons[0], true); assert.equal(app.element('weapon-slot-0').hidden, false);
   app.key('Digit5'); app.key('Digit5', false); assert.equal(sim.state.weapon, 4);
-  app.emit('wheel', { deltaY: 1 }); assert.equal(sim.state.weapon, 0);
+  app.emit('wheel', { deltaY: 1 }); assert.equal(sim.state.weapon, 4, 'Sub-threshold wheel movement must not change weapons');
+  app.emit('wheel', { deltaY: 99 }); assert.equal(sim.state.weapon, 0);
   app.element('weapon-switch').click(); assert.equal(sim.state.weapon, 4);
   app.element('weapon-slot-0').click(); assert.equal(sim.state.weapon, 0);
   app.element('left-hand-setting').value = '4'; app.element('left-hand-setting').emit('change');

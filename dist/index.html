@@ -173,7 +173,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         <section id="pane-audio" role="tabpanel" aria-labelledby="tab-audio" hidden><p class="option-section-label">MIXAGE</p><h3>Du métal dans les circuits.</h3><button class="option-toggle" id="sound-toggle">Son <strong>Activé</strong></button><div class="option-grid audio-sliders">
           <label class="option-slider" for="master-setting"><span>Volume général <output id="master-value">100 %</output></span><input id="master-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="music-setting"><span>Musique MOD <output id="music-value">45 %</output></span><input id="music-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="effects-setting"><span>Armes et impacts <output id="effects-value">100 %</output></span><input id="effects-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="ambience-setting"><span>Ambiances <output id="ambience-value">100 %</output></span><input id="ambience-setting" type="range" min="0" max="100" step="5"></label>
         </div><div class="tracker-card"><span class="tracker-badge">MOD / 4 CANAUX</span><strong id="music-title">Furie d’acier · 212 BPM</strong><p>Un accueil thrash metal à 212 BPM : riffs rapides, double grosse caisse et breaks. Trois autres compositions accompagnent les mondes. Instruments et morceaux entièrement synthétisés.</p><button id="export-mod" class="text-button">EXPORTER LE MOD DU TITRE ↓</button></div><div class="menu-actions audio-actions"><button id="test-audio" class="secondary">TESTER TIRS ET AMBIANCES</button><button id="reset-audio" class="text-button">RÉTABLIR LE MIX RECOMMANDÉ</button></div><p id="audio-status" class="option-hint" role="status">Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.</p></section>
-        <section id="pane-controls" role="tabpanel" aria-labelledby="tab-controls" hidden><p class="option-section-label">VISÉE & DÉPLACEMENT</p><h3>À votre main.</h3><div class="option-grid"><label class="option-slider" for="sensitivity-setting"><span>Sensibilité <output id="sensitivity-value">1,00 ×</output></span><input id="sensitivity-setting" type="range" min="25" max="300" step="5"></label><button class="option-toggle" id="invert-toggle">Axe vertical inversé <strong>Non</strong></button><label class="option-slider" for="crosshair-setting"><span>Taille du viseur <output id="crosshair-value">100 %</output></span><input id="crosshair-setting" type="range" min="75" max="150" step="5"></label></div><p class="option-hint" id="binding-status" role="status">Cliquez sur une touche pour la modifier. Échap annule. Le clic gauche et la molette restent disponibles.</p><div id="key-bindings" class="binding-grid"></div><button id="reset-controls" class="text-button">RÉTABLIR LES COMMANDES PAR DÉFAUT</button></section>
+        <section id="pane-controls" role="tabpanel" aria-labelledby="tab-controls" hidden><p class="option-section-label">VISÉE & DÉPLACEMENT</p><h3>À votre main.</h3><div class="option-grid"><label class="option-slider" for="sensitivity-setting"><span>Sensibilité <output id="sensitivity-value">1,00 ×</output></span><input id="sensitivity-setting" type="range" min="25" max="300" step="5"></label><button class="option-toggle" id="invert-toggle">Axe vertical inversé <strong>Non</strong></button><button class="option-toggle" id="pointer-acceleration-toggle" aria-describedby="pointer-acceleration-hint">Accélération du système <strong>Désactivée</strong></button><label class="option-slider" for="crosshair-setting"><span>Taille du viseur <output id="crosshair-value">100 %</output></span><input id="crosshair-setting" type="range" min="75" max="150" step="5"></label></div><p class="option-hint" id="pointer-acceleration-hint">Désactivée : visée directe si le navigateur le permet. Activée : conserve l’accélération habituelle de votre souris.</p><p class="option-hint" id="binding-status" role="status">Cliquez sur une touche pour la modifier. Échap annule. Le clic gauche et la molette restent disponibles.</p><div id="key-bindings" class="binding-grid"></div><button id="reset-controls" class="text-button">RÉTABLIR LES COMMANDES PAR DÉFAUT</button></section>
       </div>
     </div><footer class="options-footer"><span>Réglages enregistrés sur cet appareil.</span><button id="resume" class="primary">Reprendre <span class="arrow-icon" aria-hidden="true"></span></button></footer>
   </div></section>
@@ -8258,10 +8258,10 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   'use strict';
   const actions=[['forward','Avancer',['KeyW','KeyZ','ArrowUp']],['back','Reculer',['KeyS','ArrowDown']],['left','À gauche',['KeyA','KeyQ']],['right','À droite',['KeyD']],['turnLeft','Tourner à gauche',['ArrowLeft']],['turnRight','Tourner à droite',['ArrowRight']],['fire','Tirer · main droite',['Enter']],['fireLeft','Tirer / bouclier · main gauche',['KeyC']],['leftHand','Changer la main gauche',['KeyX']],['sprint','Courir',['ShiftLeft','ShiftRight']],['dash','Esquive / coup de bouclier',['Space']],['pulse','Onde défensive',['KeyE']],['melee','Coup de crosse',['KeyV']],['interact','Interagir',['KeyF']],['weapon1','Mitraillette',['Digit1']],['weapon2','Double pompe',['Digit2']],['weapon3','Lance-roquettes',['Digit3']],['weapon4','Lance-grenades',['Digit4']],['weapon5','Pistolet',['Digit5']],['map','Carte',['KeyM']],['pause','Pause',['KeyP']]];
   const allowed=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space|Enter|Backspace|Tab)$/.test(code);
-  function defaults(touch){return {muted:false,quality:'auto',difficulty:0,aiAcceleration:'auto',softMotion:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:0,masterVolume:1,musicVolume:.45,effectsVolume:1,ambienceVolume:1,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()]))};}
+  function defaults(touch){return {muted:false,quality:'auto',difficulty:0,aiAcceleration:'auto',softMotion:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:0,masterVolume:1,musicVolume:.45,effectsVolume:1,ambienceVolume:1,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()]))};}
   function normalize(raw,touch){
     const out=defaults(touch),v=raw&&typeof raw==='object'?raw:{};
-    for(const id of ['muted','softMotion','invertY','shadows','bloom','showFps','crt','vignette'])if(typeof v[id]==='boolean')out[id]=v[id];
+    for(const id of ['muted','softMotion','invertY','systemPointerAcceleration','shadows','bloom','showFps','crt','vignette'])if(typeof v[id]==='boolean')out[id]=v[id];
     if(['auto','low','high'].includes(v.quality))out.quality=v.quality;
     if(['auto','cpu'].includes(v.aiAcceleration))out.aiAcceleration=v.aiAcceleration;
     for(const [id,min,max] of [['fov',60,110],['brightness',.7,1.4],['sensitivity',.25,3],['crosshairScale',.75,1.5],['masterVolume',0,1],['musicVolume',0,1],['effectsVolume',0,1],['ambienceVolume',0,1]])if(typeof v[id]==='number'&&Number.isFinite(v[id]))out[id]=Math.max(min,Math.min(max,v[id]));
@@ -8314,6 +8314,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   let mouseFire=false,mouseLeftFire=false,touchFire=false,touchLeftFire=false,dragLook=null,moveTouch=null,stick={x:0,y:0},lookDX=0,lookDY=0,dashQueued=false,pulseQueued=false,meleeQueued=false,interactQueued=false;
   const fireBufferMs=FOptions.fireBufferMs;
   let firePressed=false,fireLeftPressed=false,firePressAt=0,fireLeftPressAt=0,fireWeapon=null,fireLeftWeapon=null;
+  let pointerRequestSerial=0,pointerLockWanted=false,captureMouseButton=null,wheelDistance=0,wheelDirection=0,wheelAt=-Infinity;
   function clearFireIntents(){firePressed=fireLeftPressed=false;}
   function pressFire(left=false){
     const weapon=left?sim?.state.equipment?.left:selectedWeapon;
@@ -8413,7 +8414,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     $('quality-toggle').querySelector('strong').textContent={auto:'Auto',low:'Économie',high:'Haute'}[quality];
     $('difficulty-setting').value=String(prefs.difficulty);$('difficulty-hint').textContent=['Standard · apprenez à lire les attaques ; la pression monte avec les secteurs et les objectifs.','Brutal · des machines plus agressives, des tirs plus rapprochés et moins de répit.','Cauchemar · des attaques plus rapides, des impacts plus durs et une forte pression.'][prefs.difficulty];brainStatus();
     $('motion-toggle').querySelector('strong').textContent=softMotion?'Doux':'Désactivés';
-    for(const [id,key,on,off] of [['shadows','shadows','Activées','Désactivées'],['bloom','bloom','Activé','Désactivé'],['fps','showFps','Visible','Masqué'],['crt','crt','Activé','Désactivé'],['vignette','vignette','Activée','Désactivée'],['invert','invertY','Oui','Non']]){const el=$(id+'-toggle');el.querySelector('strong').textContent=prefs[key]?on:off;el.setAttribute('aria-pressed',String(prefs[key]));}
+    for(const [id,key,on,off] of [['shadows','shadows','Activées','Désactivées'],['bloom','bloom','Activé','Désactivé'],['fps','showFps','Visible','Masqué'],['crt','crt','Activé','Désactivé'],['vignette','vignette','Activée','Désactivée'],['invert','invertY','Oui','Non'],['pointer-acceleration','systemPointerAcceleration','Activée','Désactivée']]){const el=$(id+'-toggle');el.querySelector('strong').textContent=prefs[key]?on:off;el.setAttribute('aria-pressed',String(prefs[key]));}
     for(const [id,key,multiplier,suffix] of [['fov','fov',1,'°'],['brightness','brightness',100,' %'],['sensitivity','sensitivity',100,' ×'],['crosshair','crosshairScale',100,' %'],['master','masterVolume',100,' %'],['music','musicVolume',100,' %'],['effects','effectsVolume',100,' %'],['ambience','ambienceVolume',100,' %']]){
       $(id+'-setting').value=String(Math.round(prefs[key]*multiplier));$(id+'-value').textContent=(id==='sensitivity'?prefs[key].toFixed(2).replace('.',','):Math.round(prefs[key]*multiplier))+suffix;
     }
@@ -8498,7 +8499,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       saveCheckpoint();
     }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
   }
-  function clearInput(){keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
+  function clearInput(){keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
     audio.cancelTestMix?.();
     last=performance.now();perfStart=0;perfFrames=0;
@@ -8531,9 +8532,23 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     if(renderer.updateWorld)renderer.updateWorld(d.meshes,revision,d.lights);else renderer.setWorld(d.meshes,d.lights||world.lights,world.environment);
     renderRevision=revision;
   }
+  function freePointerHint(){if(mode==='playing'&&document.pointerLockElement!==canvas)toast('Glissez pour viser · '+bindingLabel('fire')+' : tirer. Cliquez pour capturer la souris.',4);}
   function lock(){
     if(touch)return;
-    try{const result=canvas.requestPointerLock?.();if(result?.catch)result.catch(()=>{if(toastTime<=0)toast('Maintenez et glissez pour regarder. Flèches : tourner.',4);});}catch{if(toastTime<=0)toast('Glissez pour regarder. Flèches : tourner.',4);}
+    pointerLockWanted=true;
+    if(document.pointerLockElement===canvas)return;
+    const ticket=++pointerRequestSerial,current=()=>ticket===pointerRequestSerial&&mode==='playing'&&!document.hidden&&windowFocused;
+    const attempt=raw=>{
+      if(!current())return;
+      const failed=error=>{if(!current())return;if(raw&&error?.name==='NotSupportedError')attempt(false);else freePointerHint();};
+      try{
+        if(!canvas.requestPointerLock){freePointerHint();return;}
+        const result=raw?canvas.requestPointerLock({unadjustedMovement:true}):canvas.requestPointerLock();
+        // Older implementations return void and report through document events.
+        if(result?.catch)result.catch(failed);
+      }catch(error){failed(error);}
+    };
+    attempt(!prefs.systemPointerAcceleration);
   }
   function start(message){
     titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode(document.hidden||!windowFocused?'paused':'playing');if(mode==='playing'){lock();canvas.focus({preventScroll:true});}
@@ -9157,11 +9172,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   $('motion-toggle').addEventListener('click',()=>{softMotion=!softMotion;settings();});
   const tabs=['game','image','audio','controls'];
   for(const id of tabs){$('tab-'+id).addEventListener('click',()=>selectTab(id));$('tab-'+id).addEventListener('keydown',e=>{let next=tabs.indexOf(id);if(e.code==='ArrowRight')next=(next+1)%4;else if(e.code==='ArrowLeft')next=(next+3)%4;else if(e.code==='Home')next=0;else if(e.code==='End')next=3;else return;e.preventDefault();selectTab(tabs[next],true);});}
-  for(const [id,key] of [['shadows','shadows'],['bloom','bloom'],['fps','showFps'],['crt','crt'],['vignette','vignette'],['invert','invertY']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
+  for(const [id,key] of [['shadows','shadows'],['bloom','bloom'],['fps','showFps'],['crt','crt'],['vignette','vignette'],['invert','invertY'],['pointer-acceleration','systemPointerAcceleration']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
   for(const [id,key,divisor] of [['fov','fov',1],['brightness','brightness',100],['sensitivity','sensitivity',100],['crosshair','crosshairScale',100],['master','masterVolume',100],['music','musicVolume',100],['effects','effectsVolume',100],['ambience','ambienceVolume',100]])$(id+'-setting').addEventListener('input',()=>{prefs[key]=Number($(id+'-setting').value)/divisor;settings();});
   $('fps-limit').addEventListener('change',()=>{prefs.fpsLimit=Number($('fps-limit').value);settings();});
   $('reset-image').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['quality','softMotion','fov','brightness','shadows','bloom','showFps','crt','vignette','fpsLimit'])prefs[key]=d[key];quality=prefs.quality;softMotion=prefs.softMotion;renderer.resize(quality);settings();});
-  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','crosshairScale','bindings'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
+  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','bindings'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
   $('reset-audio').addEventListener('click',()=>{audio.cancelTestMix?.();const d=FOptions.defaults(touch);for(const key of ['masterVolume','musicVolume','effectsVolume','ambienceVolume'])prefs[key]=d[key];muted=false;settings();$('audio-status').textContent='Mix recommandé rétabli. Testez les tirs et les ambiances.';});
   $('test-audio').addEventListener('click',async()=>{
     if(audio.stats?.preview){audio.cancelTestMix?.();activateTitle();$('audio-status').textContent='Test audio arrêté.';return;}
@@ -9205,21 +9220,38 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   addEventListener('keyup',e=>keys.delete(e.code));
   addEventListener('click',titleUserGesture,{capture:true,passive:true});
   addEventListener('pointerup',titleUserGesture,{capture:true,passive:true});
-  addEventListener('wheel',e=>{if(mode==='playing'&&e.deltaY){e.preventDefault();switchWeapon(undefined,e.deltaY>0?1:-1);}},{passive:false});
-  document.addEventListener('pointerlockchange',()=>{const locked=document.pointerLockElement===canvas;if(wasLocked&&!locked&&mode==='playing')setMode('paused');wasLocked=locked;});
+  addEventListener('wheel',e=>{
+    if(mode!=='playing'||!Number.isFinite(e.deltaY)||!e.deltaY)return;
+    e.preventDefault();const direction=e.deltaY>0?1:-1,now=performance.now();
+    if(direction!==wheelDirection){wheelDistance=0;wheelDirection=direction;}
+    if(now-wheelAt<150)return;
+    wheelDistance+=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?innerHeight:1);
+    if(Math.abs(wheelDistance)<100)return;
+    wheelDistance=0;wheelAt=now;switchWeapon(undefined,direction);
+  },{passive:false});
+  document.addEventListener('pointerlockchange',()=>{
+    const locked=document.pointerLockElement===canvas;
+    // A cancelled request can still succeed through a promise or a legacy
+    // document event. Only a fresh gesture may make that acquisition wanted.
+    if(locked&&(mode!=='playing'||!pointerLockWanted)){wasLocked=false;document.exitPointerLock();return;}
+    if(wasLocked&&!locked&&mode==='playing')setMode('paused');
+    if(locked&&captureMouseButton!==null)toast('Souris capturée · relâchez puis cliquez pour tirer.',3);
+    wasLocked=locked;
+  });
+  document.addEventListener('pointerlockerror',freePointerHint);
   document.addEventListener('mousemove',e=>{if(mode==='playing'&&document.pointerLockElement===canvas){lookDX+=e.movementX*.0022*prefs.sensitivity;lookDY-=e.movementY*.0022*prefs.sensitivity*(prefs.invertY?-1:1);}});
   // Mouse down/up report every button transition. Pointer down/up only report
   // the first pressed/last released mouse button, which would break dual fire.
-  canvas.addEventListener('mousedown',e=>{if(mode!=='playing'||document.pointerLockElement!==canvas)return;if(e.button===0){mouseFire=true;pressFire();}else if(e.button===2){mouseLeftFire=true;pressFire(true);}});
+  canvas.addEventListener('mousedown',e=>{if(mode!=='playing'||captureMouseButton!==null||document.pointerLockElement!==canvas)return;if(e.button===0){mouseFire=true;pressFire();}else if(e.button===2){mouseLeftFire=true;pressFire(true);}});
   canvas.addEventListener('pointerdown',e=>{
     if(mode!=='playing')return;
-    if(e.pointerType==='mouse'){if(!document.pointerLockElement){dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}}
+    if(e.pointerType==='mouse'){if(document.pointerLockElement!==canvas){captureMouseButton=e.button??0;mouseFire=mouseLeftFire=false;dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);toast('Capture de la souris · ce clic ne tire pas.',3);lock();}}
     else if(e.clientX>innerWidth*.36){dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}
   });
   canvas.addEventListener('pointermove',e=>{if(dragLook?.id===e.pointerId&&!document.pointerLockElement&&mode==='playing'){const sensitivity=(touch?.004:.003)*prefs.sensitivity;lookDX+=(e.clientX-dragLook.x)*sensitivity;lookDY-=(e.clientY-dragLook.y)*sensitivity*(prefs.invertY?-1:1);dragLook.x=e.clientX;dragLook.y=e.clientY;}});
-  function endMouse(e){if(e.button===0)mouseFire=false;else if(e.button===2)mouseLeftFire=false;if(!mouseFire&&!mouseLeftFire)dragLook=null;}
+  function endMouse(e){if(e.button===captureMouseButton)captureMouseButton=null;if(e.button===0)mouseFire=false;else if(e.button===2)mouseLeftFire=false;if(!mouseFire&&!mouseLeftFire)dragLook=null;}
   addEventListener('mouseup',endMouse);
-  function endPointer(e){if(e.pointerType==='mouse'&&(e.type==='pointercancel'||e.buttons===0)){mouseFire=mouseLeftFire=false;if(e.type==='pointercancel')clearFireIntents();}if(dragLook?.id===e.pointerId&&!mouseFire&&!mouseLeftFire)dragLook=null;if(moveTouch?.id===e.pointerId){moveTouch=null;stick.x=stick.y=0;$('move-stick').style.transform='';}}
+  function endPointer(e){if(e.pointerType==='mouse'&&(e.type==='pointercancel'||e.buttons===0)){mouseFire=mouseLeftFire=false;captureMouseButton=null;if(e.type==='pointercancel'){clearFireIntents();++pointerRequestSerial;if(document.pointerLockElement!==canvas)pointerLockWanted=false;}}if(dragLook?.id===e.pointerId&&!mouseFire&&!mouseLeftFire)dragLook=null;if(moveTouch?.id===e.pointerId){moveTouch=null;stick.x=stick.y=0;$('move-stick').style.transform='';}}
   addEventListener('pointerup',endPointer);addEventListener('pointercancel',endPointer);canvas.addEventListener('contextmenu',e=>e.preventDefault());
   $('move-zone').addEventListener('pointerdown',e=>{if(mode!=='playing'||moveTouch)return;e.preventDefault();const rect=$('move-zone').getBoundingClientRect();moveTouch={id:e.pointerId,x:rect.left+rect.width/2,y:rect.top+rect.height/2};$('move-zone').setPointerCapture(e.pointerId);joystick(e);});
   function joystick(e){if(moveTouch?.id!==e.pointerId)return;const dx=e.clientX-moveTouch.x,dy=e.clientY-moveTouch.y,n=Math.max(1,Math.hypot(dx,dy)/34);stick.x=dx/n/34;stick.y=dy/n/34;$('move-stick').style.transform='translate('+dx/n+'px,'+dy/n+'px)';}

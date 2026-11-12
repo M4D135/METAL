@@ -330,3 +330,15 @@ Le harnais de checkpoints représente maintenant un vrai verrou de pointeur acqu
 Validation cumulative T1 + STAB-V1 + T2 : **73/73** tests entrées, checkpoints, options et cadence ; build et contrôle de distribution PASS. `checks/input.test.mjs` est ajouté à `npm test`. HTML **804 421 → 806 474 octets**, SHA-256 `2aa738e123901c4616dac5ec569d07016071d7cfeeed64f94410eaf4d862f8be`, version 0.8.1.
 
 Valeur par défaut appliquée : tampon 150 ms, exposé par `FOptions.fireBufferMs`. Question de ressenti conservée pour David : maintenir cette durée après essai réel ? Le lot 01 ne la transforme pas en format de sauvegarde.
+
+### T3 — pointeur fiable et molette seuillée [LOOP-10]
+
+La capture est demandée directement dans le geste souris. Le mouvement brut est demandé par défaut, avec repli sur `NotSupportedError` et préférence persistée **« Accélération du système »**, désactivée par défaut. API à promesse et API `void`, échec de capture, glisser pour viser, pause et succès tardifs sont couverts. Le clic d’acquisition ne tire pas, même si la capture arrive avant le `mousedown` de compatibilité.
+
+La revue indépendante a reproduit puis corrigé l’annulation d’une demande encore en attente : `pointercancel` empêche désormais un repli ou une acquisition tardive, tandis qu’un simple relâchement reste valide. Le prochain geste peut à nouveau capturer. Les trois régressions supplémentaires donnent **1 réussite / 2 échecs → 3/3** ; le fichier d’entrées complet atteint **24/24**.
+
+La molette cumule les déplacements normalisés (pixels, lignes et pages), avec seuil **100 px** et délai **150 ms**. Trente petits événements de 4 px produisent **30 → 1 changement d’arme**. Le test historique de molette attend volontairement aucun changement à 1 px, puis un à 99 px supplémentaires ; les vérifications d’arsenal restent présentes.
+
+[Preuves avant/après, sources API et annulation tardive](preuves/lot-01/t3/PROOF.md). Validation cumulative ciblée : **85/85** (entrées, checkpoints, options, cadence), build et contrôle de distribution PASS. HTML **806 474 → 809 176 octets**, SHA-256 `9a935866e0f1b64bda17fc5e5092cd534deeab38fc0d44367bf44e6fbba950e2` ; version 0.8.1. Les horloges restent hors de la simulation. Aucun essai de souris Windows, de Safari/Firefox ou de téléphone physique n’est déduit du harnais.
+
+Valeur par défaut appliquée : mouvement brut activé. Question de ressenti conservée pour David : maintenir cette valeur après essai de la sensibilité sur sa souris ? L’option permet déjà le mouvement traité par le système.

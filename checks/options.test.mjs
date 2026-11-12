@@ -4,6 +4,11 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const context={window:{}};vm.createContext(context);vm.runInContext(readFileSync(new URL('../src/options.js',import.meta.url),'utf8'),context);
 const options=context.window.FOptions;
+test('System mouse acceleration is opt-in and only accepts stored booleans',()=>{
+  assert.equal(options.defaults().systemPointerAcceleration,false);
+  assert.equal(options.normalize({systemPointerAcceleration:true}).systemPointerAcceleration,true);
+  for(const value of [false,'true',1,null,undefined])assert.equal(options.normalize({systemPointerAcceleration:value}).systemPointerAcceleration,false);
+});
 test('Older preferences migrate while new controls have safe bounded values',()=>{
   const v=options.normalize({muted:true,quality:'high',softMotion:false,fov:300,sensitivity:NaN,musicVolume:-2,brightness:Infinity,showFps:'false'});
   assert.equal(v.muted,true);assert.equal(v.quality,'high');assert.equal(v.softMotion,false);assert.equal(v.fov,110);assert.equal(v.sensitivity,1);assert.equal(v.musicVolume,0);assert.equal(v.brightness,1);assert.equal(v.showFps,true);assert.equal(options.defaults(true).fov,79);
