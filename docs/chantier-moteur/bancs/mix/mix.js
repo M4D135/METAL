@@ -4,6 +4,9 @@
 // exposent les nœuds. Exception : v.source ('A' = SRC, 'B' = SRC_B, job=ab) rend la source telle quelle, sans aucun
 // remplacement ni réglage imposé ; seules la sortie (canaux 0 et 1), audio.stats et le compte d'automatisations
 // sont alors mesurés. Une scène marquée title (scène t) joue la musique d'accueil par setTitlePlaying(true).
+// Lot 11/T3 : recipe 'metal' charge src/audio-recipes.js de SRC après audio.js et crée FAudio comme game.js
+// (FAudio.create(MetalAudio.options())) ; le rendu « tel quel » (job=ab) fait de même quand la source a ce fichier,
+// sauf v.plain (FAudio.create() sans option, le moteur par défaut).
 'use strict';
 const Q = new URLSearchParams(location.search), SR = +Q.get('sr') || 48000, K0 = 120, HZ = 60, TAIL = 1.5;
 function emit(obj) { const s = btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); for (let i = 0; i < s.length; i += 6000) console.log('MIXCHUNK ' + s.slice(i, i + 6000)); console.log('MIXDONE'); }
@@ -29,9 +32,9 @@ const DUCK = {
 };
 const synthCache = new Map();
 let RECIPE = 'cur';
-window.__SYNTH = function (name, variant, rate, original) {
-  const proto = RECIPE === 'doom' && DOOMISH.RECIPES[name], key = (proto ? 'doom' : 'cur') + '|' + name + '|' + variant + '|' + rate;
-  let v = synthCache.get(key); if (!v) { v = proto ? DOOMISH.synth(name, variant | 0, rate || 22050) : original(name, variant, rate); synthCache.set(key, v); }
+window.__SYNTH = function (name, variant, rate, original) { // 'metal' : la table de recettes de METAL (consultée avant synthesize par FAudio)
+  const metal = RECIPE === 'metal' && window.MetalAudio && window.MetalAudio.recipes[name], proto = !metal && RECIPE === 'doom' && DOOMISH.RECIPES[name], key = (metal ? 'metal' : proto ? 'doom' : 'cur') + '|' + name + '|' + variant + '|' + rate;
+  let v = synthCache.get(key); if (!v) { v = metal ? metal.synth(variant | 0, rate || 22050) : proto ? DOOMISH.synth(name, variant | 0, rate || 22050) : original(name, variant, rate); synthCache.set(key, v); }
   return v;
 };
 function buildAudio(v) {
@@ -95,13 +98,17 @@ async function render(scene, v, opt = {}) {
   Object.defineProperty(ctx, 'state', {get: () => 'running'});
   const counter = {n: 0}; countParams(ctx, counter); window.__L14 = {sent: 0, skipped: 0};
   const saved = window.AudioContext; window.AudioContext = function () { return ctx; };
-  const raw = !!v.source, sharedMusic = window.FMusic; window.__NODES = null; window.__duckShelf = null;
+  const raw = !!v.source, sharedMusic = window.FMusic; window.__NODES = null; window.__duckShelf = null; delete window.MetalAudio;
   if (raw) { // job=ab : FMusic puis FAudio de la source choisie, réévalués à chaque rendu, sans remplacement ; FMusic de SRC rétabli après le rendu
     const src = v.source === 'B' ? window.SRC_B : window.SRC; if (!src) throw new Error('source ' + v.source + ' absente de src.js (gen.mjs, 4e argument)');
-    delete window.FMusic; (0, eval)(src.music); delete window.FAudio; (0, eval)(src.audio);
-  } else { delete window.FAudio; (0, eval)(buildAudio(v)); }
+    delete window.FMusic; (0, eval)(src.music); delete window.FAudio; (0, eval)(src.audio); if (src.recipes && !v.plain) (0, eval)(src.recipes);
+  } else {
+    delete window.FAudio; (0, eval)(buildAudio(v));
+    if (v.recipe === 'metal') { if (!SRC.recipes) throw new Error('recipes=metal : src/audio-recipes.js absent de la racine A (gen.mjs)'); (0, eval)(SRC.recipes); }
+  }
+  // Création comme game.js : FAudio.create(window.MetalAudio?.options?.()).
   // Écran titre : le jeu ouvre le contexte coupé (audioGate) puis rétablit le son après setTitlePlaying(true).
-  const audio = FAudio.create(); if (scene.title) audio.setMuted(true); audio.start(); window.AudioContext = saved;
+  const audio = FAudio.create(window.MetalAudio && typeof window.MetalAudio.options === 'function' ? window.MetalAudio.options() : undefined); if (scene.title) audio.setMuted(true); audio.start(); window.AudioContext = saved;
   const nodes = raw ? null : window.__NODES, comp = COMP[v.comp || 'cur'], taps = !raw && !v.noTaps;
   if (nodes) for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) nodes.limiter[k].value = comp[k];
 
@@ -148,7 +155,8 @@ async function render(scene, v, opt = {}) {
   const stats = Object.assign({}, audio.stats), l14 = Object.assign({}, window.__L14);
   try { audio.dispose(); } catch (_) {}
   if (raw) window.FMusic = sharedMusic;
-  return {buffer, ms, replayMs, stats, red, voices, seconds, params: counter.n, l14, titlePrepared};
+  const table = !!(window.MetalAudio && window.MetalAudio.recipes); delete window.MetalAudio;
+  return {buffer, ms, replayMs, stats, red, voices, seconds, params: counter.n, l14, titlePrepared, table};
 }
 // différence échantillon par échantillon de la sortie (canaux 0 et 1), en dBFS ; premier écart non nul et au-delà de −90 dBFS
 function diffOut(x, y) {

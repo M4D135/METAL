@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
 const root=new URL('../',import.meta.url);
-const source=Object.fromEntries(['music','audio','soundscape','economy','destruction','effects','simulation','motion','actors','options','game'].map(name=>
+const source=Object.fromEntries(['music','audio','audio-recipes','soundscape','economy','destruction','effects','simulation','motion','actors','options','game'].map(name=>
   [name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 class Param{
   constructor(value=0){this.value=value;this.events=[];}
@@ -36,17 +36,24 @@ class Context{
   resume(){this.resumes++;this.state='running';return Promise.resolve();}
   close(){this.closes++;this.state='closed';return Promise.resolve();}
 }
-function rig({unavailable=false,noPan=false}={}){
+// recipes: METAL's table (src/audio-recipes.js) passed as game.js does; options: any other create() argument.
+function rig({unavailable=false,noPan=false,recipes=false,options}={}){
   const contexts=[],music=[],scope={},timers=new Map();let timerId=0;scope.window=scope;
   scope.setTimeout=(fn,ms)=>{const id=++timerId;timers.set(id,{fn,at:(contexts.at(-1)?.currentTime||0)+ms/1000});return id;};scope.clearTimeout=id=>timers.delete(id);
   if(!unavailable)scope.AudioContext=class extends Context{constructor(){super();if(noPan)this.createStereoPanner=undefined;contexts.push(this);}};
   vm.createContext(scope);vm.runInContext(source.music,scope,{filename:'music.js'});
   const create=scope.FMusic.create;scope.FMusic.create=(ctx,output)=>{const first=ctx.nodes.length,instance=create(ctx,output);music.push({instance,output,owned:ctx.nodes.slice(first)});return instance;};
-  vm.runInContext(source.audio,scope,{filename:'audio.js'});
-  return {scope,contexts,music,timers,audio:scope.FAudio.create(),get ctx(){return contexts.at(-1);},get master(){return music.at(-1)?.output.connections[0];},get tracker(){return music.at(-1)?.instance;},advanceTimers(seconds){const end=contexts.at(-1).currentTime+seconds;let count=0;while(timers.size){const [id,timer]=[...timers].sort((a,b)=>a[1].at-b[1].at)[0];if(timer.at>end)break;assert(++count<1000,'timer pump is bounded');contexts.at(-1).advance(Math.max(0,timer.at-contexts.at(-1).currentTime));timers.delete(id);timer.fn();}contexts.at(-1).advance(Math.max(0,end-contexts.at(-1).currentTime));}};
+  vm.runInContext(source.audio,scope,{filename:'audio.js'});if(recipes)vm.runInContext(source['audio-recipes'],scope,{filename:'audio-recipes.js'});
+  return {scope,contexts,music,timers,audio:recipes||options?scope.FAudio.create(options||scope.MetalAudio.options()):scope.FAudio.create(),get ctx(){return contexts.at(-1);},get master(){return music.at(-1)?.output.connections[0];},get tracker(){return music.at(-1)?.instance;},advanceTimers(seconds){const end=contexts.at(-1).currentTime+seconds;let count=0;while(timers.size){const [id,timer]=[...timers].sort((a,b)=>a[1].at-b[1].at)[0];if(timer.at>end)break;assert(++count<1000,'timer pump is bounded');contexts.at(-1).advance(Math.max(0,timer.at-contexts.at(-1).currentTime));timers.delete(id);timer.fn();}contexts.at(-1).advance(Math.max(0,end-contexts.at(-1).currentTime));}};
 }
 function run(r,seconds,step=.04){for(let t=0;t<seconds;t+=step){r.audio.tick();r.ctx.advance(step);}}
 function waveform(pcm){let peak=0,sum=0,energy=0,difference=0,tail=0;for(let i=0;i<pcm.length;i++){const x=pcm[i];assert(Number.isFinite(x));peak=Math.max(peak,Math.abs(x));sum+=x;energy+=x*x;if(i)difference+=(x-pcm[i-1])**2;if(i>pcm.length*.85)tail+=x*x;}return {peak,rms:Math.sqrt(energy/pcm.length),dc:sum/pcm.length,brightness:difference/energy,tail:tail/energy};}
+// Absolute energy in [lo, hi) Hz (radix-2 FFT, Parseval-normalized), as bancs/feel-verif2/t4.mjs measures FEEL-06.
+function bandDb(pcm,lo,hi,rate=22050){let n=1;while(n<pcm.length)n<<=1;const re=new Float64Array(n),im=new Float64Array(n);re.set(pcm);
+  for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j)[re[i],re[j]]=[re[j],re[i]];}
+  for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=len)for(let k=0,cr=1,ci=0;k<len/2;k++){const p=i+k,q=p+len/2,vr=re[q]*cr-im[q]*ci,vi=re[q]*ci+im[q]*cr;re[q]=re[p]-vr;im[q]=im[p]-vi;re[p]+=vr;im[p]+=vi;[cr,ci]=[cr*wr-ci*wi,cr*wi+ci*wr];}}
+  let e=0;for(let k=1;k<n/2;k++){const f=k*rate/n;if(f>=lo&&f<hi)e+=re[k]**2+im[k]**2;}return 10*Math.log10(2*e/n);}
+const pcmKey=pcm=>Buffer.from(pcm.buffer,pcm.byteOffset,pcm.byteLength).toString('base64');
 function effectGain(source){let n=source.connections[0];if(n.kind==='filter')n=n.connections[0];return n;}
 function effectPeak(source){return Math.max(...effectGain(source).gain.events.map(e=>e.value));}
 
@@ -66,6 +73,59 @@ test('original PCM has bounded peaks, quiet tails and distinct material and weap
   assert(measure.get('smg').rms<measure.get('rocket').rms,'automatic fire has a shorter, drier report than exhaust');
   for(const [name,seconds] of [['pistol',.18],['smg',.12],['shotgun',.35],['rocket',.45],['grenade',.32]])assert(render(name,0,22050).length/22050<seconds);
   assert.throws(()=>render('external-recording',0,22050),/Unknown procedural sound/);assert.equal(r.contexts.length,0,'offline synthesis needs no audio device');
+});
+
+test('METAL weapon recipes are seeded, denser reports under their own caps and pass every waveform rule on both variants (FEEL-06)',()=>{
+  const r=rig({recipes:true}),{FAudio,MetalAudio}=r.scope,table=MetalAudio.recipes,caps={pistol:.36,smg:.26,shotgun:.95,rocket:.82,grenade:.55},rms={};
+  assert.deepEqual(Object.keys(table).sort(),Object.keys(caps).sort());
+  for(const [name,cap] of Object.entries(caps)){
+    assert.equal(table[name].variants,2);const a=table[name].synth(0,22050),b=table[name].synth(1,22050);
+    for(const pcm of [a,b]){
+      const m=waveform(pcm);let end=0;for(let i=pcm.length-Math.round(.02*22050);i<pcm.length;i++)end=Math.max(end,Math.abs(pcm[i]));
+      assert(pcm.length/22050<cap,name+' keeps its new duration cap');assert.equal(pcm[0],0);assert.equal(pcm.at(-1),0);
+      assert(m.peak>.8&&m.peak<.85,name+' preserves digital headroom');assert(m.rms>.025&&m.rms<.4);assert(Math.abs(m.dc)<.003,name+' has no DC offset');
+      assert(m.tail<.04&&end<.04,name+' fades out instead of being cut');
+    }
+    assert.notEqual(pcmKey(a),pcmKey(b),name+' has seeded variation');assert.equal(pcmKey(table[name].synth(0,22050)),pcmKey(a),name+' is reproducible');
+    assert.equal(pcmKey(FAudio.synthesize(name,1,22050,table)),pcmKey(b),'synthesize consults a table before its own recipes');
+    rms[name]=waveform(a).rms;
+  }
+  assert(rms.smg<rms.rocket,'automatic fire keeps a shorter, drier report than exhaust');
+  for(const name of ['smg','pistol','shotgun','rocket']){
+    const before=FAudio.synthesize(name,0,22050),after=table[name].synth(0,22050);
+    assert(bandDb(after,120,500)-bandDb(before,120,500)>4.5,name+' gains 120-500 Hz energy, what small speakers carry');
+    assert(20*Math.log10(waveform(after).rms/waveform(before).rms)>6,name+' is denser at the same peak');
+  }
+  assert.equal(r.contexts.length,0,'offline synthesis needs no audio device');
+});
+
+test('a recipe table replaces only its own buffers, falls back on bad output, and no table keeps the v0.2 bank bit for bit (MIX-01)',async()=>{
+  const bank=async r=>{await r.audio.start();r.audio.setPlaying(true);return r.ctx.buffers.filter(b=>b.sampleRate===22050).map(b=>pcmKey(b.getChannelData(0)));};
+  const plain=rig(),metal=rig({recipes:true}),{FAudio}=plain.scope,table=metal.scope.MetalAudio.recipes,jobs=[...FAudio.effectNames].flatMap(n=>n.startsWith('motor:')?[[n,0]]:[[n,0],[n,1]]);
+  const a=await bank(plain),b=await bank(metal);assert.equal(a.length,64);assert.equal(b.length,64);
+  jobs.forEach(([n,v],i)=>assert.equal(a[i],pcmKey(FAudio.synthesize(n,v,22050)),'without a table the bank is the v0.2 PCM'));
+  assert.deepEqual(jobs.filter((_,i)=>a[i]!==b[i]).map(([n,v])=>n+'#'+v),['pistol#0','pistol#1','smg#0','smg#1','shotgun#0','shotgun#1','rocket#0','rocket#1','grenade#0','grenade#1']);
+  jobs.forEach(([n,v],i)=>{if(table[n])assert.equal(b[i],pcmKey(table[n].synth(v,22050)),'the bank holds the recipe output');});
+  const count=metal.ctx.sources.length;metal.audio.shot({level:1});assert.equal(metal.ctx.sources.length,count+1);assert.equal(metal.ctx.sources.at(-1).buffer.length,Math.ceil(.24*22050));
+  const odd=rig({options:{recipes:{click:{synth:()=>{throw new Error('broken recipe');}},body:{synth:()=>new Float32Array(0)},swish:{synth:()=>Float32Array.of(0,NaN,0)},smg:{},
+    'external-recording':{synth:()=>Float32Array.of(0,.5,0)},explosion:{variants:1,synth:(v,rate)=>Float32Array.of(0,rate/44100,-.25,0)}}}});
+  const c=await bank(odd),oddJobs=jobs.filter(([n,v])=>n!=='explosion'||v===0);assert.equal(c.length,63,'a single-variant recipe builds one buffer, unknown names are ignored');
+  oddJobs.forEach(([n,v],i)=>assert.equal(c[i],n==='explosion'?pcmKey(Float32Array.of(0,.5,-.25,0)):pcmKey(FAudio.synthesize(n,v,22050)),n+' falls back to v0.2 unless its recipe is valid'));
+  for(const r of [plain,metal,odd])r.audio.dispose();
+});
+
+test('the 240 ms METAL SMG overlaps two voices at 8 shots/s and leaves the 32/40/48 ceilings and stealing rules unchanged (MIX-06)',async()=>{
+  const r=rig({recipes:true});r.audio.setStage(1);r.audio.setPlaying(true);await r.audio.start();r.audio.tick();const first=r.ctx.sources.length;
+  for(let i=0;i<24;i++){r.audio.shot({level:1,hand:'right'});r.ctx.advance(.125);}
+  const fired=r.ctx.sources.slice(first);assert.equal(fired.length,24);assert(fired.every(n=>n.buffer.length===Math.ceil(.24*22050)));assert.equal(r.audio.stats.peakVoices,2);
+  r.ctx.advance(1);assert.equal(r.audio.stats.voices,0);
+  const before=r.ctx.sources.length;for(let i=0;i<200;i++)r.audio.enemyShot({kind:i%4,level:.6,pan:0});
+  assert.equal(r.ctx.sources.length-before,1,'simultaneous shots from one bearing still share a prebuilt transient');
+  for(let burst=0;burst<4;burst++){r.ctx.currentTime+=.065;for(let p=-4;p<=4;p++)r.audio.enemyShot({kind:1,level:.6,pan:p/4});}
+  assert.equal(r.audio.stats.voices,32,'longer distant reports still cannot consume the reserved slots');assert.equal(r.audio.stats.stolenVoices,0);assert(r.audio.stats.fxSkipped>0);
+  const count=r.ctx.sources.length;r.audio.shot();assert.equal(r.ctx.sources.length-count,1,'the local report survives in a reserved voice');
+  r.audio.fracture();r.audio.hurt();r.audio.bossImpact({level:1});r.audio.bossTell({level:1});for(let i=0;i<16;i++){r.ctx.currentTime+=.06;r.audio.shot();}
+  assert(r.audio.stats.voices<=48);assert(r.audio.stats.stolenVoices>0,'an urgent nearby cue can still replace a distant voice');r.audio.dispose();
 });
 
 test('empty rooms have no tonal bed, exterior wind has gaps, and every environmental layer silences on pause',async()=>{
@@ -228,8 +288,8 @@ test('horror pressure reuses ambience and the MOD mix while spatial cues remain 
   assert(!r.ctx.sources.some(n=>n.kind==='oscillator'&&n.stopTime===Infinity),'no persistent drone or modulation oscillator remains');r.audio.setPlaying(false);assert.equal(r.audio.stats.windGain,0);assert.equal(r.audio.stats.machineryGain,0);assert.equal(r.audio.stats.steamGain,0);assert.equal(r.audio.stats.voices,0,'pause releases existing world transients');const stopped=r.ctx.sources.length;r.audio.horror({kind:'ambush',intensity:1});assert.equal(r.ctx.sources.length,stopped);r.audio.setStage(2);r.audio.setPlaying(true);assert(lead.gain.value<raised);r.audio.dispose();assert.equal(r.audio.stats.voices,0);
 });
 
-function shell({touch=false,settings:storedSettings}={}){
-  const r=rig(),elements=new Map(),listeners=new Map(),documentListeners=new Map(),memory=new Map(),errors=[],simulations=[],downloads=[],blobs=[],timers=[];let frames=[],now=0;
+function shell({touch=false,settings:storedSettings,recipes=false}={}){
+  const r=rig({recipes}),elements=new Map(),listeners=new Map(),documentListeners=new Map(),memory=new Map(),errors=[],simulations=[],downloads=[],blobs=[],timers=[];let frames=[],now=0;
   let focused=true;
   if(storedSettings)memory.set('ferro-settings',JSON.stringify(storedSettings));
   const noop=()=>{},draw=new Proxy({},{get:()=>noop}),schedule=r.scope.setTimeout;
@@ -253,7 +313,8 @@ function shell({touch=false,settings:storedSettings}={}){
     localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)},FWorld:{create:world},
     FRender:{create:()=>({stats:{backend:'test'},resize:noop,setWorld:noop,draw:noop})}});
   // The shell receives the same observed real audio instance as the direct API tests.
-  r.scope.FAudio.create=()=>r.audio;
+  // With recipes, game.js's own create() argument builds that instance.
+  const createAudio=r.scope.FAudio.create;r.scope.FAudio.create=recipes?options=>{r.createOptions=options;return r.audio=createAudio(options);}:()=>r.audio;
   for(const name of ['soundscape','economy','destruction','effects','simulation','motion','actors','options'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
   const create=r.scope.FSimulation.create;r.scope.FSimulation.create=value=>{const sim=create(value);simulations.push(sim);return sim;};
   vm.runInContext(source.game,r.scope,{filename:'game.js'});assert.deepEqual(errors,[],'game must initialize without an audio or DOM exception');
@@ -531,4 +592,14 @@ test('actual menu audition survives live volume sliders and stops on explicit mu
   await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,true);
   app.element('resume').click();assert.equal(app.audio.stats.preview,false);assert.equal(app.mode(),'playing');assert.equal(app.tracker.stats.playing,true);
   app.audio.dispose();
+});
+
+test('the game creates FAudio with the METAL recipe table and its own audition plays the 0.24 s SMG report',async()=>{
+  const app=shell({recipes:true});assert.equal(app.createOptions?.recipes,app.scope.MetalAudio.recipes,'game.js hands METAL recipes to FAudio');
+  app.element('intro-options').click();app.element('tab-audio').click();await app.flush();assert(app.audio.stats.titlePlaying);
+  const before=app.ctx.sources.length;await app.element('test-audio').dispatch('click');assert(app.audio.stats.preview);app.frame(700);
+  const lengths=app.ctx.sources.slice(before).map(n=>n.buffer?.length);
+  assert(lengths.includes(Math.ceil(.24*22050)),'the audition plays the METAL SMG');assert(lengths.includes(Math.ceil(.34*22050)),'and the METAL pistol');
+  assert(!lengths.includes(Math.ceil(.105*22050))&&!lengths.includes(Math.ceil(.165*22050)),'no v0.2 weapon buffer is played');
+  app.element('resume').click();app.element('start').click();await app.ready();assert.equal(app.mode(),'playing');assert.equal(app.contexts.length,1);app.audio.dispose();
 });

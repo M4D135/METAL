@@ -86,10 +86,57 @@
     for(i=0;i<out.length;i++)out[i]*=normal;
     out[0]=0;out[out.length-1]=0;return out;
   }
+  // FEEL-06 / MIX-01: parametric layered report for a game's recipe table.
+  // Crack [gain, ms], pitched thump {f0,f1,tp,ta,g}, saturated two-pole noise
+  // body {cut,tb,g,drive}, mechanism clicks [[s,gain,Hz]], short room {tr,g},
+  // then a rate-aware 25 Hz DC blocker and gentle density saturation. Every
+  // number comes from the game; this knows no weapon. Seeded by name+variant.
+  var ROOM_TAPS=[[.011,.34],[.017,.27],[.023,.21],[.031,.15],[.043,.10]];
+  function layered(name,spec,variant,sampleRate){
+    var exp=Math.exp,sin=Math.sin,tanh=Math.tanh,min=Math.min,PI=Math.PI,s=spec||{},key=String(name);
+    var rate=Math.max(8000,min(48000,Number(sampleRate)||22050)),seed=(0x5eed^Math.imul((variant|0)+1,0x9e3779b9))>>>0;
+    for(var h=0;h<key.length;h++)seed=(Math.imul(seed,33)^key.charCodeAt(h))>>>0;
+    function rnd(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296*2-1;}
+    function one(f){return 1-exp(-2*PI*f/rate);}
+    var n=Math.max(0,Math.ceil(Number(s.dur)*rate))||0,out=new Float32Array(n),tune=1+(rnd()*.03);
+    var c=s.crack,th=s.thump,b=s.body,room=s.room,mech=[],taps=[],hist=room?new Float32Array(n):null,i,k,m,u;
+    (s.mech||[]).forEach(function(q){mech.push([q[0],q[1],q[2],one(q[2]*1.4),one(q[2]*.7)]);});
+    if(room)ROOM_TAPS.forEach(function(q){taps.push([Math.round(q[0]*rate),q[1]]);});
+    var crackPole=one(2500),crackTau=c?c[1]/1000:1,bodyPole=b?one(b.cut):0,bodyNorm=b?tanh(b.drive):1,roomPole=one(900),dcR=exp(-2*PI*25/rate),density=tanh(1.25);
+    var hp=0,phase=0,lp1=0,lp2=0,bandA=0,bandB=0,roomLp=0,dcx=0,dcy=0;
+    for(i=0;i<n;i++){
+      var t=i/rate,w=rnd(),x=0,clicks=0;
+      if(c){hp+=crackPole*(w-hp);x=(w-hp)*c[0]*exp(-t/crackTau);}
+      if(th){phase+=2*PI*((th.f1+(th.f0-th.f1)*exp(-t/th.tp))*tune)/rate;x+=sin(phase)*th.g*min(1,t/.0006)*exp(-t/th.ta);}
+      if(b){lp1+=bodyPole*(w-lp1);lp2+=bodyPole*(lp1-lp2);x+=tanh(lp2*3.2*b.g*exp(-t/b.tb)*b.drive)/bodyNorm;}
+      for(k=0;k<mech.length;k++){m=mech[k];u=t-m[0];if(u>=0&&u<.06){bandA+=m[3]*(w-bandA);bandB+=m[4]*(bandA-bandB);clicks+=((bandA-bandB)*2.2*exp(-u/.004)+.35*sin(2*PI*m[2]*u)*exp(-u/.011))*m[1];}}
+      x+=clicks;
+      if(room){hist[i]=x;for(k=0;k<taps.length;k++)if(i>=taps[k][0])x+=hist[i-taps[k][0]]*taps[k][1]*room.g*2.2;roomLp+=roomPole*(w-roomLp);x+=roomLp*room.g*1.6*exp(-t/room.tr)*min(1,t/.012);}
+      dcy=x-dcx+dcR*dcy;dcx=x;out[i]=tanh(dcy*1.25)/density;
+    }
+    var fade=Math.round((Number.isFinite(s.fade)?s.fade:.012)*rate),peak=0;
+    for(i=0;i<fade&&i<n;i++)out[n-1-i]*=i/fade;
+    for(i=0;i<n;i++)peak=Math.max(peak,Math.abs(out[i]));
+    var gain=peak>0?.84/peak:0;for(i=0;i<n;i++)out[i]*=gain;
+    if(n){out[0]=0;out[n-1]=0;}return out;
+  }
+  // A recipe table only replaces built-in names. Output that throws, is empty
+  // or not finite falls back to the v0.2 recipe: without a table, PCM is v0.2.
+  function tablePCM(recipes,name,variant,sampleRate){
+    var r=recipes&&effectNames.indexOf(name)>=0&&Object.prototype.hasOwnProperty.call(recipes,name)?recipes[name]:null,data=null;
+    if(!r||typeof r.synth!=='function')return null;
+    try{data=r.synth(variant|0,Math.max(8000,Math.min(48000,Number(sampleRate)||22050)));}catch(_){return null;}
+    if(!data||!(data.length>0))return null;
+    for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i]))return null;
+    return data;
+  }
   window.FAudio = {
-    synthesize: synthesize,
+    synthesize: function (name, variant, sampleRate, recipes) { return tablePCM(recipes,name,variant,sampleRate)||synthesize(name,variant,sampleRate); },
+    recipe: function (name, spec) { return {variants:spec&&spec.variants===1?1:2,synth:function(variant,rate){return layered(name,spec,variant,rate);}}; },
     effectNames: effectNames.slice(),
-    create: function () {
+    create: function (options) {
+      var recipes = Object.create(null), table = options && options.recipes;
+      if (table) Object.keys(table).forEach(function (name) { var r = table[name]; if (r && typeof r.synth === 'function' && effectNames.indexOf(name) >= 0) recipes[name] = {synth: r.synth, variants: r.variants === 1 ? 1 : 2}; });
       var ctx = null, master, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
       var lastStep = -1, stepSide = 1, lastAlert = -1;
@@ -304,9 +351,9 @@
         if(stats.pcmReady)return Promise.resolve(true);
         function build(name){
           if(bank[name]||!ctx||disposed)return;
-          var variants=name.indexOf('motor:')===0?1:2;bank[name]=[];
+          var recipe=recipes[name],variants=recipe?recipe.variants:name.indexOf('motor:')===0?1:2;bank[name]=[];
           for(var v=0;v<variants;v++){
-            var data=synthesize(name,v,22050),buffer=ctx.createBuffer(1,data.length,22050);
+            var data=recipe&&tablePCM(recipes,name,v,22050)||synthesize(name,v,22050),buffer=ctx.createBuffer(1,data.length,22050);
             buffer.getChannelData(0).set(data);bank[name].push(buffer);stats.pcmBuffers++;stats.pcmBytes+=data.byteLength;
           }
         }
