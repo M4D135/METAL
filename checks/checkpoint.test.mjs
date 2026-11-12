@@ -211,6 +211,58 @@ test('Continue restores a current-generation checkpoint at its relay', () => {
   assert.equal(app.memory.get(key + '-before-ascension'), undefined);
 });
 
+test('A real fall below a terrace opens the death screen and Continue restores the safe checkpoint', () => {
+  const make = (seed, stage) => ({
+    ...arsenalWorld(seed, stage), spawn: { x: 0, y: 6.4, z: 0, yaw: 0 },
+    walkable: [{ x: 0, y: 6.4, z: 0, w: 4, d: 4 }, { x: 0, y: -.25, z: 0, w: 40, d: 40, fallback: true, substrate: true }],
+    pickups: [], cores: [{ id: 0, x: 10, y: 6.4, z: 10 }, { id: 1, x: 12, y: 6.4, z: 10 }, { id: 2, x: 14, y: 6.4, z: 10 }],
+  });
+  const app = harness(null, {}, make); app.element('start').click();
+  const sim = app.simulations.at(-1), saved = app.memory.get(key), before = JSON.parse(saved).checkpoint;
+  sim.move(sim.state.player, 4, 0);
+  assert.equal(sim.state.player.airborne, true, 'Leaving the physical terrace must start a real fall');
+  for (let i = 0; i < 30 && app.element('body').dataset.state === 'playing'; i++) app.frame(100);
+  assert.equal(sim.state.dead, true);
+  assert.equal(sim.state.player.hp, 0);
+  assert.equal(app.element('body').dataset.state, 'dead');
+  assert.equal(app.element('result').hidden, false);
+  assert.match(app.element('result-title').textContent, /Chute fatale/);
+  assert.match(app.element('continue').innerHTML, /Reprendre au point de reprise/);
+  assert.equal(app.sounds.filter(q => q.name === 'dead').length, 1);
+  assert.equal(app.memory.get(key), saved, 'The fatal position must not replace the last safe checkpoint');
+  const elapsed = sim.state.elapsed;
+  app.frame(100); assert.equal(sim.state.elapsed, elapsed, 'The death screen must stop gameplay');
+  app.element('continue').click();
+  const restored = app.simulations.at(-1).state;
+  assert.equal(app.element('body').dataset.state, 'playing');
+  assert.equal(restored.dead, false);
+  assert.equal(restored.player.hp, before.state.player.hp);
+  for (const axis of ['x', 'y', 'z']) assert.equal(restored.player[axis], before.state.player[axis]);
+  for (let i = 0; i < 20; i++) app.frame(100);
+  assert.equal(restored.dead, false, 'The restored point must remain playable without a death loop');
+  assert.equal(app.memory.get(key), saved);
+});
+
+test('Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall', () => {
+  const make = (seed, stage) => ({
+    ...arsenalWorld(seed, stage), spawn: { x: 0, y: 3.2, z: 0, yaw: 0 },
+    walkable: [{ x: 0, y: 3.2, z: 0, w: 4, d: 4 }, { x: 0, y: -.25, z: 0, w: 40, d: 40, fallback: true, substrate: true }],
+    pickups: [], cores: [{ id: 0, x: 2.1, y: 3.2, z: 0 }, { id: 1, x: 12, y: 3.2, z: 10 }, { id: 2, x: 14, y: 3.2, z: 10 }],
+  });
+  const app = harness(null, {}, make); app.element('start').click();
+  const sim = app.simulations.at(-1), saved = app.memory.get(key);
+  sim.move(sim.state.player, 4, 0); app.frame(100);
+  assert.equal(sim.state.player.airborne, true); assert.equal(sim.state.relays, 1);
+  assert.equal(app.memory.get(key), saved, 'An in-flight reward must wait for a safe landing before saving');
+  for (let i = 0; i < 20 && !sim.state.dead; i++) app.frame(100);
+  assert.equal(sim.state.dead, true); assert.equal(app.memory.get(key), saved);
+  app.element('continue').click();
+  const restored = app.simulations.at(-1).state;
+  assert.equal(restored.relays, 0); assert.equal(restored.player.y, 3.2);
+  for (let i = 0; i < 20; i++) app.frame(100);
+  assert.equal(restored.dead, false);
+});
+
 for (const generation of [4, 3, undefined]) test(`Continue migrates generation ${generation ?? 'legacy'} to the same sector without losing prior-sector totals`, () => {
   const saved = savedPoint(generation); if (generation === undefined) delete saved.generation;
   const app = harness(saved), original = app.memory.get(key);

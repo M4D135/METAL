@@ -2,15 +2,14 @@
 
 **Des ennemis de métal. Une bande-son metal.** Un FPS d’horreur et d’action entièrement procédural : 430 machines réparties en garnisons et en vagues, trois colosses, des territoires destructibles et des musiques MOD originales. Modèles, matériaux, animation, effets, instruments et compositions sont produits par le code. Aucun asset de jeu importé.
 
-**Version 0.6.0 — Survie.** Explorez pour trouver vos armes et leurs munitions, récupérez le butin des machines et choisissez vos améliorations dans les ateliers. Le projet auparavant nommé FERRO conserve son dépôt et son adresse pour préserver les liens et les sauvegardes.
+**Version 0.6.1 — Survie.** Correctif des chutes sous les terrasses après une projection : mort et reprise au dernier point enregistré. Explorez pour trouver vos armes et leurs munitions, récupérez le butin des machines et choisissez vos améliorations dans les ateliers. Le projet auparavant nommé FERRO conserve son dépôt pour préserver les liens et les sauvegardes.
 
 ## Jouer
 
-- **Jeu :** https://ferro-procedural-fps.garden-lake-2660.chatgpt.site/
 - **Dépôt :** https://github.com/M4D135/FERRO
-- **Distribution autonome :** `dist/index.html`, utilisable hors ligne dans un navigateur récent.
+- **Distribution autonome :** [dist/index.html](dist/index.html), à télécharger puis ouvrir dans un navigateur récent, même hors ligne.
 
-L’hébergement garde son accès privé réservé au propriétaire. WebGL 2 est recommandé ; le rendu Canvas 2D sert de secours. Aucun CDN, paquet JavaScript, modèle, texture, police ou fichier audio externe n’est téléchargé. Le son commence après une interaction.
+WebGL 2 est recommandé ; le rendu Canvas 2D sert de secours. Aucun CDN, paquet JavaScript, modèle, texture, police ou fichier audio externe n’est téléchargé. Le son commence après une interaction.
 
 ## Trois territoires, trois colosses
 
@@ -61,6 +60,8 @@ La pression monte avec les secteurs et les objectifs activés. Les premières se
 Les structures peuvent perdre leurs panneaux, leurs équipements, leurs lampes et leurs supports. Les éléments privés de support s’effondrent ; les débris sont animés avec un nombre et une durée bornés. Les arbres et accessoires appartiennent à des ensembles destructibles. La suppression d’un obstacle met à jour les collisions, la navigation, le rendu et les ombres.
 
 Les **sols, rampes et plateformes de circulation restent portants**. Il existe un substrat visible sous les territoires, à −0,25 m, pour qu’une brèche extérieure ne donne pas sur un vide sans sol. Cette version réalise une destruction locale par morceaux ; elle n’est pas une simulation structurelle universelle de chaque matériau. Détruire une console libère son circuit, et casser une porte ouvre son passage, afin de conserver une mission terminable.
+
+Une projection hors d'une terrasse ne laisse plus le joueur bloqué vivant sur ce sol inférieur : une chute importante sur le substrat est fatale. Les positions véritablement sous le terrain ou hors du monde déclenchent aussi la mort. L'écran **Chute fatale** permet de reprendre au dernier point enregistré ; une découverte en vol attend un atterrissage sûr avant de remplacer ce point. Les brèches au niveau du sol, rampes, tremplins et ascenseurs restent praticables.
 
 Les conduites percées émettent de la vapeur brûlante depuis une **buse matérielle**, visible à l’extrémité de la conduite. Des cycles de pression animent aussi le décor ; les avertissements précèdent les décharges dangereuses. Détruire la buse ou son assemblage coupe le jet, ses dégâts et son souffle sonore : aucun point de vapeur ne reste suspendu dans le vide.
 

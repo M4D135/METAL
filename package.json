@@ -1,6 +1,6 @@
 {
   "name": "ferro-procedural-fps",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "description": "METAL — procedural survival FPS: sequenced waves, scavenged weapons, finite ammunition and massive original metal MOD music.",
   "scripts": {

@@ -1,4 +1,16 @@
-# Validation de METAL v0.6.0 — 12 novembre 2026
+# Correctif de chute 0.6.1 — 12 novembre 2026
+
+Référence précédant les travaux de campagne. `npm test` : **269 tests réussis, 0 échec, 0 annulé, 0 ignoré**, suite `node:test` en **29 207,292 ms** ; génération historique **18 configurations et 4 800 cibles** vérifiées séparément. Distribution : **692 464 octets bruts**, **208 799 octets gzip**, **0 asset externe**. SHA-256 : `c7d78c7939dddb25b47fb22d93136f0f7cb024f6053d9aa0cc97b261ee98f9f2`.
+
+Une roquette réelle faisait tomber le joueur depuis 3,2 m sur le substrat −0,25 m, avec environ 91 PV restants. Le compteur de chute était réinitialisé à l'atterrissage. La régression vérifie désormais cette explosion à 20/60/120 Hz, puis la mort unique. Le scénario physique est également reproduit dans les trois arènes de la graine 96 après destruction de leur rambarde. Il démontre une chute hors du bord, pas une traversée du plancher porteur.
+
+La QA indépendante valide **42 cas ciblés** : 3 chutes, 3 brèches basses aller-retour, 9 tremplins, 6 ascenseurs, 12 rampes, 3 plafonds et 6 joints de palier. La géométrie et les collisions sont réelles ; les ennemis sont retirés et les systèmes nécessaires préactivés pour isoler les parcours. Les tests du shell utilisent la vraie simulation, avec DOM/audio/rendu substitués : écran de mort, reprise jouable, sauvegarde intacte et acquisition en vol ne remplaçant pas le dernier point sûr. Aucun nouvel essai matériel, navigateur ou FPS n'est revendiqué pour ce correctif.
+
+L'audit préalable de la campagne et de la passe visuelle figure dans [docs/CAMPAIGN_AUDIT.md](docs/CAMPAIGN_AUDIT.md).
+
+---
+
+# Validation de METAL v0.6.0 — 12 novembre 2026 (historique)
 
 Cette section décrit **0.6.0 Survie**, génération **6**, avec quatre armes, deux mains, bouclier, vagues, économie et inférence tactique optionnelle. Les validations 0.5 et antérieures conservées plus bas sont historiques. Les résultats structurés et les empreintes des sources sont dans [docs/validation-v06.json](docs/validation-v06.json).
 

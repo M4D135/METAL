@@ -1,4 +1,4 @@
-# Architecture — METAL 0.6.0 — Survie
+# Architecture — METAL 0.6.1 — Survie
 
 ## Distribution et identité
 
@@ -43,6 +43,8 @@ Les arènes font 60 × 60 m, avec un rayon de combat de 28 m et une passerelle d
 Une porte mobile utilise le même `progress` pour son battant visuel et physique. Les lifts exposent `y`, `target`, `powered`, `moving` et `carrying`. Les passagers restent posés sur leur plateau, avec vérification des murs et de l’espace au-dessus de la tête. `liftStop.carrying` distingue l’arrivée du joueur d’un rappel à vide.
 
 Les tremplins exposent `{id,x,y,z,r,target:{x,y,z},flightTime,yaw}`. Le contact calcule une impulsion depuis la position réelle, avec gravité de 12 m/s², sans recentrer ni téléporter l’acteur. Les champs `airborne`, `airVX/Y/Z`, `airTime`, `padCooldown` et `padId` sont sauvegardés. Les plafonds, murs et atterrissages sont physiques ; le cooldown empêche une relance involontaire au même contact.
+
+Le garde de chute détecte les coordonnées non finies/hors limites, `y < -14` et les pieds à plus de 0,5 m sous un terrain porteur, avec exemption d'un véritable ascenseur ou d'un sol inférieur explicitement praticable. Un impact vertical supérieur à 6 m/s sur le seul substrat de fond est fatal (environ 1,5 m de chute). Les vrais sols inférieurs conservent leurs règles d'atterrissage. `dead{reason:'fall'}` ignore protection de reprise, esquive et bouclier, arrête le jeu et n'est émis qu'une fois. Les points de reprise demandés en vol sont différés jusqu'à un atterrissage vivant ; ils ne remplacent donc pas le dernier point sûr au cours d'une chute fatale. Le format des snapshots et la génération restent identiques.
 
 Le shell conserve au plus 0,12 s de temps écoulé par image, divisée en sous-pas d’au plus 1/60 s. Les entrées ponctuelles sont consommées une seule fois ; les tirs et déplacements tenus continuent. Une suspension plus longue ne déclenche pas un rattrapage illimité. Les déplacements sont eux-mêmes subdivisés pour ne pas franchir une paroi mince.
 

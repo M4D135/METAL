@@ -11,7 +11,7 @@
   const audio=FAudio.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
-  let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,lastFootstep=0,outdoorMix=0;
+  let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades'],ammoNames=['balles','cartouches','roquettes','grenades'];
   const worldCache=new Map();let preparationSerial=0,shieldLift=0;
   const actorMotion=new Map(),systemMotion=new Map();
@@ -82,6 +82,8 @@
   }
   function saveCheckpoint(){
     if(!sim||sim.state.dead||sim.state.won)return;
+    if(sim.state.player.airborne){checkpointPending=true;return;}
+    checkpointPending=false;
     checkpoint=sim.snapshot();
     savedRun={version:2,generation:world.generation||3,seed,stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
     try{localStorage.setItem(SAVE_KEY,JSON.stringify(savedRun));saveAvailable=true;}catch{saveAvailable=false;}
@@ -118,6 +120,7 @@
     if(value!=='playing'){audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
   function load(n,newSeed,loadout){
+    checkpointPending=false;
     stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed);const carry=copyLoadout(loadout);sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),...(brain?{brain}:{})});sim.setDifficulty?.(prefs.difficulty);
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
@@ -154,12 +157,12 @@
       action();
     }catch(error){setMode('menu');toast('Préparation interrompue. Réessayez depuis le menu.',4);console.error('METAL preparation:',error);}
   }
-  function result(dead){
+  function result(dead,reason){
     const s=sim.state,finished=!dead&&stage===2;
     if(!dead){runStats.time+=s.elapsed;runStats.kills+=s.kills;runStats.shots+=s.shots;runStats.hits+=s.hits;runStats.score+=s.score||0;}
     $('result-kicker').textContent=dead?'TRANSMISSION PERDUE':finished?'TRANSMISSION RÉTABLIE':'RELAIS SYNCHRONISÉS';
-    $('result-title').textContent=dead?'Signal perdu.':finished?'Vous êtes sorti.':'Secteur sécurisé.';
-    $('result-copy').textContent=dead?'Votre dernier point a gardé le signal. Les commandes et les arrivées en ascenseur enregistrent aussi votre progression.':finished?'Trois colosses abattus. Neuf relais rallumés. Le dernier Veilleur s’est tu ; les forges respirent encore.':'Le colosse est tombé. Alimentation rétablie, relais synchronisés. Un nouveau territoire et une machine plus immense vous attendent.';
+    $('result-title').textContent=dead?(reason==='fall'?'Chute fatale.':'Signal perdu.'):finished?'Vous êtes sorti.':'Secteur sécurisé.';
+    $('result-copy').textContent=dead?(reason==='fall'?'La chute a rompu le signal. Reprenez au dernier point enregistré.':'Votre dernier point a gardé le signal. Les commandes et les arrivées en ascenseur enregistrent aussi votre progression.'):finished?'Trois colosses abattus. Neuf relais rallumés. Le dernier Veilleur s’est tu ; les forges respirent encore.':'Le colosse est tombé. Alimentation rétablie, relais synchronisés. Un nouveau territoire et une machine plus immense vous attendent.';
     const stats=finished?runStats:{time:s.elapsed,kills:s.kills,shots:s.shots,hits:s.hits};
     $('result-time').textContent=formatTime(stats.time);$('result-kills').textContent=String(stats.kills);$('result-accuracy').textContent=(stats.shots?Math.min(100,Math.round(stats.hits/stats.shots*100)):0)+'%';
     $('result-score').textContent=String(Math.round(dead?runStats.score+(s.score||0):runStats.score));
@@ -208,11 +211,11 @@
       if(e.name==='bossPhase')toast('SURCHARGE · le colosse change de rythme. Surveillez les zones au sol.',3.5);
       if(e.name==='bossDeath'){const boss=sim.state.enemies.find(a=>a.id===e.id);encounter(boss?.bossName||'Le Colosse','COLOSSE ABATTU');checkpointDue=true;}
       if(e.name==='win'){result(false);break;}
-      if(e.name==='dead'){result(true);break;}
+      if(e.name==='dead'){result(true,e.reason);break;}
     }
     sim.state.events.length=0;
     selectedWeapon=sim.state.weapon;
-    if(checkpointDue)saveCheckpoint();
+    if(checkpointDue||checkpointPending&&!sim.state.player.airborne)saveCheckpoint();
   }
   const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>({shape,p,s,mat,r,emissive});
   function renderShop(message){

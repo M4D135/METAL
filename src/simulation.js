@@ -57,7 +57,7 @@
     const floorGX=Math.floor(world.bounds.minX/8),floorGZ=Math.floor(world.bounds.minZ/8),floorGW=Math.floor(world.bounds.maxX/8)-floorGX+1,floorGD=Math.floor(world.bounds.maxZ/8)-floorGZ+1;
     const floorBuckets=Array.from({length:floorGW*floorGD},()=>[]);
     for(const f of floors){const x0=Math.max(0,Math.floor((f.x-f.w/2-1e-7)/8)-floorGX),x1=Math.min(floorGW-1,Math.floor((f.x+f.w/2+1e-7)/8)-floorGX),z0=Math.max(0,Math.floor((f.z-f.d/2-1e-7)/8)-floorGZ),z1=Math.min(floorGD-1,Math.floor((f.z+f.d/2+1e-7)/8)-floorGZ);for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)floorBuckets[z*floorGW+x].push(f);}
-    function ground(x,z){
+    function ground(x,z,activeTraps=trapStates){
       if(!floors.length)return 0;
       let y=-Infinity,flat=-Infinity,fallback=-Infinity;
       const gx=Math.floor(x/8)-floorGX,gz=Math.floor(z/8)-floorGZ,local=gx>=0&&gx<floorGW&&gz>=0&&gz<floorGD?floorBuckets[gz*floorGW+gx]:floors;
@@ -66,8 +66,23 @@
         if(f.substrate||f.fallback)fallback=Math.max(fallback,h);else if(!f.slopeX&&!f.slopeZ)flat=Math.max(flat,h);else y=Math.max(y,h);
       }
       let result=Number.isFinite(flat)?flat:Number.isFinite(y)?y:fallback;
-      for(const t of trapStates)if(t.kind==='floor'&&Math.abs(x-t.x)<t.w/2&&Math.abs(z-t.z)<t.d/2&&Math.abs(result-t.y)<.1)result=t.y-(t.travel||.85)*t.progress;
+      for(const t of activeTraps)if(t.kind==='floor'&&Math.abs(x-t.x)<t.w/2&&Math.abs(z-t.z)<t.d/2&&Math.abs(result-t.y)<.1)result=t.y-(t.travel||.85)*t.progress;
       return result;
+    }
+    function fallbackLanding(x,z,y){
+      if(Math.abs(y-ground(x,z))>.08)return false;
+      const gx=Math.floor(x/8)-floorGX,gz=Math.floor(z/8)-floorGZ,local=gx>=0&&gx<floorGW&&gz>=0&&gz<floorGD?floorBuckets[gz*floorGW+gx]:floors;
+      let fallback=false;
+      for(const f of local)if(Math.abs(x-f.x)<=f.w/2+1e-7&&Math.abs(z-f.z)<=f.d/2+1e-7){if(!f.substrate&&!f.fallback)return false;fallback=true;}
+      return fallback;
+    }
+    function beneathTerrain(x,z,y,lifts=s.lifts,activeTraps=trapStates){
+      if(!(ground(x,z,activeTraps)-y>.5))return false;
+      // A real deck or an explicit lower walkable floor is legitimate. The
+      // fallback substrate and an arbitrary prop underneath terrain are not.
+      if(lifts.some(l=>onLift(l,x,z)&&Math.abs(l.y-y)<=.43))return false;
+      const gx=Math.floor(x/8)-floorGX,gz=Math.floor(z/8)-floorGZ,local=gx>=0&&gx<floorGW&&gz>=0&&gz<floorGD?floorBuckets[gz*floorGW+gx]:floors;
+      return !local.some(f=>!f.substrate&&!f.fallback&&Math.abs(x-f.x)<=f.w/2+1e-7&&Math.abs(z-f.z)<=f.d/2+1e-7&&(f.y||0)+(x-f.x)*(f.slopeX||0)+(z-f.z)*(f.slopeZ||0)<=y+.08);
     }
     const groundAt=(x,z)=>{const y=ground(x,z);return Number.isFinite(y)?y:0;};
     const elevated=floors.some(f=>f.y||f.slopeX||f.slopeZ)||(world.lifts||[]).length>0;
@@ -237,6 +252,10 @@
       return y;
     }
     function land(e,y,impact){
+      // The world-wide substrate supports ordinary breached exits (a .25m
+      // step), but must not catch a deep fall beneath a raised stage. Six m/s
+      // is a 1.5m vertical fall; ordinary authored floors keep their old rules.
+      if(e===p&&impact>6&&fallbackLanding(e.x,e.z,y)){putHeight(e,y);fatalFall();return;}
       putHeight(e,y);e.airborne=false;e.airVX=e.airVY=e.airVZ=e.airTime=0;e.padCooldown=Math.max(.5,e.padCooldown);
       if(e===p){stopMotion();p.dashing=0;}
       else{e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;e.thinkWait=e.planWait=0;e.tactic='hold';}
@@ -264,7 +283,7 @@
         if(ground(nx,e.z)<=y+.02&&!blocked(nx,e.z,r,y)&&!actorBlocked(e,nx,e.z,r,y))e.x=nx;else e.airVX=0;
         if(ground(e.x,nz)<=y+.02&&!blocked(e.x,nz,r,y)&&!actorBlocked(e,e.x,nz,r,y))e.z=nz;else e.airVZ=0;
         if(y<-14||e.airTime>8){
-          if(e===p){p.hp=0;s.dead=true;stopMotion();emit('dead');}else damageEnemy(e,e.hp);
+          if(e===p)fatalFall();else damageEnemy(e,e.hp);
           e.airborne=false;e.airVX=e.airVY=e.airVZ=e.airTime=0;break;
         }
       }
@@ -293,6 +312,16 @@
       locomotion.blocked=false;
       if(reset)locomotion.stridePhase=locomotion.distance=0;
     }
+    function fatalFall(){
+      if(s.dead||s.won)return;
+      p.hp=0;p.dashing=0;Object.assign(p,freshAir());s.dead=true;s.damage=1;s.combo=s.comboTime=0;stopMotion();
+      if(arsenal)s.shield.raised=false;
+      emit('dead',{reason:'fall'});
+    }
+    function checkPlayerBounds(){
+      if(!s.dead&&(!Number.isFinite(p.x)||!Number.isFinite(p.y)||!Number.isFinite(p.z)||p.x<b.minX||p.x>b.maxX||p.z<b.minZ||p.z>b.maxZ||p.y<-14||beneathTerrain(p.x,p.z,p.y)))fatalFall();
+      return s.dead;
+    }
     // Exact integral of a short smoothstep ramp, plateau, and smoothstep release.
     // The boost ends at 0.2s and never enters normal movement's velocity accumulator.
     function dashIntegral(time){
@@ -303,7 +332,7 @@
     }
     function locomote(dt,input){
       if(p.airborne){
-        const x=p.x,z=p.z;airMove(p,dt,input);
+        const x=p.x,z=p.z;airMove(p,dt,input);if(s.dead)return;
         const vx=dt>0?(p.x-x)/dt:0,vz=dt>0?(p.z-z)/dt:0;
         Object.assign(locomotion,{vx,vz,speed:0,forward:0,strafe:0,moveBlend:0,sprintBlend:0,dashBlend:0,accelForward:0,accelStrafe:0,blocked:false});s.moving=0;return;
       }
@@ -1626,7 +1655,7 @@
       }
     }
     function step(dt,input={}){
-      dt=Number.isFinite(dt)?clamp(dt,0,.05):0;if(s.won||s.dead)return;
+      dt=Number.isFinite(dt)?clamp(dt,0,.05):0;if(s.won||s.dead||checkPlayerBounds())return;
       s.time+=dt;s.elapsed+=dt;fireWait=Math.max(0,fireWait-dt);emptyWait=Math.max(0,emptyWait-dt);navWait-=dt;hazardWait=Math.max(0,hazardWait-dt);recovery=Math.max(0,recovery-dt);
       if(arsenal){for(let i=0;i<weaponSlots;i++)weaponWait[i]=Math.max(0,weaponWait[i]-dt);s.leftFlash=Math.max(0,s.leftFlash-dt*9);}
       s.flash=Math.max(0,s.flash-dt*9);s.damage=Math.max(0,s.damage-dt*1.9);s.hitMarker=Math.max(0,s.hitMarker-dt);s.pulseVisual=Math.max(0,s.pulseVisual-dt);
@@ -1636,14 +1665,14 @@
       p.heat=Math.max(0,p.heat-dt*(fireWait>0?.1:.35)*stats.coolingMultiplier);if(p.overheated&&p.heat<.3){p.overheated=false;emit('cooled');}
       p.dash=Math.max(0,p.dash-dt);p.pulseCooldown=Math.max(0,p.pulseCooldown-dt);
       airTimers(p,dt);for(const j of s.jumpPads)j.flash=Math.max(0,j.flash-dt);
-      updateShield(dt,input);syncDestruction();updateSystems(dt);pumpNav();updateDirector(dt);updateEnvironment(dt);if(s.dead)return;if(input.interact&&!interactHeld)interact();interactHeld=!!input.interact;
+      updateShield(dt,input);syncDestruction();updateSystems(dt);pumpNav();updateDirector(dt);updateEnvironment(dt);if(checkPlayerBounds())return;if(input.interact&&!interactHeld)interact();interactHeld=!!input.interact;
       if(input.pulse)pulse();
-      locomote(dt,arsenal&&s.equipment.left==='shield'?{...input,dash:false}:input);if(s.dead)return;checkPad(p);
+      locomote(dt,arsenal&&s.equipment.left==='shield'?{...input,dash:false}:input);if(checkPlayerBounds())return;checkPad(p);
       if(input.melee)melee();
       if(input.fire)fire(input.assist);
       if(arsenal&&input.fireLeft&&Number.isInteger(s.equipment.left))fire(input.assist,'left');
       if(navWait<=0){if(!advanced)rebuildNav();navWait=.6;}
-      updateEnemies(dt);updateBossAttacks(dt);updateProjectiles(dt);
+      updateEnemies(dt);updateBossAttacks(dt);updateProjectiles(dt);if(checkPlayerBounds())return;
       for(const bullet of s.bullets){
         const speed=Math.hypot(bullet.dx,bullet.dy,bullet.dz),travel=speed*dt;
         if(!(speed>0)){bullet.life=0;continue;}
@@ -1767,6 +1796,7 @@
         }
         const v=a.player;if(v&&v.y===undefined&&data.systemsVersion===undefined)v.y=0;
         require(v&&number(v.x,b.minX,b.maxX)&&number(v.z,b.minZ,b.maxZ)&&!blocked(v.x,v.z,.28,v.y,savedDoors,savedSolids,savedTrapBoxes));validAir(v,v.x,v.z,v.y);
+        require(a.dead||!beneathTerrain(v.x,v.z,v.y,lifts,traps));
         require(number(v.yaw,-1e6,1e6)&&number(v.pitch,-1.2,1.2)&&number(v.hp,0,savedStats.maxHp)&&number(v.heat,0,1)&&bool(v.overheated));
         require(number(v.dash,0,1.7)&&number(v.dashing,0,.2)&&number(v.pulseCooldown,0,7)&&a.dead===(v.hp===0));
         require(number(t.fireWait,0,1.25)&&number(t.navWait,0,.6)&&number(t.hazardWait,0,.65));
