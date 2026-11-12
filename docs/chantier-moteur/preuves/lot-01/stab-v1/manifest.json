@@ -1,0 +1,27 @@
+{
+  "finding": "STAB-V1",
+  "base": "63668aca7045e62cd524973b226f21e9ec5703e8",
+  "files": [
+    {
+      "file": "lot01-stab-paired-final.json.gz",
+      "rawBytes": 31083,
+      "rawSha256": "e77e41d122f5f535eeb679c82cf5e3298e8298fdff777bf56f1f580b9cae30b1",
+      "gzipBytes": 2959,
+      "gzipSha256": "e1d7183d9779b6a2469a08c7fe03293f4fdc2ea2664c2b287e9099dd9d4812eb"
+    },
+    {
+      "file": "lot01-stab-before.jsonl.gz",
+      "rawBytes": 15303,
+      "rawSha256": "51278bccf2e62bdf92d51d6a6010d6f87fe9b1de262b5f356488063cc12dc98a",
+      "gzipBytes": 1820,
+      "gzipSha256": "0d91e07af3213eb0566521d1c7b70ec888ab450a10ec0b407fd90353d9273a33"
+    },
+    {
+      "file": "integration-tests.log.gz",
+      "rawBytes": 14183,
+      "rawSha256": "457f3aa8011307e9cfd805d1c4f8d717f1b71083f69685090b4b888f295f8ad2",
+      "gzipBytes": 3213,
+      "gzipSha256": "cb66c70079b1e83fee6e3413adfb36ed74da0baccec05d9b88af307203bfd9e4"
+    }
+  ]
+}

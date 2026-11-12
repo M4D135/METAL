@@ -1,3 +1,108 @@
+# Validation du chantier moteur — lot 01 terminé — 12 novembre 2026
+
+**LOAD-01, LOOP-01/LOOP-V2, STAB-V1, LOOP-06, LOOP-10 et LOOP-09.** La branche réunit les reprises compatibles, le tampon de tir par main, la capture/annulation du pointeur, la molette seuillée et le limiteur stabilisé avec indication de la cadence choisie.
+
+| Contrôle | Résultat |
+|---|---|
+| `npm test` complet | **470/470**, zéro échec, zéro ignoré ; baseline 422/422 |
+| Vérification indépendante du monde | **18 cas**, PASS |
+| Build autonome | **812 696 octets bruts**, zéro ressource externe |
+| Version | **0.8.1** |
+| Limiteur sur sources finales | **63/63 scénarios synthétiques stables** |
+
+SHA-256 : `4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a`. Les journaux des étapes ci-dessous sont historiques ; la présente entrée porte sur leur réunion finale. [Rapport et arbitrages](docs/chantier-moteur/RAPPORT.md), [preuves finales et captures](docs/chantier-moteur/preuves/lot-01/final/README.md).
+
+Le navigateur Chrome disponible valide l’affichage des réglages, l’activation/remise à zéro de l’accélération système, le lancement d’une partie et la pause. **WebGL 2 indisponible, rendu CPU de secours autour de 1 FPS** : calibration de cadence non obtenue, capture physique non validée, aucune conclusion NVIDIA/GPU/écran réel. Les tests déterministes couvrent séparément ces contrats. Téléphone, Windows/NVIDIA, Safari et Firefox restent à essayer.
+
+Les reprises acceptées passent de 7/31 à 31/31 ; les 17 refus LOOP sur 44 disparaissent. À 60 Hz quantifié, 900 images font 900 pas au lieu de 1 500. Les douze combinaisons de clic bref testées produisent un tir chacune. Le limiteur choisit une cadence régulière par diviseur entier : la cible 60 donne 75 i/s sur 75 Hz, 72 sur 144 Hz, 55 sur 165 Hz ; le libellé exprime ce choix et ne promet pas un plafond strict. Le futur gouverneur natif 60/30 est réservé aux lots 06/07/15.
+
+Aucune fusion de main, aucun déploiement, aucun changement de version ni format de sauvegarde. Les lots 02 et suivants restent à réaliser. Le navigateur, les pilotes, les outils et les preuves sont exclus de la taille brute du jeu.
+
+---
+
+# Validation du chantier moteur — lot 01 / T3 — 12 novembre 2026
+
+**LOOP-10 : capture, visée et molette.** Capture dans le geste, mouvement brut par défaut avec repli, préférence d’accélération persistée, clic d’acquisition sans tir. Une annulation empêche aussi les réponses tardives, sans invalider un relâchement normal. Trente événements de molette de 4 px donnent **30 → 1 changement d’arme**.
+
+**85/85 tests ciblés cumulés**, dont 24 tests d’entrées ; build et contrôle de distribution verts. HTML **809 176 octets bruts**, version 0.8.1, zéro ressource externe. SHA-256 `9a935866e0f1b64bda17fc5e5092cd534deeab38fc0d44367bf44e6fbba950e2`.
+
+[Preuves initiales et régression pointercancel](docs/chantier-moteur/preuves/lot-01/t3/PROOF.md). Le changement voulu de seuil de molette et la nouvelle acquisition après annulation sont expliqués dans le rapport ; les tests ne sont pas affaiblis pour masquer un échec. La suite globale et l’interface seront vérifiées après T4.
+
+---
+
+# Validation du chantier moteur — lot 01 / T2 — 12 novembre 2026
+
+**LOOP-06 : tir ponctuel conservé.** Tampon indépendant de 150 ms par main, proposé au premier sous-pas jusqu’au tir ou à expiration ; annulation lors des changements de contexte. Les treize tests dédiés passaient de **5 verts / 8 rouges** à **13 verts**. Les douze combinaisons de périphérique et de cadence produisent exactement un tir entre deux images.
+
+Après réunion avec T1 et STAB-V1 : **73/73 tests ciblés**, build et contrôle de distribution verts. HTML **806 474 octets bruts**, aucune ressource externe, version **0.8.1** ; SHA-256 `2aa738e123901c4616dac5ec569d07016071d7cfeeed64f94410eaf4d862f8be`.
+
+[Preuves T2](docs/chantier-moteur/preuves/lot-01/t2/PROOF.md). Les surfaces de périphériques sont factices ; la validation matérielle ne se déduit pas de ces tests. La suite complète et l’essai navigateur sont réservés à la clôture du lot.
+
+---
+
+# Validation du chantier moteur — lot 01 / STAB-V1 — 12 novembre 2026
+
+Le correctif provisoire de subdivision est intégré après T1. **1 500 → 900 pas** pour 900 images à 60 Hz quantifiées, **1 800 → 900** à 59,94 Hz ; zéro double pas dans ces motifs, aucun temps écoulé perdu, pas borné à 17,7 ms. Les cinq tests ajoutés vérifient également une session longue et le passage d’un joueur contre un mur mince.
+
+**55/55 tests ciblés** (cadence + checkpoints), build et `checks/build.test.mjs` verts. HTML **804 421 octets bruts**, zéro ressource externe, version **0.8.1**. SHA-256 : `3aa68a79c28e19ed982605a557c8e35585bf3478ad54de05ea3cbadc3ddc4f50`.
+
+Les ratios CPU appariés varient selon le motif et les contrôles restent bruités ; aucun gain universel de 18 à 48 % n’est revendiqué. Le changement de subdivision modifie volontairement les trajectoires. [Preuves et commande de reproduction](docs/chantier-moteur/preuves/lot-01/stab-v1/README.md). La suite complète finale et le navigateur seront consignés à la clôture du lot.
+
+---
+
+# Validation du chantier moteur — lot 01 / T1 — 12 novembre 2026
+
+**LOAD-01, LOOP-01 et LOOP-V2 : reprise corrigée, version 0.8.1 inchangée.**
+La suppression du seul rejet d'intersection des gravats conserve les autres
+validations et l'atomicité. Le shell retente une copie sans débris visuels,
+préserve l'équipement d'entrée lors du repli et conserve le dernier point
+refusé avant tout remplacement de la sauvegarde active, y compris après un
+échec temporaire du stockage.
+
+| Contrôle | Avant, main propre `63668ac` | Après T1 |
+|---|---|---|
+| Suite complète `npm test` | **422/422, zéro échec** | **432/432, zéro échec** |
+| Reprises LOAD acceptées | 7/31 | **31/31** |
+| Refus LOOP | 17/44 | **0/44** |
+| HTML autonome brut | 803 375 octets | **804 329 octets** |
+| Ressources externes | 0 | 0 |
+| Version | 0.8.1 | 0.8.1 |
+
+Les 31 snapshots restaurés sont identiques en valeurs et structure JSON ;
+**30/31 sont identiques octet pour octet**. L'écart restant est seulement
+l'ordre de deux propriétés d'un butin, dans un chemin de sérialisation
+inchangé. Les six cas générés contractuels (l:0/c:9, trois murs, roquette et
+300 pas) restaurent un snapshot exactement identique.
+
+Le build et la suite complète ont réussi sur le worktree T1 ; les contrôles
+de génération (18 cas) et du document distribué passent aussi. Les 44
+fichiers de sources, tests, configuration et build comparés sont identiques
+après intégration du commit d'outillage lot 00 / T1 `8098725`. Le build
+d'intégration a le même SHA-256 :
+`f52b93562b0566dbe167410e5099af18860190ffc14dd8a7575bed722e62ebfd`.
+`SIZE.json` fait foi ; navigateur, pilotes, tests et documentation sont
+exclus des 804 329 octets bruts.
+
+**Préflight MURS-V1 : les huit échecs signalés sur le Mac d'audit ne sont pas
+reproduits.** Les huit tests ciblés passent sur `673d6b2` et son parent
+`79e6e35`, sous Linux x86-64 / Node 24.22.1 ; main intact passe 422/422.
+Les fichiers de génération et de tests campagne de main sont identiques à
+ceux de `673d6b2`, les six `legacyHashes` sont inchangés et le retrait des
+panneaux / `openEntries` est conditionné par `w.campaignVersion===2`.
+L'attribution au retrait des murs n'est donc pas confirmée ici ; le résultat
+macOS arm64 reste inexpliqué. Aucune empreinte régénérée ni correction de
+`world.js` n'a été nécessaire sur ces preuves.
+
+Le [rapport](docs/chantier-moteur/RAPPORT.md) cite le master de la PR #2 au
+commit `6a17e08281b70feae33015d7059ef21717666ba3`. Les
+[preuves T1](docs/chantier-moteur/preuves/lot-01/t1/README.md) et le
+[préflight](docs/chantier-moteur/preuves/lot-01/preflight/README.md) conservent
+les journaux gzip, mesures et manifestes. Aucun nouveau contrôle de
+navigateur, appareil réel ou écoute subjective n'est revendiqué. Les autres
+tâches du lot 01 restent distinctes ; le lot complet n'est pas déclaré fini.
+
+---
+
 # Validation du chantier moteur — lot 00 / T1 — 12 novembre 2026
 
 **SIM-11, IA-06 : outillage de preuve livré, version 0.8.1 inchangée.** Les

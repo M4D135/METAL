@@ -183,3 +183,199 @@ champs par pas est explicite : les hashes et le snapshot complètent les tests
 fonctionnels, sans les remplacer. Les tâches différées du lot 00 — harnais de
 boucle, census, trace, overlay et comparaison de pixels notamment — restent
 nécessaires après le lot 05 selon le master.
+
+## Lot 01 — bugs bloquants — 12 novembre 2026
+
+**T1 terminé — LOAD-01, LOOP-01 et LOOP-V2 absorbés selon les arbitrages.**
+Cette section ne déclare pas le lot 01 entier terminé. Les autres tâches du
+lot restent séparées de ce commit.
+
+La référence documentaire est le [master de la PR #2 au commit
+`6a17e08281b70feae33015d7059ef21717666ba3`](https://github.com/M4D135/METAL/blob/6a17e08281b70feae33015d7059ef21717666ba3/docs/chantier-moteur/MASTER-PROMPT.md).
+Il demande d'abord le contrôle des huit échecs historiques MURS-V1, puis T1.
+Les constats et contre-vérifications priment sur les chiffres attendus des
+fiches ; aucun chiffre du Mac d'audit n'est présenté comme reproduit ici.
+
+### Préflight MURS-V1 : les huit échecs ne sont pas reproduits
+
+| Référence | Contrôle | Résultat ici |
+|---|---|---|
+| Parent `79e6e35703ec84193491f36ea44f87fa910b3847` | Huit tests historiques ciblés | **8/8, zéro échec** |
+| Version 0.8.0 `673d6b2b80026103b4523fb0b3b16fb708556b06` | Huit tests historiques ciblés | **8/8, zéro échec** |
+| Main intact `63668aca7045e62cd524973b226f21e9ec5703e8` | Suite complète | **422/422, zéro échec** |
+
+Les tests ciblés portent sur les six empreintes classiques, le mode campagne
+strictement explicite et la géométrie historique des trois premiers mondes
+de campagne. Ils ont été exécutés avec **Node 24.22.1 sur Linux x86-64**.
+Les [deux journaux et le manifeste](preuves/lot-01/preflight/README.md)
+conservent la commande, les commits et les empreintes des fichiers ; la
+baseline main déjà archivée avec le lot 00 n'est pas dupliquée.
+
+`src/world.js` et `checks/campaign-world.test.mjs` de main sont identiques
+octet pour octet aux fichiers du commit audité `673d6b2`. Les six valeurs de
+`legacyHashes` sont inchangées entre `79e6e35`, `673d6b2` et main. Le code
+0.8.0 conditionne le retrait des panneaux et l'appel à `openEntries` par
+`w.campaignVersion===2` : le monde historique est explicitement conservé.
+
+**L'attribution des huit échecs au retrait des murs n'est pas confirmée ici.**
+Le résultat rapporté sur macOS arm64 / Node 24.18 n'est ni reproduit ni
+expliqué. Aucune empreinte n'a été régénérée, aucun test affaibli et aucun
+correctif de `world.js` n'est nécessaire sur les preuves acquises. Ce point
+reste une différence d'environnement à comprendre, pas un correctif déclaré
+réussi sans reproduction.
+
+### Problème T1 et changement livré
+
+Le validateur refusait des gravats au repos que la physique réelle avait
+produits : le test d'intersection avec les solides ou pièges mobiles était
+plus strict que le comportement du jeu. Un tel refus pouvait réinitialiser
+le secteur et perdre l'équipement porté à son entrée.
+
+Le seul prédicat d'intersection des gravats au repos est retiré. Les
+contrôles d'appui, de bornes, d'identité, de vitesse et la validation atomique
+restent en place. La physique, la position des morceaux et leur état
+`resting` ne changent pas ; les variantes physiques de LOOP-01/LOOP-V2 sont
+écartées conformément à l'arbitrage.
+
+Si une reprise échoue encore, le shell tente une **copie** sans
+`rubbleVersion`, `state.rubble` et `timers.rubbleSerial`. Une réussite
+conserve position, santé, progression, équipement et destruction ; seuls les
+débris visuels sont retirés. Le repli ultime transmet
+`copyLoadout(v.entryLoadout||v.entryInventory)` et écrit le nouveau point
+seulement après la relance réussie. Aucun format de sauvegarde ne change.
+
+Le dernier point refusé est conservé dans le slot remplaçable
+`ferro-expedition-v2-refuse` avant d'écraser le point actif ; le premier
+backup de migration reste intact. Si cette écriture échoue, la source reste
+en attente : les checkpoints suivants et l'effacement de fin de partie
+doivent d'abord la préserver. Les tests couvrent une panne de stockage
+temporaire, sa récupération et un échec injecté pendant la relance.
+
+### Mesures avant et après T1
+
+| Contrôle | Avant | Après |
+|---|---:|---:|
+| Reprises LOAD acceptées | **7/31** | **31/31** |
+| Refus LOOP, quatre mondes, motif b | **17/44** | **0/44** |
+| Nouveaux cas contractuels générés, restauration exacte | Refus reproduit sur les deux mondes | **6/6** |
+| Suite complète `npm test` | **422/422** | **432/432** |
+| HTML autonome brut | 803 375 octets | **804 329 octets** |
+
+Les bancs LOAD et LOOP chargent les sources dans le domaine principal de
+Node. La contre-vérification après patch utilise les sources candidates
+réelles, sans leur injecter le correctif en mémoire. Le tableau détaillé
+est dans [la fiche de preuve T1](preuves/lot-01/t1/README.md).
+
+Avec `recover:false`, **31/31 snapshots sont identiques en valeurs et
+structure JSON ; 30/31 le sont octet pour octet**. Dans le premier point
+`rocket l:0`, un butin `salvage` change uniquement l'ordre de ses propriétés
+`ammo` et `armor`. Le diagnostic récursif ne trouve aucune différence de
+valeur ou de structure. Ce chemin de sérialisation est inchangé ; le chiffre
+historique 29/31 avec `recover:true` ne décrit pas cette mesure actuelle.
+
+Les six régressions contractuelles utilisent les vrais mondes l:0 et c:9
+de campagne V2, graine 96 : trois murs par monde, une roquette puis 300 pas
+à 1/60 s. Leur snapshot est exactement identique après restauration.
+LOOP vérifie les mondes classic-0, campaign-0, campaign-9 et campaign-10 :
+zéro refus dans un monde régénéré comme dans le même objet monde. Le banc
+atteint 33 secondes simulées avec l'argument 30, soit onze essais par monde.
+
+### Validation, intégration et limites
+
+`python3 tools/build.py` et `npm test` ont terminé avec le code 0 sur le
+worktree T1 : **432 réussis, zéro échec, zéro annulé, zéro ignoré**. Les dix
+tests ajoutés expliquent le passage de 422 à 432. Les contrôles séparés de
+génération (18 cas) et du build passent également, sans être additionnés
+artificiellement au total TAP.
+
+Après le fast-forward local du commit d'outillage lot 00 / T1
+`8098725e5b85cf44996d5379fb215643b2615e46`, les **44 fichiers** de sources,
+tests, configuration et build comparés sont identiques au worktree T1
+validé. La suite complète n'est pas relancée pour cette copie identique.
+Le build d'intégration déjà reconstruit possède le même SHA-256 :
+
+```text
+f52b93562b0566dbe167410e5099af18860190ffc14dd8a7575bed722e62ebfd
+```
+
+`SIZE.json` donne **804 329 octets bruts**, **242 483 octets gzip**, zéro
+ressource externe, version **0.8.1 inchangée**. Le navigateur, les pilotes,
+les tests et la documentation ne sont pas comptés dans cette taille brute.
+Les sources audio, musique, HTML et CSS sont identiques à la base ; le cycle
+de vie de la musique d'accueil n'est pas modifié dans `game.js`.
+
+Les preuves T1 comprennent **16 journaux gzip déterministes**, un manifeste,
+les commandes et les empreintes. Aucun double de patch ou journal brut n'est
+commité lorsque le journal gzip est présent. Le préflight ajoute deux petits
+journaux historiques. Aucun essai navigateur, écoute réelle, appareil
+physique ou gain de performance n'est revendiqué par T1 ; téléphone,
+Windows/NVIDIA, Safari et Firefox restent à vérifier dans les lots concernés.
+
+### STAB-V1 — sous-pas stables dans l’attente du lot 07
+
+Le calcul des sous-pas tolère maintenant les imprécisions de l’horloge : `ceil(dt*60-.06)` au lieu de `ceil(dt*60)`. Sur 900 images à 60 Hz avec horloge arrondie à 0,1 ou 1 ms, le nombre de pas passe de **1 500 à 900** ; à 59,94 Hz, de **1 800 à 900**. Il ne reste aucune image à deux pas dans ces trois motifs. Le temps total reste simulé et chaque pas reste inférieur à **17,7 ms** ; une vraie simulation vérifie sprint et esquive contre un mur mince. Ce changement volontaire du découpage temporel ne prétend pas conserver les trajectoires bit à bit.
+
+[Les mesures appariées et leurs limites](preuves/lot-01/stab-v1/README.md) sont jointes. Cinq paires, chauffe exclue, domaine principal, alternance AB/BA : ratios CPU médians après/avant **0,800 / 0,957 / 0,841** pour q60, ms60 et 59,94 Hz. Les contrôles 120/144 Hz, dont le nombre de pas reste identique, montrent également du bruit. La promesse de gain CPU de 18 à 48 % n’est **pas reproduite uniformément** ; le correctif est conservé pour la subdivision erronée effectivement corrigée, sans revendiquer ce gain universel.
+
+Les cinq nouveaux tests de cadence sont inclus dans `npm test`. Validation d’intégration ciblée : **55/55** tests cadence + checkpoints, puis contrôle de build PASS. Distribution **804 329 → 804 421 octets**, version 0.8.1 ; SHA-256 `3aa68a79c28e19ed982605a557c8e35585bf3478ad54de05ea3cbadc3ddc4f50`. La suite complète du lot sera exécutée après assemblage T2–T4 ; elle n’est pas présentée comme relancée ici. La boucle fixe et l’interpolation restent au lot 07.
+
+### T2 — intention de tir conservée [LOOP-06]
+
+Le shell conserve séparément un appui droit et gauche pendant **150 ms**, jusqu’au tir de la main concernée. Il propose l’intention au premier sous-pas et conserve l’état tenu sur les suivants. Clavier reconfiguré, souris et tactile utilisent le même contrat. Le changement d’arme, la pause, la perte de focus ou l’annulation de capture effacent l’intention ; le bouclier reste une garde tenue. Le clic utilisé pour capturer la souris ne tire pas. Aucune horloge n’entre dans la simulation.
+
+Les treize nouveaux tests du vrai shell avec vraie simulation donnaient **5 réussites / 8 échecs avant**, puis **13/13** après. Les douze combinaisons de clic entièrement entre deux images (souris/clavier/tactile × 20/30/60/144 Hz) produisent chacune exactement un tir. Le modèle d’audit reproduit **20,3 à 26,7 %** de clics prêts perdus avant, zéro pour les modèles verrouillé/tamponné ; ce modèle ne remplace pas les tests du code livré. [Preuves et limites](preuves/lot-01/t2/PROOF.md).
+
+Le harnais de checkpoints représente maintenant un vrai verrou de pointeur acquis et libéré. La résolution d’intégration conserve aussi les injections d’échec de stockage et de relance introduites par T1. Aucun attendu de checkpoint n’a été affaibli.
+
+Validation cumulative T1 + STAB-V1 + T2 : **73/73** tests entrées, checkpoints, options et cadence ; build et contrôle de distribution PASS. `checks/input.test.mjs` est ajouté à `npm test`. HTML **804 421 → 806 474 octets**, SHA-256 `2aa738e123901c4616dac5ec569d07016071d7cfeeed64f94410eaf4d862f8be`, version 0.8.1.
+
+Valeur par défaut appliquée : tampon 150 ms, exposé par `FOptions.fireBufferMs`. Question de ressenti conservée pour David : maintenir cette durée après essai réel ? Le lot 01 ne la transforme pas en format de sauvegarde.
+
+### T3 — pointeur fiable et molette seuillée [LOOP-10]
+
+La capture est demandée directement dans le geste souris. Le mouvement brut est demandé par défaut, avec repli sur `NotSupportedError` et préférence persistée **« Accélération du système »**, désactivée par défaut. API à promesse et API `void`, échec de capture, glisser pour viser, pause et succès tardifs sont couverts. Le clic d’acquisition ne tire pas, même si la capture arrive avant le `mousedown` de compatibilité.
+
+La revue indépendante a reproduit puis corrigé l’annulation d’une demande encore en attente : `pointercancel` empêche désormais un repli ou une acquisition tardive, tandis qu’un simple relâchement reste valide. Le prochain geste peut à nouveau capturer. Les trois régressions supplémentaires donnent **1 réussite / 2 échecs → 3/3** ; le fichier d’entrées complet atteint **24/24**.
+
+La molette cumule les déplacements normalisés (pixels, lignes et pages), avec seuil **100 px** et délai **150 ms**. Trente petits événements de 4 px produisent **30 → 1 changement d’arme**. Le test historique de molette attend volontairement aucun changement à 1 px, puis un à 99 px supplémentaires ; les vérifications d’arsenal restent présentes.
+
+[Preuves avant/après, sources API et annulation tardive](preuves/lot-01/t3/PROOF.md). Validation cumulative ciblée : **85/85** (entrées, checkpoints, options, cadence), build et contrôle de distribution PASS. HTML **806 474 → 809 176 octets**, SHA-256 `9a935866e0f1b64bda17fc5e5092cd534deeab38fc0d44367bf44e6fbba950e2` ; version 0.8.1. Les horloges restent hors de la simulation. Aucun essai de souris Windows, de Safari/Firefox ou de téléphone physique n’est déduit du harnais.
+
+Valeur par défaut appliquée : mouvement brut activé. Question de ressenti conservée pour David : maintenir cette valeur après essai de la sensibilité sur sa souris ? L’option permet déjà le mouvement traité par le système.
+
+### T4 — cadence régulière et indication explicite [LOOP-09]
+
+Le limiteur observe tous les callbacks, mesure leur période et présente une image tous les N rafraîchissements. La première calibration, le changement d’écran/cible et les suspensions réinitialisent proprement la décision. Une tolérance numérique et une bande d’hystérésis évitent les oscillations du diviseur aux demi-entiers. Le texte est aussi rafraîchi dans l’onglet Image **en pause**.
+
+La fiche contient une contradiction : sa formule `round(fréquence/cible)` ne peut pas produire à la fois 60 i/s sur 75 Hz et 48 sur 144 Hz. La contre-vérification LOOP-09 prime. Le libellé est donc **« Cadence visée »**, accompagné de la cadence estimée réellement choisie. Il ne s’agit pas d’un plafond strict.
+
+| Écran / cible | Limiteur historique | Candidat final |
+|---|---:|---:|
+| 75 Hz / 60 | 37,5 i/s | 75 i/s, un rafraîchissement |
+| 90 Hz / 60 | 45 i/s | 45 i/s, deux rafraîchissements |
+| 144 Hz / 60 | 48 i/s | 72 i/s, deux rafraîchissements |
+| 165 Hz / 60 | 55 i/s | 55 i/s, trois rafraîchissements |
+| 75 Hz / 30 | 25 i/s | 25 i/s, trois rafraîchissements |
+
+Les **63 scénarios** exacts, arrondis et avec faible gigue sont stables après chauffe. Les trois défauts de stabilisation et le texte de pause ont leurs tests rouges avant/verts après. [Preuves T4](preuves/lot-01/t4/README.md) et [nouvelle mesure sur l’intégration finale](preuves/lot-01/final/README.md).
+
+La décision nouvelle de PR #2 est déjà tranchée : **60 i/s constantes à résolution native, 30 en repli calibré**, sans oscillation en combat. Le gouverneur, le défaut 60/30 et la suppression de l’adaptation automatique de résolution appartiennent aux **lots 06/07/15**. La préférence actuelle sans limite et l’ancien gouverneur ne réalisent pas encore cette cible ; T4 ne prétend pas les avoir remplacés.
+
+### Clôture du lot 01
+
+**Préflight, T1, STAB-V1, T2, T3 et T4 terminés.** Les variantes physiques de LOOP-01, le changement de format des sauvegardes et la boucle fixe restent écartés ou différés conformément aux arbitrages ; aucun format n’a été ajouté. Les seuls fichiers de production modifiés sont `game.js`, `simulation.js`, `options.js` et le balisage des options dans `index.html`.
+
+| Validation finale | Résultat |
+|---|---|
+| Suite complète avant / après | **422/422 → 470/470**, zéro échec ni test ignoré |
+| Contrôle de monde séparé | **18 cas**, PASS |
+| Build et contrôle de distribution | PASS, zéro ressource externe |
+| HTML brut | **803 375 → 812 696 octets** (+9 321), limite 1 400 000 |
+| Version | **0.8.1**, conservée |
+| Limiteur synthétique sur les sources réunies | **63/63** scénarios stables |
+
+SHA-256 du HTML final : `4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a`. [Journal complet, empreintes et captures](preuves/lot-01/final/README.md).
+
+Le contrôle Chrome distant a vérifié les nouveaux réglages, leur remise à zéro, le lancement et la pause. **WebGL 2 y est indisponible et le rendu CPU affichait environ 1 FPS** : la cadence n’a pas pu y être calibrée, et le pointeur est resté en mode de visée par glisser. L’essai ne prouve aucune performance GPU, aucune fréquence d’écran physique ni l’absence d’accélération d’une souris réelle. Téléphone, Windows/NVIDIA, Safari et Firefox restent à vérifier. Aucune égalité de pixels ni écoute physique n’est annoncée.
+
+Le lot 00 / T1 est publié dans la PR #3. Le lot 01 dépend de cet outillage ; sa branche garde une tâche par commit. Aucune fusion de main, aucun déploiement et aucun changement de version n’ont été effectués. **Les lots 02 et suivants ne sont pas réalisés dans cette livraison.** La prochaine étape est l’invalidation locale de navigation et les optimisations de simulation du lot 02, avec sa comparaison principale appariée ; la replanification sélective demeure réservée au lot 03/T4.

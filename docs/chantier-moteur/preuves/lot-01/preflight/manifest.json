@@ -1,0 +1,92 @@
+{
+  "finding": "MURS-V1",
+  "node": "v24.22.1",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "main": "63668aca7045e62cd524973b226f21e9ec5703e8",
+  "commits": [
+    {
+      "commit": "673d6b2b80026103b4523fb0b3b16fb708556b06",
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "command": "node --test --test-reporter=tap --test-name-pattern='exact pre-campaign|strictly opt-in|first three campaign' checks/campaign-world.test.mjs",
+      "sources": {
+        "src/world.js": {
+          "bytes": 133209,
+          "sha256": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+          "gitBlob": "c491d2ae5e9bb0859e31a2be03feb1b5b32a6f38"
+        },
+        "checks/campaign-world.test.mjs": {
+          "bytes": 23856,
+          "sha256": "37413228d437a68fa8a996d31c6ab2bd69830bbe8d34d590cee4cfc511228ce7",
+          "gitBlob": "cbff9cb52bb025266e3dcb257bc5099e06d288fd"
+        }
+      },
+      "log": "673d6b2-historical-tests.log.gz"
+    },
+    {
+      "commit": "79e6e35703ec84193491f36ea44f87fa910b3847",
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "command": "node --test --test-reporter=tap --test-name-pattern='exact pre-campaign|strictly opt-in|first three campaign' checks/campaign-world.test.mjs",
+      "sources": {
+        "src/world.js": {
+          "bytes": 127149,
+          "sha256": "ab4e37cd5c6bed8ce3dc0cba655d035fa056fd94103aaa5254821b2d4f1fc385",
+          "gitBlob": "e943d2ce157767bc3d5a7b4cdb7c77d2e22a0280"
+        },
+        "checks/campaign-world.test.mjs": {
+          "bytes": 21132,
+          "sha256": "c1811df0b1e24fb210af2f598916b1fa5b2d3efe6901f846bc96d8568f22039d",
+          "gitBlob": "82bd79e7c22106fd4c58698fa005489aef5c6439"
+        }
+      },
+      "log": "79e6e35-historical-tests.log.gz"
+    }
+  ],
+  "schema": "metal-lot01-preflight-murs-v1",
+  "master": {
+    "pull_request": 2,
+    "commit": "6a17e08281b70feae33015d7059ef21717666ba3",
+    "url": "https://github.com/M4D135/METAL/blob/6a17e08281b70feae33015d7059ef21717666ba3/docs/chantier-moteur/MASTER-PROMPT.md",
+    "file_sha256": "97fd35063031ae4d033179fc6f9adf99ee485b961de9d73543d06fc59269050e"
+  },
+  "baseline_main": {
+    "commit": "63668aca7045e62cd524973b226f21e9ec5703e8",
+    "tests": 422,
+    "pass": 422,
+    "fail": 0,
+    "log": "../../lot-00/baseline-main-tests.log.gz"
+  },
+  "code_review": {
+    "main_world_and_campaign_test_byte_identical_to_080": true,
+    "legacy_hash_count": 6,
+    "legacy_hashes_equal_on_79e6e35_673d6b2_and_main": true,
+    "world_removal_guard": "if(w.campaignVersion===2)",
+    "openEntries_call_guarded": true,
+    "fingerprints_regenerated": false,
+    "world_correction_applied": false,
+    "conclusion": "The eight failures and their attribution to wall removal were not reproduced on this Linux x64 environment. The reported macOS arm64 failures remain unexplained."
+  },
+  "files": [
+    {
+      "file": "673d6b2-historical-tests.log.gz",
+      "compressed_bytes": 432,
+      "compressed_sha256": "f9a3881627ec6821022ab59d4b859b6301fede9f831ab34b62011a9791232b40",
+      "uncompressed_bytes": 1785,
+      "uncompressed_sha256": "3dae6e38f5c10b23066d330c20bce0c9b74ba5ced41b8466935321c7f03672e7",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "file": "79e6e35-historical-tests.log.gz",
+      "compressed_bytes": 434,
+      "compressed_sha256": "4c18408f074781e672856f8030961761ed34ad11e9255b40b854b978c8c520a3",
+      "uncompressed_bytes": 1785,
+      "uncompressed_sha256": "c174108fd6eae956e34a6fc86dce3e3c7b0ffb4934b431ea80a98ab8574c274f",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    }
+  ]
+}

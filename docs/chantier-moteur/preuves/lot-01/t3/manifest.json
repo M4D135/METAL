@@ -1,0 +1,75 @@
+{
+  "task": "t3",
+  "baseline": "63668aca7045e62cd524973b226f21e9ec5703e8",
+  "finding": "LOOP-10",
+  "scope": "Individual task measurements; integrated build and tests recorded in RAPPORT.md",
+  "sourceSha256": {
+    "checks/options.test.mjs": "1b58d6546efd9130f1214bb6309e4b89cec0949b483dfd086d57c09ff3fb9f4b",
+    "checks/checkpoint.test.mjs": "f3fa9866986356e0df385c67fbc99870b7c0e16955b2c5cc77666596ded0e6fc",
+    "checks/input.test.mjs": "1b876b063934c76196ff25926ae3a273c4ef5a10a27784e7e6b78692ecab72b1",
+    "src/game.js": "f3579a674a5fdee894d31b7f0791d2406ee74ea0524fb782db0e856ec3c1764a",
+    "src/options.js": "c45cf1b876c32eed699ddf115315201f03718779e0714a857e81820ef32b3c3f",
+    "src/index.html": "20d4e59c42efb0b41eef9465d86f9ba7cc638bc9fcea8982a72d256bc396367f"
+  },
+  "files": [
+    {
+      "path": "logs/lot01-t3-shell-before.log.gz",
+      "rawBytes": 12059,
+      "rawSha256": "5433d5ef0117c3f9482ba6cded35461c42331736a2f8c3a911208cf554850831",
+      "gzipBytes": 2348,
+      "gzipSha256": "e4fa77c9b01a66824c1dade2aaf78c4c4b5e923117ed2f516cc6c5597d9a951c"
+    },
+    {
+      "path": "logs/lot01-t3-shell-after.log.gz",
+      "rawBytes": 17045,
+      "rawSha256": "6947d6bd43de692e04cc15665a8d8c695c38a296f0305f56741091ab495c0567",
+      "gzipBytes": 3944,
+      "gzipSha256": "a895d4e07e8a87b0db64b55d11e9663f654ca5716b79dc8da74bbf83127680fd"
+    },
+    {
+      "path": "logs/lot01-t3-cancel-before.log.gz",
+      "rawBytes": 2589,
+      "rawSha256": "ebcb144654a039134aa4c6d66418164d38181ff9d3e17c67018ab900d1552536",
+      "gzipBytes": 969,
+      "gzipSha256": "3a6d6679e7c8f0bd33ceff4af191ea4a3e643dde086df1ac260810970e6aeab5"
+    },
+    {
+      "path": "logs/lot01-t3-cancel-after-targeted.log.gz",
+      "rawBytes": 391,
+      "rawSha256": "c9a5c16b31aaaf84b1b692c9cf7c55c42763fc5db5cab7a88bcc911b344d2ac6",
+      "gzipBytes": 270,
+      "gzipSha256": "8d0d2c4377402caf400f3d9915f25302be3274cbb0306c1e9a830e5f6fba009a"
+    },
+    {
+      "path": "logs/lot01-t3-cancel-after-input.log.gz",
+      "rawBytes": 2575,
+      "rawSha256": "3d3f52ab669cad17cf321c390ddd4091bb2b9270ce94f53a993a6c06c4c11337",
+      "gzipBytes": 1215,
+      "gzipSha256": "12c2bf1b19878359779bae44ec7d775998f602b8327ee42889084f010cf25b82"
+    },
+    {
+      "path": "logs/lot01-t3-integration-tests.log.gz",
+      "rawBytes": 21271,
+      "rawSha256": "e40c0876b6b84a6e9ed8814846c25fc4c951494633ca6bcee3b308d7f76ee26a",
+      "gzipBytes": 4703,
+      "gzipSha256": "752f601238f761b2e3d584650046feb27dd1e45d14bf688ac42786c94a2f3e54"
+    }
+  ],
+  "reviewFix": {
+    "patchSha256": "591b528d3f9e9f99f6e095b783b11836983169ebc9b1cab6bb34a1339196e294",
+    "before": {
+      "pass": 1,
+      "fail": 2
+    },
+    "after": {
+      "pass": 3,
+      "fail": 0
+    },
+    "inputSuite": 24,
+    "integratedTargetedSuite": 85,
+    "sourceSha256": {
+      "src/game.js": "345e7d7951e32ed56e7a057e00dcf388f712f8dd8942440ce0c74c5bcad73d99",
+      "checks/input.test.mjs": "950f7ec1aab0c29a1eae1e6a418e44b72fda727101e5f5ee52049481aeddd1e8"
+    }
+  }
+}

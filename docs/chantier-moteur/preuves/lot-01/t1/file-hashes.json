@@ -1,0 +1,62 @@
+[
+  {
+    "path": "src/simulation.js",
+    "bytes": 202378,
+    "sha256": "96544ee94904791cc223e19c510065407e8f9ac7b333ff5771a0de73485c9ca4",
+    "same_as_base": false
+  },
+  {
+    "path": "src/game.js",
+    "bytes": 99004,
+    "sha256": "77e49db6759eb12bea152139048760f2b6fc1470819da9344d2f4424e1e1b4a3",
+    "same_as_base": false
+  },
+  {
+    "path": "checks/checkpoint.test.mjs",
+    "bytes": 69165,
+    "sha256": "ef8eb4fecd74c5b4976e6b5c0fd4c675fc4725052f1944495ef4d1557ddb6055",
+    "same_as_base": false
+  },
+  {
+    "path": "src/audio.js",
+    "bytes": 47822,
+    "sha256": "4b36fde20d003c7a785c05f1315cd568d309dd08dd6bdc30ec2283bdbe452b6d",
+    "same_as_base": true
+  },
+  {
+    "path": "src/music.js",
+    "bytes": 26522,
+    "sha256": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74",
+    "same_as_base": true
+  },
+  {
+    "path": "src/index.html",
+    "bytes": 21541,
+    "sha256": "84255c6e73d2b800cf91d529a642b6a3a1b6cfcd8af3107e77923e3c33fb8145",
+    "same_as_base": true
+  },
+  {
+    "path": "src/style.css",
+    "bytes": 59867,
+    "sha256": "5fac4844ea19cd8ab0eae39c88626b1fd8c585ca9851de6dc51ca0093bdf31be",
+    "same_as_base": true
+  },
+  {
+    "path": "package.json",
+    "bytes": 960,
+    "sha256": "777655936324f6aa081a8796c427c7d6dbe45a5163e30bcc39319dd420c0615c",
+    "same_as_base": true
+  },
+  {
+    "path": "dist/index.html",
+    "bytes": 804329,
+    "sha256": "f52b93562b0566dbe167410e5099af18860190ffc14dd8a7575bed722e62ebfd",
+    "same_as_base": false
+  },
+  {
+    "path": "SIZE.json",
+    "bytes": 718,
+    "sha256": "b93b131dcaac2aa9425f1012b865961828697f44176701d0b6b5ce3734bdfef5",
+    "same_as_base": false
+  }
+]

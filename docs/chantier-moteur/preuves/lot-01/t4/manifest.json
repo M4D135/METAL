@@ -1,0 +1,111 @@
+{
+  "schema": "metal-lot-proof-manifest-v1",
+  "task": "lot-01/T4 LOOP-09",
+  "baseline": {
+    "version": "0.8.1",
+    "commit": "63668aca7045e62cd524973b226f21e9ec5703e8"
+  },
+  "candidateScope": "T2+T3+T4, before the additional T3 pointercancel fix and before integration of T1 and STAB-V1",
+  "archivePolicy": {
+    "format": "gzip",
+    "compressionLevel": 9,
+    "mtime": 0,
+    "embeddedFilename": null,
+    "uncompressedDuplicates": false
+  },
+  "scenarios": {
+    "count": 63,
+    "referenceGameSha256": "95f81b40ec57f13d028d7dd2e810cd31a823d1b354ba93565aae341f7ba1beed",
+    "candidateOptionsSha256": "46a02bba9a6e83942a0ea37abf2eda8024dc20b70665cbc1c48c84cdd0a4a3fd",
+    "warmupSeconds": 2,
+    "measuredSeconds": 20,
+    "stableDivisorInEveryScenario": true
+  },
+  "sourceFiles": [
+    {
+      "path": "src/options.js",
+      "sha256": "46a02bba9a6e83942a0ea37abf2eda8024dc20b70665cbc1c48c84cdd0a4a3fd"
+    },
+    {
+      "path": "src/game.js",
+      "sha256": "63e131495a5ac0f2e3ff94c3d26081dc0caa8f87292cb50f77d5ef12c5a0e300"
+    },
+    {
+      "path": "src/index.html",
+      "sha256": "334453660082853d2b6775550ccc8fee1ef25bd9623da62eb9190b4d67b68135"
+    },
+    {
+      "path": "checks/options.test.mjs",
+      "sha256": "4ecc7298a4b4e8185a937bc5a0c2f926bb66947e77e91837903276134b2df25e"
+    },
+    {
+      "path": "checks/input.test.mjs",
+      "sha256": "3e8d1778e89e6d0a3fc71770049f5a9c05c9f8707afd8a975dd4718b0bbb1c86"
+    },
+    {
+      "path": "tools/frame-gate-profile.mjs",
+      "sha256": "8d8db3c6d78cbdd35c4881adc3006817105e1a7beb3d849b334fc2bd329f31ee"
+    }
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 6375,
+      "sha256": "11ec0aa5f0317a3f3e7e7006987d21bc975718ebe8d533c91ebf53de82ceebda"
+    },
+    {
+      "path": "options-before.log.gz",
+      "purpose": "Initial T4 before divider stabilization; 9 pass, 3 fail",
+      "sourceArtifact": "lot01-t4-options-before.log",
+      "bytes": 1285,
+      "sha256": "550ab06b483ddb2fba7c636e2926b38de9820727c97fbf9ce59f7fa69f819edb",
+      "uncompressedBytes": 5387,
+      "uncompressedSha256": "4dfd706c5221e7890532b84119d8000373e7a00e5f060e79c5e3bd1b36257de7"
+    },
+    {
+      "path": "options-after.log.gz",
+      "purpose": "Stabilized T4; 12 pass, 0 fail",
+      "sourceArtifact": "lot01-t4-options-after.log",
+      "bytes": 875,
+      "sha256": "28557cb000ad64655a6e4a847611c0fef556049987b63a0f23f2ec71bef28012",
+      "uncompressedBytes": 2885,
+      "uncompressedSha256": "f8c0751aa071578a89d886857ce1c70969e67900f411f106f543701c23cd97c9"
+    },
+    {
+      "path": "paused-before.log.gz",
+      "purpose": "Paused cadence hint before correction; 0 pass, 1 fail",
+      "sourceArtifact": "lot01-t4-paused-before.log",
+      "bytes": 584,
+      "sha256": "b6b99a939b29154e73bf8b9470732e96ca55ad497c73d71a083575e8f10f9e0d",
+      "uncompressedBytes": 1139,
+      "uncompressedSha256": "17f485355e5dda7e4983b76e35babba92ec6ab5cb9253f4130b6138c9a70a1d7"
+    },
+    {
+      "path": "paused-after.log.gz",
+      "purpose": "Paused cadence hint after correction; 1 pass, 0 fail",
+      "sourceArtifact": "lot01-t4-paused-after.log",
+      "bytes": 218,
+      "sha256": "2c66a299e6cf2ecf66911628bd72a5a6e26b5abef532d60a3c42fd60f90988f5",
+      "uncompressedBytes": 366,
+      "uncompressedSha256": "5dab936da60e0be7abff12e7fed1701bd7e2d81c287ea82392e9d547a29f2f93"
+    },
+    {
+      "path": "integrated-after.log.gz",
+      "purpose": "T2+T3+T4 targeted suite; 108 pass, 0 fail",
+      "sourceArtifact": "lot01-t4-integrated-after.log",
+      "bytes": 6193,
+      "sha256": "c429d2e7151ba3cbccf439af30fa1e5cf58d6bd563651248a7156dc111288382",
+      "uncompressedBytes": 27349,
+      "uncompressedSha256": "e0e4631438e1c26ecd6bd05cc6c41663bc54262bbe3c7b176b0ce8cdf42aeb8e"
+    },
+    {
+      "path": "scenarios.json.gz",
+      "purpose": "63 deterministic synthetic callback scenarios; historical 0.8.1 versus T2+T3+T4",
+      "sourceArtifact": "lot01-t4-measures.json",
+      "bytes": 1607,
+      "sha256": "e4ef3ff5af21e18447a6242c71b902d45ea672047ad574b44fb30975379fc6f7",
+      "uncompressedBytes": 26328,
+      "uncompressedSha256": "22f0dfce64bc11ceefe1ef887d6c488b64340531fb21562cc52237fb9b4d6fd3"
+    }
+  ]
+}

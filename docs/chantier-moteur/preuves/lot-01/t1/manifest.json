@@ -1,0 +1,578 @@
+{
+  "schema_version": 1,
+  "delivery_id": "lot01-T1",
+  "status": "validated",
+  "prepared_at_utc": "2026-11-12T19:49:28.738271+00:00",
+  "base_sha": "63668aca7045e62cd524973b226f21e9ec5703e8",
+  "branch": "chantier/lot-01-correctifs",
+  "version": "0.8.1",
+  "patch": {
+    "sha256": "9731bcb2c87208fc67cc833286d25e41d0a2a8b2607fd426bf6cbbb1caf5d0af",
+    "source_files": [
+      "src/simulation.js",
+      "src/game.js",
+      "checks/checkpoint.test.mjs"
+    ],
+    "representation": "Logical source diff committed with this proof; no duplicate patch file."
+  },
+  "audit_ids": [
+    {
+      "id": "LOAD-01",
+      "status": "implemented",
+      "scope": "remove only resting-rubble overlap rejection; copied restore without rubble; preserve entry loadout; save after successful restart"
+    },
+    {
+      "id": "LOOP-01",
+      "status": "absorbed",
+      "scope": "checkpoint recovery only; physical changes and resting:false serialization rejected by arbitration"
+    },
+    {
+      "id": "LOOP-V2",
+      "status": "absorbed",
+      "scope": "compatible rubble validation plus replaceable latest-refused backup before replacing active save"
+    }
+  ],
+  "measurements": {
+    "load": {
+      "method": "main-realm Node, baseline-generated snapshots, candidate source files read without in-memory source patch, recover:false",
+      "rows": [
+        {
+          "mode": "walk",
+          "scenario": "l:0",
+          "points": 8,
+          "before_accepted": 0,
+          "after_accepted": 8,
+          "after_byte_equal": 8,
+          "other_validation_failures": 0,
+          "log": "logs/after-load-walk-l-0-exact.txt.gz"
+        },
+        {
+          "mode": "walk",
+          "scenario": "c:9",
+          "points": 8,
+          "before_accepted": 1,
+          "after_accepted": 8,
+          "after_byte_equal": 8,
+          "other_validation_failures": 0,
+          "log": "logs/after-load-walk-c-9-exact.txt.gz"
+        },
+        {
+          "mode": "rocket",
+          "scenario": "l:0",
+          "points": 8,
+          "before_accepted": 6,
+          "after_accepted": 8,
+          "after_byte_equal": 7,
+          "other_validation_failures": 0,
+          "log": "logs/after-load-rocket-l-0-exact.txt.gz"
+        },
+        {
+          "mode": "rocket",
+          "scenario": "c:9",
+          "points": 7,
+          "before_accepted": 0,
+          "after_accepted": 7,
+          "after_byte_equal": 7,
+          "other_validation_failures": 0,
+          "log": "logs/after-load-rocket-c-9-exact.txt.gz"
+        }
+      ],
+      "total_points": 31,
+      "before_accepted": 7,
+      "after_accepted": 31,
+      "after_byte_equal": 30,
+      "after_semantically_equal": 31,
+      "semantic_definition": "Equality of parsed JSON values and structure, ignoring object property order. No claim of raw in-memory Float64 equality.",
+      "remaining_byte_difference": {
+        "scenario": "rocket l:0",
+        "sample": 1,
+        "path": "state.loot[0] (salvage)",
+        "cause": "Existing serialization changes object property order for ammo and armor; values and structure unchanged.",
+        "before_keys_suffix": [
+          "credits",
+          "cores",
+          "ammo",
+          "armor",
+          "x",
+          "y",
+          "z",
+          "taken"
+        ],
+        "after_keys_suffix": [
+          "credits",
+          "cores",
+          "x",
+          "y",
+          "z",
+          "taken",
+          "ammo",
+          "armor"
+        ],
+        "evidence": "logs/load-first-difference.txt.gz"
+      },
+      "timing_claim": null
+    },
+    "loop": {
+      "pattern": "b",
+      "requested_seconds": 30,
+      "observed_final_simulated_seconds": 33,
+      "before": [
+        {
+          "scenario": "classic-0",
+          "attempts": 11,
+          "refused_regenerated_world": 3,
+          "refused_same_world": 3
+        },
+        {
+          "scenario": "campaign-0",
+          "attempts": 11,
+          "refused_regenerated_world": 3,
+          "refused_same_world": 3
+        },
+        {
+          "scenario": "campaign-9",
+          "attempts": 11,
+          "refused_regenerated_world": 1,
+          "refused_same_world": 1
+        },
+        {
+          "scenario": "campaign-10",
+          "attempts": 11,
+          "refused_regenerated_world": 10,
+          "refused_same_world": 10
+        }
+      ],
+      "after": [
+        {
+          "scenario": "classic-0",
+          "attempts": 11,
+          "refused_regenerated_world": 0,
+          "refused_same_world": 0
+        },
+        {
+          "scenario": "campaign-0",
+          "attempts": 11,
+          "refused_regenerated_world": 0,
+          "refused_same_world": 0
+        },
+        {
+          "scenario": "campaign-9",
+          "attempts": 11,
+          "refused_regenerated_world": 0,
+          "refused_same_world": 0
+        },
+        {
+          "scenario": "campaign-10",
+          "attempts": 11,
+          "refused_regenerated_world": 0,
+          "refused_same_world": 0
+        }
+      ],
+      "before_refused": 17,
+      "after_refused": 0,
+      "attempts": 44
+    },
+    "generated_regressions": {
+      "scenarios": [
+        "l:0",
+        "c:9 campaignVersion:2"
+      ],
+      "seed": 96,
+      "walls_each": 3,
+      "steps_after_rocket": 300,
+      "dt": 0.016666666666666666,
+      "restore_recover": false,
+      "snapshot_byte_equal_cases": 6
+    },
+    "build": {
+      "version": "0.8.1",
+      "html_bytes": 804329,
+      "gzip_bytes": 242483,
+      "html_sha256": "f52b93562b0566dbe167410e5099af18860190ffc14dd8a7575bed722e62ebfd",
+      "external_assets": 0,
+      "limit_html_bytes": 1400000,
+      "base_html_bytes": 803375,
+      "delta_html_bytes": 954,
+      "delta_gzip_bytes": 258
+    }
+  },
+  "tests": {
+    "complete_suite": {
+      "status": "PASS",
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "exit_code": 0,
+      "tests": 432,
+      "pass": 432,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "tap_duration_ms": 154344.05826,
+      "command_elapsed_seconds": 191.398,
+      "world_validation": {
+        "status": "PASS",
+        "cases": 18
+      },
+      "build_validation": {
+        "status": "PASS",
+        "html_sha256": "f52b93562b0566dbe167410e5099af18860190ffc14dd8a7575bed722e62ebfd"
+      },
+      "baseline_comparison": {
+        "base_sha": "63668aca7045e62cd524973b226f21e9ec5703e8",
+        "tests": 422,
+        "passed": 422,
+        "source": "Archived main baseline, linked below; confirmed 422 tests and zero failures.",
+        "added_tests": 10,
+        "log": "../../lot-00/baseline-main-tests.log.gz"
+      },
+      "log": "logs/npm-test.log.gz"
+    },
+    "prior_targeted_triple": {
+      "files": [
+        "checks/checkpoint.test.mjs",
+        "checks/simulation.test.mjs",
+        "checks/destruction.test.mjs"
+      ],
+      "passed": 174,
+      "failed": 0,
+      "log": "logs/after-targeted.txt.gz"
+    },
+    "final_checkpoint_file": {
+      "passed": 50,
+      "failed": 0,
+      "log": "logs/after-checkpoint-final.txt.gz"
+    },
+    "baseline_new_regressions": {
+      "tested": 9,
+      "failed_expected": 9,
+      "log": "logs/before-regressions-final-fixtures.txt.gz"
+    },
+    "backup_failure_coverage": [
+      "Existing first migration backup does not prevent replacement of latest -refuse slot.",
+      "Injected fallback launch failure leaves active serialized checkpoint unchanged.",
+      "A -refuse write failure protects the active point, including subsequent automatic checkpoints.",
+      "After storage recovers, refused point is backed up before the next active write."
+    ],
+    "new_regression_titles": [
+      "LOAD-01: an unrecoverable classic point restarts with its exact entry equipment",
+      "LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment",
+      "LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment",
+      "LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment",
+      "LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoint",
+      "LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy checkpoint",
+      "LOAD-01: a failed fallback launch never replaces the active rejected checkpoint",
+      "LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint",
+      "LOAD-01: generated l:0 rubble restores exactly after three real rocket breaches",
+      "LOAD-01: generated c:9 rubble restores exactly after three real rocket breaches"
+    ]
+  },
+  "preservation": {
+    "audio_js": true,
+    "music_js": true,
+    "index_html_source": true,
+    "style_css": true,
+    "package_version": true,
+    "save_format": true,
+    "rubble_physics": true,
+    "title_lifecycle": true
+  },
+  "file_hashes": [
+    {
+      "path": "src/simulation.js",
+      "bytes": 202378,
+      "sha256": "96544ee94904791cc223e19c510065407e8f9ac7b333ff5771a0de73485c9ca4",
+      "same_as_base": false
+    },
+    {
+      "path": "src/game.js",
+      "bytes": 99004,
+      "sha256": "77e49db6759eb12bea152139048760f2b6fc1470819da9344d2f4424e1e1b4a3",
+      "same_as_base": false
+    },
+    {
+      "path": "checks/checkpoint.test.mjs",
+      "bytes": 69165,
+      "sha256": "ef8eb4fecd74c5b4976e6b5c0fd4c675fc4725052f1944495ef4d1557ddb6055",
+      "same_as_base": false
+    },
+    {
+      "path": "src/audio.js",
+      "bytes": 47822,
+      "sha256": "4b36fde20d003c7a785c05f1315cd568d309dd08dd6bdc30ec2283bdbe452b6d",
+      "same_as_base": true
+    },
+    {
+      "path": "src/music.js",
+      "bytes": 26522,
+      "sha256": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74",
+      "same_as_base": true
+    },
+    {
+      "path": "src/index.html",
+      "bytes": 21541,
+      "sha256": "84255c6e73d2b800cf91d529a642b6a3a1b6cfcd8af3107e77923e3c33fb8145",
+      "same_as_base": true
+    },
+    {
+      "path": "src/style.css",
+      "bytes": 59867,
+      "sha256": "5fac4844ea19cd8ab0eae39c88626b1fd8c585ca9851de6dc51ca0093bdf31be",
+      "same_as_base": true
+    },
+    {
+      "path": "package.json",
+      "bytes": 960,
+      "sha256": "777655936324f6aa081a8796c427c7d6dbe45a5163e30bcc39319dd420c0615c",
+      "same_as_base": true
+    },
+    {
+      "path": "dist/index.html",
+      "bytes": 804329,
+      "sha256": "f52b93562b0566dbe167410e5099af18860190ffc14dd8a7575bed722e62ebfd",
+      "same_as_base": false
+    },
+    {
+      "path": "SIZE.json",
+      "bytes": 718,
+      "sha256": "b93b131dcaac2aa9425f1012b865961828697f44176701d0b6b5ce3734bdfef5",
+      "same_as_base": false
+    }
+  ],
+  "logs": [
+    {
+      "path": "logs/before-load-walk-l-0.txt.gz",
+      "original_name": "before-load-walk-l-0.txt",
+      "raw_bytes": 228,
+      "raw_sha256": "5281cf835dceb0b0ce38c6d91fbfc376ed1be45241cd77c1c8c4149e91543303",
+      "gzip_bytes": 166,
+      "gzip_sha256": "619c9c56a1c93fa8aa9dbb3816df2cc17f60ba9ed37bf7b8052527e736e3653a",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/before-load-walk-c-9.txt.gz",
+      "original_name": "before-load-walk-c-9.txt",
+      "raw_bytes": 228,
+      "raw_sha256": "4e8f9c89d4d4fd079cdede03b47f08c5505b21dac478a850f34c0f4cc8e1a79e",
+      "gzip_bytes": 177,
+      "gzip_sha256": "dab94b3e16bcddff46f3fd11eac30c36bfd3cdf2c126af72b655c746cc745639",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/before-load-rocket-l-0.txt.gz",
+      "original_name": "before-load-rocket-l-0.txt",
+      "raw_bytes": 245,
+      "raw_sha256": "dc03334c536e0dbd01d270e5edc311ccda3a5fe5d865809a7e401bd485dce178",
+      "gzip_bytes": 181,
+      "gzip_sha256": "9bc59bb8056987c3abca87c51f68b06d29aa18e4e4c10020a3946e3d9a69d40a",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/before-load-rocket-c-9.txt.gz",
+      "original_name": "before-load-rocket-c-9.txt",
+      "raw_bytes": 237,
+      "raw_sha256": "9dc07d17f3a727424dc7a679202a7a8096a921b36d721baf738a3c4ab29bde74",
+      "gzip_bytes": 177,
+      "gzip_sha256": "73e5420f4cd11527d3dec591ee62253cb5064f92d9cd64e13f2ae87a9f6c30b8",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/after-load-walk-l-0-exact.txt.gz",
+      "original_name": "after-load-walk-l-0-exact.txt",
+      "raw_bytes": 228,
+      "raw_sha256": "5b8c937cdd42a619d5c228a60460b42bf3c7e648cb031b86888acf408646a0da",
+      "gzip_bytes": 166,
+      "gzip_sha256": "865580242a61bbbefdd4a535411722cd8835a985906d99c88b4375a67013e364",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/after-load-walk-c-9-exact.txt.gz",
+      "original_name": "after-load-walk-c-9-exact.txt",
+      "raw_bytes": 226,
+      "raw_sha256": "ce91a35799fd9d40685630e5b4481b4c74df36e6ddef3b7f5da0731c5778ffbd",
+      "gzip_bytes": 175,
+      "gzip_sha256": "c3691433095b8300acc974b062725f68085a6f2cf4f949cdcdd31bf08d12e749",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/after-load-rocket-l-0-exact.txt.gz",
+      "original_name": "after-load-rocket-l-0-exact.txt",
+      "raw_bytes": 245,
+      "raw_sha256": "7985eb554bb560e9375ca5e58e4d6a2fb8a3864ce1eed5b6f387b3b89f54de43",
+      "gzip_bytes": 182,
+      "gzip_sha256": "930c32be878f26cdba5331f5ffea25a9aad5bfe38aa8b21a7bbc045599977858",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/after-load-rocket-c-9-exact.txt.gz",
+      "original_name": "after-load-rocket-c-9-exact.txt",
+      "raw_bytes": 237,
+      "raw_sha256": "5f83a3b3d42fce6590997372a852ff209a1aa7ad42b33a5a1f3803e33af01b69",
+      "gzip_bytes": 178,
+      "gzip_sha256": "a3043eec96c83c963e21929b6a74b1a65c002f35e39098ec3b5841f28cef27f6",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/before-loop-b.txt.gz",
+      "original_name": "before-loop-b.txt",
+      "raw_bytes": 2666,
+      "raw_sha256": "0a2b2bd5f41c5e2856650dc5786f71dd4400b0cc26c2275c4e83b5d4af325028",
+      "gzip_bytes": 424,
+      "gzip_sha256": "9fe380192f65a3ecaa04ee8dbac549b9876e138af7a0e49f097c2446d5c48418",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/after-loop-b.txt.gz",
+      "original_name": "after-loop-b.txt",
+      "raw_bytes": 2568,
+      "raw_sha256": "c302702e3cb0e604edb4fba340e365013de772835967ad5ceb2a41444db0fd99",
+      "gzip_bytes": 363,
+      "gzip_sha256": "39f8e234e45091f6c7ba1fe613086f136cb437bb00c62a8961e3eb1ac72a1e9f",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/load-first-difference.txt.gz",
+      "original_name": "load-first-difference.txt",
+      "raw_bytes": 890,
+      "raw_sha256": "99fb951ec5788e3a9784b89a4996e96976a9a6b784181bce5241eef134f17771",
+      "gzip_bytes": 385,
+      "gzip_sha256": "de4a1557b7324fdac8e9360c220a62819c94ecac33a28a80e265e0031de99e6f",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/before-regressions-final-fixtures.txt.gz",
+      "original_name": "before-regressions-final-fixtures.txt",
+      "raw_bytes": 33003,
+      "raw_sha256": "41a4c70ff32bf9f1606911d1ab71bb5cf095d70ab2d9c0aee24dc1fb4c68a101",
+      "gzip_bytes": 3191,
+      "gzip_sha256": "c45ee6a050994d170704507ad6e5b5f8052f37fcd7fe0de40330d4935c828754",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/after-targeted.txt.gz",
+      "original_name": "after-targeted.txt",
+      "raw_bytes": 19724,
+      "raw_sha256": "69fa5a3f002f7154cb6a4fcfcab0735a9c476846c3b7a0ee5acc473510e945da",
+      "gzip_bytes": 8126,
+      "gzip_sha256": "961a450254bab1d1d63a7c905b60a8fb976cde6c8e59ad6ce096eaccf9d3f328",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/after-checkpoint-final.txt.gz",
+      "original_name": "after-checkpoint-final.txt",
+      "raw_bytes": 5744,
+      "raw_sha256": "1e5095462f3382c908be1470e86ebc6d8a5d09fda28f3512ba08008c0e02aa67",
+      "gzip_bytes": 2409,
+      "gzip_sha256": "c9e269008d062196a6207fbdc8cca2fc784c2ea4febbc85cc0fc199dd03b68a4",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/build.log.gz",
+      "original_name": "build.log",
+      "raw_bytes": 718,
+      "raw_sha256": "b93b131dcaac2aa9425f1012b865961828697f44176701d0b6b5ce3734bdfef5",
+      "gzip_bytes": 408,
+      "gzip_sha256": "ade5d9cec164f76ece06a755f9275eaeeed30829ba669097b54cba1b0160bdd9",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    },
+    {
+      "path": "logs/npm-test.log.gz",
+      "original_name": "npm-test.log",
+      "raw_bytes": 126260,
+      "raw_sha256": "c180ac05d923b82a2f7f6e07059ee059ede37fe96810c7151ef2c99475b29f62",
+      "gzip_bytes": 25176,
+      "gzip_sha256": "7f98ae0c1133dae076b642fde8e3b19d426c3b2e2c454c76f0eec9c98be40170",
+      "gzip_mtime": 0,
+      "gzip_filename": ""
+    }
+  ],
+  "limits": [
+    "No browser or physical-device validation performed for T1.",
+    "No measured performance gain claimed from these checkpoint benches.",
+    "Build output is T1-only on base 63668ac, not the combined lot01 integration build.",
+    "One local T1 commit prepared; no push, deployment or version change by this agent."
+  ],
+  "completed_at_utc": "2026-11-12T19:50:53.129637+00:00",
+  "execution": {
+    "started_at_utc": "2026-11-12T19:45:43.328696+00:00",
+    "cwd": "/workspace/scratch/5ba980389006/METAL-lot01-reprises",
+    "base_sha": "63668aca7045e62cd524973b226f21e9ec5703e8",
+    "patch_sha256": "9731bcb2c87208fc67cc833286d25e41d0a2a8b2607fd426bf6cbbb1caf5d0af",
+    "commands": [
+      {
+        "argv": [
+          "python3",
+          "tools/build.py"
+        ],
+        "started_at_utc": "2026-11-12T19:45:43.330453+00:00",
+        "elapsed_seconds": 0.083,
+        "exit_code": 0,
+        "log": "logs/build.log.gz",
+        "log_encoding": "gzip"
+      },
+      {
+        "argv": [
+          "npm",
+          "test"
+        ],
+        "started_at_utc": "2026-11-12T19:45:43.413286+00:00",
+        "elapsed_seconds": 191.398,
+        "exit_code": 0,
+        "log": "logs/npm-test.log.gz",
+        "log_encoding": "gzip"
+      }
+    ],
+    "completed_at_utc": "2026-11-12T19:48:54.811803+00:00"
+  },
+  "runtime": {
+    "node": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "build_generated_files": [
+    "dist/index.html",
+    "SIZE.json"
+  ],
+  "validation_origin": {
+    "worktree": "/workspace/scratch/5ba980389006/METAL-lot01-reprises",
+    "branch": "travail/lot01-reprises"
+  },
+  "integration": {
+    "branch": "chantier/lot-01-correctifs",
+    "parent_commit": "8098725e5b85cf44996d5379fb215643b2615e46",
+    "byte_identical_files_checked": 44,
+    "comparison_scope": [
+      "src/",
+      "checks/",
+      "package.json",
+      "tools/build.py",
+      "dist/index.html",
+      "SIZE.json"
+    ],
+    "validation_source": "Full npm test ran on the isolated T1 worktree; all 44 execution/build inputs are byte-identical here after the tool-only lot00/T1 fast-forward. No duplicate full run.",
+    "master": {
+      "pull_request": 2,
+      "commit": "6a17e08281b70feae33015d7059ef21717666ba3",
+      "url": "https://github.com/M4D135/METAL/blob/6a17e08281b70feae33015d7059ef21717666ba3/docs/chantier-moteur/MASTER-PROMPT.md",
+      "file_sha256": "97fd35063031ae4d033179fc6f9adf99ee485b961de9d73543d06fc59269050e"
+    }
+  }
+}

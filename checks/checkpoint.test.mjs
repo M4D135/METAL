@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'game'].map(name =>
+const sources = Object.fromEntries(['renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -25,7 +25,7 @@ function world(seed, stage) {
 function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   const memory = new Map(Object.entries(initial));
   if (saved) memory.set(key, JSON.stringify(saved));
-  const elements = new Map(), errors = [], simulations = [], listeners = new Map(), frames = [], sounds = [], worlds = [], brains = [], simulationOptions = [];
+  const elements = new Map(), errors = [], simulations = [], listeners = new Map(), frames = [], sounds = [], worlds = [], brains = [], simulationOptions = [], writes = [];
   let nextFrame, now = 0;
   const noop = () => {}, draw = new Proxy({}, { get: () => noop });
   function element(id) {
@@ -39,16 +39,16 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
       click: () => events.get('click')?.({ preventDefault: noop }),
       querySelector: selector => element(id + selector),
       querySelectorAll: () => [0, 1, 2].map(n => element(id + n)),
-      setAttribute: noop, focus: noop, setPointerCapture: noop, getContext: () => draw, requestPointerLock: noop,
+      setAttribute: noop, focus: noop, setPointerCapture: noop, getContext: () => draw, requestPointerLock() { context.document.pointerLockElement = value; },
     };
     elements.set(id, value); return value;
   }
   const context = { console: { error: (...args) => errors.push(args) }, performance: { now: () => now }, innerWidth: 1280, innerHeight: 800,
     URLSearchParams, setTimeout, clearTimeout, navigator: { maxTouchPoints: 0 }, location: { search: '' },
     matchMedia: () => ({ matches: false }), requestAnimationFrame: callback => { nextFrame = callback; }, addEventListener: (name, callback) => listeners.set(name, callback),
-    document: { body: element('body'), getElementById: element, addEventListener: noop, hasFocus: () => true },
-    localStorage: { getItem: name => memory.get(name) ?? null, setItem: (name, value) => memory.set(name, String(value)), removeItem: name => memory.delete(name) },
-    FWorld: { create: createWorld }, FAudio: { create: () => new Proxy({}, { get: (_, name) => (...args) => sounds.push({ name, args }) }) },
+    document: { body: element('body'), getElementById: element, addEventListener: noop, hasFocus: () => true, exitPointerLock() { this.pointerLockElement = null; } },
+    localStorage: { getItem: name => memory.get(name) ?? null, setItem: (name, value) => { const write = { name, value: String(value), mode: element('body').dataset.state || 'menu' }; runtime.beforeWrite?.(write); memory.set(name, write.value); writes.push(write); }, removeItem: name => memory.delete(name) },
+    FWorld: { create: createWorld }, FAudio: { create: () => new Proxy({}, { get: (_, name) => (...args) => { runtime.audioCall?.(name,args); sounds.push({ name, args }); } }) },
     FRender: { create: () => ({ stats: { backend: 'test' }, resize: noop, setWorld: (meshes, lights) => worlds.push({ meshes, lights, initial:true }), updateWorld: (meshes, revision, lights) => worlds.push({meshes,revision,lights}), draw: (camera, meshes, effects) => frames.push({ camera, meshes, effects }) }) },
   };
   context.window = context; vm.createContext(context);
@@ -58,7 +58,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); return sim; };
   vm.runInContext(sources.game, context, { filename: 'game.js' });
   assert.deepEqual(errors, [], 'Browser shell initialization must succeed');
-  return { memory, element, simulations, context, frames, sounds, worlds, brains, simulationOptions,
+  return { memory, element, simulations, context, frames, sounds, worlds, brains, simulationOptions, writes,
     frame: ms => { now += ms; nextFrame(now); },
     emit: (name,event={}) => listeners.get(name)?.({type:name,preventDefault:noop,...event}),
     key: (code, down = true, repeat = false) => listeners.get(down ? 'keydown' : 'keyup')?.({ code, repeat, preventDefault: noop }) };
@@ -210,7 +210,8 @@ test('The campaign pistol HUD, keyboard, wheel, touch button and left hand use t
   sim.move(sim.state.player, 3, 0); app.frame(100);
   assert.equal(sim.state.inventory.weapons[0], true); assert.equal(app.element('weapon-slot-0').hidden, false);
   app.key('Digit5'); app.key('Digit5', false); assert.equal(sim.state.weapon, 4);
-  app.emit('wheel', { deltaY: 1 }); assert.equal(sim.state.weapon, 0);
+  app.emit('wheel', { deltaY: 1 }); assert.equal(sim.state.weapon, 4, 'Sub-threshold wheel movement must not change weapons');
+  app.emit('wheel', { deltaY: 99 }); assert.equal(sim.state.weapon, 0);
   app.element('weapon-switch').click(); assert.equal(sim.state.weapon, 4);
   app.element('weapon-slot-0').click(); assert.equal(sim.state.weapon, 0);
   app.element('left-hand-setting').value = '4'; app.element('left-hand-setting').emit('change');
@@ -508,14 +509,110 @@ for (const generation of [4, 3, undefined]) test(`Continue migrates generation $
 
 test('An invalid snapshot restarts its sector and preserves the first migration backup', () => {
   const saved = savedPoint(); saved.checkpoint.fingerprint = 'incompatible-world';
-  const backup = '{"previous":"original untouched save"}', app = harness(saved, { [key + '-before-ascension']: backup, [key + '-before-horizons']: 'older backup' });
+  const backup = '{"previous":"original untouched save"}', app = harness(saved, { [key + '-before-ascension']: backup, [key + '-before-horizons']: 'older backup', [key + '-refuse']: 'previous refused point' });
   app.element('resume-expedition').click();
   const next = JSON.parse(app.memory.get(key));
   assert.equal(next.stage, 2); assert.deepEqual(next.runStats, previousStats);
   assert.equal(next.checkpoint.state.relays, 0);
   assert.equal(app.memory.get(key + '-before-ascension'), backup);
   assert.equal(app.memory.get(key + '-before-horizons'), 'older backup');
+  assert.equal(app.memory.get(key + '-refuse'), JSON.stringify(saved), 'the replaceable slot keeps the latest rejected point even when the first migration backup already exists');
+  const backupWrite = app.writes.findIndex(write => write.name === key + '-refuse'), activeWrite = app.writes.findIndex(write => write.name === key);
+  assert(backupWrite >= 0 && activeWrite > backupWrite, 'the refused point must be stored before replacing the active checkpoint');
+  assert.equal(app.writes[activeWrite].mode, 'playing', 'the fallback must launch successfully before saving its replacement');
   assert.match(app.element('toast').textContent, /illisible/);
+});
+
+function saveWithEntry(campaign = false, legacy = false, revision = 1) {
+  const factory = campaign ? revision === 2 ? bossShellWorld : campaignShellWorld : arsenalWorld, base = harness(null, {}, factory), index = campaign ? 9 : 2;
+  const w = factory(96, index, campaign ? { campaign: true, campaignVersion: revision } : undefined), equipment = { right: 1, left: 'shield', shieldEnergy: 100 };
+  const inventory = { weapons: campaign ? [true,true,true,true,true] : [true,true,true,true], ammo: campaign ? [77,9,3,4,1] : [77,9,3,4], shield: true };
+  const entry = { inventory, equipment, armor: { version: 1, points: 127.5 }, economy: { ...base.context.FEconomy.fresh(), credits: 237, cores: 3 },
+    ...(campaign ? { campaign: { version: revision, discovered: ['pistol','shield','smg','shotgun','grenade','rocket'], ...(revision === 2 ? { claimedBossRewards: [0,1] } : {}) } } : {}) };
+  if (revision === 2) for (const reward of entry.campaign.claimedBossRewards) entry.economy = base.context.FEconomy.grantBossReward(entry.economy, reward);
+  if (legacy) { entry.inventory = { weapons: [true,true,true], ammo: [77,9,3] }; delete entry.equipment; delete entry.armor; delete entry.economy; }
+  const sim = base.context.FSimulation.create(w, { ...entry, armorSystem: true }), expected = plain(sim.exportLoadout());
+  sim.state.player.x = 6; sim.step(.025, {}); sim.state.player.hp = 63;
+  const saved = { version: campaign ? 3 : 2, generation: w.generation, seed: 96, stage: w.stage, runStats: { ...previousStats }, checkpoint: sim.snapshot(),
+    ...(campaign ? { campaign: true, index, ...(revision === 2 ? { campaignRevision: 2 } : {}) } : {}), ...(legacy ? { entryInventory: entry.inventory } : { entryLoadout: expected }) };
+  return { saved, expected, factory };
+}
+
+for (const variant of ['classic','campaign','campaign-v2','legacy']) test(`LOAD-01: an unrecoverable ${variant} point restarts with its exact entry equipment`, async () => {
+  const { saved, expected, factory } = saveWithEntry(variant.startsWith('campaign'), variant === 'legacy', variant === 'campaign-v2' ? 2 : 1); saved.checkpoint.fingerprint = 'refused-non-rubble-state';
+  const app = harness(saved, {}, factory); await app.element('resume-expedition').click();
+  assert.equal(app.element('body').dataset.state, 'playing'); assert.deepEqual(plain(app.simulations.at(-1).exportLoadout()), expected);
+  const next = JSON.parse(app.memory.get(key)); assert.deepEqual(next.entryLoadout, expected); assert.deepEqual(next.runStats, previousStats); assert.equal(next.checkpoint.state.relays, 0);
+  assert.equal(app.memory.get(key + '-refuse'), JSON.stringify(saved)); assert(app.simulations.at(-1).restore(next.checkpoint));
+});
+
+for (const fault of ['bad-size','missing-version']) test(`LOAD-01: a rubble-only ${fault} refusal preserves progression and destruction through a copied legacy checkpoint`, async () => {
+  const factory=(seed,stage)=>({...demolitionWorld(seed,stage),progression:{...arsenalWorld(seed,stage).progression,startWeapons:[true,true,true,true],startAmmo:[77,9,3,4]}});
+  const original = harness(null, {}, factory); original.element('start').click(); const sim = original.simulations.at(-1);
+  for (let i = 0; i < 300; i++) { sim.step(1 / 60, i === 0 ? { weapon: 2, fire: true } : {}); sim.state.events.length = 0; }
+  sim.state.player.x = 6; sim.step(.025, {}); sim.state.player.hp = 61;
+  const saved = JSON.parse(original.memory.get(key)); saved.checkpoint = sim.snapshot(); assert(saved.checkpoint.state.rubble.length > 0); assert.equal(saved.checkpoint.state.relays, 1);
+  if (fault === 'bad-size') saved.checkpoint.state.rubble[0].size[0] = -1; else delete saved.checkpoint.rubbleVersion;
+  const raw = JSON.stringify(saved), backup = 'first migration backup', app = harness(saved, { [key + '-before-ascension']: backup }, factory);
+  await app.element('resume-expedition').click(); const restored = app.simulations.at(-1), next = JSON.parse(app.memory.get(key));
+  assert.equal(app.element('body').dataset.state, 'playing'); assert.equal(restored.state.player.x, 6); assert.equal(restored.state.player.hp, 61); assert.equal(restored.state.relays, 1);
+  assert.deepEqual(plain(restored.exportLoadout()), plain(sim.exportLoadout())); assert.equal(restored.state.debris.filter(q => q.structural).length, 0);
+  assert.deepEqual(next.checkpoint.destruction, plain(saved.checkpoint.destruction)); assert.equal(next.checkpoint.rubbleVersion, 1); assert.deepEqual(next.checkpoint.state.rubble, []);
+  assert.equal(JSON.stringify(saved), raw, 'repair cannot mutate the rejected source object'); assert.equal(app.memory.get(key + '-refuse'), raw); assert.equal(app.memory.get(key + '-before-ascension'), backup);
+  assert.equal(app.simulations.length, 2, 'retry the candidate restore without regenerating the world'); assert.match(app.element('toast').textContent, /débris/);
+  assert.equal(app.writes.find(write => write.name === key).mode, 'playing'); assert(restored.restore(next.checkpoint));
+});
+
+test('LOAD-01: a failed fallback launch never replaces the active rejected checkpoint', async () => {
+  const { saved, factory } = saveWithEntry(true); saved.checkpoint.fingerprint = 'refused'; const raw = JSON.stringify(saved);
+  const app = harness(saved, {}, factory, { audioCall(name, args) { if (name === 'setPlaying' && args[0]) throw new Error('launch interrupted'); } });
+  await assert.rejects(app.element('resume-expedition').click(), /launch interrupted/);
+  assert.equal(app.memory.get(key), raw); assert.equal(app.memory.get(key + '-refuse'), raw); assert.equal(app.writes.filter(write => write.name === key).length, 0);
+});
+
+test('LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint', async () => {
+  const { saved, factory } = saveWithEntry(false); saved.checkpoint.fingerprint = 'refused'; const raw = JSON.stringify(saved); let blockBackup = true;
+  const app = harness(saved, {}, factory, { beforeWrite(write) { if (blockBackup && write.name === key + '-refuse') throw new Error('storage unavailable'); } });
+  await app.element('resume-expedition').click(); assert.equal(app.element('body').dataset.state, 'playing'); assert.equal(app.memory.get(key), raw);
+  const sim = app.simulations.at(-1); sim.state.player.x = 6; app.frame(100); assert.equal(app.memory.get(key), raw, 'a later automatic checkpoint still has to preserve the rejected source first');
+  blockBackup = false; sim.state.player.x = 8; app.frame(100);
+  assert.equal(app.memory.get(key + '-refuse'), raw); assert.notEqual(app.memory.get(key), raw); assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays, 2);
+  const names = app.writes.filter(write => write.name === key || write.name === key + '-refuse').map(write => write.name); assert.deepEqual(names, [key + '-refuse', key]);
+});
+
+function generatedModules() {
+  const previous = globalThis.window, modules = {}; globalThis.window = modules;
+  try { for (const name of ['renderer','world','destruction','economy','brain','simulation']) vm.runInThisContext(sources[name], { filename: name + '.js' }); }
+  finally { if (previous === undefined) delete globalThis.window; else globalThis.window = previous; }
+  return modules;
+}
+
+for (const campaign of [false,true]) test(`LOAD-01: generated ${campaign ? 'c:9' : 'l:0'} rubble restores exactly after three real rocket breaches`, () => {
+  const G = generatedModules(), w = G.FWorld.create(96, campaign ? 9 : 0, campaign ? { campaign: true, campaignVersion: 2 } : undefined);
+  const options = () => ({ brain: G.FBrain.create({ mode: 'cpu' }), armorSystem: true,
+    inventory: { weapons: campaign ? [true,true,true,true,true] : [true,true,true,true], ammo: campaign ? [180,36,12,16,1] : [180,36,12,16], shield: false },
+    ...(campaign ? { campaign: { version: 2, discovered: ['pistol','smg','shotgun','grenade','rocket'], claimedBossRewards: [] }, equipment: { right: 2, left: null, shieldEnergy: 100 } } : {}) });
+  const create = () => G.FSimulation.create(w, options()), probe = create(), walls = [];
+  for (const group of w.destructibles.filter(q => q.kind === 'wall' && q.colliders.length)) {
+    const b = group.bounds, cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2, thinX = b.maxX - b.minX < b.maxZ - b.minZ;
+    for (const side of [-1,1]) {
+      const nx = thinX ? side : 0, nz = thinX ? 0 : side, x = cx + nx * 7, z = cz + nz * 7, y = probe.ground(x,z);
+      if (!Number.isFinite(y) || Math.abs(y - b.minY) > .1 || probe.blocked(x,z,.28)) continue;
+      const hit = probe.ray([x,y+1.62,z],[-nx,0,-nz],9); if (hit < 6 || hit > 7.4) continue;
+      walls.push({ x,y,z,yaw:Math.atan2(-nx,nz),pitch:0 }); break;
+    }
+  }
+  let checked = 0;
+  for (const wall of walls) {
+    const sim = create(); Object.assign(sim.state.player,wall);
+    for (let i = 0; i < 300; i++) { sim.step(1/60,i === 0 ? { weapon:2,fire:true } : {}); sim.state.events.length = 0; }
+    if (sim.state.dead || !sim.state.debris.some(q => q.structural)) { sim.dispose(); continue; }
+    const saved = JSON.stringify(sim.snapshot()), restored = create(); assert.equal(JSON.parse(saved).rubbleVersion,1);
+    assert.equal(restored.restore(JSON.parse(saved),{recover:false}),true,`breach ${checked+1} rejects a snapshot produced by real physics`);
+    assert.equal(JSON.stringify(restored.snapshot()),saved,'no resting piece is displaced and every serialized gameplay field is retained');
+    sim.dispose(); restored.dispose(); if (++checked === 3) break;
+  }
+  probe.dispose(); assert.equal(checked,3,'three live generated-world breaches must be exercised');
 });
 
 function mechanicalWorld(seed, stage) {
