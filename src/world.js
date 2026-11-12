@@ -1588,6 +1588,15 @@
       add('box',[p.x+side*.66,p.y+.095,p.z+end*.78],[.16,.018,.055],4,'trophy_inlay',{color:theme.alt,emissive:.35});
     }
     for(let i=0;i<12;i++){const a=i*TAU/12;add('box',[p.x+Math.cos(a)*1.14,p.y+.016,p.z+Math.sin(a)*1.14],[.12,.022,.27],5,'trophy_floor_mark',{r:[0,-a,0],color:theme.alt,emissive:.15});}
+    // A narrow portal carries the lamp from the indestructible plinth. Its
+    // opening faces the service wall; the approach and pickup stay unobstructed.
+    const frameBox=(pos,size,category)=>{const mesh=w.meshes.length;add('box',pos,size,3,category,{solid:true});w.colliders.push({minX:pos[0]-size[0]/2,maxX:pos[0]+size[0]/2,minY:pos[1]-size[1]/2,maxY:pos[1]+size[1]/2,minZ:pos[2]-size[2]/2,maxZ:pos[2]+size[2]/2,mesh});};
+    for(const side of [-1,1]){
+      const x=p.x+bay.normal[1]*side*.78,z=p.z-bay.normal[0]*side*.78;
+      frameBox([x,p.y+.09,z],[.26,.10,.26],'trophy_support_foot');
+      frameBox([x,p.y+1.43,z],[.12,2.68,.12],'trophy_support');
+    }
+    frameBox([p.x,p.y+2.74,p.z],[bay.normal[1]?1.78:.12,.10,bay.normal[0]?1.78:.12],'trophy_crossbar');
     add('ring',[p.x,p.y+2.72,p.z],[1.2,.055,1.2],1,'trophy_lamp');
     add('cylinder',[p.x,p.y+2.69,p.z],[.64,.035,.64],4,'trophy_lens',{color:theme.alt,emissive:.7});
     const lightIndex=w.lights.length;w.lights.push({p:[p.x,p.y+2.45,p.z],color:theme.alt.slice(),power:5.5,region,trophyId:id});

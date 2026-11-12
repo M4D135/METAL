@@ -135,7 +135,28 @@ function assertTrophy(world, label) {
   assert(trophy.name && trophy.usage && trophy.meshCount >= 20 && trophy.meshCount <= 32);
   const presentation = world.meshes.slice(trophy.meshStart, trophy.meshStart + trophy.meshCount);
   assert(presentation.every(m => m.trophyId === trophy.id && m.indestructible && !m.destructibleId));
-  assert(presentation.some(m => m.category === 'trophy_plinth')); assert(presentation.some(m => m.category === 'trophy_lens'));
+  const byCategory = category => presentation.filter(m => m.category === category);
+  const plinth = byCategory('trophy_plinth')[0], lens = byCategory('trophy_lens')[0], lamp = byCategory('trophy_lamp')[0];
+  const feet = byCategory('trophy_support_foot'), posts = byCategory('trophy_support'), crossbar = byCategory('trophy_crossbar')[0];
+  assert(plinth && lens && lamp && crossbar); assert.equal(feet.length, 2); assert.equal(posts.length, 2); assert.equal(trophy.meshCount, 30);
+  const boxOf = m => ({ minX: m.p[0] - m.s[0] / 2, maxX: m.p[0] + m.s[0] / 2, minY: m.p[1] - m.s[1] / 2, maxY: m.p[1] + m.s[1] / 2, minZ: m.p[2] - m.s[2] / 2, maxZ: m.p[2] + m.s[2] / 2 });
+  const touches = (a, b) => a.minX <= b.maxX + 1e-7 && a.maxX + 1e-7 >= b.minX && a.minY <= b.maxY + 1e-7 && a.maxY + 1e-7 >= b.minY && a.minZ <= b.maxZ + 1e-7 && a.maxZ + 1e-7 >= b.minZ;
+  for (const m of [plinth, ...feet, ...posts, crossbar]) {
+    const mesh = world.meshes.indexOf(m), collider = world.colliders.find(q => q.mesh === mesh);
+    assert(m.solid && collider, `${label}: physical trophy frame lacks its collider`);
+    for (const [key, value] of Object.entries(boxOf(m))) assert(Math.abs(collider[key] - value) < 1e-7);
+  }
+  const pedestal = boxOf(plinth), beam = boxOf(crossbar);
+  for (let i = 0; i < 2; i++) {
+    const foot = boxOf(feet[i]), post = boxOf(posts[i]);
+    assert(Math.abs(foot.minY - pedestal.maxY) < 1e-7 && touches(pedestal, foot), `${label}: trophy frame floats above its plinth`);
+    assert(touches(foot, post) && touches(post, beam), `${label}: trophy lamp has a disconnected support`);
+    assert(foot.minX >= pedestal.minX - 1e-7 && foot.maxX <= pedestal.maxX + 1e-7 && foot.minZ >= pedestal.minZ - 1e-7 && foot.maxZ <= pedestal.maxZ + 1e-7);
+  }
+  assert(touches(beam, boxOf(lamp)) && touches(beam, boxOf(lens)), `${label}: trophy lighting floats below its support`);
+  const bay = world.encounterBays.find(q => q.zoneId === trophy.zoneId), axis = bay.normal[0] ? 2 : 0;
+  const opening = Math.abs(posts[1].p[axis] - posts[0].p[axis]) - posts[0].s[axis];
+  assert(opening >= 1.4 && beam.minY - trophy.y >= 2.6, `${label}: trophy portal blocks a player capsule`);
   assert.equal(world.lights[trophy.lightIndex].trophyId, trophy.id); assert(!world.lights[trophy.lightIndex].destructibleId);
   assert.equal(trial.waves.length, 1); assert.equal(trial.waves[0].enemyIds.length, 3); assert.equal(trial.maxActive, 3);
   for (const id of trial.waves[0].enemyIds) {

@@ -1,0 +1,71 @@
+[
+  {
+    "file": "mob-proche-mesa.png",
+    "bytes": 482702,
+    "sha256": "601b285fe29d6a0bf9cc144a0f347fdc31f47b8ad6a3b53d90b150cf4082efb8",
+    "scene": "custodian",
+    "source_sha256": {
+      "world": "148f582cb8b649f47a9c3b15e9371ecf89910c145e3cf0a9c2376a9683559d29",
+      "economy": "362863977e9ab6a9ddaf26f9d1ec6ec8f51eda25c58193d98b72abca4c2c08c9",
+      "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+      "simulation": "6093242c58fab9d7de9bf65a35dc95a774ac66df708f9c3aca1f76e89f540ecb",
+      "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+      "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+      "effects": "a9b87f021bc82f06ac22607689bc2bb0f9caddbfaa7bd0e9cf40c382bf94c341",
+      "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+      "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+      "game": "6f97b2db8a3bb56b88fe1a5ccda862104018f1173e18c3b8644e7dd1f73154bb"
+    },
+    "renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+    "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+    "GL_errors": 0,
+    "width": 960,
+    "height": 600
+  },
+  {
+    "file": "exterieur-mesa.png",
+    "bytes": 384939,
+    "sha256": "cb6aea45a04088740eefdddca6b34b567228b39f709437c948849531c636aaf2",
+    "scene": "trees",
+    "source_sha256": {
+      "world": "148f582cb8b649f47a9c3b15e9371ecf89910c145e3cf0a9c2376a9683559d29",
+      "economy": "362863977e9ab6a9ddaf26f9d1ec6ec8f51eda25c58193d98b72abca4c2c08c9",
+      "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+      "simulation": "6093242c58fab9d7de9bf65a35dc95a774ac66df708f9c3aca1f76e89f540ecb",
+      "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+      "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+      "effects": "a9b87f021bc82f06ac22607689bc2bb0f9caddbfaa7bd0e9cf40c382bf94c341",
+      "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+      "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+      "game": "6f97b2db8a3bb56b88fe1a5ccda862104018f1173e18c3b8644e7dd1f73154bb"
+    },
+    "renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+    "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+    "GL_errors": 0,
+    "width": 960,
+    "height": 600
+  },
+  {
+    "file": "pistolet-mesa.png",
+    "bytes": 433879,
+    "sha256": "6208f2df99ab16784d91ab8db78ec06974a4f623c51913b6b55a4b1b9642f108",
+    "scene": "pistol",
+    "source_sha256": {
+      "world": "148f582cb8b649f47a9c3b15e9371ecf89910c145e3cf0a9c2376a9683559d29",
+      "economy": "362863977e9ab6a9ddaf26f9d1ec6ec8f51eda25c58193d98b72abca4c2c08c9",
+      "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+      "simulation": "6093242c58fab9d7de9bf65a35dc95a774ac66df708f9c3aca1f76e89f540ecb",
+      "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+      "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+      "effects": "a9b87f021bc82f06ac22607689bc2bb0f9caddbfaa7bd0e9cf40c382bf94c341",
+      "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+      "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+      "game": "6f97b2db8a3bb56b88fe1a5ccda862104018f1173e18c3b8644e7dd1f73154bb"
+    },
+    "renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+    "GL_version": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1",
+    "GL_errors": 0,
+    "width": 960,
+    "height": 600
+  }
+]

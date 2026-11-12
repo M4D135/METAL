@@ -21,6 +21,7 @@
     // A thirty-metre silhouette needs close geometry at a very different distance
     // from a human-sized patrol. The LOD decision follows its projected size.
     const lod=distance/scale<near?0:distance/scale<far?1:2,stun=e.stun>0,charge=e.windup>0?clamp(1-e.windup/(e.windupMax||1),0,1):0;
+    const rich=lod===0&&!canvas&&!low;
     const airborne=!!e.airborne;
     const aim=e.attackState==='aim'||e.attackState==='burst'||e.windup>0?1:0,rush=e.attackState==='rush';
     const phase=Number.isFinite(options.phase)?options.phase:time*(e.moveSpeed||0)*4.8/scale+(e.id||0)*.7;
@@ -136,6 +137,18 @@
         cyl('rifle-scope',[0,.205,-.18],[.115,.25,.115],'dark',gun,[PI/2,0,0]);
         eye('scope-lens',[0,.205,-.309],[.075,.015,.075],gun,[PI/2,0,0],'cylinder');
       }
+      if(rich)for(const side of [-1,1]){
+        for(const y of [-.12,.12])cyl('detail-helmet-bolt-'+side+'-'+y,[side*.20,y,-.251],[.035,.012,.035],'steel',head,[PI/2,0,0]);
+        box('detail-chest-seam-'+side,[side*.35,.50,-.404],[.018,.21,.014],'steel',body);
+        const plate=frame(body,[side*.188,.52,-.33],[0,side*.08,side*.035]);
+        box('detail-chest-laminate-'+side,[0,.015,-.072],[.265,.27,.024],'trim',plate);
+        box('detail-chest-intake-'+side,[0,-.005,-.087],[.17,.13,.006],'rubber',plate);
+      }
+      if(rich)for(const l of legs){
+        const upper=point(root,[l.side*.37,.73,l.stride*.20+.12]),lower=point(root,[l.side*.37,.27+l.lift,l.stride+.12]);
+        limb('detail-leg-jacket-'+l.side,upper,upper.map((v,i)=>v+(lower[i]-v)*.55),.108,.108,'dark','cylinder');
+        cyl('detail-knee-cap-'+l.side,[l.side*.37,l.kneeY,l.kneeZ],[.14,.025,.14],'steel',root,[0,0,PI/2]);
+      }
     }
     function drone(){
       const hover=1.35+Math.sin(time*2.2+(e.id||0))*.045,bank=stun?.18:Math.sin(time*1.5+(e.id||0))*.025+(e.tactic==='flank'?.075:0);
@@ -167,6 +180,13 @@
       }
       cyl('drone-aerial',[0,.40,.19],[.026,.29,.026],'edge',body);
       eye('drone-status',[0,.55,.19],[.055,.055,.055],body,null,'sphere');
+      if(rich)for(const side of [-1,1]){
+        for(const z of [-.31,.31])cyl('detail-drone-bolt-'+side+'-'+z,[side*.28,.177,z],[.035,.014,.035],'steel',body);
+        box('detail-drone-grille-'+side,[side*.15,-.015,-.529],[.05,.09,.012],'dark',body);
+        box('detail-drone-intake-'+side,[side*.374,-.025,-.23],[.028,.17,.28],'rubber',body);
+        for(const y of [-.07,.025])box('detail-drone-louver-'+side+'-'+y,[side*.395,y,-.23],[.014,.018,.24],'steel',body);
+        limb('detail-drone-optic-feed-'+side,point(body,[side*.285,-.13,-.38]),point(body,[side*.1,-.11,-.56]),.045,.045,'steel','cylinder',body.b);
+      }
     }
     function sentinel(){
       const fixed={p:root.p,b:identity,r:[0,0,0]},body=frame(root,[0,1.60,0],[stun?-.12:0,0,stun?Math.sin(time*15)*.025:0]);
@@ -211,6 +231,20 @@
       }
       for(let i=0;i<3;i++)box('turret-heat-fin-'+i,[(i-1)*.18,.09,.468],[.08,.35,.055],'dark',body);
       cyl('turret-aerial',[.32,.45,.22],[.025,.43,.025],'steel',body);eye('turret-status',[.32,.67,.22],[.055,.055,.055],body,null,'sphere');
+      if(rich)for(const side of [-1,1]){
+        for(const y of [.05,.25])cyl('detail-sensor-bolt-'+side+'-'+y,[side*.16,y,-.486],[.035,.012,.035],'steel',body,[PI/2,0,0]);
+        box('detail-turret-conductor-'+side,[side*.18,.09,.474],[.026,.26,.018],'trim',body);
+        limb('detail-turret-feed-'+side,point(body,[side*.40,-.20,.10]),point(gun,[side*.37,-.16,-.25]),.055,.055,'rubber','cylinder',body.b);
+      }
+      if(rich){
+        box('detail-turret-plastron',[0,-.16,-.407],[.57,.17,.055],'trim',body);
+        box('detail-turret-intake',[0,-.16,-.438],[.40,.075,.007],'rubber',body);
+        ring('detail-turret-bearing',[0,1.14,0],[.46,.07,.46],'trim',fixed);
+        for(const [i,f] of feet.entries()){
+          const upper=point(fixed,[f.x*.23,.92,f.z*.23]),lower=point(fixed,[f.footX*.82,.29+f.lift,f.footZ*.82]);
+          limb('detail-turret-jacket-'+i,upper,upper.map((v,k)=>v+(lower[k]-v)*.48),.105,.105,'trim','cylinder',fixed.b);
+        }
+      }
     }
     function custodian(){
       const bounce=giant?0:Math.sin(phase*2)*.035*blend,body=frame(root,[0,1.5+bounce,0],giant?[0,0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
@@ -263,6 +297,16 @@
         cyl('custodian-aerial-'+side,[side*.43,1.60,.12],[.035,.45,.035],'steel',body);
         eye('custodian-core-strip-'+side,[side*.36,.43,-.712],[.045,.42,.025],body);
       }
+      if(rich)for(const side of [-1,1]){
+        for(const y of [.11,.75])cyl('detail-plastron-bolt-'+side+'-'+y,[side*.5,y,-.709],[.055,.018,.055],'steel',body,[PI/2,0,0]);
+        box('detail-plastron-seam-'+side,[side*.36,.08,-.709],[.16,.025,.018],'trim',body);
+        box('detail-plastron-laminate-'+side,[side*.19,.43,-.728],[.25,.60,.056],'trim',body);
+        box('detail-plastron-intake-'+side,[side*.19,.43,-.760],[.145,.27,.008],'rubber',body);
+      }
+      if(rich)for(const [i,l] of feet.entries()){
+        const upper=point(root,[l.side*1.015,1.13,l.end*.5]),lower=point(root,[l.side*1.045,.34+l.lift,l.end*.76+l.stride]);
+        limb('detail-custodian-jacket-'+i,upper,upper.map((v,k)=>v+(lower[k]-v)*.55),.14,.14,'trim','cylinder');
+      }
     }
     if(type===0)drone();else if(type===1)heavy();else if(type===2)sentinel();else custodian();
     if(giant){
@@ -305,6 +349,10 @@
           }
           for(let j=0;j<3;j++)box('titan-back-vent-'+side+'-'+j,[side*.26,1.72+j*.26,.98],[.25,.10,.12],'dark');
           piece('titan-reactor-seal-'+side,'box',[side*.46,2.29,.99],[.035,.39,.025],glow,root,null,5,energy*.55);
+        }
+        if(rich)for(let j=0;j<4;j++){
+          const a=j*PI/2+PI/4;
+          cyl('detail-reactor-coupling-'+j,[Math.cos(a)*.52,1.93+Math.sin(a)*.52,-.875],[.09,.06,.09],'steel',root,[PI/2,0,0]);
         }
       }
       for(const mesh of out){

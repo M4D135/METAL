@@ -83,6 +83,24 @@ test('blast lighting is anchored to live sources, fades independently of smoke a
   assert.equal(Effects.lights(storm).length,4);assert.deepEqual(plain(Effects.lights(state)),plain([light]));
 });
 
+test('spark trails end at the ballistic tip while cold smoke and hot sparks keep distinct material tags',()=>{
+  const blast={id:1,x:0,y:3,z:-5,age:.4,life:2.4,radius:4.5,power:55,seed:887},state=freeze({time:3,explosions:[blast]});
+  const first=Effects.build(state,{},camera,{quality:'high'});validate(first);
+  const sparks=first.filter(m=>m.effectPart==='blast-ember'),smoke=first.filter(m=>m.effectPart==='blast-dust');
+  assert(sparks.length>0&&sparks.every(m=>m.fxSpark&&!m.fxSmoke&&!m.fxFire&&m.s[1]>m.s[0]*2));
+  assert(smoke.length>0&&smoke.every(m=>m.fxSmoke&&!m.fxSpark&&!m.fxFire));
+  assert(first.filter(m=>m.effectPart==='fire-cloud').every(m=>m.fxFire&&!m.fxSmoke&&!m.fxSpark));
+  // Follow the actual tip twice: its horizontal velocity stays constant and
+  // its vertical displacement includes gravity, independently of render time.
+  const tip=m=>{const a=matrixFor(m.r),direction=[a[1],a[4],a[7]];return m.p.map((v,k)=>v+direction[k]*m.s[1]/2);};
+  function matrixFor(r){const [x,y,z]=r,c=[x,y,z].map(Math.cos),s=[x,y,z].map(Math.sin);return [c[2]*c[1],c[2]*s[1]*s[0]-s[2]*c[0],c[2]*s[1]*c[0]+s[2]*s[0],s[2]*c[1],s[2]*s[1]*s[0]+c[2]*c[0],s[2]*s[1]*c[0]-c[2]*s[0],-s[1],c[1]*s[0],c[1]*c[0]];}
+  const a=tip(sparks[0]),later=Effects.build({time:50,explosions:[{...blast,age:.6}]},{},camera,{quality:'high'}),b=tip(later.find(m=>m.effectPart==='blast-ember'));
+  assert(Math.abs((b[0]-blast.x)/.6-(a[0]-blast.x)/.4)<1e-8);
+  assert(Math.abs((b[2]-blast.z)/.6-(a[2]-blast.z)/.4)<1e-8);
+  assert(Math.abs((b[1]-blast.y+3*.6*.6)/.6-(a[1]-blast.y+3*.4*.4)/.4)<1e-8);
+  assert.equal(Effects.build({explosions:[{...blast,age:1.4}]},{},camera).filter(m=>m.fxSpark).length,0);
+});
+
 test('settled wide roof slabs keep their bottom on the floor throughout their fade',()=>{
   const q={x:0,y:3.32,z:0,vx:0,vy:0,vz:0,size:[2.4,.24,1.8],life:2.5,seed:91,mat:3,resting:true};
   let yaw;

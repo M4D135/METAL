@@ -85,3 +85,13 @@ Les scripts portables `tools/campaign-profiles.mjs` et `tools/campaign-balance.m
 ## Compléments demandés pendant la validation
 
 La passe G de détails/reflets/particules précède maintenant F pour que la documentation finale décrive le rendu livré. Deux nouveaux messages ajoutent H : corriger l’intersection arme/bouclier, ajouter une armure rechargeable par objets dont le plafond augmente avec le bouclier équipé, et réduire les ambiances continues trop lourdes. Ces changements seront validés et intégrés avant la fusion finale autorisée, sans abandonner la campagne ni le correctif de chute.
+
+## Validation de phase G
+
+Suite complète : 333 tests réussis, 0 échec, node:test en 121 253,354 ms. Les 54 mondes passent avec les supports physiques ajoutés aux cinq présentations de trophée. Cinq parcours ciblés supplémentaires traversent ces portiques avec move/step, collecte et reprise ; un vrai kill libère la place manquante du troisième garde au monde 4. Les ouvertures restent praticables.
+
+Les détails proches WebGL ajoutent 14 pièces par machine, 18 par géant ; Canvas, Économie et les niveaux éloignés restent inchangés. Le filtrage du métal, les reflets analytiques et les silhouettes des fumées/étincelles n’ajoutent aucune passe d’ombre ni aucun quota de particules. La pièce de comparaison passe de 238 888 à 241 224 triangles toutes passes (+0,98 %), avec 51 appels opaques dans les deux cas. Ce coût ponctuel ne constitue pas une mesure de FPS matériels.
+
+Les 16 comparaisons GLES et les trois captures D+G ont rendu sans erreur GL sur Mesa llvmpipe. Les PNG et empreintes dans docs/qa-v07 sont uniquement des preuves, jamais des assets chargés par le jeu. Le prévol Chromium a échoué avant ouverture de page (socket IPC interdit) : aucune capture ni validation du HUD en navigateur n’en découle.
+
+Build : 729 973 octets bruts, 220 490 gzip, SHA-256 `36b663a78a3e5d246e2fcac4de1dabc43c07bc6e19e9bd2ace37d9b8ca4287dd`, aucun asset externe.

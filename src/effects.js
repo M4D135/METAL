@@ -18,7 +18,7 @@
     const close=(list,limit=Infinity)=>Array.from(list||[]).filter(e=>[e.x,e.y,e.z].every(Number.isFinite)).sort((a,b)=>distance(point(a))-distance(point(b))).slice(0,limit);
     function puff(p,s,color,alpha,emissive=0,part='dust',shape='sphere',r=[0,0,0],mandatory=false){
       alpha*=fade(p,Math.hypot(...s)*.5);if(!mandatory&&particles>=budget||alpha<.008||s.some(v=>!(v>.002)))return;
-      const m=mesh(shape,p,s,7,color,r,part);m.fx=true;m.alpha=clamp(alpha,0,.94);m.emissive=emissive;if(part==='blast-core'||part==='fire-cloud')m.fxFire=true;if(mandatory)m.fxPriority='hazard';out.push(m);particles++;return m;
+      const m=mesh(shape,p,s,7,color,r,part);m.fx=true;m.alpha=clamp(alpha,0,.94);m.emissive=emissive;if(part==='blast-core'||part==='fire-cloud')m.fxFire=true;if(part==='blast-dust')m.fxSmoke=true;if(part==='blast-ember')m.fxSpark=true;if(mandatory)m.fxPriority='hazard';out.push(m);particles++;return m;
     }
     function solid(shape,p,s,mat,color,r,part){const m=mesh(shape,p,s,mat,color,r,part);out.push(m);return m;}
 
@@ -133,8 +133,8 @@
       }
       if(near&&age<1.05)for(let i=0;i<(software?3:5+tier*3);i++){
         const a=hash(seed,i+171)*Math.PI*2,speed=radius*(1.15+hash(seed,i+191)*1.1),up=radius*(.55+hash(seed,i+211)*1.2),velocity=[Math.cos(a)*speed,up-6*age,Math.sin(a)*speed];
-        const center=[p[0]+velocity[0]*age,p[1]+up*age-3*age*age,p[2]+velocity[2]*age],width=.025+radius*.009,trail=Math.min(radius*.42,Math.hypot(...velocity)*.035);
-        emit(center,[width,Math.max(width,trail),width],[1,.44,.035],.84*(1-age/1.05),3.2,'blast-ember','octa',orient(unit(velocity)));
+        const tip=[p[0]+velocity[0]*age,p[1]+up*age-3*age*age,p[2]+velocity[2]*age],width=.018+radius*.006,trail=Math.max(width,Math.min(radius*.42,Math.hypot(...velocity)*.052)),direction=unit(velocity),center=add(tip,direction,-trail*.5),hot=1-age/1.05;
+        emit(center,[width,trail,width],[1,.24+hot*.4,.025+hot*.14],.84*hot,1.9+hot*1.8,'blast-ember','octa',orient(direction));
       }
     }
 
