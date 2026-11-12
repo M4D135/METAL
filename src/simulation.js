@@ -26,6 +26,7 @@
   const PIPE=['broken','active','age','remaining','hot','warning','damageWait','cycle'];
   const TRAP=['progress','angle','box','hot','warning','damageWait','triggered','triggerAge','cycle','hp','destroyed'];
   const SHIELD=['energy','raised','rechargeDelay','bashCooldown','bashVisual'];
+  const CAMPAIGN_GEAR=[{key:'pistol',weapon:4,index:0},{key:'shield',index:3},{key:'smg',weapon:0,index:6},{key:'shotgun',weapon:1,index:9},{key:'grenade',weapon:3,index:12},{key:'rocket',weapon:2,index:15}];
   const NUMBERS=['time','elapsed','kills','shots','hits','relays','weapon','score','combo','comboTime'];
   const pick=(value,keys)=>Object.fromEntries(keys.map(key=>[key,value[key]]));
   function create(world,options={}) {
@@ -478,10 +479,16 @@
       s.equipment.left=id;s.shield.raised=false;return true;
     }
     function pickupKind(q){return q.kind||q.type||'health';}
+    function campaignPickupAllowed(q,kind){
+      if(!pistol||kind!=='weapon'&&kind!=='shield'||(kind==='shield'?s.inventory.shield:s.inventory.weapons[q.weapon]))return true;
+      const gear=CAMPAIGN_GEAR.find(g=>kind==='shield'?g.key==='shield':g.weapon===q.weapon),id=gear&&'trophy-'+gear.key;
+      return !!gear&&gear.key!=='pistol'&&world.index===gear.index&&q.id===id&&q.trophyId===id;
+    }
     function collectSupplies(){
       for(const q of s.pickups){
         if(q.taken||Math.abs(p.y-(q.y||0))>=.8||Math.hypot(p.x-q.x,p.z-q.z)>=1||!sight(p.x,p.z,q.x,q.z,p.y+.8,(q.y||0)+.45))continue;
         const kind=pickupKind(q);
+        if(!campaignPickupAllowed(q,kind)||pistol&&Number.isInteger(q.requiresWeapon)&&!s.inventory.weapons[q.requiresWeapon])continue;
         if(kind==='health'){if(p.hp>=stats.maxHp-.01)continue;q.taken=true;p.hp=Math.min(stats.maxHp,p.hp+(q.amount||35));s.score+=25;emit('pickup');continue;}
         if(arsenal&&kind==='shield'){q.taken=true;q.remaining=0;if(!s.inventory.shield){s.inventory.shield=true;selectLeftWeapon('shield');emit('shieldPickup',{id:q.id,x:q.x,y:q.y||0,z:q.z});}continue;}
         if(!progression||!Number.isInteger(q.weapon)||q.weapon<0||q.weapon>=weaponSlots)continue;

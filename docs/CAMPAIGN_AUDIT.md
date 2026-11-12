@@ -65,3 +65,7 @@ Suite complète : 301 tests réussis, 0 échec, en 122 097,156 ms pour node:test
 ## Validation de phase B
 
 Suite complète : 311 tests réussis, 0 échec, node:test en 122 080,297 ms. Le pistolet est une arme à cinq emplacements avec modèle, son, recul, touches, molette, commande tactile et main gauche. Les tests vérifient sa cadence, sa précision et la réserve finie jamais consommée, le transport exact entre mondes et les transactions ne débloquant pas les trophées. Le contrôle de parité des trois premiers mondes exclut maintenant seulement les quatre champs de loadout ajoutés en campagne ; les six empreintes du mode historique restent strictes. Build : 700 006 octets bruts, SHA-256 `8f60654989be60a4eff240931552961fe6215d8ceaf298446843d553b8b7f9bf`, aucun asset externe.
+
+## Validation de phase C
+
+Suite complète : 313 tests réussis, 0 échec, node:test en 129 859,592 ms. Le calendrier autorise une unique première acquisition aux mondes 4/7/10/13/16 ; les racks précédents sont retirés en campagne. Les caches non possédées sont refusées par la simulation et masquées dans la scène comme dans les indications. Les transactions directes en boutique ne peuvent pas contourner les découvertes. Les fixtures des nouveaux tests de shell suivent maintenant le vrai calendrier, sans retoucher les tests historiques. Build : 702 274 octets bruts, SHA-256 `6181a920b513e48d821e07898810e35e94b01f4ad581caace333d44530f28586`, aucun asset externe.

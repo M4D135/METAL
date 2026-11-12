@@ -90,15 +90,17 @@ function collectArsenal(app){const sim=app.simulations.at(-1);for(const x of [3,
 
 function campaignShellWorld(seed, index, options) {
   const value = arsenalWorld(seed, options?.campaign ? index % 3 : index);
+  const gear = [{index:3,key:'shield',kind:'shield',amount:1},{index:6,key:'smg',kind:'weapon',weapon:0,amount:48},{index:9,key:'shotgun',kind:'weapon',weapon:1,amount:12},{index:12,key:'grenade',kind:'weapon',weapon:3,amount:6},{index:15,key:'rocket',kind:'weapon',weapon:2,amount:4}].find(q => q.index === index);
   return options?.campaign ? { ...value, campaign: true, index, chapter: Math.floor(index / 3), chapterTitle: 'Chapitre ' + (Math.floor(index / 3) + 1),
     progression: { ...value.progression, weaponSlots: 5, startWeapons: [false, false, false, false, true], startAmmo: [0, 0, 0, 0, 1], ammoCaps: [180, 36, 12, 16, 1] },
-    pickups: [{ id: 'smg', kind: 'weapon', weapon: 0, amount: 48, x: 3, y: 0, z: 0 }, ...value.pickups.map(p => ({ ...p, x: p.x + 4 }))],
+    pickups: gear ? [{ ...gear, id: 'trophy-' + gear.key, trophyId: 'trophy-' + gear.key, x: 3, y: 0, z: 0 }] : [],
   } : value;
 }
 function clearShellWorld(app) {
   const sim = app.simulations.at(-1);
   for (const x of [6, 8, 10, 15]) { sim.move(sim.state.player, x - sim.state.player.x, 0); app.frame(100); }
 }
+function advanceShellTo(app, index) { while (app.simulations.at(-1).state.world.index < index) { clearShellWorld(app); app.element('continue').click(); } }
 
 test('The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen', () => {
   const app = harness(null, {}, campaignShellWorld); app.element('start').click();
@@ -144,7 +146,7 @@ test('Campaign save envelopes reject mismatched biome indices and out-of-range w
 
 test('The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal', () => {
   const app = harness(null, {}, campaignShellWorld); app.element('start').click(); app.frame(100);
-  const sim = app.simulations.at(-1);
+  let sim = app.simulations.at(-1);
   assert.equal(sim.state.weapon, 4); assert.equal(app.element('weapon-label').textContent, 'PISTOLET');
   assert.equal(app.element('ammo-count').textContent, '∞'); assert.equal(app.element('slot-ammo-4').textContent, '∞');
   assert.equal(app.element('arsenal-count').textContent, '1 / 5');
@@ -157,6 +159,7 @@ test('The campaign pistol HUD, keyboard, wheel, touch button and left hand use t
   assert.equal(sim.state.inventory.ammo[4], 1);
   assert(app.sounds.some(s => s.name === 'shot' && s.args[0].weapon === 4));
   assert(app.frames.at(-1).meshes.filter(m => m.overlay).length > 25, 'The pistol must have a real detailed first-person model');
+  advanceShellTo(app, 6); sim = app.simulations.at(-1);
   sim.move(sim.state.player, 3, 0); app.frame(100);
   assert.equal(sim.state.inventory.weapons[0], true); assert.equal(app.element('weapon-slot-0').hidden, false);
   app.key('Digit5'); app.key('Digit5', false); assert.equal(sim.state.weapon, 4);
@@ -177,16 +180,32 @@ test('The campaign pistol HUD, keyboard, wheel, touch button and left hand use t
 
 test('Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell', () => {
   const app = harness(null, {}, campaignShellWorld); app.element('start').click();
+  advanceShellTo(app, 6);
   const first = app.simulations.at(-1); first.move(first.state.player, 3, 0); app.frame(100);
   first.state.inventory.ammo[0] = 19;
   clearShellWorld(app); app.element('continue').click();
   const next = app.simulations.at(-1), saved = JSON.parse(app.memory.get(key));
-  assert.equal(next.state.world.index, 1); assert.equal(next.state.inventory.weapons[4], true);
+  assert.equal(next.state.world.index, 7); assert.equal(next.state.inventory.weapons[4], true);
   assert.equal(next.state.inventory.ammo[0], 19); assert.equal(next.state.inventory.ammo[4], 1);
   assert.equal(saved.entryLoadout.inventory.weapons.length, 5);
   const resumed = harness(saved, {}, campaignShellWorld); resumed.element('resume-expedition').click();
   assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()), plain(next.exportLoadout()));
   assert.equal(resumed.element('body').dataset.state, 'playing');
+});
+
+test('Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered', () => {
+  const make = (seed, index, options) => { const w=campaignShellWorld(seed,index,options);return {...w,shops:[],pickups:[...w.pickups,{id:'locked-ammo',kind:'ammo',weapon:0,requiresWeapon:0,amount:12,x:0,y:0,z:3}]}; };
+  const app = harness(null, {}, make);app.element('start').click();advanceShellTo(app,6);app.frame(100);
+  const sim = app.simulations.at(-1), atCache = m => !m.overlay && Math.abs(m.p[0]) < .001 && Math.abs(m.p[2]-3) < .001;
+  assert.equal(sim.state.inventory.weapons[0],false);
+  assert.equal(app.frames.at(-1).meshes.some(atCache),false);
+  assert.notEqual(app.element('supply-name').textContent,'BALLES');
+  sim.move(sim.state.player,3,0);app.frame(100);sim.move(sim.state.player,-3,0);app.frame(100);
+  assert.equal(sim.state.inventory.weapons[0],true);
+  assert(app.frames.at(-1).meshes.some(atCache));
+  assert.equal(app.element('supply-name').textContent,'BALLES');
+  const before=sim.state.inventory.ammo[0];sim.move(sim.state.player,0,3);app.frame(100);
+  assert.equal(sim.state.inventory.ammo[0],before+12);
 });
 
 test('Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together',()=>{

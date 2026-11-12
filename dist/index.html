@@ -2390,6 +2390,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     suppliesWorld(world);
     populate(world);
     armoryWorld(world);
+    if(campaign)campaignArmory(world);
     polishTrees(world);
     demolitionMetadata(world);
     world.detailStats.added=world.meshes.length-world.detailStats.base;
@@ -3247,6 +3248,24 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     add(late,'ammo',4,'grenades-late');
     const outer=[];for(const x of [-22,-20.5,-23.5])for(const z of [-17.2,-15.8,17.2,15.8])outer.push({x:arena.x+x,z:arena.z+z});
     add(arena,'ammo',4,'grenades-boss',outer);
+  }
+  // Campaign discoveries occupy one reserved, physically reachable equipment
+  // point. The legacy racks remain untouched in worlds without the opt-in flag.
+  function campaignArmory(w){
+    const unlock=[6,9,15,12,0],schedule=[
+      {index:3,key:'shield',kind:'shield',amount:1},
+      {index:6,key:'smg',kind:'weapon',weapon:0,amount:60},
+      {index:9,key:'shotgun',kind:'weapon',weapon:1,amount:12},
+      {index:12,key:'grenade',kind:'weapon',weapon:3,amount:6},
+      {index:15,key:'rocket',kind:'weapon',weapon:2,amount:4}
+    ],discovery=schedule.find(q=>q.index===w.index),reserved=w.pickups.find(q=>q.id==='arsenal-shield');
+    w.pickups=w.pickups.filter(q=>q.kind==='health'||q.kind==='ammo'&&q.weapon<4&&unlock[q.weapon]<=w.index).map(q=>q.kind==='ammo'?{...q,requiresWeapon:q.weapon}:q);
+    for(const e of w.enemies)if(e.drop&&(e.drop.weapon>=4||unlock[e.drop.weapon]>w.index))e.drop=false;
+    if(discovery){
+      if(!reserved)throw new Error('Missing campaign equipment reservation '+w.index);
+      const {key,kind,weapon,amount}=discovery;
+      w.pickups.push({id:'trophy-'+key,trophyId:'trophy-'+key,kind,...(kind==='weapon'?{weapon}:{}),amount,x:reserved.x,y:reserved.y,z:reserved.z,zoneId:reserved.zoneId});
+    }
   }
   // All 430 IDs stay stable in the save. Only the opening patrols and the
   // colossus's six scripted guards exist physically before their wave deploys.
@@ -4815,6 +4834,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   const PIPE=['broken','active','age','remaining','hot','warning','damageWait','cycle'];
   const TRAP=['progress','angle','box','hot','warning','damageWait','triggered','triggerAge','cycle','hp','destroyed'];
   const SHIELD=['energy','raised','rechargeDelay','bashCooldown','bashVisual'];
+  const CAMPAIGN_GEAR=[{key:'pistol',weapon:4,index:0},{key:'shield',index:3},{key:'smg',weapon:0,index:6},{key:'shotgun',weapon:1,index:9},{key:'grenade',weapon:3,index:12},{key:'rocket',weapon:2,index:15}];
   const NUMBERS=['time','elapsed','kills','shots','hits','relays','weapon','score','combo','comboTime'];
   const pick=(value,keys)=>Object.fromEntries(keys.map(key=>[key,value[key]]));
   function create(world,options={}) {
@@ -5267,10 +5287,16 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       s.equipment.left=id;s.shield.raised=false;return true;
     }
     function pickupKind(q){return q.kind||q.type||'health';}
+    function campaignPickupAllowed(q,kind){
+      if(!pistol||kind!=='weapon'&&kind!=='shield'||(kind==='shield'?s.inventory.shield:s.inventory.weapons[q.weapon]))return true;
+      const gear=CAMPAIGN_GEAR.find(g=>kind==='shield'?g.key==='shield':g.weapon===q.weapon),id=gear&&'trophy-'+gear.key;
+      return !!gear&&gear.key!=='pistol'&&world.index===gear.index&&q.id===id&&q.trophyId===id;
+    }
     function collectSupplies(){
       for(const q of s.pickups){
         if(q.taken||Math.abs(p.y-(q.y||0))>=.8||Math.hypot(p.x-q.x,p.z-q.z)>=1||!sight(p.x,p.z,q.x,q.z,p.y+.8,(q.y||0)+.45))continue;
         const kind=pickupKind(q);
+        if(!campaignPickupAllowed(q,kind)||pistol&&Number.isInteger(q.requiresWeapon)&&!s.inventory.weapons[q.requiresWeapon])continue;
         if(kind==='health'){if(p.hp>=stats.maxHp-.01)continue;q.taken=true;p.hp=Math.min(stats.maxHp,p.hp+(q.amount||35));s.score+=25;emit('pickup');continue;}
         if(arsenal&&kind==='shield'){q.taken=true;q.remaining=0;if(!s.inventory.shield){s.inventory.shield=true;selectLeftWeapon('shield');emit('shieldPickup',{id:q.id,x:q.x,y:q.y||0,z:q.z});}continue;}
         if(!progression||!Number.isInteger(q.weapon)||q.weapon<0||q.weapon>=weaponSlots)continue;
@@ -7704,6 +7730,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       }
     }
   }
+  function supplyVisible(c){return !c.taken&&(!world.campaign||(!(Number.isInteger(c.requiresWeapon)&&!sim.state.inventory.weapons[c.requiresWeapon])&&((c.kind||c.type)!=='ammo'||sim.state.inventory.weapons[c.weapon])));}
   function supplyModel(out,c,t){
     const kind=c.kind||c.type||'health',weapon=c.weapon||0,y=(c.y||0)+.4+Math.sin(t*1.8+c.x)*.035,mat=kind==='health'?4:weapon===0?4:weapon===1?5:6;
     const frame=FMotion.mount({pos:[c.x,y,c.z],yaw:t*.3+c.x*.1,pitch:0,roll:0}),part=(shape,p,s,material=0,rx=0,glow=0)=>{const pose=FMotion.place(frame,p,rx);out.push(m(shape,pose.p,s,material,pose.r,glow));};
@@ -7772,7 +7799,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       }
       if(e.stun>0)out.push(m('ring',[e.x,base+[2,2.25,2.35,3.35][e.type]*scale,e.z],[1.05*scale,.055*scale,1.05*scale],4,[.15,t*2,0],.6));
     }
-    for(const c of [...s.pickups,...(s.loot||[])])if(!c.taken&&nearby(c.x,c.z))supplyModel(out,c,t);
+    for(const c of [...s.pickups,...(s.loot||[])])if(supplyVisible(c)&&nearby(c.x,c.z))supplyModel(out,c,t);
     const ex=world.exit.x,ez=world.exit.z,ey=world.exit.y||0,ready=exitReady(),exitMat=ready?4:5;
     if(nearby(ex,ez,4)){
     out.push(m('cylinder',[ex,ey+.08,ez],[2.5,.16,2.5],0),m('ring',[ex,ey+.2,ez],[2.7,.1,2.7],exitMat,[0,0,0],1.4));
@@ -7945,7 +7972,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     $('crosshair').classList.toggle('fracture',s.weapon===1);
     $('crosshair').classList.toggle('rocket',s.weapon===2||s.weapon===3);
     document.body.dataset.ammo=String(ammo??0);
-    const supply=[...s.pickups,...(s.loot||[])].filter(c=>!c.taken&&Math.abs((c.y||0)-p.y)<1.1&&Math.hypot(c.x-p.x,c.z-p.z)<3.7).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z)).find(c=>{const a=[p.x,p.y+1.3,p.z],b=[c.x,(c.y||0)+.4,c.z],d=b.map((v,i)=>v-a[i]),length=Math.hypot(...d)||1;return sim.ray(a,d.map(v=>v/length),length)>=length-.2;});
+    const supply=[...s.pickups,...(s.loot||[])].filter(c=>supplyVisible(c)&&Math.abs((c.y||0)-p.y)<1.1&&Math.hypot(c.x-p.x,c.z-p.z)<3.7).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z)).find(c=>{const a=[p.x,p.y+1.3,p.z],b=[c.x,(c.y||0)+.4,c.z],d=b.map((v,i)=>v-a[i]),length=Math.hypot(...d)||1;return sim.ray(a,d.map(v=>v/length),length)>=length-.2;});
     $('supply-hint').hidden=!supply;
     if(supply){const kind=supply.kind||supply.type||'health',weapon=supply.weapon||0,salvage=kind==='salvage'||kind==='boss',full=kind==='shield'?!!inventory?.shield:kind==='health'?p.hp>=maxHp:salvage?!supply.credits&&!supply.cores&&supply.ammo.every((n,i)=>!n||(inventory?.ammo[i]??0)>=sim.ammoCaps[i]):kind==='weapon'&&!owned[weapon]?false:inventory?.ammo[weapon]>=sim.ammoCaps?.[weapon];$('supply-name').textContent=kind==='shield'?'BOUCLIER':kind==='weapon'?weaponNames[weapon].toUpperCase():kind==='ammo'?ammoNames[weapon].toUpperCase():kind==='boss'?'BUTIN DU COLOSSE':salvage?'FERRAILLE & RÉSERVES':'INTÉGRITÉ';$('supply-detail').textContent=full?'RÉSERVE AU MAXIMUM':kind==='weapon'&&!owned[weapon]?'ARME À RÉCUPÉRER':'AVANCEZ POUR RAMASSER';}
     const bossTarget=s.relays===3&&operational&&boss;

@@ -135,3 +135,16 @@ test('A pistol remains usable in the right hand while the left shield is raised'
   const saved = sim.snapshot(), resumed = FSimulation.create(sim.state.world); assert.equal(resumed.restore(saved), true);
   assert.equal(JSON.stringify(resumed.snapshot()), JSON.stringify(saved));
 });
+
+test('First campaign equipment pickups require the exact calendar world and its unique trophy identity', () => {
+  for (const [index, key, weapon] of [[3, 'shield', null], [6, 'smg', 0], [9, 'shotgun', 1], [12, 'grenade', 3], [15, 'rocket', 2]]) {
+    const id = 'trophy-' + key, pickup = { id, trophyId: id, kind: weapon === null ? 'shield' : 'weapon', ...(weapon === null ? {} : { weapon }), amount: weapon === null ? 1 : 4, x: .5, y: 0, z: 0 };
+    for (const [worldIndex, q, allowed] of [[index, pickup, true], [index - 1, pickup, false], [index + 1, pickup, false], [index, { ...pickup, trophyId: 'invented' }, false], [index, { ...pickup, id: 'ordinary-rack' }, false]]) {
+      const sim = FSimulation.create(campaignWorld(worldIndex, { pickups: [q] })); sim.step(.025);
+      assert.equal(weapon === null ? sim.state.inventory.shield : sim.state.inventory.weapons[weapon], allowed, `${key} at world index ${worldIndex}`);
+      assert.equal(sim.state.pickups[0].taken, allowed);
+    }
+  }
+  const sim = FSimulation.create(campaignWorld(6, { pickups: [{ id: 'dependent-cache', kind: 'ammo', weapon: 4, requiresWeapon: 0, amount: 1, x: .5, y: 0, z: 0 }] }));
+  sim.step(.025); assert.equal(sim.state.pickups[0].taken, false); assert.equal(sim.state.inventory.ammo[4], 1);
+});

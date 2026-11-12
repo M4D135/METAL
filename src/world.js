@@ -662,6 +662,7 @@
     suppliesWorld(world);
     populate(world);
     armoryWorld(world);
+    if(campaign)campaignArmory(world);
     polishTrees(world);
     demolitionMetadata(world);
     world.detailStats.added=world.meshes.length-world.detailStats.base;
@@ -1519,6 +1520,24 @@
     add(late,'ammo',4,'grenades-late');
     const outer=[];for(const x of [-22,-20.5,-23.5])for(const z of [-17.2,-15.8,17.2,15.8])outer.push({x:arena.x+x,z:arena.z+z});
     add(arena,'ammo',4,'grenades-boss',outer);
+  }
+  // Campaign discoveries occupy one reserved, physically reachable equipment
+  // point. The legacy racks remain untouched in worlds without the opt-in flag.
+  function campaignArmory(w){
+    const unlock=[6,9,15,12,0],schedule=[
+      {index:3,key:'shield',kind:'shield',amount:1},
+      {index:6,key:'smg',kind:'weapon',weapon:0,amount:60},
+      {index:9,key:'shotgun',kind:'weapon',weapon:1,amount:12},
+      {index:12,key:'grenade',kind:'weapon',weapon:3,amount:6},
+      {index:15,key:'rocket',kind:'weapon',weapon:2,amount:4}
+    ],discovery=schedule.find(q=>q.index===w.index),reserved=w.pickups.find(q=>q.id==='arsenal-shield');
+    w.pickups=w.pickups.filter(q=>q.kind==='health'||q.kind==='ammo'&&q.weapon<4&&unlock[q.weapon]<=w.index).map(q=>q.kind==='ammo'?{...q,requiresWeapon:q.weapon}:q);
+    for(const e of w.enemies)if(e.drop&&(e.drop.weapon>=4||unlock[e.drop.weapon]>w.index))e.drop=false;
+    if(discovery){
+      if(!reserved)throw new Error('Missing campaign equipment reservation '+w.index);
+      const {key,kind,weapon,amount}=discovery;
+      w.pickups.push({id:'trophy-'+key,trophyId:'trophy-'+key,kind,...(kind==='weapon'?{weapon}:{}),amount,x:reserved.x,y:reserved.y,z:reserved.z,zoneId:reserved.zoneId});
+    }
   }
   // All 430 IDs stay stable in the save. Only the opening patrols and the
   // colossus's six scripted guards exist physically before their wave deploys.

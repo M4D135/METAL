@@ -126,12 +126,14 @@ test('campaign mode is strictly opt-in and keeps historical clamping otherwise',
   assert.equal(create(96, 7.9, { campaign: true }).index, 7);
 });
 
-test('the first three campaign worlds preserve historical content outside their five-slot starting loadout', () => {
+test('the first three campaign worlds preserve historical geometry outside campaign supplies and loadout', () => {
   for (let stage = 0; stage < 3; stage++) {
     const world = create(96, stage, { campaign: true });
     for (const key of ['campaign', 'index', 'chapter', 'chapterTitle']) delete world[key];
     const legacy = create(96, stage);
     for (const key of ['weaponSlots', 'startWeapons', 'startAmmo', 'ammoCaps']) world.progression[key] = legacy.progression[key];
+    world.pickups = legacy.pickups;
+    for (let i = 0; i < world.enemies.length; i++) world.enemies[i].drop = legacy.enemies[i].drop;
     assert.equal(digest(world), legacyHashes.find(([seed, sector]) => seed === 96 && sector === stage)[2]);
   }
 });
@@ -154,6 +156,11 @@ for (let index = 0; index < 18; index++) test(`campaign world ${String(index + 1
     assert.deepEqual(Array.from(world.progression.ammoCaps), [180, 36, 12, 16, 1]);
     assert.equal(world.progression.startShield, false);
     assert.equal(world.enemies.length, [120, 140, 170][world.stage]);
+    const unlock = [6, 9, 15, 12, 0], novelty = new Map([[3, 'shield'], [6, 0], [9, 1], [12, 3], [15, 2]]), equipment = world.pickups.filter(q => q.kind === 'weapon' || q.kind === 'shield');
+    assert.equal(equipment.length, novelty.has(index) ? 1 : 0, `${label}: campaign equipment is duplicated or out of schedule`);
+    if (equipment.length) { const item = equipment[0]; assert(item.id.startsWith('trophy-')); assert.equal(item.trophyId, item.id); assert.equal(item.kind === 'shield' ? 'shield' : item.weapon, novelty.get(index)); }
+    for (const q of world.pickups.filter(q => q.kind === 'ammo')) assert(q.weapon < 4 && unlock[q.weapon] <= index && q.requiresWeapon === q.weapon, `${label}: premature or unconditional ammunition cache`);
+    for (const e of world.enemies) if (e.drop) assert(e.drop.weapon < 4 && unlock[e.drop.weapon] <= index, `${label}: enemy drops ammunition before its weapon is introduced`);
     const result = assertReachable(world, label); reachedTargets += result.targets; minCells = Math.min(minCells, result.accessibleCells); maxCells = Math.max(maxCells, result.accessibleCells);
     if (seed === 96) {
       const art = artSignatures[world.stage];

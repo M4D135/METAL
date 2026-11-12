@@ -358,6 +358,7 @@
       }
     }
   }
+  function supplyVisible(c){return !c.taken&&(!world.campaign||(!(Number.isInteger(c.requiresWeapon)&&!sim.state.inventory.weapons[c.requiresWeapon])&&((c.kind||c.type)!=='ammo'||sim.state.inventory.weapons[c.weapon])));}
   function supplyModel(out,c,t){
     const kind=c.kind||c.type||'health',weapon=c.weapon||0,y=(c.y||0)+.4+Math.sin(t*1.8+c.x)*.035,mat=kind==='health'?4:weapon===0?4:weapon===1?5:6;
     const frame=FMotion.mount({pos:[c.x,y,c.z],yaw:t*.3+c.x*.1,pitch:0,roll:0}),part=(shape,p,s,material=0,rx=0,glow=0)=>{const pose=FMotion.place(frame,p,rx);out.push(m(shape,pose.p,s,material,pose.r,glow));};
@@ -426,7 +427,7 @@
       }
       if(e.stun>0)out.push(m('ring',[e.x,base+[2,2.25,2.35,3.35][e.type]*scale,e.z],[1.05*scale,.055*scale,1.05*scale],4,[.15,t*2,0],.6));
     }
-    for(const c of [...s.pickups,...(s.loot||[])])if(!c.taken&&nearby(c.x,c.z))supplyModel(out,c,t);
+    for(const c of [...s.pickups,...(s.loot||[])])if(supplyVisible(c)&&nearby(c.x,c.z))supplyModel(out,c,t);
     const ex=world.exit.x,ez=world.exit.z,ey=world.exit.y||0,ready=exitReady(),exitMat=ready?4:5;
     if(nearby(ex,ez,4)){
     out.push(m('cylinder',[ex,ey+.08,ez],[2.5,.16,2.5],0),m('ring',[ex,ey+.2,ez],[2.7,.1,2.7],exitMat,[0,0,0],1.4));
@@ -599,7 +600,7 @@
     $('crosshair').classList.toggle('fracture',s.weapon===1);
     $('crosshair').classList.toggle('rocket',s.weapon===2||s.weapon===3);
     document.body.dataset.ammo=String(ammo??0);
-    const supply=[...s.pickups,...(s.loot||[])].filter(c=>!c.taken&&Math.abs((c.y||0)-p.y)<1.1&&Math.hypot(c.x-p.x,c.z-p.z)<3.7).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z)).find(c=>{const a=[p.x,p.y+1.3,p.z],b=[c.x,(c.y||0)+.4,c.z],d=b.map((v,i)=>v-a[i]),length=Math.hypot(...d)||1;return sim.ray(a,d.map(v=>v/length),length)>=length-.2;});
+    const supply=[...s.pickups,...(s.loot||[])].filter(c=>supplyVisible(c)&&Math.abs((c.y||0)-p.y)<1.1&&Math.hypot(c.x-p.x,c.z-p.z)<3.7).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z)).find(c=>{const a=[p.x,p.y+1.3,p.z],b=[c.x,(c.y||0)+.4,c.z],d=b.map((v,i)=>v-a[i]),length=Math.hypot(...d)||1;return sim.ray(a,d.map(v=>v/length),length)>=length-.2;});
     $('supply-hint').hidden=!supply;
     if(supply){const kind=supply.kind||supply.type||'health',weapon=supply.weapon||0,salvage=kind==='salvage'||kind==='boss',full=kind==='shield'?!!inventory?.shield:kind==='health'?p.hp>=maxHp:salvage?!supply.credits&&!supply.cores&&supply.ammo.every((n,i)=>!n||(inventory?.ammo[i]??0)>=sim.ammoCaps[i]):kind==='weapon'&&!owned[weapon]?false:inventory?.ammo[weapon]>=sim.ammoCaps?.[weapon];$('supply-name').textContent=kind==='shield'?'BOUCLIER':kind==='weapon'?weaponNames[weapon].toUpperCase():kind==='ammo'?ammoNames[weapon].toUpperCase():kind==='boss'?'BUTIN DU COLOSSE':salvage?'FERRAILLE & RÉSERVES':'INTÉGRITÉ';$('supply-detail').textContent=full?'RÉSERVE AU MAXIMUM':kind==='weapon'&&!owned[weapon]?'ARME À RÉCUPÉRER':'AVANCEZ POUR RAMASSER';}
     const bossTarget=s.relays===3&&operational&&boss;
