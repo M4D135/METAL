@@ -2,11 +2,13 @@
 
 **Des ennemis de métal. Une bande-son metal.** Un FPS d’horreur et d’action entièrement procédural : 18 mondes, six chapitres, un arsenal à découvrir, des colosses, des territoires destructibles et des musiques MOD originales. Modèles, matériaux, animations, effets, instruments et compositions sont produits par le code. Aucun asset de jeu importé.
 
-**Version 0.8.0 — Arsenal.** Départ au pistolet et au bouclier, armes et améliorations laissées par les boss, premier tiers consacré à l’équipement, douze mondes supplémentaires avec l’arsenal complet. Les grands panneaux-obstacles ajoutés devant les renforts sont supprimés de la nouvelle campagne. Les débris conservent leur forme, tombent et restent au sol. Les bruitages et les ambiances sont reconstruits avec des sons procéduraux distincts et des sources locales. **V0.8.0** est affiché sur le titre à partir de `package.json`. Le nom historique FERRO reste celui du dépôt et des clés de sauvegarde.
+**Version 0.8.1 — Furie d’acier.** L’accueil reçoit une composition thrash metal originale à **212 BPM** : guitares saturées, basse, double grosse caisse, breaks et relances sur une boucle de **54 secondes**. Le premier clic, toucher ou geste clavier sur l’accueil déverrouille le son ; sa commande permet aussi de l’écouter ou de le couper sans lancer une expédition. La piste suit les volumes enregistrés, s’arrête au départ de l’assaut ou lorsque la page perd le focus, puis retrouve l’accueil au retour. Les trois musiques des mondes restent inchangées. Les instruments et le morceau sont entièrement synthétisés par le code, sans enregistrement importé ni reprise d’une composition existante. **V0.8.1** est affiché sur le titre depuis `package.json`. Voir les [vérifications de cette mise à jour](docs/qa-title-v081.md).
+
+**Campagne Arsenal.** Départ au pistolet et au bouclier, armes et améliorations laissées par les boss, premier tiers consacré à l’équipement, douze mondes supplémentaires avec l’arsenal complet. Les grands panneaux-obstacles ajoutés devant les renforts sont supprimés de la nouvelle campagne. Les débris conservent leur forme, tombent et restent au sol. Les bruitages et les ambiances sont reconstruits avec des sons procéduraux distincts et des sources locales. Les clés de sauvegarde historiques `ferro-*` sont conservées.
 
 ## Jouer
 
-- **Dépôt :** https://github.com/M4D135/FERRO
+- **Dépôt :** https://github.com/M4D135/METAL
 - **Distribution autonome :** [dist/index.html](dist/index.html), à télécharger puis ouvrir dans un navigateur récent, même hors ligne.
 
 WebGL 2 est recommandé ; le rendu Canvas 2D sert de secours. Aucun CDN, paquet JavaScript, modèle, texture, police ou fichier audio externe n’est téléchargé. Le son commence après une interaction.

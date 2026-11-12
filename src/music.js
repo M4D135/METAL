@@ -12,8 +12,12 @@
     {title:'Fracture',moduleTitle:'METAL II - FRACTURE',style:'Thrash',bpm:170,root:40},
     {title:'Veille des cendres',moduleTitle:'METAL III - CENDRES',style:'Métal mélodique sombre',bpm:145,root:40}
   ];
-  let instrumentBank=null,percussionBank=null,tensionSample=null;
-  const modules=new Map(),clamp=(x,a,b)=>max(a,min(b,x)),stageOf=x=>clamp(floor(Number(x)||0),0,2);
+  // An independent, original menu composition. Its symbolic key never changes
+  // the meaning (or the PCM/score) of the three historical world indices.
+  const TITLE_SONG={title:'Furie d’acier',moduleTitle:'METAL - FURIE ACIER',style:'Thrash metal',bpm:212,root:38};
+  const TITLE_ORDERS=[0,1,2,1,3,4,5,2,6,4,1,7];
+  let instrumentBank=null,titleBank=null,percussionBank=null,tensionSample=null;
+  const modules=new Map(),clamp=(x,a,b)=>max(a,min(b,x)),stageOf=x=>x==='title'?'title':clamp(floor(Number(x)||0),0,2),songOf=x=>x==='title'?TITLE_SONG:SONGS[x];
   const period=midi=>PERIODS[clamp(round(midi)-36,0,35)];
   function random(seed){return ()=>{seed=(imul(seed,1664525)+1013904223)|0;return (seed>>>0)/2147483648-1;};}
   function pcm(data,peak=.84){
@@ -24,7 +28,7 @@
     return out;
   }
   function strings(kind,intervals,seconds,seed){
-    const rand=random(seed),length=ceil(seconds*RATE),out=new Float32Array(length),bass=kind==='bass',lead=kind==='lead',palm=kind==='palm';
+    const rand=random(seed),length=ceil(seconds*RATE),out=new Float32Array(length),thrash=kind.startsWith('thrash'),bass=kind==='bass',lead=kind==='lead'||kind==='thrashLead',palm=kind==='palm'||kind==='thrashPalm';
     // A picked string has moving partials, a noisy contact and a short body
     // resonance. Two separately detuned courses drive the amplifier together;
     // distorting a finished sine chord only produces a flat organ-like buzz.
@@ -48,7 +52,7 @@
       }
       const pick=rand();pickLow+=.2*(pick-pickLow);
       const envelope=palm?exp(-t*12)*(1+.38*exp(-t*55)):exp(-t*(bass?2:lead?.85:1.35));
-      const contact=(pick-pickLow)*exp(-t*(palm?90:160))*(bass?.035:.22),drive=bass?1.7:lead?2.9:4.1;
+      const contact=(pick-pickLow)*exp(-t*(palm?90:160))*(bass?.035:thrash?.30:.22),drive=bass?1.7:thrash?5.2:lead?2.9:4.1;
       const amp=tanh((sum*.43+contact)*drive),asymmetric=tanh(amp*1.7+.12)-tanh(.12);
       low+=(bass?.46:.78)*(asymmetric-low);body+=.16*(low-body);dc+=.014*(low-dc);
       const thump=palm?sin(TAU*fundamental*t)*exp(-t*21)*.22:0;
@@ -109,6 +113,30 @@
     for(let i=0;i<out.length;i++)out[i]=tanh(out[i]*1.25)*min(1,(out.length-i)/110);
     return pcm(out,.91);
   }
+  function titleDrumBar(variant,hits){
+    const beat=60/TITLE_SONG.bpm,step=beat/4,out=new Float32Array(ceil((beat*4+.25)*RATE));
+    function hit(kind,row,velocity=1){const at=round(row*step*RATE),data=hits[kind];for(let i=0;i<data.length&&at+i<out.length;i++)out[at+i]+=data[i]*velocity;}
+    // Separate picked accents and alternating kick strokes keep the double
+    // bass readable. The stop section really leaves space before its answer.
+    const kickRows=variant===4?[0,1,6,7,10,14]:variant===5?[0,2,3,6,8,10,11,14]:
+      variant===2||variant===6?Array.from({length:16},(_,i)=>i):variant===1?[0,1,3,5,6,7,8,9,11,13,14,15]:[0,1,2,3,6,7,8,9,10,11,14,15];
+    for(const row of kickRows)hit('kick',row,row%4===0?1.03:row%2?.77:.9);
+    for(const row of (variant===4?[8]:[4,12]))hit('snare',row,.95);
+    if(variant===4){for(const row of [0,4,8,12])hit('ride',row,.53);hit('crash',0,.52);}
+    else for(let row=0;row<16;row+=2)hit(variant===2||variant===6?'ride':'hat',row,row%4?.60:.84);
+    if(variant===0||variant===6)hit('crash',0,.68);
+    if(variant===1)hit('open',15,.52);
+    if(variant===3||variant===7){
+      for(const row of [12.5,13,13.5])hit('snare',row,.55+(row-12)*.15);
+      for(const row of [14,14.5,15])hit('tom',row,.8);
+      hit('snare',15.5,.73);
+    }else if(variant===5){
+      for(const row of [10,11,12,13,14,15])hit('snare',row,.35+(row-10)*.08);
+      hit('tom',15.5,.85);
+    }
+    for(let i=0;i<out.length;i++)out[i]=tanh(out[i]*1.15)*min(1,(out.length-i)/110);
+    return pcm(out,.89);
+  }
   function compose(stage,samples){
     const song=SONGS[stage],patterns=Array.from({length:6},()=>new Uint8Array(1024));
     // Four-bar phrases: opening impact, riff, answer, breakdown, climax, turn.
@@ -168,6 +196,51 @@
     }
     return {title:song.moduleTitle,patterns,orders,samples};
   }
+  function composeTitle(samples){
+    const patterns=Array.from({length:8},()=>new Uint8Array(1024));
+    function put(p,row,ch,sample,midi,effect=12,param=54){
+      const pitch=midi===null?0:period(midi),at=(row*4+ch)*4,bytes=patterns[p];
+      bytes[at]=(sample&240)|(pitch>>8);bytes[at+1]=pitch&255;bytes[at+2]=((sample&15)<<4)|effect;bytes[at+3]=param;
+    }
+    // Original asymmetric 3+3+2 answers over a low pedal, not a transcription
+    // of a recording. Repeated notes are new picked attacks, never a held pad.
+    const riffs=[
+      [[0,0,2],[2,0,1],[3,0,1],[5,3,1],[6,0,1],[7,0,1],[8,5,2],[10,0,1],[11,0,1],[13,1,1],[14,0,1],[15,0,1]],
+      [[0,0,1],[1,0,1],[3,0,1],[4,3,2],[6,0,1],[7,0,1],[8,0,1],[10,5,1],[11,0,1],[12,1,2],[14,0,1],[15,0,1]],
+      [[0,0,2],[1,0,1],[2,0,1],[3,0,1],[4,7,1],[5,0,1],[6,3,1],[7,0,1],[8,0,2],[10,6,1],[11,5,1],[12,0,1],[13,0,1],[14,1,1],[15,3,1]],
+      [[0,0,2],[6,0,1],[7,0,1],[10,3,2],[14,1,1]],
+      [[0,0,2],[1,0,1],[2,0,1],[3,0,1],[4,0,1],[5,0,1],[6,5,2],[8,0,1],[9,0,1],[10,0,1],[11,0,1],[12,3,2],[14,1,1],[15,0,1]],
+      [[0,0,2],[2,0,1],[3,0,1],[4,0,1],[6,3,1],[7,0,1],[8,0,2],[10,0,1],[11,0,1],[12,5,1],[14,1,1],[15,0,1]],
+      [[0,0,2],[3,0,1],[4,1,2],[6,0,1],[7,0,1],[8,5,2],[10,0,1],[11,0,1],[12,3,2],[14,0,1],[15,1,1]],
+      [[0,0,2],[1,0,1],[3,0,1],[4,5,2],[6,0,1],[7,0,1],[8,3,2],[10,0,1],[11,0,1],[12,1,2],[14,0,1]]
+    ];
+    const shifts=[[0,0,3,1],[0,0,5,3],[0,3,1,0],[0,0,1,3],[0,0,3,5],[0,3,5,1],[5,3,1,0],[0,3,1,0]];
+    const solo=[62,65,69,67,64,65,70,69,67,62,64,61,65,64,60,62];
+    for(let p=0;p<8;p++)for(let bar=0;bar<4;bar++){
+      const start=bar*16,root=TITLE_SONG.root+shifts[p][bar],drop=p===3,riff=riffs[p];
+      for(const [r,offset,sample] of riff){
+        const midi=root+offset,accent=r%4===0;
+        put(p,start+r,0,sample,midi,12,sample===2?57:accent?60:49);
+        if(drop||r%2===0||r===15)put(p,start+r,1,4,midi,12,accent?52:43);
+        if(p!==5&&p!==6)put(p,start+r,2,sample===1?16:17,midi,12,sample===2?42:accent?40:33);
+      }
+      if(drop){
+        for(const r of [3,9,13])for(const ch of [0,1,2])put(p,start+r,ch,0,null,12,0);
+        put(p,start+10,2,15,root+12,12,26);
+      }else if(p===5){
+        for(let r=0;r<16;r+=2)put(p,start+r,2,3,solo[(bar*5+r/2)%solo.length],12,r%4?34:41);
+        // Brief articulated holes at phrase ends prevent an endless solo bed.
+        if(bar%2)put(p,start+15,2,0,null,12,0);
+      }else if(p===6){
+        for(const r of [0,3,6,8,11,14])put(p,start+r,2,r===8?2:3,root+12+[0,7,3,10,5,1][[0,3,6,8,11,14].indexOf(r)],12,r===0?40:32);
+      }
+      const kit=drop?(bar===3?5:4):bar===3?(p===7?7:3):p===4?6:p===2?2:(p+bar)%2;
+      put(p,start,3,7+kit,48,12,61);
+      if(p===7&&bar===3)for(const ch of [0,1,2])put(p,start+15,ch,0,null,12,0);
+    }
+    for(const p of patterns){p[2]=(p[2]&240)|15;p[3]=6;p[14]=(p[14]&240)|15;p[15]=TITLE_SONG.bpm;}
+    return {title:TITLE_SONG.moduleTitle,patterns,orders:TITLE_ORDERS,samples};
+  }
   function serialize(score){
     const size=1084+score.patterns.length*1024+score.samples.reduce((n,s)=>n+s.pcm.length,0),bytes=new Uint8Array(size);
     const word=(at,v)=>{bytes[at]=v>>8;bytes[at+1]=v&255;},text=(at,s,n)=>{for(let i=0;i<min(n,s.length);i++)bytes[at+i]=s.charCodeAt(i)&127;};
@@ -204,6 +277,15 @@
     if(!instrumentBank[index]){const [name,volume,kind,notes,seconds,seed]=INSTRUMENTS[index];instrumentBank[index]={name,volume,pcm:strings(kind,notes,seconds,seed)};}
     return instrumentBank[index];
   }
+  function titleInstrument(index){
+    if(!titleBank)titleBank=[];
+    if(!titleBank[index]){
+      const settings=[['MTL THRASH PALM','thrashPalm',[0,7,12],.27,5917],['MTL THRASH POWER','thrashOpen',[0,7,12],1.3,6043],['MTL THRASH LEAD','thrashLead',[0],1.05,6269],['MTL THRASH PALM R','thrashPalm',[0,7,12],.27,6421],['MTL THRASH POWER R','thrashOpen',[0,7,12],1.3,6653]][index];
+      const [name,kind,notes,seconds,seed]=settings;
+      titleBank[index]={name,volume:index===2?39:57,pcm:strings(kind,notes,seconds,seed)};
+    }
+    return titleBank[index];
+  }
   let preparation=Promise.resolve();const preparing=new Map();
   function warmup(stage){
     stage=stageOf(stage);
@@ -215,6 +297,7 @@
       // Instrument-sized jobs let a loading screen paint between expensive
       // synthesis steps. This prepares PCM/score only: no device is opened.
       for(let i=0;i<6;i++)if(!instrumentBank?.[i]){await pause();instrument(i);}
+      if(stage==='title')for(let i=0;i<5;i++)if(!titleBank?.[i]){await pause();titleInstrument(i);}
       if(!tensionSample){await pause();tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};}
       await pause();return info();
     });
@@ -223,15 +306,16 @@
   }
   function moduleFor(stage){
     stage=stageOf(stage);if(modules.has(stage))return modules.get(stage);
-    const samples=Array.from({length:6},(_,i)=>instrument(i));
+    const title=stage==='title',song=songOf(stage),samples=Array.from({length:6},(_,i)=>title&&i<3?titleInstrument(i):instrument(i));
     if(!percussionBank){percussionBank={};for(const [i,kind] of ['kick','snare','hat','open','crash','tom','ride'].entries())percussionBank[kind]=drumHit(kind,907+i*113);}
-    for(let i=0;i<8;i++)samples.push({name:'MTL KIT '+SONGS[stage].bpm+' '+String.fromCharCode(65+i),volume:60,pcm:drumBar(stage,i,percussionBank)});
+    for(let i=0;i<8;i++)samples.push({name:'MTL KIT '+song.bpm+' '+String.fromCharCode(65+i),volume:60,pcm:title?titleDrumBar(i,percussionBank):drumBar(stage,i,percussionBank)});
     if(!tensionSample)tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};
     samples.push(tensionSample);
-    const value=decode(serialize(compose(stage,samples)));modules.set(stage,value);return value;
+    if(title)samples.push(titleInstrument(3),titleInstrument(4));
+    const value=decode(serialize(title?composeTitle(samples):compose(stage,samples)));modules.set(stage,value);return value;
   }
   function getModule(stage){return moduleFor(stage).bytes.slice();}
-  function getTrack(stage){const song=SONGS[stageOf(stage)];return {title:song.title,bpm:song.bpm,style:song.style,duration:7680/song.bpm,channels:4};}
+  function getTrack(stage){stage=stageOf(stage);const song=songOf(stage);return {title:song.title,bpm:song.bpm,style:song.style,duration:(stage==='title'?TITLE_ORDERS.length*960:7680)/song.bpm,channels:4};}
   function create(ctx,output){
     let stage=0,threat=0,volume=.4,playing=false,disposed=false,module=null,order=0,row=0,nextTime=null,bpm=125,speed=6;
     const voices=new Set(),buffers=new Map(),nodes=[],tracks=[],stats={activeVoices:0,peakVoices:0,scheduledRows:0,scheduledNotes:0,resyncs:0,playing:false,stage:0,order:0,row:0,tempo:100};
@@ -251,11 +335,11 @@
       }
       for(const t of tracks){t.voice=null;t.sample=0;t.volume=64;}
     }
-    function mix(){if(!ready||disposed)return;const now=ctx.currentTime;tracks.forEach((t,i)=>t.gain.gain.setTargetAtTime([.94+threat*.04,.78,.30+threat*.22,.95+threat*.08][i],now,.07));}
+    function mix(){if(!ready||disposed)return;const now=ctx.currentTime,levels=stage==='title'?[.86,.72,.52,.93]:[.94+threat*.04,.78,.30+threat*.22,.95+threat*.08];tracks.forEach((t,i)=>t.gain.gain.setTargetAtTime(levels[i],now,.07));}
     function level(){if(!master||disposed)return;const now=ctx.currentTime;master.gain.cancelScheduledValues(now);master.gain.setTargetAtTime(playing?volume:0,now,.012);}
     function load(){if(module)return;module=moduleFor(stage);bpm=module.bpm;speed=module.speed;stats.tempo=bpm;}
     function buffer(sample,whichStage=stage){
-      const key=whichStage*32+sample;if(buffers.has(key))return buffers.get(key);
+      const key=(whichStage==='title'?3:whichStage)*32+sample;if(buffers.has(key))return buffers.get(key);
       const score=whichStage===stage&&module?module:moduleFor(whichStage),data=score.samples[sample-1].pcm,b=ctx.createBuffer(1,data.length,RATE),channel=b.getChannelData(0);for(let i=0;i<data.length;i++)channel[i]=data[i]/128;
       buffers.set(key,b);return b;
     }
@@ -295,13 +379,13 @@
     }
     mix();
     return {
-      setStage(value){const next=stageOf(value);if(disposed||next===stage)return;stopAll();stage=next;stats.stage=stage;module=null;order=row=0;nextTime=null;},
+      setStage(value){const next=stageOf(value);if(disposed||next===stage)return;stopAll();stage=next;stats.stage=stage;module=null;order=row=0;nextTime=null;mix();},
       setThreat(value){const next=clamp(Number(value)||0,0,1);if(disposed||abs(next-threat)<.01)return;threat=next;mix();},
       setVolume(value){if(disposed)return;const next=clamp(Number(value)||0,0,1);if(next===volume)return;volume=next;if(!volume){stopAll();nextTime=null;row=floor(row/16)*16;}level();},
       setPlaying(value){if(disposed||playing===!!value)return;playing=!!value;stats.playing=playing;if(!playing){stopAll();row=floor(row/16)*16;}nextTime=null;level();},
       prepare(value=stage){
         if(!ready||disposed)return false;const next=stageOf(value),score=moduleFor(next);
-        // At most three small instrument banks, retained across stage changes.
+        // Three world banks plus the independent title bank, retained across changes.
         // Loading a future bank does not seek, switch stage or start any notes.
         for(let i=0;i<score.samples.length;i++)if(score.samples[i].pcm.length>2)buffer(i+1,next);
         return true;

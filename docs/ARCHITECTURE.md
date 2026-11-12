@@ -1,4 +1,12 @@
-# Architecture — METAL 0.8.0 — Arsenal
+# Architecture — METAL 0.8.1 — Furie d’acier
+
+## Musique d’accueil 0.8.1
+
+`FMusic` accepte la clé symbolique `title` pour le morceau original « Furie d’acier », en plus des indices historiques `0..2`. Le morceau possède 8 patterns, 12 séquences de 4 mesures, 17 instruments synthétisés et un tempo de 212 BPM. Les identifiants des caches distinguent le titre des trois mondes ; les anciennes compositions restent identiques octet par octet.
+
+`FAudio.prepareTitle()` ne prépare que cette musique, sans ouvrir le périphérique ni charger la banque d’effets. `start()`/`resume()` s’exécutent dans le geste utilisateur, puis `setTitlePlaying()` active le tracker sans mettre `playing` à vrai. L’index environnemental `stage` reste numérique : le vent, les moteurs et la vapeur ne suivent jamais la clé du morceau. Les effets de jeu sont inhibés pendant le titre, sauf pendant une audition explicite des réglages. Le lancement d’une partie restaure sa musique et coupe celle du titre.
+
+Le shell distingue menu/options de l’accueil, chargement et partie/pause. Il invalide les préparations de titre devenues obsolètes après navigation, mute ou perte de visibilité/focus ; une promesse terminée tardivement ne peut donc pas relancer la musique pendant une partie. Le titre respecte les préférences master/musique, les auditions existantes et l’export MOD du contexte courant. Aucune donnée de campagne ni sauvegarde n’est modifiée par un geste musical.
 
 ## Évolution 0.8 — progression, espaces ouverts, gravats et acoustique
 
@@ -22,7 +30,7 @@ Les éléments du HUD affichent l’armement initial, la phase6+12, les rangs, l
 
 `tools/build.py` assemble **quatorze modules JavaScript**, `index.html` et `style.css` dans un HTML autonome. Aucun chargement réseau de code, image, texture, modèle, police ou audio n’est nécessaire. `SIZE.json` mesure le HTML brut, son gzip reproductible et son SHA-256. Le budget est de 1 400 000 octets bruts ; navigateur, pilotes, tests et documentation sont exclus. Les mesures du build courant et les résultats de vérification sont référencés dans `SIZE.json` et `VALIDATION.md` ; ce document décrit les contrats.
 
-Le titre public devient **METAL**. Les API `FWorld`, `FRender`, etc., le format de snapshot `FERRO`, les clés `ferro-settings` / `ferro-expedition-v2` et le dépôt GitHub historique restent inchangés pour préserver les références et les migrations.
+Le titre public et le dépôt GitHub sont **METAL** (`M4D135/METAL`). Les API `FWorld`, `FRender`, etc., le format de snapshot `FERRO` et les clés `ferro-settings` / `ferro-expedition-v2` restent inchangés pour préserver les migrations.
 
 | Module | Responsabilité |
 | --- | --- |

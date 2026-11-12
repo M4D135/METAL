@@ -1,0 +1,32 @@
+{
+  "track": {
+    "title": "Furie d’acier",
+    "bpm": 212,
+    "style": "Thrash metal",
+    "duration": 54.339622641509436,
+    "channels": 4
+  },
+  "module_bytes": 183704,
+  "module_sha256": "88dfafde9f335f640c907cb709e96de72bc00d7a9fa6fb020a4625b08a08efe7",
+  "browser_export_matches_generator": true,
+  "browser": "Chrome cloud",
+  "renderer": "canvas2d",
+  "version": "0.8.1",
+  "tested": [
+    "first click on title without starting gameplay",
+    "explicit listen button",
+    "title music in menu options",
+    "music slider zero and restored",
+    "world loading then pause",
+    "sector track label and export restored",
+    "return to title track",
+    "title MOD browser download byte-identical to code-generated MOD"
+  ],
+  "application_console_errors": [],
+  "not_tested": [
+    "physical phone",
+    "subjective human listening",
+    "user hardware",
+    "WebGL performance"
+  ]
+}

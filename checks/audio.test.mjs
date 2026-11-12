@@ -210,21 +210,28 @@ test('horror pressure reuses ambience and the MOD mix while spatial cues remain 
   assert(!r.ctx.sources.some(n=>n.kind==='oscillator'&&n.stopTime===Infinity),'no persistent drone or modulation oscillator remains');r.audio.setPlaying(false);assert.equal(r.audio.stats.windGain,0);assert.equal(r.audio.stats.machineryGain,0);assert.equal(r.audio.stats.steamGain,0);assert.equal(r.audio.stats.voices,0,'pause releases existing world transients');const stopped=r.ctx.sources.length;r.audio.horror({kind:'ambush',intensity:1});assert.equal(r.ctx.sources.length,stopped);r.audio.setStage(2);r.audio.setPlaying(true);assert(lead.gain.value<raised);r.audio.dispose();assert.equal(r.audio.stats.voices,0);
 });
 
-function shell(){
+function shell({touch=false,settings:storedSettings}={}){
   const r=rig(),elements=new Map(),listeners=new Map(),documentListeners=new Map(),memory=new Map(),errors=[],simulations=[],downloads=[],blobs=[],timers=[];let frames=[],now=0;
+  let focused=true;
+  if(storedSettings)memory.set('ferro-settings',JSON.stringify(storedSettings));
   const noop=()=>{},draw=new Proxy({},{get:()=>noop}),schedule=r.scope.setTimeout;
+  function register(map,name,fn,options){
+    if(!map.has(name)){const callbacks=[];const dispatch=event=>{for(const {fn} of callbacks)fn(event||{});};dispatch.callbacks=callbacks;map.set(name,dispatch);}
+    map.get(name).callbacks.push({fn,capture:options===true||!!options?.capture});
+  }
+  function emit(map,name,event,capture){for(const item of map.get(name)?.callbacks||[])if(capture===undefined||item.capture===capture)item.fn(event);}
   // Pure PCM warmup is tested with yielding jobs separately. Here use the real
   // cache synchronously so this DOM harness controls RAF and transport timing.
   r.scope.FMusic.warmup=async stage=>{const bytes=r.scope.FMusic.getModule(stage);return {...r.scope.FMusic.getTrack(stage),bytes:bytes.length};};
-  function element(id){if(elements.has(id))return elements.get(id);const events=new Map(),classes=new Set();const el={style:{},dataset:{},firstChild:{textContent:''},hidden:false,
+  function element(id){if(elements.has(id))return elements.get(id);const events=new Map(),classes=new Set(),attributes=new Map();const el={id,tagName:id==='body'?'BODY':id==='world'?'CANVAS':id.endsWith('-setting')?'INPUT':'BUTTON',style:{},dataset:{},firstChild:{textContent:''},hidden:false,
     classList:{add:n=>classes.add(n),remove:n=>classes.delete(n),toggle(n,on){on??=!classes.has(n);on?classes.add(n):classes.delete(n);}},
-    addEventListener:(name,fn)=>events.set(name,fn),dispatch:(name,event={})=>events.get(name)?.({preventDefault:noop,...event}),click(){this.dispatch('click');if(this.download)downloads.push(this);},
-    querySelector:selector=>element(id+selector),querySelectorAll:()=>[],setAttribute:noop,focus:noop,getContext:()=>draw,requestPointerLock:noop};elements.set(id,el);return el;}
+    addEventListener:(name,fn,options)=>register(events,name,fn,options),dispatch(name,event={}){const e={type:name,target:el,isTrusted:true,preventDefault:noop,...event};emit(listeners,name,e,true);let result;for(const {fn} of events.get(name)?.callbacks||[])result=fn(e);emit(listeners,name,e,false);return result;},click(){this.dispatch('click',{isTrusted:!this.download});if(this.download)downloads.push(this);},
+    closest:selector=>selector==='button'&&el.tagName==='BUTTON'?el:null,querySelector:selector=>element(id+selector),querySelectorAll:()=>[],setAttribute:(key,value)=>attributes.set(key,String(value)),getAttribute:key=>attributes.get(key),focus:noop,getContext:()=>draw,requestPointerLock:noop};elements.set(id,el);return el;}
   const world=(seed,stage)=>({seed,stage,generation:5,title:'Audio QA',spawn:{x:0,z:0,yaw:0},bounds:{minX:-20,maxX:20,minZ:-20,maxZ:20},meshes:[],lights:[],colliders:[],enemies:[],pickups:[],hazards:[],rooms:[{x:0,z:0,w:40,d:40,name:'QA',outdoor:true}],corridors:[],environment:{biome:'woodland',outdoorZones:[]},cores:[{id:0,x:6,z:0},{id:1,x:8,z:0},{id:2,x:10,z:0}],exit:{x:15,z:0}});
   Object.assign(r.scope,{console:{error:(...args)=>errors.push(args)},performance:{now:()=>now},innerWidth:1280,innerHeight:800,URLSearchParams,Blob,
     URL:{createObjectURL:blob=>{blobs.push(blob);return 'blob:qa-'+blobs.length;},revokeObjectURL:noop},setTimeout:(fn,ms)=>{timers.push(fn);return schedule(fn,ms);},
-    navigator:{maxTouchPoints:0},location:{search:''},matchMedia:()=>({matches:false}),requestAnimationFrame:fn=>{frames.push(fn);},addEventListener:(name,fn)=>listeners.set(name,fn),
-    document:{body:element('body'),getElementById:element,createElement:tag=>element(tag+elements.size),addEventListener:(name,fn)=>documentListeners.set(name,fn),hasFocus:()=>true},
+    navigator:{maxTouchPoints:touch?5:0},location:{search:''},matchMedia:query=>({matches:touch&&query==='(pointer: coarse)'}),requestAnimationFrame:fn=>{frames.push(fn);},addEventListener:(name,fn,options)=>register(listeners,name,fn,options),
+    document:{body:element('body'),hidden:false,getElementById:element,createElement:tag=>element(tag+elements.size),addEventListener:(name,fn,options)=>register(documentListeners,name,fn,options),hasFocus:()=>focused},
     localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)},FWorld:{create:world},
     FRender:{create:()=>({stats:{backend:'test'},resize:noop,setWorld:noop,draw:noop})}});
   // The shell receives the same observed real audio instance as the direct API tests.
@@ -232,19 +239,19 @@ function shell(){
   for(const name of ['soundscape','economy','destruction','effects','simulation','motion','actors','options'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
   const create=r.scope.FSimulation.create;r.scope.FSimulation.create=value=>{const sim=create(value);simulations.push(sim);return sim;};
   vm.runInContext(source.game,r.scope,{filename:'game.js'});assert.deepEqual(errors,[],'game must initialize without an audio or DOM exception');
-  return Object.assign(r,{element,listeners,documentListeners,simulations,downloads,blobs,timers,memory,frame(ms=40){now+=ms;if(r.ctx)r.advanceTimers(ms/1000);const batch=frames;frames=[];for(const fn of batch)fn(now);},async ready(){for(let i=0;i<40;i++){this.frame();await Promise.resolve();await Promise.resolve();if(this.mode()!=='loading')return;}throw new Error('loading did not finish');},mode:()=>element('body').dataset.state||'menu'});
+  return Object.assign(r,{element,listeners,documentListeners,simulations,downloads,blobs,timers,memory,gesture(name='pointerup',event={}){emit(listeners,name,{type:name,target:element('body'),isTrusted:true,button:0,preventDefault:noop,...event});},visibility(visible){r.scope.document.hidden=!visible;emit(documentListeners,'visibilitychange',{});},focus(){focused=true;emit(listeners,'focus',{});},blur(){focused=false;emit(listeners,'blur',{});},frame(ms=40){now+=ms;if(r.ctx)r.advanceTimers(ms/1000);const batch=frames;frames=[];for(const fn of batch)fn(now);},async flush(){for(let i=0;i<12;i++){await Promise.resolve();this.frame(10);}},async ready(){for(let i=0;i<40;i++){this.frame();await Promise.resolve();await Promise.resolve();if(this.mode()!=='loading')return;}throw new Error('loading did not finish');},mode:()=>element('body').dataset.state||'menu'});
 }
 
 test('actual game menus, pause, focus loss, volume controls and MOD export drive the real transport',async()=>{
-  const app=shell();app.frame();assert.equal(app.contexts.length,0);app.element('intro-options').click();assert.equal(app.mode(),'options');app.frame();assert.equal(app.contexts.length,0);
-  app.element('export-mod').click();assert.equal(app.downloads[0].download,'METAL-01.mod');const exported=new Uint8Array(await app.blobs[0].arrayBuffer());assert.equal(Buffer.from(exported.slice(1080,1084)).toString(),'M.K.');assert.equal(app.contexts.length,0,'MOD export does not need an audio device');
+  const app=shell();app.frame();assert.equal(app.contexts.length,0);app.element('intro-options').dispatch('click',{isTrusted:false});assert.equal(app.mode(),'options');app.frame();assert.equal(app.contexts.length,0);
+  app.element('export-mod').dispatch('click',{isTrusted:false});assert.equal(app.downloads[0].download,'METAL-titre.mod');const exported=new Uint8Array(await app.blobs[0].arrayBuffer());assert.equal(Buffer.from(exported.slice(1080,1084)).toString(),'M.K.');assert.equal(app.contexts.length,0,'MOD export does not need an audio device');
   app.element('resume').click();assert.equal(app.mode(),'menu');app.element('start').click();await app.ready();app.frame();assert.equal(app.mode(),'playing');assert(app.tracker.stats.playing&&app.tracker.stats.scheduledNotes>0);
   app.element('pause-button').click();app.frame(100);assert.equal(app.mode(),'paused');assert(!app.tracker.stats.playing);assert.equal(app.tracker.stats.activeVoices,0);const paused=app.tracker.stats.scheduledNotes;app.frame(400);assert.equal(app.tracker.stats.scheduledNotes,paused);
   app.element('music-setting').value='0';app.element('music-setting').dispatch('input');app.element('resume').click();app.frame();assert(app.tracker.stats.playing);assert.equal(app.tracker.stats.scheduledNotes,paused);
   app.element('music-setting').value='65';app.element('music-setting').dispatch('input');app.frame();assert(app.tracker.stats.scheduledNotes>paused);assert.equal(app.music[0].owned[0].gain.value,.65);
   app.element('sound-toggle').click();assert.equal(app.master.gain.value,0);app.element('sound-toggle').click();assert.equal(app.master.gain.value,.65);
-  app.listeners.get('blur')();app.frame(100);assert.equal(app.mode(),'paused');assert.equal(app.tracker.stats.activeVoices,0);
-  app.element('pause-main').click();app.frame();assert.equal(app.mode(),'menu');assert(!app.tracker.stats.playing);assert.equal(app.master.gain.value,0);
+  app.blur();app.frame(100);assert.equal(app.mode(),'paused');assert.equal(app.tracker.stats.activeVoices,0);app.focus();assert.equal(app.mode(),'paused');assert(!app.tracker.stats.playing);
+  app.element('pause-main').click();await app.flush();assert.equal(app.mode(),'menu');assert(app.audio.stats.titlePlaying&&app.tracker.stats.playing);assert.equal(app.tracker.stats.stage,'title');assert.equal(app.master.gain.value,.65);
   assert.equal(JSON.parse(app.memory.get('ferro-settings')).musicVolume,.65);app.audio.dispose();
 });
 
@@ -306,6 +313,77 @@ test('device unlock is cheap and loading prepares future instrument buffers with
  const buffers=r.ctx.buffers.length;assert.equal(r.audio.stats.pcmBuffers,64);assert.equal(buffers,16+r.audio.stats.pcmBuffers);assert(r.audio.stats.pcmBytes<2*1024*1024);r.audio.setStage(2);r.audio.setPlaying(true);run(r,9);assert.equal(r.ctx.buffers.length,buffers,'first combat notes do not allocate cached AudioBuffers');
  r.audio.dispose();assert.equal(await r.audio.prepare(1),false);
  const cold=rig();cold.scope.setTimeout=fn=>{queueMicrotask(fn);return 0;};assert.equal(await cold.audio.prepare(0),false);assert.equal(cold.contexts.length,0,'preparation never opens a device without a user gesture');cold.audio.dispose();
+});
+
+test('title preparation opens no device, then plays music alone without building the world effects bank',async()=>{
+  const r=rig();r.scope.setTimeout=fn=>{queueMicrotask(fn);return 0;};r.audio.setStage(2);
+  assert.equal(await r.audio.prepareTitle(),false);assert.equal(r.contexts.length,0);
+  await r.audio.start();assert(await r.audio.prepareTitle());assert.equal(r.audio.stats.pcmBuffers,0);assert(!r.audio.stats.pcmReady);
+  r.audio.setTitlePlaying(true);r.audio.setThreat(1);r.audio.setPressure(1);r.audio.setEnvironment({wind:2},1);r.audio.setSteam(1);r.audio.setMachinery(1);run(r,1.5);
+  assert.equal(r.tracker.stats.stage,'title');assert.equal(r.tracker.stats.tempo,212);assert(r.tracker.stats.scheduledNotes>0);assert(r.audio.stats.titlePlaying);
+  assert.equal(r.audio.stats.windGain,0);assert.equal(r.audio.stats.steamGain,0);assert.equal(r.audio.stats.machineryGain,0);assert.equal(r.audio.stats.voices,0);
+  const before=r.ctx.sources.length;for(const name of ['explosion','bossTell','switchWeapon','pickup','ammoPickup','shot'])r.audio[name]({level:1,weapon:4});assert.equal(r.ctx.sources.length,before,'an audible title cannot leak world cues');
+  r.audio.setMix({music:0});run(r,.2);assert.equal(r.tracker.stats.activeVoices,0);r.audio.setMix({music:.4});r.audio.setMuted(true);assert.equal(r.master.gain.value,0);r.audio.setMuted(false);
+  r.audio.setPlaying(true);r.audio.tick();assert(!r.audio.stats.titlePlaying);assert.equal(r.tracker.stats.stage,2);assert.equal(r.tracker.stats.tempo,145);assert(r.audio.stats.pcmReady);
+  r.audio.bossImpact({level:1});assert(r.audio.stats.duckGain<.56);r.audio.setPlaying(false);r.audio.setTitlePlaying(true);assert.equal(r.audio.stats.duckGain,.56,'a new title is not attenuated by the last combat impact');r.audio.dispose();assert(!r.audio.stats.titlePlaying);assert.equal(r.ctx.closes,1);
+});
+
+test('a title audition returns to the title and releases every transient when cancelled or finished',async()=>{
+  const r=rig();r.scope.FMusic.warmup=async key=>{r.scope.FMusic.getModule(key);return true;};await r.audio.start();await r.audio.prepareTitle();r.audio.setTitlePlaying(true);r.audio.tick();
+  assert(await r.audio.testMix({muted:false}));assert(r.audio.stats.preview);r.advanceTimers(.65);assert(r.audio.stats.voices>0);
+  r.audio.cancelTestMix();assert(!r.audio.stats.preview);assert.equal(r.audio.stats.voices,0);assert(r.audio.stats.titlePlaying&&r.tracker.stats.playing);assert.equal(r.tracker.stats.stage,'title');assert.equal(r.timers.size,0);
+  assert(await r.audio.testMix({muted:false}));r.advanceTimers(2.1);assert(!r.audio.stats.preview);assert(r.audio.stats.titlePlaying&&r.tracker.stats.playing);assert.equal(r.audio.stats.voices,0);assert.equal(r.timers.size,0);
+  r.audio.setTitlePlaying(false);assert(!r.tracker.stats.playing);assert.equal(r.tracker.stats.stage,0);r.audio.dispose();
+});
+
+test('mouse, touch and keyboard gestures unlock the title once without advancing the world',async()=>{
+  for(const kind of ['mouse','touch','keyboard']){
+    const app=shell({touch:kind==='touch'}),simulation=app.simulations[0],elapsed=simulation.state.elapsed;
+    app.frame(400);assert.equal(app.contexts.length,0);assert.match(app.element('intro-sound').textContent,/ÉCOUTER/);
+    if(kind==='mouse')app.element('intro-sound').click();else if(kind==='touch')app.gesture('pointerup',{pointerType:'touch'});else app.gesture('keydown',{code:'Tab'});
+    assert.equal(app.contexts.length,1,'unlock happens synchronously inside the gesture');await app.flush();
+    assert.equal(app.mode(),'menu');assert(app.audio.stats.titlePlaying);assert.equal(app.tracker.stats.stage,'title');assert.equal(app.tracker.stats.tempo,212);assert(app.tracker.stats.scheduledNotes>0);
+    assert.equal(app.simulations.length,1);assert.equal(simulation.state.elapsed,elapsed);assert.equal(app.audio.stats.pcmBuffers,0);assert.equal(app.element('intro-sound').getAttribute('aria-pressed'),'true');
+    app.gesture();app.gesture('keydown',{code:'Tab'});await app.flush();assert.equal(app.contexts.length,1);
+    app.element('intro-sound').click();assert.equal(app.master.gain.value,0);assert(!app.audio.stats.titlePlaying);app.element('intro-sound').click();await app.flush();assert(app.audio.stats.titlePlaying);assert.equal(simulation.state.elapsed,elapsed);app.audio.dispose();
+  }
+});
+
+test('title mute and zero sliders are respected, while hidden tabs and blur never resume combat',async()=>{
+  const muted=shell({settings:{muted:true,musicVolume:.3}});muted.gesture();await muted.flush();assert.equal(muted.contexts.length,0);muted.element('intro-sound').click();await muted.flush();assert(muted.audio.stats.titlePlaying);assert.equal(muted.music[0].owned[0].gain.value,.3);muted.audio.dispose();
+  const zero=shell({settings:{musicVolume:0,masterVolume:.6}});zero.element('intro-sound').click();assert.equal(zero.mode(),'options');assert.equal(zero.contexts.length,0);assert.equal(JSON.parse(zero.memory.get('ferro-settings')).musicVolume,0);
+  zero.element('music-setting').value='25';zero.element('music-setting').dispatch('input');await zero.flush();assert(zero.audio.stats.titlePlaying);assert.equal(zero.music[0].owned[0].gain.value,.25);assert.equal(zero.master.gain.value,.39);
+  zero.visibility(false);zero.frame(100);assert(!zero.audio.stats.titlePlaying);assert(!zero.tracker.stats.playing);assert.equal(zero.master.gain.value,0);const notes=zero.tracker.stats.scheduledNotes;zero.frame(500);assert.equal(zero.tracker.stats.scheduledNotes,notes);
+  zero.visibility(true);await zero.flush();assert(zero.audio.stats.titlePlaying);zero.blur();assert(!zero.audio.stats.titlePlaying);zero.focus();await zero.flush();assert(zero.audio.stats.titlePlaying);
+  zero.element('resume').click();zero.element('start').click();await zero.ready();assert.equal(zero.mode(),'playing');assert(!zero.audio.stats.titlePlaying);zero.visibility(false);assert.equal(zero.mode(),'paused');zero.visibility(true);await zero.flush();assert.equal(zero.mode(),'paused');assert(!zero.tracker.stats.playing);assert(!zero.audio.stats.titlePlaying);zero.audio.dispose();
+});
+
+test('shared title preparation cannot restart music after launch, mute, hiding or focus loss',async()=>{
+  for(const action of ['launch','mute','hide','blur']){
+    const app=shell(),prepare=app.audio.prepareTitle;let release,calls=0;
+    app.audio.prepareTitle=()=>{calls++;return new Promise(resolve=>{release=async()=>resolve(await prepare());});};
+    app.gesture();app.gesture('keydown',{code:'Tab'});app.element('intro-options').click();await app.flush();assert.equal(calls,1,'all pending title requests share instrument preparation');assert.equal(typeof release,'function');
+    if(action==='launch'){app.element('resume').click();app.element('start').click();await app.ready();}
+    else if(action==='mute')app.element('sound-toggle').click();else if(action==='hide')app.visibility(false);else app.blur();
+    await release();await app.flush();assert(!app.audio.stats.titlePlaying,action+' must invalidate every pending title request');
+    if(action==='launch'){assert.equal(app.mode(),'playing');assert.equal(app.tracker.stats.stage,0);assert(app.tracker.stats.playing);}else{assert.equal(app.master.gain.value,0);assert(!app.tracker.stats.playing);assert.equal(app.simulations[0].state.elapsed,0);}
+    app.audio.dispose();
+  }
+});
+
+test('a blocked audio resume remains retryable by a new user gesture',async()=>{
+  const app=shell(),resume=app.scope.AudioContext.prototype.resume;app.scope.AudioContext.prototype.resume=function(){this.resumes++;return Promise.resolve();};
+  app.element('intro-sound').click();await app.flush();assert(!app.audio.stats.titlePlaying);assert.match(app.element('intro-music-status').textContent,/réessayer/);assert.equal(app.mode(),'menu');
+  app.scope.AudioContext.prototype.resume=resume;app.element('intro-sound').click();await app.flush();assert(app.audio.stats.titlePlaying);assert.equal(app.contexts.length,1);app.audio.dispose();
+});
+
+test('a world prepared while hidden or unfocused waits for explicit resume before combat',async()=>{
+  for(const reason of ['hidden','blur']){
+    const app=shell();app.element('start').click();assert.equal(app.mode(),'loading');if(reason==='hidden')app.visibility(false);else app.blur();await app.ready();
+    assert.equal(app.mode(),'paused');assert(!app.tracker.stats.playing);assert(!app.audio.stats.titlePlaying);assert.equal(app.master.gain.value,0);assert.equal(app.simulations.at(-1).state.elapsed,0);
+    if(reason==='hidden')app.visibility(true);else app.focus();await app.flush();assert.equal(app.mode(),'paused');assert.equal(app.simulations.at(-1).state.elapsed,0);
+    app.element('resume').click();app.frame();assert.equal(app.mode(),'playing');assert.equal(app.tracker.stats.stage,0);assert(app.tracker.stats.playing);app.audio.dispose();
+  }
 });
 
 test('explosions have bounded crack/body/debris tails, scale with power and preserve the player reserve',async()=>{
@@ -413,7 +491,7 @@ test('trophy discovery has one bounded metal sting, survives a busy mix and stay
 
 
 test('actual menu audition survives live volume sliders and stops on explicit mute or navigation',async()=>{
-  const app=shell();app.element('intro-options').click();app.element('tab-audio').click();
+  const app=shell();app.element('intro-options').click();app.element('tab-audio').click();await app.flush();assert(app.audio.stats.titlePlaying);
   const elapsed=app.simulations.at(-1).state.elapsed;
   await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,true);
   for(const [id,key,value] of [['master','masterVolume','60'],['music','musicVolume','35'],['effects','effectsVolume','55'],['ambience','ambienceVolume','45']]){
@@ -424,10 +502,12 @@ test('actual menu audition survives live volume sliders and stops on explicit mu
   assert.equal(app.music[0].owned[0].gain.value,.35);app.frame(300);assert.equal(app.simulations.at(-1).state.elapsed,elapsed);
   app.element('sound-toggle').click();assert.equal(app.audio.stats.preview,false);assert.equal(app.master.gain.value,0);assert.equal(app.tracker.stats.playing,false);
   await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,false,'Explicit mute forbids a new audition');
-  app.element('sound-toggle').click();await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,true);
-  app.element('tab-image').click();assert.equal(app.audio.stats.preview,false);assert.equal(app.master.gain.value,0);
+  app.element('sound-toggle').click();await app.flush();await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,true);
+  app.element('tab-image').click();assert.equal(app.audio.stats.preview,false);assert.equal(app.master.gain.value,.39);assert(app.audio.stats.titlePlaying&&app.tracker.stats.playing);
   app.element('tab-audio').click();await app.element('test-audio').dispatch('click');app.frame(2100);
-  assert.equal(app.audio.stats.preview,false);assert.equal(app.master.gain.value,0);assert.equal(app.tracker.stats.playing,false);
+  assert.equal(app.audio.stats.preview,false);assert.equal(app.master.gain.value,.39);assert.equal(app.tracker.stats.playing,true);assert.equal(app.tracker.stats.stage,'title');
+  await app.element('test-audio').dispatch('click');assert(app.audio.stats.preview);await app.element('test-audio').dispatch('click');assert(!app.audio.stats.preview);assert(app.audio.stats.titlePlaying);
+  await app.element('test-audio').dispatch('click');app.visibility(false);assert(!app.audio.stats.preview);assert(!app.audio.stats.titlePlaying);assert.equal(app.master.gain.value,0);app.visibility(true);await app.flush();assert(app.audio.stats.titlePlaying);
   assert.equal(app.simulations.at(-1).state.elapsed,elapsed,'Audition and slider changes never unpause the game');
   app.element('resume').click();app.element('start').click();await app.ready();app.element('pause-button').click();app.element('tab-audio').click();
   await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,true);

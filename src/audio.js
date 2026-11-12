@@ -93,13 +93,13 @@
       var ctx = null, master, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
       var lastStep = -1, stepSide = 1, lastAlert = -1;
-      var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false;
+      var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false, titlePlaying = false;
       var bank = Object.create(null), motors = [], ambientDuckUntil = 0, variation = 0, warming = null, warmTimer = null, warmResolve = null;
       var mix = {master:1,music:.45,effects:1,ambience:1};
       var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null);
       var priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
       var MUSIC_GAIN = .56, EFFECTS_GAIN = .9, AMBIENCE_GAIN = .7;
-      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
+      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
       function remember(node) { persistent.push(node); return node; }
       function random() {
         noiseSeed = (Math.imul(noiseSeed, 1664525) + 1013904223) | 0;
@@ -120,7 +120,7 @@
         return ctx && !disposed && (!muted || preview) && ctx.state === 'running';
       }
       function reserve(level, bus) {
-        if (!available() || level <= .0001 || (bus === ambience ? mix.ambience : mix.effects) <= 0) return false;
+        if (!available() || titlePlaying && !preview || level <= .0001 || (bus === ambience ? mix.ambience : mix.effects) <= 0) return false;
         // Distant enemies get 32 voices, world interactions 40. The remaining
         // eight slots belong to the player and urgent warnings. A loud nearby
         // cue may replace a quieter lower-priority voice, never the MOD bus.
@@ -160,6 +160,15 @@
           master.gain.setValueAtTime(.65 * mix.master, Math.max(now,preview.end-.018));
           master.gain.linearRampToValueAtTime(0, preview.end);
         }
+      }
+      function syncMusic() {
+        stats.titlePlaying = titlePlaying;
+        if (!music) return;
+        // The title is a score selection, never an environmental stage or a
+        // running simulation. Keep stage numeric for wind/room calculations.
+        music.setStage(titlePlaying ? 'title' : stage);
+        music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65));
+        music.setPlaying(playing || titlePlaying);
       }
       function effectEvent(name, value, interval) {
         if (!available()) return null;
@@ -360,7 +369,7 @@
             gain.gain.value=0;filter.type='lowpass';filter.frequency.value=4200;filter.Q.value=.55;
             filter.connect(gain);gain.connect(pan);pan.connect(ambience);motors.push({kind:kind,source:null,gain:gain,filter:filter,pan:pan});
           });
-          if (window.FMusic) { music = FMusic.create(ctx, musicBus); music.setStage(stage); music.setVolume(mix.music); music.setThreat(Math.max(threat,pressure*.65)); music.setPlaying(playing); }
+          if (window.FMusic) { music = FMusic.create(ctx, musicBus); music.setVolume(mix.music); syncMusic(); }
           if(playing)warmBank(false);
         } catch (_) {
           failed = true;
@@ -403,7 +412,7 @@
         preview = null; stats.preview = false;
         if (previous.timer !== null) clearTimeout(previous.timer);
         for (var entry of Array.from(voices)) if (entry.preview === previous.id) { try { entry.source.stop(); } catch (_) {} clean(entry); }
-        if (music) music.setPlaying(playing);
+        syncMusic();
         if (musicBus && ctx) { musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setTargetAtTime(MUSIC_GAIN,ctx.currentTime,.03); }
         duckUntil = 0; duckDepth = 1; stats.duckGain = MUSIC_GAIN;
         updateMaster();
@@ -449,6 +458,31 @@
           var fx=warmBank(true),score=window.FMusic?FMusic.warmup(next):Promise.resolve(false);
           return Promise.all([fx,score]).then(function () { return !!(ctx && !disposed && stats.pcmReady && (!music || music.prepare(next))); });
         },
+        prepareTitle: function () {
+          // Warm only the title instruments. Opening the device still belongs
+          // to start/resume in a user gesture; no world effects are synthesized.
+          if (disposed || !window.FMusic) return Promise.resolve(false);
+          return FMusic.warmup('title').then(function () {
+            return !!(ctx && ctx.state === 'running' && !disposed && music && music.prepare('title'));
+          });
+        },
+        setTitlePlaying: function (value) {
+          var next = !!value && !disposed;
+          if (next === titlePlaying) return;
+          cancelTestMix();
+          if (next && playing) api.setPlaying(false);
+          titlePlaying = next;
+          if (next && ctx) {
+            // A last combat impact must not duck the first title riff.
+            musicBus.gain.cancelScheduledValues(ctx.currentTime);
+            musicBus.gain.setTargetAtTime(MUSIC_GAIN,ctx.currentTime,.018);
+            duckUntil = 0; duckDepth = 1; ambientDuckUntil = 0; stats.duckGain = MUSIC_GAIN;
+            for (var entry of Array.from(voices)) { try { entry.source.stop(); } catch (_) {} clean(entry); }
+            airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018); stats.windGain = 0;
+            updateSteam(); updateMachinery();
+          }
+          syncMusic();
+        },
         setMuted: function (value) {
           var next = !!value;
           if (next !== muted) cancelTestMix();
@@ -457,10 +491,10 @@
           updateSteam();updateMachinery();
           if(muted&&!preview&&ctx&&airVolume){airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;}
         },
-        setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(Math.max(threat,pressure*.65)); },
-        setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(Math.max(threat,pressure*.65)); },
-        setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); if (music) { music.setStage(stage); music.setThreat(threat); } },
-        setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing&&ctx)warmBank(false); updateSteam();updateMachinery(); if (music) music.setPlaying(playing); if (!playing && ctx && airVolume) {airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
+        setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
+        setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
+        setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); syncMusic(); },
+        setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing){titlePlaying=false;if(ctx)warmBank(false);} updateSteam();updateMachinery(); syncMusic(); if (!playing && ctx && airVolume) {airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
         setMix: function (value) {
           for (var key in mix) if (Number.isFinite(value && value[key])) mix[key] = Math.max(0, Math.min(1, value[key]));
           if (!ctx || disposed) return;
@@ -689,6 +723,7 @@
           if (disposed) return;
           cancelTestMix();
           disposed = true;
+          titlePlaying = false; stats.titlePlaying = false;
           if(warmTimer!==null)clearTimeout(warmTimer);warmTimer=null;if(warmResolve)warmResolve(false);warmResolve=null;
           if (music) { music.dispose(); music = null; }
           voices.forEach(function (entry) {
@@ -712,6 +747,7 @@
         if (typeof api[name] !== 'function' || helpers.test(name)) return;
         var method = api[name];
         api[name] = function () {
+          if (titlePlaying && !preview) return;
           var event = arguments[0], previousPriority=priority, previousCue=cue, previousLevel=cueLevel, previousDucked=cueDucked;
           if (event && typeof event==='object' && Number.isFinite(event.level) && event.level<=.008) return;
           priority = name==='enemyShot'||name==='alerted'||name==='debrisLand'||name==='step' ? 1 : urgent.test(name) ? 3 : 2;

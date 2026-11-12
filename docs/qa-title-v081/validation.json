@@ -1,0 +1,52 @@
+{
+  "base_commit": "673d6b2b80026103b4523fb0b3b16fb708556b06",
+  "baseline": {
+    "tests": 412,
+    "pass": 412,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "final": {
+    "tests": 422,
+    "pass": 422,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "build": {
+    "version": "0.8.1",
+    "html_bytes": 803375,
+    "html_decimal_kb": 803.38,
+    "html_kib": 784.55,
+    "gzip_bytes": 242225,
+    "sha256": "d9503acf09a33a9b2d0f90d598c0ac881250131ce0b3f70b74e1afc8c5df1b3b",
+    "external_assets": 0,
+    "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+    "source_bytes": {
+      "renderer.js": 106801,
+      "world.js": 133209,
+      "destruction.js": 26469,
+      "music.js": 26522,
+      "audio.js": 47822,
+      "soundscape.js": 4438,
+      "economy.js": 11994,
+      "brain.js": 8923,
+      "simulation.js": 202349,
+      "motion.js": 5280,
+      "actors.js": 27015,
+      "effects.js": 18725,
+      "options.js": 4349,
+      "game.js": 98079
+    }
+  },
+  "source_sha256": {
+    "src/music.js": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74",
+    "src/audio.js": "4b36fde20d003c7a785c05f1315cd568d309dd08dd6bdc30ec2283bdbe452b6d",
+    "src/game.js": "95f81b40ec57f13d028d7dd2e810cd31a823d1b354ba93565aae341f7ba1beed",
+    "src/index.html": "84255c6e73d2b800cf91d529a642b6a3a1b6cfcd8af3107e77923e3c33fb8145",
+    "src/style.css": "5fac4844ea19cd8ab0eae39c88626b1fd8c585ca9851de6dc51ca0093bdf31be",
+    "checks/music.test.mjs": "9f3a12c7ab49331f2f34bf2c1aeaec1996c1732fa2720f8935601d61d52a29b8",
+    "checks/audio.test.mjs": "c9bc180b5e551fb714e1c2d94dec365b7abd7668bd0a47b19036c9db0e0c32e9"
+  }
+}

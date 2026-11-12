@@ -108,3 +108,8 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
 @media(max-height:650px) and (max-width:650px){.armor-pool{margin-top:2px}.armor-pool b{font-size:11px}.armor-track{height:2px;margin-top:1px}.vital .health-number{margin-bottom:2px}}
 
 #boss-health{display:block;font-size:9px;font-variant-numeric:tabular-nums;letter-spacing:.7px;color:#f0c08d;margin-top:6px}#boss-name{min-width:0}#supply-detail{max-width:320px;line-height:1.5}@media(max-width:650px){#boss-health{font-size:8px}#supply-detail{max-width:240px}}
+
+/* One compact, keyboard/touch-accessible soundtrack control keeps the title intact. */
+.intro-audio{display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:158px}.intro-score{font-size:8px;letter-spacing:1.2px;color:#a6b7ae}.intro-score i{font-style:normal;color:var(--acid);padding:0 4px}.intro-audio .text-button{min-height:40px;padding:10px 0;color:var(--acid);font-size:10px;letter-spacing:1.3px}.intro-audio.is-playing .intro-score{color:#e4edcf}#intro-music-status{font-size:7px;letter-spacing:.25px;line-height:1.4;color:#8da198}.intro-bottom>#intro-controls{min-width:0}.intro-settings{flex-shrink:0}
+@media(max-width:650px){.intro-audio{min-width:145px}.intro-score{font-size:7px;letter-spacing:.75px}.intro-audio .text-button{font-size:9px;min-height:44px;padding:12px 0}.intro-bottom{align-items:center;gap:12px}.intro-bottom>#intro-controls{max-width:130px;font-size:7px}.intro-settings{gap:13px}#intro-music-status{font-size:6.5px}}
+@media(max-height:540px){.intro-audio{gap:0}.intro-audio .text-button{min-height:35px;padding:8px 0}.intro-score{font-size:7px}#intro-music-status{font-size:6px}.intro-bottom>#intro-controls{max-width:none}}
