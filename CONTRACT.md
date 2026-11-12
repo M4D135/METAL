@@ -1,5 +1,17 @@
 # FERRO procedural FPS — internal module contract
 
+## 0.3 detail and motion pass (current ownership and limits)
+
+User asks for very dense level detail, prettier lighting with more shadows, and smoother animated movement. Preserve the industrial cyan/bronze identity, all procedural content, the 1,400,000-byte standalone budget, existing progression and private hosting.
+
+World owner: src/world.js and checks/world.test.mjs. Enrich existing geometry with deterministic detail from an independent RNG so navigation, colliders, objective/enemy placements and checkpoint signatures remain stable where possible. Keep colliders <=350; allow <=12,000 static meshes with distance/detail filtering. Optional mesh.detail 0|1|2 (default0): architecture, medium dressing, micro detail. Renderer may cull detail by distance/quality. Optional world.ambience [{type:'steam'|'sparks'|'drip'|'beacon'|'screen',x,y,z,phase,scale,color:[r,g,b]}] for root animation; no invisible collision changes or blocked routes.
+
+Renderer owner: src/renderer.js only. Support mesh.detail for WebGL and Canvas with distance/quality culling or spatial batches. Substantially improve actual shadows/contact depth and material richness while preserving API and safe Economy mode. Optional camera.roll radians (default0) must work in WebGL and Canvas and be applied consistently with root weapon basis. Coordinate with world owner about visibility ranges. Renderer QA artifacts outside repo, no browser bypass or browser flags.
+
+Motion owner: src/simulation.js and checks/simulation.test.mjs. Smooth acceleration, responsive braking, analogue movement, coherent walk/run/dash transitions, no mouse aim latency. Expose real velocity and locomotion state for root camera/weapon animation; document exact API. Preserve collision safety, combat, old checkpoint restore if feasible, and no movement creep after restore. Add meaningful regression checks for frame-rate independence, direction reversal/braking, wall sliding/diagonals and checkpoint motion.
+
+Root owns src/game.js, src/audio.js, src/index.html, src/style.css, build and docs. Root integrates damped camera/weapon motion, ambient detail animations, input handling and optional reduced motion. Agents do not commit, push, change other owners' files or call Sites mutations.
+
 ## 0.2 integration additions (override original limits/ownership below)
 
 Budget stays 1,400,000 bytes for standalone HTML; improve play and art rather than chasing the 0.1 size. Static mesh budget 2600 and colliders 350 per stage. Three stages must have different connected topologies and distinct architecture; preserve walkable flat ground and existing APIs.

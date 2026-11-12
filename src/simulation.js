@@ -16,6 +16,10 @@
       cores:world.cores.map(c=>({...c,taken:false})),pickups:world.pickups.map(c=>({...c,taken:false})),
       hazards:(world.hazards||[]).map(h=>({...h,hot:false,warning:false}))};
     s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);
+    // Public locomotion values describe displacement after collision, never held keys.
+    const locomotion=s.locomotion={vx:0,vz:0,speed:0,forward:0,strafe:0,stridePhase:0,distance:0,
+      moveBlend:0,sprintBlend:0,dashBlend:0,accelForward:0,accelStrafe:0,blocked:false};
+    let velocityX=0,velocityZ=0,dashAge=.2,dashX=0,dashZ=0;
     let fireWait=0,navWait=0,hazardWait=0,recovery=0;
     const solids=world.colliders.filter(b=>b.minY<1.8&&b.maxY>.06),b=world.bounds;
     let fingerprint=2166136261;
@@ -30,6 +34,86 @@
       const count=Math.max(1,Math.ceil(Math.max(Math.abs(dx),Math.abs(dz))/.12));
       dx/=count;dz/=count;
       for(let j=0;j<count;j++){if(!blocked(e.x+dx,e.z,r))e.x+=dx;if(!blocked(e.x,e.z+dz,r))e.z+=dz;}
+    }
+    function stopMotion(reset=false){
+      velocityX=velocityZ=0;dashAge=.2;dashX=dashZ=0;s.moving=0;
+      for(const key of ['vx','vz','speed','forward','strafe','moveBlend','sprintBlend','dashBlend','accelForward','accelStrafe'])locomotion[key]=0;
+      locomotion.blocked=false;
+      if(reset)locomotion.stridePhase=locomotion.distance=0;
+    }
+    // Exact integral of a short smoothstep ramp, plateau, and smoothstep release.
+    // The boost ends at 0.2s and never enters normal movement's velocity accumulator.
+    function dashIntegral(time){
+      const t=clamp(time,0,.2);
+      if(t<.025){const u=t/.025;return .025*(u*u*u-.5*u*u*u*u);}
+      if(t<=.15)return .0125+t-.025;
+      const u=(t-.15)/.05;return .1375+.05*(u-u*u*u+.5*u*u*u*u);
+    }
+    function locomote(dt,input){
+      let mx=Number.isFinite(input.moveX)?input.moveX:0,my=Number.isFinite(input.moveY)?input.moveY:0;
+      let magnitude=Math.hypot(mx,my);
+      if(magnitude>1){mx/=magnitude;my/=magnitude;magnitude=Math.hypot(mx,my);}
+      if(magnitude<.002){mx=my=magnitude=0;}
+      const cy=Math.cos(p.yaw),sy=Math.sin(p.yaw),speed=input.sprint?5.8:4.2;
+      const targetX=(cy*mx+sy*my)*speed,targetZ=(sy*mx-cy*my)*speed;
+      if(input.dash&&p.dash<=0){
+        p.dash=1.7;p.dashing=.2;dashAge=0;
+        if(magnitude>.1){dashX=(cy*mx+sy*my)/magnitude;dashZ=(sy*mx-cy*my)/magnitude;}
+        else {dashX=sy;dashZ=-cy;}
+        emit('dash');
+      }
+      if(!(dt>0))return;
+      let dx=0,dz=0;
+      function integrate(duration,rate){
+        if(duration<=0)return;
+        const decay=Math.exp(-rate*duration),area=(1-decay)/rate;
+        dx+=targetX*duration+(velocityX-targetX)*area;
+        dz+=targetZ*duration+(velocityZ-targetZ)*area;
+        velocityX=targetX+(velocityX-targetX)*decay;
+        velocityZ=targetZ+(velocityZ-targetZ)*decay;
+      }
+      const startX=p.x,startZ=p.z,previousX=locomotion.vx,previousZ=locomotion.vz;
+      let travel=0,dashContribution=0,collided=false;
+      // Resolve short physical segments as well as the exact velocity integral. This
+      // preserves reversal/turning arc length and wall contact at lower frame rates.
+      const count=Math.max(1,Math.ceil(dt*120)),part=dt/count;
+      for(let sample=0;sample<count;sample++){
+        dx=dz=0;
+        if(!magnitude&&Math.hypot(velocityX,velocityZ)<.008)velocityX=velocityZ=0;
+        const dot=velocityX*targetX+velocityZ*targetZ,targetSquared=targetX*targetX+targetZ*targetZ;
+        if(magnitude&&dot<0){
+          const crossing=Math.log((targetSquared-dot)/targetSquared)/38,first=Math.min(part,crossing);
+          integrate(first,38);integrate(part-first,20);
+        }else integrate(part,magnitude?20:32);
+        let weight=0;
+        if(dashAge<.2){
+          const end=Math.min(.2,dashAge+part),area=dashIntegral(end)-dashIntegral(dashAge);
+          weight=area/part;
+          dx=dx*(1-weight)+dashX*13.2*area;
+          dz=dz*(1-weight)+dashZ*13.2*area;
+          dashAge=end;p.dashing=Math.max(0,.2-dashAge);
+        }else p.dashing=Math.max(0,p.dashing-part);
+        const x=p.x,z=p.z;move(p,dx,dz);
+        const ax=p.x-x,az=p.z-z,distance=Math.hypot(ax,az),wanted=Math.hypot(dx,dz);
+        const blockedX=Math.abs(ax-dx)>1e-8,blockedZ=Math.abs(az-dz)>1e-8;
+        if(blockedX)velocityX=0;if(blockedZ)velocityZ=0;collided ||= blockedX||blockedZ;
+        travel+=distance;
+        if(distance>1e-8)dashContribution+=weight*clamp(distance/Math.max(wanted,1e-8),0,1)*part;
+      }
+      const actualX=p.x-startX,actualZ=p.z-startZ;
+      locomotion.vx=actualX/dt;locomotion.vz=actualZ/dt;locomotion.speed=travel/dt;s.moving=locomotion.speed;
+      locomotion.forward=sy*locomotion.vx-cy*locomotion.vz;
+      locomotion.strafe=cy*locomotion.vx+sy*locomotion.vz;
+      locomotion.blocked=collided;
+      locomotion.moveBlend=clamp(locomotion.speed/4.2,0,1);
+      locomotion.dashBlend=clamp(dashContribution/dt,0,1);
+      locomotion.sprintBlend=clamp((locomotion.speed-4.2)/1.6,0,1)*(1-locomotion.dashBlend);
+      const ax=(locomotion.vx-previousX)/dt,az=(locomotion.vz-previousZ)/dt;
+      locomotion.accelForward=clamp(sy*ax-cy*az,-80,80);
+      locomotion.accelStrafe=clamp(cy*ax+sy*az,-80,80);
+      locomotion.distance+=travel;
+      locomotion.stridePhase=(locomotion.stridePhase+travel/(2.4+.5*locomotion.sprintBlend)*Math.PI*2)%(Math.PI*2);
+      if(!travel){locomotion.vx=locomotion.vz=locomotion.speed=locomotion.forward=locomotion.strafe=0;}
     }
     function ray(o,d,far=80){
       let best=far;
@@ -65,7 +149,7 @@
     function hurt(amount){
       if(!(amount>0)||p.dashing>0||recovery>0||s.dead||s.won)return;
       p.hp=Math.max(0,p.hp-amount);s.damage=1;s.combo=0;s.comboTime=0;emit('hurt');
-      if(!p.hp){s.dead=true;emit('dead');}
+      if(!p.hp){s.dead=true;stopMotion();emit('dead');}
     }
     function bossPhase(e){
       if(e.type===3&&e.hp>0&&e.hp<=e.maxHp/2&&e.phase===0){
@@ -225,13 +309,9 @@
       if(input.weapon===0||input.weapon===1)s.weapon=input.weapon;
       p.yaw+=Number.isFinite(input.lookX)?input.lookX:0;p.pitch=clamp(p.pitch+(Number.isFinite(input.lookY)?input.lookY:0),-1.2,1.2);
       p.heat=Math.max(0,p.heat-dt*(fireWait>0?.1:.35));if(p.overheated&&p.heat<.3){p.overheated=false;emit('cooled');}
-      p.dash=Math.max(0,p.dash-dt);p.dashing=Math.max(0,p.dashing-dt);p.pulseCooldown=Math.max(0,p.pulseCooldown-dt);
-      if(input.dash&&p.dash<=0){p.dash=1.7;p.dashing=.2;emit('dash');}
+      p.dash=Math.max(0,p.dash-dt);p.pulseCooldown=Math.max(0,p.pulseCooldown-dt);
       if(input.pulse)pulse();
-      let mx=input.moveX||0,my=input.moveY||0,len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len;}
-      if(p.dashing>0&&len<.1)my=1;
-      const speed=p.dashing>0?12:input.sprint?5.8:4.2,dx=(Math.cos(p.yaw)*mx+Math.sin(p.yaw)*my)*speed*dt,dz=(Math.sin(p.yaw)*mx-Math.cos(p.yaw)*my)*speed*dt;
-      move(p,dx,dz);s.moving=Math.hypot(dx,dz)/Math.max(dt,.001);
+      locomote(dt,input);
       if(input.fire)fire(input.assist);
       if(navWait<=0){rebuildNav();navWait=.6;}
       updateEnemies(dt);
@@ -253,7 +333,7 @@
       for(const q of s.particles){q.life-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.z+=q.vz*dt;q.vy-=dt*3;}
       s.particles=s.particles.filter(q=>q.life>0);
       s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);
-      if(s.relays===3&&!s.bossAlive&&Math.hypot(p.x-world.exit.x,p.z-world.exit.z)<1.5&&!s.dead){s.won=true;s.score+=500;emit('win');}
+      if(s.relays===3&&!s.bossAlive&&Math.hypot(p.x-world.exit.x,p.z-world.exit.z)<1.5&&!s.dead){s.won=true;s.score+=500;stopMotion();emit('win');}
     }
     function snapshot(){
       return {version:1,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
@@ -306,7 +386,7 @@
         Object.assign(p,pick(v,PLAYER));Object.assign(s,pick(a,NUMBERS),{won:a.won,dead:a.dead,bossAlive:a.bossAlive,enemies,bullets});
         s.cores=world.cores.map((c,i)=>({...c,taken:a.cores[i]}));s.pickups=world.pickups.map((c,i)=>({...c,taken:a.pickups[i]}));
         s.events=[];s.particles=[];s.pulseVisual=0;s.flash=0;s.damage=0;s.hitMarker=0;s.moving=0;s.threat=0;
-        fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;recovery=0;
+        fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;recovery=0;stopMotion(true);
         if(options?.recover===true&&!s.dead&&!s.won){recovery=1.4;s.bullets=s.bullets.filter(q=>Math.hypot(q.x-p.x,q.z-p.z)>=2.4);}
         rebuildNav();updateHazards(false);return true;
       }catch(_){return false;}

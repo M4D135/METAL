@@ -302,7 +302,291 @@
     for (const q of [-1, 1]) box(exit.x + q * 1.8, 1.5, exit.z, 0.16, 3, 0.35, 4, true, theme.main, 1);
     box(exit.x, 3, exit.z, 3.75, 0.16, 0.35, 4, false, theme.main, 1);
     const bounds={minX:Math.floor(Math.min(...rooms.map(r=>r.x-r.w/2))-.8),maxX:Math.ceil(Math.max(...rooms.map(r=>r.x+r.w/2))+.8),minZ:Math.floor(Math.min(...rooms.map(r=>r.z-r.d/2))-.8),maxZ:Math.ceil(Math.max(...rooms.map(r=>r.z+r.d/2))+.8)};
-    return { seed, stage, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, bounds };
+    const world={ seed, stage, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, bounds };
+    detailWorld(world,theme,aperture,doorHeight);
+    return world;
+  }
+  // An independent art pass never consumes the layout/combat RNG. Everything
+  // below is attached to an existing solid, flat on the floor, or overhead.
+  // Consequently the v0.2 collision and checkpoint fingerprints stay identical.
+  function detailWorld(w,theme,aperture,doorHeight) {
+    const rand=randomFor('FERRO-detail-03:'+w.seed,w.stage),out=w.meshes,baseCount=out.length;
+    const ambience=[],categories={},roomCounts={};
+    const axes={x:[0,0,-Math.PI/2],y:[0,0,0],z:[Math.PI/2,0,0]};
+    let owner='';
+    function add(shape,p,s,mat=0,r=[0,0,0],detail=1,category='pipe',emissive=0,color) {
+      const mesh={shape,p,s,mat,r,detail,category};
+      if(emissive)mesh.emissive=emissive;if(color)mesh.color=color;
+      out.push(mesh);categories[category]=(categories[category]||0)+1;
+      if(owner)roomCounts[owner]=(roomCounts[owner]||0)+1;
+      return mesh;
+    }
+    const box=(p,s,mat=0,detail=1,category='panel',r=[0,0,0],emissive=0,color)=>add('box',p,s,mat,r,detail,category,emissive,color);
+    function tube(a,b,radius,mat=1,category='pipe',detail=1) {
+      const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz);
+      if(length<.005)return;
+      return add('cylinder',[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[radius*2,length,radius*2],mat,
+        [Math.atan2(dz,Math.hypot(dx,dy)),0,Math.atan2(-dx,dy)],detail,category);
+    }
+    function flange(p,radius,axis,bolts=true) {
+      const rotation=axes[axis];
+      add('cylinder',p,[radius*2.8,.075,radius*2.8],1,rotation,1,'flange');
+      add('ring',p,[radius*3.3,.14,radius*3.3],0,axis==='x'?[0,0,Math.PI/2]:axis==='z'?[Math.PI/2,0,0]:[0,0,0],1,'flange');
+      if(bolts)for(let j=0;j<4;j++) {
+        const a=j*TAU/4+.785,c=Math.cos(a)*radius*1.2,s=Math.sin(a)*radius*1.2;
+        const at=axis==='x'?[p[0]+.045,p[1]+c,p[2]+s]:axis==='z'?[p[0]+c,p[1]+s,p[2]+.045]:[p[0]+c,p[1]+.045,p[2]+s];
+        add('cylinder',at,[.065,.035,.065],3,rotation,2,'bolt');
+      }
+    }
+    function elbow(cx,y,cz,radius,start,end,thickness,mat=1) {
+      for(let j=0;j<5;j++) {
+        const a=start+(end-start)*j/5,b=start+(end-start)*(j+1)/5;
+        tube([cx+Math.cos(a)*radius,y,cz+Math.sin(a)*radius],[cx+Math.cos(b)*radius,y,cz+Math.sin(b)*radius],thickness,mat,'elbow');
+      }
+    }
+    function surface(x,z,nx,nz) {
+      const tx=nz,tz=-nx;
+      const at=(u,y,d=0)=>[x+tx*u+nx*d,y,z+tz*u+nz*d];
+      const plate=(u,y,d,width,height,depth,mat,category,detail=1,emit=0,color)=>
+        box(at(u,y,d),nx?[depth,height,width]:[width,height,depth],mat,detail,category,[0,0,0],emit,color);
+      const bolt=(u,y,d=.06)=>add('cylinder',at(u,y,d),[.055,.024,.055],1,nx?axes.x:axes.z,2,'bolt');
+      return {at,plate,bolt,nx,nz,tx,tz};
+    }
+    function gauge(s,u,y) {
+      const rot=s.nx?axes.x:axes.z;
+      add('cylinder',s.at(u,y,.055),[.34,.07,.34],0,rot,1,'gauge');
+      add('cylinder',s.at(u,y,.096),[.28,.014,.28],3,rot,2,'gauge',0,[.56,.61,.55]);
+      for(let k=0;k<8;k++) {
+        const a=(k/7*1.5+.25)*Math.PI;
+        s.plate(u+Math.cos(a)*.11,y+Math.sin(a)*.11,.108,.024,.024,.012,0,'gauge',2);
+      }
+      const a=.4+rand()*1.9,centre=s.at(u+Math.sin(a)*.043,y+Math.cos(a)*.043,.12);
+      box(centre,s.nx?[.016,.13,.018]:[.018,.13,.016],6,2,'gauge',s.nx?[a,0,0]:[0,0,-a]);
+    }
+    function servicePanel(s,u,y,width,screen,room) {
+      s.plate(u,y,.018,width,1.08,.035,1,'panel');
+      s.plate(u,y,.042,width-.09,.98,.025,0,'panel');
+      for(const q of [-1,1])for(const k of [-1,1])s.bolt(u+q*(width/2-.09),y+k*.44,.067);
+      if(screen) {
+        s.plate(u-.12,y+.1,.062,width*.68,.57,.022,7,'screen');
+        s.plate(u-.12,y+.1,.076,width*.61,.48,.012,4,'screen',1,.14,theme.main.map(c=>c*.2));
+        for(let j=0;j<4;j++) {
+          const len=.22+rand()*width*.27;
+          s.plate(u-width*.27+len/2,y+.25-j*.105,.086,len,.018,.012,4,'screen',len<=.3?2:1,.48,theme.main);
+        }
+        for(let j=0;j<4;j++)s.plate(u-width*.26+j*.16,y-.32,.067,.09,.065,.025,j===3?5:3,'switch',2,j===3?.4:0);
+        // At most one animated display per room; its normal avoids wall clipping.
+        if(!ambience.some(a=>a.type==='screen'&&a.room===room.id)) {
+          const p=s.at(u-.12,y+.1,.096);
+          ambience.push({type:'screen',x:p[0],y:p[1],z:p[2],phase:rand()*TAU,scale:1,color:theme.main,normal:[s.nx,0,s.nz],width:width*.58,height:.44,room:room.id});
+        }
+      } else {
+        for(let j=0;j<7;j++)s.plate(u,y-.33+j*.11,.07,width-.3,.035,.075,7,'louver');
+        s.plate(u,y+.56,.055,width-.15,.085,.04,3,'panel',1,0,theme.wall);
+      }
+    }
+    function cableTray(r,x,z,length,axis,drop=0) {
+      const y=r.h-.78-drop,width=.64,alongX=axis==='x';
+      for(const q of [-1,1])box([x+(alongX?0:q*width/2),y,z+(alongX?q*width/2:0)],alongX?[length,.15,.065]:[.065,.15,length],0,1,'cable_tray');
+      const rungs=Math.ceil(length/.8);
+      for(let j=0;j<=rungs;j++) {
+        const p=(j/rungs-.5)*length;
+        box([x+(alongX?p:0),y-.07,z+(alongX?0:p)],alongX?[.07,.055,width]:[width,.055,.07],1,1,'cable_tray');
+      }
+      for(let k=-1;k<=1;k++) {
+        const a=[x+(alongX?-length/2:k*.16),y+.025,z+(alongX?k*.16:-length/2)],b=[x+(alongX?length/2:k*.16),y+.025,z+(alongX?k*.16:length/2)];
+        const cable=tube(a,b,.037,k===0?1:7,'cable');
+        if(k===1)cable.color=[.12,.25,.27];
+      }
+      for(const q of [-1,0,1]) {
+        const px=x+(alongX?q*length*.38:0),pz=z+(alongX?0:q*length*.38);
+        for(const k of [-1,1])box([px+(alongX?0:k*.43),(y+r.h)/2,pz+(alongX?k*.43:0)],[.05,r.h-y,.05],1,1,'support');
+        box([px,y-.11,pz],alongX?[.1,.07,.94]:[.94,.07,.1],1,1,'support');
+      }
+    }
+    function drain(x,z,length,axis) {
+      const alongX=axis==='x';
+      box([x,.012,z],alongX?[length,.018,.44]:[.44,.018,length],7,1,'floor_drain');
+      for(const q of [-1,1])box([x+(alongX?0:q*.25),.026,z+(alongX?q*.25:0)],alongX?[length+.1,.02,.055]:[.055,.02,length+.1],1,1,'floor_drain');
+      const slats=Math.ceil(length/.23);
+      for(let i=0;i<=slats;i++) {
+        const d=(i/slats-.5)*length;
+        box([x+(alongX?d:0),.027,z+(alongX?0:d)],alongX?[.065,.018,.4]:[.4,.018,.065],0,1,'floor_drain');
+        if(i%5===0)for(const q of [-1,1])add('cylinder',[x+(alongX?d:q*.25),.044,z+(alongX?q*.25:d)],[.045,.012,.045],3,[0,0,0],2,'bolt');
+      }
+    }
+    function wallDetails(r,side) {
+      const alongX=side==='n'||side==='s',sign=side==='n'||side==='w'?-1:1,extent=alongX?r.w:r.d;
+      const nx=alongX?0:-sign,nz=alongX?-sign:0;
+      const x=r.x+(alongX?0:sign*(r.w/2-.343)),z=r.z+(alongX?sign*(r.d/2-.343):0),s=surface(x,z,nx,nz);
+      const spans=r.openings[side]?[[ -(extent+aperture)/4,(extent-aperture)/2],[(extent+aperture)/4,(extent-aperture)/2]]:[[0,extent-.6]];
+      // Convert the room's world-facing span coordinates to this wall's tangent.
+      for(const [offset,length] of spans) {
+        const u=offset*(alongX?s.tx:s.tz),panelWidth=Math.min(1.65,length-.5);
+        servicePanel(s,u,2.08,panelWidth,(r.id+(side==='n'?0:side==='s'?1:2))%3===0,r);
+        gauge(s,u+(length>4?1.28:0),length>4?1.58:3.0);
+        // Twin supply lines run along solid sections, never across a doorway.
+        for(const y of [.83,3.12]) {
+          tube(s.at(u-length/2+.22,y,.075),s.at(u+length/2-.22,y,.075),.048,y<1?7:1,'pipe');
+          for(let j=0;j<Math.ceil(length/1.8);j++) {
+            const cu=u-length/2+.35+j*(length-.7)/Math.max(1,Math.ceil(length/1.8)-1);
+            s.plate(cu,y,.076,.08,.22,.15,0,'clamp');
+            s.bolt(cu,y+.085,.16);
+          }
+        }
+        // Identification strips consist of actual small geometry, not a font asset.
+        for(let j=0;j<5;j++)s.plate(u-panelWidth*.3+j*.13,2.75,.035,.065,.11,.025,j===0?5:3,'marker',2,j===0?.2:0);
+        if(length>6) {
+          const ventU=u-length*.31;
+          s.plate(ventU,r.h-1.8,.015,1.7,.9,.03,7,'vent');
+          for(let j=0;j<8;j++)s.plate(ventU,r.h-2.15+j*.1,.06,1.6,.035,.10,1,'louver');
+          for(const q of [-1,1])s.plate(ventU+q*.88,r.h-1.8,.045,.06,1.02,.1,0,'vent');
+        }
+      }
+      if(r.openings[side]) {
+        // Mechanical jambs occupy the existing wall face. Teeth sit above heads.
+        for(const q of [-1,1]) {
+          const u=q*(aperture/2+.15);
+          s.plate(u,doorHeight/2,.015,.22,doorHeight-.16,.035,0,'door_mechanism');
+          tube(s.at(u,.3,.07),s.at(u,doorHeight-.3,.07),.05,3,'door_mechanism');
+          for(const y of [.45,1.55,doorHeight-.45]) {
+            s.plate(u,y,.07,.26,.16,.09,1,'door_mechanism');
+            for(const k of [-1,1])s.bolt(u+k*.085,y,.126);
+          }
+          const at=s.at(u,doorHeight-.1,.08);
+          add('sphere',at,[.13,.13,.13],5,[0,0,0],1,'beacon',.7,theme.alt);
+        }
+        s.plate(0,doorHeight+.27,.025,aperture+.3,.35,.07,1,'door_mechanism');
+        for(let j=0;j<8;j++)s.plate((j-3.5)*aperture/8,doorHeight+.21,.075,.15,.12,.06,7,'door_mechanism');
+        for(const q of [-1,1])s.bolt(q*aperture*.42,doorHeight+.31,.08);
+        const threshold=s.at(0,.025,.1);
+        box(threshold,alongX?[aperture,.025,.45]:[.45,.025,aperture],7,1,'threshold');
+        for(let j=0;j<12;j++) {
+          const p=s.at((j-5.5)*aperture/12,.042,.1);
+          box(p,alongX?[.06,.015,.4]:[.4,.015,.06],1,1,'threshold');
+        }
+      }
+    }
+    for(const r of w.rooms) {
+      owner='room-'+r.id;
+      // A complete overhead network with flanges, hanger clamps and rounded bends.
+      for(const q of [-1,1]) {
+        const z=r.z+q*(r.d/2-1.15),y=r.h-1.13,left=r.x-r.w/2+1.45,right=r.x+r.w/2-1.45;
+        tube([left,y,z],[right,y,z],w.stage===1?.17:.12,1,'pipe');
+        const joints=Math.max(3,Math.ceil((right-left)/2.6));
+        for(let j=0;j<=joints;j++) {
+          const x=left+(right-left)*j/joints;
+          flange([x,y,z],w.stage===1?.17:.12,'x');
+          box([x,(y+r.h)/2,z],[.065,r.h-y,.065],0,1,'support');
+          box([x,y-.18,z],[.14,.07,.5],0,1,'clamp');
+        }
+        for(const side of [-1,1])elbow(r.x+side*(r.w/2-1.45),y,z-q*.35,.35,q*Math.PI/2,side>0?0:q*Math.PI,.12);
+        // Cable bundles remain separate from the fluid pipework.
+        cableTray(r,r.x+q*1.25,r.z,r.d-1.7,'z');
+        drain(r.x+q*(r.w/2-2.75),r.z,r.d*.46,'z');
+      }
+      cableTray(r,r.x,r.z-3.2,r.w-2.1,'x',.42);
+      for(const side of ['n','s','e','w'])wallDetails(r,side);
+      // Equipment footprints already have physical collision: add readable panels,
+      // cable glands, inspection hatches and bolted ribs to their existing fronts.
+      for(const q of [-1,1]) {
+        const x=r.x+q*(r.w/2-2),sign=r.id%2?-1:1,z=r.z+sign*(r.d/2-2);
+        const body=w.colliders.find(c=>Math.abs((c.minX+c.maxX)/2-x)<.01&&Math.abs((c.minZ+c.maxZ)/2-z)<.01&&Math.abs(c.maxX-c.minX-1.65)<.01);
+        if(!body)continue;
+        const s=surface(x,z-sign*.807,0,-sign),y=Math.min(body.maxY-.2,1.32);
+        s.plate(0,y,.025,1.28,.45,.035,7,'equipment');
+        for(let j=0;j<5;j++)s.plate(-.43+j*.22,y,.054,.12,.29,.025,j===0?4:0,'equipment',1,j===0?.4:0);
+        for(const a of [-1,1])for(const b of [-1,1])s.bolt(a*.69,Math.max(.25,body.maxY/2+b*(body.maxY/2-.15)),.048);
+        // The riser stays inside the existing machine's horizontal footprint.
+        const pipeX=x+q*.38,pipeZ=z+sign*.32,top=r.h-1.45;
+        tube([pipeX,body.maxY+.08,pipeZ],[pipeX,top,pipeZ],w.stage===1?.14:.075,w.stage===2?0:1,'riser');
+        for(let k=0;k<3;k++)flange([pipeX,body.maxY+.25+(top-body.maxY-.4)*k/2,pipeZ],w.stage===1?.14:.075,'y',k!==1);
+        for(const k of [-1,1])box([x+k*.71,body.maxY+.08,z],[.075,.15,1.45],1,1,'equipment');
+        // Flat hazard paint outlines the machine footprint and can be walked over.
+        for(let k=0;k<6;k++)box([x+(k-2.5)*.29,.026,z-sign*1.02],[.11,.012,.32],5,1,'hazard_marking',[0,-sign*.5,0],.08,theme.alt);
+        if(q===1) {
+          const type=w.stage===1?'steam':w.stage===2?'sparks':'drip';
+          const mouth=[pipeX,Math.max(3.0,Math.min(top-.25,3.8)),pipeZ-sign*.15];
+          tube([pipeX,mouth[1],pipeZ],mouth,.075,0,'nozzle');
+          ambience.push({type,x:mouth[0],y:mouth[1],z:mouth[2],phase:rand()*TAU,scale:w.stage===1?.65:.34,color:w.stage===1?[.44,.53,.53]:theme.alt,room:r.id});
+        }
+      }
+      // High wall ventilation cabinets add depth behind their louver faces.
+      for(const q of [-1,1]) {
+        const x=r.x+q*(r.w/2-.85),z=r.z+2.8,y=r.h-2.15;
+        box([x,y,z],[.65,.82,1.8],0,1,'vent');
+        for(let j=0;j<9;j++)box([x-q*.34,y-.3+j*.075,z],[.08,.025,1.62],1,1,'louver');
+        for(const k of [-1,1])box([x-q*.36,y,z+k*.9],[.12,.94,.075],1,1,'vent');
+      }
+      // Stage-specific silhouettes complement the common construction vocabulary.
+      if(w.stage===0) {
+        for(const q of [-1,1]) {
+          const x=r.x+q*(r.w/2-.75),z=r.z-3.9,s=surface(x-q*.39,z,-q,0);
+          gauge(s,.35,1.27);
+          for(let j=0;j<4;j++)s.plate(-.44+j*.27,.57,.035,.11,.1,.035,j===3?5:3,'switch',2,j===3?.4:0);
+          for(let j=0;j<4;j++)tube([x-q*.1,2.1,z+(j-1.5)*.2],[x-q*.1,r.h-.5,z+(j-1.5)*.2],.025,j%2?7:1,'cable');
+        }
+      } else if(w.stage===1) {
+        for(const q of [-1,1]) {
+          const x=r.x+q*(r.w/2-1.7),z=r.z-2.9,s=surface(x-q*.67,z,-q,0);
+          gauge(s,.49,2.65);
+          for(let j=0;j<6;j++) {
+            const a=j*TAU/6,at=s.at(Math.cos(a)*.35,1.75+Math.sin(a)*.35,.025);
+            add('cylinder',at,[.05,.04,.05],3,axes.x,2,'bolt');
+          }
+          for(const k of [-1,1])tube([x+k*.35,3.25,z],[x+k*.35,4.7,z],.055,0,'pipe');
+          flange([x,4.65,z],.46,'y');
+        }
+        for(let j=-1;j<=1;j++)tube([r.x+j*.34,r.h-1.15,r.z-r.d/2+.8],[r.x+j*.34,r.h-1.15,r.z+r.d/2-.8],.11,1,'header');
+      } else {
+        const ringY=r.archetype==='reactor'?5.3:r.archetype==='arena'?5.8:4.5,diameter=r.archetype==='reactor'?8:r.archetype==='arena'?6.5:3.1;
+        for(let j=0;j<12;j++) {
+          const a=j*TAU/12,x=r.x+Math.cos(a)*diameter*.5,z=r.z+Math.sin(a)*diameter*.5;
+          box([x,ringY,z],[.25,.36,.42],0,1,'reactor_fins',[0,-a,0]);
+          box([x,ringY-.21,z],[.12,.045,.32],4,1,'reactor_fins',[0,-a,0],.45,theme.main);
+          for(const q of [-1,1])add('cylinder',[x,ringY+q*.21,z],[.065,.035,.065],1,[0,0,0],2,'bolt');
+        }
+      }
+    }
+    // Corridors use the same systems at a smaller scale, including dense frame
+    // detailing: the player sees the improvement while travelling, not only at hubs.
+    for(let index=0;index<w.corridors.length;index++) {
+      owner='corridor-'+index;
+      const c=w.corridors[index],link=w.connections[index],alongX=link.z1===link.z2,length=alongX?c.w:c.d,height=doorHeight+.2;
+      const along=(u,v,y)=>[c.x+(alongX?u:v),y,c.z+(alongX?v:u)];
+      for(const q of [-1,1]) {
+        const v=q*(aperture/2-.012),s=alongX?surface(c.x,c.z+v,0,-q):surface(c.x+v,c.z,-q,0);
+        tube(along(-length/2+.1,q*(aperture/2-.48),height-.72),along(length/2-.1,q*(aperture/2-.48),height-.72),.07,7,'cable');
+        const ribs=Math.max(2,Math.ceil(length/1.9));
+        for(let j=0;j<ribs;j++) {
+          const u=(j+.5)/ribs*length-length/2,p=along(u,q*(aperture/2-.5),height-.45);
+          flange(p,.12,alongX?'x':'z',j%2===0);
+          s.plate(u*(alongX?s.tx:s.tz),1.65,.01,.16,2.7,.04,1,'support');
+          for(const y of [.48,1.45,2.6])s.bolt(u*(alongX?s.tx:s.tz),y,.06);
+        }
+        const u=0;
+        s.plate(u,1.95,.025,Math.min(1.5,length-.6),.82,.04,7,'vent');
+        for(let j=0;j<6;j++)s.plate(u,1.7+j*.1,.065,Math.min(1.32,length-.8),.035,.08,1,'louver');
+      }
+      const cRoom={h:height};
+      cableTray(cRoom,c.x,c.z,length-.2,alongX?'x':'z');
+      drain(c.x,c.z,Math.min(1.5,length*.4),alongX?'z':'x');
+      // Narrow ceiling conduits and crossing brackets give the shadow lights edges.
+      for(const q of [-1,1])tube(along(-length/2,q*.65,height-.42),along(length/2,q*.65,height-.42),.045,1,'pipe');
+      const p=along(0,aperture/2-.13,2.65);
+      add('sphere',p,[.12,.12,.12],4,[0,0,0],1,'beacon',.8,theme.main);
+      if(index%2===0)ambience.push({type:'beacon',x:p[0],y:p[1],z:p[2],phase:rand()*TAU,scale:.12,color:theme.main});
+    }
+    for(const h of w.hazards) {
+      owner='vent';
+      for(let j=0;j<12;j++) {
+        const a=j*TAU/12,r=h.r+.37,x=h.x+Math.cos(a)*r,z=h.z+Math.sin(a)*r;
+        box([x,.028,z],[.12,.018,.28],5,1,'hazard_marking',[0,-a,0],.12,theme.alt);
+        if(j%2===0)add('cylinder',[h.x+Math.cos(a)*(h.r+.15),.06,h.z+Math.sin(a)*(h.r+.15)],[.065,.025,.065],3,[0,0,0],2,'bolt');
+      }
+    }
+    w.ambience=ambience;
+    w.detailStats={base:baseCount,added:out.length-baseCount,tiers:[out.filter(m=>!m.detail).length,out.filter(m=>m.detail===1).length,out.filter(m=>m.detail===2).length],categories,regions:roomCounts};
   }
   function isWalkable(world, x, z, radius) {
     const r = radius === undefined ? 0.35 : radius;
@@ -332,7 +616,7 @@
     const targets = [world.spawn, ...world.cores, world.exit, ...world.enemies, ...world.pickups];
     const errors = [];
     targets.forEach((p, i) => { if (!isWalkable(world, p.x, p.z, 0.38) || !seen[index(p.x, p.z)]) errors.push('Unreachable target ' + i); });
-    if (world.meshes.length > 2600) errors.push('Mesh budget exceeded');
+    if (world.meshes.length > 12000) errors.push('Mesh budget exceeded');
     if (world.colliders.length > 350) errors.push('Collider budget exceeded');
     if (world.cores.length !== 3) errors.push('Expected three relays');
     const safeRoom = world.rooms[0];

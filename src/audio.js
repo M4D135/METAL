@@ -192,6 +192,12 @@
           noise(.045, .075, 2300, .2);
           tone(170, 98, .065, .055, 'triangle', .025, .1, 1200);
         },
+        dash: function () {
+          if (!available()) return;
+          noise(.17, .075, 1850, -.18, 0, 'highpass');
+          noise(.12, .055, 850, .18, .04, 'lowpass');
+          tone(180, 65, .18, .035, 'sine', 0, 0, 500);
+        },
         enemyShot: function (event) {
           event = event || {};
           var level = (event.level || 1) * .075, pan = event.pan || 0;
@@ -234,12 +240,14 @@
         },
         step: function (speed) {
           if (!available() || !(speed > .2)) return;
-          var interval = Math.max(.22, Math.min(.55, 1.35 / speed));
-          if (ctx.currentTime - lastStep < interval) return;
+          // The measured stride in game.js schedules steps; this only rejects duplicates.
+          if (ctx.currentTime - lastStep < .1) return;
           lastStep = ctx.currentTime; stepSide *= -1;
-          noise(.075, .09, 430 + random() * 120, stepSide * .24, 0, 'lowpass');
-          tone(67 + random() * 8, 34, .07, .055, 'sine', 0, stepSide * .18);
-          noise(.035, .018, 2600, stepSide * .25, .025);
+          var weight = Math.max(.55, Math.min(1.2, speed / 4.5));
+          noise(.075, .09 * weight, 430 + random() * 120, stepSide * .24, 0, 'lowpass');
+          tone(67 + random() * 8, 34, .07, .055 * weight, 'sine', 0, stepSide * .18);
+          noise(.035, .018 * weight, 2600, stepSide * .25, .025);
+          noise(.055, .009 * weight, 1500, -stepSide * .12, .055, 'highpass');
         },
         dispose: function () {
           if (disposed) return;

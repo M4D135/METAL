@@ -12,6 +12,29 @@ const { create } = sandbox.window.FWorld;
 const seeds = [1, 7, 42, 96, 2026, 65535];
 const radius = .28, spacing = .25;
 
+// Captured from the released v0.2 generator before the art pass. These fields
+// determine checkpoint compatibility, collision, objectives and enemy placement.
+const physicsV02 = {
+  "1:0": "f8936a31bcc8bc99b94f3f785950b3c585f72b0ad711e041324e4359630e3d0c",
+  "1:1": "477106c9c190b164216ddb479197536eae24b5008d4cb7a4e74b87b9858c78c5",
+  "1:2": "c4f7f98b2e7a163a603ad490203b523a5995727ef107d782f361284cb2df20ce",
+  "7:0": "e7273feb6750c723475a25266bb365fcab10818f09701d0304a797e38826f0f9",
+  "7:1": "9b86b76ddf1c4feec3d6a7123af93a73dd57622819aeb15c3b993cf83baefa7a",
+  "7:2": "ab0af19907ef9affb76c0efa954300e5cbf5ebb6faabb0147a94d8db98d99c26",
+  "42:0": "ba52d6c85ae9ae56e1b7c239f82c0152b06d53bc43ce71e5b5d7d02ec420b565",
+  "42:1": "365e60d8bad85604eb57fa77fcc51692821c4d3f1ce099f3174c335d1f773613",
+  "42:2": "57db35ed85e1622f3a83104f9dc43bdaec5dc9b41cc44cc5197b23c364b584a3",
+  "96:0": "bf944a6d8d2f3997a194d141c4c32d45980c895bfe04913f748283e1b13ae5d0",
+  "96:1": "bd5d184c8728c8e5392a67d862083ca0205c172274175a7ee948aafcd128d355",
+  "96:2": "1666d98d6521b34b1056babffa93d38171de74b8f3ffba2beb8d8f485ba3db2c",
+  "2026:0": "d7a87fc12c21b476deb54f77b95fc029b8acec2db21a413556544c64b7be7acb",
+  "2026:1": "71ab0fdbc8b468f16da26fa52b8cd5ab2a8e12d9de2c7f022f76bc93f9f60914",
+  "2026:2": "d3d90a108c76b2b67e0efd78ca72b551cc5a2c277edbed91fe6a36f540090813",
+  "65535:0": "c09b25d5147f916dc4c65936f55b89e88f341caca782c794b6bf1e33da15a016",
+  "65535:1": "0216393c60d31ca0751e5d120426f9124025413cb62c568889b44a8cdd379672",
+  "65535:2": "f3c54df1b7fa2bc8b244e1efb3c5ccc0d09f3390aee3cf9d5673a2eb1e445c2d"
+};
+
 function finiteNumbers(value, path = 'world') {
   if (typeof value === 'number') assert(Number.isFinite(value), `${path} is not finite`);
   else if (value && typeof value === 'object') {
@@ -116,7 +139,49 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   assert.equal(serialized, JSON.stringify(repeated), `${label}: nondeterministic generation`);
   signatures.add(createHash('sha256').update(serialized).digest('hex'));
   assert.equal(world.cores.length, 3, `${label}: expected three required relays`);
-  assert(world.meshes.length<=2600&&world.colliders.length<=350,`${label}: stage exceeds geometry budget`);
+  assert(world.meshes.length<=12000&&world.colliders.length<=350,`${label}: stage exceeds geometry budget`);
+  const physics=JSON.stringify([world.seed,world.stage,world.spawn,world.bounds,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[]]);
+  assert.equal(createHash('sha256').update(physics).digest('hex'),physicsV02[`${seed}:${stage}`],
+    `${label}: decorative pass changed released collision/checkpoint data`);
+  const details=world.detailStats;
+  assert(details&&Number.isInteger(details.base)&&details.base>0&&details.base<world.meshes.length,`${label}: no layered art pass`);
+  assert.equal(details.added,world.meshes.length-details.base,`${label}: inaccurate detail count`);
+  const tiers=[0,0,0],categoryCounts={};
+  for(const [i,mesh] of world.meshes.entries()){
+    const level=mesh.detail||0;
+    assert([0,1,2].includes(level),`${label}: renderer cannot classify this detail tier`);
+    assert(mesh.p.length===3&&mesh.s.length===3&&mesh.s.every(n=>n>0),`${label}: invalid mesh dimensions`);
+    tiers[level]++;
+    if(i<details.base)assert.equal(level,0,`${label}: original architecture was made disposable detail`);
+    else{
+      assert(level>0&&typeof mesh.category==='string',`${label}: new dressing has no LOD/category`);
+      categoryCounts[mesh.category]=(categoryCounts[mesh.category]||0)+1;
+      if(level===2)assert(Math.max(...mesh.s)<=.35,`${label}: large silhouette incorrectly hidden with micro detail`);
+      // Only floor markings, existing solid footprints and wall-attached fittings
+      // may receive low details. New free-standing obstacles would be misleading.
+      if(mesh.p[1]<1.95&&mesh.p[1]+mesh.s[1]/2>.08){
+        const nearSolid=world.colliders.some(c=>{
+          if(c.minY>mesh.p[1]+.3||c.maxY<.05)return false;
+          const x=Math.max(c.minX,Math.min(mesh.p[0],c.maxX)),z=Math.max(c.minZ,Math.min(mesh.p[2],c.maxZ));
+          return Math.hypot(mesh.p[0]-x,mesh.p[2]-z)<=.19;
+        });
+        assert(nearSolid,`${label}: low decoration ${mesh.category} is detached from collision geometry at ${mesh.p}`);
+      }
+    }
+  }
+  assert.deepEqual(tiers,Array.from(details.tiers),`${label}: inaccurate tier counts`);
+  assert.equal(JSON.stringify(categoryCounts),JSON.stringify(details.categories),`${label}: inaccurate category counts`);
+  for(const category of ['pipe','flange','elbow','clamp','cable_tray','cable','floor_drain','panel','screen','gauge','door_mechanism','louver','vent','equipment','hazard_marking'])
+    assert(categoryCounts[category]>0,`${label}: missing promised industrial system ${category}`);
+  for(const room of world.rooms)assert(details.regions['room-'+room.id]>100,`${label}: room ${room.id} was left without an art pass`);
+  for(const [i] of world.corridors.entries())assert(details.regions['corridor-'+i]>30,`${label}: corridor ${i} was left without fittings`);
+  assert(world.ambience.length<=40,`${label}: excessive ambient animation sources`);
+  for(const a of world.ambience){
+    assert(['steam','sparks','drip','beacon','screen'].includes(a.type)&&a.scale>0,`${label}: invalid ambient emitter`);
+    assert(a.color.length===3&&a.color.every(c=>c>=0&&c<=1),`${label}: invalid ambient colour`);
+    if(['steam','sparks','drip'].includes(a.type))assert(a.y>=2.6,`${label}: ambient plume obscures combat at eye height`);
+    if(a.type==='screen')assert(a.width>0&&a.height>0&&Math.abs(Math.hypot(...a.normal)-1)<1e-8,`${label}: screen animation lacks its surface orientation`);
+  }
   topologyIds.add(world.topologyId);
   const graph=world.connections.map(c=>[Math.min(c.from,c.to),Math.max(c.from,c.to)].join('-')).sort().join(',');
   if(topologyGraphs.has(stage))assert.equal(topologyGraphs.get(stage),graph,`${label}: seed changed the promised safe topology`);
@@ -171,7 +236,7 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   }
   const entry = reachability(world, label);
   if(world.hazards.length)reachability(world,label+' with every vent hot',true);
-  summary.push({ seed, stage, ...entry });
+  summary.push({ seed, stage,meshes:world.meshes.length,tiers,ambientSources:world.ambience.length, ...entry });
 }
 assert.equal(signatures.size, seeds.length * 3, 'Seeds/stages unexpectedly produce identical worlds');
 assert.equal(topologyIds.size,3,'Stages must have distinct topology identities');
@@ -183,7 +248,11 @@ console.log(JSON.stringify({
     'all relays reachable', 'exit reachable', 'enemy and pickup placement',
     'distinct stage graphs and footprints', 'every corridor physically connected',
     'all objectives accessible with every vent hot', 'safe hazard warning windows',
-    'boss progression and arena clearance', 'geometry budgets'],
+    'boss progression and arena clearance', 'geometry budgets',
+    'released v0.2 physics/checkpoint data unchanged', 'LOD silhouettes preserved',
+    'wall-attached low details', 'industrial detail categories', 'ambient surface orientation'],
+  meshes:{min:Math.min(...summary.map(s=>s.meshes)),max:Math.max(...summary.map(s=>s.meshes))},
+  representativeStages:summary.filter(s=>s.seed===96).map(s=>({stage:s.stage,meshes:s.meshes,tiers:s.tiers,ambientSources:s.ambientSources})),
   accessibleCells: { min: Math.min(...summary.map(s => s.accessibleCells)),
     max: Math.max(...summary.map(s => s.accessibleCells)) },
   targetsChecked: summary.reduce((sum, s) => sum + s.targets, 0)

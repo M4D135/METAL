@@ -1,8 +1,8 @@
-# Architecture et décisions — FERRO 0.2
+# Architecture et décisions — FERRO 0.3
 
 ## Une distribution autonome et procédurale
 
-`python3 tools/build.py` rassemble cinq modules JavaScript, l’interface et les styles dans `dist/index.html`. Ce fichier contient le jeu autonome. Il n’utilise aucune image, texture, police, piste audio ou géométrie téléchargée, aucun CDN et aucune bibliothèque d’exécution externe.
+`python3 tools/build.py` rassemble six modules JavaScript, l’interface et les styles dans `dist/index.html`. Ce fichier contient le jeu autonome. Il n’utilise aucune image, texture, police, piste audio ou géométrie téléchargée, aucun CDN et aucune bibliothèque d’exécution externe.
 
 Le code décrit les opérations qui construisent les primitives, leurs assemblages, les matériaux et les sons. Les dimensions des salles, les placements et les variations restent déterministes pour une même graine et un même étage. Cette petite distribution s’appuie sur les API du navigateur ; elle n’inclut donc ni le navigateur, ni les pilotes graphiques, ni le système. `SIZE.json` distingue les tailles brutes et compressées.
 
@@ -10,6 +10,7 @@ Le code décrit les opérations qui construisent les primitives, leurs assemblag
 | --- | --- |
 | [`world.js`](../src/world.js) | Topologie, architecture, collisions, placements, machines et dangers déterministes. |
 | [`simulation.js`](../src/simulation.js) | Déplacements, tirs, ennemis, objectifs, score et checkpoints, sans DOM ni stockage. |
+| [`motion.js`](../src/motion.js) | Présentation amortie indépendante de la visée et des collisions ; montage cohérent des pièces de l'arme. |
 | [`renderer.js`](../src/renderer.js) | Géométries, matériaux, éclairage et rendu WebGL 2 ; secours logiciel Canvas 2D. |
 | [`audio.js`](../src/audio.js) | Synthèse Web Audio, musique, ambiances et effets. |
 | [`game.js`](../src/game.js) | Écrans, entrées clavier/tactiles, boucle d’animation, modèles animés, HUD et stockage local. |
@@ -28,6 +29,10 @@ Les murs et équipements solides possèdent des volumes de collision cohérents 
 
 Le déplacement reste sur un sol horizontal. Les structures élevées sont décoratives : cette version n’a pas de plateformes traversables à plusieurs hauteurs, de saut ou de multijoueur. Les vents de vapeur sont des dangers temporels, placés à l’écart des axes indispensables. Le troisième étage contient le boss et ses couverts.
 
+La passe `detailWorld` s'exécute après la génération physique avec son propre générateur déterministe. Elle habille les surfaces existantes et les volumes en hauteur sans ajouter de colliders, déplacer les objectifs ou consommer l'aléatoire du plan initial. Les ajouts sont répartis entre `detail:1` (habillage) et `detail:2` (microdétails). Le budget monte à 12 000 primitives statiques par monde, sans augmenter le plafond de 350 colliders.
+
+`world.ambience` décrit les balises, écrans et petits effets près des machines. Les écrans donnent leur normale, largeur et hauteur pour garder leur animation sur leur face. Ces effets n'infligent aucun dégât ; les évents dangereux restent dans `world.hazards` avec leurs annonces distinctes.
+
 ## Simulation et temps
 
 `FSimulation.create(world)` retourne `state`, `step(dt,input)`, `fire(assist)`, `pulse()`, les méthodes de collision et de visibilité, la grille de navigation, `snapshot()` et `restore(data,options)`.
@@ -37,6 +42,16 @@ La boucle du navigateur conserve jusqu’à **0,12 seconde** de temps écoulé p
 Le plafond interne de `step()` à 0,05 seconde demeure une protection pour les appels directs. Il ne limite plus toute une image du jeu à 0,05 seconde. Les images dépassant 0,12 seconde perdent volontairement le temps excédentaire pour éviter une longue rafale de simulation après une suspension ; ce n’est pas une simulation à pas fixe avec rattrapage illimité.
 
 Les déplacements sont eux-mêmes subdivisés en segments courts pour éviter de traverser les cloisons fines. Le joueur utilise un disque horizontal de rayon 0,28 m ; les ennemis ordinaires utilisent 0,38 m et le boss 1,05 m. La navigation des ennemis repose sur une grille de distances vers le joueur, reconstruite périodiquement. L’esquive, le recul de l’onde et les charges passent par les mêmes collisions.
+
+### Mouvement et présentation
+
+L'inertie du joueur est intégrée dans la simulation, avec accélération progressive et freinage plus rapide. La direction de visée est appliquée immédiatement. `state.locomotion` expose la vitesse effectivement obtenue après collision, ses composantes locales, l'accélération, les transitions de marche/course/esquive et une phase de foulée fondée sur la distance parcourue. Ce sont ces valeurs qui animent la marche et déclenchent les pas, jamais la seule présence d'une touche pressée.
+
+`FMotion.create()` fournit `update`, `impulse` et `reset`. Les canaux de présentation utilisent des ressorts à amortissement critique intégrés analytiquement. Les événements de tir, changement d'arme, impact et onde excitent leurs ressorts. `update` retourne une petite translation/inclinaison de caméra, une variation de champ de vision et une pose de l'arme. Cette couche ne change ni le joueur ni la direction des tirs. Une reprise remet ces canaux au repos.
+
+Les pièces de l'arme sont placées dans un même repère avec `mount` et `place`, qui composent correctement lacet, tangage et roulis. La rotation déplace les centres des pièces et leurs orientations ensemble. Les cylindres des canons conservent leur rotation locale ; ils ne se désassemblent pas lorsque le joueur regarde sur le côté ou penche la caméra.
+
+Le réglage de mouvement désactivé remet immédiatement hauteur, roulis et variation de champ de vision à zéro. Il réduit aussi le mouvement décoratif de l'arme. Les tests dédiés comparent le résultat des ressorts à 20, 60 et 120 images/s et vérifient la rigidité du montage, y compris près d'une singularité d'angles d'Euler.
 
 ### Armes et onde
 
@@ -105,11 +120,17 @@ Il l’enregistre sous **`ferro-expedition-v2`** à l’entrée d’un étage et
 
 Le chemin principal utilise **WebGL 2** et le dessin instancié de primitives. La géométrie statique est préparée une fois ; les personnages, machines, projectiles et effets sont actualisés à chaque image. Les matériaux calculent joints, grain, motifs métalliques et reflets, avec brouillard et éclairage directionnel/local.
 
-Les modes **Auto** et **Haute** ajoutent une carte d’ombres pour une source proche, filtrée par PCF, et un halo lumineux calculé dans des cibles **RGBA8**. La carte d’ombres mesure respectivement **512×512** et **1024×1024**. Ce dispositif ne calcule pas des ombres omnidirectionnelles pour toutes les lampes. Les passes sont activées seulement lorsque leurs cibles de rendu sont disponibles.
+Les modes **Auto** et **Haute** emploient un atlas de profondeur pour **deux plafonniers proches et une torche décalée**. Chaque vue mesure respectivement **512×512** ou **1024×1024**, dans un atlas de deux cases de côté. Les microdétails sont exclus des casters. Le halo lumineux utilise des cibles **RGBA8**. Ce dispositif ne calcule pas des ombres omnidirectionnelles pour toutes les lampes ; les passes restent conditionnées à des framebuffers complets.
+
+La profondeur des ombres est lue par un **sampler explicitement `highp`**. La comparaison GLES a montré que la précision implicite produisait des bandes sur les murs ; changer seulement le bias ne corrigeait pas la cause. Le bias et le déplacement du récepteur utilisent la normale géométrique, indépendamment du microrelief. Chaque lecture PCF compense aussi la différence de profondeur du plan récepteur au centre du texel échantillonné. Les bords du cône et sa limite de portée sont fondus progressivement.
+
+La torche reste dans le rayon de collision du joueur : décalage de 0,16 m à droite et 0,08 m vers le bas. Cela évite de placer sa source de l'autre côté d'une cloison lorsque le joueur la longe. La normale de relief est bornée et les motifs fins sont atténués avec la taille du pixel pour limiter les artefacts à angle rasant.
 
 Le mode **Économie** désactive l’ombre et le halo et réduit le nombre de lumières retenues. Les compteurs du renderer indiquent le backend et les passes réellement actifs ; le réglage demandé ne constitue pas à lui seul une preuve que chaque effet a été créé.
 
-Si WebGL 2 est indisponible, le secours **Canvas 2D** projette les mêmes géométries 3D avec découpage au plan proche, élimination des faces arrière, tri de profondeur, éclairage simplifié et joints projetés. Il réduit les facettes, la résolution et la portée d’affichage, sans reproduire les passes WebGL d’ombre et de halo. Le tri de surfaces peut présenter des imperfections aux intersections ; ce secours reste plus limité que le chemin WebGL.
+Si WebGL 2 est indisponible, le secours **Canvas 2D** projette les mêmes géométries 3D avec découpage au plan proche, élimination des faces arrière, tri de profondeur, éclairage simplifié et joints projetés. Les sols sont traités avant les faces et leurs joints partagent une grille mondiale. En Auto/Haute, il projette jusqu'à 18 silhouettes simplifiées sur les sols, puis les découpe au domaine visible des sols ; il ne reproduit ni les cartes d'ombre WebGL ni le halo. Le tri de surfaces peut présenter des imperfections aux intersections.
+
+Les deux chemins emploient un index spatial par cellules de 8 m, des portées distinctes pour l'architecture, l'habillage et les microdétails, et un rejet hors champ. Le Canvas construit les géométries à la demande, rejette les très petits détails en pixels et borne leur nombre visible. Le monde généré complet reste inchangé ; ces choix ne concernent que son affichage.
 
 ## Audio, stockage et portée des vérifications
 

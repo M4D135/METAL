@@ -7,10 +7,10 @@
   let muted=false,quality='auto',softMotion=true;
   try{const v=JSON.parse(localStorage.getItem('ferro-settings')||'{}');muted=!!v.muted;quality=['auto','low','high'].includes(v.quality)?v.quality:'auto';softMotion=v.softMotion!==false;}catch{}
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)softMotion=false;
-  const audio=FAudio.create(),SAVE_KEY='ferro-expedition-v2';
+  const audio=FAudio.create(),motion=FMotion.create(),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,wasLocked=false,perfStart=last,perfFrames=0;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
-  let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,saveAvailable=true;
+  let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,saveAvailable=true,lastFootstep=0;
   const keys=new Set(),input={moveX:0,moveY:0,lookX:0,lookY:0,fire:false,dash:false,pulse:false,weapon:0,sprint:false,assist:touch};
   let mouseFire=false,touchFire=false,dragLook=null,moveTouch=null,stick={x:0,y:0},lookDX=0,lookDY=0,dashQueued=false,pulseQueued=false;
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify({muted,quality,softMotion}));}catch{}}
@@ -57,6 +57,7 @@
   }
   function load(n,newSeed){
     stage=n;if(newSeed!==undefined)seed=newSeed;world=FWorld.create(seed,stage);sim=FSimulation.create(world);sim.state.weapon=selectedWeapon;renderer.setWorld(world.meshes,world.lights);
+    motion.reset();lastFootstep=0;
     audio.setStage?.(stage);
     $('sector-number').textContent='ÉTAGE '+String(stage+1).padStart(2,'0')+' / 03';$('sector-title').textContent=world.title;
     document.body.dataset.stage=String(stage+1);$('radar-wrap').hidden=false;hudWait=0;renderHUD();
@@ -87,6 +88,7 @@
   function events(){
     let checkpointDue=false;
     for(const e of sim.state.events){
+      motion.impulse(e.name);
       if(typeof audio[e.name]==='function'){
         const p=sim.state.player,d=Number.isFinite(e.x)?Math.hypot(e.x-p.x,e.z-p.z):0;
         const pan=Number.isFinite(e.x)?clamp(((e.x-p.x)*Math.cos(p.yaw)+(e.z-p.z)*Math.sin(p.yaw))/Math.max(1,d),-1,1):0;
@@ -107,7 +109,9 @@
   }
   const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>({shape,p,s,mat,r,emissive});
   function machinery(out,t){
+    const player=sim.state.player,range=quality==='low'?25:43;
     for(const a of world.machinery||[]){
+      if(Math.hypot(a.x-player.x,a.z-player.z)>range)continue;
       const size=a.size||2,turn=t*a.speed,axis=a.axis||'y';
       if(a.type==='fan'){
         const ringRot=axis==='x'?[0,0,Math.PI/2]:axis==='z'?[Math.PI/2,0,0]:[0,0,0];
@@ -137,8 +141,38 @@
       }
     }
   }
-  function models(t,playing){
-    const out=[],s=sim.state,p=s.player;machinery(out,t);
+  function ambience(out,t){
+    const p=sim.state.player,range=quality==='low'?10:22;
+    const near=(world.ambience||[]).filter(a=>quality!=='low'||a.type==='screen'||a.type==='beacon').map(a=>({a,d:Math.hypot(a.x-p.x,a.z-p.z)})).filter(v=>v.d<range).sort((a,b)=>a.d-b.d).slice(0,quality==='low'?3:9);
+    function piece(shape,pos,size,mat,em,color,r=[0,0,0]){const mesh=m(shape,pos,size,mat,r,em);if(color)mesh.color=color;out.push(mesh);}
+    for(const {a} of near){
+      const phase=a.phase||0,scale=a.scale||1;
+      if(a.type==='screen'){
+        const n=a.normal||[0,0,1],width=a.width||.6,height=a.height||.4;
+        const scan=((t*.22+phase)%1-.5)*height;
+        piece('box',[a.x+n[0]*.012,a.y+scan,a.z+n[2]*.012],n[0]?[.009,.012,width]:[width,.012,.009],4,.55,a.color);
+      }else if(a.type==='beacon'){
+        const beat=Math.pow(Math.max(0,Math.sin(t*2.2+phase)),6),s=scale*(.8+beat*.2);
+        piece('sphere',[a.x,a.y,a.z],[s,s,s],4,.3+beat*1.5,a.color);
+      }else if(quality!=='low'&&a.type==='steam'){
+        for(let j=0;j<4;j++){
+          const q=(t*.45+phase+j*.25)%1,r=.035+q*.065;
+          piece('sphere',[a.x+Math.sin(q*8+phase)*r,a.y+q*.8*scale,a.z+Math.cos(q*7+phase)*r],[r,r*2.2,r],3,0,a.color);
+        }
+      }else if(quality!=='low'&&a.type==='drip'){
+        const q=(t*.65+phase)%1;
+        if(q<.8)piece('sphere',[a.x,a.y-q*.55,a.z],[.025,.065,.025],4,.2,a.color);
+      }else if(quality!=='low'&&a.type==='sparks'){
+        const burst=(t+phase)%2.7;
+        if(burst<.28)for(let j=0;j<3;j++){
+          const angle=phase+j*2.094;
+          piece('box',[a.x+Math.cos(angle)*burst*.7,a.y-burst*burst*3,a.z+Math.sin(angle)*burst*.7],[.018,.04,.018],5,1.5,a.color,[0,angle,burst*4]);
+        }
+      }
+    }
+  }
+  function models(t,playing,camera){
+    const out=[],s=sim.state,p=s.player;machinery(out,t);ambience(out,t);
     for(const c of s.cores){
       out.push(m('cylinder',[c.x,.13,c.z],[.95,.26,.95],0),m('ring',[c.x,.29,c.z],[1.15,.1,1.15],c.taken?0:5));
       if(!c.taken){const y=1.22+Math.sin(t*2+c.id)*.13;out.push(m('octa',[c.x,y,c.z],[.55,.85,.55],5,[0,t*.7,0],1.8),m('ring',[c.x,y,c.z],[1.2,1.2,1.2],4,[Math.PI/2,0,t*.35],1.2));}
@@ -193,30 +227,36 @@
       if(progress<.65)out.push(m('ring',[p.x,.7,p.z],[r*1.7,.08,r*1.7],4,[0,0,0],.8));
     }
     if(playing){
-      const sy=Math.sin(p.yaw),cy=Math.cos(p.yaw),sp=Math.sin(p.pitch),cp=Math.cos(p.pitch),fracture=s.weapon===1,recoil=s.flash*(fracture?.12:.07);
-      const bob=softMotion&&s.moving>.1?Math.sin(t*9)*.012:0;
+      const fracture=s.weapon===1,pose=motion.view.weapon,slide=pose.slide;
+      const grip=FMotion.mount(camera,[.27*Math.min(1,Math.max(.45,(innerWidth/innerHeight)/1.2))+pose.offset[0],-.29+pose.offset[1],-.56+pose.offset[2]],pose.rotation);
       function gun(shape,x,y,z,siz,mat,rx=0,em=0){
-        x+=.27*Math.min(1,Math.max(.45,(innerWidth/innerHeight)/1.2));y+=-.29+bob;z+=-.56+recoil;
-        const pos=[p.x+cy*x-sy*sp*y-sy*cp*z,1.62+cp*y-sp*z,p.z+sy*x+cy*sp*y+cy*cp*z];
-        const a=m(shape,pos,siz,mat,[p.pitch+rx,-p.yaw,0],em);a.overlay=true;out.push(a);
+        const part=FMotion.place(grip,[x,y,z],rx),a=m(shape,part.p,siz,mat,part.r,em);a.overlay=true;out.push(a);
       }
       gun('box',0,-.09,.12,[.17,.25,.17],7,-.2);
+      // A gloved grip and its wrist remain attached to the complete, damped weapon assembly.
+      gun('box',.013,-.2,.21,[.18,.1,.21],0,-.2);gun('box',.013,-.16,.2,[.19,.03,.2],1,-.2);
+      for(let j=0;j<4;j++)gun('box',0,-.035-j*.031,.205,[.17,.023,.045],0,-.2);
+      gun('box',-.096,-.07,.15,[.04,.09,.09],7,-.5);
       if(fracture){
-        gun('box',0,0,.01,[.27,.23,.53],0);gun('box',0,.135,.03,[.26,.045,.3],1);
+        gun('box',0,0,.01,[.27,.23,.53],0);gun('box',0,.135,.03+slide,[.26,.045,.3],1);
         gun('box',0,-.07,-.3,[.29,.09,.22],7);
+        gun('box',-.06,-.13,-.26,[.2,.08,.2],0,.1);gun('box',-.06,-.17,-.24,[.19,.04,.18],1,.1);
         for(const side of [-1,1]){
-          gun('cylinder',side*.082,.01,-.33,[.135,.38,.135],0,Math.PI/2);
-          gun('cylinder',side*.082,.01,-.52,[.16,.055,.16],1,Math.PI/2);
+          gun('cylinder',side*.082,.01,-.33+slide*.35,[.135,.38,.135],0,Math.PI/2);
+          gun('cylinder',side*.082,.01,-.52+slide*.35,[.16,.055,.16],1,Math.PI/2);
           gun('box',side*.143,.025,.04,[.014,.075,.24],p.overheated?6:5,0,.9);
+          for(let j=0;j<3;j++)gun('box',side*.147,.08,-.1+j*.06,[.018,.018,.032],7);
           if(s.flash>.2)gun('octa',side*.082,.01,-.59,[.16+s.flash*.13,.16+s.flash*.13,.24+s.flash*.3],5,0,2.6);
         }
         gun('box',0,.17,-.13,[.04,.04,.04],5,0,.6);
       }else{
-        gun('box',0,0,-.03,[.2,.18,.52],0);gun('box',0,.105,.04,[.15,.045,.27],1);
+        gun('box',0,0,-.03,[.2,.18,.52],0);gun('box',0,.105,.04+slide,[.15,.045,.27],1);
         gun('box',-.106,.025,-.02,[.015,.055,.28],p.overheated?6:4,0,1.2);gun('box',.106,.025,-.02,[.015,.055,.28],1);
-        gun('cylinder',0,.01,-.34,[.13,.24,.13],0,Math.PI/2);gun('cylinder',0,.01,-.47,[.16,.045,.16],1,Math.PI/2);gun('box',0,.14,-.13,[.035,.04,.035],4,0,.5);
+        gun('cylinder',0,.01,-.34+slide*.3,[.13,.24,.13],0,Math.PI/2);gun('cylinder',0,.01,-.47+slide*.3,[.16,.045,.16],1,Math.PI/2);gun('box',0,.14,-.13,[.035,.04,.035],4,0,.5);
+        for(let j=0;j<5;j++)gun('box',0,.13,-.04+j*.037+slide,[.13,.012,.012],7);
         if(s.flash>.2)gun('octa',0,.01,-.53,[.12+s.flash*.12,.12+s.flash*.12,.15+s.flash*.25],5,0,2.5);
       }
+      for(let j=0;j<3;j++)gun('box',fracture?.143:.108,-.045,.1-j*.037,[.014,.016,.023],p.overheated?6:j/3<p.heat?5:0,0,j/3<p.heat?.6:0);
     }
     return out;
   }
@@ -255,11 +295,13 @@
     requestAnimationFrame(frame);const dt=clamp((now-last)/1000,0,.12);last=now;clock+=dt;
     perfFrames++;if(now-perfStart>1000){document.body.dataset.fps=String(Math.round(perfFrames*1000/(now-perfStart)));perfStart=now;perfFrames=0;}
     if(!renderer||!sim||document.hidden)return;
+    const signals={time:sim.state.time,lookYaw:0,lookPitch:0,firing:false};
     if(mode==='playing'){
       input.moveX=(keys.has('KeyD')?1:0)-(keys.has('KeyA')||keys.has('KeyQ')?1:0)+stick.x;
       input.moveY=(keys.has('KeyW')||keys.has('KeyZ')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-stick.y;
       input.lookX=lookDX+((keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0))*dt*1.9;input.lookY=lookDY;
       input.fire=mouseFire||touchFire||keys.has('Enter');input.dash=dashQueued;input.pulse=pulseQueued;input.weapon=selectedWeapon;input.sprint=keys.has('ShiftLeft')||keys.has('ShiftRight');
+      signals.lookYaw=dt>0?input.lookX/dt:0;signals.lookPitch=dt>0?input.lookY/dt:0;signals.firing=input.fire;
       lookDX=lookDY=0;dashQueued=pulseQueued=false;
       // Bounded substeps preserve movement/combat timing when rendering is slower than 60 Hz.
       const steps=Math.max(1,Math.ceil(dt*60)),part=dt/steps;
@@ -268,18 +310,22 @@
         events();
         if(mode!=='playing')break;
       }
-      audio.setThreat(sim.state.threat||0);audio.tick(dt);if(mode==='playing'&&sim.state.moving>.5)audio.step(sim.state.moving);
+      const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI);
+      audio.setThreat(sim.state.threat||0);audio.tick(dt);
+      if(mode==='playing'&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving);
+      lastFootstep=footstep;
       toastTime-=dt;if(toastTime<=0)$('toast').classList.remove('visible');
       hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.09;}
       $('crosshair').classList.toggle('hit',sim.state.hitMarker>0);$('damage').style.opacity=String(sim.state.damage*.45);
     }else{$('damage').style.opacity='0';}
     const p=sim.state.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
-    const camera={pos:[p.x,1.62+(isPlay&&softMotion&&sim.state.moving>.1?Math.sin(t*9)*.012:0),p.z],yaw:p.yaw,pitch:p.pitch,fov:(touch?79:74)+(softMotion&&p.dashing>0?4:0)};
-    if(mode==='menu'){camera.yaw=world.spawn.yaw+.38+Math.sin(clock*.13)*.11;camera.pitch=.02;camera.pos[1]=1.72;}
-    renderer.draw(camera,models(t,isPlay),{time:t,flash:sim.state.flash,damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0});
+    signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);
+    const camera={pos:[p.x,1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch,roll:isPlay?view.roll:0,fov:(touch?79:74)+(isPlay?view.fov:0)};
+    if(mode==='menu'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=1.72;}
+    renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:sim.state.flash,damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0});
   }
   function togglePause(){if(mode==='playing')setMode('paused');else if(mode==='paused'){audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});}}
-  function switchWeapon(value){const next=value===undefined?1-selectedWeapon:value;if(mode!=='playing'||next===selectedWeapon)return;selectedWeapon=next;sim.state.weapon=selectedWeapon;audio.switchWeapon?.();renderHUD();}
+  function switchWeapon(value){const next=value===undefined?1-selectedWeapon:value;if(mode!=='playing'||next===selectedWeapon)return;selectedWeapon=next;sim.state.weapon=selectedWeapon;motion.impulse('switch');audio.switchWeapon?.();renderHUD();}
   $('start').addEventListener('click',()=>newRun(savedRun?(Date.now()>>>0)%1000000:seed));
   $('resume-expedition').addEventListener('click',()=>{
     if(restoreRun(savedRun))start('Signal retrouvé. Reprise au dernier point enregistré.');

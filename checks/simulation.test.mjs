@@ -473,3 +473,159 @@ test('Recovery mode clears immediate projectile danger and grants only temporary
   assert.equal(exact.state.player.hp, 0);
   assert.equal(exact.state.dead, true, 'Recovery resurrected a checkpoint whose player was already dead');
 });
+
+function advanceAt(sim, seconds, fps, input = {}) {
+  for (let remaining = seconds; remaining > 1e-9;) {
+    const dt = Math.min(1 / fps, remaining);
+    sim.step(dt, input); remaining -= dt;
+  }
+}
+
+test('Analogue movement retains stick magnitude and diagonals cannot exceed cardinal speed', () => {
+  const straight = FSimulation.create(fixture()), diagonal = FSimulation.create(fixture());
+  const half = FSimulation.create(fixture()), quarter = FSimulation.create(fixture());
+  advanceAt(straight, 2, 60, { moveY: 1 });
+  advanceAt(diagonal, 2, 60, { moveX: 1, moveY: 1 });
+  advanceAt(half, 2, 60, { moveX: .3, moveY: .4 });
+  advanceAt(quarter, 2, 60, { moveY: .25 });
+  assert(Math.abs(straight.state.locomotion.speed - 4.2) < .001);
+  assert(Math.abs(diagonal.state.locomotion.speed - straight.state.locomotion.speed) < .001);
+  assert(Math.abs(diagonal.state.locomotion.distance - straight.state.locomotion.distance) < .001);
+  assert(Math.abs(half.state.locomotion.distance / straight.state.locomotion.distance - .5) < .001);
+  assert(Math.abs(quarter.state.locomotion.speed / straight.state.locomotion.speed - .25) < .001);
+  assert(Math.abs(half.state.locomotion.vx / -half.state.locomotion.vz - .75) < .001);
+  assert.equal(straight.state.moving, straight.state.locomotion.speed);
+  assert(Math.abs(straight.state.locomotion.distance + straight.state.player.z) < 1e-8);
+});
+
+test('Walk, run, reversal and braking give the same travelled route at 20–120 simulation steps per second', () => {
+  const results = [];
+  for (const fps of [20, 30, 60, 120]) {
+    const sim = FSimulation.create(fixture());
+    for (const [duration, input] of [
+      [.8, { moveY: 1 }], [.4, { moveY: 1, sprint: true }],
+      [.35, { moveY: -1 }], [.4, { moveX: 1, moveY: 1 }], [.45, {}],
+    ]) advanceAt(sim, duration, fps, input);
+    results.push({ x: sim.state.player.x, z: sim.state.player.z, distance: sim.state.locomotion.distance });
+    assert.equal(sim.state.locomotion.speed, 0);
+  }
+  for (const result of results.slice(1)) {
+    assert(Math.hypot(result.x - results[0].x, result.z - results[0].z) < .003,
+      'Frame rate changed the route by more than three millimetres');
+    // Arc length is measured from physical substep segments, not a predicted speed integral.
+    assert(Math.abs(result.distance - results[0].distance) < .025,
+      'Frame rate changed travelled path length by more than 2.5 centimetres');
+  }
+});
+
+test('Acceleration is soft while release and reversal are responsive without mouse aim lag', () => {
+  const sim = FSimulation.create(fixture());
+  sim.step(1 / 60, { moveY: 1 });
+  assert(sim.state.locomotion.forward > 0 && sim.state.locomotion.forward < 2,
+    'Walking jumped instantly to full speed');
+  advanceAt(sim, .5, 120, { moveY: 1 });
+  assert(sim.state.locomotion.forward > 4.1);
+  const stoppedFrom = sim.state.player.z;
+  advanceAt(sim, .25, 120);
+  assert.equal(sim.state.locomotion.speed, 0);
+  assert(stoppedFrom - sim.state.player.z < .16, 'Release left excessive skating distance');
+  const stoppedAt = sim.state.player.z, stride = sim.state.locomotion.stridePhase;
+  advanceAt(sim, .5, 60);
+  assert.equal(sim.state.player.z, stoppedAt);
+  assert.equal(sim.state.locomotion.stridePhase, stride, 'Stride continued while stationary');
+  advanceAt(sim, .5, 120, { moveY: 1 });
+  advanceAt(sim, .08, 120, { moveY: -1 });
+  assert(sim.state.locomotion.forward < -2, 'Counter-direction braking feels sluggish');
+  const yaw = sim.state.player.yaw;
+  sim.step(1 / 120, { lookX: .7, lookY: .2, moveY: 1 });
+  assert.equal(sim.state.player.yaw, yaw + .7, 'Movement smoothing delayed mouse yaw');
+  assert.equal(sim.state.player.pitch, .2, 'Movement smoothing delayed mouse pitch');
+});
+
+test('Sprint presentation follows a smooth physical transition instead of the sprint key alone', () => {
+  const sim = FSimulation.create(fixture());
+  advanceAt(sim, .5, 60, { moveY: 1 });
+  assert(sim.state.locomotion.sprintBlend < .001);
+  sim.step(1 / 60, { moveY: 1, sprint: true });
+  assert(sim.state.locomotion.speed > 4.2 && sim.state.locomotion.speed < 5.8);
+  assert(sim.state.locomotion.sprintBlend > 0 && sim.state.locomotion.sprintBlend < .5);
+  advanceAt(sim, .4, 60, { moveY: 1, sprint: true });
+  assert(sim.state.locomotion.speed > 5.7 && sim.state.locomotion.speed <= 5.8 + 1e-8);
+  assert(sim.state.locomotion.sprintBlend > .95);
+  sim.step(1 / 60, { moveY: 1 });
+  assert(sim.state.locomotion.speed > 4.2 && sim.state.locomotion.speed < 5.8);
+  advanceAt(sim, .4, 60, { moveY: 1 });
+  assert(sim.state.locomotion.sprintBlend < .001);
+});
+
+test('Pushing a wall produces no fake velocity, stride, sprint or dash animation while sliding remains possible', () => {
+  const sim = FSimulation.create(fixture({
+    colliders: [{ minX: .8, maxX: .9, minZ: -20, maxZ: 20, minY: 0, maxY: 4 }],
+  }));
+  advanceAt(sim, 1, 60, { moveX: 1, sprint: true });
+  assert(sim.state.player.x <= .52 + 1e-9);
+  assert.equal(sim.state.locomotion.blocked, true);
+  assert.equal(sim.state.moving, 0);
+  assert.equal(sim.state.locomotion.speed, 0);
+  assert.equal(sim.state.locomotion.moveBlend, 0);
+  assert.equal(sim.state.locomotion.sprintBlend, 0);
+  const phase = sim.state.locomotion.stridePhase, distance = sim.state.locomotion.distance;
+  advanceAt(sim, .5, 60, { moveX: 1, sprint: true });
+  assert.equal(sim.state.locomotion.stridePhase, phase);
+  assert.equal(sim.state.locomotion.distance, distance);
+  sim.step(1 / 60, { moveX: 1, dash: true });
+  advanceAt(sim, .25, 60, { moveX: 1 });
+  assert.equal(sim.state.locomotion.dashBlend, 0);
+  assert.equal(sim.state.locomotion.speed, 0);
+  assert.equal(sim.state.locomotion.stridePhase, phase);
+  advanceAt(sim, 1, 60, { moveX: 1, moveY: 1 });
+  assert(sim.state.player.z < -2.5, 'Smoothing prevented valid sliding along the wall');
+  assert(sim.state.player.x <= .52 + 1e-9);
+  assert(sim.state.locomotion.forward > 2.8 && Math.abs(sim.state.locomotion.strafe) < .001);
+  assert.equal(sim.blocked(sim.state.player.x, sim.state.player.z), false);
+});
+
+test('Dash travel is bounded and frame-rate independent with no retained boost or extended immunity', () => {
+  const distances = [];
+  for (const fps of [20, 30, 60, 120]) {
+    const sim = FSimulation.create(fixture()), dt = 1 / fps;
+    sim.step(dt, { dash: true });
+    assert(sim.state.player.dashing > 0);
+    advanceAt(sim, .35 - dt, fps);
+    assert.equal(sim.state.player.dashing, 0);
+    assert.equal(sim.state.locomotion.speed, 0);
+    assert.equal(sim.state.locomotion.dashBlend, 0);
+    const position = sim.state.player.z;
+    advanceAt(sim, .4, fps);
+    assert.equal(sim.state.player.z, position, 'Dash retained a sliding impulse after it ended');
+    sim.hurt(20); assert.equal(sim.state.player.hp, 80, 'Dash immunity outlived its movement window');
+    assert.equal(events(sim, 'dash').length, 1);
+    distances.push(sim.state.locomotion.distance);
+  }
+  assert(distances.every(d => d > 2 && d < 2.4));
+  assert(Math.max(...distances) - Math.min(...distances) < .001);
+});
+
+test('Version-one checkpoints restore at rest, including a saved dash, without animation spikes or movement creep', () => {
+  const world = fixture(), original = FSimulation.create(world), restored = FSimulation.create(world);
+  advanceAt(original, 1, 60, { moveY: 1 });
+  const data = JSON.parse(JSON.stringify(original.snapshot()));
+  assert.equal(data.version, 1);
+  assert.equal('locomotion' in data.state, false, 'Transient motion should not require a new checkpoint format');
+  const motionRef = restored.state.locomotion;
+  assert.equal(restored.restore(data), true);
+  assert.equal(restored.state.locomotion, motionRef);
+  for (const key of ['vx', 'vz', 'speed', 'forward', 'strafe', 'distance', 'stridePhase', 'moveBlend', 'sprintBlend', 'dashBlend', 'accelForward', 'accelStrafe']) {
+    assert.equal(restored.state.locomotion[key], 0, `${key} was not reset for checkpoint presentation`);
+  }
+  const position = [restored.state.player.x, restored.state.player.z];
+  advanceAt(restored, .5, 60);
+  assert.deepEqual([restored.state.player.x, restored.state.player.z], position);
+  data.state.player.dashing = .15; data.state.player.dash = 1.5;
+  assert.equal(restored.restore(data), true);
+  advanceAt(restored, .3, 60);
+  assert.deepEqual([restored.state.player.x, restored.state.player.z], position,
+    'Restoring a previous dash launched an unrequested movement');
+  assert.equal(restored.state.locomotion.dashBlend, 0);
+  assert.equal(restored.state.player.dashing, 0);
+});

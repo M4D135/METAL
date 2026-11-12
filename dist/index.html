@@ -26,7 +26,7 @@
   <canvas id="world" tabindex="0" aria-label="Vue 3D du complexe FERRO"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">F</span><span>FERRO INDUSTRIES<span class="small">DIVISION SOUTERRAINE</span></span><span class="edition">02 / RÉACTIVATION</span></div>
+    <div class="brand-top"><span class="brand-symbol">F</span><span>FERRO INDUSTRIES<span class="small">DIVISION SOUTERRAINE</span></span><span class="edition">03 / PROFONDEUR</span></div>
     <div class="intro-content">
       <p class="eyebrow"><span class="dot"></span> LE COMPLEXE SILENCIEUX</p>
       <h1>FERRO<span>_</span></h1>
@@ -102,9 +102,11 @@
   uniform int uLightCount;
   uniform vec2 uResolution;
   uniform vec4 uEffects;
-  uniform sampler2D uShadowMap;
-  uniform mat4 uShadowMatrix;
-  uniform vec2 uShadowSettings;
+  // Explicit sampler precision keeps 24-bit depth from being quantized into bands.
+  uniform highp sampler2D uShadowMap;
+  uniform mat4 uShadowMatrix[3];
+  uniform vec4 uShadowSettings;
+  uniform vec3 uTorchPosition;
   out vec4 fragColor;
   float hash(vec2 p) {
     vec3 p3=fract(vec3(p.xyx)*.1031);
@@ -127,24 +129,40 @@
     vec3 r1=cross(dpdy,n),r2=cross(n,dpdx);
     float determinant=dot(dpdx,r1);
     vec3 gradient=sign(determinant)*(dFdx(height)*r1+dFdy(height)*r2);
-    return normalize(max(abs(determinant),.000001)*n-gradient);
+    float scale=max(abs(determinant),.000001);
+    gradient*=min(1.,scale*.35/max(length(gradient),.000001));
+    return normalize(scale*n-gradient);
   }
-  float shadow(vec3 n,vec3 l) {
-    if(uShadowSettings.x<.5||vOverlay>.5)return 1.;
-    vec4 projected=uShadowMatrix*vec4(vWorld,1.);
+  float depthSample(vec2 uv,vec2 offset,float depth,vec2 slope) {
+    float texel=uShadowSettings.y;
+    vec2 tap=uv+offset*texel;
+    // The nearest depth texel represents a different point on a sloping surface.
+    // Compare against that point on the receiver plane, not the centre depth.
+    vec2 centre=(floor(tap/texel)+.5)*texel;
+    return step(depth+dot(slope,(centre-uv)*2.),texture(uShadowMap,tap).r);
+  }
+  float shadow(vec3 n,vec3 l,int slot) {
+    if(vOverlay>.5||(slot<2&&float(slot)>=uShadowSettings.x)||(slot==2&&uShadowSettings.z<.5))return 1.;
+    vec4 projected=uShadowMatrix[slot]*vec4(vWorld+n*.014,1.);
     vec3 p=projected.xyz/projected.w*.5+.5;
+    vec3 dx=dFdx(p),dy=dFdy(p);
+    float determinant=dx.x*dy.y-dx.y*dy.x;
+    vec2 slope=abs(determinant)>.00000000001?vec2(dx.z*dy.y-dy.z*dx.y,dy.z*dx.x-dx.z*dy.x)/determinant:vec2(0.);
     if(projected.w<=0.||p.z<=0.||p.z>=1.||min(p.x,p.y)<=.001||max(p.x,p.y)>=.999)return 1.;
-    float bias=.00045+.0011*(1.-max(dot(n,l),0.));
-    vec2 texel=vec2(uShadowSettings.y);
+    float bias=.00005+.00014*(1.-max(dot(n,l),0.));
+    vec2 tile=slot==1?vec2(.5,0.):slot==2?vec2(0.,.5):vec2(0.);
+    vec2 uv=p.xy*.5+tile;
     float visibility=0.;
-    visibility+=step(p.z-bias,texture(uShadowMap,p.xy+texel*vec2(-.65,-.65)).r);
-    visibility+=step(p.z-bias,texture(uShadowMap,p.xy+texel*vec2(.65,-.65)).r);
-    visibility+=step(p.z-bias,texture(uShadowMap,p.xy+texel*vec2(-.65,.65)).r);
-    visibility+=step(p.z-bias,texture(uShadowMap,p.xy+texel*vec2(.65,.65)).r);
-    return mix(.12,1.,visibility*.25);
+    visibility+=depthSample(uv,vec2(-.65,-.65),p.z-bias,slope);
+    visibility+=depthSample(uv,vec2(.65,-.65),p.z-bias,slope);
+    visibility+=depthSample(uv,vec2(-.65,.65),p.z-bias,slope);
+    visibility+=depthSample(uv,vec2(.65,.65),p.z-bias,slope);
+    float edge=min(min(p.x,p.y),min(1.-p.x,1.-p.y));
+    float blend=smoothstep(.012,.085,edge)*(1.-smoothstep(24.,31.,projected.w));
+    return mix(1.,mix(.055,1.,visibility*.25),blend);
   }
   void main() {
-    vec3 n=normalize(vNormal), an=abs(n);
+    vec3 geometricNormal=normalize(vNormal), n=geometricNormal, an=abs(n);
     vec2 uv=an.y>.65?vWorld.xz:(an.x>an.z?vWorld.zy:vWorld.xy);
     float m=vMaterial, emission=vEmission;
     vec3 base=vec3(.105,.135,.15);
@@ -153,10 +171,10 @@
     float fineDetail=1.-smoothstep(.015,.10,pixelSpan);
     float grain=noise(uv*23.)*.5+mix(.5,noise(uv*71.),fineDetail)*.2;
     float broad=noise(uv*.7);
-    float panel=grid(uv*.55,.012);
+    float panel=grid(uv*.55,.007);
     if (m<.5) {
       base*=.82+grain*.27+broad*.17;
-      base*=1.-panel*.55;
+      base*=1.-panel*.38;
       vec2 panelUV=fract(uv*.55);
       float screw=1.-smoothstep(.019,.031,length(panelUV-vec2(.065)));
       screw+=1.-smoothstep(.019,.031,length(panelUV-vec2(.935,.065)));
@@ -165,6 +183,8 @@
       base*=1.-ribs*.085;
       float brushing=(.5+.5*sin(uv.y*410.+noise(uv*3.)*4.))*fineDetail;
       roughness=.33+.19*brushing+.08*broad;
+      float scratch=(1.-smoothstep(.008,.025,abs(fract(uv.y*4.3+noise(vec2(uv.x*1.1,0.))*.4)-.5)))*step(.62,noise(uv*vec2(2.,.25)))*fineDetail;
+      base+=vec3(.035,.045,.05)*scratch;
     } else if (m<1.5) {
       base=mix(vec3(.19,.075,.025),vec3(.47,.235,.08),broad*.8+.15);
       base*=.8+grain*.43;
@@ -172,20 +192,25 @@
       roughness=.37+.34*broad;
       metalness=.82;
     } else if (m<2.5) {
-      float tiles=grid(uv*.5,.013);
+      float tiles=grid(uv*.5,.007);
       float variation=hash(floor(uv*.5));
       base=mix(vec3(.095,.12,.135),vec3(.17,.19,.20),variation*.6);
-      base*=1.-tiles*.72;
+      base*=1.-tiles*.43;
       base*=.9+grain*.3;
       vec2 diamond=fract(mat2(.707,-.707,.707,.707)*uv*12.);
       float tread=step(.68,diamond.x)*step(.65,diamond.y);
       base+=tread*.016;
       roughness=.26+.24*broad;
+      float oil=smoothstep(.57,.80,noise(uv*.47+19.));
+      base*=1.-oil*.24;roughness=mix(roughness,.19,oil);
+      float wornEdge=max(0.,grid(uv*.5,.04)-tiles);
+      base+=vec3(.025,.029,.03)*wornEdge*noise(uv*17.);
       metalness=.55;
     } else if (m<3.5) {
       base=vec3(.57,.58,.54)*(.78+grain*.3+broad*.13);
       base*=1.-panel*.22;
       roughness=.85;
+      base*=.79+.21*noise(uv*vec2(6.,.19));
       metalness=0.;
     } else if (m<4.5) {
       base=vec3(.025,.74,.77);
@@ -212,13 +237,13 @@
     if(m>1.5&&m<2.5){
       vec2 treadUV=mat2(.707,-.707,.707,.707)*uv*12.;
       float tread=(1.-smoothstep(.26,.34,abs(fract(treadUV.x)-.5)))*(1.-smoothstep(.08,.16,abs(fract(treadUV.y)-.5)));
-      height=(1.-grid(uv*.5,.013))*.009+tread*.004*fineDetail;
+      height=(1.-grid(uv*.5,.007))*.006+tread*.0018*fineDetail;
     }
     if(m<3.5)n=reliefNormal(n,height);
     vec3 view=normalize(uEye-vWorld);
     float distanceToEye=length(uEye-vWorld);
-    vec3 light=vec3(.10,.13,.15)*(.72+.28*n.y);
-    light+=vec3(.12,.13,.13)*max(dot(n,normalize(vec3(-.45,.85,.35))),0.);
+    vec3 light=vec3(.075,.10,.12)*(.72+.28*n.y);
+    light+=vec3(.075,.09,.09)*max(dot(n,normalize(vec3(-.45,.85,.35))),0.);
     light*=1.-panel*.18;
     float specularPower=mix(180.,10.,roughness);
     vec3 specularTint=mix(vec3(.32),base*1.45+vec3(.10),metalness);
@@ -228,16 +253,19 @@
       vec3 toLight=uLightPosition[i]-vWorld;
       float d=length(toLight);
       vec3 l=toLight/max(d,.001);
-      float attenuation=.24/(1.+d*d*.26);
+      float attenuation=(i<2?.27:.13)/(1.+d*d*.26);
       float diffuse=max(dot(n,l),0.);
-      float visibility=i==0?shadow(n,l):1.;
+      float visibility=i<2?shadow(geometricNormal,l,i):1.;
       light+=uLightColor[i]*attenuation*(diffuse*visibility+.035);
       vec3 halfVector=normalize(l+view);
       specular+=uLightColor[i]*attenuation*visibility*pow(max(dot(n,halfVector),0.),specularPower)*specularTint*(1.35-roughness*.7);
     }
-    float cone=smoothstep(.58,.97,dot(-view,uForward));
-    float torch=cone/(1.+distanceToEye*distanceToEye*.035);
-    light+=vec3(.28,.35,.38)*torch*max(dot(n,view),0.);
+    vec3 torchVector=uTorchPosition-vWorld;
+    float torchDistance=length(torchVector);
+    vec3 torchDirection=normalize(torchVector);
+    float cone=smoothstep(.59,.96,dot(-torchDirection,uForward));
+    float torch=cone/(1.+torchDistance*torchDistance*.045)*shadow(geometricNormal,torchDirection,2);
+    light+=vec3(.44,.52,.56)*torch*max(dot(n,torchDirection),0.);
     light+=vec3(1.,.48,.12)*uEffects.y*2.2/(1.+distanceToEye*distanceToEye*.14);
     if(vOverlay>.5) light+=vec3(.18,.22,.25);
     vec3 color=base*light+specular;
@@ -386,6 +414,52 @@
     return out;
   }
 
+  function cameraAxes(camera){
+    const yaw=camera.yaw||0,pitch=camera.pitch||0,roll=camera.roll||0;
+    const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch),cr=Math.cos(roll),sr=Math.sin(roll);
+    const r=[cy,0,sy],u=[-sy*sp,cp,cy*sp];
+    return {right:r.map((v,i)=>v*cr+u[i]*sr),up:u.map((v,i)=>v*cr-r[i]*sr),forward:[sy*cp,sp,-cy*cp]};
+  }
+  function detailRanges(quality,software=false){
+    return software?(quality==='low'?[26,16,0]:quality==='high'?[42,30,12]:[34,23,8]):(quality==='low'?[48,20,0]:quality==='high'?[82,42,19]:[64,32,13]);
+  }
+  function metadata(mesh){
+    return {mesh,p:mesh.p||[0,0,0],radius:Math.hypot(...(mesh.s||[1,1,1]))*.5,detail:Math.max(0,Math.min(2,Math.floor(mesh.detail||0))),software:null};
+  }
+  function spatialIndex(meshes){
+    const levels=[new Map(),new Map(),new Map()],maxRadius=[0,0,0],entries=[];
+    for(const mesh of meshes||[]){
+      const e=metadata(mesh),key=Math.floor(e.p[0]/8)+','+Math.floor(e.p[2]/8),map=levels[e.detail];
+      if(!map.has(key))map.set(key,[]);map.get(key).push(e);maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
+      const p=e.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
+      e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],mesh.overlay?1:0,c[0],c[1],c[2],mesh.color?1:0]);entries.push(e);
+    }
+    function query(eye,ranges){
+      const result=[];
+      for(let level=0;level<3;level++){
+        const range=ranges[level];if(!(range>0))continue;
+        const radius=range+maxRadius[level];
+        for(let x=Math.floor((eye[0]-radius)/8);x<=Math.floor((eye[0]+radius)/8);x++)for(let z=Math.floor((eye[2]-radius)/8);z<=Math.floor((eye[2]+radius)/8);z++){
+          const bucket=levels[level].get(x+','+z);if(!bucket)continue;
+          for(const e of bucket){const d=(e.p[0]-eye[0])**2+(e.p[1]-eye[1])**2+(e.p[2]-eye[2])**2;if(d<=(range+e.radius)**2)result.push(e);}
+        }
+      }
+      return result;
+    }
+    return {entries,query};
+  }
+  function visible(e,eye,axes,horizontal,vertical,far){
+    const d=[e.p[0]-eye[0],e.p[1]-eye[1],e.p[2]-eye[2]],dot=a=>d[0]*a[0]+d[1]*a[1]+d[2]*a[2];
+    const z=dot(axes.forward),r=e.radius;
+    return z+r>.04&&z-r<far&&Math.abs(dot(axes.right))<=z*horizontal+r*Math.sqrt(1+horizontal*horizontal)&&Math.abs(dot(axes.up))<=z*vertical+r*Math.sqrt(1+vertical*vertical);
+  }
+  function packIndexed(entries){
+    const buckets=names.map(()=>[]);for(const e of entries){const i=names.indexOf(e.mesh.shape||'box');if(i>=0)buckets[i].push(e);}
+    const values=new Float32Array(entries.length*16),groups=[];let offset=0;
+    for(let i=0;i<names.length;i++)if(buckets[i].length){groups.push({name:names[i],offset:offset*4,count:buckets[i].length});for(const e of buckets[i]){values.set(e.row,offset);offset+=16;}}
+    return {values,groups};
+  }
+
   // CPU fallback: actual transformed polygons, perspective projection and near clipping.
   // It intentionally has fewer facets and a shorter draw distance than the GPU renderer.
   function createSoftware(canvas) {
@@ -393,7 +467,7 @@
     if(!ctx) throw new Error('Le rendu graphique est indisponible dans ce navigateur.');
     const source=geometry(true),base={},palette=[[.105,.135,.15],[.36,.18,.065],[.13,.16,.17],[.57,.58,.54],[.025,.74,.77],[1,.42,.06],[.68,.055,.025],[.065,.075,.085]];
     const stats={backend:'canvas2d',webglVersion:0,drawCalls:0,triangles:0,instances:0,contextLost:false,bloom:false,shadows:false};
-    let world=[],lights=[],quality='auto',disposed=false,vignette=null;
+    let world=spatialIndex([]),lights=[],quality='auto',disposed=false,vignette=null;
     const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
     const subtract=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
     const same=(a,b)=>Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2])<.00001;
@@ -423,7 +497,7 @@
         base[shape].push(quad||triangles[j]);if(quad)j++;
       }
     }
-    function cache(mesh) {
+    function cache(mesh,staticLighting=false) {
       const p=mesh.p||[0,0,0],s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=r.map(Math.cos),sn=r.map(Math.sin);
       function transform(v){
         let x=v[0]*s[0],y=v[1]*s[1],z=v[2]*s[2];
@@ -437,18 +511,32 @@
         const points=v.map(transform),n=normal(points),center=[0,0,0];
         for(const q of points)for(let k=0;k<3;k++)center[k]+=q[k]/points.length;
         const grain=.9+Math.abs(Math.sin(center[0]*91.17+center[1]*17.3+center[2]*51.79))*.13;
-        const lines=[];
+        const lines=[],ground=mat===2&&n[1]>.98&&Math.abs(center[1])<.08;
         if(shape==='box'&&points.length===4&&mat<4){
-          const a=subtract(points[1],points[0]),b=subtract(points[3],points[0]);
-          const na=Math.min(12,Math.floor(Math.hypot(...a)/2)),nb=Math.min(12,Math.floor(Math.hypot(...b)/2));
-          for(let i=1;i<na;i++)lines.push([points[0].map((x,k)=>x+a[k]*i/na),points[3].map((x,k)=>x+a[k]*i/na)]);
-          for(let i=1;i<nb;i++)lines.push([points[0].map((x,k)=>x+b[k]*i/nb),points[1].map((x,k)=>x+b[k]*i/nb)]);
+          if(ground){
+            const xs=points.map(v=>v[0]),zs=points.map(v=>v[2]),x0=Math.min(...xs),x1=Math.max(...xs),z0=Math.min(...zs),z1=Math.max(...zs);
+            for(let x=Math.ceil(x0/2)*2;x<x1;x+=2)lines.push([[x,center[1],z0],[x,center[1],z1]]);
+            for(let z=Math.ceil(z0/2)*2;z<z1;z+=2)lines.push([[x0,center[1],z],[x1,center[1],z]]);
+          }else{
+            const a=subtract(points[1],points[0]),b=subtract(points[3],points[0]);
+            const na=Math.min(12,Math.floor(Math.hypot(...a)/2)),nb=Math.min(12,Math.floor(Math.hypot(...b)/2));
+            for(let i=1;i<na;i++)lines.push([points[0].map((x,k)=>x+a[k]*i/na),points[3].map((x,k)=>x+a[k]*i/na)]);
+            for(let i=1;i<nb;i++)lines.push([points[0].map((x,k)=>x+b[k]*i/nb),points[1].map((x,k)=>x+b[k]*i/nb)]);
+          }
         }
-        return {points,n,center,grain,lines,color,emission,mat,overlay:!!mesh.overlay};
+        let fixedLight=null;
+        if(staticLighting){
+          fixedLight=[.10,.13,.15].map(v=>v*(.72+.28*n[1]));
+          const sun=Math.max(0,(-.45*n[0]+.85*n[1]+.35*n[2])/1.022)*.13;
+          for(let k=0;k<3;k++)fixedLight[k]+=sun;
+          const nearby=lights.map(light=>({light,d:(light.p[0]-center[0])**2+(light.p[1]-center[1])**2+(light.p[2]-center[2])**2})).sort((a,b)=>a.d-b.d).slice(0,4);
+          for(const {light,d} of nearby){const vector=subtract(light.p,center),power=(light.power===undefined?1:light.power)*.24/(1+d*.26)*(Math.max(0,dot(n,vector)/(Math.sqrt(d)||.001))+.035),c=light.color||[1,1,1];for(let k=0;k<3;k++)fixedLight[k]+=power*c[k];}
+        }
+        return {points,n,center,grain,lines,color,emission,mat,ground,fixedLight,overlay:!!mesh.overlay};
       });
       return {p,radius:Math.hypot(...s)*.5,faces};
     }
-    function setWorld(meshes,points){world=(meshes||[]).map(cache);lights=points||[];}
+    function setWorld(meshes,points){world=spatialIndex(meshes||[]);lights=points||[];stats.staticTotal=world.entries.length;}
     function resize(next){
       if(next!==undefined)quality=next;
       const cssWidth=canvas.clientWidth||window.innerWidth||800,cssHeight=canvas.clientHeight||window.innerHeight||600;
@@ -475,15 +563,14 @@
     function draw(camera,dynamic,fx){
       if(disposed)return;resize();fx=fx||{};
       const width=canvas.width,height=canvas.height,t=fx.time||0,shake=fx.shake||0,p=camera.pos||[0,1.6,0];
-      const eye=[p[0]+Math.sin(t*57)*shake*.025,p[1]+Math.sin(t*71)*shake*.015,p[2]],yaw=camera.yaw||0,pitch=camera.pitch||0;
-      const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
-      const right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],forward=[sy*cp,sp,-cy*cp];
+      const eye=[p[0]+Math.sin(t*57)*shake*.025,p[1]+Math.sin(t*71)*shake*.015,p[2]];
+      const axes=cameraAxes(camera),{right,up,forward}=axes;
       const fov=Math.max(40,Math.min(110,camera.fov||75))*Math.PI/180,tan=Math.tan(fov*.5),focal=height/(2*tan),horizontal=tan*width/height;
       const near=.065,far=quality==='low'?26:quality==='high'?42:34;
       const toCamera=v=>{const d=subtract(v,eye);return [dot(d,right),dot(d,up),dot(d,forward)];};
       const project=v=>[width*.5+v[0]*focal/v[2],height*.5-v[1]*focal/v[2]];
       const nearest=lights.map(light=>({light,d:dot(subtract(light.p,eye),subtract(light.p,eye))})).sort((a,b)=>a.d-b.d).slice(0,quality==='low'?4:6).map(entry=>entry.light);
-      const faces=[],overlays=[];
+      const faces=[],overlays=[],grounds=[];
       stats.drawCalls=0;stats.triangles=0;stats.instances=0;
       function inView(position,r){
         const center=toCamera(position);
@@ -503,19 +590,54 @@
           const screen=points.map(project);
           if(screen.every(v=>v[0]<-2)||screen.every(v=>v[0]>width+2)||screen.every(v=>v[1]<-2)||screen.every(v=>v[1]>height+2))continue;
           const depth=points.reduce((sum,v)=>sum+v[2],0)/points.length;
-          (face.overlay?overlays:faces).push({face,screen,depth});
+          (face.overlay?overlays:face.ground?grounds:faces).push({face,screen,depth});
         }
       }
-      for(const object of world)collect(object);
+      const ranges=detailRanges(quality,true),tiers=[[],[],[]];let staticVisible=0;
+      for(const e of world.query(eye,ranges))if(visible(e,eye,axes,horizontal,tan,far)){
+        const delta=subtract(e.p,eye),distance=Math.hypot(...delta),pixelRadius=e.radius*focal/Math.max(.2,dot(delta,forward));
+        if(e.detail>0&&pixelRadius<(e.detail===2?2.1:1.0))continue;
+        tiers[e.detail].push({e,score:distance/(1+Math.min(e.radius,3)*.32)});
+      }
+      const budget=quality==='low'?[Infinity,110,0]:quality==='high'?[Infinity,440,180]:[Infinity,220,80];
+      for(let level=0;level<3;level++){
+        if(level)tiers[level].sort((a,b)=>a.score-b.score);
+        for(const {e} of tiers[level].slice(0,budget[level])){if(!e.software)e.software=cache(e.mesh,true);collect(e.software);staticVisible++;}
+      }
+      stats.staticVisible=staticVisible;stats.staticCulled=world.entries.length-staticVisible;
       for(const mesh of dynamic||[])if(inView(mesh.p||[0,0,0],Math.hypot(...(mesh.s||[1,1,1]))*.5))collect(cache(mesh));
+      const floorShadows=[],lamp=nearest.find(light=>light.p[1]>2.5);
+      if(lamp&&quality!=='low'){
+        const occluders=world.query(eye,[13,11,0]).map(e=>e.mesh).concat((dynamic||[]).filter(m=>!m.overlay));
+        const candidates=occluders.filter(m=>{
+          const s=m.s||[1,1,1],p=m.p||[0,0,0];
+          return (m.shape==='box'||m.shape==='cylinder'||m.shape==='sphere'||m.shape==='octa')&&s[0]>.45&&s[2]>.45&&s[1]>.4&&p[1]-s[1]*.5<1.2&&p[1]+s[1]*.5<lamp.p[1]-.15&&(m.mat||0)<4;
+        }).sort((a,b)=>Math.hypot(a.p[0]-eye[0],a.p[2]-eye[2])-Math.hypot(b.p[0]-eye[0],b.p[2]-eye[2])).slice(0,18);
+        const cross=(a,b,c)=>(b[0]-a[0])*(c[2]-a[2])-(b[2]-a[2])*(c[0]-a[0]);
+        for(const m of candidates){
+          const p=m.p,s=m.s,angle=(m.r||[0,0,0])[1],c=Math.cos(angle),sn=Math.sin(angle),vertices=[];
+          for(const y of [-1,1])for(const x of [-1,1])for(const z of [-1,1]){
+            const px=p[0]+c*x*s[0]*.5+sn*z*s[2]*.5,pz=p[2]-sn*x*s[0]*.5+c*z*s[2]*.5,py=p[1]+y*s[1]*.5;
+            const amount=Math.min(7,(lamp.p[1]-.026)/(lamp.p[1]-Math.max(.026,py)));
+            vertices.push([lamp.p[0]+(px-lamp.p[0])*amount,.026,lamp.p[2]+(pz-lamp.p[2])*amount]);
+          }
+          vertices.sort((a,b)=>a[0]-b[0]||a[2]-b[2]);const hull=[];
+          for(const v of vertices){while(hull.length>1&&cross(hull[hull.length-2],hull[hull.length-1],v)<=0)hull.pop();hull.push(v);}
+          const lower=hull.length;for(let i=vertices.length-2;i>=0;i--){const v=vertices[i];while(hull.length>lower&&cross(hull[hull.length-2],hull[hull.length-1],v)<=0)hull.pop();hull.push(v);}hull.pop();
+          let transformed=hull.map(toCamera);if(!transformed.length||transformed.every(v=>v[2]<near))continue;
+          if(transformed.some(v=>v[2]<near))transformed=clip(transformed,near,true);
+          if(transformed.length>2)floorShadows.push(transformed.map(project));
+        }
+      }
+      stats.shadows=floorShadows.length>0;stats.shadowMode='projected';
       ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.fillStyle='#14252e';ctx.fillRect(0,0,width,height);
       function shade(face){
         const n=face.n,toEye=subtract(eye,face.center),distance=Math.hypot(...toEye)||.001;
-        const lit=[.10,.13,.15].map(c=>c*(.72+.28*n[1]));
+        const lit=face.fixedLight?face.fixedLight.slice():[.10,.13,.15].map(c=>c*(.72+.28*n[1]));
         const sun=Math.max(0,(-.45*n[0]+.85*n[1]+.35*n[2])/1.022)*.13;
         const head=Math.max(0,dot(n,toEye)/distance)*.35/(1+distance*distance*.035);
-        for(let k=0;k<3;k++)lit[k]+=sun+head*(k===0?.8:1)+(face.overlay?.2:0)+(fx.flash||0)*.65/(1+distance*distance*.14);
-        for(const light of nearest){
+        for(let k=0;k<3;k++)lit[k]+=(face.fixedLight?0:sun)+head*(k===0?.8:1)+(face.overlay?.2:0)+(fx.flash||0)*.65/(1+distance*distance*.14);
+        for(const light of face.fixedLight?[]:nearest){
           const l=subtract(light.p,face.center),d2=dot(l,l),d=Math.sqrt(d2)||.001;
           const power=(light.power===undefined?1:light.power)*.24/(1+d2*.26)*(Math.max(0,dot(n,l)/d)+.065),color=light.color||[1,1,1];
           for(let k=0;k<3;k++)lit[k]+=power*color[k];
@@ -542,15 +664,19 @@
         for(const item of list){
           const {face,screen,depth}=item;ctx.beginPath();ctx.moveTo(...screen[0]);for(let i=1;i<screen.length;i++)ctx.lineTo(...screen[i]);ctx.closePath();
           ctx.fillStyle=shade(face);ctx.fill();stats.drawCalls++;stats.triangles+=screen.length-2;
+          if(face.ground&&floorShadows.length){
+            ctx.save();ctx.clip();ctx.fillStyle='rgba(0,7,11,.24)';
+            for(const polygon of floorShadows){ctx.beginPath();ctx.moveTo(...polygon[0]);for(let i=1;i<polygon.length;i++)ctx.lineTo(...polygon[i]);ctx.closePath();ctx.fill();}ctx.restore();
+          }
           // The seams are projected from positions on the actual face, not screen-space stripes.
           // Do not outline individual mesh faces: that reveals triangulation instead of material detail.
           if(face.mat<4&&face.lines.length&&depth<18){
-            ctx.beginPath();for(const segment of face.lines)line(segment[0],segment[1]);ctx.strokeStyle='rgba(2,7,10,.42)';ctx.lineWidth=1.5;ctx.stroke();
-            if(quality!=='low'&&depth<10){ctx.strokeStyle='rgba(128,180,176,.19)';ctx.lineWidth=.45;ctx.stroke();}
+            ctx.beginPath();for(const segment of face.lines)line(segment[0],segment[1]);ctx.strokeStyle=face.ground?'rgba(2,7,10,.22)':'rgba(2,7,10,.32)';ctx.lineWidth=face.ground?.65:1.0;ctx.stroke();
+            if(!face.ground&&quality!=='low'&&depth<10){ctx.strokeStyle='rgba(128,180,176,.14)';ctx.lineWidth=.35;ctx.stroke();}
           }
         }
       }
-      paint(faces);paint(overlays);
+      paint(grounds);paint(faces);paint(overlays);
       ctx.fillStyle=vignette;ctx.fillRect(0,0,width,height);
       if(fx.damage>0){ctx.fillStyle='rgba(190,12,2,'+Math.min(.3,fx.damage*.22)+')';ctx.fillRect(0,0,width,height);}
       if(fx.pulse>0){
@@ -558,7 +684,7 @@
         ctx.beginPath();ctx.arc(width*.5,height*.5,Math.max(1,radius),0,Math.PI*2);ctx.strokeStyle='rgba(82,248,216,'+(strength*.35)+')';ctx.lineWidth=height*.018;ctx.stroke();
       }
     }
-    function dispose(){disposed=true;world=[];lights=[];vignette=null;}
+    function dispose(){disposed=true;world=spatialIndex([]);lights=[];vignette=null;}
     return {setWorld,draw,resize,dispose,stats};
   }
 
@@ -566,12 +692,12 @@
     const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
     if(!gl) return createSoftware(canvas);
     const source=geometry(),view=new Float32Array(16),projection=new Float32Array(16),vp=new Float32Array(16);
-    const shadowView=new Float32Array(16),shadowProjection=new Float32Array(16),shadowMatrix=new Float32Array(16);
+    const shadowView=new Float32Array(16),shadowProjection=new Float32Array(16),shadowMatrix=new Float32Array(16),shadowMatrices=new Float32Array(48);
     const lightPositions=new Float32Array(36),lightColors=new Float32Array(36);
     const stats={drawCalls:0,triangles:0,instances:0,contextLost:false,webglVersion:2,backend:'webgl2',bloom:false,shadows:false};
     let program,depthProgram,postProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,uniforms,postUniforms,depthMatrix;
     let post=null,shadowTarget=null,whiteTexture=null,targetKey='',shadowLight=null;
-    let world=[],lights=[],worldBatch=pack([]),quality='auto',disposed=false;
+    let world=[],worldIndex=spatialIndex([]),lights=[],worldBatch=pack([]),quality='auto',disposed=false;
 
     function compile(type,code) {
       const shader=gl.createShader(type);gl.shaderSource(shader,code);gl.compileShader(shader);
@@ -611,7 +737,7 @@
       const scene=colorTarget(width,height,true),a=colorTarget(bw,bh,false),b=colorTarget(bw,bh,false);
       if(scene&&a&&b)post={scene,a,b};else{deleteTarget(scene);deleteTarget(a);deleteTarget(b);}
       const size=quality==='high'?1024:512;
-      const target={framebuffer:gl.createFramebuffer(),texture:texture(size,size,true),size};
+      const target={framebuffer:gl.createFramebuffer(),texture:texture(size*2,size*2,true),size};
       gl.bindFramebuffer(gl.FRAMEBUFFER,target.framebuffer);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,target.texture,0);
       gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);
       if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE)shadowTarget=target;else deleteTarget(target);
@@ -620,7 +746,7 @@
     }
     function initialize() {
       program=link(VERT,FRAG);depthProgram=link(VERT,DEPTH_FRAG);postProgram=link(POST_VERT,POST_FRAG);
-      uniforms={};for(const name of ['uViewProjection','uEye','uForward','uLightPosition','uLightColor','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings']) uniforms[name]=gl.getUniformLocation(program,name);
+      uniforms={};for(const name of ['uViewProjection','uEye','uForward','uLightPosition','uLightColor','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition']) uniforms[name]=gl.getUniformLocation(program,name);
       postUniforms={};for(const name of ['uScene','uBloom','uTexel','uPass'])postUniforms[name]=gl.getUniformLocation(postProgram,name);
       depthMatrix=gl.getUniformLocation(depthProgram,'uViewProjection');
       vao=gl.createVertexArray();gl.bindVertexArray(vao);
@@ -641,7 +767,7 @@
     initialize();
 
     function setWorld(meshes,points) {
-      world=meshes||[];lights=points||[];worldBatch=pack(world);shadowLight=null;
+      world=meshes||[];worldIndex=spatialIndex(world);lights=points||[];worldBatch=pack([]);shadowLight=null;stats.staticTotal=world.length;
       if(stats.contextLost||disposed) return;
       gl.bindBuffer(gl.ARRAY_BUFFER,worldBuffer);gl.bufferData(gl.ARRAY_BUFFER,worldBatch.values,gl.STATIC_DRAW);
     }
@@ -668,16 +794,20 @@
         stats.drawCalls++;stats.triangles+=shape.count/3*group.count;if(!shadowPass)stats.instances+=group.count;
       }
     }
-    function shadowPass(light,dynamicBatch){
-      const p=light.p;
-      shadowView.set([1,0,0,0,0,0,1,0,0,-1,0,0,-p[0],p[2],-p[1],1]);
-      const f=1/Math.tan(138*Math.PI/360),near=.15,far=32;
+    function shadowPass(light,dynamicBatch,slot,torchAxes){
+      const p=light.p,shadowAxes=torchAxes||{right:[1,0,0],up:[0,0,-1],forward:[0,-1,0]};
+      const {right:r,up:u,forward:fw}=shadowAxes;
+      shadowView.set([r[0],u[0],-fw[0],0,r[1],u[1],-fw[1],0,r[2],u[2],-fw[2],0,-(r[0]*p[0]+r[1]*p[1]+r[2]*p[2]),-(u[0]*p[0]+u[1]*p[1]+u[2]*p[2]),fw[0]*p[0]+fw[1]*p[1]+fw[2]*p[2],1]);
+      const f=1/Math.tan((torchAxes?108:138)*Math.PI/360),near=torchAxes?.08:.15,far=32;
       shadowProjection.fill(0);shadowProjection[0]=shadowProjection[5]=f;shadowProjection[10]=(far+near)/(near-far);shadowProjection[11]=-1;shadowProjection[14]=2*far*near/(near-far);
       multiply(shadowProjection,shadowView,shadowMatrix);
-      gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.viewport(0,0,shadowTarget.size,shadowTarget.size);
-      gl.clear(gl.DEPTH_BUFFER_BIT);gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);
+      shadowMatrices.set(shadowMatrix,slot*16);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.viewport((slot%2)*shadowTarget.size,Math.floor(slot/2)*shadowTarget.size,shadowTarget.size,shadowTarget.size);
+      gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);
       gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2.0);gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);
-      renderBatch(worldBatch,worldBuffer,false,true);renderBatch(dynamicBatch,dynamicBuffer,true,true);gl.disable(gl.POLYGON_OFFSET_FILL);
+      const tangent=1/f;
+      const casters=worldIndex.query(p,[32,18,0]).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));
+      renderBatch(packIndexed(casters),worldBuffer,true,true);renderBatch(dynamicBatch,dynamicBuffer,true,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
     function postPass(){
       gl.disable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.bindVertexArray(postVao);gl.useProgram(postProgram);
@@ -696,36 +826,42 @@
       if(disposed||stats.contextLost) return;
       resize();fx=fx||{};
       const t=fx.time||0,shake=fx.shake||0,p=camera.pos||[0,1.6,0];
-      const yaw=camera.yaw||0,pitch=camera.pitch||0;
-      const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
-      const right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],forward=[sy*cp,sp,-cy*cp];
+      const axes=cameraAxes(camera),{right,up,forward}=axes;
       const eye=[p[0]+Math.sin(t*57.)*shake*.025,p[1]+Math.sin(t*71.)*shake*.015,p[2]];
       view.set([right[0],up[0],-forward[0],0,right[1],up[1],-forward[1],0,right[2],up[2],-forward[2],0,
         -(right[0]*eye[0]+right[1]*eye[1]+right[2]*eye[2]),-(up[0]*eye[0]+up[1]*eye[1]+up[2]*eye[2]),forward[0]*eye[0]+forward[1]*eye[1]+forward[2]*eye[2],1]);
       const fov=Math.max(40,Math.min(110,camera.fov||75))*Math.PI/180,f=1/Math.tan(fov*.5),near=.045,far=180;
       projection.fill(0);projection[0]=f/(canvas.width/canvas.height);projection[5]=f;projection[10]=(far+near)/(near-far);projection[11]=-1;projection[14]=2*far*near/(near-far);
       multiply(projection,view,vp);
+      const ranges=detailRanges(quality),candidates=worldIndex.query(eye,ranges);
+      const shown=candidates.filter(e=>visible(e,eye,axes,canvas.width/canvas.height/f,1/f,ranges[0]));
+      const visibleWorld=packIndexed(shown);stats.staticVisible=shown.length;stats.staticCulled=world.length-shown.length;
       const distanceTo=light=>(light.p[0]-eye[0])**2+(light.p[1]-eye[1])**2+(light.p[2]-eye[2])**2;
       const sorted=lights.map(light=>({light,d:distanceTo(light)})).sort((a,b)=>a.d-b.d);
       const candidate=sorted.find(entry=>entry.light.p[1]>=2.5&&(entry.light.power||1)>=7)||sorted.find(entry=>entry.light.p[1]>=2.5);
       if(candidate&&(!shadowLight||distanceTo(shadowLight)>candidate.d*1.35+5))shadowLight=candidate.light;
       if(!candidate)shadowLight=null;
-      const selected=sorted.filter(entry=>entry.light!==shadowLight).slice(0,(quality==='low'?6:12)-(shadowLight?1:0));
-      if(shadowLight)selected.unshift({light:shadowLight,d:distanceTo(shadowLight)});
+      const second=sorted.find(entry=>entry.light!==shadowLight&&entry.light.p[1]>=2.5);
+      const shadowLights=shadowLight?[shadowLight,...(second?[second.light]:[])]:[];
+      const selected=shadowLights.map(light=>({light,d:distanceTo(light)})).concat(sorted.filter(entry=>!shadowLights.includes(entry.light)).slice(0,(quality==='low'?6:12)-shadowLights.length));
       lightPositions.fill(0);lightColors.fill(0);
       selected.forEach(({light},i)=>{lightPositions.set(light.p,i*3);const c=light.color||[1,1,1],power=light.power===undefined?1:light.power;lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});
       const ordinary=[],overlay=[];for(const mesh of dynamic||[]) (mesh.overlay?overlay:ordinary).push(mesh);
       const dynamicBatch=pack(ordinary);
-      stats.drawCalls=0;stats.triangles=0;stats.instances=0;stats.bloom=!!post;stats.shadows=!!shadowTarget&&!!shadowLight;
-      if(stats.shadows)shadowPass(shadowLight,dynamicBatch);
+      const torchPosition=eye.map((v,i)=>v+right[i]*.16-up[i]*.08);
+      stats.drawCalls=0;stats.triangles=0;stats.instances=0;stats.bloom=!!post;stats.shadows=!!shadowTarget;stats.shadowMaps=shadowTarget?shadowLights.length+1:0;stats.shadowMode='atlas';
+      if(stats.shadows){
+        gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.clear(gl.DEPTH_BUFFER_BIT);
+        shadowLights.forEach((light,i)=>shadowPass(light,dynamicBatch,i));shadowPass({p:torchPosition},dynamicBatch,2,axes);
+      }
       gl.bindFramebuffer(gl.FRAMEBUFFER,post?post.scene.framebuffer:null);gl.viewport(0,0,canvas.width,canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.bindVertexArray(vao);
       gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);gl.uniform3fv(uniforms.uEye,eye);gl.uniform3fv(uniforms.uForward,forward);
       gl.uniform3fv(uniforms.uLightPosition,lightPositions);gl.uniform3fv(uniforms.uLightColor,lightColors);gl.uniform1i(uniforms.uLightCount,selected.length);
       gl.uniform2f(uniforms.uResolution,canvas.width,canvas.height);gl.uniform4f(uniforms.uEffects,t,fx.flash||0,fx.damage||0,Math.max(0,Math.min(1,fx.pulse||0)));
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,stats.shadows?shadowTarget.texture:whiteTexture);gl.uniform1i(uniforms.uShadowMap,2);
-      gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrix);gl.uniform2f(uniforms.uShadowSettings,stats.shadows?1:0,shadowTarget?1/shadowTarget.size:1);
-      renderBatch(worldBatch,worldBuffer,false);
+      gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrices);gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,0);gl.uniform3fv(uniforms.uTorchPosition,torchPosition);
+      renderBatch(visibleWorld,worldBuffer,true);
       renderBatch(dynamicBatch,dynamicBuffer,!stats.shadows);
       if(overlay.length) {gl.clear(gl.DEPTH_BUFFER_BIT);renderBatch(pack(overlay),overlayBuffer,true);}
       if(post)postPass();
@@ -1050,7 +1186,291 @@
     for (const q of [-1, 1]) box(exit.x + q * 1.8, 1.5, exit.z, 0.16, 3, 0.35, 4, true, theme.main, 1);
     box(exit.x, 3, exit.z, 3.75, 0.16, 0.35, 4, false, theme.main, 1);
     const bounds={minX:Math.floor(Math.min(...rooms.map(r=>r.x-r.w/2))-.8),maxX:Math.ceil(Math.max(...rooms.map(r=>r.x+r.w/2))+.8),minZ:Math.floor(Math.min(...rooms.map(r=>r.z-r.d/2))-.8),maxZ:Math.ceil(Math.max(...rooms.map(r=>r.z+r.d/2))+.8)};
-    return { seed, stage, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, bounds };
+    const world={ seed, stage, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, bounds };
+    detailWorld(world,theme,aperture,doorHeight);
+    return world;
+  }
+  // An independent art pass never consumes the layout/combat RNG. Everything
+  // below is attached to an existing solid, flat on the floor, or overhead.
+  // Consequently the v0.2 collision and checkpoint fingerprints stay identical.
+  function detailWorld(w,theme,aperture,doorHeight) {
+    const rand=randomFor('FERRO-detail-03:'+w.seed,w.stage),out=w.meshes,baseCount=out.length;
+    const ambience=[],categories={},roomCounts={};
+    const axes={x:[0,0,-Math.PI/2],y:[0,0,0],z:[Math.PI/2,0,0]};
+    let owner='';
+    function add(shape,p,s,mat=0,r=[0,0,0],detail=1,category='pipe',emissive=0,color) {
+      const mesh={shape,p,s,mat,r,detail,category};
+      if(emissive)mesh.emissive=emissive;if(color)mesh.color=color;
+      out.push(mesh);categories[category]=(categories[category]||0)+1;
+      if(owner)roomCounts[owner]=(roomCounts[owner]||0)+1;
+      return mesh;
+    }
+    const box=(p,s,mat=0,detail=1,category='panel',r=[0,0,0],emissive=0,color)=>add('box',p,s,mat,r,detail,category,emissive,color);
+    function tube(a,b,radius,mat=1,category='pipe',detail=1) {
+      const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz);
+      if(length<.005)return;
+      return add('cylinder',[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[radius*2,length,radius*2],mat,
+        [Math.atan2(dz,Math.hypot(dx,dy)),0,Math.atan2(-dx,dy)],detail,category);
+    }
+    function flange(p,radius,axis,bolts=true) {
+      const rotation=axes[axis];
+      add('cylinder',p,[radius*2.8,.075,radius*2.8],1,rotation,1,'flange');
+      add('ring',p,[radius*3.3,.14,radius*3.3],0,axis==='x'?[0,0,Math.PI/2]:axis==='z'?[Math.PI/2,0,0]:[0,0,0],1,'flange');
+      if(bolts)for(let j=0;j<4;j++) {
+        const a=j*TAU/4+.785,c=Math.cos(a)*radius*1.2,s=Math.sin(a)*radius*1.2;
+        const at=axis==='x'?[p[0]+.045,p[1]+c,p[2]+s]:axis==='z'?[p[0]+c,p[1]+s,p[2]+.045]:[p[0]+c,p[1]+.045,p[2]+s];
+        add('cylinder',at,[.065,.035,.065],3,rotation,2,'bolt');
+      }
+    }
+    function elbow(cx,y,cz,radius,start,end,thickness,mat=1) {
+      for(let j=0;j<5;j++) {
+        const a=start+(end-start)*j/5,b=start+(end-start)*(j+1)/5;
+        tube([cx+Math.cos(a)*radius,y,cz+Math.sin(a)*radius],[cx+Math.cos(b)*radius,y,cz+Math.sin(b)*radius],thickness,mat,'elbow');
+      }
+    }
+    function surface(x,z,nx,nz) {
+      const tx=nz,tz=-nx;
+      const at=(u,y,d=0)=>[x+tx*u+nx*d,y,z+tz*u+nz*d];
+      const plate=(u,y,d,width,height,depth,mat,category,detail=1,emit=0,color)=>
+        box(at(u,y,d),nx?[depth,height,width]:[width,height,depth],mat,detail,category,[0,0,0],emit,color);
+      const bolt=(u,y,d=.06)=>add('cylinder',at(u,y,d),[.055,.024,.055],1,nx?axes.x:axes.z,2,'bolt');
+      return {at,plate,bolt,nx,nz,tx,tz};
+    }
+    function gauge(s,u,y) {
+      const rot=s.nx?axes.x:axes.z;
+      add('cylinder',s.at(u,y,.055),[.34,.07,.34],0,rot,1,'gauge');
+      add('cylinder',s.at(u,y,.096),[.28,.014,.28],3,rot,2,'gauge',0,[.56,.61,.55]);
+      for(let k=0;k<8;k++) {
+        const a=(k/7*1.5+.25)*Math.PI;
+        s.plate(u+Math.cos(a)*.11,y+Math.sin(a)*.11,.108,.024,.024,.012,0,'gauge',2);
+      }
+      const a=.4+rand()*1.9,centre=s.at(u+Math.sin(a)*.043,y+Math.cos(a)*.043,.12);
+      box(centre,s.nx?[.016,.13,.018]:[.018,.13,.016],6,2,'gauge',s.nx?[a,0,0]:[0,0,-a]);
+    }
+    function servicePanel(s,u,y,width,screen,room) {
+      s.plate(u,y,.018,width,1.08,.035,1,'panel');
+      s.plate(u,y,.042,width-.09,.98,.025,0,'panel');
+      for(const q of [-1,1])for(const k of [-1,1])s.bolt(u+q*(width/2-.09),y+k*.44,.067);
+      if(screen) {
+        s.plate(u-.12,y+.1,.062,width*.68,.57,.022,7,'screen');
+        s.plate(u-.12,y+.1,.076,width*.61,.48,.012,4,'screen',1,.14,theme.main.map(c=>c*.2));
+        for(let j=0;j<4;j++) {
+          const len=.22+rand()*width*.27;
+          s.plate(u-width*.27+len/2,y+.25-j*.105,.086,len,.018,.012,4,'screen',len<=.3?2:1,.48,theme.main);
+        }
+        for(let j=0;j<4;j++)s.plate(u-width*.26+j*.16,y-.32,.067,.09,.065,.025,j===3?5:3,'switch',2,j===3?.4:0);
+        // At most one animated display per room; its normal avoids wall clipping.
+        if(!ambience.some(a=>a.type==='screen'&&a.room===room.id)) {
+          const p=s.at(u-.12,y+.1,.096);
+          ambience.push({type:'screen',x:p[0],y:p[1],z:p[2],phase:rand()*TAU,scale:1,color:theme.main,normal:[s.nx,0,s.nz],width:width*.58,height:.44,room:room.id});
+        }
+      } else {
+        for(let j=0;j<7;j++)s.plate(u,y-.33+j*.11,.07,width-.3,.035,.075,7,'louver');
+        s.plate(u,y+.56,.055,width-.15,.085,.04,3,'panel',1,0,theme.wall);
+      }
+    }
+    function cableTray(r,x,z,length,axis,drop=0) {
+      const y=r.h-.78-drop,width=.64,alongX=axis==='x';
+      for(const q of [-1,1])box([x+(alongX?0:q*width/2),y,z+(alongX?q*width/2:0)],alongX?[length,.15,.065]:[.065,.15,length],0,1,'cable_tray');
+      const rungs=Math.ceil(length/.8);
+      for(let j=0;j<=rungs;j++) {
+        const p=(j/rungs-.5)*length;
+        box([x+(alongX?p:0),y-.07,z+(alongX?0:p)],alongX?[.07,.055,width]:[width,.055,.07],1,1,'cable_tray');
+      }
+      for(let k=-1;k<=1;k++) {
+        const a=[x+(alongX?-length/2:k*.16),y+.025,z+(alongX?k*.16:-length/2)],b=[x+(alongX?length/2:k*.16),y+.025,z+(alongX?k*.16:length/2)];
+        const cable=tube(a,b,.037,k===0?1:7,'cable');
+        if(k===1)cable.color=[.12,.25,.27];
+      }
+      for(const q of [-1,0,1]) {
+        const px=x+(alongX?q*length*.38:0),pz=z+(alongX?0:q*length*.38);
+        for(const k of [-1,1])box([px+(alongX?0:k*.43),(y+r.h)/2,pz+(alongX?k*.43:0)],[.05,r.h-y,.05],1,1,'support');
+        box([px,y-.11,pz],alongX?[.1,.07,.94]:[.94,.07,.1],1,1,'support');
+      }
+    }
+    function drain(x,z,length,axis) {
+      const alongX=axis==='x';
+      box([x,.012,z],alongX?[length,.018,.44]:[.44,.018,length],7,1,'floor_drain');
+      for(const q of [-1,1])box([x+(alongX?0:q*.25),.026,z+(alongX?q*.25:0)],alongX?[length+.1,.02,.055]:[.055,.02,length+.1],1,1,'floor_drain');
+      const slats=Math.ceil(length/.23);
+      for(let i=0;i<=slats;i++) {
+        const d=(i/slats-.5)*length;
+        box([x+(alongX?d:0),.027,z+(alongX?0:d)],alongX?[.065,.018,.4]:[.4,.018,.065],0,1,'floor_drain');
+        if(i%5===0)for(const q of [-1,1])add('cylinder',[x+(alongX?d:q*.25),.044,z+(alongX?q*.25:d)],[.045,.012,.045],3,[0,0,0],2,'bolt');
+      }
+    }
+    function wallDetails(r,side) {
+      const alongX=side==='n'||side==='s',sign=side==='n'||side==='w'?-1:1,extent=alongX?r.w:r.d;
+      const nx=alongX?0:-sign,nz=alongX?-sign:0;
+      const x=r.x+(alongX?0:sign*(r.w/2-.343)),z=r.z+(alongX?sign*(r.d/2-.343):0),s=surface(x,z,nx,nz);
+      const spans=r.openings[side]?[[ -(extent+aperture)/4,(extent-aperture)/2],[(extent+aperture)/4,(extent-aperture)/2]]:[[0,extent-.6]];
+      // Convert the room's world-facing span coordinates to this wall's tangent.
+      for(const [offset,length] of spans) {
+        const u=offset*(alongX?s.tx:s.tz),panelWidth=Math.min(1.65,length-.5);
+        servicePanel(s,u,2.08,panelWidth,(r.id+(side==='n'?0:side==='s'?1:2))%3===0,r);
+        gauge(s,u+(length>4?1.28:0),length>4?1.58:3.0);
+        // Twin supply lines run along solid sections, never across a doorway.
+        for(const y of [.83,3.12]) {
+          tube(s.at(u-length/2+.22,y,.075),s.at(u+length/2-.22,y,.075),.048,y<1?7:1,'pipe');
+          for(let j=0;j<Math.ceil(length/1.8);j++) {
+            const cu=u-length/2+.35+j*(length-.7)/Math.max(1,Math.ceil(length/1.8)-1);
+            s.plate(cu,y,.076,.08,.22,.15,0,'clamp');
+            s.bolt(cu,y+.085,.16);
+          }
+        }
+        // Identification strips consist of actual small geometry, not a font asset.
+        for(let j=0;j<5;j++)s.plate(u-panelWidth*.3+j*.13,2.75,.035,.065,.11,.025,j===0?5:3,'marker',2,j===0?.2:0);
+        if(length>6) {
+          const ventU=u-length*.31;
+          s.plate(ventU,r.h-1.8,.015,1.7,.9,.03,7,'vent');
+          for(let j=0;j<8;j++)s.plate(ventU,r.h-2.15+j*.1,.06,1.6,.035,.10,1,'louver');
+          for(const q of [-1,1])s.plate(ventU+q*.88,r.h-1.8,.045,.06,1.02,.1,0,'vent');
+        }
+      }
+      if(r.openings[side]) {
+        // Mechanical jambs occupy the existing wall face. Teeth sit above heads.
+        for(const q of [-1,1]) {
+          const u=q*(aperture/2+.15);
+          s.plate(u,doorHeight/2,.015,.22,doorHeight-.16,.035,0,'door_mechanism');
+          tube(s.at(u,.3,.07),s.at(u,doorHeight-.3,.07),.05,3,'door_mechanism');
+          for(const y of [.45,1.55,doorHeight-.45]) {
+            s.plate(u,y,.07,.26,.16,.09,1,'door_mechanism');
+            for(const k of [-1,1])s.bolt(u+k*.085,y,.126);
+          }
+          const at=s.at(u,doorHeight-.1,.08);
+          add('sphere',at,[.13,.13,.13],5,[0,0,0],1,'beacon',.7,theme.alt);
+        }
+        s.plate(0,doorHeight+.27,.025,aperture+.3,.35,.07,1,'door_mechanism');
+        for(let j=0;j<8;j++)s.plate((j-3.5)*aperture/8,doorHeight+.21,.075,.15,.12,.06,7,'door_mechanism');
+        for(const q of [-1,1])s.bolt(q*aperture*.42,doorHeight+.31,.08);
+        const threshold=s.at(0,.025,.1);
+        box(threshold,alongX?[aperture,.025,.45]:[.45,.025,aperture],7,1,'threshold');
+        for(let j=0;j<12;j++) {
+          const p=s.at((j-5.5)*aperture/12,.042,.1);
+          box(p,alongX?[.06,.015,.4]:[.4,.015,.06],1,1,'threshold');
+        }
+      }
+    }
+    for(const r of w.rooms) {
+      owner='room-'+r.id;
+      // A complete overhead network with flanges, hanger clamps and rounded bends.
+      for(const q of [-1,1]) {
+        const z=r.z+q*(r.d/2-1.15),y=r.h-1.13,left=r.x-r.w/2+1.45,right=r.x+r.w/2-1.45;
+        tube([left,y,z],[right,y,z],w.stage===1?.17:.12,1,'pipe');
+        const joints=Math.max(3,Math.ceil((right-left)/2.6));
+        for(let j=0;j<=joints;j++) {
+          const x=left+(right-left)*j/joints;
+          flange([x,y,z],w.stage===1?.17:.12,'x');
+          box([x,(y+r.h)/2,z],[.065,r.h-y,.065],0,1,'support');
+          box([x,y-.18,z],[.14,.07,.5],0,1,'clamp');
+        }
+        for(const side of [-1,1])elbow(r.x+side*(r.w/2-1.45),y,z-q*.35,.35,q*Math.PI/2,side>0?0:q*Math.PI,.12);
+        // Cable bundles remain separate from the fluid pipework.
+        cableTray(r,r.x+q*1.25,r.z,r.d-1.7,'z');
+        drain(r.x+q*(r.w/2-2.75),r.z,r.d*.46,'z');
+      }
+      cableTray(r,r.x,r.z-3.2,r.w-2.1,'x',.42);
+      for(const side of ['n','s','e','w'])wallDetails(r,side);
+      // Equipment footprints already have physical collision: add readable panels,
+      // cable glands, inspection hatches and bolted ribs to their existing fronts.
+      for(const q of [-1,1]) {
+        const x=r.x+q*(r.w/2-2),sign=r.id%2?-1:1,z=r.z+sign*(r.d/2-2);
+        const body=w.colliders.find(c=>Math.abs((c.minX+c.maxX)/2-x)<.01&&Math.abs((c.minZ+c.maxZ)/2-z)<.01&&Math.abs(c.maxX-c.minX-1.65)<.01);
+        if(!body)continue;
+        const s=surface(x,z-sign*.807,0,-sign),y=Math.min(body.maxY-.2,1.32);
+        s.plate(0,y,.025,1.28,.45,.035,7,'equipment');
+        for(let j=0;j<5;j++)s.plate(-.43+j*.22,y,.054,.12,.29,.025,j===0?4:0,'equipment',1,j===0?.4:0);
+        for(const a of [-1,1])for(const b of [-1,1])s.bolt(a*.69,Math.max(.25,body.maxY/2+b*(body.maxY/2-.15)),.048);
+        // The riser stays inside the existing machine's horizontal footprint.
+        const pipeX=x+q*.38,pipeZ=z+sign*.32,top=r.h-1.45;
+        tube([pipeX,body.maxY+.08,pipeZ],[pipeX,top,pipeZ],w.stage===1?.14:.075,w.stage===2?0:1,'riser');
+        for(let k=0;k<3;k++)flange([pipeX,body.maxY+.25+(top-body.maxY-.4)*k/2,pipeZ],w.stage===1?.14:.075,'y',k!==1);
+        for(const k of [-1,1])box([x+k*.71,body.maxY+.08,z],[.075,.15,1.45],1,1,'equipment');
+        // Flat hazard paint outlines the machine footprint and can be walked over.
+        for(let k=0;k<6;k++)box([x+(k-2.5)*.29,.026,z-sign*1.02],[.11,.012,.32],5,1,'hazard_marking',[0,-sign*.5,0],.08,theme.alt);
+        if(q===1) {
+          const type=w.stage===1?'steam':w.stage===2?'sparks':'drip';
+          const mouth=[pipeX,Math.max(3.0,Math.min(top-.25,3.8)),pipeZ-sign*.15];
+          tube([pipeX,mouth[1],pipeZ],mouth,.075,0,'nozzle');
+          ambience.push({type,x:mouth[0],y:mouth[1],z:mouth[2],phase:rand()*TAU,scale:w.stage===1?.65:.34,color:w.stage===1?[.44,.53,.53]:theme.alt,room:r.id});
+        }
+      }
+      // High wall ventilation cabinets add depth behind their louver faces.
+      for(const q of [-1,1]) {
+        const x=r.x+q*(r.w/2-.85),z=r.z+2.8,y=r.h-2.15;
+        box([x,y,z],[.65,.82,1.8],0,1,'vent');
+        for(let j=0;j<9;j++)box([x-q*.34,y-.3+j*.075,z],[.08,.025,1.62],1,1,'louver');
+        for(const k of [-1,1])box([x-q*.36,y,z+k*.9],[.12,.94,.075],1,1,'vent');
+      }
+      // Stage-specific silhouettes complement the common construction vocabulary.
+      if(w.stage===0) {
+        for(const q of [-1,1]) {
+          const x=r.x+q*(r.w/2-.75),z=r.z-3.9,s=surface(x-q*.39,z,-q,0);
+          gauge(s,.35,1.27);
+          for(let j=0;j<4;j++)s.plate(-.44+j*.27,.57,.035,.11,.1,.035,j===3?5:3,'switch',2,j===3?.4:0);
+          for(let j=0;j<4;j++)tube([x-q*.1,2.1,z+(j-1.5)*.2],[x-q*.1,r.h-.5,z+(j-1.5)*.2],.025,j%2?7:1,'cable');
+        }
+      } else if(w.stage===1) {
+        for(const q of [-1,1]) {
+          const x=r.x+q*(r.w/2-1.7),z=r.z-2.9,s=surface(x-q*.67,z,-q,0);
+          gauge(s,.49,2.65);
+          for(let j=0;j<6;j++) {
+            const a=j*TAU/6,at=s.at(Math.cos(a)*.35,1.75+Math.sin(a)*.35,.025);
+            add('cylinder',at,[.05,.04,.05],3,axes.x,2,'bolt');
+          }
+          for(const k of [-1,1])tube([x+k*.35,3.25,z],[x+k*.35,4.7,z],.055,0,'pipe');
+          flange([x,4.65,z],.46,'y');
+        }
+        for(let j=-1;j<=1;j++)tube([r.x+j*.34,r.h-1.15,r.z-r.d/2+.8],[r.x+j*.34,r.h-1.15,r.z+r.d/2-.8],.11,1,'header');
+      } else {
+        const ringY=r.archetype==='reactor'?5.3:r.archetype==='arena'?5.8:4.5,diameter=r.archetype==='reactor'?8:r.archetype==='arena'?6.5:3.1;
+        for(let j=0;j<12;j++) {
+          const a=j*TAU/12,x=r.x+Math.cos(a)*diameter*.5,z=r.z+Math.sin(a)*diameter*.5;
+          box([x,ringY,z],[.25,.36,.42],0,1,'reactor_fins',[0,-a,0]);
+          box([x,ringY-.21,z],[.12,.045,.32],4,1,'reactor_fins',[0,-a,0],.45,theme.main);
+          for(const q of [-1,1])add('cylinder',[x,ringY+q*.21,z],[.065,.035,.065],1,[0,0,0],2,'bolt');
+        }
+      }
+    }
+    // Corridors use the same systems at a smaller scale, including dense frame
+    // detailing: the player sees the improvement while travelling, not only at hubs.
+    for(let index=0;index<w.corridors.length;index++) {
+      owner='corridor-'+index;
+      const c=w.corridors[index],link=w.connections[index],alongX=link.z1===link.z2,length=alongX?c.w:c.d,height=doorHeight+.2;
+      const along=(u,v,y)=>[c.x+(alongX?u:v),y,c.z+(alongX?v:u)];
+      for(const q of [-1,1]) {
+        const v=q*(aperture/2-.012),s=alongX?surface(c.x,c.z+v,0,-q):surface(c.x+v,c.z,-q,0);
+        tube(along(-length/2+.1,q*(aperture/2-.48),height-.72),along(length/2-.1,q*(aperture/2-.48),height-.72),.07,7,'cable');
+        const ribs=Math.max(2,Math.ceil(length/1.9));
+        for(let j=0;j<ribs;j++) {
+          const u=(j+.5)/ribs*length-length/2,p=along(u,q*(aperture/2-.5),height-.45);
+          flange(p,.12,alongX?'x':'z',j%2===0);
+          s.plate(u*(alongX?s.tx:s.tz),1.65,.01,.16,2.7,.04,1,'support');
+          for(const y of [.48,1.45,2.6])s.bolt(u*(alongX?s.tx:s.tz),y,.06);
+        }
+        const u=0;
+        s.plate(u,1.95,.025,Math.min(1.5,length-.6),.82,.04,7,'vent');
+        for(let j=0;j<6;j++)s.plate(u,1.7+j*.1,.065,Math.min(1.32,length-.8),.035,.08,1,'louver');
+      }
+      const cRoom={h:height};
+      cableTray(cRoom,c.x,c.z,length-.2,alongX?'x':'z');
+      drain(c.x,c.z,Math.min(1.5,length*.4),alongX?'z':'x');
+      // Narrow ceiling conduits and crossing brackets give the shadow lights edges.
+      for(const q of [-1,1])tube(along(-length/2,q*.65,height-.42),along(length/2,q*.65,height-.42),.045,1,'pipe');
+      const p=along(0,aperture/2-.13,2.65);
+      add('sphere',p,[.12,.12,.12],4,[0,0,0],1,'beacon',.8,theme.main);
+      if(index%2===0)ambience.push({type:'beacon',x:p[0],y:p[1],z:p[2],phase:rand()*TAU,scale:.12,color:theme.main});
+    }
+    for(const h of w.hazards) {
+      owner='vent';
+      for(let j=0;j<12;j++) {
+        const a=j*TAU/12,r=h.r+.37,x=h.x+Math.cos(a)*r,z=h.z+Math.sin(a)*r;
+        box([x,.028,z],[.12,.018,.28],5,1,'hazard_marking',[0,-a,0],.12,theme.alt);
+        if(j%2===0)add('cylinder',[h.x+Math.cos(a)*(h.r+.15),.06,h.z+Math.sin(a)*(h.r+.15)],[.065,.025,.065],3,[0,0,0],2,'bolt');
+      }
+    }
+    w.ambience=ambience;
+    w.detailStats={base:baseCount,added:out.length-baseCount,tiers:[out.filter(m=>!m.detail).length,out.filter(m=>m.detail===1).length,out.filter(m=>m.detail===2).length],categories,regions:roomCounts};
   }
   function isWalkable(world, x, z, radius) {
     const r = radius === undefined ? 0.35 : radius;
@@ -1080,7 +1500,7 @@
     const targets = [world.spawn, ...world.cores, world.exit, ...world.enemies, ...world.pickups];
     const errors = [];
     targets.forEach((p, i) => { if (!isWalkable(world, p.x, p.z, 0.38) || !seen[index(p.x, p.z)]) errors.push('Unreachable target ' + i); });
-    if (world.meshes.length > 2600) errors.push('Mesh budget exceeded');
+    if (world.meshes.length > 12000) errors.push('Mesh budget exceeded');
     if (world.colliders.length > 350) errors.push('Collider budget exceeded');
     if (world.cores.length !== 3) errors.push('Expected three relays');
     const safeRoom = world.rooms[0];
@@ -1285,6 +1705,12 @@
           noise(.045, .075, 2300, .2);
           tone(170, 98, .065, .055, 'triangle', .025, .1, 1200);
         },
+        dash: function () {
+          if (!available()) return;
+          noise(.17, .075, 1850, -.18, 0, 'highpass');
+          noise(.12, .055, 850, .18, .04, 'lowpass');
+          tone(180, 65, .18, .035, 'sine', 0, 0, 500);
+        },
         enemyShot: function (event) {
           event = event || {};
           var level = (event.level || 1) * .075, pan = event.pan || 0;
@@ -1327,12 +1753,14 @@
         },
         step: function (speed) {
           if (!available() || !(speed > .2)) return;
-          var interval = Math.max(.22, Math.min(.55, 1.35 / speed));
-          if (ctx.currentTime - lastStep < interval) return;
+          // The measured stride in game.js schedules steps; this only rejects duplicates.
+          if (ctx.currentTime - lastStep < .1) return;
           lastStep = ctx.currentTime; stepSide *= -1;
-          noise(.075, .09, 430 + random() * 120, stepSide * .24, 0, 'lowpass');
-          tone(67 + random() * 8, 34, .07, .055, 'sine', 0, stepSide * .18);
-          noise(.035, .018, 2600, stepSide * .25, .025);
+          var weight = Math.max(.55, Math.min(1.2, speed / 4.5));
+          noise(.075, .09 * weight, 430 + random() * 120, stepSide * .24, 0, 'lowpass');
+          tone(67 + random() * 8, 34, .07, .055 * weight, 'sine', 0, stepSide * .18);
+          noise(.035, .018 * weight, 2600, stepSide * .25, .025);
+          noise(.055, .009 * weight, 1500, -stepSide * .12, .055, 'highpass');
         },
         dispose: function () {
           if (disposed) return;
@@ -1373,6 +1801,10 @@
       cores:world.cores.map(c=>({...c,taken:false})),pickups:world.pickups.map(c=>({...c,taken:false})),
       hazards:(world.hazards||[]).map(h=>({...h,hot:false,warning:false}))};
     s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);
+    // Public locomotion values describe displacement after collision, never held keys.
+    const locomotion=s.locomotion={vx:0,vz:0,speed:0,forward:0,strafe:0,stridePhase:0,distance:0,
+      moveBlend:0,sprintBlend:0,dashBlend:0,accelForward:0,accelStrafe:0,blocked:false};
+    let velocityX=0,velocityZ=0,dashAge=.2,dashX=0,dashZ=0;
     let fireWait=0,navWait=0,hazardWait=0,recovery=0;
     const solids=world.colliders.filter(b=>b.minY<1.8&&b.maxY>.06),b=world.bounds;
     let fingerprint=2166136261;
@@ -1387,6 +1819,86 @@
       const count=Math.max(1,Math.ceil(Math.max(Math.abs(dx),Math.abs(dz))/.12));
       dx/=count;dz/=count;
       for(let j=0;j<count;j++){if(!blocked(e.x+dx,e.z,r))e.x+=dx;if(!blocked(e.x,e.z+dz,r))e.z+=dz;}
+    }
+    function stopMotion(reset=false){
+      velocityX=velocityZ=0;dashAge=.2;dashX=dashZ=0;s.moving=0;
+      for(const key of ['vx','vz','speed','forward','strafe','moveBlend','sprintBlend','dashBlend','accelForward','accelStrafe'])locomotion[key]=0;
+      locomotion.blocked=false;
+      if(reset)locomotion.stridePhase=locomotion.distance=0;
+    }
+    // Exact integral of a short smoothstep ramp, plateau, and smoothstep release.
+    // The boost ends at 0.2s and never enters normal movement's velocity accumulator.
+    function dashIntegral(time){
+      const t=clamp(time,0,.2);
+      if(t<.025){const u=t/.025;return .025*(u*u*u-.5*u*u*u*u);}
+      if(t<=.15)return .0125+t-.025;
+      const u=(t-.15)/.05;return .1375+.05*(u-u*u*u+.5*u*u*u*u);
+    }
+    function locomote(dt,input){
+      let mx=Number.isFinite(input.moveX)?input.moveX:0,my=Number.isFinite(input.moveY)?input.moveY:0;
+      let magnitude=Math.hypot(mx,my);
+      if(magnitude>1){mx/=magnitude;my/=magnitude;magnitude=Math.hypot(mx,my);}
+      if(magnitude<.002){mx=my=magnitude=0;}
+      const cy=Math.cos(p.yaw),sy=Math.sin(p.yaw),speed=input.sprint?5.8:4.2;
+      const targetX=(cy*mx+sy*my)*speed,targetZ=(sy*mx-cy*my)*speed;
+      if(input.dash&&p.dash<=0){
+        p.dash=1.7;p.dashing=.2;dashAge=0;
+        if(magnitude>.1){dashX=(cy*mx+sy*my)/magnitude;dashZ=(sy*mx-cy*my)/magnitude;}
+        else {dashX=sy;dashZ=-cy;}
+        emit('dash');
+      }
+      if(!(dt>0))return;
+      let dx=0,dz=0;
+      function integrate(duration,rate){
+        if(duration<=0)return;
+        const decay=Math.exp(-rate*duration),area=(1-decay)/rate;
+        dx+=targetX*duration+(velocityX-targetX)*area;
+        dz+=targetZ*duration+(velocityZ-targetZ)*area;
+        velocityX=targetX+(velocityX-targetX)*decay;
+        velocityZ=targetZ+(velocityZ-targetZ)*decay;
+      }
+      const startX=p.x,startZ=p.z,previousX=locomotion.vx,previousZ=locomotion.vz;
+      let travel=0,dashContribution=0,collided=false;
+      // Resolve short physical segments as well as the exact velocity integral. This
+      // preserves reversal/turning arc length and wall contact at lower frame rates.
+      const count=Math.max(1,Math.ceil(dt*120)),part=dt/count;
+      for(let sample=0;sample<count;sample++){
+        dx=dz=0;
+        if(!magnitude&&Math.hypot(velocityX,velocityZ)<.008)velocityX=velocityZ=0;
+        const dot=velocityX*targetX+velocityZ*targetZ,targetSquared=targetX*targetX+targetZ*targetZ;
+        if(magnitude&&dot<0){
+          const crossing=Math.log((targetSquared-dot)/targetSquared)/38,first=Math.min(part,crossing);
+          integrate(first,38);integrate(part-first,20);
+        }else integrate(part,magnitude?20:32);
+        let weight=0;
+        if(dashAge<.2){
+          const end=Math.min(.2,dashAge+part),area=dashIntegral(end)-dashIntegral(dashAge);
+          weight=area/part;
+          dx=dx*(1-weight)+dashX*13.2*area;
+          dz=dz*(1-weight)+dashZ*13.2*area;
+          dashAge=end;p.dashing=Math.max(0,.2-dashAge);
+        }else p.dashing=Math.max(0,p.dashing-part);
+        const x=p.x,z=p.z;move(p,dx,dz);
+        const ax=p.x-x,az=p.z-z,distance=Math.hypot(ax,az),wanted=Math.hypot(dx,dz);
+        const blockedX=Math.abs(ax-dx)>1e-8,blockedZ=Math.abs(az-dz)>1e-8;
+        if(blockedX)velocityX=0;if(blockedZ)velocityZ=0;collided ||= blockedX||blockedZ;
+        travel+=distance;
+        if(distance>1e-8)dashContribution+=weight*clamp(distance/Math.max(wanted,1e-8),0,1)*part;
+      }
+      const actualX=p.x-startX,actualZ=p.z-startZ;
+      locomotion.vx=actualX/dt;locomotion.vz=actualZ/dt;locomotion.speed=travel/dt;s.moving=locomotion.speed;
+      locomotion.forward=sy*locomotion.vx-cy*locomotion.vz;
+      locomotion.strafe=cy*locomotion.vx+sy*locomotion.vz;
+      locomotion.blocked=collided;
+      locomotion.moveBlend=clamp(locomotion.speed/4.2,0,1);
+      locomotion.dashBlend=clamp(dashContribution/dt,0,1);
+      locomotion.sprintBlend=clamp((locomotion.speed-4.2)/1.6,0,1)*(1-locomotion.dashBlend);
+      const ax=(locomotion.vx-previousX)/dt,az=(locomotion.vz-previousZ)/dt;
+      locomotion.accelForward=clamp(sy*ax-cy*az,-80,80);
+      locomotion.accelStrafe=clamp(cy*ax+sy*az,-80,80);
+      locomotion.distance+=travel;
+      locomotion.stridePhase=(locomotion.stridePhase+travel/(2.4+.5*locomotion.sprintBlend)*Math.PI*2)%(Math.PI*2);
+      if(!travel){locomotion.vx=locomotion.vz=locomotion.speed=locomotion.forward=locomotion.strafe=0;}
     }
     function ray(o,d,far=80){
       let best=far;
@@ -1422,7 +1934,7 @@
     function hurt(amount){
       if(!(amount>0)||p.dashing>0||recovery>0||s.dead||s.won)return;
       p.hp=Math.max(0,p.hp-amount);s.damage=1;s.combo=0;s.comboTime=0;emit('hurt');
-      if(!p.hp){s.dead=true;emit('dead');}
+      if(!p.hp){s.dead=true;stopMotion();emit('dead');}
     }
     function bossPhase(e){
       if(e.type===3&&e.hp>0&&e.hp<=e.maxHp/2&&e.phase===0){
@@ -1582,13 +2094,9 @@
       if(input.weapon===0||input.weapon===1)s.weapon=input.weapon;
       p.yaw+=Number.isFinite(input.lookX)?input.lookX:0;p.pitch=clamp(p.pitch+(Number.isFinite(input.lookY)?input.lookY:0),-1.2,1.2);
       p.heat=Math.max(0,p.heat-dt*(fireWait>0?.1:.35));if(p.overheated&&p.heat<.3){p.overheated=false;emit('cooled');}
-      p.dash=Math.max(0,p.dash-dt);p.dashing=Math.max(0,p.dashing-dt);p.pulseCooldown=Math.max(0,p.pulseCooldown-dt);
-      if(input.dash&&p.dash<=0){p.dash=1.7;p.dashing=.2;emit('dash');}
+      p.dash=Math.max(0,p.dash-dt);p.pulseCooldown=Math.max(0,p.pulseCooldown-dt);
       if(input.pulse)pulse();
-      let mx=input.moveX||0,my=input.moveY||0,len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len;}
-      if(p.dashing>0&&len<.1)my=1;
-      const speed=p.dashing>0?12:input.sprint?5.8:4.2,dx=(Math.cos(p.yaw)*mx+Math.sin(p.yaw)*my)*speed*dt,dz=(Math.sin(p.yaw)*mx-Math.cos(p.yaw)*my)*speed*dt;
-      move(p,dx,dz);s.moving=Math.hypot(dx,dz)/Math.max(dt,.001);
+      locomote(dt,input);
       if(input.fire)fire(input.assist);
       if(navWait<=0){rebuildNav();navWait=.6;}
       updateEnemies(dt);
@@ -1610,7 +2118,7 @@
       for(const q of s.particles){q.life-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.z+=q.vz*dt;q.vy-=dt*3;}
       s.particles=s.particles.filter(q=>q.life>0);
       s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);
-      if(s.relays===3&&!s.bossAlive&&Math.hypot(p.x-world.exit.x,p.z-world.exit.z)<1.5&&!s.dead){s.won=true;s.score+=500;emit('win');}
+      if(s.relays===3&&!s.bossAlive&&Math.hypot(p.x-world.exit.x,p.z-world.exit.z)<1.5&&!s.dead){s.won=true;s.score+=500;stopMotion();emit('win');}
     }
     function snapshot(){
       return {version:1,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
@@ -1663,7 +2171,7 @@
         Object.assign(p,pick(v,PLAYER));Object.assign(s,pick(a,NUMBERS),{won:a.won,dead:a.dead,bossAlive:a.bossAlive,enemies,bullets});
         s.cores=world.cores.map((c,i)=>({...c,taken:a.cores[i]}));s.pickups=world.pickups.map((c,i)=>({...c,taken:a.pickups[i]}));
         s.events=[];s.particles=[];s.pulseVisual=0;s.flash=0;s.damage=0;s.hitMarker=0;s.moving=0;s.threat=0;
-        fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;recovery=0;
+        fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;recovery=0;stopMotion(true);
         if(options?.recover===true&&!s.dead&&!s.won){recovery=1.4;s.bullets=s.bullets.filter(q=>Math.hypot(q.x-p.x,q.z-p.z)>=2.4);}
         rebuildNav();updateHazards(false);return true;
       }catch(_){return false;}
@@ -1672,6 +2180,91 @@
     return {state:s,step,fire,pulse,blocked,move,ray,sight,hurt,snapshot,restore,nav:{cells:nav,dist,nx,nz,cell,coord,idx,rebuild:rebuildNav}};
   }
   G.FSimulation={create,clamp};
+})(typeof window!=='undefined'?window:globalThis);
+
+;
+/* FERRO — damped presentation. Aim and collision state are never modified here. */
+(function(G){
+  'use strict';
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const finite=(v,fallback=0)=>Number.isFinite(v)?v:fallback;
+  function basis(yaw=0,pitch=0,roll=0){
+    const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch),cr=Math.cos(roll),sr=Math.sin(roll);
+    const r=[cy,0,sy],u=[-sy*sp,cp,cy*sp],b=[-sy*cp,-sp,cy*cp];
+    return [r.map((v,k)=>v*cr+u[k]*sr),u.map((v,k)=>v*cr-r[k]*sr),b];
+  }
+  function rotation(x=0,y=0,z=0){
+    const cx=Math.cos(x),sx=Math.sin(x),cy=Math.cos(y),sy=Math.sin(y),cz=Math.cos(z),sz=Math.sin(z);
+    return [[cz*cy,sz*cy,-sy],[cz*sy*sx-sz*cx,sz*sy*sx+cz*cx,cy*sx],[cz*sy*cx+sz*sx,sz*sy*cx-cz*sx,cy*cx]];
+  }
+  const vector=(axes,v)=>[0,1,2].map(k=>axes[0][k]*v[0]+axes[1][k]*v[1]+axes[2][k]*v[2]);
+  function mount(camera,offset=[0,0,0],angles=[0,0,0]){
+    const axes=basis(camera.yaw||0,camera.pitch||0,camera.roll||0),shift=vector(axes,offset);
+    return {pos:camera.pos.map((v,k)=>v+shift[k]),axes:rotation(...angles).map(v=>vector(axes,v))};
+  }
+  function place(frame,offset,rx=0){
+    const shift=vector(frame.axes,offset),c=Math.cos(rx),s=Math.sin(rx);
+    const axes=[frame.axes[0],frame.axes[1].map((v,k)=>v*c+frame.axes[2][k]*s),frame.axes[2].map((v,k)=>v*c-frame.axes[1][k]*s)];
+    const ry=Math.asin(clamp(-axes[0][2],-1,1)),regular=Math.abs(Math.cos(ry))>1e-6;
+    const r=regular?[Math.atan2(axes[1][2],axes[2][2]),ry,Math.atan2(axes[0][1],axes[0][0])]:[Math.atan2(-axes[2][1],axes[1][1]),ry,0];
+    return {p:frame.pos.map((v,k)=>v+shift[k]),r};
+  }
+  function create(){
+    const springs={};
+    const view={height:0,roll:0,fov:0,weapon:{offset:[0,0,0],rotation:[0,0,0],slide:0}};
+    function channel(key){return springs[key]||(springs[key]={x:0,v:0});}
+    // Exact critically damped step for a constant target. Stable at any render cadence.
+    function damp(key,target,omega,dt){
+      const q=channel(key),x=q.x-target,e=Math.exp(-omega*dt),t=(q.v+omega*x)*dt;
+      q.x=target+(x+t)*e;q.v=(q.v-omega*t)*e;return q.x;
+    }
+    function impulse(kind){
+      if(kind==='shot')channel('kick').v+=1.9;
+      else if(kind==='fracture')channel('kick').v+=3.5;
+      else if(kind==='switch')channel('equip').v-=2.5;
+      else if(kind==='hurt')channel('impact').v+=.7;
+      else if(kind==='pulse')channel('equip').v-=1.1;
+    }
+    function reset(){
+      for(const key of Object.keys(springs))delete springs[key];
+      view.height=view.roll=view.fov=0;view.weapon.offset.fill(0);view.weapon.rotation.fill(0);view.weapon.slide=0;
+      return view;
+    }
+    function update(dt,loc={},signals={},enabled=true){
+      dt=clamp(finite(dt),0,.12);
+      const speed=Math.max(0,finite(loc.speed)),move=speed>.04?clamp(finite(loc.moveBlend),0,1):0;
+      const run=clamp(finite(loc.sprintBlend),0,1),dash=clamp(finite(loc.dashBlend),0,1),phase=finite(loc.stridePhase);
+      const strafe=clamp(finite(loc.strafe)/5,-1,1),forward=clamp(finite(loc.forward)/5,-1,1);
+      const yawRate=clamp(finite(signals.lookYaw),-8,8),pitchRate=clamp(finite(signals.lookPitch),-6,6),time=finite(signals.time);
+      const kick=damp('kick',0,25,dt),equip=damp('equip',0,17,dt),impact=damp('impact',0,23,dt);
+      const intensity=enabled?1:.22,runPose=run*(signals.firing?.3:1);
+      const breathing=Math.sin(time*1.45)*.002*(1-move);
+      const x=damp('x',Math.sin(phase)*.018*move-strafe*.021-yawRate*.0045,18,dt);
+      const y=damp('y',Math.cos(phase*2)*.012*move-runPose*.035-dash*.035+breathing,19,dt);
+      const z=damp('z',runPose*.018+dash*.04-forward*.006,16,dt);
+      const pitch=damp('pitch',runPose*-.12-pitchRate*.012-clamp(finite(loc.accelForward),-20,20)*.0016,18,dt);
+      const yaw=damp('yaw',-yawRate*.014-strafe*.018,19,dt);
+      const roll=damp('weaponRoll',-strafe*.065-Math.sin(phase)*.018*move-yawRate*.004,18,dt);
+      view.weapon.offset[0]=x*intensity;
+      view.weapon.offset[1]=(y+equip-impact*.24)*intensity;
+      view.weapon.offset[2]=z*intensity+kick*(enabled?1:.55);
+      view.weapon.rotation[0]=pitch*intensity+kick*.85;
+      view.weapon.rotation[1]=yaw*intensity;
+      view.weapon.rotation[2]=roll*intensity;
+      view.weapon.slide=clamp(kick*1.1,0,.075);
+      if(enabled){
+        view.height=damp('height',Math.cos(phase*2)*.010*move-dash*.022,21,dt);
+        view.roll=damp('cameraRoll',-strafe*.008+clamp(yawRate*.0007,-.004,.004),13,dt);
+        view.fov=damp('fov',run*4.5+dash*5.5,12,dt);
+      }else{
+        view.height=view.roll=view.fov=0;
+        for(const key of ['height','cameraRoll','fov']){const q=channel(key);q.x=q.v=0;}
+      }
+      return view;
+    }
+    return {view,reset,update,impulse};
+  }
+  G.FMotion={create,basis,mount,place};
 })(typeof window!=='undefined'?window:globalThis);
 
 ;
@@ -1684,10 +2277,10 @@
   let muted=false,quality='auto',softMotion=true;
   try{const v=JSON.parse(localStorage.getItem('ferro-settings')||'{}');muted=!!v.muted;quality=['auto','low','high'].includes(v.quality)?v.quality:'auto';softMotion=v.softMotion!==false;}catch{}
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)softMotion=false;
-  const audio=FAudio.create(),SAVE_KEY='ferro-expedition-v2';
+  const audio=FAudio.create(),motion=FMotion.create(),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,wasLocked=false,perfStart=last,perfFrames=0;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
-  let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,saveAvailable=true;
+  let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,saveAvailable=true,lastFootstep=0;
   const keys=new Set(),input={moveX:0,moveY:0,lookX:0,lookY:0,fire:false,dash:false,pulse:false,weapon:0,sprint:false,assist:touch};
   let mouseFire=false,touchFire=false,dragLook=null,moveTouch=null,stick={x:0,y:0},lookDX=0,lookDY=0,dashQueued=false,pulseQueued=false;
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify({muted,quality,softMotion}));}catch{}}
@@ -1734,6 +2327,7 @@
   }
   function load(n,newSeed){
     stage=n;if(newSeed!==undefined)seed=newSeed;world=FWorld.create(seed,stage);sim=FSimulation.create(world);sim.state.weapon=selectedWeapon;renderer.setWorld(world.meshes,world.lights);
+    motion.reset();lastFootstep=0;
     audio.setStage?.(stage);
     $('sector-number').textContent='ÉTAGE '+String(stage+1).padStart(2,'0')+' / 03';$('sector-title').textContent=world.title;
     document.body.dataset.stage=String(stage+1);$('radar-wrap').hidden=false;hudWait=0;renderHUD();
@@ -1764,6 +2358,7 @@
   function events(){
     let checkpointDue=false;
     for(const e of sim.state.events){
+      motion.impulse(e.name);
       if(typeof audio[e.name]==='function'){
         const p=sim.state.player,d=Number.isFinite(e.x)?Math.hypot(e.x-p.x,e.z-p.z):0;
         const pan=Number.isFinite(e.x)?clamp(((e.x-p.x)*Math.cos(p.yaw)+(e.z-p.z)*Math.sin(p.yaw))/Math.max(1,d),-1,1):0;
@@ -1784,7 +2379,9 @@
   }
   const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>({shape,p,s,mat,r,emissive});
   function machinery(out,t){
+    const player=sim.state.player,range=quality==='low'?25:43;
     for(const a of world.machinery||[]){
+      if(Math.hypot(a.x-player.x,a.z-player.z)>range)continue;
       const size=a.size||2,turn=t*a.speed,axis=a.axis||'y';
       if(a.type==='fan'){
         const ringRot=axis==='x'?[0,0,Math.PI/2]:axis==='z'?[Math.PI/2,0,0]:[0,0,0];
@@ -1814,8 +2411,38 @@
       }
     }
   }
-  function models(t,playing){
-    const out=[],s=sim.state,p=s.player;machinery(out,t);
+  function ambience(out,t){
+    const p=sim.state.player,range=quality==='low'?10:22;
+    const near=(world.ambience||[]).filter(a=>quality!=='low'||a.type==='screen'||a.type==='beacon').map(a=>({a,d:Math.hypot(a.x-p.x,a.z-p.z)})).filter(v=>v.d<range).sort((a,b)=>a.d-b.d).slice(0,quality==='low'?3:9);
+    function piece(shape,pos,size,mat,em,color,r=[0,0,0]){const mesh=m(shape,pos,size,mat,r,em);if(color)mesh.color=color;out.push(mesh);}
+    for(const {a} of near){
+      const phase=a.phase||0,scale=a.scale||1;
+      if(a.type==='screen'){
+        const n=a.normal||[0,0,1],width=a.width||.6,height=a.height||.4;
+        const scan=((t*.22+phase)%1-.5)*height;
+        piece('box',[a.x+n[0]*.012,a.y+scan,a.z+n[2]*.012],n[0]?[.009,.012,width]:[width,.012,.009],4,.55,a.color);
+      }else if(a.type==='beacon'){
+        const beat=Math.pow(Math.max(0,Math.sin(t*2.2+phase)),6),s=scale*(.8+beat*.2);
+        piece('sphere',[a.x,a.y,a.z],[s,s,s],4,.3+beat*1.5,a.color);
+      }else if(quality!=='low'&&a.type==='steam'){
+        for(let j=0;j<4;j++){
+          const q=(t*.45+phase+j*.25)%1,r=.035+q*.065;
+          piece('sphere',[a.x+Math.sin(q*8+phase)*r,a.y+q*.8*scale,a.z+Math.cos(q*7+phase)*r],[r,r*2.2,r],3,0,a.color);
+        }
+      }else if(quality!=='low'&&a.type==='drip'){
+        const q=(t*.65+phase)%1;
+        if(q<.8)piece('sphere',[a.x,a.y-q*.55,a.z],[.025,.065,.025],4,.2,a.color);
+      }else if(quality!=='low'&&a.type==='sparks'){
+        const burst=(t+phase)%2.7;
+        if(burst<.28)for(let j=0;j<3;j++){
+          const angle=phase+j*2.094;
+          piece('box',[a.x+Math.cos(angle)*burst*.7,a.y-burst*burst*3,a.z+Math.sin(angle)*burst*.7],[.018,.04,.018],5,1.5,a.color,[0,angle,burst*4]);
+        }
+      }
+    }
+  }
+  function models(t,playing,camera){
+    const out=[],s=sim.state,p=s.player;machinery(out,t);ambience(out,t);
     for(const c of s.cores){
       out.push(m('cylinder',[c.x,.13,c.z],[.95,.26,.95],0),m('ring',[c.x,.29,c.z],[1.15,.1,1.15],c.taken?0:5));
       if(!c.taken){const y=1.22+Math.sin(t*2+c.id)*.13;out.push(m('octa',[c.x,y,c.z],[.55,.85,.55],5,[0,t*.7,0],1.8),m('ring',[c.x,y,c.z],[1.2,1.2,1.2],4,[Math.PI/2,0,t*.35],1.2));}
@@ -1870,30 +2497,36 @@
       if(progress<.65)out.push(m('ring',[p.x,.7,p.z],[r*1.7,.08,r*1.7],4,[0,0,0],.8));
     }
     if(playing){
-      const sy=Math.sin(p.yaw),cy=Math.cos(p.yaw),sp=Math.sin(p.pitch),cp=Math.cos(p.pitch),fracture=s.weapon===1,recoil=s.flash*(fracture?.12:.07);
-      const bob=softMotion&&s.moving>.1?Math.sin(t*9)*.012:0;
+      const fracture=s.weapon===1,pose=motion.view.weapon,slide=pose.slide;
+      const grip=FMotion.mount(camera,[.27*Math.min(1,Math.max(.45,(innerWidth/innerHeight)/1.2))+pose.offset[0],-.29+pose.offset[1],-.56+pose.offset[2]],pose.rotation);
       function gun(shape,x,y,z,siz,mat,rx=0,em=0){
-        x+=.27*Math.min(1,Math.max(.45,(innerWidth/innerHeight)/1.2));y+=-.29+bob;z+=-.56+recoil;
-        const pos=[p.x+cy*x-sy*sp*y-sy*cp*z,1.62+cp*y-sp*z,p.z+sy*x+cy*sp*y+cy*cp*z];
-        const a=m(shape,pos,siz,mat,[p.pitch+rx,-p.yaw,0],em);a.overlay=true;out.push(a);
+        const part=FMotion.place(grip,[x,y,z],rx),a=m(shape,part.p,siz,mat,part.r,em);a.overlay=true;out.push(a);
       }
       gun('box',0,-.09,.12,[.17,.25,.17],7,-.2);
+      // A gloved grip and its wrist remain attached to the complete, damped weapon assembly.
+      gun('box',.013,-.2,.21,[.18,.1,.21],0,-.2);gun('box',.013,-.16,.2,[.19,.03,.2],1,-.2);
+      for(let j=0;j<4;j++)gun('box',0,-.035-j*.031,.205,[.17,.023,.045],0,-.2);
+      gun('box',-.096,-.07,.15,[.04,.09,.09],7,-.5);
       if(fracture){
-        gun('box',0,0,.01,[.27,.23,.53],0);gun('box',0,.135,.03,[.26,.045,.3],1);
+        gun('box',0,0,.01,[.27,.23,.53],0);gun('box',0,.135,.03+slide,[.26,.045,.3],1);
         gun('box',0,-.07,-.3,[.29,.09,.22],7);
+        gun('box',-.06,-.13,-.26,[.2,.08,.2],0,.1);gun('box',-.06,-.17,-.24,[.19,.04,.18],1,.1);
         for(const side of [-1,1]){
-          gun('cylinder',side*.082,.01,-.33,[.135,.38,.135],0,Math.PI/2);
-          gun('cylinder',side*.082,.01,-.52,[.16,.055,.16],1,Math.PI/2);
+          gun('cylinder',side*.082,.01,-.33+slide*.35,[.135,.38,.135],0,Math.PI/2);
+          gun('cylinder',side*.082,.01,-.52+slide*.35,[.16,.055,.16],1,Math.PI/2);
           gun('box',side*.143,.025,.04,[.014,.075,.24],p.overheated?6:5,0,.9);
+          for(let j=0;j<3;j++)gun('box',side*.147,.08,-.1+j*.06,[.018,.018,.032],7);
           if(s.flash>.2)gun('octa',side*.082,.01,-.59,[.16+s.flash*.13,.16+s.flash*.13,.24+s.flash*.3],5,0,2.6);
         }
         gun('box',0,.17,-.13,[.04,.04,.04],5,0,.6);
       }else{
-        gun('box',0,0,-.03,[.2,.18,.52],0);gun('box',0,.105,.04,[.15,.045,.27],1);
+        gun('box',0,0,-.03,[.2,.18,.52],0);gun('box',0,.105,.04+slide,[.15,.045,.27],1);
         gun('box',-.106,.025,-.02,[.015,.055,.28],p.overheated?6:4,0,1.2);gun('box',.106,.025,-.02,[.015,.055,.28],1);
-        gun('cylinder',0,.01,-.34,[.13,.24,.13],0,Math.PI/2);gun('cylinder',0,.01,-.47,[.16,.045,.16],1,Math.PI/2);gun('box',0,.14,-.13,[.035,.04,.035],4,0,.5);
+        gun('cylinder',0,.01,-.34+slide*.3,[.13,.24,.13],0,Math.PI/2);gun('cylinder',0,.01,-.47+slide*.3,[.16,.045,.16],1,Math.PI/2);gun('box',0,.14,-.13,[.035,.04,.035],4,0,.5);
+        for(let j=0;j<5;j++)gun('box',0,.13,-.04+j*.037+slide,[.13,.012,.012],7);
         if(s.flash>.2)gun('octa',0,.01,-.53,[.12+s.flash*.12,.12+s.flash*.12,.15+s.flash*.25],5,0,2.5);
       }
+      for(let j=0;j<3;j++)gun('box',fracture?.143:.108,-.045,.1-j*.037,[.014,.016,.023],p.overheated?6:j/3<p.heat?5:0,0,j/3<p.heat?.6:0);
     }
     return out;
   }
@@ -1932,11 +2565,13 @@
     requestAnimationFrame(frame);const dt=clamp((now-last)/1000,0,.12);last=now;clock+=dt;
     perfFrames++;if(now-perfStart>1000){document.body.dataset.fps=String(Math.round(perfFrames*1000/(now-perfStart)));perfStart=now;perfFrames=0;}
     if(!renderer||!sim||document.hidden)return;
+    const signals={time:sim.state.time,lookYaw:0,lookPitch:0,firing:false};
     if(mode==='playing'){
       input.moveX=(keys.has('KeyD')?1:0)-(keys.has('KeyA')||keys.has('KeyQ')?1:0)+stick.x;
       input.moveY=(keys.has('KeyW')||keys.has('KeyZ')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-stick.y;
       input.lookX=lookDX+((keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0))*dt*1.9;input.lookY=lookDY;
       input.fire=mouseFire||touchFire||keys.has('Enter');input.dash=dashQueued;input.pulse=pulseQueued;input.weapon=selectedWeapon;input.sprint=keys.has('ShiftLeft')||keys.has('ShiftRight');
+      signals.lookYaw=dt>0?input.lookX/dt:0;signals.lookPitch=dt>0?input.lookY/dt:0;signals.firing=input.fire;
       lookDX=lookDY=0;dashQueued=pulseQueued=false;
       // Bounded substeps preserve movement/combat timing when rendering is slower than 60 Hz.
       const steps=Math.max(1,Math.ceil(dt*60)),part=dt/steps;
@@ -1945,18 +2580,22 @@
         events();
         if(mode!=='playing')break;
       }
-      audio.setThreat(sim.state.threat||0);audio.tick(dt);if(mode==='playing'&&sim.state.moving>.5)audio.step(sim.state.moving);
+      const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI);
+      audio.setThreat(sim.state.threat||0);audio.tick(dt);
+      if(mode==='playing'&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving);
+      lastFootstep=footstep;
       toastTime-=dt;if(toastTime<=0)$('toast').classList.remove('visible');
       hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.09;}
       $('crosshair').classList.toggle('hit',sim.state.hitMarker>0);$('damage').style.opacity=String(sim.state.damage*.45);
     }else{$('damage').style.opacity='0';}
     const p=sim.state.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
-    const camera={pos:[p.x,1.62+(isPlay&&softMotion&&sim.state.moving>.1?Math.sin(t*9)*.012:0),p.z],yaw:p.yaw,pitch:p.pitch,fov:(touch?79:74)+(softMotion&&p.dashing>0?4:0)};
-    if(mode==='menu'){camera.yaw=world.spawn.yaw+.38+Math.sin(clock*.13)*.11;camera.pitch=.02;camera.pos[1]=1.72;}
-    renderer.draw(camera,models(t,isPlay),{time:t,flash:sim.state.flash,damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0});
+    signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);
+    const camera={pos:[p.x,1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch,roll:isPlay?view.roll:0,fov:(touch?79:74)+(isPlay?view.fov:0)};
+    if(mode==='menu'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=1.72;}
+    renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:sim.state.flash,damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0});
   }
   function togglePause(){if(mode==='playing')setMode('paused');else if(mode==='paused'){audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});}}
-  function switchWeapon(value){const next=value===undefined?1-selectedWeapon:value;if(mode!=='playing'||next===selectedWeapon)return;selectedWeapon=next;sim.state.weapon=selectedWeapon;audio.switchWeapon?.();renderHUD();}
+  function switchWeapon(value){const next=value===undefined?1-selectedWeapon:value;if(mode!=='playing'||next===selectedWeapon)return;selectedWeapon=next;sim.state.weapon=selectedWeapon;motion.impulse('switch');audio.switchWeapon?.();renderHUD();}
   $('start').addEventListener('click',()=>newRun(savedRun?(Date.now()>>>0)%1000000:seed));
   $('resume-expedition').addEventListener('click',()=>{
     if(restoreRun(savedRun))start('Signal retrouvé. Reprise au dernier point enregistré.');
