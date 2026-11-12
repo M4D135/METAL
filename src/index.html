@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111617">
-<meta name="description" content="Descendez dans FERRO. Un FPS 3D entièrement procédural, jouable sur ordinateur et mobile.">
+<meta name="description" content="Explorez les forêts, la carrière et les jardins de FERRO. Un FPS 3D entièrement procédural, jouable sur ordinateur et mobile.">
 <title>FERRO — Le complexe silencieux</title>
 <style>/*__STYLE__*/</style>
 </head>
@@ -13,19 +13,19 @@
   <canvas id="world" tabindex="0" aria-label="Vue 3D du complexe FERRO"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">F</span><span>FERRO INDUSTRIES<span class="small">DIVISION SOUTERRAINE</span></span><span class="edition">03 / PROFONDEUR</span></div>
+    <div class="brand-top"><span class="brand-symbol">F</span><span>FERRO INDUSTRIES<span class="small">ZONES ABANDONNÉES</span></span><span class="edition">04 / HORIZONS</span></div>
     <div class="intro-content">
       <p class="eyebrow"><span class="dot"></span> LE COMPLEXE SILENCIEUX</p>
       <h1>FERRO<span>_</span></h1>
-      <p class="tagline">Quelque chose tourne encore.</p>
-      <p class="intro-copy">Le signal s’est éteint. Les machines, elles, continuent.<br>Neuf relais à rallumer. Un gardien à affronter.</p>
+      <p class="tagline">Au-delà des murs, elles vous attendent.</p>
+      <p class="intro-copy">Une lisière boisée. Une carrière. Des jardins oubliés.<br>Neuf relais à rallumer. Des machines qui se coordonnent pour vous traquer.</p>
       <div class="intro-actions"><button id="start" class="primary">Entrer dans le complexe <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
-      <div class="intro-meta"><span>3 ÉTAGES</span><i></i><span>2 ARMES</span><i></i><span>UNE ISSUE</span></div>
+      <div class="intro-meta"><span>3 TERRITOIRES</span><i></i><span>2 ARMES</span><i></i><span>UNE ISSUE</span></div>
     </div>
     <div class="intro-bottom"><span id="intro-controls">ZQSD / WASD · Souris · Clic pour tirer</span><button id="intro-sound" class="text-button">SON ACTIVÉ</button></div>
   </section>
   <div id="hud" hidden>
-    <header class="hud-top"><div class="sector-tag"><span class="logo-small">F/</span><div><span id="sector-number">ÉTAGE 01 / 03</span><strong id="sector-title">Sas d’accès</strong></div></div><div class="top-buttons"><button id="map-button" class="icon-button" title="Carte (M)" aria-label="Afficher ou masquer la carte"><span class="map-icon" aria-hidden="true"></span></button><button id="pause-button" class="icon-button" title="Pause (Échap)" aria-label="Mettre en pause"><span class="pause-icon" aria-hidden="true"></span></button></div></header>
+    <header class="hud-top"><div class="sector-tag"><span class="logo-small">F/</span><div><span id="sector-number">SECTEUR 01 / 03</span><strong id="sector-title">Sas d’accès</strong></div></div><div class="top-buttons"><button id="map-button" class="icon-button" title="Carte (M)" aria-label="Afficher ou masquer la carte"><span class="map-icon" aria-hidden="true"></span></button><button id="pause-button" class="icon-button" title="Pause (Échap)" aria-label="Mettre en pause"><span class="pause-icon" aria-hidden="true"></span></button></div></header>
     <div class="objective"><span id="objective-label">RÉCUPÉRER LES RELAIS</span><div id="relays"><i></i><i></i><i></i><span id="relay-count">0 / 3</span></div></div>
     <div id="crosshair"><i></i><i></i><i></i><i></i><b></b></div>
     <div id="toast" role="status"></div>
@@ -35,8 +35,8 @@
     <footer class="hud-bottom"><div class="vital"><span class="stat-label">INTÉGRITÉ</span><div><strong id="hp">100</strong><span class="percent">%</span></div><div class="bar"><i id="hp-bar"></i></div></div><div class="score-status"><span id="combo">SIGNAL STABLE</span><strong id="score">00000</strong><span class="stat-label">SCORE</span></div><div class="weapon-status"><button id="weapon-switch" title="Changer d’arme (1 / 2, molette)" aria-label="Changer d’arme"><span class="stat-label" id="weapon-label">IMPULSE / 01</span><span class="swap-icon" aria-hidden="true"></span></button><div class="bar"><i id="heat-bar"></i></div><span id="dash-label">ESPACE · ESQUIVE PRÊTE</span><span id="pulse-label">E · ONDE PRÊTE</span></div></footer>
     <div id="touch-controls"><div id="move-zone" aria-label="Joystick de déplacement"><span id="move-stick"></span></div><span class="touch-move-label">DÉPLACER</span><button id="dash-button" aria-label="Esquiver"><span class="dash-icon"></span></button><button id="pulse-button" aria-label="Onde de choc"><span class="pulse-icon"></span></button><button id="fire-button" aria-label="Tirer"><span></span></button><span class="touch-look-label">GLISSER POUR VISER</span></div>
   </div>
-  <section id="pause" class="screen modal-screen" hidden><div class="panel"><p class="eyebrow">SIGNAL EN ATTENTE</p><h2>Un instant.</h2><p class="panel-copy" id="checkpoint-status">Reprise au dernier relais synchronisé.</p><button id="resume" class="primary">Reprendre <span class="arrow-icon" aria-hidden="true"></span></button><div class="settings"><button id="sound-toggle">Son <strong>Activé</strong></button><button id="quality-toggle">Image <strong>Auto</strong></button><button id="motion-toggle">Mouvements de caméra <strong>Doux</strong></button></div><p class="help" id="help-text">ZQSD / WASD : déplacer · Souris : viser<br>Clic : tirer · 1 / 2 ou molette : arme<br>Espace : esquiver · E : onde de choc<br>Maj : courir · M : carte · Échap : pause</p><button id="restart" class="text-button">RECOMMENCER CET ÉTAGE</button></div></section>
-  <section id="result" class="screen modal-screen" hidden><div class="panel result-panel"><p id="result-kicker" class="eyebrow">TRANSMISSION RÉTABLIE</p><h2 id="result-title">Étage sécurisé.</h2><p id="result-copy" class="panel-copy"></p><div class="result-stats"><div><span>TEMPS</span><strong id="result-time"></strong></div><div><span>MACHINES</span><strong id="result-kills"></strong></div><div><span>PRÉCISION</span><strong id="result-accuracy"></strong></div></div><div class="result-score"><span>SCORE DE L’EXPÉDITION</span><strong id="result-score">0</strong></div><button id="continue" class="primary">Continuer <span class="arrow-icon" aria-hidden="true"></span></button><button id="back-menu" class="text-button">RETOUR AU SIGNAL</button></div></section>
+  <section id="pause" class="screen modal-screen" hidden><div class="panel"><p class="eyebrow">SIGNAL EN ATTENTE</p><h2>Un instant.</h2><p class="panel-copy" id="checkpoint-status">Reprise au dernier relais synchronisé.</p><button id="resume" class="primary">Reprendre <span class="arrow-icon" aria-hidden="true"></span></button><div class="settings"><button id="sound-toggle">Son <strong>Activé</strong></button><button id="quality-toggle">Image <strong>Auto</strong></button><button id="motion-toggle">Mouvements de caméra <strong>Doux</strong></button></div><p class="help" id="help-text">ZQSD / WASD : déplacer · Souris : viser<br>Clic : tirer · 1 / 2 ou molette : arme<br>Espace : esquiver · E : onde de choc<br>Maj : courir · M : carte · Échap : pause</p><button id="restart" class="text-button">RECOMMENCER CE SECTEUR</button></div></section>
+  <section id="result" class="screen modal-screen" hidden><div class="panel result-panel"><p id="result-kicker" class="eyebrow">TRANSMISSION RÉTABLIE</p><h2 id="result-title">Secteur sécurisé.</h2><p id="result-copy" class="panel-copy"></p><div class="result-stats"><div><span>TEMPS</span><strong id="result-time"></strong></div><div><span>MACHINES</span><strong id="result-kills"></strong></div><div><span>PRÉCISION</span><strong id="result-accuracy"></strong></div></div><div class="result-score"><span>SCORE DE L’EXPÉDITION</span><strong id="result-score">0</strong></div><button id="continue" class="primary">Continuer <span class="arrow-icon" aria-hidden="true"></span></button><button id="back-menu" class="text-button">RETOUR AU SIGNAL</button></div></section>
   <section id="error" class="screen modal-screen" hidden><div class="panel"><p class="eyebrow">SIGNAL INTERROMPU</p><h2>La 3D est indisponible.</h2><p id="error-copy" class="panel-copy">Essayez un navigateur récent avec l’accélération graphique activée.</p><button id="reload" class="primary">Réessayer <span class="arrow-icon" aria-hidden="true"></span></button></div></section>
   <noscript>FERRO nécessite JavaScript. WebGL 2 est recommandé ; un rendu 3D de secours est disponible.</noscript>
 </main>

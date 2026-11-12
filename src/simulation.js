@@ -5,6 +5,10 @@
   const HP=[3,5,4,30], HEIGHT=[1.35,1.05,1.6,1.8], ATTACKS=['idle','aim','burst','rush','recover','stunned'];
   const PLAYER=['x','z','yaw','pitch','hp','heat','overheated','dash','dashing','pulseCooldown'];
   const ENEMY=['x','z','id','type','hp','maxHp','y','active','cooldown','hurt','windup','windupMax','attackState','yaw','stun','phase','aimX','aimY','aimZ','burstLeft','burstWait','rushTime','rushX','rushZ','rushHit'];
+  // Awareness describes evidence (none / noise or ally / sight / lost sight).
+  // Tactic describes the physical goal, independently of the existing attack telegraph.
+  const AWARENESS=['patrol','investigate','engage','search'],TACTICS=['hold','advance','flank','cover'];
+  const AI=['awareness','tactic','hasMemory','lastSeenX','lastSeenZ','memory','alert','seen','senseWait','thinkWait','shareWait','alertWait','coverWait','holdTime','planWait','patrolIndex','searchIndex','goalX','goalZ','pathAt','stuck','moveSpeed'];
   const NUMBERS=['time','elapsed','kills','shots','hits','relays','weapon','score','combo','comboTime'];
   const pick=(value,keys)=>Object.fromEntries(keys.map(key=>[key,value[key]]));
   function create(world) {
@@ -12,7 +16,10 @@
     const s={world,player:p,time:0,elapsed:0,won:false,dead:false,kills:0,shots:0,hits:0,relays:0,weapon:0,score:0,combo:0,comboTime:0,pulseVisual:0,
       flash:0,damage:0,hitMarker:0,events:[],bullets:[],particles:[],threat:0,moving:0,
       enemies:world.enemies.map((e,i)=>({...e,id:i,hp:HP[e.type],maxHp:HP[e.type],y:HEIGHT[e.type],active:false,cooldown:1.2+i*.15,hurt:0,
-        windup:0,windupMax:0,attackState:'idle',yaw:0,stun:0,phase:0,aimX:p.x,aimY:1.45,aimZ:p.z,burstLeft:0,burstWait:0,rushTime:0,rushX:0,rushZ:0,rushHit:false})),
+        windup:0,windupMax:0,attackState:'idle',yaw:Number.isFinite(e.yaw)?e.yaw:Math.atan2(world.spawn.x-e.x,e.z-world.spawn.z),stun:0,phase:0,aimX:p.x,aimY:1.45,aimZ:p.z,burstLeft:0,burstWait:0,rushTime:0,rushX:0,rushZ:0,rushHit:false,
+        awareness:'patrol',tactic:'hold',hasMemory:false,lastSeenX:e.x,lastSeenZ:e.z,memory:0,alert:0,seen:false,
+        senseWait:0,thinkWait:i%4*.09,shareWait:0,alertWait:0,coverWait:0,holdTime:0,planWait:0,patrolIndex:0,searchIndex:0,
+        goalX:e.x,goalZ:e.z,path:[],pathAt:0,stuck:0,moveSpeed:0})),
       cores:world.cores.map(c=>({...c,taken:false})),pickups:world.pickups.map(c=>({...c,taken:false})),
       hazards:(world.hazards||[]).map(h=>({...h,hot:false,warning:false}))};
     s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);
@@ -27,6 +34,7 @@
     fingerprint=(fingerprint>>>0).toString(36);
     function blocked(x,z,r=.28){
       if(x-r<b.minX||x+r>b.maxX||z-r<b.minZ||z+r>b.maxZ)return true;
+      if(world.walkable?.length&&!world.walkable.some(a=>x>=a.x-a.w/2&&x<=a.x+a.w/2&&z>=a.z-a.d/2&&z<=a.z+a.d/2))return true;
       for(const q of solids){const dx=x-clamp(x,q.minX,q.maxX),dz=z-clamp(z,q.minZ,q.maxZ);if(dx*dx+dz*dz<r*r)return true;}
       return false;
     }
@@ -158,7 +166,7 @@
     }
     function damageEnemy(e,amount){
       if(e.hp<=0)return;
-      e.hp=Math.max(0,e.hp-amount);e.hurt=.2;e.active=true;
+      e.hp=Math.max(0,e.hp-amount);e.hurt=.2;remember(e,p.x,p.z,'investigate',7);e.thinkWait=0;
       if(e.hp<=0){
         s.kills++;s.combo++;s.comboTime=4;
         const multiplier=1+Math.min(4,s.combo-1)*.25,points=Math.round([100,150,125,2000][e.type]*multiplier);
@@ -199,6 +207,7 @@
         }else particles(origin[0]+dir[0]*hit.distance,origin[1]+dir[1]*hit.distance,origin[2]+dir[2]*hit.distance,5,shotgun?2:4);
       }
       s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon:s.weapon});
+      hear(p.x,p.z,shotgun?24:18);
       if(connected){s.hits++;s.hitMarker=.18;emit('hit');}
       return true;
     }
@@ -217,11 +226,14 @@
         }
       }
       s.bullets=s.bullets.filter(q=>{if(Math.hypot(q.x-p.x,q.z-p.z)>7.5)return true;particles(q.x,q.y,q.z,4,3);return false;});
-      emit('pulse',{radius:6.5,hits});return true;
+      hear(p.x,p.z,15);emit('pulse',{radius:6.5,hits});return true;
     }
     function projectile(e,angle=0,speed=7,damage=8){
       const horizontal=Math.hypot(e.aimX-e.x,e.aimZ-e.z),pitch=Math.atan2(e.aimY-e.y,horizontal||.01),yaw=Math.atan2(e.aimX-e.x,e.z-e.aimZ)+angle;
-      const direction=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)],muzzle=e.type===3?1.2:.52;
+      const direction=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
+      // A barrel may approach a wall more closely than its nominal muzzle offset.
+      // Keep the projectile on the near side so a committed burst cannot spawn through it.
+      const muzzle=Math.min(e.type===3?1.2:.52,Math.max(0,ray([e.x,e.y,e.z],direction,1.2)-.025));
       s.bullets.push({x:e.x+direction[0]*muzzle,y:e.y+direction[1]*muzzle,z:e.z+direction[2]*muzzle,
         dx:direction[0]*speed,dy:direction[1]*speed,dz:direction[2]*speed,life:5,damage,kind:e.type,owner:e.id});
       if(s.bullets.length>160)s.bullets.shift();
@@ -244,39 +256,236 @@
         for(let i=-half;i<=half;i++)projectile(e,i*.16,e.phase?6.3:5.5,e.phase?11:12);
       }
     }
-    function navigate(e,dx,dz,clear,d,dt){
-      if(e.type===2)return;
-      let vx=0,vz=0;
-      if(!clear){
-        const i=idx(e.x,e.z);let best=i;
-        for(let iz=-1;iz<=1;iz++)for(let ix=-1;ix<=1;ix++){
-          const j=i+iz*nx+ix;
-          if(j>=0&&j<nav.length&&nav[j]&&dist[j]>=0&&(dist[best]<0||dist[j]<dist[best])&&sight(e.x,e.z,...coord(j)))best=j;
+    // Perception records observations, never an omniscient navigation target. A sound
+    // or a nearby observer can supply a position; neither grants vision through walls.
+    function remember(e,x,z,awareness,life=8){
+      if(e.hp<=0||e.seen&&awareness!=='engage')return;
+      const fresh=!e.hasMemory;
+      e.hasMemory=true;e.active=true;e.lastSeenX=x;e.lastSeenZ=z;e.memory=life;
+      e.awareness=awareness;e.alert=awareness==='engage'?1:.7;
+      if(fresh){e.thinkWait=0;e.planWait=0;e.path=[];e.pathAt=0;e.searchIndex=0;
+        if(e.alertWait<=0){emit('alerted',{id:e.id,kind:e.type,x:e.x,z:e.z});e.alertWait=7;}}
+    }
+    function hear(x,z,radius){
+      for(const e of s.enemies)if(e.hp>0&&!e.seen){
+        const distance=Math.hypot(e.x-x,e.z-z);
+        if(distance<radius&&(distance<radius*.58||sight(x,z,e.x,e.z)))remember(e,x,z,'investigate',7);
+      }
+    }
+    function perceive(e){
+      const dx=p.x-e.x,dz=p.z-e.z,d=Math.hypot(dx,dz),facing=(Math.sin(e.yaw)*dx-Math.cos(e.yaw)*dz)/Math.max(d,.01);
+      const visible=d<(e.hasMemory?24:e.type===3?23:18)&&(e.hasMemory||d<3||facing>-.15)&&sight(e.x,e.z,p.x,p.z);
+      e.seen=visible;
+      if(visible){
+        remember(e,p.x,p.z,'engage');
+        if(e.shareWait<=0){
+          e.shareWait=1.1;
+          for(const ally of s.enemies)if(ally!==e&&ally.hp>0&&!ally.seen&&Math.hypot(ally.x-e.x,ally.z-e.z)<12)
+            remember(ally,e.lastSeenX,e.lastSeenZ,'investigate',7);
         }
-        const target=coord(best),x=target[0]-e.x,z=target[1]-e.z,n=Math.hypot(x,z);
-        if(n>.1){vx=x/n*(e.type===0?1.65:.85);vz=z/n*(e.type===0?1.65:.85);}
-      }else if(d>.01){
-        const nx=dx/d,nz=dz/d;
-        if(e.type===0){
-          const radial=d>8?1.65:d<4.2?-1.1:.12,strafe=d<13?Math.sin(s.time*.85+e.id*1.73)*1.35:0;
-          vx=nx*radial-nz*strafe;vz=nz*radial+nx*strafe;
-        }else if(e.type===1){if(d>4.1){vx=nx*.92;vz=nz*.92;}}
-        else {
-          const radial=d>14?.8:d<5?-.5:0,side=Math.sin(s.time*.6+e.id)*(e.phase?.75:.45);
-          vx=nx*radial-nz*side;vz=nz*radial+nx*side;
+      }else if(e.awareness==='engage')e.awareness='search';
+    }
+    function radius(e){return e.type===3?1.05:.38;}
+    function segmentFree(ax,az,bx,bz,r=.4){
+      if(blocked(ax,az,r)||blocked(bx,bz,r))return false;
+      const dx=bx-ax,dz=bz-az;
+      // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
+      for(const q of solids){
+        let lo=0,hi=1;
+        for(const [origin,delta,min,max] of [[ax,dx,q.minX-r,q.maxX+r],[az,dz,q.minZ-r,q.maxZ+r]]){
+          if(Math.abs(delta)<1e-8){if(origin<min||origin>max){hi=-1;break;}}
+          else {let a=(min-origin)/delta,c=(max-origin)/delta;if(a>c)[a,c]=[c,a];lo=Math.max(lo,a);hi=Math.min(hi,c);if(hi<lo)break;}
+        }
+        if(hi>=lo&&hi>=0&&lo<=1)return false;
+      }
+      if(world.walkable?.length){
+        const count=Math.ceil(Math.hypot(dx,dz)/.45);
+        for(let j=1;j<count;j++)if(!world.walkable.some(q=>Math.abs(ax+dx*j/count-q.x)<=q.w/2&&Math.abs(az+dz*j/count-q.z)<=q.d/2))return false;
+      }
+      return true;
+    }
+    const routeCost=new Float64Array(nav.length),routePrev=new Int32Array(nav.length),routeStamp=new Uint32Array(nav.length),routeClosed=new Uint32Array(nav.length);
+    const edgeKnown=new Uint8Array(nav.length),edgeOpen=new Uint8Array(nav.length);let routeSerial=0;
+    function nearestNode(x,z,r){
+      const center=idx(x,z),cx=center%nx,cz=Math.floor(center/nx);let best=-1,distance=Infinity;
+      for(let dz=-3;dz<=3;dz++)for(let dx=-3;dx<=3;dx++){
+        const ix=cx+dx,iz=cz+dz;if(ix<0||ix>=nx||iz<0||iz>=nz)continue;
+        const j=iz*nx+ix;if(!nav[j])continue;
+        const [px,pz]=coord(j),d=(px-x)**2+(pz-z)**2;
+        if(d<distance&&segmentFree(x,z,px,pz,r)){best=j;distance=d;}
+      }
+      return best;
+    }
+    function route(e,x,z){
+      const r=radius(e);
+      if(blocked(x,z,r))return null;
+      if(segmentFree(e.x,e.z,x,z,r))return [];
+      const start=nearestNode(e.x,e.z,r),end=nearestNode(x,z,r);if(start<0||end<0)return null;
+      const stamp=++routeSerial,heap=[];
+      const heuristic=i=>Math.abs(i%nx-end%nx)+Math.abs(Math.floor(i/nx)-Math.floor(end/nx));
+      function push(i,cost){let at=heap.length;heap.push([i,cost]);while(at){const parent=(at-1)>>1;if(heap[parent][1]<=cost)break;heap[at]=heap[parent];at=parent;}heap[at]=[i,cost];}
+      function pop(){const value=heap[0],last=heap.pop();if(heap.length){let at=0;while(at*2+1<heap.length){let child=at*2+1;if(child+1<heap.length&&heap[child+1][1]<heap[child][1])child++;if(heap[child][1]>=last[1])break;heap[at]=heap[child];at=child;}heap[at]=last;}return value[0];}
+      routeStamp[start]=stamp;routeCost[start]=0;routePrev[start]=-1;push(start,heuristic(start));
+      let explored=0,found=false;
+      while(heap.length&&explored++<2400){
+        const i=pop();if(routeClosed[i]===stamp)continue;routeClosed[i]=stamp;if(i===end){found=true;break;}
+        const ix=i%nx,neighbors=[ix?i-1:-1,ix<nx-1?i+1:-1,i-nx,i+nx];
+        for(let k=0;k<4;k++){
+          const j=neighbors[k];if(j<0||j>=nav.length||!nav[j]||routeClosed[j]===stamp)continue;
+          const mask=1<<k;
+          if(!(edgeKnown[i]&mask)){edgeKnown[i]|=mask;if(segmentFree(...coord(i),...coord(j),.4))edgeOpen[i]|=mask;}
+          if(!(edgeOpen[i]&mask)||r>.4&&!segmentFree(...coord(i),...coord(j),r))continue;
+          const cost=routeCost[i]+1;if(routeStamp[j]===stamp&&routeCost[j]<=cost)continue;
+          routeStamp[j]=stamp;routeCost[j]=cost;routePrev[j]=i;push(j,cost+heuristic(j));
         }
       }
-      move(e,vx*dt,vz*dt,e.type===3?1.05:.38);
+      if(!found)return null;
+      const raw=[];for(let i=end;i>=0;i=routePrev[i])raw.push(i);raw.reverse();
+      // String-pull this bounded local route once, rather than trace many rays every frame.
+      const result=[];let ax=e.x,az=e.z,at=0;
+      while(at<raw.length){let far=at;for(let k=Math.min(raw.length-1,at+14);k>at;k--)if(segmentFree(ax,az,...coord(raw[k]),r)){far=k;break;}
+        result.push(raw[far]);[ax,az]=coord(raw[far]);at=far+1;}
+      return result.length<=512?result:null;
+    }
+    function setGoal(e,x,z,tactic,commit=0){
+      const path=route(e,x,z);if(!path)return false;
+      e.goalX=x;e.goalZ=z;e.path=path;e.pathAt=0;e.tactic=tactic;e.planWait=commit;e.stuck=0;return true;
+    }
+    function reached(e){return Math.hypot(e.goalX-e.x,e.goalZ-e.z)<.16;}
+    function protects(e,x,z){
+      const dx=x-e.lastSeenX,dz=z-e.lastSeenZ,dy=e.y+.3-1.62,d=Math.hypot(dx,dy,dz);
+      return d>.01&&ray([e.lastSeenX,1.62,e.lastSeenZ],[dx/d,dy/d,dz/d],d)<d-.02;
+    }
+    function cover(e){
+      const choices=[],r=radius(e)+.18;
+      for(const q of solids){
+        if(q.maxY<1.35||q.maxX-q.minX>12||q.maxZ-q.minZ>12)continue;
+        const x=(q.minX+q.maxX)/2,z=(q.minZ+q.maxZ)/2;
+        if(Math.hypot(x-e.x,z-e.z)>10)continue;
+        for(const [cx,cz] of [[q.minX-r,z],[q.maxX+r,z],[x,q.minZ-r],[x,q.maxZ+r]]){
+          const d=Math.hypot(cx-e.x,cz-e.z);
+          if(d<.35||d>10||blocked(cx,cz,.4)||Math.hypot(cx-e.lastSeenX,cz-e.lastSeenZ)<3||sight(e.lastSeenX,e.lastSeenZ,cx,cz)||!protects(e,cx,cz))continue;
+          const occupied=s.enemies.some(q=>q!==e&&q.hp>0&&q.tactic==='cover'&&Math.hypot(cx-q.goalX,cz-q.goalZ)<1.3);
+          choices.push({x:cx,z:cz,score:d+(occupied?8:0)});
+        }
+      }
+      choices.sort((a,b)=>a.score-b.score);
+      for(const q of choices.slice(0,7))if(setGoal(e,q.x,q.z,'cover')){e.holdTime=[1.1,1.25,1.4][e.id%3];return true;}
+      return false;
+    }
+    function peek(e){
+      const choices=[];
+      for(const d of [1.2,2.4,3.6])for(let j=0;j<12;j++){
+        const angle=j*Math.PI/6,x=e.x+Math.cos(angle)*d,z=e.z+Math.sin(angle)*d;
+        if(blocked(x,z,.4)||Math.hypot(x-e.lastSeenX,z-e.lastSeenZ)<3||!sight(x,z,e.lastSeenX,e.lastSeenZ))continue;
+        choices.push({x,z,d});
+      }
+      for(const q of choices)if(setGoal(e,q.x,q.z,'flank',2.3)){e.coverWait=4.5;return true;}
+      e.coverWait=2;e.holdTime=0;return false;
+    }
+    function plan(e){
+      const home=world.enemies[e.id];
+      if(e.type===2){e.tactic='hold';e.path=[];e.pathAt=0;e.goalX=e.x;e.goalZ=e.z;return;}
+      if(e.stuck>1.1){
+        const path=route(e,e.goalX,e.goalZ);e.planWait=0;e.path=path||[];e.pathAt=0;e.stuck=0;
+        if(!path&&e.tactic==='cover'){e.tactic='hold';e.coverWait=1.5;e.holdTime=0;}
+      }
+      if(e.hasMemory&&e.tactic==='cover'){
+        if(!reached(e)||e.holdTime>0)return;
+        if(peek(e))return;
+        e.tactic='advance';
+      }
+      if(e.planWait>0&&!reached(e))return;
+      if(!e.hasMemory){
+        if(!reached(e)&&e.tactic==='advance')return;
+        const span=e.type===3?1.6:2.5;
+        for(let j=0;j<4;j++){
+          const angle=(++e.patrolIndex+e.id)*Math.PI/2,x=home.x+Math.cos(angle)*span,z=home.z+Math.sin(angle)*span;
+          if(setGoal(e,x,z,'advance'))return;
+        }
+        e.tactic='hold';return;
+      }
+      if(e.type===0&&e.hp<=e.maxHp*.55&&e.coverWait<=0&&cover(e))return;
+      if(!e.seen){
+        if(e.type===3){
+          const x=clamp(e.lastSeenX,home.x-4,home.x+4),z=clamp(e.lastSeenZ,home.z-4,home.z+4);
+          if(setGoal(e,x,z,'advance'))return;
+          e.tactic='hold';return;
+        }
+        const d=Math.hypot(e.lastSeenX-e.x,e.lastSeenZ-e.z);
+        if(d>1.2){
+          if(setGoal(e,e.lastSeenX,e.lastSeenZ,'advance'))return;
+          const near=nearestNode(e.lastSeenX,e.lastSeenZ,.28);
+          if(near>=0&&setGoal(e,...coord(near),'advance'))return;
+        }else{
+          e.awareness='search';
+          for(let j=0;j<4;j++){
+            const angle=(++e.searchIndex+e.id)*2.399963,distance=1.8+(e.searchIndex%2)*.9;
+            if(setGoal(e,e.lastSeenX+Math.cos(angle)*distance,e.lastSeenZ+Math.sin(angle)*distance,'advance',1.2))return;
+          }
+        }
+        e.tactic='hold';return;
+      }
+      const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz)||.01;
+      if(e.type===0){
+        const base=Math.atan2(-dz,-dx),side=e.id%2?-1:1,range=clamp(d,5.7,8);
+        for(const offset of [side*.9,side*1.35,-side*.9]){
+          const angle=base+offset;
+          if(setGoal(e,e.lastSeenX+Math.cos(angle)*range,e.lastSeenZ+Math.sin(angle)*range,'flank',2.6))return;
+        }
+      }else if(e.type===1){
+        if(d<4.1){e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;e.tactic='hold';return;}
+        if(setGoal(e,e.x+dx/d*(d-3.8),e.z+dz/d*(d-3.8),'advance'))return;
+      }else {
+        // The Custodian guards the arena; it never wanders into a narrow service doorway.
+        const side=e.id%2?-1:1,radial=d>14?1.6:d<5?-1:0;
+        const x=clamp(e.x+dx/d*radial-dz/d*side*1.5,home.x-4,home.x+4),z=clamp(e.z+dz/d*radial+dx/d*side*1.5,home.z-4,home.z+4);
+        if(setGoal(e,x,z,'advance',1.8))return;
+      }
+      e.tactic='hold';
+    }
+    function navigate(e,dt){
+      if(e.type===2||e.tactic==='hold')return;
+      const speed=!e.hasMemory?(e.type===0?.72:.55):[1.65,1.05,0,e.phase?.85:.65][e.type];
+      let budget=speed*dt,segments=0;
+      const ox=e.x,oz=e.z;
+      while(budget>1e-8&&segments++<8){
+        const target=e.pathAt<e.path.length?coord(e.path[e.pathAt]):[e.goalX,e.goalZ],dx=target[0]-e.x,dz=target[1]-e.z,d=Math.hypot(dx,dz);
+        if(d<.035){if(e.pathAt<e.path.length){e.pathAt++;continue;}break;}
+        const travel=Math.min(d,budget);move(e,dx/d*travel,dz/d*travel,radius(e));budget-=travel;
+        if(travel<d)break;
+        if(e.pathAt<e.path.length)e.pathAt++;else break;
+      }
+      const actual=Math.hypot(e.x-ox,e.z-oz);
+      if(actual<speed*dt*.15&&!reached(e))e.stuck+=dt;else e.stuck=Math.max(0,e.stuck-dt*2);
+      if(!e.hasMemory&&actual>.0001)e.yaw=Math.atan2(e.x-ox,oz-e.z);
+      if(e.tactic==='cover'&&reached(e))e.holdTime=Math.max(0,e.holdTime-dt);
+    }
+    function separate(dt){
+      for(let i=0;i<s.enemies.length;i++){
+        const a=s.enemies[i];if(a.hp<=0)continue;
+        for(let j=i+1;j<s.enemies.length;j++){
+          const c=s.enemies[j];if(c.hp<=0)continue;
+          const dx=c.x-a.x,dz=c.z-a.z,d=Math.hypot(dx,dz),gap=radius(a)+radius(c)+.18;
+          if(d>=gap)continue;
+          const angle=(i+j+1)*2.399963,ux=d>.001?dx/d:Math.cos(angle),uz=d>.001?dz/d:Math.sin(angle);
+          const mobile=e=>e.type!==2&&e.rushTime<=0&&e.windup<=0&&e.stun<=0;
+          const ma=mobile(a),mc=mobile(c),count=Number(ma)+Number(mc);if(!count)continue;
+          const push=Math.min(gap-d,dt*2)/count;
+          if(ma)move(a,-ux*push,-uz*push,radius(a));if(mc)move(c,ux*push,uz*push,radius(c));
+        }
+      }
     }
     function updateEnemies(dt){
-      let threat=0;
+      let threat=0;const starts=s.enemies.map(e=>[e.x,e.z]);
       for(const e of s.enemies){
-        if(e.hp<=0)continue;
+        e.moveSpeed=0;if(e.hp<=0)continue;
         e.hurt=Math.max(0,e.hurt-dt);e.cooldown=Math.max(0,e.cooldown-dt);e.burstWait=Math.max(0,e.burstWait-dt);bossPhase(e);
-        const dx=p.x-e.x,dz=p.z-e.z,d=Math.hypot(dx,dz),clear=d<25&&sight(e.x,e.z,p.x,p.z);
-        if(clear&&d<(e.type===3?23:18))e.active=true;
-        if(!e.active)continue;
-        if(d<19)threat++;
+        for(const key of ['senseWait','thinkWait','shareWait','alertWait','coverWait','planWait'])e[key]=Math.max(-.05,e[key]-dt);
+        if(e.hasMemory){e.memory=Math.max(0,e.memory-dt);e.alert=e.seen?1:clamp(e.memory/8,.1,.85);}
+        if(e.senseWait<=0){e.senseWait+=.15;perceive(e);}
+        if(e.hasMemory&&e.memory<=0){e.hasMemory=false;e.active=false;e.awareness='patrol';e.alert=0;e.seen=false;e.planWait=0;e.tactic='hold';e.path=[];e.pathAt=0;e.goalX=e.x;e.goalZ=e.z;e.thinkWait=0;}
+        const d=Math.hypot(p.x-e.x,p.z-e.z);if(e.hasMemory&&d<19)threat++;
         if(e.stun>0){e.stun=Math.max(0,e.stun-dt);e.attackState=e.stun>0?'stunned':'recover';continue;}
         if(e.rushTime>0){
           e.attackState='rush';e.rushTime=Math.max(0,e.rushTime-dt);move(e,e.rushX*7.3*dt,e.rushZ*7.3*dt,.38);
@@ -285,13 +494,17 @@
         }
         if(e.burstLeft>0){if(e.burstWait<=0)burst(e);continue;}
         if(e.windup>0){e.windup=Math.max(0,e.windup-dt);if(!e.windup)attack(e);continue;}
-        e.yaw=Math.atan2(dx,-dz);
-        if(clear&&d<22&&e.cooldown<=0){
-          e.aimX=p.x;e.aimY=1.45;e.aimZ=p.z;e.windupMax=[.65,.9,.75,e.phase?.9:1.15][e.type];
+        if(e.thinkWait<=0){e.thinkWait+=.65+(e.id%3)*.05;plan(e);}
+        if(e.hasMemory)e.yaw=Math.atan2(e.lastSeenX-e.x,e.z-e.lastSeenZ);
+        else if(e.type===2){const home=world.enemies[e.id],yaw=Number.isFinite(home.yaw)?home.yaw:Math.atan2(world.spawn.x-home.x,home.z-world.spawn.z);e.yaw=yaw+Math.sin(s.time*.45+e.id)*.85;}
+        if(e.seen&&e.tactic!=='cover'&&d<22&&e.cooldown<=0&&sight(e.x,e.z,p.x,p.z)){
+          e.aimX=p.x;e.aimY=1.45;e.aimZ=p.z;e.yaw=Math.atan2(p.x-e.x,e.z-p.z);e.windupMax=[.65,.9,.75,e.phase?.9:1.15][e.type];
           e.windup=e.windupMax;e.attackState='aim';continue;
         }
-        e.attackState=e.cooldown>0?'recover':'idle';navigate(e,dx,dz,clear,d,dt);
+        e.attackState=e.cooldown>0?'recover':'idle';navigate(e,dt);
       }
+      separate(dt);
+      if(dt>0)for(let i=0;i<s.enemies.length;i++)s.enemies[i].moveSpeed=Math.hypot(s.enemies[i].x-starts[i][0],s.enemies[i].z-starts[i][1])/dt;
       s.threat=Math.min(1,threat/4);
     }
     function updateHazards(damage=true){
@@ -336,9 +549,9 @@
       if(s.relays===3&&!s.bossAlive&&Math.hypot(p.x-world.exit.x,p.z-world.exit.z)<1.5&&!s.dead){s.won=true;s.score+=500;stopMotion();emit('win');}
     }
     function snapshot(){
-      return {version:1,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
+      return {version:1,aiVersion:1,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
         state:{...pick(s,NUMBERS),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
-          enemies:s.enemies.map(e=>pick(e,ENEMY)),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q}))},
+          enemies:s.enemies.map(e=>({...pick(e,ENEMY),...pick(e,AI),path:e.path.slice()})),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q}))},
         timers:{fireWait,navWait:Math.max(0,navWait),hazardWait}};
     }
     function restore(data,options={}){
@@ -349,6 +562,7 @@
         const integer=(v,min,max)=>number(v,min,max)&&Number.isInteger(v);
         const bool=v=>typeof v==='boolean',require=condition=>{if(!condition)throw new Error('Invalid checkpoint');};
         require(data.version===1&&data.format==='FERRO'&&data.seed===world.seed&&data.stage===(world.stage||0)&&data.fingerprint===fingerprint&&a&&t);
+        require(data.aiVersion===undefined||data.aiVersion===1);
         require(number(a.time,0,1e7)&&number(a.elapsed,0,1e7));
         for(const key of ['kills','shots','hits','score'])require(integer(a[key],0,1e9));
         require(a.hits<=a.shots&&integer(a.relays,0,3)&&integer(a.weapon,0,1)&&integer(a.combo,0,1000)&&number(a.comboTime,0,4));
@@ -369,7 +583,26 @@
           require(number(e.yaw,-1e6,1e6)&&number(e.stun,0,.85)&&integer(e.phase,0,type===3?1:0));
           require(number(e.aimX,b.minX,b.maxX)&&number(e.aimZ,b.minZ,b.maxZ)&&number(e.aimY,0,3));
           require(integer(e.burstLeft,0,3)&&number(e.burstWait,0,.18)&&number(e.rushTime,0,.68)&&number(e.rushX,-1,1)&&number(e.rushZ,-1,1));
-          return {...world.enemies[i],...pick(e,ENEMY)};
+          let ai;
+          if(data.aiVersion===1){
+            require(AWARENESS.includes(e.awareness)&&TACTICS.includes(e.tactic)&&bool(e.hasMemory)&&bool(e.seen));
+            require(number(e.lastSeenX,b.minX,b.maxX)&&number(e.lastSeenZ,b.minZ,b.maxZ)&&number(e.memory,0,8)&&number(e.alert,0,1));
+            require(number(e.goalX,b.minX,b.maxX)&&number(e.goalZ,b.minZ,b.maxZ)&&!blocked(e.goalX,e.goalZ,type===3?1.05:.38));
+            require(number(e.senseWait,-.05,.15)&&number(e.thinkWait,-.05,.75)&&number(e.shareWait,-.05,1.1)&&number(e.alertWait,-.05,7));
+            require(number(e.coverWait,-.05,4.5)&&number(e.planWait,-.05,2.6)&&number(e.holdTime,0,1.4)&&number(e.stuck,0,30)&&number(e.moveSpeed,0,40));
+            require(integer(e.patrolIndex,0,1e9)&&integer(e.searchIndex,0,1e9));
+            require(Array.isArray(e.path)&&e.path.length<=512&&e.path.every(j=>integer(j,0,nav.length-1)&&nav[j])&&integer(e.pathAt,0,e.path.length));
+            require(!e.seen||e.hasMemory);require(e.hasMemory||e.awareness==='patrol');
+            ai={...pick(e,AI),path:e.path.slice()};
+          }else{
+            // Legacy saves have no tactical memory. A stored aim is a legitimate old
+            // observation; the current player position is deliberately not imported.
+            require(AI.every(key=>e[key]===undefined)&&e.path===undefined);
+            ai={awareness:e.active?'search':'patrol',tactic:'hold',hasMemory:e.active,lastSeenX:e.active?e.aimX:e.x,lastSeenZ:e.active?e.aimZ:e.z,
+              memory:e.active?2:0,alert:e.active?.25:0,seen:false,senseWait:0,thinkWait:0,shareWait:0,alertWait:0,coverWait:0,holdTime:0,
+              planWait:0,patrolIndex:0,searchIndex:0,goalX:e.x,goalZ:e.z,path:[],pathAt:0,stuck:0,moveSpeed:0};
+          }
+          return {...world.enemies[i],...pick(e,ENEMY),...ai};
         });
         require(enemies.filter(e=>e.hp===0).length===a.kills&&enemies.some(e=>e.type===3&&e.hp>0)===a.bossAlive);
         require(!a.won||(a.relays===3&&!a.bossAlive));

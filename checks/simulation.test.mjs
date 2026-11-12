@@ -629,3 +629,268 @@ test('Version-one checkpoints restore at rest, including a saved dash, without a
   assert.equal(restored.state.locomotion.dashBlend, 0);
   assert.equal(restored.state.player.dashing, 0);
 });
+
+test('Sight has a field of view and lost contact preserves a last observation instead of following a hidden player', () => {
+  const unaware = FSimulation.create(fixture({ enemies: [{ x: 0, z: -10, type: 2, yaw: 0 }] }));
+  advance(unaware, .8);
+  assert.equal(unaware.state.enemies[0].awareness, 'patrol', 'A quiet player behind the turret should not be detected');
+  assert.equal(events(unaware, 'alerted').length, 0);
+  const world = fixture({
+    spawn: { x: -5, z: 0, yaw: 0 },
+    enemies: [{ x: -5, z: -8, type: 0 }],
+    colliders: [{ minX: -.5, maxX: .5, minZ: -25, maxZ: 25, minY: 0, maxY: 4 }],
+  });
+  const first = FSimulation.create(world), second = FSimulation.create(world);
+  for (const sim of [first, second]) { sim.state.enemies[0].cooldown = 30; sim.step(.025); }
+  Object.assign(first.state.player, { x: 5, z: 0 });
+  Object.assign(second.state.player, { x: 13, z: -15 });
+  for (let i = 0; i < 240; i++) {
+    first.step(.025); second.step(.025);
+    assert.equal(JSON.stringify(first.snapshot().state.enemies), JSON.stringify(second.snapshot().state.enemies),
+      'Two different hidden player positions changed the same enemy knowledge or route');
+  }
+  const enemy = first.state.enemies[0];
+  assert.equal(enemy.seen, false);
+  assert.equal(enemy.awareness, 'search');
+  assert.deepEqual([enemy.lastSeenX, enemy.lastSeenZ], [-5, 0]);
+  assert(enemy.x < -.88, 'A search crossed the wall toward the hidden player');
+  advance(first, 3);
+  assert.equal(enemy.awareness, 'patrol');
+  assert.equal(enemy.hasMemory, false);
+  assert.equal(enemy.active, false);
+  assert.equal(events(first, 'alerted').length, 1, 'Continuous searching replayed the initial alert');
+});
+
+test('Unalerted mobile guards patrol locally and all movement remains on physical walkable ground', () => {
+  const world = fixture({
+    spawn: { x: 25, z: 25, yaw: 0 }, enemies: [{ x: 0, z: 0, type: 0 }],
+    walkable: [{ x: 0, z: 0, w: 7, d: 7 }, { x: 25, z: 25, w: 8, d: 8 }],
+    colliders: [{ minX: .8, maxX: 1.5, minZ: -1, maxZ: 1, minY: 0, maxY: 2.4 }],
+  });
+  const sim = FSimulation.create(world), enemy = sim.state.enemies[0];
+  let distance = 0;
+  for (let frame = 0; frame < 400; frame++) {
+    const x = enemy.x, z = enemy.z; sim.step(.025);
+    distance += Math.hypot(enemy.x - x, enemy.z - z);
+    assert.equal(sim.blocked(enemy.x, enemy.z, .38), false);
+    assert(Math.abs(enemy.x) <= 3.5 && Math.abs(enemy.z) <= 3.5);
+  }
+  assert(distance > 5, 'Patrol was only a state label with no physical route');
+  assert.equal(enemy.awareness, 'patrol');
+  assert.equal(enemy.hasMemory, false);
+});
+
+test('Actual weapon and pulse noises carry their event position, with shorter hearing through an opaque wall', () => {
+  const wall = { minX: -.1, maxX: .1, minZ: -25, maxZ: 25, minY: 0, maxY: 4 };
+  function noisy(kind, enemyX) {
+    const sim = FSimulation.create(fixture({ spawn: { x: -4, z: 0, yaw: 0 }, colliders: [wall], enemies: [{ x: enemyX, z: 0, type: 2 }] }));
+    if (kind === 'pulse') sim.pulse();
+    else { sim.state.weapon = kind === 'fracture' ? 1 : 0; sim.fire(); }
+    return sim;
+  }
+  const quiet = noisy('shot', 8);
+  assert.equal(quiet.state.enemies[0].hasMemory, false, 'Ordinary fire was heard beyond its attenuated range');
+  for (const sim of [noisy('shot', 4), noisy('fracture', 8), noisy('pulse', 4)]) {
+    const enemy = sim.state.enemies[0];
+    assert.equal(enemy.awareness, 'investigate');
+    assert.equal(enemy.seen, false);
+    assert.deepEqual([enemy.lastSeenX, enemy.lastSeenZ], [-4, 0]);
+    assert.equal(enemy.hp, enemy.maxHp, 'Sound must not also penetrate cover as damage');
+    assert.equal(events(sim, 'alerted').length, 1);
+    sim.state.player.z = 12; advance(sim, .5);
+    assert.deepEqual([enemy.lastSeenX, enemy.lastSeenZ], [-4, 0], 'The recorded noise followed its source after the event');
+  }
+});
+
+test('An observer warns nearby allies with known coordinates but a blind relay cannot alert the entire map', () => {
+  const sim = FSimulation.create(fixture({
+    spawn: { x: -4, z: 0, yaw: 0 },
+    colliders: [{ minX: -.5, maxX: .5, minZ: -25, maxZ: 25, minY: 0, maxY: 4 }],
+    enemies: [{ x: -4, z: -6, type: 2 }, { x: 4, z: -6, type: 2 }, { x: 15, z: -6, type: 2 }],
+  }));
+  sim.step(.025);
+  const [observer, ally, remote] = sim.state.enemies;
+  assert.equal(observer.awareness, 'engage');
+  assert.equal(ally.awareness, 'investigate');
+  assert.equal(ally.seen, false);
+  assert.deepEqual([ally.lastSeenX, ally.lastSeenZ], [-4, 0]);
+  assert.equal(remote.hasMemory, false);
+  advance(sim, 2);
+  assert.equal(remote.awareness, 'patrol', 'An ally relayed hearsay as a fresh direct sighting');
+  assert.equal(events(sim, 'alerted').length, 2, 'Alert sounds repeated every perception update');
+  assert.equal(sim.state.enemies[1].x, 4, 'A turret moved while investigating a radio report');
+});
+
+test('A scout physically takes an alternate route around a solid obstacle to reach a flank', () => {
+  const wall = { minX: 1, maxX: 4, minZ: -8, maxZ: -3, minY: 0, maxY: 3 };
+  const sim = FSimulation.create(fixture({ colliders: [wall], enemies: [{ x: 0, z: -8, type: 0 }] }));
+  const enemy = sim.state.enemies[0]; enemy.cooldown = 30;
+  sim.step(.025);
+  assert.equal(enemy.tactic, 'flank');
+  assert(enemy.goalX > wall.maxX && enemy.path.length >= 2, 'Flank had no navigable alternative to the blocked straight line');
+  let usedEnd = false, crossed = false;
+  for (let frame = 0; frame < 260; frame++) {
+    sim.step(.025);
+    assert.equal(sim.blocked(enemy.x, enemy.z, .38), false);
+    if (enemy.x > 1.5 && enemy.x < 3.5 && enemy.z < wall.minZ - .38) usedEnd = true;
+    if (enemy.x > wall.maxX + .38) crossed = true;
+  }
+  assert(usedEnd, 'The scout did not travel around the obstacle end');
+  assert(crossed, 'The scout stayed pressed against the obstacle instead of reaching its other side');
+  assert.equal(events(sim, 'enemyShot').length, 0);
+});
+
+test('A wounded scout reaches real occluding cover, waits, then peeks; the whole tactical sequence survives a checkpoint', () => {
+  const world = fixture({
+    colliders: [{ minX: 1, maxX: 3, minZ: -8, maxZ: -6, minY: 0, maxY: 2.5 }],
+    enemies: [{ x: -25, z: -25, type: 2 }, { x: 25, z: -25, type: 2 }, { x: 0, z: -8, type: 0 }],
+  });
+  const sim = FSimulation.create(world), restored = FSimulation.create(world), enemy = sim.state.enemies[2];
+  enemy.hp = 1; enemy.cooldown = 0; sim.step(.025);
+  assert.equal(enemy.tactic, 'cover');
+  assert.equal(enemy.holdTime, 1.4, 'The id2 cover duration must remain a serializable exact bound');
+  assert.equal(sim.sight(0, 0, enemy.goalX, enemy.goalZ), false, 'Chosen cover did not actually occlude the known threat');
+  assert.equal(restored.restore(sim.snapshot()), true, 'A real cover plan failed validation immediately after creation');
+  advance(sim, 2.35);
+  assert.equal(enemy.tactic, 'cover');
+  assert(Math.hypot(enemy.x - enemy.goalX, enemy.z - enemy.goalZ) < .16, 'The scout did not reach its cover');
+  assert.equal(sim.sight(0, 0, enemy.x, enemy.z), false);
+  assert(enemy.holdTime > 0 && enemy.holdTime < 1.4);
+  assert.equal(events(sim, 'enemyShot').length, 0, 'The scout fired while hiding behind cover');
+  sim.state.player.yaw = Math.atan2(enemy.x, -enemy.z); sim.fire();
+  assert.equal(enemy.hp, 1, 'The claimed cover blocked an eye ray but failed to stop the actual weapon ray');
+  assert.equal(restored.restore(sim.snapshot()), true);
+  let peeked = false;
+  for (let frame = 0; frame < 200; frame++) {
+    sim.step(.025); restored.step(.025);
+    if (enemy.tactic !== 'cover' && sim.sight(0, 0, enemy.x, enemy.z)) peeked = true;
+    assert.equal(JSON.stringify(restored.snapshot()), JSON.stringify(sim.snapshot()), 'Tactical memory, route or cover timing changed after restoring');
+  }
+  assert(peeked, 'Taking cover became a permanent hidden state');
+  assert(events(sim, 'enemyShot').length > 0, 'The scout never resumed an exposed, telegraphed attack after peeking');
+});
+
+test('Squads separate collision-safely and presentation speed measures displacement instead of intentions', () => {
+  const sim = FSimulation.create(fixture({ enemies: [{ x: -.05, z: -8, type: 0 }, { x: .05, z: -8, type: 0 }, { x: 0, z: -9, type: 1 }] }));
+  for (const e of sim.state.enemies) e.cooldown = 30;
+  for (let frame = 0; frame < 100; frame++) {
+    const before = sim.state.enemies.map(e => [e.x, e.z]); sim.step(.025);
+    for (let i = 0; i < sim.state.enemies.length; i++) {
+      const e = sim.state.enemies[i];
+      assert(Math.abs(e.moveSpeed - Math.hypot(e.x - before[i][0], e.z - before[i][1]) / .025) < 1e-9);
+      assert.equal(sim.blocked(e.x, e.z, .38), false);
+    }
+  }
+  const [a, b] = sim.state.enemies;
+  assert(Math.hypot(a.x - b.x, a.z - b.z) > .9, 'Two members of the squad remained stacked');
+  const turret = FSimulation.create(fixture({ enemies: [{ x: 0, z: -8, type: 2 }] }));
+  advance(turret, 1);
+  assert.equal(turret.state.enemies[0].moveSpeed, 0);
+});
+
+test('Even a committed burst with its barrel against a wall cannot create a projectile behind that wall', () => {
+  const sim = FSimulation.create(fixture({
+    spawn: { x: 0, z: 1, yaw: 0 },
+    colliders: [{ minX: -20, maxX: 20, minZ: -.1, maxZ: 0, minY: 0, maxY: 4 }],
+    enemies: [{ x: 0, z: -.49, type: 2 }],
+  }));
+  const enemy = sim.state.enemies[0];
+  Object.assign(enemy, { active: true, burstLeft: 3, burstWait: 0, attackState: 'burst', aimX: 0, aimY: 1.45, aimZ: 1 });
+  advance(sim, 1.5);
+  assert.equal(events(sim, 'enemyShot').length, 3, 'The test did not exercise the existing committed burst');
+  assert.equal(sim.state.player.hp, 100, 'A muzzle offset spawned a projectile on the far side of the wall');
+  assert.equal(sim.state.bullets.length, 0);
+});
+
+test('A locally planned investigation travels the same collision-respecting route at 20–120 steps per second', () => {
+  const positions = [];
+  for (const fps of [20, 30, 60, 120]) {
+    const sim = FSimulation.create(fixture({
+      colliders: [{ minX: -1.5, maxX: 1.5, minZ: -6, maxZ: -4, minY: 0, maxY: 4 }],
+      enemies: [{ x: 0, z: -10, type: 1 }],
+    }));
+    const enemy = sim.state.enemies[0]; enemy.cooldown = 30; sim.fire();
+    assert.equal(enemy.awareness, 'investigate');
+    advanceAt(sim, 3, fps);
+    assert.equal(sim.blocked(enemy.x, enemy.z, .38), false);
+    assert(Math.hypot(enemy.x, enemy.z + 10) > 2.5, 'The heard shot never caused a physical investigation');
+    positions.push([enemy.x, enemy.z]);
+  }
+  for (const [x, z] of positions) assert(Math.hypot(x - positions[0][0], z - positions[0][1]) < .08,
+    'AI displacement depends on the display frame rate');
+});
+
+test('Malformed tactical checkpoints fail atomically while compatible legacy saves import only their stored aim', () => {
+  const world = fixture({
+    spawn: { x: -5, z: 0, yaw: 0 }, enemies: [{ x: -5, z: -8, type: 0 }],
+    colliders: [{ minX: -.5, maxX: .5, minZ: -25, maxZ: 25, minY: 0, maxY: 4 }],
+  });
+  const sim = FSimulation.create(world); sim.state.enemies[0].cooldown = 0; sim.step(.025);
+  Object.assign(sim.state.player, { x: 5, z: 0 }); advance(sim, .3);
+  const original = JSON.stringify(sim.snapshot());
+  const invalid = [
+    d => { d.aiVersion = 9; },
+    d => { d.state.enemies[0].awareness = 'omniscient'; },
+    d => { d.state.enemies[0].tactic = 'teleport'; },
+    d => { d.state.enemies[0].hasMemory = 'true'; },
+    d => { d.state.enemies[0].lastSeenX = Infinity; },
+    d => { d.state.enemies[0].memory = 90; },
+    d => { d.state.enemies[0].alert = 2; },
+    d => { d.state.enemies[0].goalX = 0; d.state.enemies[0].goalZ = 0; },
+    d => { d.state.enemies[0].path = [-1]; },
+    d => { d.state.enemies[0].path = [sim.nav.idx(0, 0)]; },
+    d => { d.state.enemies[0].pathAt = d.state.enemies[0].path.length + 1; },
+    d => { d.state.enemies[0].senseWait = NaN; },
+    d => { d.state.enemies[0].holdTime = 1.41; },
+    d => { delete d.aiVersion; },
+  ];
+  for (const corrupt of invalid) {
+    const data = JSON.parse(original); corrupt(data);
+    assert.equal(sim.restore(data), false);
+    assert.equal(JSON.stringify(sim.snapshot()), original, 'Rejected tactical data partially mutated the active game');
+  }
+  const legacy = JSON.parse(original); delete legacy.aiVersion;
+  const keys = ['awareness', 'tactic', 'hasMemory', 'lastSeenX', 'lastSeenZ', 'memory', 'alert', 'seen', 'senseWait', 'thinkWait', 'shareWait', 'alertWait', 'coverWait', 'holdTime', 'planWait', 'patrolIndex', 'searchIndex', 'goalX', 'goalZ', 'pathAt', 'stuck', 'moveSpeed', 'path'];
+  for (const e of legacy.state.enemies) for (const key of keys) delete e[key];
+  const restored = FSimulation.create(world);
+  assert.equal(restored.restore(legacy), true);
+  const enemy = restored.state.enemies[0];
+  assert.equal(enemy.awareness, 'search');
+  assert.equal(enemy.seen, false);
+  assert.deepEqual([enemy.lastSeenX, enemy.lastSeenZ], [legacy.state.enemies[0].aimX, legacy.state.enemies[0].aimZ]);
+  assert.notEqual(enemy.lastSeenX, restored.state.player.x, 'Importing an old save revealed the hidden player position');
+});
+
+test('The Custodian keeps its last-known search inside its arena instead of getting stranded in a service route', () => {
+  const world = fixture({
+    enemies: [{ x: 0, z: -12, type: 3 }],
+    colliders: [{ minX: 5, maxX: 5.2, minZ: -25, maxZ: 25, minY: 0, maxY: 4 }],
+  });
+  const sim = FSimulation.create(world), boss = sim.state.enemies[0]; boss.cooldown = 30;
+  sim.step(.025); Object.assign(sim.state.player, { x: 15, z: 0 });
+  for (let frame = 0; frame < 400; frame++) {
+    sim.step(.025);
+    assert(Math.abs(boss.x) <= 4.01 && Math.abs(boss.z + 12) <= 4.01);
+    assert.equal(sim.blocked(boss.x, boss.z, 1.05), false);
+  }
+  assert.equal(boss.awareness, 'patrol');
+  assert.equal(boss.hasMemory, false);
+});
+
+test('Real outdoor geometry supports tactical updates and exact cover checkpoints without invalid enemy positions', () => {
+  const world = FWorld.create('96', 1), sim = FSimulation.create(world);
+  const enemy = sim.state.enemies[2]; Object.assign(sim.state.player, { x: 14, z: 16 });
+  enemy.hp = 1; enemy.cooldown = 10;
+  for (let frame = 0; frame < 180; frame++) {
+    sim.step(1 / 60);
+    for (const e of sim.state.enemies) if (e.hp > 0) {
+      assert.equal(sim.blocked(e.x, e.z, e.type === 3 ? 1.05 : .38), false);
+      assert.equal(FWorld.isWalkable(world, e.x, e.z, .1), true);
+    }
+  }
+  const data = sim.snapshot(), restored = FSimulation.create(world);
+  assert.equal(restored.restore(data), true);
+  assert.equal(JSON.stringify(restored.snapshot()), JSON.stringify(data));
+  for (let frame = 0; frame < 60; frame++) { sim.step(1 / 60); restored.step(1 / 60); }
+  assert.equal(JSON.stringify(restored.snapshot()), JSON.stringify(sim.snapshot()));
+});

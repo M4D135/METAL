@@ -10,7 +10,8 @@
   const audio=FAudio.create(),motion=FMotion.create(),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,wasLocked=false,perfStart=last,perfFrames=0;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
-  let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,saveAvailable=true,lastFootstep=0;
+  let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,saveAvailable=true,lastFootstep=0,outdoorMix=0;
+  const actorMotion=new Map();
   const keys=new Set(),input={moveX:0,moveY:0,lookX:0,lookY:0,fire:false,dash:false,pulse:false,weapon:0,sprint:false,assist:touch};
   let mouseFire=false,touchFire=false,dragLook=null,moveTouch=null,stick={x:0,y:0},lookDX=0,lookDY=0,dashQueued=false,pulseQueued=false;
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify({muted,quality,softMotion}));}catch{}}
@@ -30,25 +31,35 @@
   }
   function refreshContinue(){
     $('resume-expedition').hidden=!savedRun;
-    $('save-label').textContent=savedRun?'ÉTAGE '+String(savedRun.stage+1).padStart(2,'0'):'';
+    $('save-label').textContent=savedRun?'SECTEUR '+String(savedRun.stage+1).padStart(2,'0'):'';
     $('start').firstChild.textContent=savedRun?'Nouvelle expédition ':'Entrer dans le complexe ';
   }
   function saveCheckpoint(){
     if(!sim||sim.state.dead||sim.state.won)return;
     checkpoint=sim.snapshot();
-    savedRun={version:2,seed,stage,runStats:{...runStats},checkpoint};
+    savedRun={version:2,generation:world.generation||3,seed,stage,runStats:{...runStats},checkpoint};
     try{localStorage.setItem(SAVE_KEY,JSON.stringify(savedRun));saveAvailable=true;}catch{saveAvailable=false;}
-    $('checkpoint-status').textContent=(sim.state.relays?'Reprise au relais '+sim.state.relays+' / 3.':'Reprise à l’entrée de cet étage.')+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
+    $('checkpoint-status').textContent=(sim.state.relays?'Reprise au relais '+sim.state.relays+' / 3.':'Reprise à l’entrée de ce secteur.')+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
     refreshContinue();
   }
   function clearSave(){checkpoint=null;savedRun=null;try{localStorage.removeItem(SAVE_KEY);}catch{}refreshContinue();}
   function restoreRun(v){
     if(!validSave(v))return false;
     load(v.stage,v.seed);
-    if(!sim.restore(v.checkpoint,{recover:true}))return false;
+    if((v.generation||3)!==(world.generation||3)||!sim.restore(v.checkpoint,{recover:true}))return false;
     runStats={...v.runStats};checkpoint=v.checkpoint;savedRun=v;selectedWeapon=sim.state.weapon;
-    $('checkpoint-status').textContent=(sim.state.relays?'Reprise au relais '+sim.state.relays+' / 3.':'Reprise à l’entrée de cet étage.')+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
+    $('checkpoint-status').textContent=(sim.state.relays?'Reprise au relais '+sim.state.relays+' / 3.':'Reprise à l’entrée de ce secteur.')+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
     renderHUD();return true;
+  }
+  function resumeSaved(v){
+    if(restoreRun(v)){start('Signal retrouvé. Reprise au dernier point enregistré.');return;}
+    if(validSave(v)){
+      // Retain the old point separately when the new terrain makes its position invalid.
+      try{if(!localStorage.getItem(SAVE_KEY+'-before-horizons'))localStorage.setItem(SAVE_KEY+'-before-horizons',JSON.stringify(v));}catch{}
+      runStats={...v.runStats};selectedWeapon=v.checkpoint?.state?.weapon===1?1:0;
+      load(v.stage,v.seed);saveCheckpoint();
+      start(v.generation!==world.generation?'Les lieux ont changé. Reprise à l’entrée du même secteur ; progression précédente conservée.':'Point de reprise illisible. Reprise à l’entrée de ce secteur.');
+    }else{runStats=emptyStats();selectedWeapon=0;load(0,96);saveCheckpoint();start('Nouvelle expédition. Trois secteurs vous attendent.');}
   }
   function clearInput(){keys.clear();mouseFire=touchFire=false;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
@@ -56,31 +67,31 @@
     if(value!=='playing'&&document.pointerLockElement)document.exitPointerLock();
   }
   function load(n,newSeed){
-    stage=n;if(newSeed!==undefined)seed=newSeed;world=FWorld.create(seed,stage);sim=FSimulation.create(world);sim.state.weapon=selectedWeapon;renderer.setWorld(world.meshes,world.lights);
-    motion.reset();lastFootstep=0;
-    audio.setStage?.(stage);
-    $('sector-number').textContent='ÉTAGE '+String(stage+1).padStart(2,'0')+' / 03';$('sector-title').textContent=world.title;
+    stage=n;if(newSeed!==undefined)seed=newSeed;world=FWorld.create(seed,stage);sim=FSimulation.create(world);sim.state.weapon=selectedWeapon;renderer.setWorld(world.meshes,world.lights,world.environment);
+    motion.reset();lastFootstep=0;actorMotion.clear();outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
+    audio.setStage?.(stage);audio.setEnvironment?.(world.environment,outdoorMix);
+    $('sector-number').textContent='SECTEUR '+String(stage+1).padStart(2,'0')+' / 03';$('sector-title').textContent=world.title;
     document.body.dataset.stage=String(stage+1);$('radar-wrap').hidden=false;hudWait=0;renderHUD();
   }
   function lock(){
     if(touch)return;
-    try{const result=canvas.requestPointerLock?.();if(result?.catch)result.catch(()=>toast('Maintenez et glissez pour regarder. Flèches : tourner.',4));}catch{toast('Glissez pour regarder. Flèches : tourner.',4);}
+    try{const result=canvas.requestPointerLock?.();if(result?.catch)result.catch(()=>{if(toastTime<=0)toast('Maintenez et glissez pour regarder. Flèches : tourner.',4);});}catch{if(toastTime<=0)toast('Glissez pour regarder. Flèches : tourner.',4);}
   }
   function start(message){
     audio.start();audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});
-    toast(message||(stage===0?'Trois relais. Deux armes. E déclenche une onde de choc.':stage===1?'Attention aux évents : orange annonce la prochaine décharge.':'Le gardien protège la sortie. Observez ses attaques.'),4.5);
+    toast(message||(stage===0?'Les sentinelles entendent vos tirs. Changez de position après une rafale.':stage===1?'Les rochers vous couvrent. Attention aux machines qui contournent.':'Le gardien protège la sortie. Gardez un chemin de repli.'),5.5);
   }
   function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed);saveCheckpoint();start();}
   function result(dead){
     const s=sim.state,finished=!dead&&stage===2;
     if(!dead){runStats.time+=s.elapsed;runStats.kills+=s.kills;runStats.shots+=s.shots;runStats.hits+=s.hits;runStats.score+=s.score||0;}
     $('result-kicker').textContent=dead?'TRANSMISSION PERDUE':finished?'TRANSMISSION RÉTABLIE':'RELAIS SYNCHRONISÉS';
-    $('result-title').textContent=dead?'Signal perdu.':finished?'Vous êtes sorti.':'Étage sécurisé.';
-    $('result-copy').textContent=dead?'Le dernier relais a gardé votre signal. Esquivez les attaques annoncées et utilisez l’onde de choc pour dégager le passage.':finished?'Neuf relais rallumés. Le gardien neutralisé. Au-dessus de vous, le silence a enfin changé.':'Votre signal descend encore. Un autre plan, d’autres machines, la même issue à trouver.';
+    $('result-title').textContent=dead?'Signal perdu.':finished?'Vous êtes sorti.':'Secteur sécurisé.';
+    $('result-copy').textContent=dead?'Le dernier relais a gardé votre signal. Utilisez les couverts et changez de position quand les machines se séparent.':finished?'Neuf relais rallumés. Le gardien neutralisé. Au-delà des machines, le vent reprend ses droits.':'Le signal traverse une nouvelle zone. D’autres paysages, d’autres lignes de vue, la même issue à trouver.';
     const stats=finished?runStats:{time:s.elapsed,kills:s.kills,shots:s.shots,hits:s.hits};
     $('result-time').textContent=formatTime(stats.time);$('result-kills').textContent=String(stats.kills);$('result-accuracy').textContent=(stats.shots?Math.min(100,Math.round(stats.hits/stats.shots*100)):0)+'%';
     $('result-score').textContent=String(Math.round(dead?runStats.score+(s.score||0):runStats.score));
-    $('continue').innerHTML=(dead?'Reprendre au point de reprise':finished?'Nouvelle expédition':'Descendre à l’étage '+(stage+2))+' <span class="arrow-icon" aria-hidden="true"></span>';
+    $('continue').innerHTML=(dead?'Reprendre au point de reprise':finished?'Nouvelle expédition':'Rejoindre le secteur '+(stage+2))+' <span class="arrow-icon" aria-hidden="true"></span>';
     if(finished)clearSave();
     setMode(dead?'dead':finished?'complete':'cleared');
   }
@@ -108,6 +119,7 @@
     if(checkpointDue)saveCheckpoint();
   }
   const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>({shape,p,s,mat,r,emissive});
+  function isOutdoors(x,z){return (world?.environment?.outdoorZones||[]).some(a=>Math.abs(x-a.x)<=a.w/2&&Math.abs(z-a.z)<=a.d/2);}
   function machinery(out,t){
     const player=sim.state.player,range=quality==='low'?25:43;
     for(const a of world.machinery||[]){
@@ -181,15 +193,16 @@
       if(e.hp<=0)continue;
       const heading=Number.isFinite(e.yaw)?e.yaw:Math.atan2(p.x-e.x,e.z-p.z),rot=Math.PI-heading;
       const charge=e.windup>0?1-e.windup/(e.windupMax||1):0,stunned=e.stun>0;
-      const y=e.y+(e.type===1?0:Math.sin(t*2+e.id)*.09),mat=e.hurt>0?5:stunned?0:1,eye=stunned?4:e.windup>0?5:6;
+      const scanning=e.awareness==='investigate'||e.awareness==='search',patrolling=e.awareness==='patrol';
+      const y=e.y+(e.type===1?0:Math.sin(t*2+e.id)*.09),mat=e.hurt>0?5:stunned?0:1,eye=stunned||patrolling?4:e.windup>0||scanning?5:6;
       const glow=1.4+charge*2;
       if(e.type===0){
         out.push(m('octa',[e.x,y,e.z],[1,.7,1],mat,[stunned?.3:0,t*.3+e.id,0]),m('sphere',[e.x,y,e.z],[.42,.42,.42],eye,[0,0,0],glow),m('ring',[e.x,y-.1,e.z],[1.2,.1,1.2],0,[.15,0,0]));
         for(let j=0;j<3;j++){const a=t*(stunned?.1:1.1)+j*Math.PI*2/3+e.id,r=.57+charge*.14;out.push(m('box',[e.x+Math.cos(a)*r,y,e.z+Math.sin(a)*r],[.16,.25,.45],0,[0,-a,0]),m('sphere',[e.x+Math.cos(a)*(r+.09),y-.1,e.z+Math.sin(a)*(r+.09)],[.1,.1,.1],eye,[0,0,0],glow));}
       }else if(e.type===1){
-        const lean=e.attackState==='rush'?.16:0,bounce=e.active&&!stunned?Math.sin(t*8+e.id)*.04:0;
+        const walk=actorMotion.get(e.id)||{phase:0,blend:0},lean=e.attackState==='rush'?.16:walk.blend*.045,bounce=!stunned?Math.sin(walk.phase*2)*.035*walk.blend:0;
         out.push(m('box',[e.x,1.05+bounce,e.z],[1.05,.85,.65],mat,[lean,rot,0]),m('box',[e.x,1.67+bounce,e.z],[.6,.4,.5],0,[lean,rot,0]));
-        for(const side of [-1,1]){const x=e.x+Math.cos(rot)*side*.38,z=e.z-Math.sin(rot)*side*.38;out.push(m('box',[x,.4,z],[.29,.8,.4],0,[e.active&&!stunned?Math.sin(t*7)*side*.23:0,rot,0]),m('cylinder',[x,1.2+bounce,z],[.2,.7,.2],7,[0,0,Math.PI/2]));}
+        for(const side of [-1,1]){const x=e.x+Math.cos(rot)*side*.38,z=e.z-Math.sin(rot)*side*.38;out.push(m('box',[x,.4,z],[.29,.8,.4],0,[!stunned?Math.sin(walk.phase)*side*.25*walk.blend:0,rot,0]),m('cylinder',[x,1.2+bounce,z],[.2,.7,.2],7,[0,0,Math.PI/2]));}
         out.push(m('box',[e.x+Math.sin(rot)*.28,1.69+bounce,e.z+Math.cos(rot)*.28],[.4,.08,.08],eye,[0,rot,0],glow));
       }else if(e.type===2){
         out.push(m('sphere',[e.x,y,e.z],[.8,.8,.8],mat),m('octa',[e.x,y,e.z],[.4,1.35,.4],0,[0,t*.5,0]),m('ring',[e.x,y,e.z],[1.35,1.35,1.35],0,[Math.PI/2,rot,t*.4]));
@@ -278,14 +291,14 @@
     const bossTarget=s.relays===3&&boss;
     const targets=s.relays===3?[bossTarget||world.exit]:s.cores.filter(c=>!c.taken),target=targets.reduce((a,c)=>!a||Math.hypot(c.x-p.x,c.z-p.z)<Math.hypot(a.x-p.x,a.z-p.z)?c:a,null);
     if(target){$('target-label').textContent=s.relays===3?(bossTarget?'GARDIEN':'SORTIE'):'RELAIS';$('target-distance').textContent=Math.round(Math.hypot(target.x-p.x,target.z-p.z))+' m';const angle=Math.atan2(target.x-p.x,p.z-target.z)-p.yaw;$('target-arrow').style.transform='rotate('+angle+'rad)';}
-    const room=world.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);$('room-name').textContent=room?room.name:'COULOIR DE LIAISON';
+    const room=world.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);$('room-name').textContent=room?room.name:isOutdoors(p.x,p.z)?'CHEMIN DE LIAISON':'COULOIR DE LIAISON';
     drawRadar();
   }
   function drawRadar(){
     if($('radar-wrap').hidden)return;
     const ctx=$('radar').getContext('2d'),b=world.bounds,k=160/Math.max(b.maxX-b.minX,b.maxZ-b.minZ),X=x=>10+(x-b.minX)*k,Z=z=>10+(z-b.minZ)*k;
     ctx.clearRect(0,0,180,180);ctx.fillStyle='#8caf9320';ctx.strokeStyle='#779d7c77';ctx.lineWidth=.8;
-    for(const r of [...(world.corridors||[]),...world.rooms]){ctx.fillRect(X(r.x-r.w/2),Z(r.z-r.d/2),r.w*k,r.d*k);ctx.strokeRect(X(r.x-r.w/2),Z(r.z-r.d/2),r.w*k,r.d*k);}
+    for(const r of [...(world.corridors||[]),...world.rooms]){ctx.fillStyle=r.outdoor?'#829c4b22':'#8caf9320';ctx.strokeStyle=r.outdoor?'#90ae5e66':'#779d7c77';ctx.fillRect(X(r.x-r.w/2),Z(r.z-r.d/2),r.w*k,r.d*k);ctx.strokeRect(X(r.x-r.w/2),Z(r.z-r.d/2),r.w*k,r.d*k);}
     for(const c of sim.state.cores){ctx.fillStyle=c.taken?'#567260':'#d7f36b';ctx.save();ctx.translate(X(c.x),Z(c.z));ctx.rotate(Math.PI/4);ctx.fillRect(-2.5,-2.5,5,5);ctx.restore();}
     const boss=sim.state.enemies.find(e=>e.type===3&&e.hp>0&&e.active);if(boss){ctx.fillStyle='#e89963';ctx.fillRect(X(boss.x)-3,Z(boss.z)-3,6,6);}
     ctx.strokeStyle=sim.state.relays===3&&!sim.state.bossAlive?'#71e1cc':'#b08449';ctx.strokeRect(X(world.exit.x)-3,Z(world.exit.z)-3,6,6);
@@ -310,10 +323,12 @@
         events();
         if(mode!=='playing')break;
       }
-      const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI);
+      const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI),outside=isOutdoors(sim.state.player.x,sim.state.player.z);
+      outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
       audio.setThreat(sim.state.threat||0);audio.tick(dt);
-      if(mode==='playing'&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving);
+      if(mode==='playing'&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving,{outdoor:outside,biome:world.environment?.biome});
       lastFootstep=footstep;
+      for(const e of sim.state.enemies){const pose=actorMotion.get(e.id)||{phase:0,blend:0};pose.phase=(pose.phase+(e.moveSpeed||0)*dt*4.8)%(Math.PI*2);pose.blend+=(Math.min(1,(e.moveSpeed||0)/.9)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);}
       toastTime-=dt;if(toastTime<=0)$('toast').classList.remove('visible');
       hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.09;}
       $('crosshair').classList.toggle('hit',sim.state.hitMarker>0);$('damage').style.opacity=String(sim.state.damage*.45);
@@ -327,16 +342,12 @@
   function togglePause(){if(mode==='playing')setMode('paused');else if(mode==='paused'){audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});}}
   function switchWeapon(value){const next=value===undefined?1-selectedWeapon:value;if(mode!=='playing'||next===selectedWeapon)return;selectedWeapon=next;sim.state.weapon=selectedWeapon;motion.impulse('switch');audio.switchWeapon?.();renderHUD();}
   $('start').addEventListener('click',()=>newRun(savedRun?(Date.now()>>>0)%1000000:seed));
-  $('resume-expedition').addEventListener('click',()=>{
-    if(restoreRun(savedRun))start('Signal retrouvé. Reprise au dernier point enregistré.');
-    else{clearSave();runStats=emptyStats();load(0,96);$('start').firstChild.textContent='Recommencer l’expédition ';}
-  });
+  $('resume-expedition').addEventListener('click',()=>resumeSaved(savedRun));
   $('pause-button').addEventListener('click',togglePause);$('resume').addEventListener('click',togglePause);
   $('restart').addEventListener('click',()=>{load(stage);saveCheckpoint();start('Nouvelle tentative. Le point de reprise est à l’entrée.');});
   $('continue').addEventListener('click',()=>{
     if(mode==='dead'){
-      const v=savedRun;if(!restoreRun(v)){load(stage);saveCheckpoint();}
-      start('Point de reprise restauré. Le complexe vous attend.');return;
+      resumeSaved(savedRun);return;
     }
     if(mode==='complete'){newRun((Date.now()>>>0)%1000000);return;}
     load(stage+1);saveCheckpoint();start();

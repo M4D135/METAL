@@ -1,133 +1,137 @@
-# Validation de FERRO 0.3.0 — Profondeur
+# Validation de FERRO 0.4.0 — Horizons
 
-Date : 12 novembre 2026.
+Vérifications réalisées le **12 novembre 2026** sur le fichier autonome assemblé et les sources correspondantes.
 
-## Distribution et périmètre
+## Version contrôlée
 
-Dépôt privé : **M4D135/FERRO**, branche **main**. Jeu autonome : `dist/index.html`.
+- Dépôt : https://github.com/M4D135/FERRO
+- Site privé : https://ferro-procedural-fps.garden-lake-2660.chatgpt.site/
+- Version : **0.4.0**, génération de terrain **4**.
+- Taille du fichier jouable : **248 290 octets bruts**, **76 041 octets gzip**.
+- SHA-256 du HTML : `7fd67226b0f445b99e51b64c7737de49e775d73fd2776870253ef92d3c3f32f2`.
+- Aucun asset ou code externe chargé à l’exécution. Le navigateur reste exclu de la mesure.
 
-Hébergement existant : https://ferro-procedural-fps.garden-lake-2660.chatgpt.site
+Les trois territoires mêlent des cours et chemins à ciel ouvert avec des bâtiments industriels. Le joueur commence dehors. Les deux armes, neuf relais, évents et gardien final restent présents. La simulation ajoute perception, mémoire, alerte locale, navigation tactique et couverture sans augmenter les PV ou dégâts des machines.
 
-L'accès reste privé, réservé au propriétaire. Cette passe conserve les trois étages, les combats, les neuf relais et le gardien. Elle enrichit le décor, remplace le mouvement instantané par une accélération contrôlée et corrige le rendu des ombres et des joints. Aucun asset externe n'est ajouté.
+## Résultat des contrôles automatisés
 
-## Mesure du build
+| Groupe | Résultat |
+| --- | --- |
+| Génération et accessibilité | **18 configurations réussies**, 750 cibles contrôlées |
+| Simulation | **42 tests réussis**, dont les 30 régressions précédentes |
+| Mouvement et présentation | **7 tests réussis** |
+| Bouton Continuer et migration du stockage | **4 tests réussis** |
+| Distribution | Taille, SHA-256, modules embarqués et absence de chargement externe vérifiés |
 
-Les valeurs exactes de taille brute, gzip et SHA-256 sont générées dans `SIZE.json` et vérifiées contre `dist/index.html`.
+La suite du projet a passé. Après le dernier durcissement du couvert au rayon 3D, les 53 tests simulation/mouvement/shell ont été réexécutés sur les sources finales ; le build et son contrôle ont également passé. La génération n’avait pas changé depuis ses 18 vérifications.
 
-- HTML autonome : **189 736 octets bruts**, soit **189,736 ko** ou **185,29 Kio**.
-- Gzip reproductible : **59 021 octets**.
-- Budget utilisé : **13,55 %**.
-- SHA-256 du HTML : `c7b0ffec4b1c90c294de36e7be99dab3af1206f6538e1af55b60eaded714c568`.
+Commandes reproductibles :
 
-Le budget reste **1 400 000 octets non compressés**. Le navigateur et ses API sont exclus de cette mesure ; le HTML n'est pas un exécutable natif de même taille.
+```sh
+python3 tools/build.py
+node checks/world.test.mjs
+node --test checks/simulation.test.mjs checks/motion.test.mjs checks/checkpoint.test.mjs
+node checks/build.test.mjs
+```
 
-## Génération : 18 mondes, PASS
+## Mondes et extérieurs
 
-Six graines sur chacun des trois étages. Un flood fill indépendant utilise un disque joueur de rayon **0,28 m**, une grille de **0,25 m**, les sols et les obstacles, sans diagonale à travers les coins.
+Six graines sont vérifiées dans chacun des trois secteurs : `1`, `7`, `42`, `96`, `2026`, `65535`. Un flood fill indépendant utilise un disque joueur de rayon **0,28 m**, une grille de **0,25 m** et les obstacles réels, sans diagonale traversant les coins.
 
-**750 positions contrôlées** : relais, sortie, soins, positions initiales des ennemis, centres des salles et liaisons. Les objectifs restent accessibles en traitant simultanément tous les évents comme dangereux. Les plans et colliders sont inchangés.
+Les contrôles couvrent le déterminisme, les valeurs finies, le dégagement du départ, les centres des régions, les relais, la sortie, les soins et les positions initiales des ennemis. Les objectifs restent accessibles lorsque tous les évents sont considérés dangereux. Chaque axe de connexion reste ouvert, et l’arène conserve son dégagement pour le gardien.
 
-Les empreintes SHA-256 des données physiques et de checkpoint sont comparées à celles du générateur publié en 0.2 : **les 18 cas sont identiques**. Le générateur décoratif indépendant ne consomme pas l'aléatoire des placements existants.
+Les tests extérieurs vérifient également :
 
-Pour la graine 96 :
+- Cinq régions extérieures dans chacun des secteurs, et des atmosphères distinctes.
+- Présence d’un arbre proche dans le champ avant au départ.
+- Rayons verticaux libres vers le ciel au centre des régions et chemins extérieurs.
+- Correspondance exacte des colliders avec leurs meshes solides visibles.
+- Troncs collidables jusqu’à 2,9 m, utilisables comme obstacle à hauteur de tir.
+- Conservation des troncs, canopées et silhouettes essentielles au niveau de détail minimal.
+- Un second flood fill qui **ignore entièrement le masque de sol** : aucune cellule accessible ne sort du terrain. Les frontières bloquent donc physiquement le joueur et ne reposent pas sur une restriction invisible du sol.
 
-| Étage | Architecture conservée | Détails moyens | Microdétails | Total statique | Colliders | Sources ambiantes |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Ateliers | 1 044 | 5 663 | 3 566 | 10 273 | 224 | 23 |
-| Fonderie | 1 654 | 5 419 | 3 423 | 10 496 | 184 | 21 |
-| Cœur | 1 340 | 6 494 | 3 946 | 11 780 | 218 | 24 |
+| Secteur, graine 96 | Meshes statiques | Arbres | Arbres dans les zones jouables | Cours extérieures | Chemins extérieurs |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Lisière rouillée | 10 696 | 48 | 20 | 5 | 7 |
+| Carrière des braises | 8 378 | 10 | 10 | 5 | 9 |
+| Jardins du veilleur | 12 275 | 44 | 20 | 5 | 12 |
 
-Le maximum observé sur les 18 cas est de **11 795 primitives**, sous le budget de 12 000. Les microdétails ont une dimension maximale de 0,35 m. Les détails bas sont ancrés aux surfaces/empreintes existantes ; les réseaux suspendus et effets ambiants restent au-dessus des passages. Les écrans exposent une normale et des dimensions vérifiées.
+Sur les 18 configurations, les budgets observés vont de **8 324 à 12 356 meshes** et de **177 à 213 colliders**, sous les plafonds de 16 000 et 500. Ces nombres décrivent le monde généré complet ; le renderer n’affiche que sa partie pertinente.
 
-## Simulation : 30 tests, PASS
+Le sol de circulation reste horizontal. Collines et falaises de fond donnent du relief au décor ; elles ne constituent pas des pentes ou plateformes traversables.
 
-Les **23 régressions précédentes restent inchangées** : murs minces, glissement, tirs en 3D et couvertures basses, surchauffe, esquive, collecte après dégât fatal, parcours ordinaire d'un niveau généré, armes, onde, télégraphes, charges, boss, score, évents, snapshots et protection de reprise.
+## Preuves comportementales de l’IA
 
-Sept suites supplémentaires vérifient :
+Les nouveaux contrôles observent les trajectoires et les conséquences des décisions, pas seulement le nom d’un état.
 
-- Intensité analogique conservée et diagonales normalisées.
-- Distance et trajet cohérents de 20 à 120 pas de simulation par seconde, y compris inversion et freinage.
-- Accélération progressive, freinage rapide et visée immédiate.
-- Transition de course liée à la vitesse réelle.
-- Arrêt de la foulée et des animations quand un mur bloque le joueur, avec glissement encore possible.
-- Esquive bornée à 0,2 s, sans boost résiduel ni prolongation d'invulnérabilité.
-- Reprise des checkpoints version 1 au repos, même lorsqu'un ancien dash était enregistré.
+1. **Perte de trace.** Deux parties identiques placent le joueur dans deux positions cachées différentes après une observation. Les décisions, souvenirs et trajectoires des ennemis restent strictement identiques. La mémoire expire ensuite sans observation nouvelle.
+2. **Patrouille.** Une machine non alertée parcourt réellement un trajet local, en restant sur le terrain autorisé.
+3. **Bruit.** Les tirs d’Impulse, Fracture et l’onde produisent des enquêtes sur le lieu de leur émission. Un mur réduit la portée d’écoute ; déplacer ensuite le joueur caché ne déplace pas ce souvenir.
+4. **Coordination locale.** Un observateur prévient un voisin proche avec sa position connue. Un allié qui ne voit pas le joueur ne retransmet pas cette alerte à toute la carte.
+5. **Contournement.** Un éclaireur atteint un flanc en passant physiquement autour de l’extrémité d’un mur solide, sans le traverser.
+6. **Couvert puis sortie.** Un éclaireur blessé rejoint une position réellement masquée par une caisse haute, attend, ressort sur un côté puis reprend une attaque annoncée. Un vrai tir vers le scout caché laisse son dernier PV intact. Sauvegarder puis restaurer au milieu de ce comportement conserve la suite exacte.
+7. **Séparation.** Les membres d’un groupe se dégagent sans traverser les collisions ; leur vitesse de présentation correspond au déplacement mesuré.
+8. **Canon contre un mur.** Une rafale déjà engagée ne peut pas créer un projectile de l’autre côté d’une paroi lorsque le canon la touche.
+9. **Cadence.** Une investigation suit le même trajet physique à 20, 60 et 120 pas de simulation par seconde.
+10. **Reprise tactique.** Les données mal formées sont refusées sans modifier la partie. Une ancienne reprise compatible importe seulement sa visée enregistrée, sans obtenir la position actuelle d’un joueur caché.
+11. **Gardien.** La recherche après perte de contact reste dans son arène, sans l’expédier dans une liaison trop étroite.
+12. **Mondes réels.** Des mises à jour tactiques dans les nouveaux extérieurs conservent des positions physiques valides et des checkpoints restaurables.
 
-Le moteur intègre le déplacement en segments physiques d'au plus 1/120 s. Le test de parcours neutralise les ennemis pour isoler la navigation ; les tests de combat sont séparés. Il ne remplace pas une campagne humaine entière avec tous les ennemis actifs.
+La revue indépendante a trouvé un arrondi flottant : une attente calculée à `1.4000000000000001` était refusée par une limite de snapshot à `1.4`. Les durées sont maintenant les littéraux `[1.1, 1.25, 1.4]`. Le scénario de couverture et reprise contrôle ce cas avec un ennemi d’identifiant 2.
 
-## Présentation : 7 tests, PASS
+Les anciens contrôles de collision, de rayon 3D, des deux armes, de surchauffe, d’onde, de charge et rafale verrouillées, d’évents, de score, de boss et de victoire sont conservés. Le parcours de niveau généré avec déplacement ordinaire continue de réussir.
 
-Les ressorts de présentation sont indépendants de l'état de collision et de la visée. Les contrôles couvrent :
+## Mouvement et sauvegardes
 
-- Résultat identique à 20, 60 et 120 images/s pour une même cible de ressort et les mêmes impulsions.
-- Retour au repos après l'arrêt du déplacement réel.
-- Désactivation immédiate des variations de caméra par le réglage de confort.
-- Recul borné, amorti, sans modification de la direction de tir.
-- Variation progressive et bornée du champ de vision pendant la course et l'esquive.
-- Roulis de caméra et distances relatives des pièces de l'arme conservés.
-- Repères orthonormaux pour des angles arbitraires, y compris près d'une singularité d'Euler.
+Les sept tests de présentation conservent les contrôles des ressorts à différentes cadences, du repos après déplacement, des mouvements réduits, du recul borné et du montage cohérent de l’arme avec lacet, tangage et roulis. Les contrôles de locomotion restent dans la simulation, notamment les collisions, diagonales, accélération, freinage et esquive.
 
-Les pas sonores sont déclenchés sur la phase de foulée réelle. Leur garde-fou audio ne supprime plus un pas sur deux. Les animations décoratives exclues en Économie sont filtrées avant la sélection des sources proches. Le mouvement de caméra du menu respecte aussi le réglage de confort.
+Les quatre tests du shell exécutent le vrai module navigateur avec DOM, son et rendu simulés, et la vraie validation de simulation. Ils actionnent le bouton **Continuer** et examinent l’état ainsi que les écritures de stockage :
 
-## Vérifications navigateur
+- Un point de génération 4 reprend à son relais.
+- Un point de génération 3 reprend à l’entrée du même secteur, avec graine, arme et totaux des secteurs terminés.
+- Une ancienne enveloppe sans champ `generation` suit la même migration.
+- Un snapshot incompatible reprend son secteur sans écraser une copie de migration existante.
 
-Contrôle dans Chromium avec le **rendu de secours Canvas 2D**, WebGL 2 étant indisponible dans ce navigateur :
+L’ancien point est conservé séparément si le stockage le permet. Les relais et ennemis du secteur en cours sont réinitialisés lors d’une migration de terrain. Les points compatibles gardent le mode de récupération avec protection transitoire, sans inflation des statistiques.
 
-- Accueil 03 / PROFONDEUR, démarrage et reprise d'un point d'entrée existant.
-- Marche, course, esquive, rotation de visée, tirs de Fracture, changement d'arme et pause.
-- Nouveaux détails inspectés au sas et dans le couloir ; contrôle du sol en vue oblique et près d'un mur.
-- Joints de sol amincis et alignés dans le monde ; ombres au sol visibles dans les scènes contrôlées.
-- Commandes tactiles, HUD, accueil et pause inspectés en cadres **390 × 844** et **844 × 390**.
-- Changement d'arme et onde utilisés en portrait ; cycle Auto / Économie / Haute et désactivation/réactivation des mouvements utilisés en paysage.
-- Aucun débordement constaté dans ces menus. Ces cadres ne valident pas le multitouch d'un appareil physique.
+## Navigateur et commandes
 
-Des relevés ponctuels au premier plan ont donné environ **21 à 26 images/s** dans le sas et le couloir avec le décor enrichi, contre environ 6 avant limitation des détails. Ce sont des observations du renderer logiciel dans cet environnement, pas un benchmark matériel ni une promesse de performance sur toute la campagne.
+Le navigateur de contrôle utilise le secours **Canvas 2D** ; ces observations ne constituent donc pas une validation WebGL dans Chromium ou Safari.
 
-Les pages temporaires de contrôle ne font pas partie du build distribué.
+Contrôles effectués dans l’aperçu géré du projet :
 
-## Rendu avancé
+- Menu Horizons et arbres/ciel visibles dès le départ.
+- Reprise d’une vraie sauvegarde de la version précédente : message de migration et entrée dans le même secteur observés.
+- Déplacement au clavier depuis la lisière jusqu’au sentier des fougères ; collisions, poursuite et dégâts ennemis actifs.
+- Tir continu, surchauffe, onde, pause et reprise.
+- Élimination puis retour au point de reprise, avec intégrité restaurée.
+- Passage entre Auto, Économie et Haute, puis retour en Auto.
+- Menu, HUD, pause et boutons aux formats **390 × 844** et **844 × 390**, avec commandes tactiles forcées. Aucun débordement de la page dans les dimensions contrôlées.
+- Actions des boutons d’onde, d’esquive et de changement d’arme dans le format paysage. L’interface affiche bien Fracture ensuite.
+- Aucune erreur JavaScript attribuée à la page du jeu dans les journaux inspectés. Des erreurs d’extension du navigateur sont distinctes du jeu.
 
-Les appels du renderer, ses vrais shaders, matrices, buffers et paramètres ont été capturés puis rejoués dans **EGL / OpenGL ES avec Mesa llvmpipe**. Les programmes compilent et se lient, les framebuffers sont complets et les dessins s'exécutent sans erreur GL.
+Sur le build final, des relevés ponctuels au premier plan à **1363 × 936** ont donné environ **21 images/s en Auto** pendant le déplacement et **39 images/s en Économie** dans le sentier. Ces relevés ne comparent pas un trajet strictement identique et ne sont pas un benchmark matériel ni une garantie sur toute la campagne. Les deux iframes mobiles servent à contrôler l’interface, pas à mesurer les performances.
 
-### Bandes d'ombre : cause reproduite et correctif vérifié
+Le site de production garde une porte de connexion privée. Le contrôle visuel porte sur l’aperçu ; le résultat de publication est confirmé séparément par le service d’hébergement.
 
-La première version du nouvel atlas produisait des bandes diagonales et verticales sur les murs. Leur disparition lorsque seule l'ombre de la torche était coupée a isolé le chemin concerné. La correction de pente PCF ne suffisait pas à elle seule. La déclaration explicite **`uniform highp sampler2D uShadowMap`** a supprimé les bandes ; revenir uniquement à la précision implicite les réintroduit dans la comparaison. Le défaut de précision de lecture de la profondeur est donc reproduit et expliqué dans cet environnement.
+## Rendu GLES réel et ressources
 
-Les captures finales conservent les ombres au pied des caisses. Les vues oblique, rasante, au bord du cône, contre un mur, du monde enrichi et du mode Économie ont été inspectées. Le décalage de la torche a aussi été réduit pour rester dans le rayon de collision du joueur. Le bias utilise la normale géométrique ; chaque échantillon PCF tient compte de la pente du plan récepteur. Le bord et la portée des ombres sont fondus.
+Les shaders réels sont exécutés dans un contexte **EGL / OpenGL ES logiciel Mesa**. Ce contrôle est indépendant du navigateur de test et n’active aucune option graphique spéciale dans celui-ci.
 
-Le backend exact de la photo initiale n'est pas établi. Ces vérifications ne prétendent pas reproduire le navigateur ou le GPU de l'utilisateur. Les corrections Canvas et GLES ont été vérifiées séparément.
+Les images contrôlées comprennent les trois extérieurs, un intérieur, cet intérieur avec flash de tir, la proximité d’un mur, ainsi que les modes Auto, Haute et Économie. **Zéro erreur GL** dans ces vues ; les shaders compilent et les framebuffers de rendu sont complets.
 
-### Passes et ressources
+Le ciel, les nuages, le soleil, les matériaux naturels et les ombres directionnelles sont visibles. Les volumes des bâtiments masquent le ciel, et l’éclairage intérieur conserve son caractère industriel. Les bandes du défaut d’ombre précédent ne réapparaissent pas dans les vues contrôlées.
 
-En Auto et Haute, l'atlas contient les vues de deux plafonniers et de la torche ; chaque case mesure 512 ou 1024 pixels de côté. Économie coupe ombres WebGL et bloom. Aucun SSAO n'est ajouté.
+L’atlas contient une lampe locale, le soleil et la torche. Le soleil utilise neuf lectures PCF pondérées, sur 56 m de couverture en Auto ; la lampe et la torche conservent quatre lectures. Le sampler de profondeur reste explicitement **highp**, la correction de pente est appliquée à chaque échantillon et le décalage de torche reste dans le rayon de collision du joueur.
 
-| Cycle de vérification | Ressources créées | Détruites | Restantes |
-| --- | ---: | ---: | ---: |
-| Auto → Économie → Haute → Économie → Auto → dispose | 44 | 44 | 0 |
-| Même cycle avec tous les FBO forcés incomplets | 44 | 44 | 0 |
+Une assertion confirme que la passe couleur et les trois passes de profondeur reçoivent exactement le même vent et le même temps. Les silhouettes et ombres de feuillage ne sont donc pas animées avec des horloges différentes.
 
-Le second cas conserve un rendu direct et désactive les effets indisponibles. Matrices, instances et coordonnées projetées contrôlées sont finies.
+Un cycle Auto → Économie → Haute → Économie → Auto puis destruction du renderer compte **47 ressources créées et 47 libérées, zéro restante**. Le même contrôle avec framebuffers forcés incomplets n’observe aucune fuite. Ce contrôle des appels et allocations complète le rendu GLES réel ; il ne mesure pas la mémoire d’un pilote physique.
 
-Sur le monde de 10 273 primitives, vue du sas :
+Le secours Canvas a reçu deux niveaux de facettes, des chapeaux de cylindres regroupés et une projection unique des sommets partagés. Le contrôle Canvas natif séparé passe d’environ 100 ms par vue extérieure avant ces changements à 44–48 ms en Auto, et environ 22 ms en Économie. Ce comparatif natif ne doit pas être présenté comme des FPS navigateur.
 
-| Chemin et qualité | Statiques retenus | Écartés |
-| --- | ---: | ---: |
-| WebGL Auto | 2 788 | 7 485 |
-| WebGL Économie | 1 423 | 8 850 |
-| Canvas Auto | 637 | 9 636 |
-| Canvas Économie | 359 | 9 914 |
-| Canvas Haute | 1 148 | 9 125 |
+## Limites pratiques
 
-La capture WebGL Auto emploie **17 appels de dessin**, bloom et trois passes d'ombre compris. Ces nombres décrivent cette vue et ne sont pas un budget garanti de toute la campagne. Le renderer testé mesure 50 086 octets, SHA-256 `e0605ed4a6a12a9174b8e0cc983b6ba59dddac34ae38ca161f49ec585201f264`.
+Les essais ne remplacent pas une partie humaine complète ni une validation sur GPU physique, Safari macOS/iOS ou téléphone réel. Le multitouch simultané et l’équilibrage de la campagne restent à éprouver sur ces appareils.
 
-Mesa llvmpipe est un rasteriseur logiciel. Ce test natif des shaders est distinct d'un essai WebGL dans un navigateur ou sur un GPU physique.
-
-## Intégration et limites
-
-Le build rassemble six modules JavaScript sans chargement réseau de code, modèle, texture, police ou son. La taille, le SHA-256 et le remplacement des marqueurs d'assemblage sont contrôlés par `checks/build.test.mjs`.
-
-Les événements de simulation restent consommés après chaque sous-pas afin de ne pas perdre un relais pris avant un dégât fatal ultérieur dans la même image. Les sauvegardes restent locales au navigateur et à l'origine, sans synchronisation entre appareils.
-
-Le secours Canvas emploie un tri de polygones et des ombres projetées simplifiées ; il peut encore montrer des limites aux intersections. Le sol est horizontal et les structures élevées sont décoratives. La boucle conserve au plus 0,12 s par image : une machine durablement sous environ 8 images/s ralentit encore la simulation.
-
-Les essais décrits ne constituent pas une validation sur Safari/macOS ou iOS, sur GPU physique, ni une qualification du multitouch réel ou de l'équilibrage intégral de la campagne.
+Le secours Canvas utilise un tri de polygones et des ombres projetées simplifiées ; certaines intersections peuvent rester imparfaites. Les ombres WebGL ne couvrent qu’un voisinage et les sources retenues, pas toutes les lumières du niveau. Le déplacement reste horizontal et la boucle conserve au plus 0,12 s par image : une machine durablement sous environ huit images/s peut encore ralentir la simulation.

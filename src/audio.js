@@ -3,9 +3,10 @@
   'use strict';
   window.FAudio = {
     create: function () {
-      var ctx = null, master, effects, ambience, droneLevel, airFilter, noiseBuffer;
+      var ctx = null, master, effects, ambience, droneLevel, airFilter, airVolume, echoSend, noiseBuffer;
       var muted = false, disposed = false, failed = false, threat = 0, stage = 0;
-      var beatTime = 0, beat = 0, lastStep = -1, stepSide = 1, lastShot = -1;
+      var beatTime = 0, beat = 0, lastStep = -1, stepSide = 1, lastShot = -1, lastAlert = -1, natureTime = 0;
+      var environment = {}, outside = 0;
       var persistent = [], voices = new Set(), noiseSeed = 0x96f3;
       function remember(node) { persistent.push(node); return node; }
       function random() {
@@ -81,6 +82,7 @@
 
           // A small filtered echo gives the metal chambers a sense of space.
           var send = remember(ctx.createGain()), delay = remember(ctx.createDelay(.5));
+          echoSend = send;
           var damping = remember(ctx.createBiquadFilter()), feedback = remember(ctx.createGain());
           send.gain.value = .11; delay.delayTime.value = .183;
           damping.type = 'lowpass'; damping.frequency.value = 1700; feedback.gain.value = .23;
@@ -94,7 +96,7 @@
             smooth = smooth * .96 + white * .04;
             data[i] = white * .64 + smooth * .55;
           }
-          var air = remember(ctx.createBufferSource()), airVolume = remember(ctx.createGain());
+          var air = remember(ctx.createBufferSource()); airVolume = remember(ctx.createGain());
           airFilter = remember(ctx.createBiquadFilter());
           air.buffer = noiseBuffer; air.loop = true;
           airFilter.type = 'lowpass'; airFilter.frequency.value = 380;
@@ -131,8 +133,26 @@
         if (!available()) return;
         var now = ctx.currentTime;
         if (beatTime < now - .3) beatTime = now + .04;
-        droneLevel.gain.setTargetAtTime(.012 + threat * .008 + stage * .002, now, .4);
-        airFilter.frequency.setTargetAtTime(380 + threat * 360 + stage * 100, now, .5);
+        droneLevel.gain.setTargetAtTime((.012 + threat * .008 + stage * .002) * (1 - outside * .5), now, .4);
+        airFilter.frequency.setTargetAtTime(380 + threat * 360 + stage * 100 + outside * 540, now, .5);
+        var wind = Math.max(.2, Math.min(2, Number(environment.wind) || 1));
+        airVolume.gain.setTargetAtTime(.022 + outside * wind * (.022 + .012 * Math.sin(now * .31)), now, .45);
+        echoSend.gain.setTargetAtTime(.11 - outside * .075, now, .65);
+        if (outside > .5 && now >= natureTime) {
+          natureTime = now + 4 + random() * 5;
+          var side = random() * 1.4 - .7, calm = (1 - threat * .75) * outside;
+          if (stage === 0) {
+            var chirp = 1600 + random() * 900;
+            tone(chirp, chirp * 1.32, .095, .022 * calm, 'sine', 0, side, 3500, ambience);
+            tone(chirp * 1.12, chirp * .77, .17, .017 * calm, 'sine', .16, side, 3000, ambience);
+          } else if (stage === 1) {
+            noise(.9, .028 * calm, 1500, side, 0, 'bandpass', ambience);
+            tone(310, 290, .35, .011 * calm, 'triangle', .12, -side, 900, ambience);
+          } else {
+            for (var j = 0; j < 3; j++) tone(2400, 2700, .055, .008 * calm, 'sine', j * .1, side, 3200, ambience);
+            tone(520, 490, .38, .009 * calm, 'sine', .45, -side, 900, ambience);
+          }
+        }
         var guard = 0;
         while (beatTime < now + .13 && guard++ < 4) {
           var offset = Math.max(0, beatTime - now), index = beat % 16;
@@ -164,6 +184,7 @@
         },
         setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); },
         setStage: function (value) { stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); },
+        setEnvironment: function (value, amount) { environment = value || {}; outside = Math.max(0, Math.min(1, Number(amount) || 0)); },
         tick: tick,
         shot: function () {
           if (!available() || ctx.currentTime - lastShot < .045) return;
@@ -197,6 +218,13 @@
           noise(.17, .075, 1850, -.18, 0, 'highpass');
           noise(.12, .055, 850, .18, .04, 'lowpass');
           tone(180, 65, .18, .035, 'sine', 0, 0, 500);
+        },
+        alerted: function (event) {
+          if (!available() || ctx.currentTime - lastAlert < .45) return;
+          lastAlert = ctx.currentTime; event = event || {};
+          var level = Math.min(1, event.level || 1) * .065, pan = event.pan || 0;
+          tone(530, 820, .085, level, 'triangle', 0, pan, 1500);
+          tone(1040, 720, .12, level * .55, 'sine', .095, pan, 1800);
         },
         enemyShot: function (event) {
           event = event || {};
@@ -238,12 +266,18 @@
             tone(n, n, .9, .085, 'triangle', i * .14, Math.sin(i) * .3, 1900);
           });
         },
-        step: function (speed) {
+        step: function (speed, surface) {
           if (!available() || !(speed > .2)) return;
           // The measured stride in game.js schedules steps; this only rejects duplicates.
           if (ctx.currentTime - lastStep < .1) return;
           lastStep = ctx.currentTime; stepSide *= -1;
           var weight = Math.max(.55, Math.min(1.2, speed / 4.5));
+          if (surface && surface.outdoor) {
+            noise(.095, .074 * weight, stage === 1 ? 1850 : 1050, stepSide * .24, 0, 'bandpass');
+            noise(.055, .024 * weight, 3700, stepSide * .2, .025, 'highpass');
+            tone(53 + random() * 7, 29, .065, .026 * weight, 'sine', 0, stepSide * .15);
+            return;
+          }
           noise(.075, .09 * weight, 430 + random() * 120, stepSide * .24, 0, 'lowpass');
           tone(67 + random() * 8, 34, .07, .055 * weight, 'sine', 0, stepSide * .18);
           noise(.035, .018 * weight, 2600, stepSide * .25, .025);

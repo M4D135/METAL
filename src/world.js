@@ -3,25 +3,25 @@
   'use strict';
   const TAU = Math.PI * 2;
   const themes = [
-    { title: 'Les ateliers silencieux', main: [0.12, 0.82, 0.92], alt: [1, 0.57, 0.18], wall: [0.33, 0.39, 0.40] },
-    { title: 'La fonderie profonde', main: [1, 0.35, 0.07], alt: [0.30, 0.68, 0.88], wall: [0.42, 0.29, 0.23] },
-    { title: 'Le cœur du veilleur', main: [0.20, 0.67, 1], alt: [0.67, 0.30, 1], wall: [0.33, 0.36, 0.46] }
+    { title: 'La lisière rouillée', main: [0.12, 0.82, 0.78], alt: [1, 0.64, 0.24], wall: [0.33, 0.39, 0.36] },
+    { title: 'La carrière des braises', main: [1, 0.35, 0.07], alt: [0.30, 0.68, 0.88], wall: [0.42, 0.29, 0.23] },
+    { title: 'Les jardins du veilleur', main: [0.20, 0.67, 1], alt: [0.67, 0.42, 1], wall: [0.33, 0.36, 0.46] }
   ];
-  // Different graphs as well as different footprints: two maintenance loops,
-  // a long foundry ladder, then a four-way reactor hub with a large final arena.
+  // Different circulation graphs, outdoor silhouettes and built landmarks. The
+  // flat paths stay continuous while the surrounding landscape supplies relief.
   const layouts = [
-    { id: 'maintenance-loops', xs: [-20, 0, 20], zs: [20, 0, -20], aperture: 4.4,
+    { id: 'woodland-maintenance-loops', xs: [-26, 0, 26], zs: [26, 0, -26], aperture: 5.2, outdoors:[0,1,3,6,7],
       edges: [[0,1],[1,2],[0,3],[1,4],[2,5],[3,6],[4,5],[5,8],[6,7],[7,8]],
       relays: [2,4,6], exit: 8,
-      names: ['Sas d’injection','Atelier des turbines','Archives de maintenance','Galerie des pompes','Relais de contrôle','Vestibule de service','Atelier des câbles','Coursive extérieure','Monte-charge'] },
-    { id: 'foundry-double-gallery', xs: [-33, -11, 11, 33], zs: [13, -13], aperture: 5.2,
+      names: ['Lisière des pins','Cour des turbines','Archives de maintenance','Sentier des fougères','Relais de contrôle','Atelier abandonné','Bosquet des antennes','Jardin des pompes','Ascenseur de la carrière'] },
+    { id: 'quarry-double-gallery', xs: [-42, -14, 14, 42], zs: [16, -16], aperture: 6, outdoors:[0,1,3,4,6],
       edges: [[0,1],[1,2],[2,3],[4,5],[5,6],[6,7],[0,4],[2,6],[3,7]],
       relays: [3,5,6], exit: 7,
-      names: ['Sas thermique','Galerie des vannes','Creuset principal','Salle des échangeurs','Conduite de retour','Halle des presses','Refroidissement','Ascenseur du cœur'] },
-    { id: 'reactor-hub-arena', xs: [-24, 0, 24], zs: [24, 0, -24], aperture: 5.8,
+      names: ['Balcon de la carrière','Cour du convoyeur','Creuset principal','Faille des échangeurs','Sentier des scories','Halle des presses','Bassin de refroidissement','Ascenseur des jardins'] },
+    { id: 'garden-observatory-hub', xs: [-29, 0, 29], zs: [29, 0, -29], aperture: 6, outdoors:[0,1,3,5,7],
       edges: [[0,1],[0,3],[1,2],[1,4],[2,5],[3,4],[3,6],[4,5],[4,7],[5,8],[6,7],[7,8]],
       relays: [2,4,6], exit: 8,
-      names: ['Sas de confinement','Galerie des condensateurs','Relais de blindage','Chambre de flux','Cœur suspendu','Galerie des bobines','Relais de sûreté','Coursive du veilleur','Arène du veilleur'] }
+      names: ['Jardin des brumes','Verger des condensateurs','Relais de blindage','Clairière des stèles','Observatoire suspendu','Jardin des bobines','Relais de sûreté','Allée du veilleur','Arène du veilleur'] }
   ];
   function randomFor(seed, stage) {
     let n = 2166136261;
@@ -37,21 +37,219 @@
     stage = Math.max(0, Math.min(2, Math.floor(stage || 0)));
     const rand = randomFor(seed, stage), theme = themes[stage], layout = layouts[stage];
     const meshes = [], lights = [], colliders = [], rooms = [], corridors = [], connections = [];
-    const cores = [], enemies = [], pickups = [], machinery = [], hazards = [], aperture = layout.aperture;
+    const cores = [], enemies = [], pickups = [], machinery = [], hazards = [], trees=[], outdoorBoundaries=[], aperture = layout.aperture;
+    let outdoorContext=false;
     const doorHeight = [3.7,4.8,4.4][stage];
     const mesh = (shape, p, s, mat, r, emissive, color) => {
       const m = { shape, p, s, mat };
       if (r) m.r = r;
       if (emissive) m.emissive = emissive;
       if (color) m.color = color;
+      m.outdoor=outdoorContext;
       meshes.push(m); return m;
     };
     const box = (x, y, z, w, h, d, mat, solid, color, emit) => {
-      mesh('box', [x, y, z], [w, h, d], mat, null, emit, color);
-      if (solid) colliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, minY: y - h / 2, maxY: y + h / 2 });
+      const m=mesh('box', [x, y, z], [w, h, d], mat, null, emit, color);
+      if (solid) {m.solid=true;colliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, minY: y - h / 2, maxY: y + h / 2, mesh:meshes.length-1 });}
+      return m;
     };
     const pipe = (x, y, z, length, radius, axis, mat) => mesh('cylinder', [x, y, z], [radius * 2, length, radius * 2], mat, axis === 'x' ? [0, 0, Math.PI / 2] : axis === 'z' ? [Math.PI / 2, 0, 0] : null);
     const light = (x, y, z, color, power) => lights.push({ p: [x, y, z], color, power });
+    const mark=(m,category,region)=>{m.category=category;if(region!==undefined)m.region=region;return m;};
+    function limb(a,b,radius,mat=10,category='branch',region) {
+      const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz);
+      return mark(mesh('cylinder',[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[radius*2,length,radius*2],mat,
+        [Math.atan2(dz,Math.hypot(dx,dy)),0,Math.atan2(-dx,dy)]),category,region);
+    }
+    function tree(x,z,height,species,region,solid=true) {
+      const width=species==='pine'?.72:species==='birch'?.45:.86,lean=(rand()-.5)*.6;
+      const color=species==='birch'?[.57,.58,.49]:stage===1?[.33,.24,.16]:[.27,.23,.16];
+      const first=meshes.length;
+      mark(box(x,1.45,z,width,2.9,width,10,solid,color),'trunk',region);
+      limb([x,2.2,z],[x+lean,height*.92,z+lean*.4],width*.38,10,'trunk',region).color=color;
+      // Root flare stays within a compact, visibly grounded tree footprint.
+      for(let i=0;i<5;i++) {
+        const a=i*TAU/5+rand()*.25;
+        limb([x,.25,z],[x+Math.cos(a)*.64,.065,z+Math.sin(a)*.64],.09,10,'root',region);
+      }
+      if(species==='pine') {
+        for(let k=0;k<4;k++) {
+          const y=height*(.47+k*.135),spread=height*(.52-k*.085);
+          mark(mesh('octa',[x+lean*k/4,y,z],[spread,height*.47,spread],11,[0,rand()*TAU,0],0,[.15+k*.018,.30+k*.023,.20+k*.012]),'canopy',region);
+          for(let q=0;q<3;q++) {
+            const a=q*TAU/3+k*1.2;
+            limb([x,y-.35,z],[x+Math.cos(a)*spread*.34,y-.02,z+Math.sin(a)*spread*.34],.055,10,'branch',region);
+          }
+        }
+      } else {
+        const bare=species==='dead',count=bare?5:6;
+        for(let i=0;i<count;i++) {
+          const a=i*TAU/count+.45,reach=height*(.23+rand()*.10),y=height*(.58+rand()*.22);
+          const bx=x+Math.cos(a)*reach+lean,bz=z+Math.sin(a)*reach;
+          limb([x+lean*.4,height*(.40+i*.035),z],[bx,y,bz],bare?.10:.12,10,'branch',region);
+          limb([bx,y,bz],[bx+Math.cos(a+.4)*.65,y+.65,bz+Math.sin(a+.4)*.65],.045,10,'twig',region);
+          if(!bare) {
+            const green=species==='birch'?[.38,.46,.22]:stage===2?[.28,.41,.32]:[.22,.38,.23];
+            mark(mesh('sphere',[bx,y+.35,bz],[height*.47,height*.35,height*.44],11,[0,a,0],0,green),'canopy',region);
+            mark(mesh('octa',[bx+.3,y+.72,bz-.25],[height*.39,height*.31,height*.37],11,[.2,a+.5,.1],0,green.map(v=>v*1.13)),'canopy',region);
+          }
+        }
+      }
+      trees.push({x,z,height,species,region,solid,mesh:first,phase:rand()*TAU});
+    }
+    function boulder(x,z,w,h,d,region,solid=true) {
+      // A low square rock core is the exact collision shape; faceted caps sit
+      // above it and never hide an invisible larger rectangle around the player.
+      mark(box(x,h*.34,z,w*.72,h*.68,d*.72,9,solid),'rock_core',region);
+      mark(mesh('octa',[x,h*.66,z],[w,h*.95,d],9,[.1,rand()*TAU,.08],0,stage===1?[.52,.38,.24]:[.36,.41,.37]),'boulder',region);
+      mark(mesh('octa',[x+w*.20,h*.34,z-d*.14],[w*.7,h*.67,d*.8],9,[0,rand()*TAU,.15]),'boulder',region);
+    }
+    function boundary(x,z,length,alongX,region,side) {
+      const height=stage===1?1.55:stage===2?.94:.72,thickness=stage===1?.8:.52;
+      const m=mark(box(x,height/2,z,alongX?length:thickness,height,alongX?thickness:length,9,true,
+        stage===1?[.42,.30,.20]:stage===2?[.36,.42,.43]:[.35,.38,.30]),'boundary',region);
+      outdoorBoundaries.push({x,z,length,alongX,height,thickness,region,side,mesh:meshes.length-1});
+      mark(box(x,height+.045,z,alongX?length+.05:thickness+.12,.09,alongX?thickness+.12:length+.05,stage===1?9:3,false),'boundary_cap',region);
+      const posts=Math.max(1,Math.ceil(length/(stage===2?2.5:3.2)));
+      for(let j=0;j<=posts;j++) {
+        const t=(j/posts-.5)*Math.max(0,length-.18),px=x+(alongX?t:0),pz=z+(alongX?0:t);
+        mark(box(px,height+.38,pz,.10,.75,.10,stage===2?1:0,false),'fence_post',region);
+        if(stage===1)mark(mesh('octa',[px,.86,pz],[1.3,2.1,1.2],9,[0,j*.45,0]),'retaining_rock',region);
+      }
+      for(const y of [height+.17,height+.62])mark(box(x,y,z,alongX?length:.07,.065,alongX?.07:length,stage===2?1:0,false),'fence_rail',region);
+      return m;
+    }
+    function lamp(x,z,region,tall=3.25) {
+      mark(box(x,tall/2,z,.16,tall,.16,1,true),'lamp_post',region);
+      mark(box(x,tall,z,.55,.18,.55,0,false),'lamp_head',region);
+      mark(box(x,tall-.11,z,.44,.06,.44,5,false,theme.alt,.9),'lamp_glow',region);
+      light(x,tall-.35,z,theme.alt,stage===2?7:4.5);
+    }
+    function exterior(r) {
+      const region='room-'+r.id,ground=stage===1?[.43,.32,.20]:stage===2?[.24,.33,.27]:[.29,.35,.23];
+      mark(box(r.x,-.22,r.z,r.w+.48,.44,r.d+.48,8,false,ground),'outdoor_floor',region);
+      // Paths terminate at actual doors; dead ends become broad planting areas.
+      for(const side of ['n','s','e','w']) {
+        const alongX=side==='n'||side==='s',sign=side==='n'||side==='w'?-1:1,extent=alongX?r.w:r.d;
+        const edgeX=r.x+(alongX?0:sign*r.w/2),edgeZ=r.z+(alongX?sign*r.d/2:0);
+        const segments=r.openings[side]?[[ -(extent+aperture)/4,(extent-aperture)/2],[(extent+aperture)/4,(extent-aperture)/2]]:[[0,extent+.48]];
+        for(const [offset,length] of segments)boundary(edgeX+(alongX?offset:0),edgeZ+(alongX?0:offset),length,alongX,region,side);
+        if(r.openings[side]) {
+          const length=(alongX?r.d:r.w)/2;
+          mark(box(r.x+(alongX?0:sign*length/2),.007,r.z+(alongX?sign*length/2:0),alongX?4.3:length,.012,alongX?length:4.3,9,false,
+            stage===1?[.49,.42,.31]:[.48,.47,.38]),'trail',region);
+          for(const q of [-1,1]) {
+            const px=edgeX+(alongX?q*(aperture/2+.33):0),pz=edgeZ+(alongX?0:q*(aperture/2+.33));
+            mark(box(px,.75,pz,.31,1.5,.31,1,false),'gate_post',region);
+            mark(box(px,1.49,pz,.34,.08,.34,4,false,theme.main,.45),'gate_beacon',region);
+          }
+        }
+        const globalSide=(side==='w'&&r.x===layout.xs[0])||(side==='e'&&r.x===layout.xs[layout.xs.length-1])||(side==='s'&&r.z===layout.zs[0])||(side==='n'&&r.z===layout.zs[layout.zs.length-1]);
+        if(globalSide&&!r.openings[side]) {
+          // Hills and treelines are beyond the visible retaining barrier. Their
+          // sculpted height is scenery, never an invisible walking elevation.
+          for(let j=0;j<4;j++) {
+            const t=(j/3-.5)*extent*.83,px=edgeX+(alongX?t:sign*(3.8+rand()*2)),pz=edgeZ+(alongX?sign*(3.8+rand()*2):t);
+            if(stage===1) {
+              const h=4.8+rand()*5;
+              mark(mesh('octa',[px,h*.3,pz],[7+rand()*3,h,6+rand()*4],9,[0,rand()*TAU,.13],0,[.48,.34,.24]),'cliff',region);
+              mark(mesh('box',[px,h*.32,pz],[5.7,h*.7,4.2],9,[0,rand()*.45,0],0,[.43,.30,.21]),'cliff_stratum',region);
+            } else {
+              mark(mesh('octa',[px,-.45,pz],[9,3.2+rand()*2,8],8,[0,rand()*TAU,0],0,ground),'hill',region);
+              tree(px,pz,6+rand()*3.2,stage===0?'pine':'broadleaf',region,false);
+            }
+          }
+        }
+      }
+      mark(mesh('cylinder',[r.x,.008,r.z],[5.6,.012,5.6],9,null,0,stage===1?[.49,.42,.31]:[.48,.47,.38]),'trail',region);
+      // Corner groves and real cover leave >5 m wide circulation axes and all
+      // objectives, initial enemy positions and warning vents unobstructed.
+      for(const q of [-1,1])for(const k of [-1,1]) {
+        const x=r.x+q*(r.w/2-3.0),z=r.z+k*(r.d/2-3.1);
+        if(stage===1) {
+          boulder(x,z,2.8+rand()*.6,1.9+rand()*1.2,2.4+rand()*.8,region);
+          if(q===-1&&k===1)tree(x-q*1.3,z-k*1.8,4.3+rand()*1.1,'dead',region);
+          if(q===1&&k===-1)tree(x-q*1.4,z-k*1.5,4.1+rand(),'pine',region);
+        } else {
+          const species=stage===0?(q===k?'pine':'birch'):(q===-1?'broadleaf':'birch');
+          tree(x,z,5.7+rand()*2.1,species,region);
+          if(q===k)boulder(x-q*1.5,z+k*.5,1.65,1.05,1.5,region);
+        }
+      }
+      // Distinct industrial / archaeological landmarks occupy one side of each
+      // outdoor place rather than repeating an identical kit in every room.
+      const sx=r.x-r.w/2+1.4,sz=r.z+1.4;
+      if(stage===0) {
+        if(r.id===1||r.id===7) {
+          const z=r.z-6.1;
+          mark(box(r.x-5.1,.8,z,2.2,1.6,2.3,0,true),'pump_housing',region);
+          mark(mesh('cylinder',[r.x-5.1,2.15,z],[1.6,1.15,1.6],1),'pump_tank',region);
+          mark(mesh('ring',[r.x-5.1,2.68,z],[2,.18,2],0),'pump_tank',region);
+          for(const q of [-1,1])limb([r.x-5.1+q*.5,1.7,z],[r.x-5.1+q*.5,1.7,z-2.2],.12,1,'pump_pipe',region);
+          machinery.push({type:'fan',x:r.x-5.1,y:2.74,z,size:1.45,speed:.4,axis:'y'});
+        } else {
+          mark(box(sx,.7,sz,1.3,1.4,2.1,0,true),'supply_cache',region);
+          mark(box(sx,.74,sz-1.06,1,.17,.025,4,false,theme.main,.35),'cache_screen',region);
+          mark(box(sx,1.47,sz,1.45,.14,2.25,1,false),'cache_lid',region);
+        }
+        if(r.id===6) {
+          const x=r.x+6,z=r.z-6;
+          mark(box(x,3,z,.38,6,.38,1,true),'antenna',region);
+          for(let j=0;j<3;j++)mark(box(x,4+j*.65,z,2.6-j*.5,.11,.11,0,false),'antenna',region);
+          mark(mesh('sphere',[x,6.1,z],[.22,.22,.22],5,null,.6,theme.alt),'antenna_beacon',region);
+        }
+      } else if(stage===1) {
+        const x=r.x-6.3,z=r.z-5.9;
+        if(r.id===1||r.id===3) {
+          for(const q of [-1,1])mark(box(x+q*2.1,2.3,z,.45,4.6,.7,1,true),'gantry_support',region);
+          mark(box(x,4.6,z,5,.45,.9,1,false),'gantry_beam',region);
+          for(let j=0;j<8;j++)mark(box(x+(j-3.5)*.55,4.9,z,.12,.14,1.05,0,false),'gantry_track',region);
+          limb([x,4.45,z],[x,2.65,z],.065,0,'gantry_cable',region);
+          mark(mesh('ring',[x,2.52,z],[.55,.1,.55],1,[Math.PI/2,0,0]),'gantry_hook',region);
+        } else {
+          mark(box(x,1,z,2.8,2,2,1,true),'ore_cart',region);
+          for(const q of [-1,1])for(const k of [-1,1])mark(mesh('cylinder',[x+q*1.45,.4,z+k*.7],[.63,.14,.63],0,[0,0,Math.PI/2]),'ore_wheel',region);
+          for(let j=0;j<4;j++)mark(mesh('octa',[x+(j%2-.5)*1.1,2.1,z+(Math.floor(j/2)-.5)*.8],[1.2,.8,1.0],9,[0,j,0]),'ore',region);
+        }
+        if(r.id===6) {
+          mark(box(r.x+5.6,.45,r.z-5.5,3.8,.9,3.1,9,true),'basin',region);
+          mark(box(r.x+5.6,.92,r.z-5.5,3.3,.025,2.6,12,false,[.21,.33,.35]),'water',region);
+        }
+      } else {
+        const x=r.x-6.5,z=r.z-5.8;
+        if(r.id===1||r.id===7) {
+          for(const q of [-1,1]) {
+            mark(box(x+q*1.65,1.8,z,.65,3.6,.65,3,true,[.46,.48,.43]),'ruin_column',region);
+            mark(box(x+q*1.65,3.65,z,.9,.18,.9,1,false),'ruin_capital',region);
+          }
+          mark(box(x,3.83,z,4.3,.32,.8,3,false,[.46,.48,.43]),'ruin_arch',region);
+          mark(mesh('sphere',[x,3.96,z],[3.3,.38,1.3],11,null,0,[.23,.37,.27]),'arch_ivy',region);
+        } else {
+          mark(box(x,.5,z,2.3,1,2.3,3,true,[.43,.47,.43]),'monument_base',region);
+          mark(mesh('octa',[x,2.2,z],[1.5,3.1,1.5],9,[0,.3,0],0,[.41,.49,.52]),'monument',region);
+          mark(mesh('ring',[x,2.5,z],[2.3,.13,2.3],1,[.5,.3,.4]),'monument_orbit',region);
+          mark(mesh('sphere',[x,3.7,z],[.4,.4,.4],4,null,.4,theme.main),'monument_glow',region);
+        }
+        for(const q of [-1,1]) {
+          const px=r.x+q*6,pz=r.z+6.0;
+          mark(box(px,.3,pz,3.4,.6,1.4,9,true),'raised_bed',region);
+          mark(box(px,.61,pz,3,.03,1,8,false,[.24,.25,.17]),'bed_earth',region);
+          for(let j=0;j<4;j++)mark(mesh('octa',[px+(j-1.5)*.7,1.08,pz],[.95,.95,.8],11,[0,j,0],0,[.28,.45,.31]),'shrub',region);
+        }
+      }
+      lamp(r.x+r.w/2-.9,r.z-2.8,region,stage===1?4:3.25);
+      lamp(r.x-r.w/2+.9,r.z+3.8,region,stage===1?4:3.25);
+    }
+    function outsidePath(c,horizontal,length) {
+      const region='corridor-'+(corridors.length-1);
+      mark(box(c.x,-.22,c.z,c.w,.44,c.d,8,false,stage===1?[.43,.32,.20]:[.29,.35,.23]),'outdoor_floor',region);
+      mark(box(c.x,.007,c.z,horizontal?length:4.3,.012,horizontal?4.3:length,9,false,stage===1?[.49,.42,.31]:[.48,.47,.38]),'trail',region);
+      for(const q of [-1,1]) {
+        const x=c.x+(horizontal?0:q*(aperture/2+.24)),z=c.z+(horizontal?q*(aperture/2+.24):0);
+        boundary(x,z,length,horizontal,region,q<0?'left':'right');
+        if(length>7)lamp(x, z,region,2.8);
+      }
+    }
     for (let row = 0; row < layout.zs.length; row++) for (let col = 0; col < layout.xs.length; col++) {
       const id = row * layout.xs.length + col;
       let w, d, h, archetype;
@@ -68,7 +266,9 @@
         h = id === 4 ? 10 : id === 8 ? 8.6 : 6.6;
         archetype = id === 4 ? 'reactor' : id === 8 ? 'arena' : 'capacitor';
       }
-      rooms.push({ id, x: layout.xs[col], z: layout.zs[row], w, d, h, name: layout.names[id], archetype, openings: {} });
+      const outdoor=layout.outdoors.includes(id);
+      if(outdoor){w=(stage===0?21.8:stage===1?22.6:23.3)+rand()*.9;d=(stage===0?22.1:stage===1?24.1:23.5)+rand()*.9;h=0;archetype=stage===0?(id===0?'woodland':'forest-yard'):stage===1?'quarry-yard':'garden';}
+      rooms.push({ id, x: layout.xs[col], z: layout.zs[row], w, d, h, name: layout.names[id], archetype, outdoor, openings: {} });
     }
     for (const [aId, bId] of layout.edges) {
       const a = rooms[aId], b = rooms[bId];
@@ -122,6 +322,7 @@
       }
     }
     for (const r of rooms) {
+      if(r.outdoor){outdoorContext=true;exterior(r);outdoorContext=false;continue;}
       box(r.x, -0.22, r.z, r.w + 0.48, 0.44, r.d + 0.48, 2, false);
       box(r.x, r.h + 0.17, r.z, r.w + 0.5, 0.34, r.d + 0.5, 0, false);
       for (const side of ['n','s','e','w']) wall(r, side, r.openings[side]);
@@ -250,8 +451,10 @@
       const z = horizontal ? a.z : (start + end) / 2;
       const w = horizontal ? length : aperture + 0.48, d = horizontal ? aperture + 0.48 : length;
       const ceiling = doorHeight+.2;
-      corridors.push({ x, z, w, d });
+      const outdoor=a.outdoor||b.outdoor;
+      corridors.push({ x, z, w, d, outdoor });
       connections.push({ from: a.id, to: b.id, x1: a.x, z1: a.z, x2: b.x, z2: b.z, width: aperture });
+      if(outdoor){outdoorContext=true;outsidePath({x,z,w,d},horizontal,length);outdoorContext=false;return;}
       box(x, -0.22, z, w, 0.44, d, 2, false);
       box(x, ceiling+.15, z, w, 0.3, d, 0, false);
       for (const q of [-1, 1]) {
@@ -292,30 +495,41 @@
     // when every vent is hot. Players may take the outer corners at their risk.
     if(stage>0)for(const [i,roomId] of (stage===1?[1,2,5,6]:[2,3,4,5,6]).entries()){
       const r=rooms[roomId],x=r.x+(i%2?-1:1)*4.35,z=r.z+3.65,rad=stage===1?.82:.95;
+      outdoorContext=r.outdoor;
       hazards.push({type:'vent',x,z,r:rad,period:6.8+stage*.5+(i%3)*.6,active:1.45+stage*.15,phase:(i*1.7+rand()*1.1)});
       mesh('cylinder',[x,.023,z],[rad*2+.35,.045,rad*2+.35],0);
       mesh('ring',[x,.055,z],[rad*2+.48,.11,rad*2+.48],1);
       for(let j=-2;j<=2;j++)box(x+j*.25,.055,z,.10,.045,rad*1.5,7,false);
       for(const q of [-1,1])box(x+q*(rad+.21),.035,z,.07,.04,rad*1.5,5,false,theme.main,.45);
     }
+    outdoorContext=false;
     // Low energy rails frame the exit without putting a solid door on its trigger.
     for (const q of [-1, 1]) box(exit.x + q * 1.8, 1.5, exit.z, 0.16, 3, 0.35, 4, true, theme.main, 1);
     box(exit.x, 3, exit.z, 3.75, 0.16, 0.35, 4, false, theme.main, 1);
     const bounds={minX:Math.floor(Math.min(...rooms.map(r=>r.x-r.w/2))-.8),maxX:Math.ceil(Math.max(...rooms.map(r=>r.x+r.w/2))+.8),minZ:Math.floor(Math.min(...rooms.map(r=>r.z-r.d/2))-.8),maxZ:Math.ceil(Math.max(...rooms.map(r=>r.z+r.d/2))+.8)};
-    const world={ seed, stage, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, bounds };
+    const environments=[
+      {biome:'woodland',skyTop:[.26,.47,.56],skyBottom:[.72,.78,.63],fog:[.36,.49,.43],sunDirection:[-.48,.78,.36],sunColor:[1,.88,.62],ambient:[.24,.32,.25],wind:.7,weather:'pollen'},
+      {biome:'quarry',skyTop:[.32,.35,.42],skyBottom:[.84,.57,.32],fog:[.48,.34,.23],sunDirection:[-.65,.56,-.36],sunColor:[1,.68,.36],ambient:[.32,.24,.18],wind:1.1,weather:'ash'},
+      {biome:'garden',skyTop:[.10,.17,.31],skyBottom:[.52,.49,.63],fog:[.26,.31,.43],sunDirection:[.42,.45,-.79],sunColor:[.78,.69,1],ambient:[.23,.28,.35],wind:.45,weather:'motes'}
+    ];
+    const environment={...environments[stage],outdoorZones:rooms.concat(corridors).filter(r=>r.outdoor).map(({x,z,w,d})=>({x,z,w,d}))};
+    const sunLength=Math.hypot(...environment.sunDirection);
+    environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
+    const world={ seed, stage, generation:4, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, walkable:rooms.concat(corridors).map(({x,z,w,d})=>({x,z,w,d})) };
     detailWorld(world,theme,aperture,doorHeight);
+    naturalDetails(world,theme);
     return world;
   }
-  // An independent art pass never consumes the layout/combat RNG. Everything
-  // below is attached to an existing solid, flat on the floor, or overhead.
-  // Consequently the v0.2 collision and checkpoint fingerprints stay identical.
+  // This independent art pass does not consume the layout/combat RNG. Interior
+  // fittings remain attached to existing solids, flat on the floor or overhead;
+  // open-air rooms and links deliberately receive none of this ceiling network.
   function detailWorld(w,theme,aperture,doorHeight) {
     const rand=randomFor('FERRO-detail-03:'+w.seed,w.stage),out=w.meshes,baseCount=out.length;
     const ambience=[],categories={},roomCounts={};
     const axes={x:[0,0,-Math.PI/2],y:[0,0,0],z:[Math.PI/2,0,0]};
-    let owner='';
+    let owner='',outside=false;
     function add(shape,p,s,mat=0,r=[0,0,0],detail=1,category='pipe',emissive=0,color) {
-      const mesh={shape,p,s,mat,r,detail,category};
+      const mesh={shape,p,s,mat,r,detail,category,outdoor:outside};
       if(emissive)mesh.emissive=emissive;if(color)mesh.color=color;
       out.push(mesh);categories[category]=(categories[category]||0)+1;
       if(owner)roomCounts[owner]=(roomCounts[owner]||0)+1;
@@ -468,6 +682,7 @@
       }
     }
     for(const r of w.rooms) {
+      if(r.outdoor)continue;
       owner='room-'+r.id;
       // A complete overhead network with flanges, hanger clamps and rounded bends.
       for(const q of [-1,1]) {
@@ -551,6 +766,7 @@
     // Corridors use the same systems at a smaller scale, including dense frame
     // detailing: the player sees the improvement while travelling, not only at hubs.
     for(let index=0;index<w.corridors.length;index++) {
+      if(w.corridors[index].outdoor)continue;
       owner='corridor-'+index;
       const c=w.corridors[index],link=w.connections[index],alongX=link.z1===link.z2,length=alongX?c.w:c.d,height=doorHeight+.2;
       const along=(u,v,y)=>[c.x+(alongX?u:v),y,c.z+(alongX?v:u)];
@@ -579,6 +795,7 @@
     }
     for(const h of w.hazards) {
       owner='vent';
+      outside=w.environment.outdoorZones.some(r=>Math.abs(h.x-r.x)<=r.w/2&&Math.abs(h.z-r.z)<=r.d/2);
       for(let j=0;j<12;j++) {
         const a=j*TAU/12,r=h.r+.37,x=h.x+Math.cos(a)*r,z=h.z+Math.sin(a)*r;
         box([x,.028,z],[.12,.018,.28],5,1,'hazard_marking',[0,-a,0],.12,theme.alt);
@@ -587,6 +804,143 @@
     }
     w.ambience=ambience;
     w.detailStats={base:baseCount,added:out.length-baseCount,tiers:[out.filter(m=>!m.detail).length,out.filter(m=>m.detail===1).length,out.filter(m=>m.detail===2).length],categories,regions:roomCounts};
+  }
+  // Organic shapes use the same small primitive library as the machinery. The
+  // main trees, cliffs, retaining walls and landmark cover were created above as
+  // detail 0; this pass adds optional, non-solid vegetation and surface scatter.
+  function naturalDetails(w,theme) {
+    const rand=randomFor('FERRO-nature-04:'+w.seed,w.stage),out=w.meshes,stats=w.detailStats;
+    let region='';
+    const green=w.stage===1?[.35,.36,.20]:w.stage===2?[.28,.43,.31]:[.29,.43,.21];
+    function add(shape,p,s,mat,category,r=[0,0,0],detail=1,color,emissive=0) {
+      const m={shape,p,s,mat,r,detail,category,outdoor:true,region};
+      if(color)m.color=color;if(emissive)m.emissive=emissive;
+      out.push(m);stats.categories[category]=(stats.categories[category]||0)+1;
+      stats.regions[region]=(stats.regions[region]||0)+1;
+      return m;
+    }
+    const patch=(x,z,sx,sz,mat=8,color)=>add('octa',[x,.013,z],[sx,.018,sz],mat,'ground_patch',[0,rand()*TAU,0],1,color);
+    function grass(x,z,dry=false) {
+      const a=rand()*TAU,height=(dry?.30:.34)+rand()*.24;
+      for(let j=0;j<4;j++)add('octa',[x+Math.cos(a+j*1.6)*.09,height*.44,z+Math.sin(a+j*1.6)*.09],
+        [.055,height,.15],11,'grass',[.12+rand()*.25,a+j*1.6,(rand()-.5)*.7],1,dry?[.45,.40,.25]:green);
+    }
+    function fern(x,z,size=1) {
+      for(let j=0;j<7;j++) {
+        const a=j*TAU/7,dx=Math.cos(a),dz=Math.sin(a);
+        add('octa',[x+dx*.23*size,.28*size,z+dz*.23*size],[.12*size,.68*size,.19*size],11,'fern',[.7,a,.24],1,green);
+        for(const q of [-1,1])add('octa',[x+dx*.27*size+dz*q*.10,.25*size,z+dz*.27*size-dx*q*.10],
+          [.12*size,.27*size,.045*size],11,'fern_leaf',[.65,a+q*.65,0],2,green.map(c=>c*1.11));
+      }
+    }
+    function shrub(x,z,size=1) {
+      for(let j=0;j<3;j++)add(j===1?'sphere':'octa',[x+Math.cos(j*2.1)*.25*size,.38*size,z+Math.sin(j*2.1)*.25*size],
+        [size,.9*size,size*.9],11,'undergrowth',[0,rand()*TAU,0],1,green.map(c=>c*(.85+j*.1)));
+    }
+    function pebble(x,z) {
+      const size=.08+rand()*.20;
+      add('octa',[x,size*.24,z],[size,size*.48,size*.76],9,'pebble',[0,rand()*TAU,.12],2,w.stage===1?[.57,.43,.30]:[.42,.47,.39]);
+    }
+    function safePlant(x,z) {
+      return !w.hazards.some(h=>Math.hypot(h.x-x,h.z-z)<h.r+.55)&&!w.colliders.some(c=>
+        c.minY<1&&c.maxY>.05&&x>c.minX-.15&&x<c.maxX+.15&&z>c.minZ-.15&&z<c.maxZ+.15);
+    }
+    for(const room of w.rooms) {
+      if(!room.outdoor)continue;
+      region='room-'+room.id;
+      const corner=()=>{
+        const q=rand()<.5?-1:1,k=rand()<.5?-1:1;
+        return [room.x+q*(4.3+rand()*(room.w/2-5.4)),room.z+k*(4.9+rand()*(room.d/2-6))];
+      };
+      // Large tonal patches blend paths, moss, leaf fall and bare ground without
+      // changing floor height or relying on imported textures.
+      for(let j=0;j<18;j++) {
+        const [x,z]=corner();
+        patch(x,z,1.1+rand()*2.2,1+rand()*1.8,8,w.stage===1?[.38+rand()*.12,.29,.19]:[.22+rand()*.09,.32+rand()*.07,.19]);
+      }
+      for(let j=0;j<(w.stage===1?35:56);j++) {
+        const [x,z]=corner();if(safePlant(x,z))grass(x,z,w.stage===1);
+      }
+      for(let j=0;j<(w.stage===1?5:15);j++) {
+        const [x,z]=corner();if(safePlant(x,z))fern(x,z,.78+rand()*.20);
+      }
+      for(let j=0;j<(w.stage===1?4:10);j++) {
+        const [x,z]=corner();if(safePlant(x,z))shrub(x,z,.6+rand()*.45);
+      }
+      // A grounded bed of small pebbles and leaves carries the detail down from
+      // canopy height. None is large enough to imply an impassable obstacle.
+      for(let j=0;j<86;j++) {
+        const x=room.x+(rand()-.5)*(room.w-1.4),z=room.z+(rand()-.5)*(room.d-1.4);
+        if(!safePlant(x,z))continue;
+        if(j%3===0)pebble(x,z);
+        else {
+          const s=.10+rand()*.18;
+          add('octa',[x,.035,z],[s,.035,s*.55],w.stage===1?9:11,'leaf_litter',[.1,rand()*TAU,.15],2,w.stage===2?[.47,.44,.27]:[.43,.34,.18]);
+        }
+      }
+      // Local ecologies distinguish the sectors: dry scrub and mineral seams,
+      // bracken and fallen wood, or flowers and hanging ivy amongst ruins.
+      if(w.stage===0) {
+        for(let j=0;j<12;j++) {
+          const [x,z]=corner();
+          add('box',[x,.035,z],[.7+rand()*.7,.035,.045],10,'fallen_twig',[0,rand()*TAU,0],1,[.30,.24,.15]);
+        }
+        for(const t of w.trees.filter(t=>t.region===region&&t.solid)) {
+          for(let j=0;j<5;j++) {
+            const a=rand()*TAU,x=t.x+Math.cos(a)*(.4+rand()*.25),z=t.z+Math.sin(a)*(.4+rand()*.25);
+            add('cylinder',[x,.08,z],[.04,.15,.04],3,'mushroom',[0,0,0],2,[.64,.59,.43]);
+            add('sphere',[x,.16,z],[.18,.09,.18],5,'mushroom',[0,0,0],2,[.60,.35,.15]);
+          }
+        }
+      } else if(w.stage===1) {
+        for(let j=0;j<15;j++) {
+          const [x,z]=corner();
+          add('octa',[x,.09,z],[.23,.18,.16],9,'mineral',[0,rand()*TAU,.3],2,[.60,.44,.23]);
+          for(let k=0;k<3;k++)add('box',[x+(k-1)*.11,.022,z],[.055,.018,.31],1,'ore_seam',[0,.4,0],2,[.51,.31,.17]);
+        }
+      } else {
+        for(let j=0;j<24;j++) {
+          const [x,z]=corner();if(!safePlant(x,z))continue;
+          const h=.18+rand()*.14;
+          add('cylinder',[x,h*.5,z],[.025,h,.025],10,'flower_stem',[0,0,0],2,green);
+          add('sphere',[x,h,z],[.15,.08,.15],11,'flower',[0,rand()*TAU,0],2,j%3?[.56,.48,.70]:[.81,.67,.38]);
+        }
+        for(const t of w.trees.filter(t=>t.region===region&&t.solid))for(let j=0;j<9;j++) {
+          const a=j*1.6;
+          add('octa',[t.x+Math.cos(a)*.24,.35+j*.21,t.z+Math.sin(a)*.24],[.27,.19,.09],11,'ivy',[.2,a,.5],2,green);
+        }
+        if(room.id===0||room.id===5) {
+          add('cylinder',[room.x+4.9,.021,room.z-5.4],[2,.025,1.2],12,'puddle',[0,.4,0],1,[.23,.35,.39]);
+          for(let j=0;j<7;j++)grass(room.x+4+rand()*1.8,room.z-6.25+rand()*.25);
+        }
+      }
+      // Insets and rivets give outdoor machinery the same construction language
+      // as the interiors, while being safely attached to the actual solid body.
+      const solids=w.colliders.filter(c=>{
+        const m=w.meshes[c.mesh];return m.region===region&&['supply_cache','pump_housing','ore_cart','monument_base','basin'].includes(m.category);
+      });
+      for(const body of solids) {
+        const x=(body.minX+body.maxX)/2,z=body.maxZ+.012,y=Math.min(1,body.maxY*.65),width=Math.min(1.4,body.maxX-body.minX-.16);
+        add('box',[x,y,z],[width,.28,.022],0,'outdoor_fitting');
+        for(let j=0;j<4;j++)add('box',[x+(j-1.5)*width*.2,y,z+.018],[.08,.16,.018],j?1:4,'outdoor_fitting',[0,0,0],2,j?undefined:theme.main,j?0:.4);
+        for(const q of [-1,1])add('cylinder',[x+q*width*.42,y,z+.025],[.06,.025,.06],3,'bolt',[Math.PI/2,0,0],2);
+      }
+    }
+    for(const [i,c] of w.corridors.entries()) {
+      if(!c.outdoor)continue;
+      region='corridor-'+i;
+      const alongX=c.w>c.d,length=alongX?c.w:c.d,half=(alongX?c.d:c.w)/2;
+      for(const q of [-1,1])for(let j=0;j<Math.max(4,Math.ceil(length*2));j++) {
+        const d=(j/Math.max(3,Math.ceil(length*2)-1)-.5)*Math.max(.1,length-.4);
+        const x=c.x+(alongX?d:q*(half-.60)),z=c.z+(alongX?q*(half-.60):d);
+        grass(x,z,w.stage===1);pebble(x+(rand()-.5)*.3,z+(rand()-.5)*.3);
+      }
+    }
+    stats.added=out.length-stats.base;
+    stats.tiers=[out.filter(m=>!m.detail).length,out.filter(m=>m.detail===1).length,out.filter(m=>m.detail===2).length];
+    w.natureStats={trees:w.trees.length,playableTrees:w.trees.filter(t=>t.solid).length,species:[...new Set(w.trees.map(t=>t.species))],
+      outdoorRooms:w.rooms.filter(r=>r.outdoor).length,outdoorPaths:w.corridors.filter(c=>c.outdoor).length,
+      vegetation:out.filter(m=>m.mat===11).length,rocks:out.filter(m=>m.category==='boulder'||m.category==='cliff').length};
   }
   function isWalkable(world, x, z, radius) {
     const r = radius === undefined ? 0.35 : radius;
@@ -616,8 +970,8 @@
     const targets = [world.spawn, ...world.cores, world.exit, ...world.enemies, ...world.pickups];
     const errors = [];
     targets.forEach((p, i) => { if (!isWalkable(world, p.x, p.z, 0.38) || !seen[index(p.x, p.z)]) errors.push('Unreachable target ' + i); });
-    if (world.meshes.length > 12000) errors.push('Mesh budget exceeded');
-    if (world.colliders.length > 350) errors.push('Collider budget exceeded');
+    if (world.meshes.length > 16000) errors.push('Mesh budget exceeded');
+    if (world.colliders.length > 500) errors.push('Collider budget exceeded');
     if (world.cores.length !== 3) errors.push('Expected three relays');
     const safeRoom = world.rooms[0];
     if (world.enemies.some(e => Math.abs(e.x - safeRoom.x) < safeRoom.w / 2 && Math.abs(e.z - safeRoom.z) < safeRoom.d / 2)) errors.push('Enemy in spawn chamber');

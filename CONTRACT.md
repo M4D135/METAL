@@ -1,5 +1,15 @@
 # FERRO procedural FPS — internal module contract
 
+## 0.4 Horizons: varied environments and tactical enemies (current)
+
+User asks for substantially more varied decor, intelligent mobs, and outdoor areas with trees. Root owns integration in game/audio/UI, motion module, build/docs/publishing. World owner ferro_world_v04 owns world.js + world tests; AI owner ferro_ai_v04 owns simulation.js + simulation tests; renderer owner ferro_render_v04 owns renderer.js. No agent git/push/Sites actions.
+
+Three mixed outdoor/indoor settings: reclaimed woodland outpost (outdoors visible from spawn), rocky quarry/foundry, and overgrown gardens/observatory with final guardian. Real open-sky walkable areas, procedural trees/vegetation, coherent terrain boundaries and background relief. Traversal remains horizontal; do not add invisible stairs or walk-through visible trunks. Physics and layouts MAY change for this request; world.generation=4 and root must handle old checkpoints explicitly. Keep 3relays/stage, boss gate, original runtime/no imported assets, 1,400,000-byte HTML budget. Mesh budget <=16000; colliders <=500; detail tiers retained, major vegetation silhouettes must survive Economy.
+
+World and renderer coordinate setWorld(meshes,lights,environment). Proposed natural mats8 soil/grass,9 stone,10 bark,11 foliage. rooms/corridors.outdoor and environment.outdoorZones rects identify regions. environment includes biome,skyTop,skyBottom,fog,sunDirection,sunColor,ambient,wind,weather; exact additions must be messaged to root. Any optional foliage sway must remain consistent across render/shadow paths. Preserve highp depth reads, receiver-plane PCF, camera.roll, fallback rendering and visible shadow fixes.
+
+AI improves decisions rather than HP/damage: perception and sound, last-known position memory, nearby ally alerts, actual navigable flank/cover routes, group spacing and readable committed attacks. Preserve all movement/collision/combat invariants; tests must demonstrate behaviors, not only assigned labels. New awareness/tactic presentation fields are separate from attackState. Validate/safely reset tactical state in checkpoints, without hidden player knowledge. Root retains checkpoint/settings UI, adds biome ambiance and readable enemy animation cues.
+
 ## 0.3 detail and motion pass (current ownership and limits)
 
 User asks for very dense level detail, prettier lighting with more shadows, and smoother animated movement. Preserve the industrial cyan/bronze identity, all procedural content, the 1,400,000-byte standalone budget, existing progression and private hosting.

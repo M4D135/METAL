@@ -12,34 +12,106 @@ const { create } = sandbox.window.FWorld;
 const seeds = [1, 7, 42, 96, 2026, 65535];
 const radius = .28, spacing = .25;
 
-// Captured from the released v0.2 generator before the art pass. These fields
-// determine checkpoint compatibility, collision, objectives and enemy placement.
-const physicsV02 = {
-  "1:0": "f8936a31bcc8bc99b94f3f785950b3c585f72b0ad711e041324e4359630e3d0c",
-  "1:1": "477106c9c190b164216ddb479197536eae24b5008d4cb7a4e74b87b9858c78c5",
-  "1:2": "c4f7f98b2e7a163a603ad490203b523a5995727ef107d782f361284cb2df20ce",
-  "7:0": "e7273feb6750c723475a25266bb365fcab10818f09701d0304a797e38826f0f9",
-  "7:1": "9b86b76ddf1c4feec3d6a7123af93a73dd57622819aeb15c3b993cf83baefa7a",
-  "7:2": "ab0af19907ef9affb76c0efa954300e5cbf5ebb6faabb0147a94d8db98d99c26",
-  "42:0": "ba52d6c85ae9ae56e1b7c239f82c0152b06d53bc43ce71e5b5d7d02ec420b565",
-  "42:1": "365e60d8bad85604eb57fa77fcc51692821c4d3f1ce099f3174c335d1f773613",
-  "42:2": "57db35ed85e1622f3a83104f9dc43bdaec5dc9b41cc44cc5197b23c364b584a3",
-  "96:0": "bf944a6d8d2f3997a194d141c4c32d45980c895bfe04913f748283e1b13ae5d0",
-  "96:1": "bd5d184c8728c8e5392a67d862083ca0205c172274175a7ee948aafcd128d355",
-  "96:2": "1666d98d6521b34b1056babffa93d38171de74b8f3ffba2beb8d8f485ba3db2c",
-  "2026:0": "d7a87fc12c21b476deb54f77b95fc029b8acec2db21a413556544c64b7be7acb",
-  "2026:1": "71ab0fdbc8b468f16da26fa52b8cd5ab2a8e12d9de2c7f022f76bc93f9f60914",
-  "2026:2": "d3d90a108c76b2b67e0efd78ca72b551cc5a2c277edbed91fe6a36f540090813",
-  "65535:0": "c09b25d5147f916dc4c65936f55b89e88f341caca782c794b6bf1e33da15a016",
-  "65535:1": "0216393c60d31ca0751e5d120426f9124025413cb62c568889b44a8cdd379672",
-  "65535:2": "f3c54df1b7fa2bc8b244e1efb3c5ccc0d09f3390aee3cf9d5673a2eb1e445c2d"
-};
+// Generation 4 intentionally replaces the enclosed v0.2/v0.3 footprints.
+// Checkpoint compatibility is explicit, rather than asserting the old coordinates.
+const generation = 4;
+const softGroundDetails = new Set(['grass','fern','fern_leaf','undergrowth','pebble',
+  'mineral','mushroom','flower','flower_stem','ivy']);
 
 function finiteNumbers(value, path = 'world') {
   if (typeof value === 'number') assert(Number.isFinite(value), `${path} is not finite`);
   else if (value && typeof value === 'object') {
     for (const [key, child] of Object.entries(value)) finiteNumbers(child, `${path}.${key}`);
   }
+}
+
+function outdoorIntegrity(world,label) {
+  const outside=world.rooms.filter(r=>r.outdoor),paths=world.corridors.filter(c=>c.outdoor),env=world.environment;
+  assert.equal(outside.length,5,`${label}: missing genuinely open-air regions`);
+  assert(world.rooms.filter(r=>!r.outdoor).length>=3,`${label}: no coherent indoor buildings remain`);
+  assert(paths.length>=7,`${label}: outdoor regions are isolated decorative pockets`);
+  assert(world.rooms[0].outdoor,`${label}: spawn still hides the outdoor environment`);
+  assert.equal(env.outdoorZones.length,outside.length+paths.length,`${label}: renderer outdoor mask is incomplete`);
+  assert.equal(JSON.stringify(world.walkable),JSON.stringify(world.rooms.concat(world.corridors).map(({x,z,w,d})=>({x,z,w,d}))),
+    `${label}: tactical navigation and rendered floors disagree`);
+  for(const key of ['skyTop','skyBottom','fog','sunColor','ambient'])assert(env[key].length===3&&env[key].every(c=>c>=0&&c<=1),`${label}: invalid ${key}`);
+  assert(Math.abs(Math.hypot(...env.sunDirection)-1)<1e-8&&env.sunDirection[1]>.3,`${label}: sun direction is not a unit direction above ground`);
+  assert(env.wind>0&&['pollen','ash','motes'].includes(env.weather),`${label}: missing outdoor atmosphere`);
+  const canopy=new Set(['canopy','arch_ivy']),silhouettes=new Set(['trunk','canopy','branch','boulder','rock_core','cliff','hill','boundary']);
+  for(const mat of [8,9,10,11])assert(world.meshes.some(m=>m.mat===mat&&m.outdoor),`${label}: missing natural material ${mat}`);
+  for(const m of world.meshes) {
+    if(silhouettes.has(m.category))assert(!m.detail,`${label}: essential outdoor silhouette disappears at low quality`);
+    assert(!(m.outdoor&&['cable_tray','door_mechanism'].includes(m.category)),`${label}: indoor ceiling systems leaked into an open-air region`);
+    if(canopy.has(m.category))assert(m.mat===11,`${label}: foliage lacks the natural material/wind path`);
+  }
+  for(const [i,region] of world.rooms.concat(world.corridors).entries()) {
+    if(!region.outdoor)continue;
+    const name=i<world.rooms.length?'room-'+region.id:'corridor-'+(i-world.rooms.length);
+    const floors=world.meshes.filter(m=>m.region===name&&m.category==='outdoor_floor');
+    assert.equal(floors.length,1,`${label}: outdoor region ${name} lacks a continuous ground plane`);
+    assert(Math.abs(floors[0].p[1]+floors[0].s[1]/2)<1e-8&&floors[0].s[0]>=region.w&&floors[0].s[2]>=region.d,
+      `${label}: outdoor floor ${name} has a hidden step or gap`);
+    assert(world.outdoorBoundaries.filter(b=>b.region===name).length>=2,`${label}: outdoor region ${name} lacks visible retaining limits`);
+    // A vertical ray above every circulation centre must actually reach the sky.
+    // Merely adding a sky-coloured ceiling or foliage around a roof will fail.
+    for(const m of world.meshes) {
+      if(m.p[1]+m.s[1]/2<2.1)continue;
+      assert(!(Math.abs(m.p[0]-region.x)<m.s[0]/2&&Math.abs(m.p[2]-region.z)<m.s[2]/2&&m.p[1]-m.s[1]/2<16),
+        `${label}: outdoor centre ${name} is still roofed by ${m.category||m.shape}`);
+    }
+  }
+  for(const b of world.outdoorBoundaries) {
+    const mesh=world.meshes[b.mesh],solid=world.colliders.find(c=>c.mesh===b.mesh);
+    assert(mesh&&mesh.outdoor&&mesh.solid&&mesh.category==='boundary'&&solid,`${label}: invisible/unphysical outdoor boundary`);
+    assert(b.height>=.7&&b.thickness>=.5,`${label}: outdoor border cannot physically stop the player`);
+  }
+  const trees=world.trees.filter(t=>t.solid);
+  assert(trees.length>=10&&new Set(world.trees.map(t=>t.species)).size>=2,`${label}: insufficient tree silhouettes/species`);
+  assert.equal(world.natureStats.playableTrees,trees.length,`${label}: inaccurate nature statistics`);
+  let substantial=0;
+  for(const t of trees) {
+    const m=world.meshes[t.mesh],c=world.colliders.find(c=>c.mesh===t.mesh);
+    assert(m.category==='trunk'&&m.mat===10&&!m.detail&&c,`${label}: a large tree can be walked through`);
+    assert(c.minY<=0&&c.maxY>1.62,`${label}: tree is not solid at firing height`);
+    assert(c.minX<t.x&&c.maxX>t.x&&c.minZ<t.z&&c.maxZ>t.z,`${label}: trunk collider is detached from its visible trunk`);
+    if(c.maxX-c.minX>=.65)substantial++;
+  }
+  assert(substantial>=5,`${label}: no trees wide enough to provide tactical cover`);
+  const visibleFromSpawn=trees.filter(t=>t.z<world.spawn.z&&Math.abs(t.x-world.spawn.x)<(world.spawn.z-t.z)*.9&&Math.hypot(t.x-world.spawn.x,t.z-world.spawn.z)<20);
+  assert(visibleFromSpawn.length,`${label}: the initial forward view has no tree silhouette`);
+  assert(world.meshes.some(m=>m.outdoor&&m.category===(world.stage===1?'cliff':'hill')),`${label}: missing raised landscape outside the walking surface`);
+}
+
+// Flood the collision space WITHOUT a floor constraint. If a wall or path-end
+// seam is missing, this search can escape into a gap and proves the bug instead
+// of hiding it behind a synthetic "must be in a room" navigation restriction.
+function sealedBoundaries(world,label) {
+  const b={minX:world.bounds.minX-1,maxX:world.bounds.maxX+1,minZ:world.bounds.minZ-1,maxZ:world.bounds.maxZ+1};
+  const width=Math.ceil((b.maxX-b.minX)/spacing),depth=Math.ceil((b.maxZ-b.minZ)/spacing),count=width*depth;
+  const px=i=>b.minX+(i+.5)*spacing,pz=i=>b.minZ+(i+.5)*spacing;
+  const boxes=world.colliders.filter(c=>c.minY<1.8&&c.maxY>.05),bucketSize=2,buckets=new Map();
+  for(const c of boxes)for(let z=Math.floor((c.minZ-radius)/bucketSize);z<=Math.floor((c.maxZ+radius)/bucketSize);z++)for(let x=Math.floor((c.minX-radius)/bucketSize);x<=Math.floor((c.maxX+radius)/bucketSize);x++) {
+    const key=x+','+z;if(!buckets.has(key))buckets.set(key,[]);buckets.get(key).push(c);
+  }
+  const onFloor=(x,z)=>world.walkable.some(f=>Math.abs(x-f.x)<=f.w/2&&Math.abs(z-f.z)<=f.d/2);
+  const free=(x,z)=>!(buckets.get(Math.floor(x/bucketSize)+','+Math.floor(z/bucketSize))||[]).some(c=>{
+    const dx=Math.max(c.minX-x,0,x-c.maxX),dz=Math.max(c.minZ-z,0,z-c.maxZ);return dx*dx+dz*dz<radius*radius;
+  });
+  const mask=new Uint8Array(count),seen=new Uint8Array(count),queue=new Uint32Array(count);
+  for(let z=0;z<depth;z++)for(let x=0;x<width;x++)mask[z*width+x]=Number(free(px(x),pz(z)));
+  const first=Math.floor((world.spawn.z-b.minZ)/spacing)*width+Math.floor((world.spawn.x-b.minX)/spacing);
+  assert(mask[first],`${label}: boundary search starts in collision`);
+  let head=0,tail=1;seen[first]=1;queue[0]=first;
+  while(head<tail) {
+    const id=queue[head++],x=id%width,z=Math.floor(id/width);
+    assert(onFloor(px(x),pz(z)),`${label}: physical movement escapes the ground at ${px(x)},${pz(z)}`);
+    for(const n of [x?id-1:-1,x+1<width?id+1:-1,z?id-width:-1,z+1<depth?id+width:-1]) {
+      if(n<0||seen[n]||!mask[n])continue;
+      const xx=n%width,zz=Math.floor(n/width);if(!free((px(x)+px(xx))/2,(pz(z)+pz(zz))/2))continue;
+      seen[n]=1;queue[tail++]=n;
+    }
+  }
+  return tail;
 }
 
 function reachability(world, label, avoidHazards = false) {
@@ -130,7 +202,7 @@ function reachability(world, label, avoidHazards = false) {
   return { accessibleCells: tail, targets: targets.length };
 }
 
-const summary = [], signatures = new Set(), topologyIds = new Set(), topologyGraphs = new Map(), footprints = new Map();
+const summary = [], signatures = new Set(), topologyIds = new Set(), topologyGraphs = new Map(), footprints = new Map(), biomes = new Set();
 for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   const label = `seed ${seed}, stage ${stage}`;
   const world = create(seed, stage), repeated = create(seed, stage);
@@ -139,10 +211,11 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   assert.equal(serialized, JSON.stringify(repeated), `${label}: nondeterministic generation`);
   signatures.add(createHash('sha256').update(serialized).digest('hex'));
   assert.equal(world.cores.length, 3, `${label}: expected three required relays`);
-  assert(world.meshes.length<=12000&&world.colliders.length<=350,`${label}: stage exceeds geometry budget`);
-  const physics=JSON.stringify([world.seed,world.stage,world.spawn,world.bounds,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[]]);
-  assert.equal(createHash('sha256').update(physics).digest('hex'),physicsV02[`${seed}:${stage}`],
-    `${label}: decorative pass changed released collision/checkpoint data`);
+  assert(world.meshes.length<=16000&&world.colliders.length<=500,`${label}: stage exceeds geometry budget`);
+  assert.equal(world.generation,generation,`${label}: changed topology lacks a checkpoint generation marker`);
+  outdoorIntegrity(world,label);
+  sealedBoundaries(world,label);
+  biomes.add(world.environment.biome);
   const details=world.detailStats;
   assert(details&&Number.isInteger(details.base)&&details.base>0&&details.base<world.meshes.length,`${label}: no layered art pass`);
   assert.equal(details.added,world.meshes.length-details.base,`${label}: inaccurate detail count`);
@@ -151,15 +224,19 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
     const level=mesh.detail||0;
     assert([0,1,2].includes(level),`${label}: renderer cannot classify this detail tier`);
     assert(mesh.p.length===3&&mesh.s.length===3&&mesh.s.every(n=>n>0),`${label}: invalid mesh dimensions`);
+    assert.equal(typeof mesh.outdoor,'boolean',`${label}: ambiguous indoor/outdoor light assignment`);
     tiers[level]++;
     if(i<details.base)assert.equal(level,0,`${label}: original architecture was made disposable detail`);
     else{
       assert(level>0&&typeof mesh.category==='string',`${label}: new dressing has no LOD/category`);
       categoryCounts[mesh.category]=(categoryCounts[mesh.category]||0)+1;
       if(level===2)assert(Math.max(...mesh.s)<=.35,`${label}: large silhouette incorrectly hidden with micro detail`);
-      // Only floor markings, existing solid footprints and wall-attached fittings
-      // may receive low details. New free-standing obstacles would be misleading.
-      if(mesh.p[1]<1.95&&mesh.p[1]+mesh.s[1]/2>.08){
+      // Leaves, grass and small stones are permeable ground cover. Large rigid
+      // details must still be attached to a genuinely collidable body.
+      if(softGroundDetails.has(mesh.category)) {
+        assert(mesh.outdoor&&mesh.p[1]+mesh.s[1]/2<2.4&&Math.max(...mesh.s)<1.2,
+          `${label}: decorative vegetation masquerades as large solid cover`);
+      } else if(mesh.p[1]<1.95&&mesh.p[1]+mesh.s[1]/2>.08){
         const nearSolid=world.colliders.some(c=>{
           if(c.minY>mesh.p[1]+.3||c.maxY<.05)return false;
           const x=Math.max(c.minX,Math.min(mesh.p[0],c.maxX)),z=Math.max(c.minZ,Math.min(mesh.p[2],c.maxZ));
@@ -202,6 +279,12 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   for (const box of world.colliders) {
     assert(box.minX <= box.maxX && box.minY <= box.maxY && box.minZ <= box.maxZ,
       `${label}: reversed collider bounds`);
+    const mesh=world.meshes[box.mesh];
+    assert(mesh&&mesh.solid&&mesh.shape==='box'&&!mesh.detail,`${label}: collider has no essential visible solid mesh`);
+    for(const [axis,i] of [['X',0],['Y',1],['Z',2]]) {
+      assert(Math.abs(box['min'+axis]-(mesh.p[i]-mesh.s[i]/2))<1e-8&&Math.abs(box['max'+axis]-(mesh.p[i]+mesh.s[i]/2))<1e-8,
+        `${label}: collider and visible mesh disagree on ${axis}`);
+    }
   }
   const entryRoom=world.rooms[0];
   const inEntry=p=>Math.abs(p.x-entryRoom.x)<entryRoom.w/2&&Math.abs(p.z-entryRoom.z)<entryRoom.d/2;
@@ -236,12 +319,13 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   }
   const entry = reachability(world, label);
   if(world.hazards.length)reachability(world,label+' with every vent hot',true);
-  summary.push({ seed, stage,meshes:world.meshes.length,tiers,ambientSources:world.ambience.length, ...entry });
+  summary.push({ seed, stage,meshes:world.meshes.length,colliders:world.colliders.length,trees:world.natureStats.trees,outdoorRooms:world.natureStats.outdoorRooms,tiers,ambientSources:world.ambience.length, ...entry });
 }
 assert.equal(signatures.size, seeds.length * 3, 'Seeds/stages unexpectedly produce identical worlds');
 assert.equal(topologyIds.size,3,'Stages must have distinct topology identities');
 assert.equal(new Set(topologyGraphs.values()).size,3,'Stages reuse the same graph with recoloured rooms');
 assert.equal(new Set(footprints.values()).size,3,'Stages reuse the same room footprint');
+assert.equal(biomes.size,3,'Stages reuse the same outdoor ecology');
 console.log(JSON.stringify({
   status: 'PASS', cases: summary.length, radius, spacing,
   checks: ['finite values', 'determinism', 'spawn clearance', 'independent flood fill',
@@ -249,10 +333,13 @@ console.log(JSON.stringify({
     'distinct stage graphs and footprints', 'every corridor physically connected',
     'all objectives accessible with every vent hot', 'safe hazard warning windows',
     'boss progression and arena clearance', 'geometry budgets',
-    'released v0.2 physics/checkpoint data unchanged', 'LOD silhouettes preserved',
-    'wall-attached low details', 'industrial detail categories', 'ambient surface orientation'],
+    'explicit generation 4 checkpoint identity', 'LOD silhouettes preserved',
+    'collision geometry visible', 'solid trunks at eye height', 'real open sky at spawn',
+    'three distinct outdoor biomes', 'sealed visible outdoor boundaries',
+    'flat continuous outdoor floors', 'industrial and natural detail systems',
+    'wall-attached rigid details', 'ambient surface orientation'],
   meshes:{min:Math.min(...summary.map(s=>s.meshes)),max:Math.max(...summary.map(s=>s.meshes))},
-  representativeStages:summary.filter(s=>s.seed===96).map(s=>({stage:s.stage,meshes:s.meshes,tiers:s.tiers,ambientSources:s.ambientSources})),
+  representativeStages:summary.filter(s=>s.seed===96).map(s=>({stage:s.stage,meshes:s.meshes,colliders:s.colliders,trees:s.trees,outdoorRooms:s.outdoorRooms,tiers:s.tiers,ambientSources:s.ambientSources})),
   accessibleCells: { min: Math.min(...summary.map(s => s.accessibleCells)),
     max: Math.max(...summary.map(s => s.accessibleCells)) },
   targetsChecked: summary.reduce((sum, s) => sum + s.targets, 0)

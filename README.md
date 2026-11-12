@@ -1,6 +1,6 @@
 # FERRO — Le complexe silencieux
 
-**Version 0.3.0 — Profondeur.** Un FPS 3D compact dont la géométrie, les matériaux, les machines et le son sont fabriqués par le code. Deux armes, trois étages industriels, neuf relais et un gardien final.
+**Version 0.4.0 — Horizons.** Un FPS 3D compact dont la géométrie, les matériaux, les machines et le son sont fabriqués par le code. Deux armes, trois territoires mêlant nature et installations industrielles, neuf relais et un gardien final.
 
 L'idée technique s'inspire de la démarche de .kkrieger : conserver la recette du contenu dans un petit programme. **Tout le code et tout le contenu de FERRO sont originaux ; aucun asset du jeu historique n'est repris.**
 
@@ -16,32 +16,33 @@ Téléchargez **`dist/index.html`** et ouvrez-le dans un navigateur de bureau r�
 
 Le jeu possède également des commandes tactiles et peut être servi par un hébergement statique. WebGL 2 est recommandé ; un rendu 3D logiciel prend le relais quand il est indisponible. Le son commence après une interaction.
 
-## Ce qui change en 0.3
+## Ce qui change en 0.4
 
-- **Un complexe beaucoup plus détaillé.** Conduites avec coudes, brides et colliers, chemins de câbles, panneaux de maintenance, jauges, consoles, grilles, drains, supports et mécanismes de portes. Chaque étage garde son architecture et sa palette industrielle.
-- **Un décor vivant.** Les écrans balayent leurs traces, les balises pulsent et de petits effets de condensation, vapeur ou étincelles accompagnent les machines. Les détails fins s'affichent à proximité pour limiter leur coût.
-- **Déplacement plus souple.** Accélération progressive, freinage rapide, changement de direction réactif et esquive amortie. Le joystick conserve sa précision analogique et les diagonales ne donnent pas de vitesse supplémentaire.
-- **Armes animées.** Balancement lié à la distance réellement parcourue, inertie lors de la rotation, recul amorti, pièces mobiles, prise gantée et transition de course. Les pas suivent la foulée ; pousser contre un mur ne fait plus marcher l'animation sur place.
-- **Caméra mesurée.** Variations légères de hauteur, d'inclinaison et de champ de vision, avec visée immédiate. Le réglage de mouvements désactivés fixe la caméra et réduit les mouvements de l'arme.
-- **Ombres corrigées et renforcées.** Lecture de profondeur en haute précision, comparaison adaptée aux surfaces obliques, transitions aux bords des ombres et joints de sol plus propres. Le rendu WebGL ombre deux plafonniers et la torche ; le secours Canvas projette des ombres simplifiées au sol.
-- **Continuité de l'expédition.** La passe décorative utilise un générateur indépendant ; elle ne modifie ni les passages ni les empreintes physiques des points de reprise de la 0.2. Une reprise remet l'inertie à zéro.
+- **De vrais extérieurs.** Chaque secteur possède cinq espaces à ciel ouvert, des chemins praticables et des bâtiments à explorer. Les barrières, murets et fronts rocheux délimitent visiblement le terrain. Le premier départ se fait dans une lisière boisée.
+- **Trois paysages.** Pins et bouleaux autour des postes de maintenance ; falaises, minerais et installations dans la carrière ; feuillus, fleurs, lierre et ruines dans les jardins du veilleur. Les reliefs de fond donnent de la profondeur sans transformer le sol en plateformes.
+- **Une nature construite en 3D.** Troncs et branches, plusieurs formes de canopée, racines, fougères, buissons, herbes, champignons, brindilles et petits cailloux. Les gros troncs et les rochers ont des collisions et servent de couverts.
+- **Ciel et éclairage.** Ciel dégradé, nuages, soleil, brume et palette propre à chaque paysage. Le soleil entre dans l'atlas d'ombres ; le feuillage bouge légèrement avec le vent. Terre, pierre, écorce et feuilles ont leurs propres matériaux procéduraux.
+- **Des machines qui observent.** Patrouille, champ de vision, écoute des tirs et alertes entre voisins. Après avoir perdu la vue, elles cherchent autour de la dernière position connue, puis abandonnent la recherche. Elles ne connaissent pas en permanence la position du joueur.
+- **Des décisions tactiques.** Les éclaireurs cherchent un chemin de flanc ; blessés, ils peuvent rejoindre un couvert qui bloque réellement la vue, attendre puis ressortir pour viser. Les lourds avancent et chargent, les tourelles tiennent leur position. La séparation limite les attroupements. Les PV et dégâts ne sont pas gonflés pour simuler une meilleure IA.
+- **Ambiance extérieure.** Vent, oiseaux synthétiques dans la lisière, sons secs dans la carrière et insectes dans les jardins ; pas et réverbération changent en passant une porte. Les yeux des ennemis et leurs signaux sonores rendent l'alerte lisible.
+- **Reprise adaptée aux nouveaux plans.** Une sauvegarde antérieure repart à l'entrée du même secteur avec les résultats des secteurs déjà terminés. Son ancien point est conservé séparément. Les sauvegardes de la nouvelle génération reprennent normalement au dernier relais.
 
-Le détail du correctif de rendu et les résultats observés figurent dans `VALIDATION.md`.
+Le déplacement amorti, les armes animées, les réglages de confort, les détails industriels et les corrections d'ombres de la 0.3 sont conservés. Les résultats observés figurent dans `VALIDATION.md`.
 
 ## La campagne
 
-- **Trois plans distincts.** Ateliers à deux boucles, double galerie de fonderie, puis cœur central et arène finale. Les ventilateurs, presses et réacteurs s'animent ; les évents de la fonderie et du cœur annoncent leurs décharges.
+- **Trois plans distincts.** Deux boucles de maintenance dans la lisière, doubles galeries autour de la carrière, puis jardins et observatoire central avant l'arène. Les ventilateurs, presses et réacteurs s'animent ; les évents annoncent leurs décharges.
 - **Deux armes complémentaires.** Impulse tire rapidement et précisément. Fracture disperse sept projectiles instantanés, efficace de près, avec une cadence plus lente et davantage de chaleur.
 - **Onde de choc.** Repousse et étourdit les machines proches, dissipe les projectiles et réduit la chaleur. Son délai de récupération impose de choisir son moment.
 - **Combat plus lisible.** Scouts mobiles, marcheurs qui préparent leur charge, tourelles à rafales et gardien à deux phases. Les yeux et les repères au sol annoncent l'attaque ; les tirs verrouillent leur direction avant de partir.
-- **Points de reprise.** L'entrée d'un étage et chaque relais sauvegardent l'état de la partie. On peut continuer après avoir fermé la page. Une brève protection évite de réapparaître directement dans un projectile.
-- **Score et séries.** Les éliminations rapprochées augmentent le score ; le bilan d'expédition rassemble les trois étages.
+- **Points de reprise.** L'entrée d'un secteur et chaque relais sauvegardent l'état de la partie. On peut continuer après avoir fermé la page. Une brève protection évite de réapparaître directement dans un projectile.
+- **Score et séries.** Les éliminations rapprochées augmentent le score ; le bilan d'expédition rassemble les trois secteurs.
 - **Rendu procédural.** Relief des panneaux, métal brossé, reflets et éclairage industriel. Le mode Économie réduit les passes graphiques coûteuses.
-- **Ambiance par étage.** La synthèse musicale varie avec la profondeur et la menace ; les nouvelles armes, l'onde et le gardien ont leurs propres sons.
+- **Ambiance par secteur.** La synthèse musicale varie avec le paysage et la menace ; les armes, l'onde et le gardien ont leurs propres sons.
 
 ## Mission et commandes
 
-À chaque étage, approchez-vous des trois relais lumineux, puis rejoignez le portique. Les relais restaurent une partie de votre intégrité et deviennent des points de reprise. Les soins se ramassent automatiquement lorsqu'ils sont utiles. Au troisième étage, le gardien doit également être neutralisé avant de sortir.
+Dans chaque secteur, approchez-vous des trois relais lumineux, puis rejoignez le portique. Les relais restaurent une partie de votre intégrité et deviennent des points de reprise. Les soins se ramassent automatiquement lorsqu'ils sont utiles. Dans le troisième secteur, le gardien doit également être neutralisé avant de sortir.
 
 Les armes utilisent la même jauge de chaleur, sans munitions limitées. Relâchez le tir pour refroidir. L'onde possède un rayon de 6,5 m et une recharge de 7 secondes. Une esquive accorde brièvement l'invulnérabilité. Les évents orange annoncent une décharge ; leur phase chaude reste évitable.
 
@@ -62,9 +63,11 @@ Les réglages de son, qualité graphique et mouvements de caméra sont dans la p
 
 ### Sauvegarde locale
 
-L'écran d'accueil propose **Continuer l'expédition** quand un point de reprise existe. **Nouvelle expédition** remplace ce point ; **Recommencer cet étage** repart de son entrée. La reprise conserve les relais, machines éliminées, score, arme et délais de récupération enregistrés.
+L'écran d'accueil propose **Continuer l'expédition** quand un point de reprise existe. **Nouvelle expédition** remplace ce point ; **Recommencer ce secteur** repart de son entrée. Pour un point compatible, la reprise conserve les relais, machines éliminées, score, arme et délais de récupération enregistrés.
 
-La sauvegarde reste dans ce navigateur, sur cette origine, sans synchronisation ni compte de jeu. Effacer les données du navigateur l'efface aussi. Si le stockage local est indisponible, le point de reprise fonctionne pendant la session. Un changement incompatible de génération invalide proprement une ancienne sauvegarde.
+La sauvegarde reste dans ce navigateur, sur cette origine, sans synchronisation ni compte de jeu. Effacer les données du navigateur l'efface aussi. Si le stockage local est indisponible, le point de reprise fonctionne pendant la session.
+
+**Passage à Horizons :** les nouveaux plans utilisent la génération 4. Une ancienne sauvegarde reprend à l'entrée du même secteur et conserve la graine, l'arme ainsi que les statistiques cumulées des secteurs terminés. Les relais et ennemis du secteur en cours repartent de zéro. L'ancien point est copié dans `ferro-expedition-v2-before-horizons` lorsque le stockage le permet, sans écraser une copie déjà présente.
 
 ## Ce qui est procédural
 
@@ -72,24 +75,25 @@ La sauvegarde reste dans ce navigateur, sur cette origine, sans synchronisation 
 | --- | --- |
 | Architecture | Trois graphes conçus pour rester traversables ; dimensions, placement et détails déterministes selon une graine |
 | Géométrie | Boîtes, cylindres, sphères, octaèdres et anneaux générés mathématiquement |
-| Matériaux | Panneaux, joints, grain, béton, métal, normales et rugosité calculés dans les shaders |
+| Matériaux | Panneaux, joints, métal, terre, roche, écorce, feuillage, normales et rugosité calculés dans les shaders |
+| Nature et ciel | Assemblages d'arbres et plantes ; vent, nuages, soleil et brume paramétrés par secteur |
 | Machines et personnages | Assemblages de primitives animés par leurs paramètres et états de combat |
 | Son | Oscillateurs, bruit synthétique et filtres Web Audio |
 | Effets | Particules, projectiles, onde, ombre et bloom calculés à l'exécution |
 
-| Étage | Plan | Salles / liaisons | Machines animées | Évents |
+| Secteur | Plan | Zones / liaisons | Zones à ciel ouvert | Chemins extérieurs |
 | --- | --- | ---: | ---: | ---: |
-| Les ateliers silencieux | Deux boucles de maintenance | 9 / 10 | 13 | 0 |
-| La fonderie profonde | Deux longues galeries | 8 / 9 | 18 | 4 |
-| Le cœur du veilleur | Cœur central et arène | 9 / 12 | 5 | 5 |
+| La lisière rouillée | Deux boucles de maintenance | 9 / 10 | 5 | 7 |
+| La carrière des braises | Deux longues galeries | 8 / 9 | 5 | 9 |
+| Les jardins du veilleur | Observatoire central et arène | 9 / 12 | 5 | 12 |
 
-La graine change les dimensions et détails, tout en conservant le graphe propre à chaque étage. Il ne s'agit pas d'un labyrinthe dont la topologie entière est aléatoire à chaque lancement. Le sol reste horizontal ; les volumes en hauteur ne constituent pas des plateformes traversables.
+La graine change les dimensions et détails, tout en conservant le graphe propre à chaque secteur. Il ne s'agit pas d'un labyrinthe dont la topologie entière est aléatoire à chaque lancement. Le sol reste horizontal ; les collines, falaises et volumes en hauteur sont décoratifs, sans plateformes traversables.
 
 ## Taille
 
 `SIZE.json` est produit par le build : taille brute du HTML, taille gzip reproductible et SHA-256.
 
-Pour la 0.3.0 : **189 736 octets bruts** (189,736 ko ; 185,29 Kio) et **59 021 octets gzip**.
+Pour la 0.4.0 : **248 290 octets bruts** (248,29 ko ; 242,47 Kio) et **76 041 octets gzip**. `SIZE.json` contient aussi le SHA-256 du fichier distribué.
 
 Le budget reste **1 400 000 octets non compressés** pour le fichier jouable. Le dépôt, ses tests et la documentation sont séparés de cette mesure. Gzip mesure une compression de transport ; ce n'est pas la taille brute.
 
@@ -102,7 +106,7 @@ Aucune installation npm n'est nécessaire. Python 3 assemble le fichier ; Node.j
 ```sh
 python3 tools/build.py
 node checks/world.test.mjs
-node --test checks/simulation.test.mjs checks/motion.test.mjs
+node --test checks/simulation.test.mjs checks/motion.test.mjs checks/checkpoint.test.mjs
 node checks/build.test.mjs
 ```
 
@@ -127,7 +131,7 @@ Le build est suivi dans Git pour être immédiatement téléchargeable. Relancer
 
 Voir `VALIDATION.md` pour les résultats et `docs/ARCHITECTURE.md` pour les décisions techniques.
 
-Le rendu avancé est contrôlé avec les vrais shaders dans un contexte EGL / OpenGL ES logiciel. Les essais navigateur utilisent le secours Canvas 2D dans l'environnement disponible. Les performances sur GPU physique, Safari macOS/iOS, le multitouch réel et l'équilibrage complet de la campagne restent à confirmer. Les cartes d'ombre couvrent les cônes des sources retenues ; les autres lumières ne calculent pas d'occlusion complète.
+Le rendu avancé est contrôlé avec les vrais shaders dans un contexte EGL / OpenGL ES logiciel. Les essais navigateur utilisent le secours Canvas 2D dans l'environnement disponible. Les performances sur GPU physique, Safari macOS/iOS, le multitouch réel et l'équilibrage complet de la campagne restent à confirmer. L'ombre solaire couvre le voisinage de la caméra ; la lampe retenue et la torche couvrent leurs cônes. Les autres lumières ne calculent pas d'occlusion complète.
 
 Le prototype n'inclut pas de saut, d'étages superposés traversables, de multijoueur ou de longue campagne narrative. Un portage natif C/C++ serait un projet distinct pour explorer la contrainte de distribution historique.
 

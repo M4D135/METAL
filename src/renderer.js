@@ -11,11 +11,13 @@
   layout(location=4) in vec4 iRotation;
   layout(location=5) in vec4 iColor;
   uniform mat4 uViewProjection;
+  uniform vec2 uWindTime;
   out vec3 vWorld;
   out vec3 vNormal;
   flat out float vMaterial;
   flat out float vEmission;
   flat out float vOverlay;
+  flat out float vOutdoor;
   flat out vec4 vColor;
   void main() {
     vec3 c=cos(iRotation.xyz), s=sin(iRotation.xyz);
@@ -24,10 +26,16 @@
     mat3 rz=mat3(c.z,s.z,0., -s.z,c.z,0., 0.,0.,1.);
     mat3 rotation=rz*ry*rx;
     vWorld=rotation*(aPosition*iScale.xyz)+iPosition.xyz;
+    if(iPosition.w>10.5&&iPosition.w<11.5){
+      float phase=uWindTime.y*.85+iPosition.x*.37+iPosition.z*.21;
+      float bend=(aPosition.y+.5)*uWindTime.x*.055;
+      vWorld.x+=sin(phase)*bend;vWorld.z+=cos(phase*.73)*bend*.6;
+    }
     vNormal=normalize(rotation*(aNormal/max(abs(iScale.xyz),vec3(.0001))));
     vMaterial=iPosition.w;
     vEmission=iScale.w;
-    vOverlay=iRotation.w;
+    vOverlay=mod(iRotation.w,2.);
+    vOutdoor=floor(iRotation.w*.5);
     vColor=iColor;
     gl_Position=uViewProjection*vec4(vWorld,1.);
   }`;
@@ -39,6 +47,7 @@
   flat in float vMaterial;
   flat in float vEmission;
   flat in float vOverlay;
+  flat in float vOutdoor;
   flat in vec4 vColor;
   uniform vec3 uEye;
   uniform vec3 uForward;
@@ -52,6 +61,11 @@
   uniform mat4 uShadowMatrix[3];
   uniform vec4 uShadowSettings;
   uniform vec3 uTorchPosition;
+  uniform vec3 uSunDirection;
+  uniform vec3 uSunColor;
+  uniform vec3 uAmbient;
+  uniform vec3 uFogColor;
+  uniform vec2 uEnvironment;
   out vec4 fragColor;
   float hash(vec2 p) {
     vec3 p3=fract(vec3(p.xyx)*.1031);
@@ -87,24 +101,33 @@
     return step(depth+dot(slope,(centre-uv)*2.),texture(uShadowMap,tap).r);
   }
   float shadow(vec3 n,vec3 l,int slot) {
-    if(vOverlay>.5||(slot<2&&float(slot)>=uShadowSettings.x)||(slot==2&&uShadowSettings.z<.5))return 1.;
+    if(vOverlay>.5||(slot==0&&uShadowSettings.x<.5)||(slot==1&&uShadowSettings.x<1.5&&uShadowSettings.w<.5)||(slot==2&&uShadowSettings.z<.5))return 1.;
     vec4 projected=uShadowMatrix[slot]*vec4(vWorld+n*.014,1.);
     vec3 p=projected.xyz/projected.w*.5+.5;
     vec3 dx=dFdx(p),dy=dFdy(p);
     float determinant=dx.x*dy.y-dx.y*dy.x;
     vec2 slope=abs(determinant)>.00000000001?vec2(dx.z*dy.y-dy.z*dx.y,dy.z*dx.x-dx.z*dy.x)/determinant:vec2(0.);
     if(projected.w<=0.||p.z<=0.||p.z>=1.||min(p.x,p.y)<=.001||max(p.x,p.y)>=.999)return 1.;
-    float bias=.00005+.00014*(1.-max(dot(n,l),0.));
+    float bias=slot==1&&uShadowSettings.w>.5?.00014+.00024*(1.-max(dot(n,l),0.)):.00005+.00014*(1.-max(dot(n,l),0.));
     vec2 tile=slot==1?vec2(.5,0.):slot==2?vec2(0.,.5):vec2(0.);
     vec2 uv=p.xy*.5+tile;
     float visibility=0.;
-    visibility+=depthSample(uv,vec2(-.65,-.65),p.z-bias,slope);
-    visibility+=depthSample(uv,vec2(.65,-.65),p.z-bias,slope);
-    visibility+=depthSample(uv,vec2(-.65,.65),p.z-bias,slope);
-    visibility+=depthSample(uv,vec2(.65,.65),p.z-bias,slope);
+    if(slot==1&&uShadowSettings.w>.5){
+      // A wider, weighted kernel softens the sun's large world-space texels.
+      // Every tap still compares its own receiver-plane depth at full precision.
+      visibility=depthSample(uv,vec2(0.),p.z-bias,slope)*4.;
+      visibility+=(depthSample(uv,vec2(-1.25,0.),p.z-bias,slope)+depthSample(uv,vec2(1.25,0.),p.z-bias,slope)+depthSample(uv,vec2(0.,-1.25),p.z-bias,slope)+depthSample(uv,vec2(0.,1.25),p.z-bias,slope))*2.;
+      visibility+=depthSample(uv,vec2(-1.25,-1.25),p.z-bias,slope)+depthSample(uv,vec2(1.25,-1.25),p.z-bias,slope)+depthSample(uv,vec2(-1.25,1.25),p.z-bias,slope)+depthSample(uv,vec2(1.25,1.25),p.z-bias,slope);
+      visibility*=.0625;
+    }else{
+      visibility+=depthSample(uv,vec2(-.65,-.65),p.z-bias,slope);
+      visibility+=depthSample(uv,vec2(.65,-.65),p.z-bias,slope);
+      visibility+=depthSample(uv,vec2(-.65,.65),p.z-bias,slope);
+      visibility+=depthSample(uv,vec2(.65,.65),p.z-bias,slope);visibility*=.25;
+    }
     float edge=min(min(p.x,p.y),min(1.-p.x,1.-p.y));
-    float blend=smoothstep(.012,.085,edge)*(1.-smoothstep(24.,31.,projected.w));
-    return mix(1.,mix(.055,1.,visibility*.25),blend);
+    float blend=smoothstep(.012,.085,edge)*(slot==1&&uShadowSettings.w>.5?1.:1.-smoothstep(24.,31.,projected.w));
+    return mix(1.,mix(.055,1.,visibility),blend);
   }
   void main() {
     vec3 geometricNormal=normalize(vNormal), n=geometricNormal, an=abs(n);
@@ -116,7 +139,7 @@
     float fineDetail=1.-smoothstep(.015,.10,pixelSpan);
     float grain=noise(uv*23.)*.5+mix(.5,noise(uv*71.),fineDetail)*.2;
     float broad=noise(uv*.7);
-    float panel=grid(uv*.55,.007);
+    float panel=m<7.5?grid(uv*.55,.007):0.;
     if (m<.5) {
       base*=.82+grain*.27+broad*.17;
       base*=1.-panel*.38;
@@ -172,12 +195,34 @@
       emission+=.18;
       roughness=.4;
       metalness=.4;
-    } else {
+    } else if(m<7.5) {
       base=vec3(.065,.075,.085)*(.82+grain*.4);
       roughness=.86;
       metalness=0.;
+    } else if(m<8.5) {
+      float soil=noise(uv*.6)*.6+noise(uv*3.7)*.4;
+      base=mix(vec3(.13,.105,.057),vec3(.16,.24,.075),smoothstep(.3,.7,soil));
+      base*=.75+grain*.5;roughness=.95;metalness=0.;
+    } else if(m<9.5) {
+      float strata=.5+.5*sin(vWorld.y*4.+noise(uv*.9)*8.);
+      base=mix(vec3(.23,.24,.22),vec3(.42,.40,.33),broad)*(.8+strata*.17+grain*.15);
+      roughness=.91;metalness=0.;
+    } else if(m<10.5) {
+      float bark=noise(vec2((uv.x+sin(vWorld.y*.8)*.08)*9.,vWorld.y*.8));
+      base=mix(vec3(.065,.036,.018),vec3(.27,.16,.065),bark)*(.82+grain*.35);
+      roughness=.97;metalness=0.;
+    } else if(m<11.5) {
+      float leaves=noise(uv*8.)*.7+noise(uv*19.)*.3;
+      base=mix(vec3(.035,.12,.035),vec3(.20,.34,.08),leaves);
+      roughness=.88;metalness=0.;
+    } else {
+      base=vec3(.035,.12,.15)*(.9+sin(uv.x*9.+uEffects.x)*sin(uv.y*7.-uEffects.x*.7)*.1);
+      roughness=.13;metalness=.35;
     }
-    if(vColor.w>.5) base=vColor.rgb*(.88+grain*.2)*(1.-panel*.12)*(m<3.5?.65:1.);
+    if(vColor.w>.5){
+      vec3 tint=vColor.rgb*(.88+grain*.2)*(1.-panel*.12)*(m<3.5?.65:1.);
+      base=m>7.5?base*.35+tint*.65:tint;
+    }
     float height=(1.-panel)*.012+grain*.003*fineDetail;
     if(m>1.5&&m<2.5){
       vec2 treadUV=mat2(.707,-.707,.707,.707)*uv*12.;
@@ -185,11 +230,14 @@
       height=(1.-grid(uv*.5,.007))*.006+tread*.0018*fineDetail;
     }
     if(m<3.5)n=reliefNormal(n,height);
+    if(m>7.5&&m<10.5)n=reliefNormal(n,(noise(uv*(m<9.5?vec2(7.):vec2(12.,1.)))-.5)*.009*fineDetail);
     vec3 view=normalize(uEye-vWorld);
     float distanceToEye=length(uEye-vWorld);
     vec3 light=vec3(.075,.10,.12)*(.72+.28*n.y);
     light+=vec3(.075,.09,.09)*max(dot(n,normalize(vec3(-.45,.85,.35))),0.);
     light*=1.-panel*.18;
+    float outdoors=clamp(vOutdoor,0.,1.)*uEnvironment.x;
+    light=mix(light,uAmbient*(.72+.28*max(n.y,0.)),outdoors);
     float specularPower=mix(180.,10.,roughness);
     vec3 specularTint=mix(vec3(.32),base*1.45+vec3(.10),metalness);
     vec3 specular=vec3(0.);
@@ -200,11 +248,15 @@
       vec3 l=toLight/max(d,.001);
       float attenuation=(i<2?.27:.13)/(1.+d*d*.26);
       float diffuse=max(dot(n,l),0.);
-      float visibility=i<2?shadow(geometricNormal,l,i):1.;
+      float visibility=i==0?shadow(geometricNormal,l,0):i==1&&uEnvironment.x<.5?shadow(geometricNormal,l,1):1.;
       light+=uLightColor[i]*attenuation*(diffuse*visibility+.035);
       vec3 halfVector=normalize(l+view);
       specular+=uLightColor[i]*attenuation*visibility*pow(max(dot(n,halfVector),0.),specularPower)*specularTint*(1.35-roughness*.7);
     }
+    float sunlight=outdoors>.5?shadow(geometricNormal,uSunDirection,1):0.;
+    float leafBack=m>10.5&&m<11.5?max(dot(-n,uSunDirection),0.)*.24:0.;
+    light+=uSunColor*(max(dot(n,uSunDirection),0.)+leafBack)*sunlight;
+    specular+=uSunColor*sunlight*pow(max(dot(n,normalize(uSunDirection+view)),0.),specularPower)*specularTint*.35;
     vec3 torchVector=uTorchPosition-vWorld;
     float torchDistance=length(torchVector);
     vec3 torchDirection=normalize(torchVector);
@@ -218,8 +270,8 @@
     color+=base*emission*pulse*1.55;
     float fresnel=pow(1.-max(dot(n,view),0.),4.);
     color+=vec3(.035,.09,.1)*fresnel*(1.-roughness);
-    vec3 fogColor=vec3(.009,.018,.024);
-    float fog=1.-exp(-distanceToEye*(.014+.008*exp(-max(vWorld.y,0.)*.7)));
+    vec3 fogColor=mix(vec3(.009,.018,.024),uFogColor,outdoors);
+    float fog=1.-exp(-distanceToEye*mix(.014+.008*exp(-max(vWorld.y,0.)*.7),uEnvironment.y,outdoors));
     if(vOverlay>.5) fog=0.;
     color=mix(color,fogColor,min(fog,.86));
     color=color/(color+vec3(.76));
@@ -244,6 +296,47 @@
   void main(){
     vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));
     vUV=p;gl_Position=vec4(p*2.-1.,0.,1.);
+  }`;
+  const SKY_FRAG=`#version 300 es
+  precision highp float;
+  in vec2 vUV;
+  uniform vec3 uSkyRight;
+  uniform vec3 uSkyUp;
+  uniform vec3 uSkyForward;
+  uniform vec3 uSkyTop;
+  uniform vec3 uSkyBottom;
+  uniform vec3 uSkyFog;
+  uniform vec3 uSunDirection;
+  uniform vec3 uSunColor;
+  uniform vec2 uSkyFov;
+  uniform vec2 uSkyMotion;
+  out vec4 fragColor;
+  float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+  float noise(vec2 p){
+    vec2 a=floor(p),b=fract(p);b=b*b*(3.-2.*b);
+    return mix(mix(hash(a),hash(a+vec2(1.,0.)),b.x),mix(hash(a+vec2(0.,1.)),hash(a+vec2(1.)),b.x),b.y);
+  }
+  float cloud(vec2 p){return noise(p)*.52+noise(p*2.03+11.)*.28+noise(p*4.17)*.14+noise(p*8.1)*.06;}
+  void main(){
+    vec2 uv=vUV*2.-1.;
+    vec3 ray=normalize(uSkyForward+uSkyRight*uv.x*uSkyFov.x+uSkyUp*uv.y*uSkyFov.y);
+    float elevation=clamp(ray.y,0.,1.);
+    vec3 color=mix(uSkyBottom,uSkyTop,pow(elevation,.55));
+    float sun=max(0.,dot(ray,uSunDirection));
+    color+=uSunColor*(pow(sun,48.)*.20+pow(sun,650.)*.65+smoothstep(.99925,.99965,sun)*2.8);
+    vec2 cloudUV=ray.xz/max(.13,ray.y+.18)*1.8+vec2(uSkyMotion.x*.006*uSkyMotion.y,0.);
+    float clouds=smoothstep(.49,.73,cloud(cloudUV))*smoothstep(-.01,.24,ray.y);
+    vec3 cloudColor=mix(uSkyBottom,vec3(1.12,1.10,1.01),.62)+uSunColor*pow(sun,6.)*.12;
+    color=mix(color,cloudColor,clouds*.66);
+    // Two distant ridgelines close the horizon without a flat, fog-coloured void.
+    float angle=atan(ray.z,ray.x);
+    float ridge=.018+noise(vec2(angle*5.,1.7))*.075+noise(vec2(angle*13.,4.))*.025;
+    color=mix(color,mix(uSkyFog,uSkyBottom,.43),1.-smoothstep(ridge-.003,ridge+.003,ray.y));
+    float nearRidge=-.025+noise(vec2(angle*7.+25.,2.8))*.065;
+    color=mix(color,uSkyFog*.80,1.-smoothstep(nearRidge-.002,nearRidge+.002,ray.y));
+    color=color/(color+vec3(.76));color=pow(max(color,vec3(0.)),vec3(.4545));
+    float vignette=pow(max(0.,16.*vUV.x*vUV.y*(1.-vUV.x)*(1.-vUV.y)),.13);
+    fragColor=vec4(color*mix(.76,1.,vignette),1.);
   }`;
   const POST_FRAG=`#version 300 es
   precision highp float;
@@ -297,7 +390,7 @@
     end('box');
     begin('sphere');
     const sphere=(u,v)=>[Math.sin(v)*Math.cos(u)*.5,Math.cos(v)*.5,Math.sin(v)*Math.sin(u)*.5];
-    const longitude=low?8:16,latitude=low?6:10;
+    const longitude=low===2?6:low?8:16,latitude=low===2?4:low?6:10;
     for(let j=0;j<latitude;j++) for(let i=0;i<longitude;i++) {
       const p=[sphere(i*Math.PI*2/longitude,j*Math.PI/latitude),sphere((i+1)*Math.PI*2/longitude,j*Math.PI/latitude),sphere((i+1)*Math.PI*2/longitude,(j+1)*Math.PI/latitude),sphere(i*Math.PI*2/longitude,(j+1)*Math.PI/latitude)];
       if(j>0) triangle(p[0],p[1],p[2],p[0].map(v=>v*2),p[1].map(v=>v*2),p[2].map(v=>v*2));
@@ -305,7 +398,7 @@
     }
     end('sphere');
     begin('cylinder');
-    const cylinderSides=low?8:16;
+    const cylinderSides=low===2?6:low?8:16;
     for(let i=0;i<cylinderSides;i++) {
       const a=i*Math.PI*2/cylinderSides,b=(i+1)*Math.PI*2/cylinderSides;
       const na=[Math.cos(a),0,Math.sin(a)],nb=[Math.cos(b),0,Math.sin(b)];
@@ -324,7 +417,7 @@
     begin('ring');
     const torus=(u,v)=>[(.435+.065*Math.cos(v))*Math.cos(u),.065*Math.sin(v),(.435+.065*Math.cos(v))*Math.sin(u)];
     const torusNormal=(u,v)=>[Math.cos(v)*Math.cos(u),Math.sin(v),Math.cos(v)*Math.sin(u)];
-    const ringSides=low?12:24,ringTube=low?4:6;
+    const ringSides=low===2?8:low?12:24,ringTube=low?4:6;
     for(let i=0;i<ringSides;i++) for(let j=0;j<ringTube;j++) {
       const a=i*Math.PI*2/ringSides,b=(i+1)*Math.PI*2/ringSides,c=j*Math.PI*2/ringTube,d=(j+1)*Math.PI*2/ringTube;
       const p=[torus(a,c),torus(b,c),torus(b,d),torus(a,d)],n=[torusNormal(a,c),torusNormal(b,c),torusNormal(b,d),torusNormal(a,d)];
@@ -334,7 +427,21 @@
     return {vertices:new Float32Array(data),indices:new Uint16Array(indices),ranges};
   }
 
-  function pack(meshes) {
+  function environmentInfo(value){
+    if(!value)return null;
+    const color=(v,fallback)=>Array.isArray(v)&&v.length>=3?v.slice(0,3).map((x,i)=>Number.isFinite(x)?Math.max(0,x):fallback[i]):fallback;
+    // A direction can contain negative horizontal coordinates; colours cannot.
+    const sun=Array.isArray(value.sunDirection)&&value.sunDirection.length>=3?value.sunDirection.slice(0,3).map((x,i)=>Number.isFinite(x)?x:[.4,.8,.3][i]):[.4,.8,.3];
+    sun[1]=Math.max(.12,sun[1]);const sunLength=Math.hypot(...sun)||1;
+    return {...value,skyTop:color(value.skyTop,[.22,.39,.51]),skyBottom:color(value.skyBottom,[.65,.72,.66]),fog:color(value.fog,[.35,.43,.42]),sunDirection:sun.map(x=>x/sunLength),sunColor:color(value.sunColor,[1,.86,.62]),ambient:color(value.ambient,[.24,.29,.27]),wind:Number.isFinite(value.wind)?Math.max(0,Math.min(2,value.wind)):.6,fogDensity:Number.isFinite(value.fogDensity)?Math.max(.001,value.fogDensity):.011,outdoorZones:value.outdoorZones||[]};
+  }
+  function outdoorAt(p,environment){
+    return !!environment&&environment.outdoorZones.some(zone=>Math.abs(p[0]-zone.x)<=zone.w*.5+.08&&Math.abs(p[2]-zone.z)<=zone.d*.5+.08);
+  }
+  function outdoorMesh(mesh,environment){
+    return !!environment&&(mesh.outdoor===undefined?((mesh.mat||0)>=8||outdoorAt(mesh.p||[0,0,0],environment)):!!mesh.outdoor);
+  }
+  function pack(meshes,environment) {
     const grouped=names.map(()=>[]);
     for(const mesh of meshes||[]) {
       const i=names.indexOf(mesh.shape||'box');
@@ -347,7 +454,7 @@
       if(list.length) groups.push({name:names[i],offset:offset*4,count:list.length});
       for(const mesh of list) {
         const p=mesh.p||[0,0,0],s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
-        values.set([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],mesh.overlay?1:0,c[0],c[1],c[2],mesh.color?1:0],offset);
+        values.set([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],(mesh.overlay?1:0)+(outdoorMesh(mesh,environment)?2:0),c[0],c[1],c[2],mesh.color?1:0],offset);
         offset+=16;
       }
     }
@@ -369,15 +476,15 @@
     return software?(quality==='low'?[26,16,0]:quality==='high'?[42,30,12]:[34,23,8]):(quality==='low'?[48,20,0]:quality==='high'?[82,42,19]:[64,32,13]);
   }
   function metadata(mesh){
-    return {mesh,p:mesh.p||[0,0,0],radius:Math.hypot(...(mesh.s||[1,1,1]))*.5,detail:Math.max(0,Math.min(2,Math.floor(mesh.detail||0))),software:null};
+    return {mesh,p:mesh.p||[0,0,0],radius:Math.hypot(...(mesh.s||[1,1,1]))*.5,detail:Math.max(0,Math.min(2,Math.floor(mesh.detail||0))),software:null,softwareCoarse:null};
   }
-  function spatialIndex(meshes){
+  function spatialIndex(meshes,environment){
     const levels=[new Map(),new Map(),new Map()],maxRadius=[0,0,0],entries=[];
     for(const mesh of meshes||[]){
       const e=metadata(mesh),key=Math.floor(e.p[0]/8)+','+Math.floor(e.p[2]/8),map=levels[e.detail];
       if(!map.has(key))map.set(key,[]);map.get(key).push(e);maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
       const p=e.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
-      e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],mesh.overlay?1:0,c[0],c[1],c[2],mesh.color?1:0]);entries.push(e);
+      e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],(mesh.overlay?1:0)+(outdoorMesh(mesh,environment)?2:0),c[0],c[1],c[2],mesh.color?1:0]);entries.push(e);
     }
     function query(eye,ranges){
       const result=[];
@@ -405,14 +512,52 @@
     return {values,groups};
   }
 
+  function skyColor(values,scale=1){return 'rgb('+values.map(v=>Math.round(Math.pow(Math.max(0,v*scale)/(Math.max(0,v*scale)+.76),.4545)*255)).join(',')+')';}
+  function softwareSky(ctx,width,height,axes,tan,environment,time){
+    const {right,up,forward}=axes,focal=height/(2*tan),span=Math.hypot(right[1],up[1])||1;
+    const ux=right[1]/span,uy=-up[1]/span,offset=-forward[1]*focal/span;
+    const hx=width*.5+ux*offset,hy=height*.5+uy*offset;
+    const gradient=ctx.createLinearGradient(hx+ux*height,hy+uy*height,hx-ux*height*.15,hy-uy*height*.15);
+    gradient.addColorStop(0,skyColor(environment.skyTop));gradient.addColorStop(.84,skyColor(environment.skyBottom));gradient.addColorStop(1,skyColor(environment.fog,.85));
+    ctx.fillStyle=gradient;ctx.fillRect(0,0,width,height);
+    const projectDirection=d=>{const z=d[0]*forward[0]+d[1]*forward[1]+d[2]*forward[2];return z>.03?[width*.5+(d[0]*right[0]+d[1]*right[1]+d[2]*right[2])*focal/z,height*.5-(d[0]*up[0]+d[1]*up[1]+d[2]*up[2])*focal/z,z]:null;};
+    const sun=projectDirection(environment.sunDirection);
+    if(sun){
+      const radius=Math.max(4,focal*.022/sun[2]),glow=ctx.createRadialGradient(sun[0],sun[1],radius*.2,sun[0],sun[1],radius*7);
+      glow.addColorStop(0,'rgba(255,233,179,.70)');glow.addColorStop(1,'rgba(255,232,182,0)');
+      ctx.fillStyle=glow;ctx.fillRect(sun[0]-radius*7,sun[1]-radius*7,radius*14,radius*14);
+      ctx.beginPath();ctx.arc(sun[0],sun[1],radius,0,Math.PI*2);ctx.fillStyle=skyColor(environment.sunColor,5);ctx.fill();
+    }
+    // Clouds occupy stable directions in the sky; walking never drags them with the camera.
+    for(let i=0;i<20;i++){
+      const angle=i*2.399963+time*.0008*environment.wind,elevation=.16+(.5+.5*Math.sin(i*5.17))*.52;
+      const d=[Math.sin(angle),elevation,-Math.cos(angle)],cloud=projectDirection(d);if(!cloud)continue;
+      const size=focal*(.075+(.5+.5*Math.sin(i*3.1))*.08)/cloud[2];
+      if(cloud[0]<-size*3||cloud[0]>width+size*3||cloud[1]<-size||cloud[1]>height+size)continue;
+      ctx.save();ctx.translate(cloud[0],cloud[1]);ctx.rotate(Math.atan2(right[1],up[1]));ctx.scale(2.6,1);
+      const haze=ctx.createRadialGradient(0,0,0,0,0,size);haze.addColorStop(0,'rgba(247,249,234,.27)');haze.addColorStop(.5,'rgba(247,249,234,.19)');haze.addColorStop(1,'rgba(247,249,234,0)');
+      ctx.fillStyle=haze;ctx.fillRect(-size,-size,size*2,size*2);ctx.restore();
+    }
+    // A yaw-stable panorama continues behind the actual trees, cliffs and buildings.
+    for(let layer=0;layer<2;layer++){
+      const points=[];
+      for(let x=-width*.25;x<=width*1.25;x+=width/48){
+        const lateral=(x-width*.5)/focal,dx=forward[0]+right[0]*lateral,dz=forward[2]+right[2]*lateral,angle=Math.atan2(dx,-dz);
+        const ridge=(layer?-.018:.026)+(.5+.5*Math.sin(angle*7.3+layer*5))*.035+(.5+.5*Math.sin(angle*17.1+2))*.022;
+        const point=projectDirection([Math.sin(angle),ridge,-Math.cos(angle)]);if(point)points.push(point);
+      }
+      if(points.length>1){ctx.beginPath();ctx.moveTo(points[0][0],height*3);for(const p of points)ctx.lineTo(p[0],p[1]);ctx.lineTo(points[points.length-1][0],height*3);ctx.closePath();ctx.fillStyle=skyColor(environment.fog,layer?.8:1.12);ctx.fill();}
+    }
+  }
+
   // CPU fallback: actual transformed polygons, perspective projection and near clipping.
   // It intentionally has fewer facets and a shorter draw distance than the GPU renderer.
   function createSoftware(canvas) {
     const ctx=canvas.getContext('2d',{alpha:false});
     if(!ctx) throw new Error('Le rendu graphique est indisponible dans ce navigateur.');
-    const source=geometry(true),base={},palette=[[.105,.135,.15],[.36,.18,.065],[.13,.16,.17],[.57,.58,.54],[.025,.74,.77],[1,.42,.06],[.68,.055,.025],[.065,.075,.085]];
+    const base={},coarseBase={},palette=[[.105,.135,.15],[.36,.18,.065],[.13,.16,.17],[.57,.58,.54],[.025,.74,.77],[1,.42,.06],[.68,.055,.025],[.065,.075,.085],[.16,.21,.075],[.32,.31,.27],[.18,.10,.04],[.105,.255,.055],[.035,.12,.15]];
     const stats={backend:'canvas2d',webglVersion:0,drawCalls:0,triangles:0,instances:0,contextLost:false,bloom:false,shadows:false};
-    let world=spatialIndex([]),lights=[],quality='auto',disposed=false,vignette=null;
+    let world=spatialIndex([]),lights=[],environment=null,quality='auto',disposed=false,vignette=null;
     const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
     const subtract=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
     const same=(a,b)=>Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2])<.00001;
@@ -431,18 +576,28 @@
       for(let j=0;j<3;j++){v.push(tip);const next=boundary.find(e=>same(e[0],tip));if(!next)return null;tip=next[1];}
       return same(tip,v[0])?v:null;
     }
-    for(const shape of names) {
-      const range=source.ranges[shape],triangles=[];
-      for(let j=range.offset/2;j<range.offset/2+range.count;j+=3){
-        const v=[];for(let k=0;k<3;k++){const at=source.indices[j+k]*6;v.push(Array.from(source.vertices.subarray(at,at+3)));}triangles.push(v);
-      }
-      base[shape]=[];
-      for(let j=0;j<triangles.length;j++){
-        const quad=j+1<triangles.length?merge(triangles[j],triangles[j+1]):null;
-        base[shape].push(quad||triangles[j]);if(quad)j++;
+    for(const [source,shapes] of [[geometry(true),base],[geometry(2),coarseBase]]){
+      for(const shape of names) {
+        const range=source.ranges[shape],triangles=[];
+        for(let j=range.offset/2;j<range.offset/2+range.count;j+=3){
+          const v=[];for(let k=0;k<3;k++){const at=source.indices[j+k]*6;v.push(Array.from(source.vertices.subarray(at,at+3)));}triangles.push(v);
+        }
+        shapes[shape]=[];
+        for(let j=0;j<triangles.length;j++){
+          const quad=j+1<triangles.length?merge(triangles[j],triangles[j+1]):null;
+          shapes[shape].push(quad||triangles[j]);if(quad)j++;
+        }
+        if(shape==='cylinder'){
+          // A planar cap is one polygon, not a fan of separately shaded triangles.
+          for(const sign of [-1,1]){
+            const vertices=[];for(const face of shapes[shape])if(normal(face)[1]*sign>.999)for(const p of face)if(Math.hypot(p[0],p[2])>.49&&!vertices.some(v=>same(v,p)))vertices.push(p);
+            vertices.sort((a,b)=>Math.atan2(a[2],a[0])-Math.atan2(b[2],b[0]));if(normal(vertices)[1]*sign<0)vertices.reverse();
+            shapes[shape]=shapes[shape].filter(face=>normal(face)[1]*sign<.999);shapes[shape].push(vertices);
+          }
+        }
       }
     }
-    function cache(mesh,staticLighting=false) {
+    function cache(mesh,staticLighting=false,coarse=false) {
       const p=mesh.p||[0,0,0],s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=r.map(Math.cos),sn=r.map(Math.sin);
       function transform(v){
         let x=v[0]*s[0],y=v[1]*s[1],z=v[2]*s[2];
@@ -450,13 +605,13 @@
         [x,z]=[c[1]*x+sn[1]*z,-sn[1]*x+c[1]*z];
         return [c[2]*x-sn[2]*y+p[0],sn[2]*x+c[2]*y+p[1],z+p[2]];
       }
-      const mat=Math.max(0,Math.min(7,Math.floor(mesh.mat||0))),color=mesh.color?(mat<4?mesh.color.map(v=>v*.65):mesh.color):palette[mat],shape=mesh.shape||'box';
+      const mat=Math.max(0,Math.min(12,Math.floor(mesh.mat||0))),outdoor=outdoorMesh(mesh,environment),color=mesh.color?(mat<4?mesh.color.map(v=>v*.65):mat>=8?mesh.color.map((v,k)=>v*.65+palette[mat][k]*.35):mesh.color):palette[mat],shape=mesh.shape||'box';
       const emission=(mesh.emissive||0)+(mat===4?.72:mat===5?.68:mat===6?.18:0);
-      const faces=(base[shape]||base.box).map(v=>{
+      const shapeSet=coarse?coarseBase:base,faces=(shapeSet[shape]||shapeSet.box).map(v=>{
         const points=v.map(transform),n=normal(points),center=[0,0,0];
         for(const q of points)for(let k=0;k<3;k++)center[k]+=q[k]/points.length;
         const grain=.9+Math.abs(Math.sin(center[0]*91.17+center[1]*17.3+center[2]*51.79))*.13;
-        const lines=[],ground=mat===2&&n[1]>.98&&Math.abs(center[1])<.08;
+        const lines=[],ground=(mat===2||mat===8||mat===9||mat===12)&&n[1]>.98&&Math.abs(center[1])<.08;
         if(shape==='box'&&points.length===4&&mat<4){
           if(ground){
             const xs=points.map(v=>v[0]),zs=points.map(v=>v[2]),x0=Math.min(...xs),x1=Math.max(...xs),z0=Math.min(...zs),z1=Math.max(...zs);
@@ -471,17 +626,22 @@
         }
         let fixedLight=null;
         if(staticLighting){
-          fixedLight=[.10,.13,.15].map(v=>v*(.72+.28*n[1]));
-          const sun=Math.max(0,(-.45*n[0]+.85*n[1]+.35*n[2])/1.022)*.13;
-          for(let k=0;k<3;k++)fixedLight[k]+=sun;
+          fixedLight=(outdoor?environment.ambient:[.10,.13,.15]).map(v=>v*(.72+.28*Math.max(outdoor?0:-1,n[1])));
+          const sun=outdoor?Math.max(0,dot(n,environment.sunDirection)):Math.max(0,(-.45*n[0]+.85*n[1]+.35*n[2])/1.022)*.13;
+          for(let k=0;k<3;k++)fixedLight[k]+=sun*(outdoor?environment.sunColor[k]:1);
           const nearby=lights.map(light=>({light,d:(light.p[0]-center[0])**2+(light.p[1]-center[1])**2+(light.p[2]-center[2])**2})).sort((a,b)=>a.d-b.d).slice(0,4);
           for(const {light,d} of nearby){const vector=subtract(light.p,center),power=(light.power===undefined?1:light.power)*.24/(1+d*.26)*(Math.max(0,dot(n,vector)/(Math.sqrt(d)||.001))+.035),c=light.color||[1,1,1];for(let k=0;k<3;k++)fixedLight[k]+=power*c[k];}
         }
-        return {points,n,center,grain,lines,color,emission,mat,ground,fixedLight,overlay:!!mesh.overlay};
+        return {points,n,center,grain,lines,color,emission,mat,ground,fixedLight,outdoor,overlay:!!mesh.overlay};
       });
-      return {p,radius:Math.hypot(...s)*.5,faces};
+      const vertices=[],indices=new Map();
+      for(const face of faces)face.indices=face.points.map(point=>{
+        const key=point.map(v=>Math.round(v*100000)).join(',');
+        if(!indices.has(key)){indices.set(key,vertices.length);vertices.push(point);}return indices.get(key);
+      });
+      return {p,radius:Math.hypot(...s)*.5,faces,vertices,sway:mat===11,s};
     }
-    function setWorld(meshes,points){world=spatialIndex(meshes||[]);lights=points||[];stats.staticTotal=world.entries.length;}
+    function setWorld(meshes,points,atmosphere){environment=environmentInfo(atmosphere);world=spatialIndex(meshes||[],environment);lights=points||[];stats.staticTotal=world.entries.length;stats.biome=environment?environment.biome:null;}
     function resize(next){
       if(next!==undefined)quality=next;
       const cssWidth=canvas.clientWidth||window.innerWidth||800,cssHeight=canvas.clientHeight||window.innerHeight||600;
@@ -511,8 +671,8 @@
       const eye=[p[0]+Math.sin(t*57)*shake*.025,p[1]+Math.sin(t*71)*shake*.015,p[2]];
       const axes=cameraAxes(camera),{right,up,forward}=axes;
       const fov=Math.max(40,Math.min(110,camera.fov||75))*Math.PI/180,tan=Math.tan(fov*.5),focal=height/(2*tan),horizontal=tan*width/height;
-      const near=.065,far=quality==='low'?26:quality==='high'?42:34;
-      const toCamera=v=>{const d=subtract(v,eye);return [dot(d,right),dot(d,up),dot(d,forward)];};
+      const near=.065,far=environment?(quality==='low'?30:quality==='high'?50:38):(quality==='low'?26:quality==='high'?42:34);
+      const toCamera=v=>{const x=v[0]-eye[0],y=v[1]-eye[1],z=v[2]-eye[2];return [x*right[0]+y*right[1]+z*right[2],x*up[0]+y*up[1]+z*up[2],x*forward[0]+y*forward[1]+z*forward[2]];};
       const project=v=>[width*.5+v[0]*focal/v[2],height*.5-v[1]*focal/v[2]];
       const nearest=lights.map(light=>({light,d:dot(subtract(light.p,eye),subtract(light.p,eye))})).sort((a,b)=>a.d-b.d).slice(0,quality==='low'?4:6).map(entry=>entry.light);
       const faces=[],overlays=[],grounds=[];
@@ -524,70 +684,78 @@
       function collect(object){
         if(!inView(object.p,object.radius))return;
         stats.instances++;
+        const phase=t*.85+object.p[0]*.37+object.p[2]*.21,bend=object.sway&&environment?environment.wind*.055:0;
+        const vertices=object.vertices.map(v=>{if(!bend)return toCamera(v);const weight=Math.max(0,Math.min(1,(v[1]-object.p[1])/Math.max(.01,object.s[1])+.5));return toCamera([v[0]+Math.sin(phase)*bend*weight,v[1],v[2]+Math.cos(phase*.73)*bend*.6*weight]);});
+        const projected=vertices.map(v=>v[2]>=near&&v[2]<=far?project(v):null);
         for(const face of object.faces){
           if(dot(face.n,subtract(eye,face.center))<=.00001)continue;
-          let points=face.points.map(toCamera);
+          let points=face.indices.map(i=>vertices[i]),clipped=false;
           if(points.every(v=>v[2]<near)||points.every(v=>v[2]>far))continue;
-          if(points.some(v=>v[2]<near))points=clip(points,near,true);
+          if(points.some(v=>v[2]<near)){points=clip(points,near,true);clipped=true;}
           if(points.length<3)continue;
-          if(points.some(v=>v[2]>far))points=clip(points,far,false);
+          if(points.some(v=>v[2]>far)){points=clip(points,far,false);clipped=true;}
           if(points.length<3)continue;
-          const screen=points.map(project);
+          const screen=clipped?points.map(project):face.indices.map(i=>projected[i]);
           if(screen.every(v=>v[0]<-2)||screen.every(v=>v[0]>width+2)||screen.every(v=>v[1]<-2)||screen.every(v=>v[1]>height+2))continue;
           const depth=points.reduce((sum,v)=>sum+v[2],0)/points.length;
           (face.overlay?overlays:face.ground?grounds:faces).push({face,screen,depth});
         }
       }
-      const ranges=detailRanges(quality,true),tiers=[[],[],[]];let staticVisible=0;
+      const ranges=detailRanges(quality,true),tiers=[[],[],[]];if(environment)ranges[0]=far;let staticVisible=0;
       for(const e of world.query(eye,ranges))if(visible(e,eye,axes,horizontal,tan,far)){
         const delta=subtract(e.p,eye),distance=Math.hypot(...delta),pixelRadius=e.radius*focal/Math.max(.2,dot(delta,forward));
         if(e.detail>0&&pixelRadius<(e.detail===2?2.1:1.0))continue;
-        tiers[e.detail].push({e,score:distance/(1+Math.min(e.radius,3)*.32)});
+        tiers[e.detail].push({e,pixelRadius,score:distance/(1+Math.min(e.radius,3)*.32)});
       }
-      const budget=quality==='low'?[Infinity,110,0]:quality==='high'?[Infinity,440,180]:[Infinity,220,80];
+      const budget=quality==='low'?[Infinity,80,0]:quality==='high'?[Infinity,360,120]:[Infinity,170,45];
       for(let level=0;level<3;level++){
         if(level)tiers[level].sort((a,b)=>a.score-b.score);
-        for(const {e} of tiers[level].slice(0,budget[level])){if(!e.software)e.software=cache(e.mesh,true);collect(e.software);staticVisible++;}
+        for(const {e,pixelRadius} of tiers[level].slice(0,budget[level])){
+          const key=quality!=='high'&&(quality==='low'||pixelRadius<75)?'softwareCoarse':'software';
+          if(!e[key])e[key]=cache(e.mesh,true,key==='softwareCoarse');collect(e[key]);staticVisible++;
+        }
       }
       stats.staticVisible=staticVisible;stats.staticCulled=world.entries.length-staticVisible;
       for(const mesh of dynamic||[])if(inView(mesh.p||[0,0,0],Math.hypot(...(mesh.s||[1,1,1]))*.5))collect(cache(mesh));
       const floorShadows=[],lamp=nearest.find(light=>light.p[1]>2.5);
-      if(lamp&&quality!=='low'){
-        const occluders=world.query(eye,[13,11,0]).map(e=>e.mesh).concat((dynamic||[]).filter(m=>!m.overlay));
+      if((lamp||environment)&&quality!=='low'){
+        const occluders=world.query(eye,[environment?25:13,13,0]).map(e=>e.mesh).concat((dynamic||[]).filter(m=>!m.overlay));
         const candidates=occluders.filter(m=>{
-          const s=m.s||[1,1,1],p=m.p||[0,0,0];
-          return (m.shape==='box'||m.shape==='cylinder'||m.shape==='sphere'||m.shape==='octa')&&s[0]>.45&&s[2]>.45&&s[1]>.4&&p[1]-s[1]*.5<1.2&&p[1]+s[1]*.5<lamp.p[1]-.15&&(m.mat||0)<4;
-        }).sort((a,b)=>Math.hypot(a.p[0]-eye[0],a.p[2]-eye[2])-Math.hypot(b.p[0]-eye[0],b.p[2]-eye[2])).slice(0,18);
+          const s=m.s||[1,1,1],p=m.p||[0,0,0],outdoor=outdoorMesh(m,environment),mat=m.mat||0;
+          return (m.shape==='box'||m.shape==='cylinder'||m.shape==='sphere'||m.shape==='octa')&&s[0]>.45&&s[2]>.45&&s[1]>.4&&s[0]<10&&s[2]<10&&(mat<4||mat>7)&&(outdoor?p[1]+s[1]*.5<16:lamp&&p[1]-s[1]*.5<1.2&&p[1]+s[1]*.5<lamp.p[1]-.15);
+        }).sort((a,b)=>Math.hypot(a.p[0]-eye[0],a.p[2]-eye[2])-Math.hypot(b.p[0]-eye[0],b.p[2]-eye[2])).slice(0,environment?28:18);
         const cross=(a,b,c)=>(b[0]-a[0])*(c[2]-a[2])-(b[2]-a[2])*(c[0]-a[0]);
         for(const m of candidates){
-          const p=m.p,s=m.s,angle=(m.r||[0,0,0])[1],c=Math.cos(angle),sn=Math.sin(angle),vertices=[];
-          for(const y of [-1,1])for(const x of [-1,1])for(const z of [-1,1]){
-            const px=p[0]+c*x*s[0]*.5+sn*z*s[2]*.5,pz=p[2]-sn*x*s[0]*.5+c*z*s[2]*.5,py=p[1]+y*s[1]*.5;
-            const amount=Math.min(7,(lamp.p[1]-.026)/(lamp.p[1]-Math.max(.026,py)));
-            vertices.push([lamp.p[0]+(px-lamp.p[0])*amount,.026,lamp.p[2]+(pz-lamp.p[2])*amount]);
+          const outdoor=outdoorMesh(m,environment),vertices=[],object=cache(m,false,true);
+          const phase=t*.85+object.p[0]*.37+object.p[2]*.21,bend=object.sway&&environment?environment.wind*.055:0;
+          for(const [x,py,z] of object.vertices){
+            const weight=Math.max(0,Math.min(1,(py-object.p[1])/Math.max(.01,object.s[1])+.5)),px=x+Math.sin(phase)*bend*weight,pz=z+Math.cos(phase*.73)*bend*.6*weight;
+            if(outdoor){const sun=environment.sunDirection,amount=Math.max(0,py-.026)/sun[1];vertices.push([px-sun[0]*amount,.026,pz-sun[2]*amount]);}
+            else{const amount=Math.min(7,(lamp.p[1]-.026)/(lamp.p[1]-Math.max(.026,py)));vertices.push([lamp.p[0]+(px-lamp.p[0])*amount,.026,lamp.p[2]+(pz-lamp.p[2])*amount]);}
           }
           vertices.sort((a,b)=>a[0]-b[0]||a[2]-b[2]);const hull=[];
           for(const v of vertices){while(hull.length>1&&cross(hull[hull.length-2],hull[hull.length-1],v)<=0)hull.pop();hull.push(v);}
           const lower=hull.length;for(let i=vertices.length-2;i>=0;i--){const v=vertices[i];while(hull.length>lower&&cross(hull[hull.length-2],hull[hull.length-1],v)<=0)hull.pop();hull.push(v);}hull.pop();
           let transformed=hull.map(toCamera);if(!transformed.length||transformed.every(v=>v[2]<near))continue;
           if(transformed.some(v=>v[2]<near))transformed=clip(transformed,near,true);
-          if(transformed.length>2)floorShadows.push(transformed.map(project));
+          if(transformed.length>2)floorShadows.push({polygon:transformed.map(project),outdoor});
         }
       }
       stats.shadows=floorShadows.length>0;stats.shadowMode='projected';
       ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.fillStyle='#14252e';ctx.fillRect(0,0,width,height);
+      if(environment)softwareSky(ctx,width,height,axes,tan,environment,t);
       function shade(face){
         const n=face.n,toEye=subtract(eye,face.center),distance=Math.hypot(...toEye)||.001;
-        const lit=face.fixedLight?face.fixedLight.slice():[.10,.13,.15].map(c=>c*(.72+.28*n[1]));
-        const sun=Math.max(0,(-.45*n[0]+.85*n[1]+.35*n[2])/1.022)*.13;
+        const lit=face.fixedLight?face.fixedLight.slice():(face.outdoor?environment.ambient:[.10,.13,.15]).map(c=>c*(.72+.28*Math.max(face.outdoor?0:-1,n[1])));
+        const sun=face.outdoor?Math.max(0,dot(n,environment.sunDirection)):Math.max(0,(-.45*n[0]+.85*n[1]+.35*n[2])/1.022)*.13;
         const head=Math.max(0,dot(n,toEye)/distance)*.35/(1+distance*distance*.035);
-        for(let k=0;k<3;k++)lit[k]+=(face.fixedLight?0:sun)+head*(k===0?.8:1)+(face.overlay?.2:0)+(fx.flash||0)*.65/(1+distance*distance*.14);
+        for(let k=0;k<3;k++)lit[k]+=(face.fixedLight?0:sun*(face.outdoor?environment.sunColor[k]:1))+head*(k===0?.8:1)+(face.overlay?.2:0)+(fx.flash||0)*.65/(1+distance*distance*.14);
         for(const light of face.fixedLight?[]:nearest){
           const l=subtract(light.p,face.center),d2=dot(l,l),d=Math.sqrt(d2)||.001;
           const power=(light.power===undefined?1:light.power)*.24/(1+d2*.26)*(Math.max(0,dot(n,l)/d)+.065),color=light.color||[1,1,1];
           for(let k=0;k<3;k++)lit[k]+=power*color[k];
         }
-        const fog=face.overlay?0:Math.min(.9,1-Math.exp(-distance*.027)),fogColor=[.009,.018,.024];
+        const fog=face.overlay?0:Math.min(.9,1-Math.exp(-distance*(face.outdoor?environment.fogDensity:.027))),fogColor=face.outdoor?environment.fog:[.009,.018,.024];
         const rgb=lit.map((value,k)=>{
           let color=face.color[k]*(value*face.grain+face.emission*1.55*(.94+.06*Math.sin(t*2.2+face.center[1]*3)));
           color=color*(1-fog)+fogColor[k]*fog;
@@ -610,8 +778,8 @@
           const {face,screen,depth}=item;ctx.beginPath();ctx.moveTo(...screen[0]);for(let i=1;i<screen.length;i++)ctx.lineTo(...screen[i]);ctx.closePath();
           ctx.fillStyle=shade(face);ctx.fill();stats.drawCalls++;stats.triangles+=screen.length-2;
           if(face.ground&&floorShadows.length){
-            ctx.save();ctx.clip();ctx.fillStyle='rgba(0,7,11,.24)';
-            for(const polygon of floorShadows){ctx.beginPath();ctx.moveTo(...polygon[0]);for(let i=1;i<polygon.length;i++)ctx.lineTo(...polygon[i]);ctx.closePath();ctx.fill();}ctx.restore();
+            ctx.save();ctx.clip();ctx.fillStyle=face.outdoor?'rgba(5,18,23,.27)':'rgba(0,7,11,.24)';
+            for(const {polygon,outdoor} of floorShadows)if(outdoor===face.outdoor){ctx.beginPath();ctx.moveTo(...polygon[0]);for(let i=1;i<polygon.length;i++)ctx.lineTo(...polygon[i]);ctx.closePath();ctx.fill();}ctx.restore();
           }
           // The seams are projected from positions on the actual face, not screen-space stripes.
           // Do not outline individual mesh faces: that reveals triangulation instead of material detail.
@@ -640,9 +808,9 @@
     const shadowView=new Float32Array(16),shadowProjection=new Float32Array(16),shadowMatrix=new Float32Array(16),shadowMatrices=new Float32Array(48);
     const lightPositions=new Float32Array(36),lightColors=new Float32Array(36);
     const stats={drawCalls:0,triangles:0,instances:0,contextLost:false,webglVersion:2,backend:'webgl2',bloom:false,shadows:false};
-    let program,depthProgram,postProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,uniforms,postUniforms,depthMatrix;
+    let program,depthProgram,postProgram,skyProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,uniforms,postUniforms,skyUniforms,depthMatrix,depthWind;
     let post=null,shadowTarget=null,whiteTexture=null,targetKey='',shadowLight=null;
-    let world=[],worldIndex=spatialIndex([]),lights=[],worldBatch=pack([]),quality='auto',disposed=false;
+    let world=[],worldIndex=spatialIndex([]),lights=[],environment=null,worldBatch=pack([]),quality='auto',disposed=false;
 
     function compile(type,code) {
       const shader=gl.createShader(type);gl.shaderSource(shader,code);gl.compileShader(shader);
@@ -690,10 +858,11 @@
       stats.bloom=!!post;stats.shadows=!!shadowTarget;
     }
     function initialize() {
-      program=link(VERT,FRAG);depthProgram=link(VERT,DEPTH_FRAG);postProgram=link(POST_VERT,POST_FRAG);
-      uniforms={};for(const name of ['uViewProjection','uEye','uForward','uLightPosition','uLightColor','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition']) uniforms[name]=gl.getUniformLocation(program,name);
+      program=link(VERT,FRAG);depthProgram=link(VERT,DEPTH_FRAG);postProgram=link(POST_VERT,POST_FRAG);skyProgram=link(POST_VERT,SKY_FRAG);
+      uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uEnvironment']) uniforms[name]=gl.getUniformLocation(program,name);
       postUniforms={};for(const name of ['uScene','uBloom','uTexel','uPass'])postUniforms[name]=gl.getUniformLocation(postProgram,name);
-      depthMatrix=gl.getUniformLocation(depthProgram,'uViewProjection');
+      skyUniforms={};for(const name of ['uSkyRight','uSkyUp','uSkyForward','uSkyTop','uSkyBottom','uSkyFog','uSunDirection','uSunColor','uSkyFov','uSkyMotion'])skyUniforms[name]=gl.getUniformLocation(skyProgram,name);
+      depthMatrix=gl.getUniformLocation(depthProgram,'uViewProjection');depthWind=gl.getUniformLocation(depthProgram,'uWindTime');
       vao=gl.createVertexArray();gl.bindVertexArray(vao);
       vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,source.vertices,gl.STATIC_DRAW);
       gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);
@@ -711,8 +880,8 @@
     }
     initialize();
 
-    function setWorld(meshes,points) {
-      world=meshes||[];worldIndex=spatialIndex(world);lights=points||[];worldBatch=pack([]);shadowLight=null;stats.staticTotal=world.length;
+    function setWorld(meshes,points,atmosphere) {
+      environment=environmentInfo(atmosphere);world=meshes||[];worldIndex=spatialIndex(world,environment);lights=points||[];worldBatch=pack([]);shadowLight=null;stats.staticTotal=world.length;stats.biome=environment?environment.biome:null;
       if(stats.contextLost||disposed) return;
       gl.bindBuffer(gl.ARRAY_BUFFER,worldBuffer);gl.bufferData(gl.ARRAY_BUFFER,worldBatch.values,gl.STATIC_DRAW);
     }
@@ -739,7 +908,7 @@
         stats.drawCalls++;stats.triangles+=shape.count/3*group.count;if(!shadowPass)stats.instances+=group.count;
       }
     }
-    function shadowPass(light,dynamicBatch,slot,torchAxes){
+    function shadowPass(light,dynamicBatch,slot,torchAxes,time){
       const p=light.p,shadowAxes=torchAxes||{right:[1,0,0],up:[0,0,-1],forward:[0,-1,0]};
       const {right:r,up:u,forward:fw}=shadowAxes;
       shadowView.set([r[0],u[0],-fw[0],0,r[1],u[1],-fw[1],0,r[2],u[2],-fw[2],0,-(r[0]*p[0]+r[1]*p[1]+r[2]*p[2]),-(u[0]*p[0]+u[1]*p[1]+u[2]*p[2]),fw[0]*p[0]+fw[1]*p[1]+fw[2]*p[2],1]);
@@ -749,10 +918,38 @@
       shadowMatrices.set(shadowMatrix,slot*16);
       gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.viewport((slot%2)*shadowTarget.size,Math.floor(slot/2)*shadowTarget.size,shadowTarget.size,shadowTarget.size);
       gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);
-      gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2.0);gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);
+      gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2.0);gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);gl.uniform2f(depthWind,environment?environment.wind:0,time);
       const tangent=1/f;
       const casters=worldIndex.query(p,[32,18,0]).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));
       renderBatch(packIndexed(casters),worldBuffer,true,true);renderBatch(dynamicBatch,dynamicBuffer,true,true);gl.disable(gl.POLYGON_OFFSET_FILL);
+    }
+    function sunShadowPass(eye,axes,dynamicBatch,time){
+      const sun=environment.sunDirection,fw=sun.map(v=>-v),length=Math.hypot(fw[0],fw[2]);
+      const r=length>.0001?[-fw[2]/length,0,fw[0]/length]:[1,0,0],u=[r[1]*fw[2]-r[2]*fw[1],r[2]*fw[0]-r[0]*fw[2],r[0]*fw[1]-r[1]*fw[0]];
+      const extent=quality==='high'?36:28,texel=extent*2/shadowTarget.size;
+      const center=[eye[0]+axes.forward[0]*8,3,eye[2]+axes.forward[2]*8],dot=a=>a[0]*center[0]+a[1]*center[1]+a[2]*center[2];
+      const xSnap=Math.round(dot(r)/texel)*texel-dot(r),ySnap=Math.round(dot(u)/texel)*texel-dot(u);
+      for(let k=0;k<3;k++)center[k]+=r[k]*xSnap+u[k]*ySnap;
+      const p=center.map((v,k)=>v+sun[k]*55);
+      shadowView.set([r[0],u[0],-fw[0],0,r[1],u[1],-fw[1],0,r[2],u[2],-fw[2],0,-(r[0]*p[0]+r[1]*p[1]+r[2]*p[2]),-(u[0]*p[0]+u[1]*p[1]+u[2]*p[2]),fw[0]*p[0]+fw[1]*p[1]+fw[2]*p[2],1]);
+      const near=1,far=115;shadowProjection.fill(0);shadowProjection[0]=shadowProjection[5]=1/extent;shadowProjection[10]=-2/(far-near);shadowProjection[14]=-(far+near)/(far-near);shadowProjection[15]=1;
+      multiply(shadowProjection,shadowView,shadowMatrix);shadowMatrices.set(shadowMatrix,16);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.viewport(shadowTarget.size,0,shadowTarget.size,shadowTarget.size);
+      gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2);
+      gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);gl.uniform2f(depthWind,environment.wind,time);
+      const casters=worldIndex.query(center,[extent+24,26,0]).filter(e=>{
+        const d=e.p.map((v,k)=>v-p[k]),along=a=>d[0]*a[0]+d[1]*a[1]+d[2]*a[2],z=along(fw);
+        return Math.abs(along(r))<extent+e.radius&&Math.abs(along(u))<extent+e.radius&&z+e.radius>near&&z-e.radius<far;
+      });
+      renderBatch(packIndexed(casters),worldBuffer,true,true);renderBatch(dynamicBatch,dynamicBuffer,true,true);gl.disable(gl.POLYGON_OFFSET_FILL);
+    }
+    function skyPass(axes,f,time){
+      gl.disable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.bindVertexArray(postVao);gl.useProgram(skyProgram);
+      gl.uniform3fv(skyUniforms.uSkyRight,axes.right);gl.uniform3fv(skyUniforms.uSkyUp,axes.up);gl.uniform3fv(skyUniforms.uSkyForward,axes.forward);
+      gl.uniform3fv(skyUniforms.uSkyTop,environment.skyTop);gl.uniform3fv(skyUniforms.uSkyBottom,environment.skyBottom);gl.uniform3fv(skyUniforms.uSkyFog,environment.fog);
+      gl.uniform3fv(skyUniforms.uSunDirection,environment.sunDirection);gl.uniform3fv(skyUniforms.uSunColor,environment.sunColor);
+      gl.uniform2f(skyUniforms.uSkyFov,canvas.width/canvas.height/f,1/f);gl.uniform2f(skyUniforms.uSkyMotion,time,environment.wind);gl.drawArrays(gl.TRIANGLES,0,3);
+      stats.drawCalls++;gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);
     }
     function postPass(){
       gl.disable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.bindVertexArray(postVao);gl.useProgram(postProgram);
@@ -787,28 +984,30 @@
       if(candidate&&(!shadowLight||distanceTo(shadowLight)>candidate.d*1.35+5))shadowLight=candidate.light;
       if(!candidate)shadowLight=null;
       const second=sorted.find(entry=>entry.light!==shadowLight&&entry.light.p[1]>=2.5);
-      const shadowLights=shadowLight?[shadowLight,...(second?[second.light]:[])]:[];
+      const shadowLights=shadowLight?[shadowLight,...(second&&!environment?[second.light]:[])]:[];
       const selected=shadowLights.map(light=>({light,d:distanceTo(light)})).concat(sorted.filter(entry=>!shadowLights.includes(entry.light)).slice(0,(quality==='low'?6:12)-shadowLights.length));
       lightPositions.fill(0);lightColors.fill(0);
       selected.forEach(({light},i)=>{lightPositions.set(light.p,i*3);const c=light.color||[1,1,1],power=light.power===undefined?1:light.power;lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});
       const ordinary=[],overlay=[];for(const mesh of dynamic||[]) (mesh.overlay?overlay:ordinary).push(mesh);
-      const dynamicBatch=pack(ordinary);
+      const dynamicBatch=pack(ordinary,environment);
       const torchPosition=eye.map((v,i)=>v+right[i]*.16-up[i]*.08);
-      stats.drawCalls=0;stats.triangles=0;stats.instances=0;stats.bloom=!!post;stats.shadows=!!shadowTarget;stats.shadowMaps=shadowTarget?shadowLights.length+1:0;stats.shadowMode='atlas';
+      stats.drawCalls=0;stats.triangles=0;stats.instances=0;stats.bloom=!!post;stats.shadows=!!shadowTarget;stats.shadowMaps=shadowTarget?shadowLights.length+1+(environment?1:0):0;stats.shadowMode=environment?'sun-atlas':'atlas';
       if(stats.shadows){
         gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.clear(gl.DEPTH_BUFFER_BIT);
-        shadowLights.forEach((light,i)=>shadowPass(light,dynamicBatch,i));shadowPass({p:torchPosition},dynamicBatch,2,axes);
+        shadowLights.forEach((light,i)=>shadowPass(light,dynamicBatch,i,null,t));if(environment)sunShadowPass(eye,axes,dynamicBatch,t);shadowPass({p:torchPosition},dynamicBatch,2,axes,t);
       }
       gl.bindFramebuffer(gl.FRAMEBUFFER,post?post.scene.framebuffer:null);gl.viewport(0,0,canvas.width,canvas.height);
-      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.bindVertexArray(vao);
+      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);if(environment)skyPass(axes,f,t);gl.useProgram(program);gl.bindVertexArray(vao);
       gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);gl.uniform3fv(uniforms.uEye,eye);gl.uniform3fv(uniforms.uForward,forward);
+      gl.uniform2f(uniforms.uWindTime,environment?environment.wind:0,t);gl.uniform3fv(uniforms.uSunDirection,environment?environment.sunDirection:[.4,.8,.3]);gl.uniform3fv(uniforms.uSunColor,environment?environment.sunColor:[0,0,0]);
+      gl.uniform3fv(uniforms.uAmbient,environment?environment.ambient:[.075,.10,.12]);gl.uniform3fv(uniforms.uFogColor,environment?environment.fog:[.009,.018,.024]);gl.uniform2f(uniforms.uEnvironment,environment?1:0,environment?environment.fogDensity:.014);
       gl.uniform3fv(uniforms.uLightPosition,lightPositions);gl.uniform3fv(uniforms.uLightColor,lightColors);gl.uniform1i(uniforms.uLightCount,selected.length);
       gl.uniform2f(uniforms.uResolution,canvas.width,canvas.height);gl.uniform4f(uniforms.uEffects,t,fx.flash||0,fx.damage||0,Math.max(0,Math.min(1,fx.pulse||0)));
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,stats.shadows?shadowTarget.texture:whiteTexture);gl.uniform1i(uniforms.uShadowMap,2);
-      gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrices);gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,0);gl.uniform3fv(uniforms.uTorchPosition,torchPosition);
+      gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrices);gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,stats.shadows&&environment?1:0);gl.uniform3fv(uniforms.uTorchPosition,torchPosition);
       renderBatch(visibleWorld,worldBuffer,true);
       renderBatch(dynamicBatch,dynamicBuffer,!stats.shadows);
-      if(overlay.length) {gl.clear(gl.DEPTH_BUFFER_BIT);renderBatch(pack(overlay),overlayBuffer,true);}
+      if(overlay.length) {gl.clear(gl.DEPTH_BUFFER_BIT);renderBatch(pack(overlay,environment),overlayBuffer,true);}
       if(post)postPass();
     }
     function lost(event){event.preventDefault();stats.contextLost=true;}
@@ -819,7 +1018,7 @@
       canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
       for(const buffer of [vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer]) gl.deleteBuffer(buffer);
       freePost();deleteTarget(shadowTarget);gl.deleteTexture(whiteTexture);
-      gl.deleteVertexArray(vao);gl.deleteVertexArray(postVao);gl.deleteProgram(program);gl.deleteProgram(depthProgram);gl.deleteProgram(postProgram);
+      gl.deleteVertexArray(vao);gl.deleteVertexArray(postVao);gl.deleteProgram(program);gl.deleteProgram(depthProgram);gl.deleteProgram(postProgram);gl.deleteProgram(skyProgram);
     }
     return {setWorld,draw,resize,dispose,stats};
   }
