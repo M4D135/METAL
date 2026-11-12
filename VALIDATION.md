@@ -1,3 +1,66 @@
+# Validation de METAL v0.7.0 — 12 novembre 2026
+
+Cette version regroupe la campagne de 18 mondes, le correctif de chute, les détails proches et reflets, le nouveau montage du bouclier, l’armure consommable et l’allègement des ambiances. Les sections conservées plus bas sont historiques. Le relevé structuré et les empreintes des sources finales figurent dans [docs/validation-v07.json](docs/validation-v07.json) ; le suivi par phases est dans [docs/CAMPAIGN_AUDIT.md](docs/CAMPAIGN_AUDIT.md).
+
+## Distribution finale et suite complète
+
+| Contrôle | Résultat |
+| --- | --- |
+| Suite finale `npm test` / `node:test` | **351 réussis, 0 échec, 0 annulé, 0 ignoré** |
+| Durée de la partie `node:test` | 131202.638 ms ; durée de banc, pas performance du jeu |
+| Mondes classiques | **18 configurations, 4 800 cibles accessibles** |
+| Campagne | **54 mondes : 18 indices × graines 1, 96 et 2026**, 9 450 cibles accessibles |
+| Géométrie classique | **Six empreintes complètes inchangées** |
+| HTML autonome | **739 903 octets bruts**, 223 144 octets gzip |
+| Ressources externes à l’exécution | **0** |
+| Modules embarqués | **13** |
+
+SHA-256 final : `7ef8815703ce09fe7140c412c87b6aa57a6262f58fcda7566bbb4a788a5c8bb6`. Le fichier distribué reste sous **1 400 000 octets non compressés**. Le navigateur, les pilotes et la documentation sont exclus. Les contrôles des mondes et les sous-ensembles ciblés ne sont pas additionnés artificiellement au total des tests. La suite complète finale est réussie ; son contrôle de distribution porte sur le HTML reconstruit avec les derniers changements. Elle inclut l’intégration de l’ajout concurrent de version du titre (`352aeac20aded30a00bb8048958ee9f99c3590cd`) : balise, style `.game-version` et substitution `__GAME_VERSION__` depuis `package.json` sont conservés ; le menu affiche **V0.7.0**.
+
+## Campagne, progression et compatibilité
+
+Les [profils des 18 mondes](docs/campaign-world-profiles.json) sont régénérés sur les sources finales : cinq collectes physiques locales de trophées, 23 reprises exactes et valeurs sérialisées finies. Ils mesurent l’arsenal d’entrée, les plafonds d’engagement, les facteurs de dégâts et les PV réels du boss. Les profils utilisent des conditions initiales contrôlées ; ils ne sont pas des traversées complètes. Le tableau des 18 mondes est dans le [README](README.md).
+
+Les régressions exercent le pistolet sans consommation d’une sentinelle finie, les cinq emplacements, les premières découvertes aux mondes 4/7/10/13/16, les caches et magasins verrouillés par possession, la grâce puis les trois gardes physiques des trophées, les vagues partielles et les renforts des boss. Les PV des boss restent fixés à l’entrée, même après une découverte. L’adaptation dépend des armes et du bouclier possédés ; la sélection de la main n’accorde aucun avantage de difficulté.
+
+Les enveloppes v2 conservent le parcours classique ; les nouvelles campagnes utilisent v3. Une mauvaise métadonnée d’entrée n’empêche plus de reprendre un checkpoint sain, et l’ancien inventaire classique à trois slots peut migrer vers quatre sans cadeau. Les restaurations invalides ne modifient pas la simulation en cours. Le fallback du shell peut reprendre à l’entrée et remplacer la sauvegarde active, avec conservation du premier backup disponible. Les sauvegardes intermédiaires de campagne antérieures aux trois caches d’armure H changent d’empreinte et suivent ce fallback ; aucune migration physique en place n’est revendiquée pour ces dispositions intermédiaires.
+
+Le [banc de combat](docs/campaign-balance.json) termine **36 combats de quatre ennemis**, 18 avec arsenal nominal et 18 au seul pistolet. Temps observés : **1.675–5.55 s** en nominal, **3.6–5.875 s** au pistolet. La visée automatisée reçoit **zéro dégât**. Ces chiffres vérifient le fonctionnement et la consommation dans une arène contrôlée ; ils ne mesurent ni la durée d’un monde ni une difficulté satisfaisante pour un joueur.
+
+## Chute, armure et sauvegarde
+
+Le correctif de chute reste couvert par des tirs de roquette réels à 20/60/120 Hz, les trois arènes générées et **42 contrôles physiques indépendants** sur chutes, brèches, tremplins, ascenseurs, rampes, plafonds et jonctions. Une chute sous le terrain ou un impact trop rapide sur le substrat de fond produit une seule mort ; dash, reprise et bouclier ne la bloquent pas. Une acquisition en vol attend un atterrissage sûr avant de remplacer le checkpoint.
+
+**Douze tests de simulation d’armure et deux nouveaux tests du shell** contrôlent les vrais dégâts, le plafond 100/200 selon la main gauche, l’absence de recharge au changement d’équipement, les restes fractionnaires, les butins, les migrations et les reprises. Trois essais utilisent les véritables caches H des mondes 1/10/16, avec une collecte partielle puis une restauration sans événement répété. Les anciennes sauvegardes compatibles acquièrent zéro point, et les anciens butins ne reçoivent pas de cadeau rétroactif. Les PV, les points d’armure et l’énergie de garde restent des ressources distinctes.
+
+## Rendu et montage des mains
+
+Le nouveau bouclier passe trois tests dédiés, dont **3 500 poses** comparant les silhouettes des vraies primitives du renderer : cinq armes, quatre formats, garde, frappe, course, rotations, recul et mêlée, aux FOV 60 et 110. Aucun chevauchement visible du cadre opaque avec l’arme dans cet ensemble ; le test échoue sur l’ancienne pose. Le canon et le montage droit restent identiques. Le panneau conserve dix pièces ; la scène SMG comparée garde 1 529 instances et 130 088 triangles. Les appels de dessin passent de 52 à 53 par tri transparent, sans nouvelle passe.
+
+Les détails proches ajoutent 14 pièces par machine et 18 par géant seulement en WebGL Auto/Haute. Les niveaux lointains, Économie et Canvas gardent leurs budgets. La scène de comparaison G passe de 238 888 à 241 224 triangles toutes passes (**+0,98 %**) et conserve 51 appels de dessin. Les quotas de particules et les trois cartes d’ombre restent bornés. Les reflets sont analytiques, sans miroir exact de la scène ni ray tracing.
+
+**26 rendus natifs** ont passé compilation des shaders, framebuffers et zéro erreur GL : 16 comparaisons G, trois captures D+G, sept captures du bouclier H. Les [images et manifestes](docs/qa-v07/README.md) précisent leurs sources et leurs conditions initiales. Le banc rejoue WebGL2 dans **Mesa llvmpipe / GLES, rasterisation logicielle** ; ce n’est pas une validation de navigateur ou de GPU matériel. Les captures H équipent volontairement les armes dans le premier monde pour comparer les poses et ne comprennent pas le HUD DOM.
+
+## Audio et limites de validation
+
+Les **21 tests audio** couvrent les bus, les volumes nuls, la priorité des effets, les plafonds de voix, la pause et l’écoute du menu. La nouvelle régression reproduit l’arrêt de l’aperçu au déplacement d’un curseur, puis vérifie la correction avec le vrai shell et le vrai FAudio : ajustement des quatre volumes, persistance, mute explicite, changement d’onglet, extinction à deux secondes et reprise. Le jeu reste suspendu pendant le test sonore.
+
+Le fond continu est réduit : bus d’ambiance 0,9 → 0,7, drone/moteurs/vent atténués, filtre de vent moins chargé en graves, portée sonore de vapeur 12 m avec décroissance quadratique. La modulation du drone se coupe en pause. Les niveaux de musique et des effets de combat, ainsi que les préférences sauvegardées, sont conservés. Ces contrôles ne remplacent pas une écoute humaine.
+
+## Contrôle limité dans un navigateur réel
+
+Un contrôle ultérieur dans **Chrome**, via l’aperçu local pris en charge, a ouvert la distribution et inspecté le DOM à **1363 × 936**. Le titre affiche **V0.7.0**. Une nouvelle expédition affiche **MONDE 01 / 18**, **L’Éveil des forges**, le pistolet **∞**, une arme possédée sur cinq et l’armure **0 / 100**. L’appui sur **F** devant la première commande physique porte la progression à **1 / 3**, avec une notification de point de reprise. Les onglets Partie, Image et Audio du menu de pause s’ouvrent ; le bouton de test audio a été actionné et le curseur d’ambiance déplacé à 35 %, puis rétabli à 100 %, sans évaluation par écoute humaine.
+
+Après un **rechargement complet de la page**, le bouton **Continuer — MONDE 01** restaure la commande **1 / 3**, les **100 PV**, l’armure **0 / 100**, le pistolet **∞** et l’arsenal **1 / 5**, avec le message « Signal retrouvé. Reprise au dernier point enregistré. ». Le retour au titre affiche toujours **V0.7.0**, avec le libellé accessible de version 0.7.0.
+
+Le menu Image indique **WebGL2 indisponible** et le **secours Canvas 2D** ; WebNN est également indisponible, avec repli CPU. L’indicateur affiche environ **1 FPS** dans cet environnement distant. Il s’agit d’une observation de ce contrôle, pas d’un banc matériel ni d’une cadence promise. Un seul format de bureau a été inspecté : aucun contrôle DOM mobile, multitouch réel, GPU/NPU physique ou Safari n’en découle. Le [relevé de navigateur](docs/qa-v07/browser-smoke.json) et les [captures](docs/qa-v07/README.md) délimitent ce périmètre.
+
+Les quinze dernières entrées d’erreur consultées concernent des métadonnées d’extensions du navigateur ; aucune de ces quinze entrées n’est attribuée au code du jeu. Cette inspection bornée n’est pas un audit exhaustif de la console.
+
+Le [prévol Chromium antérieur](docs/qa-v07/browser-preflight.json), qui avait échoué avant toute page faute de socket IPC autorisé, est conservé comme historique. Le contrôle réel ultérieur valide uniquement les actions et l’interface observées ci-dessus. Les tests automatisés du shell restent des contrôles séparés avec APIs navigateur substituées ; ni eux ni cette courte session ne constituent une partie humaine complète.
+
+---
+
 # Correctif de chute 0.6.1 — 12 novembre 2026
 
 Référence précédant les travaux de campagne. `npm test` : **269 tests réussis, 0 échec, 0 annulé, 0 ignoré**, suite `node:test` en **29 207,292 ms** ; génération historique **18 configurations et 4 800 cibles** vérifiées séparément. Distribution : **692 464 octets bruts**, **208 799 octets gzip**, **0 asset externe**. SHA-256 : `c7d78c7939dddb25b47fb22d93136f0f7cb024f6053d9aa0cc97b261ee98f9f2`.

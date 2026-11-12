@@ -1,0 +1,118 @@
+{
+  "schema": "metal-browser-smoke-v1",
+  "version": "0.7.0",
+  "date": "2026-11-12",
+  "status": "limited-desktop-smoke-passed",
+  "distribution": {
+    "path": "dist/index.html",
+    "html_bytes": 739903,
+    "sha256": "7ef8815703ce09fe7140c412c87b6aa57a6262f58fcda7566bbb4a788a5c8bb6"
+  },
+  "environment": {
+    "browser": "Chrome",
+    "entry": "Supported local preview controlled through CUA",
+    "viewport": {
+      "width": 1363,
+      "height": 936
+    },
+    "singleDesktopViewport": true,
+    "physicalDeviceValidation": false
+  },
+  "historicalPreflight": {
+    "file": "browser-preflight.json",
+    "status": "Failed before page creation in an earlier standalone Chromium process. Preserved as history; superseded only for the limited UI scope observed here."
+  },
+  "observations": [
+    {
+      "check": "title",
+      "result": "pass",
+      "visible": "V0.7.0 title badge with the 07 / CAMPAGNE title screen."
+    },
+    {
+      "check": "new-expedition",
+      "result": "pass",
+      "visible": "MONDE 01 / 18; chapter L’Éveil des forges; pistol ammunition ∞; one owned weapon out of five; armor 0 / 100."
+    },
+    {
+      "check": "physical-command",
+      "result": "pass",
+      "action": "Pressed F at the first physical command.",
+      "visible": "Command progress became 1 / 3 and a checkpoint notice appeared."
+    },
+    {
+      "check": "pause-options",
+      "result": "pass",
+      "action": "Opened the game, image and audio tabs."
+    },
+    {
+      "check": "audio-controls",
+      "result": "pass-for-interface",
+      "action": "Clicked the audio test button, moved ambience to 35%, then restored it to 100%.",
+      "humanListeningPerformed": false
+    },
+    {
+      "check": "renderer",
+      "result": "observed-fallback",
+      "visible": "Image options reported WebGL2 unavailable; Canvas 2D fallback was active."
+    },
+    {
+      "check": "tactical-inference",
+      "result": "observed-fallback",
+      "visible": "WebNN unavailable; CPU fallback active."
+    },
+    {
+      "check": "performance-display",
+      "result": "observation-only",
+      "approximateDisplayedFPS": 1,
+      "physicalHardwareBenchmark": false
+    },
+    {
+      "check": "continue-after-reload",
+      "result": "pass",
+      "passed": true,
+      "method": "Full page reload, then the normal Continue button for MONDE 01.",
+      "restored": {
+        "world": "01 / 18",
+        "commands": "1 / 3",
+        "health": 100,
+        "armor": "0 / 100",
+        "pistolAmmunition": "∞",
+        "ownedWeapons": "1 / 5"
+      },
+      "visibleMessage": "Signal retrouvé. Reprise au dernier point enregistré."
+    },
+    {
+      "check": "return-to-title",
+      "result": "pass",
+      "visible": "V0.7.0; accessible version label reports 0.7.0; viewport remained 1363x936."
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "titre-navigateur.jpg",
+      "scope": "Title screen in the real browser; version badge.",
+      "bytes": 71679,
+      "sha256": "8f7d6611676f60bc65202077cb5c68e743eb04a31bfb791d447a0aec92224428"
+    },
+    {
+      "file": "campagne-navigateur.jpg",
+      "scope": "Campaign HUD in the real browser at the tested desktop viewport.",
+      "bytes": 77363,
+      "sha256": "95c6acc91513cd3ac37a5120cdd58fb52405c22f1114d43f73f777b9f15b5c21"
+    }
+  ],
+  "limitations": [
+    "A single desktop viewport was inspected; no mobile DOM or real multitouch validation.",
+    "Canvas fallback was observed, not real browser WebGL2 rendering.",
+    "No complete world or campaign playthrough is claimed.",
+    "The audio test UI was exercised without a human listening assessment.",
+    "No physical GPU, NPU, phone, Safari or hardware FPS validation.",
+    "The existing automated simulation and Mesa rendering evidence remain separate checks."
+  ],
+  "errorLogInspection": {
+    "entriesInspected": 15,
+    "scope": "Last 15 error entries available during the check.",
+    "observation": "Only browser-extension metadata errors were found in this bounded sample; none was attributed to the game source.",
+    "completeConsoleAudit": false
+  }
+}

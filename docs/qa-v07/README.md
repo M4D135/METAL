@@ -1,6 +1,6 @@
-# Rendus de contrôle METAL 0.7
+# Contrôles visuels METAL 0.7
 
-Ces images sont produites par le moteur du jeu, avec la géométrie et les matériaux procéduraux. Le banc enregistre les commandes WebGL2 puis les rejoue en OpenGL ES 3.2 sous **Mesa llvmpipe, rasterisation logicielle**. Les trois images de finition G sont figées à 960 × 600 ; elles ne constituent pas une mesure de FPS sur GPU matériel ni une capture de partie dans un navigateur.
+Les images Mesa présentées ci-dessous sont produites par le moteur du jeu, avec la géométrie et les matériaux procéduraux. Le banc enregistre les commandes WebGL2 puis les rejoue en OpenGL ES 3.2 sous **Mesa llvmpipe, rasterisation logicielle**. Les trois images de finition G sont figées à 960 × 600 ; elles ne constituent pas une mesure de FPS sur GPU matériel ni une capture de partie dans un navigateur.
 
 ## Construction d’un mob proche
 
@@ -45,4 +45,23 @@ Sept rendus natifs H (six PNG conservés ici, dont l’avant) ont passé les con
 
 [armor-preflight.json](armor-preflight.json) décrit trois collectes locales sur les véritables réserves des mondes 1, 10 et 16 : points et restes fractionnaires, puis reprise sans nouvel événement. Les positions initiales sont préparées pour isoler la collecte ; ce ne sont pas des parcours complets.
 
-Le prévol Chromium a échoué avant toute page, car la création de son socket IPC est interdite dans cet environnement. [browser-preflight.json](browser-preflight.json) conserve ce résultat. Les tests du shell utilisent les vrais modules du jeu avec des APIs de navigateur substituées ; les images sont de la rasterisation logicielle GLES. Aucun essai humain complet, écoute humaine, test de téléphone physique, validation NPU ou gain de FPS sur GPU matériel n’est revendiqué.
+Le prévol initial de Chromium a échoué avant toute page ; [browser-preflight.json](browser-preflight.json) conserve cette tentative comme historique. Un contrôle ultérieur dans Chrome a ouvert le jeu par l’aperçu local pris en charge ; il est décrit ci-dessous. Les tests automatisés du shell emploient des APIs navigateur substituées, et les images Mesa restent de la rasterisation logicielle GLES : ces preuves sont distinctes de la session de navigateur réel.
+
+
+## Navigateur réel — contrôle de bureau
+
+Le [relevé de la session](browser-smoke.json) porte sur **Chrome à 1363 × 936**, dans l’aperçu local. Le DOM du titre, du HUD et des menus est inspecté dans ce seul format de bureau. Aucun format mobile ou geste multitouch réel n’a été vérifié pendant cette session.
+
+![Titre METAL avec le badge V0.7.0 dans Chrome](titre-navigateur.jpg)
+
+Le badge de version provient de `package.json`. La balise et le style ajoutés en parallèle sur `main` sont conservés ; l’écran montre **V0.7.0** avec **07 / CAMPAGNE**.
+
+![Début de campagne et HUD dans Chrome](campagne-navigateur.jpg)
+
+Une nouvelle expédition affiche **MONDE 01 / 18**, le chapitre **L’Éveil des forges**, le pistolet **∞**, une arme possédée sur cinq et **0 / 100** d’armure. La première commande physique a été activée avec **F** : progression **1 / 3** et notification de point de reprise. Les onglets Partie, Image et Audio s’ouvrent. Le bouton d’essai sonore et le réglage d’ambiance à 35 %, puis 100 %, ont été actionnés ; aucune appréciation par écoute humaine n’est revendiquée.
+
+Après un **rechargement complet de la page**, le bouton **Continuer — MONDE 01** restaure la commande **1 / 3**, les **100 PV**, l’armure **0 / 100**, le pistolet **∞** et l’arsenal **1 / 5**, avec le message « Signal retrouvé. Reprise au dernier point enregistré. ». Le retour au titre affiche toujours **V0.7.0**, avec le libellé accessible de version 0.7.0.
+
+Les options signalent **WebGL2 indisponible**, donc le **secours Canvas 2D**, ainsi que **WebNN indisponible**, donc le repli CPU. L’indicateur affiche environ **1 FPS** dans cet environnement distant : ce n’est ni une mesure de GPU matériel ni une garantie de cadence. Ces captures complètent les images Mesa par une observation réelle du DOM ; elles ne valident pas WebGL2 dans un navigateur, Safari, un téléphone, un NPU/GPU physique ou une campagne jouée entièrement.
+
+L’inspection des quinze dernières entrées d’erreur montre seulement des erreurs de métadonnées d’extensions ; aucune n’est attribuée au jeu dans cet échantillon. Cette lecture bornée ne vaut pas audit exhaustif de la console.
