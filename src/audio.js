@@ -96,7 +96,7 @@
       var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false, titlePlaying = false;
       var bank = Object.create(null), motors = [], ambientDuckUntil = 0, variation = 0, warming = null, warmTimer = null, warmResolve = null;
       var mix = {master:1,music:.45,effects:1,ambience:1};
-      var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null);
+      var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null), targets = new WeakMap();
       var priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
       var MUSIC_GAIN = .56, EFFECTS_GAIN = .9, AMBIENCE_GAIN = .7;
       var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
@@ -186,22 +186,34 @@
         if(event)event.pan=Math.max(-1,Math.min(1,event.pan+side));
         return event;
       }
+      // LOOP-14 / MIX-08: setTargetAtTime is a memoryless exponential, so the
+      // same target and time constant sent again draws the same curve. Strict
+      // equality only: a threshold leaves an audible error. Setters still apply
+      // at once; this memory absorbs tick's repeat in the same frame. Every
+      // automation of the persistent ambience parameters goes through here;
+      // master and music buses never do (cancelled, scheduled ahead).
+      function approach(param, value, time, tau) {
+        var last = targets.get(param);
+        if (last && last.value === value && last.tau === tau) return;
+        param.setTargetAtTime(value, time, tau);
+        if (last) { last.value = value; last.tau = tau; } else targets.set(param, {value: value, tau: tau});
+      }
       function updateSteam() {
         if (!ctx || !steamLevel || disposed) return;
         var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
         stats.steamGain=audible?steam*.055*mask:0;
-        steamLevel.gain.setTargetAtTime(stats.steamGain, ctx.currentTime, steam ? .06 : .018);
-        if (steamPan.pan) steamPan.pan.setTargetAtTime(steamSide, ctx.currentTime, .12);
-        steamFilter.frequency.setTargetAtTime(1950-steamOccluded*1250,ctx.currentTime,.12);
+        approach(steamLevel.gain, stats.steamGain, ctx.currentTime, steam ? .06 : .018);
+        if (steamPan.pan) approach(steamPan.pan, steamSide, ctx.currentTime, .12);
+        approach(steamFilter.frequency, 1950-steamOccluded*1250, ctx.currentTime, .12);
       }
       function updateMachinery() {
         if(!ctx||disposed)return;
         var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
         stats.machineryGain=audible?machinery*.075*mask:0;
         motors.forEach(function(m){
-          m.gain.gain.setTargetAtTime(m.kind===machineKind?stats.machineryGain:0,ctx.currentTime,.055);
-          if(m.pan.pan)m.pan.pan.setTargetAtTime(machineSide,ctx.currentTime,.09);
-          m.filter.frequency.setTargetAtTime(4200-machineOccluded*3400,ctx.currentTime,.12);
+          approach(m.gain.gain,m.kind===machineKind?stats.machineryGain:0,ctx.currentTime,.055);
+          if(m.pan.pan)approach(m.pan.pan,machineSide,ctx.currentTime,.09);
+          approach(m.filter.frequency,4200-machineOccluded*3400,ctx.currentTime,.12);
         });
       }
       function horrorCue(kind,value) {
@@ -399,10 +411,10 @@
         var wind=Math.max(0,Math.min(2,Number.isFinite(environment.wind)?environment.wind:1));
         var gust=Math.max(0,Math.min(1,(Math.sin(now*.19+1.2)+.28*Math.sin(now*.53)-.28)*1.25));
         var mask=(1-Math.max(threat,pressure)*.45)*(now<ambientDuckUntil?.55:1);
-        airFilter.frequency.setTargetAtTime(780+stage*180+(environment.biome==='woodland'?-100:0),now,.4);
+        approach(airFilter.frequency,780+stage*180+(environment.biome==='woodland'?-100:0),now,.4);
         stats.windGain=active&&mix.ambience>0?outside*wind*gust*.020*mask:0;
-        airVolume.gain.setTargetAtTime(stats.windGain,now,stats.windGain?.22:.045);
-        echoSend.gain.setTargetAtTime(.065-outside*.055,now,.45);
+        approach(airVolume.gain,stats.windGain,now,stats.windGain?.22:.045);
+        approach(echoSend.gain,.065-outside*.055,now,.45);
 
       }
       function cancelTestMix() {
@@ -416,7 +428,7 @@
         if (musicBus && ctx) { musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setTargetAtTime(MUSIC_GAIN,ctx.currentTime,.03); }
         duckUntil = 0; duckDepth = 1; stats.duckGain = MUSIC_GAIN;
         updateMaster();
-        if (ctx && !playing) {airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;updateSteam();updateMachinery();}
+        if (ctx && !playing) {approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;updateSteam();updateMachinery();}
       }
       function testMix(options) {
         cancelTestMix();
@@ -478,7 +490,7 @@
             musicBus.gain.setTargetAtTime(MUSIC_GAIN,ctx.currentTime,.018);
             duckUntil = 0; duckDepth = 1; ambientDuckUntil = 0; stats.duckGain = MUSIC_GAIN;
             for (var entry of Array.from(voices)) { try { entry.source.stop(); } catch (_) {} clean(entry); }
-            airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018); stats.windGain = 0;
+            approach(airVolume.gain,0,ctx.currentTime,.018); stats.windGain = 0;
             updateSteam(); updateMachinery();
           }
           syncMusic();
@@ -489,12 +501,12 @@
           muted = next;
           updateMaster();
           updateSteam();updateMachinery();
-          if(muted&&!preview&&ctx&&airVolume){airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;}
+          if(muted&&!preview&&ctx&&airVolume){approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;}
         },
         setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
         setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
         setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); syncMusic(); },
-        setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing){titlePlaying=false;if(ctx)warmBank(false);} updateSteam();updateMachinery(); syncMusic(); if (!playing && ctx && airVolume) {airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
+        setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing){titlePlaying=false;if(ctx)warmBank(false);} updateSteam();updateMachinery(); syncMusic(); if (!playing && ctx && airVolume) {approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
         setMix: function (value) {
           for (var key in mix) if (Number.isFinite(value && value[key])) mix[key] = Math.max(0, Math.min(1, value[key]));
           if (!ctx || disposed) return;
@@ -502,7 +514,7 @@
           effects.gain.setTargetAtTime(EFFECTS_GAIN * mix.effects, ctx.currentTime, .025);
           ambience.gain.setTargetAtTime(AMBIENCE_GAIN * mix.ambience, ctx.currentTime, .025);
           updateSteam();updateMachinery();
-          if(mix.ambience<=0){airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;}
+          if(mix.ambience<=0){approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;}
           if (music) music.setVolume(mix.music);
         },
         setEnvironment: function (value, amount) { environment = value || {}; outside = Math.max(0, Math.min(1, Number(amount) || 0)); },

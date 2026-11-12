@@ -99,6 +99,24 @@ test('nearby machinery and steam are spatial, occluded, source-dependent and con
   const delay=r.ctx.nodes.find(n=>n.kind==='delay'),send=r.ctx.nodes.find(n=>n.kind==='gain'&&n.connections.includes(delay));r.audio.setEnvironment({},0);r.audio.tick();const indoor=send.gain.value;r.audio.setEnvironment({},1);r.audio.tick();assert(send.gain.value<indoor*.2,'open sky does not accumulate a room echo');r.audio.dispose();
 });
 
+test('steady ambience is automated once per change and every wind cut can be undone at the same instant (LOOP-14)',async()=>{
+  const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);
+  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>n.connections[0].frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),air=loops.find(n=>n!==steam&&!machines.includes(n));
+  const delay=r.ctx.nodes.find(n=>n.kind==='delay'),send=r.ctx.nodes.find(n=>n.kind==='gain'&&n.connections.includes(delay)),wind=effectGain(air).gain;
+  const params=[steam,air,...machines].flatMap(n=>[n.connections[0].frequency,effectGain(n).gain,effectGain(n).connections[0].pan]).filter(Boolean).concat(send.gain);assert.equal(params.length,18);
+  const sent=()=>params.reduce((sum,p)=>sum+p.events.length,0),frame=outside=>{r.audio.setEnvironment({wind:1},outside);r.audio.setMachinery(.6,-.4,'fan',.3);r.audio.setSteam(.5,.2,.1);r.audio.setThreat(.2);r.audio.setPressure(.1);r.audio.tick();};
+  frame(0);const settled=sent();for(let i=0;i<120;i++){r.ctx.currentTime+=1/60;frame(0);}
+  assert.equal(sent(),settled,'unchanged targets are not sent again, neither by the next frame nor by tick after a setter');
+  r.audio.setSteam(.5+1e-9,.2,.1);r.audio.tick();assert.equal(sent(),settled+1,'strict equality: the smallest change is sent once, with no threshold');
+  frame(1);const audible=wind.value;assert(audible>0&&audible===r.audio.stats.windGain);
+  for(const [cut,restore] of [[()=>r.audio.setMuted(true),()=>r.audio.setMuted(false)],[()=>r.audio.setPlaying(false),()=>r.audio.setPlaying(true)],[()=>r.audio.setMix({ambience:0}),()=>r.audio.setMix({ambience:1})],[()=>r.audio.setTitlePlaying(true),()=>r.audio.setPlaying(true)]]){
+    cut();assert.equal(wind.value,0,'each path still cuts the wind');assert.equal(r.audio.stats.windGain,0);
+    restore();frame(1);assert.equal(wind.value,audible,'a cut never leaves a stale target that would keep the wind silent');
+  }
+  r.audio.setPlaying(false);assert(await r.audio.testMix({muted:false}));r.audio.tick();r.audio.cancelTestMix();assert.equal(wind.value,0);
+  r.audio.setPlaying(true);frame(1);assert.equal(wind.value,audible,'the audition cut is remembered too');r.audio.dispose();
+});
+
 test('material collisions use their real material, energy and occlusion without allocating combat buffers',async()=>{
   const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);const buffers=r.ctx.buffers.length,profiles=new Set();
   for(const material of ['metal','stone','wood','glass','dirt'])for(const method of ['materialImpact','materialBreak','debrisLand']){

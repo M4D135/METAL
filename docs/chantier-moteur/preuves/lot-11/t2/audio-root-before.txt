@@ -1,0 +1,7 @@
+prepare (bank + music) ms 389 | nodes 43 | buffers 80 | buffer samples 821908 | stats {"pcmReady":true,"pcmBuffers":64}
+audio frame (setThreat+setPressure+setSteam+setMachinery+tick), 3600 frames @60: median 1.04 us | p10 0.92 | p99 8.83 | max 490.2 us
+AudioParam automation calls/frame 34.2 | nodes created/s 29.9 | buffers created during play 5 | frames that schedule notes 463 (median 2.5 us, max 490.2 us)
+music stats {} | node kinds during play {"gain":898,"source":898}
+stage -> 2 | worst frame after change ms 13.95 | buffers created 7 | samples converted 84170
+stage -> 3 | worst frame after change ms 0.19 | buffers created 1 | samples converted 15790
+stage -> 0 | worst frame after change ms 0.01 | buffers created 0 | samples converted 0

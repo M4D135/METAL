@@ -1,0 +1,943 @@
+{
+ "sources": {
+  "A": {
+   "root": "/private/tmp/claude-501/-Users-david-claude/e16d3c39-dad4-44c7-b4df-971eba017053/scratchpad/lot11/t2/A",
+   "audioSha256": "4b36fde20d003c7a785c05f1315cd568d309dd08dd6bdc30ec2283bdbe452b6d",
+   "musicSha256": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74"
+  },
+  "B": {
+   "root": ".",
+   "audioSha256": "fd03c584ffc9a0c1ba0c32d5c117feae8c80b02e0d8af968f082833b25b2d6fd",
+   "musicSha256": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74"
+  }
+ },
+ "criterion": "B = A, ou B = A privé des setTargetAtTime répétant cible et constante de l’événement précédent du même paramètre",
+ "scenes": [
+  {
+   "scene": "a",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 63485,
+    "B": 7106,
+    "removed": 56379,
+    "perFrameA": 33.08,
+    "perFrameB": 3.7
+   },
+   "params": 1046,
+   "identicalParams": 1028,
+   "cancelledParams": 9,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [
+    {
+     "param": "7:gain.gain",
+     "init": 0.065,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 146
+     }
+    },
+    {
+     "param": "14:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "12:filter.frequency",
+     "init": 1950,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "13:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "17:filter.frequency",
+     "init": 780,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 2
+     }
+    },
+    {
+     "param": "16:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 649
+     }
+    },
+    {
+     "param": "20:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 962
+     }
+    },
+    {
+     "param": "18:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 576
+     }
+    },
+    {
+     "param": "19:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "23:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 962
+     }
+    },
+    {
+     "param": "21:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "22:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "26:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 962
+     }
+    },
+    {
+     "param": "24:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "25:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "29:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 962
+     }
+    },
+    {
+     "param": "27:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "28:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    }
+   ],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": null,
+   "pass": true
+  },
+  {
+   "scene": "b",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 64230,
+    "B": 2646,
+    "removed": 61584,
+    "perFrameA": 33.47,
+    "perFrameB": 1.38
+   },
+   "params": 1558,
+   "identicalParams": 1540,
+   "cancelledParams": 12,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [
+    {
+     "param": "7:gain.gain",
+     "init": 0.065,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 2
+     }
+    },
+    {
+     "param": "14:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "12:filter.frequency",
+     "init": 1950,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "13:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "17:filter.frequency",
+     "init": 780,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 2
+     }
+    },
+    {
+     "param": "16:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 2
+     }
+    },
+    {
+     "param": "20:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "18:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "19:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "23:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "21:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "22:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "26:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "24:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "25:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "29:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "27:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "28:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    }
+   ],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": null,
+   "pass": true
+  },
+  {
+   "scene": "c",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 64491,
+    "B": 9497,
+    "removed": 54994,
+    "perFrameA": 33.61,
+    "perFrameB": 4.95
+   },
+   "params": 1802,
+   "identicalParams": 1784,
+   "cancelledParams": 11,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [
+    {
+     "param": "7:gain.gain",
+     "init": 0.065,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 290
+     }
+    },
+    {
+     "param": "14:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "12:filter.frequency",
+     "init": 1950,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "13:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "17:filter.frequency",
+     "init": 780,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 2
+     }
+    },
+    {
+     "param": "16:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 335
+     }
+    },
+    {
+     "param": "20:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 1204
+     }
+    },
+    {
+     "param": "18:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 1163
+     }
+    },
+    {
+     "param": "19:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "23:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 1204
+     }
+    },
+    {
+     "param": "21:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "22:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "26:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 1204
+     }
+    },
+    {
+     "param": "24:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "25:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "29:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 1204
+     }
+    },
+    {
+     "param": "27:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "28:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    }
+   ],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": null,
+   "pass": true
+  },
+  {
+   "scene": "d",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 63706,
+    "B": 2626,
+    "removed": 61080,
+    "perFrameA": 33.2,
+    "perFrameB": 1.37
+   },
+   "params": 1337,
+   "identicalParams": 1319,
+   "cancelledParams": 9,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [
+    {
+     "param": "7:gain.gain",
+     "init": 0.065,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 3
+     }
+    },
+    {
+     "param": "14:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "12:filter.frequency",
+     "init": 1950,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "13:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "17:filter.frequency",
+     "init": 780,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 2
+     }
+    },
+    {
+     "param": "16:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 505
+     }
+    },
+    {
+     "param": "20:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "18:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "19:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "23:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "21:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "22:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "26:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "24:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "25:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "29:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "27:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    },
+    {
+     "param": "28:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 3724,
+      "B": 2
+     }
+    }
+   ],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": null,
+   "pass": true
+  },
+  {
+   "scene": "t",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 38306,
+    "B": 3737,
+    "removed": 34569,
+    "perFrameA": 19.96,
+    "perFrameB": 1.95
+   },
+   "params": 1863,
+   "identicalParams": 1845,
+   "cancelledParams": 17,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [
+    {
+     "param": "7:gain.gain",
+     "init": 0.065,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 2
+     }
+    },
+    {
+     "param": "14:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "12:filter.frequency",
+     "init": 1950,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "13:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "17:filter.frequency",
+     "init": 780,
+     "persistent": true,
+     "events": {
+      "A": 1920,
+      "B": 2
+     }
+    },
+    {
+     "param": "16:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1921,
+      "B": 3
+     }
+    },
+    {
+     "param": "20:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "18:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "19:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "23:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "21:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "22:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "26:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "24:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "25:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "29:panner.pan",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "27:gain.gain",
+     "init": 0,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    },
+    {
+     "param": "28:filter.frequency",
+     "init": 4200,
+     "persistent": true,
+     "events": {
+      "A": 1923,
+      "B": 2
+     }
+    }
+   ],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": true,
+   "pass": true
+  }
+ ],
+ "pass": true
+}
