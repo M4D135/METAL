@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111617">
-<meta name="description" content="METAL : 430 machines, trois colosses, des décors destructibles et une bande-son metal MOD. Un FPS 3D entièrement procédural, sur ordinateur et mobile.">
+<meta name="description" content="METAL : dix-huit mondes, six chapitres, des colosses, des décors destructibles et une bande-son metal MOD. Un FPS 3D entièrement procédural, sur ordinateur et mobile.">
 <title>METAL</title>
 <style>:root{color-scheme:dark;--ink:#e6e7dc;--muted:#8a9995;--acid:#d7f36b;--cyan:#71e1cc;--bg:#111617}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}body{touch-action:none;-webkit-user-select:none;user-select:none}button{font:inherit;cursor:pointer;color:inherit;border:0;-webkit-tap-highlight-color:transparent}button:focus-visible{outline:2px solid var(--acid);outline-offset:5px}button:disabled{opacity:.45;cursor:wait}button:active{transform:translateY(1px)}[hidden]{display:none!important}#app,#world,.screen{position:absolute;inset:0;width:100%;height:100%}#world{display:block;outline:none}#vignette{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 20vw rgba(3,8,9,.45)}#scanlines{position:absolute;inset:0;pointer-events:none;opacity:.08;background:repeating-linear-gradient(0deg,transparent 0 3px,#000 3px 4px)}#damage{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 18vw 5vw #e3422a;opacity:0;z-index:2}.screen{z-index:10}#intro{padding:35px 4.4vw 26px;display:flex;flex-direction:column;background:linear-gradient(90deg,rgba(10,17,18,.94),rgba(10,17,18,.73) 34%,rgba(10,17,18,.15) 72%)}.brand-top{display:flex;align-items:center;gap:12px;font-size:10px;font-weight:700;letter-spacing:1.5px}.brand-symbol{display:grid;place-items:center;font-size:30px;line-height:1;border:1px solid #a6bab34d;width:43px;height:43px;transform:skewY(-8deg)}.small{display:block;font-size:8px;color:var(--muted);letter-spacing:2px;margin-top:6px}.edition{margin-left:auto;color:#c3d1ca8c;font-size:10px}.intro-content{margin:auto 0;max-width:590px;padding:38px 0}.eyebrow{font-size:10px;font-weight:700;letter-spacing:3px;color:var(--acid);margin:0 0 17px;display:flex;align-items:center;gap:9px}.dot{height:6px;width:6px;background:var(--acid);box-shadow:0 0 12px #d7f36b88;border-radius:50%}h1{font-family:Impact,'Arial Narrow',Arial,sans-serif;font-size:clamp(100px,13vw,190px);font-weight:900;letter-spacing:-6px;line-height:.88;margin:0 0 27px;color:#e3e7da;text-shadow:0 5px 50px #0007}h1 span{color:var(--acid);font-size:.65em}.tagline{font-size:clamp(18px,2vw,26px);font-weight:400;letter-spacing:-.5px;margin:0 0 18px}.intro-copy{font-size:13px;line-height:1.9;color:#a4b4ae;margin:0 0 32px}.primary{min-height:55px;padding:18px 22px;background:var(--acid);color:#18221a;display:flex;justify-content:space-between;align-items:center;gap:32px;font-size:13px;font-weight:700;letter-spacing:.2px;transition:background .2s,box-shadow .2s}.primary:hover{background:#e4ff8c;box-shadow:0 0 32px #c4ec5626}.primary span{font-size:22px;line-height:1}.intro-meta{margin-top:22px;display:flex;align-items:center;gap:13px;color:#788b83;font-size:8px;letter-spacing:1.8px}.intro-meta i{width:3px;height:3px;border-radius:50%;background:#5d7068}.intro-bottom{display:flex;justify-content:space-between;align-items:center;font-size:9px;letter-spacing:1px;color:#7d9088}.text-button{background:none;font-size:9px;letter-spacing:1.5px;color:#a6b7ae;padding:12px 0}.text-button:hover{color:var(--acid)}.text-button span{margin-left:10px}.hud-top{position:absolute;top:max(23px,env(safe-area-inset-top));left:max(25px,env(safe-area-inset-left));right:max(25px,env(safe-area-inset-right));display:flex;justify-content:space-between;align-items:center}.sector-tag{display:flex;gap:13px;align-items:center}.logo-small{font-size:30px;color:var(--acid);font-weight:900;letter-spacing:-3px}.sector-tag div{display:flex;flex-direction:column;gap:6px}.sector-tag span:not(.logo-small){font-size:8px;letter-spacing:2px;color:#9eafa6}.sector-tag strong{font-size:13px;font-weight:500;letter-spacing:.5px}.top-buttons{display:flex;gap:8px}.icon-button{border:1px solid #c0d2bf25;background:#1019199c;width:36px;height:36px;font-size:17px;border-radius:3px;display:grid;place-items:center}.icon-button:hover{border-color:var(--acid);color:var(--acid)}.objective{position:absolute;top:103px;left:26px}.objective>span{font-size:8px;letter-spacing:1.8px;color:#b5c7ba}#relays{display:flex;gap:7px;align-items:center;margin-top:9px}#relays i{width:8px;height:8px;border:1px solid var(--acid);transform:rotate(45deg);margin:3px}#relays i.on{background:var(--acid);box-shadow:0 0 10px #d7f36b66}#relay-count{font-size:9px;margin-left:10px;color:#a8b9aa;font-variant-numeric:tabular-nums}#crosshair{position:absolute;left:50%;top:50%;width:28px;height:28px;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 1px 2px #000)}#crosshair i{background:#e5f3d9ac;position:absolute}#crosshair i:nth-child(1){left:13px;top:0;width:2px;height:7px}#crosshair i:nth-child(2){left:13px;bottom:0;width:2px;height:7px}#crosshair i:nth-child(3){left:0;top:13px;width:7px;height:2px}#crosshair i:nth-child(4){right:0;top:13px;width:7px;height:2px}#crosshair b{position:absolute;left:13px;top:13px;width:2px;height:2px;background:var(--acid)}#crosshair.hit{transform:translate(-50%,-50%) rotate(45deg)}#crosshair.hit i{background:var(--acid)}#toast{position:absolute;left:50%;top:28%;transform:translateX(-50%) translateY(-5px);padding:13px 22px;border-left:2px solid var(--acid);background:#0d1917e8;color:#dae6ce;font-size:12px;letter-spacing:.5px;opacity:0;transition:opacity .15s,transform .15s;pointer-events:none;white-space:nowrap}#toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}#direction{position:absolute;bottom:120px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:9px;color:#d1e6cbcf;font-size:9px;letter-spacing:1px;text-shadow:0 1px 3px #000}#target-symbol{font-size:17px;color:var(--acid)}#target-arrow{font-size:20px;display:inline-block}#target-distance{color:#8da496;font-size:10px}#radar-wrap{position:absolute;right:24px;top:93px;width:146px;padding:5px 5px 10px;background:#0d1917a6;border:1px solid #9dbba01a;border-radius:3px}#radar{display:block;width:134px;height:134px;opacity:.85}#room-name{display:block;text-align:center;font-size:7px;letter-spacing:1.7px;color:#99b59e}.hud-bottom{position:absolute;left:max(28px,env(safe-area-inset-left));right:max(28px,env(safe-area-inset-right));bottom:max(27px,env(safe-area-inset-bottom));display:flex;align-items:flex-end;justify-content:space-between;pointer-events:none}.stat-label{font-size:8px;letter-spacing:2px;color:#a8bead}.vital>div:not(.bar){display:flex;align-items:baseline;gap:3px;margin:4px 0 7px}.vital strong{font-size:36px;line-height:1;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:-1px}.percent{font-size:11px;color:#8aa08f}.bar{height:3px;width:120px;background:#c6dfc21c}.bar i{display:block;height:100%;width:100%;background:var(--acid);transition:width .12s}.weapon-status{text-align:right}.weapon-status .bar{width:152px;margin:12px 0 8px}.weapon-status .bar i{width:0;background:#6ce5d2}#dash-label{font-size:7px;letter-spacing:1.2px;color:#92a99b}.modal-screen{background:#071110bf;display:flex;align-items:center;justify-content:center;padding:25px;backdrop-filter:blur(10px)}.panel{width:400px;max-height:100%;overflow:auto;padding:34px 33px;border:1px solid #9dbc9d30;background:linear-gradient(145deg,#15241ff5,#0b1514f5);box-shadow:0 30px 90px #0007}.panel .eyebrow{font-size:9px;letter-spacing:2.3px}h2{font-family:Impact,'Arial Narrow',Arial,sans-serif;font-size:46px;font-weight:800;line-height:1;letter-spacing:-.7px;margin:0 0 15px}.panel-copy{font-size:12px;line-height:1.8;color:#9eb2a4;margin:0 0 25px}.panel .primary{width:100%}.settings{margin:22px 0 20px;border-top:1px solid #9ab89722}.settings button{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border-bottom:1px solid #9ab89722;padding:13px 0;font-size:11px;color:#9eb2a4}.settings button strong{color:#d2e2cd;font-size:10px;font-weight:500}.help{font-size:10px;line-height:1.9;color:#799380}.panel>.text-button{display:block;margin:10px auto 0}.result-panel{width:440px}.result-stats{display:grid;grid-template-columns:1fr 1fr 1fr;margin:26px 0 30px;border-top:1px solid #9ab89722;padding-top:22px}.result-stats>div{display:flex;flex-direction:column;gap:8px}.result-stats span{font-size:8px;letter-spacing:1px;color:#799380}.result-stats strong{font-size:23px;font-weight:400;color:#dcead5}#touch-controls{display:none}body.touch #touch-controls{display:block}#move-zone{position:absolute;left:max(30px,env(safe-area-inset-left));bottom:max(70px,env(safe-area-inset-bottom));width:110px;height:110px;border:1px solid #b7d0be38;border-radius:50%;background:#1424212b;touch-action:none;display:grid;place-items:center}#move-stick{width:43px;height:43px;border:1px solid #d7f36b77;border-radius:50%;background:#c2de8630;pointer-events:none}.touch-move-label{position:absolute;left:61px;bottom:51px;font-size:7px;letter-spacing:1.5px;color:#9aba9a77}#fire-button{position:absolute;right:max(26px,env(safe-area-inset-right));bottom:72px;width:83px;height:83px;border-radius:50%;background:#a9ce4b24;border:1px solid #d7f36b77;display:grid;place-items:center;touch-action:none}#fire-button span{width:25px;height:25px;border:2px solid #d7f36b;border-radius:50%;box-shadow:0 0 0 7px #d7f36b22}#fire-button:active{background:#d7f36b5c}#dash-button{position:absolute;right:124px;bottom:85px;width:49px;height:49px;background:#1424219c;border:1px solid #b7d0be38;border-radius:50%;font-size:26px;color:#c6e5c1}.touch-look-label{position:absolute;right:26px;bottom:53px;font-size:7px;letter-spacing:1.3px;color:#9aba9a77}body.touch .hud-bottom{bottom:15px}body.touch .vital strong{font-size:25px}body.touch .bar{width:85px}body.touch .weapon-status .bar{width:100px}body.touch #direction{bottom:194px}body.touch #dash-label{display:none}body.touch #radar-wrap{width:115px;right:16px;top:87px}body.touch #radar{width:103px;height:103px}body.touch #room-name{font-size:6px}body.touch .objective{top:89px;left:18px}body.touch .hud-top{left:18px;right:18px;top:max(18px,env(safe-area-inset-top))}body.touch .logo-small{font-size:26px}body.touch .sector-tag strong{font-size:11px}body.touch .sector-tag span:not(.logo-small){font-size:7px}body.touch #toast{font-size:10px;max-width:90vw;white-space:normal;text-align:center;width:max-content}body[data-state=menu] #scanlines{opacity:.12}body[data-state=playing] #intro{display:none}body.low-motion #scanlines{display:none}
 @media(max-width:650px){#intro{padding:25px 25px 22px;background:linear-gradient(90deg,#0a1112e8,#0a111295 70%,#0a11124d)}.brand-top{font-size:8px;gap:9px}.brand-symbol{width:35px;height:35px;font-size:25px}.small{font-size:6px;letter-spacing:1.4px}.edition{font-size:7px;letter-spacing:1px}.intro-content{padding:25px 0}h1{font-size:clamp(92px,23vw,145px);letter-spacing:-4px;margin-bottom:23px}.eyebrow{font-size:8px;letter-spacing:2px}.tagline{font-size:20px}.intro-copy{font-size:12px}.primary{padding:17px 19px;font-size:12px;min-height:53px}.intro-meta{font-size:7px;gap:10px;letter-spacing:1.3px}.intro-bottom{font-size:8px;gap:15px;line-height:1.7}.text-button{font-size:8px;white-space:nowrap}.panel{padding:26px 25px}h2{font-size:40px}#radar-wrap{width:115px;right:16px;top:87px}#radar{width:103px;height:103px}#room-name{font-size:6px}}
@@ -115,12 +115,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       <p class="tagline">Du métal dans les veines.</p>
       <p class="intro-copy">Éventrez les forteresses. Abattez les colosses.<br>Écoutez le métal hurler. Et ce qui rôde entre deux riffs.</p>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
-      <div class="intro-meta"><span>3 COLOSSES</span><i></i><span>430 MACHINES</span><i></i><span>100 % PROCÉDURAL</span></div>
+      <div class="intro-meta"><span>18 MONDES</span><i></i><span>6 CHAPITRES</span><i></i><span>100 % PROCÉDURAL</span></div>
     </div>
     <div class="intro-bottom"><span id="intro-controls">ZQSD / WASD · Souris · Clic pour tirer</span><div class="intro-settings"><button id="intro-options" class="text-button">OPTIONS</button><button id="intro-sound" class="text-button">SON ACTIVÉ</button></div></div>
   </section>
   <div id="hud" hidden>
-    <header class="hud-top"><div class="sector-tag"><span class="logo-small">M/</span><div><span id="sector-number">SECTEUR 01 / 03</span><strong id="sector-title">Sas d’accès</strong></div></div><div class="top-buttons"><output id="fps-counter" class="fps-counter" title="Images par seconde" aria-label="Images par seconde" aria-live="off">— FPS</output><button id="map-button" class="icon-button" title="Carte (M)" aria-label="Afficher ou masquer la carte"><span class="map-icon" aria-hidden="true"></span></button><button id="pause-button" class="icon-button" title="Pause (Échap)" aria-label="Mettre en pause"><span class="pause-icon" aria-hidden="true"></span></button></div></header>
+    <header class="hud-top"><div class="sector-tag"><span class="logo-small">M/</span><div><span id="sector-number">MONDE 01 / 18</span><strong id="sector-title">Sas d’accès</strong></div></div><div class="top-buttons"><output id="fps-counter" class="fps-counter" title="Images par seconde" aria-label="Images par seconde" aria-live="off">— FPS</output><button id="map-button" class="icon-button" title="Carte (M)" aria-label="Afficher ou masquer la carte"><span class="map-icon" aria-hidden="true"></span></button><button id="pause-button" class="icon-button" title="Pause (Échap)" aria-label="Mettre en pause"><span class="pause-icon" aria-hidden="true"></span></button></div></header>
     <div class="score-status"><span id="combo">SIGNAL STABLE</span><strong id="score">00000</strong><span class="stat-label">SCORE</span></div>
     <div class="objective"><span id="objective-label">RÉTABLIR L’ALIMENTATION</span><div id="relays" title="Relais synchronisés"><i></i><i></i><i></i><span id="relay-count">0 / 3</span></div><div class="sector-progress"><span>COMMANDES <b id="mechanism-count">0 / 3</b></span><span>MACHINES <b id="enemy-count">0 / 120</b></span></div></div>
     <div id="wave-status" hidden><span id="wave-label"></span><strong id="wave-count"></strong><span id="wave-detail"></span></div>
@@ -144,7 +144,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     <div class="options-layout">
       <nav class="options-tabs" role="tablist" aria-label="Rubriques des options"><button id="tab-game" role="tab" aria-controls="pane-game" aria-selected="true"><span>01</span> Partie</button><button id="tab-image" role="tab" aria-controls="pane-image" aria-selected="false"><span>02</span> Image</button><button id="tab-audio" role="tab" aria-controls="pane-audio" aria-selected="false"><span>03</span> Audio</button><button id="tab-controls" role="tab" aria-controls="pane-controls" aria-selected="false"><span>04</span> Commandes</button></nav>
       <div class="options-body" id="options-body">
-        <section id="pane-game" role="tabpanel" aria-labelledby="tab-game"><p class="option-section-label">L’EXPÉDITION</p><h3>Gardez le signal.</h3><p class="panel-copy" id="checkpoint-status">Reprise au dernier point enregistré.</p><div class="mission-summary"><span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span></div><label class="option-row difficulty-row" for="difficulty-setting"><span>Difficulté</span><select id="difficulty-setting"><option value="0">Standard</option><option value="1">Brutal</option><option value="2">Cauchemar</option></select></label><p id="difficulty-hint" class="option-hint">La pression monte avec les secteurs et les objectifs.</p><label class="option-row ai-row" for="ai-setting"><span>Accélération de l’IA</span><select id="ai-setting"><option value="auto">Auto · NPU / GPU</option><option value="cpu">CPU · compatibilité</option></select></label><p class="option-hint" id="ai-status" role="status">Détection de l’accélérateur…</p><p class="help" id="help-text">ZQSD / WASD : déplacer · Souris : viser<br>Clic : tirer · 1 / 2 / 3 ou molette : arme trouvée<br>F : commandes et ascenseurs · E : onde défensive · V : crosse<br>Espace : esquiver · Maj : courir<br>M : carte · Échap : pause</p><p class="option-hint">Les armes et munitions se ramassent dans le décor. Les machines laissent aussi des crédits ; les colosses, des noyaux rares. Les ateliers réparent et améliorent votre équipement. Chaque réserve est limitée. Les machines sortent par vagues ; profitez des accalmies pour vous ravitailler. Marchez sur les tremplins pour bondir. Rupture ouvre des brèches ; reculez avant de tirer. Les colosses exposent leur cœur après leurs attaques. Surveillez les zones au sol, les grenades et les fuites brûlantes. Relais, commandes et paliers enregistrent la progression.</p><div class="menu-actions"><button id="restart" class="secondary">RECOMMENCER CE SECTEUR</button><button id="pause-main" class="text-button">RETOUR AU SIGNAL</button></div></section>
+        <section id="pane-game" role="tabpanel" aria-labelledby="tab-game"><p class="option-section-label">L’EXPÉDITION</p><h3>Gardez le signal.</h3><p class="panel-copy" id="checkpoint-status">Reprise au dernier point enregistré.</p><div class="mission-summary" id="mission-summary"><span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span></div><label class="option-row difficulty-row" for="difficulty-setting"><span>Difficulté</span><select id="difficulty-setting"><option value="0">Standard</option><option value="1">Brutal</option><option value="2">Cauchemar</option></select></label><p id="difficulty-hint" class="option-hint">La pression monte avec les secteurs et les objectifs.</p><label class="option-row ai-row" for="ai-setting"><span>Accélération de l’IA</span><select id="ai-setting"><option value="auto">Auto · NPU / GPU</option><option value="cpu">CPU · compatibilité</option></select></label><p class="option-hint" id="ai-status" role="status">Détection de l’accélérateur…</p><p class="help" id="help-text">ZQSD / WASD : déplacer · Souris : viser<br>Clic : tirer · 1 / 2 / 3 ou molette : arme trouvée<br>F : commandes et ascenseurs · E : onde défensive · V : crosse<br>Espace : esquiver · Maj : courir<br>M : carte · Échap : pause</p><p class="option-hint">Les armes et munitions se ramassent dans le décor. Les machines laissent aussi des crédits ; les colosses, des noyaux rares. Les ateliers réparent et améliorent votre équipement. Chaque réserve est limitée. Les machines sortent par vagues ; profitez des accalmies pour vous ravitailler. Marchez sur les tremplins pour bondir. Rupture ouvre des brèches ; reculez avant de tirer. Les colosses exposent leur cœur après leurs attaques. Surveillez les zones au sol, les grenades et les fuites brûlantes. Relais, commandes et paliers enregistrent la progression.</p><div class="menu-actions"><button id="restart" class="secondary">RECOMMENCER CE SECTEUR</button><button id="pause-main" class="text-button">RETOUR AU SIGNAL</button></div></section>
         <section id="pane-image" role="tabpanel" aria-labelledby="tab-image" hidden><p class="option-section-label">AFFICHAGE</p><h3>Votre terrain de jeu.</h3><div class="option-grid">
           <button class="option-toggle" id="quality-toggle">Qualité <strong>Auto</strong></button><label class="option-row" for="fps-limit"><span>Limite d’images</span><select id="fps-limit"><option value="0">Sans limite</option><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="120">120 FPS</option></select></label>
           <label class="option-slider" for="fov-setting"><span>Champ de vision <output id="fov-value">74°</output></span><input id="fov-setting" type="range" min="60" max="110" step="1"></label><label class="option-slider" for="brightness-setting"><span>Luminosité <output id="brightness-value">100 %</output></span><input id="brightness-setting" type="range" min="70" max="140" step="5"></label>
@@ -1758,9 +1758,10 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       return ((t ^ t >>> 14) >>> 0) / 4294967296;
     };
   }
-  function create(seed, stage) {
-    stage = Math.max(0, Math.min(2, Math.floor(stage || 0)));
-    const rand = randomFor(seed, stage), theme = themes[stage], original = layouts[stage];
+  function create(seed, stage, options = {}) {
+    const campaign=options?.campaign===true,index=campaign?Math.max(0,Math.min(17,Math.floor(stage||0))):null;
+    stage = campaign?index%3:Math.max(0, Math.min(2, Math.floor(stage || 0)));
+    const rand = randomFor(seed, campaign?index:stage), theme = themes[stage], original = layouts[stage];
     const layout = {...original, xs:original.xs.map(x=>x*1.6), zs:original.zs.map(z=>z*1.6)};
     const levels = [[0,0,3.2,0,3.2,3.2,3.2,6.4,6.4],[0,0,3.2,6.4,0,6.4,3.2,6.4],[0,0,3.2,0,3.2,6.4,3.2,6.4,6.4]][stage];
     const liftEdges = [[[1,4],[6,7]],[[1,2],[2,3]],[[1,4],[4,7]]][stage];
@@ -2375,6 +2376,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const sunLength=Math.hypot(...environment.sunDirection);
     environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
     const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
+    if(campaign)Object.assign(world,{campaign:true,index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
     detailWorld(world,theme,aperture,doorHeight);
     naturalDetails(world,theme);
     elevateWorld(world);
@@ -2395,7 +2397,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   // fittings remain attached to existing solids, flat on the floor or overhead;
   // open-air rooms and links deliberately receive none of this ceiling network.
   function detailWorld(w,theme,aperture,doorHeight) {
-    const rand=randomFor('FERRO-detail-03:'+w.seed,w.stage),out=w.meshes,baseCount=out.length;
+    const rand=randomFor('FERRO-detail-03:'+w.seed,w.campaign===true?w.index:w.stage),out=w.meshes,baseCount=out.length;
     const ambience=[],categories={},roomCounts={};
     const axes={x:[0,0,-Math.PI/2],y:[0,0,0],z:[Math.PI/2,0,0]};
     let owner='',outside=false;
@@ -2680,7 +2682,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   // main trees, cliffs, retaining walls and landmark cover were created above as
   // detail 0; this pass adds optional, non-solid vegetation and surface scatter.
   function naturalDetails(w,theme) {
-    const rand=randomFor('FERRO-nature-04:'+w.seed,w.stage),out=w.meshes,stats=w.detailStats;
+    const rand=randomFor('FERRO-nature-04:'+w.seed,w.campaign===true?w.index:w.stage),out=w.meshes,stats=w.detailStats;
     let region='';
     const green=w.stage===1?[.35,.36,.20]:w.stage===2?[.28,.43,.31]:[.29,.43,.21];
     function add(shape,p,s,mat,category,r=[0,0,0],detail=1,color,emissive=0) {
@@ -2874,7 +2876,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   // irregular leaf clusters; the scene gains no additional draw instances.
   function polishTrees(w){
     for(const t of w.trees){
-      const random=randomFor('METAL-botanical:'+w.seed+':'+t.mesh,w.stage),parts=w.meshes.slice(t.mesh,t.mesh+t.meshCount);
+      const random=randomFor('METAL-botanical:'+w.seed+':'+t.mesh,w.campaign===true?w.index:w.stage),parts=w.meshes.slice(t.mesh,t.mesh+t.meshCount);
       const originals=parts.map(m=>({...m,p:m.p.slice(),s:m.s.slice(),r:(m.r||[0,0,0]).slice()}));
       const endpoints=m=>{const [rx,ry,rz]=m.r,cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry),cz=Math.cos(rz),sz=Math.sin(rz),axis=[cz*sy*sx-sz*cx,sz*sy*sx+cz*cx,cy*sx];return [-1,1].map(q=>m.p.map((v,i)=>v+q*axis[i]*m.s[1]/2));};
       const wood=t.species==='birch'?[.57,.58,.49]:t.species==='dead'?[.35,.29,.23]:[.27,.23,.16];
@@ -4938,6 +4940,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
     if(progression)identity.push(world.progression,world.encounters||[],world.shops||[]);
+    if(world.campaign===true)identity.push({campaign:true,index:world.index,chapter:world.chapter});
     for(const c of JSON.stringify(identity))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
     fingerprint=(fingerprint>>>0).toString(36);
     function blocked(x,z,r=.28,y=ground(x,z),doors=doorBoxes,staticBoxes=solids,traps=trapBoxes,height=1.8){
@@ -7333,7 +7336,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)prefs.softMotion=false;
   let {muted,quality,softMotion}=prefs,bindingAction=null,optionsTab='game';
   const audio=FAudio.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
-  let renderer,world,sim,stage=0,seed=96,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
+  let renderer,world,sim,stage=0,seed=96,campaignMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades'],ammoNames=['balles','cartouches','roquettes','grenades'];
@@ -7350,8 +7353,8 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     let equipment;if(value.equipment){const q=value.equipment,left=q.left??null;if(!Number.isInteger(q.right)||!inventory.weapons[q.right]||left!==null&&left!=='shield'&&(!Number.isInteger(left)||!inventory.weapons[left]||left===q.right)||left==='shield'&&!inventory.shield||q.shieldEnergy!==undefined&&(!Number.isFinite(q.shieldEnergy)||q.shieldEnergy<0||q.shieldEnergy>100))return null;equipment={right:q.right,left,shieldEnergy:q.shieldEnergy??100};}
     return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice(),...(inventory.shield!==undefined?{shield:inventory.shield}:{})},...(economy?{economy}:{}),...(equipment?{equipment}:{})};
   }
-  function cachedWorld(n,worldSeed){const key=worldSeed+':'+n;if(!worldCache.has(key)){worldCache.set(key,FWorld.create(worldSeed,n));while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);}return worldCache.get(key);}
-  function trackLabel(){const t=window.FMusic?.getTrack?.(stage);return t?t.title+' · '+t.bpm+' BPM':'METAL · MOD PROCÉDURAL';}
+  function cachedWorld(n,worldSeed,campaign=campaignMode){const key=(campaign?'campaign:':'classic:')+worldSeed+':'+n;if(!worldCache.has(key)){worldCache.set(key,FWorld.create(worldSeed,n,campaign?{campaign:true}:undefined));while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);}return worldCache.get(key);}
+  function trackLabel(){const t=window.FMusic?.getTrack?.(world?.stage??stage%3);return t?t.title+' · '+t.bpm+' BPM':'METAL · MOD PROCÉDURAL';}
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
   function bindingLabel(id){return (prefs.bindings[id]||[]).map(FOptions.keyName).join(' / ');}
@@ -7393,15 +7396,17 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   }
   function toast(message,seconds=2.8){$('toast').textContent=message;$('toast').classList.add('visible');toastTime=seconds;}
   function encounter(name,caption){$('encounter-name').textContent=name;$('encounter-caption').textContent=caption;$('encounter').classList.add('visible');encounterTime=4.2;}
+  const savedIndex=v=>v?.version===3?v.index:v?.stage??0;
   function validSave(v){
-    return v&&v.version===2&&Number.isInteger(v.seed)&&v.seed>=0&&v.seed<=0xffffffff&&Number.isInteger(v.stage)&&v.stage>=0&&v.stage<3&&v.checkpoint&&v.runStats&&Object.keys(emptyStats()).every(k=>Number.isFinite(v.runStats[k])&&v.runStats[k]>=0&&v.runStats[k]<1e9);
+    const identity=v&&(v.version===2&&Number.isInteger(v.stage)&&v.stage>=0&&v.stage<3&&v.campaign!==true||v.version===3&&v.campaign===true&&Number.isInteger(v.index)&&v.index>=0&&v.index<18&&v.stage===v.index%3);
+    return identity&&Number.isInteger(v.seed)&&v.seed>=0&&v.seed<=0xffffffff&&v.checkpoint&&v.runStats&&Object.keys(emptyStats()).every(k=>Number.isFinite(v.runStats[k])&&v.runStats[k]>=0&&v.runStats[k]<1e9);
   }
   function readSave(){
     try{const raw=localStorage.getItem(SAVE_KEY);if(!raw||raw.length>2200000)return null;const v=JSON.parse(raw);return validSave(v)?v:null;}catch{return null;}
   }
   function refreshContinue(){
     $('resume-expedition').hidden=!savedRun;
-    $('save-label').textContent=savedRun?'SECTEUR '+String(savedRun.stage+1).padStart(2,'0'):'';
+    $('save-label').textContent=savedRun?(savedRun.version===3?'MONDE ':'SECTEUR ')+String(savedIndex(savedRun)+1).padStart(2,'0'):'';
     $('start').firstChild.textContent=savedRun?'Nouvelle expédition ':'Lancer l’assaut ';
   }
   function saveCheckpoint(){
@@ -7409,7 +7414,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     if(sim.state.player.airborne){checkpointPending=true;return;}
     checkpointPending=false;
     checkpoint=sim.snapshot();
-    savedRun={version:2,generation:world.generation||3,seed,stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
+    savedRun={version:world.campaign?3:2,...(world.campaign?{campaign:true,index:stage}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
     try{localStorage.setItem(SAVE_KEY,JSON.stringify(savedRun));saveAvailable=true;}catch{saveAvailable=false;}
     $('checkpoint-status').textContent='Reprise au dernier point enregistré.'+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
     refreshContinue();
@@ -7417,7 +7422,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   function clearSave(){checkpoint=null;savedRun=null;try{localStorage.removeItem(SAVE_KEY);}catch{}refreshContinue();}
   function restoreRun(v){
     if(!validSave(v))return false;
-    load(v.stage,v.seed,copyLoadout(v.entryLoadout||v.entryInventory));
+    load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3);
     if((v.generation||3)!==(world.generation||3)||!sim.restore(v.checkpoint,{recover:true}))return false;
     sim.setDifficulty?.(prefs.difficulty);
     runStats={...v.runStats};checkpoint=v.checkpoint;savedRun=v;selectedWeapon=sim.state.weapon;
@@ -7430,9 +7435,9 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       // Retain the old point separately when the new terrain makes its position invalid.
       try{if(!localStorage.getItem(SAVE_KEY+'-before-ascension'))localStorage.setItem(SAVE_KEY+'-before-ascension',JSON.stringify(v));}catch{}
       runStats={...v.runStats};selectedWeapon=[0,1,2,3].includes(v.checkpoint?.state?.weapon)?v.checkpoint.state.weapon:0;
-      load(v.stage,v.seed);saveCheckpoint();
+      load(savedIndex(v),v.seed,undefined,v.version===3);saveCheckpoint();
       start(v.generation!==world.generation?'Les lieux ont changé. Reprise à l’entrée du même secteur ; progression précédente conservée.':'Point de reprise illisible. Reprise à l’entrée de ce secteur.');
-    }else{runStats=emptyStats();selectedWeapon=0;load(0,96);saveCheckpoint();start('Nouvelle expédition. Trois secteurs vous attendent.');}
+    }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true);saveCheckpoint();start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');}
   }
   function clearInput(){keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
@@ -7443,17 +7448,19 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     if(value==='paused'||value==='options'){$('pause-kicker').textContent=value==='options'?'CONSOLE DE RÉGLAGE':'SIGNAL EN ATTENTE';$('resume').innerHTML=(value==='options'?'Retour':'Reprendre')+' <span class="arrow-icon" aria-hidden="true"></span>';$('restart').hidden=$('pause-main').hidden=value==='options';selectTab(value==='options'?'image':optionsTab);}
     if(value!=='playing'){audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
-  function load(n,newSeed,loadout){
+  function load(n,newSeed,loadout,asCampaign=campaignMode){
     checkpointPending=false;
-    stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed);const carry=copyLoadout(loadout);sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),...(brain?{brain}:{})});sim.setDifficulty?.(prefs.difficulty);
+    campaignMode=asCampaign;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode);const carry=copyLoadout(loadout);sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),...(brain?{brain}:{})});sim.setDifficulty?.(prefs.difficulty);
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;
     motion.reset();leftMotion.reset();shieldLift=0;lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
-    audio.setStage?.(stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
+    audio.setStage?.(world.stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
     $('music-title').textContent=trackLabel();
-    $('sector-number').textContent='SECTEUR '+String(stage+1).padStart(2,'0')+' / 03';$('sector-title').textContent=world.title;
-    document.body.dataset.stage=String(stage+1);$('radar-wrap').hidden=false;hudWait=0;renderHUD();
+    $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaign?world.chapterTitle+' · ':'')+world.title;
+    $('mission-summary').innerHTML=world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';
+    $('restart').textContent=world.campaign?'RECOMMENCER CE MONDE':'RECOMMENCER CE SECTEUR';
+    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=false;hudWait=0;renderHUD();
   }
   function syncDestruction(){
     const d=sim?.destruction,revision=sim?.state.destructionRevision??d?.revision;if(!d||revision===renderRevision)return;
@@ -7466,34 +7473,34 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   }
   function start(message){
     audio.start();audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});
-    toast(message||(stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
+    toast(message||(world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
-  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed);saveCheckpoint();start();}
-  async function preparePlay(nextStage,action){
+  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true);saveCheckpoint();start();}
+  async function preparePlay(nextStage,action,asCampaign=campaignMode){
     if(!window.FMusic?.warmup){action();return;}
-    const ticket=++preparationSerial;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent='SECTEUR '+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
+    const ticket=++preparationSerial;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent=(asCampaign?'MONDE ':'SECTEUR ')+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
     try{
       // Two animation frames show the preparation screen before any substantial work.
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      await Promise.all([FMusic.warmup(nextStage),brain?.prepare()]);await audio.prepare?.(nextStage);brainStatus();if(ticket!==preparationSerial)return;
+      await Promise.all([FMusic.warmup(nextStage%3),brain?.prepare()]);await audio.prepare?.(nextStage%3);brainStatus();if(ticket!==preparationSerial)return;
       $('loading-detail').textContent='Assemblage du territoire et de la simulation…';$('loading-bar').style.width='76%';
       await new Promise(resolve=>requestAnimationFrame(resolve));if(ticket!==preparationSerial)return;
       action();
     }catch(error){setMode('menu');toast('Préparation interrompue. Réessayez depuis le menu.',4);console.error('METAL preparation:',error);}
   }
   function result(dead,reason){
-    const s=sim.state,finished=!dead&&stage===2;
+    const s=sim.state,finished=!dead&&stage===(world.campaign?17:2);
     if(!dead){runStats.time+=s.elapsed;runStats.kills+=s.kills;runStats.shots+=s.shots;runStats.hits+=s.hits;runStats.score+=s.score||0;}
     $('result-kicker').textContent=dead?'TRANSMISSION PERDUE':finished?'TRANSMISSION RÉTABLIE':'RELAIS SYNCHRONISÉS';
     $('result-title').textContent=dead?(reason==='fall'?'Chute fatale.':'Signal perdu.'):finished?'Vous êtes sorti.':'Secteur sécurisé.';
-    $('result-copy').textContent=dead?(reason==='fall'?'La chute a rompu le signal. Reprenez au dernier point enregistré.':'Votre dernier point a gardé le signal. Les commandes et les arrivées en ascenseur enregistrent aussi votre progression.'):finished?'Trois colosses abattus. Neuf relais rallumés. Le dernier Veilleur s’est tu ; les forges respirent encore.':'Le colosse est tombé. Alimentation rétablie, relais synchronisés. Un nouveau territoire et une machine plus immense vous attendent.';
+    $('result-copy').textContent=dead?(reason==='fall'?'La chute a rompu le signal. Reprenez au dernier point enregistré.':'Votre dernier point a gardé le signal. Les commandes et les arrivées en ascenseur enregistrent aussi votre progression.'):finished?(world.campaign?'Dix-huit mondes traversés. Six chapitres arrachés aux machines. Le dernier Veilleur s’est tu ; les forges respirent encore.':'Trois colosses abattus. Neuf relais rallumés. Le dernier Veilleur s’est tu ; les forges respirent encore.'):'Le colosse est tombé. Alimentation rétablie, relais synchronisés. Un nouveau territoire et une machine plus immense vous attendent.';
     const stats=finished?runStats:{time:s.elapsed,kills:s.kills,shots:s.shots,hits:s.hits};
     $('result-time').textContent=formatTime(stats.time);$('result-kills').textContent=String(stats.kills);$('result-accuracy').textContent=(stats.shots?Math.min(100,Math.round(stats.hits/stats.shots*100)):0)+'%';
     $('result-score').textContent=String(Math.round(dead?runStats.score+(s.score||0):runStats.score));
-    $('continue').innerHTML=(dead?'Reprendre au point de reprise':finished?'Nouvelle expédition':'Rejoindre le secteur '+(stage+2))+' <span class="arrow-icon" aria-hidden="true"></span>';
+    $('continue').innerHTML=(dead?'Reprendre au point de reprise':finished?'Nouvelle expédition':(world.campaign?'Rejoindre le monde ':'Rejoindre le secteur ')+(stage+2))+' <span class="arrow-icon" aria-hidden="true"></span>';
     if(finished)clearSave();
     setMode(dead?'dead':finished?'complete':'cleared');
-    if(!dead&&!finished&&window.FMusic?.warmup){const nextStage=stage+1,nextSeed=seed;FMusic.warmup(nextStage).then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))).then(()=>{if(mode==='cleared'&&seed===nextSeed&&stage+1===nextStage)cachedWorld(nextStage,nextSeed);}).catch(error=>console.error('METAL preparation:',error));}
+    if(!dead&&!finished&&window.FMusic?.warmup){const nextStage=stage+1,nextSeed=seed,nextCampaign=!!world.campaign;FMusic.warmup(nextStage%3).then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))).then(()=>{if(mode==='cleared'&&seed===nextSeed&&stage+1===nextStage)cachedWorld(nextStage,nextSeed,nextCampaign);}).catch(error=>console.error('METAL preparation:',error));}
   }
   function formatTime(v){return Math.floor(v/60)+':'+String(Math.floor(v%60)).padStart(2,'0');}
   function events(){
@@ -8006,13 +8013,13 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     selectedWeapon=sim.state.weapon;leftMotion.impulse('switch');audio.switchWeapon?.();renderHUD();
   }
   $('start').addEventListener('click',()=>preparePlay(0,()=>newRun(savedRun?(Date.now()>>>0)%1000000:seed)));
-  $('resume-expedition').addEventListener('click',()=>preparePlay(savedRun?.stage||0,()=>resumeSaved(savedRun)));
+  $('resume-expedition').addEventListener('click',()=>preparePlay(savedIndex(savedRun),()=>resumeSaved(savedRun),savedRun?.version===3));
   $('intro-options').addEventListener('click',()=>setMode('options'));
   $('pause-button').addEventListener('click',togglePause);$('resume').addEventListener('click',togglePause);
   $('restart').addEventListener('click',()=>preparePlay(stage,()=>{load(stage,undefined,stageEntryLoadout);saveCheckpoint();start('Nouvelle tentative. Équipement et crédits de l’entrée du secteur restaurés.');}));
   $('continue').addEventListener('click',()=>{
     if(mode==='dead'){
-      preparePlay(savedRun?.stage||stage,()=>resumeSaved(savedRun));return;
+      preparePlay(savedRun?savedIndex(savedRun):stage,()=>resumeSaved(savedRun),savedRun?.version===3);return;
     }
     if(mode==='complete'){preparePlay(0,()=>newRun((Date.now()>>>0)%1000000));return;}
     const nextStage=stage+1,loadout=sim.exportLoadout?.()||sim.exportInventory?.();preparePlay(nextStage,()=>{load(nextStage,undefined,loadout);saveCheckpoint();start();});
@@ -8040,7 +8047,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     if(['paused','options'].includes(mode)&&optionsTab==='audio')$('audio-status').textContent=played?'Test lancé : tir, impact et ambiance. Les quatre volumes restent indépendants.':'Le test audio a été interrompu ou le son est indisponible.';
   });
   $('export-mod').addEventListener('click',()=>{
-    const data=window.FMusic?.getModule(stage);if(!data){$('audio-status').textContent='Le module audio est indisponible.';return;}
+    const data=window.FMusic?.getModule(world.stage);if(!data){$('audio-status').textContent='Le module audio est indisponible.';return;}
     const url=URL.createObjectURL(new Blob([data],{type:'audio/mod'})),link=document.createElement('a');link.href=url;link.download='METAL-'+String(stage+1).padStart(2,'0')+'.mod';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('audio-status').textContent='Module généré : '+Math.round(data.byteLength/1000)+' ko. Téléchargement lancé.';
   });
   $('map-button').addEventListener('click',()=>{$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();});

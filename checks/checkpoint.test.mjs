@@ -88,6 +88,57 @@ function arsenalWorld(seed,stage){
 }
 function collectArsenal(app){const sim=app.simulations.at(-1);for(const x of [3,6,8,9,10,12]){sim.move(sim.state.player,x-sim.state.player.x,0);app.frame(100);}return sim;}
 
+function campaignShellWorld(seed, index, options) {
+  const value = arsenalWorld(seed, options?.campaign ? index % 3 : index);
+  return options?.campaign ? { ...value, campaign: true, index, chapter: Math.floor(index / 3), chapterTitle: 'Chapitre ' + (Math.floor(index / 3) + 1) } : value;
+}
+function clearShellWorld(app) {
+  const sim = app.simulations.at(-1);
+  for (const x of [6, 8, 10, 15]) { sim.move(sim.state.player, x - sim.state.player.x, 0); app.frame(100); }
+}
+
+test('The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen', () => {
+  const app = harness(null, {}, campaignShellWorld); app.element('start').click();
+  for (let index = 0; index < 18; index++) {
+    const saved = JSON.parse(app.memory.get(key)), current = app.simulations.at(-1).state.world;
+    assert.equal(saved.version, 3); assert.equal(saved.campaign, true);
+    assert.equal(saved.index, index); assert.equal(saved.stage, index % 3);
+    assert.equal(current.index, index); assert.equal(current.stage, index % 3);
+    assert.equal(app.element('sector-number').textContent, 'MONDE ' + String(index + 1).padStart(2, '0') + ' / 18');
+    assert.match(app.element('sector-title').textContent, new RegExp('Chapitre ' + (Math.floor(index / 3) + 1)));
+    clearShellWorld(app);
+    assert.equal(app.element('body').dataset.state, index === 17 ? 'complete' : 'cleared');
+    if (index < 17) app.element('continue').click();
+  }
+  assert.equal(app.memory.has(key), false, 'Only the final world clears the finished campaign save');
+  assert(app.sounds.filter(q => q.name === 'setStage').every(q => [0, 1, 2].includes(q.args[0])), 'Audio must use a base biome track, never a campaign index');
+});
+
+test('A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode', () => {
+  const app = harness(null, {}, campaignShellWorld); app.element('start').click();
+  for (let i = 0; i < 6; i++) { clearShellWorld(app); app.element('continue').click(); }
+  const saved = JSON.parse(app.memory.get(key)), resumed = harness(saved, {}, campaignShellWorld);
+  resumed.element('resume-expedition').click();
+  assert.equal(resumed.simulations.at(-1).state.world.index, 6);
+  assert.equal(resumed.element('sector-number').textContent, 'MONDE 07 / 18');
+  assert.equal(JSON.parse(resumed.memory.get(key)).version, 3);
+  const legacy = harness(savedPoint()); legacy.element('resume-expedition').click();
+  assert.equal(legacy.simulations.at(-1).state.world.campaign, undefined);
+  assert.equal(legacy.element('sector-number').textContent, 'SECTEUR 03 / 03');
+  assert.equal(JSON.parse(legacy.memory.get(key)).version, 2);
+});
+
+test('Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly', () => {
+  const app = harness(null, {}, campaignShellWorld); app.element('start').click();
+  const good = JSON.parse(app.memory.get(key));
+  for (const bad of [{ ...good, index: 18 }, { ...good, index: -1 }, { ...good, index: 4, stage: 2 }, { ...good, campaign: false }]) {
+    const invalid = harness(bad, {}, campaignShellWorld);
+    assert.equal(invalid.element('resume-expedition').hidden, true);
+    invalid.element('start').click();
+    assert.equal(invalid.simulations.at(-1).state.world.index, 0);
+  }
+});
+
 test('Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together',()=>{
   const app=harness(null,{},arsenalWorld);app.element('start').click();app.frame(100);
   assert.equal(app.element('arsenal-count').textContent,'1 / 4');assert.equal(app.element('weapon-slot-3').disabled,true);

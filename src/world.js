@@ -33,9 +33,10 @@
       return ((t ^ t >>> 14) >>> 0) / 4294967296;
     };
   }
-  function create(seed, stage) {
-    stage = Math.max(0, Math.min(2, Math.floor(stage || 0)));
-    const rand = randomFor(seed, stage), theme = themes[stage], original = layouts[stage];
+  function create(seed, stage, options = {}) {
+    const campaign=options?.campaign===true,index=campaign?Math.max(0,Math.min(17,Math.floor(stage||0))):null;
+    stage = campaign?index%3:Math.max(0, Math.min(2, Math.floor(stage || 0)));
+    const rand = randomFor(seed, campaign?index:stage), theme = themes[stage], original = layouts[stage];
     const layout = {...original, xs:original.xs.map(x=>x*1.6), zs:original.zs.map(z=>z*1.6)};
     const levels = [[0,0,3.2,0,3.2,3.2,3.2,6.4,6.4],[0,0,3.2,6.4,0,6.4,3.2,6.4],[0,0,3.2,0,3.2,6.4,3.2,6.4,6.4]][stage];
     const liftEdges = [[[1,4],[6,7]],[[1,2],[2,3]],[[1,4],[4,7]]][stage];
@@ -650,6 +651,7 @@
     const sunLength=Math.hypot(...environment.sunDirection);
     environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
     const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
+    if(campaign)Object.assign(world,{campaign:true,index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
     detailWorld(world,theme,aperture,doorHeight);
     naturalDetails(world,theme);
     elevateWorld(world);
@@ -670,7 +672,7 @@
   // fittings remain attached to existing solids, flat on the floor or overhead;
   // open-air rooms and links deliberately receive none of this ceiling network.
   function detailWorld(w,theme,aperture,doorHeight) {
-    const rand=randomFor('FERRO-detail-03:'+w.seed,w.stage),out=w.meshes,baseCount=out.length;
+    const rand=randomFor('FERRO-detail-03:'+w.seed,w.campaign===true?w.index:w.stage),out=w.meshes,baseCount=out.length;
     const ambience=[],categories={},roomCounts={};
     const axes={x:[0,0,-Math.PI/2],y:[0,0,0],z:[Math.PI/2,0,0]};
     let owner='',outside=false;
@@ -955,7 +957,7 @@
   // main trees, cliffs, retaining walls and landmark cover were created above as
   // detail 0; this pass adds optional, non-solid vegetation and surface scatter.
   function naturalDetails(w,theme) {
-    const rand=randomFor('FERRO-nature-04:'+w.seed,w.stage),out=w.meshes,stats=w.detailStats;
+    const rand=randomFor('FERRO-nature-04:'+w.seed,w.campaign===true?w.index:w.stage),out=w.meshes,stats=w.detailStats;
     let region='';
     const green=w.stage===1?[.35,.36,.20]:w.stage===2?[.28,.43,.31]:[.29,.43,.21];
     function add(shape,p,s,mat,category,r=[0,0,0],detail=1,color,emissive=0) {
@@ -1149,7 +1151,7 @@
   // irregular leaf clusters; the scene gains no additional draw instances.
   function polishTrees(w){
     for(const t of w.trees){
-      const random=randomFor('METAL-botanical:'+w.seed+':'+t.mesh,w.stage),parts=w.meshes.slice(t.mesh,t.mesh+t.meshCount);
+      const random=randomFor('METAL-botanical:'+w.seed+':'+t.mesh,w.campaign===true?w.index:w.stage),parts=w.meshes.slice(t.mesh,t.mesh+t.meshCount);
       const originals=parts.map(m=>({...m,p:m.p.slice(),s:m.s.slice(),r:(m.r||[0,0,0]).slice()}));
       const endpoints=m=>{const [rx,ry,rz]=m.r,cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry),cz=Math.cos(rz),sz=Math.sin(rz),axis=[cz*sy*sx-sz*cx,sz*sy*sx+cz*cx,cy*sx];return [-1,1].map(q=>m.p.map((v,i)=>v+q*axis[i]*m.s[1]/2));};
       const wood=t.species==='birch'?[.57,.58,.49]:t.species==='dead'?[.35,.29,.23]:[.27,.23,.16];

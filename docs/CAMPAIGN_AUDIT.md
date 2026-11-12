@@ -57,3 +57,7 @@ Chaque phase possède ses tests propres et repasse la suite. Les contrôles hist
 ## Synchronisation GitHub
 
 Le fetch Git HTTPS direct n'a pas d'identifiants dans cet environnement. La référence `main` et son arbre sont donc lus par le connecteur GitHub autorisé avant les commits ; les 43 fichiers de départ ont été comparés par SHA Git et mode. L'objet de commit de départ a été reconstruit et vérifié contre son SHA exact pour créer la branche locale depuis le véritable commit GitHub. Toute évolution concurrente de `main` sera examinée et intégrée avant la fusion, sans écrasement forcé.
+
+## Validation de phase A
+
+Suite complète : 301 tests réussis, 0 échec, en 122 097,156 ms pour node:test. Les 18 configurations historiques passent toujours ; les nouveaux contrôles couvrent 54 mondes (18 index × trois graines), 13 104 cibles accessibles et six empreintes historiques exactes. Le shell parcourt réellement ses transitions jusqu’au monde 18 et recharge les enveloppes v2/v3 dans leur mode respectif. Build : 694 793 octets bruts, SHA-256 `372e9ad42d72e92b5bea416850d86e936ca3d48a27e680678c6fecad87eb669d`, aucun asset externe.

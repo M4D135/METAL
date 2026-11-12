@@ -167,6 +167,7 @@
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
     if(progression)identity.push(world.progression,world.encounters||[],world.shops||[]);
+    if(world.campaign===true)identity.push({campaign:true,index:world.index,chapter:world.chapter});
     for(const c of JSON.stringify(identity))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
     fingerprint=(fingerprint>>>0).toString(36);
     function blocked(x,z,r=.28,y=ground(x,z),doors=doorBoxes,staticBoxes=solids,traps=trapBoxes,height=1.8){
