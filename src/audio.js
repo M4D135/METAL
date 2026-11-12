@@ -3,14 +3,14 @@
   'use strict';
   window.FAudio = {
     create: function () {
-      var ctx = null, master, effects, ambience, musicBus, droneLevel, airFilter, airVolume, echoSend, noiseBuffer, motorLevel, motorOscillator, steamLevel, steamPan;
+      var ctx = null, master, effects, ambience, musicBus, droneLevel, droneSway, airFilter, airVolume, echoSend, noiseBuffer, motorLevel, motorOscillator, steamLevel, steamPan;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
       var lastStep = -1, stepSide = 1, lastAlert = -1, natureTime = 0;
       var environment = {}, outside = 0, machinery = 0, steam = 0, steamSide = 0, music = null, playing = false;
       var mix = {master:1,music:.45,effects:1,ambience:1};
       var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null);
       var priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
-      var MUSIC_GAIN = .56, EFFECTS_GAIN = .9, AMBIENCE_GAIN = .9;
+      var MUSIC_GAIN = .56, EFFECTS_GAIN = .9, AMBIENCE_GAIN = .7;
       var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,outputCeiling:1};
       function remember(node) { persistent.push(node); return node; }
       function random() {
@@ -48,7 +48,7 @@
       }
       function duckMusic() {
         if (cueDucked || !musicBus || !cue || mix.effects <= 0) return;
-        var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|wave|core|mechanism|shieldRaise)$/.test(cue) ? .68 : 1;
+        var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism|shieldRaise)$/.test(cue) ? .68 : 1;
         if (strength === 1) return;
         strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
         cueDucked = true;
@@ -90,7 +90,7 @@
       }
       function updateSteam() {
         if (!ctx || !steamLevel || disposed) return;
-        steamLevel.gain.setTargetAtTime(playing ? steam * .115 : 0, ctx.currentTime, steam ? .09 : .025);
+        steamLevel.gain.setTargetAtTime(playing ? steam * .085 : 0, ctx.currentTime, steam ? .09 : .025);
         if (steamPan.pan) steamPan.pan.setTargetAtTime(steamSide, ctx.currentTime, .12);
       }
       function horrorCue(kind,value) {
@@ -202,7 +202,7 @@
           var air = remember(ctx.createBufferSource()); airVolume = remember(ctx.createGain());
           airFilter = remember(ctx.createBiquadFilter());
           air.buffer = noiseBuffer; air.loop = true;
-          airFilter.type = 'lowpass'; airFilter.frequency.value = 380;
+          airFilter.type = 'bandpass'; airFilter.frequency.value = 650; airFilter.Q.value = .45;
           airVolume.gain.value = 0;
           air.connect(airFilter); airFilter.connect(airVolume); airVolume.connect(ambience); air.start();
 
@@ -214,9 +214,9 @@
             oscillator.frequency.value = frequency; level.gain.value = index === 2 ? .33 : .5;
             oscillator.connect(level); level.connect(droneLevel); oscillator.start();
           });
-          var sway = remember(ctx.createOscillator()), swayDepth = remember(ctx.createGain());
-          sway.frequency.value = .087; swayDepth.gain.value = .004;
-          sway.connect(swayDepth); swayDepth.connect(droneLevel.gain); sway.start();
+          var sway = remember(ctx.createOscillator()); droneSway = remember(ctx.createGain());
+          sway.frequency.value = .087; droneSway.gain.value = 0;
+          sway.connect(droneSway); droneSway.connect(droneLevel.gain); sway.start();
           motorLevel = remember(ctx.createGain()); motorLevel.gain.value = 0;
           motorOscillator = remember(ctx.createOscillator()); motorOscillator.type = 'triangle'; motorOscillator.frequency.value = 48;
           motorOscillator.connect(motorLevel); motorLevel.connect(ambience); motorOscillator.start();
@@ -243,12 +243,15 @@
         var now = ctx.currentTime;
         var active = playing || preview;
         if (now >= duckUntil + 1) stats.duckGain = MUSIC_GAIN;
-        droneLevel.gain.setTargetAtTime(active ? (.038 + threat * .012 + pressure*.024 + stage * .003) * (1 - outside * .42) : 0, now, .25);
-        airFilter.frequency.setTargetAtTime(530 + threat * 290 + pressure*220 + stage * 90 + outside * 450, now, .4);
+        // Keep the continuous bed behind actionable sounds; pressure changes color,
+        // not an ever-growing bass floor. The modulation also silences on pause.
+        droneLevel.gain.setTargetAtTime(active ? (.011 + threat * .005 + pressure*.008 + stage * .001) * (1 - outside * .55) : 0, now, .25);
+        droneSway.gain.setTargetAtTime(active ? .0012 : 0, now, .25);
+        airFilter.frequency.setTargetAtTime(650 + threat * 120 + pressure*80 + stage * 60 + outside * 550, now, .4);
         var wind = Math.max(.2, Math.min(2, Number(environment.wind) || 1));
-        airVolume.gain.setTargetAtTime(active ? .085 + pressure*.035 + outside * wind * (.025 + .014 * Math.sin(now * .31)) : 0, now, .3);
+        airVolume.gain.setTargetAtTime(active ? .025 + pressure*.012 + outside * wind * (.010 + .004 * Math.sin(now * .23)) : 0, now, .3);
         echoSend.gain.setTargetAtTime(.11 - outside * .075, now, .65);
-        motorLevel.gain.setTargetAtTime(active ? machinery * .095 : 0, now, .18);
+        motorLevel.gain.setTargetAtTime(active ? machinery * .042 : 0, now, .18);
         motorOscillator.frequency.setTargetAtTime(48 + machinery * 18 + Math.sin(now * 5) * machinery, now, .12);
         if (active && outside > .5 && now >= natureTime) {
           natureTime = now + 4 + random() * 5;
@@ -280,7 +283,7 @@
         if (musicBus && ctx) { musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setTargetAtTime(MUSIC_GAIN,ctx.currentTime,.03); }
         duckUntil = 0; duckDepth = 1; stats.duckGain = MUSIC_GAIN;
         updateMaster();
-        if (ctx && !playing) for (var node of [airVolume,droneLevel,motorLevel]) if (node) node.gain.setTargetAtTime(0,ctx.currentTime,.025);
+        if (ctx && !playing) for (var node of [airVolume,droneLevel,motorLevel,droneSway]) if (node) node.gain.setTargetAtTime(0,ctx.currentTime,.025);
       }
       function testMix(options) {
         cancelTestMix();
@@ -294,7 +297,7 @@
           // These use the real buses, samples and cue methods. Volume sliders,
           // including an intentionally silent effects/ambience/music bus, hold.
           var events = [
-            {at:0,run:function(){noise(1.7,.15,720,-.4,0,'bandpass',ambience);tone(146,115,1.5,.055,'triangle',0,.4,600,ambience);}},
+            {at:0,run:function(){noise(1.7,.06,900,-.4,0,'bandpass',ambience);tone(146,115,1.5,.022,'triangle',0,.4,600,ambience);}},
             {at:.25,run:function(){api.shot();}},
             {at:.55,run:function(){api.shot();}},
             {at:.9,run:function(){api.fracture();}},
@@ -321,14 +324,15 @@
           return FMusic.warmup(next).then(function () { return !!(ctx && music && !disposed && music.prepare(next)); });
         },
         setMuted: function (value) {
-          cancelTestMix();
-          muted = !!value;
+          var next = !!value;
+          if (next !== muted) cancelTestMix();
+          muted = next;
           updateMaster();
         },
         setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(Math.max(threat,pressure*.65)); },
         setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(Math.max(threat,pressure*.65)); },
         setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; updateSteam(); if (music) { music.setStage(stage); music.setThreat(threat); } },
-        setPlaying: function (value) { cancelTestMix(); playing = !!value; updateSteam(); if (music) music.setPlaying(playing); if (!playing && ctx) for (var node of [airVolume,droneLevel,motorLevel]) if (node) node.gain.setTargetAtTime(0,ctx.currentTime,.025); },
+        setPlaying: function (value) { cancelTestMix(); playing = !!value; updateSteam(); if (music) music.setPlaying(playing); if (!playing && ctx) for (var node of [airVolume,droneLevel,motorLevel,droneSway]) if (node) node.gain.setTargetAtTime(0,ctx.currentTime,.025); },
         setMix: function (value) {
           for (var key in mix) if (Number.isFinite(value && value[key])) mix[key] = Math.max(0, Math.min(1, value[key]));
           if (!ctx || disposed) return;
@@ -445,7 +449,17 @@
           }
         },
         shot: function (value) {
-          var e=handEvent('shot',value,.045);if(!e)return;var g=e.level;
+          var pistol=!!value&&value.weapon===4;
+          if(pistol&&!playing&&!preview)return;
+          var e=handEvent(pistol?'pistol':'shot',value,pistol?.08:.045);if(!e)return;var g=e.level;
+          if(pistol){
+            // A compact crack, a short body and the closing slide; no sample asset.
+            tone(260,68,.115,.18*g,'triangle',0,e.pan,2200);
+            tone(1560,240,.045,.065*g,'sawtooth',0,e.pan,3400);
+            noise(.058,.19*g,2900,e.pan,0,'highpass');
+            noise(.024,.065*g,4600,e.pan,.048,'highpass');
+            return;
+          }
           tone(185, 45, .16, .24*g, 'sawtooth', 0, e.pan+.08, 1800);
           tone(1150, 180, .065, .07*g, 'triangle', 0, e.pan+.02, 2800);
           noise(.095, .23*g, 2350, e.pan+.1);
@@ -524,6 +538,17 @@
           var e=effectEvent('weaponPickup',value,.2);if(!e)return;
           noise(.09,.13*e.level,1800,e.pan,0,'bandpass');tone(120,52,.21,.13*e.level,'triangle',0,e.pan,900);
           tone(330,440,.23,.075*e.level,'sawtooth',.08,-.16,1200);tone(660,880,.26,.055*e.level,'triangle',.18,.16,1800);
+        },
+        // A new campaign discovery has one short forged-metal fanfare. It is
+        // dispatched only by the discovery event, never by snapshot restore.
+        trophy: function (value) {
+          if(!playing&&!preview)return;
+          var e=effectEvent('trophy',value,1.1);if(!e)return;var g=e.level;
+          noise(.095,.13*g,1900,e.pan,0,'bandpass');
+          tone(88,55,.24,.12*g,'triangle',0,e.pan,950);
+          tone(164.81,164.81,.32,.085*g,'sawtooth',.035,-.12,1400);
+          tone(246.94,246.94,.36,.07*g,'sawtooth',.13,.12,1600);
+          tone(329.63,329.63,.48,.06*g,'triangle',.25,0,2200);
         },
         empty: function (value) {
           var e=effectEvent('empty',value,.18);if(!e)return;
@@ -616,7 +641,7 @@
       };
       // Priority belongs to a cue, not its waveform. A rocket's click, body
       // and exhaust keep the same reservation and cause one short music dip.
-      var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|wave|core|win)$/;
+      var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
       var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose)/;
       Object.keys(api).forEach(function (name) {
         if (typeof api[name] !== 'function' || helpers.test(name)) return;

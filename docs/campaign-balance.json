@@ -1,0 +1,2285 @@
+{
+  "version": 1,
+  "seed": 96,
+  "simulationHz": 40,
+  "difficulty": 0,
+  "limitSeconds": 90,
+  "methodology": "Four infantry definitions sampled deterministically from each generated world. Identical small 3D arena with two physical covers. A bot moves, aims, selects owned weapons, fires and raises its owned shield through normal step inputs. CPU tactical network; no imported assets. No health or enemy-state mutation during combat. Initial spawn grace is disabled. Nominal assumes scheduled trophies have been found; pistol-only omits every optional discovery. These are controlled simulations, not complete campaign runs, human playtests, FPS measurements or real-device validation.",
+  "weaponOrder": [
+    "smg",
+    "shotgun",
+    "rocket",
+    "grenade",
+    "pistol"
+  ],
+  "rows": [
+    {
+      "world": 1,
+      "index": 0,
+      "chapter": 1,
+      "decor": 0,
+      "title": "La lisière rouillée",
+      "garrison": 42,
+      "profile": {
+        "version": 1,
+        "garrison": 42,
+        "garrisonScale": 0.35,
+        "maxActive": 4,
+        "grenadiers": 0,
+        "rocketeers": 0,
+        "bossHpScale": 0.25,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 5.55,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 16.23,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.55,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 16.23,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 2,
+      "index": 1,
+      "chapter": 1,
+      "decor": 1,
+      "title": "La carrière des braises",
+      "garrison": 49,
+      "profile": {
+        "version": 1,
+        "garrison": 49,
+        "garrisonScale": 0.35,
+        "maxActive": 4,
+        "grenadiers": 0,
+        "rocketeers": 0,
+        "bossHpScale": 0.25,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.9,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 14.606,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 4.9,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 14.606,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 3,
+      "index": 2,
+      "chapter": 1,
+      "decor": 2,
+      "title": "Les jardins du veilleur",
+      "garrison": 60,
+      "profile": {
+        "version": 1,
+        "garrison": 60,
+        "garrisonScale": 0.35,
+        "maxActive": 4,
+        "grenadiers": 0,
+        "rocketeers": 0,
+        "bossHpScale": 0.25,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.575,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 15,
+          "hits": 15,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 13.81,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 4.575,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 15,
+          "hits": 15,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 13.81,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 4,
+      "index": 3,
+      "chapter": 2,
+      "decor": 0,
+      "title": "La lisière rouillée",
+      "garrison": 54,
+      "profile": {
+        "version": 1,
+        "garrison": 54,
+        "garrisonScale": 0.45,
+        "maxActive": 5,
+        "grenadiers": 2,
+        "rocketeers": 0,
+        "bossHpScale": 0.32,
+        "trialEnemies": 3
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 5.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 15.409,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 1,
+            "maxActive": 5,
+            "damageMultiplier": 0.66,
+            "cadenceMultiplier": 0.76,
+            "entryTier": 1,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 15.409,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.91
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 5,
+      "index": 4,
+      "chapter": 2,
+      "decor": 1,
+      "title": "La carrière des braises",
+      "garrison": 63,
+      "profile": {
+        "version": 1,
+        "garrison": 63,
+        "garrisonScale": 0.45,
+        "maxActive": 5,
+        "grenadiers": 2,
+        "rocketeers": 0,
+        "bossHpScale": 0.32,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 5.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 15.409,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 1,
+            "maxActive": 5,
+            "damageMultiplier": 0.66,
+            "cadenceMultiplier": 0.76,
+            "entryTier": 1,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 15.409,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.91
+          },
+          "enemyTypes": [
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 6,
+      "index": 5,
+      "chapter": 2,
+      "decor": 2,
+      "title": "Les jardins du veilleur",
+      "garrison": 77,
+      "profile": {
+        "version": 1,
+        "garrison": 77,
+        "garrisonScale": 0.45,
+        "maxActive": 5,
+        "grenadiers": 2,
+        "rocketeers": 0,
+        "bossHpScale": 0.32,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.9,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 14.606,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 1,
+            "maxActive": 5,
+            "damageMultiplier": 0.66,
+            "cadenceMultiplier": 0.76,
+            "entryTier": 1,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 4.9,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 14.606,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.91
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 7,
+      "index": 6,
+      "chapter": 3,
+      "decor": 0,
+      "title": "La lisière rouillée",
+      "garrison": 66,
+      "profile": {
+        "version": 1,
+        "garrison": 66,
+        "garrisonScale": 0.55,
+        "maxActive": 6,
+        "grenadiers": 3,
+        "rocketeers": 0,
+        "bossHpScale": 0.45,
+        "trialEnemies": 3
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.525,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            18,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 13.687,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 2,
+            "maxActive": 6,
+            "damageMultiplier": 0.75,
+            "cadenceMultiplier": 0.82,
+            "entryTier": 2,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.55,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 16.23,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.82
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 8,
+      "index": 7,
+      "chapter": 3,
+      "decor": 1,
+      "title": "La carrière des braises",
+      "garrison": 77,
+      "profile": {
+        "version": 1,
+        "garrison": 77,
+        "garrisonScale": 0.55,
+        "maxActive": 6,
+        "grenadiers": 3,
+        "rocketeers": 0,
+        "bossHpScale": 0.45,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 1.675,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 12,
+          "hits": 12,
+          "ammoConsumed": [
+            12,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 5.701,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 2,
+            "maxActive": 6,
+            "damageMultiplier": 0.75,
+            "cadenceMultiplier": 0.82,
+            "entryTier": 2,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 3.6,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 12,
+          "hits": 12,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 11.362,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.82
+          },
+          "enemyTypes": [
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 9,
+      "index": 8,
+      "chapter": 3,
+      "decor": 2,
+      "title": "Les jardins du veilleur",
+      "garrison": 94,
+      "profile": {
+        "version": 1,
+        "garrison": 94,
+        "garrisonScale": 0.55,
+        "maxActive": 6,
+        "grenadiers": 3,
+        "rocketeers": 0,
+        "bossHpScale": 0.45,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.375,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            17,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 13.319,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 2,
+            "maxActive": 6,
+            "damageMultiplier": 0.75,
+            "cadenceMultiplier": 0.82,
+            "entryTier": 2,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 15.409,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.82
+          },
+          "enemyTypes": [
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 10,
+      "index": 9,
+      "chapter": 4,
+      "decor": 0,
+      "title": "La lisière rouillée",
+      "garrison": 84,
+      "profile": {
+        "version": 1,
+        "garrison": 84,
+        "garrisonScale": 0.7,
+        "maxActive": 8,
+        "grenadiers": 5,
+        "rocketeers": 2,
+        "bossHpScale": 0.62,
+        "trialEnemies": 3
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            16,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            16,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 12.948,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 3,
+            "maxActive": 8,
+            "damageMultiplier": 0.84,
+            "cadenceMultiplier": 0.88,
+            "entryTier": 3,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 4.9,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 14.606,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.73
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 11,
+      "index": 10,
+      "chapter": 4,
+      "decor": 1,
+      "title": "La carrière des braises",
+      "garrison": 98,
+      "profile": {
+        "version": 1,
+        "garrison": 98,
+        "garrisonScale": 0.7,
+        "maxActive": 8,
+        "grenadiers": 5,
+        "rocketeers": 2,
+        "bossHpScale": 0.62,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.525,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            18,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            16,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 13.687,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 3,
+            "maxActive": 8,
+            "damageMultiplier": 0.84,
+            "cadenceMultiplier": 0.88,
+            "entryTier": 3,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.55,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 16.23,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.73
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 12,
+      "index": 11,
+      "chapter": 4,
+      "decor": 2,
+      "title": "Les jardins du veilleur",
+      "garrison": 119,
+      "profile": {
+        "version": 1,
+        "garrison": 119,
+        "garrisonScale": 0.7,
+        "maxActive": 8,
+        "grenadiers": 5,
+        "rocketeers": 2,
+        "bossHpScale": 0.62,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.375,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            17,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            16,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 13.319,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 3,
+            "maxActive": 8,
+            "damageMultiplier": 0.84,
+            "cadenceMultiplier": 0.88,
+            "entryTier": 3,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 15.409,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.73
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 13,
+      "index": 12,
+      "chapter": 5,
+      "decor": 0,
+      "title": "La lisière rouillée",
+      "garrison": 102,
+      "profile": {
+        "version": 1,
+        "garrison": 102,
+        "garrisonScale": 0.85,
+        "maxActive": 10,
+        "grenadiers": 6,
+        "rocketeers": 4,
+        "bossHpScale": 0.8,
+        "trialEnemies": 3
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.525,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            18,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            16,
+            0,
+            8,
+            1
+          ],
+          "distanceMoved": 13.687,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 4,
+            "maxActive": 10,
+            "damageMultiplier": 0.92,
+            "cadenceMultiplier": 0.94,
+            "entryTier": 4,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 1,
+              "weapon": "grenade"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.55,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 16.23,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.64
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 1,
+              "weapon": "grenade"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 14,
+      "index": 13,
+      "chapter": 5,
+      "decor": 1,
+      "title": "La carrière des braises",
+      "garrison": 119,
+      "profile": {
+        "version": 1,
+        "garrison": 119,
+        "garrisonScale": 0.85,
+        "maxActive": 10,
+        "grenadiers": 6,
+        "rocketeers": 4,
+        "bossHpScale": 0.8,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.525,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            18,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            16,
+            0,
+            8,
+            1
+          ],
+          "distanceMoved": 13.687,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 4,
+            "maxActive": 10,
+            "damageMultiplier": 0.92,
+            "cadenceMultiplier": 0.94,
+            "entryTier": 4,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.55,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 18,
+          "hits": 18,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 16.23,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.64
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 15,
+      "index": 14,
+      "chapter": 5,
+      "decor": 2,
+      "title": "Les jardins du veilleur",
+      "garrison": 145,
+      "profile": {
+        "version": 1,
+        "garrison": 145,
+        "garrisonScale": 0.85,
+        "maxActive": 10,
+        "grenadiers": 6,
+        "rocketeers": 4,
+        "bossHpScale": 0.8,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.375,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            17,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            16,
+            0,
+            8,
+            1
+          ],
+          "distanceMoved": 13.319,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 4,
+            "maxActive": 10,
+            "damageMultiplier": 0.92,
+            "cadenceMultiplier": 0.94,
+            "entryTier": 4,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 17,
+          "hits": 17,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 15.409,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.64
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 16,
+      "index": 15,
+      "chapter": 6,
+      "decor": 0,
+      "title": "La lisière rouillée",
+      "garrison": 120,
+      "profile": {
+        "version": 1,
+        "garrison": 120,
+        "garrisonScale": 1,
+        "maxActive": 12,
+        "grenadiers": 8,
+        "rocketeers": 6,
+        "bossHpScale": 1,
+        "trialEnemies": 3
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.675,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 19,
+          "hits": 19,
+          "ammoConsumed": [
+            19,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            16,
+            6,
+            8,
+            1
+          ],
+          "distanceMoved": 14.054,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 5,
+            "maxActive": 12,
+            "damageMultiplier": 1,
+            "cadenceMultiplier": 1,
+            "entryTier": 5,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 5.875,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 19,
+          "hits": 19,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 17.076,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.55
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 17,
+      "index": 16,
+      "chapter": 6,
+      "decor": 1,
+      "title": "La carrière des braises",
+      "garrison": 140,
+      "profile": {
+        "version": 1,
+        "garrison": 140,
+        "garrisonScale": 1,
+        "maxActive": 12,
+        "grenadiers": 8,
+        "rocketeers": 6,
+        "bossHpScale": 1,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            16,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            16,
+            6,
+            8,
+            1
+          ],
+          "distanceMoved": 12.948,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 5,
+            "maxActive": 12,
+            "damageMultiplier": 1,
+            "cadenceMultiplier": 1,
+            "entryTier": 5,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 4.9,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 14.606,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.55
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rocket"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "world": 18,
+      "index": 17,
+      "chapter": 6,
+      "decor": 2,
+      "title": "Les jardins du veilleur",
+      "garrison": 170,
+      "profile": {
+        "version": 1,
+        "garrison": 170,
+        "garrisonScale": 1,
+        "maxActive": 12,
+        "grenadiers": 8,
+        "rocketeers": 6,
+        "bossHpScale": 1,
+        "trialEnemies": 0
+      },
+      "combats": [
+        {
+          "scenario": "nominal",
+          "outcome": "cleared",
+          "seconds": 4.225,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            16,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            80,
+            16,
+            6,
+            8,
+            1
+          ],
+          "distanceMoved": 12.948,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 5,
+            "maxActive": 12,
+            "damageMultiplier": 1,
+            "cadenceMultiplier": 1,
+            "entryTier": 5,
+            "bossHpFactor": 1
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        },
+        {
+          "scenario": "pistol-only",
+          "outcome": "cleared",
+          "seconds": 4.9,
+          "kills": 4,
+          "enemies": 4,
+          "damageTaken": 0,
+          "shots": 16,
+          "hits": 16,
+          "ammoConsumed": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "startingAmmo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "distanceMoved": 14.606,
+          "peakCombat": 4,
+          "adaptation": {
+            "version": 1,
+            "tier": 0,
+            "maxActive": 4,
+            "damageMultiplier": 0.58,
+            "cadenceMultiplier": 0.7,
+            "entryTier": 0,
+            "bossHpFactor": 0.55
+          },
+          "enemyTypes": [
+            {
+              "type": 1,
+              "weapon": "rifle"
+            },
+            {
+              "type": 0,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            },
+            {
+              "type": 2,
+              "weapon": "rifle"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

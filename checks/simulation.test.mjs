@@ -1629,6 +1629,100 @@ test('Fallback outdoor substrate never overrides a higher ramp or terrace', () =
   walkTo(sim, { x: 0, z: -14 }); assert(Math.abs(sim.state.player.y - 3.2) < 1e-8);
 });
 
+function fallFixture(extra = {}) {
+  return fixture({ generation: 6, spawn: { x: -.1, y: 3.2, z: 0, yaw: -Math.PI / 2 },
+    bounds: { minX: -10, maxX: 10, minZ: -10, maxZ: 10 },
+    walkable: [{ x: -3, y: 3.2, z: 0, w: 6, d: 8 }, { x: 0, y: -.25, z: 0, w: 20, d: 20, substrate: true, fallback: true }],
+    colliders: [{ minX: -3.5, maxX: -3.3, minY: 3.2, maxY: 5.4, minZ: -1, maxZ: 1 }],
+    cores: [{ id: 0, x: -5, y: 3.2, z: 2 }, { id: 1, x: -4, y: 3.2, z: 2 }, { id: 2, x: -3, y: 3.2, z: 2 }],
+    exit: { x: -4, y: 3.2, z: -3 }, ...extra,
+  });
+}
+
+test('A real rocket knocks the player off a terrace and falling onto the deep substrate is fatal', () => {
+  for (const fps of [20, 60, 120]) {
+    const sim = FSimulation.create(fallFixture()), p = sim.state.player;
+    sim.step(.01, { weapon: 2, fire: true });
+    advanceAt(sim, .2, fps);
+    assert.equal(events(sim, 'explosion').length, 1, 'The rocket must really travel and explode');
+    assert.equal(p.airborne, true, 'The real explosion must shove the player over the ledge');
+    assert(p.x > 0 && p.y < 3.2 && p.hp > 0, 'The blast itself must be survivable');
+    advanceAt(sim, 1.2, fps);
+    assert.equal(sim.state.dead, true, 'The substrate must not leave a player alive underneath the stage');
+    assert.equal(p.hp, 0); assert.equal(p.airborne, false);
+    assert.equal(events(sim, 'dead').length, 1); assert.equal(events(sim, 'dead')[0].reason, 'fall');
+    const terminal = JSON.stringify(sim.snapshot());
+    advance(sim, 2, { moveY: 1, dash: true, fire: true, interact: true });
+    assert.equal(JSON.stringify(sim.snapshot()), terminal, 'Death must stop movement and interactions');
+  }
+});
+
+test('The actual three generated arenas cannot strand the player after a blast-sized shove through a destroyed rail', () => {
+  for (let stage = 0; stage < 3; stage++) {
+    const generated = FWorld.create(96, stage), arena = generated.bossArena;
+    const x = arena.x + 6, z = arena.z + 30, world = { ...generated, enemies: [], spawn: { x, y: arena.y, z: z - 1.5, yaw: Math.PI } };
+    const sim = FSimulation.create(world), p = sim.state.player;
+    sim.destruction.blast([x, arena.y + .5, z], 4.2, 55); sim.step(.025);
+    sim.move(p, 0, 1.35); sim.move(p, 0, .42);
+    assert.equal(p.airborne, true, `Stage ${stage}: a physical shove must start the fall`);
+    advance(sim, 1.5);
+    assert.equal(sim.state.dead, true, `Stage ${stage}: the arena substrate must not trap a survivor`);
+    assert.equal(events(sim, 'dead')[0].reason, 'fall');
+  }
+});
+
+test('An already invalid player below terrain dies despite recovery, dash and a raised shield', () => {
+  const world = fallFixture({ progression: { version: 1, weaponSlots: 4, startShield: true } });
+  for (const y of [-.25, -15]) {
+    const sim = FSimulation.create(world), checkpoint = sim.snapshot();
+    assert.equal(sim.restore(checkpoint, { recover: true }), true);
+    const p = sim.state.player;
+    p.y = y; p.dashing = .2; sim.state.equipment.left = 'shield'; sim.state.shield.raised = true;
+    sim.step(0, { fire: true, interact: true });
+    assert.equal(p.hp, 0); assert.equal(sim.state.dead, true);
+    assert.equal(p.dashing, 0); assert.equal(sim.state.shield.raised, false);
+    assert.equal(events(sim, 'dead').length, 1); assert.equal(events(sim, 'dead')[0].reason, 'fall');
+    assert.equal(sim.state.shots, 0, 'The invalid position must be caught before shooting');
+    assert.equal(sim.restore(checkpoint, { recover: true }), true); advance(sim, .5);
+    assert.equal(sim.state.dead, false, 'A valid checkpoint must not inherit the fatal fall');
+  }
+});
+
+test('A grounded checkpoint on a collider underneath terrain is rejected without changing the live game', () => {
+  const world = fallFixture({ colliders: [{ minX: -2, maxX: 0, minY: -.6, maxY: -.25, minZ: -1, maxZ: 1 }] });
+  const sim = FSimulation.create(world), valid = sim.snapshot(), invalid = JSON.parse(JSON.stringify(valid));
+  invalid.state.player.y = -.25;
+  assert.equal(sim.restore(invalid, { recover: true }), false, 'A lower collider must not validate a checkpoint buried beneath terrain');
+  assert.equal(JSON.stringify(sim.snapshot()), JSON.stringify(valid));
+});
+
+test('Breached ground-level exterior, ordinary lower floors and space beneath raised props stay safe', () => {
+  const outdoor = FSimulation.create(fallFixture({ spawn: { x: -.1, y: 0, z: 0, yaw: Math.PI / 2 }, colliders: [],
+    walkable: [{ x: -3, y: 0, z: 0, w: 6, d: 8 }, { x: 0, y: -.25, z: 0, w: 20, d: 20, substrate: true, fallback: true }],
+  }));
+  outdoor.move(outdoor.state.player, 2, 0); advance(outdoor, .5);
+  assert.equal(outdoor.state.player.y, -.25); assert.equal(outdoor.state.dead, false);
+  outdoor.move(outdoor.state.player, -2, 0); advance(outdoor, .5);
+  assert.equal(outdoor.state.player.y, 0); assert.equal(outdoor.state.dead, false);
+  assert.equal(FSimulation.create(outdoor.state.world).restore(outdoor.snapshot()), true);
+
+  const landing = FSimulation.create(fallFixture({ colliders: [], walkable: [
+    { x: -3, y: 3.2, z: 0, w: 6, d: 8 }, { x: 5, y: -.25, z: 0, w: 10, d: 8 },
+  ] }));
+  landing.move(landing.state.player, .42, 0); assert.equal(landing.state.player.airborne, true);
+  advance(landing, 1.5);
+  assert.equal(landing.state.player.y, -.25); assert.equal(landing.state.player.hp, 100); assert.equal(landing.state.dead, false);
+
+  for (const bridge of [false, true]) {
+    const under = FSimulation.create(fallFixture({ spawn: { x: 0, y: 0, z: 0, yaw: 0 },
+      walkable: [{ x: 0, y: 0, z: 0, w: 20, d: 20 }, ...(bridge ? [{ x: 0, y: 3.2, z: 0, w: 4, d: 4 }] : [])],
+      colliders: [{ minX: -2, maxX: 2, minY: 3, maxY: 3.2, minZ: -2, maxZ: 2 }],
+    }));
+    advance(under, .5); assert.equal(under.state.dead, false); assert.equal(under.state.player.y, 0);
+    if(!bridge)assert.equal(FSimulation.create(under.state.world).restore(under.snapshot()), true);
+  }
+});
+
 function giantFixture(kind = 'colossus', extra = {}) {
   const stage = ['colossus', 'siegebreaker', 'custodian'].indexOf(kind), size = [5.4, 7.2, 9][stage];
   const boss = { x: 0, y: 0, z: -25, type: 3, bossScale: size, bossKind: kind, bossName: kind, maxHp: [130, 180, 240][stage], arena: { x: 0, z: -25, r: 28 } };

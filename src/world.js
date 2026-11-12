@@ -33,9 +33,10 @@
       return ((t ^ t >>> 14) >>> 0) / 4294967296;
     };
   }
-  function create(seed, stage) {
-    stage = Math.max(0, Math.min(2, Math.floor(stage || 0)));
-    const rand = randomFor(seed, stage), theme = themes[stage], original = layouts[stage];
+  function create(seed, stage, options = {}) {
+    const campaign=options?.campaign===true,index=campaign?Math.max(0,Math.min(17,Math.floor(stage||0))):null;
+    stage = campaign?index%3:Math.max(0, Math.min(2, Math.floor(stage || 0)));
+    const rand = randomFor(seed, campaign?index:stage), theme = themes[stage], original = layouts[stage];
     const layout = {...original, xs:original.xs.map(x=>x*1.6), zs:original.zs.map(z=>z*1.6)};
     const levels = [[0,0,3.2,0,3.2,3.2,3.2,6.4,6.4],[0,0,3.2,6.4,0,6.4,3.2,6.4],[0,0,3.2,0,3.2,6.4,3.2,6.4,6.4]][stage];
     const liftEdges = [[[1,4],[6,7]],[[1,2],[2,3]],[[1,4],[4,7]]][stage];
@@ -650,6 +651,8 @@
     const sunLength=Math.hypot(...environment.sunDirection);
     environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
     const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
+    if(campaign)Object.assign(world,{campaign:true,index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
+    if(campaign)world.campaignProfile=campaignProfile(world);
     detailWorld(world,theme,aperture,doorHeight);
     naturalDetails(world,theme);
     elevateWorld(world);
@@ -660,6 +663,7 @@
     suppliesWorld(world);
     populate(world);
     armoryWorld(world);
+    if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);}
     polishTrees(world);
     demolitionMetadata(world);
     world.detailStats.added=world.meshes.length-world.detailStats.base;
@@ -670,7 +674,7 @@
   // fittings remain attached to existing solids, flat on the floor or overhead;
   // open-air rooms and links deliberately receive none of this ceiling network.
   function detailWorld(w,theme,aperture,doorHeight) {
-    const rand=randomFor('FERRO-detail-03:'+w.seed,w.stage),out=w.meshes,baseCount=out.length;
+    const rand=randomFor('FERRO-detail-03:'+w.seed,w.campaign===true?w.index:w.stage),out=w.meshes,baseCount=out.length;
     const ambience=[],categories={},roomCounts={};
     const axes={x:[0,0,-Math.PI/2],y:[0,0,0],z:[Math.PI/2,0,0]};
     let owner='',outside=false;
@@ -955,7 +959,7 @@
   // main trees, cliffs, retaining walls and landmark cover were created above as
   // detail 0; this pass adds optional, non-solid vegetation and surface scatter.
   function naturalDetails(w,theme) {
-    const rand=randomFor('FERRO-nature-04:'+w.seed,w.stage),out=w.meshes,stats=w.detailStats;
+    const rand=randomFor('FERRO-nature-04:'+w.seed,w.campaign===true?w.index:w.stage),out=w.meshes,stats=w.detailStats;
     let region='';
     const green=w.stage===1?[.35,.36,.20]:w.stage===2?[.28,.43,.31]:[.29,.43,.21];
     function add(shape,p,s,mat,category,r=[0,0,0],detail=1,color,emissive=0) {
@@ -1149,7 +1153,7 @@
   // irregular leaf clusters; the scene gains no additional draw instances.
   function polishTrees(w){
     for(const t of w.trees){
-      const random=randomFor('METAL-botanical:'+w.seed+':'+t.mesh,w.stage),parts=w.meshes.slice(t.mesh,t.mesh+t.meshCount);
+      const random=randomFor('METAL-botanical:'+w.seed+':'+t.mesh,w.campaign===true?w.index:w.stage),parts=w.meshes.slice(t.mesh,t.mesh+t.meshCount);
       const originals=parts.map(m=>({...m,p:m.p.slice(),s:m.s.slice(),r:(m.r||[0,0,0]).slice()}));
       const endpoints=m=>{const [rx,ry,rz]=m.r,cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry),cz=Math.cos(rz),sz=Math.sin(rz),axis=[cz*sy*sx-sz*cx,sz*sy*sx+cz*cx,cy*sx];return [-1,1].map(q=>m.p.map((v,i)=>v+q*axis[i]*m.s[1]/2));};
       const wood=t.species==='birch'?[.57,.58,.49]:t.species==='dead'?[.35,.29,.23]:[.27,.23,.16];
@@ -1368,7 +1372,7 @@
     }
     const nearest=(x,y,z,region)=>groups.filter(g=>(!region||g.region===region)&&g.kind!=='decor').map(g=>({g,d:distance([x,y,z],g.bounds)})).sort((a,b)=>a.d-b.d)[0]?.g;
     for(const a of (w.machinery||[]).concat(w.ambience||[])){const g=nearest(a.x,a.y,a.z,a.room===undefined?undefined:'room-'+a.room);if(g)a.destructibleId=g.id;}
-    for(const light of w.lights){const g=nearest(...light.p,light.region);if(g)light.destructibleId=g.id;}
+    for(const light of w.lights){if(light.trophyId)continue;const g=nearest(...light.p,light.region);if(g)light.destructibleId=g.id;}
     for(const p of w.pipes)p.destructibleId='pressure-'+p.id.slice(5);
     for(const t of w.traps)t.destructibleId='trap-frame-'+t.id.slice(5);
     for(const m of w.mechanisms){const g=nearest(m.x,m.y+.6,m.z);if(g)m.destructibleId=g.id;}
@@ -1457,6 +1461,7 @@
   function suppliesWorld(w){
     const depths=roomDepths(w),initial=new Set(w.connections.flatMap(c=>c.from===0?[c.to]:c.to===0?[c.from]:[]));
     w.progression={version:1,weaponSlots:4,startWeapons:w.stage===0?[true,false,false,false]:[true,true,true,false],startAmmo:[[48,0,0,0],[72,12,4,0],[84,16,5,0]][w.stage],startShield:false,ammoCaps:[180,36,12,16],maxActive:[8,10,12][w.stage]};
+    if(w.campaign)Object.assign(w.progression,{weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],ammoCaps:[180,36,12,16,1],maxActive:w.campaignProfile.maxActive});
     w.pickups=w.pickups.filter(p=>{const r=w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);return r&&(r.id===0||r.bossArena||Math.hypot(p.x-r.x-2.5,p.z-r.z-1.5)<.1);}).map((p,i)=>({...p,id:'health-'+i,kind:'health',amount:28,zoneId:w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2).id}));
     const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target])];
     // Service-bay cover follows the real incoming corridor. A small health case
@@ -1517,13 +1522,120 @@
     const outer=[];for(const x of [-22,-20.5,-23.5])for(const z of [-17.2,-15.8,17.2,15.8])outer.push({x:arena.x+x,z:arena.z+z});
     add(arena,'ammo',4,'grenades-boss',outer);
   }
+  function campaignProfile(w){
+    const chapter=w.chapter,percent=[35,45,55,70,85,100][chapter],garrisonScale=percent/100;
+    return {version:1,garrison:Math.round([120,140,170][w.stage]*percent/100),garrisonScale,maxActive:[4,5,6,8,10,12][chapter],grenadiers:[0,2,3,5,6,8][chapter],rocketeers:[0,0,0,2,4,6][chapter],bossHpScale:[.25,.32,.45,.62,.8,1][chapter],trialEnemies:[3,6,9,12,15].includes(w.index)?3:0};
+  }
+  function campaignCounts(weights,budget){
+    const sum=weights.reduce((a,b)=>a+b,0),shares=weights.map(n=>n*budget/sum),counts=shares.map(n=>Math.max(2,Math.floor(n)));
+    let left=budget-counts.reduce((a,b)=>a+b,0);
+    const order=shares.map((n,i)=>({i,fraction:n-Math.floor(n)})).sort((a,b)=>b.fraction-a.fraction||a.i-b.i);
+    for(let i=0;left>0;i++,left--)counts[order[i%order.length].i]++;
+    for(let i=order.length-1;left<0;i--){const q=order[(i%order.length+order.length)%order.length];if(counts[q.i]>2){counts[q.i]--;left++;}}
+    return counts;
+  }
+  // Campaign discoveries occupy one reserved, physically reachable equipment
+  // point. The legacy racks remain untouched in worlds without the opt-in flag.
+  function campaignArmory(w){
+    const unlock=[6,9,15,12,0],schedule=[
+      {index:3,key:'shield',kind:'shield',amount:1},
+      {index:6,key:'smg',kind:'weapon',weapon:0,amount:60},
+      {index:9,key:'shotgun',kind:'weapon',weapon:1,amount:12},
+      {index:12,key:'grenade',kind:'weapon',weapon:3,amount:6},
+      {index:15,key:'rocket',kind:'weapon',weapon:2,amount:4}
+    ],discovery=schedule.find(q=>q.index===w.index),reserved=w.pickups.find(q=>q.id==='arsenal-shield');
+    w.pickups=w.pickups.filter(q=>q.kind==='health'||q.kind==='ammo'&&q.weapon<4&&unlock[q.weapon]<=w.index).map(q=>q.kind==='ammo'?{...q,amount:Math.max(q.weapon===0?8:q.weapon===1?2:1,Math.round(q.amount*w.campaignProfile.garrisonScale)),requiresWeapon:q.weapon}:q);
+    for(const e of w.enemies)if(e.drop&&(e.drop.weapon>=4||unlock[e.drop.weapon]>w.index))e.drop=false;
+    if(discovery){
+      if(!reserved)throw new Error('Missing campaign equipment reservation '+w.index);
+      const {key,kind,weapon,amount}=discovery;
+      w.pickups.push({id:'trophy-'+key,trophyId:'trophy-'+key,kind,...(kind==='weapon'?{weapon}:{}),amount,x:reserved.x,y:reserved.y,z:reserved.z,zoneId:reserved.zoneId});
+    }
+  }
+  // The trophy is a detour inside an existing low room. Its approach can see
+  // the equipment but every reserve silhouette stays behind a real service wall.
+  function campaignTrophies(w,theme){
+    w.trophies=[];
+    const gift=w.pickups.find(q=>q.trophyId);if(!gift)return;
+    const key=gift.trophyId.slice(7),names={shield:'Bouclier',smg:'Mitraillette',shotgun:'Double pompe',grenade:'Lance-grenades',rocket:'Lance-roquettes'},usage={shield:'Protégez-vous, puis frappez au contact.',smg:'Enchaînez les rafales et surveillez la chauffe.',shotgun:'Approchez, frappez fort, reprenez votre distance.',grenade:'Faites rebondir les grenades derrière les couverts.',rocket:'Visez les groupes et gardez vos distances.'},depths=roomDepths(w);
+    const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target]),...w.pickups.filter(q=>q!==gift),...w.enemies.filter(e=>e.deployed)];
+    const segmentHit=(a,b,c)=>{let low=0,high=1;for(const [i,min,max] of [[0,c.minX,c.maxX],[1,c.minY,c.maxY],[2,c.minZ,c.maxZ]]){const d=b[i]-a[i];if(Math.abs(d)<1e-9){if(a[i]<min||a[i]>max)return false;}else{const x=(min-a[i])/d,y=(max-a[i])/d;low=Math.max(low,Math.min(x,y));high=Math.min(high,Math.max(x,y));if(low>high)return false;}}return high>0&&low<.999;};
+    const safe=(p,r,rad)=>Math.abs(p.x-r.x)<r.w/2-rad-.3&&Math.abs(p.z-r.z)<r.d/2-rad-.3&&Math.abs(floorHeight(w,p.x,p.z)-r.y)<.01&&safeSupply(w,p.x,p.z,rad)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>rad+.7)&&w.jumpPads.every(q=>pointSegment(p.x,p.z,q,q.target)>rad+1.6);
+    let chosen;
+    const rooms=w.rooms.filter(r=>r.id&&!r.bossArena&&r.y===0&&depths.get(r.id)===1).sort((a,b)=>(a.id===3?-1:0)-(b.id===3?-1:0)||a.id-b.id);
+    for(const r of rooms){
+      const bay=w.encounterBays.find(q=>q.zoneId===r.id),screen=w.colliders.find(q=>q.mesh===bay.coverMesh);
+      search:for(const d of [10,11,9,12,13,14,9.5,10.5,11.5,12.5,13.5])for(const lateral of [2.4,-2.4,3,-3,1.8,-1.8,3.6,-3.6,1.2,-1.2,0]){
+        const p={x:bay.x-bay.normal[0]*d+bay.normal[1]*lateral,y:r.y,z:bay.z-bay.normal[1]*d-bay.normal[0]*lateral};
+        if(Math.abs(p.x-r.x)<1.2||Math.abs(p.z-r.z)<1.2||!safe(p,r,.95))continue;
+        const origin=[p.x,p.y+1.62,p.z];
+        if(!bay.spawnEntries.every(q=>Math.hypot(q.x-p.x,q.z-p.z)>=10&&[.2,1.1,2.15].every(h=>[[0,0],[-1.5,0],[1.5,0],[0,-1.5],[0,1.5],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65]].every(([dx,dz])=>segmentHit(origin,[q.x+dx,q.y+h,q.z+dz],screen)))))continue;
+        const cache=[[-2.4,0],[2.4,0],[-2.4,1.2],[2.4,1.2],[0,2.4],[0,-2.4]].map(([u,v])=>({x:p.x+bay.normal[1]*u+bay.normal[0]*v,y:r.y,z:p.z-bay.normal[0]*u+bay.normal[1]*v})).find(q=>safe(q,r,.57));
+        if(!cache)continue;chosen={r,bay,p,cache};break search;
+      }
+      if(chosen)break;
+    }
+    if(!chosen)throw new Error('No safe trophy alcove '+w.seed+'/'+w.index);
+    const {r,bay,p,cache}=chosen,id=gift.trophyId,name=names[key],encounterId='trial-'+key,meshStart=w.meshes.length,region='room-'+r.id;
+    Object.assign(gift,p,{zoneId:r.id});r.trophyId=id;
+    const add=(shape,pos,size,mat,category,extra={})=>{w.meshes.push({shape,p:pos,s:size,mat,category,region,outdoor:r.outdoor,indestructible:true,trophyId:id,...extra});};
+    add('box',[p.x,p.y+.02,p.z],[1.85,.04,1.85],1,'trophy_plinth',{solid:true,color:[.34,.30,.22]});
+    w.colliders.push({minX:p.x-.925,maxX:p.x+.925,minY:p.y,maxY:p.y+.04,minZ:p.z-.925,maxZ:p.z+.925,mesh:meshStart});
+    add('cylinder',[p.x,p.y+.055,p.z],[1.45,.03,1.45],3,'trophy_deck');
+    add('ring',[p.x,p.y+.079,p.z],[1.68,.035,1.68],4,'trophy_signal',{color:theme.alt,emissive:.45});
+    for(const side of [-1,1])for(const end of [-1,1]){
+      add('box',[p.x+side*.78,p.y+.065,p.z+end*.78],[.19,.05,.19],3,'trophy_corner');
+      add('box',[p.x+side*.66,p.y+.095,p.z+end*.78],[.16,.018,.055],4,'trophy_inlay',{color:theme.alt,emissive:.35});
+    }
+    for(let i=0;i<12;i++){const a=i*TAU/12;add('box',[p.x+Math.cos(a)*1.14,p.y+.016,p.z+Math.sin(a)*1.14],[.12,.022,.27],5,'trophy_floor_mark',{r:[0,-a,0],color:theme.alt,emissive:.15});}
+    // A narrow portal carries the lamp from the indestructible plinth. Its
+    // opening faces the service wall; the approach and pickup stay unobstructed.
+    const frameBox=(pos,size,category)=>{const mesh=w.meshes.length;add('box',pos,size,3,category,{solid:true});w.colliders.push({minX:pos[0]-size[0]/2,maxX:pos[0]+size[0]/2,minY:pos[1]-size[1]/2,maxY:pos[1]+size[1]/2,minZ:pos[2]-size[2]/2,maxZ:pos[2]+size[2]/2,mesh});};
+    for(const side of [-1,1]){
+      const x=p.x+bay.normal[1]*side*.78,z=p.z-bay.normal[0]*side*.78;
+      frameBox([x,p.y+.09,z],[.26,.10,.26],'trophy_support_foot');
+      frameBox([x,p.y+1.43,z],[.12,2.68,.12],'trophy_support');
+    }
+    frameBox([p.x,p.y+2.74,p.z],[bay.normal[1]?1.78:.12,.10,bay.normal[0]?1.78:.12],'trophy_crossbar');
+    add('ring',[p.x,p.y+2.72,p.z],[1.2,.055,1.2],1,'trophy_lamp');
+    add('cylinder',[p.x,p.y+2.69,p.z],[.64,.035,.64],4,'trophy_lens',{color:theme.alt,emissive:.7});
+    const lightIndex=w.lights.length;w.lights.push({p:[p.x,p.y+2.45,p.z],color:theme.alt.slice(),power:5.5,region,trophyId:id});
+    w.pickups.push({id:'trial-cache-'+key,kind:key==='shield'?'health':'ammo',...(key==='shield'?{}:{weapon:gift.weapon,requiresWeapon:gift.weapon}),amount:key==='shield'?24:Math.max(2,Math.ceil(gift.amount/2)),...cache,zoneId:r.id,trophyCache:id});
+    const boss=w.enemies.pop(),ids=[];
+    for(let i=0;i<3;i++){const point=bay.spawnEntries[i],type=key==='shotgun'||key==='rocket'?1:0;ids.push(w.enemies.length);w.enemies.push({...point,type,zoneId:r.id,squadId:1000+w.index,encounterId,wave:0,deployed:false,role:'assault',yaw:Math.atan2(p.x-point.x,point.z-p.z),drop:key==='shield'?false:{weapon:gift.weapon,amount:gift.weapon===0?4:gift.weapon===1?2:1},trophyGuard:id});}
+    const bossId=w.enemies.length;w.enemies.push(boss);for(const e of w.enemies)if(e.bossWave)e.bossId=bossId;
+    w.encounters.push({id:encounterId,label:'Épreuve — '+name,zoneId:r.id,trigger:{x:r.x,y:r.y,z:r.z,w:r.w+4,d:r.d+4},leashRadius:38,maxActive:3,waveGap:4,spawnEntries:bay.spawnEntries.map(q=>({...q})),waves:[{enemyIds:ids}],requiresTrophy:id});
+    w.trophies.push({id,key,name,usage:usage[key],pickupId:gift.id,encounterId,grace:3,...p,zoneId:r.id,...(key==='shield'?{shield:true}:{weapon:gift.weapon}),meshStart,meshCount:w.meshes.length-meshStart,lightIndex,cacheId:'trial-cache-'+key,coverMesh:bay.coverMesh});
+  }
+  // Armor reserves are real nonblocking pickups. The shell draws their cases
+  // and markers; placing them last preserves all existing supplies and trials.
+  function campaignArmor(w){
+    const arena=w.rooms.find(r=>r.bossArena),middle=w.shops[1],plans=[
+      {id:'armor-start',amount:25,room:w.rooms[0],anchor:w.spawn},
+      {id:'armor-middle',amount:25,room:w.rooms[middle.zoneId],anchor:middle},
+      {id:'armor-boss',amount:50,room:arena,anchor:w.shops[2]}
+    ];
+    const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.shops.map(s=>s.terminal),...w.doors,...w.lifts.flatMap(l=>[l,l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target]),...w.encounters.flatMap(q=>q.spawnEntries),...w.trophies];
+    for(const plan of plans){
+      const {room:r,anchor:a}=plan,candidates=[];
+      for(const [x,z] of [[2.4,0],[-2.4,0],[0,-2.4],[0,2.4],[2.4,-2.4],[-2.4,2.4]])candidates.push({x:a.x+x,z:a.z+z});
+      if(r.bossArena)for(const x of [-20,20,-22,22])for(const z of [-11,11,-16,16,-20,20])candidates.push({x:r.x+x,z:r.z+z});
+      for(const z of [-1.8,1.8,-3.6,3.6,-5.4,5.4,-7.2,7.2,0])for(const x of [-1.8,1.8,-3.6,3.6,-5.4,5.4,-7.2,7.2,0])candidates.push({x:r.x+x,z:r.z+z});
+      const point=candidates.find(p=>Math.abs(p.x-r.x)<r.w/2-1&&Math.abs(p.z-r.z)<r.d/2-1&&Math.abs(floorHeight(w,p.x,p.z)-r.y)<.01&&safeSupply(w,p.x,p.z,.65)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.8)&&w.pickups.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>2.1)&&w.enemies.filter(e=>e.deployed).every(e=>Math.hypot(p.x-e.x,p.z-e.z)>(e.bossScale?1.5*e.bossScale+1.1:1.8))&&w.jumpPads.every(q=>pointSegment(p.x,p.z,q,q.target)>2));
+      if(!point)throw new Error('No safe armor reserve '+w.seed+'/'+w.index+'/'+plan.id);
+      w.pickups.push({id:plan.id,kind:'armor',amount:plan.amount,x:point.x,y:r.y,z:point.z,zoneId:r.id});
+    }
+  }
   // All 430 IDs stay stable in the save. Only the opening patrols and the
   // colossus's six scripted guards exist physically before their wave deploys.
   function populate(w) {
-    const target=[120,140,170][w.stage],depths=roomDepths(w),counts=[[6,15,7,17,18,16,17,17],[8,22,24,9,22,24,24],[10,23,11,25,23,24,24,23]][w.stage];
+    const target=w.campaign?w.campaignProfile.garrison:[120,140,170][w.stage],trialCount=w.campaign?w.campaignProfile.trialEnemies:0,depths=roomDepths(w),baseCounts=[[6,15,7,17,18,16,17,17],[8,22,24,9,22,24,24],[10,23,11,25,23,24,24,23]][w.stage],counts=w.campaign?campaignCounts(baseCounts,target-7-trialCount):baseCounts;
     const early=new Set(w.connections.flatMap(c=>c.from===0?[c.to]:c.to===0?[c.from]:[]));w.encounters=[];
     const candidates=[];
-    function waveSizes(n,opening){const out=[];if(opening){const k=w.stage===0?3:4;out.push(k);n-=k;}const k=Math.ceil(n/6);for(let i=0;i<k;i++)out.push(Math.floor(n/k)+(i>=k-n%k?1:0));return out;}
+    function waveSizes(n,opening){
+      if(w.campaign){const out=[],limit=[3,3,4,4,5,6][w.chapter];if(opening){let k=Math.min(n,w.chapter<2?2:3);if(n-k===1)k=k>2?k-1:k+1;out.push(k);n-=k;}const groups=Math.ceil(n/limit);for(let i=0;i<groups;i++)out.push(Math.floor(n/groups)+(i>=groups-n%groups?1:0));return out;}
+      const out=[];if(opening){const k=w.stage===0?3:4;out.push(k);n-=k;}const k=Math.ceil(n/6);for(let i=0;i<k;i++)out.push(Math.floor(n/k)+(i>=k-n%k?1:0));return out;
+    }
     for(const r of w.rooms.filter(r=>r.id&&!r.bossArena)){
       const bay=w.encounterBays.find(b=>b.zoneId===r.id),opening=early.has(r.id),sizes=waveSizes(counts[r.id-1],opening),patrol=[];
       if(opening)for(const dz of [0,2.4,-2.4,4.8,-4.8])for(const dx of [-2.4,0,2.4,-4.8,4.8]){
@@ -1545,15 +1657,15 @@
       }
       w.encounters.push(encounter);
     }
-    let grenades=0,rockets=0;
+    let grenades=0,rockets=0;const grenadeGoal=w.campaign?w.campaignProfile.grenadiers:8,rocketGoal=w.campaign?w.campaignProfile.rocketeers:6;
     candidates.sort((a,b)=>a.wave-b.wave||a.depth-b.depth||a.room-b.room);
-    for(const {enemy:e} of candidates){const weapon=grenades<8&&(grenades<=rockets||rockets===6)?'grenade':rockets<6?'rocket':null;if(!weapon)break;e.type=1;e.role='assault';e.weapon=weapon;if(weapon==='grenade')grenades++;else rockets++;}
-    if(grenades!==8||rockets!==6)throw new Error('Insufficient later heavy waves');
+    for(const {enemy:e} of candidates){const weapon=grenades<grenadeGoal&&(grenades<=rockets||rockets===rocketGoal)?'grenade':rockets<rocketGoal?'rocket':null;if(!weapon)break;e.type=1;e.role='assault';e.weapon=weapon;if(weapon==='grenade')grenades++;else rockets++;}
+    if(grenades!==grenadeGoal||rockets!==rocketGoal)throw new Error('Insufficient later heavy waves');
     const arena=w.bossArena;
     for(let i=0;i<6;i++){const a=(i+.5)*TAU/6;w.enemies.push({x:arena.x+Math.cos(a)*26,y:arena.y,z:arena.z+Math.sin(a)*26,type:0,zoneId:arena.room,squadId:200+Math.floor(i/3),role:'flanker',bossWave:1+Math.floor(i/3),bossId:target-1,deployed:true});}
-    w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
+    w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:w.campaign?Math.max(30,Math.round([130,180,240][w.stage]*w.campaignProfile.bossHpScale)):[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
     for(const [i,e] of w.enemies.entries())e.drop=e.type===3?false:e.weapon==='rocket'?{weapon:2,amount:1}:e.weapon==='grenade'?{weapon:3,amount:1}:e.type===1?{weapon:1,amount:2}:e.type===2||i%2===0?{weapon:0,amount:4}:false;
-    if(w.enemies.length!==target)throw new Error('Incorrect finite garrison size');
+    if(w.enemies.length!==target-trialCount)throw new Error('Incorrect finite garrison size');
   }
   function isWalkable(world, x, z, radius) {
     const r = radius === undefined ? 0.35 : radius;
@@ -1589,7 +1701,7 @@
     if (world.meshes.length > 18000) errors.push('Mesh budget exceeded');
     if (world.colliders.length > 512) errors.push('Collider budget exceeded');
     if (world.cores.length !== 3) errors.push('Expected three relays');
-    if(world.enemies.length<[120,140,170][world.stage])errors.push('Garrison below tenfold target');
+    if(world.campaign?world.enemies.length!==world.campaignProfile.garrison:world.enemies.length<[120,140,170][world.stage])errors.push(world.campaign?'Incorrect campaign garrison':'Garrison below tenfold target');
     if(world.mechanisms.length!==3||world.lifts.length!==2)errors.push('Missing interactive machinery');
     const safeRoom = world.rooms[0];
     if (world.enemies.some(e => Math.abs(e.x - safeRoom.x) < safeRoom.w / 2 && Math.abs(e.z - safeRoom.z) < safeRoom.d / 2)) errors.push('Enemy in spawn chamber');

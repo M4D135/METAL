@@ -30,3 +30,19 @@ test('Adding melee preserves an existing custom V binding and finds a free defau
   const r=options.assign(v.bindings,'melee','KeyH');assert.equal(r.ok,true);
   assert.equal(options.down(r.bindings,new Set(['KeyH']),'melee'),true);
 });
+
+test('campaign pistol selection migrates without stealing a customized Digit5 binding',()=>{
+  const old=options.defaults();delete old.bindings.weapon5;old.bindings.interact=['Digit5'];old.bindings.fire=['KeyH'];
+  const migrated=options.normalize(JSON.parse(JSON.stringify(old)));
+  assert.deepEqual(Array.from(migrated.bindings.interact),['Digit5']);
+  assert.deepEqual(Array.from(migrated.bindings.fire),['KeyH']);
+  assert.notEqual(migrated.bindings.weapon5[0],'Digit5');
+  const codes=Object.values(migrated.bindings).flat();assert.equal(new Set(codes).size,codes.length);
+  assert.equal(options.matches(migrated.bindings,'weapon5',migrated.bindings.weapon5[0]),true);
+  const custom=options.assign(migrated.bindings,'weapon5','Digit6');assert.equal(custom.ok,true);
+  const restored=options.normalize(JSON.parse(JSON.stringify({...migrated,bindings:custom.bindings})));
+  assert.equal(options.down(restored.bindings,new Set(['Digit6']),'weapon5'),true);
+  assert.equal(options.matches(restored.bindings,'interact','Digit5'),true);
+  const defaultOld=options.defaults();delete defaultOld.bindings.weapon5;
+  assert.equal(options.normalize(defaultOld).bindings.weapon5[0],'Digit5');
+});

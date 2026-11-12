@@ -1,0 +1,483 @@
+{
+  "version": "0.7.0",
+  "date": "2026-11-12",
+  "delivery": {
+    "repository": "https://github.com/M4D135/FERRO",
+    "targetBranch": "main",
+    "preparationBranch": "campagne-18-mondes",
+    "hostingDeploymentRequested": false
+  },
+  "build": {
+    "version": "0.7.0",
+    "html_bytes": 739903,
+    "html_decimal_kb": 739.9,
+    "html_kib": 722.56,
+    "gzip_bytes": 223144,
+    "sha256": "7ef8815703ce09fe7140c412c87b6aa57a6262f58fcda7566bbb4a788a5c8bb6",
+    "external_assets": 0,
+    "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+    "source_bytes": {
+      "renderer.js": 106801,
+      "world.js": 127149,
+      "destruction.js": 21634,
+      "music.js": 20526,
+      "audio.js": 40062,
+      "economy.js": 9409,
+      "brain.js": 8923,
+      "simulation.js": 181572,
+      "motion.js": 5280,
+      "actors.js": 27015,
+      "effects.js": 16510,
+      "options.js": 4349,
+      "game.js": 91327
+    }
+  },
+  "nodeTest": {
+    "tests": 351,
+    "pass": 351,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 131202.638269
+  },
+  "phaseGates": [
+    {
+      "phase": "hotfix",
+      "nodeTests": {
+        "tests": 269,
+        "pass": 269,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 29207.292148
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 692464,
+        "external_assets": 0,
+        "sha256": "c7d78c7939dddb25b47fb22d93136f0f7cb024f6053d9aa0cc97b261ee98f9f2"
+      }
+    },
+    {
+      "phase": "A",
+      "nodeTests": {
+        "tests": 301,
+        "pass": 301,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 122097.156027
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 694793,
+        "external_assets": 0,
+        "sha256": "372e9ad42d72e92b5bea416850d86e936ca3d48a27e680678c6fecad87eb669d"
+      }
+    },
+    {
+      "phase": "B",
+      "nodeTests": {
+        "tests": 311,
+        "pass": 311,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 122080.296693
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 700006,
+        "external_assets": 0,
+        "sha256": "8f60654989be60a4eff240931552961fe6215d8ceaf298446843d553b8b7f9bf"
+      }
+    },
+    {
+      "phase": "C",
+      "nodeTests": {
+        "tests": 313,
+        "pass": 313,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 129859.592082
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 702274,
+        "external_assets": 0,
+        "sha256": "6181a920b513e48d821e07898810e35e94b01f4ad581caace333d44530f28586"
+      }
+    },
+    {
+      "phase": "D",
+      "nodeTests": {
+        "tests": 319,
+        "pass": 319,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 135078.516334
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 716407,
+        "external_assets": 0,
+        "sha256": "440ef160628573af9e5be7de81d367769330b62f3fc91458e79a59ea3d7e163a"
+      }
+    },
+    {
+      "phase": "E",
+      "nodeTests": {
+        "tests": 329,
+        "pass": 329,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 133798.167597
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 723107,
+        "external_assets": 0,
+        "sha256": "3e1cc3f200cdb89e54082bf880e2ad44ce7712203d74953f2c3ef25c9fbc1e9a"
+      }
+    },
+    {
+      "phase": "G",
+      "nodeTests": {
+        "tests": 333,
+        "pass": 333,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 121253.353885
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 729973,
+        "external_assets": 0,
+        "sha256": "36b663a78a3e5d246e2fcac4de1dabc43c07bc6e19e9bd2ace37d9b8ca4287dd"
+      }
+    },
+    {
+      "phase": "H",
+      "nodeTests": {
+        "tests": 351,
+        "pass": 351,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 125973.267532
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 739682,
+        "external_assets": 0,
+        "sha256": "ea583a03cadd661272a08aff6d41307c1c1d6059eabae22a809d7000b5ee3516"
+      }
+    },
+    {
+      "phase": "F",
+      "nodeTests": {
+        "tests": 351,
+        "pass": 351,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 123191.038346
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 739686,
+        "external_assets": 0,
+        "sha256": "ff1ab0b9e0a790a44e4b643bfb6c4d3c892da9a6e6d0ca7020bd73db697e13b6"
+      },
+      "scope": "Initial finalization before the concurrent title-version integration; historical checkpoint."
+    },
+    {
+      "phase": "F-final",
+      "scope": "Full suite after preserving the concurrent title version markup, CSS and build substitution.",
+      "nodeTests": {
+        "tests": 351,
+        "pass": 351,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 131202.638269
+      },
+      "build": {
+        "status": "PASS",
+        "html_bytes": 739903,
+        "external_assets": 0,
+        "sha256": "7ef8815703ce09fe7140c412c87b6aa57a6262f58fcda7566bbb4a788a5c8bb6"
+      }
+    }
+  ],
+  "legacyWorlds": {
+    "cases": 18,
+    "targetsChecked": 4800,
+    "status": "PASS"
+  },
+  "campaignWorlds": {
+    "campaignWorlds": 54,
+    "seeds": [
+      1,
+      96,
+      2026
+    ],
+    "reachedTargets": 9450,
+    "accessibleCells": {
+      "min": 29088,
+      "max": 34335
+    },
+    "legacyFingerprints": 6
+  },
+  "campaignProfiles": {
+    "worlds": 18,
+    "discoveryPickups": 5,
+    "exactCheckpointRoundTrips": 23,
+    "finiteSerializedValues": true,
+    "unchangedSourcesDuringRun": true
+  },
+  "campaignTotals": {
+    "enemies": 1679,
+    "conditionalTrophyGuards": 15
+  },
+  "campaignBalance": {
+    "report": "docs/campaign-balance.json",
+    "combatCount": 36,
+    "opponentsPerCombat": 4,
+    "scenarios": {
+      "nominal": {
+        "combats": 18,
+        "secondsRange": [
+          1.675,
+          5.55
+        ],
+        "receivedDamageRange": [
+          0,
+          0
+        ]
+      },
+      "pistol-only": {
+        "combats": 18,
+        "secondsRange": [
+          3.6,
+          5.875
+        ],
+        "receivedDamageRange": [
+          0,
+          0
+        ]
+      }
+    },
+    "methodology": "Four infantry definitions sampled deterministically from each generated world. Identical small 3D arena with two physical covers. A bot moves, aims, selects owned weapons, fires and raises its owned shield through normal step inputs. CPU tactical network; no imported assets. No health or enemy-state mutation during combat. Initial spawn grace is disabled. Nominal assumes scheduled trophies have been found; pistol-only omits every optional discovery. These are controlled simulations, not complete campaign runs, human playtests, FPS measurements or real-device validation.",
+    "completeWorldRuns": false,
+    "humanBalanceValidated": false
+  },
+  "fatalFall": {
+    "independentPhysicalCases": 42,
+    "actualRocketStepRatesHz": [
+      20,
+      60,
+      120
+    ],
+    "generatedArenasChecked": 3,
+    "underTerrainAndFallbackImpactsFatal": true,
+    "safeCheckpointDeferral": true
+  },
+  "armor": {
+    "capacity": 100,
+    "equippedShieldCapacity": 200,
+    "initialPoints": 0,
+    "residualAbsorptionFraction": 0.3333333333333333,
+    "timeRegeneration": false,
+    "campaignPlateQuantities": [
+      25,
+      25,
+      50
+    ],
+    "bossLoot": 50,
+    "ordinaryLoot": {
+      "idModulo": 4,
+      "quantity": 10
+    },
+    "dedicatedSimulationTests": 12,
+    "dedicatedShellTests": 2,
+    "realCacheLocalPreflights": "docs/qa-v07/armor-preflight.json",
+    "classicGeometryUnchanged": true,
+    "oldCompatibleSaveInitialPoints": 0,
+    "intermediatePreHCampaignSave": "Changed pickup fingerprint can trigger the documented entrance fallback; no claim of in-place migration for those unpublished intermediate layouts."
+  },
+  "shield": {
+    "geometryPoses": 3500,
+    "fovDegrees": [
+      60,
+      110
+    ],
+    "formats": [
+      [
+        1280,
+        720
+      ],
+      [
+        844,
+        390
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        320,
+        568
+      ]
+    ],
+    "weapons": 5,
+    "newTests": 3,
+    "pieces": 10,
+    "panelMetres": [
+      0.52,
+      0.66
+    ],
+    "guardDepthMetres": 0.98,
+    "rightHandGeometryUnchanged": true,
+    "nativeCaptureDrawCallsBeforeAfter": [
+      52,
+      53
+    ],
+    "nativeCaptureTrianglesBeforeAfter": [
+      130088,
+      130088
+    ],
+    "provenance": "docs/qa-v07/bouclier-provenance.json"
+  },
+  "rendering": {
+    "nearActorExtraParts": 14,
+    "nearBossExtraParts": 18,
+    "extraPartsMode": "WebGL Auto/High near tier only",
+    "comparisonTrianglesBeforeAfter": [
+      238888,
+      241224
+    ],
+    "comparisonDrawCallsBeforeAfter": [
+      51,
+      51
+    ],
+    "newShadowPasses": 0,
+    "particleCountIncreased": false,
+    "sceneReflections": "Analytic sky/sun, not exact scene mirrors or ray tracing",
+    "nativeRenders": {
+      "GComparisons": 16,
+      "DGFinalCaptures": 3,
+      "HShieldCaptures": 7,
+      "GLerrors": 0,
+      "backend": "OpenGL ES 3.2 Mesa llvmpipe, software rasterization"
+    },
+    "evidence": "docs/qa-v07/README.md"
+  },
+  "audio": {
+    "tests": 21,
+    "musicBusUnchanged": true,
+    "combatCueLevelsUnchanged": true,
+    "ambienceBusBeforeAfter": [
+      0.9,
+      0.7
+    ],
+    "steamMaxAudibleDistanceMetres": 12,
+    "windFilter": "bandpass Q 0.45",
+    "droneLfoSilencedWhenPaused": true,
+    "liveAuditionSlidersFixed": true,
+    "humanListeningPerformed": false
+  },
+  "browser": {
+    "validatedThisRelease": true,
+    "scope": "Limited desktop UI smoke in real Chrome at 1363x936; not a full gameplay or cross-device validation.",
+    "evidence": "docs/qa-v07/browser-smoke.json",
+    "historicalPreflight": "docs/qa-v07/browser-preflight.json",
+    "historicalPreflightOutcome": "An earlier standalone Chromium launch aborted before page creation; a later supported local preview opened successfully in Chrome.",
+    "DOMLayoutInspectedThisRelease": true,
+    "inspectedViewports": [
+      [
+        1363,
+        936
+      ]
+    ],
+    "mobileDOMLayoutInspectedThisRelease": false,
+    "renderBackendObserved": "Canvas 2D fallback; image options reported WebGL2 unavailable.",
+    "tacticalBackendObserved": "CPU fallback; WebNN unavailable.",
+    "shellAutomatedMethod": "Real game/simulation/audio modules with substituted browser APIs; separate from this real browser smoke.",
+    "checkpointResumeAfterReload": {
+      "passed": true,
+      "method": "Full page reload, then the normal Continue button for MONDE 01.",
+      "restored": {
+        "world": "01 / 18",
+        "commands": "1 / 3",
+        "health": 100,
+        "armor": "0 / 100",
+        "pistolAmmunition": "∞",
+        "ownedWeapons": "1 / 5"
+      },
+      "visibleMessage": "Signal retrouvé. Reprise au dernier point enregistré."
+    },
+    "errorLogInspection": {
+      "entriesInspected": 15,
+      "scope": "Last 15 error entries available during the check.",
+      "observation": "Only browser-extension metadata errors were found in this bounded sample; none was attributed to the game source.",
+      "completeConsoleAudit": false
+    },
+    "returnedToTitle": true
+  },
+  "physicalHardware": {
+    "GPUtested": false,
+    "NPUtested": false,
+    "phonesTested": false,
+    "fpsClaimed": false
+  },
+  "sourceSha256": {
+    "src/actors.js": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+    "src/audio.js": "1d450513a8677a9fb00bf860b71dbc246a2fd1be050fbfa015470928b2a546ae",
+    "src/brain.js": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "src/destruction.js": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+    "src/economy.js": "362863977e9ab6a9ddaf26f9d1ec6ec8f51eda25c58193d98b72abca4c2c08c9",
+    "src/effects.js": "a9b87f021bc82f06ac22607689bc2bb0f9caddbfaa7bd0e9cf40c382bf94c341",
+    "src/game.js": "b0621d75272adff53cf105faa889d58db21964fa18b511de77bfbd961528e0f1",
+    "src/index.html": "2b180fb855e06829e9bc8c84a6ec049f511ca3f72819e3a60b508a1431c4f581",
+    "src/motion.js": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+    "src/music.js": "f50361332f36c212461d3005489a5813f518ec65317f2f7c0727d9754f2f5d0b",
+    "src/options.js": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+    "src/renderer.js": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "src/simulation.js": "31ea989d0599e8c60f844c95b47a81315eb46d9dad0cad8a2811c742be239681",
+    "src/style.css": "12ea806672363986ecab0c4c72ca8be87e5b528a8c6267e87e6e33dcdb4ca586",
+    "src/world.js": "ab4e37cd5c6bed8ce3dc0cba655d035fa056fd94103aaa5254821b2d4f1fc385"
+  },
+  "limitations": [
+    "The 18-world profile report uses controlled entry inventories and local trophy spawns, not complete playthroughs.",
+    "The 36 four-opponent arena simulations use accurate automated aiming and take zero damage; they do not prove human difficulty balance.",
+    "Native GLES images omit the DOM HUD and use documented source snapshots preceding some final H integration changes.",
+    "All documentation images and validation reports are excluded from the standalone runtime size.",
+    "Browser, drivers and platform runtime are excluded from the HTML size.",
+    "The real browser smoke inspects a single desktop viewport in Canvas fallback, not WebGL rendering or mobile layout. Approximately 1 FPS was displayed remotely; this is not a physical-hardware benchmark or a performance guarantee."
+  ],
+  "concurrentChangePreserved": {
+    "commit": "352aeac20aded30a00bb8048958ee9f99c3590cd",
+    "scope": "Title version markup, .game-version styling and __GAME_VERSION__ substitution from package.json.",
+    "displayedVersion": "V0.7.0"
+  },
+  "buildInputSha256": {
+    "package.json": "c61a248a8b6504f48ffaa54c07f56b4d889e69764ea60d56ea707b9d2d73f28e",
+    "tools/build.py": "410c24ef345ee4b9b9d28d416a85c4239705b784f517f714a2e0132917940447"
+  }
+}

@@ -1,0 +1,1282 @@
+{
+  "status": "scratch only, pending root GO",
+  "source_growth_bytes": 6093,
+  "tests": {
+    "pass": 47,
+    "fail": 0,
+    "log": "phase-g-tests.log"
+  },
+  "renderer": "OpenGL ES 3.2 Mesa 25.0.7-2+deb13u1 / llvmpipe LLVM19.1.7 (software)",
+  "hardware_fps_claim": false,
+  "capture_dimensions": [
+    960,
+    600
+  ],
+  "warm_sample_count": 7,
+  "notes": "Shared CPU workload. Native frame timing includes Python command replay, GL synchronization and software rasterization. Do not convert into hardware/browser FPS or infer a performance gain. Frozen identical worlds/game code for before/current.",
+  "models": [
+    {
+      "kind": "drone",
+      "rows": [
+        {
+          "variant": "before",
+          "instances": 35,
+          "triangles": 2864,
+          "added": 0
+        },
+        {
+          "variant": "current",
+          "instances": 49,
+          "triangles": 3344,
+          "added": 14
+        }
+      ]
+    },
+    {
+      "kind": "heavy",
+      "rows": [
+        {
+          "variant": "before",
+          "instances": 45,
+          "triangles": 1736,
+          "added": 0
+        },
+        {
+          "variant": "current",
+          "instances": 59,
+          "triangles": 2320,
+          "added": 14
+        }
+      ]
+    },
+    {
+      "kind": "sentinel",
+      "rows": [
+        {
+          "variant": "before",
+          "instances": 40,
+          "triangles": 2852,
+          "added": 0
+        },
+        {
+          "variant": "current",
+          "instances": 54,
+          "triangles": 3764,
+          "added": 14
+        }
+      ]
+    },
+    {
+      "kind": "custodian",
+      "rows": [
+        {
+          "variant": "before",
+          "instances": 55,
+          "triangles": 2396,
+          "added": 0
+        },
+        {
+          "variant": "current",
+          "instances": 69,
+          "triangles": 2980,
+          "added": 14
+        }
+      ]
+    },
+    {
+      "kind": "giant",
+      "rows": [
+        {
+          "variant": "before",
+          "instances": 93,
+          "triangles": 4076,
+          "added": 0
+        },
+        {
+          "variant": "current",
+          "instances": 111,
+          "triangles": 4916,
+          "added": 18
+        }
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "scene": "actor",
+      "variants": [
+        {
+          "variant": "before",
+          "stats": {
+            "drawCalls": 23,
+            "triangles": 7040,
+            "instances": 47,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": null,
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "atlas",
+            "uploadBytes": 2880,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              1.55,
+              1.52,
+              2.65
+            ],
+            "yaw": -0.5292467808318448,
+            "pitch": -0.11673013055403912,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "eeb06a022a162d820403b925fc50499d250b2ff9cfe873b8029e6f3c6fd3904f",
+            "effects": "eae5d9a26667e6e86661ff99a16a27ff39d444cd4aeafd4943da5a682fc4a6d8",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            38.48022199963452,
+            16.535011000087252,
+            16.743776999646798,
+            14.800757999182679,
+            15.018755999335553,
+            14.726065001013922,
+            15.356436000729445,
+            13.606075001007412
+          ],
+          "warm_median_ms": 15.018755999335553,
+          "warm_range_ms": [
+            13.606075001007412,
+            16.743776999646798
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/actor-before-gles.png"
+        },
+        {
+          "variant": "current",
+          "stats": {
+            "drawCalls": 23,
+            "triangles": 9376,
+            "instances": 61,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": null,
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "atlas",
+            "uploadBytes": 3776,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              1.55,
+              1.52,
+              2.65
+            ],
+            "yaw": -0.5292467808318448,
+            "pitch": -0.11673013055403912,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+            "effects": "8880df16c405cfb74df87f1c231f3865f9781c1847df755897df7c58fe4a4316",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            35.724180001125205,
+            16.04636800038861,
+            14.234037000278477,
+            15.294728000299074,
+            16.663690999848768,
+            16.917508000915404,
+            16.43911700011813,
+            14.077345000259811
+          ],
+          "warm_median_ms": 16.04636800038861,
+          "warm_range_ms": [
+            14.077345000259811,
+            16.917508000915404
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/actor-current-gles.png"
+        }
+      ]
+    },
+    {
+      "scene": "drone",
+      "variants": [
+        {
+          "variant": "before",
+          "stats": {
+            "drawCalls": 27,
+            "triangles": 11552,
+            "instances": 37,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": null,
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "atlas",
+            "uploadBytes": 2240,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              1.45,
+              1.7,
+              2.45
+            ],
+            "yaw": -0.5343954767544137,
+            "pitch": -0.13269288313216807,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "eeb06a022a162d820403b925fc50499d250b2ff9cfe873b8029e6f3c6fd3904f",
+            "effects": "eae5d9a26667e6e86661ff99a16a27ff39d444cd4aeafd4943da5a682fc4a6d8",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            39.28257300140103,
+            17.507073000160744,
+            15.97466000021086,
+            18.687530999159208,
+            17.63494099941454,
+            15.782455000589835,
+            14.71633999972255,
+            18.940628000564175
+          ],
+          "warm_median_ms": 17.507073000160744,
+          "warm_range_ms": [
+            14.71633999972255,
+            18.940628000564175
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/drone-before-gles.png"
+        },
+        {
+          "variant": "current",
+          "stats": {
+            "drawCalls": 27,
+            "triangles": 13472,
+            "instances": 51,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": null,
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "atlas",
+            "uploadBytes": 3136,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              1.45,
+              1.7,
+              2.45
+            ],
+            "yaw": -0.5343954767544137,
+            "pitch": -0.13269288313216807,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+            "effects": "8880df16c405cfb74df87f1c231f3865f9781c1847df755897df7c58fe4a4316",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            38.11001199937891,
+            17.600614999537356,
+            16.828022999106906,
+            14.993785000115167,
+            17.575095997017343,
+            14.831614000286208,
+            14.482587001111824,
+            13.636379000672605
+          ],
+          "warm_median_ms": 14.993785000115167,
+          "warm_range_ms": [
+            13.636379000672605,
+            17.600614999537356
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/drone-current-gles.png"
+        }
+      ]
+    },
+    {
+      "scene": "sentinel",
+      "variants": [
+        {
+          "variant": "before",
+          "stats": {
+            "drawCalls": 27,
+            "triangles": 11504,
+            "instances": 42,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": null,
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "atlas",
+            "uploadBytes": 2560,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              1.8,
+              1.35,
+              3
+            ],
+            "yaw": -0.5404195002705842,
+            "pitch": -0.09970908929112109,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "eeb06a022a162d820403b925fc50499d250b2ff9cfe873b8029e6f3c6fd3904f",
+            "effects": "eae5d9a26667e6e86661ff99a16a27ff39d444cd4aeafd4943da5a682fc4a6d8",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            37.80157700020936,
+            15.821488999790745,
+            15.686064998590155,
+            20.24002100006328,
+            18.566483002359746,
+            15.083554000739241,
+            15.367011998023372,
+            14.8480899988499
+          ],
+          "warm_median_ms": 15.686064998590155,
+          "warm_range_ms": [
+            14.8480899988499,
+            20.24002100006328
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/sentinel-before-gles.png"
+        },
+        {
+          "variant": "current",
+          "stats": {
+            "drawCalls": 27,
+            "triangles": 15152,
+            "instances": 56,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": null,
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "atlas",
+            "uploadBytes": 3456,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              1.8,
+              1.35,
+              3
+            ],
+            "yaw": -0.5404195002705842,
+            "pitch": -0.09970908929112109,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+            "effects": "8880df16c405cfb74df87f1c231f3865f9781c1847df755897df7c58fe4a4316",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            37.48230500059435,
+            16.249550000793533,
+            17.22808799968334,
+            18.272659999638563,
+            15.143664997594897,
+            17.1087679991615,
+            14.775322997593321,
+            16.28286600316642
+          ],
+          "warm_median_ms": 16.28286600316642,
+          "warm_range_ms": [
+            14.775322997593321,
+            18.272659999638563
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/sentinel-current-gles.png"
+        }
+      ]
+    },
+    {
+      "scene": "custodian",
+      "variants": [
+        {
+          "variant": "before",
+          "stats": {
+            "drawCalls": 23,
+            "triangles": 9680,
+            "instances": 57,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": null,
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "atlas",
+            "uploadBytes": 3520,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              2.6,
+              2.5,
+              4.8
+            ],
+            "yaw": -0.49642275340488196,
+            "pitch": -0.14192430016909224,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "eeb06a022a162d820403b925fc50499d250b2ff9cfe873b8029e6f3c6fd3904f",
+            "effects": "eae5d9a26667e6e86661ff99a16a27ff39d444cd4aeafd4943da5a682fc4a6d8",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            48.62384700027178,
+            18.861013999412535,
+            15.974570000253152,
+            15.82724100080668,
+            14.600180002162233,
+            15.173256000707624,
+            15.252835997671355,
+            16.682599001796916
+          ],
+          "warm_median_ms": 15.82724100080668,
+          "warm_range_ms": [
+            14.600180002162233,
+            18.861013999412535
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/custodian-before-gles.png"
+        },
+        {
+          "variant": "current",
+          "stats": {
+            "drawCalls": 23,
+            "triangles": 12016,
+            "instances": 71,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": null,
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "atlas",
+            "uploadBytes": 4416,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              2.6,
+              2.5,
+              4.8
+            ],
+            "yaw": -0.49642275340488196,
+            "pitch": -0.14192430016909224,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+            "effects": "8880df16c405cfb74df87f1c231f3865f9781c1847df755897df7c58fe4a4316",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            37.778852001792984,
+            17.602948999410728,
+            16.75837299990235,
+            15.443687996594235,
+            16.969462001725333,
+            15.796324998518685,
+            15.747623001516331,
+            14.749149002454942
+          ],
+          "warm_median_ms": 15.796324998518685,
+          "warm_range_ms": [
+            14.749149002454942,
+            17.602948999410728
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/custodian-current-gles.png"
+        }
+      ]
+    },
+    {
+      "scene": "material",
+      "variants": [
+        {
+          "variant": "before",
+          "stats": {
+            "drawCalls": 20,
+            "triangles": 1680,
+            "instances": 5,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": "woodland",
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "sun-atlas",
+            "uploadBytes": 192,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              4.7,
+              2.2,
+              5.7
+            ],
+            "yaw": -0.6895390162874351,
+            "pitch": -0.18073890856297128,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "eeb06a022a162d820403b925fc50499d250b2ff9cfe873b8029e6f3c6fd3904f",
+            "effects": "eae5d9a26667e6e86661ff99a16a27ff39d444cd4aeafd4943da5a682fc4a6d8",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            55.54492200099048,
+            21.55053900060011,
+            21.650079997925786,
+            19.754767999984324,
+            21.601460000965744,
+            21.629028000461403,
+            28.671350999502465,
+            18.07024499794352
+          ],
+          "warm_median_ms": 21.601460000965744,
+          "warm_range_ms": [
+            18.07024499794352,
+            28.671350999502465
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/material-before-gles.png"
+        },
+        {
+          "variant": "current",
+          "stats": {
+            "drawCalls": 20,
+            "triangles": 1680,
+            "instances": 5,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 2,
+            "biome": "woodland",
+            "worldRevision": 0,
+            "actorsCulled": 1,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 2,
+            "staticCulled": 0,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "sun-atlas",
+            "uploadBytes": 192,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              4.7,
+              2.2,
+              5.7
+            ],
+            "yaw": -0.6895390162874351,
+            "pitch": -0.18073890856297128,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+            "effects": "8880df16c405cfb74df87f1c231f3865f9781c1847df755897df7c58fe4a4316",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            49.29697700208635,
+            19.303150998894125,
+            18.626092998601962,
+            18.94220000031055,
+            20.29606500218506,
+            29.48660100082634,
+            18.888455000706017,
+            18.710120999458013
+          ],
+          "warm_median_ms": 18.94220000031055,
+          "warm_range_ms": [
+            18.626092998601962,
+            29.48660100082634
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/material-current-gles.png"
+        }
+      ]
+    },
+    {
+      "scene": "trees",
+      "variants": [
+        {
+          "variant": "before",
+          "stats": {
+            "drawCalls": 51,
+            "triangles": 93468,
+            "instances": 326,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 14077,
+            "biome": "woodland",
+            "worldRevision": 0,
+            "actorsCulled": 6,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 142,
+            "staticCulled": 13935,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "sun-atlas",
+            "uploadBytes": 11776,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              -44.869727751890316,
+              1.62,
+              51.71307133724913
+            ],
+            "yaw": -2.356194490192345,
+            "pitch": 0.16122299961384012,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "eeb06a022a162d820403b925fc50499d250b2ff9cfe873b8029e6f3c6fd3904f",
+            "effects": "eae5d9a26667e6e86661ff99a16a27ff39d444cd4aeafd4943da5a682fc4a6d8",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            73.90920499892673,
+            72.13766000131727,
+            43.64870599965798,
+            48.82787100359565,
+            43.12069799925666,
+            42.22420400037663,
+            40.35967999880086,
+            43.36846200021682
+          ],
+          "warm_median_ms": 43.36846200021682,
+          "warm_range_ms": [
+            40.35967999880086,
+            72.13766000131727
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/trees-before-gles.png"
+        },
+        {
+          "variant": "current",
+          "stats": {
+            "drawCalls": 51,
+            "triangles": 93468,
+            "instances": 326,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 14077,
+            "biome": "woodland",
+            "worldRevision": 0,
+            "actorsCulled": 6,
+            "actorsConsidered": 6,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 142,
+            "staticCulled": 13935,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "sun-atlas",
+            "uploadBytes": 11776,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              -44.869727751890316,
+              1.62,
+              51.71307133724913
+            ],
+            "yaw": -2.356194490192345,
+            "pitch": 0.16122299961384012,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+            "effects": "8880df16c405cfb74df87f1c231f3865f9781c1847df755897df7c58fe4a4316",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            80.85407199905603,
+            48.52227399896947,
+            46.45147700284724,
+            53.73122300079558,
+            46.024442999623716,
+            40.19357799916179,
+            38.84427099910681,
+            58.70264500117628
+          ],
+          "warm_median_ms": 46.45147700284724,
+          "warm_range_ms": [
+            38.84427099910681,
+            58.70264500117628
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/trees-current-gles.png"
+        }
+      ]
+    },
+    {
+      "scene": "metal",
+      "variants": [
+        {
+          "variant": "before",
+          "stats": {
+            "drawCalls": 51,
+            "triangles": 238888,
+            "instances": 1746,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 14077,
+            "biome": "woodland",
+            "worldRevision": 0,
+            "actorsCulled": 3,
+            "actorsConsidered": 7,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 1235,
+            "staticCulled": 12842,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "sun-atlas",
+            "uploadBytes": 32704,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              -2,
+              4.82,
+              4
+            ],
+            "yaw": 0.3587706702705722,
+            "pitch": -0.019894369970341757,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "eeb06a022a162d820403b925fc50499d250b2ff9cfe873b8029e6f3c6fd3904f",
+            "effects": "eae5d9a26667e6e86661ff99a16a27ff39d444cd4aeafd4943da5a682fc4a6d8",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            119.32051199983107,
+            80.51309700022102,
+            90.22351100065862,
+            101.25305299879983,
+            146.6302490007365,
+            109.83186199882766,
+            73.00653399943258,
+            79.64577799793915
+          ],
+          "warm_median_ms": 90.22351100065862,
+          "warm_range_ms": [
+            73.00653399943258,
+            146.6302490007365
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/metal-before-gles.png"
+        },
+        {
+          "variant": "current",
+          "stats": {
+            "drawCalls": 51,
+            "triangles": 241224,
+            "instances": 1760,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 14077,
+            "biome": "woodland",
+            "worldRevision": 0,
+            "actorsCulled": 3,
+            "actorsConsidered": 7,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 1235,
+            "staticCulled": 12842,
+            "dynamicLights": 0,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "sun-atlas",
+            "uploadBytes": 33600,
+            "fxInstances": 0
+          },
+          "camera": {
+            "pos": [
+              -2,
+              4.82,
+              4
+            ],
+            "yaw": 0.3587706702705722,
+            "pitch": -0.019894369970341757,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+            "effects": "8880df16c405cfb74df87f1c231f3865f9781c1847df755897df7c58fe4a4316",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            130.65558800008148,
+            76.61422199817025,
+            78.3169119968079,
+            70.89414399888483,
+            70.32320199868991,
+            71.78744199700304,
+            70.88414399913745,
+            69.49738500043168
+          ],
+          "warm_median_ms": 70.89414399888483,
+          "warm_range_ms": [
+            69.49738500043168,
+            78.3169119968079
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/metal-current-gles.png"
+        }
+      ]
+    },
+    {
+      "scene": "explosion",
+      "variants": [
+        {
+          "variant": "before",
+          "stats": {
+            "drawCalls": 64,
+            "triangles": 242696,
+            "instances": 1767,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 14077,
+            "biome": "woodland",
+            "worldRevision": 0,
+            "actorsCulled": 3,
+            "actorsConsidered": 7,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 1235,
+            "staticCulled": 12842,
+            "dynamicLights": 1,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "sun-atlas",
+            "uploadBytes": 34048,
+            "fxInstances": 21
+          },
+          "camera": {
+            "pos": [
+              -2,
+              4.82,
+              4
+            ],
+            "yaw": 0.3587706702705722,
+            "pitch": -0.019894369970341757,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "eeb06a022a162d820403b925fc50499d250b2ff9cfe873b8029e6f3c6fd3904f",
+            "effects": "eae5d9a26667e6e86661ff99a16a27ff39d444cd4aeafd4943da5a682fc4a6d8",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "45c1b17014fb5310f89ea6ca982d91a9a9158f71472eaf82c5eadeae817df0a4",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            145.4846840024402,
+            86.3307369982067,
+            88.11050299846102,
+            181.23122800170677,
+            75.04585399874486,
+            73.5471600019082,
+            76.8024789977062,
+            74.77039800141938
+          ],
+          "warm_median_ms": 76.8024789977062,
+          "warm_range_ms": [
+            73.5471600019082,
+            181.23122800170677
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/explosion-before-gles.png"
+        },
+        {
+          "variant": "current",
+          "stats": {
+            "drawCalls": 66,
+            "triangles": 245032,
+            "instances": 1781,
+            "contextLost": false,
+            "webglVersion": 2,
+            "backend": "webgl2",
+            "bloom": true,
+            "shadows": true,
+            "renderScale": 1,
+            "pixelRatio": 1,
+            "width": 960,
+            "height": 600,
+            "staticTotal": 14077,
+            "biome": "woodland",
+            "worldRevision": 0,
+            "actorsCulled": 3,
+            "actorsConsidered": 7,
+            "actorFilterMode": "camera-and-shadow-frusta",
+            "actorFilterVolumes": 4,
+            "viewDistance": 64,
+            "staticVisible": 1235,
+            "staticCulled": 12842,
+            "dynamicLights": 1,
+            "blackoutLights": 0,
+            "shadowMaps": 3,
+            "shadowMode": "sun-atlas",
+            "uploadBytes": 34944,
+            "fxInstances": 21
+          },
+          "camera": {
+            "pos": [
+              -2,
+              4.82,
+              4
+            ],
+            "yaw": 0.3587706702705722,
+            "pitch": -0.019894369970341757,
+            "fov": 74
+          },
+          "sha256": {
+            "world": "09b25c40747bda2f1dd3e3f0f44b512cc5efd85ed4d00963373266b48d2fa02f",
+            "economy": "4142a9034d1dab55b5c426e91d008656b7abafcc915e28b265e1a43d2f59adb7",
+            "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+            "simulation": "4391dc2375ae1678bca91b5a4e5545b3d24fc86eb8764f7729f5f69472bb22ba",
+            "motion": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+            "actors": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+            "effects": "8880df16c405cfb74df87f1c231f3865f9781c1847df755897df7c58fe4a4316",
+            "options": "b5a81d773ca049abad7ddab7c7756e5dfbe0d2f131ec53fe6a6d90ff5094bf25",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "game": "555aeffe5b47bf1689ccba89d57a0b6c99a1b49d22575a0970f8958dc200c13b"
+          },
+          "native_frames_ms": [
+            118.04770199887571,
+            79.33889999912935,
+            73.66716999968048,
+            71.60489699890604,
+            74.89681400329573,
+            83.19408500028658,
+            74.46986300055869,
+            75.8869119999872
+          ],
+          "warm_median_ms": 74.89681400329573,
+          "warm_range_ms": [
+            71.60489699890604,
+            83.19408500028658
+          ],
+          "image": "/workspace/scratch/1e3caa08787d/qa-metal-campaign-interface/phase-g/captures/explosion-current-gles.png"
+        }
+      ]
+    }
+  ]
+}

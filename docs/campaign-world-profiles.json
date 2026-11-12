@@ -1,0 +1,1609 @@
+{
+  "schema": "metal-campaign-api-profile-v1",
+  "seed": 96,
+  "sources": {
+    "renderer": "src/renderer.js",
+    "world": "src/world.js",
+    "destruction": "src/destruction.js",
+    "economy": "src/economy.js",
+    "simulation": "src/simulation.js"
+  },
+  "sourceSha256": {
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "ab4e37cd5c6bed8ce3dc0cba655d035fa056fd94103aaa5254821b2d4f1fc385",
+    "destruction": "4c108fd0409f9deeb3e4bddfd58508c40848840e33f97e74e71d5ca749b83559",
+    "economy": "362863977e9ab6a9ddaf26f9d1ec6ec8f51eda25c58193d98b72abca4c2c08c9",
+    "simulation": "31ea989d0599e8c60f844c95b47a81315eb46d9dad0cad8a2811c742be239681"
+  },
+  "method": {
+    "entryInventory": "Pistol from the start; only scheduled gifts at strictly earlier indices are owned. Owned finite-ammo weapons start at their base capacity for this profile measurement; these are controlled inputs, not measured combat ammunition.",
+    "discovery": "FSimulation.create on the full generated world with a local valid spawn at the trophy, then step(.025). The real pickup code grants the gift; this is not a traversal benchmark.",
+    "multipliers": "The reported damage/cadence values are the campaign adaptation multipliers. Selected difficulty, biome stage, director progress, attack-specific cooldowns and player upgrades compose separately.",
+    "boss": "entryMaxHp is the actual runtime value, frozen when entering the world. baseMaxHp is the chapter-scaled generated value before the missing-arsenal adjustment.",
+    "heavyCounts": "grenadeRosterCount and rocketRosterCount count finite predefined identities. Their explosive attacks are gated at runtime by owned shield and, for rockets, at least one heavy weapon.",
+    "enemies": "enemyCount includes the boss, its six reinforcements and any three conditional trophy guards; it is not a simultaneous-combat count."
+  },
+  "checks": {
+    "worlds": 18,
+    "discoveryPickups": 5,
+    "exactCheckpointRoundTrips": 23,
+    "finiteSerializedValues": true,
+    "unchangedSourcesDuringRun": true
+  },
+  "totals": {
+    "enemies": 1679,
+    "conditionalTrophyGuards": 15
+  },
+  "worlds": [
+    {
+      "index": 0,
+      "worldNumber": 1,
+      "stage": 0,
+      "decor": "La lisière rouillée",
+      "biome": "woodland",
+      "chapter": 0,
+      "chapterNumber": 1,
+      "chapterTitle": "L’Éveil des forges",
+      "gift": {
+        "key": "pistol",
+        "name": "Pistolet (départ)",
+        "pickupId": null
+      },
+      "enemyCount": 42,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 0,
+      "rocketRosterCount": 0,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 42,
+        "garrisonScale": 0.35,
+        "maxActive": 4,
+        "grenadiers": 0,
+        "rocketeers": 0,
+        "bossHpScale": 0.25,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Colosse de Fer",
+        "kind": "colossus",
+        "baseMaxHp": 33,
+        "entryMaxHp": 33
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": false
+        },
+        "discovered": [
+          "pistol"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 0,
+          "maxActive": 4,
+          "damageMultiplier": 0.58,
+          "cadenceMultiplier": 0.7,
+          "entryTier": 0,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 41,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 33,
+          "hp": 33
+        },
+        "totalActors": 42,
+        "currentCombatCap": 4
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 1,
+      "worldNumber": 2,
+      "stage": 1,
+      "decor": "La carrière des braises",
+      "biome": "quarry",
+      "chapter": 0,
+      "chapterNumber": 1,
+      "chapterTitle": "L’Éveil des forges",
+      "gift": null,
+      "enemyCount": 49,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 0,
+      "rocketRosterCount": 0,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 49,
+        "garrisonScale": 0.35,
+        "maxActive": 4,
+        "grenadiers": 0,
+        "rocketeers": 0,
+        "bossHpScale": 0.25,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Brise-siège",
+        "kind": "siegebreaker",
+        "baseMaxHp": 45,
+        "entryMaxHp": 45
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": false
+        },
+        "discovered": [
+          "pistol"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 0,
+          "maxActive": 4,
+          "damageMultiplier": 0.58,
+          "cadenceMultiplier": 0.7,
+          "entryTier": 0,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 48,
+          "name": "Le Brise-siège",
+          "kind": "siegebreaker",
+          "maxHp": 45,
+          "hp": 45
+        },
+        "totalActors": 49,
+        "currentCombatCap": 4
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 2,
+      "worldNumber": 3,
+      "stage": 2,
+      "decor": "Les jardins du veilleur",
+      "biome": "garden",
+      "chapter": 0,
+      "chapterNumber": 1,
+      "chapterTitle": "L’Éveil des forges",
+      "gift": null,
+      "enemyCount": 60,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 0,
+      "rocketRosterCount": 0,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 60,
+        "garrisonScale": 0.35,
+        "maxActive": 4,
+        "grenadiers": 0,
+        "rocketeers": 0,
+        "bossHpScale": 0.25,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Veilleur primordial",
+        "kind": "custodian",
+        "baseMaxHp": 60,
+        "entryMaxHp": 60
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": false
+        },
+        "discovered": [
+          "pistol"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 0,
+          "maxActive": 4,
+          "damageMultiplier": 0.58,
+          "cadenceMultiplier": 0.7,
+          "entryTier": 0,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 59,
+          "name": "Le Veilleur primordial",
+          "kind": "custodian",
+          "maxHp": 60,
+          "hp": 60
+        },
+        "totalActors": 60,
+        "currentCombatCap": 4
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 3,
+      "worldNumber": 4,
+      "stage": 0,
+      "decor": "La lisière rouillée",
+      "biome": "woodland",
+      "chapter": 1,
+      "chapterNumber": 2,
+      "chapterTitle": "La Garde de fer",
+      "gift": {
+        "key": "shield",
+        "name": "Bouclier",
+        "pickupId": "trophy-shield"
+      },
+      "enemyCount": 54,
+      "trialEnemyCount": 3,
+      "grenadeRosterCount": 2,
+      "rocketRosterCount": 0,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 54,
+        "garrisonScale": 0.45,
+        "maxActive": 5,
+        "grenadiers": 2,
+        "rocketeers": 0,
+        "bossHpScale": 0.32,
+        "trialEnemies": 3
+      },
+      "boss": {
+        "name": "Le Colosse de Fer",
+        "kind": "colossus",
+        "baseMaxHp": 42,
+        "entryMaxHp": 38
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": false
+        },
+        "discovered": [
+          "pistol"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 0,
+          "maxActive": 4,
+          "damageMultiplier": 0.58,
+          "cadenceMultiplier": 0.7,
+          "entryTier": 0,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 53,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 38,
+          "hp": 38
+        },
+        "totalActors": 54,
+        "currentCombatCap": 4
+      },
+      "afterDiscovery": {
+        "inventory": {
+          "weapons": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 1,
+          "maxActive": 5,
+          "damageMultiplier": 0.66,
+          "cadenceMultiplier": 0.76,
+          "entryTier": 0,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 53,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 38,
+          "hp": 38
+        },
+        "totalActors": 54,
+        "currentCombatCap": 5
+      }
+    },
+    {
+      "index": 4,
+      "worldNumber": 5,
+      "stage": 1,
+      "decor": "La carrière des braises",
+      "biome": "quarry",
+      "chapter": 1,
+      "chapterNumber": 2,
+      "chapterTitle": "La Garde de fer",
+      "gift": null,
+      "enemyCount": 63,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 2,
+      "rocketRosterCount": 0,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 63,
+        "garrisonScale": 0.45,
+        "maxActive": 5,
+        "grenadiers": 2,
+        "rocketeers": 0,
+        "bossHpScale": 0.32,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Brise-siège",
+        "kind": "siegebreaker",
+        "baseMaxHp": 58,
+        "entryMaxHp": 58
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 1,
+          "maxActive": 5,
+          "damageMultiplier": 0.66,
+          "cadenceMultiplier": 0.76,
+          "entryTier": 1,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 62,
+          "name": "Le Brise-siège",
+          "kind": "siegebreaker",
+          "maxHp": 58,
+          "hp": 58
+        },
+        "totalActors": 63,
+        "currentCombatCap": 5
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 5,
+      "worldNumber": 6,
+      "stage": 2,
+      "decor": "Les jardins du veilleur",
+      "biome": "garden",
+      "chapter": 1,
+      "chapterNumber": 2,
+      "chapterTitle": "La Garde de fer",
+      "gift": null,
+      "enemyCount": 77,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 2,
+      "rocketRosterCount": 0,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 77,
+        "garrisonScale": 0.45,
+        "maxActive": 5,
+        "grenadiers": 2,
+        "rocketeers": 0,
+        "bossHpScale": 0.32,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Veilleur primordial",
+        "kind": "custodian",
+        "baseMaxHp": 77,
+        "entryMaxHp": 77
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 1,
+          "maxActive": 5,
+          "damageMultiplier": 0.66,
+          "cadenceMultiplier": 0.76,
+          "entryTier": 1,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 76,
+          "name": "Le Veilleur primordial",
+          "kind": "custodian",
+          "maxHp": 77,
+          "hp": 77
+        },
+        "totalActors": 77,
+        "currentCombatCap": 5
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 6,
+      "worldNumber": 7,
+      "stage": 0,
+      "decor": "La lisière rouillée",
+      "biome": "woodland",
+      "chapter": 2,
+      "chapterNumber": 3,
+      "chapterTitle": "La Chasse mécanique",
+      "gift": {
+        "key": "smg",
+        "name": "Mitraillette",
+        "pickupId": "trophy-smg"
+      },
+      "enemyCount": 66,
+      "trialEnemyCount": 3,
+      "grenadeRosterCount": 3,
+      "rocketRosterCount": 0,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 66,
+        "garrisonScale": 0.55,
+        "maxActive": 6,
+        "grenadiers": 3,
+        "rocketeers": 0,
+        "bossHpScale": 0.45,
+        "trialEnemies": 3
+      },
+      "boss": {
+        "name": "Le Colosse de Fer",
+        "kind": "colossus",
+        "baseMaxHp": 59,
+        "entryMaxHp": 54
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 1,
+          "maxActive": 5,
+          "damageMultiplier": 0.66,
+          "cadenceMultiplier": 0.76,
+          "entryTier": 1,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 65,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 54,
+          "hp": 54
+        },
+        "totalActors": 66,
+        "currentCombatCap": 5
+      },
+      "afterDiscovery": {
+        "inventory": {
+          "weapons": [
+            true,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            60,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 2,
+          "maxActive": 6,
+          "damageMultiplier": 0.75,
+          "cadenceMultiplier": 0.82,
+          "entryTier": 1,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 65,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 54,
+          "hp": 54
+        },
+        "totalActors": 66,
+        "currentCombatCap": 6
+      }
+    },
+    {
+      "index": 7,
+      "worldNumber": 8,
+      "stage": 1,
+      "decor": "La carrière des braises",
+      "biome": "quarry",
+      "chapter": 2,
+      "chapterNumber": 3,
+      "chapterTitle": "La Chasse mécanique",
+      "gift": null,
+      "enemyCount": 77,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 3,
+      "rocketRosterCount": 0,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 77,
+        "garrisonScale": 0.55,
+        "maxActive": 6,
+        "grenadiers": 3,
+        "rocketeers": 0,
+        "bossHpScale": 0.45,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Brise-siège",
+        "kind": "siegebreaker",
+        "baseMaxHp": 81,
+        "entryMaxHp": 81
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            180,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 2,
+          "maxActive": 6,
+          "damageMultiplier": 0.75,
+          "cadenceMultiplier": 0.82,
+          "entryTier": 2,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 76,
+          "name": "Le Brise-siège",
+          "kind": "siegebreaker",
+          "maxHp": 81,
+          "hp": 81
+        },
+        "totalActors": 77,
+        "currentCombatCap": 6
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 8,
+      "worldNumber": 9,
+      "stage": 2,
+      "decor": "Les jardins du veilleur",
+      "biome": "garden",
+      "chapter": 2,
+      "chapterNumber": 3,
+      "chapterTitle": "La Chasse mécanique",
+      "gift": null,
+      "enemyCount": 94,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 3,
+      "rocketRosterCount": 0,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 94,
+        "garrisonScale": 0.55,
+        "maxActive": 6,
+        "grenadiers": 3,
+        "rocketeers": 0,
+        "bossHpScale": 0.45,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Veilleur primordial",
+        "kind": "custodian",
+        "baseMaxHp": 108,
+        "entryMaxHp": 108
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            180,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 2,
+          "maxActive": 6,
+          "damageMultiplier": 0.75,
+          "cadenceMultiplier": 0.82,
+          "entryTier": 2,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 93,
+          "name": "Le Veilleur primordial",
+          "kind": "custodian",
+          "maxHp": 108,
+          "hp": 108
+        },
+        "totalActors": 94,
+        "currentCombatCap": 6
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 9,
+      "worldNumber": 10,
+      "stage": 0,
+      "decor": "La lisière rouillée",
+      "biome": "woodland",
+      "chapter": 3,
+      "chapterNumber": 4,
+      "chapterTitle": "Les Forges brisées",
+      "gift": {
+        "key": "shotgun",
+        "name": "Double pompe",
+        "pickupId": "trophy-shotgun"
+      },
+      "enemyCount": 84,
+      "trialEnemyCount": 3,
+      "grenadeRosterCount": 5,
+      "rocketRosterCount": 2,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 84,
+        "garrisonScale": 0.7,
+        "maxActive": 8,
+        "grenadiers": 5,
+        "rocketeers": 2,
+        "bossHpScale": 0.62,
+        "trialEnemies": 3
+      },
+      "boss": {
+        "name": "Le Colosse de Fer",
+        "kind": "colossus",
+        "baseMaxHp": 81,
+        "entryMaxHp": 74
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            180,
+            0,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 2,
+          "maxActive": 6,
+          "damageMultiplier": 0.75,
+          "cadenceMultiplier": 0.82,
+          "entryTier": 2,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 83,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 74,
+          "hp": 74
+        },
+        "totalActors": 84,
+        "currentCombatCap": 6
+      },
+      "afterDiscovery": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            180,
+            12,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 3,
+          "maxActive": 8,
+          "damageMultiplier": 0.84,
+          "cadenceMultiplier": 0.88,
+          "entryTier": 2,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 83,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 74,
+          "hp": 74
+        },
+        "totalActors": 84,
+        "currentCombatCap": 8
+      }
+    },
+    {
+      "index": 10,
+      "worldNumber": 11,
+      "stage": 1,
+      "decor": "La carrière des braises",
+      "biome": "quarry",
+      "chapter": 3,
+      "chapterNumber": 4,
+      "chapterTitle": "Les Forges brisées",
+      "gift": null,
+      "enemyCount": 98,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 5,
+      "rocketRosterCount": 2,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 98,
+        "garrisonScale": 0.7,
+        "maxActive": 8,
+        "grenadiers": 5,
+        "rocketeers": 2,
+        "bossHpScale": 0.62,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Brise-siège",
+        "kind": "siegebreaker",
+        "baseMaxHp": 112,
+        "entryMaxHp": 112
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 3,
+          "maxActive": 8,
+          "damageMultiplier": 0.84,
+          "cadenceMultiplier": 0.88,
+          "entryTier": 3,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 97,
+          "name": "Le Brise-siège",
+          "kind": "siegebreaker",
+          "maxHp": 112,
+          "hp": 112
+        },
+        "totalActors": 98,
+        "currentCombatCap": 8
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 11,
+      "worldNumber": 12,
+      "stage": 2,
+      "decor": "Les jardins du veilleur",
+      "biome": "garden",
+      "chapter": 3,
+      "chapterNumber": 4,
+      "chapterTitle": "Les Forges brisées",
+      "gift": null,
+      "enemyCount": 119,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 5,
+      "rocketRosterCount": 2,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 119,
+        "garrisonScale": 0.7,
+        "maxActive": 8,
+        "grenadiers": 5,
+        "rocketeers": 2,
+        "bossHpScale": 0.62,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Veilleur primordial",
+        "kind": "custodian",
+        "baseMaxHp": 149,
+        "entryMaxHp": 149
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 3,
+          "maxActive": 8,
+          "damageMultiplier": 0.84,
+          "cadenceMultiplier": 0.88,
+          "entryTier": 3,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 118,
+          "name": "Le Veilleur primordial",
+          "kind": "custodian",
+          "maxHp": 149,
+          "hp": 149
+        },
+        "totalActors": 119,
+        "currentCombatCap": 8
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 12,
+      "worldNumber": 13,
+      "stage": 0,
+      "decor": "La lisière rouillée",
+      "biome": "woodland",
+      "chapter": 4,
+      "chapterNumber": 5,
+      "chapterTitle": "La Fournaise",
+      "gift": {
+        "key": "grenade",
+        "name": "Lance-grenades",
+        "pickupId": "trophy-grenade"
+      },
+      "enemyCount": 102,
+      "trialEnemyCount": 3,
+      "grenadeRosterCount": 6,
+      "rocketRosterCount": 4,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 102,
+        "garrisonScale": 0.85,
+        "maxActive": 10,
+        "grenadiers": 6,
+        "rocketeers": 4,
+        "bossHpScale": 0.8,
+        "trialEnemies": 3
+      },
+      "boss": {
+        "name": "Le Colosse de Fer",
+        "kind": "colossus",
+        "baseMaxHp": 104,
+        "entryMaxHp": 95
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            false,
+            false,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            0,
+            0,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 3,
+          "maxActive": 8,
+          "damageMultiplier": 0.84,
+          "cadenceMultiplier": 0.88,
+          "entryTier": 3,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 101,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 95,
+          "hp": 95
+        },
+        "totalActors": 102,
+        "currentCombatCap": 8
+      },
+      "afterDiscovery": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            false,
+            true,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            0,
+            6,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun",
+          "grenade"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 4,
+          "maxActive": 10,
+          "damageMultiplier": 0.92,
+          "cadenceMultiplier": 0.94,
+          "entryTier": 3,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 101,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 95,
+          "hp": 95
+        },
+        "totalActors": 102,
+        "currentCombatCap": 10
+      }
+    },
+    {
+      "index": 13,
+      "worldNumber": 14,
+      "stage": 1,
+      "decor": "La carrière des braises",
+      "biome": "quarry",
+      "chapter": 4,
+      "chapterNumber": 5,
+      "chapterTitle": "La Fournaise",
+      "gift": null,
+      "enemyCount": 119,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 6,
+      "rocketRosterCount": 4,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 119,
+        "garrisonScale": 0.85,
+        "maxActive": 10,
+        "grenadiers": 6,
+        "rocketeers": 4,
+        "bossHpScale": 0.8,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Brise-siège",
+        "kind": "siegebreaker",
+        "baseMaxHp": 144,
+        "entryMaxHp": 144
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            false,
+            true,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            0,
+            16,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun",
+          "grenade"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 4,
+          "maxActive": 10,
+          "damageMultiplier": 0.92,
+          "cadenceMultiplier": 0.94,
+          "entryTier": 4,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 118,
+          "name": "Le Brise-siège",
+          "kind": "siegebreaker",
+          "maxHp": 144,
+          "hp": 144
+        },
+        "totalActors": 119,
+        "currentCombatCap": 10
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 14,
+      "worldNumber": 15,
+      "stage": 2,
+      "decor": "Les jardins du veilleur",
+      "biome": "garden",
+      "chapter": 4,
+      "chapterNumber": 5,
+      "chapterTitle": "La Fournaise",
+      "gift": null,
+      "enemyCount": 145,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 6,
+      "rocketRosterCount": 4,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 145,
+        "garrisonScale": 0.85,
+        "maxActive": 10,
+        "grenadiers": 6,
+        "rocketeers": 4,
+        "bossHpScale": 0.8,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Veilleur primordial",
+        "kind": "custodian",
+        "baseMaxHp": 192,
+        "entryMaxHp": 192
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            false,
+            true,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            0,
+            16,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun",
+          "grenade"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 4,
+          "maxActive": 10,
+          "damageMultiplier": 0.92,
+          "cadenceMultiplier": 0.94,
+          "entryTier": 4,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 144,
+          "name": "Le Veilleur primordial",
+          "kind": "custodian",
+          "maxHp": 192,
+          "hp": 192
+        },
+        "totalActors": 145,
+        "currentCombatCap": 10
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 15,
+      "worldNumber": 16,
+      "stage": 0,
+      "decor": "La lisière rouillée",
+      "biome": "woodland",
+      "chapter": 5,
+      "chapterNumber": 6,
+      "chapterTitle": "Le Dernier signal",
+      "gift": {
+        "key": "rocket",
+        "name": "Lance-roquettes",
+        "pickupId": "trophy-rocket"
+      },
+      "enemyCount": 120,
+      "trialEnemyCount": 3,
+      "grenadeRosterCount": 8,
+      "rocketRosterCount": 6,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 120,
+        "garrisonScale": 1,
+        "maxActive": 12,
+        "grenadiers": 8,
+        "rocketeers": 6,
+        "bossHpScale": 1,
+        "trialEnemies": 3
+      },
+      "boss": {
+        "name": "Le Colosse de Fer",
+        "kind": "colossus",
+        "baseMaxHp": 130,
+        "entryMaxHp": 118
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            false,
+            true,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            0,
+            16,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun",
+          "grenade"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 4,
+          "maxActive": 10,
+          "damageMultiplier": 0.92,
+          "cadenceMultiplier": 0.94,
+          "entryTier": 4,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 119,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 118,
+          "hp": 118
+        },
+        "totalActors": 120,
+        "currentCombatCap": 10
+      },
+      "afterDiscovery": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            4,
+            16,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun",
+          "grenade",
+          "rocket"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 5,
+          "maxActive": 12,
+          "damageMultiplier": 1,
+          "cadenceMultiplier": 1,
+          "entryTier": 4,
+          "bossHpFactor": 0.91
+        },
+        "boss": {
+          "id": 119,
+          "name": "Le Colosse de Fer",
+          "kind": "colossus",
+          "maxHp": 118,
+          "hp": 118
+        },
+        "totalActors": 120,
+        "currentCombatCap": 12
+      }
+    },
+    {
+      "index": 16,
+      "worldNumber": 17,
+      "stage": 1,
+      "decor": "La carrière des braises",
+      "biome": "quarry",
+      "chapter": 5,
+      "chapterNumber": 6,
+      "chapterTitle": "Le Dernier signal",
+      "gift": null,
+      "enemyCount": 140,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 8,
+      "rocketRosterCount": 6,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 140,
+        "garrisonScale": 1,
+        "maxActive": 12,
+        "grenadiers": 8,
+        "rocketeers": 6,
+        "bossHpScale": 1,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Brise-siège",
+        "kind": "siegebreaker",
+        "baseMaxHp": 180,
+        "entryMaxHp": 180
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            12,
+            16,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun",
+          "grenade",
+          "rocket"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 5,
+          "maxActive": 12,
+          "damageMultiplier": 1,
+          "cadenceMultiplier": 1,
+          "entryTier": 5,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 139,
+          "name": "Le Brise-siège",
+          "kind": "siegebreaker",
+          "maxHp": 180,
+          "hp": 180
+        },
+        "totalActors": 140,
+        "currentCombatCap": 12
+      },
+      "afterDiscovery": null
+    },
+    {
+      "index": 17,
+      "worldNumber": 18,
+      "stage": 2,
+      "decor": "Les jardins du veilleur",
+      "biome": "garden",
+      "chapter": 5,
+      "chapterNumber": 6,
+      "chapterTitle": "Le Dernier signal",
+      "gift": null,
+      "enemyCount": 170,
+      "trialEnemyCount": 0,
+      "grenadeRosterCount": 8,
+      "rocketRosterCount": 6,
+      "nominalProfile": {
+        "version": 1,
+        "garrison": 170,
+        "garrisonScale": 1,
+        "maxActive": 12,
+        "grenadiers": 8,
+        "rocketeers": 6,
+        "bossHpScale": 1,
+        "trialEnemies": 0
+      },
+      "boss": {
+        "name": "Le Veilleur primordial",
+        "kind": "custodian",
+        "baseMaxHp": 240,
+        "entryMaxHp": 240
+      },
+      "entry": {
+        "inventory": {
+          "weapons": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "ammo": [
+            180,
+            36,
+            12,
+            16,
+            1
+          ],
+          "shield": true
+        },
+        "discovered": [
+          "pistol",
+          "shield",
+          "smg",
+          "shotgun",
+          "grenade",
+          "rocket"
+        ],
+        "adaptation": {
+          "version": 1,
+          "tier": 5,
+          "maxActive": 12,
+          "damageMultiplier": 1,
+          "cadenceMultiplier": 1,
+          "entryTier": 5,
+          "bossHpFactor": 1
+        },
+        "boss": {
+          "id": 169,
+          "name": "Le Veilleur primordial",
+          "kind": "custodian",
+          "maxHp": 240,
+          "hp": 240
+        },
+        "totalActors": 170,
+        "currentCombatCap": 12
+      },
+      "afterDiscovery": null
+    }
+  ]
+}

@@ -15,6 +15,7 @@
   out vec3 vWorld;
   out vec3 vNormal;
   out vec3 vSurface;
+  out vec3 vLocal;
   out vec3 vSurfaceNormal;
   flat out float vMaterial;
   flat out float vEmission;
@@ -41,6 +42,7 @@
     vOutdoor=mod(floor(iRotation.w*.5),2.);
     vObject=floor(iRotation.w*.25);
     vSurface=vObject>.5?aPosition*iScale.xyz:vWorld;
+    vLocal=aPosition;
     vSurfaceNormal=vObject>.5?normalize(aNormal/max(abs(iScale.xyz),vec3(.0001))):vNormal;
     vColor=iColor;
     gl_Position=uViewProjection*vec4(vWorld,1.);
@@ -51,6 +53,7 @@
   in vec3 vWorld;
   in vec3 vNormal;
   in vec3 vSurface;
+  in vec3 vLocal;
   in vec3 vSurfaceNormal;
   flat in float vMaterial;
   flat in float vEmission;
@@ -66,6 +69,7 @@
   uniform int uLightCount;
   uniform vec2 uResolution;
   uniform vec4 uEffects;
+  uniform vec2 uWindTime;
   // Explicit sampler precision keeps 24-bit depth from being quantized into bands.
   uniform highp sampler2D uShadowMap;
   uniform mat4 uShadowMatrix[3];
@@ -176,8 +180,12 @@
       base+=screw*.16*architectural;
       float ribs=1.-smoothstep(.02,.03,abs(fract(uv.y*4.)-.5));
       base*=1.-ribs*.085*architectural;
-      float brushing=(.5+.5*sin(uv.y*410.+noise(uv*3.)*4.))*fineDetail;
-      roughness=.33+.19*brushing+.08*broad;
+      // Integrate the brushed finish once it becomes smaller than a pixel;
+      // distant armour must not turn into bands of bright parallel lines.
+      float brushPhase=uv.y*980.+broad*4.;
+      float brushFilter=1.-smoothstep(.65,2.8,fwidth(brushPhase));
+      float brushing=.5+.5*sin(brushPhase)*brushFilter*fineDetail;
+      roughness=.32+.12*brushing+.12*broad;
       float scratch=(1.-smoothstep(.008,.025,abs(fract(uv.y*4.3+noise(vec2(uv.x*1.1,0.))*.4)-.5)))*step(.62,noise(uv*vec2(2.,.25)))*fineDetail;
       base+=vec3(.035,.045,.05)*scratch;
     } else if (m<1.5) {
@@ -267,6 +275,18 @@
       vec3 tint=vColor.rgb*(.88+grain*.2)*(1.-panel*.12)*(m<3.5?.65:1.);
       base=m>7.5?base*.35+tint*.65:tint;
     }
+    if(vObject>.5&&m<2.5){
+      // Local edge wear survives instance tinting and follows the moving plate.
+      // It cannot bring the architecture's world-space panel grid onto a gun.
+      vec2 localUV=an.y>.65?vLocal.xz:(an.x>an.z?vLocal.zy:vLocal.xy);
+      float edgeDistance=.5-max(abs(localUV.x),abs(localUV.y));
+      float wear=(1.-smoothstep(.008,.025+fwidth(edgeDistance),edgeDistance))*(.52+.48*broad);
+      float scuff=(1.-smoothstep(.015,.055,abs(sin(uv.y*173.+grain*11.))))*smoothstep(.52,.74,broad)*fineDetail;
+      base*=.82+.24*broad+.14*grain;
+      base=mix(base,base*1.28+vec3(.055,.065,.07),wear*.7);
+      base+=vec3(.04,.045,.048)*scuff;
+      roughness=mix(roughness,.21,wear*.82);
+    }
     float height=(1.-panel)*.012+grain*.003*fineDetail;
     if(m>1.5&&m<2.5){
       vec2 treadUV=mat2(.707,-.707,.707,.707)*uv*12.;
@@ -276,6 +296,9 @@
     if(m<3.5)n=reliefNormal(n,height);
     if(m>7.5&&m<9.5)n=reliefNormal(n,(noise(uv*7.)-.5)*.009*fineDetail);
     if(m>9.5&&m<11.5)n=reliefNormal(n,organicHeight*fineDetail);
+    // Pixel-scale normal variation broadens highlights instead of shimmering.
+    vec3 ndx=dFdx(n),ndy=dFdy(n);
+    roughness=min(.98,sqrt(roughness*roughness+min(.16,max(dot(ndx,ndx),dot(ndy,ndy))*.28)));
     vec3 view=normalize(uEye-vWorld);
     float distanceToEye=length(uEye-vWorld);
     vec3 light=vec3(.075,.10,.12)*(.72+.28*n.y);
@@ -319,6 +342,16 @@
     // a soft indoor ceiling. This is intentionally not a scene-mirror pass.
     vec3 reflected=reflect(-view,n);
     vec3 sky=mix(uSkyBottom,uSkyTop,smoothstep(0.,1.,reflected.y));
+    if(outdoors>.5&&roughness<.65&&metalness>.25){
+      vec2 cloudUV=reflected.xz/max(.13,reflected.y+.18)*1.8+vec2(uWindTime.y*.006*uWindTime.x,0.);
+      // One broad procedural lobe, filtered by roughness; no cubemap pass.
+      float field=noise(cloudUV)*.8+.2;
+      float cloud=smoothstep(.49-roughness*.08,.73+roughness*.08,field)*smoothstep(-.01,.24,reflected.y);
+      float sun=max(0.,dot(reflected,uSunDirection));
+      vec3 cloudColor=mix(uSkyBottom,vec3(1.12,1.10,1.01),.62)+uSunColor*pow(sun,6.)*.12;
+      sky=mix(sky,cloudColor,cloud*.66);
+      sky+=uSunColor*pow(sun,mix(48.,10.,roughness))*.16;
+    }
     vec3 outside=mix(uAmbient*.20,sky,smoothstep(-.16,.18,reflected.y));
     vec3 inside=mix(vec3(.02,.03,.035),vec3(.18,.24,.27),smoothstep(-.45,.75,reflected.y));
     vec3 environmentReflection=mix(inside,outside,outdoors);
@@ -361,6 +394,7 @@
   in vec3 vWorld;
   in vec3 vNormal;
   in vec3 vSurface;
+  in vec3 vLocal;
   flat in float vMaterial;
   flat in float vEmission;
   flat in float vOutdoor;
@@ -381,9 +415,15 @@
     // Only cosmetic volumes soften toward their silhouette.
     float edge=vMaterial>=15.5?1.:pow(max(dot(normalize(vNormal),toEye/distanceToEye),0.),.65);
     float grain=clamp(noise(vSurface),.1,1.);
-    bool fire=vMaterial>13.5&&vMaterial<14.5;
+    bool fire=vMaterial>13.5&&vMaterial<14.5,smoke=vMaterial>14.5&&vMaterial<15.5,spark=vMaterial>16.5&&vMaterial<17.5;
     float heat=fire?smoothstep(.22,.83,noise(vSurface*vec3(1.65,.72,1.65)-vec3(0.,uTime*2.7,0.))):0.;
     float alpha=clamp(vColor.a*edge*(.58+grain*.42)*(fire?mix(.28,1.,heat):1.),0.,.94);
+    if(smoke){
+      vec3 flow=vSurface*vec3(.91,.65,.91)-vec3(0.,uTime*.30,0.);
+      float billow=noise(flow)*.66+noise(flow*2.1+vec3(7.,3.,11.))*.34;
+      alpha*=smoothstep(.16,.76,billow);
+    }
+    if(spark)alpha*=.30+.70*smoothstep(-.5,.18,vLocal.y);
     if(alpha<.004)discard;
     vec3 color=vColor.rgb*(uAmbient*.65+vec3(.34)+max(vEmission,0.)*1.25);
     if(fire){
@@ -391,6 +431,8 @@
       temperature=mix(temperature,vec3(2.7,1.45,.23),smoothstep(.60,1.,heat));
       color=temperature*(.55+max(vEmission,0.)*.45)*(.7+grain*.3);
     }
+    if(smoke)color*=.74+.40*grain;
+    if(spark)color=mix(vec3(1.3,.10,.005),vec3(2.6,1.7,.52),smoothstep(-.25,.42,vLocal.y))*(.5+vEmission*.45);
     float fog=1.-exp(-distanceToEye*mix(.018,uEnvironment.y,clamp(vOutdoor,0.,1.)));
     color=mix(color,uFogColor,min(.86,fog));
     color=pow(max(color/(color+vec3(.76)),vec3(0.)),vec3(.4545));
@@ -660,7 +702,7 @@
       const name=mesh.shape||'sphere',last=groups[groups.length-1];
       if(last&&last.name===name)last.count++;else groups.push({name,offset:offset*4,count:1});
       const p=mesh.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[.5,.5,.5];
-      const material=mesh.shape==='ring'&&Number.isFinite(mesh.innerRatio)?20+Math.min(.999,Math.max(0,mesh.innerRatio)):mesh.fxPriority==='hazard'?16:mesh.fxFire?14:7;
+      const material=mesh.shape==='ring'&&Number.isFinite(mesh.innerRatio)?20+Math.min(.999,Math.max(0,mesh.innerRatio)):mesh.fxPriority==='hazard'?16:mesh.fxFire?14:mesh.fxSmoke?15:mesh.fxSpark?17:7;
       values.set([p[0],p[1],p[2],material,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment,true),c[0],c[1],c[2],Math.min(1,Math.max(0,mesh.alpha))],offset);offset+=16;
     }
     return {values,groups};

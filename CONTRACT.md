@@ -1,6 +1,30 @@
 # METAL procedural FPS — internal module contract
 
-## 0.6 Survie — current release contract (supersedes historical sections below)
+## 0.7 Campagne — current release contract
+
+This section supersedes historical contracts below. Delivery is GitHub only; the user explicitly authorized merging the combined work into main. Do not deploy or alter hosting. Runtime content stays entirely procedural: no imported game art, audio, font, trained model, external engine or CDN. Documentation screenshots are excluded from runtime.
+
+`FWorld.create(seed,index,{campaign:true})` supports indices0–17, `stage=index%3`, chapter0–5 and generation6. Without the option, the three-sector world remains identical. New expeditions opt in; legacy saves stay classic. Per-index RNG affects architecture and detail streams; music/environment use only the biome stage.
+
+Campaign arsenal IDs remain0SMG/1shotgun/2rocket/3grenade, with pistol4 appended. Five booleans and five finite ammo integers; initial possession only pistol, right4. Pistol cadence.32s, damage1.2, range75, heat.06; ammo sentinel0..1 never consumed. No pistol ammo drops or packs. The HUD shows owned slots only and ∞, with keyboard/touch/wheel and independent hand controls. Classic four-slot validation remains intact.
+
+Unique milestones: world4shield,7SMG,10shotgun,13grenade,16rocket. One accessible optional alcove each, with physical pedestal/supports, directed light, marker, one discovery event, three seconds of grace, then three preallocated guards through concealed real entries. Discoveries persist across worlds; grace/trial/completion persist locally. No repeated reward/sting after restore. No initial-weapon shopping or premature weapon/ammo drops.
+
+`campaign:{version:1,discovered:[...]}` is a separate transportable profile, never a field of the strict economic profile. Local trophy states and `adaptation` are snapshot-only. Adaptation uses actual owned quantity and quality, not the selected hand. Policy reevaluates only after the six-bit possession key changes. Active caps4–12, damage/cadence curves, gated explosive infantry and partial wave deployment preserve finite actor identities. Selected difficulty is a separate multiplier. Boss maximum/current HP never rescale after entry.
+
+Campaign envelopes use version3, classic version2. Snapshot campaignVersion1 and arsenalVersion2 identify five-slot saves; classic uses arsenalVersion1. All quantities remain JSON finite. Restoration is atomic. Invalid optional entry metadata cannot prevent restoration of a valid checkpoint; slot validation follows the actual generated world, including the explicit classic3→4 migration without gifts. Mode validation itself does not overwrite saved data. A valid envelope with an incompatible checkpoint may subsequently restart at the world entrance and replace the active save; the shell preserves the first available legacy backup when storage permits, not a fresh backup for every refusal.
+
+Fatal falls beneath terrain/outside bounds or onto the fallback substrate at speed>6m/s emit exactly one fall death and bypass ordinary immunity. Genuine lower floors, ramps, lifts and launch pads remain supported. Airborne acquisitions defer checkpoint replacement until safe landing.
+
+Consumable armor is `state.armor={points,capacity}`, separate from health, passive armor ranks and guard energy. Capacity is 100, or 200 with an owned shield actually equipped left. Initial points are zero; equipment changes never refill and unequipping clamps excess. Armor consumes one third of residual damage after passive mitigation and directional guard; fatal falls bypass it. Campaign enables it automatically, the shell opts in for classic mode, and the classic simulation API remains unchanged without `armorSystem:true` or an armor loadout. Three campaign plate reserves provide 25/25/50; enabled boss loot adds 50 and ordinary IDs divisible by four add 10. Partial quantities remain collectible.
+
+Portable armor is `{version:1,points}`; snapshots add `armorVersion:1` and validated capacity/points. Old compatible checkpoints gain zero armor, including zero in previously generated loot. No retroactive rewards. Shield geometry is compact, left mounted and follows movement clearance without changing right-hand firearms or physics. Ambience bus and continuous sources are quieter; user sliders, combat cues and music retain their own levels. Paused modulation is silenced.
+
+Near WebGL Auto/High actors gain14parts, giants18; lower/far/Canvas tiers retain budgets. Metallic wear uses object coordinates, architectural grid stays off objects, specular detail is filtered, environment reflections remain analytic. Particle counts and shadow passes stay bounded. Physical trophy supports preserve navigation. No claim of exact scene reflections, ray tracing, physical GPU/NPU validation or stable user FPS.
+
+The current evidence is `SIZE.json`, `VALIDATION.md`, `docs/validation-v07.json`, the two reproducible campaign reports and the scoped captures. HTML is below1,400,000 raw bytes; browser/drivers/documentation are excluded. Preserve honest distinctions between Node simulation, browser fixtures, software GLES and human/hardware testing.
+
+## 0.6 Survie — historical release contract
 
 Public name remains METAL. Keep the existing private Site and GitHub repository, F* globals and production storage keys. Every mesh, material, instrument, MOD pattern and neural coefficient is original procedural code. No imported asset, external engine, trained model or runtime network request. The standalone HTML remains below 1,400,000 uncompressed bytes; browser and drivers are outside that measure.
 

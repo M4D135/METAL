@@ -83,6 +83,24 @@ test('blast lighting is anchored to live sources, fades independently of smoke a
   assert.equal(Effects.lights(storm).length,4);assert.deepEqual(plain(Effects.lights(state)),plain([light]));
 });
 
+test('spark trails end at the ballistic tip while cold smoke and hot sparks keep distinct material tags',()=>{
+  const blast={id:1,x:0,y:3,z:-5,age:.4,life:2.4,radius:4.5,power:55,seed:887},state=freeze({time:3,explosions:[blast]});
+  const first=Effects.build(state,{},camera,{quality:'high'});validate(first);
+  const sparks=first.filter(m=>m.effectPart==='blast-ember'),smoke=first.filter(m=>m.effectPart==='blast-dust');
+  assert(sparks.length>0&&sparks.every(m=>m.fxSpark&&!m.fxSmoke&&!m.fxFire&&m.s[1]>m.s[0]*2));
+  assert(smoke.length>0&&smoke.every(m=>m.fxSmoke&&!m.fxSpark&&!m.fxFire));
+  assert(first.filter(m=>m.effectPart==='fire-cloud').every(m=>m.fxFire&&!m.fxSmoke&&!m.fxSpark));
+  // Follow the actual tip twice: its horizontal velocity stays constant and
+  // its vertical displacement includes gravity, independently of render time.
+  const tip=m=>{const a=matrixFor(m.r),direction=[a[1],a[4],a[7]];return m.p.map((v,k)=>v+direction[k]*m.s[1]/2);};
+  function matrixFor(r){const [x,y,z]=r,c=[x,y,z].map(Math.cos),s=[x,y,z].map(Math.sin);return [c[2]*c[1],c[2]*s[1]*s[0]-s[2]*c[0],c[2]*s[1]*c[0]+s[2]*s[0],s[2]*c[1],s[2]*s[1]*s[0]+c[2]*c[0],s[2]*s[1]*c[0]-c[2]*s[0],-s[1],c[1]*s[0],c[1]*c[0]];}
+  const a=tip(sparks[0]),later=Effects.build({time:50,explosions:[{...blast,age:.6}]},{},camera,{quality:'high'}),b=tip(later.find(m=>m.effectPart==='blast-ember'));
+  assert(Math.abs((b[0]-blast.x)/.6-(a[0]-blast.x)/.4)<1e-8);
+  assert(Math.abs((b[2]-blast.z)/.6-(a[2]-blast.z)/.4)<1e-8);
+  assert(Math.abs((b[1]-blast.y+3*.6*.6)/.6-(a[1]-blast.y+3*.4*.4)/.4)<1e-8);
+  assert.equal(Effects.build({explosions:[{...blast,age:1.4}]},{},camera).filter(m=>m.fxSpark).length,0);
+});
+
 test('settled wide roof slabs keep their bottom on the floor throughout their fade',()=>{
   const q={x:0,y:3.32,z:0,vx:0,vy:0,vz:0,size:[2.4,.24,1.8],life:2.5,seed:91,mat:3,resting:true};
   let yaw;
@@ -118,4 +136,20 @@ test('cosmetic storm budgets keep hazards/projectile bodies and do not mutate or
     for(const m of meshes.filter(m=>m.effectPart==='debris'))assert.equal(m.p[1],2,'rendering must not integrate another gravity step');
   }
   assert.equal(JSON.stringify(state),before);
+});
+
+test('trophy lighting follows persisted discoveries and grace, retains its ground anchor and yields to combat lights',()=>{
+  const world={trophies:[{id:7,key:'rifle',x:2,y:3.5,z:-4}]};
+  const make=(phase,discovered=[])=>freeze({player:{x:2,y:3.5,z:0},world,campaign:{version:1,discovered,trophies:[{id:7,phase,timer:phase==='grace'?3:0}]}});
+  assert.equal(Effects.lights(make('sealed')).length,0,'sealed trophies cannot reveal themselves through a live light');
+  const state=make('grace',['rifle']),saved=JSON.stringify(state),light=Effects.lights(state)[0];
+  assert.deepEqual(plain(light.p),[2,5.6,-4]);assert(light.power>0&&light.range>0);
+  assert.equal(JSON.stringify(state),saved);assert.deepEqual(plain(Effects.lights(JSON.parse(saved))),plain([light]));
+  for(const phase of ['trial','complete']){const permanent=Effects.lights(make(phase,['rifle']))[0];assert(permanent.power>0&&permanent.power<light.power);assert.deepEqual(plain(permanent.p),[2,5.6,-4]);}
+  assert(Effects.lights(make('sealed',['rifle']))[0].power>0,'loadout discovery also lights a revisited pedestal');
+  assert.equal(Effects.lights({...state,player:{x:300,y:0,z:300}}).length,0,'offscreen remote trophy lights do not occupy the pool');
+  assert.equal(Effects.lights({world}).length,0,'the legacy path does not activate campaign light');
+  const blasts=Array.from({length:4},(_,i)=>({id:i,x:i+1,y:4,z:-3,age:.04,life:2.4,radius:4,power:55}));
+  const crowded=Effects.lights({...state,explosions:blasts});assert.equal(crowded.length,4);assert(crowded.every(l=>!l.trophy),'combat transients retain all four existing slots');
+  const one=Effects.lights({...state,explosions:blasts.slice(0,1)});assert.equal(one.length,2);assert(!one[0].trophy&&one[1].trophy);
 });

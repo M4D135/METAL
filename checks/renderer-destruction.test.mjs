@@ -193,3 +193,20 @@ test('a translucent first-person shield blends after the opaque hand depth and n
   const a=software();a.renderer.setWorld(original,lights);a.renderer.draw(camera,[shield,weapon],fx);
   assert(a.calls.some(c=>c[0]==='set'&&c[1]==='globalAlpha'&&c[2]>.05&&c[2]<=.22),'Canvas preserves the shield alpha in the overlay pass');r.dispose();a.renderer.dispose();
 });
+
+test('smoke and spark finish stays in one depth-safe FX pass while hazard and ring contracts keep precedence',()=>{
+  const g=gpu(),r=g.renderer;r.setWorld([floor],lights);r.resize('auto');r.draw(camera,[],fx);
+  g.calls.length=0;g.draws.length=0;
+  const particle=(x,extra={})=>({shape:'sphere',p:[x,1,-3],s:[.4,.4,.4],mat:7,fx:true,alpha:.45,surface:'object',...extra});
+  const smoke=particle(-1.5,{fxSmoke:true}),spark=particle(-.5,{shape:'octa',s:[.035,.38,.035],fxSpark:true,emissive:2.5}),hazard=particle(.5,{fxSmoke:true,fxSpark:true,fxPriority:'hazard'}),ring=particle(1.5,{shape:'ring',innerRatio:.91,fxSmoke:true,fxSpark:true});
+  r.draw(camera,[smoke,spark,hazard,ring],fx);
+  const particles=rows(g.draws).filter(v=>Math.abs(v[15]-.45)<1e-6);
+  assert.equal(particles.length,4,'each effect renders once, without extra shadow copies');
+  const material=x=>particles.find(v=>v[0]===x)[3];
+  assert.equal(material(-1.5),15);assert.equal(material(-.5),17);assert.equal(material(.5),16);assert(Math.abs(material(1.5)-20.91)<1e-5);
+  assert.equal(new Set(g.draws.filter(d=>d.values.some((v,i)=>i%16===15&&Math.abs(v-.45)<1e-6)).map(d=>d.program)).size,1);
+  assert.deepEqual(g.calls.filter(c=>c.name==='depthMask').map(c=>c.args[0]),[false,true]);
+  assert.deepEqual(g.calls.filter(c=>(c.name==='enable'||c.name==='disable')&&c.args[0]==='BLEND').map(c=>c.name),['enable','disable']);
+  assert(!g.calls.some(c=>c.name.startsWith('create')),'particle finish must reuse existing GPU resources');
+  assert.equal(r.stats.fxInstances,4);r.dispose();
+});

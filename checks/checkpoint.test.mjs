@@ -88,6 +88,163 @@ function arsenalWorld(seed,stage){
 }
 function collectArsenal(app){const sim=app.simulations.at(-1);for(const x of [3,6,8,9,10,12]){sim.move(sim.state.player,x-sim.state.player.x,0);app.frame(100);}return sim;}
 
+function campaignShellWorld(seed, index, options) {
+  const value = arsenalWorld(seed, options?.campaign ? index % 3 : index);
+  const gear = [{index:3,key:'shield',kind:'shield',amount:1},{index:6,key:'smg',kind:'weapon',weapon:0,amount:48},{index:9,key:'shotgun',kind:'weapon',weapon:1,amount:12},{index:12,key:'grenade',kind:'weapon',weapon:3,amount:6},{index:15,key:'rocket',kind:'weapon',weapon:2,amount:4}].find(q => q.index === index);
+  return options?.campaign ? { ...value, campaign: true, index, chapter: Math.floor(index / 3), chapterTitle: 'Chapitre ' + (Math.floor(index / 3) + 1),
+    progression: { ...value.progression, weaponSlots: 5, startWeapons: [false, false, false, false, true], startAmmo: [0, 0, 0, 0, 1], ammoCaps: [180, 36, 12, 16, 1] },
+    pickups: gear ? [{ ...gear, id: 'trophy-' + gear.key, trophyId: 'trophy-' + gear.key, x: 3, y: 0, z: 0 }] : [],
+  } : value;
+}
+function clearShellWorld(app) {
+  const sim = app.simulations.at(-1);
+  for (const x of [6, 8, 10, 15]) { sim.move(sim.state.player, x - sim.state.player.x, 0); app.frame(100); }
+}
+function advanceShellTo(app, index) { while (app.simulations.at(-1).state.world.index < index) { clearShellWorld(app); app.element('continue').click(); } }
+
+function trophyShellWorld(seed,index,options) {
+  const w=campaignShellWorld(seed,index,options),gift=w.pickups.find(q=>q.trophyId);if(!gift)return w;
+  const encounterId='trial-'+gift.key,points=[-2,0,2].map(z=>({x:-13,y:0,z}));
+  return {...w,shops:[],colliders:[{minX:-8,maxX:-7.5,minY:0,maxY:3,minZ:-5,maxZ:5}],
+    trophies:[{id:gift.id,key:gift.key,name:gift.kind==='shield'?'Bouclier':'Mitraillette',usage:'Enchaînez les rafales et surveillez la chauffe.',pickupId:gift.id,encounterId,grace:3,x:gift.x,y:0,z:0,...(gift.kind==='shield'?{shield:true}:{weapon:gift.weapon})}],
+    enemies:points.map((q,id)=>({...q,type:0,id,encounterId,wave:0,deployed:false,role:'assault'})),
+    encounters:[{id:encounterId,label:'Épreuve — équipement',trigger:{x:3,y:0,z:0,w:8,d:8},maxActive:3,leashRadius:40,spawnEntries:points,waves:[{enemyIds:[0,1,2]}],requiresTrophy:gift.id}],
+  };
+}
+
+test('The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen', () => {
+  const app = harness(null, {}, campaignShellWorld); app.element('start').click();
+  for (let index = 0; index < 18; index++) {
+    const saved = JSON.parse(app.memory.get(key)), current = app.simulations.at(-1).state.world;
+    assert.equal(saved.version, 3); assert.equal(saved.campaign, true);
+    assert.equal(saved.index, index); assert.equal(saved.stage, index % 3);
+    assert.equal(current.index, index); assert.equal(current.stage, index % 3);
+    assert.equal(app.element('sector-number').textContent, 'MONDE ' + String(index + 1).padStart(2, '0') + ' / 18');
+    assert.match(app.element('sector-title').textContent, new RegExp('Chapitre ' + (Math.floor(index / 3) + 1)));
+    clearShellWorld(app);
+    assert.equal(app.element('body').dataset.state, index === 17 ? 'complete' : 'cleared');
+    if (index < 17) app.element('continue').click();
+  }
+  assert.equal(app.memory.has(key), false, 'Only the final world clears the finished campaign save');
+  assert(app.sounds.filter(q => q.name === 'setStage').every(q => [0, 1, 2].includes(q.args[0])), 'Audio must use a base biome track, never a campaign index');
+});
+
+test('A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode', () => {
+  const app = harness(null, {}, campaignShellWorld); app.element('start').click();
+  for (let i = 0; i < 6; i++) { clearShellWorld(app); app.element('continue').click(); }
+  const saved = JSON.parse(app.memory.get(key)), resumed = harness(saved, {}, campaignShellWorld);
+  resumed.element('resume-expedition').click();
+  assert.equal(resumed.simulations.at(-1).state.world.index, 6);
+  assert.equal(resumed.element('sector-number').textContent, 'MONDE 07 / 18');
+  assert.equal(JSON.parse(resumed.memory.get(key)).version, 3);
+  const legacy = harness(savedPoint()); legacy.element('resume-expedition').click();
+  assert.equal(legacy.simulations.at(-1).state.world.campaign, undefined);
+  assert.equal(legacy.element('sector-number').textContent, 'SECTEUR 03 / 03');
+  assert.equal(JSON.parse(legacy.memory.get(key)).version, 2);
+});
+
+test('Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly', () => {
+  const app = harness(null, {}, campaignShellWorld); app.element('start').click();
+  const good = JSON.parse(app.memory.get(key));
+  for (const bad of [{ ...good, index: 18 }, { ...good, index: -1 }, { ...good, index: 4, stage: 2 }, { ...good, campaign: false }]) {
+    const invalid = harness(bad, {}, campaignShellWorld);
+    assert.equal(invalid.element('resume-expedition').hidden, true);
+    invalid.element('start').click();
+    assert.equal(invalid.simulations.at(-1).state.world.index, 0);
+  }
+});
+
+test('The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal', () => {
+  const app = harness(null, {}, campaignShellWorld); app.element('start').click(); app.frame(100);
+  let sim = app.simulations.at(-1);
+  assert.equal(sim.state.weapon, 4); assert.equal(app.element('weapon-label').textContent, 'PISTOLET');
+  assert.equal(app.element('ammo-count').textContent, '∞'); assert.equal(app.element('slot-ammo-4').textContent, '∞');
+  assert.equal(app.element('arsenal-count').textContent, '1 / 5');
+  for (let i = 0; i < 4; i++) assert.equal(app.element('weapon-slot-' + i).hidden, true);
+  assert.equal(app.element('weapon-slot-4').hidden, false);
+  app.element('world').emit('mousedown', { button: 0 });
+  for (let i = 0; i < 12; i++) app.frame(100);
+  app.emit('mouseup', { button: 0 });
+  assert(sim.state.shots >= 3 && sim.state.shots <= 5);
+  assert.equal(sim.state.inventory.ammo[4], 1);
+  assert(app.sounds.some(s => s.name === 'shot' && s.args[0].weapon === 4));
+  assert(app.frames.at(-1).meshes.filter(m => m.overlay).length > 25, 'The pistol must have a real detailed first-person model');
+  advanceShellTo(app, 6); sim = app.simulations.at(-1);
+  sim.move(sim.state.player, 3, 0); app.frame(100);
+  assert.equal(sim.state.inventory.weapons[0], true); assert.equal(app.element('weapon-slot-0').hidden, false);
+  app.key('Digit5'); app.key('Digit5', false); assert.equal(sim.state.weapon, 4);
+  app.emit('wheel', { deltaY: 1 }); assert.equal(sim.state.weapon, 0);
+  app.element('weapon-switch').click(); assert.equal(sim.state.weapon, 4);
+  app.element('weapon-slot-0').click(); assert.equal(sim.state.weapon, 0);
+  app.element('left-hand-setting').value = '4'; app.element('left-hand-setting').emit('change');
+  assert.equal(sim.state.equipment.left, 4); assert.equal(app.element('left-hand-stock').textContent, '∞ BALLES');
+  const rightAmmo = sim.state.inventory.ammo[0];
+  app.element('left-fire-button').emit('pointerdown', { pointerId: 10 });
+  for (let i = 0; i < 8; i++) app.frame(100);
+  app.element('left-fire-button').emit('lostpointercapture');
+  assert.equal(sim.state.inventory.ammo[0], rightAmmo); assert.equal(sim.state.inventory.ammo[4], 1);
+  app.key('KeyP'); app.key('KeyP', false); app.element('restart').click();
+  assert.equal(app.simulations.at(-1).state.weapon, 4);
+  assert.deepEqual(plain(app.simulations.at(-1).state.inventory.weapons), [false, false, false, false, true]);
+});
+
+test('Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell', () => {
+  const app = harness(null, {}, campaignShellWorld); app.element('start').click();
+  advanceShellTo(app, 6);
+  const first = app.simulations.at(-1); first.move(first.state.player, 3, 0); app.frame(100);
+  first.state.inventory.ammo[0] = 19;
+  clearShellWorld(app); app.element('continue').click();
+  const next = app.simulations.at(-1), saved = JSON.parse(app.memory.get(key));
+  assert.equal(next.state.world.index, 7); assert.equal(next.state.inventory.weapons[4], true);
+  assert.equal(next.state.inventory.ammo[0], 19); assert.equal(next.state.inventory.ammo[4], 1);
+  assert.equal(saved.entryLoadout.inventory.weapons.length, 5);
+  const resumed = harness(saved, {}, campaignShellWorld); resumed.element('resume-expedition').click();
+  assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()), plain(next.exportLoadout()));
+  assert.equal(resumed.element('body').dataset.state, 'playing');
+});
+
+test('Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered', () => {
+  const make = (seed, index, options) => { const w=campaignShellWorld(seed,index,options);return {...w,shops:[],pickups:[...w.pickups,{id:'locked-ammo',kind:'ammo',weapon:0,requiresWeapon:0,amount:12,x:0,y:0,z:3}]}; };
+  const app = harness(null, {}, make);app.element('start').click();advanceShellTo(app,6);app.frame(100);
+  const sim = app.simulations.at(-1), atCache = m => !m.overlay && Math.abs(m.p[0]) < .001 && Math.abs(m.p[2]-3) < .001;
+  assert.equal(sim.state.inventory.weapons[0],false);
+  assert.equal(app.frames.at(-1).meshes.some(atCache),false);
+  assert.notEqual(app.element('supply-name').textContent,'BALLES');
+  sim.move(sim.state.player,3,0);app.frame(100);sim.move(sim.state.player,-3,0);app.frame(100);
+  assert.equal(sim.state.inventory.weapons[0],true);
+  assert(app.frames.at(-1).meshes.some(atCache));
+  assert.equal(app.element('supply-name').textContent,'BALLES');
+  const before=sim.state.inventory.ammo[0];sim.move(sim.state.player,0,3);app.frame(100);
+  assert.equal(sim.state.inventory.ammo[0],before+12);
+});
+
+test('A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial', () => {
+  const app=harness(null,{},trophyShellWorld);app.element('start').click();advanceShellTo(app,6);
+  const sim=app.simulations.at(-1);sim.move(sim.state.player,3,0);app.frame(100);
+  assert.equal(sim.state.inventory.weapons[0],true);
+  assert.deepEqual(plain(sim.state.campaign.discovered),['pistol','smg']);
+  assert.equal(app.element('encounter-name').textContent,'Mitraillette');
+  assert.match(app.element('encounter-caption').textContent,/rafales/);
+  assert.equal(app.element('wave-status').dataset.state,'trophy');
+  assert.equal(app.sounds.filter(q=>q.name==='trophy').length,1);
+  assert.equal(app.sounds.filter(q=>q.name==='weaponPickup').length,0,'One dedicated discovery sting replaces the ordinary pickup cue');
+  const saved=JSON.parse(app.memory.get(key)),trophy=saved.checkpoint.state.campaign.trophies[0];
+  assert.equal(trophy.phase,'grace');assert(trophy.timer>0&&trophy.timer<=3);
+  const resumed=harness(saved,{},trophyShellWorld);resumed.element('resume-expedition').click();resumed.frame(100);
+  const next=resumed.simulations.at(-1);
+  assert.equal(resumed.sounds.filter(q=>q.name==='trophy').length,0);
+  assert.equal(next.state.inventory.ammo[0],sim.state.inventory.ammo[0]);
+  assert.equal(next.state.campaign.trophies[0].phase,'grace');
+  for(let i=0;i<65&&next.state.enemies.filter(e=>e.deployed).length<3;i++)resumed.frame(100);
+  assert.equal(next.state.campaign.trophies[0].phase,'trial');
+  assert.equal(next.state.enemies.filter(e=>e.deployed).length,3);
+  assert.equal(next.state.dead,false);
+  assert.equal(resumed.sounds.filter(q=>q.name==='trophy').length,0);
+  assert.equal(next.state.inventory.ammo[0],sim.state.inventory.ammo[0]);
+  clearShellWorld(resumed);resumed.element('continue').click();
+  assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout().campaign),{version:1,discovered:['pistol','smg']});
+});
+
 test('Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together',()=>{
   const app=harness(null,{},arsenalWorld);app.element('start').click();app.frame(100);
   assert.equal(app.element('arsenal-count').textContent,'1 / 4');assert.equal(app.element('weapon-slot-3').disabled,true);
@@ -123,16 +280,51 @@ test('Shield charge, both hands and fourth-calibre ammunition survive sector Con
   app.element('weapon-slot-3').click();app.key('Space');app.frame(100);app.key('Space',false);assert.equal(sim.state.shield.energy,76);
   const carried=plain(sim.exportLoadout());assert.deepEqual(carried.equipment,{right:3,left:'shield',shieldEnergy:76});
   sim.move(sim.state.player,15-sim.state.player.x,0);app.frame(100);assert.equal(app.element('body').dataset.state,'cleared');
-  app.element('continue').click();const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('left-hand-stock').textContent,'76 %');
+  app.element('continue').click();const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('left-hand-stock').textContent,'GARDE 76 %');
   next.state.inventory.ammo[3]--;app.key('KeyP');app.key('KeyP',false);app.element('restart').click();assert.deepEqual(plain(app.simulations.at(-1).exportLoadout()),carried);
 });
 
 test('Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint',()=>{
   const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app),expected=plain(sim.exportLoadout()),saved=JSON.parse(app.memory.get(key));
-  for(const corrupt of [entry=>delete entry.inventory.shield,entry=>{entry.inventory.ammo[2]=null;}]){
+  for(const corrupt of [entry=>delete entry.inventory.shield,entry=>{entry.inventory.ammo[2]=null;},entry=>{entry.armor={version:1,points:201};}]){
     const value=plain(saved);corrupt(value.entryLoadout);const resumed=harness(value,{},arsenalWorld);resumed.element('resume-expedition').click();
     assert.equal(resumed.element('body').dataset.state,'playing');assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),expected);
   }
+});
+
+test('Physical armor pickups update the HUD, retain excess and gain capacity only from the equipped shield',()=>{
+  const make=(seed,stage)=>{const w=arsenalWorld(seed,stage);return {...w,pickups:[...w.pickups,{id:'plates',kind:'armor',amount:150,x:0,y:0,z:3}]};};
+  const app=harness(null,{},make);app.element('start').click();app.frame(100);const sim=app.simulations.at(-1);
+  assert.equal(app.simulationOptions.at(-1).armorSystem,true,'The real shell enables consumable armor for classic saves too');
+  assert.equal(app.element('armor-pool').hidden,false);assert.equal(app.element('armor-points').textContent,'0');assert.equal(app.element('armor-cap').textContent,'/ 100');
+  sim.move(sim.state.player,0,3);app.frame(100);
+  assert.deepEqual(plain(sim.state.armor),{points:100,capacity:100});assert.equal(sim.state.pickups.at(-1).remaining,50);
+  assert.equal(app.element('supply-name').textContent,'PLAQUES D’ARMURE');
+  assert.equal(app.element('armor-points').textContent,'100');assert.equal(app.element('armor-bar').style.width,'100%');assert.equal(app.element('supply-detail').textContent,'RÉSERVE AU MAXIMUM');
+  assert.match(app.element('toast').textContent,/100 ARMURE/);assert.equal(app.sounds.filter(s=>s.name==='ammoPickup').length,1);
+  const saved=JSON.parse(app.memory.get(key)),resumed=harness(saved,{},make);resumed.element('resume-expedition').click();resumed.frame(100);
+  assert.deepEqual(plain(resumed.simulations.at(-1).state.armor),{points:100,capacity:100});assert.equal(resumed.simulations.at(-1).state.pickups.at(-1).remaining,50);
+  assert.equal(resumed.sounds.filter(s=>s.name==='ammoPickup').length,0,'A restored partial pickup must not replay or refill');
+  sim.move(sim.state.player,12,-3);app.frame(100);
+  assert.equal(sim.state.equipment.left,'shield');assert.deepEqual(plain(sim.state.armor),{points:100,capacity:200});assert.equal(app.element('armor-cap').textContent,'/ 200');
+  sim.move(sim.state.player,-12,3);app.frame(100);
+  assert.equal(sim.state.armor.points,150);assert.equal(sim.state.pickups.at(-1).taken,true);assert.equal(app.element('armor-bar').style.width,'75%');
+  app.element('left-hand-setting').value='none';app.element('left-hand-setting').emit('change');assert.deepEqual(plain(sim.state.armor),{points:100,capacity:100});
+  app.element('left-hand-setting').value='shield';app.element('left-hand-setting').emit('change');assert.deepEqual(plain(sim.state.armor),{points:100,capacity:200});
+  app.key('Space');app.frame(100);app.key('Space',false);assert.equal(sim.state.shield.energy,76);assert.equal(sim.state.armor.points,100);assert.equal(app.element('left-hand-stock').textContent,'GARDE 76 %');
+});
+
+test('The browser shell carries fractional armor through Continue, resume and entry restart without refilling',()=>{
+  const make=(seed,stage)=>{const w=arsenalWorld(seed,stage);return {...w,pickups:[...w.pickups,{id:'plates',kind:'armor',amount:150,x:12,y:0,z:0}]};};
+  const app=harness(null,{},make);app.element('start').click();const sim=collectArsenal(app);
+  assert.deepEqual(plain(sim.state.armor),{points:150,capacity:200});sim.hurt(7.5);app.frame(100);
+  assert.equal(sim.state.armor.points,147.5);const carried=plain(sim.exportLoadout());
+  sim.move(sim.state.player,15-sim.state.player.x,0);app.frame(100);assert.equal(app.element('body').dataset.state,'cleared');app.element('continue').click();
+  const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('armor-points').textContent,'148');assert.equal(app.element('armor-cap').textContent,'/ 200');
+  const saved=JSON.parse(app.memory.get(key));assert.deepEqual(saved.entryLoadout.armor,{version:1,points:147.5});
+  const resumed=harness(saved,{},make);resumed.element('resume-expedition').click();assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),carried);
+  next.hurt(15);assert.equal(next.state.armor.points,142.5);app.key('KeyP');app.key('KeyP',false);app.element('restart').click();
+  assert.deepEqual(plain(app.simulations.at(-1).exportLoadout()),carried,'Restart restores the original entry points, not a full reserve');
 });
 
 test('The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations',async()=>{
@@ -209,6 +401,58 @@ test('Continue restores a current-generation checkpoint at its relay', () => {
   assert.equal(state.weapon, 1);
   assert.equal(Number(app.element('score').textContent), previousStats.score + saved.checkpoint.state.score);
   assert.equal(app.memory.get(key + '-before-ascension'), undefined);
+});
+
+test('A real fall below a terrace opens the death screen and Continue restores the safe checkpoint', () => {
+  const make = (seed, stage) => ({
+    ...arsenalWorld(seed, stage), spawn: { x: 0, y: 6.4, z: 0, yaw: 0 },
+    walkable: [{ x: 0, y: 6.4, z: 0, w: 4, d: 4 }, { x: 0, y: -.25, z: 0, w: 40, d: 40, fallback: true, substrate: true }],
+    pickups: [], cores: [{ id: 0, x: 10, y: 6.4, z: 10 }, { id: 1, x: 12, y: 6.4, z: 10 }, { id: 2, x: 14, y: 6.4, z: 10 }],
+  });
+  const app = harness(null, {}, make); app.element('start').click();
+  const sim = app.simulations.at(-1), saved = app.memory.get(key), before = JSON.parse(saved).checkpoint;
+  sim.move(sim.state.player, 4, 0);
+  assert.equal(sim.state.player.airborne, true, 'Leaving the physical terrace must start a real fall');
+  for (let i = 0; i < 30 && app.element('body').dataset.state === 'playing'; i++) app.frame(100);
+  assert.equal(sim.state.dead, true);
+  assert.equal(sim.state.player.hp, 0);
+  assert.equal(app.element('body').dataset.state, 'dead');
+  assert.equal(app.element('result').hidden, false);
+  assert.match(app.element('result-title').textContent, /Chute fatale/);
+  assert.match(app.element('continue').innerHTML, /Reprendre au point de reprise/);
+  assert.equal(app.sounds.filter(q => q.name === 'dead').length, 1);
+  assert.equal(app.memory.get(key), saved, 'The fatal position must not replace the last safe checkpoint');
+  const elapsed = sim.state.elapsed;
+  app.frame(100); assert.equal(sim.state.elapsed, elapsed, 'The death screen must stop gameplay');
+  app.element('continue').click();
+  const restored = app.simulations.at(-1).state;
+  assert.equal(app.element('body').dataset.state, 'playing');
+  assert.equal(restored.dead, false);
+  assert.equal(restored.player.hp, before.state.player.hp);
+  for (const axis of ['x', 'y', 'z']) assert.equal(restored.player[axis], before.state.player[axis]);
+  for (let i = 0; i < 20; i++) app.frame(100);
+  assert.equal(restored.dead, false, 'The restored point must remain playable without a death loop');
+  assert.equal(app.memory.get(key), saved);
+});
+
+test('Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall', () => {
+  const make = (seed, stage) => ({
+    ...arsenalWorld(seed, stage), spawn: { x: 0, y: 3.2, z: 0, yaw: 0 },
+    walkable: [{ x: 0, y: 3.2, z: 0, w: 4, d: 4 }, { x: 0, y: -.25, z: 0, w: 40, d: 40, fallback: true, substrate: true }],
+    pickups: [], cores: [{ id: 0, x: 2.1, y: 3.2, z: 0 }, { id: 1, x: 12, y: 3.2, z: 10 }, { id: 2, x: 14, y: 3.2, z: 10 }],
+  });
+  const app = harness(null, {}, make); app.element('start').click();
+  const sim = app.simulations.at(-1), saved = app.memory.get(key);
+  sim.move(sim.state.player, 4, 0); app.frame(100);
+  assert.equal(sim.state.player.airborne, true); assert.equal(sim.state.relays, 1);
+  assert.equal(app.memory.get(key), saved, 'An in-flight reward must wait for a safe landing before saving');
+  for (let i = 0; i < 20 && !sim.state.dead; i++) app.frame(100);
+  assert.equal(sim.state.dead, true); assert.equal(app.memory.get(key), saved);
+  app.element('continue').click();
+  const restored = app.simulations.at(-1).state;
+  assert.equal(restored.relays, 0); assert.equal(restored.player.y, 3.2);
+  for (let i = 0; i < 20; i++) app.frame(100);
+  assert.equal(restored.dead, false);
 });
 
 for (const generation of [4, 3, undefined]) test(`Continue migrates generation ${generation ?? 'legacy'} to the same sector without losing prior-sector totals`, () => {
@@ -356,4 +600,78 @@ test('difficulty settings affect the real simulation, persist, and preserve heal
   app.key('KeyP');sim.state.player.hp=61;app.element('difficulty-setting').value='0';app.element('difficulty-setting').emit('change');
   assert.equal(sim.state.difficulty,0);assert.equal(sim.state.player.hp,61,'changing difficulty must not refill health');
   const restarted=harness(null,Object.fromEntries(app.memory));assert.equal(restarted.simulations.at(-1).state.difficulty,0);
+});
+
+
+test('audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint',async()=>{
+  const original=harness(null,{},campaignShellWorld);original.element('start').click();advanceShellTo(original,6);
+  const sim=original.simulations.at(-1);sim.move(sim.state.player,3,0);original.frame(100);
+  sim.state.player.hp=63;sim.state.inventory.ammo[0]=19;
+  const expected=plain(sim.exportLoadout()),saved=JSON.parse(original.memory.get(key));saved.checkpoint=sim.snapshot();
+  saved.entryLoadout={inventory:{weapons:[true,false,false,false],ammo:[48,0,0,0],shield:false},equipment:{right:0,left:null,shieldEnergy:100}};
+  const value=JSON.stringify(saved),resumed=harness(saved,{},campaignShellWorld);
+  assert.equal(resumed.element('resume-expedition').hidden,false);
+  await assert.doesNotReject(resumed.element('resume-expedition').click());
+  const recovered=resumed.simulations.at(-1);
+  assert.equal(resumed.element('body').dataset.state,'playing');assert.equal(recovered.state.world.index,6);
+  assert.equal(recovered.state.player.hp,63);assert.equal(recovered.state.inventory.ammo[0],19);
+  assert.deepEqual(plain(recovered.exportLoadout()),expected,'ownership, equipment and discoveries come from the healthy checkpoint');
+  assert.equal(resumed.memory.get(key),value,'successful recovery cannot overwrite the original save');
+  assert.equal(resumed.simulations.length,2);
+});
+
+test('audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources',async()=>{
+  const original=harness(null,{},arsenalWorld);original.element('start').click();
+  const sim=original.simulations.at(-1);sim.state.player.hp=58;sim.state.inventory.ammo[0]=17;
+  const expected=plain(sim.exportLoadout()),saved=JSON.parse(original.memory.get(key));saved.checkpoint=sim.snapshot();
+  saved.entryLoadout={inventory:{weapons:[false,false,false,false,true],ammo:[0,0,0,0,1],shield:false},equipment:{right:4,left:null,shieldEnergy:100},campaign:{version:1,discovered:['pistol']}};
+  const value=JSON.stringify(saved),resumed=harness(saved,{},arsenalWorld);
+  assert.equal(resumed.element('resume-expedition').hidden,false);
+  await assert.doesNotReject(resumed.element('resume-expedition').click());
+  const recovered=resumed.simulations.at(-1);
+  assert.equal(resumed.element('body').dataset.state,'playing');assert.equal(recovered.state.world.campaign,undefined);
+  assert.equal(recovered.state.player.hp,58);assert.equal(recovered.state.inventory.ammo[0],17);
+  assert.deepEqual(plain(recovered.exportLoadout()),expected);assert.equal(resumed.element('weapon-slot-4').hidden,true);
+  assert.equal(resumed.memory.get(key),value);assert.equal(resumed.simulations.length,2);
+});
+
+test('audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout',async()=>{
+  const original=harness(null,{},arsenalWorld);original.element('start').click();
+  const sim=original.simulations.at(-1);sim.state.player.hp=57;sim.state.inventory.ammo[0]=13;
+  const expected=plain(sim.exportLoadout()),saved=JSON.parse(original.memory.get(key));saved.checkpoint=sim.snapshot();
+  saved.entryLoadout={inventory:{weapons:[true,true,false],ammo:[9,2,0]}};
+  const value=JSON.stringify(saved),resumed=harness(saved,{},arsenalWorld);
+  await assert.doesNotReject(resumed.element('resume-expedition').click());
+  assert.equal(resumed.element('body').dataset.state,'playing');
+  assert.equal(resumed.simulations.at(-1).state.player.hp,57);
+  assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),expected);
+  assert.equal(resumed.memory.get(key),value);
+  resumed.key('KeyP');resumed.key('KeyP',false);await resumed.element('restart').click();
+  assert.deepEqual(plain(resumed.simulations.at(-1).exportInventory()),{weapons:[true,true,false,false],ammo:[9,2,0,0],shield:false});
+});
+
+test('audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage',()=>{
+  for(const campaign of [false,true]){
+    const factory=campaign?campaignShellWorld:arsenalWorld,original=harness(null,{},factory);original.element('start').click();
+    const saved=JSON.parse(original.memory.get(key));
+    saved.checkpoint.state.inventory=campaign?{weapons:[true,false,false,false],ammo:[48,0,0,0],shield:false}:{weapons:[false,false,false,false,true],ammo:[0,0,0,0,1],shield:false};
+    const value=JSON.stringify(saved),resumed=harness(saved,{},factory);
+    assert.equal(resumed.element('resume-expedition').hidden,true);
+    assert.equal(resumed.memory.get(key),value);assert.equal(resumed.simulations.length,1,'the invalid checkpoint never reaches load');
+  }
+});
+
+test('audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule',async()=>{
+  const app=harness(null,{},campaignShellWorld);app.element('start').click();
+  assert.equal(app.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 / 5 ou molette');
+  assert.match(app.element('toast').textContent,/premier trophée au monde 4/);
+  const preferences=app.context.FOptions.defaults(false);preferences.bindings.weapon5=['KeyB'];
+  const custom=harness(null,{'ferro-settings':JSON.stringify(preferences)},campaignShellWorld);
+  assert.equal(custom.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 / B ou molette');
+  const classic=harness(null,{},arsenalWorld);classic.element('start').click();
+  const resumed=harness(JSON.parse(classic.memory.get(key)),{},campaignShellWorld);
+  assert.equal(resumed.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 / 5 ou molette','the menu initially previews a new campaign');
+  await resumed.element('resume-expedition').click();
+  assert.equal(resumed.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 ou molette','resuming classic mode refreshes the hint immediately');
+  assert.equal(resumed.element('weapon-slot-4').hidden,true);
 });

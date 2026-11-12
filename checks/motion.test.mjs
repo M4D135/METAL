@@ -78,3 +78,22 @@ test('Rocket recoil and nearby blast settle, with all camera shake disabled by r
   assert(kick>.065&&kick<.10);assert(shake>0&&shake<.02);assert(Math.abs(motion.view.weapon.offset[2])<1e-8);
   motion.impulse('blast',1);const reduced=motion.update(1/60,moving,{time:1},false);assert.equal(reduced.height,0);assert.equal(reduced.roll,0);assert.equal(reduced.fov,0);
 });
+
+test('campaign pistol recoil is gentler than the rifle, cadence independent and never moves the camera aim',()=>{
+  const settled=[];
+  for(const fps of [20,60,120]){
+    const pistol=M.create(),rifle=M.create();pistol.impulse('pistol');rifle.impulse('shot');
+    for(let i=0;i<fps/10;i++){
+      const p=pistol.update(1/fps,{}, {time:0},true),r=rifle.update(1/fps,{}, {time:0},true);
+      assert(p.weapon.offset[2]>0&&p.weapon.offset[2]<r.weapon.offset[2]);
+      assert(p.weapon.slide>0&&p.weapon.slide<.03);
+      assert.equal(p.height,0);assert.equal(p.roll,0);assert.equal(p.fov,0);
+    }
+    settled.push(pistol.view.weapon.offset[2]);
+    for(let i=0;i<fps;i++)pistol.update(1/fps,{}, {time:0},true);
+    assert(Math.abs(pistol.view.weapon.offset[2])<1e-8);
+    pistol.impulse('pistol');const quiet=pistol.update(1/fps,moving,{time:1},false);
+    assert.equal(quiet.height,0);assert.equal(quiet.roll,0);assert.equal(quiet.fov,0);
+  }
+  for(const n of settled)close(n,settled[0]);
+});

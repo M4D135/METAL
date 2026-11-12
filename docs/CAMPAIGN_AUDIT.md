@@ -1,0 +1,122 @@
+# Campagne 18 mondes — audit préalable
+
+Référence : GitHub `main`, commit `950f743221cdac0ff7c2af48d78a4a1a766e35d5` (0.6.0), puis correctif de chute préparé dans la même session. Les lignes ci-dessous sont celles du checkout après ce correctif ; elles servent de repères d'audit et évolueront avec les phases.
+
+## Demande et livraison
+
+Le cahier joint demande six chapitres de trois mondes, un pistolet initial, cinq découvertes d'équipement espacées, des salles-trophées et une adaptation à l'arsenal réellement possédé. Les messages suivants demandent de fusionner l'ensemble dans le jeu et d'ajouter une passe de détails, reflets et particules. Le travail est préparé sur `campagne-18-mondes`, validé par phases, puis destiné à `main` sans déploiement d'hébergement.
+
+Le mode historique reste disponible sans troisième argument à `FWorld.create`. Le shell de la nouvelle expédition utilisera le mode campagne ; une ancienne sauvegarde à trois secteurs continuera à se charger explicitement dans son mode historique. Les musiques et biomes restent au nombre de trois.
+
+## Inventaire des modifications
+
+| Fichier et repère | Modification prévue |
+| --- | --- |
+| `src/world.js:36–40` | Signature optionnelle, index 0–17, décor `index % 3`, RNG indexé sans modifier les clés historiques 0–2. |
+| `src/world.js:652–665` | Métadonnées campagne/index/chapitre, chaîne des passes de génération. |
+| `src/world.js:673,958,1152` | Graines indépendantes des détails, nature et botanique intégrant aussi l'index. |
+| `src/world.js:1457–1519` | Cinq emplacements, retrait des racks prématurés, calendrier d'armes, caches conditionnées à la possession. |
+| `src/world.js:1522–1557` | Garnison finie par chapitre, spécialistes progressifs, identités préallouées des épreuves. |
+| `src/world.js:1589–1596` | Validation des objectifs/trophées et des effectifs campagne. |
+| `src/simulation.js:33–52` | Chemin arsenal à cinq entrées, inventaire valide sans mitraillette, main droite initiale 4, sentinelle finie de munition. |
+| `src/simulation.js:90,167` | État et empreinte conditionnels de campagne. |
+| `src/simulation.js:459–515` | Export des découvertes, achats et butin limités à l'équipement possédé, acquisition des trophées. |
+| `src/simulation.js:549–628,970` | Épreuve, grâce de découverte, adaptation des engagés/cadence/dégâts et autorisation des armes explosives ennemies. |
+| `src/simulation.js:875–901` | Pistolet précis, cadence 0,32 s, recul/événement distincts, réserve jamais consommée. |
+| `src/simulation.js:1696–1887` | Sauvegardes atomiques à cinq emplacements, découvertes/épreuve, identité de monde, adaptation vérifiée. |
+| `src/economy.js:35–61,95` | Profil économique inchangé ; options campagne propagées aux capacités, validation, cotation et transaction. |
+| `src/brain.js:7,28,43,93,113` | Aucune modification requise : adaptation déterministe de gameplay indépendante du backend tactique. |
+| `src/game.js:15–30` | Noms d'armes, loadout, cache des mondes distinguant les modes, musique par décor. |
+| `src/game.js:73–112,128–170` | Enveloppe de sauvegarde campagne version 3, reprise historique explicite, 18 libellés et fin au monde 18. |
+| `src/game.js:174–211` | Recul pistolet, annonce et point de reprise du trophée. |
+| `src/game.js:355–385,439–513` | Présentation des trophées/objets et véritable modèle du pistolet en première personne. |
+| `src/game.js:535–548,599–605,721,739` | HUD dynamique, réserve infinie affichée avec ∞, radar, cinq boutons/touches. |
+| `src/index.html:42–52`, `src/style.css:86–90` | Cinquième emplacement, choix main gauche, aide, grille adaptée aux seules armes possédées en campagne. |
+| `src/options.js:4,17–18` | Action weapon5 et migration des attributions sans écraser une touche personnalisée existante. |
+| `src/audio.js:51,85–89,447–453,523–527,619` | Timbre de pistolet et sting trophée originaux, spatialisation des deux mains, priorités/volumes. |
+| `src/motion.js:36–44` | Recul amorti propre au pistolet, purement visuel. |
+| `src/renderer.js:179–201,266–278,318–328` | Préserver les détails sur métal teinté, enrichir les reflets analytiques et filtrer les petits reflets spéculaires. |
+| `src/effects.js:105–138,183–194` | Particules et lumière de découverte dans les budgets existants. |
+| `src/actors.js:115–138,300–308` | Détails géométriques proches avec maintien des volumes, cœurs, bouches et niveaux lointains. |
+
+## Contrats retenus
+
+- `FWorld.create(seed,index,{campaign:true})` produit `campaign:true`, `index`, `chapter`, et `stage=index%3`. Sans option, mêmes données historiques. La génération existante reste 6 ; l'identité campagne fait partie de l'empreinte conditionnelle.
+- IDs conservés : 0 mitraillette, 1 double pompe, 2 roquettes, 3 grenades, 4 pistolet. Départ : armes `[false,false,false,false,true]`, munitions `[0,0,0,0,1]`, droite 4. Aucune valeur Infinity dans une sauvegarde.
+- Le tir du pistolet émet `shot` avec `weapon:4` et la main concernée. Le shell choisit le recul `pistol`, l'audio choisit le timbre à partir de l'ID.
+- L'état transportable séparé `campaign:{version:1,discovered:[...]}` utilise les clés fermées `pistol`, `shield`, `smg`, `shotgun`, `grenade`, `rocket`. Il n'est pas ajouté au profil économique strict.
+- `world.trophies` relie un objet, une rencontre préallouée et une grâce de trois secondes ; `pickup.trophyId` et `encounter.requiresTrophy` portent le lien. L'événement `trophy` présente la découverte ; l'état simulé et sauvegardé en garantit l'unicité.
+- Garnison et identités dépendent de l'index. Les plafonds d'engagement, dégâts et cadence s'adaptent à la possession réelle. Les caches conditionnelles sont masquées et refusées tant que leur arme manque. Les options de difficulté restent un multiplicateur supplémentaire.
+
+## Phases et validations
+
+Correctif préalable : chute, écran de mort et reprise sûre. Puis A : 18 index et sauvegardes ; B : pistolet et cinq emplacements ; C : calendrier ; D : trophées et épreuves ; E : adaptation et mesures ; F : documentation, distribution et version 0.7.0 ; G : détails/reflets/particules demandés ensuite, avant validation finale et fusion.
+
+Chaque phase possède ses tests propres et repasse la suite. Les contrôles historiques restent actifs. Les comptages de géométrie éventuellement augmentés par G seront justifiés explicitement ; les volumes physiques, budgets d'effets et niveaux lointains restent contrôlés. Les mesures de simulation ou de rasterisation logicielle ne seront pas présentées comme une campagne jouée par une personne ou comme des FPS sur le matériel de l'utilisateur.
+
+## Synchronisation GitHub
+
+Le fetch Git HTTPS direct n'a pas d'identifiants dans cet environnement. La référence `main` et son arbre sont donc lus par le connecteur GitHub autorisé avant les commits ; les 43 fichiers de départ ont été comparés par SHA Git et mode. L'objet de commit de départ a été reconstruit et vérifié contre son SHA exact pour créer la branche locale depuis le véritable commit GitHub. Toute évolution concurrente de `main` sera examinée et intégrée avant la fusion, sans écrasement forcé.
+
+## Validation de phase A
+
+Suite complète : 301 tests réussis, 0 échec, en 122 097,156 ms pour node:test. Les 18 configurations historiques passent toujours ; les nouveaux contrôles couvrent 54 mondes (18 index × trois graines), 13 104 cibles accessibles et six empreintes historiques exactes. Le shell parcourt réellement ses transitions jusqu’au monde 18 et recharge les enveloppes v2/v3 dans leur mode respectif. Build : 694 793 octets bruts, SHA-256 `372e9ad42d72e92b5bea416850d86e936ca3d48a27e680678c6fecad87eb669d`, aucun asset externe.
+
+## Validation de phase B
+
+Suite complète : 311 tests réussis, 0 échec, node:test en 122 080,297 ms. Le pistolet est une arme à cinq emplacements avec modèle, son, recul, touches, molette, commande tactile et main gauche. Les tests vérifient sa cadence, sa précision et la réserve finie jamais consommée, le transport exact entre mondes et les transactions ne débloquant pas les trophées. Le contrôle de parité des trois premiers mondes exclut maintenant seulement les quatre champs de loadout ajoutés en campagne ; les six empreintes du mode historique restent strictes. Build : 700 006 octets bruts, SHA-256 `8f60654989be60a4eff240931552961fe6215d8ceaf298446843d553b8b7f9bf`, aucun asset externe.
+
+## Validation de phase C
+
+Suite complète : 313 tests réussis, 0 échec, node:test en 129 859,592 ms. Le calendrier autorise une unique première acquisition aux mondes 4/7/10/13/16 ; les racks précédents sont retirés en campagne. Les caches non possédées sont refusées par la simulation et masquées dans la scène comme dans les indications. Les transactions directes en boutique ne peuvent pas contourner les découvertes. Les fixtures des nouveaux tests de shell suivent maintenant le vrai calendrier, sans retoucher les tests historiques. Build : 702 274 octets bruts, SHA-256 `6181a920b513e48d821e07898810e35e94b01f4ad581caace333d44530f28586`, aucun asset externe.
+
+## Validation de phase D
+
+Suite complète : 319 tests réussis, 0 échec, node:test en 135 078,516 ms. Les cinq alcôves présentent un trophée unique, une lumière persistante, une annonce et un sting synthétisé. La découverte donne trois secondes de grâce avant une épreuve de trois gardes préalloués, dont les corps et armes sont initialement masqués par un vrai volume de décor. Les 54 mondes et les six empreintes historiques restent vérifiés. Quinze essais physiques de collecte/reprise sur trois graines confirment une seule découverte, aucun rejeu à la restauration et le déploiement effectif des trois gardes ; ce sont des scénarios ciblés, pas quinze parcours humains complets. Le profil de découvertes est transporté entre mondes, les phases locales sont sauvegardées séparément, et le test du shell couvre la reprise pendant la grâce. Build : 716 407 octets bruts, SHA-256 `440ef160628573af9e5be7de81d367769330b62f3fc91458e79a59ea3d7e163a`, aucun asset externe.
+
+## Validation de phase E
+
+Suite complète finale de phase : 329 tests réussis, 0 échec, node:test en 133 798,168 ms. La garnison finie progresse de 42 à 170 identités, avec 4 à 12 combattants ordinaires engagés selon l’arsenal. Les vagues trop grandes se déploient partiellement ; le bouclier et les armes lourdes conditionnent les explosifs de l’infanterie. Les PV du boss restent fixés à l’entrée. La clé de possession de six bits évite de recréer la politique à chaque pas. Les nouveaux tests contrôlent dégâts/cadence, boss déjà blessé puis découverte, deux phases de renforts, reprise et arsenal incomplet.
+
+La revue du shell a reproduit un blocage de Continue par une entrée à quatre/cinq slots incompatible avec le mode. Seule la métadonnée d’entrée incompatible est neutralisée ; le checkpoint sain conserve PV, munitions, mains et découvertes. La migration classique trois vers quatre slots reste autorisée, sans cadeaux, et le redémarrage conserve cet équipement exact. Les cinq nouvelles régressions du shell et les 16 tests campagne passent aussi en contrôle ciblé (51/51 au total avec les tests historiques du shell).
+
+Les scripts portables `tools/campaign-profiles.mjs` et `tools/campaign-balance.mjs` produisent les rapports dans `docs/`. Le premier instancie 18 mondes, collecte localement les cinq trophées et valide 23 reprises exactes. Le second termine 36 combats physiques de quatre adversaires échantillonnés, avec mouvement/visée/tir par les entrées normales : 1,675–5,55 s pour l’arsenal nominal, 3,6–5,875 s au pistolet seul. Les dégâts reçus sont nuls avec cette visée parfaite ; ce banc ne mesure ni la durée d’un monde complet ni la difficulté humaine. Build : 723 107 octets bruts, 218 612 gzip, SHA-256 `3e1cc3f200cdb89e54082bf880e2ad44ce7712203d74953f2c3ef25c9fbc1e9a`, aucun asset externe.
+
+## Compléments demandés pendant la validation
+
+La passe G de détails/reflets/particules précède maintenant F pour que la documentation finale décrive le rendu livré. Deux nouveaux messages ajoutent H : corriger l’intersection arme/bouclier, ajouter une armure rechargeable par objets dont le plafond augmente avec le bouclier équipé, et réduire les ambiances continues trop lourdes. Ces changements seront validés et intégrés avant la fusion finale autorisée, sans abandonner la campagne ni le correctif de chute.
+
+## Validation de phase G
+
+Suite complète : 333 tests réussis, 0 échec, node:test en 121 253,354 ms. Les 54 mondes passent avec les supports physiques ajoutés aux cinq présentations de trophée. Cinq parcours ciblés supplémentaires traversent ces portiques avec move/step, collecte et reprise ; un vrai kill libère la place manquante du troisième garde au monde 4. Les ouvertures restent praticables.
+
+Les détails proches WebGL ajoutent 14 pièces par machine, 18 par géant ; Canvas, Économie et les niveaux éloignés restent inchangés. Le filtrage du métal, les reflets analytiques et les silhouettes des fumées/étincelles n’ajoutent aucune passe d’ombre ni aucun quota de particules. La pièce de comparaison passe de 238 888 à 241 224 triangles toutes passes (+0,98 %), avec 51 appels de dessin dans les deux cas. Ce coût ponctuel ne constitue pas une mesure de FPS matériels.
+
+Les 16 comparaisons GLES et les trois captures D+G ont rendu sans erreur GL sur Mesa llvmpipe. Les PNG et empreintes dans docs/qa-v07 sont uniquement des preuves, jamais des assets chargés par le jeu. Le prévol Chromium a échoué avant ouverture de page (socket IPC interdit) : aucune capture ni validation du HUD en navigateur n’en découle.
+
+Build : 729 973 octets bruts, 220 490 gzip, SHA-256 `36b663a78a3e5d246e2fcac4de1dabc43c07bc6e19e9bd2ace37d9b8ca4287dd`, aucun asset externe.
+
+
+## Validation de phase H
+
+Suite complète intégrée : **351 tests réussis, 0 échec, 0 annulé, 0 ignoré**, node:test en 125 973,268 ms. Les 18 configurations classiques et les 54 mondes campagne passent ; les six empreintes classiques sont inchangées. Le nouvel ensemble comprend douze régressions d’armure, trois de montage des mains, deux raccords de HUD/reprise et une régression audio supplémentaire.
+
+La réserve d’armure commence à zéro et absorbe un tiers des dégâts résiduels. Son plafond vaut 100, ou 200 avec le bouclier équipé à gauche. Équiper ou acheter ne recharge rien ; retirer le bouclier borne l’excédent. Trois plaques de 25/25/50 sont placées par monde de campagne ; certains ennemis donnent 10, les boss 50. Les fractions, restes au sol, butins et passages de monde restent persistants. Les anciens checkpoints compatibles migrent avec zéro point et zéro ajout dans les anciens butins. Les campagnes intermédiaires pré-H dont la disposition de pickups a changé peuvent suivre le fallback d’entrée documenté ; le monde classique conserve son empreinte.
+
+Le cadre du bouclier est plus compact, plus loin et monté à gauche ; son dégagement suit les mouvements de la main droite. 3 500 poses des cinq armes, quatre formats et les FOV 60/110 ne présentent aucun chevauchement visible du cadre opaque avec l’arme. Le test échoue sur l’ancienne pose. Le canon et la simulation des tirs restent inchangés. Sept rendus Mesa passent sans erreur GL ; dans la comparaison SMG, instances et triangles sont identiques, les appels de dessin passent de 52 à 53 par tri transparent, sans nouvelle passe. Ces captures ne comprennent pas le HUD DOM.
+
+Le drone, le vent, les moteurs et la vapeur continue sont atténués ; la portée sonore des buses devient 12 m avec décroissance quadratique. La modulation du drone se coupe aussi en pause. Une revue a reproduit l’annulation de l’aperçu audio dès un mouvement de curseur : le rappel de mute idempotent ne l’annule plus, tandis que les boutons Son l’arrêtent explicitement. Le nouveau test utilise le vrai shell et FAudio, contrôle les quatre curseurs, leur persistance, la sortie d’onglet, l’arrêt à deux secondes et la reprise. Les 21 tests audio passent. Aucune écoute humaine ni nouvelle validation navigateur n’est revendiquée.
+
+Les rapports de profils et de 36 combats ont été régénérés sur les sources H finales ; 18 profils, cinq collectes locales et 23 reprises exactes. Build : **739 682 octets bruts**, **223 076 gzip**, SHA-256 `ea583a03cadd661272a08aff6d41307c1c1d6059eabae22a809d7000b5ee3516`, aucun asset externe.
+
+## Validation de phase F — finition 0.7.0
+
+La documentation de livraison décrit maintenant la campagne, les découvertes, l’adaptation, les nouvelles ressources d’armure et les changements de rendu et d’audio. Le package et la distribution portent la version **0.7.0**. L’ajout concurrent du titre versionné, commit `352aeac20aded30a00bb8048958ee9f99c3590cd`, est préservé avec sa balise, son style `.game-version` et la substitution `__GAME_VERSION__` ; le menu affiche **V0.7.0**. Le relevé structuré est dans [validation-v07.json](validation-v07.json), et [VALIDATION.md](../VALIDATION.md) distingue les preuves de cette version des essais historiques.
+
+La suite complète de phase F a terminé avec **351 tests réussis, 0 échec, 0 annulé, 0 ignoré**, node:test en **131 202,638 ms**, puis le contrôle du build a réussi. Les vérifications séparées couvrent **18 configurations classiques et 4 800 cibles**, ainsi que **54 mondes de campagne et 9 450 cibles accessibles**. Les six empreintes classiques restent inchangées. Les sous-ensembles de contrôle ne sont pas ajoutés artificiellement au total des 351 tests.
+
+Distribution finale de cette phase : **739 903 octets bruts**, **223 144 octets gzip**, **0 asset externe**, SHA-256 `7ef8815703ce09fe7140c412c87b6aa57a6262f58fcda7566bbb4a788a5c8bb6`. La distribution est assemblée depuis les treize modules, le HTML source et le CSS ; le titre reçoit la version du package pendant cette construction. Les empreintes des cinq modules référencés dans le rapport des profils correspondent aux sources livrées ; les 18 profils, cinq collectes locales et 23 reprises restent traçables.
+
+Les 36 combats contrôlés de quatre adversaires terminent sans dégât reçu avec la visée automatisée. Ce résultat ne valide ni la durée d’un monde ni l’équilibrage humain. Les rendus Mesa et le prévol Chromium bloqué décrits plus haut gardent leur valeur historique. Un contrôle ultérieur dans Chrome à 1363 × 936 valide le titre versionné, une nouvelle expédition, le HUD du monde 1, la première commande activée avec F, sa notification de reprise et les onglets Partie/Image/Audio. L’essai du bouton audio et du curseur d’ambiance ne vaut pas écoute humaine. Canvas 2D et le repli tactique CPU sont affichés, WebGL2 et WebNN étant indisponibles ; environ 1 FPS est observé dans cet environnement distant. Le [relevé de navigateur](qa-v07/browser-smoke.json) ne revendique ni format mobile, ni campagne complète, ni performance matérielle. Aucune publication GitHub ni aucun déploiement d’hébergement ne sont déduits de cette validation locale.
+
+Après un **rechargement complet de la page**, le bouton **Continuer — MONDE 01** restaure la commande **1 / 3**, les **100 PV**, l’armure **0 / 100**, le pistolet **∞** et l’arsenal **1 / 5**, avec le message « Signal retrouvé. Reprise au dernier point enregistré. ». Le retour au titre affiche toujours **V0.7.0**, avec le libellé accessible de version 0.7.0. Les quinze dernières entrées d’erreur inspectées concernent des métadonnées d’extensions du navigateur, sans erreur attribuée au jeu dans cet échantillon ; aucune affirmation de console entièrement exempte d’erreurs n’est faite.

@@ -27,6 +27,7 @@
     'owned':'Équipement déjà possédé.',
     'unsupported-item':'Cet équipement nécessite l’arsenal complet.',
     'locked-weapon':'Récupérez d’abord cette arme.',
+    'trophy-required':'Découvrez cet équipement dans sa salle-trophée.',
     'max-rank':'Rang maximal atteint.',
     'insufficient-credits':'Crédits insuffisants.',
     'insufficient-cores':'Noyau de colosse requis.'
@@ -46,20 +47,20 @@
     if(!validate(profile))return null;const r=profile.upgrades;
     return {maxHp:100+20*r.vitality,damageMultiplier:1+.10*r.power,incomingMultiplier:1-.08*r.armor,coolingMultiplier:1+.20*r.cooling};
   }
-  function ammoCaps(profile){return validate(profile)?BASE_CAPS.map(value=>Math.floor(value*(1+.25*profile.upgrades.capacity))):null;}
+  function ammoCaps(profile,options={}){if(!validate(profile))return null;const caps=BASE_CAPS.map(value=>Math.floor(value*(1+.25*profile.upgrades.capacity)));if(options.campaign===true)caps.push(1);return caps;}
   function catalog(){return ITEMS.map(item=>({...item}));}
-  function copyState(state){
+  function copyState(state,options={}){
     if(!shape(state,['profile','inventory','hp']))return null;
     const profile=copy(state.profile);if(!profile)return null;
-    const caps=ammoCaps(profile),inventory=state.inventory;
+    const campaign=options.campaign===true,caps=ammoCaps(profile,options),inventory=state.inventory;
     if(!inventory||!Array.isArray(inventory.weapons)||!Array.isArray(inventory.ammo))return null;
     const slots=inventory.weapons.length,hasShield=own(inventory,'shield');
-    if(![3,4].includes(slots)||!shape(inventory,hasShield?['weapons','ammo','shield']:['weapons','ammo'])||slots===4&&!hasShield||hasShield&&typeof inventory.shield!=='boolean'||Object.keys(inventory.weapons).length!==slots||inventory.weapons[0]!==true||inventory.ammo.length!==slots||Object.keys(inventory.ammo).length!==slots||!Array.from({length:slots},(_,i)=>i).every(i=>own(inventory.weapons,i)&&typeof inventory.weapons[i]==='boolean'&&own(inventory.ammo,i)&&integer(inventory.ammo[i],caps[i])))return null;
+    if(!(campaign?[5]:[3,4]).includes(slots)||!shape(inventory,hasShield?['weapons','ammo','shield']:['weapons','ammo'])||slots>=4&&!hasShield||hasShield&&typeof inventory.shield!=='boolean'||Object.keys(inventory.weapons).length!==slots||(campaign?!inventory.weapons.some(Boolean):inventory.weapons[0]!==true)||inventory.ammo.length!==slots||Object.keys(inventory.ammo).length!==slots||!Array.from({length:slots},(_,i)=>i).every(i=>own(inventory.weapons,i)&&typeof inventory.weapons[i]==='boolean'&&own(inventory.ammo,i)&&integer(inventory.ammo[i],caps[i])))return null;
     if(!Number.isFinite(state.hp)||state.hp<0||state.hp>stats(profile).maxHp)return null;
     return {profile,inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice(),...(hasShield?{shield:inventory.shield}:{})},hp:state.hp};
   }
-  function quote(state,itemId){
-    const item=ITEMS.find(item=>item.id===itemId),valid=copyState(state);
+  function quote(state,itemId,options={}){
+    const item=ITEMS.find(item=>item.id===itemId),valid=copyState(state,options);
     const result={ok:false,reason:'',message:'',item:item?{...item}:null,cost:{credits:0,cores:0},amount:0,rank:0,nextRank:0};
     function deny(reason){result.reason=reason;result.message=MESSAGES[reason];return result;}
     if(!valid)return deny('invalid-state');
@@ -67,18 +68,19 @@
     if(valid.hp<=0)return deny('defeated');
     const profile=valid.profile,inventory=valid.inventory;
     if(inventory.weapons.length<4&&(item.weapon===3||item.kind==='shield'))return deny('unsupported-item');
+    if(options.campaign===true&&(item.kind==='weapon'&&!inventory.weapons[item.weapon]||item.kind==='shield'&&!inventory.shield))return deny('trophy-required');
     if(item.kind==='repair'){
       result.amount=Math.min(item.quantity,stats(profile).maxHp-valid.hp);
       if(result.amount<=0)return deny('full');
       result.cost.credits=Math.max(1,Math.ceil(item.basePrice*result.amount/item.quantity));
     }else if(item.kind==='ammo'){
       if(!inventory.weapons[item.weapon])return deny('locked-weapon');
-      result.amount=Math.min(item.quantity,ammoCaps(profile)[item.weapon]-inventory.ammo[item.weapon]);
+      result.amount=Math.min(item.quantity,ammoCaps(profile,options)[item.weapon]-inventory.ammo[item.weapon]);
       if(result.amount<=0)return deny('full');
       result.cost.credits=Math.max(1,Math.ceil(item.basePrice*result.amount/item.quantity));
     }else if(item.kind==='weapon'){
       if(inventory.weapons[item.weapon])return deny('owned');
-      result.amount=Math.min(item.quantity,ammoCaps(profile)[item.weapon]-inventory.ammo[item.weapon]);
+      result.amount=Math.min(item.quantity,ammoCaps(profile,options)[item.weapon]-inventory.ammo[item.weapon]);
       result.cost.credits=item.basePrice;
     }else if(item.kind==='shield'){
       if(inventory.shield)return deny('owned');
@@ -92,9 +94,9 @@
     if(profile.cores<result.cost.cores)return deny('insufficient-cores');
     result.ok=true;return result;
   }
-  function transact(state,itemId){
+  function transact(state,itemId,options={}){
     // Always re-quote the current state. A cached UI price is never authority.
-    const offer=quote(state,itemId),next=copyState(state),result={...offer,state:next};
+    const offer=quote(state,itemId,options),next=copyState(state,options),result={...offer,state:next};
     if(!offer.ok)return result;
     next.profile.credits-=offer.cost.credits;next.profile.cores-=offer.cost.cores;
     const item=offer.item;

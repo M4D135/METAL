@@ -1,0 +1,49 @@
+{
+  "schema": "metal-browser-preflight-v1",
+  "status": "blocked-before-any-page-test",
+  "available": {
+    "chromiumExecutable": "/usr/bin/chromium",
+    "chromiumVersion": "156.0.8078.79 (Debian GNU/Linux 13)",
+    "playwrightPackage": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright",
+    "nodeVersionObserved": "24.22.1"
+  },
+  "attempt": {
+    "browser": "Chromium headless through Playwright",
+    "profile": "A newly created disposable scratch profile; no existing browser session used",
+    "intendedPage": "A data URL containing a tiny diagnostic canvas; the game distribution was not loaded",
+    "requestedRendering": "ANGLE/SwiftShader WebGL2, not a physical GPU benchmark",
+    "result": "Browser process exited with SIGABRT before page creation"
+  },
+  "error": {
+    "source": "chrome/browser/process_singleton_posix.cc:297",
+    "message": "Check failed: . socket() failed: Operation not permitted (1)",
+    "additionalDiagnostic": "Crashpad also reported ptrace: Operation not permitted (1)"
+  },
+  "prerequisitesForASeparateAuthorizedRun": [
+    "An execution environment that already permits Chromium process startup and its normal local IPC sockets",
+    "A localhost listener for serving the exact standalone distribution; listener availability was not tested here",
+    "The existing local Playwright package and Chromium executable, with no dependency download",
+    "A completed G distribution whose byte size and SHA-256 match SIZE.json"
+  ],
+  "harness": {
+    "path": "/workspace/scratch/1e3caa08787d/qa-browser-G/run-browser-qa.mjs",
+    "command": "node /workspace/scratch/1e3caa08787d/qa-browser-G/run-browser-qa.mjs --distribution-ready",
+    "preparedChecks": [
+      "Fresh campaign starts with the pistol and the infinite-ammunition indicator",
+      "World18 full-arsenal fixture initialized through real public world/simulation APIs, then restored through the ordinary Continue UI",
+      "Right and left selection of all five weapons and shield selection",
+      "HUD and pause/options layouts at390x844,320x568,844x390 CSS pixels",
+      "Real WebGL2 execution, plus the genuine Canvas2D fallback under an explicit context-unavailable fixture",
+      "Console/page errors, nonlocal network requests, clipping and control hit testing"
+    ],
+    "runtimeValidation": "Not executed: the system-level preflight failed, and the parent requested no further browser launch"
+  },
+  "observedTests": {
+    "gamePagesOpened": 0,
+    "browserScreenshots": 0,
+    "gameWebGLOrCanvasChecks": 0,
+    "physicalDeviceTests": 0,
+    "physicalGpuFpsBenchmarks": 0
+  },
+  "followup": "No retry, permission bypass, or existing-session fallback was attempted. Keep browser/mobile visual validation explicitly unverified."
+}
