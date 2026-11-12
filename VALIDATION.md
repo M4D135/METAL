@@ -1,3 +1,13 @@
+# Validation du chantier moteur — lot 01 / STAB-V1 — 12 novembre 2026
+
+Le correctif provisoire de subdivision est intégré après T1. **1 500 → 900 pas** pour 900 images à 60 Hz quantifiées, **1 800 → 900** à 59,94 Hz ; zéro double pas dans ces motifs, aucun temps écoulé perdu, pas borné à 17,7 ms. Les cinq tests ajoutés vérifient également une session longue et le passage d’un joueur contre un mur mince.
+
+**55/55 tests ciblés** (cadence + checkpoints), build et `checks/build.test.mjs` verts. HTML **804 421 octets bruts**, zéro ressource externe, version **0.8.1**. SHA-256 : `3aa68a79c28e19ed982605a557c8e35585bf3478ad54de05ea3cbadc3ddc4f50`.
+
+Les ratios CPU appariés varient selon le motif et les contrôles restent bruités ; aucun gain universel de 18 à 48 % n’est revendiqué. Le changement de subdivision modifie volontairement les trajectoires. [Preuves et commande de reproduction](docs/chantier-moteur/preuves/lot-01/stab-v1/README.md). La suite complète finale et le navigateur seront consignés à la clôture du lot.
+
+---
+
 # Validation du chantier moteur — lot 01 / T1 — 12 novembre 2026
 
 **LOAD-01, LOOP-01 et LOOP-V2 : reprise corrigée, version 0.8.1 inchangée.**

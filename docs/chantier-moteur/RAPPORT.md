@@ -310,3 +310,11 @@ commité lorsque le journal gzip est présent. Le préflight ajoute deux petits
 journaux historiques. Aucun essai navigateur, écoute réelle, appareil
 physique ou gain de performance n'est revendiqué par T1 ; téléphone,
 Windows/NVIDIA, Safari et Firefox restent à vérifier dans les lots concernés.
+
+### STAB-V1 — sous-pas stables dans l’attente du lot 07
+
+Le calcul des sous-pas tolère maintenant les imprécisions de l’horloge : `ceil(dt*60-.06)` au lieu de `ceil(dt*60)`. Sur 900 images à 60 Hz avec horloge arrondie à 0,1 ou 1 ms, le nombre de pas passe de **1 500 à 900** ; à 59,94 Hz, de **1 800 à 900**. Il ne reste aucune image à deux pas dans ces trois motifs. Le temps total reste simulé et chaque pas reste inférieur à **17,7 ms** ; une vraie simulation vérifie sprint et esquive contre un mur mince. Ce changement volontaire du découpage temporel ne prétend pas conserver les trajectoires bit à bit.
+
+[Les mesures appariées et leurs limites](preuves/lot-01/stab-v1/README.md) sont jointes. Cinq paires, chauffe exclue, domaine principal, alternance AB/BA : ratios CPU médians après/avant **0,800 / 0,957 / 0,841** pour q60, ms60 et 59,94 Hz. Les contrôles 120/144 Hz, dont le nombre de pas reste identique, montrent également du bruit. La promesse de gain CPU de 18 à 48 % n’est **pas reproduite uniformément** ; le correctif est conservé pour la subdivision erronée effectivement corrigée, sans revendiquer ce gain universel.
+
+Les cinq nouveaux tests de cadence sont inclus dans `npm test`. Validation d’intégration ciblée : **55/55** tests cadence + checkpoints, puis contrôle de build PASS. Distribution **804 329 → 804 421 octets**, version 0.8.1 ; SHA-256 `3aa68a79c28e19ed982605a557c8e35585bf3478ad54de05ea3cbadc3ddc4f50`. La suite complète du lot sera exécutée après assemblage T2–T4 ; elle n’est pas présentée comme relancée ici. La boucle fixe et l’interpolation restent au lot 07.

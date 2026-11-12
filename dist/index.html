@@ -9049,8 +9049,9 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       input.fire=mouseFire||touchFire||held('fire');input.fireLeft=mouseLeftFire||touchLeftFire||held('fireLeft');input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');
       signals.lookYaw=dt>0?input.lookX/dt:0;signals.lookPitch=dt>0?input.lookY/dt:0;signals.firing=input.fire;
       lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;
-      // Bounded substeps preserve movement/combat timing when rendering is slower than 60 Hz.
-      const steps=Math.max(1,Math.ceil(dt*60)),part=dt/steps;
+      // STAB-V1: tolerate timestamp rounding and 59.94 Hz until the fixed-step loop lands.
+      // Each part stays below 17.7 ms; precision noise must not double the work at 60 Hz.
+      const steps=Math.max(1,Math.ceil(dt*60-.06)),part=dt/steps;
       for(let i=0;i<steps;i++){
         sim.step(part,input);input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=false;
         events();
