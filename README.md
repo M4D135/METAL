@@ -1,6 +1,6 @@
 # FERRO — Le complexe silencieux
 
-**Version 0.4.0 — Horizons.** Un FPS 3D compact dont la géométrie, les matériaux, les machines et le son sont fabriqués par le code. Deux armes, trois territoires mêlant nature et installations industrielles, neuf relais et un gardien final.
+**Version 0.4.1 — Horizons.** Un FPS 3D compact dont la géométrie, les matériaux, les machines et le son sont fabriqués par le code. Deux armes, trois territoires mêlant nature et installations industrielles, neuf relais et un gardien final.
 
 L'idée technique s'inspire de la démarche de .kkrieger : conserver la recette du contenu dans un petit programme. **Tout le code et tout le contenu de FERRO sont originaux ; aucun asset du jeu historique n'est repris.**
 
@@ -16,7 +16,18 @@ Téléchargez **`dist/index.html`** et ouvrez-le dans un navigateur de bureau r�
 
 Le jeu possède également des commandes tactiles et peut être servi par un hébergement statique. WebGL 2 est recommandé ; un rendu 3D logiciel prend le relais quand il est indisponible. Le son commence après une interaction.
 
-## Ce qui change en 0.4
+## Ce qui change en 0.4.1
+
+- **FPS visibles.** Le compteur en haut à droite, près de la carte et de la pause, indique le nombre réel d’images par seconde. Sa moyenne se rafraîchit environ toutes les 0,75 seconde ; un onglet masqué ne fausse pas la mesure au retour.
+- **Arme et ennemis sans grille parasite.** Les joints, vis et grandes rainures des panneaux restent sur le bâtiment. Le métal des objets emploie des coordonnées locales : ses détails suivent l’arme ou l’armure au lieu de les traverser pendant le déplacement. Les véritables ombres restent actives en Auto/Haute.
+- **Moins de travail graphique répété.** Les lots statiques identiques restent dans leurs buffers entre deux images. Les instances animées sont envoyées une fois puis partagées entre les passes de couleur et d’ombre. Le secours Canvas conserve aussi la géométrie des ombres statiques.
+- **Résolution Auto adaptative en WebGL.** Après une baisse de fluidité durable, la résolution diminue par paliers, jusqu’à 65 % de son échelle initiale ; elle remonte plus lentement quand la marge revient. Le budget initial est limité à 1,8 million de pixels, utile sur les écrans à forte densité. Haute et Économie gardent une résolution fixe. Les textes de l’interface restent nets.
+- **Collisions moins coûteuses.** Un index spatial limite les obstacles examinés sans changer le test physique exact, les décisions tactiques ou leurs cadences. Les modèles très éloignés ne sont plus assemblés pour l’affichage ; leur simulation continue.
+- **Reprises compatibles.** Cette mise à jour conserve la génération de terrain 4 et les formats de sauvegarde de la 0.4.0.
+
+Les mesures comparables et les limites des tests sont détaillées dans `VALIDATION.md`.
+
+## Territoires et IA de Horizons
 
 - **De vrais extérieurs.** Chaque secteur possède cinq espaces à ciel ouvert, des chemins praticables et des bâtiments à explorer. Les barrières, murets et fronts rocheux délimitent visiblement le terrain. Le premier départ se fait dans une lisière boisée.
 - **Trois paysages.** Pins et bouleaux autour des postes de maintenance ; falaises, minerais et installations dans la carrière ; feuillus, fleurs, lierre et ruines dans les jardins du veilleur. Les reliefs de fond donnent de la profondeur sans transformer le sol en plateformes.
@@ -93,7 +104,7 @@ La graine change les dimensions et détails, tout en conservant le graphe propre
 
 `SIZE.json` est produit par le build : taille brute du HTML, taille gzip reproductible et SHA-256.
 
-Pour la 0.4.0 : **248 290 octets bruts** (248,29 ko ; 242,47 Kio) et **76 041 octets gzip**. `SIZE.json` contient aussi le SHA-256 du fichier distribué.
+Pour la 0.4.1 : **255 973 octets bruts** (255,97 ko ; 249,97 Kio) et **78 478 octets gzip**. `SIZE.json` contient aussi le SHA-256 du fichier distribué.
 
 Le budget reste **1 400 000 octets non compressés** pour le fichier jouable. Le dépôt, ses tests et la documentation sont séparés de cette mesure. Gzip mesure une compression de transport ; ce n'est pas la taille brute.
 

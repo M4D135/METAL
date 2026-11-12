@@ -29,13 +29,24 @@
     let velocityX=0,velocityZ=0,dashAge=.2,dashX=0,dashZ=0;
     let fireWait=0,navWait=0,hazardWait=0,recovery=0;
     const solids=world.colliders.filter(b=>b.minY<1.8&&b.maxY>.06),b=world.bounds;
+    // Static broad phase: all gameplay bodies fit within this expansion, including
+    // the Custodian. A single bucket lookup replaces a full level scan per footstep.
+    const bucketSize=8,bucketRadius=1.05,bucketX=Math.floor(b.minX/bucketSize),bucketZ=Math.floor(b.minZ/bucketSize);
+    const bucketWidth=Math.floor(b.maxX/bucketSize)-bucketX+1,bucketDepth=Math.floor(b.maxZ/bucketSize)-bucketZ+1;
+    const collisionBuckets=Array.from({length:bucketWidth*bucketDepth},()=>[]);
+    for(const q of solids){
+      const x0=Math.max(0,Math.floor((q.minX-bucketRadius-1e-7)/bucketSize)-bucketX),x1=Math.min(bucketWidth-1,Math.floor((q.maxX+bucketRadius+1e-7)/bucketSize)-bucketX);
+      const z0=Math.max(0,Math.floor((q.minZ-bucketRadius-1e-7)/bucketSize)-bucketZ),z1=Math.min(bucketDepth-1,Math.floor((q.maxZ+bucketRadius+1e-7)/bucketSize)-bucketZ);
+      for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)collisionBuckets[z*bucketWidth+x].push(q);
+    }
     let fingerprint=2166136261;
     for(const c of JSON.stringify([world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[]]))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
     fingerprint=(fingerprint>>>0).toString(36);
     function blocked(x,z,r=.28){
       if(x-r<b.minX||x+r>b.maxX||z-r<b.minZ||z+r>b.maxZ)return true;
       if(world.walkable?.length&&!world.walkable.some(a=>x>=a.x-a.w/2&&x<=a.x+a.w/2&&z>=a.z-a.d/2&&z<=a.z+a.d/2))return true;
-      for(const q of solids){const dx=x-clamp(x,q.minX,q.maxX),dz=z-clamp(z,q.minZ,q.maxZ);if(dx*dx+dz*dz<r*r)return true;}
+      const boxes=r>=0&&r<=bucketRadius?collisionBuckets[(Math.floor(z/bucketSize)-bucketZ)*bucketWidth+Math.floor(x/bucketSize)-bucketX]||solids:solids;
+      for(const q of boxes){const dx=x<q.minX?x-q.minX:x>q.maxX?x-q.maxX:0,dz=z<q.minZ?z-q.minZ:z>q.maxZ?z-q.maxZ:0;if(dx*dx+dz*dz<r*r)return true;}
       return false;
     }
     function move(e,dx,dz,r=.28){
@@ -288,9 +299,12 @@
     function radius(e){return e.type===3?1.05:.38;}
     function segmentFree(ax,az,bx,bz,r=.4){
       if(blocked(ax,az,r)||blocked(bx,bz,r))return false;
-      const dx=bx-ax,dz=bz-az;
+      const dx=bx-ax,dz=bz-az,minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
       // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
       for(const q of solids){
+        // Most A* edge checks are shorter than a metre: discard remote boxes
+        // before building intervals, without approximating the remaining sweep.
+        if(q.maxX<minX||q.minX>maxX||q.maxZ<minZ||q.minZ>maxZ)continue;
         let lo=0,hi=1;
         for(const [origin,delta,min,max] of [[ax,dx,q.minX-r,q.maxX+r],[az,dz,q.minZ-r,q.maxZ+r]]){
           if(Math.abs(delta)<1e-8){if(origin<min||origin>max){hi=-1;break;}}

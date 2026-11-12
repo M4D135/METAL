@@ -59,6 +59,39 @@ test('Swept movement stops at a thin wall and slides along it, including a large
   assert(sim.state.player.x >= -29.72 - 1e-8, 'Player crossed the world boundary');
 });
 
+test('Spatial collision lookup matches exhaustive disc checks at bucket edges, corners and all body sizes', () => {
+  // Independent exhaustive reference: this deliberately knows nothing about buckets.
+  function exhaustive(world, x, z, radius) {
+    const b = world.bounds;
+    if (x - radius < b.minX || x + radius > b.maxX || z - radius < b.minZ || z + radius > b.maxZ) return true;
+    if (world.walkable?.length && !world.walkable.some(a => x >= a.x - a.w / 2 && x <= a.x + a.w / 2 && z >= a.z - a.d / 2 && z <= a.z + a.d / 2)) return true;
+    return world.colliders.some(q => {
+      if (!(q.minY < 1.8 && q.maxY > .06)) return false;
+      const dx = x - Math.max(q.minX, Math.min(q.maxX, x));
+      const dz = z - Math.max(q.minZ, Math.min(q.maxZ, z));
+      return dx * dx + dz * dz < radius * radius;
+    });
+  }
+  const radii = [.28, .38, 1.05, 1.6];
+  let samples = 0, randomState = 1234567;
+  const random = () => ((randomState = (Math.imul(randomState, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (let stage = 0; stage < 3; stage++) {
+    const world = FWorld.create(96, stage), sim = FSimulation.create(world), b = world.bounds;
+    function check(x, z, radius) {
+      assert.equal(sim.blocked(x, z, radius), exhaustive(world, x, z, radius), `stage ${stage}, (${x}, ${z}), radius ${radius}`);
+      samples++;
+    }
+    for (let i = 0; i < 2400; i++) check(b.minX - 2 + random() * (b.maxX - b.minX + 4), b.minZ - 2 + random() * (b.maxZ - b.minZ + 4), radii[i % radii.length]);
+    for (const q of world.colliders) for (const radius of radii) {
+      const x = (q.minX + q.maxX) / 2, z = (q.minZ + q.maxZ) / 2;
+      check(q.minX - radius, z, radius); check(q.maxX + radius - 1e-9, z, radius);
+      check(q.minX - radius * Math.SQRT1_2, q.minZ - radius * Math.SQRT1_2, radius);
+      for (const epsilon of [-1e-9, 0, 1e-9]) check(Math.round(x / 8) * 8 + epsilon, Math.round(z / 8) * 8 - epsilon, radius);
+    }
+  }
+  assert(samples > 20000);
+});
+
 test('A very large frame delta cannot teleport the player through a wall', () => {
   const sim = FSimulation.create(fixture({
     spawn: { x: 0, z: -.4, yaw: 0 },

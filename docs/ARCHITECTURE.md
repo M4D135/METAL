@@ -1,4 +1,4 @@
-# Architecture et décisions — FERRO 0.4
+# Architecture et décisions — FERRO 0.4.1
 
 ## Une distribution autonome et procédurale
 
@@ -38,6 +38,10 @@ Les passes `detailWorld` et `naturalDetails` s'exécutent après la génération
 `world.ambience` décrit les balises, écrans et petits effets près des machines. Les écrans donnent leur normale, largeur et hauteur pour garder leur animation sur leur face. Ces effets n'infligent aucun dégât ; les évents dangereux restent dans `world.hazards` avec leurs annonces distinctes.
 
 ## Simulation et temps
+
+Les collisions statiques disposent d’un index en cellules de 8 m, élargi au rayon maximal usuel de 1,05 m. Les objets candidats conservent le calcul disque/rectangle exact ; un rayon plus grand utilise le parcours exhaustif. Les balayages de navigation rejettent d’abord les rectangles hors de l’enveloppe du segment. La cadence de perception, les choix tactiques et le format des snapshots ne changent pas.
+
+Le compteur FPS du shell utilise les intervalles RAF non tronqués, indépendamment du pas physique borné. Il compte les intervalles terminés sur une fenêtre d’au moins 750 ms, se réinitialise aux transitions d’écran et ignore les périodes où le document est masqué. Le DOM est mis à jour au plus deux fois par seconde et le compteur n’est pas une région annoncée en permanence par un lecteur d’écran.
 
 `FSimulation.create(world)` retourne `state`, `step(dt,input)`, `fire(assist)`, `pulse()`, les méthodes de collision et de visibilité, la grille de navigation, `snapshot()` et `restore(data,options)`.
 
@@ -133,6 +137,22 @@ Il l’enregistre sous **`ferro-expedition-v2`** à l’entrée d’un étage et
 La génération du terrain est indépendante du format de sauvegarde. Pour une enveloppe antérieure à la génération 4, ou un snapshot devenu incompatible, le shell redémarre à l'entrée du **même secteur**, en conservant graine, arme et statistiques des secteurs terminés. Il sauvegarde ce nouveau point et explique la reprise dans un message. L'ancien point est copié sous `ferro-expedition-v2-before-horizons` si possible, sans écraser une sauvegarde de migration déjà présente. Les tests du shell actionnent le vrai bouton Continuer et vérifient les écritures de stockage.
 
 ## Rendu WebGL et secours logiciel
+
+### Surfaces des objets et grille parasite
+
+Le même matériau de métal servait aux murs et aux acteurs. Ses joints de panneaux en coordonnées mondiales traversaient donc l’arme et les ennemis même avec les shadow maps désactivées. Le bit 4 du champ d’instance de présentation distingue maintenant une surface d’objet. Le lot dynamique reçoit ce rôle par défaut ; `surface: 'architecture'` permet une exception et `surface: 'object'` marque explicitement un élément statique. L’arme overlay reste toujours un objet.
+
+Le shader utilise alors les coordonnées et normales locales pour le grain du métal, et réserve les joints, grandes rainures et vis au décor. Les normales géométriques mondiales servent toujours à l’éclairage et aux ombres. Le secours Canvas suit cette même séparation. Ce correctif ne remplace pas les vrais tests d’occlusion par un éclairage constant.
+
+### Travail par image et résolution
+
+Quatre buffers distincts conservent les instances statiques de la vue couleur, de la lampe, du soleil et de la torche. Une sélection identique réutilise son lot préparé ; un changement d’ensemble reconstruit et envoie uniquement ce lot. Le frustum couleur et les sélections de casters restent recalculés quand nécessaire. La liste des casters d’une lampe fixe peut être réutilisée. Les meshes dynamiques sont préparés et envoyés une fois pour toutes les passes d’une même image. `setWorld`, un changement de sélection et la restauration du contexte invalident correctement ces caches.
+
+En WebGL Auto, un gouverneur observe les intervalles RAF réels fournis par le shell, uniquement en partie visible et active. Il lisse sur environ 0,65 s, exige plus de 1,3 s de lenteur au-delà de 25 ms, puis baisse l’échelle de 0,1 avec 2 s de temporisation. Le retour demande plus de 5 s sous 18,5 ms et remonte par 0,05. L’échelle reste entre 0,65 et 1. Le plafond initial de 1,8 million de pixels s’applique avant cette échelle, y compris aux grandes fenêtres ; les modes fixes ne passent pas par ce gouverneur. Le changement de résolution recrée les cibles couleur mais conserve un atlas d’ombre de taille identique.
+
+Le shell construit les modèles visuels proches, avec une marge plus grande que la portée visible du renderer et des ombres. L’IA, les projectiles et les collisions de toute la carte continuent de s’exécuter. Le Canvas conserve les géométries statiques utilisées pour les ombres au sol, sans mettre en cache la position des objets dynamiques.
+
+### Éclairage et passes
 
 Le chemin principal utilise **WebGL 2** et le dessin instancié de primitives. La géométrie statique est préparée une fois ; les personnages, machines, projectiles et effets sont actualisés à chaque image. Les matériaux calculent joints, grain, motifs métalliques et reflets, avec brouillard et éclairage directionnel/local.
 

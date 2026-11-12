@@ -8,7 +8,7 @@
   try{const v=JSON.parse(localStorage.getItem('ferro-settings')||'{}');muted=!!v.muted;quality=['auto','low','high'].includes(v.quality)?v.quality:'auto';softMotion=v.softMotion!==false;}catch{}
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)softMotion=false;
   const audio=FAudio.create(),motion=FMotion.create(),SAVE_KEY='ferro-expedition-v2';
-  let renderer,world,sim,stage=0,seed=96,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,wasLocked=false,perfStart=last,perfFrames=0;
+  let renderer,world,sim,stage=0,seed=96,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,wasLocked=false,perfStart=0,perfFrames=0;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   let runStats=emptyStats(),checkpoint=null,savedRun=null,selectedWeapon=0,saveAvailable=true,lastFootstep=0,outdoorMix=0;
   const actorMotion=new Map();
@@ -63,6 +63,8 @@
   }
   function clearInput(){keys.clear();mouseFire=touchFire=false;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
+    last=performance.now();perfStart=0;perfFrames=0;
+    $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
     mode=value;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=value!=='paused';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();audio.setMuted(muted||value==='menu'||value==='paused');
     if(value!=='playing'&&document.pointerLockElement)document.exitPointerLock();
   }
@@ -185,12 +187,16 @@
   }
   function models(t,playing,camera){
     const out=[],s=sim.state,p=s.player;machinery(out,t);ambience(out,t);
+    // Keep simulation active everywhere; only build visible actor/effect geometry nearby.
+    const range=renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);
+    const nearby=(x,z,r=3)=>(x-p.x)**2+(z-p.z)**2<(range+r)**2;
     for(const c of s.cores){
+      if(!nearby(c.x,c.z))continue;
       out.push(m('cylinder',[c.x,.13,c.z],[.95,.26,.95],0),m('ring',[c.x,.29,c.z],[1.15,.1,1.15],c.taken?0:5));
       if(!c.taken){const y=1.22+Math.sin(t*2+c.id)*.13;out.push(m('octa',[c.x,y,c.z],[.55,.85,.55],5,[0,t*.7,0],1.8),m('ring',[c.x,y,c.z],[1.2,1.2,1.2],4,[Math.PI/2,0,t*.35],1.2));}
     }
     for(const e of s.enemies){
-      if(e.hp<=0)continue;
+      if(e.hp<=0||!nearby(e.x,e.z,e.type===3?4:2))continue;
       const heading=Number.isFinite(e.yaw)?e.yaw:Math.atan2(p.x-e.x,e.z-p.z),rot=Math.PI-heading;
       const charge=e.windup>0?1-e.windup/(e.windupMax||1):0,stunned=e.stun>0;
       const scanning=e.awareness==='investigate'||e.awareness==='search',patrolling=e.awareness==='patrol';
@@ -226,14 +232,16 @@
       }
       if(stunned)out.push(m('ring',[e.x,y+.65,e.z],[1.05,.08,1.05],4,[.15,t*2,0],1));
     }
-    for(const c of s.pickups)if(!c.taken){const y=.5+Math.sin(t*2+c.x)*.06;out.push(m('box',[c.x,y,c.z],[.45,.4,.45],0,[0,t*.4,0]),m('box',[c.x,y+.22,c.z],[.3,.035,.09],4,[0,t*.4,0],1),m('box',[c.x,y+.22,c.z],[.09,.035,.3],4,[0,t*.4,0],1));}
+    for(const c of s.pickups)if(!c.taken&&nearby(c.x,c.z)){const y=.5+Math.sin(t*2+c.x)*.06;out.push(m('box',[c.x,y,c.z],[.45,.4,.45],0,[0,t*.4,0]),m('box',[c.x,y+.22,c.z],[.3,.035,.09],4,[0,t*.4,0],1),m('box',[c.x,y+.22,c.z],[.09,.035,.3],4,[0,t*.4,0],1));}
     const ex=world.exit.x,ez=world.exit.z,ready=s.relays===3&&!s.bossAlive,exitMat=ready?4:5;
+    if(nearby(ex,ez,4)){
     out.push(m('cylinder',[ex,.08,ez],[2.5,.16,2.5],0),m('ring',[ex,.2,ez],[2.7,.1,2.7],exitMat,[0,0,0],1.4));
     for(const side of [-1,1])out.push(m('box',[ex+side*1.4,1.65,ez],[.25,3.3,.5],0),m('box',[ex+side*1.24,1.65,ez],[.06,2.9,.2],exitMat,[0,0,0],1.4));
     out.push(m('box',[ex,3.2,ez],[2.9,.25,.5],0));
     if(ready)for(let j=0;j<6;j++){const a=t*1.1+j*1.047;out.push(m('octa',[ex+Math.cos(a)*.7,.4+((t*.6+j*.4)%2.4),ez+Math.sin(a)*.7],[.1,.16,.1],4,[0,t,0],2));}
-    for(const q of s.bullets)out.push(m('sphere',[q.x,q.y,q.z],[.2,.2,.2],6,[0,0,0],2.6));
-    for(const q of s.particles){const v=Math.min(.11,q.life*.17);out.push(m('box',[q.x,q.y,q.z],[v,v,v],q.kind,[t,t,0],1.6));}
+    }
+    for(const q of s.bullets)if(nearby(q.x,q.z))out.push(m('sphere',[q.x,q.y,q.z],[.2,.2,.2],6,[0,0,0],2.6));
+    for(const q of s.particles)if(nearby(q.x,q.z)){const v=Math.min(.11,q.life*.17);out.push(m('box',[q.x,q.y,q.z],[v,v,v],q.kind,[t,t,0],1.6));}
     if(s.pulseVisual>0){
       const progress=1-s.pulseVisual/.65,r=.3+progress*6.2;
       out.push(m('ring',[p.x,.16,p.z],[r*2,.13,r*2],4,[0,0,0],1.7*(1-progress)));
@@ -305,9 +313,8 @@
     const p=sim.state.player;ctx.save();ctx.translate(X(p.x),Z(p.z));ctx.rotate(p.yaw);ctx.fillStyle='#f2f5e5';ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(3.5,3.2);ctx.lineTo(0,1.5);ctx.lineTo(-3.5,3.2);ctx.closePath();ctx.fill();ctx.restore();
   }
   function frame(now){
-    requestAnimationFrame(frame);const dt=clamp((now-last)/1000,0,.12);last=now;clock+=dt;
-    perfFrames++;if(now-perfStart>1000){document.body.dataset.fps=String(Math.round(perfFrames*1000/(now-perfStart)));perfStart=now;perfFrames=0;}
-    if(!renderer||!sim||document.hidden)return;
+    requestAnimationFrame(frame);const frameMs=Math.max(0,now-last),dt=clamp(frameMs/1000,0,.12);last=now;clock+=dt;
+    if(!renderer||!sim||document.hidden){perfStart=0;perfFrames=0;return;}
     const signals={time:sim.state.time,lookYaw:0,lookPitch:0,firing:false};
     if(mode==='playing'){
       input.moveX=(keys.has('KeyD')?1:0)-(keys.has('KeyA')||keys.has('KeyQ')?1:0)+stick.x;
@@ -337,7 +344,14 @@
     signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);
     const camera={pos:[p.x,1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch,roll:isPlay?view.roll:0,fov:(touch?79:74)+(isPlay?view.fov:0)};
     if(mode==='menu'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=1.72;}
-    renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:sim.state.flash,damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0});
+    renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:sim.state.flash,damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,adaptive:mode==='playing'&&document.hasFocus()});
+    // Count completed frame intervals in real time, with a stable readout at most twice/s.
+    if(!perfStart){perfStart=now;perfFrames=0;}else perfFrames++;
+    if(now-perfStart>=750){
+      const fps=Math.round(perfFrames*1000/(now-perfStart));
+      document.body.dataset.fps=String(fps);$('fps-counter').textContent=fps+' FPS';
+      perfStart=now;perfFrames=0;
+    }
   }
   function togglePause(){if(mode==='playing')setMode('paused');else if(mode==='paused'){audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});}}
   function switchWeapon(value){const next=value===undefined?1-selectedWeapon:value;if(mode!=='playing'||next===selectedWeapon)return;selectedWeapon=next;sim.state.weapon=selectedWeapon;motion.impulse('switch');audio.switchWeapon?.();renderHUD();}

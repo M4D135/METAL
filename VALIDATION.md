@@ -1,8 +1,103 @@
-# Validation de FERRO 0.4.0 — Horizons
+# Validation de FERRO 0.4.1 — FPS, matériaux et performances
+
+Vérifications finales réalisées le **12 novembre 2026**, sur la source restaurée depuis le dépôt officiel puis le fichier autonome assemblé. Les résultats historiques de la 0.4.0 sont conservés plus bas et identifiés comme tels.
+
+## Version contrôlée
+
+- Dépôt : https://github.com/M4D135/FERRO
+- Site privé conservé : https://ferro-procedural-fps.garden-lake-2660.chatgpt.site/
+- Version **0.4.1**, génération de terrain **4** inchangée, sauvegardes de la 0.4.0 compatibles.
+- Fichier jouable : **255 973 octets bruts**, **78 478 octets gzip**.
+- SHA-256 du HTML : `243cb40959d83cb99926066edbd19ee1d8432fdc0459c7a65e947d70dea2bab5`.
+- SHA-256 du renderer contrôlé en GLES : `920a7331f300dff34503669125658b44715fb6f98e3133b070a3b5c52cf9afe2`.
+- Aucun asset, CDN ou paquet externe à l’exécution. Le navigateur n’entre pas dans la taille du fichier.
+
+## Grille sur l’arme et les machines
+
+Le défaut a été reproduit avec les vrais modèles de `game.js` : arme, lourd et drone, dans une scène de contrôle sans plafond. En Économie, alors qu’aucune shadowmap n’est créée, une translation commune du décor, des lumières et de la caméra produit une ligne sombre sur le torse à 0,6 m et sur le capot bronze de l’arme à 1,55 m. Changer uniquement le terme `panel=grid(...)` dans une copie de diagnostic du shader supprime la ligne. La cause est donc le matériau architectural en coordonnées mondiales, indépendamment des vraies ombres.
+
+Le correctif réserve les panneaux au décor et utilise des coordonnées locales pour les surfaces d’objets. Les détails du métal suivent maintenant les acteurs. Sur les comparaisons de translation, l’écart moyen du torse passe de 7,111/255 à **0**, et celui du capot de 8,416 à **0,061** (résidu au bord de la géométrie).
+
+**Huit images finales en OpenGL ES 3.2 / Mesa llvmpipe** ont passé avec compilation réelle des shaders, framebuffers complets et **zéro erreur GL** : intérieur Économie, intérieur Auto, extérieur Auto, ombres isolées, cache chaud et acteurs déplacés. L’ombre du lourd sur le sol et les jambes reste présente ; seule la variante de diagnostic sans réception des ombres la fait disparaître. Le sampler `highp`, le PCF et le vent commun aux passes sont conservés.
+
+## Régressions et exactitude des optimisations
+
+Le build puis **`npm test`** passent sur les sources finales :
+
+| Groupe | Résultat final |
+| --- | --- |
+| Génération et accessibilité | 18 configurations, 750 cibles |
+| Simulation | 43 tests, dont les 42 régressions antérieures |
+| Mouvement et présentation | 7 tests |
+| Sauvegarde et reprise du shell | 4 tests |
+| Total simulation / mouvement / shell | **54 réussis, aucun échec** |
+| Distribution | Taille, hash, modules et absence de chargement externe validés |
+
+La nouvelle régression compare **21 240 collisions** à un parcours exhaustif indépendant, aux bords de cellules, coins et contacts, avec les rayons du joueur, des ennemis, du gardien et un rayon plus grand utilisant le chemin de secours. Une seconde comparaison couvre **3 240 pas** sur les trois biomes, en patrouille, marche et combat : snapshots complets, événements et locomotion restent strictement identiques avant/après. La cadence et les décisions de l’IA ne sont pas réduites.
+
+Les instances réellement liées aux appels de dessin sont identiques dans **27 scénarios** de rendu, en couleur et dans toutes les passes d’ombre : marche, rotation, FOV, téléportation, lampe déplacée, qualités, redimensionnement, changement de monde et restauration du contexte. Aucun objet manquant ou ajouté.
+
+Les contrôles GLES des caches montrent aussi :
+
+- Première image et image avec cache chaud : identiques pixel par pixel.
+- Acteurs déplacés de 0,32 m, rendu frais contre cache chaud : identiques pixel par pixel.
+- Pose déplacée contre pose précédente : 69 443 pixels changent ; acteurs et ombres ne restent pas figés.
+- Cycle Auto / Économie / Haute / Économie / Auto puis destruction : **50 ressources créées, 50 libérées**, zéro restante. Les trois buffers supplémentaires sont libérés. Le repli sur framebuffer incomplet et la restauration du contexte sont également vérifiés.
+
+## Mesures de coût
+
+Ces mesures sont des bancs séparés et ne s’additionnent pas en un gain FPS global.
+
+| Mesure, mêmes entrées avant/après | 0.4.0 | 0.4.1 |
+| --- | ---: | ---: |
+| Transfert d’instances, vue fixe avec 25 meshes dynamiques | 315 328 octets/image | 1 600 octets/image |
+| Nombre de transferts dans cette vue | 8 | 2 |
+| Appels de dessin / instances couleur | 31 / 1 666 | 31 / 1 666 |
+| Triangles, ombres comprises | 149 860 | 149 860 |
+| Préparation CPU avec WebGL simulé, médiane de trois séries | 7,35 ms | 5,24 ms |
+| Simulation Node native, médiane pour 5 400 pas | 268,09 ms | 147,65 ms |
+
+Les transferts baissent de 99,49 % dans cette vue stationnaire ; le bénéfice diminue quand le déplacement change les sélections. Les sept vues mobiles du banc renderer économisent environ 28,3 Kio par image. La mesure CPU utilise un WebGL simulé et exclut donc le coût d’un vrai pilote.
+
+Le banc de simulation utilise Node v24.22.1 directement, sans VM ni profileur : cinq essais alternés, graine 96, trois biomes × trois scénarios × 600 pas à 1/60 s, après 180 pas de chauffe par scénario. La génération et l’initialisation sont exclues. La médiane indique environ 44,9 % de coût de simulation en moins dans cet environnement partagé ; elle ne mesure pas les FPS du jeu complet. Les chiffres d’un environnement perdu pendant la session ont été écartés du comparatif final.
+
+## FPS et essais navigateur
+
+Le navigateur disponible utilise **Canvas 2D**, pas WebGL. Les comparaisons sont au premier plan, en Auto, fenêtre **1363 × 936**, canvas **1024 × 703**, lisière graine 96. La version précédente utilise son compteur DOM existant ; la nouvelle affiche la mesure correspondante dans le HUD.
+
+| Court parcours de référence | Avant | Après |
+| --- | ---: | ---: |
+| Au départ, vue vers les arbres et l’entrée | 26 FPS | 31 FPS |
+| Avancer pendant deux secondes | 24 FPS | 28 FPS |
+| Avancer pendant quatre secondes au total | 25 FPS | 30 FPS |
+
+Il s’agit de relevés ponctuels, pas d’un benchmark de toute la campagne. Les fenêtres de moyenne du compteur diffèrent légèrement (environ 1 s avant et 0,75 s après), et le processeur est partagé. Une vue plus avancée dans le sentier a également affiché **23 FPS** dans la nouvelle version : aucun débit minimal de 30 ou 60 FPS n’est promis. Le gouverneur de résolution WebGL n’intervient pas dans ce comparatif Canvas ; les dimensions de rendu restent identiques.
+
+Vérifications manuelles sur le fichier final :
+
+- Compteur visible en haut à droite ; nombre identique à la mesure FPS du DOM et rafraîchissement pendant le déplacement.
+- Continue sur le checkpoint 0.4.0 sans migration de terrain, déplacement, pause et reprise.
+- HUD sans chevauchement ni débordement aux formats **390 × 844**, **320 × 568** et **844 × 390**.
+- Compteur affiché aussi en tactile ; commandes d’onde, esquive et passage à Fracture actionnées dans le format paysage.
+- Journaux inspectés : erreurs d’extension du navigateur distinctes de la page du jeu, aucune erreur du jeu relevée dans ces observations.
+
+Les interfaces mobiles sont testées dans un cadre redimensionné avec commandes tactiles forcées ; cela ne remplace pas un téléphone multitouch réel. La capture du compteur provient du jeu dans l’aperçu. La publication est validée séparément par le service d’hébergement.
+
+## Résolution Auto et limites
+
+Le contrôleur de résolution WebGL est testé avec pic isolé, lenteur durable à 40 et 200 ms/image, pause, reprise de débit, Retina, Haute et Économie. Il baisse uniquement après une lenteur prolongée et remonte plus lentement ; les modes fixes restent fixes. Le plafond initial est d’environ 1,8 million de pixels. À 3840 × 2160, Auto commence à **1789 × 1006**, puis peut descendre à **1163 × 654**, sans recréer son atlas de profondeur.
+
+Le compteur utilise le temps RAF réel non tronqué par le pas de physique ; les périodes masquées et les transitions d’écran réinitialisent la fenêtre. L’adaptation est limitée à une partie visible ayant le focus. La génération de terrain, les silhouettes, les sauvegardes et l’IA restent celles de Horizons.
+
+Les essais ne remplacent pas un GPU physique, Safari sur le Mac de l’utilisateur, un téléphone réel ou une partie humaine complète. Le secours Canvas conserve son tri de polygones et ses ombres simplifiées. Les ombres WebGL restent locales aux sources retenues. La simulation conserve au plus 0,12 seconde par image ; un appareil durablement sous environ huit FPS peut encore ralentir le jeu.
+
+---
+
+## Historique — validation de FERRO 0.4.0 — Horizons
 
 Vérifications réalisées le **12 novembre 2026** sur le fichier autonome assemblé et les sources correspondantes.
 
-## Version contrôlée
+### Version contrôlée
 
 - Dépôt : https://github.com/M4D135/FERRO
 - Site privé : https://ferro-procedural-fps.garden-lake-2660.chatgpt.site/
@@ -13,7 +108,7 @@ Vérifications réalisées le **12 novembre 2026** sur le fichier autonome assem
 
 Les trois territoires mêlent des cours et chemins à ciel ouvert avec des bâtiments industriels. Le joueur commence dehors. Les deux armes, neuf relais, évents et gardien final restent présents. La simulation ajoute perception, mémoire, alerte locale, navigation tactique et couverture sans augmenter les PV ou dégâts des machines.
 
-## Résultat des contrôles automatisés
+### Résultat des contrôles automatisés
 
 | Groupe | Résultat |
 | --- | --- |
@@ -34,7 +129,7 @@ node --test checks/simulation.test.mjs checks/motion.test.mjs checks/checkpoint.
 node checks/build.test.mjs
 ```
 
-## Mondes et extérieurs
+### Mondes et extérieurs
 
 Six graines sont vérifiées dans chacun des trois secteurs : `1`, `7`, `42`, `96`, `2026`, `65535`. Un flood fill indépendant utilise un disque joueur de rayon **0,28 m**, une grille de **0,25 m** et les obstacles réels, sans diagonale traversant les coins.
 
@@ -60,7 +155,7 @@ Sur les 18 configurations, les budgets observés vont de **8 324 à 12 356 meshe
 
 Le sol de circulation reste horizontal. Collines et falaises de fond donnent du relief au décor ; elles ne constituent pas des pentes ou plateformes traversables.
 
-## Preuves comportementales de l’IA
+### Preuves comportementales de l’IA
 
 Les nouveaux contrôles observent les trajectoires et les conséquences des décisions, pas seulement le nom d’un état.
 
@@ -81,7 +176,7 @@ La revue indépendante a trouvé un arrondi flottant : une attente calculée à 
 
 Les anciens contrôles de collision, de rayon 3D, des deux armes, de surchauffe, d’onde, de charge et rafale verrouillées, d’évents, de score, de boss et de victoire sont conservés. Le parcours de niveau généré avec déplacement ordinaire continue de réussir.
 
-## Mouvement et sauvegardes
+### Mouvement et sauvegardes
 
 Les sept tests de présentation conservent les contrôles des ressorts à différentes cadences, du repos après déplacement, des mouvements réduits, du recul borné et du montage cohérent de l’arme avec lacet, tangage et roulis. Les contrôles de locomotion restent dans la simulation, notamment les collisions, diagonales, accélération, freinage et esquive.
 
@@ -94,7 +189,7 @@ Les quatre tests du shell exécutent le vrai module navigateur avec DOM, son et 
 
 L’ancien point est conservé séparément si le stockage le permet. Les relais et ennemis du secteur en cours sont réinitialisés lors d’une migration de terrain. Les points compatibles gardent le mode de récupération avec protection transitoire, sans inflation des statistiques.
 
-## Navigateur et commandes
+### Navigateur et commandes
 
 Le navigateur de contrôle utilise le secours **Canvas 2D** ; ces observations ne constituent donc pas une validation WebGL dans Chromium ou Safari.
 
@@ -114,7 +209,7 @@ Sur le build final, des relevés ponctuels au premier plan à **1363 × 936** on
 
 Le site de production garde une porte de connexion privée. Le contrôle visuel porte sur l’aperçu ; le résultat de publication est confirmé séparément par le service d’hébergement.
 
-## Rendu GLES réel et ressources
+### Rendu GLES réel et ressources
 
 Les shaders réels sont exécutés dans un contexte **EGL / OpenGL ES logiciel Mesa**. Ce contrôle est indépendant du navigateur de test et n’active aucune option graphique spéciale dans celui-ci.
 
@@ -130,7 +225,7 @@ Un cycle Auto → Économie → Haute → Économie → Auto puis destruction du
 
 Le secours Canvas a reçu deux niveaux de facettes, des chapeaux de cylindres regroupés et une projection unique des sommets partagés. Le contrôle Canvas natif séparé passe d’environ 100 ms par vue extérieure avant ces changements à 44–48 ms en Auto, et environ 22 ms en Économie. Ce comparatif natif ne doit pas être présenté comme des FPS navigateur.
 
-## Limites pratiques
+### Limites pratiques
 
 Les essais ne remplacent pas une partie humaine complète ni une validation sur GPU physique, Safari macOS/iOS ou téléphone réel. Le multitouch simultané et l’équilibrage de la campagne restent à éprouver sur ces appareils.
 

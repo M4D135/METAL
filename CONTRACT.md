@@ -1,5 +1,9 @@
 # FERRO procedural FPS — internal module contract
 
+## 0.4.1 render / performance fix (current)
+
+Root owns FPS HUD, game integration, docs/build/publication. ferro_render_hotfix owns renderer.js; ferro_sim_perf owns simulation.js and its tests; ferro_qa_hotfix owns scratch-only validation. Keep generation4, saves, landscapes, silhouettes, tactical decisions, combat and procedural assets unchanged. Reproduce the apparent grid independently of shadow maps, separate architectural materials from actor/weapon surfaces, preserve highp depth and receiver-plane PCF. Measure comparable scenes before/after. Reduce redundant render/collision work. Auto may adapt resolution with hysteresis; High/Economy stay fixed. FPS uses actual elapsed wall-clock frame intervals and excludes hidden time. No agent git/push/Sites mutations.
+
 ## 0.4 Horizons: varied environments and tactical enemies (current)
 
 User asks for substantially more varied decor, intelligent mobs, and outdoor areas with trees. Root owns integration in game/audio/UI, motion module, build/docs/publishing. World owner ferro_world_v04 owns world.js + world tests; AI owner ferro_ai_v04 owns simulation.js + simulation tests; renderer owner ferro_render_v04 owns renderer.js. No agent git/push/Sites actions.
