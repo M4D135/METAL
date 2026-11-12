@@ -6,7 +6,7 @@
   try {
     (0, eval)(SRC.music);
     const cal = async v => ({...(await M.calib(v.comp || 'cur')), musicGain: .56 * (v.musicGain || 1)});
-    const scenes = {...SCENES, iso: M.isoScene(), p: M.pumpScene()};
+    const scenes = {...SCENES, iso: M.isoScene(), p: M.pumpScene(), t: M.titleScene()};
     if (job === 'calib') { out.comp = []; for (const k of Object.keys(M.COMP)) out.comp.push(await M.calib(k)); }
     if (job === 'matrix') {
       const list = (Q.get('scenes') || 'a,b,c,d').split(','), recipes = (Q.get('recipes') || 'cur,doom').split(','), comps = (Q.get('comps') || 'cur,feel07').split(','), ducks = (Q.get('ducks') || 'cur,feel07,shelf').split(',');
@@ -92,6 +92,21 @@
           let pk = 0, e = 0, n = 0; for (const c of [0, 1]) { const d = R.buffer.getChannelData(c), r = b0[c]; for (let i = 0; i < d.length; i++) { const x = Math.abs(d[i] - r[i]); if (x > pk) pk = x; e += x * x; n++; } }
           out.rows.push({scene: sc, variant: tag, diffPeakDbFS: M.r2(M.dB(pk)), diffRmsDbFS: M.r2(M.dB(Math.sqrt(e / n))), refPeak: M.r3(ref), audioParamCalls: R.params, baseParamCalls: base.params, l14: R.l14});
         }
+      }
+    }
+    if (job === 'ab') { // A/B : même scène rendue avec SRC (A) puis SRC_B (B), sources telles quelles ; A rendue encore noise fois (1 par défaut) = bruit du banc
+      if (!window.SRC_B) throw new Error('SRC_B absent : node gen.mjs <racine A> <doomish.mjs> <dossier> <racine B>');
+      const nNoise = Q.get('noise') === null ? 1 : Math.max(0, Math.min(8, +Q.get('noise') | 0)), worst = (list, k) => list.reduce((m, x) => x[k] === null ? m : m === null ? x[k] : Math.max(m, x[k]), null);
+      out.sources = window.SRC_INFO || null; out.sameSource = SRC.audio === SRC_B.audio && SRC.music === SRC_B.music;
+      out.nullCriterion = 'MIX-08 : différence RMS <= -110 dBFS et crête <= -80 dBFS (null = -Infinity, sorties identiques)'; out.rows = [];
+      for (const sc of (Q.get('scenes') || 'c,a,t').split(',')) {
+        if (!scenes[sc]) throw new Error('scène inconnue : ' + sc);
+        const A = await M.render(scenes[sc], {source: 'A'}), B = await M.render(scenes[sc], {source: 'B'}), d = M.diffOut(A.buffer, B.buffer), noise = [];
+        for (let i = 0; i < nNoise; i++) noise.push(M.diffOut(A.buffer, (await M.render(scenes[sc], {source: 'A'})).buffer));
+        const pick = R => ({...M.outLevels(R.buffer), audioParamCalls: R.params, peakVoices: R.stats.peakVoices, stolenVoices: R.stats.stolenVoices, fxSkipped: R.stats.fxSkipped, titlePrepared: R.titlePrepared, renderMs: Math.round(R.ms)});
+        out.rows.push({scene: sc, label: scenes[sc].label, diffPeakDbFS: d.peakDbFS, diffRmsDbFS: d.rmsDbFS, identical: d.identical, firstDiffSec: d.firstDiffSec, firstOver90Sec: d.firstOver90Sec,
+          nullTestPass: d.identical || d.rmsDbFS <= -110 && d.peakDbFS <= -80, noise: nNoise ? {renders: nNoise, peakDbFS: worst(noise, 'peakDbFS'), rmsDbFS: worst(noise, 'rmsDbFS'), identical: noise.every(x => x.identical)} : null,
+          audioParamCalls: {A: A.params, B: B.params}, A: pick(A), B: pick(B)});
       }
     }
     if (job === 'perf') { // temps de rendu hors ligne par seconde d'audio, variantes alternées dans le même processus

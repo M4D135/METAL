@@ -1,0 +1,144 @@
+{
+  "schema": "metal-lot-proof-manifest-v1",
+  "task": "lot-11/T0 outillage de preuve audio (MIX-11 partie banc, MIX-09, LOAD-13, MIX-08)",
+  "proofClass": "état identique : ni src/, ni dist/, ni SIZE.json modifiés",
+  "baseline": {
+    "version": "0.8.1",
+    "commit": "71eca61c0b8f3bbaa05b0692d9fa4fd192b9f2db",
+    "srcToolsChecksIdenticalTo": "363473aecd5a96e7f5b8d476c40208d604606c2d"
+  },
+  "environment": {
+    "machine": "Mac M5, 10 cœurs, arm64",
+    "os": "macOS 27.2.1",
+    "node": "v24.18.0",
+    "chrome": "Google Chrome 157.0.8103.39, --headless=new, file://, sans port ni réseau",
+    "offlineSampleRate": 48000
+  },
+  "archivePolicy": {
+    "format": "gzip",
+    "compressionLevel": 9,
+    "mtime": 0,
+    "embeddedFilename": null,
+    "threshold": "200 Ko, plus scenes.js et le journal de tests"
+  },
+  "sourceFiles": [
+    {
+      "path": "src/audio.js",
+      "sha256": "4b36fde20d003c7a785c05f1315cd568d309dd08dd6bdc30ec2283bdbe452b6d"
+    },
+    {
+      "path": "src/music.js",
+      "sha256": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74"
+    },
+    {
+      "path": "dist/index.html",
+      "sha256": "4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a"
+    },
+    {
+      "path": "SIZE.json",
+      "sha256": "4221722ac3099aa28dd1972d61b157f84aa99748939cc21cf3ae08673062c972"
+    }
+  ],
+  "toolFiles": [
+    {
+      "path": "tools/audio-prep-profile.mjs",
+      "sha256": "ad250dfe6014746076cbfea14d6089f4e33c5ea07c87f0129eb54396005d0663"
+    },
+    {
+      "path": "tools/realm-loader.mjs",
+      "sha256": "e9dac4a5e50fc86d994532277d45fc6c23d32c4ea13a02fe975a91a82933a4af"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/mix/gen.mjs",
+      "sha256": "fd34759004bd58bde60765e519a4505ed476fe776167deb08be0fd6f0c2858f4"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/mix/mix.js",
+      "sha256": "c465ba7f0318cfd821aef129734c96fa07d1c07b4c040abab671ce48b0f21000"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/mix/mix.html",
+      "sha256": "8604debc1cdae582b76e8571a47ad7353169001eaf45c941eca9d7b2603a2e6e"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/mix/run.py",
+      "sha256": "41a7d872f0c89b48004f247930eed7f55b0076f607f26bcc925bdbdb909bdb0c"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/mix/record.mjs",
+      "sha256": "8707b280993c25fce9657508b3ee1e74a709d3ee1b40eba3f246c65785ca3729"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/mix/load13.mjs",
+      "sha256": "3cdb48e3f3f0b3bdaacfbb99586d0b723ad6da6343f6286b5f42b136cc7f7ab8"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/loop/play.mjs",
+      "sha256": "bcfdc931c8f8ba18bb4ad9b1bea2ac7377f8aac3468c3b2f61a2f3670ded25f7"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/feel/doomish.mjs",
+      "sha256": "d36b4e8ab51b1c909a5e7022f2e429374cbb574a5f2274603cd09550ea0c836d"
+    }
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "purpose": "Commandes, références de départ et pièges",
+      "bytes": 12096,
+      "sha256": "b80246b7bdefd13c31793975c64194ae43eaca82db919203336d8cabb0a70800"
+    },
+    {
+      "path": "ab-aa.json",
+      "purpose": "mix.html?job=ab&scenes=c,a,t&noise=3, A = archive 71eca61, B = arbre de T0",
+      "bytes": 2686,
+      "sha256": "1e25fa37e3903a3be7cb61a92f93a92a9a95d91d49b2dff2e8c8adba128d48fb"
+    },
+    {
+      "path": "calib.json",
+      "purpose": "mix.html?job=calib",
+      "bytes": 778,
+      "sha256": "8a49d28fb6d4330aaa45dc644828476bc68b968a3c651e9e117bd7085b002224"
+    },
+    {
+      "path": "load13.json",
+      "purpose": "docs/chantier-moteur/bancs/mix/load13.mjs . (node:vm, empreintes seulement)",
+      "bytes": 108,
+      "sha256": "7f2abeb0a0cc3ab4c6caf7d212262f16aeeffc580b8fd0c71d3657e6688f3cde"
+    },
+    {
+      "path": "npm-test.log.gz",
+      "purpose": "npm test complet sur l'arbre de T0",
+      "bytes": 28051,
+      "sha256": "2032481e7d24dd916d550665638dcd7429f48b475a8629356ea013c973230198",
+      "uncompressedBytes": 143933,
+      "uncompressedSha256": "ea3af019cf6fe0d8a61a479f7672b990caa19d6160e7b24fe057ad605da1ee97"
+    },
+    {
+      "path": "null.json",
+      "purpose": "mix.html?job=null&scenes=c,a (LOOP-14, bruit du banc)",
+      "bytes": 1434,
+      "sha256": "14684913101683ec85314784df83cc2edd289b7a314fae464a418fe2b09bf435"
+    },
+    {
+      "path": "play-base.json",
+      "purpose": "docs/chantier-moteur/bancs/loop/play.mjs . 30 60 (node:vm, comptes seulement)",
+      "bytes": 4048,
+      "sha256": "6aeb908757a616acf8cbd8be99e7584c5cf7af8fad7a5fa90e687bfdec84379c"
+    },
+    {
+      "path": "prep-aa.json",
+      "purpose": "tools/audio-prep-profile.mjs, base 71eca61 contre arbre de T0, 7 paires alternées, domaine principal",
+      "bytes": 14903,
+      "sha256": "e7b56a9870600f82f1791b9de0f0a425b3dd7a48a557ab06d17f7023942d537f"
+    },
+    {
+      "path": "scenes.js.gz",
+      "purpose": "record.mjs sur l'archive 71eca61 : scènes a, b, c, d de 30 s",
+      "bytes": 30041,
+      "sha256": "f070e847e4d2555ae6702f329e7e2eaa00bba0e8b6cf4916ea6164db35472fa2",
+      "uncompressedBytes": 465561,
+      "uncompressedSha256": "1f066203d3a8a5ca27262a691375a028cc890536f97b1be6b44ea3f4b62f9345"
+    }
+  ]
+}
