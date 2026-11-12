@@ -35,6 +35,7 @@
     }
     function impulse(kind,amount=1){
       if(kind==='shot')channel('kick').v+=1.9;
+      else if(kind==='pistol')channel('kick').v+=1.45;
       else if(kind==='fracture')channel('kick').v+=3.5;
       else if(kind==='rocket')channel('kick').v+=5.5;
       else if(kind==='blast')channel('blast').v=Math.min(3,channel('blast').v+clamp(finite(amount),0,1)*1.4);

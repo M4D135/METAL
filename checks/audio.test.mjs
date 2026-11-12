@@ -256,6 +256,34 @@ test('simultaneous hands keep independent firing transients, stereo placement an
   assert(r.audio.stats.peakVoices<=48);r.audio.dispose();
 });
 
+test('campaign pistol has its own short synthesized report and preserves independent hand timing and silent states',async()=>{
+  const r=rig();await r.audio.start();const idle=r.ctx.sources.length;
+  r.audio.shot({weapon:4,hand:'right'});assert.equal(r.ctx.sources.length,idle,'the campaign pistol must stay silent in menus');
+  r.audio.setPlaying(true);
+  const base=r.ctx.sources.length,first=r.ctx.nodes.length;
+  r.audio.shot({weapon:4,hand:'right',level:.8});
+  const pistol=r.ctx.sources.slice(base);assert.equal(pistol.length,4);
+  assert(pistol.every(n=>n.stopTime-r.ctx.currentTime<.18),'the compact report must not leave a long tail');
+  assert(r.ctx.nodes.slice(first).filter(n=>n.kind==='pan').every(n=>n.pan.value>0));
+  const left=r.ctx.nodes.length;r.audio.shot({weapon:0,hand:'left',level:.8});
+  const rifle=r.ctx.sources.slice(base+4);assert.equal(rifle.length,4,'the other hand keeps its simultaneous transient');
+  assert(r.ctx.nodes.slice(left).filter(n=>n.kind==='pan').every(n=>n.pan.value<0));
+  const shape=voices=>voices.map(n=>[n.kind,n.type,n.frequency.value,n.stopTime-r.ctx.currentTime]);
+  assert.notDeepEqual(shape(pistol),shape(rifle),'pistol and automatic rifle must have distinct synthesis');
+  for(let i=0;i<20;i++)r.audio.shot({weapon:4,hand:'right',level:.8});
+  assert.equal(r.ctx.sources.length,base+8,'duplicate pistol cues in one frame stay bounded');
+  r.ctx.advance(.32);r.audio.shot({weapon:4,hand:'right',level:.8});assert.equal(r.ctx.sources.length,base+12,'the next legal pistol shot must sound');
+  assert(r.audio.stats.duckGain<.56);
+  r.ctx.advance(1);r.audio.setMix({effects:0});const silent=r.ctx.sources.length;
+  r.audio.shot({weapon:4,hand:'right'});assert.equal(r.ctx.sources.length,silent);
+  r.ctx.advance(1);r.audio.setMix({effects:1});r.audio.setMuted(true);r.audio.shot({weapon:4,hand:'right'});assert.equal(r.ctx.sources.length,silent);
+  r.audio.setMuted(false);r.audio.setPlaying(false);r.audio.shot({weapon:4,hand:'right'});assert.equal(r.ctx.sources.length,silent);
+  r.audio.setPlaying(true);for(let i=0;i<30;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}
+  assert(r.audio.stats.voices<=40);const crowded=r.ctx.sources.length;r.audio.shot({weapon:4,hand:'right'});
+  assert.equal(r.ctx.sources.length,crowded+4,'the pistol retains the player reservation during a blast storm');
+  assert(r.audio.stats.voices<=48);r.audio.dispose();assert.equal(r.audio.stats.voices,0);
+});
+
 test('shield raise, impact, break and bash use distinct short cues and respect pause and silent effects',async()=>{
   const r=rig();await r.audio.start();const names=['grenadeLaunch','shieldRaise','shieldBlock','shieldBash'],idle=r.ctx.sources.length;
   for(const name of names)r.audio[name]({level:1,hit:true,absorbed:8});assert.equal(r.ctx.sources.length,idle,'menu state must not play the new combat cues');

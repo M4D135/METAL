@@ -126,10 +126,12 @@ test('campaign mode is strictly opt-in and keeps historical clamping otherwise',
   assert.equal(create(96, 7.9, { campaign: true }).index, 7);
 });
 
-test('the first three campaign worlds preserve every historical generated field', () => {
+test('the first three campaign worlds preserve historical content outside their five-slot starting loadout', () => {
   for (let stage = 0; stage < 3; stage++) {
     const world = create(96, stage, { campaign: true });
     for (const key of ['campaign', 'index', 'chapter', 'chapterTitle']) delete world[key];
+    const legacy = create(96, stage);
+    for (const key of ['weaponSlots', 'startWeapons', 'startAmmo', 'ammoCaps']) world.progression[key] = legacy.progression[key];
     assert.equal(digest(world), legacyHashes.find(([seed, sector]) => seed === 96 && sector === stage)[2]);
   }
 });
@@ -145,8 +147,13 @@ for (let index = 0; index < 18; index++) test(`campaign world ${String(index + 1
     signatures.get(seed).add(digest(world)); finite(world, label);
     assert(world.meshes.length <= 18000 && world.colliders.length <= 512, `${label}: geometry budget exceeded`);
     assert.equal(world.cores.length, 3); assert.equal(world.mechanisms.length, 3); assert.equal(world.lifts.length, 2); assert.equal(world.jumpPads.length, 3);
-    // Phase A retains the existing four-slot arsenal and finite garrison.
-    assert.equal(world.progression.weaponSlots, 4); assert.equal(world.enemies.length, [120, 140, 170][world.stage]);
+    // Campaign adds a finite JSON sentinel for the infinite-ammunition pistol.
+    assert.equal(world.progression.weaponSlots, 5);
+    assert.deepEqual(Array.from(world.progression.startWeapons), [false, false, false, false, true]);
+    assert.deepEqual(Array.from(world.progression.startAmmo), [0, 0, 0, 0, 1]);
+    assert.deepEqual(Array.from(world.progression.ammoCaps), [180, 36, 12, 16, 1]);
+    assert.equal(world.progression.startShield, false);
+    assert.equal(world.enemies.length, [120, 140, 170][world.stage]);
     const result = assertReachable(world, label); reachedTargets += result.targets; minCells = Math.min(minCells, result.accessibleCells); maxCells = Math.max(maxCells, result.accessibleCells);
     if (seed === 96) {
       const art = artSignatures[world.stage];

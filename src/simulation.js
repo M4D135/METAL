@@ -31,25 +31,25 @@
   function create(world,options={}) {
     const floors=world.walkable||[],advanced=!!world.combat||world.generation>=5,horror=!!world.horrorSites?.length||world.director?.enabled===true;
     const progression=world.progression?.version===1,economyEnabled=progression&&!!G.FEconomy,maxCombat=clamp(world.progression?.maxActive||[8,10,12][world.stage||0],2,16);
-    const arsenal=progression&&world.progression.weaponSlots===4,weaponSlots=arsenal?4:3,weaponIds=Array.from({length:weaponSlots},(_,i)=>i);
+    const campaign=world.campaign===true,arsenal=progression&&(world.progression.weaponSlots===4||campaign&&world.progression.weaponSlots===5),weaponSlots=arsenal?(campaign&&world.progression.weaponSlots===5?5:4):3,weaponIds=Array.from({length:weaponSlots},(_,i)=>i),pistol=campaign&&weaponSlots===5;
     const brain=advanced&&options.brain&&typeof options.brain.evaluate==='function'?options.brain:null;
     const initialEconomy=economyEnabled?G.FEconomy.copy(options.economy===undefined?G.FEconomy.fresh():options.economy):null;
     if(economyEnabled&&!initialEconomy||!economyEnabled&&options.economy!==undefined)throw new Error('Invalid economy');
     const baseStats={maxHp:100,damageMultiplier:1,incomingMultiplier:1,coolingMultiplier:1};
-    let ammoCaps=(economyEnabled?G.FEconomy.ammoCaps(initialEconomy):(world.progression?.ammoCaps||[180,36,12,16])).slice(0,weaponSlots),stats=economyEnabled?G.FEconomy.stats(initialEconomy):{...baseStats};
+    let ammoCaps=(economyEnabled?G.FEconomy.ammoCaps(initialEconomy,{campaign:pistol}):(world.progression?.ammoCaps||(pistol?[180,36,12,16,1]:[180,36,12,16]))).slice(0,weaponSlots),stats=economyEnabled?G.FEconomy.stats(initialEconomy):{...baseStats};
     const motionProfile=progression||world.generation>=6?{walk:5.4,sprint:7.6,accel:30,friction:42,reverse:50,dash:15.2,air:2.2}:{walk:4.2,sprint:5.8,accel:20,friction:32,reverse:38,dash:13.2,air:1};
     function inventoryValue(value,caps=ammoCaps){
-      if(arsenal&&value&&Array.isArray(value.weapons)&&value.weapons.length===3&&Array.isArray(value.ammo)&&value.ammo.length===3)value={...value,weapons:[...value.weapons,false],ammo:[...value.ammo,0],shield:value.shield??false};
-      if(!value||!Array.isArray(value.weapons)||value.weapons.length!==weaponSlots||!weaponIds.every(i=>typeof value.weapons[i]==='boolean')||value.weapons[0]!==true||!Array.isArray(value.ammo)||value.ammo.length!==weaponSlots||!weaponIds.every(i=>Number.isInteger(value.ammo[i])&&value.ammo[i]>=0&&value.ammo[i]<=caps[i])||arsenal&&typeof value.shield!=='boolean')return null;
+      if(arsenal&&!pistol&&value&&Array.isArray(value.weapons)&&value.weapons.length===3&&Array.isArray(value.ammo)&&value.ammo.length===3)value={...value,weapons:[...value.weapons,false],ammo:[...value.ammo,0],shield:value.shield??false};
+      if(!value||!Array.isArray(value.weapons)||value.weapons.length!==weaponSlots||!weaponIds.every(i=>typeof value.weapons[i]==='boolean')||(pistol?!value.weapons.some(Boolean):value.weapons[0]!==true)||!Array.isArray(value.ammo)||value.ammo.length!==weaponSlots||!weaponIds.every(i=>Number.isInteger(value.ammo[i])&&value.ammo[i]>=0&&value.ammo[i]<=caps[i])||arsenal&&typeof value.shield!=='boolean')return null;
       return {weapons:value.weapons.slice(),ammo:value.ammo.slice(),...(arsenal?{shield:value.shield}:{})};
     }
-    const initialInventory=inventoryValue(options.inventory===undefined?{weapons:progression?(world.progression.startWeapons||weaponIds.map(i=>i===0)):weaponIds.map(()=>true),ammo:progression?(world.progression.startAmmo||weaponIds.map(i=>i===0?48:0)):ammoCaps,...(arsenal?{shield:world.progression.startShield===true}:{})}:options.inventory);
+    const initialInventory=inventoryValue(options.inventory===undefined?{weapons:progression?(world.progression.startWeapons||weaponIds.map(i=>i===(pistol?4:0))):weaponIds.map(()=>true),ammo:progression?(world.progression.startAmmo||weaponIds.map(i=>pistol?i===4?1:0:i===0?48:0)):ammoCaps,...(arsenal?{shield:world.progression.startShield===true}:{})}:options.inventory);
     if(!initialInventory)throw new Error('Invalid inventory');
     function equipmentValue(value,inventory){
       if(!value||!Number.isInteger(value.right)||!inventory.weapons[value.right]||!(value.left===null||value.left==='shield'&&inventory.shield||Number.isInteger(value.left)&&value.left!==value.right&&inventory.weapons[value.left])||!Number.isFinite(value.shieldEnergy)||value.shieldEnergy<0||value.shieldEnergy>100)return null;
       return {right:value.right,left:value.left,shieldEnergy:value.shieldEnergy};
     }
-    const initialEquipment=arsenal?equipmentValue(options.equipment??{right:0,left:null,shieldEnergy:100},initialInventory):null;
+    const initialEquipment=arsenal?equipmentValue(options.equipment??{right:pistol?(initialInventory.weapons[4]?4:initialInventory.weapons.findIndex(Boolean)):0,left:null,shieldEnergy:100},initialInventory):null;
     if(arsenal&&!initialEquipment)throw new Error('Invalid equipment');
     let destruction=G.FDestruction?.create(world)||null,trapStates=[];
     // Static height rectangles share a small spatial index. Breach updates never
@@ -461,11 +461,11 @@
     function exportInventory(){return {weapons:s.inventory.weapons.slice(),ammo:s.inventory.ammo.slice(),...(arsenal?{shield:s.inventory.shield}:{})};}
     function exportLoadout(){return {inventory:exportInventory(),economy:economyEnabled?G.FEconomy.copy(s.economy):null,...(arsenal?{equipment:{right:s.weapon,left:s.equipment.left,shieldEnergy:s.shield.energy}}:{})};}
     function shopAccessible(q){return economyEnabled&&!s.dead&&!s.won&&p.hp>0&&Math.hypot(p.x-q.x,p.z-q.z)<=2.6&&Math.abs(p.y-(q.y||0))<1.05&&(!q.destructibleId||!destruction||destruction.isAlive(q.destructibleId))&&sight(p.x,p.z,q.x,q.z,p.y+1.4,(q.y||0)+1.4);}
-    function shopOffers(id){const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return null;const state={profile:s.economy,inventory:s.inventory,hp:p.hp};return G.FEconomy.catalog().filter(item=>arsenal||item.weapon!==3&&item.kind!=='shield').map(item=>({...item,...G.FEconomy.quote(state,item.id)}));}
+    function shopOffers(id){const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return null;const state={profile:s.economy,inventory:s.inventory,hp:p.hp};return G.FEconomy.catalog().filter(item=>(arsenal||item.weapon!==3&&item.kind!=='shield')&&(!pistol||item.kind!=='weapon'&&item.kind!=='shield'&&(item.kind!=='ammo'||s.inventory.weapons[item.weapon]))).map(item=>({...item,...G.FEconomy.quote(state,item.id,{campaign:pistol})}));}
     function buy(id,itemId){
       const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return {ok:false,reason:'Approchez un atelier accessible.',cost:{credits:0,cores:0}};
-      const result=G.FEconomy.transact({profile:s.economy,inventory:s.inventory,hp:p.hp},itemId);if(!result.ok)return result;
-      const profile=G.FEconomy.copy(result.state.profile),caps=profile&&G.FEconomy.ammoCaps(profile).slice(0,weaponSlots),inventory=caps&&inventoryValue(result.state.inventory,caps),nextStats=profile&&G.FEconomy.stats(profile);
+      const result=G.FEconomy.transact({profile:s.economy,inventory:s.inventory,hp:p.hp},itemId,{campaign:pistol});if(!result.ok)return result;
+      const profile=G.FEconomy.copy(result.state.profile),caps=profile&&G.FEconomy.ammoCaps(profile,{campaign:pistol}).slice(0,weaponSlots),inventory=caps&&inventoryValue(result.state.inventory,caps),nextStats=profile&&G.FEconomy.stats(profile);
       if(!profile||!inventory||!Number.isFinite(result.state.hp)||result.state.hp<=0||result.state.hp>nextStats.maxHp)return {ok:false,reason:'Transaction invalide.',cost:{credits:0,cores:0}};
       const newShield=arsenal&&!s.inventory.shield&&inventory.shield;s.economy=profile;s.inventory=inventory;p.hp=result.state.hp;stats=nextStats;ammoCaps=caps;s.maxHp=stats.maxHp;if(newShield)selectLeftWeapon('shield');
       emit('purchase',{id,itemId,label:result.item?.label||itemId,cost:{...result.cost}});return result;
@@ -486,6 +486,7 @@
         if(arsenal&&kind==='shield'){q.taken=true;q.remaining=0;if(!s.inventory.shield){s.inventory.shield=true;selectLeftWeapon('shield');emit('shieldPickup',{id:q.id,x:q.x,y:q.y||0,z:q.z});}continue;}
         if(!progression||!Number.isInteger(q.weapon)||q.weapon<0||q.weapon>=weaponSlots)continue;
         const weapon=q.weapon,found=kind==='weapon'&&!s.inventory.weapons[weapon];
+        if(pistol&&(weapon===4||kind!=='weapon'&&!s.inventory.weapons[weapon]))continue;
         if(found){s.inventory.weapons[weapon]=true;selectWeapon(weapon);}
         const amount=Math.min(q.remaining,ammoCaps[weapon]-s.inventory.ammo[weapon]);
         if(amount>0){s.inventory.ammo[weapon]+=amount;q.remaining-=amount;}
@@ -496,16 +497,16 @@
         if(q.taken||Math.abs(p.y-q.y)>=.8||Math.hypot(p.x-q.x,p.z-q.z)>=1||!sight(p.x,p.z,q.x,q.z,p.y+.8,q.y+.45))continue;
         const gains={credits:0,cores:0,ammo:weaponIds.map(()=>0)};
         if(economyEnabled&&(q.credits||q.cores)){const next=G.FEconomy.copy({...s.economy,credits:s.economy.credits+q.credits,cores:s.economy.cores+q.cores});if(next){gains.credits=q.credits;gains.cores=q.cores;q.credits=q.cores=0;s.economy=next;}}
-        for(let i=0;i<weaponSlots;i++){const amount=Math.min(q.ammo[i],ammoCaps[i]-s.inventory.ammo[i]);q.ammo[i]-=amount;s.inventory.ammo[i]+=amount;gains.ammo[i]=amount;}
+        for(let i=0;i<weaponSlots;i++){if(pistol&&(i===4||!s.inventory.weapons[i]))continue;const amount=Math.min(q.ammo[i],ammoCaps[i]-s.inventory.ammo[i]);q.ammo[i]-=amount;s.inventory.ammo[i]+=amount;gains.ammo[i]=amount;}
         q.taken=!q.credits&&!q.cores&&q.ammo.every(n=>n===0);
         if(gains.credits||gains.cores||gains.ammo.some(Boolean))emit('lootPickup',{id:q.id,sourceEnemy:q.sourceEnemy,boss:q.kind==='boss',...gains});
       }
     }
-    function enemyDrop(e){
+    function enemyDrop(e,inventory=s.inventory){
       if(!progression||giant(e))return null;const home=world.enemies[e.id];
       if(home.drop===false)return null;
       const drop=home.drop|| (e.weapon==='rocket'?{weapon:2,amount:1}:e.type===1?{weapon:1,amount:2}:e.id%2===0?{weapon:0,amount:6}:null);
-      return drop&&Number.isInteger(drop.weapon)&&drop.weapon>=0&&drop.weapon<weaponSlots&&Number.isInteger(drop.amount)&&drop.amount>0?{weapon:drop.weapon,amount:Math.min(drop.amount,[180,36,12,16][drop.weapon])}:null;
+      return drop&&Number.isInteger(drop.weapon)&&drop.weapon>=0&&drop.weapon<weaponSlots&&(!pistol||drop.weapon!==4&&inventory.weapons[drop.weapon])&&Number.isInteger(drop.amount)&&drop.amount>0?{weapon:drop.weapon,amount:Math.min(drop.amount,[180,36,12,16,0][drop.weapon])}:null;
     }
     function dropLoot(e){
       const reward=enemyReward(e);if(!reward||s.loot.some(q=>q.sourceEnemy===e.id))return;
@@ -513,8 +514,8 @@
       let x=e.x,z=e.z;if(giant(e)){x+=Math.sin(e.yaw)*scale(e)*.9;z-=Math.cos(e.yaw)*scale(e)*.9;}
       s.loot.push({id:'enemy-'+e.id,sourceEnemy:e.id,kind:giant(e)?'boss':'salvage',...reward,x,y:groundAt(x,z),z,taken:false});
     }
-    function enemyReward(e){
-      if(!progression)return null;const ammo=weaponIds.map(()=>0),drop=enemyDrop(e);if(drop)ammo[drop.weapon]=drop.amount;if(giant(e))for(let i=0;i<weaponSlots;i++)ammo[i]=[24,6,2,3][i];
+    function enemyReward(e,inventory=s.inventory){
+      if(!progression)return null;const ammo=weaponIds.map(()=>0),drop=enemyDrop(e,inventory);if(drop)ammo[drop.weapon]=drop.amount;if(giant(e))for(let i=0;i<weaponSlots;i++)ammo[i]=pistol&&!inventory.weapons[i]?0:[24,6,2,3,0][i];
       const credits=economyEnabled?(giant(e)?160:[6,12,8,30][e.type]):0,cores=economyEnabled&&giant(e)?1:0;
       return credits||cores||ammo.some(Boolean)?{credits,cores,ammo}:null;
     }
@@ -876,12 +877,13 @@
     function fireArsenal(assist,hand){
       const weapon=hand==='left'?s.equipment.left:s.weapon;
       if(s.dead||s.won||!Number.isInteger(weapon)||!s.inventory.weapons[weapon]||weaponWait[weapon]>0)return false;
-      if(s.inventory.ammo[weapon]<=0){if(emptyWait<=0){emit('empty',{weapon,hand});emptyWait=1;}return melee();}
+      const handgun=pistol&&weapon===4;
+      if(!handgun&&s.inventory.ammo[weapon]<=0){if(emptyWait<=0){emit('empty',{weapon,hand});emptyWait=1;}return melee();}
       const shotgun=weapon===1,rocket=weapon===2,grenade=weapon===3,ordnance=rocket||grenade;
       if(p.overheated||ordnance&&s.projectiles.length>=48)return false;
-      const shells=shotgun?Math.min(2,s.inventory.ammo[weapon]):1,delay=rocket?1.25:grenade?.95:shotgun?shells===2?.98:.78:.125;
-      s.inventory.ammo[weapon]-=shells;weaponWait[weapon]=delay;fireWait=Math.max(fireWait,delay);
-      p.heat=Math.min(1,p.heat+(rocket?.48:grenade?.38:shotgun?shells===2?.47:.32:.09));if(p.heat>=.99){p.overheated=true;emit('overheat');}
+      const shells=shotgun?Math.min(2,s.inventory.ammo[weapon]):1,delay=handgun?.32:rocket?1.25:grenade?.95:shotgun?shells===2?.98:.78:.125;
+      if(!handgun)s.inventory.ammo[weapon]-=shells;weaponWait[weapon]=delay;fireWait=Math.max(fireWait,delay);
+      p.heat=Math.min(1,p.heat+(handgun?.06:rocket?.48:grenade?.38:shotgun?shells===2?.47:.32:.09));if(p.heat>=.99){p.overheated=true;emit('overheat');}
       const cy=Math.cos(p.yaw),sy=Math.sin(p.yaw),cp=Math.cos(p.pitch),sp=Math.sin(p.pitch),forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],eye=[p.x,p.y+1.62,p.z];
       const target=hitRay(eye,forward,ordnance?80:shotgun?24:75,assist),decorative=destruction?.raycast?.(eye,forward,target.distance);if(decorative&&decorative.distance<target.distance)target.distance=decorative.distance;
       const aim=eye.map((v,k)=>v+forward[k]*target.distance),muzzle=playerMuzzle(eye,forward,right,up,hand,rocket?.24:grenade?.17:0),origin=muzzle.point,toward=aim.map((v,k)=>v-origin[k]),length=Math.hypot(...toward)||1,base=toward.map(v=>v/length);
@@ -896,7 +898,7 @@
         const dir=base.map((v,k)=>v+right[k]*a+up[k]*c),n=Math.hypot(...dir);for(let k=0;k<3;k++)dir[k]/=n;
         if(muzzle.blocked){damageScenery(origin,shotgun?5:2,0,muzzle.direction);particles(...origin,5,1);continue;}
         const hit=hitRay(origin,dir,shotgun?24:75,assist),prop=destruction?.raycast?.(origin,dir,hit.distance);if(prop&&prop.distance<hit.distance){hit.distance=prop.distance;hit.victim=null;}
-        if(hit.victim){connected=true;damageEnemy(hit.victim,shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):1,undefined,hit.weak);particles(...origin.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
+        if(hit.victim){connected=true;damageEnemy(hit.victim,shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):handgun?1.2:1,undefined,hit.weak);particles(...origin.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
         else{const point=origin.map((v,k)=>v+dir[k]*hit.distance);particles(...point,5,shotgun?1:3);if(hit.distance<(shotgun?24:75)-.001)damageScenery(point,shotgun?5:2,0,dir);}
       }
       syncDestruction();if(hand==='left')s.leftFlash=1;else s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon,hand,shells});hear(p.x,p.z,shotgun?24:18,p.y);reactToShot();
@@ -1699,7 +1701,7 @@
       // same routes as a freshly restored world. No actor or gameplay timer moves.
       if(navPending)pumpNav(nav.length);
       invalidateBrain();
-      return {version:1,aiVersion:3,systemsVersion:1,physicsVersion:1,directorVersion:1,bossVersion:1,destructionVersion:1,...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:1}:{}),...(arsenal?{arsenalVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
+      return {version:1,aiVersion:3,systemsVersion:1,physicsVersion:1,directorVersion:1,bossVersion:1,destructionVersion:1,...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
         state:{...pick(s,NUMBERS),difficulty:s.difficulty,director:pick(s.director,DIRECTOR),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
           ...(economyEnabled?{economy:G.FEconomy.copy(s.economy)}:{}),
           ...(arsenal?{equipment:{...s.equipment},shield:pick(s.shield,SHIELD)}:{}),
@@ -1726,13 +1728,13 @@
         require(data.directorVersion===undefined||data.directorVersion===1);
         require(progression?data.progressionVersion===1:data.progressionVersion===undefined);
         require(economyEnabled?data.economyVersion===1:data.economyVersion===undefined);
-        require(arsenal?data.arsenalVersion===1:data.arsenalVersion===undefined);
+        require(arsenal?data.arsenalVersion===(pistol?2:1):data.arsenalVersion===undefined);
         const economy=economyEnabled?G.FEconomy.copy(a.economy):null;if(economyEnabled)require(economy);else require(a.economy===undefined);
-        const savedCaps=economyEnabled?G.FEconomy.ammoCaps(economy).slice(0,weaponSlots):ammoCaps,savedStats=economyEnabled?G.FEconomy.stats(economy):{...baseStats};
+        const savedCaps=economyEnabled?G.FEconomy.ammoCaps(economy,{campaign:pistol}).slice(0,weaponSlots):ammoCaps,savedStats=economyEnabled?G.FEconomy.stats(economy):{...baseStats};
         let inventory=exportInventory(),encounters=null,pickupRemaining=null,loot=[];
         if(progression){
           inventory=inventoryValue(a.inventory,savedCaps);require(inventory&&inventory.weapons[a.weapon]);
-          if(arsenal)require(a.inventory.weapons.length===4&&a.inventory.ammo.length===4);
+          if(arsenal)require(a.inventory.weapons.length===weaponSlots&&a.inventory.ammo.length===weaponSlots);
           require(Array.isArray(a.encounters)&&a.encounters.length===s.encounters.length&&number(t.encounterWait,0,.2)&&number(t.emptyWait,0,1));
           encounters=a.encounters.map((q,i)=>{const home=s.encounters[i];require(q&&q.id===home.id&&ENCOUNTER_STATUS.includes(q.status)&&integer(q.wave,-1,home.waves.length-1)&&integer(q.pendingWave,-1,home.waves.length-1)&&number(q.timer,0,Math.max(2,home.waveGap||4)));require(q.pendingWave===-1||q.pendingWave===q.wave+1);require((q.status==='warning'||q.status==='waiting')===(q.pendingWave>=0));require(q.status!=='dormant'||q.wave===-1);require(q.status!=='active'||q.wave>=0);return {id:q.id,...pick(q,ENCOUNTER_STATE)};});
           require(Array.isArray(a.pickupRemaining)&&a.pickupRemaining.length===s.pickups.length);
@@ -1742,7 +1744,7 @@
         if(arsenal){
           require(a.shield&&number(a.shield.energy,0,100)&&bool(a.shield.raised)&&number(a.shield.rechargeDelay,0,2.2)&&number(a.shield.bashCooldown,0,1.1)&&number(a.shield.bashVisual,0,.24));
           equipment=equipmentValue({...a.equipment,shieldEnergy:a.shield.energy},inventory);require(equipment&&equipment.right===a.weapon&&(!a.shield.raised||equipment.left==='shield'&&a.shield.energy>0));
-          shield=pick(a.shield,SHIELD);require(Array.isArray(t.weaponWait)&&t.weaponWait.length===4&&weaponIds.every(i=>number(t.weaponWait[i],0,[.125,.98,1.25,.95][i])));savedWeaponWait=t.weaponWait.slice();
+          shield=pick(a.shield,SHIELD);require(Array.isArray(t.weaponWait)&&t.weaponWait.length===weaponSlots&&weaponIds.every(i=>number(t.weaponWait[i],0,[.125,.98,1.25,.95,.32][i])));savedWeaponWait=t.weaponWait.slice();
         }else require(a.shield===undefined&&a.equipment===undefined&&t.weaponWait===undefined);
         let difficulty=0,director={...s.director};
         if(data.directorVersion===1){const d=a.director;require(integer(a.difficulty,0,2)&&d&&number(d.pressure,0,1)&&number(d.tension,0,1)&&HORROR.includes(d.eventType)&&number(d.eventAge,0,1e7)&&number(d.nextEvent,0,1e7)&&integer(d.events,0,1e9)&&number(d.progress,0,1)&&integer(d.tier,0,6)&&number(d.grace,0,10)&&number(d.eventX,b.minX,b.maxX)&&number(d.eventZ,b.minZ,b.maxZ)&&number(d.eventY,-1000,1000)&&number(d.eventIntensity,0,1));difficulty=a.difficulty;director=pick(d,DIRECTOR);}else require(a.difficulty===undefined&&a.director===undefined&&!horror);
@@ -1858,8 +1860,8 @@
           require(enemies.filter(e=>alive(e)&&!giant(e)&&e.combatEnabled&&(!e.bossWave||e.bossReleased)).length<=maxCombat);
           for(let i=0;i<encounters.length;i++){const q=encounters[i],home=s.encounters[i],ids=home.waves.flatMap(w=>w.enemyIds);require(ids.filter(id=>alive(enemies[id])&&enemies[id].combatEnabled).length<=(home.maxActive||6));if(q.status==='cleared')require(ids.every(id=>enemies[id].hp===0));for(let wave=0;wave<home.waves.length;wave++)for(const id of home.waves[wave].enemyIds)if(wave>Math.max(q.wave,q.pendingWave))require(!enemies[id].encounterReleased);}
           require(Array.isArray(a.loot)&&a.loot.length<=enemies.length);const sources=new Set();
-          loot=a.loot.map(q=>{require(q&&integer(q.sourceEnemy,0,enemies.length-1)&&!sources.has(q.sourceEnemy));sources.add(q.sourceEnemy);const enemy=enemies[q.sourceEnemy],reward=enemyReward(enemy);require(enemy.hp===0&&reward&&q.id==='enemy-'+q.sourceEnemy&&q.kind===(giant(enemy)?'boss':'salvage')&&integer(q.credits,0,reward.credits)&&integer(q.cores,0,reward.cores)&&Array.isArray(q.ammo)&&q.ammo.length===weaponSlots&&weaponIds.every(i=>integer(q.ammo[i],0,reward.ammo[i]))&&bool(q.taken)&&q.taken===(!q.credits&&!q.cores&&q.ammo.every(n=>n===0))&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-1000,1000)&&Math.abs(q.y-ground(q.x,q.z))<.061);return {...pick(q,['id','sourceEnemy','kind','credits','cores','x','y','z','taken']),ammo:q.ammo.slice()};});
-          for(const e of enemies)if(e.hp===0&&enemyReward(e))require(sources.has(e.id));
+          loot=a.loot.map(q=>{require(q&&integer(q.sourceEnemy,0,enemies.length-1)&&!sources.has(q.sourceEnemy));sources.add(q.sourceEnemy);const enemy=enemies[q.sourceEnemy],reward=enemyReward(enemy,inventory);require(enemy.hp===0&&reward&&q.id==='enemy-'+q.sourceEnemy&&q.kind===(giant(enemy)?'boss':'salvage')&&integer(q.credits,0,reward.credits)&&integer(q.cores,0,reward.cores)&&Array.isArray(q.ammo)&&q.ammo.length===weaponSlots&&weaponIds.every(i=>integer(q.ammo[i],0,reward.ammo[i]))&&bool(q.taken)&&q.taken===(!q.credits&&!q.cores&&q.ammo.every(n=>n===0))&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-1000,1000)&&Math.abs(q.y-ground(q.x,q.z))<.061);return {...pick(q,['id','sourceEnemy','kind','credits','cores','x','y','z','taken']),ammo:q.ammo.slice()};});
+          for(const e of enemies)if(e.hp===0&&enemyReward(e,inventory))require(sources.has(e.id));
         }
         let bossAttacks=[];
         if(data.bossVersion===1){

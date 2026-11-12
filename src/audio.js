@@ -445,7 +445,17 @@
           }
         },
         shot: function (value) {
-          var e=handEvent('shot',value,.045);if(!e)return;var g=e.level;
+          var pistol=!!value&&value.weapon===4;
+          if(pistol&&!playing&&!preview)return;
+          var e=handEvent(pistol?'pistol':'shot',value,pistol?.08:.045);if(!e)return;var g=e.level;
+          if(pistol){
+            // A compact crack, a short body and the closing slide; no sample asset.
+            tone(260,68,.115,.18*g,'triangle',0,e.pan,2200);
+            tone(1560,240,.045,.065*g,'sawtooth',0,e.pan,3400);
+            noise(.058,.19*g,2900,e.pan,0,'highpass');
+            noise(.024,.065*g,4600,e.pan,.048,'highpass');
+            return;
+          }
           tone(185, 45, .16, .24*g, 'sawtooth', 0, e.pan+.08, 1800);
           tone(1150, 180, .065, .07*g, 'triangle', 0, e.pan+.02, 2800);
           noise(.095, .23*g, 2350, e.pan+.1);

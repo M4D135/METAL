@@ -61,3 +61,7 @@ Le fetch Git HTTPS direct n'a pas d'identifiants dans cet environnement. La réf
 ## Validation de phase A
 
 Suite complète : 301 tests réussis, 0 échec, en 122 097,156 ms pour node:test. Les 18 configurations historiques passent toujours ; les nouveaux contrôles couvrent 54 mondes (18 index × trois graines), 13 104 cibles accessibles et six empreintes historiques exactes. Le shell parcourt réellement ses transitions jusqu’au monde 18 et recharge les enveloppes v2/v3 dans leur mode respectif. Build : 694 793 octets bruts, SHA-256 `372e9ad42d72e92b5bea416850d86e936ca3d48a27e680678c6fecad87eb669d`, aucun asset externe.
+
+## Validation de phase B
+
+Suite complète : 311 tests réussis, 0 échec, node:test en 122 080,297 ms. Le pistolet est une arme à cinq emplacements avec modèle, son, recul, touches, molette, commande tactile et main gauche. Les tests vérifient sa cadence, sa précision et la réserve finie jamais consommée, le transport exact entre mondes et les transactions ne débloquant pas les trophées. Le contrôle de parité des trois premiers mondes exclut maintenant seulement les quatre champs de loadout ajoutés en campagne ; les six empreintes du mode historique restent strictes. Build : 700 006 octets bruts, SHA-256 `8f60654989be60a4eff240931552961fe6215d8ceaf298446843d553b8b7f9bf`, aucun asset externe.
