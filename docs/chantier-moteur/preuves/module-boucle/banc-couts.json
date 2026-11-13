@@ -1,0 +1,142 @@
+{
+  "schema": "boucle-banc-couts-v1",
+  "node": "v24.18.0",
+  "arch": "arm64",
+  "platform": "darwin",
+  "cpu": "Apple M5",
+  "loadavg": [
+    2.728515625,
+    4.15087890625,
+    4.09130859375
+  ],
+  "loadavgEnd": [
+    2.75,
+    4.13134765625,
+    4.08447265625
+  ],
+  "cores": 10,
+  "seconds": 3.240511041,
+  "realm": "main",
+  "clock": "process.hrtime.bigint()",
+  "warmupSeries": 1,
+  "series": 5,
+  "order": "série 1 : track, pumpSim, pump, plan, advance ; série 2 dans l'autre sens, et ainsi de suite (chauffe : advance en premier)",
+  "sources": {
+    "loopBytes": 6042,
+    "loopSha256": "2002052f16b930748cb33c59366686744d8f7ba0b05add3e517d6271e46214c5",
+    "scheduleBytes": 4221,
+    "scheduleSha256": "48a8b7cf0bba9a54ef6cff896110a654195b05606392c2d74ef3a3691edf9d12"
+  },
+  "measures": {
+    "advanceNs": {
+      "unit": "ns par appel",
+      "protocol": "1 000 000 advance(t, rappel) sur les horodatages jit144 précalculés (Float64Array), une boucle neuve par série",
+      "threshold": 1000,
+      "warmup": 54.006583,
+      "series": [
+        59.776333,
+        59.278292,
+        54.168042,
+        54.162166,
+        52.206125
+      ],
+      "median": 54.168042,
+      "min": 52.206125,
+      "max": 59.776333,
+      "ok": true,
+      "work": {
+        "steps": 416668,
+        "statsSteps": 416668
+      }
+    },
+    "advancePlanNs": {
+      "unit": "ns par appel",
+      "protocol": "1 000 000 advance(t) en mode plan, mêmes horodatages, une boucle neuve par série",
+      "threshold": 1000,
+      "warmup": 58.7735,
+      "series": [
+        58.3615,
+        58.321125,
+        56.3615,
+        52.57525,
+        52.515
+      ],
+      "median": 56.3615,
+      "min": 52.515,
+      "max": 58.3615,
+      "ok": true,
+      "work": {
+        "steps": 416668,
+        "statsSteps": 416668
+      }
+    },
+    "pump10Us": {
+      "unit": "µs par appel",
+      "protocol": "FSchedule.create({now: () => performance.now()}), 10 tâches de clés 0 à 9, priorité k % 3, coût .001, run() rend false ; 200 000 pump(4)",
+      "threshold": 20,
+      "warmup": 0.7896124999999999,
+      "series": [
+        0.8159706250000001,
+        0.86827,
+        0.86242542,
+        0.827635625,
+        0.8523587499999999
+      ],
+      "median": 0.8523587499999999,
+      "min": 0.8159706250000001,
+      "max": 0.86827,
+      "ok": true,
+      "work": {
+        "ran": 2000000,
+        "skipped": 0
+      }
+    },
+    "pumpSim3Ns": {
+      "unit": "ns par appel",
+      "protocol": "FSchedule.create(), 3 tâches « sim » qui rendent Math.min(u, 100) ; 1 000 000 pumpSim(768)",
+      "threshold": 2000,
+      "warmup": 71.399666,
+      "series": [
+        75.525417,
+        76.912166,
+        77.516875,
+        82.081209,
+        74.653708
+      ],
+      "median": 76.912166,
+      "min": 74.653708,
+      "max": 82.081209,
+      "ok": true,
+      "work": {
+        "units": 300000000,
+        "simUnits": 300000000
+      }
+    },
+    "track40Us": {
+      "unit": "µs par image",
+      "protocol": "FLoop.track() ; par image : begin, 40 save, prune, 40 pose ; 200 000 images",
+      "threshold": 20,
+      "warmup": 0.7611972899999999,
+      "series": [
+        0.92120479,
+        0.91109271,
+        0.9067518750000001,
+        0.932460625,
+        0.931318335
+      ],
+      "median": 0.92120479,
+      "min": 0.9067518750000001,
+      "max": 0.932460625,
+      "ok": true,
+      "work": {
+        "size": 40,
+        "sink": 40155974999.99977
+      }
+    }
+  },
+  "checks": {
+    "allBelowThreshold": true,
+    "workOk": true,
+    "sameWorkEachSeries": true
+  }
+}

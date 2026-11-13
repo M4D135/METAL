@@ -439,8 +439,9 @@ mesuré, risque de perdre le dernier point), à décider après une mesure dans 
 Les bancs chargent les modules dans le domaine principal de Node (`loadRealm({root, modules, realm: 'main'})`),
 jamais sous `node:vm`, qui ralentit le code de 4,5 à 9 fois (MASTER-PROMPT §4). Chaque JSON de
 `preuves/module-boucle/` commence par `schema`, `node`, `arch`, `platform`, `cpu` et `loadavg` : la machine et sa
-charge au moment de la mesure. Les coûts, l'assemblage et le navigateur viennent à l'étape 6 ; l'émulation de
-l'étape 2 (`aim` et `track` sur la vraie simulation) est résumée en 2.5 et 2.6.
+charge au moment de la mesure. Horloge (4.1) et simulation réelle (4.2) : étapes 4 et 5 ; coûts (4.3), assemblage
+de la page (4.4) et navigateur réel (4.5) : étape 6. L'émulation de l'étape 2 (`aim` et `track` sur la vraie
+simulation) est résumée en 2.5 et 2.6.
 
 ### 4.1 Horloge : `banc-horloge.json` (étape 4)
 
@@ -684,6 +685,179 @@ Ce banc ne joue qu'un scénario (`legacy-s0`, 30 s, pilote scripté du lot 00), 
 synthétiques. « Même partie sur tous les écrans » vaut pour des entrées scriptées (démo, banc), pas pour un joueur
 (STAB-06, réserve 4). L'interpolation du rendu (`track`) et les angles (`aim`) ne sont pas mesurés ici : voir
 l'émulation de l'étape 2 (sections 2.5 et 2.6).
+
+### 4.3 Coûts : `banc-couts.json` (étape 6)
+
+Constats : STAB-06 et STAB-07 (coût propre de la boucle et de l'ordonnanceur, à chaque image).
+
+- **Commande** : `node tools/boucle-banc-couts.mjs`, depuis la racine. Une ligne par mesure (médiane, cinq séries,
+  seuil), puis un bilan ; code 0, ou 1 si une médiane atteint son seuil ou si le travail mesuré n'est pas le bon.
+  Durée : 3,2 à 5,8 s.
+- **Protocole** (§7.4 de la mission) : domaine principal, `process.hrtime.bigint()`, une série de chauffe non
+  comptée, puis 5 séries ; on retient la médiane. Dans chaque série, les cinq mesures se suivent, dans un ordre
+  inversé une série sur deux : sur une machine partagée, une charge passagère ou un ramasse-miettes ne tombe pas
+  toujours sur la même mesure.
+
+| Mesure | Protocole | Seuil (médiane) |
+|---|---|---|
+| `advanceNs` | 1 000 000 `advance(t, rappel)` sur les horodatages `jit144` précalculés (`Float64Array`), rappel qui incrémente un compteur, une boucle neuve par série ; ns par appel | < 1 000 ns |
+| `advancePlanNs` | idem en mode plan, l'appelant lisant `frame.steps` | < 1 000 ns |
+| `pump10Us` | `FSchedule.create({now: () => performance.now()})`, 10 tâches (clés 0 à 9, priorité k % 3, coût 0,001, `run()` rend `false`) ; 200 000 `pump(4)` ; µs par appel | < 20 µs |
+| `pumpSim3Ns` | `FSchedule.create()`, 3 tâches « sim » qui rendent `Math.min(u, 100)` ; 1 000 000 `pumpSim(768)` ; ns par appel | < 2 000 ns |
+| `track40Us` | `FLoop.track()` ; par image, `begin`, 40 `save`, `prune` et 40 `pose` (5 cm de déplacement : la pose est interpolée) ; 200 000 images ; µs par image | < 20 µs |
+
+- **Le travail est vérifié** (`checks.workOk`). Les deux modes d'`advance` font les mêmes 416 668 pas pour
+  1 000 000 d'images ; `pumpSim` consomme 300 unités par appel ; `track` suit 40 entités ; chaque série fait le même
+  travail. Dans `pump`, les 10 tâches tournent à chaque appel : 2 000 000 d'exécutions par série, aucune sautée.
+  L'horloge de `pump` est lue par l'outil (`performance.now()`), jamais par le module.
+- **Sortie** : seulement `preuves/module-boucle/banc-couts.json` (3,6 Ko). Par mesure : la chauffe, les 5 séries, la
+  médiane, le minimum, le maximum, le seuil et le travail ; en tête, la taille et le sha256 des deux modules mesurés.
+- **Machine et charge** : Apple M5, 10 cœurs, macOS 27.2.1 (`darwin`, `arm64`), Node v24.18.0. Le JSON rangé est
+  la dernière de quatre passes ; `loadavg` 2,73 / 4,15 / 4,09. La première passe a tourné sous une charge de 4,9.
+
+**Résultats.** « 4 passes » donne la plus petite et la plus grande des quatre médianes du Mac. La colonne du Spark
+(Linux arm64, 20 cœurs, Node v24.18.0, charge 1,7) est une passe faite au-delà de la fiche ; son JSON n'est pas
+rangé. Marge : seuil divisé par la médiane du JSON rangé.
+
+| Mesure | JSON rangé : 5 séries | Médiane | 4 passes, Mac | Spark | Seuil | Marge |
+|---|---|---|---|---|---|---|
+| `advanceNs` (ns) | 59,8 ; 59,3 ; 54,2 ; 54,2 ; 52,2 | 54,2 | 54,2 à 87,0 | 74,5 | 1 000 | × 18 |
+| `advancePlanNs` (ns) | 58,4 ; 58,3 ; 56,4 ; 52,6 ; 52,5 | 56,4 | 53,8 à 79,7 | 72,0 | 1 000 | × 18 |
+| `pump10Us` (µs) | 0,816 ; 0,868 ; 0,862 ; 0,828 ; 0,852 | 0,852 | 0,816 à 1,229 | 1,542 | 20 | × 23 |
+| `pumpSim3Ns` (ns) | 75,5 ; 76,9 ; 77,5 ; 82,1 ; 74,7 | 76,9 | 74,5 à 110,9 | 90,3 | 2 000 | × 26 |
+| `track40Us` (µs) | 0,921 ; 0,911 ; 0,907 ; 0,932 ; 0,931 | 0,921 | 0,900 à 1,365 | 1,349 | 20 | × 22 |
+
+Repères de la mission (Mac M chargé) : 67 ns, 76 ns, 1,1 µs, 100 ns et 1,1 µs. Pré-mesure du chef de lot : 65 ns,
+62 ns, 0,92 µs, 88 ns et 1,18 µs. Les quatre passes du Mac les encadrent. La passe sous une charge de 4,9 est 1,4 à
+1,6 fois plus lente que les trois autres (charge 2,7 à 2,8), et sa marge reste d'au moins 11.
+
+**Ce que montre le banc.**
+1. **Le coût propre de la boucle est négligeable.** Par image, le jeu paiera un `advance` (54 ns), le suivi des
+   entités (0,92 µs pour 40, proportionnel à leur nombre) et une pompe de la file « image » (0,85 µs pour 10 tâches).
+   Cela fait 1,8 µs, soit 0,011 % d'une image de 16,7 ms (0,026 % à 144 Hz). Le travail des tâches elles-mêmes
+   (synthèse, sérialisation) n'y est pas : c'est leur propre coût, que l'ordonnanceur étale sur les images.
+2. **`pump` coûte surtout ses lectures d'horloge.** Avec 10 tâches, il appelle 31 fois `now()` : une fois au départ,
+   trois fois par tâche. Une passe à part, hors banc, le confirme
+   (`preuves/module-boucle/etape-6-pump-horloge.mjs`). Même protocole, horloges alternées, médianes de 5 séries :
+   1,036 µs avec `performance.now()` contre 0,382 µs avec une horloge constante. Sous Node, `performance.now()`
+   coûte 23,8 ns sur le Mac, soit 0,74 µs pour les 31 lectures. Sur le Spark : 1,572 µs contre 0,416 µs, et
+   39,9 ns par lecture.
+3. **La file « sim » est déterministe et peu coûteuse.** Un `pumpSim` de 3 tâches coûte 77 ns. À 60 pas par
+   seconde, cela fait 4,6 µs par seconde simulée, sans aucune lecture d'horloge.
+4. **Mêmes ordres de grandeur sous Linux arm64** (Spark, machine moins chargée). Seul `pump` y coûte plus, car la
+   lecture d'horloge y est plus lente (point 2). Dans le navigateur, `performance.now()` a son propre coût et sa
+   propre granularité : la part de l'horloge dans `pump` y reste à mesurer, au raccord.
+
+### 4.4 Assemblage de la page : `assemblage.json` (étape 6)
+
+Constats et règles : `AGENTS.md` (page autonome `dist/index.html`, `SIZE.json` fait foi, 1 400 000 octets bruts au
+plus, aucun actif externe) ; §4.13 de la mission (insertion au raccord). Rien n'est reconstruit :
+`python3 tools/build.py` n'est pas lancé, et `dist/index.html` et `SIZE.json` ne changent pas.
+
+- **Commande** : `node tools/boucle-assemblage.mjs`, depuis la racine. Trois lignes (base, projet, bilan) ; code 0,
+  ou 1 si un critère tombe. Une base non reproduite est signalée sans faire échouer l'outil (§7.5, point 4). Durée :
+  0,1 s. L'outil n'écrit que `preuves/module-boucle/assemblage.json` (2,8 Ko).
+- **Ce que fait l'outil** (§7.5) :
+  - il lit la liste `modules` de `tools/build.py` (expression `/modules=\[([^\]]*)\]/`, puis les noms entre
+    apostrophes) et joint les sources par `'\n;\n'` ;
+  - il fait les trois remplacements de `build.py` dans `src/index.html`, dans le même ordre et sur toute la page :
+    `/*__STYLE__*/`, `/*__CODE__*/`, puis `__GAME_VERSION__` ;
+  - il remplace par `split/join` : `String.replace` ne remplacerait que la première occurrence et interpréterait les
+    `$` ;
+  - il lit les fichiers comme `Path.read_text()` de Python : UTF-8 strict, BOM gardé, fins de ligne universelles.
+    Aucun fichier ne contient de `\r` (`checks.carriageReturns` est vide), donc le texte lu est celui du fichier,
+    octet pour octet.
+- **Base**, la liste telle quelle (14 modules) : 812 696 octets, sha256 `4587dc49…5c485a`.
+  - Ce sont `html_bytes` et `sha256` de `SIZE.json` (0.8.1), et c'est `dist/index.html` octet pour octet.
+  - Les tailles des 14 sources égalent les `source_bytes` de `SIZE.json`. La base est reproduite.
+- **Projet** : `'loop.js','schedule.js'` juste après `'options.js'`, avant `'game.js'` (16 modules).
+
+| Mesure | Base (main 0.8.1) | Projet du raccord | Écart |
+|---|---|---|---|
+| page brute | 812 696 octets | 822 965 octets | + 10 269 = 6 042 + 4 221 + 6 |
+| marge sous 1 400 000 | 587 304 | 577 035 | − 10 269 |
+| sha256 | `4587dc49…` | `9fdd167e…` | |
+| gzip, zlib de Node (niveau 9, indicatif) | 246 658 | 250 178 | + 3 520 |
+| gzip, zlib de Python (`gzip.compress`, comme `SIZE.json`) | 245 325 | 248 756 | + 3 431 |
+
+Les deux gzip ne se comparent pas entre eux : `gzip_bytes` de `SIZE.json` vient du zlib de Python. Seul l'écart entre
+base et projet, mesuré avec un même zlib, a un sens.
+
+| Contrôle | Résultat |
+|---|---|
+| `delta === loopBytes + scheduleBytes + 6` (deux séparateurs `'\n;\n'` de 3 octets) | vrai |
+| page projetée sous 1 400 000 octets (assertion de `build.py`) | vrai : marge de 577 035 octets |
+| `</script` dans le code joint (assertion de `build.py`, insensible à la casse) | absent |
+| les deux expressions de `checks/build.test.mjs` (actifs externes, code chargé par le réseau) | aucune ne correspond, ni sur la base ni sur le projet ; l'outil vérifie que leur texte figure tel quel dans le test |
+| marqueurs `/*__CODE__*/` et `/*__STYLE__*/` | résolus |
+| `FLoop` et `FSchedule` dans la page | absents de la base, présents dans le projet : le contrôle à ajouter dans `checks/build.test.mjs` au raccord (§4.13) passera |
+| `syntaxOk` : `new vm.Script(code projeté)` | le code des 16 modules compile |
+| `globalsOk` : `loop.js + '\n;\n' + schedule.js` dans `vm.createContext({window: {}})` | `window.FLoop.create` et `window.FSchedule.create` sont des fonctions. Rien d'autre n'est posé : `window` reçoit `FLoop` et `FSchedule`, le global du contexte ne reçoit rien |
+
+**Contre-épreuve par Python.** On rejoue sous `python3 -I` les expressions des lignes 6 à 12 de `tools/build.py`,
+sans aucune écriture. Le texte est dans `preuves/module-boucle/etape-6-couts-assemblage-navigateur.md`. Résultats :
+- base : 812 696 octets, sha256 `4587dc49…` ;
+- projet : 822 965 octets, sha256 `9fdd167e…`.
+
+L'émulation en JavaScript donne donc la même page, octet pour octet, pour la base comme pour le projet. Le gzip de
+Python (248 756 octets) est le chiffre que `SIZE.json` donnera au raccord, si les autres sources n'ont pas changé.
+
+**Ce que montre l'assemblage.**
+1. Le raccord coûte 10 269 octets bruts, soit 1,26 % de la page et 1,75 % de la marge, et 3,4 Ko compressés. La
+   marge restante est de 577 035 octets.
+2. Rien d'interdit n'entre dans la page : ni `</script`, ni réseau, ni actif. Les deux modules ne posent que leurs
+   deux globaux.
+3. Au raccord, `build.py`, `SIZE.json` et `checks/build.test.mjs` feront foi. L'outil refuse une liste qui contient
+   déjà `loop.js` ou `schedule.js` : il ne sert qu'avant l'insertion.
+
+### 4.5 Navigateur réel : Chrome sans tête (étape 6)
+
+Constats : STAB-06 et STAB-07 (comptes et déterminisme des deux modules) ; MASTER-PROMPT §6 (la page doit marcher en
+`file://`).
+
+- **Page** : `preuves/module-boucle/navigateur.html` (6 Ko).
+  - Elle charge `../../../../src/loop.js` et `../../../../src/schedule.js` en scripts classiques, ouverte en
+    `file://` : ni serveur, ni port, ni réseau.
+  - Son script en ligne vérifie de façon synchrone, pendant l'analyse de la page. Il écrit le JSON dans
+    `<pre id="out">`, puis pose `data-result` (`ok` ou `echec`) sur le corps de page.
+  - `--dump-dom` rend la page avant toute image rAF : aucune image réelle n'est mesurée.
+- **Commande**, depuis la racine :
+  `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu --no-first-run --no-default-browser-check --user-data-dir="$(mktemp -d)" --dump-dom "file://$PWD/docs/chantier-moteur/preuves/module-boucle/navigateur.html" 2>/dev/null | grep -E '<body|<pre'`.
+  Code 0. Sur stderr, il n'y a que des erreurs CVDisplayLink (pas d'écran en mode sans tête), sans effet.
+- **Résultat** : `preuves/module-boucle/navigateur-resultat.txt`. La ligne `<body data-result="ok">` et le `<pre>`
+  y sont recopiés tels quels, sous un en-tête de cinq lignes (version, machine, commande).
+
+| Contrôle | Attendu (§7.6) | Chrome 157.0.8103.39, Mac M5 |
+|---|---|---|
+| globaux | `FLoop.create` et `FSchedule.create` sont des fonctions | oui ; `window.FLoop === FLoop` et `window.FSchedule === FSchedule` ; clés `create,aim,track` et `create,budget` |
+| 144 Hz synthétique, 1 440 images (i·1000/144), rappel compteur | 601 pas, 839 images à 0 pas | 601 pas, 839 images à 0 pas, aucune à plusieurs pas, non verrouillé |
+| 59,94 Hz synthétique, 600 images | seule l'image 2 fait 2 pas ; verrouillé à la fin | image 2 : 2 pas ; aucune image à 0 pas ; 601 pas ; verrouillé, période 16,6834 ms |
+| S11 | 53 tranches, la dernière de 64 | 53 tranches, 52 de 768 puis 64 ; 40 000 unités |
+| S01, horloge factice | ordre « BDAC » | `pump(10)` rend 4, ordre BDAC, file vide, 4 exécutions |
+| `jit144`, au-delà de la fiche | même empreinte que sous Node | 10 000 images en mode plan : 4 168 pas, 5 832 images à 0 pas, empreinte `95894bbc`, celle de Node |
+
+**Mêmes octets dans trois environnements.** Le dernier contrôle mélange dans une empreinte FNV-1a les octets de
+chaque image (`steps`, `alpha`, `dt`, `dropped`), puis ceux de l'état final (11 statistiques, `acc`, `debt`,
+période). Il prouve l'égalité au bit près, pas seulement celle des comptes.
+- **Node v24.18.0, Mac.** `preuves/module-boucle/etape-6-navigateur-node.mjs` rejoue le script même de la page
+  (extrait du fichier) avec les deux modules. Son JSON est celui de Chrome, au champ `engine` près. L'empreinte
+  attendue dans la page vient de là ; le domaine principal (`loadRealm`) donne la même.
+- **Chrome 151.0.7922.137 sur le Spark** (Linux aarch64), au-delà de la fiche. Même page et même commande avec
+  `google-chrome`, sous `~/metal-tests/` : `data-result="ok"`, et le même JSON qu'au Mac, au champ `engine` près.
+  L'agent utilisateur y annonce `Linux x86_64`, mais c'est la chaîne réduite de Chrome : `uname -m` donne `aarch64`.
+- **Banc d'horloge sur le Spark** (Node v24.18.0, Linux arm64). Son `banc-horloge.json` est celui du Mac
+  (section 4.1), en-tête excepté : les 21 motifs donnent les mêmes valeurs au bit près. FLoop n'utilise que les
+  quatre opérations, `Math.round`, `abs`, `min`, `max` et un modulo entier, tous exacts ou correctement arrondis en
+  IEEE 754 : le résultat ne dépend ni du moteur ni du processeur.
+
+**Ce que montre l'essai.**
+1. Les deux modules marchent comme ils seront dans la page : scripts classiques, `file://`, globaux sur `window`,
+   sans `import` ni réseau.
+2. Les comptes et les octets sont ceux de Node, sur deux versions de Chrome et deux systèmes : « mêmes appels, mêmes
+   sorties, au bit près » tient d'un moteur à l'autre.
+3. Les horodatages restent synthétiques. Restent à essayer au raccord : une vraie boucle rAF, un vrai écran
+   (59,94 Hz, VRR), Safari et Firefox. Ils sont absents ici : Safari n'a pas de mode sans tête, et son pilote
+   d'automatisation demande un réglage système ; Firefox n'est pas installé sur le Mac.
 
 ## 5. Plan de raccord, non appliqué
 
