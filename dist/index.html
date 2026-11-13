@@ -6112,15 +6112,21 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     if(world.campaign===true)identity.push({campaign:true,...(bossProgression?{campaignVersion:2}:{}),index:world.index,chapter:world.chapter,trophies:trophyDefs});
     for(const c of JSON.stringify(identity))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
     fingerprint=(fingerprint>>>0).toString(36);
-    function blocked(x,z,r=.28,y=ground(x,z),doors=doorBoxes,staticBoxes=solids,traps=trapBoxes,height=1.8){
-      if(x-r<b.minX||x+r>b.maxX||z-r<b.minZ||z+r>b.maxZ||!Number.isFinite(y))return true;
-      const boxes=staticBoxes===solids&&r>=0&&r<=bucketRadius?collisionBuckets[(Math.floor(z/bucketSize)-bucketZ)*bucketWidth+Math.floor(x/bucketSize)-bucketX]||staticBoxes:staticBoxes;
-      for(const list of [boxes,doors,traps])for(const q of list){
+    // SIM-04/SIM-09: same predicates, no array literal per call. The orders of the
+    // three lists and of their entries are the ones of the former [boxes,doors,traps].
+    function blockedList(list,x,z,r,y,height){
+      for(let i=0;i<list.length;i++){
+        const q=list[i];
         if(q.minY>=y+height-1e-7||q.maxY<=y+.06)continue;
         const dx=x<q.minX?x-q.minX:x>q.maxX?x-q.maxX:0,dz=z<q.minZ?z-q.minZ:z>q.maxZ?z-q.maxZ:0;
         if(dx*dx+dz*dz<r*r)return true;
       }
       return false;
+    }
+    function blocked(x,z,r=.28,y=ground(x,z),doors=doorBoxes,staticBoxes=solids,traps=trapBoxes,height=1.8){
+      if(x-r<b.minX||x+r>b.maxX||z-r<b.minZ||z+r>b.maxZ||!Number.isFinite(y))return true;
+      const boxes=staticBoxes===solids&&r>=0&&r<=bucketRadius?collisionBuckets[(Math.floor(z/bucketSize)-bucketZ)*bucketWidth+Math.floor(x/bucketSize)-bucketX]||staticBoxes:staticBoxes;
+      return blockedList(boxes,x,z,r,y,height)||blockedList(doors,x,z,r,y,height)||blockedList(traps,x,z,r,y,height);
     }
     function localSolids(x,z){return collisionBuckets[(Math.floor(z/bucketSize)-bucketZ)*bucketWidth+Math.floor(x/bucketSize)-bucketX]||solids;}
     function discBox(x,z,r,q){const dx=x<q.minX?q.minX-x:x>q.maxX?x-q.maxX:0,dz=z<q.minZ?q.minZ-z:z>q.maxZ?z-q.maxZ:0;return dx*dx+dz*dz<r*r;}
@@ -6386,7 +6392,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const nav=new Uint8Array(nx*nz),dist=new Int16Array(nx*nz),queue=new Int32Array(nx*nz);
     const coord=i=>[b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell];
     const idx=(x,z)=>clamp(Math.round((z-b.minZ)/cell),0,nz-1)*nx+clamp(Math.round((x-b.minX)/cell),0,nx-1);
-    for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}navRects.length=0;
+    for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;}navRects.length=0;
     function rebuildNav(){
       dist.fill(-1);let start=idx(p.x,p.z);
       if(!nav[start]){let best=Infinity;for(let i=0;i<nav.length;i++)if(nav[i]){const [x,z]=coord(i),d=(x-p.x)**2+(z-p.z)**2;if(d<best){best=d;start=i;}}}
@@ -7256,21 +7262,30 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       // Static map only, like the walking cells (SIM-V1): trap poses never enter routes or the
       // edge cache; traps still block bodies in move() and still hurt.
       if(blocked(ax,az,r,ground(ax,az),doorBoxes,solids,noTraps)||blocked(bx,bz,r,ground(bx,bz),doorBoxes,solids,noTraps))return false;
-      const dx=bx-ax,dz=bz-az,ay=groundAt(ax,az),by=groundAt(bx,bz),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
+      const dx=bx-ax,dz=bz-az,ay=groundAt(ax,az),by=groundAt(bx,bz),lowY=Math.min(ay,by),highY=Math.max(ay,by),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
       // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
       const short=Math.max(Math.abs(dx),Math.abs(dz))/2+r<=bucketRadius;
       const local=short?collisionBuckets[(Math.floor((az+bz)/2/bucketSize)-bucketZ)*bucketWidth+Math.floor((ax+bx)/2/bucketSize)-bucketX]||solids:solids;
-      for(const list of [local,doorBoxes])for(const q of list){
-        if(q.maxY<=Math.min(ay,by)+.06||q.minY>=Math.max(ay,by)+1.8)continue;
-        // Most A* edge checks are shorter than a metre: discard remote boxes
-        // before building intervals, without approximating the remaining sweep.
-        if(q.maxX<minX||q.minX>maxX||q.maxZ<minZ||q.minZ>maxZ)continue;
-        let lo=0,hi=1;
-        for(const [origin,delta,min,max] of [[ax,dx,q.minX-r,q.maxX+r],[az,dz,q.minZ-r,q.maxZ+r]]){
-          if(Math.abs(delta)<1e-8){if(origin<min||origin>max){hi=-1;break;}}
-          else {let a=(min-origin)/delta,c=(max-origin)/delta;if(a>c)[a,c]=[c,a];lo=Math.max(lo,a);hi=Math.min(hi,c);if(hi<lo)break;}
+      // SIM-09: the two lists and the two slab axes are unrolled; no array per call.
+      for(let pass=0;pass<2;pass++){
+        const list=pass?doorBoxes:local;
+        for(let i=0;i<list.length;i++){
+          const q=list[i];
+          if(q.maxY<=lowY+.06||q.minY>=highY+1.8)continue;
+          // Most A* edge checks are shorter than a metre: discard remote boxes
+          // before building intervals, without approximating the remaining sweep.
+          if(q.maxX<minX||q.minX>maxX||q.maxZ<minZ||q.minZ>maxZ)continue;
+          let lo=0,hi=1,ok=true,min=0,max=0,a=0,c=0;
+          min=q.minX-r;max=q.maxX+r;
+          if(Math.abs(dx)<1e-8){if(ax<min||ax>max)ok=false;}
+          else{a=(min-ax)/dx;c=(max-ax)/dx;if(a>c){const t=a;a=c;c=t;}if(a>lo)lo=a;if(c<hi)hi=c;if(hi<lo)ok=false;}
+          if(ok){
+            min=q.minZ-r;max=q.maxZ+r;
+            if(Math.abs(dz)<1e-8){if(az<min||az>max)ok=false;}
+            else{a=(min-az)/dz;c=(max-az)/dz;if(a>c){const t=a;a=c;c=t;}if(a>lo)lo=a;if(c<hi)hi=c;if(hi<lo)ok=false;}
+          }
+          if(ok&&hi>=lo&&hi>=0&&lo<=1)return false;
         }
-        if(hi>=lo&&hi>=0&&lo<=1)return false;
       }
       if(floors.length){
         const count=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.3));let previous=ay;
@@ -7285,7 +7300,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const routeCost=new Float64Array(nav.length),routePrev=new Int32Array(nav.length),routeStamp=new Uint32Array(nav.length),routeClosed=new Uint32Array(nav.length);
     const edgeKnown=new Uint8Array(nav.length),edgeOpen=new Uint8Array(nav.length),navQueued=new Uint8Array(nav.length),navQueue=new Int32Array(nav.length);let routeSerial=0,navHead=0,navTail=0,navPending=0;
     function pumpNav(limit=768){
-      let work=0;while(navPending&&work<limit){const i=navQueue[navHead];navHead=(navHead+1)%nav.length;navPending--;navQueued[i]=0;const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;work++;}
+      let work=0;while(navPending&&work<limit){const i=navQueue[navHead];navHead=(navHead+1)%nav.length;navPending--;navQueued[i]=0;const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;work++;}
       s.aiStats.navUpdates=work;s.aiStats.navPending=navPending;
     }
     function navEnqueue(i){if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}}
@@ -7315,7 +7330,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     function refreshNav(reset=true){
       // A gameplay change re-plans every route; restore and simple worlds rebuild at once.
       if(advanced&&reset)navInvalidate();
-      else{navRects.length=0;navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}edgeKnown.fill(0);edgeOpen.fill(0);}
+      else{navRects.length=0;navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;}edgeKnown.fill(0);edgeOpen.fill(0);}
       if(reset)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
       if(!advanced)rebuildNav();
     }
