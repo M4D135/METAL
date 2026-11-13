@@ -1,0 +1,6 @@
+# depuis docs/chantier-moteur/bancs/sim, PREV = export de src/ de 51a85e9 (T1), avant tout code de T2
+legacy-s0     identical=true | total 208 -> 168 ms (-19%) | median step ratio 0.79 | mean 0.116 -> 0.094 | p99 0.64 -> 0.60 | max 12.3 -> 10.4 | steps>4ms 1 -> 1
+legacy-s2     identical=true | total 277 -> 182 ms (-34%) | median step ratio 0.66 | mean 0.154 -> 0.101 | p99 0.66 -> 0.75 | max 8.1 -> 5.6 | steps>4ms 1 -> 1
+campaign-w10  identical=true | total 187 -> 138 ms (-26%) | median step ratio 0.74 | mean 0.104 -> 0.077 | p99 0.73 -> 0.66 | max 7.1 -> 4.9 | steps>4ms 1 -> 1
+campaign-w16  identical=true | total 195 -> 143 ms (-27%) | median step ratio 0.73 | mean 0.108 -> 0.080 | p99 0.69 -> 0.69 | max 7.4 -> 5.4 | steps>4ms 2 -> 2
+METAL_ROOT=$PREV STEPS=1800 REPS=2 node ab2.mjs ground-v2.mjs groundPatc  8.35s user 0.11s system 190% cpu 4.436 total

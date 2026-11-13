@@ -1,0 +1,796 @@
+{
+ "schema": "metal-lot02-t1-ab2-summary-v1",
+ "source": {
+  "schema": "metal-ab2-v1",
+  "checksum": "8d1e3a27d0e0626dd90889a91ac65277f14f09b8ba1ff52abbc0a6af40df3671",
+  "identical": true
+ },
+ "environment": {
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadBefore": [
+   3.9228515625,
+   5.8916015625,
+   5.841796875
+  ],
+  "loadAfter": [
+   3.76904296875,
+   5.11181640625,
+   5.53271484375
+  ]
+ },
+ "method": {
+  "realm": "main",
+  "clock": "process.cpuUsage per sim.step; user + system microseconds",
+  "dt": 0.016666666666666666,
+  "seed": 96,
+  "weapon": null,
+  "requestedSteps": 1800,
+  "warmupPasses": 1,
+  "measuredPasses": 2,
+  "pairing": "AB then BA at each step; first order also reverses with the pass number. Each side has independent module closures, window, world, brain and simulation.",
+  "warmup": "Full first scenario passes are retained as raw evidence and excluded from every timing aggregate.",
+  "ratio": "B/A median of paired per-step CPU values where both sides meet minCpuUs; total ratio is reported separately.",
+  "minCpuUs": 5,
+  "counters": "Separate untimed instrumented A/B replay, verified against the matching uninstrumented variant.",
+  "limits": "Node process CPU includes GC/JIT; does not prove browser frame time, GPU speed or device FPS. FNV32 is a regression signal, not a collision-free proof; final snapshots also use SHA-256."
+ },
+ "variants": {
+  "a": {
+   "label": "avant 71eca61",
+   "sourceSha256": {
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+    "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "simulation": "96544ee94904791cc223e19c510065407e8f9ac7b333ff5771a0de73485c9ca4"
+   }
+  },
+  "b": {
+   "label": "après T1",
+   "sourceSha256": {
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+    "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "simulation": "985aa31c8d8109461d553955347da0ddf88649ff3d962ce7662fd10905b25cd8"
+   }
+  }
+ },
+ "scenarios": [
+  {
+   "id": "legacy-s0",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "576ce3b4",
+    "576ce3b4"
+   ],
+   "snapshotSha256": [
+    "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+    "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5"
+   ],
+   "timing": {
+    "totalMs": [
+     877.319,
+     762.917
+    ],
+    "totalRatio": 0.8696,
+    "medianPairedRatio": 1.0105,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.244,
+     0.212
+    ],
+    "p99Ms": [
+     1.804,
+     1.632
+    ],
+    "maxMs": [
+     44.281,
+     49.058
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 1010229,
+     "blocked": 318467,
+     "segmentFree": 15210,
+     "astarPops": 81453,
+     "astarNodes": 81121,
+     "revisions": 8
+    },
+    "b": {
+     "ground": 716971,
+     "blocked": 42887,
+     "segmentFree": 6376,
+     "astarPops": 81453,
+     "astarNodes": 81121,
+     "revisions": 8
+    },
+    "identical": true
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      4680,
+      4367,
+      4348,
+      368,
+      260
+     ],
+     [
+      4348,
+      546,
+      348,
+      90,
+      85
+     ]
+    ],
+    "blockedMax": [
+     24208,
+     21838
+    ]
+   }
+  },
+  {
+   "id": "legacy-s2",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "54574123",
+    "54574123"
+   ],
+   "snapshotSha256": [
+    "04a9c866b2cc9c307f4a7907dd342d19e336ef65f1a8f228df3c9d67dc7aebb7",
+    "04a9c866b2cc9c307f4a7907dd342d19e336ef65f1a8f228df3c9d67dc7aebb7"
+   ],
+   "timing": {
+    "totalMs": [
+     1153.825,
+     865.094
+    ],
+    "totalRatio": 0.7498,
+    "medianPairedRatio": 0.963,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.321,
+     0.24
+    ],
+    "p99Ms": [
+     1.775,
+     1.263
+    ],
+    "maxMs": [
+     16.141,
+     15.252
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 2296649,
+     "blocked": 603871,
+     "segmentFree": 13452,
+     "astarPops": 19200,
+     "astarNodes": 19016,
+     "revisions": 15
+    },
+    "b": {
+     "ground": 1705517,
+     "blocked": 30301,
+     "segmentFree": 4665,
+     "astarPops": 19200,
+     "astarNodes": 18960,
+     "revisions": 15
+    },
+    "identical": true
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      4422,
+      4422,
+      4422,
+      37,
+      37
+     ],
+     [
+      4405,
+      37,
+      37,
+      37,
+      37
+     ]
+    ],
+    "blockedMax": [
+     22741,
+     21900
+    ]
+   }
+  },
+  {
+   "id": "campaign-w10",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "6cd12673",
+    "6cd12673"
+   ],
+   "snapshotSha256": [
+    "3d1c13d7fdde86d3e7c73d4342fd778c2600c237751781ff21fda7cad32e1470",
+    "3d1c13d7fdde86d3e7c73d4342fd778c2600c237751781ff21fda7cad32e1470"
+   ],
+   "timing": {
+    "totalMs": [
+     861.595,
+     656.82
+    ],
+    "totalRatio": 0.7623,
+    "medianPairedRatio": 1.0071,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.239,
+     0.182
+    ],
+    "p99Ms": [
+     1.519,
+     1.291
+    ],
+    "maxMs": [
+     35.544,
+     27.151
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 1348172,
+     "blocked": 523957,
+     "segmentFree": 20603,
+     "astarPops": 58810,
+     "astarNodes": 58507,
+     "revisions": 13
+    },
+    "b": {
+     "ground": 839745,
+     "blocked": 43871,
+     "segmentFree": 6440,
+     "astarPops": 58810,
+     "astarNodes": 58507,
+     "revisions": 13
+    },
+    "identical": true
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      4703,
+      4602,
+      4444,
+      4307,
+      420
+     ],
+     [
+      4307,
+      590,
+      198,
+      184,
+      136
+     ]
+    ],
+    "blockedMax": [
+     24392,
+     21711
+    ]
+   }
+  },
+  {
+   "id": "campaign-w16",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "6de7419e",
+    "6de7419e"
+   ],
+   "snapshotSha256": [
+    "378bf459f73240e34689da0b9b1211b2293ae8a594ee7ce4c223f98abc4ab304",
+    "378bf459f73240e34689da0b9b1211b2293ae8a594ee7ce4c223f98abc4ab304"
+   ],
+   "timing": {
+    "totalMs": [
+     729.882,
+     540.717
+    ],
+    "totalRatio": 0.7408,
+    "medianPairedRatio": 1,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.203,
+     0.15
+    ],
+    "p99Ms": [
+     1.107,
+     1.06
+    ],
+    "maxMs": [
+     9.216,
+     19.856
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 1441338,
+     "blocked": 587901,
+     "segmentFree": 30016,
+     "astarPops": 61759,
+     "astarNodes": 60783,
+     "revisions": 13
+    },
+    "b": {
+     "ground": 891341,
+     "blocked": 71952,
+     "segmentFree": 12986,
+     "astarPops": 61759,
+     "astarNodes": 60811,
+     "revisions": 13
+    },
+    "identical": true
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      4620,
+      4388,
+      4388,
+      4310,
+      4290
+     ],
+     [
+      4391,
+      4245,
+      540,
+      388,
+      151
+     ]
+    ],
+    "blockedMax": [
+     23994,
+     21827
+    ]
+   }
+  },
+  {
+   "id": "campaign2-w1",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "36b0dc6a",
+    "36b0dc6a"
+   ],
+   "snapshotSha256": [
+    "96516b97b53b2646f5a85cc7b08e22b511b533471538a38c976595e55fe912e6",
+    "96516b97b53b2646f5a85cc7b08e22b511b533471538a38c976595e55fe912e6"
+   ],
+   "timing": {
+    "totalMs": [
+     624.421,
+     458.342
+    ],
+    "totalRatio": 0.734,
+    "medianPairedRatio": 1,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.173,
+     0.127
+    ],
+    "p99Ms": [
+     1.156,
+     1.014
+    ],
+    "maxMs": [
+     21.361,
+     17.857
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 1170802,
+     "blocked": 493665,
+     "segmentFree": 25013,
+     "astarPops": 50055,
+     "astarNodes": 49302,
+     "revisions": 11
+    },
+    "b": {
+     "ground": 713832,
+     "blocked": 64954,
+     "segmentFree": 10875,
+     "astarPops": 50055,
+     "astarNodes": 49309,
+     "revisions": 11
+    },
+    "identical": true
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      4759,
+      4681,
+      4643,
+      4372,
+      4372
+     ],
+     [
+      4455,
+      4368,
+      465,
+      335,
+      251
+     ]
+    ],
+    "blockedMax": [
+     24625,
+     22375
+    ]
+   }
+  },
+  {
+   "id": "campaign2-w5",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "9d97be87",
+    "9d97be87"
+   ],
+   "snapshotSha256": [
+    "c0cce7b145011f5fed4d081298d00c9fba3c199bdf9369a613eb5666146a1fcf",
+    "c0cce7b145011f5fed4d081298d00c9fba3c199bdf9369a613eb5666146a1fcf"
+   ],
+   "timing": {
+    "totalMs": [
+     1188.092,
+     937.464
+    ],
+    "totalRatio": 0.7891,
+    "medianPairedRatio": 0.9486,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.33,
+     0.26
+    ],
+    "p99Ms": [
+     1.268,
+     1.131
+    ],
+    "maxMs": [
+     4.371,
+     4.429
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 3220738,
+     "blocked": 642716,
+     "segmentFree": 0,
+     "astarPops": 0,
+     "astarNodes": 0,
+     "revisions": 16
+    },
+    "b": {
+     "ground": 2585527,
+     "blocked": 7505,
+     "segmentFree": 0,
+     "astarPops": 0,
+     "astarNodes": 0,
+     "revisions": 16
+    },
+    "identical": true
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    ],
+    "blockedMax": [
+     772,
+     68
+    ]
+   }
+  },
+  {
+   "id": "campaign2-w9",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "8057719c",
+    "8057719c"
+   ],
+   "snapshotSha256": [
+    "75dc6a96421f9a3a26ab049483d5c2703fcc3f33c7627752a2b8baa38ac2302c",
+    "75dc6a96421f9a3a26ab049483d5c2703fcc3f33c7627752a2b8baa38ac2302c"
+   ],
+   "timing": {
+    "totalMs": [
+     697.51,
+     535.275
+    ],
+    "totalRatio": 0.7674,
+    "medianPairedRatio": 0.9934,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.194,
+     0.149
+    ],
+    "p99Ms": [
+     1.073,
+     0.788
+    ],
+    "maxMs": [
+     3.107,
+     3.447
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 1590650,
+     "blocked": 451648,
+     "segmentFree": 0,
+     "astarPops": 0,
+     "astarNodes": 0,
+     "revisions": 13
+    },
+    "b": {
+     "ground": 1146211,
+     "blocked": 7209,
+     "segmentFree": 0,
+     "astarPops": 0,
+     "astarNodes": 0,
+     "revisions": 13
+    },
+    "identical": true
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    ],
+    "blockedMax": [
+     772,
+     13
+    ]
+   }
+  },
+  {
+   "id": "campaign2-w13",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "7e60456d",
+    "7e60456d"
+   ],
+   "snapshotSha256": [
+    "c7187d1870e66addbea396397ddd18f581bfcbe1ee9e62922c6b16f6fbc47df6",
+    "c7187d1870e66addbea396397ddd18f581bfcbe1ee9e62922c6b16f6fbc47df6"
+   ],
+   "timing": {
+    "totalMs": [
+     885.028,
+     595.871
+    ],
+    "totalRatio": 0.6733,
+    "medianPairedRatio": 0.9778,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.246,
+     0.166
+    ],
+    "p99Ms": [
+     1.268,
+     1.075
+    ],
+    "maxMs": [
+     19.995,
+     12.716
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 1181557,
+     "blocked": 580005,
+     "segmentFree": 34331,
+     "astarPops": 87573,
+     "astarNodes": 86708,
+     "revisions": 13
+    },
+    "b": {
+     "ground": 621636,
+     "blocked": 66607,
+     "segmentFree": 11066,
+     "astarPops": 87573,
+     "astarNodes": 86715,
+     "revisions": 13
+    },
+    "identical": true
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      4792,
+      4759,
+      4713,
+      4683,
+      4518
+     ],
+     [
+      4518,
+      4431,
+      480,
+      333,
+      113
+     ]
+    ],
+    "blockedMax": [
+     24685,
+     22644
+    ]
+   }
+  },
+  {
+   "id": "campaign2-w18",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "steps": [
+    1800,
+    1800
+   ],
+   "chainHash": [
+    "89ab7825",
+    "89ab7825"
+   ],
+   "snapshotSha256": [
+    "0247891a7f0c9ebfb04759ab967183a1d95dff98d3e26ecf0697bb4d8288acec",
+    "0247891a7f0c9ebfb04759ab967183a1d95dff98d3e26ecf0697bb4d8288acec"
+   ],
+   "timing": {
+    "totalMs": [
+     888.961,
+     635.817
+    ],
+    "totalRatio": 0.7152,
+    "medianPairedRatio": 0.9103,
+    "pairedSamples": 3600,
+    "meanMs": [
+     0.247,
+     0.177
+    ],
+    "p99Ms": [
+     1.271,
+     0.858
+    ],
+    "maxMs": [
+     10.425,
+     9.195
+    ]
+   },
+   "counters": {
+    "a": {
+     "ground": 1827774,
+     "blocked": 469148,
+     "segmentFree": 0,
+     "astarPops": 0,
+     "astarNodes": 0,
+     "revisions": 14
+    },
+    "b": {
+     "ground": 1365859,
+     "blocked": 7233,
+     "segmentFree": 0,
+     "astarPops": 0,
+     "astarNodes": 0,
+     "revisions": 14
+    },
+    "identical": true
+   },
+   "peaks": {
+    "segmentFreeTop5": [
+     [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    ],
+    "blockedMax": [
+     772,
+     16
+    ]
+   }
+  }
+ ]
+}

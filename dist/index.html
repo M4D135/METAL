@@ -128,7 +128,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   <canvas id="world" tabindex="0" aria-label="METAL — vue du champ de bataille"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.9.0">V0.9.0</b></span></div>
+    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.9.1">V0.9.1</b></span></div>
     <div class="intro-content">
       <p class="eyebrow"><span class="dot"></span> MACHINES. RUINES. COLOSSES.</p>
       <h1>METAL</h1>
@@ -5847,21 +5847,25 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   const RUBBLE_FIELDS=['id','sourceId','shape','material','mat','mass','seed','x','y','z','vx','vy','vz','age','resting','impactWait','settleTime'];
   const rubbleCopy=q=>({...pick(q,RUBBLE_FIELDS),size:q.size.slice(),rotation:q.rotation.slice(),angularVelocity:q.angularVelocity.slice(),...(q.color?{color:q.color.slice()}:{})});
   const debrisExtentCache=new WeakMap();let debrisFoliage;
+  // RESTE-05: same formulas, same addition order, scalars only. Math.hypot is kept
+  // argument by argument: sqrt would differ by up to 3 ulp and change snapshots.
+  function debrisExtent(shape,v0,v1,v2){
+    if(shape==='sphere')return Math.hypot(v0,v1,v2)/2;
+    if(shape==='cylinder')return (Math.hypot(v0,v2)+Math.abs(v1))/2;
+    if(shape==='octa')return Math.max(Math.abs(v0),Math.abs(v1),Math.abs(v2))/2;
+    if(shape==='ring')return Math.hypot(v0,v2)*.435+Math.hypot(v0,v1,v2)*.065;
+    if(shape==='foliage'){
+      if(!debrisFoliage){const seen=new Set();debrisFoliage=(G.FRender?.foliageTriangles?.().flat()||[]).filter(p=>{if(p.length!==3)return true;const k=p.join(',');if(seen.has(k))return false;seen.add(k);return true;});}
+      if(debrisFoliage.length){let m=-Infinity;for(let j=0;j<debrisFoliage.length;j++){const p=debrisFoliage[j],d=Math.abs(0+p[0]*v0+p[1]*v1+p[2]*v2);if(d>m)m=d;}return m;}
+    }
+    return ((0+Math.abs(v0))+Math.abs(v1)+Math.abs(v2))/2;
+  }
   function debrisHalf(q,r=q.rotation||[0,0,0]){
     const cached=debrisExtentCache.get(q);if(cached&&cached.r===r&&cached.size===q.size&&cached.shape===q.shape)return cached.h;
-    const [x,y,z]=r,a=Math.cos(x),c=Math.cos(y),e=Math.cos(z),b=Math.sin(x),d=Math.sin(y),f=Math.sin(z),s=Array.isArray(q.size)?q.size:[q.size,q.size,q.size];
-    const matrix=[e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a],h=[0,1,2].map(i=>{
-      const v=[0,1,2].map(k=>matrix[i*3+k]*s[k]);
-      if(q.shape==='sphere')return Math.hypot(...v)/2;
-      if(q.shape==='cylinder')return (Math.hypot(v[0],v[2])+Math.abs(v[1]))/2;
-      if(q.shape==='octa')return Math.max(...v.map(Math.abs))/2;
-      if(q.shape==='ring')return Math.hypot(v[0],v[2])*.435+Math.hypot(...v)*.065;
-      if(q.shape==='foliage'){
-        if(!debrisFoliage)debrisFoliage=G.FRender?.foliageTriangles?.().flat()||[];
-        if(debrisFoliage.length)return Math.max(...debrisFoliage.map(p=>Math.abs(p.reduce((n,x,k)=>n+x*v[k],0))));
-      }
-      return v.reduce((n,x)=>n+Math.abs(x),0)/2;
-    });
+    const rx=r[0],ry=r[1],rz=r[2],a=Math.cos(rx),c=Math.cos(ry),e=Math.cos(rz),b=Math.sin(rx),d=Math.sin(ry),f=Math.sin(rz);
+    const scalar=!Array.isArray(q.size),sx=scalar?q.size:q.size[0],sy=scalar?q.size:q.size[1],sz=scalar?q.size:q.size[2];
+    const m0=e*c,m1=e*d*b-f*a,m2=e*d*a+f*b,m3=f*c,m4=f*d*b+e*a,m5=f*d*a-e*b,m6=-d,m7=c*b,m8=c*a;
+    const h=[debrisExtent(q.shape,m0*sx,m1*sy,m2*sz),debrisExtent(q.shape,m3*sx,m4*sy,m5*sz),debrisExtent(q.shape,m6*sx,m7*sy,m8*sz)];
     debrisExtentCache.set(q,{r,size:q.size,shape:q.shape,h});return h;
   }
   function create(world,options={}) {
@@ -5903,18 +5907,71 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     // Static height rectangles share a small spatial index. Breach updates never
     // invalidate terrain, so path probes no longer rescan the entire landscape.
     const floorGX=Math.floor(world.bounds.minX/8),floorGZ=Math.floor(world.bounds.minZ/8),floorGW=Math.floor(world.bounds.maxX/8)-floorGX+1,floorGD=Math.floor(world.bounds.maxZ/8)-floorGZ+1;
-    const floorBuckets=Array.from({length:floorGW*floorGD},()=>[]);
-    for(const f of floors){const x0=Math.max(0,Math.floor((f.x-f.w/2-1e-7)/8)-floorGX),x1=Math.min(floorGW-1,Math.floor((f.x+f.w/2+1e-7)/8)-floorGX),z0=Math.max(0,Math.floor((f.z-f.d/2-1e-7)/8)-floorGZ),z1=Math.min(floorGD-1,Math.floor((f.z+f.d/2+1e-7)/8)-floorGZ);for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)floorBuckets[z*floorGW+x].push(f);}
-    function ground(x,z,activeTraps=trapStates){
-      if(!floors.length)return 0;
-      let y=-Infinity,flat=-Infinity,fallback=-Infinity;
-      const gx=Math.floor(x/8)-floorGX,gz=Math.floor(z/8)-floorGZ,local=gx>=0&&gx<floorGW&&gz>=0&&gz<floorGD?floorBuckets[gz*floorGW+gx]:floors;
-      for(const f of local)if(Math.abs(x-f.x)<=f.w/2+1e-7&&Math.abs(z-f.z)<=f.d/2+1e-7){
-        const h=(f.y||0)+(x-f.x)*(f.slopeX||0)+(z-f.z)*(f.slopeZ||0);
-        if(f.substrate||f.fallback)fallback=Math.max(fallback,h);else if(!f.slopeX&&!f.slopeZ)flat=Math.max(flat,h);else y=Math.max(y,h);
+    // ground() reads its own copy of the floors (SIM-02): one typed array per field, so the
+    // object shapes of world.walkable (never written) stay out of its loop, and a 2 m grid
+    // nested in the 8 m buckets. Each cell lists the floors of its bucket that reach it,
+    // flat ones first and highest first; gTop holds the answers that need no scan. Same
+    // arithmetic and priority as the object loop it replaces. The 8 m buckets serve
+    // fallbackLanding and beneathTerrain. Both indexes are rebuilt as soon as the floor
+    // list changes identity or length; code editing a floor in place calls indexFloors().
+    const gGX=floorGX*4,gGZ=floorGZ*4,gGW=floorGW*4,gGD=floorGD*4;
+    let floorBuckets,floorList=null,floorCount=-1,gFX,gFZ,gHW,gHD,gFY,gSX,gSZ,gFK,gAll,gStart,gCells,gFlats,gTop,trapList,trapCount=-1,floorTraps=[];
+    function indexFloors(){
+      const n=floors.length,buckets=Array.from({length:floorGW*floorGD},()=>[]),owners=buckets.map(()=>[]),cells=gGW>0&&gGD>0?gGW*gGD:0,list=[],m=1e-6,big=16777216;
+      const fx=new Float64Array(n),fz=new Float64Array(n),hw=new Float64Array(n),hd=new Float64Array(n),fy=new Float64Array(n),sx=new Float64Array(n),sz=new Float64Array(n),kind=new Uint8Array(n),all=new Int32Array(n),start=new Int32Array(cells+1),flatsAt=new Uint8Array(cells),top=new Float64Array(cells).fill(NaN);
+      for(let i=0;i<n;i++){const f=floors[i],x0=Math.max(0,Math.floor((f.x-f.w/2-1e-7)/8)-floorGX),x1=Math.min(floorGW-1,Math.floor((f.x+f.w/2+1e-7)/8)-floorGX),z0=Math.max(0,Math.floor((f.z-f.d/2-1e-7)/8)-floorGZ),z1=Math.min(floorGD-1,Math.floor((f.z+f.d/2+1e-7)/8)-floorGZ);for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){buckets[z*floorGW+x].push(f);owners[z*floorGW+x].push(i);}
+        fx[i]=f.x;fz[i]=f.z;hw[i]=f.w/2+1e-7;hd[i]=f.d/2+1e-7;fy[i]=f.y||0;sx[i]=f.slopeX||0;sz[i]=f.slopeZ||0;kind[i]=f.substrate||f.fallback?2:!f.slopeX&&!f.slopeZ?0:1;all[i]=i;}
+      // Only a finite floor box below 2^24 m is left out of a cell or trusted to cover it:
+      // the margin then exceeds every rounding error. A flat floor with a finite centre and
+      // height answers exactly its own height wherever it applies.
+      const tight=i=>Math.abs(fx[i])+Math.abs(hw[i])<big&&Math.abs(fz[i])+Math.abs(hd[i])<big,finite=i=>Number.isFinite(fx[i])&&Number.isFinite(fz[i])&&Number.isFinite(fy[i]);
+      const covers=(i,x0,x1,z0,z1)=>tight(i)&&fx[i]-hw[i]+m<=x0&&x1<=fx[i]+hw[i]-m&&fz[i]-hd[i]+m<=z0&&z1<=fz[i]+hd[i]-m,near=[];
+      for(let cz=0,c=0;cz<gGD;cz++)for(let cx=0;cx<gGW;cx++,c++){
+        const x0=(gGX+cx)*2,x1=x0+2,z0=(gGZ+cz)*2,z1=z0+2,inside=Math.abs(x0)<big&&Math.abs(x1)<big&&Math.abs(z0)<big&&Math.abs(z1)<big,owned=owners[(cz>>2)*floorGW+(cx>>2)];
+        let flats=0,ramps=0,clean=inside,level=true,low=-Infinity;near.length=0;
+        for(let k=0;k<owned.length;k++){const i=owned[k];
+          if(inside&&tight(i)&&(fx[i]-hw[i]-m>x1||fx[i]+hw[i]+m<x0||fz[i]-hd[i]-m>z1||fz[i]+hd[i]+m<z0))continue;
+          near.push(i);if(kind[i]===0){flats++;if(!finite(i))clean=false;}else if(kind[i]===1)ramps++;else if(finite(i)&&sx[i]===0&&sz[i]===0)low=Math.max(low,fy[i]);else level=false;
+        }
+        // Flat candidates first, highest first (stable): when they are all finite, the first
+        // one under the point is the answer. gTop is the height of a highest flat floor that
+        // covers the whole cell (1e-6 margin) and then no test is needed; otherwise it is the
+        // answer under none of the flat floors: nothing, or a covering level substrate that
+        // tops the others, with no ramp around. NaN asks for the full scan.
+        const from=start[c]=list.length;
+        for(let k=0;k<near.length;k++){const i=near[k];if(kind[i]!==0)continue;let j=list.length;list.push(i);while(j>from&&fy[list[j-1]]<fy[i]){list[j]=list[j-1];j--;}list[j]=i;}
+        const end=list.length;for(let k=0;k<near.length;k++)if(kind[near[k]]!==0)list.push(near[k]);
+        let under=inside&&!ramps&&level?low:NaN;
+        if(low>-Infinity){let held=false;for(let k=end;k<list.length;k++)if(fy[list[k]]===low&&covers(list[k],x0,x1,z0,z1)){held=true;break;}if(!held)under=NaN;}
+        if(!flats)top[c]=under;
+        else if(clean&&flats<256){let whole=false;for(let k=from;k<end&&fy[list[k]]===fy[list[from]];k++)if(covers(list[k],x0,x1,z0,z1)){whole=true;break;}if(whole)top[c]=fy[list[from]];else{flatsAt[c]=flats;top[c]=under;}}
       }
-      let result=Number.isFinite(flat)?flat:Number.isFinite(y)?y:fallback;
-      for(const t of activeTraps)if(t.kind==='floor'&&Math.abs(x-t.x)<t.w/2&&Math.abs(z-t.z)<t.d/2&&Math.abs(result-t.y)<.1)result=t.y-(t.travel||.85)*t.progress;
+      start[cells]=list.length;
+      floorBuckets=buckets;gFX=fx;gFZ=fz;gHW=hw;gHD=hd;gFY=fy;gSX=sx;gSZ=sz;gFK=kind;gAll=all;gStart=start;gCells=Int32Array.from(list);gFlats=flatsAt;gTop=top;floorList=floors;floorCount=n;
+    }
+    indexFloors();
+    function groundScan(x,z,list,from,to){
+      let y=-Infinity,flat=-Infinity,fallback=-Infinity;
+      for(let k=from;k<to;k++){const i=list[k],fx=gFX[i],fz=gFZ[i];if(Math.abs(x-fx)<=gHW[i]&&Math.abs(z-fz)<=gHD[i]){
+        const h=gFY[i]+(x-fx)*gSX[i]+(z-fz)*gSZ[i],kind=gFK[i];
+        if(kind===2)fallback=Math.max(fallback,h);else if(kind===0)flat=Math.max(flat,h);else y=Math.max(y,h);
+      }}
+      return Number.isFinite(flat)?flat:Number.isFinite(y)?y:fallback;
+    }
+    function ground(x,z,activeTraps=trapStates){
+      if(floors.length!==floorCount||floors!==floorList)indexFloors();
+      if(!floorCount)return 0;
+      // x/8*4 keeps each cell inside the very bucket the 8 m index picks, even for subnormals.
+      const gx=Math.floor(x/8*4)-gGX,gz=Math.floor(z/8*4)-gGZ;let result;
+      if(gx>=0&&gx<gGW&&gz>=0&&gz<gGD){
+        const c=gz*gGW+gx,flats=gFlats[c];result=NaN;
+        if(flats)for(let k=gStart[c],end=k+flats;k<end;k++){const i=gCells[k];if(Math.abs(x-gFX[i])<=gHW[i]&&Math.abs(z-gFZ[i])<=gHD[i]){result=gFY[i];break;}}
+        if(result!==result){const top=gTop[c];result=top===top?top:groundScan(x,z,gCells,gStart[c],gStart[c+1]);}
+      }else result=groundScan(x,z,gAll,0,floorCount);
+      // Floor traps (none in the generated worlds) keep their order. The filtered list is
+      // cached per trap list: callers replace a list instead of reordering it in place.
+      if(activeTraps!==trapList||activeTraps.length!==trapCount){const list=[];for(const t of activeTraps)if(t.kind==='floor')list.push(t);floorTraps=list;trapList=activeTraps;trapCount=activeTraps.length;}
+      for(let k=0;k<floorTraps.length;k++){const t=floorTraps[k];if(Math.abs(x-t.x)<t.w/2&&Math.abs(z-t.z)<t.d/2&&Math.abs(result-t.y)<.1)result=t.y-(t.travel||.85)*t.progress;}
       return result;
     }
     function fallbackLanding(x,z,y){
@@ -5962,7 +6019,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       lifts:(world.lifts||[]).map(l=>({...l,y:l.minY,target:l.minY,powered:l.requires===undefined,moving:false,carrying:false})),
       aiStats:{awake:0,dormant:0,reserve:0,combat:0,combatCap:maxCombat,alive:world.enemies.length,pathSearches:0,pathDeferred:0}};
     const encounterMap=new Map(s.encounters.map(q=>[q.id,q])),enemyEncounter=new Map();
-    for(const q of s.encounters)for(let wave=0;wave<q.waves.length;wave++)for(const id of q.waves[wave].enemyIds){enemyEncounter.set(id,q);const e=s.enemies[id];e.encounterId=q.id;e.encounterWave=wave;e.encounterReleased=false;e.combatEnabled=false;}
+    // SIM-06: encounter index per enemy, same last-wins order as the map above.
+    const enemyEncounterIndex=new Int32Array(s.enemies.length).fill(-1);
+    for(let qi=0;qi<s.encounters.length;qi++){const q=s.encounters[qi];for(let wave=0;wave<q.waves.length;wave++)for(const id of q.waves[wave].enemyIds){enemyEncounter.set(id,q);enemyEncounterIndex[id]=qi;const e=s.enemies[id];e.encounterId=q.id;e.encounterWave=wave;e.encounterReleased=false;e.combatEnabled=false;}}
+    // T10: reusable selection buffers (indices, precomputed keys, chosen flags, per-encounter counters).
+    let selectOrder=new Int32Array(s.enemies.length),selectKeys=new Float64Array(s.enemies.length),selectChosen=new Uint8Array(s.enemies.length);
+    const selectLocals=new Int32Array(s.encounters.length);
     for(const e of s.enemies)if(!present(e))e.sleeping=true;
     s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);trapStates=s.traps;let giants=s.enemies.filter(giant);
     // Public locomotion values describe displacement after collision, never held keys.
@@ -5980,8 +6042,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const b=world.bounds,trapBoxes=[];let bossAttackSerial=0,explosionSerial=0,projectileSerial=0,rubbleSerial=0,terrainDirty=false,seenDestructionRevision=destruction?.revision||0;
     const doorBoxes=s.doors.map(d=>({minX:d.x-d.w/2,maxX:d.x+d.w/2,minZ:d.z-d.d/2,maxZ:d.z+d.d/2,minY:0,maxY:0}));
     let navDirty=false,routeBudget=Infinity,routeSearches=0,routeDeferred=0;
+    // Local nav invalidation (SIM-01): [minX,maxX,minZ,maxZ] of what changed since the last refresh.
+    const navRects=[],noTraps=[];
+    function navMark(q){if(advanced&&q)navRects.push(q.minX,q.maxX,q.minZ,q.maxZ);}
     function updateDoorBoxes(doors=s.doors){
-      for(let i=0;i<doors.length;i++){const d=doors[i],q=doorBoxes[i];q.minY=(d.y||0)+(d.destroyed?1000:d.progress*(d.h+.25));q.maxY=q.minY+d.h;}
+      // Mutated in place: any vertical move (progression, opening, destruction) marks the door.
+      for(let i=0;i<doors.length;i++){const d=doors[i],q=doorBoxes[i],y=(d.y||0)+(d.destroyed?1000:d.progress*(d.h+.25));if(q.minY!==y)navMark(q);q.minY=y;q.maxY=q.minY+d.h;}
     }
     updateDoorBoxes();
     const powered=id=>id===undefined||s.mechanisms.some(m=>m.id===id&&m.active);
@@ -5998,9 +6064,9 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     // the Custodian. A single bucket lookup replaces a full level scan per footstep.
     const bucketSize=8,bucketRadius=1.05,bucketX=Math.floor(b.minX/bucketSize),bucketZ=Math.floor(b.minZ/bucketSize);
     const bucketWidth=Math.floor(b.maxX/bucketSize)-bucketX+1,bucketDepth=Math.floor(b.maxZ/bucketSize)-bucketZ+1;
-    const collisionBuckets=Array.from({length:bucketWidth*bucketDepth},()=>[]);
+    const collisionBuckets=Array.from({length:bucketWidth*bucketDepth},()=>[]);let collisionBuilds=0;
     function rebuildCollision(){
-      for(const list of collisionBuckets)list.length=0;
+      collisionBuilds++;for(const list of collisionBuckets)list.length=0;
     for(const q of solids){
       const x0=Math.max(0,Math.floor((q.minX-bucketRadius-1e-7)/bucketSize)-bucketX),x1=Math.min(bucketWidth-1,Math.floor((q.maxX+bucketRadius+1e-7)/bucketSize)-bucketX);
       const z0=Math.max(0,Math.floor((q.minZ-bucketRadius-1e-7)/bucketSize)-bucketZ),z1=Math.min(bucketDepth-1,Math.floor((q.maxZ+bucketRadius+1e-7)/bucketSize)-bucketZ);
@@ -6008,12 +6074,46 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     }
     }
     rebuildCollision();
+    // CSR mirror of collisionBuckets, shared by the debris, blocked() and ray lookups:
+    // mirrorStart[cell]..mirrorStart[cell+1] index mirrorIdx (position in solids) and
+    // mirrorBox (minX,maxX,minY,maxY,minZ,maxZ per entry), in bucket order. It is rebuilt
+    // on first use once solids is replaced or rebuildCollision runs again (syncDestruction,
+    // restore), so a revision that keeps the box objects still refreshes it. solidStamp marks
+    // the boxes already seen by one query.
+    let mirrorFor=null,mirrorBuild=-1,mirrorStart=new Int32Array(0),mirrorIdx=new Int32Array(0),mirrorBox=new Float64Array(0),solidStamp=new Uint32Array(0),solidSerial=0;
+    function ensureMirror(){
+      if(mirrorFor===solids&&mirrorBuild===collisionBuilds)return;mirrorFor=solids;mirrorBuild=collisionBuilds;
+      const cells=collisionBuckets.length,at=new Map();for(let n=0;n<solids.length;n++)at.set(solids[n],n);
+      let total=0;mirrorStart=new Int32Array(cells+1);for(let k=0;k<cells;k++){mirrorStart[k]=total;total+=collisionBuckets[k].length;}mirrorStart[cells]=total;
+      mirrorIdx=new Int32Array(total);mirrorBox=new Float64Array(total*6);
+      for(let k=0;k<cells;k++){const list=collisionBuckets[k];for(let j=0,o=mirrorStart[k];j<list.length;j++,o++){const q=list[j];mirrorIdx[o]=at.get(q);mirrorBox[o*6]=q.minX;mirrorBox[o*6+1]=q.maxX;mirrorBox[o*6+2]=q.minY;mirrorBox[o*6+3]=q.maxY;mirrorBox[o*6+4]=q.minZ;mirrorBox[o*6+5]=q.maxZ;}}
+      solidStamp=new Uint32Array(solids.length);solidSerial=0;
+    }
     function syncDestruction(){
       if(!destruction||seenDestructionRevision===destruction.revision)return;
-      solids=destruction.colliders;seenDestructionRevision=destruction.revision;s.destructionRevision++;rebuildCollision();navDirty=terrainDirty=true;unsupportedBodies();
+      navDiff(solids,destruction.colliders);solids=destruction.colliders;seenDestructionRevision=destruction.revision;s.destructionRevision++;rebuildCollision();navDirty=terrainDirty=true;unsupportedBodies();
       for(const m of s.mechanisms)if(!destruction.isAlive(m.destructibleId)){m.shellHp=0;activateMechanism(m,true);}
       for(const t of s.traps)if(!destruction.isAlive(t.destructibleId)){t.hp=0;t.destroyed=true;t.box=null;t.hot=t.warning=false;}
       for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}
+    }
+    // SIM-01: multiset diff by exact bounds (all navigation reads) of two collider revisions,
+    // a new array each time. The revision delta of lot 03 replaces it.
+    const navF64=new Float64Array(6),navU32=new Uint32Array(navF64.buffer);
+    function navHash(q){
+      navF64[0]=q.minX;navF64[1]=q.maxX;navF64[2]=q.minY;navF64[3]=q.maxY;navF64[4]=q.minZ;navF64[5]=q.maxZ;
+      let h=2166136261;for(let k=0;k<12;k++)h=Math.imul(h^navU32[k],16777619);return h|0;
+    }
+    function navDiff(before,after){
+      if(!advanced)return;
+      if(before===after){navMark(b);return;}// Mutated in place: changes cannot be told apart.
+      const pool=new Map();
+      for(const q of before){const h=navHash(q),list=pool.get(h);if(list)list.push(q);else pool.set(h,[q]);}
+      for(const q of after){
+        const list=pool.get(navHash(q));let at=-1;
+        if(list)for(let j=0;j<list.length;j++){const o=list[j];if(o.minX===q.minX&&o.maxX===q.maxX&&o.minY===q.minY&&o.maxY===q.maxY&&o.minZ===q.minZ&&o.maxZ===q.maxZ){at=j;break;}}
+        if(at>=0){list[at]=list[list.length-1];list.pop();}else navMark(q);
+      }
+      for(const list of pool.values())for(const q of list)navMark(q);
     }
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
@@ -6021,15 +6121,21 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     if(world.campaign===true)identity.push({campaign:true,...(bossProgression?{campaignVersion:2}:{}),index:world.index,chapter:world.chapter,trophies:trophyDefs});
     for(const c of JSON.stringify(identity))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
     fingerprint=(fingerprint>>>0).toString(36);
-    function blocked(x,z,r=.28,y=ground(x,z),doors=doorBoxes,staticBoxes=solids,traps=trapBoxes,height=1.8){
-      if(x-r<b.minX||x+r>b.maxX||z-r<b.minZ||z+r>b.maxZ||!Number.isFinite(y))return true;
-      const boxes=staticBoxes===solids&&r>=0&&r<=bucketRadius?collisionBuckets[(Math.floor(z/bucketSize)-bucketZ)*bucketWidth+Math.floor(x/bucketSize)-bucketX]||staticBoxes:staticBoxes;
-      for(const list of [boxes,doors,traps])for(const q of list){
+    // SIM-04/SIM-09: same predicates, no array literal per call. The orders of the
+    // three lists and of their entries are the ones of the former [boxes,doors,traps].
+    function blockedList(list,x,z,r,y,height){
+      for(let i=0;i<list.length;i++){
+        const q=list[i];
         if(q.minY>=y+height-1e-7||q.maxY<=y+.06)continue;
         const dx=x<q.minX?x-q.minX:x>q.maxX?x-q.maxX:0,dz=z<q.minZ?z-q.minZ:z>q.maxZ?z-q.maxZ:0;
         if(dx*dx+dz*dz<r*r)return true;
       }
       return false;
+    }
+    function blocked(x,z,r=.28,y=ground(x,z),doors=doorBoxes,staticBoxes=solids,traps=trapBoxes,height=1.8){
+      if(x-r<b.minX||x+r>b.maxX||z-r<b.minZ||z+r>b.maxZ||!Number.isFinite(y))return true;
+      const boxes=staticBoxes===solids&&r>=0&&r<=bucketRadius?collisionBuckets[(Math.floor(z/bucketSize)-bucketZ)*bucketWidth+Math.floor(x/bucketSize)-bucketX]||staticBoxes:staticBoxes;
+      return blockedList(boxes,x,z,r,y,height)||blockedList(doors,x,z,r,y,height)||blockedList(traps,x,z,r,y,height);
     }
     function localSolids(x,z){return collisionBuckets[(Math.floor(z/bucketSize)-bucketZ)*bucketWidth+Math.floor(x/bucketSize)-bucketX]||solids;}
     function discBox(x,z,r,q){const dx=x<q.minX?q.minX-x:x>q.maxX?x-q.maxX:0,dz=z<q.minZ?q.minZ-z:z>q.maxZ?z-q.maxZ:0;return dx*dx+dz*dz<r*r;}
@@ -6095,7 +6201,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         for(const e of passengers){putHeight(e,feet(e)+delta);if(e===p)l.carrying=true;}
         if(Math.abs(l.y-l.target)<1e-7){l.y=l.target;l.moving=false;emit('liftStop',{id:l.id,x:l.x,y:l.y,z:l.z,carrying:l.carrying&&onLift(l,p.x,p.z)&&Math.abs(p.y-l.y)<.25});l.carrying=false;}
       }
-      if(navDirty){refreshNav();navDirty=terrainDirty=false;}
+      if(navDirty){refreshNav();navDirty=terrainDirty=false;}else if(navRects.length)navInvalidate();
     }
     function landingAt(x,z,ceiling,r){
       let y=ground(x,z);if(y>ceiling+.08)y=-Infinity;
@@ -6295,7 +6401,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const nav=new Uint8Array(nx*nz),dist=new Int16Array(nx*nz),queue=new Int32Array(nx*nz);
     const coord=i=>[b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell];
     const idx=(x,z)=>clamp(Math.round((z-b.minZ)/cell),0,nz-1)*nx+clamp(Math.round((x-b.minX)/cell),0,nx-1);
-    for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}
+    for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;}navRects.length=0;
     function rebuildNav(){
       dist.fill(-1);let start=idx(p.x,p.z);
       if(!nav[start]){let best=Infinity;for(let i=0;i<nav.length;i++)if(nav[i]){const [x,z]=coord(i),d=(x-p.x)**2+(z-p.z)**2;if(d<best){best=d;start=i;}}}
@@ -6454,9 +6560,16 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       }
       return true;
     }
+    // SIM-06: counts in one pass per encounter, no flatMap/filter arrays.
     function encounterCounts(){
-      for(const q of s.encounters){const ids=q.waves.flatMap(w=>w.enemyIds);q.total=ids.length;q.remaining=ids.filter(id=>s.enemies[id].hp>0).length;q.active=ids.filter(id=>alive(s.enemies[id])&&s.enemies[id].combatEnabled).length;}
-      Object.assign(s.aiStats,{reserve:s.enemies.filter(e=>e.hp>0&&!present(e)).length,combat:s.enemies.filter(e=>alive(e)&&!giant(e)&&e.combatEnabled&&(!e.bossWave||e.bossReleased)).length,combatCap:maxCombat});
+      for(const q of s.encounters){
+        let total=0,remaining=0,activeCount=0;
+        for(const w of q.waves)for(const id of w.enemyIds){const e=s.enemies[id];total++;if(e.hp>0)remaining++;if(alive(e)&&e.combatEnabled)activeCount++;}
+        q.total=total;q.remaining=remaining;q.active=activeCount;
+      }
+      let reserveCount=0,combatCount=0;
+      for(const e of s.enemies){if(e.hp>0&&!present(e))reserveCount++;if(alive(e)&&!giant(e)&&e.combatEnabled&&(!e.bossWave||e.bossReleased))combatCount++;}
+      s.aiStats.reserve=reserveCount;s.aiStats.combat=combatCount;s.aiStats.combatCap=maxCombat;
     }
     function updateEncounters(dt){
       if(!progression)return;
@@ -6466,20 +6579,21 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         encounterWait=.2;let probes=8;
         for(const q of s.encounters){
           if(campaign&&q.requiresTrophy&&trophyState(q.requiresTrophy)?.phase!=='trial')continue;
-          const ids=q.waves.flatMap(w=>w.enemyIds),remaining=ids.filter(id=>s.enemies[id].hp>0);
-          if(!remaining.length){if(q.status!=='cleared'){q.status='cleared';q.pendingWave=-1;q.timer=0;emit('encounterClear',{id:q.id,label:q.label||'Zone sécurisée'});}continue;}
+          let remainingCount=0;for(const w of q.waves)for(const id of w.enemyIds)if(s.enemies[id].hp>0)remainingCount++;
+          if(!remainingCount){if(q.status!=='cleared'){q.status='cleared';q.pendingWave=-1;q.timer=0;emit('encounterClear',{id:q.id,label:q.label||'Zone sécurisée'});}continue;}
           if(q.status==='dormant'&&inEncounter(q))announceWave(q,0);
           if(q.status==='active'&&q.wave>=0&&q.waves[q.wave].enemyIds.every(id=>s.enemies[id].hp<=0)&&q.wave+1<q.waves.length&&inEncounter(q,8))announceWave(q,q.wave+1);
           if(q.pendingWave<0||q.timer>0||!inEncounter(q,8))continue;
           q.status='waiting';
           const wave=q.waves[q.pendingWave].enemyIds.map(id=>s.enemies[id]).filter(e=>e.hp>0),need=wave.filter(e=>!e.encounterReleased);
-          const engaged=s.enemies.filter(e=>alive(e)&&!giant(e)&&e.encounterReleased&&!e.returning&&(!e.bossWave||e.bossReleased)&&(Math.hypot(e.x-p.x,e.z-p.z)<48||bossProgression&&e.entryGrace>0));
-          const local=engaged.filter(e=>enemyEncounter.get(e.id)===q).length;
-          let slots=campaign?Math.min(maxCombat-engaged.length,(q.maxActive||6)-local):Infinity;
-          if(campaign?slots<=0:engaged.length+need.length>maxCombat||local+need.length>(q.maxActive||6))continue;
+          let engagedCount=0,local=0;
+          for(const e of s.enemies)if(alive(e)&&!giant(e)&&e.encounterReleased&&!e.returning&&(!e.bossWave||e.bossReleased)&&(Math.hypot(e.x-p.x,e.z-p.z)<48||bossProgression&&e.entryGrace>0)){engagedCount++;if(enemyEncounter.get(e.id)===q)local++;}
+          let slots=campaign?Math.min(maxCombat-engagedCount,(q.maxActive||6)-local):Infinity;
+          if(campaign?slots<=0:engagedCount+need.length>maxCombat||local+need.length>(q.maxActive||6))continue;
           // A crowded front cannot accumulate new waves while the player rushes
           // through adjacent triggers. Existing bodies always remain physical.
-          const nearbyCount=s.enemies.filter(e=>alive(e)&&!giant(e)&&(!e.bossWave||e.bossReleased)&&Math.hypot(e.x-p.x,e.z-p.z)<24&&!wave.includes(e)).length;
+          let nearbyCount=0;
+          for(const e of s.enemies)if(alive(e)&&!giant(e)&&(!e.bossWave||e.bossReleased)&&Math.hypot(e.x-p.x,e.z-p.z)<24&&!wave.includes(e))nearbyCount++;
           if(campaign)slots=Math.min(slots,maxCombat-nearbyCount-wave.filter(e=>present(e)&&e.encounterReleased).length);
           else if(nearbyCount+need.filter(e=>!present(e)).length>maxCombat)continue;
           for(const e of wave){
@@ -6503,16 +6617,34 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           if(wave.every(e=>e.encounterReleased)){q.wave=q.pendingWave;q.pendingWave=-1;q.status='active';}
         }
       }
-      const candidates=s.enemies.filter(e=>{
-        if(!alive(e)||giant(e)||!e.encounterReleased||e.bossWave&&!e.bossReleased)return false;
-        const q=enemyEncounter.get(e.id);if(!q)return true;
-        if(e.returning){if(Math.hypot(e.x-p.x,e.z-p.z)<12&&sight(e.x,e.z,p.x,p.z,eyeHeight(e),p.y+1.45)){e.returning=false;e.quietTime=0;remember(e,p.x,p.z,'engage',8,p.y+1.45);}else return false;}
-        return e.hasMemory||inEncounter(q,8)||e.combatEnabled&&e.quietTime<5;
-      }).sort((a,c)=>(Math.hypot(a.x-p.x,a.z-p.z)-(a.combatEnabled?8:0))-(Math.hypot(c.x-p.x,c.z-p.z)-(c.combatEnabled?8:0))||a.id-c.id);
-      const selected=new Set(),locals=new Map();
-      for(const e of candidates){if(selected.size>=maxCombat)break;const q=enemyEncounter.get(e.id),n=locals.get(q)||0;if(q&&n>=(q.maxActive||6))continue;selected.add(e.id);locals.set(q,n+1);}
+      // T10: same order as the former stable sort on (distance minus early bonus, id),
+      // obtained by insertion on precomputed keys; no array, Set or Map per pass.
+      const count=s.enemies.length;
+      if(selectOrder.length<count){selectOrder=new Int32Array(count);selectKeys=new Float64Array(count);selectChosen=new Uint8Array(count);}
+      selectChosen.fill(0);
+      let candidateCount=0;
+      for(const e of s.enemies){
+        if(!alive(e)||giant(e)||!e.encounterReleased||e.bossWave&&!e.bossReleased)continue;
+        const q=enemyEncounter.get(e.id);
+        if(q){
+          if(e.returning){if(Math.hypot(e.x-p.x,e.z-p.z)<12&&sight(e.x,e.z,p.x,p.z,eyeHeight(e),p.y+1.45)){e.returning=false;e.quietTime=0;remember(e,p.x,p.z,'engage',8,p.y+1.45);}else continue;}
+          else if(!(e.hasMemory||inEncounter(q,8)||e.combatEnabled&&e.quietTime<5))continue;
+        }
+        const key=Math.hypot(e.x-p.x,e.z-p.z)-(e.combatEnabled?8:0);
+        let j=candidateCount-1;
+        while(j>=0&&(selectKeys[j]>key||selectKeys[j]===key&&selectOrder[j]>e.id)){selectKeys[j+1]=selectKeys[j];selectOrder[j+1]=selectOrder[j];j--;}
+        selectKeys[j+1]=key;selectOrder[j+1]=e.id;candidateCount++;
+      }
+      selectLocals.fill(0);
+      let selectedCount=0;
+      for(let i=0;i<candidateCount;i++){
+        if(selectedCount>=maxCombat)break;
+        const e=s.enemies[selectOrder[i]],ei=enemyEncounterIndex[e.id];
+        if(ei>=0){const limit=s.encounters[ei].maxActive||6;if(selectLocals[ei]>=limit)continue;selectLocals[ei]++;}
+        selectChosen[e.id]=1;selectedCount++;
+      }
       for(const e of s.enemies)if(!giant(e)){
-        const enabled=selected.has(e.id);if(e.combatEnabled&&!enabled&&alive(e)&&enemyEncounter.has(e.id)){e.returning=true;clearEvidence(e);}
+        const enabled=selectChosen[e.id]===1;if(e.combatEnabled&&!enabled&&alive(e)&&enemyEncounter.has(e.id)){e.returning=true;clearEvidence(e);}
         e.combatEnabled=enabled;
       }
       encounterCounts();
@@ -6771,19 +6903,49 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       const q={id:++projectileSerial,kind,owner,x:source[0],y:source[1],z:source[2],vx:velocity[0],vy:velocity[1],vz:velocity[2],age:0,life:kind==='rocket'?5:4,fuse:kind==='grenade'?1.8:0,radius:kind==='rocket'?.24:.17,blastRadius:kind==='rocket'?3.4:3.2,damage:kind==='rocket'?28:24,terrainPower:kind==='rocket'?38:28,travel:0,bounces:0,resting:false,...settings};
       s.projectiles.push(q);emit(kind==='grenade'&&owner==='player'&&settings.hand?'grenadeLaunch':kind,{x:q.x,y:q.y,z:q.z,owner,id:q.id,...(settings.hand?{hand:settings.hand,weapon:kind==='grenade'?3:2}:{})});return q;
     }
+    // Two-entry memo: ground() cannot change during one updateDebris call, which resets it.
+    let dfX0=NaN,dfZ0=NaN,dfA0=NaN,dfC0=NaN,dfV0=0,dfX1=NaN,dfZ1=NaN,dfA1=NaN,dfC1=NaN,dfV1=0,dfTurn=0;
     function debrisFloor(x,z,h){
-      return Math.max(ground(x,z),ground(x-h[0],z-h[2]),ground(x+h[0],z-h[2]),ground(x-h[0],z+h[2]),ground(x+h[0],z+h[2]));
+      const a=h[0],c=h[2];
+      if(x===dfX0&&z===dfZ0&&a===dfA0&&c===dfC0)return dfV0;
+      if(x===dfX1&&z===dfZ1&&a===dfA1&&c===dfC1)return dfV1;
+      const v=Math.max(ground(x,z),ground(x-a,z-c),ground(x+a,z-c),ground(x-a,z+c),ground(x+a,z+c));
+      if(dfTurn){dfX1=x;dfZ1=z;dfA1=a;dfC1=c;dfV1=v;}else{dfX0=x;dfZ0=z;dfA0=a;dfC0=c;dfV0=v;}dfTurn^=1;return v;
     }
+    // The boxes near a piece, in the order of the former Set: the dynamic list first, then
+    // the static boxes bucket by bucket, each once (boxes.find and debrisSweep ties rely on
+    // it). The array is reused: it lives until the next call, inside one piece's update.
+    const debrisNear=[];let debrisStaticFrom=0;
     function debrisBoxes(q,h,reach,dynamic){
-      const x0=Math.max(0,Math.floor((q.x-h[0]-reach)/bucketSize)-bucketX),x1=Math.min(bucketWidth-1,Math.floor((q.x+h[0]+reach)/bucketSize)-bucketX),z0=Math.max(0,Math.floor((q.z-h[2]-reach)/bucketSize)-bucketZ),z1=Math.min(bucketDepth-1,Math.floor((q.z+h[2]+reach)/bucketSize)-bucketZ),found=new Set(dynamic);
-      for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)for(const box of collisionBuckets[z*bucketWidth+x])found.add(box);
-      return Array.from(found).filter(box=>box.minX<q.x+h[0]+reach+.02&&box.maxX>q.x-h[0]-reach-.02&&box.minZ<q.z+h[2]+reach+.02&&box.maxZ>q.z-h[2]-reach-.02);
+      const x0=Math.max(0,Math.floor((q.x-h[0]-reach)/bucketSize)-bucketX),x1=Math.min(bucketWidth-1,Math.floor((q.x+h[0]+reach)/bucketSize)-bucketX),z0=Math.max(0,Math.floor((q.z-h[2]-reach)/bucketSize)-bucketZ),z1=Math.min(bucketDepth-1,Math.floor((q.z+h[2]+reach)/bucketSize)-bucketZ),out=debrisNear;
+      const ax=q.x+h[0]+reach+.02,bx=q.x-h[0]-reach-.02,az=q.z+h[2]+reach+.02,bz=q.z-h[2]-reach-.02;out.length=0;
+      for(let k=0;k<dynamic.length;k++){const box=dynamic[k];if(box.minX<ax&&box.maxX>bx&&box.minZ<az&&box.maxZ>bz)out.push(box);}
+      debrisStaticFrom=out.length;
+      ensureMirror();if(++solidSerial>=4294967295){solidStamp.fill(0);solidSerial=1;}const stamp=solidSerial;
+      for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){const cell=z*bucketWidth+x;for(let o=mirrorStart[cell],end=mirrorStart[cell+1];o<end;o++){const n=mirrorIdx[o];if(solidStamp[n]===stamp)continue;solidStamp[n]=stamp;const box=solids[n];if(box.minX<ax&&box.maxX>bx&&box.minZ<az&&box.maxZ>bz)out.push(box);}}
+      return out;
     }
     const debrisOverlaps=(q,h,box)=>q.x+h[0]>box.minX+.0002&&q.x-h[0]<box.maxX-.0002&&q.y+h[1]>box.minY+.0002&&q.y-h[1]<box.maxY-.0002&&q.z+h[2]>box.minZ+.0002&&q.z-h[2]<box.maxZ-.0002;
     function debrisSupport(q,h,boxes){
       const bottom=q.y-h[1],floor=debrisFloor(q.x,q.z,h);let height=Math.abs(bottom-floor)<.018?floor:-Infinity;
       for(const box of boxes)if(Math.abs(bottom-box.maxY)<.018&&q.x+h[0]>box.minX+.002&&q.x-h[0]<box.maxX-.002&&q.z+h[2]>box.minZ+.002&&q.z-h[2]<box.maxZ-.002)height=Math.max(height,box.maxY);
       return height;
+    }
+    // Sleep (SIM-03): a resting piece whose own support is the floor or a static collider is
+    // skipped while seenDestructionRevision stays the same. Exact: that support only changes
+    // with a revision (the floors are fixed, solids is replaced by syncDestruction), a resting
+    // piece does not move, and doors, traps and lifts can only add support. A floor trap moves
+    // ground() itself, so nothing sleeps while one is listed. Any future moving support able
+    // to withdraw from under a piece (lot 17: carried bodies, platforms) must wake the pieces
+    // it held with debrisSleep.delete. Never saved: restore starts with an empty map.
+    let debrisSleep=new WeakMap();
+    // Reused positions at the start of updateEnemies (T7): no per-step array.
+    let enemyStarts=new Float64Array(0);
+    function debrisStaticSupport(q,h,boxes){
+      // Same predicates as debrisSupport, on the floor and the static colliders of boxes only.
+      const bottom=q.y-h[1];if(Math.abs(bottom-debrisFloor(q.x,q.z,h))<.018)return true;
+      for(let k=debrisStaticFrom;k<boxes.length;k++){const box=boxes[k];if(Math.abs(bottom-box.maxY)<.018&&q.x+h[0]>box.minX+.002&&q.x-h[0]<box.maxX-.002&&q.z+h[2]>box.minZ+.002&&q.z-h[2]<box.maxZ-.002)return true;}
+      return false;
     }
     function debrisSweep(q,h,delta,boxes){
       const pos=[q.x,q.y,q.z];let nearest=1,normal=null;
@@ -6809,11 +6971,14 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     }
     function updateDebris(dt){
       const dynamic=[...doorBoxes,...trapBoxes,...s.lifts.map(l=>({minX:l.x-l.w/2,maxX:l.x+l.w/2,minY:l.y-.22,maxY:l.y,minZ:l.z-l.d/2,maxZ:l.z+l.d/2}))],skin=.001;
+      let sleepy=true;for(let k=0;k<trapStates.length;k++)if(trapStates[k].kind==='floor'){sleepy=false;break;}
+      dfX0=dfX1=NaN;
       for(const q of s.debris){
         q.age=Math.min(1e7,q.age+dt);q.impactWait=Math.max(0,(q.impactWait||0)-dt);if(!q.structural&&q.age>=q.life||dt<=0)continue;
+        if(q.resting&&sleepy&&debrisSleep.get(q)===seenDestructionRevision)continue;
         q.rotation=q.rotation||[0,0,0];q.angularVelocity=q.angularVelocity||[0,0,0];q.settleTime=q.settleTime||0;
         let h=debrisHalf(q),boxes=debrisBoxes(q,h,Math.hypot(q.vx,q.vz)*dt+.1,dynamic);
-        if(q.resting){if(Number.isFinite(debrisSupport(q,h,boxes)))continue;q.resting=false;q.settleTime=0;}
+        if(q.resting){if(Number.isFinite(debrisSupport(q,h,boxes))){if(sleepy&&debrisStaticSupport(q,h,boxes))debrisSleep.set(q,seenDestructionRevision);continue;}q.resting=false;q.settleTime=0;debrisSleep.delete(q);}
         const count=Math.max(1,Math.ceil(dt/.0125)),step=dt/count;
         for(let i=0;i<count&&!q.resting;i++){
           h=debrisHalf(q);
@@ -6839,7 +7004,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           }
           const below=debrisFloor(q.x,q.z,h);if(q.y-h[1]<below){q.y=below+h[1]+skin;if(q.vy<0)debrisContact(q,[0,1,0]);}
           const supported=Number.isFinite(debrisSupport(q,h,boxes)),flatEnough=!q.structural||rotationBlocked||target.every((v,k)=>Math.abs(wrap(v-q.rotation[k]))<.025);
-          if(supported&&Math.hypot(q.vx,q.vy,q.vz)<.25&&flatEnough){q.settleTime+=step;if(q.settleTime>=.18){q.resting=true;q.vx=q.vy=q.vz=0;q.angularVelocity=[0,0,0];q.settleTime=.18;}}
+          if(supported&&Math.hypot(q.vx,q.vy,q.vz)<.25&&flatEnough){q.settleTime+=step;if(q.settleTime>=.18){q.resting=true;q.vx=q.vy=q.vz=0;q.angularVelocity=[0,0,0];q.settleTime=.18;debrisSleep.delete(q);}}
           else q.settleTime=0;
         }
       }
@@ -7057,16 +7222,18 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     // or a nearby observer can supply a position; neither grants vision through walls.
     // A fixed spatial index serves local sound, squad alerts and body separation.
     // Membership contains every living actor; sleeping actors are never despawned.
+    // SIM-06: numeric bucket keys ((ix+32768)*65536+(iz+32768)); valid for |x|,|z| < 262 km,
+    // which the world bounds guarantee. Lists are emptied and reused, never reallocated.
     const neighbors=new Map();
     function rebuildNeighbors(){
-      neighbors.clear();
-      for(const e of s.enemies)if(alive(e)){const key=Math.floor(e.x/8)+','+Math.floor(e.z/8);let list=neighbors.get(key);if(!list)neighbors.set(key,list=[]);list.push(e);}
+      for(const list of neighbors.values())list.length=0;
+      for(const e of s.enemies)if(alive(e)){const key=(Math.floor(e.x/8)+32768)*65536+(Math.floor(e.z/8)+32768);let list=neighbors.get(key);if(!list)neighbors.set(key,list=[]);list.push(e);}
     }
     function nearby(x,z,r){
       if(!advanced)return progression?s.enemies.filter(present):s.enemies;
       const result=[];
       for(let iz=Math.floor((z-r)/8);iz<=Math.floor((z+r)/8);iz++)for(let ix=Math.floor((x-r)/8);ix<=Math.floor((x+r)/8);ix++){
-        const list=neighbors.get(ix+','+iz);if(list)for(const e of list)result.push(e);
+        const list=neighbors.get((ix+32768)*65536+(iz+32768));if(list)for(const e of list)result.push(e);
       }
       return result;
     }
@@ -7129,28 +7296,39 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     }
     function radius(e){return giant(e)?1.5*scale(e):e.type===3?1.05:.38;}
     function segmentFree(ax,az,bx,bz,r=.4){
-      if(blocked(ax,az,r)||blocked(bx,bz,r))return false;
-      const dx=bx-ax,dz=bz-az,ay=groundAt(ax,az),by=groundAt(bx,bz),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
+      // Static map only, like the walking cells (SIM-V1): trap poses never enter routes or the
+      // edge cache; traps still block bodies in move() and still hurt.
+      if(blocked(ax,az,r,ground(ax,az),doorBoxes,solids,noTraps)||blocked(bx,bz,r,ground(bx,bz),doorBoxes,solids,noTraps))return false;
+      const dx=bx-ax,dz=bz-az,ay=groundAt(ax,az),by=groundAt(bx,bz),lowY=Math.min(ay,by),highY=Math.max(ay,by),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
       // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
       const short=Math.max(Math.abs(dx),Math.abs(dz))/2+r<=bucketRadius;
       const local=short?collisionBuckets[(Math.floor((az+bz)/2/bucketSize)-bucketZ)*bucketWidth+Math.floor((ax+bx)/2/bucketSize)-bucketX]||solids:solids;
-      for(const list of [local,doorBoxes])for(const q of list){
-        if(q.maxY<=Math.min(ay,by)+.06||q.minY>=Math.max(ay,by)+1.8)continue;
-        // Most A* edge checks are shorter than a metre: discard remote boxes
-        // before building intervals, without approximating the remaining sweep.
-        if(q.maxX<minX||q.minX>maxX||q.maxZ<minZ||q.minZ>maxZ)continue;
-        let lo=0,hi=1;
-        for(const [origin,delta,min,max] of [[ax,dx,q.minX-r,q.maxX+r],[az,dz,q.minZ-r,q.maxZ+r]]){
-          if(Math.abs(delta)<1e-8){if(origin<min||origin>max){hi=-1;break;}}
-          else {let a=(min-origin)/delta,c=(max-origin)/delta;if(a>c)[a,c]=[c,a];lo=Math.max(lo,a);hi=Math.min(hi,c);if(hi<lo)break;}
+      // SIM-09: the two lists and the two slab axes are unrolled; no array per call.
+      for(let pass=0;pass<2;pass++){
+        const list=pass?doorBoxes:local;
+        for(let i=0;i<list.length;i++){
+          const q=list[i];
+          if(q.maxY<=lowY+.06||q.minY>=highY+1.8)continue;
+          // Most A* edge checks are shorter than a metre: discard remote boxes
+          // before building intervals, without approximating the remaining sweep.
+          if(q.maxX<minX||q.minX>maxX||q.maxZ<minZ||q.minZ>maxZ)continue;
+          let lo=0,hi=1,ok=true,min=0,max=0,a=0,c=0;
+          min=q.minX-r;max=q.maxX+r;
+          if(Math.abs(dx)<1e-8){if(ax<min||ax>max)ok=false;}
+          else{a=(min-ax)/dx;c=(max-ax)/dx;if(a>c){const t=a;a=c;c=t;}if(a>lo)lo=a;if(c<hi)hi=c;if(hi<lo)ok=false;}
+          if(ok){
+            min=q.minZ-r;max=q.maxZ+r;
+            if(Math.abs(dz)<1e-8){if(az<min||az>max)ok=false;}
+            else{a=(min-az)/dz;c=(max-az)/dz;if(a>c){const t=a;a=c;c=t;}if(a>lo)lo=a;if(c<hi)hi=c;if(hi<lo)ok=false;}
+          }
+          if(ok&&hi>=lo&&hi>=0&&lo<=1)return false;
         }
-        if(hi>=lo&&hi>=0&&lo<=1)return false;
       }
       if(floors.length){
         const count=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.3));let previous=ay;
         for(let j=1;j<=count;j++){
           const x=ax+dx*j/count,z=az+dz*j/count,y=ground(x,z);
-          if(!Number.isFinite(y)||Math.abs(y-previous)>.42||blocked(x,z,r,y))return false;
+          if(!Number.isFinite(y)||Math.abs(y-previous)>.42||blocked(x,z,r,y,doorBoxes,solids,noTraps))return false;
           previous=y;
         }
       }
@@ -7159,16 +7337,38 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const routeCost=new Float64Array(nav.length),routePrev=new Int32Array(nav.length),routeStamp=new Uint32Array(nav.length),routeClosed=new Uint32Array(nav.length);
     const edgeKnown=new Uint8Array(nav.length),edgeOpen=new Uint8Array(nav.length),navQueued=new Uint8Array(nav.length),navQueue=new Int32Array(nav.length);let routeSerial=0,navHead=0,navTail=0,navPending=0;
     function pumpNav(limit=768){
-      let work=0;while(navPending&&work<limit){const i=navQueue[navHead];navHead=(navHead+1)%nav.length;navPending--;navQueued[i]=0;const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;work++;}
+      let work=0;while(navPending&&work<limit){const i=navQueue[navHead];navHead=(navHead+1)%nav.length;navPending--;navQueued[i]=0;const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;work++;}
       s.aiStats.navUpdates=work;s.aiStats.navPending=navPending;
     }
+    function navEnqueue(i){if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}}
+    const navWindow=new Int32Array(4);
+    function navReach(k){// Cells within 1.2 m (+1e-6) of rectangle k, per axis.
+      const ax=navRects[k],bx=navRects[k+1],az=navRects[k+2],bz=navRects[k+3];
+      if(!(ax<=bx&&az<=bz&&Number.isFinite(ax+bx+az+bz)))return Infinity;
+      navWindow[0]=clamp(Math.floor((ax-1.2-1e-6-b.minX)/cell),0,nx-1);navWindow[1]=clamp(Math.ceil((bx+1.2+1e-6-b.minX)/cell),0,nx-1);
+      navWindow[2]=clamp(Math.floor((az-1.2-1e-6-b.minZ)/cell),0,nz-1);navWindow[3]=clamp(Math.ceil((bz+1.2+1e-6-b.minZ)/cell),0,nz-1);
+      return (navWindow[1]-navWindow[0]+1)*(navWindow[3]-navWindow[2]+1);
+    }
+    function navInvalidate(){
+      // Colliders/rays change at once; the advisory grid follows through the amortised queue.
+      // A cell (r=.4) only changes within .4 m of a mark, a cached edge (.8 m swept at r=.4)
+      // within 1.2 m of its source cell. Past a quarter of the grid (BOSS-08), all is redone.
+      let reach=0;for(let k=0;k<navRects.length&&reach*4<=nav.length;k+=4)reach+=navReach(k);
+      if(reach*4>nav.length){for(let i=0;i<nav.length;i++)navEnqueue(i);edgeKnown.fill(0);edgeOpen.fill(0);}
+      else for(let k=0;k<navRects.length;k+=4){
+        const ax=navRects[k]-.4-1e-6,bx=navRects[k+1]+.4+1e-6,az=navRects[k+2]-.4-1e-6,bz=navRects[k+3]+.4+1e-6;navReach(k);
+        for(let iz=navWindow[2];iz<=navWindow[3];iz++)for(let ix=navWindow[0];ix<=navWindow[1];ix++){
+          const i=iz*nx+ix,x=b.minX+ix*cell,z=b.minZ+iz*cell;edgeKnown[i]=0;edgeOpen[i]=0;
+          if(x>=ax&&x<=bx&&z>=az&&z<=bz)navEnqueue(i);
+        }
+      }
+      navRects.length=0;
+    }
     function refreshNav(reset=true){
-      if(advanced&&reset){
-        // Colliders/rays change immediately. Updating the advisory walking grid is
-        // amortised; another blast appends dirty cells instead of restarting work.
-        for(let i=0;i<nav.length;i++)if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}
-      }else{navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,[])?0:1;}}
-      edgeKnown.fill(0);edgeOpen.fill(0);if(reset)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
+      // A gameplay change re-plans every route; restore and simple worlds rebuild at once.
+      if(advanced&&reset)navInvalidate();
+      else{navRects.length=0;navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;}edgeKnown.fill(0);edgeOpen.fill(0);}
+      if(reset)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
       if(!advanced)rebuildNav();
     }
     function nearestNode(x,z,r){
@@ -7521,7 +7721,9 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     }
     function updateEnemies(dt){
       let threat=0,awake=0,dormant=0,reserve=0;
-      routeBudget=advanced?2:Infinity;routeSearches=routeDeferred=0;updateEncounters(dt);rebuildNeighbors();const starts=s.enemies.map(e=>[e.x,e.z]);
+      routeBudget=advanced?2:Infinity;routeSearches=routeDeferred=0;updateEncounters(dt);rebuildNeighbors();const count=s.enemies.length;
+      if(enemyStarts.length<count*2)enemyStarts=new Float64Array(count*2);
+      for(let i=0;i<count;i++){const e=s.enemies[i];enemyStarts[i*2]=e.x;enemyStarts[i*2+1]=e.z;}
       for(const e of s.enemies){
         e.moveSpeed=0;let sensed=false;if(e.hp<=0)continue;if(!present(e)){e.sleeping=true;e.seen=false;reserve++;continue;}e.deployAge=Math.min(2,e.deployAge+dt);airTimers(e,dt);if(e.airborne)airMove(e,dt);if(e.hp<=0)continue;
         if(e.bossWave&&!e.bossReleased){e.sleeping=true;e.seen=false;dormant++;continue;}
@@ -7542,7 +7744,8 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         e.sleeping=advanced&&!e.airborne&&!(bossProgression&&e.entryGrace>0)&&d>68&&(!e.hasMemory||d>88)&&e.windup<=0&&e.rushTime<=0&&e.burstLeft<=0;
         if(e.sleeping)dormant++;else awake++;
         e.hurt=Math.max(0,e.hurt-dt);e.cooldown=Math.max(0,e.cooldown-dt);e.burstWait=Math.max(0,e.burstWait-dt);e.dodgeWait=Math.max(0,e.dodgeWait-dt);e.dodgeDelay=Math.max(0,e.dodgeDelay-dt);bossPhase(e);
-        for(const key of ['senseWait','thinkWait','shareWait','alertWait','coverWait','planWait'])e[key]=Math.max(-.05,e[key]-dt);
+        e.senseWait=Math.max(-.05,e.senseWait-dt);e.thinkWait=Math.max(-.05,e.thinkWait-dt);e.shareWait=Math.max(-.05,e.shareWait-dt);
+        e.alertWait=Math.max(-.05,e.alertWait-dt);e.coverWait=Math.max(-.05,e.coverWait-dt);e.planWait=Math.max(-.05,e.planWait-dt);
         if(e.hasMemory){e.memory=Math.max(0,e.memory-dt);e.alert=e.seen?1:clamp(e.memory/8,.1,.85);}
         if(!e.sleeping&&e.senseWait<=0){e.senseWait+=.15;perceive(e);sensed=true;}
         if(e.hasMemory&&e.memory<=0){e.hasMemory=false;e.active=false;e.awareness='patrol';e.alert=0;e.seen=false;e.planWait=0;e.tactic='hold';e.path=[];e.pathAt=0;e.goalX=e.x;e.goalZ=e.z;e.thinkWait=0;}
@@ -7581,10 +7784,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         }
         e.attackState=e.cooldown>0?'recover':'idle';navigate(e,dt);
       }
-      for(const e of s.enemies)if(alive(e))checkPad(e);
+      if(s.jumpPads.length)for(const e of s.enemies)if(alive(e))checkPad(e);
       rebuildNeighbors();separate(dt);
-      if(dt>0)for(let i=0;i<s.enemies.length;i++)s.enemies[i].moveSpeed=Math.hypot(s.enemies[i].x-starts[i][0],s.enemies[i].z-starts[i][1])/dt;
-      Object.assign(s.aiStats,{awake,dormant,reserve,alive:s.enemies.filter(e=>e.hp>0).length,pathSearches:routeSearches,pathDeferred:routeDeferred});if(progression)encounterCounts();
+      if(dt>0)for(let i=0;i<count;i++){const e=s.enemies[i],dx=e.x-enemyStarts[i*2],dz=e.z-enemyStarts[i*2+1];e.moveSpeed=dx===0&&dz===0?0:Math.hypot(dx,dz)/dt;}
+      let aliveCount=0;for(const e of s.enemies)if(e.hp>0)aliveCount++;
+      s.aiStats.awake=awake;s.aiStats.dormant=dormant;s.aiStats.reserve=reserve;s.aiStats.alive=aliveCount;s.aiStats.pathSearches=routeSearches;s.aiStats.pathDeferred=routeDeferred;if(progression)encounterCounts();
       s.threat=Math.min(1,threat/4);
       updateBrain(dt);
     }
@@ -7989,7 +8193,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         invalidateBrain();
         s.cores=world.cores.map((c,i)=>({...c,taken:a.cores[i]}));s.pickups=world.pickups.map((c,i)=>({...c,taken:a.pickups[i],remaining:pickupRemaining?pickupRemaining[i]:armorRemaining?armorRemaining[i]:Math.max(0,Math.floor(c.amount||0))}));if(encounters)for(let i=0;i<encounters.length;i++)Object.assign(s.encounters[i],encounters[i]);
         giants=s.enemies.filter(giant);destruction=candidate;solids=savedSolids;seenDestructionRevision=destruction?.revision||0;s.destructionRevision++;trapStates=s.traps;trapBoxes.length=0;trapBoxes.push(...savedTrapBoxes);rebuildCollision();
-        bossAttackSerial=t.bossAttackSerial||0;explosionSerial=t.explosionSerial||0;projectileSerial=t.projectileSerial||0;rubbleSerial=t.rubbleSerial||0;s.explosions=[];s.debris=rubble;
+        bossAttackSerial=t.bossAttackSerial||0;explosionSerial=t.explosionSerial||0;projectileSerial=t.projectileSerial||0;rubbleSerial=t.rubbleSerial||0;s.explosions=[];s.debris=rubble;debrisSleep=new WeakMap();
         s.events=[];s.particles=[];for(const j of s.jumpPads)j.flash=0;s.pulseVisual=0;s.flash=0;s.damage=0;s.hitMarker=0;s.moving=0;s.threat=0;
         fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;encounterWait=t.encounterWait||0;emptyWait=t.emptyWait||0;recovery=0;interactHeld=false;stopMotion(true);
         Object.assign(s.aiStats,{awake:enemies.filter(e=>alive(e)&&!e.sleeping).length,dormant:enemies.filter(e=>alive(e)&&e.sleeping).length,alive:enemies.filter(e=>e.hp>0).length,pathSearches:0,pathDeferred:0});if(progression)encounterCounts();
@@ -7998,7 +8202,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       }catch(_){return false;}
     }
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
-    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,shieldBash,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
+    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,shieldBash,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
   G.FSimulation={create,clamp,copyCampaign,campaignPolicy,copyArmor};
 })(typeof window!=='undefined'?window:globalThis);
@@ -8947,17 +9151,31 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   function preserveRefusedSave(){
     if(refusedSave!==null){localStorage.setItem(SAVE_KEY+'-refuse',refusedSave);refusedSave=null;}
   }
+  // LOAD-03: the snapshot stays in the frame that takes it; JSON and storage leave
+  // that frame. One idle write carries the latest point. It is forced as the page
+  // hides or unloads, and before the save slots are read or replaced.
+  let pendingSave=null,saveQueued=false;
+  function writeSave(){
+    if(pendingSave===null)return;const run=pendingSave;pendingSave=null;
+    try{preserveRefusedSave();localStorage.setItem(SAVE_KEY,JSON.stringify(run));saveAvailable=true;}catch{saveAvailable=false;}
+    $('checkpoint-status').textContent='Reprise au dernier point enregistré.'+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
+  }
+  function queueSave(run){
+    pendingSave=run;if(saveQueued)return;saveQueued=true;
+    const later=()=>{saveQueued=false;writeSave();};
+    if(typeof requestIdleCallback==='function')requestIdleCallback(later,{timeout:500});else setTimeout(later,0);
+  }
+  addEventListener('pagehide',writeSave);document.addEventListener('visibilitychange',()=>{if(document.hidden)writeSave();});
   function saveCheckpoint(){
     if(!sim||sim.state.dead||sim.state.won)return;
     if(sim.state.player.airborne){checkpointPending=true;return;}
     checkpointPending=false;
     checkpoint=sim.snapshot();
     savedRun={version:world.campaign?3:2,...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
-    try{preserveRefusedSave();localStorage.setItem(SAVE_KEY,JSON.stringify(savedRun));saveAvailable=true;}catch{saveAvailable=false;}
-    $('checkpoint-status').textContent='Reprise au dernier point enregistré.'+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
+    queueSave(savedRun);
     refreshContinue();
   }
-  function clearSave(){checkpoint=null;savedRun=null;try{preserveRefusedSave();localStorage.removeItem(SAVE_KEY);}catch{}refreshContinue();}
+  function clearSave(){checkpoint=null;savedRun=pendingSave=null;try{preserveRefusedSave();localStorage.removeItem(SAVE_KEY);}catch{}refreshContinue();}
   function acceptRestoredRun(v,point=v.checkpoint){
     sim.setDifficulty?.(prefs.difficulty);
     runStats={...v.runStats};checkpoint=point;savedRun={...v,checkpoint};selectedWeapon=sim.state.weapon;
@@ -8971,6 +9189,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     return acceptRestoredRun(v);
   }
   function resumeSaved(v){
+    writeSave();
     if(restoreRun(v)){start('Signal retrouvé. Reprise au dernier point enregistré.');return;}
     if(validSave(v)){
       // Preserve each refused source before any replacement, even when storage fails temporarily.

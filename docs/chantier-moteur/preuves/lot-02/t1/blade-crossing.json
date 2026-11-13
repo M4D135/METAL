@@ -1,0 +1,387 @@
+{
+ "schema": "metal-lot02-t1-blade-crossing-v1",
+ "rows": [
+  {
+   "travel": 0.6,
+   "period": 3,
+   "phase": 0,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": 0.79,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   },
+   "apres": {
+    "crossedAfterSeconds": null,
+    "finalZ": 0.79,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.6,
+   "period": 3,
+   "phase": 0.25,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -7,
+    "neverMoved": true,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "hold"
+   },
+   "apres": {
+    "crossedAfterSeconds": null,
+    "finalZ": -0.02,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.6,
+   "period": 3,
+   "phase": 0.5,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -7,
+    "neverMoved": true,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "hold"
+   },
+   "apres": {
+    "crossedAfterSeconds": null,
+    "finalZ": -0.93,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.6,
+   "period": 3,
+   "phase": 0.75,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -7,
+    "neverMoved": true,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "hold"
+   },
+   "apres": {
+    "crossedAfterSeconds": 4.875,
+    "finalZ": 1.51,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0.4,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.6,
+   "period": 7,
+   "phase": 0,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -1.04,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   },
+   "apres": {
+    "crossedAfterSeconds": 5.05,
+    "finalZ": 1.51,
+    "neverMoved": false,
+    "stuckMaxSeconds": 1.15,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.6,
+   "period": 7,
+   "phase": 0.25,
+   "avant": {
+    "crossedAfterSeconds": 5.025,
+    "finalZ": 1.55,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0.63,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   },
+   "apres": {
+    "crossedAfterSeconds": 4.675,
+    "finalZ": 1.53,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0.63,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.6,
+   "period": 7,
+   "phase": 0.5,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -7,
+    "neverMoved": true,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "hold"
+   },
+   "apres": {
+    "crossedAfterSeconds": 4.3,
+    "finalZ": 1.55,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.6,
+   "period": 7,
+   "phase": 0.75,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -7,
+    "neverMoved": true,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "hold"
+   },
+   "apres": {
+    "crossedAfterSeconds": 4.125,
+    "finalZ": 1.54,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.9,
+   "period": 3,
+   "phase": 0,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": 0.79,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   },
+   "apres": {
+    "crossedAfterSeconds": null,
+    "finalZ": 0.79,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.9,
+   "period": 3,
+   "phase": 0.25,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": 0.09,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   },
+   "apres": {
+    "crossedAfterSeconds": null,
+    "finalZ": 0.09,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.9,
+   "period": 3,
+   "phase": 0.5,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -7,
+    "neverMoved": true,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "hold"
+   },
+   "apres": {
+    "crossedAfterSeconds": null,
+    "finalZ": -0.61,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.9,
+   "period": 3,
+   "phase": 0.75,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -0.4,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   },
+   "apres": {
+    "crossedAfterSeconds": null,
+    "finalZ": -0.12,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0.2,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.9,
+   "period": 7,
+   "phase": 0,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -0.25,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   },
+   "apres": {
+    "crossedAfterSeconds": null,
+    "finalZ": -0.66,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.9,
+   "period": 7,
+   "phase": 0.25,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -0.81,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 3,
+    "killed": true,
+    "tactic": "flank"
+   },
+   "apres": {
+    "crossedAfterSeconds": 4.65,
+    "finalZ": 1.5,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0.8,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.9,
+   "period": 7,
+   "phase": 0.5,
+   "avant": {
+    "crossedAfterSeconds": 4.475,
+    "finalZ": 1.55,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0.17,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   },
+   "apres": {
+    "crossedAfterSeconds": 4.35,
+    "finalZ": 1.52,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0.4,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   }
+  },
+  {
+   "travel": 0.9,
+   "period": 7,
+   "phase": 0.75,
+   "avant": {
+    "crossedAfterSeconds": null,
+    "finalZ": -7,
+    "neverMoved": true,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "hold"
+   },
+   "apres": {
+    "crossedAfterSeconds": 4.05,
+    "finalZ": 1.53,
+    "neverMoved": false,
+    "stuckMaxSeconds": 0,
+    "hpLost": 0,
+    "killed": false,
+    "tactic": "flank"
+   }
+  }
+ ],
+ "totals": {
+  "avant": {
+   "crossed": 2,
+   "neverMoved": 7,
+   "killed": 7,
+   "stuckMaxSeconds": 0.63
+  },
+  "apres": {
+   "crossed": 8,
+   "neverMoved": 0,
+   "killed": 8,
+   "stuckMaxSeconds": 1.15
+  }
+ }
+}

@@ -25,9 +25,14 @@ function world(seed, stage) {
 function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   const memory = new Map(Object.entries(initial));
   if (saved) memory.set(key, JSON.stringify(saved));
-  const elements = new Map(), errors = [], simulations = [], listeners = new Map(), frames = [], sounds = [], worlds = [], brains = [], simulationOptions = [], writes = [];
-  let nextFrame, now = 0;
+  const elements = new Map(), errors = [], simulations = [], listeners = new Map(), frames = [], sounds = [], worlds = [], brains = [], simulationOptions = [], writes = [], idle = [], documentListeners = new Map();
+  let nextFrame, now = 0, idleMode = null;
   const noop = () => {}, draw = new Proxy({}, { get: () => noop });
+  // A browser runs idle callbacks between tasks. Each harness action is one task,
+  // followed by the pending idle work unless a test drives that queue itself.
+  // A deferred write notes the mode of the task that requested it: the checkpoint frame.
+  function runIdle() { while (idle.length) { const next = idle.shift(); idleMode = next.mode; try { next.callback({ didTimeout: false, timeRemaining: () => 50 }); } finally { idleMode = null; } } }
+  const task = run => { try { return run(); } finally { if (!runtime.manualIdle) runIdle(); } };
   function element(id) {
     if (elements.has(id)) return elements.get(id);
     const events = new Map(), classes = new Set();
@@ -35,8 +40,8 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
       classList: { add: name => classes.add(name), remove: name => classes.delete(name),
         toggle(name, enabled) { enabled ??= !classes.has(name); enabled ? classes.add(name) : classes.delete(name); } },
       addEventListener: (name, callback) => events.set(name, callback),
-      emit: (name, event = {}) => events.get(name)?.({ preventDefault: noop, ...event }),
-      click: () => events.get('click')?.({ preventDefault: noop }),
+      emit: (name, event = {}) => task(() => events.get(name)?.({ preventDefault: noop, ...event })),
+      click: () => task(() => events.get('click')?.({ preventDefault: noop })),
       querySelector: selector => element(id + selector),
       querySelectorAll: () => [0, 1, 2].map(n => element(id + n)),
       setAttribute: noop, focus: noop, setPointerCapture: noop, getContext: () => draw, requestPointerLock() { context.document.pointerLockElement = value; },
@@ -46,11 +51,12 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   const context = { console: { error: (...args) => errors.push(args) }, performance: { now: () => now }, innerWidth: 1280, innerHeight: 800,
     URLSearchParams, setTimeout, clearTimeout, navigator: { maxTouchPoints: 0 }, location: { search: '' },
     matchMedia: () => ({ matches: false }), requestAnimationFrame: callback => { nextFrame = callback; }, addEventListener: (name, callback) => listeners.set(name, callback),
-    document: { body: element('body'), getElementById: element, addEventListener: noop, hasFocus: () => true, exitPointerLock() { this.pointerLockElement = null; } },
-    localStorage: { getItem: name => memory.get(name) ?? null, setItem: (name, value) => { const write = { name, value: String(value), mode: element('body').dataset.state || 'menu' }; runtime.beforeWrite?.(write); memory.set(name, write.value); writes.push(write); }, removeItem: name => memory.delete(name) },
+    document: { body: element('body'), getElementById: element, addEventListener: (name, callback) => documentListeners.set(name, [...(documentListeners.get(name) || []), callback]), hasFocus: () => true, exitPointerLock() { this.pointerLockElement = null; } },
+    localStorage: { getItem: name => memory.get(name) ?? null, setItem: (name, value) => { const write = { name, value: String(value), mode: idleMode ?? (element('body').dataset.state || 'menu') }; runtime.beforeWrite?.(write); memory.set(name, write.value); writes.push(write); }, removeItem: name => memory.delete(name) },
     FWorld: { create: createWorld }, FAudio: { create: () => new Proxy({}, { get: (_, name) => (...args) => { runtime.audioCall?.(name,args); sounds.push({ name, args }); } }) },
     FRender: { create: () => ({ stats: { backend: 'test' }, resize: noop, setWorld: (meshes, lights) => worlds.push({ meshes, lights, initial:true }), updateWorld: (meshes, revision, lights) => worlds.push({meshes,revision,lights}), draw: (camera, meshes, effects) => frames.push({ camera, meshes, effects }) }) },
   };
+  if (runtime.idle !== false) context.requestIdleCallback = (callback, options) => idle.push({ callback, options, mode: element('body').dataset.state || 'menu' });
   context.window = context; vm.createContext(context);
   for (const name of ['destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
   if(runtime.brain){vm.runInContext(sources.brain, context, {filename:'brain.js'});const createBrain=context.FBrain.create;context.FBrain.create=options=>{const brain=createBrain(options);brains.push(brain);return brain;};}
@@ -58,10 +64,11 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); return sim; };
   vm.runInContext(sources.game, context, { filename: 'game.js' });
   assert.deepEqual(errors, [], 'Browser shell initialization must succeed');
-  return { memory, element, simulations, context, frames, sounds, worlds, brains, simulationOptions, writes,
-    frame: ms => { now += ms; nextFrame(now); },
-    emit: (name,event={}) => listeners.get(name)?.({type:name,preventDefault:noop,...event}),
-    key: (code, down = true, repeat = false) => listeners.get(down ? 'keydown' : 'keyup')?.({ code, repeat, preventDefault: noop }) };
+  return { memory, element, simulations, context, frames, sounds, worlds, brains, simulationOptions, writes, idle, runIdle,
+    frame: ms => task(() => { now += ms; nextFrame(now); }),
+    emit: (name,event={}) => task(() => listeners.get(name)?.({type:name,preventDefault:noop,...event})),
+    emitDocument: (name, event = {}) => task(() => { for (const callback of documentListeners.get(name) || []) callback({ type: name, ...event }); }),
+    key: (code, down = true, repeat = false) => task(() => listeners.get(down ? 'keydown' : 'keyup')?.({ code, repeat, preventDefault: noop })) };
 }
 
 function savedPoint(generation = 5) {
@@ -808,4 +815,138 @@ test('audit: weapon hints follow campaign and classic mode, custom fifth binding
   await resumed.element('resume-expedition').click();
   assert.equal(resumed.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 ou molette','resuming classic mode refreshes the hint immediately');
   assert.equal(resumed.element('weapon-slot-4').hidden,true);
+});
+
+// LOAD-03 (lot 02 T4): the shell keeps sim.snapshot() in the frame that takes the
+// checkpoint and defers only JSON and storage to one idle write.
+function watchSnapshots(sim, after) {
+  const shots = [], take = sim.snapshot;
+  sim.snapshot = (...args) => { const value = take(...args); shots.push({ text: JSON.stringify(value), airborne: sim.state.player.airborne }); after?.(shots.length); return value; };
+  return shots;
+}
+const deferred = (saved, initial = {}, factory = world, runtime = {}) => harness(saved, initial, factory, { ...runtime, manualIdle: true });
+const storedPoint = write => JSON.stringify(JSON.parse(write.value).checkpoint);
+
+test('LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write', () => {
+  const app = deferred(null); app.element('start').click(); app.runIdle();
+  const sim = app.simulations.at(-1), shots = watchSnapshots(sim), before = app.writes.length;
+  sim.state.player.x = 6; app.frame(100);
+  assert.equal(sim.state.relays, 1); assert.equal(shots.length, 1, 'the relay snapshot belongs to its own frame');
+  assert.equal(app.writes.length, before, 'neither JSON nor storage runs in the checkpoint frame');
+  assert.equal(app.idle.length, 1); assert.equal(app.idle[0].options.timeout, 500);
+  app.frame(100); app.key('KeyP'); app.key('KeyP', false); assert.equal(app.element('body').dataset.state, 'paused'); assert.equal(app.writes.length, before);
+  app.runIdle();
+  const added = app.writes.slice(before); assert.deepEqual(added.map(write => write.name), [key]);
+  assert.equal(added[0].mode, 'playing', 'the write is noted with the mode of its checkpoint frame');
+  assert.equal(storedPoint(added[0]), shots[0].text, 'the stored point is the state of the snapshot frame');
+  app.runIdle(); app.frame(100); assert.equal(app.writes.length, before + 1, 'a point is written once');
+});
+
+test('LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point', () => {
+  const app = deferred(null); app.element('start').click(); app.runIdle();
+  const sim = app.simulations.at(-1), before = app.writes.length;
+  // The first relay snapshot places the player on the next relay: a later substep of the same frame takes it.
+  const shots = watchSnapshots(sim, count => { if (count === 1) sim.state.player.x = 8; });
+  sim.state.player.x = 6; app.frame(100);
+  assert.equal(sim.state.relays, 2); assert.equal(shots.length, 2); assert.equal(app.idle.length, 1); assert.equal(app.writes.length, before);
+  app.runIdle();
+  const added = app.writes.slice(before); assert.deepEqual(added.map(write => write.name), [key]);
+  assert.equal(storedPoint(added[0]), shots[1].text); assert.equal(JSON.parse(added[0].value).checkpoint.state.relays, 2);
+});
+
+for (const exit of ['pagehide', 'visibilitychange']) test(`LOAD-03: ${exit} writes a pending checkpoint synchronously and only once`, () => {
+  const app = deferred(null); app.element('start').click(); app.runIdle();
+  const sim = app.simulations.at(-1), before = app.writes.length, leave = () => {
+    if (exit === 'pagehide') app.emit('pagehide', { persisted: false }); else { app.context.document.hidden = true; app.emitDocument('visibilitychange'); }
+  };
+  sim.state.player.x = 6; app.frame(100); assert.equal(app.writes.length, before);
+  leave();
+  assert.deepEqual(app.writes.slice(before).map(write => write.name), [key], 'the page cannot leave with an unwritten point');
+  assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays, 1);
+  if (exit === 'visibilitychange') assert.equal(app.element('body').dataset.state, 'paused');
+  app.runIdle(); leave(); assert.equal(app.writes.length, before + 1, 'nothing is left to write twice');
+});
+
+test('LOAD-03: finishing the expedition cancels a pending checkpoint write', () => {
+  const app = deferred(savedPoint()); app.element('resume-expedition').click(); app.runIdle();
+  const sim = app.simulations.at(-1);
+  for (const x of [8, 10]) { sim.move(sim.state.player, x - sim.state.player.x, 0); app.frame(100); }
+  assert.equal(sim.state.relays, 3); assert.equal(app.idle.length, 1, 'both relay points wait for the same idle write');
+  const before = app.writes.length;
+  sim.move(sim.state.player, 15 - sim.state.player.x, 0); app.frame(100);
+  assert.equal(app.element('body').dataset.state, 'complete'); assert.equal(app.memory.has(key), false);
+  app.runIdle();
+  assert.equal(app.memory.has(key), false, 'a cancelled point never comes back'); assert.equal(app.writes.slice(before).filter(write => write.name === key).length, 0);
+});
+
+test('LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point', async () => {
+  const { saved, factory } = saveWithEntry(false); saved.checkpoint.fingerprint = 'refused'; const raw = JSON.stringify(saved); let busy = 1;
+  const app = deferred(saved, {}, factory, { beforeWrite(write) { if (write.name === key + '-refuse' && busy-- > 0) throw new Error('storage busy'); } });
+  await app.element('resume-expedition').click();
+  assert.equal(app.element('body').dataset.state, 'playing'); assert.equal(app.memory.get(key), raw, 'the replacement waits for the idle write');
+  assert.equal(app.memory.has(key + '-refuse'), false);
+  const before = app.writes.length; app.runIdle();
+  assert.deepEqual(app.writes.slice(before).map(write => write.name), [key + '-refuse', key]);
+  assert.equal(app.memory.get(key + '-refuse'), raw); assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays, 0);
+});
+
+test('LOAD-03: a failed deferred write keeps the session point and reports that it is not stored', () => {
+  let full = false;
+  const app = deferred(null, {}, arsenalWorld, { beforeWrite(write) { if (full && write.name === key) throw new Error('QuotaExceededError'); } });
+  app.element('start').click(); app.runIdle();
+  const sim = app.simulations.at(-1), stored = app.memory.get(key), status = () => app.element('checkpoint-status').textContent;
+  assert.equal(status(), 'Reprise au dernier point enregistré. Sauvegarde locale active.');
+  full = true; sim.state.player.x = 6; app.frame(100); app.runIdle();
+  assert.equal(app.memory.get(key), stored); assert.equal(status(), 'Reprise au dernier point enregistré. Reprise disponible pendant cette session.');
+  sim.hurt(1000, false); app.frame(100); assert.equal(app.element('body').dataset.state, 'dead');
+  app.element('continue').click(); const next = app.simulations.at(-1);
+  assert.equal(next.state.relays, 1, 'the unstored point still resumes this session'); assert.match(status(), /pendant cette session/);
+  full = false; next.state.player.x = 8; app.frame(100); app.runIdle();
+  assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays, 2); assert.equal(status(), 'Reprise au dernier point enregistré. Sauvegarde locale active.');
+});
+
+test('LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides', () => {
+  const make = (seed, stage) => ({ ...arsenalWorld(seed, stage), spawn: { x: 0, y: 3.2, z: 0, yaw: 0 }, pickups: [],
+    walkable: [{ x: 0, y: 3.2, z: 0, w: 4, d: 4 }, { x: 0, y: 0, z: 0, w: 40, d: 40 }],
+    cores: [{ id: 0, x: 2.1, y: 3.2, z: 0 }, { id: 1, x: 12, y: 3.2, z: 10 }, { id: 2, x: 14, y: 3.2, z: 10 }] });
+  const app = deferred(null, {}, make); app.element('start').click(); app.runIdle();
+  const sim = app.simulations.at(-1), stored = app.memory.get(key), shots = watchSnapshots(sim);
+  sim.move(sim.state.player, 4, 0); app.frame(100);
+  assert.equal(sim.state.player.airborne, true); assert.equal(sim.state.relays, 1); assert.equal(shots.length, 0); assert.equal(app.idle.length, 0);
+  app.emit('pagehide'); app.context.document.hidden = true; app.emitDocument('visibilitychange');
+  assert.equal(shots.length, 0, 'leaving the page never snapshots a player in flight'); assert.equal(app.memory.get(key), stored);
+  app.context.document.hidden = false; app.emitDocument('visibilitychange'); app.element('resume').click(); assert.equal(app.element('body').dataset.state, 'playing');
+  for (let i = 0; i < 20 && !shots.length; i++) app.frame(100);
+  assert.equal(sim.state.dead, false); assert.deepEqual(shots.map(q => q.airborne), [false], 'the relay point waits for the landing');
+  app.runIdle(); assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays, 1);
+});
+
+test('LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer', async () => {
+  const app = harness(null, {}, world, { idle: false }), tick = () => new Promise(resolve => setTimeout(resolve, 1));
+  app.element('start').click(); assert.equal(app.memory.has(key), false); await tick(); assert.equal(app.memory.has(key), true);
+  const sim = app.simulations.at(-1), before = app.writes.length;
+  sim.state.player.x = 6; app.frame(100); assert.equal(app.writes.length, before);
+  await tick(); assert.equal(app.writes.length, before + 1); assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays, 1);
+});
+
+test('LOAD-03: Continue writes a pending point before it reads or replaces the save slots', () => {
+  const app = deferred(null, {}, arsenalWorld); app.element('start').click(); app.runIdle();
+  const sim = app.simulations.at(-1); sim.state.player.x = 6; app.frame(100); assert.equal(app.idle.length, 1);
+  sim.hurt(1000, false); app.frame(100); assert.equal(app.element('body').dataset.state, 'dead');
+  const before = app.writes.length; app.element('continue').click();
+  assert.deepEqual(app.writes.slice(before).map(write => write.name), [key], 'the pending point reaches storage inside Continue');
+  assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays, 1);
+  assert.equal(app.simulations.at(-1).state.relays, 1); assert.equal(app.element('body').dataset.state, 'playing');
+});
+
+test('LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on', () => {
+  const make = (seed, stage) => ({ ...world(seed, stage), walkable: [{ x: 0, y: 0, z: 0, w: 40, d: 40 }],
+    traps: [{ id: 'blade-0', kind: 'blade', x: -10, y: 0, z: -10, w: 1.2, d: .3, h: 1, travel: 1.65, axis: 'x', period: 3, active: 2, damage: 20 }] });
+  const app = deferred(null, {}, make); app.element('start').click(); app.runIdle();
+  const sim = app.simulations.at(-1), shots = watchSnapshots(sim);
+  app.frame(100); sim.state.player.x = 6; app.frame(100);
+  const taken = JSON.parse(shots[0].text).state.traps[0].box; assert(taken, 'the blade moves when the point is taken');
+  for (let i = 0; i < 5; i++) app.frame(100);
+  assert.notDeepEqual(plain(sim.state.traps[0].box), taken, 'the live blade has moved on');
+  app.runIdle(); assert.equal(storedPoint(app.writes.at(-1)), shots[0].text);
 });

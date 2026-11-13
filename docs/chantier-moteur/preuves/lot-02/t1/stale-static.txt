@@ -1,0 +1,27 @@
+2: pièges=[blade,press,spikes] pas=1800 état diverge au pas -1 | grilles différentes 139 pas (max 24 cellules)
+  avant : known 1104 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 47 contrôles | cellules évaluées par pumpNav 441560
+  après : known 2366 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 60 contrôles | cellules évaluées par pumpNav 247
+c9: pièges=[blade,press,spikes] pas=1800 état diverge au pas -1 | grilles différentes 9 pas (max 4 cellules)
+  avant : known 658 | périmées (prédicat propre) 0.63 max 19 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 48 contrôles | cellules évaluées par pumpNav 378720
+  après : known 1555 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 60 contrôles | cellules évaluées par pumpNav 6
+0: pièges=[blade,press,spikes] pas=1800 état diverge au pas -1 | grilles différentes 9 pas (max 4 cellules)
+  avant : known 577 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 54 contrôles | cellules évaluées par pumpNav 191714
+  après : known 577 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 60 contrôles | cellules évaluées par pumpNav 6
+c15: pièges=[blade,press,spikes] pas=1800 état diverge au pas -1 | grilles différentes 9 pas (max 4 cellules)
+  avant : known 3170 | périmées (prédicat propre) 1.27 max 19 | périmées (prédicat statique) 0.17 max 5 | cellules ≠ recalcul au repos 0 sur 52 contrôles | cellules évaluées par pumpNav 244800
+  après : known 4089 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 60 contrôles | cellules évaluées par pumpNav 6
+v1: pièges=[blade,press,spikes] pas=1800 état diverge au pas -1 | grilles différentes 9 pas (max 4 cellules)
+  avant : known 2443 | périmées (prédicat propre) 0.63 max 19 | périmées (prédicat statique) 0.33 max 10 | cellules ≠ recalcul au repos 0 sur 51 contrôles | cellules évaluées par pumpNav 270300
+  après : known 3231 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 60 contrôles | cellules évaluées par pumpNav 6
+v5: pièges=[blade,press,spikes] pas=1800 état diverge au pas -1 | grilles différentes 0 pas (max 0 cellules)
+  avant : known 0 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 47 contrôles | cellules évaluées par pumpNav 456930
+  après : known 0 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 60 contrôles | cellules évaluées par pumpNav 280
+v9: pièges=[blade,press,spikes] pas=1800 état diverge au pas -1 | grilles différentes 39 pas (max 6 cellules)
+  avant : known 50 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 47 contrôles | cellules évaluées par pumpNav 486084
+  après : known 755 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 60 contrôles | cellules évaluées par pumpNav 9
+v13: pièges=[blade,press,spikes] pas=1800 état diverge au pas -1 | grilles différentes 9 pas (max 4 cellules)
+  avant : known 2936 | périmées (prédicat propre) 0.83 max 10 | périmées (prédicat statique) 1.33 max 10 | cellules ≠ recalcul au repos 0 sur 51 contrôles | cellules évaluées par pumpNav 282838
+  après : known 4325 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 60 contrôles | cellules évaluées par pumpNav 8
+v18: pièges=[blade,press,spikes] pas=1800 état diverge au pas -1 | grilles différentes 39 pas (max 6 cellules)
+  avant : known 0 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 49 contrôles | cellules évaluées par pumpNav 399740
+  après : known 0 | périmées (prédicat propre) 0.00 max 0 | périmées (prédicat statique) 0.00 max 0 | cellules ≠ recalcul au repos 0 sur 60 contrôles | cellules évaluées par pumpNav 9

@@ -1,0 +1,42 @@
+legacy-s0     points 6239381 mismatches 0  | trap-list samples 300000 mismatches 0 | ns/call uniform A 71.0 B 14.8 x4.80 | trace A 82.4 B 20.6 x3.99
+legacy-s2     points 6341761 mismatches 0  | trap-list samples 300000 mismatches 0 | ns/call uniform A 70.0 B 16.2 x4.32 | trace A 78.0 B 19.8 x3.95
+campaign-w10  points 6206361 mismatches 0  | trap-list samples 300000 mismatches 0 | ns/call uniform A 69.6 B 16.0 x4.35 | trace A 78.4 B 21.8 x3.59
+campaign-w16  points 6235117 mismatches 0  | trap-list samples 300000 mismatches 0 | ns/call uniform A 66.0 B 15.6 x4.22 | trace A 78.9 B 21.3 x3.70
+legacy-s0+    points 4021 mismatches 0  | trap-list samples 0 mismatches 0
+legacy-s2+    points 4021 mismatches 0  | trap-list samples 0 mismatches 0
+campaign-w10+ points 4021 mismatches 0  | trap-list samples 0 mismatches 0
+campaign-w16+ points 4021 mismatches 0  | trap-list samples 0 mismatches 0
+campaign2-w1  points 994555 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w2  points 983045 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w3  points 1020233 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w4  points 999439 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w5  points 989357 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w6  points 1028007 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w7  points 1005513 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w8  points 995717 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w9  points 1036811 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w10 points 1010025 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w11 points 1001945 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w12 points 1044399 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w13 points 1016395 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w14 points 1008265 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w15 points 1050175 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w16 points 1021495 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w17 points 1014617 mismatches 0  | trap-list samples 30000 mismatches 0
+campaign2-w18 points 1059551 mismatches 0  | trap-list samples 30000 mismatches 0
+synthetique-vide points 474081 mismatches 0  | trap-list samples 0 mismatches 0
+synthetique-plat-seul points 479121 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-champs-absents points 494241 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-egalites points 499222 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-rampes-et-plats points 499281 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-repli-sans-substrat points 489142 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-zeros-signes points 489201 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-nan-et-infinis points 499281 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-enormes points 474022 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-tailles-negatives points 494241 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-hors-bornes points 494241 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-bords-a-1e-7 points 504262 mismatches 0  | trap-list samples 20000 mismatches 0
+synthetique-bords-pile points 504262 mismatches 0  | trap-list samples 20000 mismatches 0
+TOTAL points 49712846 mismatches 0 | trap samples 1980000 mismatches 0
+node docs/chantier-moteur/preuves/lot-02/t2/ground-equiv2.mjs <avant> .    28.63s user 0.40s system 133% cpu 21.819 total
+exit=0

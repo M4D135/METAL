@@ -1,0 +1,6 @@
+11:40  up 1 day, 20:45, 2 users, load averages: 4.72 6.06 4.46
+l:0   8 murs, révision 21, 128 gravats dont 118 au repos | identique true | pas de repos 0.114 → 0.071 ms (ratio médian 0.624) | updateDebris 0.063 → 0.021 ms (ratio médian 0.325)
+l:2   8 murs, révision 18, 127 gravats dont 125 au repos | identique true | pas de repos 0.186 → 0.134 ms (ratio médian 0.706) | updateDebris 0.063 → 0.008 ms (ratio médian 0.121)
+c:9   8 murs, révision 14, 128 gravats dont 113 au repos | identique true | pas de repos 0.176 → 0.072 ms (ratio médian 0.41) | updateDebris 0.144 → 0.04 ms (ratio médian 0.273)
+exit 0
+11:40  up 1 day, 20:46, 2 users, load averages: 3.35 5.56 4.35

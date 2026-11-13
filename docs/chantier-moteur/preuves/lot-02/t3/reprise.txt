@@ -1,0 +1,3 @@
+{"id":"legacy-s2","restoreA":true,"restoreB":true,"snapshotSame":true,"continuationSame":true,"A":{"ok":true,"snap":"8a23b53c398d","chain":"76a1505e"},"B":{"ok":true,"snap":"8a23b53c398d","chain":"76a1505e"}}
+{"id":"campaign-w10","restoreA":true,"restoreB":true,"snapshotSame":true,"continuationSame":true,"A":{"ok":true,"snap":"37c7c0134fb8","chain":"1c3d2e4f"},"B":{"ok":true,"snap":"37c7c0134fb8","chain":"1c3d2e4f"}}
+{"id":"campaign2-w10","restoreA":true,"restoreB":true,"snapshotSame":true,"continuationSame":true,"A":{"ok":true,"snap":"38e1a3b2d4ee","chain":"3510dacf"},"B":{"ok":true,"snap":"38e1a3b2d4ee","chain":"3510dacf"}}
