@@ -1,0 +1,38 @@
+{
+ "tool": "cout-invites.mjs",
+ "node": "v24.18.0",
+ "arch": "arm64",
+ "platform": "darwin",
+ "labelNsParAppel": {
+  "mediane": 75.6,
+  "series": [
+   75.7,
+   74.4,
+   73.4,
+   75.5,
+   75.6,
+   76,
+   77.9,
+   75.7,
+   74.2,
+   73.3
+  ]
+ },
+ "rumbleNsParAppel": {
+  "mediane": 9.7,
+  "series": [
+   12.2,
+   9.2,
+   9.7,
+   9.7,
+   9.5,
+   11.9,
+   9.6,
+   9.7,
+   11.7,
+   11.4
+  ]
+ },
+ "appelsActionneur": 9292000,
+ "sink": true
+}

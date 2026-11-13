@@ -1,0 +1,894 @@
+{
+ "schema": "boucle-etape7-raccord/1",
+ "node": "v24.18.0",
+ "arch": "arm64",
+ "platform": "darwin",
+ "cpu": "Apple M5",
+ "loadavg": [
+  1.297,
+  2.283,
+  2.844
+ ],
+ "loopSha256": "2002052f16b930748cb33c59366686744d8f7ba0b05add3e517d6271e46214c5",
+ "tests": [
+  {
+   "id": "input.test.mjs:91-95, appui verrouillé puis tir tenu",
+   "framesMs": [
+    120,
+    120
+   ],
+   "floopSteps": [
+    1,
+    5
+   ],
+   "floopDroppedMs": [
+    0,
+    36.667
+   ],
+   "floopSimMs": 100,
+   "todaySteps": [
+    8,
+    8
+   ],
+   "todaySimMs": 240
+  },
+  {
+   "id": "input.test.mjs:97-102, pistolet presque prêt",
+   "framesMs": [
+    10,
+    100,
+    100,
+    60
+   ],
+   "floopSteps": [
+    1,
+    5,
+    5,
+    4
+   ],
+   "floopDroppedMs": [
+    0,
+    16.667,
+    16.667,
+    0
+   ],
+   "floopSimMs": 250,
+   "todaySteps": [
+    1,
+    6,
+    6,
+    4
+   ],
+   "todaySimMs": 270,
+   "pistol": {
+    "delayS": 0.32,
+    "afterShotSimSFloop": 0.233,
+    "afterShotSimSToday": 0.26,
+    "remainingSFloop": 0.087,
+    "remainingSToday": 0.06,
+    "testWindowS": [
+     0,
+     0.07
+    ]
+   }
+  },
+  {
+   "id": "checkpoint.test.mjs, images de 100 ms",
+   "framesMs": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100
+   ],
+   "floopSteps": [
+    1,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+   ],
+   "floopDroppedMs": [
+    0,
+    16.667,
+    16.667,
+    16.667,
+    16.667,
+    16.667,
+    16.667
+   ],
+   "floopSimMs": 516.667,
+   "todaySteps": [
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "todaySimMs": 700
+  },
+  {
+   "id": "input.test.mjs, images de 20 ms",
+   "framesMs": [
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20
+   ],
+   "floopSteps": [
+    1,
+    2,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    1,
+    1
+   ],
+   "floopDroppedMs": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "floopSimMs": 200,
+   "todaySteps": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "todaySimMs": 200
+  },
+  {
+   "id": "audio.test.mjs, images de 40 ms",
+   "framesMs": [
+    40,
+    40,
+    40,
+    40,
+    40,
+    40,
+    40,
+    40,
+    40,
+    40
+   ],
+   "floopSteps": [
+    1,
+    3,
+    2,
+    3,
+    2,
+    2,
+    3,
+    2,
+    3,
+    2
+   ],
+   "floopDroppedMs": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "floopSimMs": 383.333,
+   "todaySteps": [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "todaySimMs": 400
+  },
+  {
+   "id": "input.test.mjs:82-89, première image à 50, 33,3, 16,7 et 6,94 ms",
+   "framesMs": [
+    50
+   ],
+   "floopSteps": [
+    1
+   ],
+   "floopDroppedMs": [
+    0
+   ],
+   "floopSimMs": 16.667,
+   "todaySteps": [
+    3
+   ],
+   "todaySimMs": 50
+  }
+ ],
+ "fixes": [
+  {
+   "id": "input.test.mjs:91-95 corrigé, image d’amorce puis 120 et 120 ms",
+   "framesMs": [
+    16.666666666666668,
+    120,
+    120
+   ],
+   "floopSteps": [
+    1,
+    5,
+    5
+   ],
+   "floopDroppedMs": [
+    0,
+    36.667,
+    36.667
+   ],
+   "floopSimMs": 183.333,
+   "todaySteps": [
+    1,
+    8,
+    8
+   ],
+   "todaySimMs": 256.667
+  },
+  {
+   "id": "input.test.mjs:97-102 corrigé, 16 images de 1000/60 ms puis 6 de 20 ms",
+   "framesMs": [
+    10,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    16.666666666666668,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20
+   ],
+   "floopSteps": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    1,
+    1,
+    1
+   ],
+   "floopDroppedMs": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "floopSimMs": 400,
+   "todaySteps": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "todaySimMs": 396.667,
+   "pistol": {
+    "delayS": 0.32,
+    "afterShotSimSFloop": 0.267,
+    "remainingSFloop": 0.053,
+    "testWindowS": [
+     0,
+     0.07
+    ],
+    "stepsUntilReady": 4,
+    "stepsInTwentyMsFrames": [
+     1,
+     2,
+     1,
+     1,
+     1,
+     1
+    ]
+   }
+  }
+ ],
+ "gates": [
+  {
+   "hz": 60,
+   "limit": 0,
+   "presentedFps": 60,
+   "gateStride": 1,
+   "gateEffectiveHz": 59.88,
+   "floopLocked": true,
+   "floopPeriodMs": 16.667,
+   "lockChanges": 1,
+   "stepsPerSecond": 60,
+   "stepsHistogram": {
+    "1": 3600
+   },
+   "zeroStepPct": 0
+  },
+  {
+   "hz": 60,
+   "limit": 30,
+   "presentedFps": 30,
+   "gateStride": 2,
+   "gateEffectiveHz": 29.94,
+   "floopLocked": true,
+   "floopPeriodMs": 33.333,
+   "lockChanges": 1,
+   "stepsPerSecond": 59.983,
+   "stepsHistogram": {
+    "1": 1,
+    "2": 1799
+   },
+   "zeroStepPct": 0
+  },
+  {
+   "hz": 120,
+   "limit": 0,
+   "presentedFps": 120,
+   "gateStride": 1,
+   "gateEffectiveHz": 120.482,
+   "floopLocked": false,
+   "floopPeriodMs": 8.333,
+   "lockChanges": 0,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "0": 3599,
+    "1": 3601
+   },
+   "zeroStepPct": 49.986
+  },
+  {
+   "hz": 120,
+   "limit": 30,
+   "presentedFps": 30.017,
+   "gateStride": 4,
+   "gateEffectiveHz": 30.12,
+   "floopLocked": true,
+   "floopPeriodMs": 33.333,
+   "lockChanges": 1,
+   "stepsPerSecond": 60,
+   "stepsHistogram": {
+    "0": 1,
+    "1": 5,
+    "2": 1790,
+    "3": 5
+   },
+   "zeroStepPct": 0.056
+  },
+  {
+   "hz": 120,
+   "limit": 60,
+   "presentedFps": 60,
+   "gateStride": 2,
+   "gateEffectiveHz": 60.241,
+   "floopLocked": true,
+   "floopPeriodMs": 16.667,
+   "lockChanges": 1,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "0": 2,
+    "1": 3595,
+    "2": 3
+   },
+   "zeroStepPct": 0.056
+  },
+  {
+   "hz": 144,
+   "limit": 0,
+   "presentedFps": 144,
+   "gateStride": 1,
+   "gateEffectiveHz": 144.928,
+   "floopLocked": false,
+   "floopPeriodMs": 6.943,
+   "lockChanges": 0,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "0": 5039,
+    "1": 3601
+   },
+   "zeroStepPct": 58.322
+  },
+  {
+   "hz": 144,
+   "limit": 30,
+   "presentedFps": 28.817,
+   "gateStride": 5,
+   "gateEffectiveHz": 28.986,
+   "floopLocked": false,
+   "floopPeriodMs": 17.362,
+   "lockChanges": 0,
+   "stepsPerSecond": 60,
+   "stepsHistogram": {
+    "0": 1,
+    "1": 1,
+    "2": 1582,
+    "3": 145
+   },
+   "zeroStepPct": 0.058
+  },
+  {
+   "hz": 144,
+   "limit": 60,
+   "presentedFps": 72,
+   "gateStride": 2,
+   "gateEffectiveHz": 72.464,
+   "floopLocked": false,
+   "floopPeriodMs": 13.89,
+   "lockChanges": 0,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "0": 720,
+    "1": 3599,
+    "2": 1
+   },
+   "zeroStepPct": 16.667
+  },
+  {
+   "hz": 144,
+   "limit": 120,
+   "presentedFps": 143.983,
+   "gateStride": 1,
+   "gateEffectiveHz": 144.928,
+   "floopLocked": false,
+   "floopPeriodMs": 6.943,
+   "lockChanges": 0,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "0": 5038,
+    "1": 3601
+   },
+   "zeroStepPct": 58.317
+  },
+  {
+   "hz": 165,
+   "limit": 0,
+   "presentedFps": 165,
+   "gateStride": 1,
+   "gateEffectiveHz": 163.934,
+   "floopLocked": false,
+   "floopPeriodMs": 6.06,
+   "lockChanges": 0,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "0": 6299,
+    "1": 3601
+   },
+   "zeroStepPct": 63.626
+  },
+  {
+   "hz": 165,
+   "limit": 30,
+   "presentedFps": 33.033,
+   "gateStride": 5,
+   "gateEffectiveHz": 32.787,
+   "floopLocked": false,
+   "floopPeriodMs": 15.152,
+   "lockChanges": 0,
+   "stepsPerSecond": 60,
+   "stepsHistogram": {
+    "0": 1,
+    "1": 362,
+    "2": 1619
+   },
+   "zeroStepPct": 0.05
+  },
+  {
+   "hz": 165,
+   "limit": 60,
+   "presentedFps": 55.017,
+   "gateStride": 3,
+   "gateEffectiveHz": 54.645,
+   "floopLocked": false,
+   "floopPeriodMs": 9.092,
+   "lockChanges": 0,
+   "stepsPerSecond": 60,
+   "stepsHistogram": {
+    "0": 1,
+    "1": 3000,
+    "2": 300
+   },
+   "zeroStepPct": 0.03
+  },
+  {
+   "hz": 165,
+   "limit": 120,
+   "presentedFps": 164.983,
+   "gateStride": 1,
+   "gateEffectiveHz": 163.934,
+   "floopLocked": false,
+   "floopPeriodMs": 6.06,
+   "lockChanges": 0,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "0": 6298,
+    "1": 3601
+   },
+   "zeroStepPct": 63.623
+  },
+  {
+   "hz": 240,
+   "limit": 0,
+   "presentedFps": 240,
+   "gateStride": 1,
+   "gateEffectiveHz": 238.095,
+   "floopLocked": false,
+   "floopPeriodMs": 4.167,
+   "lockChanges": 0,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "0": 10799,
+    "1": 3601
+   },
+   "zeroStepPct": 74.993
+  },
+  {
+   "hz": 240,
+   "limit": 30,
+   "presentedFps": 30.017,
+   "gateStride": 8,
+   "gateEffectiveHz": 29.762,
+   "floopLocked": true,
+   "floopPeriodMs": 33.333,
+   "lockChanges": 1,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "1": 1,
+    "2": 1800
+   },
+   "zeroStepPct": 0
+  },
+  {
+   "hz": 240,
+   "limit": 60,
+   "presentedFps": 60.017,
+   "gateStride": 4,
+   "gateEffectiveHz": 59.524,
+   "floopLocked": true,
+   "floopPeriodMs": 16.667,
+   "lockChanges": 1,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "1": 3601
+   },
+   "zeroStepPct": 0
+  },
+  {
+   "hz": 240,
+   "limit": 120,
+   "presentedFps": 120,
+   "gateStride": 2,
+   "gateEffectiveHz": 119.048,
+   "floopLocked": false,
+   "floopPeriodMs": 8.333,
+   "lockChanges": 0,
+   "stepsPerSecond": 60.017,
+   "stepsHistogram": {
+    "0": 3599,
+    "1": 3601
+   },
+   "zeroStepPct": 49.986
+  }
+ ],
+ "cadenceSwitch": [
+  {
+   "kind": "limite",
+   "reset": "aucun",
+   "resets": 0,
+   "floopLocked": false,
+   "floopPeriodMs": 8.333,
+   "lockChanges": 0,
+   "stepsHistogramAfter": {
+    "1": 3000
+   },
+   "alphaEnd": 0.001
+  },
+  {
+   "kind": "limite",
+   "reset": "au changement",
+   "resets": 1,
+   "floopLocked": false,
+   "floopPeriodMs": 8.333,
+   "lockChanges": 0,
+   "stepsHistogramAfter": {
+    "0": 5,
+    "1": 2990,
+    "2": 5
+   },
+   "alphaEnd": 0.001
+  },
+  {
+   "kind": "limite",
+   "reset": "après advance",
+   "resets": 1,
+   "floopLocked": true,
+   "floopPeriodMs": 16.667,
+   "lockChanges": 1,
+   "stepsHistogramAfter": {
+    "0": 1,
+    "1": 2998,
+    "2": 1
+   },
+   "alphaEnd": 0.999
+  },
+  {
+   "kind": "écran",
+   "reset": "aucun",
+   "resets": 0,
+   "floopLocked": false,
+   "floopPeriodMs": 8.333,
+   "lockChanges": 0,
+   "stepsHistogramAfter": {
+    "1": 3000
+   },
+   "alphaEnd": 0.585
+  },
+  {
+   "kind": "écran",
+   "reset": "après advance",
+   "resets": 2,
+   "floopLocked": true,
+   "floopPeriodMs": 16.667,
+   "lockChanges": 1,
+   "stepsHistogramAfter": {
+    "1": 3000
+   },
+   "alphaEnd": 0.999
+  }
+ ],
+ "pressWaits": [
+  {
+   "name": "60",
+   "floopMeanMs": 8.333,
+   "floopMaxMs": 16.667,
+   "todayMeanMs": 8.333,
+   "todayMaxMs": 16.667,
+   "gapsBetweenStepFramesMs": {
+    "16.7": 5958
+   }
+  },
+  {
+   "name": "72",
+   "floopMeanMs": 9.259,
+   "floopMaxMs": 27.778,
+   "todayMeanMs": 6.944,
+   "todayMaxMs": 13.889,
+   "gapsBetweenStepFramesMs": {
+    "27.8": 993,
+    "13.9": 3972
+   }
+  },
+  {
+   "name": "75",
+   "floopMeanMs": 9.332,
+   "floopMaxMs": 26.667,
+   "todayMeanMs": 6.667,
+   "todayMaxMs": 13.333,
+   "gapsBetweenStepFramesMs": {
+    "13.3": 3576,
+    "26.7": 1191
+   }
+  },
+  {
+   "name": "120",
+   "floopMeanMs": 8.333,
+   "floopMaxMs": 16.667,
+   "todayMeanMs": 4.167,
+   "todayMaxMs": 8.333,
+   "gapsBetweenStepFramesMs": {
+    "16.7": 2979
+   }
+  },
+  {
+   "name": "144",
+   "floopMeanMs": 8.68,
+   "floopMaxMs": 20.833,
+   "todayMeanMs": 3.472,
+   "todayMaxMs": 6.944,
+   "gapsBetweenStepFramesMs": {
+    "20.8": 993,
+    "13.9": 1489
+   }
+  },
+  {
+   "name": "jit144",
+   "floopMeanMs": 8.684,
+   "floopMaxMs": 21.553,
+   "todayMeanMs": 3.483,
+   "todayMaxMs": 7.184,
+   "gapsBetweenStepFramesMs": {
+    "21.6": 142,
+    "13.5": 851,
+    "20.7": 851,
+    "14.4": 638
+   }
+  },
+  {
+   "name": "165",
+   "floopMeanMs": 8.539,
+   "floopMaxMs": 18.182,
+   "todayMeanMs": 3.03,
+   "todayMaxMs": 6.061,
+   "gapsBetweenStepFramesMs": {
+    "18.2": 1624,
+    "12.1": 542
+   }
+  }
+ ],
+ "drifts": [
+  {
+   "driftPct": 0.5,
+   "lockFirst": true,
+   "lockedBefore": true,
+   "lockedEnd": true,
+   "lockChanges": 1,
+   "dilationMs": -2968.417,
+   "dilationPct": -0.4907,
+   "invariant3BoundMs": 6066.518,
+   "invariant3Ok": true
+  },
+  {
+   "driftPct": 0.9,
+   "lockFirst": true,
+   "lockedBefore": true,
+   "lockedEnd": true,
+   "lockChanges": 1,
+   "dilationMs": -5335.183,
+   "dilationPct": -0.8819,
+   "invariant3BoundMs": 6066.518,
+   "invariant3Ok": true
+  },
+  {
+   "driftPct": 1.2,
+   "lockFirst": true,
+   "lockedBefore": true,
+   "lockedEnd": true,
+   "lockChanges": 1,
+   "dilationMs": -7097.933,
+   "dilationPct": -1.1732,
+   "invariant3BoundMs": 6066.479,
+   "invariant3Ok": false
+  },
+  {
+   "driftPct": 1.5,
+   "lockFirst": true,
+   "lockedBefore": true,
+   "lockedEnd": true,
+   "lockChanges": 1,
+   "dilationMs": -8850.333,
+   "dilationPct": -1.4629,
+   "invariant3BoundMs": 6066.503,
+   "invariant3Ok": false
+  },
+  {
+   "driftPct": 1.9,
+   "lockFirst": true,
+   "lockedBefore": true,
+   "lockedEnd": true,
+   "lockChanges": 1,
+   "dilationMs": -11170.85,
+   "dilationPct": -1.8465,
+   "invariant3BoundMs": 6066.542,
+   "invariant3Ok": false
+  },
+  {
+   "driftPct": 2.1,
+   "lockFirst": true,
+   "lockedBefore": true,
+   "lockedEnd": false,
+   "lockChanges": 2,
+   "dilationMs": 6.867,
+   "dilationPct": 0.0011,
+   "invariant3BoundMs": 6066.577,
+   "invariant3Ok": true
+  },
+  {
+   "driftPct": 1.5,
+   "lockFirst": false,
+   "lockedBefore": false,
+   "lockedEnd": false,
+   "lockChanges": 0,
+   "dilationMs": 16.667,
+   "dilationPct": 0.0028,
+   "invariant3BoundMs": 6016.501,
+   "invariant3Ok": true
+  }
+ ]
+}

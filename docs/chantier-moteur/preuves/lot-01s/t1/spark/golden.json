@@ -1,0 +1,917 @@
+{
+ "schema": "metal-platform-math-golden-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "linux",
+  "arch": "arm64"
+ },
+ "root": "~/metal-tests/lot01s-t1",
+ "host": {
+  "passed": 0,
+  "of": 8,
+  "rows": [
+   {
+    "test": "legacy seed 1, sector 0: exact pre-campaign world fingerprint",
+    "pass": false,
+    "digest": "0a0aa8215233a8584e7dc86b4cca5f238daae6b4ecc7726f7709fc157b3ddbc7"
+   },
+   {
+    "test": "legacy seed 1, sector 1: exact pre-campaign world fingerprint",
+    "pass": false,
+    "digest": "ce143e6b83791fcb140442d376066b3f9eba681fabb6b733635ac0c67c993560"
+   },
+   {
+    "test": "legacy seed 1, sector 2: exact pre-campaign world fingerprint",
+    "pass": false,
+    "digest": "ad3e04647d77302edadf109ef0cb40bacb310f03b7ed5b4b2ce2a35349fa2062"
+   },
+   {
+    "test": "legacy seed 96, sector 0: exact pre-campaign world fingerprint",
+    "pass": false,
+    "digest": "efce777181efed07b0b7336ec2e210602781eda01e8f3b719925b8617cc0c505"
+   },
+   {
+    "test": "legacy seed 96, sector 1: exact pre-campaign world fingerprint",
+    "pass": false,
+    "digest": "2276b74efa23ffb250c8213c47172b9cdfec8d4aaffdcbd6bd2c45517c809772"
+   },
+   {
+    "test": "legacy seed 96, sector 2: exact pre-campaign world fingerprint",
+    "pass": false,
+    "digest": "fe6f9e332e1d9ad61045bf5f609cbfdba1860e41e2b35800720920aa7181838d"
+   },
+   {
+    "test": "campaign mode is strictly opt-in and keeps historical clamping otherwise",
+    "pass": false
+   },
+   {
+    "test": "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout",
+    "pass": false,
+    "stages": [
+     false,
+     false,
+     false
+    ]
+   }
+  ]
+ },
+ "fmath": {
+  "passed": 8,
+  "of": 8,
+  "rows": [
+   {
+    "test": "legacy seed 1, sector 0: exact pre-campaign world fingerprint",
+    "pass": true,
+    "digest": "2a488a2ae7b6b92626cc7d8b099472c2e843dd81f476c268919e8e3be026abb6"
+   },
+   {
+    "test": "legacy seed 1, sector 1: exact pre-campaign world fingerprint",
+    "pass": true,
+    "digest": "530cc4da44cfbdee311cef3bde99c1835b8772ad9d9804a2d768cefa2f18cd2e"
+   },
+   {
+    "test": "legacy seed 1, sector 2: exact pre-campaign world fingerprint",
+    "pass": true,
+    "digest": "360ff380dafda6b98058cc6ca8869961f6f85e2a63f2b0332f851deea7d55d4f"
+   },
+   {
+    "test": "legacy seed 96, sector 0: exact pre-campaign world fingerprint",
+    "pass": true,
+    "digest": "173c9d30b0bad0d8a734898ff086353315c8b47c45f4faf0b86c9019674638d7"
+   },
+   {
+    "test": "legacy seed 96, sector 1: exact pre-campaign world fingerprint",
+    "pass": true,
+    "digest": "3ddc4fabaa9873c6979324d724f7d8de4ae2e0c8ad22571d10770e3fa1d791ea"
+   },
+   {
+    "test": "legacy seed 96, sector 2: exact pre-campaign world fingerprint",
+    "pass": true,
+    "digest": "4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42"
+   },
+   {
+    "test": "campaign mode is strictly opt-in and keeps historical clamping otherwise",
+    "pass": true
+   },
+   {
+    "test": "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout",
+    "pass": true,
+    "stages": [
+     true,
+     true,
+     true
+    ]
+   }
+  ]
+ },
+ "campaign": {
+  "v1": {
+   "worlds": 54,
+   "changedByFMath": 51,
+   "changed": [
+    "1:1",
+    "1:2",
+    "1:3",
+    "1:4",
+    "1:6",
+    "1:7",
+    "1:8",
+    "1:9",
+    "1:10",
+    "1:12",
+    "1:13",
+    "1:14",
+    "1:15",
+    "1:16",
+    "1:17",
+    "1:18",
+    "96:1",
+    "96:2",
+    "96:3",
+    "96:4",
+    "96:5",
+    "96:6",
+    "96:7",
+    "96:8",
+    "96:9",
+    "96:10",
+    "96:11",
+    "96:12",
+    "96:13",
+    "96:14",
+    "96:15",
+    "96:16",
+    "96:17",
+    "96:18",
+    "2026:1",
+    "2026:2",
+    "2026:3",
+    "2026:4",
+    "2026:5",
+    "2026:6",
+    "2026:7",
+    "2026:9",
+    "2026:10",
+    "2026:11",
+    "2026:12",
+    "2026:13",
+    "2026:14",
+    "2026:15",
+    "2026:16",
+    "2026:17",
+    "2026:18"
+   ],
+   "digests": [
+    {
+     "seed": 1,
+     "index": 0,
+     "host": "6e678449d43e7b58ae822169f459ea7ad44b8afb3ff58a3da862f38cc6c1764c",
+     "fmath": "7b91a08f375851d71e89e47d5ec78d76902fd50e439ef27f87d19afc6a08a5fa"
+    },
+    {
+     "seed": 1,
+     "index": 1,
+     "host": "9c8abe88516d9645ba4b227145196ca062de4ae3029f152dcedcef8a9cd54748",
+     "fmath": "eb9bc98e3ff29777560a9fa12ad836faf68d1466cb5c1fe75786f8604e2b60a9"
+    },
+    {
+     "seed": 1,
+     "index": 2,
+     "host": "96e86458848cc258dc784985f7d253ec7377e6e461a5f8abe56c0f9ecb16de4f",
+     "fmath": "fc512679f305bfe68cc7a21440d646f4a76b989e4bf7786f9c0faff3c46fc2c9"
+    },
+    {
+     "seed": 1,
+     "index": 3,
+     "host": "1ea8da4f33cdb6a251b1d3632a67c5c2ec21627f47647934111a67dc5b120302",
+     "fmath": "79666144b2c718db20b328085451267b54660d1c537262631fd3a1f15b06dd72"
+    },
+    {
+     "seed": 1,
+     "index": 4,
+     "host": "3a8c643c631cbb6a0d2efe88193c5ea07bfdb24173aac2378dc93e6effd43b14",
+     "fmath": "3a8c643c631cbb6a0d2efe88193c5ea07bfdb24173aac2378dc93e6effd43b14"
+    },
+    {
+     "seed": 1,
+     "index": 5,
+     "host": "9cc4867d4e7c3dda6d43e230393f19b0706e97e6f5f64e57037cbbca63fe8faa",
+     "fmath": "a54afd1afa4e2f8e3cad0be5acf7ac5b76837e88621dcfceb48c10f6a89fca11"
+    },
+    {
+     "seed": 1,
+     "index": 6,
+     "host": "5785eeb1042f083b833d5f7a69acd999f22e006f8782a4757973147ff02eed8f",
+     "fmath": "75036375b8aa0e6a7e95b4dce60bdd895b53a02d7aa38e06661961fb88dab512"
+    },
+    {
+     "seed": 1,
+     "index": 7,
+     "host": "2e09f0746117c8f5b0a5ef9c36ca2ae4263b076e268dc30d65bd3162b61c6df8",
+     "fmath": "bd26c541f70a507764b6ace013a8c4c285c1c6312199b1e7d0befaa85b1d9a06"
+    },
+    {
+     "seed": 1,
+     "index": 8,
+     "host": "212fe85248fa80a647c6a344bbc7b20bf3c1ce882e845f0fecfcc4c4ba03c9e4",
+     "fmath": "78ffcd47f2c1af7938ba6e101aff4bf32ca5b6c2b69337ec65dbfa1d1d024408"
+    },
+    {
+     "seed": 1,
+     "index": 9,
+     "host": "7fbfa28da6387ec23d203741c5467f2785c12910c6e6e2df5aab647580294866",
+     "fmath": "23abd2131b253fa4f9e679db9a89187055dc907a4995c57cf7b7db400c0309fc"
+    },
+    {
+     "seed": 1,
+     "index": 10,
+     "host": "f4f26ed69ac89e94ae5ec723b7ae39d0af5a2a6b9b45f0cc2547ccb6ac82d45d",
+     "fmath": "f4f26ed69ac89e94ae5ec723b7ae39d0af5a2a6b9b45f0cc2547ccb6ac82d45d"
+    },
+    {
+     "seed": 1,
+     "index": 11,
+     "host": "c13eef6b34e25dca01c8e77ca05a998d4f1d48886e3fc4c7735ddd20eaa38ec1",
+     "fmath": "d43d9e0ac4e412277706dcef514fe300c0841f02e1e414a8c5efb6d7f4620edf"
+    },
+    {
+     "seed": 1,
+     "index": 12,
+     "host": "42ea33c592c0cf109d5ec16bff1bfce404e5d5fa035c04d2f54a7167020e316a",
+     "fmath": "440343f281123d011f8e4aeebfcba899bc26f7355c4b02416e8f0c8a71191979"
+    },
+    {
+     "seed": 1,
+     "index": 13,
+     "host": "d67e7d9dbea233a7898f10e0d6fe9605e70cb699ca323d38112fe28fc3ad0aca",
+     "fmath": "8ff87147ff7ddb1a08822f49ba7def06159bd1b472fe3d95739b11b861b81ab9"
+    },
+    {
+     "seed": 1,
+     "index": 14,
+     "host": "1aabf82b7d5ffc3f34e3d4729b26fa483e2d5390cf1dc3ee6491b3a31eb2a88c",
+     "fmath": "c7c29d1e360738a9c756da3f52e0f38b860af870286b613a8c806c51afd30ea7"
+    },
+    {
+     "seed": 1,
+     "index": 15,
+     "host": "61bb14b080f09365ee76e18db6332427f9c4c365ad6ee721acf472ed08dc3246",
+     "fmath": "0c6badda6a4e7635e7563203ed2812edf31939a417f239a324dcd9d96e6aaa1d"
+    },
+    {
+     "seed": 1,
+     "index": 16,
+     "host": "1702e0f7637943c2fcf44827ed35450327a62d51ff94a1865df3c72209f0f96f",
+     "fmath": "4813a11027f054eb81febc81b137065bf2dacc6e468534ec283f6bb8bd42320b"
+    },
+    {
+     "seed": 1,
+     "index": 17,
+     "host": "57a900631702194248f204d8bcab78ff893105e1ba8254e6c759df7976678a88",
+     "fmath": "35a56b9feec51a829959c8d7c8bc2ca00a58a497257d9bc552f82e271cd61869"
+    },
+    {
+     "seed": 96,
+     "index": 0,
+     "host": "5702bb8385a642df2e2b4f651a6ca62d3c74013f4dd74dbf9c4ed5b7d7b5725f",
+     "fmath": "c84112dc41fcfdb1fa8de8c44331e5345c2bc7ec329e0bb14a09e28e60023835"
+    },
+    {
+     "seed": 96,
+     "index": 1,
+     "host": "8f5c2787681aafecd5b4eb2cb6949064658bd82c6a9bb99ec28f31e5fbd17bed",
+     "fmath": "ebaf8a169a2a0d295609402b4fe4e380320784bda710cc2a30892487b973daf7"
+    },
+    {
+     "seed": 96,
+     "index": 2,
+     "host": "88afa09bdb509be8b7e0e2c69fd5ba8cdb00b5d6dabbe884307c586749bc08e2",
+     "fmath": "81e76baf373b4b08fb449dc63b469895083a3a526b987f4472a311cd6cbfa223"
+    },
+    {
+     "seed": 96,
+     "index": 3,
+     "host": "49755b68ac9c51b1700561247ba97555a74a189b51314ef0cb89c1db15ebeb69",
+     "fmath": "c2405de79510df7431623c0b05b4035e75789d0b92df0b4f217c345b49b2d8bc"
+    },
+    {
+     "seed": 96,
+     "index": 4,
+     "host": "b487f788240ff71c0111d6c3f9d49634fe0eaf80e9e4380b42bffb7ef435e9bc",
+     "fmath": "83b0603c8703eb8ed1fd25b74f2701d5120d0f6ffaf865e9b7e6cfcd61a5fc36"
+    },
+    {
+     "seed": 96,
+     "index": 5,
+     "host": "8e7a41c951de4c4ef516af370be9f8a04846921e1998dbdd6f833adf1344c722",
+     "fmath": "a4bb28e928c6c4f250fedf566649465ded0e66e8fa25d81e6b58df7373f88066"
+    },
+    {
+     "seed": 96,
+     "index": 6,
+     "host": "81c7dac95f38fb47b8d13e0a901ac65caac4f299f006081aa491e466a9d5d511",
+     "fmath": "c7f385c3a3c50f2e1d01c89848a3545f6f830a83ba6665a08f75c205f816a7df"
+    },
+    {
+     "seed": 96,
+     "index": 7,
+     "host": "b9e06e77c944e8d1ac424b87ec9b5b73756f25bc4f3641db5a10a09a2bd116e3",
+     "fmath": "e7d2f841fa65f1f2ce4ef216119ed3ee8d18af05ac826ec243b24f3a548a7412"
+    },
+    {
+     "seed": 96,
+     "index": 8,
+     "host": "b01bcb93e970a6bf8233770499a6ed3a7388ea2a4fd0f9af1b3bfa07f98bdbd9",
+     "fmath": "9fbd1ee5fd08625f19bc25b74e57ea5168a18d389318f1402bba1367953e4926"
+    },
+    {
+     "seed": 96,
+     "index": 9,
+     "host": "9c12ee0a62bce29cfbcdbc4c1d0bc360287a99eb8bf6f467b653d2bbf7fe64b7",
+     "fmath": "72eb52dcb5847b13751306cf403ad1cee56ed48aeb07b1433e4cb25e7aa19e19"
+    },
+    {
+     "seed": 96,
+     "index": 10,
+     "host": "81d8c81034c497f6d58069df6bbed2cf22ea121d95224546f73c97e8b68b17ca",
+     "fmath": "b8c43c2799b9c1fb5c64d36941f52d511a073ac6461463c20260f493a3b54190"
+    },
+    {
+     "seed": 96,
+     "index": 11,
+     "host": "deacfa9108cd0cd5e989ed708e8f1cc1fc71707750b45154cce8cdc5cbabcd48",
+     "fmath": "ceda4b259cfc18764040446a41079b5619bfc34587432547b58ad678f30a6748"
+    },
+    {
+     "seed": 96,
+     "index": 12,
+     "host": "e5b72e59e02270c52d5eea27d452ec206297959679fec1c952e786b6e68ef19c",
+     "fmath": "1967594558dea3b0f903047bdfa50e3a0782a4960269f419e14f735a8c6bc372"
+    },
+    {
+     "seed": 96,
+     "index": 13,
+     "host": "db6c5299949e5e1ea7615f34d56456a5989dbce22377568fcdd3f9122dae656c",
+     "fmath": "6acf78786afde5d99b9316a28b0ddf43c6a045077486b82c96e346044c310b33"
+    },
+    {
+     "seed": 96,
+     "index": 14,
+     "host": "c9d3a724c202dfb8eb3108d859488e5389c7536ab4599dbae58f72f1b6fc450b",
+     "fmath": "d6513389e052f28fb8ac51167d0b88a72126af5405196cfb8542f598c0eebac5"
+    },
+    {
+     "seed": 96,
+     "index": 15,
+     "host": "8a399ab384824b73274daced52cace077a308b6644d63726c8892cc292377113",
+     "fmath": "82914f58e187e994a3cf3f3bd3a19c9e7c1ba2c31879b99599a2f099f14409e6"
+    },
+    {
+     "seed": 96,
+     "index": 16,
+     "host": "309e856782723de18fad63b58cf06d885870a2d10bbf73f60045d9f5aee9074f",
+     "fmath": "e017243ac4bb977571edfbca68715a4985e1478a682945425b0c64432ff3958a"
+    },
+    {
+     "seed": 96,
+     "index": 17,
+     "host": "14287564a9f4be266d476e8e7f46b2805039372ac4c8f7ce449becfe1531feb8",
+     "fmath": "acf3dfd8d50f0342a5446e946af985f08e60bc9daa08e0a18991c2bf6cdcc706"
+    },
+    {
+     "seed": 2026,
+     "index": 0,
+     "host": "7eb8b49592f29f4528b4867869cc7a01862e52a3f8910c3e754c2f6f1fdcb986",
+     "fmath": "23ab89f8b1b7a66c49a44badfce8ded08b119a005a2fbedced89c97a7a9e6aaa"
+    },
+    {
+     "seed": 2026,
+     "index": 1,
+     "host": "cb8eb54684d06e56ce3c88292e54b7497dcf5d2e9251ad54be530ad7e778883f",
+     "fmath": "856ef0e058e8b0b2ff0ca847b356428aad13169a668cd7e69c3ad9fc4dbc9345"
+    },
+    {
+     "seed": 2026,
+     "index": 2,
+     "host": "ebdbbbcbe8330bc2844bec78b64cf70342f9876b05bf5fb04c286ddda512855b",
+     "fmath": "b6fb0faf356da03cf8e810a8dffc52ea5214cda81de9cb2fa9eaaf8a79d1e913"
+    },
+    {
+     "seed": 2026,
+     "index": 3,
+     "host": "96d9e27c89d578a4b334bfa2005838da36fbfe414be85dce58b83414c7d6e611",
+     "fmath": "545083b982ceb7b929c152a0c77a0acce32faf17cd19c9be10a0df2ecfc14178"
+    },
+    {
+     "seed": 2026,
+     "index": 4,
+     "host": "6de2969b4a5c7d5bb81118ccbd952d49e3ca9785ae7030d97a8686b9f90e42c1",
+     "fmath": "d204004c9812a31b75f218a21b260962f0e5debdc56fcbb46d01e6d75b0ebb3d"
+    },
+    {
+     "seed": 2026,
+     "index": 5,
+     "host": "5161ad21260ca9c21fff501a5f2f1fc85c7ab1a22002a88a895a28468fe11d5c",
+     "fmath": "91e6e029b5c66c7c3a2d25f229026fe16a10ed9c5eeace9c8959b9afd6fdb44d"
+    },
+    {
+     "seed": 2026,
+     "index": 6,
+     "host": "a4c9a7174f8d0b8a64458520ac65f09e2ee7bb3518c3f9e388e3dcf878fa080e",
+     "fmath": "4d6fe224d3fce3b2b7785442bdb63362b0e7493bebbc1127f3e71d6f016d58c4"
+    },
+    {
+     "seed": 2026,
+     "index": 7,
+     "host": "1126bd3cd469be54719d34aa5ff0fa588ba3142b26d2d6b9973af383951f88ac",
+     "fmath": "1126bd3cd469be54719d34aa5ff0fa588ba3142b26d2d6b9973af383951f88ac"
+    },
+    {
+     "seed": 2026,
+     "index": 8,
+     "host": "3e2b9cf1de02582757930b45692c8d5cc7e882a81869fb582c5e9b67292ea696",
+     "fmath": "1bb51c713558218a7f9d170f34e431c69156866492aae2edc8203f8eb29a739e"
+    },
+    {
+     "seed": 2026,
+     "index": 9,
+     "host": "0da7ce6ff50680fd307dc176abf77497ee13a85efd7eb66c2b4a9077a17021f1",
+     "fmath": "0823c2595cb8908e578ac0c97b69e060b2521ceee76639de870c427e6cd5bb7a"
+    },
+    {
+     "seed": 2026,
+     "index": 10,
+     "host": "19c09f9f8e88ab17cab8707e7adfab52d9abde6a33bf502b0092e1383cdcef52",
+     "fmath": "79cc10d3efa9063d3af5714cf4d716b8ff267df9142c9b635efa3fa76289fed6"
+    },
+    {
+     "seed": 2026,
+     "index": 11,
+     "host": "7d2abe3c9b4a7cd45036072eef260f8474c4c1d86e3c83f2adfa2da1e93b98de",
+     "fmath": "a8ca90b0a11de51347d482437d40feb89f10fc65c0379b1f7ff06d168e2ff188"
+    },
+    {
+     "seed": 2026,
+     "index": 12,
+     "host": "ba5abf46dbc40babb49dc9f8a403759f5ea62290bbcd0522e959e5baa090c37a",
+     "fmath": "16e70bdcf56ad09cc6e6e74b303bd628b34b3cf05eb3baa143645c09b78bb5a3"
+    },
+    {
+     "seed": 2026,
+     "index": 13,
+     "host": "b1e449dd287e27fb5f9172d28967350f91f34a2f049a00a48743d2ead81b3a3d",
+     "fmath": "e3ee019c6cdc969e7bc36bc5d07e250d897201743e1befffade443944b2d32eb"
+    },
+    {
+     "seed": 2026,
+     "index": 14,
+     "host": "6a9a21a46f6d3813d91b176bda08e891e6bb98a4bf3a56100befd6099af25e23",
+     "fmath": "074733e7206098380a6eeece47ce5451decfe8b9049cb92fd01e32c3c25cbec6"
+    },
+    {
+     "seed": 2026,
+     "index": 15,
+     "host": "acd768509d49eab48fabc2fd2c3c7f87f188a2eb2ba917c4581acee2b0ba962d",
+     "fmath": "64ecc59ad75d569105d8fa1babc4aa8352321a089f131fe6bb09fd2e3c545108"
+    },
+    {
+     "seed": 2026,
+     "index": 16,
+     "host": "7a84317f917d0bcbb340b2d43f6f3389da860161568672306ccdac7b78a4854d",
+     "fmath": "6f88213bdb0eed6273ee721cfa19a984c50f411842252225850871f6f3065a71"
+    },
+    {
+     "seed": 2026,
+     "index": 17,
+     "host": "0ff84e1749abc211e045b72e557d0f45ac34b803cb5053243c0e71f03d048d7f",
+     "fmath": "cd3fe1205a6a2043ad36032b6c0c36731425bf671b35fe2e84af5f08e54210a4"
+    }
+   ]
+  },
+  "v2": {
+   "worlds": 54,
+   "changedByFMath": 51,
+   "changed": [
+    "1:1",
+    "1:2",
+    "1:3",
+    "1:4",
+    "1:6",
+    "1:7",
+    "1:8",
+    "1:9",
+    "1:10",
+    "1:12",
+    "1:13",
+    "1:14",
+    "1:15",
+    "1:16",
+    "1:17",
+    "1:18",
+    "96:1",
+    "96:2",
+    "96:3",
+    "96:4",
+    "96:5",
+    "96:6",
+    "96:7",
+    "96:8",
+    "96:9",
+    "96:10",
+    "96:11",
+    "96:12",
+    "96:13",
+    "96:14",
+    "96:15",
+    "96:16",
+    "96:17",
+    "96:18",
+    "2026:1",
+    "2026:2",
+    "2026:3",
+    "2026:4",
+    "2026:5",
+    "2026:6",
+    "2026:7",
+    "2026:9",
+    "2026:10",
+    "2026:11",
+    "2026:12",
+    "2026:13",
+    "2026:14",
+    "2026:15",
+    "2026:16",
+    "2026:17",
+    "2026:18"
+   ],
+   "digests": [
+    {
+     "seed": 1,
+     "index": 0,
+     "host": "0cd47e77661f547f1d1532d5304e352666932dd6b695f491707baa28bcbdbb85",
+     "fmath": "c7c8023783069a2f71d529d3fde11f13f9f2d085ba0a56942a7f1c0f20469968"
+    },
+    {
+     "seed": 1,
+     "index": 1,
+     "host": "219543ccb0ccb4a3f26deec5fdd425ed266a1e531e732be9d5068325bfd42583",
+     "fmath": "9a5c20663e0e0cadec4f9662d00baa2033154d5ad52c0e04ba0e011e68696568"
+    },
+    {
+     "seed": 1,
+     "index": 2,
+     "host": "f76b0fb641caf483e94d69e43ac47aa641f6a5af856d1526207cfe1d6205ef44",
+     "fmath": "389b11063533607d4188fc132121762c1db38a306465ec42b37bed77a25e02d2"
+    },
+    {
+     "seed": 1,
+     "index": 3,
+     "host": "11412001fd66b09edae6dc27752c48be36044ca8c6441dc7223e5197f8150d6b",
+     "fmath": "c6e4fd7e56239ec55dea8a7cd3aa599172ba23e0b0a11b9baa3624a61b6fd9bf"
+    },
+    {
+     "seed": 1,
+     "index": 4,
+     "host": "63da76a691e0b0546990857fc54316a017163f92b475d9f81be30b5c268dac10",
+     "fmath": "63da76a691e0b0546990857fc54316a017163f92b475d9f81be30b5c268dac10"
+    },
+    {
+     "seed": 1,
+     "index": 5,
+     "host": "45c899b02dfec40027f745ee0d0d7b034c34afa6798656c6ca2c70a64a33dd7e",
+     "fmath": "e24b4f8e48740d49508afd8a6e49411f187bdf508a63777cc3b9475d629d2691"
+    },
+    {
+     "seed": 1,
+     "index": 6,
+     "host": "9bcecab9c64b8c34aac5aaa84a51199ebec9e2ba621576b6090bfb17c48c8931",
+     "fmath": "6a565a496a2639472ff3830766e88ca8050aafd0c4a7bfd652564e4230e2f25e"
+    },
+    {
+     "seed": 1,
+     "index": 7,
+     "host": "0936cae87971dd5ea73aa2d587c62e021e3d22cf4847e59c313838fa2112cd52",
+     "fmath": "13ac129f371ac8eec64730294e99788a6b8d8f216c5e179798741f7efa069662"
+    },
+    {
+     "seed": 1,
+     "index": 8,
+     "host": "38caaf70b1c820a349b48c0f4a78d681c44913f46fc03158af246a7b3572040a",
+     "fmath": "961e67557cf8bf9ac5119fe1e2b0a3aea17c4ba2c7c2a4ee3801b2aada993514"
+    },
+    {
+     "seed": 1,
+     "index": 9,
+     "host": "975e136323cd7b8efdf0d6203f0108483816e8bf2385b6d0441a52170747bf58",
+     "fmath": "d739c05ac91d9e40b8b4fcf71579283b1461a98422caeb62041f045471847ef8"
+    },
+    {
+     "seed": 1,
+     "index": 10,
+     "host": "5150bccb84cdd502263e08ae55e60ba20f63e77a8558ce7855b5b25539184f1f",
+     "fmath": "5150bccb84cdd502263e08ae55e60ba20f63e77a8558ce7855b5b25539184f1f"
+    },
+    {
+     "seed": 1,
+     "index": 11,
+     "host": "c0793bf42073e18f79b58f1131d631962a6b37340d6e389b7298649bbdcce570",
+     "fmath": "5fdea7e709e4f730b98d2cfe761572a2be3fc1167ac56d5413b97a5efa1c3443"
+    },
+    {
+     "seed": 1,
+     "index": 12,
+     "host": "62e27eb008cc4f919582fc5cc1a1d9c3a5d2ecfc73adefa213642586ddaeda48",
+     "fmath": "f31ffdc089bc1d8646bcc7b5965e8b90d53e1fa7b2eddae1c86b0e733f3087e5"
+    },
+    {
+     "seed": 1,
+     "index": 13,
+     "host": "b817ea1f4626b0851d6d336c838fabcc23d57cb90af9a86bf8f46c68363605be",
+     "fmath": "4d22bc134ccb50a932157a68426564f3cd020057966a4257ff377c09c74fb7b9"
+    },
+    {
+     "seed": 1,
+     "index": 14,
+     "host": "3f6b652ca6288321ded9aece4e4464b3dadb7e3cfdae36e84323145709bc0d8b",
+     "fmath": "46a41d712129d7df2a2c1a142c84066407835a582357cbc62684b87b985ada56"
+    },
+    {
+     "seed": 1,
+     "index": 15,
+     "host": "4d6b6e7c070dd49d95c55421899ce81db89e827b6d1482b9191ef760343b8ed9",
+     "fmath": "979b3ea08f4e2a993348abeb8492d2ac7f19c2962d1851fae9af2407071b1bd2"
+    },
+    {
+     "seed": 1,
+     "index": 16,
+     "host": "8cdb2a841f96cd504db9456f8d73362f6f101fff0244026cac53779df62c71c4",
+     "fmath": "5363ee237adbf9c70e13b6465ca6c2637cce508b3e8dbcb0c1efd86a3867777d"
+    },
+    {
+     "seed": 1,
+     "index": 17,
+     "host": "ae130efc3bf1842471932d9a770545abab10610f16904f5f7f0b07de336c897a",
+     "fmath": "85e4a90c462cc72a53c7f2fe09a04efaf6b5c6583d8cb611358e1fb173ceb150"
+    },
+    {
+     "seed": 96,
+     "index": 0,
+     "host": "fa7ca8bb9667c26991b73c607a2e56454d73754de410a1cc38d872a7ee101436",
+     "fmath": "68c5b1eaf2825f94b3438cadf735e349411e25d908ab19a2842bd47fd7de39a5"
+    },
+    {
+     "seed": 96,
+     "index": 1,
+     "host": "a9a0262234863deeef75e97e212c133b63b9a7df2a61600a2faf59747b79031d",
+     "fmath": "c932078322c32bc9bb32febe44af9ea3821ec11d9dbc25a314e4328380acc608"
+    },
+    {
+     "seed": 96,
+     "index": 2,
+     "host": "4a6778a65743f7e473d6a98886165a4477be510d4f2d19f8701ad6944f0929eb",
+     "fmath": "271310a08b0af37a6898863918b159f3e4bcfefe22a0575fe6c67f343f7d276b"
+    },
+    {
+     "seed": 96,
+     "index": 3,
+     "host": "9953b1ef6a77ec5fcf59ada2e57eedef94852c175aa57390357e78889740b0f9",
+     "fmath": "bba374412c60d78b18765451650b7dc9b668ea531df87a2fbef8fc8f1d3c312c"
+    },
+    {
+     "seed": 96,
+     "index": 4,
+     "host": "d90422d31c8b9ad46dadb1a2b45b20cc103cbbaca7efca430fe2f57106d0238f",
+     "fmath": "98258a0131f47032f28b7cb7f187c81c7ff3c7bc614a9c6ffed10803c3e124ad"
+    },
+    {
+     "seed": 96,
+     "index": 5,
+     "host": "8f8b62ba2cc312faf8c78a6c30fddcb554b6b13a10af9d894b35883d5e7568df",
+     "fmath": "009aec9c21da5b06d6a35f7e044d78d7cf7d2e37473a88a9eb929652f48a4a23"
+    },
+    {
+     "seed": 96,
+     "index": 6,
+     "host": "c1e5c208b0e8a7efc74a474acc160c1f37a03665685b1d6d3cf2a15b7f334025",
+     "fmath": "f90f0cc4d76feaa8a946ca8386eb2f1be5c5a8e3fb07101e3bdc686f5263ea5e"
+    },
+    {
+     "seed": 96,
+     "index": 7,
+     "host": "cf9c1b589289c92097a50b4d427c01b737a7ecf6cae89624fd0b6d53f2bfb765",
+     "fmath": "30728a6b7338685b69f92a36882de5cb1ceed0a8c466853de8d52ecffd1627ef"
+    },
+    {
+     "seed": 96,
+     "index": 8,
+     "host": "41f43a3be7d08cb3521f748193aa02e92f3d292bd2163e63807ec0ed306c66de",
+     "fmath": "ab4aedfdee85e586be81055bd6c82153cc50269ae74bb94fd378f352dcb8b24b"
+    },
+    {
+     "seed": 96,
+     "index": 9,
+     "host": "3a7df3e535a7b48058da461717833679a1e652f0e10f6843a897b0df35faebea",
+     "fmath": "d3393d5559ba63e67babf29953433eca326ed913816cdbf6dd27c83f41ea65f3"
+    },
+    {
+     "seed": 96,
+     "index": 10,
+     "host": "7e73237d9524b42698ed3649bfa4bb5d2f0a69ebf26e351da563996ecc32f803",
+     "fmath": "7be99e4c6c4f9b34e114c6d3a41e66003989e859ffd77f385060e590512aae07"
+    },
+    {
+     "seed": 96,
+     "index": 11,
+     "host": "8dc89910b098026d9572b39e601da6ae5e21f614c16b2b18932fe8502bbf606d",
+     "fmath": "6552df3977297ccaa47658a0e261f45a5158bb953a29905406b9d234c0ecfc6c"
+    },
+    {
+     "seed": 96,
+     "index": 12,
+     "host": "5b7a14ba017ef6906db9fcf4f16451611740d3219eae7e7179521814feac4340",
+     "fmath": "160b2d13ec7e35f18097def7cb46001e1d91f8197d370a436e8004588ac668e4"
+    },
+    {
+     "seed": 96,
+     "index": 13,
+     "host": "63e7a1aa86d190fd964cd958fd547851f37401386acc9804cf6e7738dd2949ae",
+     "fmath": "e22ce78d05313ded388742ad736612980d7a1499edc287dfc334cb496297d32c"
+    },
+    {
+     "seed": 96,
+     "index": 14,
+     "host": "7199cdcca1fd38224658f086cb2612e9f7747f2906de81b4b2ac6fc09ae9e571",
+     "fmath": "e7b70fca9ad5a81a3066a72b1c0afbe7ef1f7af1b25de30a2bf4f089a7472218"
+    },
+    {
+     "seed": 96,
+     "index": 15,
+     "host": "67299df8de2a4be7786a6feb6f69ff0635cb5a20787546c6e68ddbf40fe6d24d",
+     "fmath": "dcd2836c3e042db5144a439e3ea53b00b91b881890cd8cf24a0a3830407a429c"
+    },
+    {
+     "seed": 96,
+     "index": 16,
+     "host": "8a263afa6390046592f9fa9c899812b580b352cc6c5990aab1db6b1a103628d1",
+     "fmath": "c9317cf6a7f24387960b1cdc6824527e34b2f425064fd9b66ff95da13677e579"
+    },
+    {
+     "seed": 96,
+     "index": 17,
+     "host": "17c4d198282908c14b570314ae622d00684f683e69692d0adb93e8cf06f7b2ca",
+     "fmath": "7d6c872e5666da77619bab04227d7d187d8bc2be60b910a54aff3ffddcc9fbbf"
+    },
+    {
+     "seed": 2026,
+     "index": 0,
+     "host": "60f55c8b276fa9e7485e53b6c6cc22b1eb169a6b0018d5a5697fa36c02e3dfe5",
+     "fmath": "6446c357c6dec090d429b7aeefed997e9969a4df27c6270b84a1d9b0e7f1f73a"
+    },
+    {
+     "seed": 2026,
+     "index": 1,
+     "host": "87a3379859ab92e93f6f55b8cbf1fbeb687c4521f763bea03d4d4b511d706f80",
+     "fmath": "ea2445a183a73e26f1d2d547825d2042bd15ad4b313a292cec5833c0e6add2d1"
+    },
+    {
+     "seed": 2026,
+     "index": 2,
+     "host": "73dbcb088f2ff4bc2369a170e3056c778c614bf4a483fae3c65fed1830880bf6",
+     "fmath": "8235df853b97b04837b0ee0cd063b148ba45c65fd6ca8c7f87a2b8e82709574d"
+    },
+    {
+     "seed": 2026,
+     "index": 3,
+     "host": "62c665d54b43419f01d16d29ee7bff22dcb531fff6f2d149753ac2a6e8eb3e5b",
+     "fmath": "47b3530b1c606656d3803e44e228e3b253bec2322d440324d700f288254e122a"
+    },
+    {
+     "seed": 2026,
+     "index": 4,
+     "host": "513123592c6128a5962edf1723d1b98724528bfe510f3d24d510befa725826cd",
+     "fmath": "2a6c607559ce06842c3078ad652eb6c99d450978c644881dabd0a348a3dba903"
+    },
+    {
+     "seed": 2026,
+     "index": 5,
+     "host": "4448e70957c11da46bf26247fb77be9acbc8b317b247a963a8232f450005e826",
+     "fmath": "c49f5dcc6d101a52a7eb3d77973d8c3e27f5dc4c3756c5d27680dc5b0ee7e7c0"
+    },
+    {
+     "seed": 2026,
+     "index": 6,
+     "host": "50769d1d56521a83a1f6df377577d8495da772f6dcf102ecbe0a6ec1f393b071",
+     "fmath": "bee30d8a0b35d1f046fcf3a2fc792d5d65f288525395fc489c05676216da5335"
+    },
+    {
+     "seed": 2026,
+     "index": 7,
+     "host": "bbfa0f1ff53ed52a572638c4130823f85d437aa47eba040dc9b52734875818e9",
+     "fmath": "bbfa0f1ff53ed52a572638c4130823f85d437aa47eba040dc9b52734875818e9"
+    },
+    {
+     "seed": 2026,
+     "index": 8,
+     "host": "a6e558b6449f7dd2202891953b26a316f65957303a05064d92bca413e72ae919",
+     "fmath": "8d88b90f2932e8169a2c6c9ef458209a020012f5705a9243fe6934cf73b7e7b5"
+    },
+    {
+     "seed": 2026,
+     "index": 9,
+     "host": "befa157fde4a724b1483022ccea8d8f811595b4fe09e74a238cc894a0e79208d",
+     "fmath": "c5f8b879f27987dfe2910873e4207f46c11e4a1c488e63f58b2601b3287ea7a9"
+    },
+    {
+     "seed": 2026,
+     "index": 10,
+     "host": "e485d578cce7e42c025aa757b4fae9dba0599d899f24c621dba81b56af50418d",
+     "fmath": "76dd42bfa10e3da43ab2df1d652b8a3f6dca1d78f9ca1fef46441f2bfb9ce414"
+    },
+    {
+     "seed": 2026,
+     "index": 11,
+     "host": "795f64b1e72566c20eb66846b3ab1f441bcf9858e625f0a004053ca151f5e7b4",
+     "fmath": "3538244b1430e146c34368ed858b69020c9a313ed4adb5e8bbb1ca4109ced515"
+    },
+    {
+     "seed": 2026,
+     "index": 12,
+     "host": "c34809f2f1ab0661d0b301e924644ad926699ca2f8e9d1c6fd46dc2a660d848b",
+     "fmath": "32d3d9f3a6da50456859f2c79ffcedb95c401548503b5891d3c6a9dc6837d8ea"
+    },
+    {
+     "seed": 2026,
+     "index": 13,
+     "host": "cc19a0458fc0de56a924e62ef5516b499efd848b45385f8f29859c86c5dbe704",
+     "fmath": "3ef98ae863a7813232e578345a0cfd148a05872d22b8770ab3246f3b7c2110a3"
+    },
+    {
+     "seed": 2026,
+     "index": 14,
+     "host": "048421b8c7d891930e7702ef360a9ab960701c0ec2bc898a3a4bc5cdc8f6791d",
+     "fmath": "2c1564a3b79047d241e88fb3fd32a28b97515d92461655fe4fb864f055fbaa56"
+    },
+    {
+     "seed": 2026,
+     "index": 15,
+     "host": "ad22f59051f1eb852b82900c19985ace2fba61c8159964dcf6fd7669a540ae8a",
+     "fmath": "ce733fae7ca3b339f9fa7d5e6fe2e7ab2cfcd5814b7cec14f430ca9f6484a0a8"
+    },
+    {
+     "seed": 2026,
+     "index": 16,
+     "host": "58094836f8813eb8ef99b5d8e1cb47d3b4d567192582b2385e75c3b9d2343028",
+     "fmath": "e674c9ef4d488af6171e7f8b7ad879bd22014d42a5f8dcd46032effcb649a174"
+    },
+    {
+     "seed": 2026,
+     "index": 17,
+     "host": "3b0a2686370ed3a5224460e2a2425f3ac1be3ad6ee7afc9dc4326491ecb316aa",
+     "fmath": "a4c54f905ee23207328b25a1f5acb35cd3df6ce23c04dd64d076566f5c72b065"
+    }
+   ]
+  }
+ },
+ "subsets": [
+  {
+   "ported": [
+    "sin",
+    "cos"
+   ],
+   "passed": 0,
+   "of": 8,
+   "pattern": "00000000"
+  },
+  {
+   "ported": [
+    "atan",
+    "atan2"
+   ],
+   "passed": 1,
+   "of": 8,
+   "pattern": "01000000"
+  },
+  {
+   "ported": [
+    "sin",
+    "cos",
+    "atan2"
+   ],
+   "passed": 8,
+   "of": 8,
+   "pattern": "11111111"
+  },
+  {
+   "ported": [
+    "sin",
+    "cos",
+    "atan",
+    "atan2"
+   ],
+   "passed": 8,
+   "of": 8,
+   "pattern": "11111111"
+  }
+ ]
+}

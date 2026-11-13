@@ -1,0 +1,27 @@
+Module entrées, T5 (étape 5) — comportement des étapes 1 à 4 avant et après le resserrement du source, 13/11/2026
+Mac, Node v24.18.0, arm64. Avant = 6b4e98c (worktree à part, retiré ensuite) ; après = 6b4e98c + arbre de travail.
+  node docs/chantier-moteur/preuves/module-entrees/t5/differentiel.mjs <racine avant> <racine après> [sessions]
+Résultat complet : differentiel.json.
+
+1. 400 sessions de 300 appels tirés d'une graine (120 000 appels), plus 4 000 tirages des fonctions statiques
+   (keyName, radial, padStyle, normalize, assign, unbind) et 44 déclarations invalides passées à create, defaults,
+   normalize, assign et unbind : 264 218 sorties comparées, 0 écart.
+   Couverture des sessions (module d'après) : images 23865, imagesAvecManette 14204, imagesAppareilManette 14976, connexions 4861, deconnexions 4116, capturesClavier 206, capturesManette 179, appuis 18305, affectationsReussies 439, conflits 519.
+   Messages rapprochés (seul écart voulu : les cinq messages d'erreur raccourcis, préfixe « FInput : » et fautif gardés) :
+     « allowKey doit être une fonction » → « allowKey invalide » : 5 fois
+     « actions doit être un tableau non vide » → « actions invalides » : 15 fois
+     « identifiant d’action invalide : … » → « id invalide : … » : 10 fois
+     « identifiant en double : … » → « id en double : … » : 5 fois
+     « getGamepads doit être une fonction » → « getGamepads invalide » : 5 fois
+   Membres ajoutés à l'instance : keyLabel, setLayout, label, rumble ; membres retirés : aucun.
+   Hors comparaison : keyLabel, setLayout, label et rumble (absents avant) ; glyph et guessDevice (souches vides avant).
+
+2. Sensibilité du banc : cinq changements plantés dans une copie du module d'après (hors du dépôt), comparés au module
+   d'avant sur 100 sessions. Chacun donne des écarts, et le banc rend le code de sortie 1 :
+   trigOn .30 → .31                              → écarts    141 sur  84218 comparaisons (code de sortie 1), premier : frame
+   appareil manette seulement si index < 1       → écarts   5708 sur  84218 comparaisons (code de sortie 1), premier : frame
+   clear() sans quiet                            → écarts    453 sur  84218 comparaisons (code de sortie 1), premier : frame
+   message « config invalide » changé            → écarts     15 sur  84218 comparaisons (code de sortie 1), premier : déclaration 0 create
+   connexion annoncée à chaque image             → écarts   3065 sur  84218 comparaisons (code de sortie 1), premier : frame
+   (ancres : 'trigOn:.30' ; "if(fa)dev='gamepad';" ; 'cap=got=null;quiet=true;},' ; "'config invalide'" ;
+   'if(!seen.has(key))con.push(card(o));', remplacées une fois chacune.)

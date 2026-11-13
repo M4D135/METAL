@@ -1,0 +1,232 @@
+TAP version 13
+# Subtest: legacy seed 1, sector 0: exact pre-campaign world fingerprint
+not ok 1 - legacy seed 1, sector 0: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 444.229087
+  type: 'test'
+  location: '~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:178:53'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '0a0aa8215233a8584e7dc86b4cca5f238daae6b4ecc7726f7709fc157b3ddbc7'
+    - '2a488a2ae7b6b92626cc7d8b099472c2e843dd81f476c268919e8e3be026abb6'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '2a488a2ae7b6b92626cc7d8b099472c2e843dd81f476c268919e8e3be026abb6'
+  actual: '0a0aa8215233a8584e7dc86b4cca5f238daae6b4ecc7726f7709fc157b3ddbc7'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:179:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1325:25)
+    Test.start (node:internal/test_runner/test:1191:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17)
+  ...
+# Subtest: legacy seed 1, sector 1: exact pre-campaign world fingerprint
+not ok 2 - legacy seed 1, sector 1: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 402.543452
+  type: 'test'
+  location: '~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:178:53'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'ce143e6b83791fcb140442d376066b3f9eba681fabb6b733635ac0c67c993560'
+    - '530cc4da44cfbdee311cef3bde99c1835b8772ad9d9804a2d768cefa2f18cd2e'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '530cc4da44cfbdee311cef3bde99c1835b8772ad9d9804a2d768cefa2f18cd2e'
+  actual: 'ce143e6b83791fcb140442d376066b3f9eba681fabb6b733635ac0c67c993560'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:179:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1325:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+    Test.postRun (node:internal/test_runner/test:1465:19)
+    Test.run (node:internal/test_runner/test:1390:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: legacy seed 1, sector 2: exact pre-campaign world fingerprint
+not ok 3 - legacy seed 1, sector 2: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 539.208026
+  type: 'test'
+  location: '~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:178:53'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'ad3e04647d77302edadf109ef0cb40bacb310f03b7ed5b4b2ce2a35349fa2062'
+    - '360ff380dafda6b98058cc6ca8869961f6f85e2a63f2b0332f851deea7d55d4f'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '360ff380dafda6b98058cc6ca8869961f6f85e2a63f2b0332f851deea7d55d4f'
+  actual: 'ad3e04647d77302edadf109ef0cb40bacb310f03b7ed5b4b2ce2a35349fa2062'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:179:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1325:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+    Test.postRun (node:internal/test_runner/test:1465:19)
+    Test.run (node:internal/test_runner/test:1390:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: legacy seed 96, sector 0: exact pre-campaign world fingerprint
+not ok 4 - legacy seed 96, sector 0: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 405.36411
+  type: 'test'
+  location: '~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:178:53'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'efce777181efed07b0b7336ec2e210602781eda01e8f3b719925b8617cc0c505'
+    - '173c9d30b0bad0d8a734898ff086353315c8b47c45f4faf0b86c9019674638d7'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '173c9d30b0bad0d8a734898ff086353315c8b47c45f4faf0b86c9019674638d7'
+  actual: 'efce777181efed07b0b7336ec2e210602781eda01e8f3b719925b8617cc0c505'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:179:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1325:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+    Test.postRun (node:internal/test_runner/test:1465:19)
+    Test.run (node:internal/test_runner/test:1390:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: legacy seed 96, sector 1: exact pre-campaign world fingerprint
+not ok 5 - legacy seed 96, sector 1: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 397.909324
+  type: 'test'
+  location: '~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:178:53'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '2276b74efa23ffb250c8213c47172b9cdfec8d4aaffdcbd6bd2c45517c809772'
+    - '3ddc4fabaa9873c6979324d724f7d8de4ae2e0c8ad22571d10770e3fa1d791ea'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '3ddc4fabaa9873c6979324d724f7d8de4ae2e0c8ad22571d10770e3fa1d791ea'
+  actual: '2276b74efa23ffb250c8213c47172b9cdfec8d4aaffdcbd6bd2c45517c809772'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:179:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1325:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+    Test.postRun (node:internal/test_runner/test:1465:19)
+    Test.run (node:internal/test_runner/test:1390:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: legacy seed 96, sector 2: exact pre-campaign world fingerprint
+not ok 6 - legacy seed 96, sector 2: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 530.874957
+  type: 'test'
+  location: '~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:178:53'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'fe6f9e332e1d9ad61045bf5f609cbfdba1860e41e2b35800720920aa7181838d'
+    - '4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42'
+  actual: 'fe6f9e332e1d9ad61045bf5f609cbfdba1860e41e2b35800720920aa7181838d'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:179:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1325:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+    Test.postRun (node:internal/test_runner/test:1465:19)
+    Test.run (node:internal/test_runner/test:1390:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: campaign mode is strictly opt-in and keeps historical clamping otherwise
+not ok 7 - campaign mode is strictly opt-in and keeps historical clamping otherwise
+  ---
+  duration_ms: 512.101995
+  type: 'test'
+  location: '~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:182:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'fe6f9e332e1d9ad61045bf5f609cbfdba1860e41e2b35800720920aa7181838d'
+    - '4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42'
+  actual: 'fe6f9e332e1d9ad61045bf5f609cbfdba1860e41e2b35800720920aa7181838d'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:186:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1325:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+    Test.postRun (node:internal/test_runner/test:1465:19)
+    Test.run (node:internal/test_runner/test:1390:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: the first three campaign worlds preserve historical geometry outside campaign supplies and loadout
+not ok 8 - the first three campaign worlds preserve historical geometry outside campaign supplies and loadout
+  ---
+  duration_ms: 765.822491
+  type: 'test'
+  location: '~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:194:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'efce777181efed07b0b7336ec2e210602781eda01e8f3b719925b8617cc0c505'
+    - '173c9d30b0bad0d8a734898ff086353315c8b47c45f4faf0b86c9019674638d7'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '173c9d30b0bad0d8a734898ff086353315c8b47c45f4faf0b86c9019674638d7'
+  actual: 'efce777181efed07b0b7336ec2e210602781eda01e8f3b719925b8617cc0c505'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://~/metal-tests/lot01s-t5/base71/checks/campaign-world.test.mjs:202:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1325:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+    Test.postRun (node:internal/test_runner/test:1465:19)
+    Test.run (node:internal/test_runner/test:1390:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 0
+# fail 8
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4101.16779

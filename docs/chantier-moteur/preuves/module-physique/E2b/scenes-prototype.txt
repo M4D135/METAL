@@ -1,0 +1,23 @@
+# 2026-11-13 10:25, Mac, v24.18.0, charge 1.76 2.91 3.57
+$ node docs/chantier-moteur/preuves/module-physique/E2b/scenes-prototype.mjs
+FPhysics 2 contre bancs/phys/scenes.mjs ; Node v24.18.0.
+
+1. Données du prototype lues dans sa source
+- matières : metal (65, 0.45, 0.24), stone (28, 0.7, 0.16), wood (8, 0.55, 0.22), glass (25, 0.35, 0.16), dirt (12, 0.8, 0.05) ; MATERIALS identique, dans le même ordre
+- statiques de rubble300 (walls) : 5 boîtes, identiques à YARD ; le module ajoute la dalle du sol (ground: 0), le prototype son plan
+- statiques de blast200 : 4 boîtes, identiques à WALLS30 ; le module ajoute la dalle du sol (ground: 0), le prototype son plan
+
+2. Corps à la création
+- rubble300 : 300 corps ; centres et demi-tailles identiques (===) ; quaternions à 2.22e-16 près ; masses identiques (0.50 à 9.89 kg), dont 269 bornée(s) par le module à [3, 120] pour le solveur ; frottement et restitution identiques ; 170 pièce(s) de moins de 20 cm d'épaisseur
+- blast200 : 200 corps ; centres et demi-tailles identiques (===) ; quaternions à 0.00e+0 près ; masses identiques (14.11 à 59.26 kg), dont 0 bornée(s) par le module à [3, 120] pour le solveur ; frottement et restitution identiques
+
+3. blast contre explode, avant tout sous-pas
+- blast200, blast(0, 0.5, 0, 14, 900) : 198 corps poussés par le module, 198 par explode ; brutes : 115/200 vitesses identiques bit à bit, écart relatif max 0.65 ; explode met 85 corps à plus de 30 rad/s. Bornes du module appliquées au prototype : 175/200 corps de masse non bornée identiques bit à bit, écart relatif max 3.31e-16
+- rubble300, blast(0, 2, 0, 5, 400) : 197 corps poussés par le module, 197 par explode ; brutes : 106/300 vitesses identiques bit à bit, écart relatif max 0.88 ; explode met 182 corps à plus de 30 rad/s. Bornes du module appliquées au prototype : 22/31 corps de masse non bornée identiques bit à bit, écart relatif max 6.82e-15 ; 178 poussé(s) de masse bornée : écart relatif jusqu'à 0.68 (masse physique du module, §4.7)
+- rubble300, blast(2.5, 6, -2.5, 4, 150, 6) : 104 corps poussés par le module, 104 par explode ; brutes : 199/300 vitesses identiques bit à bit, écart relatif max 0.83 ; explode met 58 corps à plus de 30 rad/s. Bornes du module appliquées au prototype : 27/31 corps de masse non bornée identiques bit à bit, écart relatif max 4.57e-15 ; 96 poussé(s) de masse bornée : écart relatif jusqu'à 0.83 (masse physique du module, §4.7)
+
+4. Plus bas sommet de blast200, souffle avant le sous-pas 241 (P29 a : ≥ −15 mm pendant les 15 s qui suivent ; étape 7)
+- module    : avant le souffle -9.05 mm (sous-pas 54) ; après -48.67 mm (sous-pas 259, 19 après le souffle)
+- prototype : avant le souffle -7.67 mm (sous-pas 9) ; après -55.67 mm (sous-pas 242, 2 après le souffle)
+
+RÉSULTAT : scènes identiques au prototype ; blast = explode du prototype, à la masse physique bornée et aux bornes de vitesse appliquées tout de suite près

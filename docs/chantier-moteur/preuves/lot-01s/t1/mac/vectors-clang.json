@@ -1,0 +1,313 @@
+{
+ "schema": "metal-fmath-witness-v2",
+ "node": "v24.18.0",
+ "v8": "13.6.233.17-node.50",
+ "platform": "darwin",
+ "arch": "arm64",
+ "compiler": {
+  "cc": "clang",
+  "version": "Apple clang version 21.0.0 (clang-2100.4.1.1)",
+  "flags": {
+   "off": "clang -O2 -ffp-contract=off",
+   "on": "clang -O2 -ffp-contract=on"
+  },
+  "off": "-ffp-contract=off",
+  "contracted": "-ffp-contract=on"
+ },
+ "table": {
+  "path": "checks/fmath-vectors.txt",
+  "lines": 2975,
+  "bytes": 163188,
+  "written": false,
+  "identicalToExisting": true,
+  "rowsIdenticalToExisting": true,
+  "counts": {
+   "sincos": 1316,
+   "atan": 447,
+   "atan2": 757,
+   "rem": 455
+  }
+ },
+ "all": {
+  "cases": 6979,
+  "witnessContractedEqHost": 6979,
+  "witnessOffEqFMath": 6979,
+  "witnessOffEqHost": 5308
+ },
+ "totals": {
+  "sin": {
+   "cases": 3616,
+   "witnessContractedEqHost": 3616,
+   "witnessOffEqFMath": 3616,
+   "witnessOffEqHost": 2995,
+   "witnessContractedEqWitnessOff": 2995
+  },
+  "cos": {
+   "cases": 1816,
+   "witnessContractedEqHost": 1816,
+   "witnessOffEqFMath": 1816,
+   "witnessOffEqHost": 1211,
+   "witnessContractedEqWitnessOff": 1211
+  },
+  "atan": {
+   "cases": 448,
+   "witnessContractedEqHost": 448,
+   "witnessOffEqFMath": 448,
+   "witnessOffEqHost": 445,
+   "witnessContractedEqWitnessOff": 445
+  },
+  "atan2": {
+   "cases": 1099,
+   "witnessContractedEqHost": 1099,
+   "witnessOffEqFMath": 1099,
+   "witnessOffEqHost": 657,
+   "witnessContractedEqWitnessOff": 657
+  }
+ },
+ "bySet": {
+  "sin": {
+   "special": {
+    "cases": 76,
+    "witnessContractedEqHost": 76,
+    "witnessOffEqFMath": 76,
+    "witnessOffEqHost": 74,
+    "witnessContractedEqWitnessOff": 74
+   },
+   "pio2-multiple": {
+    "cases": 152,
+    "witnessContractedEqHost": 152,
+    "witnessOffEqFMath": 152,
+    "witnessOffEqHost": 152,
+    "witnessContractedEqWitnessOff": 152
+   },
+   "npio2-high-word": {
+    "cases": 32,
+    "witnessContractedEqHost": 32,
+    "witnessOffEqFMath": 32,
+    "witnessOffEqHost": 32,
+    "witnessContractedEqWitnessOff": 32
+   },
+   "pio2-multiple-medium": {
+    "cases": 40,
+    "witnessContractedEqHost": 40,
+    "witnessOffEqFMath": 40,
+    "witnessOffEqHost": 40,
+    "witnessContractedEqWitnessOff": 40
+   },
+   "random-medium": {
+    "cases": 400,
+    "witnessContractedEqHost": 400,
+    "witnessOffEqFMath": 400,
+    "witnessOffEqHost": 400,
+    "witnessContractedEqWitnessOff": 400
+   },
+   "random-tiny": {
+    "cases": 60,
+    "witnessContractedEqHost": 60,
+    "witnessOffEqFMath": 60,
+    "witnessOffEqHost": 60,
+    "witnessContractedEqWitnessOff": 60
+   },
+   "random-large": {
+    "cases": 200,
+    "witnessContractedEqHost": 200,
+    "witnessOffEqFMath": 200,
+    "witnessOffEqHost": 199,
+    "witnessContractedEqWitnessOff": 199
+   },
+   "driver": {
+    "cases": 149,
+    "witnessContractedEqHost": 149,
+    "witnessOffEqFMath": 149,
+    "witnessOffEqHost": 147,
+    "witnessContractedEqWitnessOff": 147
+   },
+   "driver-divergent": {
+    "cases": 7,
+    "witnessContractedEqHost": 7,
+    "witnessOffEqFMath": 7,
+    "witnessOffEqHost": 0,
+    "witnessContractedEqWitnessOff": 0
+   },
+   "world-divergent": {
+    "cases": 200,
+    "witnessContractedEqHost": 200,
+    "witnessOffEqFMath": 200,
+    "witnessOffEqHost": 100,
+    "witnessContractedEqWitnessOff": 100
+   },
+   "driver-all": {
+    "cases": 1800,
+    "witnessContractedEqHost": 1800,
+    "witnessOffEqFMath": 1800,
+    "witnessOffEqHost": 1791,
+    "witnessContractedEqWitnessOff": 1791
+   },
+   "world-divergent-all": {
+    "cases": 500,
+    "witnessContractedEqHost": 500,
+    "witnessOffEqFMath": 500,
+    "witnessOffEqHost": 0,
+    "witnessContractedEqWitnessOff": 0
+   }
+  },
+  "cos": {
+   "special": {
+    "cases": 76,
+    "witnessContractedEqHost": 76,
+    "witnessOffEqFMath": 76,
+    "witnessOffEqHost": 74,
+    "witnessContractedEqWitnessOff": 74
+   },
+   "pio2-multiple": {
+    "cases": 152,
+    "witnessContractedEqHost": 152,
+    "witnessOffEqFMath": 152,
+    "witnessOffEqHost": 152,
+    "witnessContractedEqWitnessOff": 152
+   },
+   "npio2-high-word": {
+    "cases": 32,
+    "witnessContractedEqHost": 32,
+    "witnessOffEqFMath": 32,
+    "witnessOffEqHost": 32,
+    "witnessContractedEqWitnessOff": 32
+   },
+   "pio2-multiple-medium": {
+    "cases": 40,
+    "witnessContractedEqHost": 40,
+    "witnessOffEqFMath": 40,
+    "witnessOffEqHost": 40,
+    "witnessContractedEqWitnessOff": 40
+   },
+   "random-medium": {
+    "cases": 400,
+    "witnessContractedEqHost": 400,
+    "witnessOffEqFMath": 400,
+    "witnessOffEqHost": 400,
+    "witnessContractedEqWitnessOff": 400
+   },
+   "random-tiny": {
+    "cases": 60,
+    "witnessContractedEqHost": 60,
+    "witnessOffEqFMath": 60,
+    "witnessOffEqHost": 60,
+    "witnessContractedEqWitnessOff": 60
+   },
+   "random-large": {
+    "cases": 200,
+    "witnessContractedEqHost": 200,
+    "witnessOffEqFMath": 200,
+    "witnessOffEqHost": 198,
+    "witnessContractedEqWitnessOff": 198
+   },
+   "driver": {
+    "cases": 149,
+    "witnessContractedEqHost": 149,
+    "witnessOffEqFMath": 149,
+    "witnessOffEqHost": 148,
+    "witnessContractedEqWitnessOff": 148
+   },
+   "driver-divergent": {
+    "cases": 7,
+    "witnessContractedEqHost": 7,
+    "witnessOffEqFMath": 7,
+    "witnessOffEqHost": 7,
+    "witnessContractedEqWitnessOff": 7
+   },
+   "world-divergent": {
+    "cases": 200,
+    "witnessContractedEqHost": 200,
+    "witnessOffEqFMath": 200,
+    "witnessOffEqHost": 100,
+    "witnessContractedEqWitnessOff": 100
+   },
+   "world-divergent-all": {
+    "cases": 500,
+    "witnessContractedEqHost": 500,
+    "witnessOffEqFMath": 500,
+    "witnessOffEqHost": 0,
+    "witnessContractedEqWitnessOff": 0
+   }
+  },
+  "atan": {
+   "special": {
+    "cases": 46,
+    "witnessContractedEqHost": 46,
+    "witnessOffEqFMath": 46,
+    "witnessOffEqHost": 46,
+    "witnessContractedEqWitnessOff": 46
+   },
+   "random": {
+    "cases": 400,
+    "witnessContractedEqHost": 400,
+    "witnessOffEqFMath": 400,
+    "witnessOffEqHost": 399,
+    "witnessContractedEqWitnessOff": 399
+   },
+   "world-divergent": {
+    "cases": 1,
+    "witnessContractedEqHost": 1,
+    "witnessOffEqFMath": 1,
+    "witnessOffEqHost": 0,
+    "witnessContractedEqWitnessOff": 0
+   },
+   "world-divergent-all": {
+    "cases": 1,
+    "witnessContractedEqHost": 1,
+    "witnessOffEqFMath": 1,
+    "witnessOffEqHost": 0,
+    "witnessContractedEqWitnessOff": 0
+   }
+  },
+  "atan2": {
+   "special": {
+    "cases": 289,
+    "witnessContractedEqHost": 289,
+    "witnessOffEqFMath": 289,
+    "witnessOffEqHost": 289,
+    "witnessContractedEqWitnessOff": 289
+   },
+   "k-limits": {
+    "cases": 8,
+    "witnessContractedEqHost": 8,
+    "witnessOffEqFMath": 8,
+    "witnessOffEqHost": 8,
+    "witnessContractedEqWitnessOff": 8
+   },
+   "random": {
+    "cases": 300,
+    "witnessContractedEqHost": 300,
+    "witnessOffEqFMath": 300,
+    "witnessOffEqHost": 300,
+    "witnessContractedEqWitnessOff": 300
+   },
+   "near-diagonal": {
+    "cases": 60,
+    "witnessContractedEqHost": 60,
+    "witnessOffEqFMath": 60,
+    "witnessOffEqHost": 60,
+    "witnessContractedEqWitnessOff": 60
+   },
+   "world-divergent": {
+    "cases": 100,
+    "witnessContractedEqHost": 100,
+    "witnessOffEqFMath": 100,
+    "witnessOffEqHost": 0,
+    "witnessContractedEqWitnessOff": 0
+   },
+   "world-divergent-all": {
+    "cases": 342,
+    "witnessContractedEqHost": 342,
+    "witnessOffEqFMath": 342,
+    "witnessOffEqHost": 0,
+    "witnessContractedEqWitnessOff": 0
+   }
+  }
+ },
+ "rem": {
+  "cases": 455,
+  "witnessContractedEqWitnessOff": 455
+ },
+ "extraModes": {}
+}

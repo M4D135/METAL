@@ -1,0 +1,101 @@
+{
+ "schema": "metal-lot01s-t4-fixture-guards-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "linux",
+  "arch": "arm64"
+ },
+ "work": "$W",
+ "fixture": {
+  "file": "checks/campaign-world-digests.json",
+  "sha256": "9618b8e289e7cb39d508aa89e52696537a4e8e0f85b8117bed8fdd0f6d2ef92d",
+  "bytes": 8705
+ },
+ "allAsExpected": true,
+ "cases": [
+  {
+   "case": "check",
+   "expectation": "exit 0, 108/108 equal, legacyHashes 6/6",
+   "pass": true,
+   "exitCode": 0,
+   "seconds": 8.5,
+   "fixture": {
+    "mode": "check",
+    "file": "checks/campaign-world-digests.json",
+    "equal": 108,
+    "of": 108,
+    "legacyHashes": "6/6"
+   },
+   "stderr": null,
+   "generated": true
+  },
+  {
+   "case": "check-altered",
+   "expectation": "exit 1, 107/108, the altered world named",
+   "pass": true,
+   "exitCode": 1,
+   "seconds": 9,
+   "fixture": {
+    "mode": "check",
+    "file": "checks/campaign-world-digests.json",
+    "equal": 107,
+    "of": 108,
+    "legacyHashes": "6/6"
+   },
+   "stderr": "checks/campaign-world-digests.json: 1 of 108 campaign worlds differ",
+   "generated": true,
+   "differing": [
+    "v2:2026:18"
+   ]
+  },
+  {
+   "case": "write-seeds",
+   "expectation": "refused before generation, fixture untouched",
+   "pass": true,
+   "exitCode": 1,
+   "seconds": 0,
+   "fixture": null,
+   "stderr": "Error: --fixture covers the seeds of the test (1,96,2026), not 1,96",
+   "generated": false
+  },
+  {
+   "case": "write-pre-t2",
+   "expectation": "refused before generation, fixture untouched",
+   "pass": true,
+   "exitCode": 1,
+   "seconds": 0,
+   "fixture": null,
+   "stderr": "Error: --fixture write: src/world.js of root must take its trigonometry from FMath (lot 01 suite T2)",
+   "generated": false,
+   "worldJs": "--pre-t2-tree"
+  },
+  {
+   "case": "write-native",
+   "expectation": "refused on arm64: the classic worlds differ from legacyHashes, fixture untouched",
+   "pass": true,
+   "exitCode": 1,
+   "seconds": 9.8,
+   "fixture": null,
+   "stderr": "Error: --fixture write refused: classic worlds 1:s0, 1:s1, 1:s2, 96:s0, 96:s1, 96:s2 differ from the golden legacyHashes of checks/campaign-world.test.mjs, so this generation is not the portable one",
+   "generated": false
+  },
+  {
+   "case": "write",
+   "expectation": "exit 0, file rewritten byte for byte",
+   "pass": true,
+   "exitCode": 0,
+   "seconds": 8.3,
+   "fixture": {
+    "mode": "write",
+    "file": "checks/campaign-world-digests.json",
+    "worlds": 108,
+    "changedFromPrevious": 0,
+    "legacyHashes": "6/6"
+   },
+   "stderr": null,
+   "generated": true,
+   "writtenSha256": "9618b8e289e7cb39d508aa89e52696537a4e8e0f85b8117bed8fdd0f6d2ef92d"
+  }
+ ]
+}

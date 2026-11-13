@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Aperçu du ciel FSky</title>
+<style>
+html,body{margin:0;background:#000}
+canvas{display:block}
+#cadre{position:relative}
+.etiquette{position:absolute;padding:2px 6px;font:600 12px/1.3 ui-monospace,Menlo,Consolas,monospace;color:#fff;background:rgba(0,0,0,.55);white-space:nowrap}
+#resultat{margin:0;padding:8px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;color:#9ab;white-space:pre-wrap;word-break:break-all}
+</style></head><body>
+<!-- Aperçu autonome de FSky (src/skies.js), ouvert en file:// ; tout le travail est synchrone pendant le chargement.
+ Fragment : #mode=vue|planche|verif|banc|sonde, puis monde=0 ou id=…, yaw, pitch et fov (degrés), t, w, h, couches=1111,
+ tramage=1, vignette=0.76, masque=0, graine=0 ; banc : res=2560x1440, tours=40, passes=6, leviers=0.
+ Le résultat JSON, entre marqueurs, va dans le pre ci-dessous, placé sous le canvas pour ne pas le couvrir. -->
+<div id="cadre"><canvas id="ciel" width="16" height="16"></canvas></div>
+<pre id="resultat"></pre>
+<script src="../../src/skies.js"></script>
+<script>
+// Ancien ciel du moteur, pour le banc : copie à l'identique de src/renderer.js:445–492 (POST_VERT, SKY_FRAG).
+const ANCIEN_VERT=`#version 300 es
+  precision highp float;
+  out vec2 vUV;
+  void main(){
+    vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));
+    vUV=p;gl_Position=vec4(p*2.-1.,0.,1.);
+  }`;
+const ANCIEN_FRAG=`#version 300 es
+  precision highp float;
+  in vec2 vUV;
+  uniform vec3 uSkyRight;
+  uniform vec3 uSkyUp;
+  uniform vec3 uSkyForward;
+  uniform vec3 uSkyTop;
+  uniform vec3 uSkyBottom;
+  uniform vec3 uSkyFog;
+  uniform vec3 uSunDirection;
+  uniform vec3 uSunColor;
+  uniform vec2 uSkyFov;
+  uniform vec2 uSkyMotion;
+  out vec4 fragColor;
+  float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+  float noise(vec2 p){
+    vec2 a=floor(p),b=fract(p);b=b*b*(3.-2.*b);
+    return mix(mix(hash(a),hash(a+vec2(1.,0.)),b.x),mix(hash(a+vec2(0.,1.)),hash(a+vec2(1.)),b.x),b.y);
+  }
+  float cloud(vec2 p){return noise(p)*.52+noise(p*2.03+11.)*.28+noise(p*4.17)*.14+noise(p*8.1)*.06;}
+  void main(){
+    vec2 uv=vUV*2.-1.;
+    vec3 ray=normalize(uSkyForward+uSkyRight*uv.x*uSkyFov.x+uSkyUp*uv.y*uSkyFov.y);
+    float elevation=clamp(ray.y,0.,1.);
+    vec3 color=mix(uSkyBottom,uSkyTop,pow(elevation,.55));
+    float sun=max(0.,dot(ray,uSunDirection));
+    color+=uSunColor*(pow(sun,48.)*.20+pow(sun,650.)*.65+smoothstep(.99925,.99965,sun)*2.8);
+    vec2 cloudUV=ray.xz/max(.13,ray.y+.18)*1.8+vec2(uSkyMotion.x*.006*uSkyMotion.y,0.);
+    float clouds=smoothstep(.49,.73,cloud(cloudUV))*smoothstep(-.01,.24,ray.y);
+    vec3 cloudColor=mix(uSkyBottom,vec3(1.12,1.10,1.01),.62)+uSunColor*pow(sun,6.)*.12;
+    color=mix(color,cloudColor,clouds*.66);
+    // Two distant ridgelines close the horizon without a flat, fog-coloured void.
+    float angle=atan(ray.z,ray.x);
+    float ridge=.018+noise(vec2(angle*5.,1.7))*.075+noise(vec2(angle*13.,4.))*.025;
+    color=mix(color,mix(uSkyFog,uSkyBottom,.43),1.-smoothstep(ridge-.003,ridge+.003,ray.y));
+    float nearRidge=-.025+noise(vec2(angle*7.+25.,2.8))*.065;
+    color=mix(color,uSkyFog*.80,1.-smoothstep(nearRidge-.002,nearRidge+.002,ray.y));
+    color=color/(color+vec3(.76));color=pow(max(color,vec3(0.)),vec3(.4545));
+    float vignette=pow(max(0.,16.*vUV.x*vUV.y*(1.-vUV.x)*(1.-vUV.y)),.13);
+    fragColor=vec4(color*mix(.76,1.,vignette),1.);
+  }`;
+(function(){
+'use strict';
+const r={mode:'',renderer:'',erreurs:[]},sortie=document.getElementById('resultat'),
+ ecrire=()=>{sortie.textContent='@@'+'JSON@@'+JSON.stringify(r)+'@@'+'END@@';},
+ // Texte d'erreur sans le chemin absolu du clone : les piles citent tools/… et src/…
+ racine=new URL('../../',location.href).href,texte=e=>String(e&&e.stack||e).split(racine).join('');
+window.onerror=(m,s,l,c,e)=>{r.erreurs.push(texte(e||m));ecrire();};
+try{
+ const P=new URLSearchParams(location.hash.slice(1)),mode=r.mode=P.get('mode')||'vue';
+ if(!['vue','planche','verif','banc','sonde'].includes(mode))throw new Error('mode inconnu : '+mode);
+ if(typeof FSky!=='object'||!FSky)throw new Error('FSky absent : ../../src/skies.js non chargé');
+ // Paramètres stricts : une valeur invalide est une erreur, jamais un défaut silencieux.
+ const lire=(k,def,ok,quoi)=>{if(!P.has(k))return def;const s=P.get(k),n=Number(s);
+   if(s.trim()===''||!ok(n))throw new Error('paramètre '+k+' : '+quoi+' attendu ('+s+')');return n;},
+  nombre=(k,def)=>lire(k,def,Number.isFinite,'nombre fini'),
+  entier=(k,def,a,b)=>lire(k,def,n=>Number.isInteger(n)&&n>=a&&n<=b,'entier de '+a+' à '+b),
+  bit=(k,def)=>lire(k,def,n=>n===0||n===1,'0 ou 1'),
+  rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI,arr=(x,n=3)=>+x.toFixed(n);
+ const N=FSky.presets.length,cv=document.getElementById('ciel'),
+  taille=mode==='vue'?[entier('w',960,1,16384),entier('h',540,1,16384)]:mode==='planche'?[320*Math.ceil(N/3),540]:mode==='verif'?[320,180]:[16,16];
+ cv.width=taille[0];cv.height=taille[1];
+ const gl=cv.getContext('webgl2',{alpha:false,antialias:false,preserveDrawingBuffer:true});
+ r.webgl2=!!gl;if(!gl)throw new Error('WebGL2 indisponible');
+ const ext=gl.getExtension('WEBGL_debug_renderer_info');
+ r.renderer=String(gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER));
+ const shader=(type,src,nom)=>{const o=gl.createShader(type);gl.shaderSource(o,src);gl.compileShader(o);
+   if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error('compilation de '+nom+' : '+gl.getShaderInfoLog(o));return o;},
+  lier=(vs,fs,nom)=>{const p=gl.createProgram();gl.attachShader(p,shader(gl.VERTEX_SHADER,vs,nom+' (sommets)'));
+   gl.attachShader(p,shader(gl.FRAGMENT_SHADER,fs,nom+' (fragments)'));gl.linkProgram(p);
+   if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error('liaison de '+nom+' : '+gl.getProgramInfoLog(p));return p;},
+  cible=(W,H)=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texStorage2D(gl.TEXTURE_2D,1,gl.RGBA8,W,H);
+   const f=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,f);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t,0);return f;};
+ if(mode==='sonde'){
+  r.version=gl.getParameter(gl.VERSION);r.MAX_FRAGMENT_UNIFORM_VECTORS=gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
+  lier(FSky.VERT,FSky.FRAG,'FSky');r.programme=true;
+ }else{
+  const graine=lire('graine',0,n=>Number.isInteger(n)&&Math.abs(n)<=2147483647,'entier'),
+   etat=i=>FSky.resolve(FSky.presets[i],{seed:graine}),
+   // Caméra par défaut : azimut de la source principale ; tangage min(34, max(6, élévation − 12)) degrés.
+   defaut=st=>{const h=st.uniforms.uFskyRefH,el=deg(Math.asin(st.uniforms.uFskyRef[1]));return[Math.atan2(h[0],-h[1]),rad(Math.min(34,Math.max(6,el-12)))];},
+   img={},tracer=()=>gl.drawArrays(gl.TRIANGLES,0,3),
+   poser=(p,cache,st,v,haut,o)=>{gl.useProgram(p);FSky.bind(gl,p,st.uniforms,cache);
+    FSky.bind(gl,p,FSky.frameUniforms({right:v.right,up:v.up,forward:v.forward,fov:v.fov,height:haut,time:o.t,vignette:o.vignette,dither:o.tramage,mask:o.masque,layers:o.couches},img),cache);};
+  gl.bindVertexArray(gl.createVertexArray());
+  const prog=lier(FSky.VERT,FSky.FRAG,'FSky'),cache={};
+  if(mode==='vue'||mode==='planche'){
+   const c=P.has('couches')?P.get('couches'):'1111';
+   if(!/^[01]{4}$/.test(c))throw new Error('paramètre couches : 4 chiffres 0 ou 1 attendus ('+c+')');
+   const o={t:nombre('t',0),vignette:nombre('vignette',.76),tramage:bit('tramage',1),masque:bit('masque',0),couches:[...c].map(Number)},
+    fov=lire('fov',75,n=>n>0&&n<180,'angle entre 0 et 180 exclus'),
+    yawP=P.has('yaw')?rad(nombre('yaw',0)):null,pitchP=P.has('pitch')?rad(lire('pitch',0,n=>n>=-90&&n<=90,'angle de -90 à 90')):null,
+    cam=st=>{const d=defaut(st);return[yawP===null?d[0]:yawP,pitchP===null?d[1]:pitchP];},
+    reglages={fov,t:o.t,couches:c,tramage:o.tramage,vignette:o.vignette,masque:o.masque,graine};
+   if(mode==='vue'){
+    let i;
+    if(P.has('id')){const id=P.get('id');i=FSky.presets.findIndex(p=>p.id===id);if(i<0)throw new Error('paramètre id : préréglage inconnu ('+id+')');}
+    else i=entier('monde',0,0,N-1);
+    const st=etat(i),[yaw,pitch]=cam(st),W=cv.width,H=cv.height;
+    gl.viewport(0,0,W,H);poser(prog,cache,st,FSky.view(yaw,pitch,rad(fov),W/H),H,o);tracer();
+    Object.assign(r,{monde:i,id:st.id,principal:st.principal,w:W,h:H,yaw:arr(deg(yaw)),pitch:arr(deg(pitch))},reglages);
+   }else{
+    // Vignettes 320×180 : colonne = chapitre floor(i/3), ligne = biome i%3 ; gl.viewport compte y depuis le bas.
+    const cadre=document.getElementById('cadre'),vignettes=[];
+    for(let i=0;i<N;i++){const st=etat(i),[yaw,pitch]=cam(st),x=320*Math.floor(i/3),y=180*(i%3);
+     gl.viewport(x,360-y,320,180);poser(prog,cache,st,FSky.view(yaw,pitch,rad(fov),320/180),180,o);tracer();
+     const e=document.createElement('div');e.className='etiquette';e.style.left=x+'px';e.style.top=y+'px';
+     e.textContent=String(i).padStart(2,'0')+' '+st.id;cadre.appendChild(e);
+     vignettes.push({monde:i,id:st.id,yaw:arr(deg(yaw),2),pitch:arr(deg(pitch),2)});}
+    Object.assign(r,{w:cv.width,h:cv.height},reglages,{vignettes});
+   }
+  }else if(mode==='verif'){
+   // Contrôle miroir : pixels GPU (couches 0000, sans tramage, vignette 1) contre encode(radianceAt) tous les 16 pixels.
+   const W=320,H=180,px=new Uint8Array(W*H*4),pt=new Uint8Array(W*H*4),fovR=rad(75),etats=[],mondes=[],
+    o={t:0,vignette:1,tramage:0,masque:0,couches:[0,0,0,0]};
+   let mx=0,somme=0,nb=0,tMax=0,tBouge=0,tNb=0;
+   gl.viewport(0,0,W,H);
+   for(let i=0;i<N;i++){const st=etat(i),[yaw,p0]=defaut(st),cams=[p0,rad(-20)].map(p=>FSky.view(yaw,p,fovR,W/H)),parCam=[];let s=0,n=0;
+    etats.push(st);
+    for(const v of cams){poser(prog,cache,st,v,H,o);tracer();gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,px);let m=0;
+     for(let y=0;y<H;y+=16)for(let x=0;x<W;x+=16){const u=(x+.5)/W*2-1,w=(y+.5)/H*2-1,
+      d=[0,1,2].map(k=>v.forward[k]+v.right[k]*u*v.fov[0]+v.up[k]*w*v.fov[1]),e=FSky.encode(FSky.radianceAt(st,d)),j=(y*W+x)*4;
+      for(let k=0;k<3;k++){const a=Math.abs(e[k]-px[j+k]);if(a>m)m=a;s+=a;n++;}}
+     parCam.push(m);
+     // Tramage (CIEL-05), caméra par défaut : chaque niveau bouge d'au plus 1, et environ un tiers bougent.
+     if(v===cams[0]){poser(prog,cache,st,v,H,{...o,tramage:1});tracer();gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,pt);
+      for(let j=0;j<px.length;j++)if((j&3)!==3){const a=Math.abs(px[j]-pt[j]);if(a>tMax)tMax=a;if(a)tBouge++;tNb++;}}}
+    const mm=Math.max(...parCam);if(mm>mx)mx=mm;somme+=s;nb+=n;
+    mondes.push({monde:i,id:st.id,maxDiff:mm,moyenne:arr(s/n,4),cameras:parCam});}
+   Object.assign(r,{maxDiff:mx,moyenne:arr(somme/nb,4),points:nb/3,mondes});
+   if(mx>2)r.erreurs.push('contrôle miroir : maxDiff '+mx+' > 2');
+   r.tramage={maxEcart:tMax,part:arr(tBouge/tNb,4)};
+   if(tMax>1||tBouge/tNb<.05)r.erreurs.push('tramage : écart '+tMax+', part '+r.tramage.part+' (attendu ≤ 1 et ≥ 0,05)');
+   // Shader de contrôle : FOG_GLSL inclus seul dans un autre programme (brouillard par direction, CIEL-07).
+   const pC=lier(FSky.VERT,'#version 300 es\nprecision highp float;\n'+FSky.FOG_GLSL+'out vec4 o;\nvoid main(){o=vec4(fskyFog(vec3(1.,0.,0.)),1.);}','contrôle FOG_GLSL'),
+    cC={},p1=new Uint8Array(4);
+   r.controle=true;let fMax=0,fPoses=0;gl.useProgram(pC);gl.viewport(0,0,1,1);
+   for(const st of etats){fPoses=FSky.bind(gl,pC,st.uniforms,cC);tracer();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,p1);
+    const f=FSky.fogAt(st,[1,0,0]);for(let k=0;k<3;k++)fMax=Math.max(fMax,Math.abs(p1[k]-Math.round(255*Math.min(1,Math.max(0,f[k])))));}
+   r.brouillard={maxDiff:fMax,uniformes:fPoses};if(fMax>2)r.erreurs.push('contrôle FOG_GLSL : maxDiff '+fMax+' > 2');
+   // Masque de bloom (CIEL-V1), cible RGBA8 : soleil seul, alpha sur le disque et nul ailleurs ; sans masque, alpha vaut 1.
+   let im=-1;etats.forEach((s,i)=>{if(s.principal==='sun'&&(im<0||s.preset.sun.el>etats[im].preset.sun.el))im=i;});
+   if(im<0)r.erreurs.push('masque : aucun préréglage de jour');
+   else{const st=etats[im],[yaw,p0]=defaut(st),v=FSky.view(yaw,p0,fovR,W/H),sv=st.sun,dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],fz=dot(sv,v.forward),
+     sx=(dot(sv,v.right)/fz/v.fov[0]+1)/2*W-.5,sy=(dot(sv,v.up)/fz/v.fov[1]+1)/2*H-.5,om={...o,couches:[0,0,1,0],masque:1};
+    cible(W,H);gl.viewport(0,0,W,H);poser(prog,cache,st,v,H,om);tracer();gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,px);
+    let aMax=0,aMin=255,np=0,sa=0,cx=0,cy=0;
+    for(let j=0;j<W*H;j++){const a=px[j*4+3];if(a>aMax)aMax=a;if(a<aMin)aMin=a;if(a){np++;sa+=a;cx+=a*(j%W);cy+=a*Math.floor(j/W);}}
+    poser(prog,cache,st,v,H,{...om,masque:0});tracer();gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,pt);
+    let a0=255;for(let j=3;j<pt.length;j+=4)if(pt[j]<a0)a0=pt[j];
+    const ecart=sa?Math.hypot(cx/sa-sx,cy/sa-sy):-1;
+    r.masque={monde:im,id:st.id,alphaMax:aMax,alphaMin:aMin,pixels:np,ecart:arr(ecart,2),sansMasque:a0};
+    if(fz<=0||aMax<128||aMin!==0||np>W*H/100||ecart<0||ecart>1||a0!==255)r.erreurs.push('masque : '+JSON.stringify(r.masque));
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
+   // Chaque uniforme actif du programme principal figure dans FSky.UNIFORMS (suffixe [0] retiré), avec son type.
+   const TY={float:gl.FLOAT,vec2:gl.FLOAT_VEC2,vec3:gl.FLOAT_VEC3,vec4:gl.FLOAT_VEC4},actifs=[],inconnus=[];
+   for(let i=0,n=gl.getProgramParameter(prog,gl.ACTIVE_UNIFORMS);i<n;i++){const a=gl.getActiveUniform(prog,i),nom=a.name.replace(/\[0\]$/,''),
+     u=Object.prototype.hasOwnProperty.call(FSky.UNIFORMS,nom)?FSky.UNIFORMS[nom]:null;actifs.push(nom);
+    if(!u)inconnus.push(nom);else if(a.type!==TY[u[0]]||a.size>u[1])r.erreurs.push('uniforme '+nom+' : type ou taille différents de FSky.UNIFORMS');}
+   Object.assign(r,{actifs:actifs.length,inconnus,absents:Object.keys(FSky.UNIFORMS).filter(n=>!actifs.includes(n))});
+   if(inconnus.length)r.erreurs.push('uniformes actifs absents de FSky.UNIFORMS : '+inconnus.join(', '));
+  }else{
+   // Banc (§6.1) : écart à un remplissage uni du même tour, en ms par passe, deux cibles RGBA8 en alternance.
+   const m=/^(\d+)x(\d+)$/.exec(P.has('res')?P.get('res'):'2560x1440');if(!m)throw new Error('paramètre res : LxH attendu');
+   const W=+m[1],H=+m[2],tours=entier('tours',40,1,100000),passes=entier('passes',6,1,10000),leviers=bit('leviers',0);
+   if(W<1||H<1||W>16384||H>16384)throw new Error('paramètre res : hors bornes ('+m[0]+')');
+   const pU=lier(FSky.VERT,'#version 300 es\nprecision highp float;\nout vec4 o;\nvoid main(){o=vec4(.5,.5,.5,1.);}','remplissage uni'),
+    pA=lier(ANCIEN_VERT,ANCIEN_FRAG,'ancien ciel'),
+    // Leviers de coût (§6.1), hors fiche : variantes de FRAG ; FSky.FRAG lui-même reste intact.
+    remplace=(s,a,b)=>{if(s.split(a).length!==2)throw new Error('levier introuvable ou ambigu dans FSky.FRAG : '+a);return s.replace(a,b);},
+    F1=leviers?remplace(FSky.FRAG,'fskyFbm(p,4)','fskyFbm(p,3)'):'',F12=leviers?remplace(F1,'fskyFbm(p+sd*.35,2)','fskyFbm(p+sd*.35,1)'):'',
+    pL1=leviers?lier(FSky.VERT,F1,'FSky levier 1'):null,pL12=leviers?lier(FSky.VERT,F12,'FSky leviers 1+2'):null,
+    fbs=[cible(W,H),cible(W,H)],px=new Uint8Array(4),fovR=rad(75),pitch=rad(40),T4=[1,1,1,1],T0=[0,0,0,0],
+    // Variante FSky : préréglage i, couches, programme ; caméra tournée vers la source principale.
+    fsky=(i,couches,p)=>{const st=etat(i),v=FSky.view(defaut(st)[0],pitch,fovR,W/H),c={},
+      u=FSky.frameUniforms({right:v.right,up:v.up,forward:v.forward,fov:v.fov,height:H,time:0,vignette:.76,dither:1,mask:0,layers:couches},{});
+     return()=>{gl.useProgram(p);FSky.bind(gl,p,st.uniforms,c);FSky.bind(gl,p,u,c);};},
+    // Ancien ciel : environnement « woodland » (src/world.js:646), normalisé comme environmentInfo (src/renderer.js:646–653).
+    bois={skyTop:[.055,.105,.14],skyBottom:[.20,.25,.22],fog:[.15,.205,.18],sunDirection:[-.48,.78,.36],sunColor:[.48,.62,.59],wind:.7},
+    sd=bois.sunDirection.slice();
+   sd[1]=Math.max(.12,sd[1]);
+   const sl=Math.hypot(...sd)||1,soleil=sd.map(x=>x/sl),va=FSky.view(0,pitch,fovR,W/H),L=n=>gl.getUniformLocation(pA,n),
+    ancien=()=>{gl.useProgram(pA);gl.uniform3fv(L('uSkyRight'),va.right);gl.uniform3fv(L('uSkyUp'),va.up);gl.uniform3fv(L('uSkyForward'),va.forward);
+     gl.uniform3fv(L('uSkyTop'),bois.skyTop);gl.uniform3fv(L('uSkyBottom'),bois.skyBottom);gl.uniform3fv(L('uSkyFog'),bois.fog);
+     gl.uniform3fv(L('uSunDirection'),soleil);gl.uniform3fv(L('uSunColor'),bois.sunColor);gl.uniform2fv(L('uSkyFov'),va.fov);gl.uniform2f(L('uSkyMotion'),0,bois.wind);},
+    V=[['uni',()=>gl.useProgram(pU)],['ancien',ancien],['fsky-jour',fsky(3,T4,prog)]];
+   if(leviers)V.push(['jour-l1',fsky(3,T4,pL1)],['jour-l12',fsky(3,T4,pL12)]);
+   V.push(['fsky-couvert',fsky(9,T4,prog)]);
+   if(leviers)V.push(['couvert-l1',fsky(9,T4,pL1)],['couvert-l12',fsky(9,T4,pL12)]);
+   V.push(['fsky-nuit',fsky(17,T4,prog)]);
+   if(leviers)V.push(['nuit-l12',fsky(17,T4,pL12)]);
+   V.push(['fsky-atmo',fsky(3,T0,prog)]);
+   // Un échantillon : passes tracés en alternant les cibles, puis readPixels 1×1, seule synchronisation fiable.
+   const mesure=f=>{f();const t0=performance.now();
+     for(let k=0;k<passes;k++){gl.bindFramebuffer(gl.FRAMEBUFFER,fbs[k&1]);tracer();}
+     gl.bindFramebuffer(gl.FRAMEBUFFER,fbs[(passes-1)&1]);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);return(performance.now()-t0)/passes;},
+    S=Object.fromEntries(V.map(x=>[x[0],[]])),nv=V.length;
+   gl.viewport(0,0,W,H);
+   // 3 tours de chauffe, puis au tour t l'ordre tourné commence par la variante t mod nv.
+   for(let t=-3;t<tours;t++){const ligne={},d=((t%nv)+nv)%nv;
+    for(let k=0;k<nv;k++){const x=V[(k+d)%nv];ligne[x[0]]=mesure(x[1]);}
+    if(t>=0)for(const k in ligne)S[k].push(ligne[k]-ligne.uni);}
+   const q=(a,f)=>{const s=[...a].sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.floor((s.length-1)*f+.5))];},
+    b={res:W+'x'+H,tours,passes,leviers,representatif:!/SwiftShader|llvmpipe|softpipe|Software/i.test(r.renderer)};
+   for(const k in S)if(k!=='uni')b[k]={mediane:arr(q(S[k],.5)),p10:arr(q(S[k],.1)),p90:arr(q(S[k],.9))};
+   for(const k in S)if(k!=='uni'&&k!=='ancien')b[k].rapport=arr(b[k].mediane/b.ancien.mediane);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,null);r.banc=b;
+  }
+ }
+ const e=gl.getError();r.glError=e;if(e)r.erreurs.push('gl.getError() vaut '+e);
+}catch(e){r.erreurs.push(texte(e));}
+ecrire();
+})();
+</script>
+</body></html>

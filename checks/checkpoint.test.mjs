@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'game'].map(name =>
+const sources = Object.fromEntries(['fmath', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -589,7 +589,7 @@ test('LOAD-01: a failed refused-slot write cannot erase the old active point on 
 
 function generatedModules() {
   const previous = globalThis.window, modules = {}; globalThis.window = modules;
-  try { for (const name of ['renderer','world','destruction','economy','brain','simulation']) vm.runInThisContext(sources[name], { filename: name + '.js' }); }
+  try { for (const name of ['fmath','renderer','world','destruction','economy','brain','simulation']) vm.runInThisContext(sources[name], { filename: name + '.js' }); }
   finally { if (previous === undefined) delete globalThis.window; else globalThis.window = previous; }
   return modules;
 }

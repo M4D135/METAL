@@ -1,0 +1,40 @@
+détectée — regard souris : produit mouseScale×sensibilité précalculé → E06
+détectée — regard souris : y non inversé → E06, E10, E14d
+détectée — regard souris : invertY ignoré → E06, E14d
+détectée — regard clavier : rate ignoré → E06, E10, E11, E14b
+détectée — tenue sans verrou → E09
+détectée — impulsion = tenue → E06, E07, E08, E10, E11, E14, E14b
+détectée — verrous jamais effacés → E05, E06, E07, E09, E10, E11, E12, E14, E14b, E14d
+détectée — regard non consommé par step → E06, E10, E11, E14b
+détectée — répétition avec front → E08, E12
+détectée — fronts en double → E07, E14b
+détectée — fronts jamais remis à zéro → E06, E07, E14, E14d
+détectée — liste des fronts non vidée → E05, E06, E07, E11, E12, E14, E14b, E14d
+détectée — clear garde le regard → E12
+détectée — clear garde les verrous → E12
+détectée — clear garde les touches → E12
+détectée — clear garde les doigts → E12
+détectée — filtre souris de 800 ms à <= → E14c
+détectée — filtre souris absent → E14c
+détectée — doigts négatifs → E12, E14
+détectée — deviceChanged contre l’appareil initial → E14c
+détectée — dt non borné → E14b
+détectée — dt non fini accepté → E14b
+détectée — deltas non finis acceptés → E14b
+détectée — configure ne recompte pas les touches → E14d
+détectée — keyUp ne relâche pas → E05, E06, E07, E08, E09, E12, E14, E14b, E14d
+détectée — table : une entrée invalide garde les autres → E04b
+détectée — table : défauts sans filtre des codes pris → E04b
+détectée — table : propriétés héritées lues → E04b
+détectée — tune : booléen pour un nombre → E04b
+détectée — tune : non borné → E04b, E14d
+détectée — tune : chaîne acceptée pour un booléen → E04b
+détectée — settings sans copie → E14d
+détectée — valeur : booléen au lieu de 1 → E14
+détectée — ordre des sorties : actions avant sticks → E14b
+détectée — addLook ignore l’appareil → E14c
+détectée — keyDown sans appareil clavier → E12, E14c
+détectée — bouton souris sans appareil → E14, E14c
+détectée — bouton tactile sans horodatage → E14c
+module intact : tous les tests passent
+38 mutations détectées sur 38

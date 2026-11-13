@@ -1,0 +1,86 @@
+{
+ "schema": "metal-lot01s-t2-loader-check-v1",
+ "node": "v24.18.0",
+ "rows": [
+  {
+   "label": "root (src/fmath.js present)",
+   "root": "<root>",
+   "defaultModules": [
+    "fmath",
+    "renderer",
+    "world",
+    "destruction",
+    "economy",
+    "brain",
+    "simulation"
+   ],
+   "loaded": [
+    "fmath",
+    "renderer",
+    "world",
+    "destruction",
+    "economy",
+    "brain",
+    "simulation"
+   ],
+   "exports": [
+    "FMath",
+    "FRender",
+    "FWorld",
+    "FDestruction",
+    "FEconomy",
+    "FBrain",
+    "FSimulation"
+   ]
+  },
+  {
+   "label": "base before the fix (no src/fmath.js, world.js without FMath)",
+   "root": "<base>",
+   "defaultModules": [
+    "renderer",
+    "world",
+    "destruction",
+    "economy",
+    "brain",
+    "simulation"
+   ],
+   "loaded": [
+    "renderer",
+    "world",
+    "destruction",
+    "economy",
+    "brain",
+    "simulation"
+   ],
+   "exports": [
+    "FRender",
+    "FWorld",
+    "FDestruction",
+    "FEconomy",
+    "FBrain",
+    "FSimulation"
+   ]
+  },
+  {
+   "label": "copy of root without src/fmath.js",
+   "root": "<work>/without-fmath",
+   "defaultModulesError": "<work>/without-fmath/src/world.js uses FMath but <work>/without-fmath/src/fmath.js is missing",
+   "loadError": "<work>/without-fmath/src/world.js uses FMath but <work>/without-fmath/src/fmath.js is missing"
+  },
+  {
+   "label": "copy of root without src/brain.js",
+   "root": "<work>/without-brain",
+   "defaultModules": [
+    "fmath",
+    "renderer",
+    "world",
+    "destruction",
+    "economy",
+    "brain",
+    "simulation"
+   ],
+   "loadError": "ENOENT: no such file or directory, open '<work>/without-brain/src/brain.js'"
+  }
+ ],
+ "explicitWorldWithoutFMath": "FWorld: charger src/fmath.js avant src/world.js"
+}

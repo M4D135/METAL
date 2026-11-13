@@ -1,0 +1,136 @@
+{
+ "schema": "fdemo-md3-hot-path-v1",
+ "command": "node docs/chantier-moteur/preuves/module-demo/MD-3/hot-path.mjs --out docs/chantier-moteur/preuves/module-demo/MD-3/hot-path.json",
+ "before": "a0d00e18ac1a9489f49e51825e2c62a878b0c681",
+ "sourceSha256": {
+  "before": "e8a72f7d615a26047ab96dfb8698223ec764f21758dba94432b15855564844ff",
+  "after": "24891a93060130125ab924b2966f2077c2275e9511064bd2651d3e5ce6991a11"
+ },
+ "environment": {
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "cores": 10,
+  "loadavg": [
+   1.94,
+   2.49,
+   2.88
+  ]
+ },
+ "allocation": {
+  "method": "ramassages pendant 10000000 opérations, jeune génération fixée à 16 Mio, un processus par cas ; octets/op ≈ ramassages × 16 Mio / opérations",
+  "cases": [
+   {
+    "version": "before",
+    "kind": "schema",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "version": "before",
+    "kind": "decode",
+    "ops": 10000000,
+    "gc": 0,
+    "bytesPerOp": 0
+   },
+   {
+    "version": "after",
+    "kind": "schema",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "version": "after",
+    "kind": "decode",
+    "ops": 10000000,
+    "gc": 0,
+    "bytesPerOp": 0
+   },
+   {
+    "version": "after",
+    "kind": "record",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "version": "after",
+    "kind": "recordTicks",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "version": "after",
+    "kind": "recordFull",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "version": "after",
+    "kind": "play",
+    "ops": 10000000,
+    "gc": 0,
+    "bytesPerOp": 0
+   },
+   {
+    "version": "after",
+    "kind": "playTicks",
+    "ops": 10000000,
+    "gc": 0,
+    "bytesPerOp": 0
+   }
+  ]
+ },
+ "timing": {
+  "method": "temps processeur du fil, 1000000 opérations par passe, 9 passes alternées dans un même processus ; record* : pas + checksumDue (+ checksum tous les 600 pas) ; play* : next + expected + verify",
+  "nsPerOp": [
+   {
+    "version": "before",
+    "schema": {
+     "median": 237.9,
+     "min": 212.4
+    },
+    "decode": {
+     "median": 102.2,
+     "min": 89.7
+    }
+   },
+   {
+    "version": "after",
+    "schema": {
+     "median": 229.2,
+     "min": 202.4
+    },
+    "decode": {
+     "median": 101.2,
+     "min": 90.6
+    },
+    "record": {
+     "median": 250,
+     "min": 222.4
+    },
+    "recordTicks": {
+     "median": 260.9,
+     "min": 232.2
+    },
+    "recordFull": {
+     "median": 247.4,
+     "min": 216.9
+    },
+    "play": {
+     "median": 138.6,
+     "min": 121.4
+    },
+    "playTicks": {
+     "median": 143.1,
+     "min": 124.5
+    }
+   }
+  ]
+ }
+}

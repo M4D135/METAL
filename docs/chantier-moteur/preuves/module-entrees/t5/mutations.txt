@@ -1,0 +1,76 @@
+détectée — glyphe Xbox : Vue manquant → E40b
+détectée — glyphe Xbox : Home → E40b
+détectée — glyphe PS : ✕ écrit X → E40, E40b
+détectée — glyphe PS : Create écrit Share → E40b
+détectée — glyphe PS : L2 et R2 échangés → E40b
+détectée — glyphe PS : △ et □ échangés → E40b
+détectée — glyph : flèches de NAMES ignorées → E40b
+détectée — glyph : propriété héritée du style → E40b
+détectée — glyph : style hérité → E40b
+détectée — guessDevice : matchMedia détaché → E41
+détectée — guessDevice : sans (pointer: coarse) → E41
+détectée — guessDevice : sans (hover: none) → E41
+détectée — guessDevice : un point de contact ne suffit pas → E41
+détectée — guessDevice : hors du try → E41
+détectée — guessDevice : fenêtre par défaut ignorée → E41
+détectée — keyLabel : libellé appris ignoré → E39, E39b
+détectée — keyLabel : table lue avant l’appris → E39b
+détectée — keyLabel : table sans majuscule → E39, E39b
+détectée — keyLabel : plusieurs caractères mis en majuscules → E39b
+détectée — keyLabel : get détaché de la table → E39, E39b
+détectée — keyLabel : chaîne vide acceptée → E39b
+détectée — keyLabel : valeur non chaîne acceptée → E39b
+détectée — keyLabel : table lue pour tout code → E39b
+détectée — keyDown : espace appris → E39b
+détectée — keyDown : caractère invisible appris → E39b
+détectée — keyDown : unité de code au lieu du caractère → E39b
+détectée — keyDown : libellé appris sans majuscule → E39, E39b
+détectée — keyDown : rien appris pendant la capture → E39b
+détectée — keyDown : rien appris sur une répétition → E39b
+détectée — keyDown : dernière touche ne remplace pas → E39b
+détectée — setLayout : toute valeur gardée → E39b
+détectée — setLayout : sans effacement → E39b
+détectée — label : séparateur → E39b, E40b
+détectée — label : action sans touche → E39b, E40, E40b
+détectée — label : action inconnue → E40, E40b
+détectée — label : style de la manette ignoré → E40, E40b
+détectée — label : sans manette, style Xbox → E40b
+détectée — label : tactile sans repli sur le libellé → E40b
+détectée — label : souris sans repli sur le clavier → E40b
+détectée — label : appareil par défaut clavier → E40b
+détectée — label : touches de la déclaration → E39b
+détectée — label : boutons de la déclaration → E40b
+détectée — label : appareil inconnu → libellé → E40b
+détectée — dernière manette : jamais remise à null → E40b
+détectée — dernière manette : retenue sans activité → E40b
+détectée — dernière manette : place dans la liste → E40b
+détectée — dernière manette : index le plus haut → E40b
+détectée — dernière manette : la dernière lue → E40b
+détectée — rumble : sans limiteur → E42, E42b
+détectée — rumble : écart de 40 ms refusé → E42b
+détectée — rumble : écart de 50 ms → E42, E42b
+détectée — rumble : padVibration ignoré → E42, E42b
+détectée — rumble : padVibration 0 accepté → E42, E42b
+détectée — rumble : moteurs échangés → E42, E42b
+détectée — rumble : ordre des champs → E42, E42b
+détectée — rumble : durée non bornée → E42b
+détectée — rumble : durée bornée à 1000 → E42b
+détectée — rumble : intensité forte non bornée → E42b
+détectée — rumble : intensité faible non bornée → E42b
+détectée — rumble : NaN gardé → E42b
+détectée — rumble : valeurs négatives gardées → E42b
+détectée — rumble : limiteur mis à jour avant l’appel → E42b
+détectée — rumble : limiteur jamais mis à jour → E42, E42b
+détectée — rumble : rejet de la promesse non traité → E42
+détectée — rumble : hors du try → E42, E42b
+détectée — rumble : toujours la première manette → E42b
+détectée — rumble : sans repli sur la première manette → E42, E42b
+détectée — rumble : objets de la première image → E42b
+détectée — rumble : type d’effet → E42, E42b
+détectée — rumble : délai de départ → E42, E42b
+détectée — rumble : limiteur initial à 0 ms → E42b
+détectée — étape 3 — capture : appareil actif inchangé → E23
+détectée — étape 2 — keyDown sans appareil clavier → E12, E14c, E23, E35, E40b
+détectée — étape 4 — activité : appareil jamais manette → E33b, E35, E40b
+module intact : tous les tests passent
+74 mutations détectées sur 74

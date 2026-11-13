@@ -1,0 +1,93 @@
+{
+ "schema": "metal-platform-math-replay-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "linux",
+  "arch": "arm64"
+ },
+ "root": "~/metal-tests/lot01s-t2/nav",
+ "fmathInProcess": false,
+ "scenario": "all",
+ "steps": 1800,
+ "checksum": "3108b7b234f1e057bd9266e9465c0b10038b58614673d232bdb91560a01742c1",
+ "stable": true,
+ "rows": [
+  {
+   "id": "legacy-s0",
+   "steps": 1800,
+   "chainHash": "fee1bbf7",
+   "oracleChainHash": "4c43a6fb",
+   "snapshotSha256": "a22ac96592c9466c2f9822bd0296bb4c6acbc6bdebf30d80e3819b8b895db19d",
+   "oracleSnapshotSha256": "efa43a89bb30801f96646375fd3d1c53e49540efa2e854ad6897a8f4af511b9c",
+   "identical": false,
+   "firstDivergentStepIndex": 37,
+   "firstDivergentStepNumber": 38,
+   "oracle": "tools/proof/reference-63668ac.json",
+   "oracleEnvironment": {
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "node": "v24.22.1",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "from": "docs/chantier-moteur/preuves/lot-00/reference-environment.json.gz"
+   }
+  },
+  {
+   "id": "legacy-s2",
+   "steps": 1800,
+   "chainHash": "7e982843",
+   "oracleChainHash": "c8706f53",
+   "snapshotSha256": "8614b6f5acaba0219e3c7a90989804863fe28fd550e91e2251a4daf7fbd06c19",
+   "oracleSnapshotSha256": "5c0b01c3ddafb7ccfe15e34efd8829d53d4001c7fb3faacfcaad4ecb7a7daee3",
+   "identical": false,
+   "firstDivergentStepIndex": 37,
+   "firstDivergentStepNumber": 38,
+   "oracle": "tools/proof/reference-63668ac.json",
+   "oracleEnvironment": {
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "node": "v24.22.1",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "from": "docs/chantier-moteur/preuves/lot-00/reference-environment.json.gz"
+   }
+  },
+  {
+   "id": "campaign-w10",
+   "steps": 1800,
+   "chainHash": "fa45f9a6",
+   "oracleChainHash": "59e36477",
+   "snapshotSha256": "a5e416ae8ec7150ed84addeaab6320d3e019ae9cdfe5100d1241651613708382",
+   "oracleSnapshotSha256": "9f783b8b0912dbd9609a4fc43f586df5b3585737c1d27c0acd3617e70325edce",
+   "identical": false,
+   "firstDivergentStepIndex": 37,
+   "firstDivergentStepNumber": 38,
+   "oracle": "tools/proof/reference-63668ac.json",
+   "oracleEnvironment": {
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "node": "v24.22.1",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "from": "docs/chantier-moteur/preuves/lot-00/reference-environment.json.gz"
+   }
+  },
+  {
+   "id": "campaign-w16",
+   "steps": 1800,
+   "chainHash": "a3531476",
+   "oracleChainHash": "b4e5f58e",
+   "snapshotSha256": "d37b4df0af5b87af1ab0e1730c8924779c6502cc289d556848d160be66bc53b3",
+   "oracleSnapshotSha256": "4a7dcd70963ed815255e2accb93fed0b2414ea722b780e9ed792baf6662cfa60",
+   "identical": false,
+   "firstDivergentStepIndex": 37,
+   "firstDivergentStepNumber": 38,
+   "oracle": "tools/proof/reference-63668ac.json",
+   "oracleEnvironment": {
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "node": "v24.22.1",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "from": "docs/chantier-moteur/preuves/lot-00/reference-environment.json.gz"
+   }
+  }
+ ],
+ "driver": {
+  "note": "tools/proof/scenarios.mjs drive() uses Math.sin(index/90): first index where the Math of this run differs from FMath",
+  "firstIndex": 42
+ }
+}

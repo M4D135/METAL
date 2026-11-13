@@ -1,0 +1,584 @@
+{
+ "schema": "metal-lot01s-t4-sensitivity-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "linux",
+  "arch": "arm64"
+ },
+ "before": {
+  "tree": "--before-tree (src/, checks/)"
+ },
+ "after": {
+  "tree": "--after-tree (src/, checks/)"
+ },
+ "work": "$W",
+ "note": "Each copy holds src/ and checks/ of its side; the witness edits src/world.js only (anchors exact and unique), then node --test --test-reporter=tap checks/campaign-world.test.mjs runs whole in the copy. historical = the 6 legacy fingerprints, campaign mode opt-in, first three campaign worlds; v1Loop/v2Loop = the 18 + 18 campaign loops.",
+ "witnesses": {
+  "none": null,
+  "v2-armor": {
+   "anchor": "window.FWorld = { create, validate, isWalkable, floorHeight };",
+   "replacement": "window.FWorld = { create: (seed, stage, options) => { const w = create(seed, stage, options); if (w.campaignVersion === 2) for (const g of w.destructibles) if (g.kind === 'wall') g.armor = 'heavy'; return w; }, validate, isWalkable, floorHeight };"
+  },
+  "v1-armor": {
+   "anchor": "window.FWorld = { create, validate, isWalkable, floorHeight };",
+   "replacement": "window.FWorld = { create: (seed, stage, options) => { const w = create(seed, stage, options); if (w.campaign === true && w.campaignVersion !== 2) for (const g of w.destructibles) if (g.kind === 'wall') g.armor = 'heavy'; return w; }, validate, isWalkable, floorHeight };"
+  },
+  "native-trig": {
+   "anchor": "const FMath = window.FMath;",
+   "replacement": "const FMath = { sin: Math.sin, cos: Math.cos, atan: Math.atan, atan2: Math.atan2, hypot2: Math.hypot, hypot3: Math.hypot };"
+  }
+ },
+ "byWitness": {
+  "none": {
+   "before": {
+    "pass": 46,
+    "fail": 0,
+    "failingByGroup": {}
+   },
+   "after": {
+    "pass": 46,
+    "fail": 0,
+    "failingByGroup": {}
+   },
+   "newlyFailingAfter": 0,
+   "failingBeforeOnly": []
+  },
+  "v2-armor": {
+   "before": {
+    "pass": 46,
+    "fail": 0,
+    "failingByGroup": {}
+   },
+   "after": {
+    "pass": 28,
+    "fail": 18,
+    "failingByGroup": {
+     "v2Loop": 18
+    }
+   },
+   "newlyFailingAfter": 18,
+   "failingBeforeOnly": []
+  },
+  "v1-armor": {
+   "before": {
+    "pass": 45,
+    "fail": 1,
+    "failingByGroup": {
+     "historical": 1
+    }
+   },
+   "after": {
+    "pass": 26,
+    "fail": 20,
+    "failingByGroup": {
+     "historical": 1,
+     "v1Loop": 18,
+     "other": 1
+    }
+   },
+   "newlyFailingAfter": 19,
+   "failingBeforeOnly": []
+  },
+  "native-trig": {
+   "before": {
+    "pass": 38,
+    "fail": 8,
+    "failingByGroup": {
+     "historical": 8
+    }
+   },
+   "after": {
+    "pass": 1,
+    "fail": 45,
+    "failingByGroup": {
+     "historical": 8,
+     "v1Loop": 18,
+     "other": 1,
+     "v2Loop": 18
+    }
+   },
+   "newlyFailingAfter": 37,
+   "failingBeforeOnly": []
+  }
+ },
+ "runs": [
+  {
+   "side": "before",
+   "witness": "none",
+   "exitCode": 0,
+   "seconds": 110.8,
+   "worldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "witnessWorldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "fixtureInCopy": false,
+   "tests": 46,
+   "pass": 46,
+   "fail": 0,
+   "failing": []
+  },
+  {
+   "side": "after",
+   "witness": "none",
+   "exitCode": 0,
+   "seconds": 113.4,
+   "worldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "witnessWorldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "fixtureInCopy": true,
+   "tests": 46,
+   "pass": 46,
+   "fail": 0,
+   "failing": []
+  },
+  {
+   "side": "before",
+   "witness": "v2-armor",
+   "exitCode": 0,
+   "seconds": 111.7,
+   "worldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "witnessWorldSha256": "2261b1adf0e0dc0cddfc118e78d7676bf0bbd3571335d36e866cffcd3d169802",
+   "fixtureInCopy": false,
+   "tests": 46,
+   "pass": 46,
+   "fail": 0,
+   "failing": []
+  },
+  {
+   "side": "after",
+   "witness": "v2-armor",
+   "exitCode": 1,
+   "seconds": 72.1,
+   "worldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "witnessWorldSha256": "2261b1adf0e0dc0cddfc118e78d7676bf0bbd3571335d36e866cffcd3d169802",
+   "fixtureInCopy": true,
+   "tests": 46,
+   "pass": 28,
+   "fail": 18,
+   "failing": [
+    {
+     "name": "boss campaign world 01: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 1: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 02: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 2: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 03: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 3: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 04: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 4: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 05: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 5: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 06: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 6: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 07: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 7: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 08: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 8: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 09: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 9: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 10: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 10: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 11: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 11: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 12: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 12: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 13: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 13: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 14: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 14: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 15: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 15: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 16: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 16: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 17: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 17: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 18: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 18: world differs from its golden digest in checks/campaign-world-digests.json"
+    }
+   ]
+  },
+  {
+   "side": "before",
+   "witness": "v1-armor",
+   "exitCode": 1,
+   "seconds": 109.9,
+   "worldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "witnessWorldSha256": "40a5d88a8e3f239970def5c98d696883ae8259ca6c9aeae61cc0793e304f58bc",
+   "fixtureInCopy": false,
+   "tests": 46,
+   "pass": 45,
+   "fail": 1,
+   "failing": [
+    {
+     "name": "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout",
+     "error": "Expected values to be strictly equal:"
+    }
+   ]
+  },
+  {
+   "side": "after",
+   "witness": "v1-armor",
+   "exitCode": 1,
+   "seconds": 82.6,
+   "worldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "witnessWorldSha256": "40a5d88a8e3f239970def5c98d696883ae8259ca6c9aeae61cc0793e304f58bc",
+   "fixtureInCopy": true,
+   "tests": 46,
+   "pass": 26,
+   "fail": 20,
+   "failing": [
+    {
+     "name": "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "campaign world 01: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 1: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 02: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 2: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 03: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 3: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 04: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 4: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 05: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 5: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 06: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 6: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 07: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 7: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 08: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 8: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 09: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 9: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 10: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 10: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 11: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 11: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 12: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 12: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 13: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 13: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 14: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 14: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 15: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 15: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 16: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 16: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 17: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 17: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 18: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 18: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "all eighteen layouts and independent art passes retain their own campaign variation",
+     "error": "seed 96: campaign worlds are duplicated"
+    }
+   ]
+  },
+  {
+   "side": "before",
+   "witness": "native-trig",
+   "exitCode": 1,
+   "seconds": 109.5,
+   "worldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "witnessWorldSha256": "521bf4c827adacbcb89ce1bde1ab23b762fc4599d39abd6b09f723cf8b146a99",
+   "fixtureInCopy": false,
+   "tests": 46,
+   "pass": 38,
+   "fail": 8,
+   "failing": [
+    {
+     "name": "legacy seed 1, sector 0: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 1, sector 1: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 1, sector 2: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 96, sector 0: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 96, sector 1: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 96, sector 2: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "campaign mode is strictly opt-in and keeps historical clamping otherwise",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout",
+     "error": "Expected values to be strictly equal:"
+    }
+   ]
+  },
+  {
+   "side": "after",
+   "witness": "native-trig",
+   "exitCode": 1,
+   "seconds": 43.4,
+   "worldSha256": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+   "witnessWorldSha256": "521bf4c827adacbcb89ce1bde1ab23b762fc4599d39abd6b09f723cf8b146a99",
+   "fixtureInCopy": true,
+   "tests": 46,
+   "pass": 1,
+   "fail": 45,
+   "failing": [
+    {
+     "name": "legacy seed 1, sector 0: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 1, sector 1: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 1, sector 2: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 96, sector 0: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 96, sector 1: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "legacy seed 96, sector 2: exact pre-campaign world fingerprint",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "campaign mode is strictly opt-in and keeps historical clamping otherwise",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout",
+     "error": "Expected values to be strictly equal:"
+    },
+    {
+     "name": "campaign world 01: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 1: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 02: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 2: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 03: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 3: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 04: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 4: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 05: deterministic and physically reachable on three seeds",
+     "error": "seed 96, world 5: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 06: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 6: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 07: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 7: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 08: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 8: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 09: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 9: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 10: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 10: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 11: deterministic and physically reachable on three seeds",
+     "error": "seed 96, world 11: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 12: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 12: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 13: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 13: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 14: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 14: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 15: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 15: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 16: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 16: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 17: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 17: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "campaign world 18: deterministic and physically reachable on three seeds",
+     "error": "seed 1, world 18: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "all eighteen layouts and independent art passes retain their own campaign variation",
+     "error": "seed 96: campaign worlds are duplicated"
+    },
+    {
+     "name": "boss campaign world 01: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 1: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 02: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 2: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 03: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 3: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 04: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 4: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 05: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 96, world 5: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 06: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 6: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 07: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 7: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 08: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 8: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 09: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 9: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 10: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 10: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 11: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 96, world 11: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 12: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 12: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 13: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 13: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 14: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 14: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 15: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 15: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 16: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 16: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 17: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 17: world differs from its golden digest in checks/campaign-world-digests.json"
+    },
+    {
+     "name": "boss campaign world 18: open routes and natural reserve entries on three seeds",
+     "error": "boss campaign seed 1, world 18: world differs from its golden digest in checks/campaign-world-digests.json"
+    }
+   ]
+  }
+ ]
+}

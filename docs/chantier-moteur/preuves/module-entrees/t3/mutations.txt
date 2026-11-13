@@ -1,0 +1,44 @@
+détectée — migrate jamais appelé → E21b, E22
+détectée — migrate appelé quel que soit le format → E22
+détectée — migrate appelé pour la version courante → E22
+détectée — from : v non entier pris tel quel → E22
+détectée — migrate travaille sur la copie elle-même → E22
+détectée — résultat de migrate non recopié → E22
+détectée — résultat de migrate pris s’il n’est pas un objet → E22
+détectée — migrate hors du try → E22
+détectée — table : entrée null lue comme vide → E04b, E19
+détectée — table : clés inconnues gardées → E04b, E19, E22
+détectée — repli alt ignoré → E15, E19, E21, E21b, E22
+détectée — repli alt aussi à la manette → E19
+détectée — repli alt : tous les codes libres → E19, E21, E21b
+détectée — repli alt avant les défauts → E19, E21b, E22
+détectée — repli alt dès qu’un code par défaut est pris → E04b, E21
+détectée — codes attribués non ajoutés aux codes utilisés → E19, E21
+détectée — table pad stockée ignorée → E16, E18, E19
+détectée — table pad : trois boutons acceptés → E19
+détectée — table pad : Home accepté → E19
+détectée — ordre des contrôles : action avant appareil → E18b
+détectée — ordre des contrôles : code avant action → E18b
+détectée — appareil inconnu traité comme la manette → E18b
+détectée — texte : Home non distingué → E18, E18b
+détectée — conflit ignoré → E15, E16, E18, E21b
+détectée — conflit lu sur les réglages bruts → E15
+détectée — conflit avec l’action elle-même → E16
+détectée — texte : genre de la touche et du bouton confondus → E18
+détectée — assign modifie son argument → E16, E18
+détectée — assign ajoute au lieu de remplacer → E16, E17, E23
+détectée — unbind sans effet → E18
+détectée — instance : assign sur les réglages de la déclaration → E16, E18
+détectée — instance : assign applique le résultat → E16
+détectée — instance : unbind sur les réglages de la déclaration → E18
+détectée — capture : la touche va aussi au jeu → E23
+détectée — capture : jamais finie → E23
+détectée — capture : répétition capturée → E23
+détectée — capture : code qui n’est pas une chaîne capturé → E23
+détectée — capture : appareil actif inchangé → E23
+détectée — capture : résultat jamais rendu → E23
+détectée — capture : résultat rendu à chaque image → E23
+détectée — capture : une nouvelle capture garde le résultat en attente → E23
+détectée — clear garde la capture → E23
+module intact : tous les tests passent
+42 mutations détectées sur 42

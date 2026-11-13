@@ -1,0 +1,14 @@
+# 2026-11-13 10:19, Mac, v24.18.0, charge 2.75 4.23 4.12
+$ node docs/chantier-moteur/preuves/module-physique/E2b/sommeil-rubble300.mjs
+FPhysics 2 et bancs/phys/fphys.mjs ; Node v24.18.0.
+
+1. Sommeil complet de rubble300
+- module, masses bornées à [3, 120] (défaut)    : sous-pas 587 (4.89 s) ; réveils 0
+- module, masses d'origine (massMin 0.5, 160)  : sous-pas 696 (5.80 s) ; réveils 2
+- prototype, plan,  masses d'origine          : sous-pas 1432 (11.93 s)
+- prototype, plan,  masses bornées à [3, 120] : sous-pas 620 (5.17 s)
+- prototype, dalle, masses d'origine          : sous-pas 2330 (19.42 s)
+- prototype, dalle, masses bornées à [3, 120] : sous-pas 1839 (15.32 s)
+
+2. P22, seconde partie (étape 6), mesurée avec le réveil provisoire d'un seul corps
+- pièce la plus haute à y = 1.705 ; pic de 276 éveillés (attendu ≤ 16) ; tout se rendort sous-pas 263 (2.19 s) plus tard (attendu < 2 s) ; 102 pièce(s) déplacée(s) de plus de 2 mm (attendu ≤ 16), dont 0 restée(s) endormie(s) tout du long (attendu 0) ; 276 pièce(s) réveillée(s) ; réveils 276

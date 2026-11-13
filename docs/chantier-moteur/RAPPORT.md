@@ -379,3 +379,61 @@ SHA-256 du HTML final : `4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d986
 Le contrôle Chrome distant a vérifié les nouveaux réglages, leur remise à zéro, le lancement et la pause. **WebGL 2 y est indisponible et le rendu CPU affichait environ 1 FPS** : la cadence n’a pas pu y être calibrée, et le pointeur est resté en mode de visée par glisser. L’essai ne prouve aucune performance GPU, aucune fréquence d’écran physique ni l’absence d’accélération d’une souris réelle. Téléphone, Windows/NVIDIA, Safari et Firefox restent à vérifier. Aucune égalité de pixels ni écoute physique n’est annoncée.
 
 Le lot 00 / T1 est publié dans la PR #3. Le lot 01 dépend de cet outillage ; sa branche garde une tâche par commit. Aucune fusion de main, aucun déploiement et aucun changement de version n’ont été effectués. **Les lots 02 et suivants ne sont pas réalisés dans cette livraison.** La prochaine étape est l’invalidation locale de navigation et les optimisations de simulation du lot 02, avec sa comparaison principale appariée ; la replanification sélective demeure réservée au lot 03/T4.
+
+## Intégration et version 0.9.0 — 13 novembre 2026
+
+Intégration sur `chantier/integration` des pistes terminées, après l'arrêt du
+workflow d'agents du matin. Rien n'a été réécrit : chaque piste entre par une
+fusion `--no-ff` qui garde ses commits.
+
+| Piste | Contenu intégré | État |
+|---|---|---|
+| `chantier/lot-01s-determinisme-plateformes` | `FMath` (sin, cos, atan, atan2, hypot2, hypot3) dans `world.js`, empreintes dorées des 108 mondes de campagne, outillage de comparaison de plateformes | Terminée ; 6 commits |
+| `chantier/lot-00-outils` | R1 et R1b : lanceur Chrome sans tête par tube CDP, PNG, comparaison d'images, `run-page.mjs`, portabilité Linux | Partielle : R1/R1b seulement, le reste du lot 00 reste à faire |
+| `chantier/module-boucle` | `src/loop.js`, `src/schedule.js` et bancs | Module livré, **non raccordé** |
+| `chantier/module-ciel` | `src/skies.js`, 18 ciels et captures | Module livré, **non raccordé** |
+| `chantier/module-demo` | `src/demo.js` (schéma, enregistreur, rejoueur, réalisateur) | Module livré, **non raccordé** |
+| `chantier/module-entrees` | `src/input.js` (clavier, souris, manette, réglages, invites, vibrations) | Module livré, **non raccordé** |
+| `chantier/module-physique` | `src/physics.js` et bancs de scènes | Module livré, **non raccordé** |
+
+Les pistes `chantier/lot-02-simulation` (T0–T4 et T17 sur 16 tâches) et
+`chantier/lot-11-audio` (plus avancée, travail en cours non commité) ne sont
+**pas** intégrées : elles sont partielles. Leurs clones gardent l'état exact.
+
+### Contrôles exécutés
+
+| Contrôle | Résultat |
+|---|---|
+| `npm test` sur le Mac (Node 24.18, macOS arm64) | **485/485**, zéro échec |
+| `npm test` sur le Spark (Linux arm64, Node 24) | **485/485**, zéro échec |
+| Tests des cinq modules, hors `npm test` | 234 réussis, 0 échec, 1 `todo` |
+| `npm run render-check` (Chrome sans tête, ANGLE Metal, M5) | 56/56, WebGL 2 disponible |
+| `python3 tools/build.py` et `checks/build.test.mjs` | PASS, **833 373 octets bruts**, 0 ressource externe |
+| Partie lancée sans tête sur la page construite | état `playing`, 60 i/s, zéro erreur de console |
+
+La référence de tests passe donc de 470 à 485 : les quinze tests ajoutés sont
+ceux de `FMath` et des empreintes de mondes du lot 01 suite. Le même total au
+Mac et au Spark est le point du lot 01 suite (MURS-V1), pas une preuve de
+performance.
+
+### Version et mise en ligne
+
+Commit de version dédié `0604bf1` (0.8.1 → **0.9.0**), fusion dans `main` par
+`a7791f0`. HTML final : **833 373 octets**, SHA-256
+`8283d60608280cf78a903829318dbc6b4276137e5058067593d8828f3ccffb65`, version
+affichée `V0.9.0`.
+
+Déploiement sur https://fps.estrasse.fr (VPS amiga) : release
+`releases/a7791f070fab0f34513ac6ea1254fd9332900f7d`, empreinte vérifiée avant
+et après la bascule, trois versions gardées (la plus ancienne, `673d6b2`, est
+retirée). La page servie est identique octet à octet au fichier testé.
+
+### Ce qui n'est pas prouvé
+
+- Aucun banc de non-régression apparié contre la page 0.8.1 n'a été exécuté :
+  la cadence à 60 i/s vient d'une exécution sans tête sur ce Mac, pas d'une
+  mesure comparative.
+- Aucun essai sur Windows/NVIDIA, téléphone, Safari ou Firefox.
+- Les cinq modules ne changent pas encore le jeu : ils sont fusionnés, testés
+  isolément et documentés, mais aucun n'est branché dans `game.js`.
+- Les lots 02 à 18 restent inachevés.

@@ -1,0 +1,146 @@
+{
+ "tool": "reglages.mjs",
+ "node": "v24.18.0",
+ "arch": "arm64",
+ "avant": "538e16d",
+ "apres": "538e16d + arbre de travail",
+ "rows": [
+  {
+   "mesure": "octets",
+   "avant": 11000,
+   "apres": 13255
+  },
+  {
+   "mesure": "gzip9",
+   "avant": 4663,
+   "apres": 5525
+  },
+  {
+   "mesure": "E15 assign clavier interact ← R",
+   "avant": "undefined",
+   "apres": {
+    "ok": false,
+    "conflict": "dash",
+    "reason": "Déjà utilisée : Esquive."
+   }
+  },
+  {
+   "mesure": "E16 assign clavier interact ← G",
+   "avant": "undefined",
+   "apres": [
+    "KeyG"
+   ]
+  },
+  {
+   "mesure": "E17 assign clavier fire ← Escape",
+   "avant": "undefined",
+   "apres": {
+    "ok": false,
+    "reason": "Cette touche est réservée au navigateur."
+   }
+  },
+  {
+   "mesure": "E18 assign manette jump ← X",
+   "avant": "undefined",
+   "apres": {
+    "ok": false,
+    "conflict": "interact",
+    "reason": "Déjà utilisé : Interagir."
+   }
+  },
+  {
+   "mesure": "E18 assign manette jump ← Home",
+   "avant": "undefined",
+   "apres": "Ce bouton est réservé au système."
+  },
+  {
+   "mesure": "E18 assign manette jump ← Z9",
+   "avant": "undefined",
+   "apres": "Bouton inconnu."
+  },
+  {
+   "mesure": "E18 unbind weaponNext puis assign weapon5 ← Y",
+   "avant": "erreur : Cannot read properties of undefined (reading 'settings')",
+   "apres": [
+    "Y"
+   ]
+  },
+  {
+   "mesure": "E19 cas idempotents et stables en JSON (sur 13)",
+   "avant": 13,
+   "apres": 13
+  },
+  {
+   "mesure": "E19 table pad stockée {fire:[RB]} → pad.fire",
+   "avant": [
+    "RT"
+   ],
+   "apres": [
+    "RB"
+   ]
+  },
+  {
+   "mesure": "E20 padYaw 9999 → ",
+   "avant": 600,
+   "apres": 600
+  },
+  {
+   "mesure": "E21 melee absente, V pris → melee",
+   "avant": [],
+   "apres": [
+    "KeyB"
+   ]
+  },
+  {
+   "mesure": "E21 weapon5 absente, Digit5 pris → weapon5",
+   "avant": [],
+   "apres": [
+    "KeyG"
+   ]
+  },
+  {
+   "mesure": "E22 profil v1 → dash, jump",
+   "avant": {
+    "dash": [
+     "Space"
+    ],
+    "jump": []
+   },
+   "apres": {
+    "dash": [
+     "KeyR"
+    ],
+    "jump": [
+     "Space"
+    ]
+   }
+  },
+  {
+   "mesure": "E22 profil v1 = defaults(M)",
+   "avant": false,
+   "apres": true
+  },
+  {
+   "mesure": "E22 appels de migrate pour un profil v2 / v1",
+   "avant": [
+    0,
+    0
+   ],
+   "apres": [
+    0,
+    1
+   ]
+  },
+  {
+   "mesure": "E23 capture puis KeyG → frame().captured",
+   "avant": "erreur : inp.capture is not a function",
+   "apres": {
+    "keyDown": true,
+    "captured": {
+     "device": "keyboard",
+     "code": "KeyG"
+    }
+   }
+  }
+ ]
+}

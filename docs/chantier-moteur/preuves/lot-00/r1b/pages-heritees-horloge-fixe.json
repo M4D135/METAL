@@ -1,0 +1,746 @@
+{
+ "schema": "metal-r1b-pages-heritees-v1",
+ "date": "2026-11-13T08:54:32.143Z",
+ "node": "v24.18.0",
+ "platform": "darwin arm64",
+ "avantRoot": "/Users/david/claude/metal-chantier/verif/lot-00-outils-R1b-avant",
+ "clock": "copies des pages RGPU, performance.now() remplacé avant tout script : <script>/* R1b : horloge déterministe, copie de comparaison des lanceurs (hors audit) */(()=>{let t=0;performance.now=()=>(t+=0.001);})();</script>",
+ "pages": {
+  "t6-run1": {
+   "file": "t6-run1.html",
+   "hash": null,
+   "window": "1440,932",
+   "sha256": "f147962f8c881a810014ebabbf116a4393de331632314491dd83c57aa724a1e7",
+   "loaded": "t6-run1-horloge-fixe.html",
+   "loadedSha256": "c996c596862d11a415953654383b8104cd064b3f68bcb7e43fb326e41f1cf247",
+   "chromeArgs": [
+    "--headless=new",
+    "--ignore-gpu-blocklist",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-extensions",
+    "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-sync",
+    "--metrics-recording-only",
+    "--disable-domain-reliability",
+    "--host-resolver-rules=MAP * ~NOTFOUND",
+    "--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows",
+    "--mute-audio",
+    "--user-data-dir=<profil jetable>",
+    "--use-angle=metal",
+    "--window-size=1440,932",
+    "--force-device-scale-factor=1",
+    "--dump-dom",
+    "file://<travail>/t6-run1-horloge-fixe.html"
+   ],
+   "chromeArgsEqual": true,
+   "urlEqual": true,
+   "extractionSameOnSameDom": true,
+   "runs": [
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-0",
+     "ms": 47411,
+     "textBytes": 5962,
+     "url": "file://<travail>/t6-run1-horloge-fixe.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1498122
+     },
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "100",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5995
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5995
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 65.0444,
+        "mad": 0.0059,
+        "gt10": 0.0003
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 65.0444,
+        "mad": 0.0059,
+        "gt10": 0.0003
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-0",
+     "ms": 137633,
+     "textBytes": 5962,
+     "url": "file://<travail>/t6-run1-horloge-fixe.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "100",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5995
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5995
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 65.0444,
+        "mad": 0.0059,
+        "gt10": 0.0003
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 65.0444,
+        "mad": 0.0059,
+        "gt10": 0.0003
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-1",
+     "ms": 45305,
+     "textBytes": 5962,
+     "url": "file://<travail>/t6-run1-horloge-fixe.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "100",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5995
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5995
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 65.0444,
+        "mad": 0.0059,
+        "gt10": 0.0003
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 65.0444,
+        "mad": 0.0059,
+        "gt10": 0.0003
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-1",
+     "ms": 58891,
+     "textBytes": 5962,
+     "url": "file://<travail>/t6-run1-horloge-fixe.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1498122
+     },
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "100",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5995
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4477
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5995
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 65.0444,
+        "mad": 0.0059,
+        "gt10": 0.0003
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 65.0444,
+        "mad": 0.0059,
+        "gt10": 0.0003
+       }
+      }
+     },
+     "shots": null
+    }
+   ],
+   "fields": {
+    "paths": 286,
+    "equalEverywhere": 286,
+    "launchNoise": 0,
+    "suspects": 0,
+    "families": {},
+    "launchNoiseExamples": [],
+    "suspectList": [],
+    "suspectsOutsideNoisyFamilies": 0
+   },
+   "fieldsEqual": true,
+   "fieldsVerdict": "égaux"
+  },
+  "runJ": {
+   "file": "runJ.html",
+   "hash": null,
+   "window": "1440,932",
+   "sha256": "fab74d6b8b7aeb038d6bfc219e850998fffe603303dc0cc5be65190e7aa1f140",
+   "loaded": "runJ-horloge-fixe.html",
+   "loadedSha256": "f5dc86406e839328c5ec39aae9691cf4de0797b2a315d7beba0164e329eb0176",
+   "chromeArgs": [
+    "--headless=new",
+    "--ignore-gpu-blocklist",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-extensions",
+    "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-sync",
+    "--metrics-recording-only",
+    "--disable-domain-reliability",
+    "--host-resolver-rules=MAP * ~NOTFOUND",
+    "--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows",
+    "--mute-audio",
+    "--user-data-dir=<profil jetable>",
+    "--use-angle=metal",
+    "--window-size=1440,932",
+    "--force-device-scale-factor=1",
+    "--dump-dom",
+    "file://<travail>/runJ-horloge-fixe.html"
+   ],
+   "chromeArgsEqual": true,
+   "urlEqual": true,
+   "extractionSameOnSameDom": true,
+   "runs": [
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-0",
+     "ms": 46877,
+     "textBytes": 109642,
+     "url": "file://<travail>/runJ-horloge-fixe.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1484332
+     },
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "100",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4475
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3948
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4475
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5837
+       },
+       "high-combo6": {
+        "draws": 45,
+        "instances": 5232
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5837
+       },
+       "hicap6": {
+        "draws": 45,
+        "instances": 5233
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 47.3135,
+        "mad": 0.3414,
+        "gt10": 0.0023
+       },
+       "spec4": {
+        "psnr": 62.6892,
+        "mad": 0.0323,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-0",
+     "ms": 46536,
+     "textBytes": 109642,
+     "url": "file://<travail>/runJ-horloge-fixe.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "100",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4475
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3948
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4475
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5837
+       },
+       "high-combo6": {
+        "draws": 45,
+        "instances": 5232
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5837
+       },
+       "hicap6": {
+        "draws": 45,
+        "instances": 5233
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 47.3135,
+        "mad": 0.3414,
+        "gt10": 0.0023
+       },
+       "spec4": {
+        "psnr": 62.6892,
+        "mad": 0.0323,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-1",
+     "ms": 45772,
+     "textBytes": 109642,
+     "url": "file://<travail>/runJ-horloge-fixe.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "100",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4475
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3948
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4475
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5837
+       },
+       "high-combo6": {
+        "draws": 45,
+        "instances": 5232
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5837
+       },
+       "hicap6": {
+        "draws": 45,
+        "instances": 5233
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 47.3135,
+        "mad": 0.3414,
+        "gt10": 0.0023
+       },
+       "spec4": {
+        "psnr": 62.6892,
+        "mad": 0.0323,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-1",
+     "ms": 45565,
+     "textBytes": 109642,
+     "url": "file://<travail>/runJ-horloge-fixe.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1484332
+     },
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "100",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4475
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3948
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4475
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5837
+       },
+       "high-combo6": {
+        "draws": 45,
+        "instances": 5232
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5837
+       },
+       "hicap6": {
+        "draws": 45,
+        "instances": 5233
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 47.3135,
+        "mad": 0.3414,
+        "gt10": 0.0023
+       },
+       "spec4": {
+        "psnr": 62.6892,
+        "mad": 0.0323,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    }
+   ],
+   "fields": {
+    "paths": 2538,
+    "equalEverywhere": 2538,
+    "launchNoise": 0,
+    "suspects": 0,
+    "families": {},
+    "launchNoiseExamples": [],
+    "suspectList": [],
+    "suspectsOutsideNoisyFamilies": 0
+   },
+   "fieldsEqual": true,
+   "fieldsVerdict": "égaux"
+  }
+ },
+ "ok": true,
+ "fieldsEqualEverywhere": true
+}

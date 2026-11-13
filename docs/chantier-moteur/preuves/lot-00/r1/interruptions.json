@@ -1,0 +1,103 @@
+{
+  "schema": "metal-render-r1-interruptions-v1",
+  "selfCheck": "/Users/david/claude/metal-chantier/render/tools/render/self-check.mjs",
+  "rows": [
+    {
+      "signal": "SIGINT",
+      "afterMs": 400,
+      "exit": {
+        "code": null,
+        "signal": "SIGINT"
+      },
+      "profilesBefore": 0,
+      "profilesAfter": [],
+      "processesAfter": [],
+      "lastStderrLine": ""
+    },
+    {
+      "signal": "SIGINT",
+      "afterMs": 1200,
+      "exit": {
+        "code": null,
+        "signal": "SIGINT"
+      },
+      "profilesBefore": 0,
+      "profilesAfter": [],
+      "processesAfter": [],
+      "lastStderrLine": ""
+    },
+    {
+      "signal": "SIGINT",
+      "afterMs": 2500,
+      "exit": {
+        "code": null,
+        "signal": "SIGINT"
+      },
+      "profilesBefore": 0,
+      "profilesAfter": [],
+      "processesAfter": [],
+      "lastStderrLine": ""
+    },
+    {
+      "signal": "SIGINT",
+      "afterMs": 3600,
+      "exit": {
+        "code": null,
+        "signal": "SIGINT"
+      },
+      "profilesBefore": 0,
+      "profilesAfter": [],
+      "processesAfter": [],
+      "lastStderrLine": ""
+    },
+    {
+      "signal": "SIGINT",
+      "afterMs": 4600,
+      "exit": {
+        "code": null,
+        "signal": "SIGINT"
+      },
+      "profilesBefore": 0,
+      "profilesAfter": [],
+      "processesAfter": [],
+      "lastStderrLine": ""
+    },
+    {
+      "signal": "SIGINT",
+      "afterMs": 5600,
+      "exit": {
+        "code": null,
+        "signal": "SIGINT"
+      },
+      "profilesBefore": 0,
+      "profilesAfter": [],
+      "processesAfter": [],
+      "lastStderrLine": ""
+    },
+    {
+      "signal": "SIGTERM",
+      "afterMs": 1000,
+      "exit": {
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "profilesBefore": 0,
+      "profilesAfter": [],
+      "processesAfter": [],
+      "lastStderrLine": ""
+    },
+    {
+      "signal": "SIGTERM",
+      "afterMs": 4000,
+      "exit": {
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "profilesBefore": 0,
+      "profilesAfter": [],
+      "processesAfter": [],
+      "lastStderrLine": "ÉCHEC cleanup.timeout {\"pid\":64131,\"profileDir\":\"/var/folders/xc/v6v5dly119l9sy64nyj2460m0000gn/T/metal-render-63971-ZGGkGC\",\"profileExisted\":true,\"rejected\":\"Chrome exited (code -, signal SIGKILL) af"
+    }
+  ],
+  "clean": true
+}
