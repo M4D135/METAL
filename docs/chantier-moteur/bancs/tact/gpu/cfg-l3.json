@@ -1,0 +1,12 @@
+{"name":"tact-844x390-dpr3","dpr":3,"cssW":844,"cssH":390,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":420,"measureFrames":240,"skip":10,"reps":2,"dumpFrames":true,"compareEvery":20,"compareRef":"base",
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"g90","code":"base","quality":1.35},
+  {"id":"g80","code":"base","quality":1.2},
+  {"id":"g70","code":"base","quality":1.05},
+  {"id":"g65","code":"base","quality":0.975},
+  {"id":"low","code":"base","quality":"low"},
+  {"id":"high","code":"base","quality":"high"},
+  {"id":"cache","code":"cache","compare":true},
+  {"id":"all","code":"all","compare":true}]}

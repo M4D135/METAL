@@ -1,0 +1,7 @@
+# Voie « boucle », étape 6 (§7.6 de la mission) : navigateur.html dans Chrome sans tête, --dump-dom.
+# Google Chrome 157.0.8103.39, Mac M5 (macOS 27.2.1, arm64), 13 novembre 2026. Depuis la racine du dépôt :
+# "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu --no-first-run --no-default-browser-check --user-data-dir="$(mktemp -d)" --dump-dom "file://$PWD/docs/chantier-moteur/preuves/module-boucle/navigateur.html" 2>/dev/null | grep -E '<body|<pre'
+# Code 0. Stderr : seulement des erreurs CVDisplayLink (pas d'écran en mode sans tête), sans effet.
+# Ci-dessous, recopiés tels quels : la ligne <body …> et le <pre> avec son contenu.
+<body data-result="ok">
+<pre id="out">{"ok":true,"engine":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36","checks":{"globals":{"ok":true,"got":{"FLoop":"create,aim,track","FSchedule":"create,budget"}},"hz144":{"ok":true,"got":{"frames":1440,"steps":601,"zeroStepFrames":839,"multiStepFrames":0,"locked":false}},"hz5994":{"ok":true,"got":{"steps":601,"multiStepFrames":["2:2"],"zeroStepFrames":0,"locked":true,"periodMs":16.68335001668335}},"s11":{"ok":true,"got":{"slices":53,"first":768,"last":64,"simUnits":40000}},"s01":{"ok":true,"got":{"spent":4,"order":"BDAC","count":0,"ran":4}},"jit144":{"ok":true,"got":{"frames":10000,"steps":4168,"zeroStepFrames":5832,"digest":"95894bbc","expected":"95894bbc"}}},"errors":[]}</pre>

@@ -1,0 +1,56 @@
+{
+ "simSeconds": 40,
+ "startIndex": 0,
+ "events": {
+  "mechanism": 2,
+  "core": 1,
+  "checkpoints": 3,
+  "deaths": 0,
+  "assistHp": 0
+ },
+ "replaySameSettings": {
+  "identical": true,
+  "firstDivergenceStep": null,
+  "steps": [
+   2400,
+   2400
+  ]
+ },
+ "secondRecording": {
+  "identical": true,
+  "firstDivergenceStep": null,
+  "steps": [
+   2400,
+   2400
+  ]
+ },
+ "replayWithoutCheckpointCalls": {
+  "identical": true,
+  "firstDivergenceStep": null,
+  "steps": [
+   2400,
+   2400
+  ]
+ },
+ "replayWithoutAssist": {
+  "identical": true,
+  "firstDivergenceStep": null,
+  "steps": [
+   2400,
+   2400
+  ]
+ },
+ "sizeBytesPerMinute": {
+  "raw8": 28800,
+  "deltaRle": 12758,
+  "rawDeflate": 12443,
+  "deltaRleDeflate": 10715
+ },
+ "bytesPerStep": {
+  "raw": 8,
+  "deltaRle": 3.54
+ },
+ "stepsWithLookChange": 0.985,
+ "buttonTransitions": 110,
+ "finalDigest": "dd2fd5a6"
+}

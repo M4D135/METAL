@@ -1,0 +1,9 @@
+stack10: 120 Hz x1 | awake steps 123/1200 | us/step mean 50.0 p50 49.1 p95 51.3 max 72.5 | awake mean 10 max 10 | contact pts mean 40 max 40 | SAT tests mean 9 | us per awake body-step 4.996 | us per contact pt 1.249 | all asleep at step 123 (1.02 s) | hashes fb79204a DETERMINISTIC
+   final pose error: horizontal max 24.33 mm, vertical max 84.87 mm, max tilt 0.156 deg
+pyramid55: 120 Hz x1 | awake steps 92/1200 | us/step mean 456.8 p50 431.2 p95 601.1 max 640.5 | awake mean 55 max 55 | contact pts mean 518 max 549 | SAT tests mean 135 | us per awake body-step 8.306 | us per contact pt 0.882 | all asleep at step 92 (0.77 s) | hashes 6d172292 DETERMINISTIC
+   final pose error: horizontal max 10.62 mm, vertical max 65.26 mm, max tilt 0.400 deg
+rubble300: 120 Hz x1 | awake steps 1432/1800 | us/step mean 1968.8 p50 1741.0 p95 3636.4 max 10478.2 | awake mean 289 max 300 | contact pts mean 1460 max 1590 | SAT tests mean 1055 | us per awake body-step 6.818 | us per contact pt 1.349 | all asleep at step 1432 (11.93 s) | hashes 5bc16ddf DETERMINISTIC
+   final: centre y min 0.036 max 1.468, bodies escaped or under ground 0
+blast200: 120 Hz x1 | awake steps 676/1500 | us/step mean 462.7 p50 485.7 p95 936.4 max 3034.1 | awake mean 119 max 200 | contact pts mean 451 max 813 | SAT tests mean 153 | us per awake body-step 3.873 | us per contact pt 1.026 | all asleep at step 849 (7.08 s) | hashes 3fa55997 DETERMINISTIC
+   final: centre y min 0.294 max 3.001, bodies escaped or under ground 0
+fit (min-filtered, 2243 steps): us/step = 1.087*awake + 0.426*contactPts + 0.978*satTests ; mean abs error 25.3 %

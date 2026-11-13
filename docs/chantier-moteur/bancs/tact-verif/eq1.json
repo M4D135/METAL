@@ -1,0 +1,60 @@
+{
+ "structure": {
+  "clavier": "dt,moveX,moveY,lookX,lookY,fire,fireLeft,dash,pulse,melee,interact,weapon,sprint,assist,jump,bash",
+  "tactile": "dt,moveX,moveY,lookX,lookY,fire,fireLeft,dash,pulse,melee,interact,weapon,sprint,assist,jump,bash",
+  "types": "moveX:number moveY:number lookX:number lookY:number fire:boolean fireLeft:boolean dash:boolean pulse:boolean melee:boolean interact:boolean weapon:number sprint:boolean assist:boolean"
+ },
+ "clavier_vs_tactile": {
+  "pas": [
+   211,
+   211
+  ],
+  "dtEgaux": false,
+  "champsDifferents": {
+   "assist": 211
+  },
+  "hashClavier": "fd999710",
+  "hashTactile": "d08bb6e4",
+  "tirs": [
+   3,
+   3
+  ]
+ },
+ "rejeu_flux_tactile": {
+  "hashSession": "d08bb6e4",
+  "hashRejeu": "d08bb6e4",
+  "egal": true
+ },
+ "rejeu_flux_clavier": {
+  "hashSession": "fd999710",
+  "hashRejeu": "fd999710",
+  "egal": true
+ },
+ "flux_tactile_sans_assist": {
+  "hash": "d08bb6e4",
+  "egalAuClavier": false
+ },
+ "flux_tactile_avec_dt_du_clavier": {
+  "hash": "fd999710",
+  "egalAuClavier": true,
+  "ecartDtMax": 9.08995101411847e-16,
+  "hashAvecAssist": "fd999710"
+ },
+ "manette_vs_clavierMaj": {
+  "pas": [
+   211,
+   211
+  ],
+  "dtEgaux": true,
+  "champsDifferents": {},
+  "hashManette": "5b087a06",
+  "hashClavierMaj": "5b087a06",
+  "egal": true
+ },
+ "vitesses": {
+  "clavier": 0,
+  "tactile": 0,
+  "clavierMaj": 0
+ },
+ "note": "Le tir part à 2000 ms : avec assist=true (tactile) le rayon gagne jusqu’à 0,38 m pour l’arme 0 et 0,16 m pour les autres (simulation.js:848)."
+}

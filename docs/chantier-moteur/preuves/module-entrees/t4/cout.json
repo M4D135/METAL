@@ -1,0 +1,82 @@
+{
+ "tool": "cout-apparie.mjs",
+ "node": "v24.18.0",
+ "arch": "arm64",
+ "platform": "darwin",
+ "avant": "f36e318",
+ "apres": "f36e318 + arbre de travail",
+ "nsParImage": {
+  "avant, manette": {
+   "series": [
+    941.4,
+    1015.8,
+    1024.1,
+    1165.3,
+    1163.1,
+    1092.9,
+    1141.5,
+    1075.8,
+    1101.3,
+    1082.5
+   ],
+   "mediane": 1087.7,
+   "min": 941.4,
+   "max": 1165.3
+  },
+  "après, manette": {
+   "series": [
+    1574.5,
+    1780,
+    1660.9,
+    2122.3,
+    1928.7,
+    1900.8,
+    1917.3,
+    1816.8,
+    1854.6,
+    1824.9
+   ],
+   "mediane": 1839.8,
+   "min": 1574.5,
+   "max": 2122.3
+  },
+  "avant, sans manette": {
+   "series": [
+    910.6,
+    992.7,
+    965.1,
+    1148.5,
+    1108.3,
+    1158.7,
+    1096.4,
+    1116.9,
+    1087.6,
+    1083.7
+   ],
+   "mediane": 1092,
+   "min": 910.6,
+   "max": 1158.7
+  },
+  "après, sans manette": {
+   "series": [
+    1476.7,
+    1452.2,
+    1308.4,
+    1395.2,
+    1471.2,
+    1556.2,
+    1449.9,
+    1536.3,
+    1464.9,
+    1462.7
+   ],
+   "mediane": 1463.8,
+   "min": 1308.4,
+   "max": 1556.2
+  }
+ },
+ "surcoutManetteNs": 752.1,
+ "surcoutLectureSansManetteNs": 371.8,
+ "attendu": "médiane < 20 000 ns par image (mission, §7.2)",
+ "sink": true
+}

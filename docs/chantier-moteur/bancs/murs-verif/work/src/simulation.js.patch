@@ -1,0 +1,74 @@
+--- a/src/simulation.js
++++ b/src/simulation.js
+@@ -28,6 +28,16 @@
+   const SHIELD=['energy','raised','rechargeDelay','bashCooldown','bashVisual'];
+   const CAMPAIGN_GEAR=[{key:'pistol',weapon:4,index:0},{key:'shield',index:3},{key:'smg',weapon:0,index:6},{key:'shotgun',weapon:1,index:9},{key:'grenade',weapon:3,index:12},{key:'rocket',weapon:2,index:15}];
+   const TROPHY_PHASES=['sealed','grace','trial','complete'];
++  // Breach rule: walls, roofs, perimeter walls and load-bearing piers yield only to
++  // heavy ordnance (1); backdrop relief and flat floor dressing never break (2).
++  // A pure function of existing world data: the world object, its fingerprint and
++  // every saved checkpoint stay exactly as they were.
++  const RELIEF=['hill','cliff','cliff_stratum'],FLOOR=['arena_inlay','floor_drain','threshold','hazard_marking','trail','ground_patch','leaf_litter','jump_landing','dock_warning','trap_warning','arena_path_mark','trap_plate'];
++  const breachArmor=(g,world)=>{
++    const meshes=g.meshes.map(i=>world.meshes[i]),c=g.colliders.length?world.colliders[g.colliders[0]]:null,m=c?world.meshes[c.mesh]:null;
++    if(meshes.some(q=>RELIEF.includes(q.category))||!c&&meshes.every(q=>FLOOR.includes(q.category)||q.s[1]<=.06&&!(q.r||[]).some(v=>Math.abs(v)>.01)))return 2;
++    return g.kind==='wall'||g.kind==='roof'||!!m&&(m.category==='boundary'||g.kind==='support'&&Math.min(c.maxX-c.minX,c.maxZ-c.minZ)>=.6)?1:0;
++  };
+   const ownsGear=(gear,inventory)=>gear.key==='shield'?inventory.shield:inventory.weapons[gear.weapon];
+   function copyCampaign(value,inventory){
+     const rewards=value?.version===2;
+@@ -117,7 +127,7 @@
+     if(arsenal&&!initialEquipment)throw new Error('Invalid equipment');
+     const initialArmorCap=initialInventory.shield&&initialEquipment?.left==='shield'?200:100,initialArmor=armorEnabled?copyArmor(options.armor===undefined?{version:1,points:0}:options.armor,initialArmorCap):null;
+     if(armorEnabled&&!initialArmor)throw new Error('Invalid armor');
+-    let destruction=G.FDestruction?.create(world)||null,trapStates=[];
++    let destruction=G.FDestruction?.create(world,{armor:breachArmor})||null,trapStates=[];
+     // Static height rectangles share a small spatial index. Breach updates never
+     // invalidate terrain, so path probes no longer rescan the entire landscape.
+     const floorGX=Math.floor(world.bounds.minX/8),floorGZ=Math.floor(world.bounds.minZ/8),floorGW=Math.floor(world.bounds.maxX/8)-floorGX+1,floorGD=Math.floor(world.bounds.maxZ/8)-floorGZ+1;
+@@ -899,12 +909,15 @@
+       for(const e of result.events||[])if(e.name==='materialImpact'||e.name==='materialBreak')emit(e.name,e);
+       if(result.changed&&!result.events?.length)emit('creak',{x:point[0],y:point[1],z:point[2],power});
+     }
+-    function distanceBox(point,q){return Math.hypot(Math.max(q.minX-point[0],0,point[0]-q.maxX),Math.max(q.minY-point[1],0,point[1]-q.maxY),Math.max(q.minZ-point[2],0,point[2]-q.maxZ));}
+-    function damageScenery(point,power,r=0,direction,ignoreId){
++    let ricochetWait=0;
++    function distanceBox(point,q){return Math.hypot(Math.max(q.minX-point[0],0,point[0]-q.maxX),Math.max(q.minY-point[1],0,point[1]-q.maxY),Math.max(q.minZ-point[2],0,point[2]-q.maxZ));}
++    function damageScenery(point,power,r=0,direction,ignoreId,heavy=r>0){
+       if(!(power>0))return;
+-      const result=destruction&&(r>0?destruction.blast(point,r,power,ignoreId):destruction.hit(point,power,direction));sceneryResult(result,point,power);
++      const result=destruction&&(r>0?destruction.blast(point,r,power,ignoreId,{heavy}):destruction.hit(point,power,direction,{heavy}));sceneryResult(result,point,power);
++      if(result?.deflected&&!r&&!ricochetWait){ricochetWait=.09;emit('ricochet',{x:point[0],y:point[1],z:point[2],material:result.events.find(e=>e.deflected)?.material||'stone',count:result.deflected});}
+       for(let i=0;i<s.doors.length;i++){
+         const d=s.doors[i];if(d.destroyed)continue;const distance=distanceBox(point,doorBoxes[i]);if(distance>(r||.18))continue;
++        if(!heavy){if(!ricochetWait){ricochetWait=.09;emit('ricochet',{x:point[0],y:point[1],z:point[2],material:'metal',count:1,door:d.id});}continue;}
+         d.hp=Math.max(0,d.hp-power*(r?Math.max(.2,1-distance/r):1));
+         if(!d.hp){
+           const across=d.w>d.d,sourceId='door:'+d.id,y=(d.y||0)+d.h/2+d.progress*(d.h+.25),size=[across?d.w/2:d.w,d.h/2,across?d.d:d.d/2];
+@@ -950,7 +963,7 @@
+         if(amount>0){connected=true;damageEnemy(e,amount,{x:point[0],y:point[1],z:point[2],credit:owner==='player'},weak);if(e.hp>0){e.stun=Math.max(e.stun,.25);e.windup=0;e.burstLeft=0;}}
+       }
+       if(shot&&connected){s.hits++;s.hitMarker=.22;emit('hit');}
+-      damageScenery(point,terrainPower,r,undefined,ignoreId);syncDestruction();hear(point[0],point[2],34,point[1]);
++      damageScenery(point,terrainPower,r,undefined,ignoreId,kind!=='steam');syncDestruction();hear(point[0],point[2],34,point[1]);
+       particles(...point,5,22);
+     }
+     function castProjectile(o,d,far,r=.12){
+@@ -1901,7 +1914,7 @@
+     function step(dt,input={}){
+       dt=Number.isFinite(dt)?clamp(dt,0,.05):0;if(s.won||s.dead||checkPlayerBounds())return;
+       syncArmor();
+-      s.time+=dt;s.elapsed+=dt;fireWait=Math.max(0,fireWait-dt);emptyWait=Math.max(0,emptyWait-dt);navWait-=dt;hazardWait=Math.max(0,hazardWait-dt);recovery=Math.max(0,recovery-dt);
++      s.time+=dt;s.elapsed+=dt;ricochetWait=Math.max(0,ricochetWait-dt);fireWait=Math.max(0,fireWait-dt);emptyWait=Math.max(0,emptyWait-dt);navWait-=dt;hazardWait=Math.max(0,hazardWait-dt);recovery=Math.max(0,recovery-dt);
+       if(arsenal){for(let i=0;i<weaponSlots;i++)weaponWait[i]=Math.max(0,weaponWait[i]-dt);s.leftFlash=Math.max(0,s.leftFlash-dt*9);}
+       s.flash=Math.max(0,s.flash-dt*9);s.damage=Math.max(0,s.damage-dt*1.9);s.hitMarker=Math.max(0,s.hitMarker-dt);s.pulseVisual=Math.max(0,s.pulseVisual-dt);
+       s.comboTime=Math.max(0,s.comboTime-dt);if(!s.comboTime)s.combo=0;
+@@ -2017,7 +2030,7 @@
+         }else require(a.armor===undefined&&a.armorPickupRemaining===undefined);
+         let difficulty=0,director={...s.director};
+         if(data.directorVersion===1){const d=a.director;require(integer(a.difficulty,0,2)&&d&&number(d.pressure,0,1)&&number(d.tension,0,1)&&HORROR.includes(d.eventType)&&number(d.eventAge,0,1e7)&&number(d.nextEvent,0,1e7)&&integer(d.events,0,1e9)&&number(d.progress,0,1)&&integer(d.tier,0,6)&&number(d.grace,0,10)&&number(d.eventX,b.minX,b.maxX)&&number(d.eventZ,b.minZ,b.maxZ)&&number(d.eventY,-1000,1000)&&number(d.eventIntensity,0,1));difficulty=a.difficulty;director=pick(d,DIRECTOR);}else require(a.difficulty===undefined&&a.director===undefined&&!horror);
+-        let candidate=G.FDestruction?.create(world)||null;
++        let candidate=G.FDestruction?.create(world,{armor:breachArmor})||null;
+         if(data.destructionVersion===1){require(candidate?candidate.restore(data.destruction,{exactRevision:true}):data.destruction===null);}else require(data.destruction===undefined);
+         const savedSolids=candidate?.colliders||world.colliders;
+         require(number(a.time,0,1e7)&&number(a.elapsed,0,1e7));

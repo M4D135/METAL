@@ -70,7 +70,7 @@ import {loadRealm} from './tools/realm-loader.mjs';
 
 const variant = loadRealm({
   root: '/chemin/vers/METAL',
-  modules: ['renderer', 'world', 'destruction', 'economy', 'brain', 'simulation'],
+  modules: ['fmath', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation'],
   patches: {simulation: [['ancre unique', 'remplacement']]},
   instrument: false,
   realm: 'main',
@@ -183,6 +183,68 @@ méthode. Ils ne sont pas le mode des profils de performance ordinaires.
 Le banc historique `bancs/sim/realm-check.mjs` compare deux contextes VM
 (Math partagé ou non) ; `tools/realm-check.mjs` complète ce diagnostic par une
 vraie comparaison main/VM avec temps CPU et checksums.
+
+## Trigonométrie portable (lot 01 suite)
+
+Depuis le lot 01 suite (T2), `src/world.js` prend `sin`, `cos`, `atan` et
+`atan2` dans `FMath` (`src/fmath.js`), identique bit à bit sur toutes les
+plateformes, et depuis T3 `hypot2` et `hypot3` (le `Math.hypot` de V8, que
+JavaScriptCore calcule autrement). Sans `modules`, `loadRealm` charge donc `fmath` en tête quand la
+racine a `src/fmath.js` (`defaultModules(root)`) ; une racine plus ancienne
+garde la liste historique, et une racine dont `world.js` cite `FMath` sans
+`src/fmath.js` est refusée. Une liste explicite qui contient `world` doit
+placer `fmath` avant lui.
+
+La simulation, la destruction et le pilote gardent le `Math` de la machine : sur
+arm64 (Mac, Linux arm64), un rejeu s'écarte des références x86-64 dès le
+44e pas. La précharge `fmath-global.mjs` remplace ces quatre fonctions dans
+tout le processus, pour comparer un rejeu fait sur arm64 aux références :
+
+```sh
+node --import=./tools/proof/fmath-global.mjs tools/profile-steps.mjs . --reps 1 --warmups 1 --no-counters --out /tmp/p.json
+node tools/proof/reference-check.mjs /tmp/p.json
+```
+
+`tools/gen-ab.mjs` compare le coût de `FWorld.create` entre deux racines (A/A
+intégré) ; `tools/platform-math.mjs` mesure la sensibilité des mondes, des
+points de reprise et des rejeux à la plateforme.
+
+Depuis T4, `checks/campaign-world.test.mjs` compare aussi les 108 mondes de
+campagne (V1 et V2, 18 mondes pour chacune des graines 1, 96 et 2026) à leurs
+empreintes dorées, `checks/campaign-world-digests.json` : SHA-256 de
+`JSON.stringify(monde)`, comme `digest()` du test. Tout nombre changé et tout
+champ ajouté dans un monde de campagne fait échouer sa boucle (MURS-06).
+`node tools/platform-math.mjs worlds . --fixture check` compare les mondes de la
+racine au fichier, et `--fixture write` le réécrit. L'écriture n'est possible
+qu'avec un `world.js` qui prend sa trigonométrie dans `FMath`, et seulement si
+les six mondes classiques du même passage égalent les `legacyHashes` du test.
+Seul un changement voulu de la génération justifie de régénérer le fichier, dans
+le commit qui fait ce changement et qui dit pourquoi ; jamais pour faire passer
+un test.
+
+## Node 24.18 et arm64
+
+Sous Node 24.18 (macOS comme Linux), la première lecture du descripteur de
+`FormData` sur `globalThis` charge undici, qui y ajoute
+`Symbol(undici.globalDispatcher.1)` et `Symbol(undici.globalDispatcher.2)`.
+`realm-loader.mjs` lit donc une fois tous les descripteurs de `globalThis` dès
+son import (12 ms sur un Mac M5, sans ressource active), et aucune précharge
+`--import` n'est nécessaire. Sans cette lecture, `self-check.mjs`, `ab2.mjs`,
+`profile-steps.mjs` et `realm-check.mjs` échouent en fin de course sur « host
+global keys changed ». `assertHostGlobalsUnchanged` reste stricte : un module
+chargé avant le chargeur ne doit pas capturer les globales pendant son propre
+chargement.
+
+`reference-63668ac.json` a été enregistrée sous Linux x86-64 (Node 24.22.1) :
+c'est l'oracle x86-64, ne la régénère jamais sur arm64. Sur arm64 (Node 24.18),
+`reference-check.mjs` échoue sans aucun changement de code, sur les sources de
+63668ac comme sur les suivantes : les quatre scénarios quittent la référence au
+pas 43 sous macOS et au pas 37 sous Linux, et ces deux systèmes divergent aussi
+entre eux au pas 37. Le fdlibm de V8 y est compilé avec contraction FMA :
+`Math.sin(42/90)`, calculé par le pilote, diffère d'un ulp de l'évaluation sans
+FMA, et d'autres fonctions trigonométriques de la simulation sont touchées.
+Prouve donc l'identité d'état sur une seule machine : `ab2.mjs` entre la base et
+la variante, ou deux `profile-steps.mjs` aux empreintes égales.
 
 ## Limites de la livraison T1
 

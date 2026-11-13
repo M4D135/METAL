@@ -1,0 +1,334 @@
+{
+  "environment": {
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "platform": "darwin",
+    "arch": "arm64",
+    "release": "27.2.0",
+    "cpu": "Apple M5",
+    "logicalCpus": 10,
+    "loadAverage": [
+      5.4658203125,
+      4.626953125,
+      3.91796875
+    ]
+  },
+  "loadAverageAfter": [
+    6.2470703125,
+    4.84033203125,
+    4.005859375
+  ],
+  "mode": "prototype",
+  "reference": "docs/chantier-moteur/bancs/phys/fphys.mjs",
+  "results": [
+    {
+      "scene": "stack10",
+      "subSteps": 1200,
+      "reps": 5,
+      "module": {
+        "activeSubSteps": 103,
+        "medianUs": 30.332999999998833,
+        "meanUs": 30.547000000058908,
+        "p95Us": 35.499999999956344,
+        "maxUs": 36.083000000871834,
+        "totalMs": 4.117545999736684,
+        "usPerAwakeBody": 3.084648039221635,
+        "peaks": {
+          "awake": 10,
+          "contacts": 40,
+          "manifolds": 10,
+          "tests": 10
+        },
+        "asleepAt": 123,
+        "asleepSeconds": 1.025,
+        "hash": "283b179e",
+        "hashes": [
+          "283b179e"
+        ],
+        "deterministic": true,
+        "repTotalsMs": [
+          12.259053000000023,
+          121.36102299999584,
+          7.283119999971859,
+          4.929749000004449,
+          4.621003999996901
+        ]
+      },
+      "prototype": {
+        "activeSubSteps": 103,
+        "medianUs": 42.49999999956344,
+        "meanUs": 42.08944660197054,
+        "p95Us": 48.45900000145775,
+        "maxUs": 49.91599999993923,
+        "totalMs": 5.464956999999174,
+        "usPerAwakeBody": 4.208944660197054,
+        "peaks": {
+          "awake": 10,
+          "contacts": 40,
+          "manifolds": 10,
+          "tests": 9
+        },
+        "asleepAt": 123,
+        "asleepSeconds": 1.025,
+        "hash": "fb79204a",
+        "hashes": [
+          "fb79204a"
+        ],
+        "deterministic": true,
+        "repTotalsMs": [
+          16.806962,
+          14.237005999996654,
+          10.10616100000152,
+          8.768823999973392,
+          5.94588000001022
+        ]
+      },
+      "ratio": {
+        "mean": 0.7257638782693987,
+        "median": 0.7137176470661274,
+        "total": 0.7534452695121493,
+        "pairedTotal": 0.7294032675268751,
+        "pairedTotals": [
+          0.7294032675268751,
+          8.524336015593754,
+          0.7206613866502585,
+          0.5621904373972391,
+          0.7771774741483108
+        ],
+        "sameHash": false
+      }
+    },
+    {
+      "scene": "pyramid55",
+      "subSteps": 1200,
+      "reps": 5,
+      "module": {
+        "activeSubSteps": 67,
+        "medianUs": 359.33399999885296,
+        "meanUs": 346.10204477610995,
+        "p95Us": 414.7499999999127,
+        "maxUs": 511.5420000000057,
+        "totalMs": 32.46681199998933,
+        "usPerAwakeBody": 6.38810936639101,
+        "peaks": {
+          "awake": 55,
+          "contacts": 580,
+          "manifolds": 145,
+          "tests": 145
+        },
+        "asleepAt": 87,
+        "asleepSeconds": 0.725,
+        "hash": "6a47467f",
+        "hashes": [
+          "6a47467f"
+        ],
+        "deterministic": true,
+        "repTotalsMs": [
+          70.36224800000022,
+          100.65623900000628,
+          151.7530290000068,
+          40.569085000055566,
+          36.048252999977194
+        ]
+      },
+      "prototype": {
+        "activeSubSteps": 72,
+        "medianUs": 271.7090000000155,
+        "meanUs": 286.60076388892014,
+        "p95Us": 431.33400000078836,
+        "maxUs": 439.37499999992724,
+        "totalMs": 29.091457000004084,
+        "usPerAwakeBody": 5.210922979798548,
+        "peaks": {
+          "awake": 55,
+          "contacts": 580,
+          "manifolds": 145,
+          "tests": 135
+        },
+        "asleepAt": 92,
+        "asleepSeconds": 0.7666666666666667,
+        "hash": "6d172292",
+        "hashes": [
+          "6d172292"
+        ],
+        "deterministic": true,
+        "repTotalsMs": [
+          48.56999899999997,
+          66.37849799999685,
+          47.9635819999894,
+          45.46611100003429,
+          35.52236500006802
+        ]
+      },
+      "ratio": {
+        "mean": 1.2076103359942583,
+        "median": 1.3224957583253865,
+        "total": 1.1160256428540094,
+        "pairedTotal": 1.4486771556244065,
+        "pairedTotals": [
+          1.4486771556244065,
+          1.5163982619795202,
+          3.163921931436237,
+          0.8922928332274773,
+          1.0148044196918804
+        ],
+        "sameHash": false
+      }
+    },
+    {
+      "scene": "rubble300",
+      "subSteps": 1800,
+      "reps": 5,
+      "module": {
+        "activeSubSteps": 567,
+        "medianUs": 1156.7499999999882,
+        "meanUs": 1053.5656807760765,
+        "p95Us": 1447.0000000000027,
+        "maxUs": 1706.0000000000173,
+        "totalMs": 603.6227430000507,
+        "usPerAwakeBody": 3.6652620596141623,
+        "peaks": {
+          "awake": 300,
+          "contacts": 1574,
+          "manifolds": 703,
+          "tests": 1342
+        },
+        "asleepAt": 587,
+        "asleepSeconds": 4.891666666666667,
+        "hash": "5d011c56",
+        "hashes": [
+          "5d011c56"
+        ],
+        "deterministic": true,
+        "repTotalsMs": [
+          781.2841400000005,
+          809.3552389999941,
+          912.8082090000316,
+          686.612988000039,
+          690.1390599999813
+        ]
+      },
+      "prototype": {
+        "activeSubSteps": 1412,
+        "medianUs": 1011.7500000014843,
+        "meanUs": 1011.71875141645,
+        "p95Us": 1363.5830000002898,
+        "maxUs": 1594.7500000002037,
+        "totalMs": 1432.3529420000464,
+        "usPerAwakeBody": 3.503753509157109,
+        "peaks": {
+          "awake": 300,
+          "contacts": 1590,
+          "manifolds": 670,
+          "tests": 1160
+        },
+        "asleepAt": 1432,
+        "asleepSeconds": 11.933333333333334,
+        "hash": "5bc16ddf",
+        "hashes": [
+          "5bc16ddf"
+        ],
+        "deterministic": true,
+        "repTotalsMs": [
+          1936.9149649999988,
+          1833.9296290000084,
+          2381.936265000031,
+          2264.50823499997,
+          1545.5849870000748
+        ]
+      },
+      "ratio": {
+        "mean": 1.0413622158342317,
+        "median": 1.14331603656861,
+        "total": 0.4214203952813406,
+        "pairedTotal": 0.40336522465765606,
+        "pairedTotals": [
+          0.40336522465765606,
+          0.44132295274672745,
+          0.3832210888312831,
+          0.30320622260843666,
+          0.44652288020700603
+        ],
+        "sameHash": false
+      }
+    },
+    {
+      "scene": "blast200",
+      "subSteps": 1500,
+      "reps": 5,
+      "blastAt": 240,
+      "module": {
+        "activeSubSteps": 593,
+        "medianUs": 319.87500000104774,
+        "meanUs": 280.7862765599071,
+        "p95Us": 541.5409999986878,
+        "maxUs": 639.8329999974521,
+        "totalMs": 178.72322700002633,
+        "usPerAwakeBody": 2.2520018664542096,
+        "peaks": {
+          "awake": 200,
+          "contacts": 878,
+          "manifolds": 335,
+          "tests": 446
+        },
+        "asleepAt": 766,
+        "asleepSeconds": 6.383333333333334,
+        "hash": "8ec40b00",
+        "hashes": [
+          "8ec40b00"
+        ],
+        "deterministic": true,
+        "repTotalsMs": [
+          266.7377039999992,
+          332.09253300000546,
+          260.8367929999931,
+          337.1966119999979,
+          229.03026399998635
+        ]
+      },
+      "prototype": {
+        "activeSubSteps": 656,
+        "medianUs": 255.37500000064028,
+        "meanUs": 225.78583384144196,
+        "p95Us": 392.5420000014128,
+        "maxUs": 511.16600000023027,
+        "totalMs": 155.46150599998327,
+        "usPerAwakeBody": 1.8895417224793132,
+        "peaks": {
+          "awake": 200,
+          "contacts": 813,
+          "manifolds": 312,
+          "tests": 317
+        },
+        "asleepAt": 849,
+        "asleepSeconds": 7.075,
+        "hash": "3fa55997",
+        "hashes": [
+          "3fa55997"
+        ],
+        "deterministic": true,
+        "repTotalsMs": [
+          418.5050320000055,
+          341.84897199999705,
+          299.48146699999415,
+          223.32058500016865,
+          155.78354999998191
+        ]
+      },
+      "ratio": {
+        "mean": 1.2435956312347265,
+        "median": 1.2525697503680695,
+        "total": 1.1496301020012347,
+        "pairedTotal": 0.9714597971644868,
+        "pairedTotals": [
+          0.6373584153224607,
+          0.9714597971644868,
+          0.8709613840645378,
+          1.5099217656076946,
+          1.4701825963011688
+        ],
+        "sameHash": false
+      }
+    }
+  ]
+}

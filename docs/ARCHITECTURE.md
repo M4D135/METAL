@@ -28,12 +28,13 @@ Les éléments du HUD affichent l’armement initial, la phase6+12, les rangs, l
 
 ## Distribution et identité
 
-`tools/build.py` assemble **quatorze modules JavaScript**, `index.html` et `style.css` dans un HTML autonome. Aucun chargement réseau de code, image, texture, modèle, police ou audio n’est nécessaire. `SIZE.json` mesure le HTML brut, son gzip reproductible et son SHA-256. Le budget est de 1 400 000 octets bruts ; navigateur, pilotes, tests et documentation sont exclus. Les mesures du build courant et les résultats de vérification sont référencés dans `SIZE.json` et `VALIDATION.md` ; ce document décrit les contrats.
+`tools/build.py` assemble **quinze modules JavaScript**, `index.html` et `style.css` dans un HTML autonome. Aucun chargement réseau de code, image, texture, modèle, police ou audio n’est nécessaire. `SIZE.json` mesure le HTML brut, son gzip reproductible et son SHA-256. Le budget est de 1 400 000 octets bruts ; navigateur, pilotes, tests et documentation sont exclus. Les mesures du build courant et les résultats de vérification sont référencés dans `SIZE.json` et `VALIDATION.md` ; ce document décrit les contrats.
 
 Le titre public et le dépôt GitHub sont **METAL** (`M4D135/METAL`). Les API `FWorld`, `FRender`, etc., le format de snapshot `FERRO` et les clés `ferro-settings` / `ferro-expedition-v2` restent inchangés pour préserver les migrations.
 
 | Module | Responsabilité |
 | --- | --- |
+| `fmath.js` | `FMath` : `sin`, `cos`, `atan` et `atan2` en JavaScript pur (fdlibm de V8 sans FMA), et `hypot`, `hypot2`, `hypot3` (portage du `Math.hypot` de V8, sans allocation pour deux et trois arguments), bit à bit identiques sur toutes les plateformes ; chargé avant `world.js` |
 | `world.js` | Monde déterministe, terrain, arènes, réservistes, rencontres, réserves, ateliers et métadonnées de démolition |
 | `destruction.js` | Découpe, assemblages, dépendances structurelles, collisions et snapshots de terrain |
 | `economy.js` | Profil strict, stats dérivées, plafonds, catalogue, devis et achats purs |
@@ -55,13 +56,13 @@ Le titre public et le dépôt GitHub sont **METAL** (`M4D135/METAL`). Les API `F
 
 Le shell lance les nouvelles parties en campagne. L’ancienne enveloppe version 2 sélectionne explicitement le mode classique. Le cache de deux mondes inclut mode/graine/index dans sa clé ; audio, ambiance et MOD utilisent `world.stage`. La fin de campagne appartient à l’index 17. Les trois anciens biomes sont réutilisés, sans introduire dix-huit décors différents.
 
-`world.campaignProfile` fixe garnison, plafond nominal, quotas d’explosifs et facteur de PV boss. Les pourcentages de garnison sont35/45/55/70/85/100, appliqués aux anciens120/140/170 et arrondis avec des entiers. Ces totaux incluent boss, six renforts et éventuels trois gardes de trophée. Les nouveaux contrôles comparent aussi six empreintes complètes du mode classique.
+`world.campaignProfile` fixe garnison, plafond nominal, quotas d’explosifs et facteur de PV boss. Les pourcentages de garnison sont35/45/55/70/85/100, appliqués aux anciens120/140/170 et arrondis avec des entiers. Ces totaux incluent boss, six renforts et éventuels trois gardes de trophée. Les nouveaux contrôles comparent aussi six empreintes complètes du mode classique et, depuis le lot 01 suite (T4), celles des 108 mondes de campagne V1 et V2 des graines 1, 96 et 2026 (`checks/campaign-world-digests.json`).
 
 ## Monde et circulation
 
 La **génération 6** conserve les territoires agrandis de la génération 5, leurs terrasses, systèmes, tremplins, substrat et arènes. Elle ajoute ateliers, caches de ravitaillement et baies de renforts dotées de couverts physiques. Les graphes possèdent des boucles et des rampes alternatives aux ascenseurs. Les positions de ravitaillement évitent obstacles, pièges, jets de vapeur, commandes et points d’arrivée.
 
-La génération reste déterministe pour une graine et un secteur. Les nombres de meshes/colliders dépendent de cette génération et ne reprennent pas les métriques de la version précédente. Un nombre de descriptions statiques ne mesure ni les pièces effectivement dessinées ni la durée d’un parcours.
+La génération reste déterministe pour une graine et un secteur, et identique d’une plateforme à l’autre sous V8 (Node sur x86-64 et arm64, Chrome) : `world.js` prend `sin`, `cos`, `atan` et `atan2` dans `FMath`, car le `Math` de V8 diffère au dernier bit sur arm64 (contraction FMA de fdlibm), et celui de Chrome encore autrement. Il y prend aussi `hypot2` et `hypot3`, à l’arité et dans l’ordre d’arguments des anciens appels à `Math.hypot` : V8 calcule `hypot` par le même algorithme sur toutes ses plateformes, mais JavaScriptCore (Safari) autrement ; le portage redonne le résultat de V8 partout, et JavaScriptCore génère alors les mêmes mondes que Node et Chrome. Les autres fonctions de `Math` qu’il appelle sont exactes. La simulation garde le `Math` de la plateforme. Les nombres de meshes/colliders dépendent de cette génération et ne reprennent pas les métriques de la version précédente. Un nombre de descriptions statiques ne mesure ni les pièces effectivement dessinées ni la durée d’un parcours.
 
 Le terrain combine plans plats et rampes `{x,z,w,d,y,slopeX,slopeZ}`. La hauteur vaut `y+(px-x)*slopeX+(pz-z)*slopeZ`. Les sols de salle sont prioritaires dans les petits recouvrements de raccord ; le **substrat `fallback:true,substrate:true` n’intervient qu’en l’absence de sol local**, afin de ne jamais aplatir une rampe. Ce terrain inférieur visible est à −0,25 m. Les sols et rampes sont portants et ne sont pas excavés par la destruction.
 

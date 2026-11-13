@@ -1,0 +1,3 @@
+{"name":"tact-390x844-fov79","dpr":3,"cssW":390,"cssH":844,"prefs":{"quality":"auto","shadows":true,"bloom":true,"fov":79},
+ "warmFrames":420,"measureFrames":160,"skip":10,"reps":2,"dumpFrames":true,
+ "variants":[{"id":"base","code":"base"},{"id":"cache","code":"cache"}]}

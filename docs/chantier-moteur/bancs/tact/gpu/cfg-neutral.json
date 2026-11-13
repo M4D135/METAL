@@ -1,0 +1,11 @@
+{"name":"tact-390x844-neutres","dpr":3,"cssW":390,"cssH":844,"prefs":{"quality":"auto","shadows":true,"bloom":true,"fov":79},
+ "warmFrames":420,"measureFrames":240,"skip":10,"reps":2,"dumpFrames":true,"compareEvery":20,"compareRef":"base",
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"g65","code":"base","quality":0.975},
+  {"id":"spec4","code":"spec4","compare":true},
+  {"id":"notorch","code":"notorch","compare":true},
+  {"id":"suncache","code":"suncache","compare":true},
+  {"id":"combo7","code":"combo7","compare":true},
+  {"id":"noshadow","code":"base","fx":{"shadows":false}},
+  {"id":"nobloom","code":"base","fx":{"bloom":false}}]}

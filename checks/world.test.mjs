@@ -5,8 +5,10 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
+const fmathSource = fileURLToPath(new URL('../src/fmath.js', import.meta.url));
 const source = fileURLToPath(new URL('../src/world.js', import.meta.url));
 const sandbox = { window: {} };
+vm.runInNewContext(readFileSync(fmathSource, 'utf8'), sandbox, { filename: fmathSource });
 vm.runInNewContext(readFileSync(source, 'utf8'), sandbox, { filename: source });
 const { create } = sandbox.window.FWorld;
 const seeds = [1, 7, 42, 96, 2026, 65535];

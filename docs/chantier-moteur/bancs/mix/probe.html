@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>probe</title><script>
+function emit(obj){const s=btoa(unescape(encodeURIComponent(JSON.stringify(obj))));for(let i=0;i<s.length;i+=6000)console.log('MIXCHUNK '+s.slice(i,i+6000));console.log('MIXDONE');}
+(async()=>{try{
+  const sr=48000,ctx=new OfflineAudioContext(12,sr*2,sr);
+  const osc=ctx.createOscillator();osc.frequency.value=1000;const g=ctx.createGain();g.gain.value=0;g.gain.setValueAtTime(1,.5);g.gain.setValueAtTime(.05,1.0);
+  const comp=ctx.createDynamicsCompressor();comp.threshold.value=-19;comp.knee.value=18;comp.ratio.value=5;comp.attack.value=.004;comp.release.value=.18;
+  const pan=ctx.createStereoPanner();osc.connect(g);g.connect(pan);pan.connect(comp);comp.connect(ctx.destination);
+  const merger=ctx.createChannelMerger(12);const sp=ctx.createChannelSplitter(2);pan.connect(sp);sp.connect(merger,0,4);sp.connect(merger,1,5);merger.connect(ctx.destination);
+  osc.start();const red=[];
+  for(let k=1;k<20;k++){ctx.suspend(k*.1).then(()=>{red.push([+ctx.currentTime.toFixed(4),+comp.reduction.toFixed(2),ctx.state]);ctx.resume();});}
+  const t0=performance.now();const buf=await ctx.startRendering();const ms=performance.now()-t0;
+  const pk=(c,a,b)=>{const d=buf.getChannelData(c);let m=0;for(let i=Math.floor(a*sr);i<Math.floor(b*sr);i++)m=Math.max(m,Math.abs(d[i]));return +m.toFixed(4);};
+  emit({ua:navigator.userAgent,channels:buf.numberOfChannels,ms,red,destCount:ctx.destination.channelCount,
+    out0:[pk(0,.2,.45),pk(0,.7,.95),pk(0,1.6,1.95)],out1:[pk(1,.2,.45),pk(1,.7,.95),pk(1,1.6,1.95)],pre4:[pk(4,.2,.45),pk(4,.7,.95),pk(4,1.6,1.95)],pre5:[pk(5,.7,.95)],ch2:pk(2,0,2),ch11:pk(11,0,2)});
+}catch(e){console.log('MIXERR '+(e&&e.stack||e));console.log('MIXDONE');}})();
+</script>

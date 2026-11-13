@@ -1,0 +1,162 @@
+{
+ "stats": {
+  "bandes-woodland": {
+   "size": [
+    2560,
+    1440
+   ],
+   "col640": {
+    "r": {
+     "levels": 85,
+     "maxRun": 88,
+     "medianRun": 2,
+     "first": 73,
+     "last": 88
+    },
+    "g": {
+     "levels": 71,
+     "maxRun": 88,
+     "medianRun": 2,
+     "first": 90,
+     "last": 100
+    },
+    "b": {
+     "levels": 62,
+     "maxRun": 103,
+     "medianRun": 2,
+     "first": 97,
+     "last": 95
+    }
+   },
+   "col1900": {
+    "r": {
+     "levels": 95,
+     "maxRun": 108,
+     "medianRun": 2,
+     "first": 73,
+     "last": 89
+    },
+    "g": {
+     "levels": 79,
+     "maxRun": 130,
+     "medianRun": 2,
+     "first": 90,
+     "last": 100
+    },
+    "b": {
+     "levels": 70,
+     "maxRun": 93,
+     "medianRun": 2,
+     "first": 97,
+     "last": 95
+    }
+   }
+  },
+  "bandes-quarry": {
+   "size": [
+    2560,
+    1440
+   ],
+   "col640": {
+    "r": {
+     "levels": 68,
+     "maxRun": 91,
+     "medianRun": 3,
+     "first": 151,
+     "last": 104
+    },
+    "g": {
+     "levels": 81,
+     "maxRun": 94,
+     "medianRun": 2,
+     "first": 145,
+     "last": 84
+    },
+    "b": {
+     "levels": 87,
+     "maxRun": 322,
+     "medianRun": 2,
+     "first": 141,
+     "last": 72
+    }
+   },
+   "col1900": {
+    "r": {
+     "levels": 64,
+     "maxRun": 82,
+     "medianRun": 3,
+     "first": 118,
+     "last": 104
+    },
+    "g": {
+     "levels": 78,
+     "maxRun": 110,
+     "medianRun": 2,
+     "first": 107,
+     "last": 84
+    },
+    "b": {
+     "levels": 82,
+     "maxRun": 174,
+     "medianRun": 2,
+     "first": 104,
+     "last": 72
+    }
+   }
+  },
+  "bandes-garden": {
+   "size": [
+    2560,
+    1440
+   ],
+   "col640": {
+    "r": {
+     "levels": 91,
+     "maxRun": 104,
+     "medianRun": 1,
+     "first": 66,
+     "last": 75
+    },
+    "g": {
+     "levels": 87,
+     "maxRun": 93,
+     "medianRun": 2,
+     "first": 71,
+     "last": 85
+    },
+    "b": {
+     "levels": 71,
+     "maxRun": 83,
+     "medianRun": 2,
+     "first": 88,
+     "last": 102
+    }
+   },
+   "col1900": {
+    "r": {
+     "levels": 70,
+     "maxRun": 101,
+     "medianRun": 2,
+     "first": 56,
+     "last": 75
+    },
+    "g": {
+     "levels": 66,
+     "maxRun": 90,
+     "medianRun": 2,
+     "first": 62,
+     "last": 85
+    },
+    "b": {
+     "levels": 53,
+     "maxRun": 80,
+     "medianRun": 3,
+     "first": 83,
+     "last": 102
+    }
+   }
+  }
+ },
+ "errors": [],
+ "backend": "webgl2"
+}

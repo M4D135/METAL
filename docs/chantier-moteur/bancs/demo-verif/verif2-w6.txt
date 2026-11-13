@@ -1,0 +1,89 @@
+{
+ "simSeconds": 60,
+ "world": 7,
+ "sessionDeaths": 0,
+ "continuousWithSnapshotsEqualsWithout": false,
+ "playerEnd": [
+  36.606,
+  0.552,
+  138.364
+ ],
+ "rows": [
+  {
+   "K": 360,
+   "tS": 6,
+   "revision": 1,
+   "debris": 14,
+   "airborne": false,
+   "restoreAccepted": true,
+   "snapshotBytes": 131121,
+   "finalStateEqual": false,
+   "diffKeys": [
+    "player",
+    "hits",
+    "loot",
+    "enemies",
+    "debris",
+    "traps",
+    "locomotion"
+   ]
+  },
+  {
+   "K": 900,
+   "tS": 15,
+   "revision": 3,
+   "debris": 31,
+   "airborne": false,
+   "restoreAccepted": true,
+   "snapshotBytes": 138030,
+   "finalStateEqual": false,
+   "diffKeys": [
+    "player",
+    "kills",
+    "hits",
+    "score",
+    "loot",
+    "encounters",
+    "director",
+    "bullets",
+    "threat",
+    "enemies",
+    "explosions",
+    "debris"
+   ]
+  },
+  {
+   "K": 1800,
+   "tS": 30,
+   "revision": 7,
+   "debris": 76,
+   "airborne": false,
+   "restoreAccepted": false,
+   "snapshotBytes": 161099,
+   "finalStateEqual": null,
+   "diffKeys": null
+  },
+  {
+   "K": 2700,
+   "tS": 45,
+   "revision": 9,
+   "debris": 137,
+   "airborne": false,
+   "restoreAccepted": false,
+   "snapshotBytes": 187257,
+   "finalStateEqual": null,
+   "diffKeys": null
+  },
+  {
+   "K": 3240,
+   "tS": 54,
+   "revision": 12,
+   "debris": 132,
+   "airborne": false,
+   "restoreAccepted": false,
+   "snapshotBytes": 190371,
+   "finalStateEqual": null,
+   "diffKeys": null
+  }
+ ]
+}

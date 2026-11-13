@@ -1,0 +1,3 @@
+{"name":"v1","world":0,"cssW":1440,"cssH":932,"inPos":[1.5,4.82,0.5],"block":10,"rounds":4,"latRounds":1,
+ "thrScenes":["out","in","outT"],"latScenes":["out","in"],"diffScenes":["out","in","outT"],"diffEvery":6,"ref":"base","refHigh":"high","reallocCycles":16,
+ "variants":[{"id":"base","code":"base"},{"id":"spec4","code":"spec4"},{"id":"notorch","code":"notorch"},{"id":"nolamp","code":"nolamp"},{"id":"suncache","code":"suncache"},{"id":"noisetex","code":"noisetex"},{"id":"combo7","code":"combo7"},{"id":"high","code":"base","quality":"high"},{"id":"hicap","code":"hicap","quality":"high"}]}

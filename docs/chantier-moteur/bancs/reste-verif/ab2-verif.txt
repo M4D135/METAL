@@ -1,0 +1,21 @@
+NULL-FRAME
+r1 vs r1 camp:6 frames 400 | dynamic list identical=true | meshes/frame 404
+  models(): median 396 -> 401 us | p10 280 -> 295 us | median ratio 1.012
+  draw()  : median 181 -> 189 us | p10 122 -> 122 us | median ratio 1.000
+  sim.step: median 207 -> 205 us | p10 123 -> 121 us | median ratio 1.006
+SWAPPED-FRAME
+r1+motionfast:motionFast vs r1 camp:6 frames 400 | dynamic list identical=true | meshes/frame 404
+  models(): median 401 -> 491 us | p10 278 -> 369 us | median ratio 1.254
+  draw()  : median 217 -> 240 us | p10 160 -> 170 us | median ratio 1.035
+  sim.step: median 268 -> 279 us | p10 189 -> 178 us | median ratio 1.033
+SWAPPED-SIMLOOPS+DEBRIS
+campaign-w10  identical=true | total 534 -> 573 ms (7.2%) | med ratio 1.124 | mean 297 -> 318 us | p99 4.12 -> 4.08 | max 9.8 -> 19.2 | >4ms 20 -> 18 | n=1800
+camp2-w6      identical=true | total 666 -> 627 ms (-5.9%) | med ratio 1.087 | mean 370 -> 348 us | p99 5.33 -> 5.28 | max 44.4 -> 25.3 | >4ms 30 -> 31 | n=1800
+camp2-w12     identical=true | total 767 -> 751 ms (-2.0%) | med ratio 1.062 | mean 426 -> 417 us | p99 5.76 -> 5.98 | max 21.2 -> 18.9 | >4ms 36 -> 41 | n=1800
+FWD
+campaign-w10  identical=true | total 587 -> 577 ms (-1.6%) | med ratio 0.897 | mean 326 -> 321 us | p99 4.01 -> 4.85 | max 16.1 -> 15.1 | >4ms 19 -> 22 | n=1800
+camp2-w6      identical=true | total 469 -> 433 ms (-7.8%) | med ratio 0.876 | mean 261 -> 240 us | p99 3.21 -> 3.20 | max 5.8 -> 5.5 | >4ms 6 -> 7 | n=1800
+camp2-w12     identical=true | total 528 -> 473 ms (-10.4%) | med ratio 0.847 | mean 293 -> 263 us | p99 3.67 -> 3.44 | max 10.3 -> 7.6 | >4ms 10 -> 9 | n=1800
+SHAPES
+ordinary dynamic meshes/frame 333 | distinct hidden classes per list (mean) 5.6 | elements kinds {"p":{"double":2653},"s":{"double":2653},"r":{"double":2653}}
+pack(as built) vs pack(canonical shape, double elements): packed rows identical=true | median 59.7 -> 57.3 us | p10 47.4 -> 44.4 us | median ratio 0.944 | n=2625

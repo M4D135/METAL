@@ -1,0 +1,3 @@
+{"name":"smoke","world":0,"cssW":1440,"cssH":932,"inPos":[1.5,4.82,0.5],"block":10,"rounds":1,"latRounds":1,
+ "thrScenes":["out"],"latScenes":[],"diffScenes":["in"],"diffEvery":30,"ref":"base","refHigh":"high","reallocCycles":2,
+ "variants":[{"id":"base","code":"base"},{"id":"spec4","code":"spec4"},{"id":"high","code":"base","quality":"high"}]}

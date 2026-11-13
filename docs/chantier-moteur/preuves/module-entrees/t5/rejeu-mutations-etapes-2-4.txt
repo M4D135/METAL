@@ -1,0 +1,236 @@
+Module entrées, T5 (étape 5) — suites de mutations des étapes 2 à 4 rejouées telles quelles sur le module de l'étape 5
+Relevé le 13/11/2026 sur le Mac (Node v24.18.0, arm64). Chaque suite copie dans un dossier de travail hors du dépôt
+le module muté, checks/finput.test.mjs et la fixture de la racine donnée, puis lance node --test :
+  node docs/chantier-moteur/preuves/module-entrees/<suite> <dossier de travail> <racine>
+Avant = racine /Users/david/claude/metal-chantier/verif/module-entrees-T5-avant (6b4e98c, ses 47 tests) ;
+après = l'arbre de travail de ce commit (54 tests). Les suites sont lancées l'une après l'autre.
+
+1. Ancres introuvables, avant et après :
+   t2/mutations.mjs : 7 avant, 7 après
+   t3/mutations.mjs : 2 avant, 3 après
+   t3/mutations-etape2.mjs : 3 avant, 4 après
+   t4/mutations.mjs : 0 avant, 1 après
+   Ancres perdues au resserrement de l'étape 5 (présentes à 6b4e98c, introuvables après) :
+     t3/mutations.mjs : capture : appareil actif inchangé
+     t3/mutations-etape2.mjs : keyDown sans appareil clavier (ancre déplacée)
+     t4/mutations.mjs : activité : appareil jamais manette
+   Ces trois mutations sont rejouées avec leur nouvelle ancre par t5/mutations.mjs (t5/mutations.txt) :
+     détectée — étape 3 — capture : appareil actif inchangé → E23
+     détectée — étape 2 — keyDown sans appareil clavier → E12, E14c, E23, E35, E40b
+     détectée — étape 4 — activité : appareil jamais manette → E33b, E35, E40b
+   Les autres ancres introuvables l'étaient déjà à 6b4e98c : elles ont bougé aux étapes 3 et 4, et
+   t3/mutations-etape2.mjs et t4/mutations.mjs les rejouent avec leur ancre suivante (trouvées et détectées ci-dessous).
+
+2. Sorties complètes après :
+== t2/mutations.mjs
+   détectée — regard souris : produit mouseScale×sensibilité précalculé → E06
+   détectée — regard souris : y non inversé → E06, E10, E14d, E27
+   détectée — regard souris : invertY ignoré → E06, E14d
+   détectée — regard clavier : rate ignoré → E06, E10, E11, E14b, E29, E32
+   détectée — tenue sans verrou → E09, E25, E30
+   détectée — impulsion = tenue → E06, E07, E08, E10, E11, E14, E14b, E34, E36
+   détectée — verrous jamais effacés → E05, E06, E07, E09, E10, E11, E12, E14, E14b, E14d, E23, E25, E30, E31, E33, E34, E34b
+   détectée — regard non consommé par step → E06, E10, E11, E14b, E23, E28, E29, E32, E37
+   détectée — répétition avec front → E08, E12
+   détectée — fronts en double → E07, E14b
+   détectée — fronts jamais remis à zéro → E06, E07, E14, E14d, E23, E30, E34, E36, E37
+   ANCRE INTROUVABLE — liste des fronts non vidée
+   ANCRE INTROUVABLE — clear garde le regard
+   ANCRE INTROUVABLE — clear garde les verrous
+   détectée — clear garde les touches → E12
+   ANCRE INTROUVABLE — clear garde les doigts
+   détectée — filtre souris de 800 ms à <= → E14c
+   détectée — filtre souris absent → E14c, E35
+   détectée — doigts négatifs → E12, E14
+   ANCRE INTROUVABLE — deviceChanged contre l’appareil initial
+   détectée — dt non borné → E14b
+   détectée — dt non fini accepté → E14b
+   détectée — deltas non finis acceptés → E14b, E33
+   détectée — configure ne recompte pas les touches → E14d
+   détectée — keyUp ne relâche pas → E05, E06, E07, E08, E09, E12, E14, E14b, E14d, E23, E25, E31, E32
+   détectée — table : une entrée invalide garde les autres → E04b, E19, E21b
+   ANCRE INTROUVABLE — table : défauts sans filtre des codes pris
+   détectée — table : propriétés héritées lues → E04b
+   détectée — tune : booléen pour un nombre → E04b, E20
+   détectée — tune : non borné → E04b, E14d, E16, E19, E20, E22
+   détectée — tune : chaîne acceptée pour un booléen → E04b, E20
+   détectée — settings sans copie → E14d
+   détectée — valeur : booléen au lieu de 1 → E14, E31
+   détectée — ordre des sorties : actions avant sticks → E14b
+   détectée — addLook ignore l’appareil → E14c
+   ANCRE INTROUVABLE — keyDown sans appareil clavier
+   détectée — bouton souris sans appareil → E14, E14c
+   détectée — bouton tactile sans horodatage → E14c, E35
+   module intact : tous les tests passent
+   31 mutations détectées sur 38
+== t3/mutations.mjs
+   détectée — migrate jamais appelé → E21b, E22
+   détectée — migrate appelé quel que soit le format → E22
+   détectée — migrate appelé pour la version courante → E22
+   détectée — from : v non entier pris tel quel → E22
+   détectée — migrate travaille sur la copie elle-même → E22
+   détectée — résultat de migrate non recopié → E22
+   détectée — résultat de migrate pris s’il n’est pas un objet → E22
+   détectée — migrate hors du try → E22
+   détectée — table : entrée null lue comme vide → E04b, E19
+   détectée — table : clés inconnues gardées → E04b, E19, E22
+   détectée — repli alt ignoré → E15, E19, E21, E21b, E22
+   détectée — repli alt aussi à la manette → E19
+   détectée — repli alt : tous les codes libres → E19, E21, E21b
+   détectée — repli alt avant les défauts → E19, E21b, E22
+   détectée — repli alt dès qu’un code par défaut est pris → E04b, E21
+   détectée — codes attribués non ajoutés aux codes utilisés → E19, E21
+   détectée — table pad stockée ignorée → E16, E18, E19, E34, E34b, E40b
+   détectée — table pad : trois boutons acceptés → E19
+   détectée — table pad : Home accepté → E19
+   détectée — ordre des contrôles : action avant appareil → E18b
+   détectée — ordre des contrôles : code avant action → E18b
+   détectée — appareil inconnu traité comme la manette → E18b
+   détectée — texte : Home non distingué → E18, E18b
+   détectée — conflit ignoré → E15, E16, E18, E21b
+   détectée — conflit lu sur les réglages bruts → E15
+   détectée — conflit avec l’action elle-même → E16
+   détectée — texte : genre de la touche et du bouton confondus → E18
+   détectée — assign modifie son argument → E16, E18
+   détectée — assign ajoute au lieu de remplacer → E16, E17, E23, E34b
+   détectée — unbind sans effet → E18, E34b, E39b
+   détectée — instance : assign sur les réglages de la déclaration → E16, E18
+   détectée — instance : assign applique le résultat → E16
+   détectée — instance : unbind sur les réglages de la déclaration → E18
+   détectée — capture : la touche va aussi au jeu → E23
+   détectée — capture : jamais finie → E23
+   détectée — capture : répétition capturée → E23
+   détectée — capture : code qui n’est pas une chaîne capturé → E23
+   ANCRE INTROUVABLE — capture : appareil actif inchangé
+   ANCRE INTROUVABLE — capture : résultat jamais rendu
+   détectée — capture : résultat rendu à chaque image → E23, E36
+   détectée — capture : une nouvelle capture garde le résultat en attente → E23
+   ANCRE INTROUVABLE — clear garde la capture
+   module intact : tous les tests passent
+   39 mutations détectées sur 42
+== t3/mutations-etape2.mjs
+   détectée — regard souris : produit mouseScale×sensibilité précalculé → E06
+   détectée — regard souris : y non inversé → E06, E10, E14d, E27
+   détectée — regard souris : invertY ignoré → E06, E14d
+   détectée — regard clavier : rate ignoré → E06, E10, E11, E14b, E29, E32
+   détectée — tenue sans verrou → E09, E25, E30
+   détectée — impulsion = tenue → E06, E07, E08, E10, E11, E14, E14b, E34, E36
+   détectée — verrous jamais effacés → E05, E06, E07, E09, E10, E11, E12, E14, E14b, E14d, E23, E25, E30, E31, E33, E34, E34b
+   détectée — regard non consommé par step → E06, E10, E11, E14b, E23, E28, E29, E32, E37
+   détectée — répétition avec front → E08, E12
+   détectée — fronts en double → E07, E14b
+   détectée — fronts jamais remis à zéro → E06, E07, E14, E14d, E23, E30, E34, E36, E37
+   détectée — liste des fronts non vidée (ancre déplacée) → E05, E06, E07, E11, E12, E14, E14b, E14d, E23, E25, E30, E32, E34, E34b, E36, E37
+   ANCRE INTROUVABLE — clear garde le regard (ancre déplacée)
+   ANCRE INTROUVABLE — clear garde les verrous
+   détectée — clear garde les touches → E12
+   ANCRE INTROUVABLE — clear garde les doigts
+   détectée — filtre souris de 800 ms à <= → E14c
+   détectée — filtre souris absent → E14c, E35
+   détectée — doigts négatifs → E12, E14
+   détectée — deviceChanged contre l’appareil initial (ancre déplacée) → E14c, E35
+   détectée — dt non borné → E14b
+   détectée — dt non fini accepté → E14b
+   détectée — deltas non finis acceptés → E14b, E33
+   détectée — configure ne recompte pas les touches → E14d
+   détectée — keyUp ne relâche pas → E05, E06, E07, E08, E09, E12, E14, E14b, E14d, E23, E25, E31, E32
+   détectée — table : une entrée invalide garde les autres → E04b, E19, E21b
+   détectée — table : défauts sans filtre des codes pris (ancre déplacée) → E04b, E15, E19, E21, E21b, E22
+   détectée — table : propriétés héritées lues → E04b
+   détectée — tune : booléen pour un nombre → E04b, E20
+   détectée — tune : non borné → E04b, E14d, E16, E19, E20, E22
+   détectée — tune : chaîne acceptée pour un booléen → E04b, E20
+   détectée — settings sans copie → E14d
+   détectée — valeur : booléen au lieu de 1 → E14, E31
+   détectée — ordre des sorties : actions avant sticks → E14b
+   détectée — addLook ignore l’appareil → E14c
+   ANCRE INTROUVABLE — keyDown sans appareil clavier (ancre déplacée)
+   détectée — bouton souris sans appareil → E14, E14c
+   détectée — bouton tactile sans horodatage → E14c, E35
+   module intact : tous les tests passent
+   34 mutations détectées sur 38
+== t4/mutations.mjs
+   détectée — radial : pas de remise à l’échelle → E24, E25, E26, E27, E28, E29, E32
+   détectée — radial : norme non bornée à 1 → E24, E25, E26, E27, E28, E32, E33, E36, E37
+   détectée — radial : direction perdue → E24, E25, E26, E27, E28, E29, E32
+   détectée — radial : -0 gardé → E24
+   détectée — padStyle : PlayStation lue comme Xbox → E33, E40, E40b
+   détectée — getGamepads détaché de navigator → E33b
+   détectée — getGamepads de la déclaration ignoré → E33
+   détectée — lecture hors du try → E33, E33b (relancée 1 fois)
+   détectée — entrée qui n’est pas un objet acceptée → E33
+   détectée — manette connected === false lue → E33
+   détectée — clé sans l’id → E33, E40, E40b
+   détectée — index : place dans la liste → E33, E40b
+   détectée — index : sans repli sur la place → E33
+   détectée — bouton en nombre ignoré → E33
+   détectée — bouton : pressed ignoré → E34
+   détectée — bouton : seuil .5 inclus → E34
+   détectée — gâchettes lues comme des boutons → E30, E31, E33, E34, E36
+   détectée — gâchettes : dernière manette au lieu du maximum → E30
+   détectée — gâchettes : sans hystérésis → E30
+   détectée — gâchettes : seuils inclus → E30
+   détectée — activité : pressed ignoré → E35
+   détectée — activité : toute valeur de bouton → E35
+   détectée — activité : axe signé → E35
+   détectée — activité : tous les axes → E35
+   ANCRE INTROUVABLE — activité : appareil jamais manette
+   détectée — swapSticks ignoré → E37
+   détectée — zones mortes échangées entre les rôles → E25, E26, E27, E28, E29, E32, E37
+   détectée — stick : dernière manette au lieu de la plus forte → E32
+   détectée — stick : première manette au lieu de la plus forte → E32
+   détectée — rôle visée lu sur le stick de déplacement → E25, E26, E27, E28, E29, E32, E37
+   détectée — axe non fini gardé → E33
+   détectée — branchement : connected à chaque image → E33
+   détectée — branchement : disconnected jamais rendu → E33
+   détectée — branchement : manettes vues jamais mises à jour → E33, E40b, E42b
+   détectée — branchement : fiches partagées avec l’état interne → E33
+   détectée — branchement : standard toujours vrai → E33
+   détectée — capture : Home capturé → E36
+   détectée — capture : bouton déjà tenu capturé → E36
+   détectée — capture : fronts de l’image gardés → E36
+   détectée — capture : jamais finie → E36
+   détectée — image calme jamais levée → E36
+   détectée — boutons de l’image précédente jamais retenus → E34b, E36
+   détectée — valeur : sans zone morte → E31
+   détectée — valeur : bouton ordinaire à 0 → E31
+   détectée — valeur : premier bouton seulement → E31
+   détectée — actions : manette sans règle des fronts → E30, E32, E33, E33b, E34, E34b, E36, E37
+   détectée — actions : image calme ignorée → E36
+   détectée — déplacement : avant négatif → E25, E32, E33, E36, E37
+   détectée — course : jamais au bout du stick → E25, E36, E37
+   détectée — course : seuil .90 → E25
+   détectée — course : fronts dans l’image calme → E36
+   détectée — visée : sans courbe → E26, E27, E28, E29, E32
+   détectée — visée : maintien compté après la rampe → E28
+   détectée — visée : maintien dès .90 → E28
+   détectée — visée : surcroît aussi au tangage → E28
+   détectée — visée : surcroît ignoré → E28
+   détectée — visée : lookScale ignoré → E29
+   détectée — visée : lookScale aussi au clavier → E29
+   détectée — visée : lookScale non fini accepté → E29
+   détectée — tangage : padInvertY ignoré → E27
+   détectée — tangage : invertY de la souris → E27
+   détectée — tangage : signe inversé → E27, E37
+   détectée — configure : boutons tenus non repris → E34b
+   détectée — configure : table pad des réglages ignorée → E34, E34b
+   détectée — clear : boutons non relâchés → E36
+   détectée — clear : déplacement manette gardé → E36
+   détectée — clear : maintien de la visée gardé → E28
+   détectée — clear : image suivante avec fronts → E36
+   détectée — étape 3 — capture : résultat jamais rendu → E23, E36, E39b
+   détectée — étape 3 — clear garde la capture → E23, E36
+   détectée — étape 2 — clear garde le regard → E12
+   détectée — étape 2 — clear garde les verrous → E12
+   détectée — étape 2 — clear garde les doigts → E12
+   module intact : tous les tests passent
+   72 mutations détectées sur 73
+
+3. Lanceur. Dans ce passage, chaque mutation détectée l'est avec le nom d'au moins un test. Deux passages
+   précédents (même module ; fichier de tests identique, à trois caractères invisibles près, écrits depuis en
+   échappements \u00a0, \u200b et \ue000) ont montré le défaut connu du lanceur décrit en tête de t4/mutations.mjs :
+   un statut 1 sans aucun nom de test, rejoué deux fois au plus par les suites des étapes 3 et 4. « regard souris :
+   invertY ignoré » est ainsi restée INDÉTERMINÉE dans t3/mutations-etape2.mjs, puis « configure ne recompte pas les
+   touches » au passage suivant. Lancées seules sur le même module muté (rapport dans un fichier), elles sont
+   détectées 6 fois sur 6 (E06, E14d) et 24 fois sur 24 (E14d), jamais sans nom.
+   Toutes les mutations dont l'ancre est trouvée sont donc détectées.

@@ -1,0 +1,84 @@
+{
+ "stats": {
+  "bruit3dMs": 12.6,
+  "compileMs": {
+   "old": 5.2,
+   "flat": 1.7,
+   "noise": 7.4,
+   "sky": 4.7,
+   "cloud": 6,
+   "blur": 1.7,
+   "comp": 6.5,
+   "direct": 10.6
+  },
+  "texturesContreDirect": {
+   "mad": 2.015,
+   "part3": 0.1364,
+   "part10": 0.0646
+  },
+  "dome512Contre1024": {
+   "mad": 1.399,
+   "part3": 0.1287,
+   "part10": 0.0558
+  },
+  "dome2048Contre1024": {
+   "mad": 0.897,
+   "part3": 0.0861,
+   "part10": 0.0325
+  },
+  "bandesActuel-garden": {
+   "partPlages8": 0.6574,
+   "plageMax": 75,
+   "couleurs": 1453
+  },
+  "bandesActuel-woodland": {
+   "partPlages8": 0.6845,
+   "plageMax": 160,
+   "couleurs": 1735
+  },
+  "bandesActuel-quarry": {
+   "partPlages8": 0.7197,
+   "plageMax": 77,
+   "couleurs": 2048
+  },
+  "bandesNouveau-nuit-trame": {
+   "partPlages8": 0.0163,
+   "plageMax": 13,
+   "couleurs": 1283
+  },
+  "bandesNouveau-nuit-sansTrame": {
+   "partPlages8": 0.8071,
+   "plageMax": 169,
+   "couleurs": 1245
+  },
+  "bandesNouveau-aube-trame": {
+   "partPlages8": 0.0229,
+   "plageMax": 16,
+   "couleurs": 1822
+  },
+  "bandesNouveau-aube-sansTrame": {
+   "partPlages8": 0.6369,
+   "plageMax": 59,
+   "couleurs": 1794
+  },
+  "bandesNouveau-plein-jour-trame": {
+   "partPlages8": 0.0136,
+   "plageMax": 15,
+   "couleurs": 2099
+  },
+  "bandesNouveau-plein-jour-sansTrame": {
+   "partPlages8": 0.665,
+   "plageMax": 56,
+   "couleurs": 2028
+  }
+ },
+ "bench": {},
+ "errors": [],
+ "info": {
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+  "float": true,
+  "half": true,
+  "dpr": 1,
+  "max3d": 2048
+ }
+}

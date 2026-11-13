@@ -1,0 +1,4 @@
+{"name":"C","runFile":"vrun-b.js","world":0,"cssW":1440,"cssH":932,"inPos":[1.5,4.82,0.5],"block":10,"rounds":0,"latRounds":0,"walk":600,
+ "thrScenes":[],"latScenes":[],"diffScenes":[],"diffEvery":6,"ref":"base","refHigh":"high","reallocCycles":0,
+ "shots":[["walk","notorch"],["walkA","notorch"],["inT","spec4"],["inA","notorch"]],
+ "variants":[{"id":"base","code":"base"},{"id":"spec4","code":"spec4"},{"id":"notorch","code":"notorch"}]}

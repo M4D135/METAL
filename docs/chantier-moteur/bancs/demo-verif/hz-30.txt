@@ -1,0 +1,1 @@
+{"HZ":30,"minutes":8,"won":1,"opened":2,"deaths":0,"stalls":0,"exceptions":0,"assistHp":379,"worlds":[{"i":1,"won":true,"s":236.6,"stalls":0,"deaths":0},{"i":2,"won":false,"s":243.4,"stalls":0,"deaths":0}],"shots":462,"hits":427}

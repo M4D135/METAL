@@ -2,15 +2,31 @@
 // This loader is for trusted local source code, not a security sandbox.
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync, existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {resolve, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {instrumentSimulation} from './proof/instrument.mjs';
+// Node 24.18 materializes some host globals lazily: the first read of the
+// FormData descriptor loads undici, which adds Symbol(undici.globalDispatcher.1)
+// and .2 to globalThis. Read every descriptor once, before any tool captures them.
+Object.getOwnPropertyDescriptors(globalThis);
 
 export const DEFAULT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 export const DEFAULT_MODULES = Object.freeze(['renderer','world','destruction','economy','brain','simulation']);
 const hash = text => createHash('sha256').update(text).digest('hex');
+
+// Default module list of one root. Since lot 01 suite (MURS-V1), world.js takes
+// sin, cos, atan and atan2 from FMath (src/fmath.js), which must load first; an
+// older root without src/fmath.js keeps the historical list. Only fmath is
+// optional: any other missing module still fails when it is read.
+export function defaultModules(root=DEFAULT_ROOT) {
+  root = resolve(root);
+  if (existsSync(join(root,'src/fmath.js'))) return Object.freeze(['fmath',...DEFAULT_MODULES]);
+  const world = join(root,'src/world.js');
+  if (existsSync(world) && /\bFMath\b/.test(readFileSync(world,'utf8'))) throw new Error(`${world} uses FMath but ${join(root,'src/fmath.js')} is missing`);
+  return DEFAULT_MODULES;
+}
 
 export function applyPatches(name, source, patches = {}) {
   let text = source;
@@ -28,7 +44,7 @@ export function applyPatches(name, source, patches = {}) {
   return text;
 }
 
-export function loadRealm({root=DEFAULT_ROOT, modules=DEFAULT_MODULES, patches={}, transform, instrument=false, realm='main', globals={}} = {}) {
+export function loadRealm({root=DEFAULT_ROOT, modules=defaultModules(root), patches={}, transform, instrument=false, realm='main', globals={}} = {}) {
   root = resolve(root);
   if (!['main','vm'].includes(realm)) throw new Error('realm must be main or vm');
   if (!Array.isArray(modules) || !modules.length || new Set(modules).size !== modules.length || !modules.every(name=>/^[a-z][a-z0-9-]*$/i.test(name))) throw new Error('Invalid module list');

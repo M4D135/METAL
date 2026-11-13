@@ -1,0 +1,73 @@
+{
+ "schema": "metal-platform-math-replay-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64"
+ },
+ "root": "~/claude/metal-chantier/nav",
+ "fmathInProcess": false,
+ "scenario": "campaign2-w1,campaign2-w10",
+ "steps": 120,
+ "checksum": "e9bdd656a8c479bea9250b6256469098450bd95c1ec0d9ba4fc75d63a84f61aa",
+ "stable": true,
+ "rows": [
+  {
+   "id": "campaign2-w1",
+   "steps": 120,
+   "chainHash": "b526292d",
+   "oracleChainHash": "2d73cf2a",
+   "snapshotSha256": "18904d503893d0b701c36957fc5332db780249bb6765d29c576d12a76798c317",
+   "oracleSnapshotSha256": "18904d503893d0b701c36957fc5332db780249bb6765d29c576d12a76798c317",
+   "identical": false,
+   "firstDivergentStepIndex": 83,
+   "firstDivergentStepNumber": 84,
+   "oracle": "docs/chantier-moteur/preuves/lot-00/aa-v2-short.json.gz (proofA)",
+   "oracleEnvironment": {
+    "node": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "platform": "linux",
+    "arch": "x64",
+    "release": "6.18.57",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "logicalCpus": 9,
+    "loadAverage": [
+     0.84,
+     1.16,
+     0.73
+    ]
+   }
+  },
+  {
+   "id": "campaign2-w10",
+   "steps": 120,
+   "chainHash": "e8f48034",
+   "oracleChainHash": "65883f09",
+   "snapshotSha256": "b1f167045fcd64d95ce8b39ce1b01eeb71204980d2549fd660b973a55eef94bc",
+   "oracleSnapshotSha256": "b1f167045fcd64d95ce8b39ce1b01eeb71204980d2549fd660b973a55eef94bc",
+   "identical": false,
+   "firstDivergentStepIndex": 43,
+   "firstDivergentStepNumber": 44,
+   "oracle": "docs/chantier-moteur/preuves/lot-00/aa-v2-short.json.gz (proofA)",
+   "oracleEnvironment": {
+    "node": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "platform": "linux",
+    "arch": "x64",
+    "release": "6.18.57",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "logicalCpus": 9,
+    "loadAverage": [
+     0.84,
+     1.16,
+     0.73
+    ]
+   }
+  }
+ ],
+ "driver": {
+  "note": "tools/proof/scenarios.mjs drive() uses Math.sin(index/90): first index where the Math of this run differs from FMath",
+  "firstIndex": 42
+ }
+}

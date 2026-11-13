@@ -1,0 +1,15 @@
+{"name":"runE","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":560,"measureFrames":240,"skip":10,"reps":3,"dumpFrames":true,"dumpScene":[600,660],
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"noshadow","code":"base","fx":{"shadows":false}},
+  {"id":"nobloom","code":"base","fx":{"bloom":false}},
+  {"id":"notorch","code":"notorch"},
+  {"id":"nosun","code":"nosun"},
+  {"id":"nolamp","code":"nolamp"},
+  {"id":"dynsh","code":"dynsh"},
+  {"id":"spec4","code":"spec4"},
+  {"id":"lightcull2","code":"lightcull2"},
+  {"id":"l0","code":"l0"},
+  {"id":"combo3","code":"combo3"},
+  {"id":"stress","code":"base","inject":{"count":48,"near":2.5,"far":12,"spread":7,"size":2.6,"alpha":0.55,"fire":true}}]}

@@ -1,0 +1,69 @@
+<!doctype html><meta charset="utf-8"><title>Vérif MIX</title>
+<script src="src.js"></script><script src="scenes.js"></script><script src="mix.js"></script>
+<script>
+(async () => {
+  const M = window.MIX, Q = new URLSearchParams(location.search), job = Q.get('job'), out = {job, errors: []}, sr = M.SR, K0 = M.K0, HZ = M.HZ;
+  function biq(d, hz, q, hp) { const out = new Float32Array(d.length), w = 2 * Math.PI * hz / sr, al = Math.sin(w) / (2 * q), c = Math.cos(w), a0 = 1 + al, b0 = (hp ? (1 + c) / 2 : (1 - c) / 2) / a0, b1 = (hp ? -(1 + c) : (1 - c)) / a0, a1 = -2 * c / a0, a2 = (1 - al) / a0; let x1 = 0, x2 = 0, y1 = 0, y2 = 0; for (let i = 0; i < d.length; i++) { const x = d[i], y = b0 * x + b1 * x1 + b0 * x2 - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; out[i] = y; } return out; }
+  const bw4 = (d, hz, hp) => biq(biq(d, hz, .5412, hp), hz, 1.3066, hp);
+  const mono = (b, c) => { const x = b.getChannelData(c), y = b.getChannelData(c + 1), o = new Float32Array(x.length); for (let i = 0; i < x.length; i++) o[i] = (x[i] + y[i]) * .5; return o; };
+  try {
+    (0, eval)(SRC.music);
+    const scenes = {...SCENES, iso: M.isoScene(), p: M.pumpScene()};
+    if (job === 'bandduck') { // atténuation réelle de la musique par bande, et marge par bande
+      out.rows = []; const sc = scenes.p, names = ['smg', 'pistol', 'shotgun', 'rocket'];
+      for (const recipe of ['cur', 'doom']) {
+        const R = {}; for (const duck of ['none', 'cur', 'prop']) { const r = await M.render(sc, {recipe, duck}); const mu = mono(r.buffer, 6), fx = mono(r.buffer, 8); R[duck] = {mu: {all: mu, low: bw4(mu, 150, false), high: bw4(mu, 250, true)}, fx: {all: fx, low: bw4(fx, 150, false), high: bw4(fx, 250, true)}}; }
+        sc.bursts.forEach(([a, z], bi) => { const i0 = Math.round((K0 + a) / HZ * sr), i1 = Math.round((K0 + z) / HZ * sr), row = {recipe, burst: names[bi]};
+          for (const duck of ['cur', 'prop']) for (const band of ['all', 'low', 'high']) {
+            const ref = R.none.mu[band], x = R[duck].mu[band]; row[duck + '_mus_' + band + '_meanDb'] = M.r2(M.dB(M.rmsRange(x, i0, i1) / M.rmsRange(ref, i0, i1)));
+            let mn = 0; const w = Math.round(.1 * sr); for (let i = i0; i + w < i1; i += w >> 1) { const r = M.rmsRange(ref, i, i + w); if (r > 1e-4) mn = Math.min(mn, M.dB(M.rmsRange(x, i, i + w) / r)); } row[duck + '_mus_' + band + '_minDb'] = M.r2(mn);
+            // marge : RMS des effets sur toute la rafale / RMS de la musique après duck, même bande
+            row[duck + '_marge_' + band + 'Db'] = M.r2(M.dB(M.rmsRange(R[duck].fx[band], i0, i1) / M.rmsRange(x, i0, i1)));
+          }
+          out.rows.push(row); });
+      }
+    }
+    if (job === 'attrib2') { // coût des boucles : non démarrées contre démarrées mais non reliées
+      const reps = +Q.get('reps') || 5, empty = {...scenes.a, frames: scenes.a.frames.map(f => ({c: [], s: [0, 0, 0, 'lift', 0, 0, 0, 0, 0, 0], f: null}))};
+      const vars = [['repos', {noTaps: 1}], ['boucles non demarrees', {noTaps: 1, noLoops: 1}], ['boucles demarrees non reliees', {noTaps: 1, detach: 1}], ['sans compresseur', {noTaps: 1, noComp: 1}]], t = {};
+      for (const [k] of vars) t[k] = []; t.sceneC = []; t.sceneC_sansBoucles = [];
+      for (let r = 0; r < reps; r++) { for (const [k, v] of vars) { const R = await M.render(empty, v, {silent: true, music: 0, channels: 2}); t[k].push((R.ms - R.replayMs) / R.seconds); }
+        let R = await M.render(scenes.c, {noTaps: 1}, {channels: 2}); t.sceneC.push((R.ms - R.replayMs) / R.seconds); R = await M.render(scenes.a, {noTaps: 1, noLoops: 1}, {channels: 2}); t.sceneC_sansBoucles.push((R.ms - R.replayMs) / R.seconds); }
+      out.rows = Object.keys(t).map(k => ({cas: k, minMsPerS: M.r2(Math.min(...t[k])), medMsPerS: M.r2(M.quant(t[k], .5)), all: t[k].map(M.r2)}));
+    }
+    if (job === 'long') { // démo qui dure : scène rejouée N fois, coût par minute et état final
+      const reps = +Q.get('n') || 16, base = scenes[Q.get('scene') || 'c'], sc = {...base, frames: [].concat(...Array.from({length: reps}, () => base.frames))};
+      const marks = []; let last = performance.now(), lastReplay = 0;
+      const vv = {noTaps: 1}; for (const k of ['recipe', 'comp', 'duck']) if (Q.get(k)) vv[k] = Q.get(k); if (Q.get('weaponGain')) vv.weaponGain = +Q.get('weaponGain'); out.variant = vv;
+      const R = await M.render(sc, vv, {channels: 2, onFrame: (k, audio, replayMs) => { if (k % 3600 === 0) { const now = performance.now(); marks.push({minute: k / 3600, msPerS: M.r2((now - last - (replayMs - lastReplay)) / 60), replayMsPerFrame: M.r3((replayMs - lastReplay) / 3600), voices: audio.stats.voices, heapMo: performance.memory ? M.r2(performance.memory.usedJSHeapSize / 1048576) : null}); last = now; lastReplay = replayMs; } }});
+      out.marks = marks; out.stats = R.stats; out.params = R.params; out.seconds = R.seconds;
+      const L = R.buffer.getChannelData(0), per = []; for (let m = 0; m < reps; m++) { const a = Math.round((K0 / HZ + m * 30) * sr), b = Math.round((K0 / HZ + (m + 1) * 30) * sr); per.push([M.r2(M.dB(M.rmsRange(L, a, b))), M.r3(M.peakRange(L, a, b))]); } out.rmsPeakPer30s = per;
+    }
+    if (job === 'stress') { // MIX-06 : 18 tireurs (tirs ennemis de la scène b triplés, panoramiques décalés), recettes actuelles et doomish
+      out.rows = []; const sc = scenes.b, frames = sc.frames.map(f => ({...f, c: f.c.slice()}));
+      sc.frames.forEach((f, i) => { for (const c of f.c) if (c[0] === 'enemyShot') for (const [dk, dp] of [[1, .5], [2, -.5]]) { const o = Object.assign({}, c[1], {pan: Math.max(-1, Math.min(1, (c[1].pan || 0) + dp)), seed: ((c[1].seed || 0) + dk * 7919) >>> 0}); if (frames[i + dk]) frames[i + dk].c.push(['enemyShot', o]); } });
+      const big = {...sc, frames}; let n = 0; for (const f of frames) for (const c of f.c) if (c[0] === 'enemyShot') n++;
+      for (const recipe of ['cur', 'doom']) { const r = await M.render(big, {recipe, noTaps: 1}, {channels: 2}); out.rows.push({recipe, enemyShots: n, peakVoices: r.stats.peakVoices, stolen: r.stats.stolenVoices, skipped: r.stats.fxSkipped, peakOut: M.r3(M.peakRange(r.buffer.getChannelData(0), 0, r.buffer.length))}); }
+    }
+    if (job === 'l14perf') { // LOOP-14 : coût réel (fil de rendu et appels du fil principal), alterné
+      const reps = +Q.get('reps') || 5, t = {base: [], exact: []}, rp = {base: [], exact: []};
+      for (let r = 0; r < reps; r++) for (const k of ['base', 'exact']) { const R = await M.render(scenes.c, k === 'base' ? {noTaps: 1} : {noTaps: 1, loop14: 'exact'}, {channels: 2}); t[k].push((R.ms - R.replayMs) / R.seconds); rp[k].push(R.replayMs / 1800); }
+      out.rows = ['base', 'exact'].map(k => ({cas: k, renduMinMsPerS: M.r2(Math.min(...t[k])), renduMedMsPerS: M.r2(M.quant(t[k], .5)), appelsMinMsParImage: M.r3(Math.min(...rp[k]) * 1), appelsMedMsParImage: M.r3(M.quant(rp[k], .5))}));
+    }
+    if (job === 'fxvol') { // le duck suit-il le volume des effets ?
+      out.rows = []; const sc = scenes.p;
+      for (const effects of [1, .5, .2, .05]) { const r = await M.render(sc, {}, {effects}), dk = r.buffer.getChannelData(10), fx = mono(r.buffer, 8), from = Math.round(K0 / HZ * sr); let mn = 1; for (let i = from; i < dk.length; i += 16) mn = Math.min(mn, dk[i] / .56);
+        out.rows.push({effectsVolume: effects, duckMinDb: M.r2(M.dB(mn)), fxRmsDb: M.r2(M.dB(M.rmsRange(fx, from, fx.length))), fxPeak: M.r3(M.peakRange(fx, from, fx.length))}); }
+    }
+    if (job === 'enemylow') { // tirs ennemis seuls : énergie grave ajoutée par les recettes doomish
+      out.rows = []; const sc = scenes.b, pick = names => ({...sc, frames: sc.frames.map(f => ({...f, c: f.c.filter(c => names.includes(c[0])), f: null}))});
+      for (const recipe of ['cur', 'doom']) for (const [tag, names] of [['ennemis', ['enemyShot']], ['joueur', ['fracture']]]) {
+        const r = await M.render(pick(names), {recipe}, {music: 0}), fx = mono(r.buffer, 8), from = Math.round(K0 / HZ * sr), low = M.lowpass(fx, 120, sr);
+        out.rows.push({recipe, tag, fxRmsDb: M.r2(M.dB(M.rmsRange(fx, from, fx.length))), low120Db: M.r2(M.dB(M.rmsRange(low, from, fx.length))), peakOut: M.r3(M.peakRange(r.buffer.getChannelData(0), from, fx.length)), peakVoices: r.stats.peakVoices, grMin: M.r2(Math.min(...r.red))});
+      }
+      const r = await M.render(sc, {recipe: 'doom'}), mu = mono(r.buffer, 6), from = Math.round(K0 / HZ * sr); out.musicLow120Db = M.r2(M.dB(M.rmsRange(M.lowpass(mu, 120, sr), from, mu.length)));
+    }
+  } catch (e) { out.errors.push(String(e && e.stack || e)); }
+  M.emit(out);
+})();
+</script>

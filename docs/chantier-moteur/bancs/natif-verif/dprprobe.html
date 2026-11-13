@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><title>dprprobe</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}#box{position:absolute}canvas{position:absolute;inset:0;width:100%;height:100%;display:block}</style></head><body>
+<pre id="vout">pending</pre><div id="box"><canvas id="c"></canvas></div>
+<script>
+// Compare trois facons de dimensionner le tampon du canvas : clientWidth*DPR (code actuel), rect*DPR, et
+// devicePixelContentBoxSize (ResizeObserver). Les tailles CSS fractionnaires imitent un telephone (411,43 px a DPR 2,625),
+// un zoom du navigateur ou un conteneur centre.
+const q=new URLSearchParams(location.hash.slice(1)),cases=JSON.parse(decodeURIComponent(q.get('cases')||'[]'));
+const box=document.getElementById('box'),c=document.getElementById('c'),out=[];let k=0,want=null;
+const ro=new ResizeObserver(entries=>{const e=entries[entries.length-1],d=e.devicePixelContentBoxSize&&e.devicePixelContentBoxSize[0];
+  if(!want)return;const r=c.getBoundingClientRect(),dpr=devicePixelRatio;
+  out.push({cas:want,dpr,client:[c.clientWidth,c.clientHeight],rect:[+r.width.toFixed(4),+r.height.toFixed(4)],
+    actuel:[Math.round(c.clientWidth*dpr),Math.round(c.clientHeight*dpr)],rectDpr:[Math.round(r.width*dpr),Math.round(r.height*dpr)],
+    exact:d?[d.inlineSize,d.blockSize]:null,contentBox:e.contentBoxSize?[+e.contentBoxSize[0].inlineSize.toFixed(4),+e.contentBoxSize[0].blockSize.toFixed(4)]:null});
+  want=null;next();});
+try{ro.observe(c,{box:'device-pixel-content-box'});}catch(e){out.push({err:String(e)});}
+function next(){if(k>=cases.length){document.getElementById('vout').textContent=JSON.stringify({inner:[innerWidth,innerHeight],dpr:devicePixelRatio,out});return;}
+  const s=cases[k++];want=s;box.style.left=s[0]+'px';box.style.top=s[1]+'px';box.style.width=s[2]+'px';box.style.height=s[3]+'px';
+  setTimeout(()=>{if(want===s){out.push({cas:s,note:'pas de rappel (taille en pixels physiques inchangee)'});want=null;next();}},120);}
+setTimeout(next,50);
+</script></body></html>

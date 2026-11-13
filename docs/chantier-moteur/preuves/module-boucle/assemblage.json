@@ -1,0 +1,114 @@
+{
+  "schema": "boucle-assemblage-v1",
+  "node": "v24.18.0",
+  "arch": "arm64",
+  "platform": "darwin",
+  "cpu": "Apple M5",
+  "loadavg": [
+    6.64501953125,
+    5.40625,
+    4.38623046875
+  ],
+  "budgetBytes": 1400000,
+  "version": "0.8.1",
+  "buildModules": [
+    "renderer.js",
+    "world.js",
+    "destruction.js",
+    "music.js",
+    "audio.js",
+    "soundscape.js",
+    "economy.js",
+    "brain.js",
+    "simulation.js",
+    "motion.js",
+    "actors.js",
+    "effects.js",
+    "options.js",
+    "game.js"
+  ],
+  "base": {
+    "htmlBytes": 812696,
+    "sha256": "4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a",
+    "gzipBytesNode": 246658,
+    "sizeJson": {
+      "version": "0.8.1",
+      "html_bytes": 812696,
+      "sha256": "4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a",
+      "gzip_bytes": 245325
+    },
+    "reproduced": true,
+    "equalsDist": true,
+    "sourceBytesMatchSizeJson": true,
+    "versionMatchesSizeJson": true,
+    "closingScriptInCode": false,
+    "placeholdersLeft": false,
+    "hasFLoop": false,
+    "hasFSchedule": false,
+    "patterns": {
+      "externalAssets": false,
+      "networkCode": false
+    }
+  },
+  "project": {
+    "modules": [
+      "renderer.js",
+      "world.js",
+      "destruction.js",
+      "music.js",
+      "audio.js",
+      "soundscape.js",
+      "economy.js",
+      "brain.js",
+      "simulation.js",
+      "motion.js",
+      "actors.js",
+      "effects.js",
+      "options.js",
+      "loop.js",
+      "schedule.js",
+      "game.js"
+    ],
+    "loopBytes": 6042,
+    "scheduleBytes": 4221,
+    "projectedHtmlBytes": 822965,
+    "sha256": "9fdd167e4131ae47697da37c8d55d30b4c0ee6732dd35fe82fdc386756615f58",
+    "delta": 10269,
+    "expectedDelta": 10269,
+    "deltaOk": true,
+    "marginBytes": 577035,
+    "underBudget": true,
+    "gzipBytes": 250178,
+    "gzipDeltaNode": 3520,
+    "closingScriptInCode": false,
+    "placeholdersLeft": false,
+    "hasFLoop": true,
+    "hasFSchedule": true,
+    "patterns": {
+      "externalAssets": false,
+      "networkCode": false
+    },
+    "syntaxOk": true,
+    "syntaxError": null,
+    "globalsOk": true,
+    "windowKeys": [
+      "FLoop",
+      "FSchedule"
+    ],
+    "contextKeysAdded": []
+  },
+  "checks": {
+    "baseReproduced": true,
+    "deltaOk": true,
+    "underBudget": true,
+    "noClosingScript": true,
+    "noForbiddenPattern": true,
+    "patternsCopiedVerbatim": true,
+    "placeholdersResolved": true,
+    "syntaxOk": true,
+    "globalsOk": true,
+    "onlyTwoGlobals": true,
+    "carriageReturns": []
+  },
+  "note": "gzip : zlib de Node, à titre indicatif ; gzip_bytes de SIZE.json vient du zlib de Python et ne se compare pas. Seul l'écart entre base et projet, mesuré avec le même zlib, a un sens."
+}

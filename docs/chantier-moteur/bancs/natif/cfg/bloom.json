@@ -1,0 +1,2 @@
+{"name":"bloom","runFile":"run-bloom.js","frames":[0,6,12,18,24,30,36,42,48,54],"scenes":[{"kind":"capture"}],
+ "variants":[{"id":"1080p","code":"base","quality":2,"cssW":960,"cssH":540},{"id":"2160p","code":"base","quality":2,"cssW":1920,"cssH":1080}]}

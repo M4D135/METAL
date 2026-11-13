@@ -1,0 +1,127 @@
+{
+ "schema": "metal-lot01s-t1-environment-v1",
+ "node": "v24.18.0",
+ "v8": "13.6.233.17-node.50",
+ "platform": "linux",
+ "arch": "arm64",
+ "osRelease": "6.17.0-1026-nvidia",
+ "cpu": "Cortex-X925 + Cortex-A725",
+ "logicalCpus": 20,
+ "compiler": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+ "chrome": "Google Chrome 151.0.7922.137",
+ "jsc": null,
+ "sources": {
+  "src/fmath.js": {
+   "bytes": 17281,
+   "sha256": "f63b2370100ba81379e902c44c2026813a033b3d278b37f55dd6f8c6db485e93"
+  },
+  "src/world.js": {
+   "bytes": 133209,
+   "sha256": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e"
+  },
+  "src/renderer.js": {
+   "bytes": 106801,
+   "sha256": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874"
+  },
+  "src/destruction.js": {
+   "bytes": 26469,
+   "sha256": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd"
+  },
+  "src/economy.js": {
+   "bytes": 11994,
+   "sha256": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3"
+  },
+  "src/brain.js": {
+   "bytes": 8923,
+   "sha256": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9"
+  },
+  "src/simulation.js": {
+   "bytes": 202378,
+   "sha256": "96544ee94904791cc223e19c510065407e8f9ac7b333ff5771a0de73485c9ca4"
+  },
+  "tools/platform-math.mjs": {
+   "bytes": 33077,
+   "sha256": "785764c6d0c8a3fa78bc8ffb3aa34cc460a3f1f402d374413d2087399b69e316"
+  },
+  "tools/realm-loader.mjs": {
+   "bytes": 5711,
+   "sha256": "e9dac4a5e50fc86d994532277d45fc6c23d32c4ea13a02fe975a91a82933a4af"
+  },
+  "tools/profile-steps.mjs": {
+   "bytes": 3321,
+   "sha256": "f5e57a8c6639af3b9d1135d05d853072194eed73efe032ad940c00fdb35ae29a"
+  },
+  "tools/proof/common.mjs": {
+   "bytes": 4535,
+   "sha256": "6c98c549af600b453c1b6461fee89c75660c72f396219dafcef1daa5e0de83c9"
+  },
+  "tools/proof/digest.mjs": {
+   "bytes": 3647,
+   "sha256": "6ae26127956c30afcea6378eb4de3c6ed72b690d4a679537861173274b63f945"
+  },
+  "tools/proof/instrument.mjs": {
+   "bytes": 2369,
+   "sha256": "1dc971078130d4bbf0dec16ef2c9d306268961739c9fe72b6681c5edd7fdc983"
+  },
+  "tools/proof/scenarios.mjs": {
+   "bytes": 2000,
+   "sha256": "9e142fe350e6a7c6a78b907e9f70c4804637d7b4fa8236d34a3e3ea223fc9c47"
+  },
+  "tools/proof/reference-63668ac.json": {
+   "bytes": 162246,
+   "sha256": "c340daa18699e2967a975ac3f63e59b54cb1b51bbf8a1960bdf7405efe03ed85"
+  },
+  "tools/campaign-profiles.mjs": {
+   "bytes": 7580,
+   "sha256": "b385b0894325a3c5be54535c8a11092c14c32c8b8f54220ba2cbcd6e798bbd34"
+  },
+  "tools/campaign-balance.mjs": {
+   "bytes": 6811,
+   "sha256": "a78756e98a05ac7cb816276316f435b6ab0751716bf8e1c006433357cc78b868"
+  },
+  "tools/boss-profiles.mjs": {
+   "bytes": 2651,
+   "sha256": "608064721dbc95de897d089b53de81c1aaf409b61e5b92604fef86459029a349"
+  },
+  "checks/fmath.test.mjs": {
+   "bytes": 10829,
+   "sha256": "7814d5585490d3ce74d579a095f23e2b33a818c1c1d04fcf360ca1e7370cdbfc"
+  },
+  "checks/fmath-vectors.txt": {
+   "bytes": 163188,
+   "sha256": "5e776abe3ed62032a5f5a032123b7bf43bf4c6b092f99c88dba6cf1a8da9ed61"
+  },
+  "checks/campaign-world.test.mjs": {
+   "bytes": 23856,
+   "sha256": "37413228d437a68fa8a996d31c6ab2bd69830bbe8d34d590cee4cfc511228ce7"
+  },
+  "package.json": {
+   "bytes": 1028,
+   "sha256": "ca0f504092efcd9ad21d6849f6c2253b5e3f156808f413eb43327752f53ebe26"
+  },
+  "docs/chantier-moteur/preuves/lot-01s/t1/fdlibm-v8.c": {
+   "bytes": 20595,
+   "sha256": "4c110d38d3b227949b5787fa71c4ab724c34ec65fb0d7fb66f9e4af0aa39445b"
+  },
+  "docs/chantier-moteur/preuves/lot-01s/t1/gen-vectors.mjs": {
+   "bytes": 25389,
+   "sha256": "6f9035d51ae9fb8e815d88ac22b478b8d9a76d9281014089d5f0b97126708795"
+  },
+  "docs/chantier-moteur/preuves/lot-01s/t1/branch-coverage.mjs": {
+   "bytes": 3263,
+   "sha256": "e8899e2d3a023b8d4284d00ce6392e70383efdc2ca942b3bdf3dc6c880e7deef"
+  },
+  "docs/chantier-moteur/preuves/lot-01s/t1/mutation-check.mjs": {
+   "bytes": 4716,
+   "sha256": "a8dbbf82f9802798e5cf1942032bf2054f88c763d212f47ed078cbedf8eabd36"
+  },
+  "docs/chantier-moteur/preuves/lot-01s/t1/profiles-check.mjs": {
+   "bytes": 2890,
+   "sha256": "4d2a688483dd5a1d2ebfa8a3930851c8bd3cce70d85ac4211490df920951c189"
+  },
+  "docs/chantier-moteur/preuves/lot-01s/t1/mac-divergent-inputs.json": {
+   "bytes": 34873,
+   "sha256": "9e7e007c43abe2556a68b702a93c3d86ddee1971834c60e5239f3c1bbc063f29"
+  }
+ }
+}

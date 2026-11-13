@@ -1,0 +1,136 @@
+{
+ "schema": "metal-r1b-avant-apres-v1",
+ "avant": "R1, 3ca8016 (git worktree détaché)",
+ "apres": "R1b, arbre de travail de chantier/lot-00-outils",
+ "cheminNuEtFragment": {
+  "avant": [
+   "ERR /Users/david/claude/metal-audit/bancs/ciel-verif/cielv.html#shots -> Page not found: /Users/david/claude/metal-audit/bancs/ciel-verif/cielv.html#shots",
+   "OK file:///Users/david/claude/metal-audit/bancs/ciel-verif/cielv.html#shots -> file:///Users/david/claude/metal-audit/bancs/ciel-verif/cielv.html#shots",
+   "ERR tools/render/pages/probe.html?dump=1 -> Page not found: /Users/david/claude/metal-chantier/verif/lot-00-outils-R1b-avant/tools/render/pages/probe.html?dump=1",
+   "defaultAngle linux env vulkan: null chromeArgs has use-gl: [ '--use-angle=vulkan' ]"
+  ],
+  "apres": {
+   "t6-run1": "file://<pages>/t6-run1.html",
+   "runJ": "file://<pages>/runJ.html",
+   "cielv": "file://<pages>/cielv.html#shots"
+  }
+ },
+ "METAL_RENDER_ANGLE=vulkan (Spark)": {
+  "avant": {
+   "drapeauxGPU": [],
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "apres": {
+   "drapeauxGPU": [
+    "--use-gl=angle",
+    "--use-angle=vulkan"
+   ],
+   "origine": "METAL_RENDER_ANGLE",
+   "renderer": "ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)"
+  }
+ },
+ "--angle vulkan (Spark)": {
+  "avant": [
+   "--use-angle=vulkan"
+  ],
+  "apres": [
+   "--use-gl=angle",
+   "--use-angle=vulkan"
+  ],
+  "memesEmpreintes": true
+ },
+ "defaut (Spark)": {
+  "avant": [],
+  "apres": [],
+  "memesEmpreintes": true
+ },
+ "dossiersDInstanceRestantsDansTMPDIR (Spark)": {
+  "avant": {
+   "avant-ss": 4,
+   "avant-envvk": 4,
+   "avant-optvk": 4
+  },
+  "apres": {
+   "apres-ss-a": 0,
+   "apres-ss-b": 0,
+   "apres-envvk-a": 0,
+   "apres-envvk-b": 0,
+   "apres-optvk-a": 0,
+   "apres-optvk-b": 0,
+   "crp-ss": 0,
+   "crp-envvk": 0
+  }
+ },
+ "dossiersDInstanceNouveauxDansLeTemporaireDuSysteme (Mac, un auto-controle)": {
+  "avantR1": 4,
+  "apresR1b": 0,
+  "disparus": 0,
+  "totalDuDossier": 293,
+  "note": "dossier partagé avec les autres agents : seuls les nouveaux comptent ; R1 : self-check.mjs du worktree 3ca8016, R1b : arbre de travail",
+  "rapports": {
+   "avantR1": "rapports/mac-avant-self-check.json.gz",
+   "apresR1b": "rapports/mac-apres-self-check.json.gz"
+  }
+ },
+ "rapportsAvant": {
+  "avant-ss": {
+   "rapport": "rapports/spark-avant-ss.json.gz",
+   "controles": "55/55",
+   "drapeauxGPU": [],
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "empreintes": {
+    "legacy-1.5": "20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0",
+    "legacy-2.5": "e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64",
+    "scene3d": "b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393",
+    "scene3d-wide": "c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927",
+    "canvas2d": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+   },
+   "restesDansTMPDIR": [
+    "com.google.Chrome.0Sg4S4",
+    "com.google.Chrome.CLsgBK",
+    "com.google.Chrome.GAywTv",
+    "com.google.Chrome.y5bWEz"
+   ]
+  },
+  "avant-envvk": {
+   "rapport": "rapports/spark-avant-envvk.json.gz",
+   "controles": "55/55",
+   "drapeauxGPU": [],
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "empreintes": {
+    "legacy-1.5": "20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0",
+    "legacy-2.5": "e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64",
+    "scene3d": "b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393",
+    "scene3d-wide": "c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927",
+    "canvas2d": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+   },
+   "restesDansTMPDIR": [
+    "com.google.Chrome.AoYxdb",
+    "com.google.Chrome.G6UXtM",
+    "com.google.Chrome.KY7f2K",
+    "com.google.Chrome.SBDesG"
+   ]
+  },
+  "avant-optvk": {
+   "rapport": "rapports/spark-avant-optvk.json.gz",
+   "controles": "55/55",
+   "drapeauxGPU": [
+    "--use-angle=vulkan"
+   ],
+   "renderer": "ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)",
+   "empreintes": {
+    "legacy-1.5": "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4",
+    "legacy-2.5": "b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602",
+    "scene3d": "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb",
+    "scene3d-wide": "905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e",
+    "canvas2d": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+   },
+   "restesDansTMPDIR": [
+    "com.google.Chrome.5NReSo",
+    "com.google.Chrome.8B1vzF",
+    "com.google.Chrome.IWBhYe",
+    "com.google.Chrome.rFbDNT"
+   ]
+  }
+ }
+}

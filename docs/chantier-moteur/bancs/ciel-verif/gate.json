@@ -1,0 +1,108 @@
+{
+ "stats": {
+  "bruit3dMs": 36.7,
+  "compileMs": {
+   "old": 9.3,
+   "flat": 2.6,
+   "noise": 4.7,
+   "sky": 5.7,
+   "cloud": 9.4,
+   "blur": 3.7,
+   "comp": 7.8,
+   "direct": 14.6,
+   "compPlein": 10.4,
+   "oldNoRidge": 8.2,
+   "oldNoCloud": 4.6,
+   "compVig": 7.6,
+   "compRidge": 9.7,
+   "oldGated": 162.4,
+   "pts": 0
+  }
+ },
+ "bench": {
+  "2560x1440": {
+   "tangage35": {
+    "octetsDifferents": 0,
+    "actuelMs": 2.083,
+    "borneMs": 1.1,
+    "ecartMs": -0.5,
+    "p10": -1.217,
+    "p90": 0.1,
+    "ratio": 0.528
+   },
+   "tangage20": {
+    "octetsDifferents": 0,
+    "actuelMs": 1.983,
+    "borneMs": 1.267,
+    "ecartMs": -0.533,
+    "p10": -1.233,
+    "p90": 0.183,
+    "ratio": 0.639
+   },
+   "tangage0": {
+    "octetsDifferents": 0,
+    "actuelMs": 1.983,
+    "borneMs": 1.233,
+    "ecartMs": -0.65,
+    "p10": -1.35,
+    "p90": -0.017,
+    "ratio": 0.622
+   },
+   "tangage-20": {
+    "octetsDifferents": 0,
+    "actuelMs": 1.417,
+    "borneMs": 0.817,
+    "ecartMs": -0.5,
+    "p10": -1.3,
+    "p90": 0.05,
+    "ratio": 0.576
+   }
+  },
+  "1792x1008": {
+   "tangage35": {
+    "octetsDifferents": 0,
+    "actuelMs": 0.717,
+    "borneMs": 0.45,
+    "ecartMs": -0.25,
+    "p10": -0.833,
+    "p90": 0.433,
+    "ratio": 0.628
+   },
+   "tangage20": {
+    "octetsDifferents": 0,
+    "actuelMs": 0.65,
+    "borneMs": 0.417,
+    "ecartMs": -0.167,
+    "p10": -0.733,
+    "p90": 0.3,
+    "ratio": 0.641
+   },
+   "tangage0": {
+    "octetsDifferents": 0,
+    "actuelMs": 0.7,
+    "borneMs": 0.433,
+    "ecartMs": -0.267,
+    "p10": -1.083,
+    "p90": 0.317,
+    "ratio": 0.619
+   },
+   "tangage-20": {
+    "octetsDifferents": 0,
+    "actuelMs": 0.7,
+    "borneMs": 0.55,
+    "ecartMs": -0.183,
+    "p10": -0.967,
+    "p90": 0.517,
+    "ratio": 0.786
+   }
+  }
+ },
+ "errors": [],
+ "info": {
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+  "float": true,
+  "half": true,
+  "dpr": 1,
+  "max3d": 2048
+ }
+}

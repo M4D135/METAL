@@ -1,0 +1,86 @@
+{
+ "schema": "metal-r1b-empreintes-v1",
+ "chaine": "Mac — ANGLE Metal (défaut de la plateforme)",
+ "machine": "Mac M5, macOS (Darwin 27.2.0), arm64",
+ "node": "v24.18.0",
+ "plateformeNode": "darwin arm64",
+ "chrome": "Chrome/157.0.8103.39",
+ "chromePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+ "angle": "metal",
+ "origineDuMoteur": "platform",
+ "drapeauxGPU": [
+  "--use-angle=metal"
+ ],
+ "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+ "extensionsWebGL2": 36,
+ "requeteDeTempsGPU": true,
+ "navigateur": {
+  "architecture": "arm",
+  "bitness": "64",
+  "platform": "macOS",
+  "platformVersion": "27.2.1"
+ },
+ "ligneDeCommande": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=<profil jetable> --use-angle=metal --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe about:blank",
+ "empreintes": {
+  "legacy-1.5": {
+   "largeur": 320,
+   "hauteur": 200,
+   "sha256": "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5"
+  },
+  "legacy-2.5": {
+   "largeur": 320,
+   "hauteur": 200,
+   "sha256": "7c0df53b8feb70f0cf8493639cf4affa7330ac19fc0023fef0b33304891c92c7"
+  },
+  "scene3d": {
+   "largeur": 480,
+   "hauteur": 270,
+   "sha256": "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70"
+  },
+  "scene3d-wide": {
+   "largeur": 640,
+   "hauteur": 360,
+   "sha256": "c5209079995d072fb37406088cecd357b0413f76f643572f3ba4028808e48dc7"
+  },
+  "canvas2d": {
+   "largeur": 320,
+   "hauteur": 200,
+   "sha256": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+  }
+ },
+ "empreintesIdentiquesDansTousLesRapports": true,
+ "autoControles": [
+  {
+   "rapport": "rapports/mac-self-check-compare-r1.json.gz",
+   "controles": "57/57",
+   "ok": true,
+   "secondes": 4.752,
+   "compare": {
+    "avec": "self-check-a.json",
+    "differences": []
+   },
+   "socketsInternet": 0,
+   "profilsSupprimes": true
+  }
+ ],
+ "runPage": {
+  "rapport": "rapports/mac-check-run-page.json.gz",
+  "controles": "64/64",
+  "ok": true,
+  "empreintesDeLaSonde": {
+   "legacy-1.5": "2cbf4fa047cdb23c1359ce3f84d9605a15fc73cf08ab12c28dedafec0758eae5",
+   "legacy-2.5": "7c0df53b8feb70f0cf8493639cf4affa7330ac19fc0023fef0b33304891c92c7",
+   "scene3d": "0e200bdb21dc1167e083d9743af889537d538a9476a4eed0453067091f027e70",
+   "scene3d-wide": "c5209079995d072fb37406088cecd357b0413f76f643572f3ba4028808e48dc7",
+   "canvas2d": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+  },
+  "identiquesAuxAutoControles": true,
+  "dossierDInstanceApresChromeTue": {
+   "supprime": true
+  }
+ },
+ "compareAvecR1": {
+  "fichier": "docs/chantier-moteur/preuves/lot-00/r1/self-check-a.json",
+  "differences": []
+ }
+}

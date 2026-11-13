@@ -1,0 +1,80 @@
+Module entrées, T5 (étape 5 : invites et vibrations) — banc de départ, relevé le 13/11/2026 sur le Mac (Node v24.18.0, arm64)
+Base 71eca61 ; branche chantier/module-entrees, HEAD 6b4e98c (étape 4).
+« Avant » = 6b4e98c, extrait dans un worktree à part (git worktree add --detach, retiré après les mesures).
+« Après » = l'arbre de travail livré par ce commit (src/input.js : 16 253 octets, sha256 40c4cdfc34f402ab1f7f05a172f40ad237ee16df4f1d08ab8cdd4f4a6bddf02f).
+
+1. Inventaire du plan (relevé, pas une mesure) :
+   git grep -n -o -E "FOptions\.keyName\([^)]*\)|clic droit[^'\"<]{0,40}|Espace[^'\"<]{0,30}" -- src/game.js src/index.html
+   src/game.js:130:FOptions.keyName(prefs.bindings.interact[0])
+   src/game.js:262:clic droit : garde. Le premier boss laisse le doub
+   src/game.js:326:clic droit : garde · Espace : frappe
+   src/game.js:711:FOptions.keyName(prefs.bindings['weapon'+(i+1)
+   src/game.js:715:FOptions.keyName(prefs.bindings.leftHand[0])
+   src/game.js:719:FOptions.keyName(prefs.bindings.melee[0])
+   src/game.js:720:FOptions.keyName(prefs.bindings.dash[0])
+   src/game.js:720:FOptions.keyName(prefs.bindings.dash[0])
+   src/game.js:721:FOptions.keyName(prefs.bindings.pulse[0])
+   src/game.js:920:FOptions.keyName(e.code)
+   src/index.html:52:Espace : esquiver · Maj : courir
+   → 11 occurrences sur 10 lignes. 8 libellés viennent de FOptions.keyName (lignes 130, 711, 715, 719, 720 deux fois, 721
+     et 920), toujours en noms QWERTY. 3 textes sont figés (game.js:262 et 326, index.html:52) : ils écrivent « clic droit »,
+     « Espace » ou « Maj », quels que soient l'appareil et la touche affectée (FEEL-11).
+
+2. API de l'étape 5 avant et après. La sonde charge src/input.js puis src/options.js dans le domaine principal de Node.
+   (new Function, pas node:vm)
+   == avant (6b4e98c)
+   FInput.glyph('A','ps')                               → undefined
+   FInput.glyph('Back','xbox')                          → undefined
+   FInput.guessDevice({matchMedia: coarse})             → undefined
+   typeof instance.keyLabel                             → "undefined"
+   typeof instance.setLayout                            → "undefined"
+   typeof instance.label                                → "undefined"
+   typeof instance.rumble                               → "undefined"
+   instance.keyDown('KeyW',0,false,'z')                 → true
+   FOptions.keyName('KeyM') (AZERTY : la touche lit « , ») → "M"
+   FOptions.keyName('KeyW') (AZERTY : « Z »)            → "W"
+   FOptions.keyName('KeyQ') (AZERTY : « A »)            → "Q"
+   == après
+   FInput.glyph('A','ps')                               → "✕"
+   FInput.glyph('Back','xbox')                          → "Vue"
+   FInput.guessDevice({matchMedia: coarse})             → "touch"
+   typeof instance.keyLabel                             → "function"
+   typeof instance.setLayout                            → "function"
+   typeof instance.label                                → "function"
+   typeof instance.rumble                               → "function"
+   instance.keyDown('KeyW',0,false,'z')                 → true
+   FOptions.keyName('KeyM') (AZERTY : la touche lit « , ») → "M"
+   FOptions.keyName('KeyW') (AZERTY : « Z »)            → "W"
+   FOptions.keyName('KeyQ') (AZERTY : « A »)            → "Q"
+   Avant, glyph et guessDevice sont des souches vides (src/input.js:72 et 114 à 6b4e98c). L'instance n'a ni keyLabel,
+   ni setLayout, ni label, ni rumble, et keyDown ignore son 4e argument (key). FOptions.keyName rend le nom QWERTY du
+   code : sur un clavier AZERTY, KeyM s'affiche « M » alors que la touche porte « , », et KeyW « W » au lieu de « Z » (FEEL-11).
+   FEEL-10 : aucune vibration à 6b4e98c, ni dans le jeu ni dans le module :
+   git grep -c -E "vibrationActuator|playEffect|vibrate\(" 6b4e98c -- src → aucune ligne (code de sortie 1).
+   TACT-08 : game.js:5 calcule une fois pour toutes
+   « matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>1||…get('touch')==='1' ».
+   Même machine, deux règles (fenêtres simulées : pointer et hover rendus par matchMedia, maxTouchPoints par navigator) :
+     PC à écran tactile (pointer fine, hover, maxTouchPoints 10) : game.js:5 → true ; FInput.guessDevice → 'keyboard'
+     téléphone (pointer coarse, maxTouchPoints 5)               : game.js:5 → true ; FInput.guessDevice → 'touch'
+   Le branchement de guessDevice à la place de game.js:5 est décrit au §4.3 du document ; le jeu reste inchangé.
+
+3. Tests de l'étape 5 contre le module d'avant. Une copie temporaire réunit les checks/finput*.mjs de ce commit
+   et les src/input.js et src/options.js de 6b4e98c ; on y lance node --test checks/finput.test.mjs :
+   ℹ tests 54
+   ℹ pass 47
+   ℹ fail 7
+   Les 7 échecs sont exactement les 7 tests ajoutés, chacun pour la raison attendue (première ligne d'erreur) :
+   E39 : TypeError: inp.keyLabel is not a function
+   E39b : TypeError: inp.keyLabel is not a function
+   E40 : TypeError: inp.label is not a function
+   E40b : AssertionError [ERR_ASSERTION]: xbox
+   E41 : AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+   E42 : TypeError: inp.rumble is not a function
+   E42b : TypeError: inp.rumble is not a function
+   (E40b : glyph rend undefined au lieu de « A » ; E41 : guessDevice rend undefined au lieu de « touch ».)
+   Les 47 autres, dont E38 (FInput.keyName = FOptions.keyName pour les 14 codes), passaient déjà.
+   node --test checks/options.test.mjs : 13 réussis sur 13 (référence de E38, inchangée).
+
+4. Taille du module avant : 16 681 octets (gzip -9 : 6 961),
+   sha256 85646fff784f734db9b635f39f75fce1db542fd0a4532e1cc4b6d91beefc9fd0. Plafond de E02 : 18 000 octets.
+   Il restait donc 1 319 octets pour les étapes 5 à 7.

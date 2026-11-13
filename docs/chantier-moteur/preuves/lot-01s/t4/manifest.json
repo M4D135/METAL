@@ -1,0 +1,158 @@
+{
+ "schema": "metal-lot01s-t4-manifest-v1",
+ "task": "Lot 01 suite / T4 — Empreintes dorées des 108 mondes de campagne (MURS-V1, MURS-06)",
+ "base": {
+  "commit": "0d529ac",
+  "measurementBase": "0d529ac : arbre propre pour les bancs « avant », git archive 0d529ac pour le côté avant des témoins ; git show 71eca61:src/world.js pour le cas write-pre-t2 (world.js d’avant T2)"
+ },
+ "fixture": {
+  "file": "checks/campaign-world-digests.json",
+  "bytes": 8705,
+  "sha256": "9618b8e289e7cb39d508aa89e52696537a4e8e0f85b8117bed8fdd0f6d2ef92d",
+  "command": "node tools/platform-math.mjs worlds . --fixture write"
+ },
+ "encoding": "JSON en UTF-8 ; TAP en texte ; journaux en gzip (niveau 9, sans nom ni date)",
+ "pathNormalization": {
+  "note": "After measurement, the root field of the worlds outputs (worlds.json, worlds-before.json) was rewritten; no other byte was changed. The other tools of this folder write $W for their work directory; the TAP files and the npm test logs contained no machine path.",
+  "replaced": {
+   "<Mac home>/claude/metal-chantier/": "~/claude/metal-chantier/",
+   "<Spark home>/metal-tests/": "~/metal-tests/"
+  }
+ },
+ "environments": {
+  "mac": {
+   "machine": "Apple M5",
+   "os": "macOS 27.2.1 (Darwin 27.2.0)",
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "arch": "arm64",
+   "chrome": "157.0.8103.39",
+   "jsc": "system JavaScriptCore"
+  },
+  "spark": {
+   "machine": "NVIDIA GB10",
+   "os": "Linux 6.17.0-1026-nvidia",
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "arch": "arm64",
+   "chrome": "151.0.7922.137",
+   "jsc": null
+  }
+ },
+ "files": [
+  {
+   "file": "PROOF.md",
+   "purpose": "Preuve lisible de la tâche T4",
+   "bytes": 12392,
+   "sha256": "cd67a91d814a1b0aae80b175a123f01d434c04d6c90fca712dc3a49199b4f308"
+  },
+  {
+   "file": "sensitivity.mjs",
+   "purpose": "Outil de preuve : témoins de sensibilité dans des copies jetables (champ V2, champ V1, Math du moteur), avant et après T4",
+   "bytes": 7829,
+   "sha256": "090b3641c484ba08a1a5966463e48879cad18136e9aebc7ba75642a1ff9fbdac"
+  },
+  {
+   "file": "engines-fixture.mjs",
+   "purpose": "Outil de preuve : les 114 mondes dans Chrome (dist/index.html, file://) et dans jsc, comparés au fichier et à legacyHashes",
+   "bytes": 7050,
+   "sha256": "7abd07de8d79b07e18b8bc64020a836b09e12ec6771fa46fc78f54ee53b8f0e0"
+  },
+  {
+   "file": "fixture-guards.mjs",
+   "purpose": "Outil de preuve : refus de worlds --fixture write et réécriture octet pour octet",
+   "bytes": 6395,
+   "sha256": "d2e4b2590c626a537946b01cc5e5fdcf58f2d85b66e0814796015bb9b9f4e71c"
+  },
+  {
+   "file": "digest-cost.mjs",
+   "purpose": "Outil de preuve : coût des 108 digest() ajoutés au test, en node:vm et dans le domaine principal",
+   "bytes": 3709,
+   "sha256": "52fe0c65475d152aca491fe6a4d690db9eca0cc6fdb6bb3aec9bd2379cc1b9e2"
+  },
+  {
+   "file": "mac/bench1-before.tap",
+   "purpose": "Banc 1 avant (0d529ac) : 37 tests, 37 réussis, 69,2 s",
+   "bytes": 8437,
+   "sha256": "10ebd169c6d925e6b29dffc16886ab8877729796da0de6a9750e630b5e28456c"
+  },
+  {
+   "file": "mac/bench1-after.tap",
+   "purpose": "Banc 1 après : 37 tests, 37 réussis, 70,2 s",
+   "bytes": 8430,
+   "sha256": "5ef56bc223382acd7c3c9006d0b000ec065a22880db3c7d525ac2f59c5a6deaa"
+  },
+  {
+   "file": "mac/worlds-before.json",
+   "purpose": "Banc 2 avant (outil de T3) : 114 empreintes, a207bc03…",
+   "bytes": 16000,
+   "sha256": "dbf2119f3093ff845acd0036c7234201f4721baec74932b4f348321418077185"
+  },
+  {
+   "file": "mac/worlds.json",
+   "purpose": "worlds --fixture check : 114 empreintes (a207bc03…), 108/108 égales au fichier, legacyHashes 6/6",
+   "bytes": 16287,
+   "sha256": "7c84218c44d78d51d929b8b27dbc1fd83ee578b2018483883368b47763dcf285"
+  },
+  {
+   "file": "mac/engines-fixture.json",
+   "purpose": "Chrome 157 (dist/index.html) et jsc : 108/108 égales au fichier, 6/6 classiques",
+   "bytes": 38480,
+   "sha256": "9bd9a0377cac81c81ed93e1ccc0910a0d7d7cc1926a6b4c448e391e4c5a32341"
+  },
+  {
+   "file": "mac/fixture-guards.json",
+   "purpose": "Six cas de worlds --fixture : tous conformes",
+   "bytes": 2687,
+   "sha256": "bba7fa78dcf1a10287b1340edc6345b8f9911acfdb1339e056c6cddcccf7a5a4"
+  },
+  {
+   "file": "mac/sensitivity.json",
+   "purpose": "Témoins avant/après : V2 46/46 → 28/46, V1 45/46 → 26/46, Math du moteur 38/46 → 1/46",
+   "bytes": 24705,
+   "sha256": "4114f80e993c4c3f8fbecddaaedd434c473b381de2901b7820933325d25a087f"
+  },
+  {
+   "file": "mac/digest-cost.json",
+   "purpose": "Coût des 108 digest() : 1 722 ms de CPU en node:vm, 1 592 ms dans le domaine principal",
+   "bytes": 844,
+   "sha256": "ec42f57a15a93de3fdd487ad932f4233bff0ececb98ec4aa10644d73bb857ea7"
+  },
+  {
+   "file": "mac/npm-test.log.gz",
+   "purpose": "npm test après T4 : 485 tests, 485 réussis, build.test PASS",
+   "bytes": 27226,
+   "sha256": "d05bbeeb47b8b93dfb294668141c85c489cf1c421f373b0f88ed80272e99bc20"
+  },
+  {
+   "file": "spark/worlds.json",
+   "purpose": "worlds --fixture check : 114 empreintes égales au Mac, 108/108 égales au fichier, legacyHashes 6/6",
+   "bytes": 16286,
+   "sha256": "ac0eab3b59e83204f25ebaf8708823d65b717ba453efd17cff4c00befd225b65"
+  },
+  {
+   "file": "spark/engines-fixture.json",
+   "purpose": "Chrome 151 (dist/index.html) : 108/108 égales au fichier, 6/6 classiques (pas de jsc)",
+   "bytes": 19446,
+   "sha256": "031ffff975ec82a52181fcc2ce18393af18626d51ef0b92f204398aa2f8252ac"
+  },
+  {
+   "file": "spark/fixture-guards.json",
+   "purpose": "Six cas de worlds --fixture : tous conformes",
+   "bytes": 2677,
+   "sha256": "951f13ddf0e0ce3fd233bd3595f817635e526c5a1a4c293513b4e2d900fcc8fa"
+  },
+  {
+   "file": "spark/sensitivity.json",
+   "purpose": "Témoins avant/après, identiques au Mac",
+   "bytes": 24729,
+   "sha256": "9a0d8420acf678aee961e5430edd66f467d752624da1f9cff39cefbed4ede22c"
+  },
+  {
+   "file": "spark/npm-test.log.gz",
+   "purpose": "npm test après T4 : 485 tests, 485 réussis, build.test PASS",
+   "bytes": 27579,
+   "sha256": "01cc23696a2d1a6b48a52a9a6981f7f305a543e39b8e46bb3f488374376cc7bf"
+  }
+ ]
+}

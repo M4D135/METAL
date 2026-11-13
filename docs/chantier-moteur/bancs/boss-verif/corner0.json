@@ -1,0 +1,84 @@
+{
+ "index": 0,
+ "kind": "colossus",
+ "policy": "corner",
+ "shield": false,
+ "seed": "96",
+ "simSeconds": 120,
+ "perf": {
+  "steps": 7200,
+  "avg": 0.176,
+  "p50": 0.13,
+  "p95": 0.5,
+  "p99": 0.827,
+  "max": 5.17,
+  "over4": 1,
+  "over8": 0,
+  "over16": 0
+ },
+ "topSpikes": [],
+ "fight": {
+  "attacks": {
+   "ring": 1
+  },
+  "hitsTaken": {
+   "ring": 1
+  },
+  "damageTaken": {
+   "ring": 20.9
+  },
+  "shieldAbsorbed": 0,
+  "armorStart": 0,
+  "dmgBody": 108,
+  "dmgWeak": 34.6,
+  "openTime": 3.02,
+  "phaseAt": [],
+  "awakeAt": null,
+  "deathAt": null,
+  "guardsReleasedAt": [],
+  "shots": 309,
+  "hpMin": 79.1,
+  "playerDeadAt": null,
+  "outOfCircle": 113.6,
+  "bossMoves": 0.9,
+  "nav": {
+   "revisions": 1,
+   "pumpSteps": 49,
+   "breaks": {
+    "solid-#": 1,
+    "decor-room-#:#,#,-#:dressing": 1
+   },
+   "maxDebris": 18,
+   "structural": 14,
+   "navCells": 37114,
+   "lastRevision": 1,
+   "revAt": [
+    10.97
+   ]
+  },
+  "hitLog": [
+   {
+    "t": 4.98,
+    "kind": "ring",
+    "lost": 20.9,
+    "d": 18.5,
+    "fromCentre": 18,
+    "shield": null,
+    "dashing": false
+   }
+  ],
+  "bossHpLeft": 457.4,
+  "bossMaxHp": 600,
+  "bossPhase": 0,
+  "playerHp": 100,
+  "armor": 0,
+  "ammo": [
+   0,
+   0,
+   0,
+   0,
+   1
+  ],
+  "heat": 0.9
+ }
+}

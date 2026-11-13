@@ -1,0 +1,56 @@
+# 2026-11-13 10:12, Mac, v24.18.0, charge 5.47 4.63 3.92
+$ node tools/physics-bench.mjs --out docs/chantier-moteur/preuves/module-physique/E2b/bench.json
+FPhysics, banc du module (contre le prototype bancs/phys/fphys.mjs) ; 5 répétitions alternées, minimum par sous-pas
+Node v24.18.0, Apple M5, 10 cœurs ; charge au départ 5.47 4.63 3.92
+
+stack10 (1200 sous-pas)
+  module     : 103 sous-pas actifs | µs/sous-pas médiane 30.3 moyenne 30.5 p95 35.5 max 36.1 | total 4.1 ms | 3.08 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  prototype  : 103 sous-pas actifs | µs/sous-pas médiane 42.5 moyenne 42.1 p95 48.5 max 49.9 | total 5.5 ms | 4.21 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 9 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage fb79204a
+  module/prototype : moyenne ×0.73, médiane ×0.71, total ×0.75 (médiane des 5 rapports appariés ×0.73)
+
+pyramid55 (1200 sous-pas)
+  module     : 67 sous-pas actifs | µs/sous-pas médiane 359.3 moyenne 346.1 p95 414.7 max 511.5 | total 32.5 ms | 6.39 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  prototype  : 72 sous-pas actifs | µs/sous-pas médiane 271.7 moyenne 286.6 p95 431.3 max 439.4 | total 29.1 ms | 5.21 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 135 tests | tout dort à la fin du sous-pas 92 (0.77 s) | hachage 6d172292
+  module/prototype : moyenne ×1.21, médiane ×1.32, total ×1.12 (médiane des 5 rapports appariés ×1.45)
+
+rubble300 (1800 sous-pas)
+  module     : 567 sous-pas actifs | µs/sous-pas médiane 1156.7 moyenne 1053.6 p95 1447.0 max 1706.0 | total 603.6 ms | 3.67 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  prototype  : 1412 sous-pas actifs | µs/sous-pas médiane 1011.8 moyenne 1011.7 p95 1363.6 max 1594.8 | total 1432.4 ms | 3.50 µs par corps éveillé | pics 300 éveillés, 1590 points, 670 paires, 1160 tests | tout dort à la fin du sous-pas 1432 (11.93 s) | hachage 5bc16ddf
+  module/prototype : moyenne ×1.04, médiane ×1.14, total ×0.42 (médiane des 5 rapports appariés ×0.40)
+
+blast200 (1500 sous-pas, souffle avant le sous-pas 240)
+  module     : 593 sous-pas actifs | µs/sous-pas médiane 319.9 moyenne 280.8 p95 541.5 max 639.8 | total 178.7 ms | 2.25 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  prototype  : 656 sous-pas actifs | µs/sous-pas médiane 255.4 moyenne 225.8 p95 392.5 max 511.2 | total 155.5 ms | 1.89 µs par corps éveillé | pics 200 éveillés, 813 points, 312 paires, 317 tests | tout dort à la fin du sous-pas 849 (7.08 s) | hachage 3fa55997
+  module/prototype : moyenne ×1.24, médiane ×1.25, total ×1.15 (médiane des 5 rapports appariés ×0.97)
+
+charge à la fin 6.25 4.84 4.01
+écrit : docs/chantier-moteur/preuves/module-physique/E2b/bench.json
+
+# ---- deuxième passe, même commande, JSON dans bench-passe2.json ----
+# 2026-11-13 10:15, Mac, v24.18.0, charge 6.50 5.32 4.34
+$ node tools/physics-bench.mjs --out docs/chantier-moteur/preuves/module-physique/E2b/bench-passe2.json
+FPhysics, banc du module (contre le prototype bancs/phys/fphys.mjs) ; 5 répétitions alternées, minimum par sous-pas
+Node v24.18.0, Apple M5, 10 cœurs ; charge au départ 6.50 5.32 4.34
+
+stack10 (1200 sous-pas)
+  module     : 103 sous-pas actifs | µs/sous-pas médiane 22.8 moyenne 23.0 p95 24.7 max 25.9 | total 3.0 ms | 2.33 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  prototype  : 103 sous-pas actifs | µs/sous-pas médiane 34.5 moyenne 33.9 p95 36.5 max 38.5 | total 4.4 ms | 3.39 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 9 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage fb79204a
+  module/prototype : moyenne ×0.68, médiane ×0.66, total ×0.69 (médiane des 5 rapports appariés ×0.69)
+
+pyramid55 (1200 sous-pas)
+  module     : 67 sous-pas actifs | µs/sous-pas médiane 260.3 moyenne 261.8 p95 282.7 max 288.5 | total 23.8 ms | 4.83 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  prototype  : 72 sous-pas actifs | µs/sous-pas médiane 266.6 moyenne 267.3 p95 288.5 max 297.4 | total 25.6 ms | 4.86 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 135 tests | tout dort à la fin du sous-pas 92 (0.77 s) | hachage 6d172292
+  module/prototype : moyenne ×0.98, médiane ×0.98, total ×0.93 (médiane des 5 rapports appariés ×1.02)
+
+rubble300 (1800 sous-pas)
+  module     : 567 sous-pas actifs | µs/sous-pas médiane 1078.6 moyenne 969.9 p95 1221.1 max 1258.0 | total 555.2 ms | 3.37 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  prototype  : 1412 sous-pas actifs | µs/sous-pas médiane 905.2 moyenne 894.2 p95 1046.7 max 1150.0 | total 1265.8 ms | 3.10 µs par corps éveillé | pics 300 éveillés, 1590 points, 670 paires, 1160 tests | tout dort à la fin du sous-pas 1432 (11.93 s) | hachage 5bc16ddf
+  module/prototype : moyenne ×1.08, médiane ×1.19, total ×0.44 (médiane des 5 rapports appariés ×0.42)
+
+blast200 (1500 sous-pas, souffle avant le sous-pas 240)
+  module     : 593 sous-pas actifs | µs/sous-pas médiane 384.7 moyenne 326.2 p95 572.4 max 593.4 | total 203.6 ms | 2.62 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  prototype  : 656 sous-pas actifs | µs/sous-pas médiane 308.1 moyenne 268.5 p95 496.3 max 537.0 | total 185.5 ms | 2.25 µs par corps éveillé | pics 200 éveillés, 813 points, 312 paires, 317 tests | tout dort à la fin du sous-pas 849 (7.08 s) | hachage 3fa55997
+  module/prototype : moyenne ×1.21, médiane ×1.25, total ×1.10 (médiane des 5 rapports appariés ×1.11)
+
+charge à la fin 6.65 5.41 4.39
+écrit : docs/chantier-moteur/preuves/module-physique/E2b/bench-passe2.json

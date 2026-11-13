@@ -49,7 +49,7 @@ test('Every permitted frame delta retains a bounded step and all elapsed time', 
 
 test('A 17.7 ms simulation step still stops sprint and dash at a thin wall', () => {
   const context = vm.createContext({window: {}});
-  for (const name of ['renderer', 'world', 'destruction', 'economy', 'simulation']) {
+  for (const name of ['fmath', 'renderer', 'world', 'destruction', 'economy', 'simulation']) {
     vm.runInContext(readFileSync(new URL('../src/' + name + '.js', import.meta.url), 'utf8'), context, {filename: name + '.js'});
   }
   const sim = context.window.FSimulation.create({

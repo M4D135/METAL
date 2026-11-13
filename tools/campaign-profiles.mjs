@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import {loadRealm} from './realm-loader.mjs';
+import {loadRealm,defaultModules} from './realm-loader.mjs';
 import {parseToolArgs} from './proof/common.mjs';
 import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
@@ -7,7 +7,8 @@ import crypto from 'node:crypto';
 
 const {root:rootPath,output} = parseToolArgs(process.argv.slice(2));
 const root = pathToFileURL(rootPath + '/');
-const modules = ['renderer','world','destruction','economy','simulation'];
+// fmath loads before world when the root has it (lot 01 suite T2); an older root keeps its list.
+const modules = [...defaultModules(rootPath).filter(name=>name==='fmath'),'renderer','world','destruction','economy','simulation'];
 const sources = Object.fromEntries(modules.map(name=>[name,'src/'+name+'.js']));
 const loaded = loadRealm({root:rootPath,modules});
 const hashes = loaded.sourceSha256;

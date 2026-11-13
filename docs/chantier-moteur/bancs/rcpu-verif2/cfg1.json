@@ -1,0 +1,10 @@
+{"name":"rcpu-verif2-1","dpr":2,"cssW":1440,"cssH":932,"prefs":{"quality":"auto","shadows":true,"bloom":true},
+ "warmFrames":420,"measureFrames":360,"skip":10,"reps":2,"compareEvery":12,"compareRef":"base",
+ "variants":[
+  {"id":"base","code":"base"},
+  {"id":"cache","code":"cache","compare":true},
+  {"id":"exact","code":"exact","compare":true},
+  {"id":"pool","code":"pool","compare":true},
+  {"id":"grid","code":"grid","compare":true},
+  {"id":"sun","code":"sun","compare":true},
+  {"id":"all","code":"all","compare":true}]}

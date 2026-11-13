@@ -1,0 +1,159 @@
+{
+ "label": "proto",
+ "M1": {
+  "pasDeTir": 379,
+  "pasDeTirAvecVisee": 238,
+  "partVisee": 62.8,
+  "lacetPendantTirDeg": 0.72,
+  "tangageDeg": 0.15,
+  "tirs": 13,
+  "glisserDuPoucePx": "±60 px horizontaux, ±25 px verticaux pendant 4 s"
+ },
+ "M2": [
+  {
+   "vitessePxS": 600,
+   "coursePx": 210,
+   "repriseMs": 120,
+   "demiTourMs": 1600
+  },
+  {
+   "vitessePxS": 1200,
+   "coursePx": 210,
+   "repriseMs": 120,
+   "demiTourMs": 467
+  },
+  {
+   "vitessePxS": 2400,
+   "coursePx": 210,
+   "repriseMs": 120,
+   "demiTourMs": 233
+  }
+ ],
+ "M3": {
+  "tactileManchePleinMs": 5.4,
+  "clavierCourseMs": 7.6,
+  "ecartPct": 28.9,
+  "tactileMancheAuDelaDuBordMs": 7.6,
+  "sprintVuParLaSim": true
+ },
+ "M4": [
+  {
+   "imageMs": 16.7,
+   "appuiMs": 30,
+   "appuis": 150,
+   "tirs": 150,
+   "perdusPct": 0
+  },
+  {
+   "imageMs": 16.7,
+   "appuiMs": 60,
+   "appuis": 150,
+   "tirs": 150,
+   "perdusPct": 0
+  },
+  {
+   "imageMs": 16.7,
+   "appuiMs": 100,
+   "appuis": 150,
+   "tirs": 150,
+   "perdusPct": 0
+  },
+  {
+   "imageMs": 33.3,
+   "appuiMs": 30,
+   "appuis": 150,
+   "tirs": 150,
+   "perdusPct": 0
+  },
+  {
+   "imageMs": 33.3,
+   "appuiMs": 60,
+   "appuis": 150,
+   "tirs": 150,
+   "perdusPct": 0
+  },
+  {
+   "imageMs": 33.3,
+   "appuiMs": 100,
+   "appuis": 150,
+   "tirs": 150,
+   "perdusPct": 0
+  },
+  {
+   "imageMs": 50,
+   "appuiMs": 40,
+   "appuis": 150,
+   "tirs": 150,
+   "perdusPct": 0
+  },
+  {
+   "imageMs": 50,
+   "appuiMs": 60,
+   "appuis": 150,
+   "tirs": 150,
+   "perdusPct": 0
+  },
+  {
+   "imageMs": 50,
+   "appuiMs": 100,
+   "appuis": 150,
+   "tirs": 150,
+   "perdusPct": 0
+  }
+ ],
+ "M5": {
+  "appuiAuBordDeLaZone": {
+   "moveX": 0,
+   "amplitude": 0
+  },
+  "tremblement3px": {
+   "amplitude": 0,
+   "vitesseMs": 0
+  },
+  "deplace17px": 0.209,
+  "deplace28px": 0.432,
+  "pleineCourse": [
+   {
+    "moveX": 0,
+    "moveY": 0.8782467532467533,
+    "amplitude": 0.8782467532467533,
+    "exact1": false
+   },
+   {
+    "moveX": 0.6138036207472889,
+    "moveY": 0.6138036207472889,
+    "amplitude": 0.8680494050945277,
+    "exact1": false
+   },
+   {
+    "moveX": 0.8782467532467533,
+    "moveY": 0,
+    "amplitude": 0.8782467532467533,
+    "exact1": false
+   },
+   {
+    "moveX": 0.22744605749801103,
+    "moveY": 0.8223049771081938,
+    "amplitude": 0.8531806282659584,
+    "exact1": false
+   },
+   {
+    "moveX": -0.5097288367976431,
+    "moveY": -0.7206511140932198,
+    "amplitude": 0.8827012605105292,
+    "exact1": false
+   }
+  ]
+ },
+ "M6": {
+  "apres30pxDeg": 22,
+  "apres2eDoigtPuis60pxDeg": 66,
+  "apresLeverDu2eDoigtPuis60pxDeg": 110.01,
+  "attenduSansVolDeg": 34.38
+ },
+ "M7": {
+  "deplacement": true,
+  "visee": false,
+  "partDeLaBandeGaucheUtilePct": 8.8
+ }
+}

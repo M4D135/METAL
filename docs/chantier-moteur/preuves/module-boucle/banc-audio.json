@@ -1,0 +1,343 @@
+{
+  "schema": "boucle-banc-audio-v1",
+  "node": "v24.18.0",
+  "arch": "arm64",
+  "platform": "darwin",
+  "cpu": "Apple M5",
+  "loadavg": [
+    1.875,
+    3.5537,
+    3.7749
+  ],
+  "loadavgEnd": [
+    1.875,
+    3.5537,
+    3.7749
+  ],
+  "cores": 10,
+  "seconds": 0.8598,
+  "realm": "main",
+  "clock": "process.threadCpuUsage(), user + system, en ms (temps CPU du fil) ; aussi l'horloge now de FSchedule",
+  "repetitions": 5,
+  "order": "A puis B aux répétitions 1, 3 et 5 ; B puis A aux répétitions 2 et 4",
+  "sources": {
+    "audio": {
+      "bytes": 47822,
+      "sha256": "4b36fde20d003c7a785c05f1315cd568d309dd08dd6bdc30ec2283bdbe452b6d"
+    },
+    "music": {
+      "bytes": 26522,
+      "sha256": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74"
+    },
+    "schedule": {
+      "bytes": 4221,
+      "sha256": "48a8b7cf0bba9a54ef6cff896110a654195b05606392c2d74ef3a3691edf9d12"
+    }
+  },
+  "bank": {
+    "names": 34,
+    "buffers": 64,
+    "motorNames": 4,
+    "sampleRate": 22050,
+    "samples": 473216,
+    "pcmBytes": 1892864,
+    "pcmSha256": "12eb48d9f0ca0e7da0228390f3ce4c9142a9ca20c725e2dd9ddbc9f370f3d50e",
+    "warmupMs": 108.226,
+    "constructions": 11
+  },
+  "protocol": {
+    "warmup": "FAudio.synthesize(nom, variante, 22050) sur chacun des tampons, une fois ; ce PCM sert de référence",
+    "A": "lots de 2 noms de FAudio.effectNames, avec toutes leurs variantes (comme warmBank) ; une tranche chronométrée par lot",
+    "B": "FSchedule.create({now}) ; une tâche « image » par tampon (clé 'pcm:'+nom+':'+variante, priorité 6, coût 2) ; while (S.count('frame')) tranches.push(S.pump(4))",
+    "pcm": "sha256 des Float32Array des tampons, dans l'ordre canonique, comparé à celui de la chauffe pour chaque construction"
+  },
+  "limitMs": 32,
+  "runs": [
+    {
+      "rep": 1,
+      "order": "A puis B",
+      "A": {
+        "slices": 17,
+        "longestMs": 18.903,
+        "medianMs": 2.379,
+        "totalMs": 80.134,
+        "over4": 6,
+        "over8": 4,
+        "over16_7": 2,
+        "over32": 0
+      },
+      "B": {
+        "slices": 19,
+        "longestMs": 9.996,
+        "medianMs": 2.752,
+        "totalMs": 78.92,
+        "over4": 6,
+        "over8": 3,
+        "over16_7": 0,
+        "over32": 0,
+        "longestTaskMs": 9.992,
+        "longestTask": {
+          "name": "break:metal",
+          "variant": 0
+        },
+        "ran": 64,
+        "skipped": 406,
+        "overrunMs": 21.416,
+        "errors": 0
+      },
+      "longestRatio": 0.5288,
+      "totalRatio": 0.9849,
+      "pcmIdentical": true
+    },
+    {
+      "rep": 2,
+      "order": "B puis A",
+      "A": {
+        "slices": 17,
+        "longestMs": 18.024,
+        "medianMs": 2.207,
+        "totalMs": 72.401,
+        "over4": 6,
+        "over8": 2,
+        "over16_7": 1,
+        "over32": 0
+      },
+      "B": {
+        "slices": 17,
+        "longestMs": 9.731,
+        "medianMs": 3.641,
+        "totalMs": 73.656,
+        "over4": 6,
+        "over8": 3,
+        "over16_7": 0,
+        "over32": 0,
+        "longestTaskMs": 8.378,
+        "longestTask": {
+          "name": "break:glass",
+          "variant": 0
+        },
+        "ran": 64,
+        "skipped": 306,
+        "overrunMs": 21.248,
+        "errors": 0
+      },
+      "longestRatio": 0.5399,
+      "totalRatio": 1.0173,
+      "pcmIdentical": true
+    },
+    {
+      "rep": 3,
+      "order": "A puis B",
+      "A": {
+        "slices": 17,
+        "longestMs": 18.119,
+        "medianMs": 2.231,
+        "totalMs": 72.773,
+        "over4": 6,
+        "over8": 2,
+        "over16_7": 1,
+        "over32": 0
+      },
+      "B": {
+        "slices": 17,
+        "longestMs": 9.728,
+        "medianMs": 3.61,
+        "totalMs": 72.98,
+        "over4": 6,
+        "over8": 3,
+        "over16_7": 0,
+        "over32": 0,
+        "longestTaskMs": 8.41,
+        "longestTask": {
+          "name": "break:glass",
+          "variant": 1
+        },
+        "ran": 64,
+        "skipped": 306,
+        "overrunMs": 20.667,
+        "errors": 0
+      },
+      "longestRatio": 0.5369,
+      "totalRatio": 1.0028,
+      "pcmIdentical": true
+    },
+    {
+      "rep": 4,
+      "order": "B puis A",
+      "A": {
+        "slices": 17,
+        "longestMs": 18.059,
+        "medianMs": 2.212,
+        "totalMs": 72.841,
+        "over4": 6,
+        "over8": 2,
+        "over16_7": 2,
+        "over32": 0
+      },
+      "B": {
+        "slices": 18,
+        "longestMs": 9.838,
+        "medianMs": 2.318,
+        "totalMs": 72.941,
+        "over4": 6,
+        "over8": 3,
+        "over16_7": 0,
+        "over32": 0,
+        "longestTaskMs": 8.474,
+        "longestTask": {
+          "name": "break:glass",
+          "variant": 0
+        },
+        "ran": 64,
+        "skipped": 320,
+        "overrunMs": 20.833,
+        "errors": 0
+      },
+      "longestRatio": 0.5448,
+      "totalRatio": 1.0014,
+      "pcmIdentical": true
+    },
+    {
+      "rep": 5,
+      "order": "A puis B",
+      "A": {
+        "slices": 17,
+        "longestMs": 18.046,
+        "medianMs": 2.24,
+        "totalMs": 72.623,
+        "over4": 6,
+        "over8": 2,
+        "over16_7": 2,
+        "over32": 0
+      },
+      "B": {
+        "slices": 17,
+        "longestMs": 9.792,
+        "medianMs": 3.639,
+        "totalMs": 72.549,
+        "over4": 6,
+        "over8": 3,
+        "over16_7": 0,
+        "over32": 0,
+        "longestTaskMs": 8.429,
+        "longestTask": {
+          "name": "break:glass",
+          "variant": 0
+        },
+        "ran": 64,
+        "skipped": 306,
+        "overrunMs": 20.442,
+        "errors": 0
+      },
+      "longestRatio": 0.5426,
+      "totalRatio": 0.999,
+      "pcmIdentical": true
+    }
+  ],
+  "medians": {
+    "A": {
+      "slices": {
+        "median": 17,
+        "min": 17,
+        "max": 17
+      },
+      "longestMs": {
+        "median": 18.059,
+        "min": 18.024,
+        "max": 18.903
+      },
+      "totalMs": {
+        "median": 72.773,
+        "min": 72.401,
+        "max": 80.134
+      }
+    },
+    "B": {
+      "slices": {
+        "median": 17,
+        "min": 17,
+        "max": 19
+      },
+      "longestMs": {
+        "median": 9.792,
+        "min": 9.728,
+        "max": 9.996
+      },
+      "longestTaskMs": {
+        "median": 8.429,
+        "min": 8.378,
+        "max": 9.992
+      },
+      "totalMs": {
+        "median": 72.98,
+        "min": 72.549,
+        "max": 78.92
+      },
+      "skipped": {
+        "median": 306,
+        "min": 306,
+        "max": 406
+      }
+    },
+    "longestRatio": {
+      "median": 0.5399,
+      "min": 0.5288,
+      "max": 0.5448
+    },
+    "longestChangePct": -46.0109,
+    "totalRatio": {
+      "median": 1.0014,
+      "min": 0.9849,
+      "max": 1.0173
+    }
+  },
+  "heaviest": {
+    "batchesA": [
+      {
+        "names": [
+          "impact:glass",
+          "break:glass"
+        ],
+        "medianMs": 18.059
+      },
+      {
+        "names": [
+          "impact:metal",
+          "break:metal"
+        ],
+        "medianMs": 16.747
+      },
+      {
+        "names": [
+          "impact:stone",
+          "break:stone"
+        ],
+        "medianMs": 7.87
+      }
+    ],
+    "buffersB": [
+      {
+        "name": "break:glass",
+        "variant": 0,
+        "medianMs": 8.421
+      },
+      {
+        "name": "break:glass",
+        "variant": 1,
+        "medianMs": 8.356
+      },
+      {
+        "name": "break:metal",
+        "variant": 0,
+        "medianMs": 7.697
+      }
+    ]
+  },
+  "checks": {
+    "pcmIdentical": true,
+    "allTasksRanOnce": true,
+    "aOneSlicePerPair": true,
+    "bLongestSliceWithinLimit": true,
+    "bLongestTaskWithinLimit": true
+  }
+}

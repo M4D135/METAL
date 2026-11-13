@@ -1,0 +1,459 @@
+{
+ "monde": "campagne 9",
+ "images": 1200,
+ "feuillesLuesParImage": {
+  "nombres": {
+   "p50": 706,
+   "p95": 926,
+   "max": 1043
+  },
+  "chaines": {
+   "p50": 126,
+   "max": 178
+  },
+  "octetsChaines": {
+   "p50": 738,
+   "max": 1178
+  },
+  "booleens": {
+   "p50": 222,
+   "max": 243
+  }
+ },
+ "octetsFloat32": {
+  "p50": 2824,
+  "max": 4172
+ },
+ "octetsFloat64": {
+  "p50": 5648,
+  "max": 8344
+ },
+ "parRacine": {
+  "enemies": {
+   "p50": 435,
+   "max": 465,
+   "frames": 1200
+  },
+  "debris": {
+   "p50": 134,
+   "max": 425,
+   "frames": 1103
+  },
+  "pickups": {
+   "p50": 172,
+   "max": 183,
+   "frames": 1200
+  },
+  "world": {
+   "p50": 143,
+   "max": 143,
+   "frames": 1200
+  },
+  "particles": {
+   "p50": 16,
+   "max": 65,
+   "frames": 1075
+  },
+  "events": {
+   "p50": 11,
+   "max": 47,
+   "frames": 67
+  },
+  "pipes": {
+   "p50": 24,
+   "max": 34,
+   "frames": 1200
+  },
+  "traps": {
+   "p50": 24,
+   "max": 24,
+   "frames": 1200
+  },
+  "mechanisms": {
+   "p50": 18,
+   "max": 21,
+   "frames": 1200
+  },
+  "lifts": {
+   "p50": 19,
+   "max": 20,
+   "frames": 1200
+  },
+  "doors": {
+   "p50": 15,
+   "max": 15,
+   "frames": 1200
+  },
+  "cores": {
+   "p50": 9,
+   "max": 13,
+   "frames": 1200
+  },
+  "player": {
+   "p50": 8,
+   "max": 10,
+   "frames": 1200
+  },
+  "explosions": {
+   "p50": 8,
+   "max": 9,
+   "frames": 144
+  },
+  "locomotion": {
+   "p50": 8,
+   "max": 8,
+   "frames": 1200
+  },
+  "encounters": {
+   "p50": 8,
+   "max": 8,
+   "frames": 200
+  },
+  "inventory": {
+   "p50": 4,
+   "max": 7,
+   "frames": 1200
+  },
+  "shield": {
+   "p50": 3,
+   "max": 4,
+   "frames": 1200
+  },
+  "economy": {
+   "p50": 3,
+   "max": 3,
+   "frames": 200
+  },
+  "armor": {
+   "p50": 2,
+   "max": 2,
+   "frames": 200
+  },
+  "time": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "weapon": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "threat": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "director": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "maxHp": {
+   "p50": 1,
+   "max": 1,
+   "frames": 200
+  },
+  "equipment": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "relays": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "kills": {
+   "p50": 1,
+   "max": 1,
+   "frames": 200
+  },
+  "score": {
+   "p50": 1,
+   "max": 1,
+   "frames": 200
+  },
+  "combo": {
+   "p50": 1,
+   "max": 1,
+   "frames": 200
+  },
+  "hitMarker": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "damage": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "destructionRevision": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "pulseVisual": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "flash": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "leftFlash": {
+   "p50": 1,
+   "max": 1,
+   "frames": 1200
+  },
+  "moving": {
+   "p50": 1,
+   "max": 1,
+   "frames": 72
+  }
+ },
+ "appelsSimDepuisLaPage": [
+  "get destruction x117829",
+  "step() x1753",
+  "get stats x200",
+  "nearestInteraction() x200",
+  "ray() x178"
+ ],
+ "ecrituresPageDansEtat": [
+  "state.events.length x1753"
+ ],
+ "cheminsLus": 229
+}
+--- chemins lus (cumul) ---
+state.enemies[].type x406521
+state.enemies.length x291000
+state.enemies[].deployed x288000
+state.enemies[].id x157062
+state.player.x x136748
+state.player.z x135288
+state.pickups[].requiresWeapon x112000
+state.pickups[].kind x102409
+state.pickups.length x70000
+state.pickups[].taken x68600
+state.debris[].rotation[] x68556
+state.world.machinery[].type x68400
+state.debris[].size[] x58242
+state.pickups[].x x57228
+state.inventory.weapons[] x51400
+state.world.machinery[].destructibleId x45600
+state.pickups[].z x40058
+state.enemies[].hp x38242
+state.debris[].rotation.length x34278
+state.enemies[].x x33611
+state.enemies[].z x33611
+state.player.y x30505
+state.debris[].color[] x29475
+state.debris[].size.length x27170
+state.world.machinery[].y x24906
+state.world.machinery.length x24000
+state.world.machinery[].x x23853
+state.world.machinery[].z x23853
+state.debris[].sourceId x23448
+state.debris[].x x22964
+state.debris[].y x22964
+state.debris[].z x22964
+state.world.machinery[].speed x22800
+state.world.machinery[].size x22800
+state.mechanisms[].x x21600
+state.pickups[].y x20794
+state.mechanisms[].z x19200
+state.enemies[].baseY x17163
+state.debris[].shape x15632
+state.world.ambience.length x13200
+state.mechanisms[].active x13200
+state.lifts[].x x13200
+state.lifts[].z x13200
+state.lifts[].y x13200
+state.debris.length x12738
+state.pipes[].x x12244
+state.pipes[].y x12244
+state.pipes[].z x12244
+state.pipes.length x12000
+state.world.ambience[].type x12000
+state.debris[].structural x11538
+state.debris[].age x11538
+state.debris[].life x11538
+state.debris[].seed x11426
+state.debris[].mat x11426
+state.enemies[].attackState x11070
+state.enemies[].moveSpeed x10616
+state.mechanisms.length x10600
+state.cores[].x x10460
+state.cores[].z x10460
+state.enemies[].windup x9963
+state.enemies[].awareness x9963
+state.debris[].color.length x9825
+state.weapon x9709
+state.mechanisms[].id x9600
+state.doors[].x x9600
+state.doors[].z x9600
+state.lifts[].axis x9600
+state.pickups[].weapon x8609
+state.pickups[].displayOnly x8585
+state.particles[].x x7906
+state.particles[].z x7906
+state.debris[].id x7816
+state.debris[].material x7816
+state.lifts.length x7800
+state.doors[].w x7200
+state.player.heat x6998
+state.enemies[].stun x6642
+state.enemies[].yaw x6642
+state.particles.length x6462
+state.pipes[].hot x6120
+state.doors[].d x6000
+state.lifts[].w x6000
+state.lifts[].d x6000
+state.traps[].kind x6000
+state.doors.length x5869
+state.cores.length x5800
+state.time x5738
+state.pipes[].broken x4980
+state.doors[].h x4800
+state.lifts[].minY x4800
+state.lifts[].lowerCall.y x4800
+state.lifts[].upperCall.y x4800
+state.traps.length x4800
+state.pipes[].active x4800
+state.events[].name x4719
+state.doors[].progress x4407
+state.cores[].y x4245
+state.cores[].taken x4030
+state.player.overheated x4000
+state.player.yaw x3738
+state.debris[].resting x3610
+state.events.length x3609
+state.locomotion.stridePhase x3600
+state.lifts[].moving x3600
+state.mechanisms[].kind x3600
+state.lifts[].lowerCall.x x3600
+state.lifts[].lowerCall.z x3600
+state.lifts[].upperCall.x x3600
+state.lifts[].upperCall.z x3600
+state.traps[].destroyed x3600
+state.enemies[].airborne x3321
+state.enemies[].hurt x3321
+state.traps[].warning x3198
+state.relays x2800
+state.lifts[].powered x2800
+state.particles[].life x2644
+state.particles[].y x2644
+state.particles[].kind x2644
+state.enemies[].bossScale x2600
+state.mechanisms[].y x2600
+state.explosions.length x2544
+state.locomotion.dashBlend x2472
+state.damage x2400
+state.locomotion.speed x2400
+state.locomotion.sprintBlend x2400
+state.locomotion.strafe x2400
+state.locomotion.forward x2400
+state.locomotion.accelForward x2400
+state.mechanisms[].destroyed x2400
+state.traps[].box.minX x2400
+state.traps[].box.minY x2400
+state.traps[].box.minZ x2400
+state.traps[].box.maxX x2400
+state.traps[].box.maxY x2400
+state.traps[].box.maxZ x2400
+state.traps[].hot x2400
+state.projectiles.length x2400
+state.pulseVisual x2400
+state.flash x2400
+state.enemies[].tactic x2214
+state.pipes[].nozzle[] x2124
+state.locomotion.moveBlend x1948
+state.shield.energy x1800
+state.debris[].color x1601
+state.inventory.weapons.length x1600
+state.loot.length x1600
+state.encounters[].status x1600
+state.cores[].id x1415
+state.equipment.left x1400
+state.shield.raised x1400
+state.threat x1200
+state.director.pressure x1200
+state.player.airborne x1200
+state.hitMarker x1200
+state.destructionRevision x1200
+state.player.pitch x1200
+state.doors[].destroyed x1200
+state.doors[].y x1200
+state.doors[].open x1200
+state.lifts[].maxY x1200
+state.bossAttacks.length x1200
+state.traps[].angle x1200
+state.traps[].box x1200
+state.bullets.length x1200
+state.shield.bashVisual x1200
+state.leftFlash x1200
+state.world.trophies.length x1200
+state.enemies[].goalX x1138
+state.enemies[].goalZ x1138
+state.armor.points x800
+state.pipes[].nozzle.length x792
+state.player.hp x624
+state.armor.capacity x600
+state.mechanisms[].required x600
+state.explosions[].age x576
+state.explosions[].life x432
+state.score x400
+state.combo x400
+state.pipes[].destructibleId x360
+state.explosions[].x x338
+state.explosions[].y x338
+state.explosions[].z x338
+state.pipes[].dx x264
+state.pipes[].dy x264
+state.pipes[].dz x264
+state.pipes[].length x264
+state.pipes[].radius x264
+state.pipes[].id x264
+state.explosions[].radius x207
+state.maxHp x200
+state.economy.credits x200
+state.economy.cores x200
+state.economy.weaponUpgrades[] x200
+state.inventory.ammo[] x200
+state.inventory.shield x200
+state.shield.bashCooldown x200
+state.player.pulseCooldown x200
+state.kills x200
+state.encounters.length x200
+state.campaign.trophies.length x200
+state.enemies[].bossAwake x200
+state.mechanisms[].baseY x200
+state.enemies[].active x200
+state.events[].hand x157
+state.events[].x x154
+state.moving x144
+state.explosions[].seed x144
+state.explosions[].id x144
+state.events[].y x142
+state.events[].weapon x108
+state.events[].z x100
+state.pipes[].warning x84
+state.explosions[].power x63
+state.events[].owner x55
+state.events[].actor x54
+state.events[].shells x54
+state.events[].power x42
+state.events[].seed x42
+state.events[].sourceId x41
+state.events[].material x41
+state.pickups[].rewardTaken x24
+state.events[].id x16
+state.events[].mass x10
+state.events[].energy x10
+state.events[].kind x5
+state.events[].warning x4
+state.events[].life x1
+state.events[].radius x1

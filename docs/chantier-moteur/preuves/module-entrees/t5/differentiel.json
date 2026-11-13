@@ -1,0 +1,41 @@
+{
+ "tool": "differentiel.mjs",
+ "node": "v24.18.0",
+ "arch": "arm64",
+ "platform": "darwin",
+ "avant": "6b4e98c",
+ "apres": "6b4e98c + arbre de travail",
+ "sessions": 400,
+ "appelsParSession": 300,
+ "appelsJoues": 120000,
+ "couverture": {
+  "images": 23865,
+  "imagesAvecManette": 14204,
+  "imagesAppareilManette": 14976,
+  "connexions": 4861,
+  "deconnexions": 4116,
+  "capturesClavier": 206,
+  "capturesManette": 179,
+  "appuis": 18305,
+  "affectationsReussies": 439,
+  "conflits": 519
+ },
+ "comparaisons": 264218,
+ "ecarts": 0,
+ "premiersEcarts": [],
+ "messagesRapproches": {
+  "allowKey doit être une fonction": 5,
+  "actions doit être un tableau non vide": 15,
+  "identifiant d’action invalide : ": 10,
+  "identifiant en double : ": 5,
+  "getGamepads doit être une fonction": 5
+ },
+ "membresAjoutesALInstance": [
+  "keyLabel",
+  "setLayout",
+  "label",
+  "rumble"
+ ],
+ "membresRetires": [],
+ "exclus": "keyLabel, setLayout, label et rumble (absents avant) ; glyph et guessDevice (souches vides avant)"
+}

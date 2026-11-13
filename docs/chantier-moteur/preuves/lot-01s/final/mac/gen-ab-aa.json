@@ -1,0 +1,197 @@
+{
+ "schema": "metal-gen-ab-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadAverage": [
+   3.61181640625,
+   2.39111328125,
+   2.53271484375
+  ]
+ },
+ "roots": {
+  "a": "$W/base71",
+  "b": "$W/base71"
+ },
+ "modules": {
+  "a": [
+   "world"
+  ],
+  "b": [
+   "world"
+  ]
+ },
+ "sourceSha256": {
+  "a": {
+   "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e"
+  },
+  "b": {
+   "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e"
+  }
+ },
+ "method": {
+  "seed": 96,
+  "reps": 15,
+  "warm": 3,
+  "realm": "main",
+  "clock": "process.threadCpuUsage (main thread), ms",
+  "order": "per repetition, one of the six permutations of A, B and A' (a second independent load of root A), in turn",
+  "reduction": "medians of the per-repetition ratios B/A and A'/A; A'/A is the noise of this run"
+ },
+ "rows": [
+  {
+   "spec": "l:0",
+   "meshesA": 14077,
+   "meshesB": 14077,
+   "cpuMs": {
+    "a": 35.77,
+    "b": 35.64,
+    "aa": 35.96
+   },
+   "wallMs": {
+    "a": 36.05,
+    "b": 35.7,
+    "aa": 36.21
+   },
+   "ratioBA": 0.995,
+   "ratioAA": 0.988,
+   "ratioBARange": [
+    0.727,
+    1.321
+   ],
+   "ratioAARange": [
+    0.837,
+    1.277
+   ]
+  },
+  {
+   "spec": "l:2",
+   "meshesA": 17377,
+   "meshesB": 17377,
+   "cpuMs": {
+    "a": 46.55,
+    "b": 46.67,
+    "aa": 45.8
+   },
+   "wallMs": {
+    "a": 46.65,
+    "b": 47.1,
+    "aa": 46.14
+   },
+   "ratioBA": 1.008,
+   "ratioAA": 1.007,
+   "ratioBARange": [
+    0.859,
+    1.194
+   ],
+   "ratioAARange": [
+    0.763,
+    1.304
+   ]
+  },
+  {
+   "spec": "v1:9",
+   "meshesA": 13956,
+   "meshesB": 13956,
+   "cpuMs": {
+    "a": 38.34,
+    "b": 37.38,
+    "aa": 37.51
+   },
+   "wallMs": {
+    "a": 38.44,
+    "b": 37.45,
+    "aa": 37.69
+   },
+   "ratioBA": 0.987,
+   "ratioAA": 0.995,
+   "ratioBARange": [
+    0.931,
+    1.099
+   ],
+   "ratioAARange": [
+    0.702,
+    1.255
+   ]
+  },
+  {
+   "spec": "c:0",
+   "meshesA": 13989,
+   "meshesB": 13989,
+   "cpuMs": {
+    "a": 43.61,
+    "b": 44.63,
+    "aa": 44.67
+   },
+   "wallMs": {
+    "a": 44.17,
+    "b": 45.28,
+    "aa": 45.06
+   },
+   "ratioBA": 0.987,
+   "ratioAA": 1.012,
+   "ratioBARange": [
+    0.79,
+    1.266
+   ],
+   "ratioAARange": [
+    0.763,
+    1.521
+   ]
+  },
+  {
+   "spec": "c:9",
+   "meshesA": 13838,
+   "meshesB": 13838,
+   "cpuMs": {
+    "a": 43.63,
+    "b": 43.19,
+    "aa": 43.76
+   },
+   "wallMs": {
+    "a": 44.1,
+    "b": 43.61,
+    "aa": 43.81
+   },
+   "ratioBA": 0.997,
+   "ratioAA": 1.003,
+   "ratioBARange": [
+    0.915,
+    1.103
+   ],
+   "ratioAARange": [
+    0.735,
+    1.345
+   ]
+  },
+  {
+   "spec": "c:17",
+   "meshesA": 17390,
+   "meshesB": 17390,
+   "cpuMs": {
+    "a": 58.47,
+    "b": 56.83,
+    "aa": 57.51
+   },
+   "wallMs": {
+    "a": 58.74,
+    "b": 56.98,
+    "aa": 58.36
+   },
+   "ratioBA": 0.997,
+   "ratioAA": 1.005,
+   "ratioBARange": [
+    0.735,
+    1.405
+   ],
+   "ratioAARange": [
+    0.77,
+    1.441
+   ]
+  }
+ ]
+}

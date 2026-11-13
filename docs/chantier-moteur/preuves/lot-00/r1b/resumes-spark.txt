@@ -1,0 +1,196 @@
+# Résumés (sortie d'erreur) des exécutions du Spark, dans l'ordre ; chemins abrégés en ~
+
+== avant-ss
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE par défaut)
+GPU : ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)
+Extensions WebGL2 : 29 ; timerQuery=non, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0
+  legacy-2.5 320x200 e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64
+  scene3d 480x270 b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393
+  scene3d-wide 640x360 c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 55/55 OK
+
+== avant-envvk
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE par défaut)
+GPU : ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)
+Extensions WebGL2 : 29 ; timerQuery=non, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0
+  legacy-2.5 320x200 e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64
+  scene3d 480x270 b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393
+  scene3d-wide 640x360 c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 55/55 OK
+
+== avant-optvk
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE vulkan)
+GPU : ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)
+Extensions WebGL2 : 32 ; timerQuery=oui, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4
+  legacy-2.5 320x200 b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602
+  scene3d 480x270 00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb
+  scene3d-wide 640x360 905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 55/55 OK
+
+== apres-ss-a
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE par défaut de Chrome, défaut de la plateforme)
+Drapeaux GPU : aucun ; machine linux arm64 (Node) ; navigateur arm 64 bits (userAgentData)
+GPU : ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)
+Extensions WebGL2 : 29 ; timerQuery=non, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0
+  legacy-2.5 320x200 e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64
+  scene3d 480x270 b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393
+  scene3d-wide 640x360 c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 55/55 OK
+
+== apres-ss-b
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE par défaut de Chrome, défaut de la plateforme)
+Drapeaux GPU : aucun ; machine linux arm64 (Node) ; navigateur arm 64 bits (userAgentData)
+GPU : ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)
+Extensions WebGL2 : 29 ; timerQuery=non, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0
+  legacy-2.5 320x200 e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64
+  scene3d 480x270 b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393
+  scene3d-wide 640x360 c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 56/56 OK
+
+== apres-envvk-a
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE vulkan, METAL_RENDER_ANGLE)
+Drapeaux GPU : --use-gl=angle --use-angle=vulkan ; machine linux arm64 (Node) ; navigateur arm 64 bits (userAgentData)
+GPU : ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)
+Extensions WebGL2 : 32 ; timerQuery=oui, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4
+  legacy-2.5 320x200 b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602
+  scene3d 480x270 00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb
+  scene3d-wide 640x360 905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 55/55 OK
+
+== apres-envvk-b
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE vulkan, METAL_RENDER_ANGLE)
+Drapeaux GPU : --use-gl=angle --use-angle=vulkan ; machine linux arm64 (Node) ; navigateur arm 64 bits (userAgentData)
+GPU : ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)
+Extensions WebGL2 : 32 ; timerQuery=oui, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4
+  legacy-2.5 320x200 b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602
+  scene3d 480x270 00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb
+  scene3d-wide 640x360 905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 56/56 OK
+
+== apres-optvk-a
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE vulkan, --angle)
+Drapeaux GPU : --use-gl=angle --use-angle=vulkan ; machine linux arm64 (Node) ; navigateur arm 64 bits (userAgentData)
+GPU : ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)
+Extensions WebGL2 : 32 ; timerQuery=oui, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4
+  legacy-2.5 320x200 b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602
+  scene3d 480x270 00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb
+  scene3d-wide 640x360 905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 56/56 OK
+
+== apres-optvk-b
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE vulkan, --angle)
+Drapeaux GPU : --use-gl=angle --use-angle=vulkan ; machine linux arm64 (Node) ; navigateur arm 64 bits (userAgentData)
+GPU : ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)
+Extensions WebGL2 : 32 ; timerQuery=oui, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4
+  legacy-2.5 320x200 b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602
+  scene3d 480x270 00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb
+  scene3d-wide 640x360 905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 56/56 OK
+
+== crp-ss
+Chrome : Google Chrome 151.0.7922.137 ; drapeaux GPU : aucun (défaut de Chrome) (platform) ; linux arm64
+GPU : ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)
+  legacy-1.5 20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0
+  legacy-2.5 e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64
+  scene3d b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393
+  scene3d-wide c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927
+  canvas2d 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Chrome tué sur délai : dossier d'instance supprimé (~/metal-tests/lot00-r1b/tmp/crp-ss/rp-fuRrxy/com.google.Chrome.1dteDu)
+Contrôles : 64/64 OK (13.382 s)
+
+== crp-envvk
+Chrome : Google Chrome 151.0.7922.137 ; drapeaux GPU : --use-gl=angle --use-angle=vulkan (METAL_RENDER_ANGLE) ; linux arm64
+GPU : ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)
+  legacy-1.5 4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4
+  legacy-2.5 b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602
+  scene3d 00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb
+  scene3d-wide 905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e
+  canvas2d 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Chrome tué sur délai : dossier d'instance supprimé (~/metal-tests/lot00-r1b/tmp/crp-envvk/rp-0cBLF2/com.google.Chrome.pKfKws)
+Contrôles : 64/64 OK (20.595 s)
+
+== lsof-ss
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE par défaut de Chrome, défaut de la plateforme)
+Drapeaux GPU : aucun ; machine linux arm64 (Node) ; navigateur arm 64 bits (userAgentData)
+GPU : ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)
+Extensions WebGL2 : 29 ; timerQuery=non, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0
+  legacy-2.5 320x200 e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64
+  scene3d 480x270 b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393
+  scene3d-wide 640x360 c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 55/55 OK
+
+== lsof-vk
+Chrome : Chrome/151.0.7922.137 (/usr/bin/google-chrome, ANGLE vulkan, METAL_RENDER_ANGLE)
+Drapeaux GPU : --use-gl=angle --use-angle=vulkan ; machine linux arm64 (Node) ; navigateur arm 64 bits (userAgentData)
+GPU : ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)
+Extensions WebGL2 : 32 ; timerQuery=oui, parallelShaderCompile=non, colorBufferFloat=oui, floatLinear=oui, anisotropic=oui, multiDraw=oui, debugRendererInfo=oui
+performance.now : pas min 0.1 ms, médian 0.1 ms ; crossOriginIsolated=false
+OfflineAudioContext=true ; isSecureContext=true
+  legacy-1.5 320x200 4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4
+  legacy-2.5 320x200 b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602
+  scene3d 480x270 00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb
+  scene3d-wide 640x360 905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e
+  canvas2d 320x200 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Contrôles : 56/56 OK
+
+== lsof-crp-vk
+Chrome : Google Chrome 151.0.7922.137 ; drapeaux GPU : --use-gl=angle --use-angle=vulkan (METAL_RENDER_ANGLE) ; linux arm64
+GPU : ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)
+  legacy-1.5 4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4
+  legacy-2.5 b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602
+  scene3d 00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb
+  scene3d-wide 905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e
+  canvas2d 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Chrome tué sur délai : dossier d'instance supprimé (~/metal-tests/lot00-r1b/tmp/lsof-crp-vk/rp-5LTfN7/com.google.Chrome.j7nJXS)
+Contrôles : 64/64 OK (20.558 s)
+
+== lsof-crp-ss
+Chrome : Google Chrome 151.0.7922.137 ; drapeaux GPU : aucun (défaut de Chrome) (platform) ; linux arm64
+GPU : ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)
+  legacy-1.5 20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0
+  legacy-2.5 e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64
+  scene3d b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393
+  scene3d-wide c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927
+  canvas2d 251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88
+Chrome tué sur délai : dossier d'instance supprimé (~/metal-tests/lot00-r1b/tmp/lsof-crp-ss/rp-lQ5uJW/com.google.Chrome.v7FHOt)
+Contrôles : 64/64 OK (13.55 s)

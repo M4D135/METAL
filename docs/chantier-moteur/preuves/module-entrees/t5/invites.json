@@ -1,0 +1,267 @@
+{
+ "tool": "invites.mjs",
+ "node": "v24.18.0",
+ "module": "6b4e98c + arbre de travail",
+ "keyNameIdentique": true,
+ "codesCompares": 14,
+ "changeesAuClavierAzerty": [
+  "forward : W / Z / ↑ → Z / W / ↑",
+  "left : A / Q → Q / A",
+  "map : M → ,"
+ ],
+ "invites": [
+  {
+   "id": "forward",
+   "avant": "W",
+   "clavierQwerty": "W / Z / ↑",
+   "clavierAzerty": "Z / W / ↑",
+   "souris": "W / Z / ↑",
+   "tactile": "Avancer",
+   "xbox": "—",
+   "playstation": "—",
+   "generique": "—"
+  },
+  {
+   "id": "back",
+   "avant": "S",
+   "clavierQwerty": "S / ↓",
+   "clavierAzerty": "S / ↓",
+   "souris": "S / ↓",
+   "tactile": "Reculer",
+   "xbox": "—",
+   "playstation": "—",
+   "generique": "—"
+  },
+  {
+   "id": "left",
+   "avant": "A",
+   "clavierQwerty": "A / Q",
+   "clavierAzerty": "Q / A",
+   "souris": "A / Q",
+   "tactile": "À gauche",
+   "xbox": "—",
+   "playstation": "—",
+   "generique": "—"
+  },
+  {
+   "id": "right",
+   "avant": "D",
+   "clavierQwerty": "D",
+   "clavierAzerty": "D",
+   "souris": "D",
+   "tactile": "À droite",
+   "xbox": "—",
+   "playstation": "—",
+   "generique": "—"
+  },
+  {
+   "id": "turnLeft",
+   "avant": "←",
+   "clavierQwerty": "←",
+   "clavierAzerty": "←",
+   "souris": "←",
+   "tactile": "Tourner à gauche",
+   "xbox": "—",
+   "playstation": "—",
+   "generique": "—"
+  },
+  {
+   "id": "turnRight",
+   "avant": "→",
+   "clavierQwerty": "→",
+   "clavierAzerty": "→",
+   "souris": "→",
+   "tactile": "Tourner à droite",
+   "xbox": "—",
+   "playstation": "—",
+   "generique": "—"
+  },
+  {
+   "id": "fire",
+   "avant": "Entrée",
+   "clavierQwerty": "Entrée",
+   "clavierAzerty": "Entrée",
+   "souris": "Clic",
+   "tactile": "TIR",
+   "xbox": "RT",
+   "playstation": "R2",
+   "generique": "RT"
+  },
+  {
+   "id": "fireLeft",
+   "avant": "C",
+   "clavierQwerty": "C",
+   "clavierAzerty": "C",
+   "souris": "Clic droit",
+   "tactile": "TIR G / GARDE",
+   "xbox": "LT",
+   "playstation": "L2",
+   "generique": "LT"
+  },
+  {
+   "id": "leftHand",
+   "avant": "X",
+   "clavierQwerty": "X",
+   "clavierAzerty": "X",
+   "souris": "X",
+   "tactile": "Changer la main gauche",
+   "xbox": "RB",
+   "playstation": "R1",
+   "generique": "RB"
+  },
+  {
+   "id": "sprint",
+   "avant": "Maj G",
+   "clavierQwerty": "Maj G / Maj D",
+   "clavierAzerty": "Maj G / Maj D",
+   "souris": "Maj G / Maj D",
+   "tactile": "Courir",
+   "xbox": "LS",
+   "playstation": "L3",
+   "generique": "L3"
+  },
+  {
+   "id": "jump",
+   "avant": "Espace",
+   "clavierQwerty": "Espace",
+   "clavierAzerty": "Espace",
+   "souris": "Espace",
+   "tactile": "SAUT",
+   "xbox": "A",
+   "playstation": "✕",
+   "generique": "A"
+  },
+  {
+   "id": "dash",
+   "avant": "R",
+   "clavierQwerty": "R",
+   "clavierAzerty": "R",
+   "souris": "R",
+   "tactile": "ESQUIVE",
+   "xbox": "B",
+   "playstation": "○",
+   "generique": "B"
+  },
+  {
+   "id": "pulse",
+   "avant": "E",
+   "clavierQwerty": "E",
+   "clavierAzerty": "E",
+   "souris": "E",
+   "tactile": "ONDE",
+   "xbox": "LB",
+   "playstation": "L1",
+   "generique": "LB"
+  },
+  {
+   "id": "melee",
+   "avant": "V",
+   "clavierQwerty": "V",
+   "clavierAzerty": "V",
+   "souris": "V",
+   "tactile": "FRAPPE",
+   "xbox": "RS",
+   "playstation": "R3",
+   "generique": "R3"
+  },
+  {
+   "id": "interact",
+   "avant": "F",
+   "clavierQwerty": "F",
+   "clavierAzerty": "F",
+   "souris": "F",
+   "tactile": "Interagir",
+   "xbox": "X",
+   "playstation": "□",
+   "generique": "X"
+  },
+  {
+   "id": "weaponNext",
+   "avant": "(aucune touche)",
+   "clavierQwerty": "—",
+   "clavierAzerty": "—",
+   "souris": "Molette",
+   "tactile": "Arme suivante",
+   "xbox": "Y",
+   "playstation": "△",
+   "generique": "Y"
+  },
+  {
+   "id": "weapon1",
+   "avant": "1",
+   "clavierQwerty": "1",
+   "clavierAzerty": "1",
+   "souris": "1",
+   "tactile": "Mitraillette",
+   "xbox": "↑",
+   "playstation": "↑",
+   "generique": "↑"
+  },
+  {
+   "id": "weapon2",
+   "avant": "2",
+   "clavierQwerty": "2",
+   "clavierAzerty": "2",
+   "souris": "2",
+   "tactile": "Double pompe",
+   "xbox": "→",
+   "playstation": "→",
+   "generique": "→"
+  },
+  {
+   "id": "weapon3",
+   "avant": "3",
+   "clavierQwerty": "3",
+   "clavierAzerty": "3",
+   "souris": "3",
+   "tactile": "Lance-roquettes",
+   "xbox": "↓",
+   "playstation": "↓",
+   "generique": "↓"
+  },
+  {
+   "id": "weapon4",
+   "avant": "4",
+   "clavierQwerty": "4",
+   "clavierAzerty": "4",
+   "souris": "4",
+   "tactile": "Lance-grenades",
+   "xbox": "←",
+   "playstation": "←",
+   "generique": "←"
+  },
+  {
+   "id": "weapon5",
+   "avant": "5",
+   "clavierQwerty": "5",
+   "clavierAzerty": "5",
+   "souris": "5",
+   "tactile": "Pistolet",
+   "xbox": "—",
+   "playstation": "—",
+   "generique": "—"
+  },
+  {
+   "id": "map",
+   "avant": "M",
+   "clavierQwerty": "M",
+   "clavierAzerty": ",",
+   "souris": "M",
+   "tactile": "Carte",
+   "xbox": "Vue",
+   "playstation": "Create",
+   "generique": "Back"
+  },
+  {
+   "id": "pause",
+   "avant": "P",
+   "clavierQwerty": "P",
+   "clavierAzerty": "P",
+   "souris": "P",
+   "tactile": "Pause",
+   "xbox": "Menu",
+   "playstation": "Options",
+   "generique": "Start"
+  }
+ ]
+}

@@ -1,0 +1,112 @@
+{
+ "index": 2,
+ "kind": "custodian",
+ "policy": "skilled",
+ "shield": true,
+ "seed": "96",
+ "simSeconds": 60,
+ "perf": {
+  "steps": 3600,
+  "avg": 0.256,
+  "p50": 0.171,
+  "p95": 0.671,
+  "p99": 2.13,
+  "max": 5.48,
+  "over4": 3,
+  "over8": 0,
+  "over16": 0
+ },
+ "topSpikes": [],
+ "fight": {
+  "attacks": {
+   "ring": 3,
+   "rocketZone": 3,
+   "sweep": 4
+  },
+  "hitsTaken": {
+   "ring": 3
+  },
+  "damageTaken": {
+   "ring": 66.3
+  },
+  "shieldAbsorbed": 0,
+  "armorStart": 0,
+  "dmgBody": 52.2,
+  "dmgWeak": 443.4,
+  "openTime": 20.53,
+  "phaseAt": [
+   43
+  ],
+  "awakeAt": 43,
+  "deathAt": null,
+  "guardsReleasedAt": [],
+  "shots": 137,
+  "hpMin": 53.730191999999974,
+  "playerDeadAt": null,
+  "outOfCircle": 0,
+  "bossMoves": 0.4,
+  "nav": {
+   "revisions": 6,
+   "pumpSteps": 57,
+   "breaks": {
+    "decor-room-#:#,#,#:dressing": 8,
+    "solid-#": 1,
+    "decor-room-#:#,#,-#:dressing": 1
+   },
+   "maxDebris": 31,
+   "structural": 23,
+   "navCells": 43771,
+   "lastRevision": 6,
+   "revAt": [
+    10.9,
+    10.97,
+    35.45,
+    35.72,
+    59.07,
+    59.32
+   ]
+  },
+  "hitLog": [
+   {
+    "t": 4.62,
+    "kind": "ring",
+    "lost": 22.1,
+    "d": 15.1,
+    "fromCentre": 14.9,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 29.17,
+    "kind": "ring",
+    "lost": 22.1,
+    "d": 15.1,
+    "fromCentre": 15.1,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 52.77,
+    "kind": "ring",
+    "lost": 22.1,
+    "d": 15.1,
+    "fromCentre": 14.8,
+    "shield": "shield",
+    "dashing": false
+   }
+  ],
+  "bossHpLeft": 704.4,
+  "bossMaxHp": 1200,
+  "bossPhase": 1,
+  "playerHp": 53.7,
+  "armor": 0,
+  "ammo": [
+   60,
+   12,
+   0,
+   0,
+   1
+  ],
+  "heat": 0.38
+ }
+}

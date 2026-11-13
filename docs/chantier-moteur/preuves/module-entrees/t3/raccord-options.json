@@ -1,0 +1,41 @@
+{
+ "tool": "raccord-options.mjs",
+ "node": "v24.18.0",
+ "octetsOptionsDelegue": 8296,
+ "runs": [
+  {
+   "essai": "tel quel",
+   "statut": 1,
+   "tests": 13,
+   "reussis": 12,
+   "echecs": 1,
+   "echoues": [
+    "Rebinding changes the real input map, preserves other actions and survives JSON storage"
+   ]
+  },
+  {
+   "essai": "Interagir sur G (lignes 18 à 21)",
+   "statut": 0,
+   "tests": 13,
+   "reussis": 13,
+   "echecs": 0,
+   "echoues": []
+  }
+ ],
+ "profilV1": {
+  "dash": [
+   "KeyR"
+  ],
+  "jump": [
+   "Space"
+  ],
+  "inputV": 2,
+  "sauvegardeRelue": true,
+  "padYawGarde": 420,
+  "sensibiliteHorsDeInput": true,
+  "v2NonMigre": [
+   "Space"
+  ],
+  "actions": 23
+ }
+}

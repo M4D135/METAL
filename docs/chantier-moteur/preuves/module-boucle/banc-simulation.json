@@ -1,0 +1,423 @@
+{
+  "schema": "boucle-banc-simulation-v1",
+  "node": "v24.18.0",
+  "arch": "arm64",
+  "platform": "darwin",
+  "cpu": "Apple M5",
+  "loadavg": [
+    4.736328125,
+    4.146484375,
+    3.50341796875
+  ],
+  "loadavgEnd": [
+    3.93798828125,
+    4.5048828125,
+    3.8115234375
+  ],
+  "seconds": 178.584811667,
+  "scenario": "legacy-s0",
+  "seed": 96,
+  "steps": 1800,
+  "patterns": [
+    "60",
+    "q60",
+    "59.94",
+    "75",
+    "120",
+    "144",
+    "165",
+    "jit144",
+    "long60"
+  ],
+  "reference": {
+    "steps": 1800,
+    "chainHash": "576ce3b4",
+    "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5"
+  },
+  "floop": [
+    {
+      "name": "60",
+      "frames": 1800,
+      "steps": 1800,
+      "chainHash": "576ce3b4",
+      "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+      "sameAsReplay": true,
+      "simulationSeconds": 29.999999999999577,
+      "cpuMsPerSimSecond": 88.97236666666791,
+      "zeroStepFrames": 0,
+      "multiStepFrames": 0,
+      "locked": true
+    },
+    {
+      "name": "q60",
+      "frames": 1800,
+      "steps": 1800,
+      "chainHash": "576ce3b4",
+      "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+      "sameAsReplay": true,
+      "simulationSeconds": 29.999999999999577,
+      "cpuMsPerSimSecond": 124.18720000000175,
+      "zeroStepFrames": 0,
+      "multiStepFrames": 0,
+      "locked": true
+    },
+    {
+      "name": "59.94",
+      "frames": 1799,
+      "steps": 1800,
+      "chainHash": "576ce3b4",
+      "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+      "sameAsReplay": true,
+      "simulationSeconds": 29.999999999999577,
+      "cpuMsPerSimSecond": 83.4975333333345,
+      "zeroStepFrames": 0,
+      "multiStepFrames": 1,
+      "locked": true
+    },
+    {
+      "name": "75",
+      "frames": 2249,
+      "steps": 1800,
+      "chainHash": "576ce3b4",
+      "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+      "sameAsReplay": true,
+      "simulationSeconds": 29.999999999999577,
+      "cpuMsPerSimSecond": 142.6946666666687,
+      "zeroStepFrames": 449,
+      "multiStepFrames": 0,
+      "locked": false
+    },
+    {
+      "name": "120",
+      "frames": 3598,
+      "steps": 1800,
+      "chainHash": "576ce3b4",
+      "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+      "sameAsReplay": true,
+      "simulationSeconds": 29.999999999999577,
+      "cpuMsPerSimSecond": 110.02573333333488,
+      "zeroStepFrames": 1798,
+      "multiStepFrames": 0,
+      "locked": false
+    },
+    {
+      "name": "144",
+      "frames": 4317,
+      "steps": 1800,
+      "chainHash": "576ce3b4",
+      "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+      "sameAsReplay": true,
+      "simulationSeconds": 29.999999999999577,
+      "cpuMsPerSimSecond": 69.81553333333432,
+      "zeroStepFrames": 2517,
+      "multiStepFrames": 0,
+      "locked": false
+    },
+    {
+      "name": "165",
+      "frames": 4946,
+      "steps": 1800,
+      "chainHash": "576ce3b4",
+      "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+      "sameAsReplay": true,
+      "simulationSeconds": 29.999999999999577,
+      "cpuMsPerSimSecond": 76.07706666666773,
+      "zeroStepFrames": 3146,
+      "multiStepFrames": 0,
+      "locked": false
+    },
+    {
+      "name": "jit144",
+      "frames": 4317,
+      "steps": 1800,
+      "chainHash": "576ce3b4",
+      "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+      "sameAsReplay": true,
+      "simulationSeconds": 29.999999999999577,
+      "cpuMsPerSimSecond": 52.74080000000074,
+      "zeroStepFrames": 2517,
+      "multiStepFrames": 0,
+      "locked": false
+    },
+    {
+      "name": "long60",
+      "frames": 1786,
+      "steps": 1800,
+      "chainHash": "576ce3b4",
+      "snapshotSha256": "966c41e5710dbe3eaba351dfc6f546aff6cfa8e6d3de91e31ea91c571603ebc5",
+      "sameAsReplay": true,
+      "simulationSeconds": 29.999999999999577,
+      "cpuMsPerSimSecond": 63.8363000000009,
+      "zeroStepFrames": 0,
+      "multiStepFrames": 6,
+      "locked": true
+    }
+  ],
+  "floopRuns": 27,
+  "distinctChainHashes": 1,
+  "allSameAsReplay": true,
+  "allStepsDone": true,
+  "current": [
+    {
+      "name": "60",
+      "frames": 1800,
+      "steps": 1800,
+      "simulationSeconds": 30.000000000000934,
+      "stepsPerSimSecond": 59.99999999999813,
+      "snapshotSha256": "ac685f995905d65f3cd438c5e89fa4e31d5d34265f84af7b38b1bae7c3c7c076",
+      "cpuMsPerSimSecond": 84.0355333333307
+    },
+    {
+      "name": "q60",
+      "frames": 1800,
+      "steps": 1800,
+      "simulationSeconds": 29.999966666665756,
+      "stepsPerSimSecond": 60.00006666674256,
+      "snapshotSha256": "fa0276aa02d1d87792a8d69581702eb8fea1503530c30cd79d4c94688ed11576",
+      "cpuMsPerSimSecond": 90.89830099811498
+    },
+    {
+      "name": "59.94",
+      "frames": 1798,
+      "steps": 1798,
+      "simulationSeconds": 29.99664664664759,
+      "stepsPerSimSecond": 59.94003333705781,
+      "snapshotSha256": "083c6174b8bdc6ec339261616bc0049898c541a95fe4c7afe109faadabf94ea5",
+      "cpuMsPerSimSecond": 94.84736855804405
+    },
+    {
+      "name": "75",
+      "frames": 2250,
+      "steps": 2250,
+      "simulationSeconds": 30.003333333332847,
+      "stepsPerSimSecond": 74.99166759249094,
+      "snapshotSha256": "23032362c3e4cf965c879fc38516e70471b62a504ff2a02d8934a0041e2168c9",
+      "cpuMsPerSimSecond": 138.1283190756605
+    },
+    {
+      "name": "120",
+      "frames": 3600,
+      "steps": 3600,
+      "simulationSeconds": 30.008333333335024,
+      "stepsPerSimSecond": 119.96667592334786,
+      "snapshotSha256": "fc1cc16fcaa49ad4f4780b29f192872aa790c133fa63695e85278e2b0b0977f5",
+      "cpuMsPerSimSecond": 204.3885920577502
+    },
+    {
+      "name": "144",
+      "frames": 4320,
+      "steps": 4320,
+      "simulationSeconds": 30.009722222224042,
+      "stepsPerSimSecond": 143.95334845188185,
+      "snapshotSha256": "468aa42ef8fe018ae6c15e7a8938ffdeba824e9504177012c29bb5b5e190f173",
+      "cpuMsPerSimSecond": 175.24170870550148
+    },
+    {
+      "name": "165",
+      "frames": 4950,
+      "steps": 4950,
+      "simulationSeconds": 30.010606060605593,
+      "stepsPerSimSecond": 164.94168728227652,
+      "snapshotSha256": "5a54e8257e583c7d7083b4c55b2dba47484a8076125287b1c2f0702e20d0d943",
+      "cpuMsPerSimSecond": 115.44485282980945
+    },
+    {
+      "name": "jit144",
+      "frames": 4320,
+      "steps": 4320,
+      "simulationSeconds": 30.00972222222403,
+      "stepsPerSimSecond": 143.9533484518819,
+      "snapshotSha256": "80d53a86ce2fd688cdccb3692b4d7993c329445a5569811e10edec31f38aa119",
+      "cpuMsPerSimSecond": 110.16239922246757
+    },
+    {
+      "name": "long60",
+      "frames": 1800,
+      "steps": 1818,
+      "simulationSeconds": 30.300000000001656,
+      "stepsPerSimSecond": 59.99999999999672,
+      "snapshotSha256": "4e292bf178db06d2c4689d3734c812ce0c5a7d306fcb6dbcef8e6965fac15e62",
+      "cpuMsPerSimSecond": 90.64468646864191
+    }
+  ],
+  "distinctSnapshotsCurrent": 9,
+  "currentRepeatable": true,
+  "cpuRatios": [
+    {
+      "name": "60",
+      "ratios": [
+        1.0587469744941707,
+        1.0924331369691993,
+        0.9306014440059339
+      ],
+      "medianRatio": 1.0587469744941707,
+      "floopCpuMsPerSimSecond": [
+        88.97236666666791,
+        134.8297000000019,
+        130.44693333333518
+      ],
+      "currentCpuMsPerSimSecond": [
+        84.0355333333307,
+        123.42146666666281,
+        140.1748666666623
+      ]
+    },
+    {
+      "name": "q60",
+      "ratios": [
+        1.3662213554748082,
+        0.985881846750589,
+        1.0138433456219398
+      ],
+      "medianRatio": 1.0138433456219398,
+      "floopCpuMsPerSimSecond": [
+        124.18720000000175,
+        89.49753333333459,
+        88.88290000000126
+      ],
+      "currentCpuMsPerSimSecond": [
+        90.89830099811498,
+        90.77916753241112,
+        87.66926407696275
+      ]
+    },
+    {
+      "name": "59.94",
+      "ratios": [
+        0.8803357921547,
+        1.0077526602901576,
+        0.8308478698946093
+      ],
+      "medianRatio": 0.8803357921547,
+      "floopCpuMsPerSimSecond": [
+        83.4975333333345,
+        84.1541000000012,
+        98.32220000000139
+      ],
+      "currentCpuMsPerSimSecond": [
+        94.84736855804405,
+        83.50670091584882,
+        118.33959448252936
+      ]
+    },
+    {
+      "name": "75",
+      "ratios": [
+        1.0330587356855256,
+        0.938435095469706,
+        0.8982396949210465
+      ],
+      "medianRatio": 0.938435095469706,
+      "floopCpuMsPerSimSecond": [
+        142.6946666666687,
+        121.42726666666839,
+        114.25570000000161
+      ],
+      "currentCpuMsPerSimSecond": [
+        138.1283190756605,
+        129.39335629374725,
+        127.19956671481152
+      ]
+    },
+    {
+      "name": "120",
+      "ratios": [
+        0.5383164110365172,
+        0.5366117525985713,
+        0.5976318293907912
+      ],
+      "medianRatio": 0.5383164110365172,
+      "floopCpuMsPerSimSecond": [
+        110.02573333333488,
+        94.68386666666801,
+        74.62193333333438
+      ],
+      "currentCpuMsPerSimSecond": [
+        204.3885920577502,
+        176.4476201055163,
+        124.86271591223957
+      ]
+    },
+    {
+      "name": "144",
+      "ratios": [
+        0.3983956436458928,
+        0.5690961871593574,
+        0.4217260656197438
+      ],
+      "medianRatio": 0.4217260656197438,
+      "floopCpuMsPerSimSecond": [
+        69.81553333333432,
+        85.90540000000121,
+        52.416833333334075
+      ],
+      "currentCpuMsPerSimSecond": [
+        175.24170870550148,
+        150.95058083027732,
+        124.29118711527917
+      ]
+    },
+    {
+      "name": "165",
+      "ratios": [
+        0.6589905465843653,
+        0.39119472187355286,
+        0.40930005424104776
+      ],
+      "medianRatio": 0.40930005424104776,
+      "floopCpuMsPerSimSecond": [
+        76.07706666666773,
+        50.755766666667384,
+        51.10813333333405
+      ],
+      "currentCpuMsPerSimSecond": [
+        115.44485282980945,
+        129.74553036805372,
+        124.86715504619774
+      ]
+    },
+    {
+      "name": "jit144",
+      "ratios": [
+        0.47875500508565794,
+        0.32557601076834214,
+        0.4330081953708141
+      ],
+      "medianRatio": 0.4330081953708141,
+      "floopCpuMsPerSimSecond": [
+        52.74080000000074,
+        44.18780000000062,
+        54.05200000000076
+      ],
+      "currentCpuMsPerSimSecond": [
+        110.16239922246757,
+        135.72191604571773,
+        124.82904614244632
+      ]
+    },
+    {
+      "name": "long60",
+      "ratios": [
+        0.7042475680257856,
+        0.9439968883820423,
+        0.9988306742827815
+      ],
+      "medianRatio": 0.9439968883820423,
+      "floopCpuMsPerSimSecond": [
+        63.8363000000009,
+        49.7420000000007,
+        50.710633333334044
+      ],
+      "currentCpuMsPerSimSecond": [
+        90.64468646864191,
+        52.692970297026825,
+        50.769999999997225
+      ]
+    }
+  ],
+  "floopCpuSpread": {
+    "min": 44.18780000000062,
+    "median": 84.1541000000012,
+    "max": 142.6946666666687
+  }
+}

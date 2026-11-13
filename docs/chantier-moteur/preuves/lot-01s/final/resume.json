@@ -1,0 +1,818 @@
+{
+ "schema": "metal-lot01s-final-summary-v1",
+ "tests": {
+  "base71eca61Spark": {
+   "totals": {
+    "tests": 470,
+    "suites": 0,
+    "pass": 462,
+    "fail": 8,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 136971.501175
+   },
+   "buildTest": null,
+   "failing": [
+    "legacy seed 1, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 2: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 2: exact pre-campaign world fingerprint",
+    "campaign mode is strictly opt-in and keeps historical clamping otherwise",
+    "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout"
+   ]
+  },
+  "mac": {
+   "totals": {
+    "tests": 485,
+    "suites": 0,
+    "pass": 485,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 85100.231458
+   },
+   "buildTest": {
+    "status": "PASS",
+    "htmlBytes": 833373,
+    "externalAssets": 0,
+    "sha256": "f4efa37800fdda0e68c66496c6e198b89f805827999bca330002abae8b486787"
+   },
+   "baseTestsPresent": 470,
+   "baseTestsPassing": 470,
+   "missing": [],
+   "notOk": [],
+   "historicPassing": 8,
+   "added": 15,
+   "addedPassing": 15,
+   "addedAllInFmathTest": true,
+   "addedNames": [
+    "FMath exposes exactly sin, cos, atan, atan2, hypot, hypot2 and hypot3, frozen, and nothing else",
+    "the hypot table covers every path, and its pairs show that order and arity matter",
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "on this V8, the table is Math.hypot, and FMath agrees with it on 120 000 seeded inputs",
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values",
+    "the vector table covers every path with enough cases",
+    "sin and cos match the no-FMA C witness bit for bit",
+    "atan and atan2 match the no-FMA C witness bit for bit",
+    "__ieee754_rem_pio2 and __kernel_rem_pio2 match the C witness (n, y0, y1)",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)",
+    "special values follow IEEE-754 and ECMAScript",
+    "fdlibm constants match their hexadecimal words",
+    "reduction tables and pi-derived constants are the digits of pi",
+    "world.js takes sin, cos, atan, atan2 and hypot from FMath only and refuses to load without it"
+   ],
+   "directives": 0
+  },
+  "spark": {
+   "totals": {
+    "tests": 485,
+    "suites": 0,
+    "pass": 485,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 114421.978042
+   },
+   "buildTest": {
+    "status": "PASS",
+    "htmlBytes": 833373,
+    "externalAssets": 0,
+    "sha256": "f4efa37800fdda0e68c66496c6e198b89f805827999bca330002abae8b486787"
+   },
+   "baseTestsPresent": 470,
+   "baseTestsPassing": 470,
+   "missing": [],
+   "notOk": [],
+   "historicPassing": 8,
+   "added": 15,
+   "addedPassing": 15,
+   "addedAllInFmathTest": true,
+   "addedNames": [
+    "FMath exposes exactly sin, cos, atan, atan2, hypot, hypot2 and hypot3, frozen, and nothing else",
+    "the hypot table covers every path, and its pairs show that order and arity matter",
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "on this V8, the table is Math.hypot, and FMath agrees with it on 120 000 seeded inputs",
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values",
+    "the vector table covers every path with enough cases",
+    "sin and cos match the no-FMA C witness bit for bit",
+    "atan and atan2 match the no-FMA C witness bit for bit",
+    "__ieee754_rem_pio2 and __kernel_rem_pio2 match the C witness (n, y0, y1)",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)",
+    "special values follow IEEE-754 and ECMAScript",
+    "fdlibm constants match their hexadecimal words",
+    "reduction tables and pi-derived constants are the digits of pi",
+    "world.js takes sin, cos, atan, atan2 and hypot from FMath only and refuses to load without it"
+   ],
+   "directives": 0
+  },
+  "note": "baseTestsPassing: tests of the lot base (71eca61, npm test on the Spark) passing under the same name in the final run; historicPassing: those failing at the base (the 8 historic tests) passing now; added: tests absent from the base, all in checks/fmath.test.mjs. checks/build.test.mjs runs after the TAP suite (&&): buildTest is its JSON line, absent when the suite fails."
+ },
+ "historic": {
+  "mac": {
+   "before": {
+    "pass": 0,
+    "tests": 8
+   },
+   "after": {
+    "pass": 8,
+    "tests": 8
+   },
+   "sameNames": true
+  },
+  "spark": {
+   "before": {
+    "pass": 0,
+    "tests": 8
+   },
+   "after": {
+    "pass": 8,
+    "tests": 8
+   },
+   "sameNames": true
+  }
+ },
+ "costs": {
+  "mac": {
+   "environment": {
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5",
+    "logicalCpus": 10
+   },
+   "loadAverages": [
+    [
+     3.61,
+     2.39,
+     2.53
+    ],
+    [
+     3.6,
+     2.45,
+     2.55
+    ],
+    [
+     4.53,
+     2.72,
+     2.65
+    ],
+    [
+     3.88,
+     2.67,
+     2.63
+    ],
+    [
+     3.53,
+     2.65,
+     2.62
+    ]
+   ],
+   "reps": 15,
+   "warm": 3,
+   "realm": "main",
+   "clock": "process.threadCpuUsage (main thread), ms",
+   "aaControl": {
+    "ratioBA": [
+     0.987,
+     1.008
+    ],
+    "ratioAAAllFiles": [
+     0.973,
+     1.018
+    ]
+   },
+   "rows": [
+    {
+     "spec": "l:0",
+     "cpuMsBase": 40.09,
+     "cpuMsFinal": 35.41,
+     "finalOverBase": [
+      0.885,
+      0.91
+     ],
+     "rawBaseThenFinal": [
+      0.859,
+      0.887
+     ],
+     "rawFinalThenBaseInverted": [
+      0.912,
+      0.934
+     ]
+    },
+    {
+     "spec": "l:2",
+     "cpuMsBase": 48.51,
+     "cpuMsFinal": 42.67,
+     "finalOverBase": [
+      0.883,
+      0.879
+     ],
+     "rawBaseThenFinal": [
+      0.884,
+      0.89
+     ],
+     "rawFinalThenBaseInverted": [
+      0.882,
+      0.867
+     ]
+    },
+    {
+     "spec": "v1:9",
+     "cpuMsBase": 39.18,
+     "cpuMsFinal": 35.03,
+     "finalOverBase": [
+      0.897,
+      0.912
+     ],
+     "rawBaseThenFinal": [
+      0.886,
+      0.93
+     ],
+     "rawFinalThenBaseInverted": [
+      0.909,
+      0.894
+     ]
+    },
+    {
+     "spec": "c:0",
+     "cpuMsBase": 42.24,
+     "cpuMsFinal": 37.65,
+     "finalOverBase": [
+      0.902,
+      0.918
+     ],
+     "rawBaseThenFinal": [
+      0.891,
+      0.916
+     ],
+     "rawFinalThenBaseInverted": [
+      0.912,
+      0.919
+     ]
+    },
+    {
+     "spec": "c:9",
+     "cpuMsBase": 39.84,
+     "cpuMsFinal": 36.16,
+     "finalOverBase": [
+      0.891,
+      0.89
+     ],
+     "rawBaseThenFinal": [
+      0.908,
+      0.891
+     ],
+     "rawFinalThenBaseInverted": [
+      0.874,
+      0.888
+     ]
+    },
+    {
+     "spec": "c:17",
+     "cpuMsBase": 52.98,
+     "cpuMsFinal": 47.16,
+     "finalOverBase": [
+      0.91,
+      0.903
+     ],
+     "rawBaseThenFinal": [
+      0.902,
+      0.897
+     ],
+     "rawFinalThenBaseInverted": [
+      0.918,
+      0.909
+     ]
+    }
+   ],
+   "finalOverBase": [
+    0.879,
+    0.918
+   ],
+   "leastFavourableRaw": 0.934,
+   "sources": {
+    "base": {
+     "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e"
+    },
+    "final": {
+     "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+     "world": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed"
+    }
+   }
+  },
+  "spark": {
+   "environment": {
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "platform": "linux",
+    "arch": "arm64",
+    "cpu": "unknown",
+    "logicalCpus": 20
+   },
+   "loadAverages": [
+    [
+     0.98,
+     1.51,
+     1.56
+    ],
+    [
+     1.26,
+     1.54,
+     1.57
+    ],
+    [
+     1.42,
+     1.56,
+     1.58
+    ],
+    [
+     3.07,
+     1.92,
+     1.7
+    ],
+    [
+     3.22,
+     2.04,
+     1.74
+    ]
+   ],
+   "reps": 15,
+   "warm": 3,
+   "realm": "main",
+   "clock": "process.threadCpuUsage (main thread), ms",
+   "aaControl": {
+    "ratioBA": [
+     0.984,
+     1.02
+    ],
+    "ratioAAAllFiles": [
+     0.962,
+     1.031
+    ]
+   },
+   "rows": [
+    {
+     "spec": "l:0",
+     "cpuMsBase": 53.14,
+     "cpuMsFinal": 44.9,
+     "finalOverBase": [
+      0.871,
+      0.836
+     ],
+     "rawBaseThenFinal": [
+      0.855,
+      0.868
+     ],
+     "rawFinalThenBaseInverted": [
+      0.888,
+      0.806
+     ]
+    },
+    {
+     "spec": "l:2",
+     "cpuMsBase": 62.82,
+     "cpuMsFinal": 57.55,
+     "finalOverBase": [
+      0.88,
+      0.824
+     ],
+     "rawBaseThenFinal": [
+      0.882,
+      0.877
+     ],
+     "rawFinalThenBaseInverted": [
+      0.878,
+      0.774
+     ]
+    },
+    {
+     "spec": "v1:9",
+     "cpuMsBase": 52.43,
+     "cpuMsFinal": 44.42,
+     "finalOverBase": [
+      0.832,
+      0.831
+     ],
+     "rawBaseThenFinal": [
+      0.825,
+      0.862
+     ],
+     "rawFinalThenBaseInverted": [
+      0.838,
+      0.802
+     ]
+    },
+    {
+     "spec": "c:0",
+     "cpuMsBase": 57.97,
+     "cpuMsFinal": 52,
+     "finalOverBase": [
+      0.89,
+      0.884
+     ],
+     "rawBaseThenFinal": [
+      0.905,
+      0.903
+     ],
+     "rawFinalThenBaseInverted": [
+      0.876,
+      0.866
+     ]
+    },
+    {
+     "spec": "c:9",
+     "cpuMsBase": 56.44,
+     "cpuMsFinal": 49.47,
+     "finalOverBase": [
+      0.883,
+      0.858
+     ],
+     "rawBaseThenFinal": [
+      0.899,
+      0.902
+     ],
+     "rawFinalThenBaseInverted": [
+      0.867,
+      0.817
+     ]
+    },
+    {
+     "spec": "c:17",
+     "cpuMsBase": 72.39,
+     "cpuMsFinal": 63.51,
+     "finalOverBase": [
+      0.892,
+      0.877
+     ],
+     "rawBaseThenFinal": [
+      0.896,
+      0.888
+     ],
+     "rawFinalThenBaseInverted": [
+      0.887,
+      0.867
+     ]
+    }
+   ],
+   "finalOverBase": [
+    0.824,
+    0.892
+   ],
+   "leastFavourableRaw": 0.905,
+   "sources": {
+    "base": {
+     "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e"
+    },
+    "final": {
+     "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+     "world": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed"
+    }
+   }
+  },
+  "note": "finalOverBase: per world and per series, sqrt((B/A, base then final)/(B/A, final then base)); below 1 the final tree is faster. leastFavourableRaw: the largest of the raw ratios final/base of the two orientations. aaControl: the noise of the same runs (B/A of base against base, and the second load A'/A of every file)."
+ },
+ "engines": {
+  "mac": {
+   "environment": {
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "platform": "darwin",
+    "arch": "arm64"
+   },
+   "cases": 114,
+   "node": {
+    "pageErrors": null,
+    "error": null,
+    "all": {
+     "worldJsonChanged": "114/114",
+     "numericDifferencesPerChangedWorld": {
+      "min": 1,
+      "max": 85
+     },
+     "maxAbsByGroup": {
+      "positions": 1.4210854715202004e-14,
+      "sizes": 6.439293542825908e-15,
+      "rotations": 2.3203661214665772e-14,
+      "bounds": 7.105427357601002e-15
+     },
+     "maxAbsOtherFields": {},
+     "maxAbsDifference": 2.3203661214665772e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "3/6",
+      "v1": "27/54",
+      "v2": "27/54",
+      "total": "57/114"
+     }
+    },
+    "worlds42": {
+     "worldJsonChanged": "42/42",
+     "numericDifferencesPerChangedWorld": {
+      "min": 1,
+      "max": 72
+     },
+     "maxAbsByGroup": {
+      "positions": 7.105427357601002e-15,
+      "sizes": 6.439293542825908e-15,
+      "rotations": 2.3203661214665772e-14,
+      "bounds": 3.552713678800501e-15
+     },
+     "maxAbsOtherFields": {},
+     "maxAbsDifference": 2.3203661214665772e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "3/6",
+      "v1": "8/18",
+      "v2": "8/18",
+      "total": "19/42"
+     }
+    }
+   },
+   "chrome": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "pageErrors": [],
+    "error": null,
+    "all": {
+     "worldJsonChanged": "114/114",
+     "numericDifferencesPerChangedWorld": {
+      "min": 135,
+      "max": 885
+     },
+     "maxAbsByGroup": {
+      "positions": 2.842170943040401e-14,
+      "sizes": 1.3322676295501878e-14,
+      "rotations": 3.937822290467352e-14,
+      "bounds": 1.4210854715202004e-14
+     },
+     "maxAbsOtherFields": {
+      "enemies.yaw": 4.440892098500626e-16
+     },
+     "maxAbsDifference": 3.937822290467352e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "6/6",
+      "v1": "54/54",
+      "v2": "54/54",
+      "total": "114/114"
+     },
+     "afterEqualsNode": {
+      "fingerprint": "114/114",
+      "worldFnv": "114/114"
+     }
+    },
+    "worlds42": {
+     "worldJsonChanged": "42/42",
+     "numericDifferencesPerChangedWorld": {
+      "min": 159,
+      "max": 885
+     },
+     "maxAbsByGroup": {
+      "positions": 2.842170943040401e-14,
+      "sizes": 1.3322676295501878e-14,
+      "rotations": 2.3203661214665772e-14,
+      "bounds": 1.4210854715202004e-14
+     },
+     "maxAbsOtherFields": {
+      "enemies.yaw": 4.440892098500626e-16
+     },
+     "maxAbsDifference": 2.842170943040401e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "6/6",
+      "v1": "18/18",
+      "v2": "18/18",
+      "total": "42/42"
+     },
+     "afterEqualsNode": {
+      "fingerprint": "42/42",
+      "worldFnv": "42/42"
+     }
+    }
+   },
+   "jsc": {
+    "pageErrors": null,
+    "error": null,
+    "all": {
+     "worldJsonChanged": "114/114",
+     "numericDifferencesPerChangedWorld": {
+      "min": 283,
+      "max": 1755
+     },
+     "maxAbsByGroup": {
+      "positions": 2.842170943040401e-14,
+      "sizes": 1.709743457922741e-14,
+      "rotations": 4.782285678572862e-14,
+      "bounds": 1.4210854715202004e-14
+     },
+     "maxAbsOtherFields": {
+      "enemies.yaw": 4.440892098500626e-16,
+      "enemies.z": 1.7763568394002505e-15,
+      "pipes.dx": 2.220446049250313e-16,
+      "pipes.dz": 1.1102230246251565e-16,
+      "encounterBays.spawnEntries.travel": 2.842170943040401e-14,
+      "encounters.leashRadius": 1.4210854715202004e-14,
+      "encounters.spawnEntries.travel": 2.842170943040401e-14
+     },
+     "maxAbsDifference": 4.782285678572862e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "6/6",
+      "v1": "54/54",
+      "v2": "54/54",
+      "total": "114/114"
+     },
+     "afterEqualsNode": {
+      "fingerprint": "114/114",
+      "worldFnv": "114/114"
+     }
+    },
+    "worlds42": {
+     "worldJsonChanged": "42/42",
+     "numericDifferencesPerChangedWorld": {
+      "min": 283,
+      "max": 1755
+     },
+     "maxAbsByGroup": {
+      "positions": 2.842170943040401e-14,
+      "sizes": 1.2878587085651816e-14,
+      "rotations": 3.749778265671466e-14,
+      "bounds": 1.4210854715202004e-14
+     },
+     "maxAbsOtherFields": {
+      "enemies.yaw": 4.440892098500626e-16,
+      "enemies.z": 1.7763568394002505e-15,
+      "pipes.dx": 2.220446049250313e-16,
+      "pipes.dz": 1.1102230246251565e-16,
+      "encounterBays.spawnEntries.travel": 2.842170943040401e-14,
+      "encounters.spawnEntries.travel": 2.842170943040401e-14,
+      "encounters.leashRadius": 1.4210854715202004e-14
+     },
+     "maxAbsDifference": 3.749778265671466e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "6/6",
+      "v1": "18/18",
+      "v2": "18/18",
+      "total": "42/42"
+     },
+     "afterEqualsNode": {
+      "fingerprint": "42/42",
+      "worldFnv": "42/42"
+     }
+    }
+   }
+  },
+  "spark": {
+   "environment": {
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "platform": "linux",
+    "arch": "arm64"
+   },
+   "cases": 114,
+   "node": {
+    "pageErrors": null,
+    "error": null,
+    "all": {
+     "worldJsonChanged": "108/114",
+     "numericDifferencesPerChangedWorld": {
+      "min": 1,
+      "max": 76
+     },
+     "maxAbsByGroup": {
+      "positions": 7.105427357601002e-15,
+      "sizes": 6.439293542825908e-15,
+      "rotations": 2.3203661214665772e-14,
+      "bounds": 7.105427357601002e-15
+     },
+     "maxAbsOtherFields": {},
+     "maxAbsDifference": 2.3203661214665772e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "3/6",
+      "v1": "24/54",
+      "v2": "24/54",
+      "total": "51/114"
+     }
+    },
+    "worlds42": {
+     "worldJsonChanged": "42/42",
+     "numericDifferencesPerChangedWorld": {
+      "min": 1,
+      "max": 74
+     },
+     "maxAbsByGroup": {
+      "positions": 7.105427357601002e-15,
+      "sizes": 6.439293542825908e-15,
+      "rotations": 2.3203661214665772e-14,
+      "bounds": 3.552713678800501e-15
+     },
+     "maxAbsOtherFields": {},
+     "maxAbsDifference": 2.3203661214665772e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "3/6",
+      "v1": "7/18",
+      "v2": "7/18",
+      "total": "17/42"
+     }
+    }
+   },
+   "chrome": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+    "pageErrors": [],
+    "error": null,
+    "all": {
+     "worldJsonChanged": "114/114",
+     "numericDifferencesPerChangedWorld": {
+      "min": 135,
+      "max": 885
+     },
+     "maxAbsByGroup": {
+      "positions": 2.842170943040401e-14,
+      "sizes": 1.3322676295501878e-14,
+      "rotations": 3.937822290467352e-14,
+      "bounds": 1.4210854715202004e-14
+     },
+     "maxAbsOtherFields": {
+      "enemies.yaw": 4.440892098500626e-16
+     },
+     "maxAbsDifference": 3.937822290467352e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "6/6",
+      "v1": "54/54",
+      "v2": "54/54",
+      "total": "114/114"
+     },
+     "afterEqualsNode": {
+      "fingerprint": "114/114",
+      "worldFnv": "114/114"
+     }
+    },
+    "worlds42": {
+     "worldJsonChanged": "42/42",
+     "numericDifferencesPerChangedWorld": {
+      "min": 159,
+      "max": 885
+     },
+     "maxAbsByGroup": {
+      "positions": 2.842170943040401e-14,
+      "sizes": 1.3322676295501878e-14,
+      "rotations": 2.3203661214665772e-14,
+      "bounds": 1.4210854715202004e-14
+     },
+     "maxAbsOtherFields": {
+      "enemies.yaw": 4.440892098500626e-16
+     },
+     "maxAbsDifference": 2.842170943040401e-14,
+     "structuralDifferences": 0,
+     "checkpointRefused": {
+      "legacy": "6/6",
+      "v1": "18/18",
+      "v2": "18/18",
+      "total": "42/42"
+     },
+     "afterEqualsNode": {
+      "fingerprint": "42/42",
+      "worldFnv": "42/42"
+     }
+    }
+   },
+   "jsc": {
+    "skipped": "--jsc none"
+   }
+  },
+  "macVersusSpark": {
+   "node": {
+    "fingerprintBefore": "106/114",
+    "fingerprintAfter": "114/114",
+    "worldFnvAfter": "114/114",
+    "refusedOnlyOnMac": [
+     "v1:96:w10",
+     "v2:96:w10",
+     "v1:2026:w7",
+     "v2:2026:w7",
+     "v1:2026:w13",
+     "v2:2026:w13"
+    ],
+    "refusedOnlyOnSpark": []
+   },
+   "chrome": {
+    "fingerprintBefore": "114/114",
+    "fingerprintAfter": "114/114",
+    "worldFnvAfter": "114/114",
+    "refusedOnlyOnMac": [],
+    "refusedOnlyOnSpark": []
+   }
+  }
+ }
+}

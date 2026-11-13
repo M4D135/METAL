@@ -1,0 +1,672 @@
+{
+ "index": 17,
+ "kind": "custodian",
+ "policy": "max",
+ "shield": true,
+ "seed": "96",
+ "simSeconds": 423.28,
+ "perf": {
+  "steps": 25397,
+  "avg": 0.73,
+  "p50": 0.23,
+  "p95": 1.709,
+  "p99": 13.823,
+  "max": 98.48,
+  "over4": 815,
+  "over8": 480,
+  "over16": 196
+ },
+ "topSpikes": [
+  {
+   "i": 19876,
+   "t": 331.27,
+   "ms": 98.5,
+   "ev": [],
+   "debris": 58,
+   "proj": 0,
+   "attacks": 0,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 6,
+    "reserve": 208,
+    "combat": 0,
+    "combatCap": 16,
+    "alive": 215,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 1243,
+    "neuralApplied": 1243,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  },
+  {
+   "i": 22718,
+   "t": 378.63,
+   "ms": 88.7,
+   "ev": [],
+   "debris": 77,
+   "proj": 0,
+   "attacks": 4,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 6,
+    "reserve": 208,
+    "combat": 0,
+    "combatCap": 16,
+    "alive": 215,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 1420,
+    "neuralApplied": 1420,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 768,
+    "navPending": 9380
+   }
+  },
+  {
+   "i": 23441,
+   "t": 390.68,
+   "ms": 69.9,
+   "ev": [],
+   "debris": 75,
+   "proj": 3,
+   "attacks": 4,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 6,
+    "reserve": 208,
+    "combat": 0,
+    "combatCap": 16,
+    "alive": 215,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 1466,
+    "neuralApplied": 1466,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  },
+  {
+   "i": 1850,
+   "t": 30.83,
+   "ms": 61.6,
+   "ev": [],
+   "debris": 12,
+   "proj": 0,
+   "attacks": 0,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 6,
+    "reserve": 208,
+    "combat": 0,
+    "combatCap": 16,
+    "alive": 215,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 116,
+    "neuralApplied": 116,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  },
+  {
+   "i": 658,
+   "t": 10.97,
+   "ms": 56.3,
+   "ev": [
+    "explosion:steam",
+    "materialBreak"
+   ],
+   "debris": 25,
+   "proj": 0,
+   "attacks": 2,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 6,
+    "reserve": 208,
+    "combat": 0,
+    "combatCap": 16,
+    "alive": 215,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 42,
+    "neuralApplied": 42,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 768,
+    "navPending": 22436
+   }
+  },
+  {
+   "i": 837,
+   "t": 13.95,
+   "ms": 54.4,
+   "ev": [],
+   "debris": 12,
+   "proj": 0,
+   "attacks": 0,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 6,
+    "reserve": 208,
+    "combat": 0,
+    "combatCap": 16,
+    "alive": 215,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 53,
+    "neuralApplied": 53,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  },
+  {
+   "i": 22602,
+   "t": 376.7,
+   "ms": 54.1,
+   "ev": [],
+   "debris": 73,
+   "proj": 0,
+   "attacks": 4,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 6,
+    "reserve": 208,
+    "combat": 0,
+    "combatCap": 16,
+    "alive": 215,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 1413,
+    "neuralApplied": 1413,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  },
+  {
+   "i": 1799,
+   "t": 29.98,
+   "ms": 53.9,
+   "ev": [],
+   "debris": 12,
+   "proj": 0,
+   "attacks": 0,
+   "routes": [],
+   "aiStats": {
+    "awake": 1,
+    "dormant": 6,
+    "reserve": 208,
+    "combat": 0,
+    "combatCap": 16,
+    "alive": 215,
+    "pathSearches": 0,
+    "pathDeferred": 0,
+    "neuralBatches": 113,
+    "neuralApplied": 113,
+    "neuralDiscarded": 0,
+    "neuralBackend": "cpu",
+    "navUpdates": 0,
+    "navPending": 0
+   }
+  }
+ ],
+ "fight": {
+  "attacks": {
+   "ring": 23,
+   "rocketZone": 20,
+   "sweep": 21
+  },
+  "hitsTaken": {
+   "ring": 39
+  },
+  "damageTaken": {
+   "ring": 1041.3
+  },
+  "shieldAbsorbed": 0,
+  "armorStart": 0,
+  "dmgBody": 0,
+  "dmgWeak": 12000,
+  "openTime": 154.02,
+  "phaseAt": [
+   57.68,
+   130.32
+  ],
+  "awakeAt": 57.68,
+  "deathAt": 423.27,
+  "guardsReleasedAt": [],
+  "shots": 634,
+  "hpMin": 153.3049338,
+  "playerDeadAt": null,
+  "outOfCircle": 0,
+  "bossMoves": 0.4,
+  "nav": {
+   "revisions": 29,
+   "pumpSteps": 1216,
+   "breaks": {
+    "decor-room-#:#,#,#:dressing": 27,
+    "solid-#": 1,
+    "decor-room-#:#,#,-#:dressing": 19
+   },
+   "maxDebris": 81,
+   "structural": 76,
+   "navCells": 43940,
+   "lastRevision": 29,
+   "revAt": [
+    10.23,
+    10.5,
+    10.97,
+    33.65,
+    33.92,
+    66.92,
+    67.22,
+    102.85,
+    103.15,
+    139.72,
+    139.95,
+    155.25,
+    168.72,
+    183.73,
+    238.27,
+    238.5,
+    238.78,
+    239.1,
+    266.18,
+    266.78,
+    294.47,
+    307.62,
+    334.7,
+    349.72,
+    350,
+    362.87,
+    363.15,
+    377.88,
+    391.63
+   ]
+  },
+  "hitLog": [
+   {
+    "t": 4.23,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 27.65,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 51.07,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.9,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 74.28,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.4,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 80.45,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 96.58,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.3,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 122.67,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.5,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 147.5,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 148.7,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.2,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 175.67,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.8,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 176.87,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 196.08,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.8,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 197.28,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 203.35,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 204.55,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.9,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 210.62,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.8,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 211.82,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 231.03,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.8,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 232.23,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 251.45,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.5,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 252.65,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.4,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 258.72,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.5,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 259.92,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.4,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 279.13,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.4,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 280.33,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.3,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 286.4,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.3,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 287.6,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.5,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 314.57,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.8,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 315.77,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.8,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 321.83,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.2,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 323.03,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 342.25,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 343.45,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 370.42,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.2,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 371.62,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 15.4,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 398.58,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 399.78,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.9,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 405.85,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.9,
+    "shield": "shield",
+    "dashing": false
+   },
+   {
+    "t": 407.05,
+    "kind": "ring",
+    "lost": 26.7,
+    "d": 15.1,
+    "fromCentre": 14.7,
+    "shield": "shield",
+    "dashing": false
+   }
+  ],
+  "bossHpLeft": 0,
+  "bossMaxHp": 12000,
+  "bossPhase": 2,
+  "playerHp": 180,
+  "armor": 0,
+  "ammo": [
+   0,
+   0,
+   0,
+   28,
+   1
+  ],
+  "heat": 0.05
+ }
+}

@@ -1,0 +1,70 @@
+{
+ "simSeconds": 60,
+ "world": 7,
+ "recorded": {
+  "relays": 3,
+  "mechanisms": 3,
+  "revisions": 14,
+  "deaths": 0,
+  "fired": [
+   59,
+   7,
+   0,
+   0,
+   0
+  ],
+  "checkpoints": 6,
+  "assistHp": 0
+ },
+ "A_digest_equals_record": true,
+ "B_digest_equals_record": true,
+ "fullState_A_equals_B": true,
+ "fullSnapshot_A_equals_B": true,
+ "stateBytes": 4419745,
+ "snapBytes": 187952,
+ "stateDiffKeys": [],
+ "snapDiffKeys": [],
+ "A": [
+  {
+   "total": 3954,
+   "mean": 1.098,
+   "p99": 4.96,
+   "max": 49.2,
+   "over8": 17
+  },
+  {
+   "total": 4119,
+   "mean": 1.144,
+   "p99": 4.35,
+   "max": 46.7,
+   "over8": 15
+  }
+ ],
+ "B": [
+  {
+   "total": 1225,
+   "mean": 0.34,
+   "p99": 1.79,
+   "max": 15.9,
+   "over8": 11
+  },
+  {
+   "total": 1255,
+   "mean": 0.349,
+   "p99": 1.61,
+   "max": 18.5,
+   "over8": 11
+  }
+ ],
+ "ratio": 0.307,
+ "extraSnapshotEvery50": {
+  "digestEqual": true,
+  "firstDivergenceStep": null,
+  "fullStateEqual": false
+ },
+ "extraSnapshotEvery7": {
+  "digestEqual": true,
+  "firstDivergenceStep": null,
+  "fullStateEqual": true
+ }
+}
