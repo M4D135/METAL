@@ -15,6 +15,15 @@ const erreurs=p=>{try{return plain(F.validate(p));}catch(x){assert.fail('validat
 const refuse=(p,chemin)=>{const e=erreurs(p);
  assert.ok(e.some(m=>m.startsWith(chemin+':')),montre(p)+' → attendu '+chemin+' dans « '+e.join(' | ')+' »');return e;};
 const accepte=p=>assert.deepEqual(erreurs(p),[],montre(p)+' doit être accepté');
+// Étape 2 : état de resolve, uniformes, cas de la source principale (T8), angles.
+const RAD=Math.PI/180,A=x=>Array.from(x),tag=x=>Object.prototype.toString.call(x);
+const MONDE=Object.keys(F.UNIFORMS).filter(n=>F.UNIFORMS[n][2]==='monde'),IMAGE=Object.keys(F.UNIFORMS).filter(n=>F.UNIFORMS[n][2]==='image');
+const ETAT=['id','preset','principal','exposure','seed','sun','moon','light','fog','uniforms'];
+const taille=n=>(F.UNIFORMS[n][0]==='float'?1:+F.UNIFORMS[n][0].slice(3))*F.UNIFORMS[n][1];
+const unitaire=v=>Math.abs(Math.hypot(...A(v))-1)<1e-12;
+const T8=[[{sun:{el:10}},'sun'],[{sun:{el:-7}},'sun'],[{sun:{el:-9},moon:{el:10}},'moon'],[{sun:{el:-9},moon:{el:-3},floor:[.01,.02,.03]},'none']];
+const ecartAngle=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
+const camera=(o={})=>({right:[1,0,0],up:[0,1,0],forward:[0,0,-1],fov:[1,1],height:100,...o});
 
 test('T1 chargement',()=>{
  assert.deepEqual(Object.keys(CTX),['FSky']);
@@ -186,10 +195,207 @@ test('T6 validate refuse',()=>{
  for(const p of[{turbidity:Object.create(null)},{tint:[Symbol('s'),1,1]},{clouds:{tint:Object.create(null)}},{sun:Object.create(null)}])erreurs(p);
 });
 
+test('T7 resolve',()=>{
+ const avant=JSON.stringify(F.presets);
+ for(const p of F.presets){
+  const s=F.resolve(p),u=s.uniforms;
+  assert.deepEqual(Object.keys(s),ETAT,'clés de l’état ('+p.id+')');
+  assert.deepEqual(Object.keys(u).sort(),[...MONDE].sort(),'les 19 uniformes de monde ('+p.id+')');
+  for(const n of MONDE){
+   assert.equal(tag(u[n]),'[object Float32Array]',n+' doit être un Float32Array');
+   assert.equal(u[n].length,taille(n),n+' : longueur');
+   assert.ok(A(u[n]).every(Number.isFinite),n+' doit être fini ('+p.id+')');
+  }
+  assert.equal(u.uFskyRay.length,90,'uFskyRay : 30 vec3');
+  assert.deepEqual(plain(F.resolve(p)),plain(s),'deux appels, même état ('+p.id+')');
+  // Cas ajoutés : champs de l'état (§3.3).
+  assert.deepEqual(plain(F.validate(p)),[],p.id+' doit être valide');
+  assert.equal(s.id,p.id);
+  assert.deepEqual(plain(s.preset),plain(F.normalize(p)),'preset = normalize(p)');
+  assert.ok(Number.isFinite(s.exposure)&&s.exposure>0,'exposition finie et strictement positive ('+p.id+')');
+  assert.ok(unitaire(s.sun)&&unitaire(s.moon),'sun et moon unitaires');
+  assert.ok(near(A(s.sun),A(F.direction(p.sun.el,p.sun.az))),'sun = direction(sun.el, sun.az)');
+  assert.ok(Array.isArray(s.fog)&&s.fog.length===3&&A(s.fog).every(Number.isFinite),'fog : 3 nombres finis');
+ }
+ assert.equal(JSON.stringify(F.presets),avant,'resolve ne modifie pas FSky.presets');
+ assert.throws(()=>F.resolve({turbidity:50}),/FSky\.resolve: turbidity: hors bornes/,'resolve lève sur un préréglage invalide');
+ // Cas ajoutés : entrée intacte et non partagée, options absentes ou nulles, entrée non objet traitée comme {}.
+ const p={sun:{el:12,az:40},tint:[1,1,1],clouds:{cover:.2,tint:[1,1,1]}},jp=JSON.stringify(p),s=F.resolve(p);
+ assert.equal(JSON.stringify(p),jp,'resolve ne modifie pas l’entrée');
+ s.preset.tint[0]=2;s.preset.clouds.tint[0]=2;s.preset.sun.el=60;
+ assert.equal(JSON.stringify(p),jp,'l’état ne partage rien avec l’entrée');
+ assert.deepEqual(plain(F.resolve(p)),plain(F.resolve(p,{})),'options absentes = {}');
+ assert.deepEqual(plain(F.resolve(p,null)),plain(F.resolve(p,{})),'options nulles = {}');
+ assert.deepEqual(plain(F.resolve(F.resolve(p).preset)),plain(F.resolve(p)),'resolve(state.preset) redonne le même état');
+ assert.deepEqual(plain(F.resolve(null)),plain(F.resolve({})),'entrée non objet traitée comme {}');
+ assert.equal(F.resolve({}).id,'','id vide sans id');
+ // Cas ajoutés : le bloc de données (annexe C.2) compte 18 mondes d'id distincts, graine = index·101+7.
+ assert.equal(F.presets.length,18);
+ assert.equal(new Set(F.presets.map(q=>q.id)).size,18,'ids distincts');
+ F.presets.forEach((q,i)=>assert.equal(q.seed,i*101+7,'graine du monde '+i));
+});
+
+test('T8 source principale',()=>{
+ for(const[p,attendu]of T8)assert.equal(F.resolve(p).principal,attendu,montre(p));
+ const s=F.resolve(T8[3][0]),u=s.uniforms;
+ assert.equal(s.exposure,1,'sans source principale, l’exposition vaut 1');
+ assert.ok(A(u.uFskyMie).every(v=>v===0),'uFskyMie entièrement nul');
+ for(let i=0;i<30;i++)for(let k=0;k<3;k++)
+  assert.ok(Math.abs(u.uFskyRay[i*3+k]-[.01,.02,.03][k])<1e-7,'uFskyRay['+i+'] vaut le plancher');
+ // Cas ajoutés : bornes incluses de la bascule (soleil ≥ −8°, lune ≥ −2°) ; sources des 18 mondes (annexe E).
+ assert.equal(F.resolve({sun:{el:-8}}).principal,'sun');
+ assert.equal(F.resolve({sun:{el:-8.001},moon:{el:-2}}).principal,'moon');
+ assert.equal(F.resolve({sun:{el:-8.001},moon:{el:-2.001}}).principal,'none');
+ assert.deepEqual(A(F.presets.map(p=>F.resolve(p).principal)),[...Array(15).fill('sun'),'moon','none','none']);
+ assert.deepEqual(A(u.uFskyCloudSun),[0,0,0],'sans source, pas de lumière directe sur les nuages');
+});
+
+test('T9 lumière clé',()=>{
+ for(const p of[...F.presets,...T8.map(c=>c[0])]){
+  const s=F.resolve(p),q=s.preset,src=s.principal==='moon'?q.moon:q.sun,L=A(s.light);
+  assert.ok(unitaire(L),'light unitaire');
+  assert.ok(Math.asin(L[1])/RAD>=18-1e-9,'élévation de light ≥ 18° ('+montre(p.id||p)+')');
+  assert.ok(ecartAngle(Math.atan2(L[0],-L[2]),src.az*RAD)<1e-9,'azimut de light = azimut de la source principale');
+  if(src.el>=18)assert.ok(near(L,A(F.direction(src.el,src.az))),'source au-dessus du plancher : light = sa direction');
+  const t=A(F.resolve(p,{lightFloor:30}).light);
+  assert.ok(Math.asin(t[1])/RAD>=30-1e-9,'lightFloor 30 respecté');
+  assert.ok(ecartAngle(Math.atan2(t[0],-t[2]),src.az*RAD)<1e-9,'lightFloor garde l’azimut');
+  // Cas ajouté : lightFloor null vaut absent (??), donc 18°.
+  assert.deepEqual(A(F.resolve(p,{lightFloor:null}).light),L,'lightFloor null = 18°');
+ }
+ // Cas ajoutés (hors fiche) : soleil à 5°, plancher absent, nul ou 0 (0 est une valeur, pas une absence).
+ const bas={sun:{el:5,az:40}};
+ assert.ok(near(A(F.resolve(bas).light),A(F.direction(18,40))),'plancher par défaut : 18°');
+ assert.ok(near(A(F.resolve(bas,{lightFloor:null}).light),A(F.direction(18,40))),'lightFloor null : 18°');
+ assert.ok(near(A(F.resolve(bas,{lightFloor:undefined}).light),A(F.direction(18,40))),'lightFloor undefined : 18°');
+ assert.ok(near(A(F.resolve(bas,{lightFloor:0}).light),A(F.direction(5,40))),'lightFloor 0 : la source à 5°');
+ assert.ok(near(A(F.resolve({sun:{el:-9,az:10},moon:{el:5,az:-70}}).light),A(F.direction(18,-70))),'lune relevée à 18°');
+ assert.ok(near(A(F.resolve({sun:{el:-30,az:208},moon:{el:-10}}).light),A(F.direction(18,208))),'sans source : soleil relevé à 18°');
+});
+
+test('T10 brouillard cohérent',()=>{
+ for(const p of F.presets){
+  const s=F.resolve(p);
+  for(const y of[-.2,-.01])for(const az of[0,90,180,270]){
+   const d=[Math.sin(az*RAD),y,-Math.cos(az*RAD)];
+   assert.ok(near(A(F.radianceAt(s,d)),A(F.fogAt(s,d))),'sous l’horizon, radianceAt = fogAt ('+p.id+', y '+y+', az '+az+')');
+  }
+  for(let j=0;j<8;j++){
+   const a=j*45*RAD,x=Math.sin(a),z=-Math.cos(a),f=A(F.fogAt(s,[x,0,z])),r=A(F.radianceAt(s,[x,1e-8,z]));
+   for(let k=0;k<3;k++)assert.ok(Math.abs(r[k]-f[k])<=1e-3*(1+Math.abs(f[k])),'continuité à l’horizon ('+p.id+', az '+j*45+')');
+  }
+  const m=[0,0,0];
+  for(let j=0;j<16;j++){const g=F.fogAt(s,F.direction(0,j*22.5));for(let k=0;k<3;k++)m[k]+=g[k];}
+  // Plus strict que la fiche (1e-6) : fog est calculé sur les uniformes Float32 définitifs.
+  assert.ok(near(A(s.fog),m.map(v=>v/16)),'fog = moyenne de 16 azimuts ('+p.id+')');
+  // Cas ajoutés : d normalisé (nul → zénith, échelle sans effet), d intact, d en Float32Array.
+  assert.deepEqual(A(F.radianceAt(s,[0,0,0])),A(F.radianceAt(s,[0,1,0])),'d nul → zénith');
+  assert.deepEqual(A(F.radianceAt(s,[2,4,6])),A(F.radianceAt(s,[1,2,3])),'radianceAt ne dépend pas de |d|');
+  assert.deepEqual(A(F.radianceAt(s,[2,-4,6])),A(F.radianceAt(s,[1,-2,3])),'même chose sous l’horizon');
+  const d=[.3,.5,-.8],jd=JSON.stringify(d);F.radianceAt(s,d);F.fogAt(s,d);
+  assert.equal(JSON.stringify(d),jd,'d intact');
+  assert.ok(near(A(F.radianceAt(s,new Float32Array([0,1,0]))),A(F.radianceAt(s,[0,1,0]))),'d en Float32Array');
+  // Direction verticale : azimut de la source (uFskyRefH, en Float32 donc pas tout à fait unitaire).
+  const v=A(F.fogAt(s,[0,-1,0])),hz=A(F.fogAt(s,[s.uniforms.uFskyRefH[0],0,s.uniforms.uFskyRefH[1]]));
+  assert.deepEqual(A(F.fogAt(s,[0,1,0])),v);assert.deepEqual(A(F.fogAt(s,[1e-6,-1,-1e-6])),v);
+  for(let k=0;k<3;k++)assert.ok(Math.abs(v[k]-hz[k])<=1e-5*(1+Math.abs(hz[k])),'vertical : azimut de la source ('+p.id+')');
+ }
+});
+
 test('T11 encode',()=>{
  const cas=[[[0,0,0],undefined,[0,0,0]],[[1e9,1e9,1e9],undefined,[255,255,255]],[[.76,.76,.76],undefined,[186,186,186]],
   [[.76,.76,.76],.5,[93,93,93]],[[-1,0,0],undefined,[0,0,0]],
   // Cas ajoutés : borne haute après vignette, canaux indépendants, Float32Array.
   [[1e9,1e9,1e9],2,[255,255,255]],[[.76,0,1e9],undefined,[186,0,255]],[new Float32Array([.76,.76,.76]),1,[186,186,186]]];
  for(const[rgb,v,attendu]of cas)assert.deepEqual(Array.from(F.encode(rgb,v)),attendu,'encode('+JSON.stringify(Array.from(rgb))+','+v+')');
+});
+
+test('T14 frameUniforms',()=>{
+ const cam=camera({fov:[1.6,1],height:540,time:3,vignette:.76,dither:0,mask:1,layers:[1,0,1,0]}),out={};
+ assert.equal(F.frameUniforms(cam,out),out,'frameUniforms renvoie out');
+ assert.deepEqual(Object.keys(out).sort(),[...IMAGE].sort(),'exactement les 8 uniformes d’image');
+ for(const n of IMAGE){assert.equal(tag(out[n]),'[object Float32Array]',n+' doit être un Float32Array');assert.equal(out[n].length,taille(n),n+' : longueur');}
+ assert.deepEqual(A(out.uFskyPost),[Math.fround(.76),0,1,0],'uFskyPost = (vignette, tramage, masque, 0)');
+ assert.deepEqual(A(out.uFskyLayers),[1,0,1,0]);
+ assert.equal(out.uFskyTime[0],3);
+ assert.equal(out.uFskyPixel[0],Math.fround(2*1/540),'uFskyPixel = 2·fov[1]/height');
+ const id=IMAGE.map(n=>out[n]);
+ F.frameUniforms({right:[0,0,1],up:[0,1,0],forward:[-1,0,0],fov:[2,1.25],height:1080,time:9},out);
+ IMAGE.forEach((n,i)=>assert.equal(out[n],id[i],n+' : même Float32Array au deuxième appel'));
+ assert.deepEqual(A(out.uFskyRight),[0,0,1]);assert.deepEqual(A(out.uFskyForward),[-1,0,0]);
+ assert.deepEqual(A(out.uFskyFov),[2,1.25]);assert.equal(out.uFskyTime[0],9,'valeurs mises à jour');
+ assert.equal(out.uFskyPixel[0],Math.fround(2*1.25/1080),'uFskyPixel = 2·fov[1]/height');
+ // Valeurs par défaut, rétablies quand la caméra ne les donne plus.
+ assert.deepEqual(A(out.uFskyPost),[1,1,0,0],'uFskyPost par défaut');
+ assert.deepEqual(A(out.uFskyLayers),[1,1,1,1],'uFskyLayers par défaut');
+ const d=F.frameUniforms(camera());
+ assert.deepEqual(Object.keys(d).sort(),[...IMAGE].sort(),'out absent : nouvel objet');
+ assert.deepEqual(A(d.uFskyPost),[1,1,0,0]);assert.deepEqual(A(d.uFskyLayers),[1,1,1,1]);assert.equal(d.uFskyTime[0],0);
+ // Cas ajoutés : rien n'est partagé avec la caméra ni d'un appel à l'autre (couches par défaut en constante de module).
+ const c=camera();d.uFskyLayers[0]=0;d.uFskyRight[0]=5;
+ const e=F.frameUniforms(c,{});
+ assert.deepEqual(A(e.uFskyLayers),[1,1,1,1],'les couches par défaut ne sont pas partagées');
+ assert.deepEqual(A(e.uFskyRight),[1,0,0]);assert.deepEqual(c.right,[1,0,0],'la caméra reste intacte');
+ const f=new Float32Array([0,1,0]);F.frameUniforms(camera({up:f}),e);
+ assert.notEqual(e.uFskyUp,f,'les axes sont copiés, pas pris');
+ // Un tableau de out de mauvais type ou de mauvaise taille est remplacé.
+ const g={uFskyPost:[9,9,9,9],uFskyFov:new Float32Array(3)};F.frameUniforms(camera(),g);
+ assert.equal(tag(g.uFskyPost),'[object Float32Array]');assert.equal(g.uFskyFov.length,2);
+});
+
+test('T15 bind avec un faux gl',()=>{
+ const appels=[],demandes=[],prog={},FCT={float:'uniform1fv',vec2:'uniform2fv',vec3:'uniform3fv',vec4:'uniform4fv'};
+ const gl={getUniformLocation(p,n){assert.equal(p,prog,'getUniformLocation reçoit le programme');demandes.push(n);return n==='uFskyMoonUp'?null:{n};},
+  useProgram(){assert.fail('bind ne doit pas appeler useProgram');}};
+ for(const f of Object.values(FCT))gl[f]=(l,v)=>appels.push([f,l.n,v.length,v]);
+ const s=F.resolve(F.presets[0]),cache={};
+ assert.equal(F.bind(gl,prog,s.uniforms,cache),18,'18 uniformes posés sur 19');
+ const noms=appels.map(a=>a[1]);
+ assert.equal(new Set(noms).size,noms.length,'un seul appel par nom');
+ assert.deepEqual(appels.filter(a=>a[1]==='uFskyRay').map(a=>a.slice(0,3)),[['uniform3fv','uFskyRay',90]],'uFskyRay : uniform3fv de 90');
+ assert.ok(!noms.includes('uFskyMoonUp'),'uFskyMoonUp sauté sans erreur');
+ assert.deepEqual([...noms].sort(),MONDE.filter(n=>n!=='uFskyMoonUp').sort());
+ for(const a of appels){
+  assert.equal(a[0],FCT[F.UNIFORMS[a[1]][0]],'fonction de '+a[1]);
+  assert.equal(a[3],s.uniforms[a[1]],a[1]+' : le Float32Array lui-même, sans copie');
+ }
+ const avant=demandes.length;
+ assert.equal(F.bind(gl,prog,s.uniforms,cache),18);
+ assert.equal(demandes.length,avant,'un second bind avec le même cache n’appelle plus getUniformLocation');
+ assert.ok('uFskyMoonUp' in cache&&cache.uFskyMoonUp===null,'emplacement nul mis en cache');
+ // Cas ajoutés : uniformes d'image, valeurs sans uniforme connu, cache absent.
+ appels.length=0;
+ assert.equal(F.bind(gl,prog,F.frameUniforms(camera()),cache),8,'8 uniformes d’image');
+ assert.deepEqual(appels.map(a=>a.slice(0,3)),IMAGE.map(n=>[FCT[F.UNIFORMS[n][0]],n,taille(n)]));
+ assert.equal(F.bind(gl,prog,{autre:new Float32Array(3)},cache),0,'nom inconnu ignoré');
+ demandes.length=0;
+ assert.equal(F.bind(gl,prog,s.uniforms),18,'cache absent : pose quand même');
+ assert.equal(demandes.length,19);
+});
+
+test('T16 graine',()=>{
+ for(const p of[F.presets[3],F.presets[15],F.presets[17]]){
+  const a=F.resolve(p,{seed:1}),b=F.resolve(p,{seed:2}),ua=plain(a.uniforms),ub=plain(b.uniforms);
+  for(const n of MONDE)if(n!=='uFskySeed')assert.deepEqual(ua[n],ub[n],n+' ne dépend pas de la graine');
+  assert.notDeepEqual(ua.uFskySeed,ub.uFskySeed,'uFskySeed dépend de la graine');
+  const reste=s=>{const o=plain(s);delete o.seed;delete o.uniforms;return o;};
+  assert.deepEqual(reste(a),reste(b),'le reste de l’état ne dépend pas de la graine');
+  assert.notEqual(a.seed,b.seed,'la graine effective change');
+  assert.equal(F.resolve(p).seed,p.seed,'sans option, la graine du préréglage');
+  assert.deepEqual(plain(F.resolve(p,{seed:5})),plain(F.resolve(p,{seed:5})),'mêmes options, même résultat');
+  // Cas ajoutés : formule de la graine effective (§3.3), graines négatives, non entières ou hors int32.
+  for(const g of[0,1,-1,7.9,1e10,-123456789,2**31,'3',undefined,null]){
+   const s=F.resolve(p,{seed:g});
+   assert.equal(s.seed,((Math.imul(g|0,7919)+p.seed)>>>0)%65536,'graine effective pour '+g);
+   assert.equal(s.uniforms.uFskySeed[3],s.seed,'uFskySeed.w = graine effective');
+  }
+ }
+});
+
+test('T17 temps (souple)',()=>{
+ // Mesuré dans le contexte vm du test, 4,5 à 9 fois plus lent que le domaine principal.
+ for(const p of F.presets){
+  const t0=performance.now();F.resolve(p);const d=performance.now()-t0;
+  assert.ok(d<50,'resolve sous 50 ms ('+p.id+' : '+d.toFixed(2)+' ms)');
+ }
 });
