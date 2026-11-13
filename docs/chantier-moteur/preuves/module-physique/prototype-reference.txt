@@ -1,0 +1,124 @@
+FPhysics — référence du prototype de l'audit (étape 0 du module physique, tâche E0-1)
+======================================================================================
+Base : 71eca61c0b8f3bbaa05b0692d9fa4fd192b9f2db, branche chantier/module-physique, arbre propre.
+Date : 13/11/2026, de 08:06 à 08:16 (heure de Paris).
+Machine : Mac17,4, Apple M5, 10 cœurs logiques, darwin 27.2.0 arm64 ; Node v24.18.0 (V8 13.6.233.17-node.50),
+domaine principal de Node (pas de node:vm). Machine partagée par 8 agents : charge moyenne de 2,5 à 2,9 pendant
+les mesures. Les temps absolus sont indicatifs : on ne compare des temps qu'appariés et alternés dans un même processus.
+Prototype : docs/chantier-moteur/bancs/phys/fphys.mjs, 38 674 octets, 365 lignes,
+sha256 378eb857ae2dbef93220e00388b4b79faa1259f1ea6beb337f23ec1066ad7210, identique (cmp) au miroir
+/Users/david/claude/metal-audit/bancs/phys/fphys.mjs ; scenes.mjs, determinism.mjs, drift.mjs, bench.mjs et
+worldstats.mjs aussi identiques au miroir. phys-verif/wake.mjs n'existe que dans le dépôt.
+Commandes lancées depuis la racine du dépôt.
+
+Synthèse, comparée à la contre-vérification de l'audit (constats PHYS-02, PHYS-04, PHYS-V2, PHYS-01)
+------------------------------------------------------------------------------------------------------
+- determinism.mjs : stack10 37d0ca59, pyramid55 56c8b99b, rubble300 170702f6, blast200 fe961b81, avec les hachages
+  finaux fb79204a, 6d172292, 51f34c6c, 58e47dd1. Les quatre chaînes sont celles de la contre-vérification (PHYS-04,
+  preuve corrigée) : le prototype donne les mêmes bits sur ce M5 que sur la machine d'audit. Aucun écart.
+- drift.mjs, 120 Hz x 1, sommeil coupé, 10 s : pile de 10, 12,57 mm d'écart horizontal ; pyramide de 55, 14,70 mm.
+  Identique à la contre-vérification de PHYS-02 (12,57 et 14,70). 60 Hz x 1 : la pile s'écroule (90°, 5,8 m), comme
+  dans PHYS-03.
+- bench.mjs 3 120 1, trois passes à la suite (charge 2,6 puis 2,8 puis 2,9) :
+    rubble300 : médiane 503,7 / 576,1 / 587,8 µs par pas, moyenne 487,3 / 548,9 / 561,3 µs ;
+                289 éveillés en moyenne, 1 460 points de contact (max 1 590), 1 055 tests de paires ; tout endormi à 11,93 s ;
+    blast200  : moyenne 144,0 / 159,5 / 168,6 µs par pas, p95 255,1 / 280,2 / 296,2 µs ; tout endormi à 7,08 s ;
+    stack10   : endormi à 1,02 s ; pyramid55 : endormie à 0,77 s.
+  Hachages identiques à chaque répétition et entre les passes (DETERMINISTIC) : fb79204a, 6d172292, 5bc16ddf, 3fa55997.
+  L'audit mesurait 1,72 à 1,74 ms (rubble300) et 0,42 ms (blast200) sur sa machine, chargée de 27 à 114 : les temps
+  sont ici 3 à 3,5 fois plus bas ; la première passe, la moins chargée, sert de référence de temps.
+- phys-verif/wake.mjs : impulsion de 6 sur le tas de 300 endormi, 120 Hz x 1 : 286 corps réveillés, 13,83 s avant
+  rendormissement, 714 ms cumulées, 183 autres pièces déplacées de plus de 2 mm (PHYS-V2 : 286 corps, 13,8 s).
+  C'est le défaut que l'étape 6 du module corrige (cible : au plus 16 corps, moins de 2 s, moins de 60 ms).
+- worldstats.mjs (modules du dépôt à la base) : 448 à 504 boîtes statiques, 26 à 28 rectangles de sol dont 3 à 6 en
+  pente, 211 à 285 accessoires « prop » dont 40 à 48 de la taille d'une caisse (PHYS-01 : mêmes chiffres).
+
+Sorties brutes
+--------------
+
+$ node docs/chantier-moteur/bancs/phys/determinism.mjs
+ 8:06  up 1 day, 17:12, 2 users, load averages: 2.54 2.29 2.05
+stack10:37d0ca59/fb79204a pyramid55:56c8b99b/6d172292 rubble300:170702f6/51f34c6c blast200:fe961b81/58e47dd1
+node docs/chantier-moteur/bancs/phys/determinism.mjs  0.63s user 0.01s system 161% cpu 0.394 total
+
+$ node docs/chantier-moteur/bancs/phys/drift.mjs
+ 8:06  up 1 day, 17:12, 2 users, load averages: 2.54 2.29 2.05
+stack10    120 Hz x1 (2+1 it.)      | t=1s horiz 23.96 mm vert 84.76 mm tilt 0.164 deg speed 28.799 mm/s | t=5s horiz 21.02 mm vert 83.69 mm tilt 0.129 deg speed 3.645 mm/s | t=10s horiz 12.57 mm vert 83.67 mm tilt 0.050 deg speed 0.530 mm/s | awake at end 10
+stack10    60 Hz x2 substeps        | t=1s horiz 13.46 mm vert 88.58 mm tilt 0.231 deg speed 73.393 mm/s | t=5s horiz 25.39 mm vert 83.62 mm tilt 0.132 deg speed 84.791 mm/s | t=10s horiz 26.64 mm vert 83.69 mm tilt 0.121 deg speed 18.510 mm/s | awake at end 10
+stack10    120 Hz x1, slop 2 mm     | t=1s horiz 96.77 mm vert 73.00 mm tilt 1.372 deg speed 237.664 mm/s | t=5s horiz 42.10 mm vert 53.73 mm tilt 0.421 deg speed 15.733 mm/s | t=10s horiz 22.36 mm vert 54.08 mm tilt 0.214 deg speed 76.672 mm/s | awake at end 10
+stack10    60 Hz x1 (2+1 it.)       | t=1s horiz 196.64 mm vert 210.54 mm tilt 2.645 deg speed 333.107 mm/s | t=5s horiz 5810.77 mm vert 7205.79 mm tilt 89.981 deg speed 1408.841 mm/s | t=10s horiz 5810.83 mm vert 7206.35 mm tilt 90.000 deg speed 6.047 mm/s | awake at end 10
+stack10    120 Hz x1, 4+2 it.       | t=1s horiz 38.60 mm vert 88.28 mm tilt 0.547 deg speed 59.853 mm/s | t=5s horiz 13.54 mm vert 83.70 mm tilt 0.046 deg speed 10.051 mm/s | t=10s horiz 23.09 mm vert 83.72 mm tilt 0.113 deg speed 0.499 mm/s | awake at end 10
+stack10    120 Hz x1, sleeping ON   | t=1s horiz 23.96 mm vert 84.76 mm tilt 0.164 deg speed 28.799 mm/s | t=5s horiz 24.33 mm vert 84.87 mm tilt 0.156 deg speed 0.000 mm/s | t=10s horiz 24.33 mm vert 84.87 mm tilt 0.156 deg speed 0.000 mm/s | awake at end 0
+pyramid55  120 Hz x1 (2+1 it.)      | t=1s horiz 11.39 mm vert 64.54 mm tilt 0.447 deg speed 21.280 mm/s | t=5s horiz 14.71 mm vert 64.53 mm tilt 0.442 deg speed 2.319 mm/s | t=10s horiz 14.70 mm vert 64.52 mm tilt 0.442 deg speed 0.046 mm/s | awake at end 55
+pyramid55  60 Hz x2 substeps        | t=1s horiz 11.67 mm vert 64.10 mm tilt 0.330 deg speed 7.769 mm/s | t=5s horiz 14.52 mm vert 63.83 mm tilt 0.374 deg speed 0.544 mm/s | t=10s horiz 14.52 mm vert 63.83 mm tilt 0.375 deg speed 0.020 mm/s | awake at end 55
+pyramid55  120 Hz x1, slop 2 mm     | t=1s horiz 6.70 mm vert 33.92 mm tilt 0.288 deg speed 18.635 mm/s | t=5s horiz 8.02 mm vert 33.36 mm tilt 0.287 deg speed 0.279 mm/s | t=10s horiz 8.02 mm vert 33.36 mm tilt 0.286 deg speed 0.010 mm/s | awake at end 55
+pyramid55  60 Hz x1 (2+1 it.)       | t=1s horiz 26.40 mm vert 114.47 mm tilt 1.312 deg speed 39.282 mm/s | t=5s horiz 44.44 mm vert 102.47 mm tilt 1.153 deg speed 17.379 mm/s | t=10s horiz 49.45 mm vert 102.86 mm tilt 1.182 deg speed 8.829 mm/s | awake at end 55
+pyramid55  120 Hz x1, 4+2 it.       | t=1s horiz 3.63 mm vert 62.21 mm tilt 0.171 deg speed 2.648 mm/s | t=5s horiz 6.38 mm vert 62.78 mm tilt 0.270 deg speed 0.260 mm/s | t=10s horiz 6.38 mm vert 62.78 mm tilt 0.270 deg speed 0.000 mm/s | awake at end 55
+pyramid55  120 Hz x1, sleeping ON   | t=1s horiz 10.62 mm vert 65.26 mm tilt 0.400 deg speed 0.000 mm/s | t=5s horiz 10.62 mm vert 65.26 mm tilt 0.400 deg speed 0.000 mm/s | t=10s horiz 10.62 mm vert 65.26 mm tilt 0.400 deg speed 0.000 mm/s | awake at end 0
+node docs/chantier-moteur/bancs/phys/drift.mjs  1.21s user 0.01s system 124% cpu 0.983 total
+
+$ node docs/chantier-moteur/bancs/phys/bench.mjs 3 120 1
+ 8:06  up 1 day, 17:12, 2 users, load averages: 2.57 2.30 2.06
+stack10: 120 Hz x1 | awake steps 123/1200 | us/step mean 18.5 p50 18.1 p95 21.0 max 22.3 | awake mean 10 max 10 | contact pts mean 40 max 40 | SAT tests mean 9 | us per awake body-step 1.854 | us per contact pt 0.464 | all asleep at step 123 (1.02 s) | hashes fb79204a DETERMINISTIC
+   final pose error: horizontal max 24.33 mm, vertical max 84.87 mm, max tilt 0.156 deg
+pyramid55: 120 Hz x1 | awake steps 92/1200 | us/step mean 154.2 p50 154.6 p95 162.9 max 166.3 | awake mean 55 max 55 | contact pts mean 518 max 549 | SAT tests mean 135 | us per awake body-step 2.804 | us per contact pt 0.298 | all asleep at step 92 (0.77 s) | hashes 6d172292 DETERMINISTIC
+   final pose error: horizontal max 10.62 mm, vertical max 65.26 mm, max tilt 0.400 deg
+rubble300: 120 Hz x1 | awake steps 1432/1800 | us/step mean 487.3 p50 503.7 p95 559.2 max 593.7 | awake mean 289 max 300 | contact pts mean 1460 max 1590 | SAT tests mean 1055 | us per awake body-step 1.687 | us per contact pt 0.334 | all asleep at step 1432 (11.93 s) | hashes 5bc16ddf DETERMINISTIC
+   final: centre y min 0.036 max 1.468, bodies escaped or under ground 0
+blast200: 120 Hz x1 | awake steps 676/1500 | us/step mean 144.0 p50 161.2 p95 255.1 max 280.7 | awake mean 119 max 200 | contact pts mean 451 max 813 | SAT tests mean 153 | us per awake body-step 1.205 | us per contact pt 0.319 | all asleep at step 849 (7.08 s) | hashes 3fa55997 DETERMINISTIC
+   final: centre y min 0.294 max 3.001, bodies escaped or under ground 0
+fit (min-filtered, 2243 steps): us/step = 0.372*awake + 0.172*contactPts + 0.123*satTests ; mean abs error 4.7 %
+node docs/chantier-moteur/bancs/phys/bench.mjs 3 120 1  2.80s user 0.02s system 109% cpu 2.581 total
+ 8:06  up 1 day, 17:12, 2 users, load averages: 2.61 2.31 2.06
+
+$ node docs/chantier-moteur/bancs/phys/bench.mjs 3 120 1   # passe 2
+ 8:16  up 1 day, 17:22, 2 users, load averages: 2.83 2.85 2.50
+stack10: 120 Hz x1 | awake steps 123/1200 | us/step mean 20.3 p50 19.7 p95 22.3 max 24.2 | awake mean 10 max 10 | contact pts mean 40 max 40 | SAT tests mean 9 | us per awake body-step 2.029 | us per contact pt 0.507 | all asleep at step 123 (1.02 s) | hashes fb79204a DETERMINISTIC
+   final pose error: horizontal max 24.33 mm, vertical max 84.87 mm, max tilt 0.156 deg
+pyramid55: 120 Hz x1 | awake steps 92/1200 | us/step mean 167.6 p50 166.6 p95 178.5 max 184.1 | awake mean 55 max 55 | contact pts mean 518 max 549 | SAT tests mean 135 | us per awake body-step 3.047 | us per contact pt 0.323 | all asleep at step 92 (0.77 s) | hashes 6d172292 DETERMINISTIC
+   final pose error: horizontal max 10.62 mm, vertical max 65.26 mm, max tilt 0.400 deg
+rubble300: 120 Hz x1 | awake steps 1432/1800 | us/step mean 548.9 p50 576.1 p95 625.9 max 671.3 | awake mean 289 max 300 | contact pts mean 1460 max 1590 | SAT tests mean 1055 | us per awake body-step 1.901 | us per contact pt 0.376 | all asleep at step 1432 (11.93 s) | hashes 5bc16ddf DETERMINISTIC
+   final: centre y min 0.036 max 1.468, bodies escaped or under ground 0
+blast200: 120 Hz x1 | awake steps 676/1500 | us/step mean 159.5 p50 179.9 p95 280.2 max 308.9 | awake mean 119 max 200 | contact pts mean 451 max 813 | SAT tests mean 153 | us per awake body-step 1.335 | us per contact pt 0.354 | all asleep at step 849 (7.08 s) | hashes 3fa55997 DETERMINISTIC
+   final: centre y min 0.294 max 3.001, bodies escaped or under ground 0
+fit (min-filtered, 2243 steps): us/step = 0.409*awake + 0.186*contactPts + 0.152*satTests ; mean abs error 4.9 %
+
+$ node docs/chantier-moteur/bancs/phys/bench.mjs 3 120 1   # passe 3
+ 8:16  up 1 day, 17:22, 2 users, load averages: 2.92 2.87 2.51
+stack10: 120 Hz x1 | awake steps 123/1200 | us/step mean 22.4 p50 22.3 p95 24.8 max 26.3 | awake mean 10 max 10 | contact pts mean 40 max 40 | SAT tests mean 9 | us per awake body-step 2.239 | us per contact pt 0.560 | all asleep at step 123 (1.02 s) | hashes fb79204a DETERMINISTIC
+   final pose error: horizontal max 24.33 mm, vertical max 84.87 mm, max tilt 0.156 deg
+pyramid55: 120 Hz x1 | awake steps 92/1200 | us/step mean 178.1 p50 176.8 p95 191.5 max 195.8 | awake mean 55 max 55 | contact pts mean 518 max 549 | SAT tests mean 135 | us per awake body-step 3.238 | us per contact pt 0.344 | all asleep at step 92 (0.77 s) | hashes 6d172292 DETERMINISTIC
+   final pose error: horizontal max 10.62 mm, vertical max 65.26 mm, max tilt 0.400 deg
+rubble300: 120 Hz x1 | awake steps 1432/1800 | us/step mean 561.3 p50 587.8 p95 631.8 max 697.7 | awake mean 289 max 300 | contact pts mean 1460 max 1590 | SAT tests mean 1055 | us per awake body-step 1.944 | us per contact pt 0.384 | all asleep at step 1432 (11.93 s) | hashes 5bc16ddf DETERMINISTIC
+   final: centre y min 0.036 max 1.468, bodies escaped or under ground 0
+blast200: 120 Hz x1 | awake steps 676/1500 | us/step mean 168.6 p50 187.4 p95 296.2 max 315.8 | awake mean 119 max 200 | contact pts mean 451 max 813 | SAT tests mean 153 | us per awake body-step 1.411 | us per contact pt 0.374 | all asleep at step 849 (7.08 s) | hashes 3fa55997 DETERMINISTIC
+   final: centre y min 0.294 max 3.001, bodies escaped or under ground 0
+fit (min-filtered, 2243 steps): us/step = 0.425*awake + 0.213*contactPts + 0.122*satTests ; mean abs error 4.4 %
+
+$ node docs/chantier-moteur/bancs/phys-verif/wake.mjs
+ 8:07  up 1 day, 17:12, 2 users, load averages: 2.48 2.29 2.06
+tas de 300 endormi, 120 Hz x1, une impulsion de 6 sur la piece du haut: 286 corps reveilles, 13.83 s avant rendormissement, cout total 714 ms (0.86 ms par image a 60 i/s pendant 13.8 s) ; 183 autres pieces deplacees de plus de 2 mm, max 540 mm
+tas de 300 endormi, 120 Hz x1, une impulsion de 45 sur la piece du haut: 286 corps reveilles, 16.00 s avant rendormissement, cout total 1012 ms (1.05 ms par image a 60 i/s pendant 16.0 s) ; 179 autres pieces deplacees de plus de 2 mm, max 2287 mm
+tas de 300 endormi, 60 Hz x2, une impulsion de 6 sur la piece du haut: 287 corps reveilles, 14.58 s avant rendormissement, cout total 678 ms (0.77 ms par image a 60 i/s pendant 14.6 s) ; 158 autres pieces deplacees de plus de 2 mm, max 474 mm
+tas de 300 endormi, 60 Hz x2, une impulsion de 45 sur la piece du haut: 287 corps reveilles, 5.53 s avant rendormissement, cout total 260 ms (0.78 ms par image a 60 i/s pendant 5.5 s) ; 187 autres pieces deplacees de plus de 2 mm, max 2993 mm
+node docs/chantier-moteur/bancs/phys-verif/wake.mjs  13.87s user 0.05s system 101% cpu 13.670 total
+
+$ node docs/chantier-moteur/bancs/phys/worldstats.mjs
+ 8:07  up 1 day, 17:12, 2 users, load averages: 2.66 2.34 2.08
+classic-0: bounds 192x122 m, colliders 448, meshes 14077, rooms 10 (floor area 7077 m2), walkable rects 26 (sloped 3), enemies 120
+   destructible kinds {"tree":48,"prop":211,"pipe":4,"support":49,"roof":40,"wall":54,"decor":691} | single-collider props 208: crate-sized (0.3..1.8 m) 48, low (h<=1 m) 140, thin 0
+   collider categories {"boundary":119,"none":100,"terrain_edge":66,"ceiling":40,"trunk":20,"lamp_post":20,"combat_cover":18,"rock_core":10,"ventilator_base":9,"reinforcement_baffle":8,"arena_pier":6,"lift_shaft":4}
+classic-2: bounds 206x134 m, colliders 504, meshes 17377, rooms 10 (floor area 7831 m2), walkable rects 28 (sloped 6), enemies 170
+   destructible kinds {"tree":40,"prop":285,"pipe":4,"support":66,"roof":7,"wall":48,"decor":786} | single-collider props 282: crate-sized (0.3..1.8 m) 40, low (h<=1 m) 165, thin 0
+   collider categories {"boundary":197,"none":86,"terrain_edge":70,"lamp_post":30,"trunk":20,"combat_cover":18,"rock_core":10,"raised_bed":10,"ventilator_base":9,"reinforcement_baffle":8,"ceiling":7,"arena_pier":6}
+campaign-0: bounds 192x122 m, colliders 448, meshes 14077, rooms 10 (floor area 7077 m2), walkable rects 26 (sloped 3), enemies 42
+   destructible kinds {"tree":48,"prop":211,"pipe":4,"support":49,"roof":40,"wall":54,"decor":691} | single-collider props 208: crate-sized (0.3..1.8 m) 48, low (h<=1 m) 140, thin 0
+   collider categories {"boundary":119,"none":100,"terrain_edge":66,"ceiling":40,"trunk":20,"lamp_post":20,"combat_cover":18,"rock_core":10,"ventilator_base":9,"reinforcement_baffle":8,"arena_pier":6,"lift_shaft":4}
+campaign-9: bounds 191x122 m, colliders 454, meshes 13956, rooms 10 (floor area 7046 m2), walkable rects 26 (sloped 3), enemies 84
+   destructible kinds {"tree":48,"prop":213,"pipe":4,"support":49,"roof":40,"wall":52,"decor":664} | single-collider props 210: crate-sized (0.3..1.8 m) 48, low (h<=1 m) 140, thin 0
+   collider categories {"boundary":119,"none":100,"terrain_edge":66,"ceiling":40,"trunk":20,"lamp_post":20,"combat_cover":18,"rock_core":10,"ventilator_base":9,"reinforcement_baffle":8,"arena_pier":6,"lift_shaft":4}
+campaign-15: bounds 191x122 m, colliders 454, meshes 14118, rooms 10 (floor area 7036 m2), walkable rects 26 (sloped 3), enemies 120
+   destructible kinds {"tree":48,"prop":211,"pipe":4,"support":49,"roof":40,"wall":54,"decor":691} | single-collider props 208: crate-sized (0.3..1.8 m) 48, low (h<=1 m) 140, thin 0
+   collider categories {"boundary":119,"none":100,"terrain_edge":66,"ceiling":40,"trunk":20,"lamp_post":20,"combat_cover":18,"rock_core":10,"ventilator_base":9,"reinforcement_baffle":8,"arena_pier":6,"lift_shaft":4}
+node docs/chantier-moteur/bancs/phys/worldstats.mjs  0.65s user 0.04s system 172% cpu 0.400 total
+ 8:07  up 1 day, 17:12, 2 users, load averages: 2.66 2.34 2.08
