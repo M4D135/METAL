@@ -14,7 +14,7 @@ const sameBytes=(a,b)=>a.length===b.length&&Array.from(a).every((v,i)=>v===b[i])
 const code=c=>e=>e&&e.code===c;                         // assert.throws(fn, code('FDEMO_FORMAT'))
 
 // Fonctions de 3.1 déjà livrées, dans l'ordre de l'export : à compléter à chaque étape.
-const API=['rng','hasher','seedFor','smootherstep','wrapAngle','lookAt','schema','recorder','player','replay'];
+const API=['rng','hasher','seedFor','smootherstep','wrapAngle','lookAt','schema','recorder','player','replay','director'];
 const draws=(r,n,kind='u32')=>Array.from({length:n},()=>r[kind]());
 
 // Schéma METAL d'aujourd'hui (section 3.5) : un exemple pour les tests, il n'est pas dans FDemo.
@@ -1207,4 +1207,471 @@ test('E11 boucle du rejeu : aucune allocation par pas (2.2)',async()=>{
   }finally{observer.disconnect();}
   for(const [name,list] of Object.entries(passes))assert.ok(list.some(clean),name+' : '+JSON.stringify(list)+', '+N+' pas par passe');
   assert.ok(commands>=1000);
+});
+
+// ---------------------------------------------------------------- Groupe F : réalisateur
+
+const DT=1/60;
+// Contexte jouet du réalisateur (annexe 1) : un seul objet, mis à jour en place à chaque image. Combat quand time % 120
+// est dans [60, 100[ ; l'œil tourne ; quatre coins, plus le colosse pendant le combat. always : combat et colosse permanents ;
+// bossGone retire le colosse.
+function toyContext(always=false){
+  const corners=[[15,15],[-15,15],[15,-15],[-15,-15]].map(([x,z],i)=>({id:'c'+i,kind:'coin',pos:[x,6,z]}));
+  const boss={id:'boss',kind:'boss',pos:[20,3,0]},ctx={time:0,combat:false,eye:{pos:[10,1.62,0],yaw:0,pitch:0},points:corners.slice()};
+  const toy={ctx,boss,bossGone:false,at(time){
+    const e=ctx.eye,points=ctx.points,wanted=(ctx.combat=always||time%120>=60&&time%120<100)&&!toy.bossGone;
+    ctx.time=time;e.pos[0]=10*Math.cos(.1*time);e.pos[2]=10*Math.sin(.1*time);e.yaw=.1*time;
+    boss.pos[0]=20*Math.cos(.3*time);boss.pos[2]=20*Math.sin(.3*time);
+    if(wanted&&points.length===4)points.push(boss);else if(!wanted&&points.length===5)points.pop();
+    return ctx;
+  }};
+  return toy;
+}
+// Catalogue jouet (annexe 1) ; F : le module dont on prend lookAt.
+function toyShots(F=D){
+  const put=(out,p)=>{out.pos[0]=p[0];out.pos[1]=p[1];out.pos[2]=p[2];};
+  return [
+    {id:'yeux',weight:60,duration:[12,25],pose(ctx,age,target,out){put(out,ctx.eye.pos);out.yaw=ctx.eye.yaw;out.pitch=ctx.eye.pitch;}},
+    {id:'surveillance',weight:15,duration:[6,9],needs:'coin',pose(ctx,age,target,out){put(out,target.pos);F.lookAt(target.pos,ctx.eye.pos,out);}},
+    {id:'colosse',weight:ctx=>ctx.combat?40:0,duration:[6,10],needs:'boss',transition:'fly',pose(ctx,age,target,out){
+      const a=.4*age,p=target.pos;out.pos[0]=p[0]+22*Math.cos(a);out.pos[1]=p[1]+6;out.pos[2]=p[2]+22*Math.sin(a);F.lookAt(out.pos,p,out);}},
+    {id:'survol',weight:ctx=>ctx.time<4?100:0,duration:[4,4],transition:'fly',pose(ctx,age,target,out){out.pos[0]=-30+5*age;out.pos[1]=15;out.pos[2]=-30;out.yaw=.8;out.pitch=-.3;}}];
+}
+const poseOf=f=>[...f.pose.pos,f.pose.yaw,f.pose.pitch,f.pose.roll,f.pose.fov];
+// Filme dir sur le contexte jouet, 60 updates par seconde de temps simulé, depuis l'image first. Journal à chaque changed :
+// {i, time, shot, target, reason, hold, flight, took}, took étant l'âge final du plan précédent (somme des dt, dans l'ordre du
+// réalisateur). digest : D.hasher de toutes les composantes de toutes les poses. each(frame, ctx, i) voit chaque image.
+function film(dir,seconds,{toy=toyContext(),each=null,first=0}={}){
+  const log=[],h=D.hasher();let took=0;
+  for(let i=first;i<first+Math.round(seconds*60);i++){
+    const ctx=toy.at(i/60),f=dir.update(DT,ctx);took+=DT;
+    if(f.changed){log.push({i,time:i/60,shot:f.shot,target:f.target&&f.target.id,reason:f.reason,hold:f.hold,flight:f.flight,took});took=0;}
+    for(const v of poseOf(f))h.number(v);
+    each?.(f,ctx,i);
+  }
+  return {log,digest:h.result()};
+}
+const toyDirector=(options={})=>D.director({shots:toyShots(),...options});
+
+test('F1 même graine, mêmes contextes : même journal et mêmes poses sur 10 min ; graine 2 : autre journal',()=>{
+  const a=film(toyDirector(),600),b=film(toyDirector({seed:1}),600),c=film(toyDirector({seed:2}),600);
+  assert.ok(a.log.length>=30,'plans en 10 min : '+a.log.length);
+  assert.deepEqual(b.log,a.log,'même journal');assert.equal(b.digest,a.digest,'mêmes poses, au bit près');
+  assert.notDeepEqual(c.log.map(e=>[e.shot,e.target,e.hold]),a.log.map(e=>[e.shot,e.target,e.hold]),'graine 2 : autre journal');
+  assert.notEqual(c.digest,a.digest);
+  assert.equal(a.log[0].reason,'start');assert.equal(a.log[0].i,0,'premier plan dès la première update');
+  assert.ok(a.log.slice(1).every(e=>['time','lost'].includes(e.reason)),'catalogue jouet : fins par la durée ou par la cible perdue');
+});
+
+test('F2 durées : hold dans [min, max] ; plan fini par « time » au bout de flight + hold, à dt près',()=>{
+  const bounds=Object.fromEntries(toyShots().map(s=>[s.id,s.duration]));let ended=0;
+  for(const seed of [1,2,3]){
+    const {log}=film(toyDirector({seed}),600);
+    for(const [k,e] of log.entries()){
+      const [min,max]=bounds[e.shot],next=log[k+1];
+      assert.ok(e.hold>=min&&e.hold<=max,e.shot+' : hold '+e.hold+' hors de ['+min+', '+max+']');
+      if(e.shot==='survol')assert.equal(e.hold,4);
+      if(!next||next.reason!=='time')continue;
+      const span=e.flight+e.hold;ended++;
+      assert.ok(next.took>=span&&next.took<span+DT+1e-9,e.shot+' : '+next.took+' s pour flight + hold = '+span);
+    }
+  }
+  assert.ok(ended>=60,'plans finis par la durée : '+ended);
+});
+
+test('F3 jamais deux fois le même plan de suite ; au moins 3 plans différents en 5 min',()=>{
+  for(const seed of [1,2,3,4,5]){
+    const {log}=film(toyDirector({seed}),600);
+    for(let k=1;k<log.length;k++)assert.notEqual(log[k].shot,log[k-1].shot,'graine '+seed+', plan '+k);
+    const seen=new Set(log.filter(e=>e.time<300).map(e=>e.shot));
+    assert.ok(seen.size>=3,'graine '+seed+' : '+[...seen]);
+  }
+  // Un seul plan possible : il se répète (la règle ne vaut que s'il existe un autre plan).
+  const lone=film(D.director({shots:toyShots().slice(0,1)}),300).log;
+  assert.ok(lone.length>=12&&lone.every(e=>e.shot==='yeux'));
+});
+
+test('F4 cible exigée : jamais « colosse » sans point boss ; cible perdue → « lost » à l’update suivante',()=>{
+  // (a) Contexte jouet : le colosse n'est filmé que pendant le combat, quand le point boss existe.
+  let filmed=0;
+  film(toyDirector(),600,{each:(f,ctx)=>{if(f.shot!=='colosse')return;filmed++;assert.ok(ctx.points.some(p=>p.kind==='boss'));assert.equal(f.target,ctx.points[4]);}});
+  assert.ok(filmed>600,'images du colosse : '+filmed);
+  // (b) Combat et colosse permanents : dès que le colosse est filmé, son point disparaît.
+  for(const seed of [1,2,3]){
+    const toy=toyContext(true),dir=toyDirector({seed});let lost=0,drop=false;
+    for(let i=0;i<60*600;i++){
+      const f=dir.update(DT,toy.at(i/60));
+      if(drop){assert.equal(f.changed,true);assert.equal(f.reason,'lost');assert.notEqual(f.shot,'colosse');assert.notEqual(f.shot,null);lost++;drop=toy.bossGone=false;}
+      else if(f.shot==='colosse'){drop=toy.bossGone=true;assert.equal(f.target,toy.boss);}
+    }
+    assert.ok(lost>=5,'graine '+seed+' : '+lost+' cibles perdues');
+  }
+  // La cible est relue par id à chaque update : des points neufs à chaque image, la cible suit l'objet du jour.
+  const dir=D.director({shots:[{id:'suivi',weight:1,duration:[50,60],needs:'mobile',pose(ctx,age,t,out){out.pos[0]=t.pos[0];out.pos[1]=t.pos[1];out.pos[2]=t.pos[2];out.yaw=out.pitch=0;}}]});
+  for(let i=0;i<600;i++){
+    const points=[{id:'m',kind:'mobile',pos:[i,0,1]},{id:'autre',kind:'fixe',pos:[0,0,0]}],f=dir.update(DT,{points});
+    assert.equal(f.target,points[0]);assert.deepEqual(Array.from(f.pose.pos),[i,0,1]);
+  }
+});
+
+test('F5 vol amorti de A vers B, d = 50 m : flight 2,2 s, aucun saut, arrivée exacte ; coupes',()=>{
+  const fixed=(id,pos,yaw,transition)=>({id,weight:1,duration:[1,2],transition,pose(ctx,age,target,out){out.pos[0]=pos[0];out.pos[1]=pos[1];out.pos[2]=pos[2];out.yaw=yaw;out.pitch=yaw/10;}});
+  const B=[30,2,40,2.5,.25,0,74];
+  for(const seed of [1,2,3]){
+    const dir=D.director({seed,shots:[fixed('A',[0,2,0],0,'cut'),fixed('B',[30,2,40],2.5,'fly')]});
+    let last=null,wasFlying=false,flights=0,arrivals=0,entries=0;
+    for(let i=0;i<60*120;i++){
+      const f=dir.update(DT,{}),p=poseOf(f),arriving=wasFlying&&!f.changed&&!f.flying;
+      if(f.changed){
+        entries++;
+        if(i===0||f.shot==='A'){assert.equal(f.cut,true,'premier plan et entrée de A : coupe');assert.equal(f.flight,0);}
+        else{assert.equal(f.cut,false,'entrée de B après A : vol');assert.equal(f.flight,2.2,'1,8 + 50/160 = 2,1125, ramené à 2,2');flights++;}
+      }
+      if(f.flying||arriving){
+        // Pendant le vol, première image et image d'arrivée comprises : déplacement borné par la pente maximale de smootherstep, 15/8.
+        const step=Math.hypot(p[0]-last[0],p[1]-last[1],p[2]-last[2]);
+        assert.ok(step<=1.875*50/2.2*DT+1e-9,'saut de '+step+' m à l’âge '+f.age);
+        if(f.changed)assert.equal(step,0,'première image du vol : la pose de départ');
+      }
+      if(arriving)arrivals++;
+      if(f.shot==='B'&&!f.flying)assert.deepEqual(p,B,'à age >= flight, pose égale à B');
+      assert.equal(f.flying,f.shot==='B'&&f.age<f.flight);
+      wasFlying=f.flying;last=p;
+    }
+    assert.ok(flights>=15&&arrivals>=flights-1&&entries>=30,'vols '+flights+', arrivées '+arrivals+', plans '+entries);
+  }
+});
+
+test('F6 pose non finie : jamais en sortie ; autre plan dans la même update, raison « pose »',()=>{
+  const broken={id:'panne',weight:50,duration:[3,5],pose(ctx,age,t,out){out.pos[0]=NaN;}};
+  const tired={id:'fatigue',weight:50,duration:[6,8],transition:'fly',pose(ctx,age,t,out){out.pos[0]=age>2?Infinity:1;out.pos[1]=2;out.pos[2]=3;out.yaw=age;out.pitch=0;}};
+  const bad=[{id:'roulis',weight:30,duration:[3,5],pose(ctx,age,t,out){out.pos[0]=out.pos[1]=out.pos[2]=0;out.yaw=out.pitch=0;out.roll=age>1?undefined:0;}},
+    {id:'champ',weight:30,duration:[3,5],pose(ctx,age,t,out){out.pos[0]=out.pos[1]=out.pos[2]=0;out.yaw=out.pitch=0;out.fov='74';}}];
+  const reasons={},after={};
+  const {log}=film(D.director({shots:[...toyShots(),broken,tired,...bad]}),300,{each:f=>{
+    for(const v of poseOf(f))assert.ok(Number.isFinite(v),'pose finie : '+poseOf(f));
+    assert.notEqual(f.shot,'panne');assert.notEqual(f.shot,'champ');assert.ok(f.shot!==null);
+    if(f.shot==='fatigue')assert.ok(f.age<=2+1e-9);if(f.shot==='roulis')assert.ok(f.age<=1+1e-9);
+  }});
+  for(const [k,e] of log.entries()){reasons[e.reason]=(reasons[e.reason]||0)+1;if(e.reason==='pose'&&k)after[log[k-1].shot]=(after[log[k-1].shot]||0)+1;}
+  assert.ok(reasons.pose>=3,JSON.stringify(reasons));
+  assert.ok(after.fatigue>=1&&after.roulis>=1,'fin en cours de plan : '+JSON.stringify(after));
+  // Toutes les poses échouent : au plus shots.length essais par update, shot null, dernière pose gardée ; reprise ensuite.
+  let calls=0,failing=false;
+  const pose=(x)=>(ctx,age,t,out)=>{calls++;out.pos[0]=failing?NaN:x;out.pos[1]=out.pos[2]=0;out.yaw=x;out.pitch=0;};
+  const dir=D.director({shots:[1,2,3].map(x=>({id:'p'+x,weight:x,duration:[1,2],pose:pose(x)}))});
+  for(let i=0;i<200;i++)dir.update(DT,{});
+  const kept=poseOf(dir.frame);failing=true;
+  for(let i=0;i<120;i++){
+    calls=0;const f=dir.update(DT,{});
+    assert.ok(calls<=3,calls+' essais');assert.equal(f.shot,null);assert.equal(f.changed,false);assert.equal(f.flying,false);assert.deepEqual(poseOf(f),kept,'dernière pose sortie gardée');
+  }
+  failing=false;const back=dir.update(DT,{});
+  assert.equal(back.changed,true);assert.equal(back.reason,'pose');assert.ok(back.shot);
+});
+
+// Deux points de genre coin à 50 m l'un de l'autre, un plan qui en exige un et un plan simple : ils alternent.
+const COINS={points:[{id:'a',kind:'coin',pos:[0,0,0]},{id:'b',kind:'coin',pos:[50,0,0]}]};
+const COIN_SHOTS=[{id:'coin',weight:1,duration:[1,2],needs:'coin',pose(c,age,t,out){out.pos[0]=t.pos[0];out.pos[1]=t.pos[1];out.pos[2]=t.pos[2];out.yaw=out.pitch=0;}},
+  {id:'simple',weight:1,duration:[1,2],pose(c,age,t,out){out.pos[0]=out.pos[1]=out.pos[2]=5;out.yaw=out.pitch=0;}}];
+// Part des choix de coin dont la cible est celle du choix de coin précédent ; forget : cut() après chaque choix de coin.
+function repeats(avoid,choices=400,forget=false){
+  const dir=D.director({shots:COIN_SHOTS,avoid});let last=null,same=0,count=0;
+  for(let i=0;count<choices;i++){
+    assert.ok(i<1e6,'trop d’updates');
+    const f=dir.update(DT,COINS);
+    if(f.changed&&f.shot==='coin'){count++;if(f.target.id===last)same++;last=f.target.id;if(forget)dir.cut();}
+  }
+  return same/(choices-1);
+}
+
+test('F7 cibles évitées : poids × 0,3 près des dernières cibles (23 % de répétitions), 50 % sans pénalité',()=>{
+  const penalized=repeats({count:1}),free=repeats({count:1,factor:1});
+  assert.ok(penalized<.35,'pénalité 0,3 : '+penalized+' (attendu 0,3/1,3 ≈ 0,23)');
+  assert.ok(free>.4,'sans pénalité : '+free+' (attendu 0,5)');
+  assert.equal(repeats({count:1,factor:0}),0,'facteur 0 : jamais la même cible');
+  assert.ok(repeats({count:0,factor:0})>.4,'aucune mémoire : aucune pénalité');
+  // Distance strictement inférieure au rayon : à 50 m pile, l'autre point n'est pas pénalisé ; à 50,5 m, les deux le sont.
+  assert.ok(repeats({count:1,radius:50})<.35);assert.ok(repeats({count:1,radius:50.5})>.4);
+});
+
+test('F8 cut() : coupe « external » à l’update suivante, sans vol ; reset(s) : journal d’un réalisateur neuf',()=>{
+  const toy=toyContext(),dir=toyDirector();let cuts=0,midFlight=0,pending=false;
+  for(let i=0;i<60*600;i++){
+    const f=dir.update(DT,toy.at(i/60));
+    if(pending){
+      assert.equal(f.changed,true);assert.equal(f.cut,true);assert.equal(f.reason,'external');assert.equal(f.flight,0);assert.equal(f.flying,false);assert.ok(f.shot);
+      cuts++;pending=false;
+    }else if(i%613===300||f.flying&&f.age>1&&midFlight<3){if(f.flying)midFlight++;dir.cut();pending=true;}
+  }
+  assert.ok(cuts>=50&&midFlight>=3,'coupes '+cuts+', dont en vol '+midFlight);
+  // La mémoire des cibles est oubliée : avec un facteur 0, la même cible deux fois de suite n'arrive qu'après cut().
+  assert.equal(repeats({count:1,factor:0},200),0);assert.ok(repeats({count:1,factor:0},200,true)>.3,'cut() oublie les cibles retenues');
+  // reset(s) remet tout, générateur compris ; reset() reprend la graine des options ; un cut() en attente est oublié.
+  for(const s of [5,1]){
+    const used=toyDirector({seed:3});film(used,123,{first:777});used.cut();used.reset(s);
+    assert.deepEqual(plain(used.frame),{shot:null,target:null,changed:false,cut:false,flying:false,reason:null,age:0,hold:0,flight:0,pose:{pos:[0,0,0],yaw:0,pitch:0,roll:0,fov:74}});
+    assert.deepEqual(film(used,600),film(toyDirector({seed:s}),600),'reset('+s+')');
+  }
+  const again=toyDirector({seed:3});film(again,50);again.reset();
+  assert.deepEqual(film(again,300),film(toyDirector({seed:3}),300),'reset() : graine des options');
+  assert.throws(()=>again.reset(NaN),code('FDEMO_ARG'));assert.throws(()=>again.reset('2'),code('FDEMO_ARG'));
+});
+
+test('F9 mêmes objets : frame, frame.pose et frame.pose.pos d’une update à l’autre',()=>{
+  const dir=toyDirector(),frame=dir.frame,{pose}=frame,{pos}=pose,toy=toyContext();
+  assert.deepEqual(plain(frame),{shot:null,target:null,changed:false,cut:false,flying:false,reason:null,age:0,hold:0,flight:0,pose:{pos:[0,0,0],yaw:0,pitch:0,roll:0,fov:74}},'à la création');
+  for(let i=0;i<60*300;i++){
+    if(i===6000)dir.cut();if(i===12000)dir.reset(9);
+    const f=dir.update(DT,toy.at(i/60));
+    assert.equal(f,frame);assert.equal(f.pose,pose);assert.equal(f.pose.pos,pos);
+  }
+  assert.deepEqual(Object.keys(frame),['shot','target','changed','cut','flying','reason','age','hold','flight','pose']);
+  assert.deepEqual(Object.keys(pose),['pos','yaw','pitch','roll','fov']);
+  assert.ok(Array.isArray(pos)&&pos.length===3);
+});
+
+test('F10 options et catalogue refusés à la création : FDEMO_ARG ; fly et avoid complétés champ par champ',()=>{
+  const shot={id:'s',weight:1,duration:[1,2],pose(){}};
+  const refused=[['sans options',undefined],['options null',null],['sans plans',{}],['plans vides',{shots:[]}],['plans non tableau',{shots:shot}],
+    ['plan null',{shots:[null]}],['plan nombre',{shots:[5]}],['id vide',{shots:[{...shot,id:''}]}],['id nombre',{shots:[{...shot,id:7}]}],['ids en double',{shots:[shot,{...shot}]}],
+    ...[[0,1],[2,1],[1,NaN],[1,Infinity],[NaN,1],[1],[1,'2'],['1',2],[-1,1],'1,2',null,undefined].map(d=>['duration '+String(d),{shots:[{...shot,duration:d}]}]),
+    ['pose absente',{shots:[{...shot,pose:undefined}]}],['pose non fonction',{shots:[{...shot,pose:'f'}]}],
+    ['transition inconnue',{shots:[{...shot,transition:'fondu'}]}],['transition null',{shots:[{...shot,transition:null}]}],
+    ...[['seed',NaN],['seed','1'],['seed',null],['fov',Infinity],['fov',null]].map(([k,v])=>[k+' '+String(v),{shots:[shot],[k]:v}]),
+    ...[['base',NaN],['speed','160'],['min',Infinity],['max',null]].map(([k,v])=>['fly.'+k+' '+String(v),{shots:[shot],fly:{[k]:v}}]),
+    ...[['count',17],['count',-1],['count',1.5],['count','2'],['radius',NaN],['factor',Infinity]].map(([k,v])=>['avoid.'+k+' '+String(v),{shots:[shot],avoid:{[k]:v}}])];
+  for(const [label,options] of refused){const e=refusal(()=>D.director(options),label);assert.equal(e.code,'FDEMO_ARG',label);assert.match(e.message,/^FDemo : réalisateur : /,label);}
+  for(const options of [{shots:[shot]},{shots:[shot],fly:{},avoid:{}},{shots:[shot],fly:null,avoid:null},{shots:[{...shot,weight:0}]},{shots:[{...shot,weight:()=>NaN}]},
+    {shots:[shot],avoid:{count:0}},{shots:[shot],avoid:{count:16}},{shots:[{...shot,duration:[3,3]}]},{shots:[{...shot,transition:'fly'}]},{shots:[shot],seed:-5}])
+    assert.equal(typeof D.director(options).update,'function',JSON.stringify(options));
+  // avoid {count:1} garde radius 12 et factor 0,3 : même suite de cibles qu'avec ces valeurs écrites, autre suite si l'une change.
+  const targets=avoid=>{const dir=D.director({shots:COIN_SHOTS,avoid}),list=[];for(let i=0;i<60*300;i++){const f=dir.update(DT,COINS);if(f.changed)list.push(f.target&&f.target.id);}return list;};
+  const implicit=targets({count:1});
+  assert.deepEqual(targets({count:1,radius:12,factor:.3}),implicit);
+  assert.notDeepEqual(targets({count:1,radius:12,factor:.5}),implicit);assert.notDeepEqual(targets({count:1,radius:60,factor:.3}),implicit);
+  assert.deepEqual(targets(undefined),targets({count:2,radius:12,factor:.3}),'avoid par défaut : 2, 12, 0,3');
+  // fly complété champ par champ : vol de B (d = 50 m) après A.
+  const flightOf=fly=>{
+    const fixed=(id,x,transition)=>({id,weight:1,duration:[1,2],transition,pose(c,age,t,out){out.pos[0]=x;out.pos[1]=0;out.pos[2]=0;out.yaw=out.pitch=0;}});
+    const dir=D.director({seed:2,shots:[fixed('A',0,'cut'),fixed('B',50,'fly')],fly});
+    for(let i=0;i<600;i++){const f=dir.update(DT,{});if(f.changed&&f.shot==='B'&&i>0)return f.flight;}
+    return assert.fail('pas de vol');
+  };
+  assert.equal(flightOf(undefined),2.2);assert.equal(flightOf({}),2.2);assert.equal(flightOf({min:3}),3);
+  assert.equal(flightOf({base:4}),4+50/160);assert.equal(flightOf({speed:10}),5.5);assert.equal(flightOf({speed:10,max:9}),1.8+5);
+  assert.equal(flightOf({base:0,min:0}),50/160);assert.equal(flightOf({min:0,max:0}),0,'vol nul : coupe franche');
+  // fov : pose de départ et préremplissage.
+  const wide=D.director({fov:90,shots:[shot]});assert.equal(wide.frame.pose.fov,90);assert.equal(wide.update(DT,{}).pose.fov,90);
+});
+
+// Modèle de référence de 3.10, écrit pour être lu, sans souci de mémoire ni de vitesse. Il fait les calculs que la mission
+// décrit (distance par racine de la somme des carrés, interpolation a + (b − a)·k) : ses images égalent celles de FDemo au bit près.
+function referenceDirector({seed=1,shots,fov=74,fly={},avoid={}}){
+  const F={base:1.8,speed:160,min:2.2,max:5.5,...fly},A={count:2,radius:12,factor:.3,...avoid},rng=D.rng(seed);
+  const worth=p=>{const w=p.weight===undefined?1:p.weight;return Number.isFinite(w)&&w>0?w:0;};
+  const blank=()=>({pos:[0,0,0],yaw:0,pitch:0,roll:0,fov}),clone=p=>({pos:[...p.pos],yaw:p.yaw,pitch:p.pitch,roll:p.roll,fov:p.fov});
+  let shot=null,previous=null,target=null,age=0,hold=0,flight=0,reason='start',pending=false,shown=false,recent=[],out=blank(),start=blank();
+  const live=blank(),own=live.pos;
+  function choose(ctx,points){
+    const weights=shots.map(s=>{
+      const w=typeof s.weight==='function'?s.weight(ctx):s.weight;
+      if(!(Number.isFinite(w)&&w>0)||s.valid&&!s.valid(ctx))return 0;
+      return s.needs===undefined||points.some(p=>p&&p.kind===s.needs&&worth(p)>0)?w:0;
+    });
+    if(previous&&weights.filter(w=>w>0).length>=2)weights[shots.indexOf(previous)]=0;
+    const i=rng.pick(weights);
+    if(i<0)return false;
+    previous=shots[i];target=null;
+    if(previous.needs!==undefined){
+      const near=p=>recent.some(q=>{const x=p.pos[0]-q[0],y=p.pos[1]-q[1],z=p.pos[2]-q[2];return x*x+y*y+z*z<A.radius*A.radius;});
+      const j=rng.pick(points.map(p=>{const w=p&&p.kind===previous.needs?worth(p):0;return w>0&&near(p)?w*A.factor:w;}));
+      if(j<0)return false;
+      target=points[j];
+      if(A.count){recent.push([...target.pos]);if(recent.length>A.count)recent.shift();}
+    }
+    shot=previous;age=0;flight=0;hold=shot.duration[0]+(shot.duration[1]-shot.duration[0])*rng.next();
+    return true;
+  }
+  return {
+    cut(){pending=true;shown=false;recent=[];},
+    update(dt,ctx){
+      if(!(Number.isFinite(dt)&&dt>0))dt=0;
+      const points=ctx&&Array.isArray(ctx.points)?ctx.points:[];
+      let changed=false,cut=false;
+      if(pending){pending=false;shot=null;reason='external';}
+      else if(shot){
+        age+=dt;
+        const t=shot.needs===undefined?null:points.find(p=>p&&p.id===target.id)||null;
+        const end=shot.needs!==undefined&&!t?'lost':shot.valid&&!shot.valid(ctx)?'invalid':age>=flight+hold?'time':shot.cutIf&&age>=flight&&shot.cutIf(ctx,age,t)?'cutIf':null;
+        if(end){shot=null;reason=end;}else target=t;
+      }
+      for(let tries=0;tries<shots.length;tries++){
+        const fresh=!shot;
+        if(fresh&&!choose(ctx,points))break;
+        live.pos=own;live.roll=0;live.fov=fov;shot.pose(ctx,age,target,live);
+        const q=live.pos;
+        if(![q[0],q[1],q[2],live.yaw,live.pitch,live.roll,live.fov].every(Number.isFinite)){shot=null;reason='pose';continue;}
+        if(fresh){
+          const x=q[0]-out.pos[0],y=q[1]-out.pos[1],z=q[2]-out.pos[2];
+          flight=shot.transition==='fly'&&shown?Math.min(F.max,Math.max(F.min,F.base+Math.sqrt(x*x+y*y+z*z)/F.speed)):0;
+          if(!(flight>0))flight=0;
+          changed=true;cut=flight===0;
+          if(flight>0)start=clone(out);
+        }
+        if(age<flight){
+          const k=D.smootherstep(age/flight),mix=(a,b)=>a+(b-a)*k;
+          out={pos:[0,1,2].map(i=>mix(start.pos[i],q[i])),yaw:start.yaw+D.wrapAngle(live.yaw-start.yaw)*k,pitch:mix(start.pitch,live.pitch),roll:mix(start.roll,live.roll),fov:mix(start.fov,live.fov)};
+        }else out=clone(live);
+        shown=true;break;
+      }
+      if(!shot){target=null;age=hold=flight=0;}
+      return {shot:shot&&shot.id,target,changed,cut,flying:!!shot&&age<flight,reason,age,hold,flight,pose:clone(out)};
+    }};
+}
+// Fait tourner FDemo et le modèle sur la même suite (dt, ctx) ; cutAt(i) : cut() des deux avant l'update i. Vérifie qu'il y a
+// au moins least changements de plan.
+function againstReference(options,steps,next,cutAt=()=>false,least=1){
+  const dir=D.director(options),ref=referenceDirector(options);let changes=0;
+  for(let i=0;i<steps;i++){
+    if(cutAt(i)){dir.cut();ref.cut();}
+    const [dt,ctx]=next(i),f=dir.update(dt,ctx),r=ref.update(dt,ctx),label='update '+i;
+    assert.equal(f.shot,r.shot,label);assert.equal(f.target,r.target,label+' : cible');
+    for(const k of ['changed','cut','flying','reason','age','hold','flight'])assert.equal(f[k],r[k],label+' : '+k);
+    assert.deepEqual(poseOf(f),[...r.pose.pos,r.pose.yaw,r.pose.pitch,r.pose.roll,r.pose.fov],label+' : pose');
+    if(f.changed)changes++;
+  }
+  assert.ok(changes>=least,'changements de plan : '+changes);
+}
+
+test('F11 modèle de référence : mêmes plans, cibles, raisons, durées, vols et poses, au bit près',()=>{
+  // Catalogue jouet, 10 min, deux graines, coupes externes de temps en temps.
+  for(const seed of [1,7]){const toy=toyContext();againstReference({seed,shots:toyShots()},36000,i=>[DT,toy.at(i/60)],i=>i%1999===1000,40);}
+  // Poses non finies, et cibles évitées avec plusieurs réglages.
+  const failing=[...toyShots(),{id:'panne',weight:50,duration:[3,5],pose(c,a,t,out){out.pos[0]=NaN;}},
+    {id:'fatigue',weight:50,duration:[6,8],transition:'fly',pose(c,age,t,out){out.pos[0]=age>2?Infinity:1;out.pos[1]=2;out.pos[2]=3;out.yaw=age;out.pitch=0;}}];
+  const toy=toyContext();againstReference({seed:4,shots:failing},18000,i=>[DT,toy.at(i/60)]);
+  for(const avoid of [{count:1},{count:2,factor:.5},{count:0},{count:16,radius:60,factor:.1}])againstReference({seed:5,shots:COIN_SHOTS,avoid},12000,()=>[DT,COINS],undefined,100);
+  // Catalogue varié : poids en fonction, valid, cutIf, roulis et champ, cibles qui bougent, disparaissent et pèsent 0, NaN ou −1 ;
+  // points neufs à chaque image ; dt variables, nuls, négatifs ou non finis ; contexte parfois sans points.
+  const zoo=[
+    {id:'garde',weight:c=>c.alert?5:1,duration:[2,4],needs:'garde',valid:c=>c.t%17<15,pose(c,age,t,out){out.pos[0]=t.pos[0]+age;out.pos[1]=2;out.pos[2]=t.pos[2];out.yaw=3*age;out.pitch=.1;out.roll=.2*Math.sin(age);}},
+    {id:'ronde',weight:3,duration:[1,3],transition:'fly',cutIf:(c,age)=>age>2&&c.alert,pose(c,age,t,out){out.pos[0]=10*Math.cos(age);out.pos[1]=4;out.pos[2]=10*Math.sin(age);out.yaw=-3+age;out.pitch=-.2;out.fov=60+age;}},
+    {id:'cible',weight:2,duration:[3,6],needs:'cible',transition:'fly',pose(c,age,t,out){out.pos[0]=t.pos[0]-5;out.pos[1]=t.pos[1]+3;out.pos[2]=t.pos[2];D.lookAt(out.pos,t.pos,out);}},
+    {id:'fixe',weight:1,duration:[2,2],pose(c,age,t,out){out.pos[0]=out.pos[1]=out.pos[2]=0;out.yaw=3;out.pitch=0;}}];
+  const dts=[DT,DT,1/144,.033,0,NaN,-.01,DT,.1,Infinity];let t=0;
+  const world=i=>{
+    const dt=dts[i%dts.length];if(Number.isFinite(dt)&&dt>0)t+=dt;
+    const points=[0,1,2,3].map(k=>({id:'g'+k,kind:'garde',pos:[10*k,0,5*Math.sin(t+k)],weight:[undefined,0,2,-1][k]}));
+    for(let k=0;k<3;k++)if(!(k===1&&t%13<4))points.push({id:'k'+k,kind:'cible',pos:[3*k,1,-4*k+Math.cos(t)],weight:k===2&&t%7<1?NaN:1});
+    return [dt,i%997<40?{t,alert:t%11<3}:{t,alert:t%11<3,points}];
+  };
+  for(const seed of [2,3])againstReference({seed,shots:zoo,fov:80},24000,world,i=>i%1499===700,100);
+});
+
+test('F12 director.update : rien d’alloué par image (2.2)',()=>{
+  // Domaine principal, comme D14 et E11. Volume alloué exact : tas grandi pendant la passe, plus ce que rend chaque ramassage
+  // (v8.GCProfiler). Une boucle témoin de même texte, autour d'un faux réalisateur, compte ce qu'allouent le contexte et la
+  // boucle ; on retranche sa médiane (5 passes alternées, après 3 de chauffe).
+  // (a) Image courante : orbite à cible relue par id, valid, cutIf, roulis, champ, et un vol de 10⁵ s qui interpole à chaque
+  //     image. Les deux plans partagent leur fonction pose, que V8 intègre à update : moins de 0,25 octet par update.
+  // (b) Catalogue de jeu, une fonction pose par plan, changements de plan compris. V8 n'intègre plus ces appels et emboîte age
+  //     (16 octets) à chaque appel où il n'est pas entier : c'est le prix de la signature pose(ctx, age, target, out), pas un
+  //     objet du réalisateur. Moins de 48 octets par update.
+  v8.setFlagsFromString('--expose-gc');const gc=vm.runInNewContext('gc');
+  const F=loadRealm({modules:['demo']}).window.FDemo,N=3e5,heap=()=>v8.getHeapStatistics().used_heap_size;
+  const corners=[[15,15],[-15,15],[15,-15],[-15,-15]].map(([x,z],i)=>({id:'c'+i,kind:'coin',pos:[x,6,z]}));
+  const boss={id:'boss',kind:'boss',pos:[20,3,0]},ctx={time:0,combat:true,points:[...corners,boss]};
+  const fixed=(c,age,t,out)=>{out.pos[0]=1;out.pos[1]=2;out.pos[2]=3;out.yaw=.5;out.pitch=.1;};
+  const orbit=(c,age,t,out)=>{const p=t.pos,a=.4*age;out.pos[0]=p[0]+22*Math.cos(a);out.pos[1]=p[1]+6;out.pos[2]=p[2]+22*Math.sin(a);out.yaw=a;out.pitch=-.3;out.roll=.01*a;out.fov=70+Math.sin(a);};
+  const both=(c,age,t,out)=>t===null?fixed(c,age,t,out):orbit(c,age,t,out);
+  const shots=[{id:'ouverture',weight:c=>c.time<1?1:0,duration:[1,1],pose:both},
+    {id:'orbite',weight:c=>c.time>=1?40:0,duration:[1e6,1e6],needs:'boss',transition:'fly',valid:c=>c.points.length>0,cutIf:(c,age)=>age<0,pose:both}];
+  const busy=[{id:'fixe',weight:60,duration:[2,4],pose:fixed},
+    {id:'coin',weight:15,duration:[1,3],needs:'coin',pose(c,age,t,out){const p=t.pos;out.pos[0]=p[0];out.pos[1]=p[1];out.pos[2]=p[2];out.yaw=age;out.pitch=-.2;}},
+    {id:'orbite',weight:c=>c.combat?40:0,duration:[2,4],needs:'boss',transition:'fly',valid:c=>c.points.length>0,cutIf:(c,age)=>age<0,pose:orbit},
+    {id:'survol',weight:c=>c.time%30<4?100:0,duration:[2,3],transition:'fly',cutIf:(c,age)=>age>3,pose(c,age,t,out){out.pos[0]=-30+5*age;out.pos[1]=15;out.pos[2]=-30;out.yaw=.8;out.pitch=-.3;}}];
+  const idle={frame:{changed:false},update(dt,c){return this.frame;}};
+  function world(i,toggle){
+    const time=i*DT,points=ctx.points;ctx.time=time;boss.pos[0]=20*Math.cos(.3*time);boss.pos[2]=20*Math.sin(.3*time);
+    if(toggle){ctx.combat=time%120>=60&&time%120<100;if(ctx.combat&&points.length===4)points.push(boss);else if(!ctx.combat&&points.length===5)points.pop();}
+  }
+  // Deux boucles de même texte : chacune garde ses sites d'appel monomorphes.
+  const loop=(dir,toggle)=>{let base=0;return ()=>{let changes=0;for(let i=base;i<base+N;i++){world(i,toggle);if(dir.update(DT,ctx).changed)changes++;}base+=N;return changes;};};
+  const twin=(dir,toggle)=>{let base=0;return ()=>{let changes=0;for(let i=base;i<base+N;i++){world(i,toggle);if(dir.update(DT,ctx).changed)changes++;}base+=N;return changes;};};
+  const measure=f=>{gc();const prof=new v8.GCProfiler();prof.start();const h0=heap(),changes=f();let bytes=heap()-h0;
+    for(const e of prof.stop().statistics)bytes+=e.beforeGC.heapStatistics.usedHeapSize-e.afterGC.heapStatistics.usedHeapSize;return {bytes,changes};};
+  const median=a=>[...a].sort((x,y)=>x-y)[a.length>>1];
+  function compare(run,control){
+    for(let k=0;k<3;k++){run();control();}
+    const r=[],c=[],changes=[];
+    for(let k=0;k<5;k++){const m=measure(run);r.push(m.bytes);changes.push(m.changes);c.push(measure(control).bytes);}
+    return {perUpdate:(median(r)-median(c))/N,changes:Math.max(...changes)};
+  }
+  const steady=F.director({shots,fly:{min:1e5,max:1e5}});
+  const a=compare(loop(steady,false),twin(idle,false));
+  assert.equal(steady.frame.shot,'orbite');assert.equal(steady.frame.flying,true);assert.equal(a.changes,0,'aucun changement de plan pendant les passes');
+  assert.ok(a.perUpdate<.25,'image courante : '+a.perUpdate.toFixed(3)+' octet par update');
+  ctx.points.length=4;ctx.combat=false;
+  const b=compare(loop(F.director({shots:busy}),true),twin(idle,true));
+  assert.ok(b.changes>=1000,'changements par passe : '+b.changes);
+  assert.ok(b.perUpdate<48,'catalogue de jeu : '+b.perUpdate.toFixed(1)+' octets par update');
+});
+
+test('F13 dt, contexte, valid, cutIf, ordre des fins, poids des points, préremplissage, tableau du jeu, lacet par le plus court',()=>{
+  const at=(x,yaw=0)=>(c,age,t,out)=>{out.pos[0]=x;out.pos[1]=out.pos[2]=0;out.yaw=yaw;out.pitch=0;};
+  // dt non fini, négatif ou non nombre : 0, l'âge n'avance pas.
+  const still=D.director({shots:[{id:'s',weight:1,duration:[5,5],pose:at(0)}]});still.update(DT);
+  for(const dt of [NaN,-1,-Infinity,Infinity,'0.5',null,undefined,-0])assert.equal(still.update(dt).age,0,'dt '+String(dt));
+  assert.equal(still.update(.25).age,.25);assert.equal(still.update(.5).age,.75);assert.equal(still.frame.shot,'s');
+  // Contexte sans points : un plan à cible ne pèse rien ; un plan à cible en cours perd sa cible.
+  const seeker={id:'cherche',weight:100,duration:[9,9],needs:'k',pose:at(1)},plain1={id:'vue',weight:1,duration:[1,1],pose:at(2)};
+  for(const ctx of [undefined,{},{points:'k'},{points:null},{points:[{id:'z',kind:'k',pos:[0,0,0],weight:0}]}]){
+    const d=D.director({shots:[seeker,plain1]});
+    for(let i=0;i<300;i++)assert.equal(d.update(DT,ctx).shot,'vue',JSON.stringify(ctx));
+  }
+  const d=D.director({shots:[seeker,plain1]}),here={points:[{id:'q',kind:'k',pos:[0,0,0]}]};
+  assert.equal(d.update(DT,here).shot,'cherche');assert.equal(d.frame.target,here.points[0]);
+  const gone=d.update(DT,{});assert.equal(gone.reason,'lost');assert.equal(gone.shot,'vue');assert.equal(gone.target,null);
+  // Poids des points : absent → 1, 0, négatif ou NaN → 0 ; une cible d'un autre genre n'est jamais prise.
+  const mixed={points:[{id:'zero',kind:'k',pos:[0,0,0],weight:0},{id:'neg',kind:'k',pos:[1,0,0],weight:-1},{id:'u',kind:'k',pos:[2,0,0]},
+    {id:'nan',kind:'k',pos:[3,0,0],weight:NaN},{id:'autre',kind:'j',pos:[4,0,0]}]};
+  const pick=D.director({shots:[{...seeker,duration:[.1,.1]},{...plain1,duration:[.1,.1]}]});let picked=0;
+  for(let i=0;i<3000;i++){const f=pick.update(DT,mixed);if(f.changed&&f.shot==='cherche'){picked++;assert.equal(f.target.id,'u');}}
+  assert.ok(picked>=100);
+  // valid : faux pendant un plan → « invalid » ; faux au choix → poids nul. weight reçoit ctx.
+  const ctx={ok:true},guarded=D.director({shots:[{id:'g',weight:c=>{assert.equal(c,ctx);return 5;},duration:[50,50],valid:c=>c.ok,pose:at(3)},{id:'o',weight:1,duration:[1,1],pose:at(4)}]});
+  const reasons=[];
+  for(let i=0;i<60*20;i++){ctx.ok=i<300||i>=900;const f=guarded.update(DT,ctx);if(f.changed)reasons.push(f.shot+' '+f.reason);if(i>=300&&i<900)assert.equal(f.shot,'o');}
+  assert.deepEqual(reasons.slice(0,2),['g start','o invalid']);assert.ok(reasons.includes('g time'),'g revient quand valid redevient vrai : '+reasons);
+  // cutIf : jamais pendant le vol ; reçoit (ctx, age, cible) ; fin « cutIf ».
+  // (armed : vrai dès que « base » a été montré, donc quand « vol » vole ; un « vol » en premier plan ne vole pas.)
+  const ages=[],cutter=D.director({seed:3,shots:[{id:'base',weight:1,duration:[1,1],pose:at(0)},
+    {id:'vol',weight:1,duration:[50,50],transition:'fly',cutIf:(c,age,t)=>{if(c.armed)ages.push(age);assert.equal(t,null);return age>=3;},pose:at(40)}]});
+  const ends=[],state={armed:false};
+  for(let i=0;i<60*30;i++){const f=cutter.update(DT,state);if(f.shot==='base')state.armed=true;if(f.changed)ends.push(f.reason);if(f.shot==='vol'&&f.changed&&state.armed)assert.equal(f.flight,2.2);}
+  assert.ok(ages.length>0&&ages.every(a=>a>=2.2),'cutIf appelé à partir de flight seulement');assert.ok(ends.filter(r=>r==='cutIf').length>=5,ends);
+  // Ordre des fins quand plusieurs s'appliquent à la même update : lost, puis invalid, puis time, puis cutIf.
+  const ending=(lost,invalid,late,cut)=>{
+    const point={id:'q',kind:'k',pos:[0,0,0]},end=D.director({shots:[{id:'p',weight:100,duration:[1,1],needs:'k',valid:c=>c.ok,cutIf:c=>c.cut,pose:at(5)},plain1]});
+    assert.equal(end.update(DT,{ok:true,cut:false,points:[point]}).shot,'p');
+    return end.update(late?2:DT,{ok:!invalid,cut,points:lost?[]:[point]}).reason;
+  };
+  assert.deepEqual([ending(1,1,1,1),ending(0,1,1,1),ending(0,0,1,1),ending(0,0,0,1),ending(0,0,0,0)],['lost','invalid','time','cutIf','start']);
+  // Préremplissage : roll = 0 et fov = options.fov avant chaque appel ; le tableau pos du jeu n'est jamais écrit.
+  const anchor=[7,8,9],seen={},painter=D.director({fov:90,shots:[{id:'alias',weight:1,duration:[1,1],pose(c,age,t,out){out.pos=c.anchor;out.yaw=out.pitch=0;out.roll=.5;out.fov=50;}},
+    {id:'ecrit',weight:1,duration:[1,1],pose(c,age,t,out){out.pos[0]=out.pos[1]=out.pos[2]=-1;out.yaw=out.pitch=0;}}]});
+  for(let i=0;i<60*20;i++){const f=painter.update(DT,{anchor});seen[f.shot]=poseOf(f);}
+  assert.deepEqual(anchor,[7,8,9],'le tableau du jeu n’est jamais écrit');assert.notEqual(painter.frame.pose.pos,anchor);
+  assert.deepEqual(seen,{alias:[7,8,9,0,0,.5,50],ecrit:[-1,-1,-1,0,0,0,90]},'roll et fov remis à 0 et à options.fov');
+  // Lacet par le plus court : de 3 rad vers −3 rad, le vol passe par π (écart wrapAngle(−6) ≈ 0,283), jamais par 0.
+  const turn=D.director({seed:5,shots:[{id:'g',weight:1,duration:[3,3],pose:at(0,3)},{id:'d',weight:1,duration:[3,3],transition:'fly',pose:at(30,-3)}]});
+  let flown=0,last=null;
+  for(let i=0;i<60*60;i++){
+    const f=turn.update(DT,{});
+    if(f.shot==='d'&&f.flying){flown++;assert.ok(f.pose.yaw>=3&&f.pose.yaw<=3+D.wrapAngle(-6)+1e-12,'lacet '+f.pose.yaw);if(!f.changed)assert.ok(f.pose.yaw>=last);}
+    if(f.shot==='d'&&!f.flying)assert.equal(f.pose.yaw,-3);
+    last=f.pose.yaw;
+  }
+  assert.ok(flown>500);
 });

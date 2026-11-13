@@ -13,8 +13,7 @@
     for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));
     try{return decodeURIComponent(escape(s));}catch{return fail('FDEMO_FORMAT','texte encodé hors UTF-8');}
   }
-  // Les états 32 bits vivent dans des tableaux typés : gardés dans une fermeture, ils seraient
-  // mis en boîte à chaque écriture, donc une allocation par tirage ou par octet haché.
+  // États en tableaux typés : un nombre gardé dans une fermeture serait mis en boîte à chaque écriture.
   function rng(seed){
     const state=new Int32Array(1);state[0]=seed;
     function u32(){
@@ -23,7 +22,6 @@
       state[0]=a;return (t^(t>>>14))>>>0;
     }
     const next=()=>u32()/4294967296,weight=w=>Number.isFinite(w)&&w>0?w:0;
-    // Toujours exactement un tirage, même quand aucun poids n'est positif.
     function pick(weights,n=weights.length){
       let sum=0,cum=0,last=-1;
       for(let i=0;i<n;i++)sum+=weight(weights[i]);
@@ -35,7 +33,6 @@
     return {u32,next,pick,int:n=>n>=1?Math.floor(next()*n):0,range:(lo,hi)=>lo+(hi-lo)*next(),
       get state(){return state[0]>>>0;},set state(v){state[0]=v;}};
   }
-  // FNV-1a 32 bits ; byte, word et number donnent les mêmes octets que tools/proof/digest.mjs.
   function hasher(seed=FNV){
     const state=new Uint32Array(1),view=new DataView(new ArrayBuffer(8));
     const byte=v=>{state[0]=Math.imul(state[0]^(v&255),PRIME);return api;};
@@ -61,13 +58,11 @@
     a%=TAU;
     return a<=-Math.PI?a+TAU:a>Math.PI?a-TAU:a;
   }
-  // Repère : y vers le haut, yaw 0 regarde vers -z ; forward = [sin(yaw)·cos(pitch), sin(pitch), -cos(yaw)·cos(pitch)].
   function lookAt(from,to,out){
     const dx=to[0]-from[0],dy=to[1]-from[1],dz=to[2]-from[2],h=Math.hypot(dx,dz);
     if(h!==0||dy!==0){out.yaw=Math.atan2(dx,-dz);out.pitch=Math.atan2(dy,h);}
     return out;
   }
-  // Schéma d'enregistrement : les champs dans l'ordre des octets, entiers en petit-boutiste.
   const usable=key=>typeof key==='string'&&key!==''&&key!=='__proto__';
   const quantize=(v,scale,max)=>{
     if(!Number.isFinite(v))return 0;
@@ -89,7 +84,6 @@
       const bad=why=>fail('FDEMO_ARG','schéma : '+name+' : '+why,{field:name,index:i});
       const kind=type==='i8'?1:type==='i16'?2:type==='u8'?3:type==='u16'?4:type==='bits'?5:0,max=kind===1?127:kind===2?32767:0;
       if(!kind)bad('type inconnu');
-      // Une échelle dont max/scale déborde décoderait l'infini : la quantification ne serait plus idempotente.
       if(max&&!(Number.isFinite(scale)&&scale>0&&Number.isFinite(max/scale)))bad('scale attendu, nombre fini > 0');
       if(!max&&scale!==undefined)bad('scale interdit pour '+type);
       if(kind!==5&&list!==undefined)bad('names réservé au type bits');
@@ -124,8 +118,7 @@
         }
       }
     }
-    // Sur V8, écrire sous un nom variable un nombre non entier crée une boîte : decode écrit des valeurs déjà
-    // en boîte, gardées par niveau dans des pages de 256 créées au premier usage, et n'alloue plus ensuite.
+    // Nombres déjà en boîte, par pages de 256 créées au premier usage : decode n'alloue plus ensuite.
     function decode(view,offset,out){
       for(let i=0;i<ops.length;i++){
         const o=ops[i],at=offset+o.at;
@@ -143,16 +136,12 @@
     }
     return {fields:copy,size,names,encode,decode};
   }
-  // FDM1, petit-boutiste : « FDM1 », u32 L, en-tête JSON de L octets, puis par scène : enregistrements (u16 de dt
-  // en tête si dtTicks > 0), empreintes (u32 n, u32 valeur), commandes (JSON de [n, type, data]).
   const NONE=Object.freeze([]);
   const text=(v,what)=>{try{return JSON.stringify(v);}catch{return fail('FDEMO_ARG',what+' : valeur hors JSON');}},json=(v,what)=>text(v,what)??'null';
-  // dt en ticks : nombres déjà en boîte, comme dans decode.
   function ticker(perSecond){
     const pages=new Array(256).fill(null);
     return t=>{const page=pages[t>>8]||(pages[t>>8]=new Array(256).fill(null));return page[t&255]??(page[t&255]=t/perSecond);};
   }
-  // L'enregistreur complète l'en-tête (FDEMO_ARG), le lecteur l'exige complet (FDEMO_FORMAT).
   function settings(h,code,fill){
     if(!h||typeof h!=='object'||Array.isArray(h))fail(code,'en-tête : objet attendu');
     const s={gameVersion:'',engine:'',hz:60,dtTicks:0,checksumEvery:600},str=v=>typeof v==='string';
@@ -174,7 +163,6 @@
     let records=new Uint8Array(Math.min(maxBytes,initialSteps*R)),view=new DataView(records.buffer),sums=new Uint8Array(512),sumView=new DataView(sums.buffer);
     let used=0,count=0,size=0,steps=0,taken=-1,dt=tick?0:1/hz,full=false,open=false,closed=false,now=null;
     const live=()=>{if(closed)fail('FDEMO_STATE','enregistreur fermé');},opened=what=>{live();if(!open)fail('FDEMO_STATE',what+' sans scène');};
-    // Ce qui dépasserait maxBytes n'est pas stocké, ni rien après.
     function room(n){if(!full&&size+n>maxBytes)full=now.truncated=true;return !full;}
     function step(input,seconds){
       opened('pas');
@@ -253,7 +241,6 @@
       }
       return all;
     }
-    // Chaque longueur est comparée aux octets restants avant de lire : rien au-delà, pas de boucle démesurée.
     let p=8+L;
     for(let k=0;k<list.length;k++){
       const s=list[k]||{},{steps,checksums,commandBytes}=s,sums=p+steps*R,commands=sums+checksums*8;
@@ -301,8 +288,6 @@
     if(parts.length)play.select(0);
     return play;
   }
-  // Rejoueur : par scène, open puis empreinte en 0 ; pour chaque n, commandes du pas n, enregistrement suivant (sinon fin
-  // de scène), step, empreinte en n+1. checksum() n'est appelé que si une empreinte est attendue ; advance reprend où il s'est arrêté.
   function replay(bytes,game,options){
     const {expect,stopOnDesync=true}=options??{};
     if(!game||typeof game.open!=='function'||typeof stopOnDesync!=='boolean')fail('FDEMO_ARG','rejeu : game.open ou stopOnDesync invalide');
@@ -349,5 +334,87 @@
     }
     return {advance,run(){advance();return result;},get done(){return done;},get result(){return result;}};
   }
-  G.FDemo={FORMAT,MAGIC,rng,hasher,seedFor,smootherstep,wrapAngle,lookAt,schema,recorder,player,replay};
+  // Réalisateur : temps simulé, tirages dans l'ordre plan, cible si needs, durée.
+  const START={shot:null,target:null,changed:false,cut:false,flying:false,reason:null,age:0,hold:0,flight:0};
+  function director(options){
+    const ok=Number.isFinite,bad=why=>fail('FDEMO_ARG','réalisateur : '+why);
+    const {seed=1,shots,fov=74,fly,avoid}=options||bad('options attendues'),{base=1.8,speed=160,min:low=2.2,max:high=5.5}=fly||{},{count=2,radius=12,factor=.3}=avoid||{};
+    if(![seed,fov,base,speed,low,high,radius,factor].every(ok)||!(Number.isInteger(count)&&count>=0&&count<=16))bad('options invalides');
+    const ids=new Set(),plans=(Array.isArray(shots)&&shots.length?shots:bad('plans attendus')).map((s,i)=>{
+      const {id,duration:d,transition='cut'}=s||{};
+      if(typeof id!=='string'||!id||ids.has(id)||!(Array.isArray(d)&&ok(d[0])&&ok(d[1])&&d[0]>0&&d[0]<=d[1])||typeof s.pose!=='function'||transition!=='cut'&&transition!=='fly')bad('plan '+i+' invalide');
+      ids.add(id);return {...s,min:d[0],max:d[1],fly:transition==='fly'};
+    });
+    const n=plans.length,draw=rng(seed),weights=new Float64Array(n),ring=new Float64Array(3*count),blank=()=>({pos:[0,0,0],yaw:0,pitch:0,roll:0,fov});
+    const live=blank(),from=blank(),own=live.pos,frame={...START,pose:blank()},out=frame.pose;
+    let spots=new Float64Array(8),cur,prev,aim,why,cutting,shown,stored,slot;
+    const copy=(a,b)=>{const p=a.pos,q=b.pos;p[0]=q[0];p[1]=q[1];p[2]=q[2];a.yaw=b.yaw;a.pitch=b.pitch;a.roll=b.roll;a.fov=b.fov;};
+    const mix=(a,b,k)=>a+(b-a)*k,worth=p=>{const w=p.weight===undefined?1:p.weight;return ok(w)&&w>0?w:0;};
+    const seek=(list,key,kind)=>{for(let j=0;j<list.length;j++){const p=list[j];if(p&&(kind?p.kind===key&&worth(p)>0:p.id===key))return p;}return null;};
+    function choose(ctx,list){
+      let positive=0;
+      for(let i=0;i<n;i++){
+        const s=plans[i],w=typeof s.weight==='function'?s.weight(ctx):s.weight;
+        if((weights[i]=ok(w)&&w>0&&(!s.valid||s.valid(ctx))&&(s.needs===undefined||seek(list,s.needs,1))?w:0)>0)positive++;
+      }
+      if(positive>1&&prev>=0)weights[prev]=0;
+      const i=draw.pick(weights,n),s=plans[i];
+      if(i<0)return false;
+      prev=i;frame.target=null;
+      if(s.needs!==undefined){
+        if(spots.length<list.length)spots=new Float64Array(list.length);
+        for(let j=0;j<list.length;j++){
+          const p=list[j];let w=p&&p.kind===s.needs?worth(p):0;
+          for(let k=0;w>0&&k<3*stored;k+=3){const q=p.pos,x=q[0]-ring[k],y=q[1]-ring[k+1],z=q[2]-ring[k+2];if(x*x+y*y+z*z<radius*radius){w*=factor;break;}}
+          spots[j]=w;
+        }
+        const t=frame.target=list[draw.pick(spots,list.length)];
+        if(!t)return false;
+        aim=t.id;
+        if(count){const q=t.pos,k=3*slot;ring[k]=q[0];ring[k+1]=q[1];ring[k+2]=q[2];slot=(slot+1)%count;stored=Math.min(stored+1,count);}
+      }
+      frame.hold=draw.range(s.min,s.max);frame.age=frame.flight=0;cur=i;
+      return true;
+    }
+    function update(dt,ctx){
+      dt=ok(dt)&&dt>0?dt:0;
+      const list=ctx&&Array.isArray(ctx.points)?ctx.points:NONE,p=out.pos,f=from.pos;
+      frame.changed=frame.cut=false;
+      if(cutting){cutting=false;cur=-1;why='external';}
+      else if(cur>=0){
+        const s=plans[cur],age=frame.age+=dt,t=s.needs===undefined?null:seek(list,aim);
+        const end=s.needs!==undefined&&!t?'lost':s.valid&&!s.valid(ctx)?'invalid':age>=frame.flight+frame.hold?'time':s.cutIf&&age>=frame.flight&&s.cutIf(ctx,age,t)?'cutIf':'';
+        if(end){cur=-1;why=end;}else frame.target=t;
+      }
+      for(let tries=0;tries<n;tries++){
+        const fresh=cur<0;
+        if(fresh&&!choose(ctx,list))break;
+        const s=plans[cur],age=frame.age;
+        live.pos=own;live.roll=0;live.fov=fov;s.pose(ctx,age,frame.target,live);
+        const q=live.pos;
+        if(!(q&&ok(q[0])&&ok(q[1])&&ok(q[2])&&ok(live.yaw)&&ok(live.pitch)&&ok(live.roll)&&ok(live.fov))){cur=-1;why='pose';continue;}
+        if(fresh){
+          const x=q[0]-p[0],y=q[1]-p[1],z=q[2]-p[2],span=s.fly&&shown?Math.min(high,Math.max(low,base+Math.sqrt(x*x+y*y+z*z)/speed)):0;
+          frame.flight=span>0?span:0;frame.changed=true;if(!(frame.cut=!frame.flight))copy(from,out);
+        }
+        if(frame.flying=age<frame.flight){
+          const k=smootherstep(age/frame.flight);
+          for(let i=0;i<3;i++)p[i]=mix(f[i],q[i],k);
+          out.yaw=from.yaw+wrapAngle(live.yaw-from.yaw)*k;out.pitch=mix(from.pitch,live.pitch,k);out.roll=mix(from.roll,live.roll,k);out.fov=mix(from.fov,live.fov,k);
+        }else copy(out,live);
+        shown=true;break;
+      }
+      if(cur<0)Object.assign(frame,START);else frame.shot=plans[cur].id;
+      frame.reason=why;
+      return frame;
+    }
+    function reset(s=seed){
+      if(!ok(s))bad('graine invalide');
+      draw.state=s;cur=prev=-1;why='start';cutting=shown=false;stored=slot=0;Object.assign(frame,START);live.pos=own;
+      for(const o of [live,from,out])copy(o,blank());
+    }
+    reset();
+    return {frame,update,reset,cut(){cutting=true;shown=false;stored=slot=0;}};
+  }
+  G.FDemo={FORMAT,MAGIC,rng,hasher,seedFor,smootherstep,wrapAngle,lookAt,schema,recorder,player,replay,director};
 })(typeof window!=='undefined'?window:globalThis);
