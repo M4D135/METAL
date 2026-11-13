@@ -1116,6 +1116,8 @@
     // to withdraw from under a piece (lot 17: carried bodies, platforms) must wake the pieces
     // it held with debrisSleep.delete. Never saved: restore starts with an empty map.
     let debrisSleep=new WeakMap();
+    // Reused positions at the start of updateEnemies (T7): no per-step array.
+    let enemyStarts=new Float64Array(0);
     function debrisStaticSupport(q,h,boxes){
       // Same predicates as debrisSupport, on the floor and the static colliders of boxes only.
       const bottom=q.y-h[1];if(Math.abs(bottom-debrisFloor(q.x,q.z,h))<.018)return true;
@@ -1885,7 +1887,9 @@
     }
     function updateEnemies(dt){
       let threat=0,awake=0,dormant=0,reserve=0;
-      routeBudget=advanced?2:Infinity;routeSearches=routeDeferred=0;updateEncounters(dt);rebuildNeighbors();const starts=s.enemies.map(e=>[e.x,e.z]);
+      routeBudget=advanced?2:Infinity;routeSearches=routeDeferred=0;updateEncounters(dt);rebuildNeighbors();const count=s.enemies.length;
+      if(enemyStarts.length<count*2)enemyStarts=new Float64Array(count*2);
+      for(let i=0;i<count;i++){const e=s.enemies[i];enemyStarts[i*2]=e.x;enemyStarts[i*2+1]=e.z;}
       for(const e of s.enemies){
         e.moveSpeed=0;let sensed=false;if(e.hp<=0)continue;if(!present(e)){e.sleeping=true;e.seen=false;reserve++;continue;}e.deployAge=Math.min(2,e.deployAge+dt);airTimers(e,dt);if(e.airborne)airMove(e,dt);if(e.hp<=0)continue;
         if(e.bossWave&&!e.bossReleased){e.sleeping=true;e.seen=false;dormant++;continue;}
@@ -1947,7 +1951,7 @@
       }
       for(const e of s.enemies)if(alive(e))checkPad(e);
       rebuildNeighbors();separate(dt);
-      if(dt>0)for(let i=0;i<s.enemies.length;i++)s.enemies[i].moveSpeed=Math.hypot(s.enemies[i].x-starts[i][0],s.enemies[i].z-starts[i][1])/dt;
+      if(dt>0)for(let i=0;i<count;i++){const e=s.enemies[i],dx=e.x-enemyStarts[i*2],dz=e.z-enemyStarts[i*2+1];e.moveSpeed=dx===0&&dz===0?0:Math.hypot(dx,dz)/dt;}
       Object.assign(s.aiStats,{awake,dormant,reserve,alive:s.enemies.filter(e=>e.hp>0).length,pathSearches:routeSearches,pathDeferred:routeDeferred});if(progression)encounterCounts();
       s.threat=Math.min(1,threat/4);
       updateBrain(dt);
