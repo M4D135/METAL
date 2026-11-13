@@ -70,33 +70,53 @@
   function padStyle(id){/* step 5 */} function glyph(name,style){/* step 5 */}
   // Settings (JSON): {v, keys, pad, tune}; tables follow the declaration order.
   function initial(C){const s={v:C.version,keys:{},pad:{},tune:{}};for(const a of C.actions){s.keys[a.id]=a.keys.slice();s.pad[a.id]=a.pad.slice();}for(const k in TUNE)s.tune[k]=TUNE[k][0];return s;}
-  // A stored table is kept whole or not at all; a missing action gets its free default codes.
+  // A stored table is kept whole or not at all. A missing action takes its default codes that no entry uses,
+  // else its first free alt code (keys only), else none; each code given out is used for the next actions.
   function table(t,C,f,max,ok){
     if(!isObj(t))return null;
-    const used=new Set(),out={};
-    for(const a of C.actions)if(own(t,a.id)){const v=t[a.id];if(!Array.isArray(v)||v.length>max||!v.every(c=>ok(c)&&!used.has(c)&&used.add(c)))return null;}
-    for(const a of C.actions)out[a.id]=own(t,a.id)?t[a.id]:a[f].filter(c=>!used.has(c));
+    const used=new Set(),out={},free=c=>!used.has(c);
+    for(const a of C.actions)if(own(t,a.id)){const v=t[a.id];if(!Array.isArray(v)||v.length>max||!v.every(c=>ok(c)&&free(c)&&used.add(c)))return null;}
+    for(const a of C.actions){
+      let v=t[a.id];
+      if(!own(t,a.id)){v=a[f].filter(free);if(!v.length&&f==='keys')v=a.alt.filter(free).slice(0,1);for(const c of v)used.add(c);}
+      out[a.id]=v;
+    }
     return out;
   }
-  // Lenient and idempotent; step 3 adds migrate, alt codes and the stored pad table.
+  // Lenient and idempotent. An older format (v below the version, or not an integer) goes through the game's
+  // migrate, called on its own copy: a migrate that throws or returns no object changes nothing.
   function settle(raw,C){
     let r={};if(isObj(raw))try{r=copy(raw);}catch(e){}if(!isObj(r))r={};
+    const from=Number.isInteger(r.v)?r.v:0,{migrate}=C;
+    if(from<C.version&&migrate)try{const m=copy(migrate(copy(r),from));if(isObj(m))r=m;}catch(e){}
     const s=initial(C),t=isObj(r.tune)?r.tune:{};
-    s.keys=table(r.keys,C,'keys',3,C.isKey)||s.keys;
+    s.keys=table(r.keys,C,'keys',3,C.isKey)||s.keys;s.pad=table(r.pad,C,'pad',2,padOk)||s.pad;
     for(const k in TUNE){const [d,lo,hi]=TUNE[k],v=own(t,k)?t[k]:d;s.tune[k]=lo===undefined?typeof v==='boolean'?v:d:Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d;}
     return s;
   }
+  // Rebinding works on normalize(settings), a new object: the arguments are never modified.
+  function rebind(C,settings,device,action,code,none){
+    const kb=device==='keyboard',f=kb?'keys':'pad',no=reason=>({ok:false,reason});
+    if(!kb&&device!=='gamepad')return no('Appareil inconnu.');
+    if(!C.index.has(action))return no('Action inconnue.');
+    if(!none&&!(kb?C.isKey(code):padOk(code)))return no(kb?'Cette touche est réservée au navigateur.':code==='Home'?'Ce bouton est réservé au système.':'Bouton inconnu.');
+    const s=settle(settings,C),other=none?null:C.actions.find(a=>a.id!==action&&s[f][a.id].includes(code));
+    if(other)return {ok:false,conflict:other.id,reason:'Déjà utilisé'+(kb?'e':'')+' : '+other.label+'.'};
+    s[f][action]=none?[]:[code];
+    return {ok:true,settings:s};
+  }
   function defaults(config){return initial(compile(config));}
   function normalize(raw,config){return settle(raw,compile(config));}
-  function assign(config,settings,device,action,code){/* step 3 */} function unbind(config,settings,device,action){/* step 3 */}
+  function assign(config,settings,device,action,code){return rebind(compile(config),settings,device,action,code);}
+  function unbind(config,settings,device,action){return rebind(compile(config),settings,device,action,null,true);}
   function guessDevice(win){/* step 5 */} function focusMove(root,cmd,doc){/* step 6 */}
   function create(config){
     const C=compile(config),held=new Set(),pressed=[];
     // Per action: keys (k), mouse (m), fingers (t), pad button (g), stick ends (gr, tr), pad value (gv).
     const A=C.actions.map(a=>({a,k:0,m:false,t:0,g:false,gr:false,tr:false,gv:0,latch:false,edge:false})),at=id=>A[C.index.get(id)];
     const sticks=C.sticks.map(s=>({kx:s.name+'X',ky:s.name+'Y',move:s.type==='move',x:s.x.map(at),y:s.y.map(at),rate:s.rate})),look=sticks.find(s=>!s.move);
-    // pm, tm: move vectors of the gamepad and of the touch stick (steps 4 and 7).
-    let S,codes,dev=C.device,shown=dev,touchT=-Infinity,px=0,py=0,pmx=0,pmy=0,tmx=0,tmy=0;
+    // pm, tm: move vectors of the gamepad and of the touch stick (steps 4 and 7); cap: capture under way, got: its result.
+    let S,codes,dev=C.device,shown=dev,touchT=-Infinity,px=0,py=0,pmx=0,pmy=0,tmx=0,tmy=0,cap=null,got=null;
     const on=s=>s.k>0||s.m||s.t>0||s.g||s.gr||s.tr,axis=v=>v.length?Number(on(v[1]))-Number(on(v[0])):0;
     // Edge: released → held latches the action and lists it once per frame.
     const rise=(s,was)=>{if(!was&&on(s)){s.latch=true;if(!s.edge){s.edge=true;pressed.push(s.a.id);}}};
@@ -104,8 +124,13 @@
     function configure(raw){S=settle(raw,C);codes=new Map();for(const s of A){s.k=0;for(const c of S.keys[s.a.id]){codes.set(c,s);if(held.has(c))s.k++;}}return copy(S);}
     configure(C.settings);
     return {
-      // a repeat restores a key held across clear(), without an edge
-      keyDown(code,t,repeat){dev='keyboard';const s=codes.get(code);if(typeof code==='string'&&!held.has(code)){held.add(code);if(s){const was=on(s);s.k++;if(!repeat)rise(s,was);}}return !!s;},
+      // A capture hands the next new press to frame().captured, never to the game; its repeats are swallowed.
+      // Otherwise a repeat restores a key held across clear(), without an edge.
+      keyDown(code,t,repeat){
+        dev='keyboard';
+        if(cap==='keyboard'){if(!repeat&&typeof code==='string'){got={device:'keyboard',code};cap=null;}return true;}
+        const s=codes.get(code);if(typeof code==='string'&&!held.has(code)){held.add(code);if(s){const was=on(s);s.k++;if(!repeat)rise(s,was);}}return !!s;
+      },
       keyUp(code){const s=codes.get(code);if(held.delete(code)&&s)s.k--;return !!s;},
       // game.js order of operations: bit-identical angles
       mouseMove(dx,dy,t){const T=S.tune;px+=fin(dx)*C.mouseScale*T.sensitivity;py-=fin(dy)*C.mouseScale*T.sensitivity*(T.invertY?-1:1);mouse(t);},
@@ -115,13 +140,18 @@
         rise(s,was);return true;
       },
       addLook(x,y,device){px+=fin(x);py+=fin(y);if(DEVICES.includes(device))dev=device;},
-      clear(){held.clear();for(const s of A){s.k=s.t=0;s.m=s.tr=s.latch=s.edge=false;}pressed.length=0;px=py=tmx=tmy=0;},
+      clear(){held.clear();for(const s of A){s.k=s.t=0;s.m=s.tr=s.latch=s.edge=false;}pressed.length=0;px=py=tmx=tmy=0;cap=got=null;},
       configure,get settings(){return copy(S);},get device(){return dev;},
+      // Nothing is applied: the game calls configure(r.settings) when it accepts the result.
+      assign:(device,action,code)=>rebind(C,S,device,action,code),
+      unbind:(device,action)=>rebind(C,S,device,action,null,true),
+      // A new capture, or null to cancel; either drops a result frame() has not handed out yet.
+      capture(device){cap=device==='keyboard'||device==='gamepad'?device:null;got=null;},
       frame(dt){
         dt=Number.isFinite(dt)?Math.min(K.dtMax,Math.max(0,dt)):0;
         if(look){px+=axis(look.x)*dt*look.rate;py+=axis(look.y)*dt*look.rate;}
-        const r={pressed:pressed.slice(),nav:null,device:dev,deviceChanged:dev!==shown,connected:[],disconnected:[],pads:[],captured:null};
-        shown=dev;pressed.length=0;for(const s of A)s.edge=false;return r;
+        const r={pressed:pressed.slice(),nav:null,device:dev,deviceChanged:dev!==shown,connected:[],disconnected:[],pads:[],captured:got};
+        shown=dev;got=null;pressed.length=0;for(const s of A)s.edge=false;return r;
       },
       step(){
         const o={};

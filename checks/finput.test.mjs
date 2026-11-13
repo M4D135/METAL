@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {METAL_INPUT as M, lcg} from './finput-fixture.mjs';
+import {METAL_INPUT as M, V1_KEYS, lcg} from './finput-fixture.mjs';
 const source = readFileSync(new URL('../src/input.js', import.meta.url), 'utf8');
 function load(){ const pads = {list: []};
   const window = {navigator: {getGamepads: () => pads.list}, Event: class {constructor(type, init){this.type = type; this.bubbles = !!(init && init.bubbles);}}};
@@ -575,6 +575,358 @@ test('E14d — configure et settings : réglages appliqués, touches tenues reco
   const c = F.create({...copyM(), mouseScale: .003, settings: {keys: {jump: ['KeyB']}, tune: {sensitivity: .5}}});
   assert.equal(json(c.settings.keys.jump), json(['KeyB'])); assert.equal(c.keyDown('Space', 0, false), false);
   c.mouseMove(10, 0, 0); assert.equal(one(c).s.lookX, 10 * .003 * .5);
+});
+
+// ——— Step 3: settings — normalize (migrate, alt codes, pad table), assign, unbind, keyboard capture ———
+const RESERVED = 'Cette touche est réservée au navigateur.';
+const plain = x => JSON.parse(json(x)); // main-realm copy of a vm object
+const fails = reason => json({ok: false, reason});
+
+test('E15 — Conflit clavier : la touche d’une autre action est refusée, réglages intacts', () => {
+  const {F} = load();
+  const s = F.defaults(M), before = json(s);
+  const r = F.assign(M, s, 'keyboard', 'interact', 'KeyR');
+  assert.equal(r.ok, false); assert.equal(r.conflict, 'dash'); assert.equal(r.reason, 'Déjà utilisée : Esquive.');
+  assert.equal(json(r), json({ok: false, conflict: 'dash', reason: 'Déjà utilisée : Esquive.'}));
+  assert.equal(json(s), before, 'réglages passés intacts');
+  // Any code of any other action, the second or third one included.
+  assert.equal(json(F.assign(M, s, 'keyboard', 'jump', 'ArrowUp')), json({ok: false, conflict: 'forward', reason: 'Déjà utilisée : Avancer.'}));
+  // Computed on normalize(settings): invalid settings are the defaults, and the codes normalize hands out count.
+  for (const raw of [undefined, null, 'x', [], {keys: {forward: 'KeyW'}}, {keys: {forward: ['KeyW'], back: ['KeyW']}}])
+    assert.equal(F.assign(M, raw, 'keyboard', 'interact', 'KeyR').conflict, 'dash', json(raw));
+  const keys = plain(s.keys); delete keys.melee; keys.interact = ['KeyV'];
+  const custom = {v: 2, keys}, kept = json(custom);
+  assert.equal(json(F.assign(M, custom, 'keyboard', 'pulse', 'KeyB')), json({ok: false, conflict: 'melee', reason: 'Déjà utilisée : Frappe / coup de crosse.'}));
+  assert.equal(json(custom), kept, 'réglages passés intacts');
+  // The instance: its declaration and its current settings; nothing is applied.
+  const inp = F.create(M), was = json(inp.settings);
+  assert.equal(json(inp.assign('keyboard', 'interact', 'KeyR')), json(r));
+  assert.equal(json(inp.settings), was);
+  assert.equal(inp.keyDown('KeyR', 0, false), true); assert.equal(json(inp.frame(DT).pressed), json(['dash']));
+});
+
+test('E16 — Affectation clavier : la liste de l’action vaut [code], toutes les autres sont inchangées', () => {
+  const {F} = load();
+  const s = F.defaults(M), before = json(s);
+  const r = F.assign(M, s, 'keyboard', 'interact', 'KeyG');
+  assert.equal(json(Object.keys(r)), json(['ok', 'settings'])); assert.equal(r.ok, true);
+  assert.equal(json(r.settings.keys.interact), json(['KeyG']));
+  assert.equal(json(r.settings), json({...plain(s), keys: {...plain(s.keys), interact: ['KeyG']}}), 'toutes les autres listes inchangées');
+  assert.equal(json(s), before, 'réglages passés intacts');
+  // A normalized copy: stable under normalize and JSON; the old key is free again.
+  assert.equal(json(F.normalize(r.settings, M)), json(r.settings)); assert.equal(json(F.normalize(plain(r.settings), M)), json(r.settings));
+  assert.equal(F.assign(M, r.settings, 'keyboard', 'pulse', 'KeyF').ok, true);
+  // [code] replaces every code of the action; an action may take back one of its own codes.
+  const f = F.assign(M, s, 'keyboard', 'forward', 'KeyI').settings;
+  assert.equal(json(f.keys.forward), json(['KeyI'])); assert.equal(F.assign(M, f, 'keyboard', 'jump', 'KeyW').ok, true, 'W libérée');
+  assert.equal(json(F.assign(M, s, 'keyboard', 'forward', 'KeyZ').settings.keys.forward), json(['KeyZ']));
+  // The pad table and tune come along, normalized.
+  const t = F.assign(M, {keys: plain(s.keys), pad: {fire: ['RB']}, tune: {sensitivity: 2, padYaw: 1e9}}, 'keyboard', 'weaponNext', 'KeyN').settings;
+  assert.equal(json(t.keys.weaponNext), json(['KeyN'])); assert.equal(json(t.pad.fire), json(['RB'])); assert.equal(t.tune.sensitivity, 2); assert.equal(t.tune.padYaw, 600);
+  // New objects at each call.
+  r.settings.keys.fire.push('KeyK'); assert.equal(json(F.assign(M, s, 'keyboard', 'interact', 'KeyG').settings.keys.fire), json(['Enter']));
+  // The instance proposes; the game applies with configure.
+  const inp = F.create(M), was = json(inp.settings), a = inp.assign('keyboard', 'interact', 'KeyG');
+  assert.equal(json(a), json(F.assign(M, s, 'keyboard', 'interact', 'KeyG'))); assert.equal(json(inp.settings), was, 'rien n’est appliqué');
+  assert.equal(inp.keyDown('KeyG', 0, false), false); inp.keyUp('KeyG', 0);
+  assert.equal(json(inp.configure(a.settings)), json(a.settings));
+  assert.equal(inp.keyDown('KeyF', 0, false), false); assert.equal(inp.keyDown('KeyG', 0, false), true);
+  assert.equal(json(inp.frame(DT).pressed), json(['interact'])); assert.equal(inp.step().interact, true);
+  // The next proposal starts from the applied settings.
+  assert.equal(inp.assign('keyboard', 'pulse', 'KeyF').ok, true); assert.equal(inp.assign('keyboard', 'pulse', 'KeyG').conflict, 'interact');
+});
+
+test('E17 — Touches réservées : Échap, Méta, Ctrl, Alt et F5 sont refusées', () => {
+  const {F} = load();
+  const s = F.defaults(M), before = json(s), inp = F.create(M);
+  for (const code of ['Escape', 'MetaLeft', 'ControlLeft', 'AltLeft', 'F5']) {
+    assert.equal(json(F.assign(M, s, 'keyboard', 'fire', code)), fails(RESERVED), code);
+    assert.equal(json(inp.assign('keyboard', 'fire', code)), fails(RESERVED), code);
+  }
+  // Whatever allowKey refuses, before any conflict: other browser keys, wrong case, non-strings.
+  for (const code of ['MetaRight', 'AltRight', 'ControlRight', 'F12', 'CapsLock', 'Home', 'keyW', 'Key', 'Digit10', 'Space ', '', undefined, null, 65, ['KeyG']])
+    assert.equal(json(F.assign(M, s, 'keyboard', 'fire', code)), fails(RESERVED), String(code));
+  assert.equal(json(s), before);
+  assert.equal(F.assign(M, s, 'keyboard', 'fire', 'Tab').ok, true, 'Tab acceptée par défaut');
+  // The game's allowKey decides: here F5 is accepted and Tab refused.
+  const own = {...copyM(), allowKey: code => code === 'F5' || /^(Key[A-Z]|Digit\d|Arrow\w+|Shift\w+|Space|Enter)$/.test(code)};
+  assert.equal(json(F.assign(own, F.defaults(own), 'keyboard', 'fire', 'F5').settings.keys.fire), json(['F5']));
+  assert.equal(json(F.assign(own, F.defaults(own), 'keyboard', 'fire', 'Tab')), fails(RESERVED));
+});
+
+test('E18 — Manette : conflit, boutons réservés ou inconnus, unbind puis assign', () => {
+  const {F} = load();
+  const s = F.defaults(M), before = json(s);
+  assert.equal(json(F.assign(M, s, 'gamepad', 'jump', 'X')), json({ok: false, conflict: 'interact', reason: 'Déjà utilisé : Interagir.'}));
+  assert.equal(json(F.assign(M, s, 'gamepad', 'jump', 'Home')), fails('Ce bouton est réservé au système.'));
+  assert.equal(json(F.assign(M, s, 'gamepad', 'jump', 'Z9')), fails('Bouton inconnu.'));
+  for (const b of ['a', 'KeyA', 'LS', 'RS', 'Select', '', undefined, null, 0, 16]) assert.equal(json(F.assign(M, s, 'gamepad', 'jump', b)), fails('Bouton inconnu.'), String(b));
+  // unbind, then the freed button.
+  const u = F.unbind(M, s, 'gamepad', 'weaponNext');
+  assert.equal(json(Object.keys(u)), json(['ok', 'settings'])); assert.equal(u.ok, true);
+  assert.equal(json(u.settings), json({...plain(s), pad: {...plain(s.pad), weaponNext: []}}));
+  assert.equal(json(F.assign(M, s, 'gamepad', 'weapon5', 'Y')), json({ok: false, conflict: 'weaponNext', reason: 'Déjà utilisé : Arme suivante.'}));
+  const w = F.assign(M, u.settings, 'gamepad', 'weapon5', 'Y');
+  assert.equal(w.ok, true); assert.equal(json(w.settings), json({...plain(s), pad: {...plain(s.pad), weaponNext: [], weapon5: ['Y']}}));
+  assert.equal(json(s), before, 'réglages passés intacts');
+  // Each of the 16 buttons but Home belongs to an action of the table, and can be moved once freed.
+  for (const b of F.PAD_BUTTONS.filter(b => b !== 'Home')) {
+    const owner = M.actions.find(a => a.pad.includes(b)).id;
+    assert.equal(F.assign(M, s, 'gamepad', 'weapon5', b).conflict, owner, b);
+    assert.equal(json(F.assign(M, F.unbind(M, s, 'gamepad', owner).settings, 'gamepad', 'weapon5', b).settings.pad.weapon5), json([b]), b);
+  }
+  // The keyboard and the gamepad tables are separate.
+  assert.equal(json(F.assign(M, s, 'keyboard', 'weapon5', 'Y')), fails(RESERVED), 'un bouton n’est pas une touche');
+  const k = F.unbind(M, s, 'keyboard', 'jump').settings;
+  assert.equal(json(k.keys.jump), '[]'); assert.equal(json(k.pad.jump), json(['A'])); assert.equal(F.assign(M, k, 'keyboard', 'dash', 'Space').ok, true);
+  // The instance: unbind, configure, assign, configure.
+  const inp = F.create(M), a = inp.unbind('gamepad', 'weaponNext');
+  assert.equal(json(a), json(u)); assert.equal(json(inp.settings.pad.weaponNext), json(['Y']), 'rien n’est appliqué');
+  assert.equal(inp.assign('gamepad', 'weapon5', 'Y').conflict, 'weaponNext');
+  inp.configure(a.settings);
+  const b = inp.assign('gamepad', 'weapon5', 'Y'); assert.equal(json(b), json(w));
+  inp.configure(b.settings); assert.equal(json(inp.settings), json(w.settings));
+  // The next proposal starts from the applied settings, for unbind too.
+  assert.equal(json(inp.unbind('gamepad', 'weapon5').settings.pad), json({...plain(w.settings.pad), weapon5: []}));
+});
+
+test('E18b — assign et unbind : ordre des contrôles, appareil et action inconnus, déclaration validée', () => {
+  const {F} = load();
+  const s = F.defaults(M), inp = F.create(M);
+  for (const d of ['mouse', 'touch', 'pilot', 'Keyboard', '', undefined, null]) {
+    for (const r of [F.assign(M, s, d, 'jump', 'KeyG'), F.unbind(M, s, d, 'jump'), inp.assign(d, 'jump', 'KeyG'), inp.unbind(d, 'jump')])
+      assert.equal(json(r), fails('Appareil inconnu.'), String(d));
+  }
+  for (const id of ['nope', 'toString', 'constructor', 'moveX', '', undefined, 5]) for (const d of ['keyboard', 'gamepad']) {
+    const code = d === 'keyboard' ? 'KeyG' : 'A';
+    for (const r of [F.assign(M, s, d, id, code), F.unbind(M, s, d, id), inp.assign(d, id, code), inp.unbind(d, id)])
+      assert.equal(json(r), fails('Action inconnue.'), d + ' ' + String(id));
+  }
+  // In this order: device, action, code, conflict.
+  assert.equal(F.assign(M, s, 'mouse', 'nope', 'Escape').reason, 'Appareil inconnu.');
+  assert.equal(F.assign(M, s, 'keyboard', 'nope', 'Escape').reason, 'Action inconnue.');
+  assert.equal(F.assign(M, s, 'gamepad', 'nope', 'Home').reason, 'Action inconnue.');
+  assert.equal(F.assign(M, s, 'keyboard', 'interact', 'Escape').reason, RESERVED);
+  assert.equal(F.assign(M, s, 'gamepad', 'interact', 'Home').reason, 'Ce bouton est réservé au système.');
+  // unbind takes no code; unbinding an unbound action is fine.
+  const u = F.unbind(M, F.unbind(M, s, 'keyboard', 'weaponNext').settings, 'keyboard', 'weaponNext');
+  assert.equal(u.ok, true); assert.equal(json(u.settings), json(s));
+  // An invalid declaration throws, as in create.
+  for (const bad of [undefined, {actions: []}, variant(copyM, c => { c.actions[1].keys = ['KeyW']; })]) {
+    assert.throws(() => F.assign(bad, s, 'keyboard', 'jump', 'KeyG'), e => String(e.message).startsWith('FInput : '));
+    assert.throws(() => F.unbind(bad, s, 'keyboard', 'jump'), e => String(e.message).startsWith('FInput : '));
+  }
+});
+
+test('E19 — normalize stable : idempotent, stable après un aller-retour JSON, défauts pour une table invalide', () => {
+  const {F} = load();
+  const D = F.defaults(M), N = raw => F.normalize(raw, M);
+  const partA = {v: 2, keys: {fire: ['KeyG'], jump: ['KeyJ'], weapon5: [], ghost: ['KeyK']}, pad: {fire: ['RB'], leftHand: ['RT'], weaponNext: []}, tune: {padYaw: 420, swapSticks: true, padCurve: '2'}};
+  const partB = {keys: {forward: ['KeyI', 'KeyW'], interact: ['KeyV']}, pad: {jump: ['B'], melee: []}, tune: {sensitivity: .1, invertY: true}};
+  const cases = [undefined, null, 42, 'x', [], {}, {keys: {forward: 'KeyW'}}, {keys: {forward: ['KeyW'], back: ['KeyW']}}, {pad: {jump: ['Home']}}, {tune: {padYaw: 9999}}, plain(D), partA, partB];
+  assert.equal(cases.length, 13);
+  for (const x of cases) {
+    const before = json(x), n = N(x);
+    assert.equal(json(x), before, 'argument intact');
+    assert.equal(json(N(n)), json(n), 'idempotent : ' + before);
+    assert.equal(json(N(JSON.parse(json(n)))), json(n), 'aller-retour JSON : ' + before);
+    assert.equal(json(Object.keys(n)), json(['v', 'keys', 'pad', 'tune'])); assert.equal(n.v, 2);
+    for (const f of ['keys', 'pad']) {
+      assert.equal(json(Object.keys(n[f])), json(IDS), f + ' dans l’ordre de déclaration');
+      const codes = Object.values(n[f]).flat(); assert.equal(new Set(codes).size, codes.length, f + ' : aucun code en double');
+    }
+  }
+  // An invalid or duplicate entry sends the whole table of its type back to the defaults; the other table stays.
+  for (const x of [{keys: {forward: 'KeyW'}}, {keys: {forward: ['KeyW'], back: ['KeyW']}}, {pad: {jump: ['Home']}}]) assert.equal(json(N(x)), json(D), json(x));
+  assert.equal(json(N({keys: {jump: ['KeyJ']}, pad: {jump: ['Home']}}).keys.jump), json(['KeyJ']));
+  assert.equal(json(N({keys: {jump: ['Escape']}, pad: {fire: ['A']}}).pad.fire), json(['A']));
+  // The pad table is read like the keys: at most 2 buttons, Home excluded, none twice; null is invalid, [] is valid.
+  for (const bad of [{jump: 'A'}, {jump: ['A', 'B', 'X']}, {jump: ['A', 'A']}, {jump: ['A'], dash: ['A']}, {jump: ['Z9']}, {jump: [0]}, {jump: ['a']}, {jump: null}, {jump: {}}])
+    assert.equal(json(N({pad: bad}).pad), json(D.pad), json(bad));
+  const p = N(partA).pad;
+  assert.equal(json(p.fire), json(['RB'])); assert.equal(json(p.leftHand), json(['RT'])); assert.equal(json(p.weaponNext), '[]'); assert.equal(json(p.fireLeft), json(['LT']));
+  // An absent action takes its default buttons that no entry uses; the gamepad has no alt codes.
+  const q = N(partB);
+  assert.equal(json(q.pad.jump), json(['B'])); assert.equal(json(q.pad.dash), '[]'); assert.equal(json(q.pad.melee), '[]');
+  assert.equal(json(N({pad: {jump: ['RB']}}).pad.leftHand), '[]', 'leftHand a des replis clavier, aucun à la manette');
+  assert.equal(json(q.keys.forward), json(['KeyI', 'KeyW'])); assert.equal(json(q.keys.interact), json(['KeyV'])); assert.equal(json(q.keys.melee), json(['KeyB']));
+  assert.equal(q.tune.sensitivity, .25); assert.equal(q.tune.invertY, true);
+});
+
+test('E20 — Bornes de tune : nombres finis bornés, booléens gardés, le reste aux défauts', () => {
+  const {F} = load();
+  const N = raw => F.normalize(raw, M).tune;
+  const t = N({tune: {padYaw: 9999, padDead: -1, invertY: 'oui', sensitivity: NaN, stickRadius: 10}});
+  assert.equal(t.padYaw, 600); assert.equal(t.padDead, 0); assert.equal(t.invertY, false); assert.equal(t.sensitivity, 1); assert.equal(t.stickRadius, 32);
+  assert.equal(json(Object.keys(F.TUNE)), json(Object.keys(F.defaults(M).tune)));
+  assert.equal(json(Object.keys(t)), json(Object.keys(F.TUNE)));
+  for (const [k, [d, lo, hi]] of Object.entries(TUNE_SPEC)) {
+    const only = v => N({tune: {[k]: v}})[k];
+    if (lo === undefined) {
+      assert.equal(only(true), true, k); assert.equal(only(false), false, k);
+      for (const v of [1, 0, 'true', 'oui', null, {}, []]) assert.equal(only(v), d, k + ' ' + json(v));
+      continue;
+    }
+    for (const [v, want] of [[lo - 1, lo], [hi + 1, hi], [-1e9, lo], [1e9, hi], [lo, lo], [hi, hi], [(lo + hi) / 2, (lo + hi) / 2]]) assert.equal(only(v), want, k + ' ' + v);
+    for (const v of [NaN, Infinity, -Infinity, String(hi), true, null, {}, [hi]]) assert.equal(only(v), d, k + ' ' + String(v));
+    assert.ok(!Object.is(only(-0), -0), k + ' : pas de -0');
+  }
+  // Unknown fields disappear; no tune gives every default.
+  assert.equal(json(N({tune: {mystery: 1, PadYaw: 100}})), json(TUNE_DEFAULTS)); assert.equal(json(N({})), json(TUNE_DEFAULTS));
+});
+
+test('E21 — Action manquante : codes par défaut libres, sinon premier repli libre (clavier), sinon []', () => {
+  const {F} = load();
+  const D = F.defaults(M), N = raw => F.normalize(raw, M).keys;
+  const keys = plain(D.keys); delete keys.melee; keys.interact = ['KeyV'];
+  const n = N({v: 2, keys});
+  assert.equal(json(n.melee), json(['KeyB']), 'V est pris, et C, premier repli, par fireLeft');
+  assert.equal(json(n.interact), json(['KeyV'])); assert.equal(json(n.fireLeft), json(['KeyC']));
+  // One code only, the first free one of the alt list; none free → [].
+  assert.equal(json(N({v: 2, keys: {...keys, map: ['KeyB']}}).melee), json(['KeyN']));
+  assert.equal(json(N({v: 2, keys: {...keys, map: ['KeyB'], pause: ['KeyN'], pulse: ['KeyH']}}).melee), '[]');
+  // The codes given out are used by the next actions, in declaration order.
+  const both = plain(D.keys); delete both.weapon4; delete both.weapon5; both.interact = ['Digit4']; both.fire = ['Digit5'];
+  const b = N({v: 2, keys: both}); assert.equal(json(b.weapon4), json(['KeyG'])); assert.equal(json(b.weapon5), json(['KeyT']));
+  // Default codes still free are kept, in their order, and then no alt code is needed.
+  assert.equal(json(N({v: 2, keys: {jump: ['KeyW']}}).forward), json(['KeyZ', 'ArrowUp']));
+  assert.equal(json(N({v: 2, keys: {jump: ['KeyW'], back: ['KeyZ'], turnLeft: ['ArrowUp']}}).forward), '[]', 'forward n’a pas de repli');
+  // Every alt code taken, or no alt list: [].
+  assert.equal(json(N({v: 2, keys: {weapon1: ['KeyG'], fire: ['KeyT'], pulse: ['KeyY'], interact: ['Digit5']}}).weapon5), '[]');
+  assert.equal(json(N({v: 2, keys: {map: ['KeyR']}}).dash), '[]');
+  // Same answer as FOptions (checks/options.test.mjs:39-52): weapon5 absent and Digit5 taken → KeyG.
+  const pistol = plain(D.keys); delete pistol.weapon5; pistol.interact = ['Digit5']; pistol.fire = ['KeyH'];
+  assert.equal(json(N({v: 2, keys: pistol}).weapon5), json(['KeyG']));
+});
+
+test('E21b — Mêmes réponses que FOptions sur les profils de checks/options.test.mjs', () => {
+  const {F, window, ctx} = load();
+  vm.runInContext(readFileSync(new URL('../src/options.js', import.meta.url), 'utf8'), ctx);
+  const O = window.FOptions;
+  // FOptions keeps v1 profiles (Space on the dodge): FInput migrates them, then both must agree on every other action.
+  const same = (old, why) => {
+    const o = plain(O.normalize(plain(old)).bindings), n = plain(F.normalize({v: 1, keys: plain(old.bindings)}, M).keys);
+    for (const id of Object.keys(o)) if (id !== 'dash') assert.equal(json(n[id]), json(o[id]), why + ' : ' + id);
+    assert.equal(json(n.dash), json(['KeyR']), why); assert.equal(json(n.jump), json(['Space']), why);
+    return n;
+  };
+  const edit = change => { const old = plain(O.defaults()); change(old.bindings); return old; };
+  const melee = same(edit(b => { for (const id of ['melee', 'fireLeft', 'leftHand', 'weapon4']) delete b[id]; b.interact = ['KeyV']; b.fire = ['KeyC']; }), 'options.test:31');
+  assert.equal(json(melee.melee), json(['KeyB'])); assert.equal(F.assign(M, {v: 2, keys: melee}, 'keyboard', 'melee', 'KeyH').ok, true);
+  const pistol = same(edit(b => { delete b.weapon5; b.interact = ['Digit5']; b.fire = ['KeyH']; }), 'options.test:40');
+  assert.equal(json(pistol.weapon5), json(['KeyG'])); assert.equal(F.assign(M, {v: 2, keys: pistol}, 'keyboard', 'weapon5', 'Digit6').ok, true);
+  assert.equal(json(same(edit(b => { delete b.weapon5; }), 'options.test:51').weapon5), json(['Digit5']));
+  assert.equal(json(same(edit(b => { b.fire = ['KeyW']; }), 'options.test:27').fire), json(['Enter']));
+  same(O.defaults(), 'défauts');
+  // Same conflicts and texts, same refusals.
+  const v1 = F.normalize({v: 1, keys: plain(O.defaults().bindings)}, M);
+  for (const [id, code] of [['interact', 'KeyE'], ['fire', 'KeyW'], ['sprint', 'Digit1'], ['pulse', 'KeyF']]) {
+    const a = F.assign(M, v1, 'keyboard', id, code), b = O.assign(O.defaults().bindings, id, code);
+    assert.equal(a.ok, false); assert.equal(a.conflict, b.conflict, id); assert.equal(a.reason, b.reason, id);
+  }
+  for (const code of ['Escape', 'MetaLeft', 'ControlLeft']) assert.equal(F.assign(M, v1, 'keyboard', 'fire', code).reason, O.assign(O.defaults().bindings, 'fire', code).reason);
+  // Planned difference (FEEL-01, FEEL-09): R is the dodge in v2; options.test.mjs:18 puts interact on R, so it takes another free key at the hookup.
+  assert.equal(F.assign(M, v1, 'keyboard', 'interact', 'KeyR').conflict, 'dash'); assert.equal(F.assign(M, v1, 'keyboard', 'interact', 'KeyG').ok, true);
+});
+
+test('E22 — Migration v1 → v2 : Espace saute, R esquive ; migrate seulement pour un format plus ancien', () => {
+  const {F} = load();
+  const D = F.defaults(M), v1 = {v: 1, keys: V1_KEYS}, before = json(v1);
+  const n = F.normalize(v1, M);
+  assert.equal(json(n.keys), json(D.keys)); assert.equal(json(n.keys.dash), json(['KeyR'])); assert.equal(json(n.keys.jump), json(['Space']));
+  assert.equal(json(n), json(D));
+  assert.equal(json(v1), before, 'le profil passé reste intact (migrate reçoit une copie)');
+  // A counter in a copy of M: migrate runs only when v is below the version or not an integer, with a copy and from.
+  const calls = [], C = {...copyM(), migrate(raw, from) { calls.push({raw: json(raw), from}); return M.migrate(raw, from); }};
+  const counted = raw => { calls.length = 0; return F.normalize(raw, C); };
+  let r = counted({v: 2, keys: V1_KEYS});
+  assert.equal(calls.length, 0, 'un profil v2 n’appelle pas migrate');
+  assert.equal(json(r.keys.dash), json(['Space'])); assert.equal(json(r.keys.jump), json(['KeyJ']), 'v2 gardé tel quel : le saut prend son repli');
+  for (const v of [3, 9]) { counted({v, keys: V1_KEYS}); assert.equal(calls.length, 0, 'v ' + v); }
+  for (const [v, from] of [[1, 1], [0, 0], [-3, -3], [undefined, 0], ['1', 0], [1.5, 0], [null, 0], [true, 0]]) {
+    r = counted({v, keys: V1_KEYS});
+    assert.equal(json(calls.map(c => c.from)), json([from]), 'v ' + String(v)); assert.equal(json(r.keys), json(D.keys), 'v ' + String(v));
+  }
+  counted({v: 1, keys: V1_KEYS, tune: {padYaw: 500}}); assert.equal(calls[0].raw, json({v: 1, keys: V1_KEYS, tune: {padYaw: 500}}));
+  // A migrate that throws, that changes its copy and then throws, or that returns no object: valid settings, without migration.
+  const unmigrated = F.normalize({v: 2, keys: V1_KEYS}, M);
+  for (const migrate of [() => { throw new Error('test'); }, raw => { raw.keys.dash = ['KeyW']; throw new Error('test'); }, () => undefined, () => null, () => 5, () => 'x', () => [],
+    raw => { const o = {...raw}; o.self = o; return o; }]) {
+    const c = {...copyM(), migrate}, s = F.normalize({v: 1, keys: V1_KEYS}, c);
+    assert.equal(json(s), json(unmigrated), String(migrate)); assert.equal(json(F.normalize(s, c)), json(s));
+    assert.equal(json(F.create({...c, settings: {v: 1, keys: V1_KEYS}}).settings), json(unmigrated));
+  }
+  // A new object returned by migrate replaces the copy, and goes through the same rules.
+  const fresh = F.normalize({v: 1}, {...copyM(), migrate: () => ({keys: {jump: ['KeyJ']}, tune: {padYaw: 1e9}})});
+  assert.equal(json(fresh.keys.jump), json(['KeyJ'])); assert.equal(fresh.tune.padYaw, 600); assert.equal(fresh.v, 2);
+  // As in stored settings, an entry set to undefined is absent.
+  const gap = F.normalize({v: 1}, {...copyM(), migrate: () => ({keys: {jump: undefined, dash: ['KeyJ']}})}).keys;
+  assert.equal(json(gap.jump), json(['Space'])); assert.equal(json(gap.dash), json(['KeyJ']));
+  // Custom v1 tables. R taken: the dodge is left unbound, to rebind; Space still goes to the jump.
+  const taken = F.normalize({v: 1, keys: {...V1_KEYS, interact: ['KeyR']}}, M).keys;
+  assert.equal(json(taken.dash), '[]'); assert.equal(json(taken.jump), json(['Space'])); assert.equal(json(taken.interact), json(['KeyR']));
+  const two = F.normalize({v: 1, keys: {...V1_KEYS, dash: ['Space', 'KeyK']}}, M).keys;
+  assert.equal(json(two.dash), json(['KeyK'])); assert.equal(json(two.jump), json(['Space']));
+  const moved = F.normalize({v: 1, keys: {...V1_KEYS, dash: ['KeyK'], fire: ['Space']}}, M).keys;
+  assert.equal(json(moved.dash), json(['KeyK'])); assert.equal(json(moved.fire), json(['Space'])); assert.equal(json(moved.jump), json(['KeyJ']));
+  // create and configure read old settings through migrate too.
+  const inp = F.create({...copyM(), settings: {v: 1, keys: V1_KEYS}});
+  assert.equal(json(inp.settings), json(D));
+  inp.keyDown('Space', 0, false); inp.keyDown('KeyR', 0, false); assert.equal(json(inp.frame(DT).pressed), json(['jump', 'dash']));
+  assert.equal(json(inp.configure({v: 1, keys: V1_KEYS})), json(D));
+});
+
+test('E23 — Capture clavier : le prochain appui va à frame().captured, jamais au jeu', () => {
+  const {F} = load();
+  const inp = F.create(M);
+  inp.mouseMove(1, 0, 0); assert.equal(inp.device, 'mouse');
+  inp.capture('keyboard');
+  assert.equal(inp.keyDown('KeyG', 10, false), true); assert.equal(inp.device, 'keyboard');
+  let r = one(inp);
+  assert.equal(json(r.f.captured), json({device: 'keyboard', code: 'KeyG'})); assert.equal(json(r.f.pressed), '[]');
+  assert.equal(inp.frame(DT).captured, null, 'une seule fois');
+  // KeyG is not held: given to a held action, configure finds no key down. The capture is over.
+  inp.configure(F.assign(M, inp.settings, 'keyboard', 'fire', 'KeyG').settings);
+  assert.equal(one(inp).s.fire, false);
+  assert.equal(inp.keyDown('KeyG', 20, false), true); assert.equal(one(inp).s.fire, true); inp.keyUp('KeyG', 30); inp.configure();
+  // A key of the game is not applied either: no front, no impulse, not held; its keyUp changes nothing.
+  inp.capture('keyboard');
+  assert.equal(inp.keyDown('KeyR', 40, false), true); assert.equal(inp.keyDown('KeyW', 41, false), true, 'capture finie : KeyW va au jeu');
+  r = one(inp); assert.equal(json(r.f.captured), json({device: 'keyboard', code: 'KeyR'})); assert.equal(json(r.f.pressed), json(['forward'])); assert.equal(r.s.dash, false);
+  assert.equal(inp.keyUp('KeyR', 50), true); inp.keyUp('KeyW', 50); assert.ok(idle(one(inp).s));
+  // A repeat is not a new press: swallowed, as game.js does today.
+  inp.capture('keyboard');
+  assert.equal(inp.keyDown('Enter', 60, true), true); assert.equal(inp.frame(DT).captured, null);
+  assert.equal(inp.keyDown('KeyH', 70, false), true); assert.equal(json(inp.frame(DT).captured), json({device: 'keyboard', code: 'KeyH'}));
+  assert.equal(one(inp).s.fire, false, 'Entrée n’a pas été tenue');
+  // Any code is captured, but only a code; the game reads the refusal from assign.
+  inp.capture('keyboard'); assert.equal(inp.keyDown(undefined, 75, false), true); assert.equal(inp.frame(DT).captured, null);
+  inp.keyDown('Escape', 80, false);
+  const esc = inp.frame(DT).captured; assert.equal(json(esc), json({device: 'keyboard', code: 'Escape'}));
+  assert.equal(inp.assign(esc.device, 'interact', esc.code).reason, RESERVED);
+  // capture(null) cancels, and so does an unknown device; capture('gamepad') leaves the keyboard alone.
+  for (const d of [null, undefined, 'mouse', 'pilot', 'gamepad']) {
+    inp.capture('keyboard'); inp.capture(d);
+    assert.equal(inp.keyDown('KeyR', 90, false), true); r = one(inp);
+    assert.equal(r.f.captured, null, String(d)); assert.equal(json(r.f.pressed), json(['dash'])); assert.equal(r.s.dash, true);
+    inp.keyUp('KeyR', 95);
+  }
+  inp.capture(null);
+  // A new capture, or clear(), drops a result not handed out yet; clear() also ends the capture.
+  inp.capture('keyboard'); inp.keyDown('KeyK', 100, false); inp.capture('keyboard');
+  assert.equal(inp.frame(DT).captured, null, 'nouvelle capture'); inp.keyDown('KeyL', 110, false); assert.equal(json(inp.frame(DT).captured), json({device: 'keyboard', code: 'KeyL'}));
+  inp.capture('keyboard'); inp.keyDown('KeyK', 120, false); inp.clear(); assert.equal(inp.frame(DT).captured, null, 'clear');
+  inp.capture('keyboard'); inp.clear();
+  assert.equal(inp.keyDown('KeyR', 130, false), true); r = one(inp); assert.equal(json(r.f.pressed), json(['dash'])); assert.equal(r.f.captured, null); inp.keyUp('KeyR', 140);
+  // A key held before the capture stays held, and is released normally.
+  inp.keyDown('KeyW', 150, false); inp.capture('keyboard'); inp.keyDown('KeyJ', 160, false); r = one(inp);
+  assert.equal(r.s.moveY, 1); assert.equal(json(r.f.captured), json({device: 'keyboard', code: 'KeyJ'}));
+  inp.keyUp('KeyW', 170); assert.equal(one(inp).s.moveY, 0);
+  // The whole flow of the options screen: capture, press, assign, configure, play.
+  inp.capture('keyboard'); inp.keyDown('KeyG', 200, false); const got = inp.frame(DT).captured;
+  const a = inp.assign(got.device, 'interact', got.code); assert.equal(a.ok, true); inp.configure(a.settings);
+  inp.keyUp('KeyG', 210); inp.keyDown('KeyG', 220, false); r = one(inp);
+  assert.equal(json(r.f.pressed), json(['interact'])); assert.equal(r.s.interact, true); assert.equal(inp.keyDown('KeyF', 230, false), false);
 });
 
 test('E38 — keyName : mêmes noms que FOptions.keyName', () => {
