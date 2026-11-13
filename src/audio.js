@@ -408,10 +408,16 @@
         // (test rigs, cold realms) the same queue advances one variant per
         // slice, deterministically: no slice count depends on time there.
         // The bank stays bit for bit the synchronous one.
-        var SLICE_MS=8,BLOCK=256,jobs=[],index=0,cost=Object.create(null),worst=0;
-        for(var ni=0;ni<bankNames.length;ni++){var jobName=bankNames[ni];for(var jobVariant=0;jobVariant<variantsOf(jobName);jobVariant++)jobs.push({name:jobName,variant:jobVariant,opaque:!!(recipes[jobName]||extras[jobName]),renderer:null,total:0,opened:false,blockMs:0,ms:0});}
+        var SLICE_MS=8,BLOCK=256,BLOCK_TARGET_MS=2,BLOCK_MIN=16,jobs=[],index=0,cost=Object.create(null),worst=0;
+        for(var ni=0;ni<bankNames.length;ni++){var jobName=bankNames[ni];for(var jobVariant=0;jobVariant<variantsOf(jobName);jobVariant++)jobs.push({name:jobName,variant:jobVariant,opaque:!!(recipes[jobName]||extras[jobName]),renderer:null,total:0,opened:false,blockMs:0,ms:0,block:BLOCK});}
         var clock=typeof performance==='object'&&performance&&typeof performance.now==='function'?function(){return performance.now();}:null;
-        function open(job){job.opened=true;if(job.opaque)return;job.renderer=synthJob(job.name,job.variant,22050);job.total=job.renderer.total;}
+        function open(job){job.opened=true;if(job.opaque)return;job.renderer=synthJob(job.name,job.variant,22050);job.total=job.renderer.total;
+          // The first block of a job used to run unconditionally at 256 samples, which
+          // cost up to 19 ms on the heaviest break. Size it from a measured cost instead:
+          // the variant already rendered for this name, else the worst rate seen so far.
+          var seen=cost[job.name],per=seen!==undefined&&job.total>0?seen/job.total:worst;
+          if(clock&&per>0)job.block=Math.max(BLOCK_MIN,Math.min(BLOCK,Math.floor(BLOCK_TARGET_MS/per)));
+        }
         function predict(job){var seen=cost[job.name];return seen!==undefined?seen:worst*job.total;}
         function run(job,deadline){
           if(bank[job.name]&&bank[job.name].length>job.variant)return true;
@@ -425,8 +431,12 @@
           for(;;){
             if(clock&&job.blockMs>0&&clock()+job.blockMs>deadline)return false;
             var b0=clock?clock():0;
-            var done=job.renderer.step(BLOCK);
-            if(clock)job.blockMs=clock()-b0;
+            var done=job.renderer.step(job.block);
+            if(clock){job.blockMs=clock()-b0;
+              // A block that overshot its target shrinks for the rest of the job, so the
+              // sample loop resumes inside the slice instead of at the next 256 samples.
+              if(job.blockMs>BLOCK_TARGET_MS&&job.block>BLOCK_MIN)job.block=Math.max(BLOCK_MIN,Math.floor(job.block*BLOCK_TARGET_MS/job.blockMs));
+            }
             if(done)break;
           }
           if(clock){
