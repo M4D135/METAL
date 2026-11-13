@@ -1,7 +1,7 @@
 /* FERRO — mode démo : outils déterministes, enregistrement et rejeu d'entrées, réalisateur, enchaînement de scènes. Sans DOM, sans horloge, sans aléa global. */
 (function(G){
   'use strict';
-  const TAU=Math.PI*2,FNV=2166136261,PRIME=16777619;
+  const TAU=Math.PI*2,FNV=2166136261,PRIME=16777619,FORMAT=1,MAGIC='FDM1';
   const fail=(code,message,extra)=>{throw Object.assign(new Error('FDemo : '+message),{code},extra);};
   function utf8(text){
     const s=unescape(encodeURIComponent(text)),bytes=new Uint8Array(s.length);
@@ -143,5 +143,163 @@
     }
     return {fields:copy,size,names,encode,decode};
   }
-  G.FDemo={FORMAT:1,MAGIC:'FDM1',rng,hasher,seedFor,smootherstep,wrapAngle,lookAt,schema};
+  // FDM1, petit-boutiste : « FDM1 », u32 L, en-tête JSON de L octets, puis par scène : enregistrements (u16 de dt
+  // en tête si dtTicks > 0), empreintes (u32 n, u32 valeur), commandes (JSON de [n, type, data]).
+  const NONE=Object.freeze([]);
+  const text=(v,what)=>{try{return JSON.stringify(v);}catch{return fail('FDEMO_ARG',what+' : valeur hors JSON');}},json=(v,what)=>text(v,what)??'null';
+  // dt en ticks : nombres déjà en boîte, comme dans decode.
+  function ticker(perSecond){
+    const pages=new Array(256).fill(null);
+    return t=>{const page=pages[t>>8]||(pages[t>>8]=new Array(256).fill(null));return page[t&255]??(page[t&255]=t/perSecond);};
+  }
+  // L'enregistreur complète l'en-tête (FDEMO_ARG), le lecteur l'exige complet (FDEMO_FORMAT).
+  function settings(h,code,fill){
+    if(!h||typeof h!=='object'||Array.isArray(h))fail(code,'en-tête : objet attendu');
+    const s={gameVersion:'',engine:'',hz:60,dtTicks:0,checksumEvery:600},str=v=>typeof v==='string';
+    for(const k of ['game','gameVersion','simHash','engine','hz','dtTicks','checksumEvery'])if(!fill||h[k]!==undefined)s[k]=h[k];
+    const {game,simHash,hz,dtTicks:t,checksumEvery:c}=s,ok={game:str(game)&&game!=='',gameVersion:str(s.gameVersion),simHash:str(simHash)&&simHash!=='',
+      engine:str(s.engine),hz:Number.isFinite(hz)&&hz>0&&1/hz<Infinity,dtTicks:Number.isInteger(t)&&t>=0&&t<=1e6,checksumEvery:Number.isSafeInteger(c)&&c>0};
+    for(const k in ok)if(!ok[k])fail(code,'en-tête : '+k+' invalide',{field:k});
+    try{s.sc=schema(h.fields);}catch(e){if(e&&e.code==='FDEMO_ARG')e.code=code;throw e;}
+    return s;
+  }
+  function recorder(header,options={}){
+    const {game,gameVersion,simHash,engine,hz,dtTicks,checksumEvery,sc}=settings(header,'FDEMO_ARG',true);
+    const copy=(v,what)=>JSON.parse(json(v,what)),simVersion=copy(header.simVersion,'simVersion'),meta=copy(header.meta,'meta');
+    const {maxBytes=4194304,initialSteps=3600}=options||fail('FDEMO_ARG','options : objet attendu');
+    if(!(Number.isInteger(maxBytes)&&maxBytes>=0&&maxBytes<=2**30))fail('FDEMO_ARG','options : maxBytes invalide',{field:'maxBytes'});
+    if(!(Number.isSafeInteger(initialSteps)&&initialSteps>=0))fail('FDEMO_ARG','options : initialSteps invalide',{field:'initialSteps'});
+    const skip=dtTicks?2:0,R=sc.size+skip,tick=skip&&ticker(dtTicks),spare=new DataView(new ArrayBuffer(R)),out=sc.decode(spare,skip,{}),scenes=[];
+    const grow=(bytes,n)=>{const next=new Uint8Array(Math.min(maxBytes,2*bytes.length+n));next.set(bytes);return next;};
+    let records=new Uint8Array(Math.min(maxBytes,initialSteps*R)),view=new DataView(records.buffer),sums=new Uint8Array(512),sumView=new DataView(sums.buffer);
+    let used=0,count=0,size=0,steps=0,taken=-1,dt=tick?0:1/hz,full=false,open=false,closed=false,now=null;
+    const live=()=>{if(closed)fail('FDEMO_STATE','enregistreur fermé');},opened=what=>{live();if(!open)fail('FDEMO_STATE',what+' sans scène');};
+    // Ce qui dépasserait maxBytes n'est pas stocké, ni rien après.
+    function room(n){if(!full&&size+n>maxBytes)full=now.truncated=true;return !full;}
+    function step(input,seconds){
+      opened('pas');
+      if(!input||typeof input!=='object')fail('FDEMO_ARG','pas : entrée attendue');
+      const store=room(R);
+      if(store&&used+R>records.length){records=grow(records,R);view=new DataView(records.buffer);}
+      const v=store?view:spare,at=store?used:0,t=tick&&(Number.isFinite(seconds)?Math.min(65535,Math.max(0,Math.round(seconds*dtTicks))):0);
+      if(tick)v.setUint16(at,t,true);
+      sc.encode(input,v,at+skip);sc.decode(v,at+skip,out);
+      if(tick)dt=tick(t);
+      if(store){used+=R;size+=R;now.steps++;}
+      steps++;
+      return out;
+    }
+    function build(){
+      const head=utf8(JSON.stringify({format:FORMAT,game,gameVersion,simHash,simVersion,engine,hz,dtTicks,checksumEvery,fields:sc.fields,meta,
+        scenes:scenes.map(s=>({info:s.info,steps:s.steps,checksums:s.checksums,commandBytes:s.commandBytes,truncated:s.truncated}))}));
+      const all=new Uint8Array(8+head.length+size);
+      let p=8+head.length;
+      for(let i=0;i<4;i++)all[i]=MAGIC.charCodeAt(i);
+      new DataView(all.buffer).setUint32(4,head.length,true);all.set(head,8);
+      for(const s of scenes){
+        all.set(records.subarray(s.at,s.at+s.steps*R),p);p+=s.steps*R;
+        all.set(sums.subarray(s.sums,s.sums+8*s.checksums),p);p+=8*s.checksums;
+        if(s.commandBytes)all.set(utf8('['+s.commands.join(',')+']'),p);
+        p+=s.commandBytes;
+      }
+      return all;
+    }
+    return {
+      scene(info){
+        live();
+        const copied=copy(info,'info');
+        open=true;steps=0;taken=-1;if(tick)dt=0;
+        if(!full)scenes.push(now={info:copied,steps:0,checksums:0,commandBytes:0,truncated:false,at:used,sums:8*count,commands:[]});
+      },
+      step,
+      checksumDue(){live();return !full&&open&&steps%checksumEvery===0&&taken!==steps;},
+      checksum(value){
+        opened('empreinte');
+        if(taken===steps)fail('FDEMO_STATE','deux empreintes au pas '+steps);
+        taken=steps;
+        if(!room(8))return;
+        if(8*count+8>sums.length){sums=grow(sums,8);sumView=new DataView(sums.buffer);}
+        sumView.setUint32(8*count,steps,true);sumView.setUint32(8*count+4,value>>>0,true);
+        count++;size+=8;now.checksums++;
+      },
+      command(type,data=null){
+        opened('commande');
+        if(typeof type!=='string'||!type)fail('FDEMO_ARG','commande : type invalide');
+        const line=json([steps,type,data],'commande '+type),cost=utf8(line).length+(now.commands.length?1:2);
+        if(room(cost)){now.commands.push(line);now.commandBytes+=cost;size+=cost;}
+      },
+      bytes(){live();return build();},
+      end(){live();closed=true;return build();},
+      get input(){return out;},get dt(){return dt;},get steps(){return steps;},get size(){return size;},get full(){return full;}};
+  }
+  function player(bytes,expect){
+    const view=ArrayBuffer.isView(bytes)?new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength)
+      :Object.prototype.toString.call(bytes)==='[object ArrayBuffer]'?new DataView(bytes):fail('FDEMO_ARG','lecteur : octets attendus');
+    const u8=new Uint8Array(view.buffer,view.byteOffset,view.byteLength),n=u8.length,bad=why=>fail('FDEMO_FORMAT','lecture : '+why);
+    const read=(at,length,what)=>{try{return JSON.parse(fromUtf8(u8.subarray(at,at+length)));}catch{return bad(what+' illisible');}};
+    if(n<8||String.fromCharCode(u8[0],u8[1],u8[2],u8[3])!==MAGIC)bad('signature '+MAGIC+' absente');
+    const L=view.getUint32(4,true),header=L>n-8?bad('en-tête tronqué'):read(8,L,'en-tête');
+    if(!header||header.format!==FORMAT)bad('format '+FORMAT+' attendu');
+    const {hz,dtTicks,sc}=settings(header,'FDEMO_FORMAT'),list=header.scenes,R=sc.size+(dtTicks?2:0),parts=[];
+    if(header.simVersion===undefined||header.meta===undefined||!Array.isArray(list))bad('en-tête incomplet');
+    function commandsOf(part,k){
+      if(!part.commandBytes)return NONE;
+      const all=read(part.commands,part.commandBytes,'commandes de la scène '+k);
+      if(!Array.isArray(all)||!all.length)bad('commandes de la scène '+k+' vides');
+      let last=0;
+      for(const c of all){
+        if(!Array.isArray(c)||c.length!==3||!Number.isSafeInteger(c[0])||c[0]<last||c[0]>part.steps||typeof c[1]!=='string'||!c[1])bad('commande invalide, scène '+k);
+        last=c[0];
+      }
+      return all;
+    }
+    // Chaque longueur est comparée aux octets restants avant de lire : rien au-delà, pas de boucle démesurée.
+    let p=8+L;
+    for(let k=0;k<list.length;k++){
+      const s=list[k]||{},{steps,checksums,commandBytes}=s,sums=p+steps*R,commands=sums+checksums*8;
+      if(s.info===undefined||typeof s.truncated!=='boolean'||![steps,checksums,commandBytes].every(v=>Number.isSafeInteger(v)&&v>=0))bad('scène '+k+' invalide');
+      if(steps*R>n-p||checksums*8>n-sums||commandBytes>n-commands)bad('scène '+k+' tronquée');
+      for(let i=0,last=-1;i<checksums;i++){
+        const at=view.getUint32(sums+8*i,true);
+        if(at<=last||at>steps)bad('scène '+k+' : empreintes hors ordre');
+        last=at;
+      }
+      const part={at:p,steps,sums,checksums,commands,commandBytes};
+      commandsOf(part,k);parts.push(part);p=commands+commandBytes;
+    }
+    if(p!==n)bad(n+' octets au lieu de '+p);
+    if(expect!==undefined&&expect!==null){
+      if(typeof expect!=='object')fail('FDEMO_ARG','lecteur : expect invalide');
+      for(const key of Object.keys(expect))if(text(header[key],'expect')!==text(expect[key],'expect'))fail('FDEMO_MISMATCH','enregistrement refusé : '+key,{field:key});
+    }
+    const fixed=dtTicks?0:1/hz,tick=dtTicks&&ticker(dtTicks);
+    let scene=0,base=0,count=0,cursor=0,dt=fixed,commands=new Map(),sums=new Map(),divergence=null;
+    const play={header,sceneCount:parts.length,
+      select(k){
+        const part=Number.isInteger(k)&&parts[k]||fail('FDEMO_ARG','lecteur : scène '+k+' inexistante'),byStep=new Map(),expected=new Map();
+        for(const [at,type,data] of commandsOf(part,k))(byStep.get(at)||byStep.set(at,[]).get(at)).push({type,data});
+        for(let i=0;i<part.checksums;i++)expected.set(view.getUint32(part.sums+8*i,true),view.getUint32(part.sums+8*i+4,true));
+        scene=k;base=part.at;count=part.steps;cursor=0;dt=fixed;commands=byStep;sums=expected;
+        return play;
+      },
+      next(out){
+        if(cursor>=count)return false;
+        let at=base+cursor*R;
+        if(tick){dt=tick(view.getUint16(at,true));at+=2;}
+        sc.decode(view,at,out);cursor++;
+        return true;
+      },
+      commandsAt:at=>commands.get(at)||NONE,
+      expected:at=>sums.get(at),
+      verify(at,value){
+        const want=sums.get(at);
+        if(want===undefined||want===value>>>0)return true;
+        divergence=divergence||{scene,step:at,expected:want,actual:value>>>0};
+        return false;
+      },
+      get scene(){return scene;},get steps(){return count;},get step(){return cursor;},get dt(){return dt;},get divergence(){return divergence;}};
+    if(parts.length)play.select(0);
+    return play;
+  }
+  G.FDemo={FORMAT,MAGIC,rng,hasher,seedFor,smootherstep,wrapAngle,lookAt,schema,recorder,player};
 })(typeof window!=='undefined'?window:globalThis);

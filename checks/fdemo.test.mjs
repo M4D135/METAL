@@ -14,7 +14,7 @@ const sameBytes=(a,b)=>a.length===b.length&&Array.from(a).every((v,i)=>v===b[i])
 const code=c=>e=>e&&e.code===c;                         // assert.throws(fn, code('FDEMO_FORMAT'))
 
 // Fonctions de 3.1 déjà livrées, dans l'ordre de l'export : à compléter à chaque étape.
-const API=['rng','hasher','seedFor','smootherstep','wrapAngle','lookAt','schema'];
+const API=['rng','hasher','seedFor','smootherstep','wrapAngle','lookAt','schema','recorder','player'];
 const draws=(r,n,kind='u32')=>Array.from({length:n},()=>r[kind]());
 
 // Schéma METAL d'aujourd'hui (section 3.5) : un exemple pour les tests, il n'est pas dans FDemo.
@@ -31,6 +31,70 @@ function toyPilot(i,s,raw){
   raw.fire=i%37<9;raw.fireLeft=i%101<3;raw.dash=i%240===0;raw.pulse=i%600===300;raw.melee=i%450===100;raw.interact=false;raw.sprint=i%300<120;raw.assist=false;
   raw.weapon=i%500===0?(i/500)%4:undefined;
 }
+
+// Simulation jouet (annexe 1) : déterministe, son aléa vient de D.rng(seed), conventions de déplacement de METAL.
+function toySim(D,seed){
+  const rng=D.rng(seed),s={t:0,x:0,z:0,yaw:0,pitch:0,vx:0,vz:0,hp:100,score:0,boosts:0,weapon:0,fired:0,enemies:[]};
+  for(let i=0;i<24;i++)s.enemies.push({x:rng.range(-30,30),z:rng.range(-30,30),hp:3,phase:rng.next()*6.283});
+  function step(dt,input){
+    s.t+=dt;s.yaw+=input.lookX;s.pitch=Math.max(-1.2,Math.min(1.2,s.pitch+input.lookY));
+    const c=Math.cos(s.yaw),n=Math.sin(s.yaw),sp=input.sprint?9:5,k=Math.min(1,dt*8);
+    const tx=(c*input.moveX+n*input.moveY)*sp,tz=(n*input.moveX-c*input.moveY)*sp;
+    s.vx+=(tx-s.vx)*k;s.vz+=(tz-s.vz)*k;s.x+=s.vx*dt;s.z+=s.vz*dt;
+    if(Number.isInteger(input.weapon))s.weapon=input.weapon;
+    for(const e of s.enemies){e.phase+=dt*(.5+rng.next());e.x+=Math.cos(e.phase)*dt*2;e.z+=Math.sin(e.phase*1.3)*dt*2;}
+    if(input.fire){
+      s.fired++;
+      // Ennemi le plus proche devant : produit scalaire > 0,8 avec [sin(yaw), −cos(yaw)], à moins de 25 m.
+      let target=null,best=25;
+      for(const e of s.enemies){const dx=e.x-s.x,dz=e.z-s.z,d=Math.hypot(dx,dz);if(d>0&&d<best&&dx*n-dz*c>.8*d){target=e;best=d;}}
+      if(target&&--target.hp<=0){s.score++;target.x=rng.range(-30,30);target.z=rng.range(-30,30);target.hp=3;}
+    }
+  }
+  function command(type,data){if(type==='boost'){s.boosts++;s.vx+=data.v;}}
+  function digest(){const h=D.hasher();for(const k of ['t','x','z','yaw','pitch','vx','vz','hp','score','boosts','weapon','fired'])h.number(s[k]);for(const e of s.enemies)h.number(e.x).number(e.z).number(e.hp).number(e.phase);return h.word(rng.state).result();}
+  return {state:s,step,command,digest};
+}
+
+// Enregistrement type (annexe 1), dans le même ordre partout. plan : [{info, seed, steps, commands:{n:[[type, data]…]}, dt(i)}].
+// Rend l'enregistreur et, par scène, la copie de chaque sortie de rec.step, les dt, les empreintes prises et l'état final.
+function recordToy(header,plan,options,onStep=()=>{}){
+  const rec=D.recorder(header,options),raw={},scenes=[];
+  for(const [k,scene] of plan.entries()){
+    rec.scene(scene.info);
+    const sim=toySim(D,scene.seed),outputs=[],dts=[],sums={};
+    const issue=n=>{for(const [type,data] of scene.commands?.[n]||[]){rec.command(type,data);sim.command(type,data);}};
+    const sum=()=>{sums[rec.steps]=sim.digest();rec.checksum(sums[rec.steps]);};
+    sum();
+    for(let i=0;i<scene.steps;i++){
+      issue(i);
+      toyPilot(i,sim.state,raw);
+      const q=rec.step(raw,scene.dt?.(i));
+      outputs.push(plain(q));dts.push(rec.dt);
+      sim.step(rec.dt,q);
+      if(rec.checksumDue())sum();
+      onStep(rec,k,i);
+    }
+    issue(scene.steps);
+    scenes.push({outputs,dts,sums,state:plain(sim.state)});
+  }
+  return {rec,scenes};
+}
+const TOY_HEADER={game:'jouet',gameVersion:'1.0',simHash:'sha-jouet',simVersion:{sim:3},engine:'node',checksumEvery:60,fields:METAL_FIELDS,meta:{lot:'MD-3',note:'été €'}};
+const TOY_PLAN=[{info:{seed:5,index:0},seed:5,steps:500,commands:{0:[['boost',{v:1.5}],['mark',{label:'départ €',ok:true}]],250:[['boost',{v:-.75}]],500:[['mark',null]]}},
+  {info:{seed:9,index:1},seed:9,steps:300}];
+// Petit enregistrement de deux scènes, avec empreintes et commandes, pour les refus du lecteur.
+const sample=()=>recordToy({...TOY_HEADER,checksumEvery:30},[{info:{k:0},seed:3,steps:120,commands:{0:[['boost',{v:1}]],120:[['mark','fin']]}},{info:{k:1},seed:4,steps:50}]).rec.end();
+const headerLength=bytes=>new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength).getUint32(4,true);
+const headerOf=bytes=>JSON.parse(Buffer.from(bytes.buffer,bytes.byteOffset+8,headerLength(bytes)).toString('utf8'));
+// Reconstruit un enregistrement dont l'en-tête est modifié par edit (ou remplacé par ce qu'il rend) : signature, longueur, JSON, corps.
+function rebuild(bytes,edit){
+  const header=headerOf(bytes),value=edit(header);
+  const head=Buffer.from(JSON.stringify(value===undefined?header:value),'utf8'),body=bytes.subarray(8+headerLength(bytes)),out=new Uint8Array(8+head.length+body.length);
+  out.set(bytes.subarray(0,4));new DataView(out.buffer).setUint32(4,head.length,true);out.set(head,8);out.set(body,8+head.length);
+  return out;
+}
+const refusal=(fn,label)=>{try{fn();}catch(e){return e;}return assert.fail('accepté : '+label);};
 
 // ---------------------------------------------------------------- Groupe A : module
 
@@ -499,4 +563,403 @@ test('C9 encode et decode : aucune allocation (3.5)',async()=>{
   for(const [name,n] of Object.entries(counts))assert.ok(n<=1,name+' : '+n+' ramassages pendant '+N+' appels');
   // Valeurs relues : celles d'un décodage dans un objet neuf.
   for(let i=0;i<COUNT;i+=97)assert.deepEqual({...sc.decode(view,i*8,out)},{...sc.decode(view,i*8,{})});
+});
+
+// ---------------------------------------------------------------- Groupe D : enregistreur et format
+
+test('D1 rec.step : un seul objet relu, égal au décodage stocké, entrée intacte',()=>{
+  const rec=D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS});
+  assert.deepEqual(Object.keys(rec.input),METAL_NAMES,'objet de sortie créé d’avance, propriétés du schéma dans l’ordre');
+  rec.scene({id:1});
+  const a={moveX:.3,moveY:-2,lookX:.0123,lookY:-5,fire:true,dash:1,weapon:3,extra:'x'},b={moveX:-.7,lookX:1e-9,sprint:true,weapon:300,fire:0};
+  const snapshot=v=>JSON.stringify(Object.entries(v)),before=[snapshot(a),snapshot(b)];
+  const qa=rec.step(a),copyA=plain(qa),qb=rec.step(b);
+  assert.equal(qa,qb,'même objet à chaque pas');assert.equal(rec.input,qa);
+  assert.deepEqual([snapshot(a),snapshot(b)],before,'entrées reçues intactes');
+  assert.deepEqual(Object.keys(qb),METAL_NAMES);
+  assert.deepEqual(copyA,{moveX:38/127,moveY:-1,lookX:101/8192,lookY:-32767/8192,fire:true,fireLeft:false,dash:true,pulse:false,melee:false,interact:false,sprint:false,assist:false,weapon:3});
+  const bytes=rec.bytes(),sc=D.schema(METAL_FIELDS),body=new DataView(bytes.buffer,8+headerLength(bytes),16);
+  assert.deepEqual(copyA,plain(sc.decode(body,0,{})),'pas 1 : décodage de l’enregistrement stocké');
+  assert.deepEqual(plain(qb),plain(sc.decode(body,8,{})),'pas 2');
+  assert.equal(qb.weapon,undefined);assert.equal(qb.moveX,-89/127);
+  assert.ok(Object.is(qb.moveY,0)&&Object.is(qb.lookX,0),'absent et quasi nul relus +0');
+});
+
+test('D2 aller-retour : deux scènes jouets de 500 et 300 pas, commandes et empreintes',()=>{
+  const {rec,scenes}=recordToy(TOY_HEADER,TOY_PLAN),play=D.player(rec.end());
+  const triplets=Object.entries(TOY_PLAN[0].commands).flatMap(([n,list])=>list.map(([type,data])=>[+n,type,data]));
+  const expected={format:1,game:'jouet',gameVersion:'1.0',simHash:'sha-jouet',simVersion:{sim:3},engine:'node',hz:60,dtTicks:0,checksumEvery:60,fields:METAL_FIELDS,meta:TOY_HEADER.meta,
+    scenes:[{info:TOY_PLAN[0].info,steps:500,checksums:9,commandBytes:Buffer.byteLength(JSON.stringify(triplets)),truncated:false},
+      {info:TOY_PLAN[1].info,steps:300,checksums:6,commandBytes:0,truncated:false}]};
+  assert.equal(JSON.stringify(play.header),JSON.stringify(expected),'en-tête, clés dans l’ordre de 3.6');
+  assert.equal(play.sceneCount,2);assert.equal(play.scene,0,'scène 0 choisie à la création');
+  const out={};
+  for(const [k,scene] of TOY_PLAN.entries()){
+    if(k)assert.equal(play.select(k),play,'select rend le lecteur');
+    assert.equal(play.scene,k);assert.equal(play.steps,scene.steps);assert.equal(play.step,0);
+    const read=[];
+    while(play.next(out)){read.push(plain(out));assert.equal(play.dt,1/60);}
+    assert.deepEqual(read,scenes[k].outputs,'scène '+k+' : même suite par next()');
+    assert.equal(play.step,scene.steps);assert.equal(play.next(out),false,'next() faux après la fin');assert.equal(play.step,scene.steps);
+    for(let n=0;n<=scene.steps;n++){
+      const want=(scene.commands?.[n]||[]).map(([type,data])=>({type,data})),got=play.commandsAt(n);
+      assert.deepEqual(plain(got),want,'scène '+k+', commandes du pas '+n);
+      if(!want.length)assert.ok(got===play.commandsAt(-1)&&Object.isFrozen(got)&&got.length===0,'tableau vide partagé et gelé');
+      assert.equal(play.expected(n),scenes[k].sums[n],'scène '+k+', empreinte du pas '+n);
+    }
+    assert.deepEqual(Object.keys(scenes[k].sums).map(Number),Array.from({length:Math.floor(scene.steps/60)+1},(_,i)=>i*60));
+  }
+  assert.equal(play.select(1).select(0),play);assert.equal(play.scene,0);assert.equal(play.step,0);
+  assert.ok(play.next(out));assert.deepEqual(plain(out),scenes[0].outputs[0],'select remet le curseur à 0');
+  for(const k of [2,-1,1.5,'1',NaN,undefined,null])assert.throws(()=>play.select(k),code('FDEMO_ARG'),'select('+String(k)+')');
+  assert.equal(play.scene,0);assert.equal(play.step,1,'un select refusé ne change rien');
+});
+
+test('D3 déterminisme : mêmes appels, mêmes octets',()=>{
+  const plan=TOY_PLAN.map(s=>({...s,dt:i=>(16.7+4*Math.sin(1.7*i))/1000}));
+  const run=(options,onStep)=>recordToy({...TOY_HEADER,dtTicks:48000},plan,options,onStep).rec.end();
+  const a=run();
+  assert.ok(sameBytes(run(),a),'deux enregistreurs indépendants');
+  for(const options of [{initialSteps:0},{initialSteps:1},{initialSteps:100000},{maxBytes:2**30}])assert.ok(sameBytes(run(options),a),'capacité '+JSON.stringify(options));
+  // bytes() en cours de route ne ferme rien et rend un enregistrement lisible de ce qui est déjà stocké.
+  const middle=[];
+  assert.ok(sameBytes(run({},(rec,k,i)=>{if(i%97===0)middle.push({k,i,size:rec.size,bytes:rec.bytes()});}),a),'bytes() ne change pas le résultat');
+  assert.ok(middle.length>5);
+  for(const {k,i,size,bytes} of middle){
+    assert.equal(bytes.length,8+headerLength(bytes)+size);
+    const play=D.player(bytes);
+    assert.equal(play.sceneCount,k+1);assert.equal(play.header.scenes[k].steps,i+1);
+  }
+});
+
+test('D4 en-tête refusé : signature, format, expect',()=>{
+  const bytes=sample(),header=headerOf(bytes);
+  assert.ok(sameBytes(rebuild(bytes,()=>{}),bytes),'en-tête JSON canonique : l’aide de test le reconstruit à l’octet près');
+  for(let i=0;i<4;i++){const b=bytes.slice();b[i]^=0x20;assert.throws(()=>D.player(b),code('FDEMO_FORMAT'),'signature, octet '+i);}
+  for(const format of [2,0,'1',1.5,null])assert.throws(()=>D.player(rebuild(bytes,h=>{h.format=format;})),code('FDEMO_FORMAT'),'format '+format);
+  assert.throws(()=>D.player(rebuild(bytes,h=>{delete h.format;})),code('FDEMO_FORMAT'),'format absent');
+  const e=refusal(()=>D.player(bytes,{simHash:'autre'}),'simHash autre');
+  assert.equal(e.code,'FDEMO_MISMATCH');assert.equal(e.field,'simHash');assert.match(e.message,/^FDemo : /);
+  assert.equal(D.player(bytes,{simHash:header.simHash,game:header.game}).sceneCount,2,'bonnes valeurs : accepté');
+  for(const expect of [undefined,null,{},{absent:undefined},{fields:plain(METAL_FIELDS),meta:header.meta,hz:60,scenes:header.scenes}])assert.equal(D.player(bytes,expect).sceneCount,2);
+  for(const [expect,field] of [[{game:'jouet',simHash:'x'},'simHash'],[{game:'autre',simHash:'x'},'game'],[{meta:{...header.meta,note:'autre'}},'meta'],
+    [{hz:'60'},'hz'],[{gameVersion:undefined},'gameVersion'],[{absent:0},'absent'],[{fields:METAL_FIELDS.slice(1)},'fields']]){
+    const m=refusal(()=>D.player(bytes,expect),JSON.stringify(expect));
+    assert.equal(m.code,'FDEMO_MISMATCH');assert.equal(m.field,field);
+  }
+  // expect est contrôlé après le format : un enregistrement illisible reste FDEMO_FORMAT.
+  assert.throws(()=>D.player(bytes.subarray(0,bytes.length-1),{simHash:'autre'}),code('FDEMO_FORMAT'));
+  for(const expect of [3,'simHash',true])assert.throws(()=>D.player(bytes,expect),code('FDEMO_ARG'),'expect '+expect);
+  assert.throws(()=>D.player(bytes,{simHash:1n}),code('FDEMO_ARG'),'valeur attendue hors JSON');
+});
+
+test('D5 octets incohérents : FDEMO_FORMAT, jamais de lecture hors des octets',()=>{
+  const bytes=sample(),L=headerLength(bytes),header=headerOf(bytes);
+  const refused=(b,label)=>{const e=refusal(()=>D.player(b),label);assert.equal(e.code,'FDEMO_FORMAT',label+' : '+e.message);return e;};
+  refused(bytes.subarray(0,bytes.length-1),'tronqué d’un octet');
+  const longer=new Uint8Array(bytes.length+1);longer.set(bytes);refused(longer,'un octet en trop');
+  const json=bytes.slice();json[8]=0x78;refused(json,'JSON d’en-tête invalide');
+  refused(rebuild(bytes,h=>{h.scenes[0].steps++;}),'steps augmenté de 1');
+  const far=bytes.slice();new DataView(far.buffer).setUint32(4,bytes.length,true);refused(far,'longueur d’en-tête plus grande que les octets');
+  const huge=bytes.slice();new DataView(huge.buffer).setUint32(4,0xFFFFFFFF,true);refused(huge,'longueur 2^32 − 1');
+  for(const n of [0,1,4,7,8])refused(bytes.subarray(0,n),n+' octets');
+  const utf=bytes.slice();utf[8+L-2]=0xC3;refused(utf,'UTF-8 invalide');
+  // En-tête : forme, réglages (validés comme à l'enregistrement), schéma, scènes.
+  const edits={'tableau':()=>[],'null':()=>null,'chaîne':()=>'FDM1','game vide':h=>{h.game='';},'simHash absent':h=>{delete h.simHash;},'gameVersion':h=>{h.gameVersion=1;},'engine':h=>{h.engine=null;},
+    'hz 0':h=>{h.hz=0;},'hz négatif':h=>{h.hz=-60;},'hz texte':h=>{h.hz='60';},'hz absent':h=>{delete h.hz;},'dtTicks −1':h=>{h.dtTicks=-1;},'dtTicks 1,5':h=>{h.dtTicks=1.5;},
+    'dtTicks 1e6+1':h=>{h.dtTicks=1e6+1;},'dtTicks absent':h=>{delete h.dtTicks;},'dtTicks 48000':h=>{h.dtTicks=48000;},'checksumEvery 0':h=>{h.checksumEvery=0;},
+    'checksumEvery 2^53':h=>{h.checksumEvery=2**53;},'checksumEvery absent':h=>{delete h.checksumEvery;},'fields vide':h=>{h.fields=[];},'fields absent':h=>{delete h.fields;},
+    'simVersion absent':h=>{delete h.simVersion;},'meta absent':h=>{delete h.meta;},'scenes absent':h=>{delete h.scenes;},'scenes objet':h=>{h.scenes={};},
+    'steps −1':h=>{h.scenes[0].steps=-1;},'steps 1,5':h=>{h.scenes[0].steps=1.5;},'steps texte':h=>{h.scenes[0].steps='120';},'steps 2^60':h=>{h.scenes[0].steps=2**60;},
+    'checksums +1':h=>{h.scenes[1].checksums++;},'checksums 2^53':h=>{h.scenes[1].checksums=2**53;},'commandBytes 1':h=>{h.scenes[1].commandBytes=1;},
+    'truncated absent':h=>{delete h.scenes[0].truncated;},'truncated 0':h=>{h.scenes[0].truncated=0;},'info absent':h=>{delete h.scenes[1].info;},'scène null':h=>{h.scenes[0]=null;},
+    'scène en trop':h=>{h.scenes.push(h.scenes[1]);},'scène en moins':h=>{h.scenes.pop();},'scenes semblable à un tableau':h=>{h.scenes={...h.scenes,length:h.scenes.length};}};
+  for(const [label,edit] of Object.entries(edits))refused(rebuild(bytes,edit),label);
+  // Entiers ≥ 0 : un compte négatif que la scène suivante compense tomberait juste sur la longueur totale.
+  const split=D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS});split.scene({});for(let i=0;i<3;i++)split.step({});split.scene({});for(let i=0;i<2;i++)split.step({});
+  const two=split.end();
+  refused(rebuild(two,h=>{h.scenes[0].steps=-1;h.scenes[1].steps=6;}),'steps −1 compensé');
+  refused(rebuild(two,h=>{h.scenes[0].checksums=-1;h.scenes[1].steps=3;}),'checksums −1 compensé');
+  assert.equal(D.player(rebuild(two,h=>{h.scenes[0].steps=4;h.scenes[1].steps=1;})).steps,4,'même total, autre découpage : accepté');
+  refused(rebuild(D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS}).end(),h=>{h.scenes={};}),'zéro scène, scenes objet');
+  // Une FDEMO_ARG du schéma ressort en FDEMO_FORMAT, avec son message et son champ.
+  const schemaError=refused(rebuild(bytes,h=>{h.fields[5].scale=1;}),'u8 avec scale');
+  assert.match(schemaError.message,/schéma : weapon : scale interdit pour u8/);assert.equal(schemaError.field,'weapon');
+  // Corps : empreintes (n strictement croissant, ≤ steps) et commandes (triplets, n croissant au sens large, ≤ steps).
+  const sums=8+L+120*8,commands=sums+header.scenes[0].checksums*8,length=header.scenes[0].commandBytes;
+  const body=(edit,label)=>{const b=bytes.slice(),v=new DataView(b.buffer);edit(b,v);return refused(b,label);};
+  body((b,v)=>{v.setUint32(sums,30,true);v.setUint32(sums+8,0,true);},'empreintes décroissantes');
+  body((b,v)=>v.setUint32(sums+8,0,true),'deux empreintes au même pas');
+  body((b,v)=>v.setUint32(sums+8*4,121,true),'empreinte après le dernier pas');
+  assert.equal(Buffer.from(bytes.subarray(commands,commands+length)).toString(),JSON.stringify([[0,'boost',{v:1}],[120,'mark','fin']]));
+  for(const text of ['[[120,"mark","fin"],[0,"boost",{"v":1}]]','[[0,"boost",{"v":1}],[121,"mark","fin"]]','[[0,"boost",{"v":1}],[120,""    ,"fin"]]','[[0,"boost",{"v":1}],[120,"mark"]]',
+    '[[0,"boost",1,2],[120,"mark","fin"]]','[["0","boost",1]]','[[-1,"boost",1]]','[[0.5,"boost",1]]','[[0,3,1]]','[]','{}','"x"','[[0,"boost",{"v":1}],[120,"mark","fin"]',''])
+    body(b=>{assert.ok(text.length<=length);b.set(Buffer.from(text.padEnd(length)),commands);},'commandes '+text);
+  // Mutations au hasard : le lecteur accepte (et se lit jusqu'au bout) ou lève FDEMO_FORMAT, jamais autre chose.
+  const r=D.rng(2026),out={};let accepted=0;
+  for(let i=0;i<3000;i++){
+    let b=bytes.slice();
+    const kind=r.int(4);
+    if(kind===0)b[r.int(b.length)]^=1<<r.int(8);
+    else if(kind===1)b[8+r.int(L)]=r.int(256);
+    else if(kind===2)b=b.subarray(0,r.int(b.length));
+    else{const at=r.int(b.length+1),c=new Uint8Array(b.length+1);c.set(b.subarray(0,at));c[at]=r.int(256);c.set(b.subarray(at),at+1);b=c;}
+    try{
+      const play=D.player(b);accepted++;
+      for(let k=0;k<play.sceneCount;k++){play.select(k);while(play.next(out));for(let n=0;n<=play.steps;n++){play.commandsAt(n);play.verify(n,0);}}
+    }catch(e){if(!e||e.code!=='FDEMO_FORMAT')throw e;}
+  }
+  assert.ok(accepted>100&&accepted<2900,'mutations acceptées : '+accepted+' sur 3 000');
+});
+
+test('D6 mauvais moment et arguments : FDEMO_STATE, FDEMO_ARG',()=>{
+  const ok={game:'g',simHash:'h',fields:METAL_FIELDS},rec=D.recorder(ok),loop={};loop.self=loop;
+  for(const call of [()=>rec.step({}),()=>rec.checksum(1),()=>rec.command('x')])assert.throws(call,code('FDEMO_STATE'),'avant scene()');
+  assert.equal(rec.checksumDue(),false,'sans scène, aucune empreinte due');
+  rec.scene();rec.checksum(1);
+  assert.throws(()=>rec.checksum(2),code('FDEMO_STATE'),'deux empreintes en n = 0');
+  rec.step({});rec.checksum(3);assert.throws(()=>rec.checksum(3),code('FDEMO_STATE'),'deux empreintes en n = 1');
+  for(const type of ['',undefined,null,3,{},['x']])assert.throws(()=>rec.command(type),code('FDEMO_ARG'),'type '+String(type));
+  for(const data of [1n,loop,{deep:[1n]}])assert.throws(()=>rec.command('x',data),code('FDEMO_ARG'),'données hors JSON');
+  assert.throws(()=>rec.scene(loop),code('FDEMO_ARG'),'info hors JSON');
+  for(const input of [null,undefined,3,'moveX',true])assert.throws(()=>rec.step(input),code('FDEMO_ARG'),'entrée '+String(input));
+  assert.equal(rec.steps,1,'les appels refusés ne comptent rien');
+  const size=rec.size,last=rec.end();
+  for(const [name,call] of Object.entries({step:()=>rec.step({}),scene:()=>rec.scene({}),checksum:()=>rec.checksum(1),command:()=>rec.command('x'),bytes:()=>rec.bytes(),end:()=>rec.end(),checksumDue:()=>rec.checksumDue()}))
+    assert.throws(call,code('FDEMO_STATE'),name+' après end()');
+  assert.equal(rec.size,size);assert.equal(rec.steps,1);assert.equal(D.player(last).header.scenes[0].steps,1);
+  // En-tête refusé : FDEMO_ARG, avec le champ en cause.
+  const without=k=>{const h={...ok};delete h[k];return h;};
+  for(const [header,field] of [[without('simHash'),'simHash'],[{...ok,hz:0},'hz'],[{...ok,checksumEvery:0},'checksumEvery'],[{...ok,dtTicks:-1},'dtTicks'],
+    [without('game'),'game'],[{...ok,game:''},'game'],[{...ok,simHash:''},'simHash'],[{...ok,simHash:3},'simHash'],[{...ok,gameVersion:1},'gameVersion'],[{...ok,engine:null},'engine'],
+    [{...ok,hz:Infinity},'hz'],[{...ok,hz:'60'},'hz'],[{...ok,hz:-60},'hz'],[{...ok,hz:NaN},'hz'],[{...ok,hz:5e-324},'hz'],[{...ok,dtTicks:1.5},'dtTicks'],
+    [{...ok,dtTicks:1e6+1},'dtTicks'],[{...ok,dtTicks:'0'},'dtTicks'],[{...ok,checksumEvery:1.5},'checksumEvery'],[{...ok,checksumEvery:2**53},'checksumEvery'],[{...ok,checksumEvery:-600},'checksumEvery']]){
+    const e=refusal(()=>D.recorder(header),JSON.stringify(header));
+    assert.equal(e.code,'FDEMO_ARG');assert.equal(e.field,field,JSON.stringify(header));
+  }
+  for(const header of [undefined,null,'g',[ok]])assert.throws(()=>D.recorder(header),code('FDEMO_ARG'),'en-tête '+String(header));
+  const schemaError=refusal(()=>D.recorder({...ok,fields:[{name:'weapon',type:'u8',scale:1}]}));
+  assert.equal(schemaError.code,'FDEMO_ARG');assert.match(schemaError.message,/schéma : weapon : scale interdit pour u8/);
+  assert.throws(()=>D.recorder(without('fields')),code('FDEMO_ARG'));
+  for(const key of ['simVersion','meta'])for(const v of [1n,loop])assert.throws(()=>D.recorder({...ok,[key]:v}),code('FDEMO_ARG'),key);
+  for(const options of [null,{maxBytes:-1},{maxBytes:1.5},{maxBytes:2**30+1},{maxBytes:NaN},{maxBytes:'10'},{maxBytes:Infinity},{initialSteps:-1},{initialSteps:.5},{initialSteps:2**53}])
+    assert.throws(()=>D.recorder(ok,options),code('FDEMO_ARG'),JSON.stringify(options));
+  for(const options of [undefined,{},{maxBytes:0},{maxBytes:2**30},{initialSteps:0},{initialSteps:2**52}]){const r=D.recorder(ok,options);r.scene();r.step({});}
+  // Valeurs par défaut de 3.7, clés dans l'ordre de 3.6 ; info absente notée null.
+  const d=D.recorder(ok);d.scene();
+  assert.equal(JSON.stringify(D.player(d.end()).header),JSON.stringify({format:1,game:'g',gameVersion:'',simHash:'h',simVersion:null,engine:'',hz:60,dtTicks:0,checksumEvery:600,
+    fields:METAL_FIELDS,meta:null,scenes:[{info:null,steps:0,checksums:0,commandBytes:0,truncated:false}]}));
+});
+
+test('D7 dt en ticks de 1/48 000 s : u16 en tête, rec.dt et play.dt identiques',()=>{
+  const rec=D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS,dtTicks:48000}),seen=[],ticks=[];
+  assert.equal(rec.dt,0,'0 avant toute scène');rec.scene({});assert.equal(rec.dt,0,'0 avant le premier pas');
+  for(let i=0;i<600;i++){
+    const dt=(16.7+4*Math.sin(1.7*i))/1000,size=rec.size;
+    rec.step({moveX:i/600},dt);
+    assert.equal(rec.dt,Math.round(dt*48000)/48000,'pas '+i);
+    assert.equal(rec.size-size,10,'un enregistrement fait size + 2 octets');
+    seen.push(rec.dt);ticks.push(Math.round(dt*48000));
+  }
+  for(const [dt,tick] of [[2,65535],[NaN,0],[-1,0],[Infinity,0],[-Infinity,0],[undefined,0],['0.016',0],[1e-6,0],[65535/48000,65535],[1/96000,1]]){
+    rec.step({},dt);assert.equal(rec.dt,tick/48000,'dt '+String(dt));seen.push(rec.dt);ticks.push(tick);
+  }
+  assert.equal(seen[600],65535/48000,'2 s → 65535/48000');assert.equal(seen[601],0,'NaN → 0');
+  rec.scene({});assert.equal(rec.dt,0,'scene() remet dt à 0, comme select() pour le lecteur');
+  const bytes=rec.end(),play=D.player(bytes),body=new DataView(bytes.buffer,8+headerLength(bytes)),out={},read=[];
+  assert.equal(body.byteLength,ticks.length*10);
+  for(let i=0;i<ticks.length;i++)assert.equal(body.getUint16(10*i,true),ticks[i],'u16 de dt en tête de l’enregistrement '+i);
+  assert.equal(play.dt,0,'avant le premier enregistrement');
+  while(play.next(out))read.push(play.dt);
+  assert.deepEqual(read,seen,'le lecteur rend la même suite de dt');
+  assert.equal(play.select(0).dt,0,'select remet dt à sa valeur de départ');
+  // Pas fixe : rec.dt et play.dt valent 1/hz, toujours le même nombre ; l'argument est ignoré.
+  const fixed=D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS,hz:50});fixed.scene();
+  assert.equal(fixed.dt,1/50);
+  for(const dt of [.1,NaN,3,undefined]){fixed.step({},dt);assert.equal(fixed.dt,1/50);}
+  assert.equal(fixed.size,4*8,'sans dtTicks, size octets par enregistrement');
+  const again=D.player(fixed.end());assert.equal(again.dt,1/50);
+  while(again.next(out))assert.equal(again.dt,1/50);
+});
+
+test('D8 checksumDue : n = 0 puis tous les checksumEvery pas',()=>{
+  const rec=D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS,checksumEvery:60});
+  assert.equal(rec.checksumDue(),false,'avant toute scène');
+  rec.scene();assert.equal(rec.checksumDue(),true,'juste après scene()');
+  rec.checksum(1);assert.equal(rec.checksumDue(),false,'après l’empreinte');
+  for(let i=0;i<59;i++){rec.step({});assert.equal(rec.checksumDue(),false,'après '+(i+1)+' pas');}
+  rec.step({});assert.equal(rec.checksumDue(),true,'après 60 pas');
+  rec.checksum(2);assert.equal(rec.checksumDue(),false);
+  rec.step({});assert.equal(rec.checksumDue(),false,'61 pas');
+  for(let i=0;i<59;i++)rec.step({});
+  assert.equal(rec.checksumDue(),true,'120 pas, même si l’empreinte de 60 avait été sautée');
+  rec.scene();assert.equal(rec.checksumDue(),true,'nouvelle scène : n = 0 de nouveau');
+  rec.checksum(3);rec.scene();assert.equal(rec.checksumDue(),true,'scène vide puis nouvelle scène');rec.checksum(4);
+  assert.deepEqual(plain(D.player(rec.bytes()).header.scenes.map(s=>s.checksums)),[2,1,1]);
+  const every=D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS,checksumEvery:1});every.scene();every.checksum(0);
+  for(let i=1;i<=100;i++){every.step({});assert.equal(every.checksumDue(),true,'checksumEvery 1, pas '+i);every.checksum(i);assert.equal(every.checksumDue(),false);}
+  const play=D.player(every.end());
+  assert.equal(play.header.scenes[0].checksums,101);
+  for(let n=0;n<=100;n++)assert.equal(play.expected(n),n);
+});
+
+test('D9 maxBytes 65 536 : saturation, scène tronquée, pas stockés relus',()=>{
+  const rec=D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS},{maxBytes:65536}),sc=D.schema(METAL_FIELDS),probe=new DataView(new ArrayBuffer(8));
+  const raw={},state={x:0},kept=[];
+  rec.scene({id:'longue'});
+  if(rec.checksumDue())rec.checksum(0);
+  for(let i=0;i<100000;i++){
+    state.x=30*Math.sin(i*.001);toyPilot(i,state,raw);
+    const q=rec.step(raw);
+    if(!rec.full)kept.push(plain(q));
+    else if(i%1009===0){sc.encode(raw,probe,0);assert.deepEqual(plain(q),plain(sc.decode(probe,0,{})),'après saturation, entrée encore quantifiée');}
+    if(rec.checksumDue())rec.checksum(Math.imul(i,2654435761));
+  }
+  assert.equal(rec.full,true);assert.ok(rec.size<=65536);
+  // 8 178 pas (65 424 octets) et 14 empreintes (n = 0 à 7 800, 112 octets) font exactement 65 536 octets ; le pas suivant déborde.
+  assert.equal(rec.size,65536);assert.equal(kept.length,8178);
+  assert.equal(rec.steps,100000,'rec.steps compte les pas vus');
+  assert.equal(rec.checksumDue(),false,'plus d’empreinte due');
+  rec.checksum(1);rec.command('après',{x:1});
+  assert.throws(()=>rec.checksum(2),code('FDEMO_STATE'),'deux empreintes au même n, même quand rien n’est stocké');
+  rec.scene({id:'suivante'});assert.equal(rec.steps,0);assert.equal(rec.checksumDue(),false);
+  for(let i=0;i<10;i++)rec.step(raw);
+  assert.equal(rec.steps,10);assert.equal(rec.size,65536,'plus rien n’est stocké');
+  const bytes=rec.end(),play=D.player(bytes),out={},read=[];
+  assert.equal(bytes.length,8+headerLength(bytes)+65536);
+  assert.equal(play.sceneCount,1,'scene() n’ajoute plus d’entrée');
+  assert.deepEqual(plain(play.header.scenes[0]),{info:{id:'longue'},steps:8178,checksums:14,commandBytes:0,truncated:true});
+  while(play.next(out))read.push(plain(out));
+  assert.deepEqual(read,kept,'le lecteur rend exactement les pas stockés, égaux aux premières sorties');
+  assert.equal(play.expected(0),0);assert.equal(play.expected(7800),Math.imul(7799,2654435761)>>>0);assert.equal(play.expected(8400),undefined);
+  // Plafond par défaut, 4 194 304 octets : 524 288 pas METAL sans empreinte, puis saturation.
+  const big=D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS});big.scene({});
+  let stored=0;
+  while(!big.full&&stored<=524288){big.step({});if(!big.full)stored++;}
+  assert.equal(stored,524288);assert.equal(big.size,4194304);assert.equal(big.full,true);
+});
+
+test('D10 taille : 3 600 pas METAL et 7 empreintes font 28 856 octets de corps',()=>{
+  const rec=D.recorder({game:'metal',simHash:'h',fields:METAL_FIELDS,checksumEvery:600}),raw={},state={x:0},at=[];
+  rec.scene({});
+  if(rec.checksumDue()){at.push(rec.steps);rec.checksum(1);}
+  for(let i=0;i<3600;i++){toyPilot(i,state,raw);rec.step(raw);if(rec.checksumDue()){at.push(rec.steps);rec.checksum(i);}}
+  assert.deepEqual(at,[0,600,1200,1800,2400,3000,3600]);
+  assert.equal(rec.size,3600*8+7*8);assert.equal(rec.size,28856);
+  const bytes=rec.end();assert.equal(bytes.length,8+headerLength(bytes)+28856);
+});
+
+test('D11 maxBytes au plus juste : commandes en octets UTF-8 exacts, crochets et virgules compris',()=>{
+  const ok={game:'g',simHash:'h',fields:METAL_FIELDS},type='é€😀',data={s:'\uD800',t:'é'};
+  const first=Buffer.byteLength(JSON.stringify([2,type,data]))+2,second=Buffer.byteLength(JSON.stringify([2,'b',null]))+1,base=8+16;
+  const fill=maxBytes=>{const rec=D.recorder(ok,{maxBytes});rec.scene({});rec.checksum(1);rec.step({});rec.step({});rec.command(type,data);rec.command('b');return rec;};
+  const exact=fill(base+first+second);
+  assert.equal(exact.full,false);assert.equal(exact.size,base+first+second);
+  const play=D.player(exact.bytes());
+  assert.equal(play.header.scenes[0].commandBytes,first+second);
+  assert.deepEqual(plain(play.commandsAt(2)),[{type,data},{type:'b',data:null}],'demi-surrogate échappé par JSON.stringify, relu tel quel');
+  exact.step({});assert.equal(exact.full,true,'le pas suivant déborde');
+  const short=fill(base+first+second-1);
+  assert.equal(short.full,true);assert.equal(short.size,base+first,'la seconde commande ne tient plus');
+  const cut=D.player(short.end());
+  assert.deepEqual(plain(cut.header.scenes[0]),{info:{},steps:2,checksums:1,commandBytes:first,truncated:true});
+  // Plafond nul : la scène reste lisible, vide et tronquée ; une empreinte seule peut aussi faire déborder.
+  const none=D.recorder(ok,{maxBytes:0}),sc=D.schema(METAL_FIELDS),probe=new DataView(new ArrayBuffer(8));
+  none.scene({});assert.equal(none.full,false);
+  sc.encode({moveX:1,fire:true},probe,0);
+  assert.deepEqual(plain(none.step({moveX:1,fire:true})),plain(sc.decode(probe,0,{})));
+  assert.equal(none.full,true);
+  assert.deepEqual(plain(D.player(none.end()).header.scenes[0]),{info:{},steps:0,checksums:0,commandBytes:0,truncated:true});
+  const tight=D.recorder(ok,{maxBytes:7});tight.scene({});tight.checksum(5);
+  assert.equal(tight.full,true);assert.equal(tight.size,0);
+});
+
+test('D12 lecteur : vues, ArrayBuffer, autre domaine, rien de copié ; zéro scène',()=>{
+  const bytes=sample(),host=new Uint8Array(bytes.length+13);host.set(bytes,5);
+  const reference=D.player(bytes),records=play=>{const out={},all=[];for(let k=0;k<play.sceneCount;k++){play.select(k);while(play.next(out))all.push(plain(out));}return all;};
+  const all=records(reference);
+  for(const [label,input] of [['vue décalée',host.subarray(5,5+bytes.length)],['DataView',new DataView(host.buffer,5,bytes.length)],['ArrayBuffer d’un autre domaine',bytes.buffer],
+    ['ArrayBuffer local',Uint8Array.from(bytes).buffer],['Int16Array',new Int16Array(Uint8Array.from([...bytes,0]).buffer,0,(bytes.length+1)>>1)]]){
+    if(label==='Int16Array'&&bytes.length%2)continue;
+    const play=D.player(input);
+    assert.equal(JSON.stringify(play.header),JSON.stringify(reference.header),label);
+    assert.deepEqual(records(play),all,label);
+  }
+  // Rien n'est copié : changer l'octet moveX du premier enregistrement se voit au prochain next().
+  const play=D.player(host.subarray(5,5+bytes.length)),out={},first=5+8+headerLength(bytes);
+  host[first]=127;play.select(0);play.next(out);assert.equal(out.moveX,1);
+  host[first]=0x81;play.select(0);play.next(out);assert.equal(out.moveX,-1);
+  for(const input of [undefined,null,[],{},'FDM1',Array.from(bytes),new SharedArrayBuffer(16),{buffer:bytes.buffer,byteOffset:0,byteLength:bytes.length}])
+    assert.throws(()=>D.player(input),code('FDEMO_ARG'),Object.prototype.toString.call(input));
+  // Un enregistrement sans scène est valide : rien à lire.
+  const empty=D.player(D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS}).end());
+  assert.equal(empty.sceneCount,0);assert.equal(empty.steps,0);assert.equal(empty.step,0);assert.equal(empty.next({}),false);
+  assert.equal(empty.commandsAt(0).length,0);assert.equal(empty.expected(0),undefined);assert.equal(empty.verify(0,1),true);
+  assert.throws(()=>empty.select(0),code('FDEMO_ARG'));
+});
+
+test('D13 copies JSON immédiates : info, données des commandes, simVersion, meta',()=>{
+  const meta={a:[1,2]},simVersion={v:1},header={game:'g',simHash:'h',fields:plain(METAL_FIELDS),meta,simVersion},rec=D.recorder(header);
+  meta.a.push(3);simVersion.v=2;header.game='autre';header.fields[0]={name:'x',type:'u8'};
+  const info={seed:1,list:[1]},data={v:1,nested:{w:[1]}};
+  rec.scene(info);info.seed=2;info.list.push(2);
+  rec.command('boost',data);data.v=99;data.nested.w.push(2);
+  rec.scene(undefined);rec.command('t');rec.command('u',undefined);rec.command('v',{toJSON:()=>'converti'});
+  rec.scene(()=>1);
+  const play=D.player(rec.end());
+  assert.deepEqual(plain(play.header.meta),{a:[1,2]});assert.deepEqual(plain(play.header.simVersion),{v:1});assert.equal(play.header.game,'g');
+  assert.deepEqual(plain(play.header.fields),METAL_FIELDS,'schéma compilé à la création');
+  assert.deepEqual(plain(play.header.scenes.map(s=>s.info)),[{seed:1,list:[1]},null,null],'info : copie JSON, undefined et fonction notés null');
+  assert.deepEqual(plain(play.commandsAt(0)),[{type:'boost',data:{v:1,nested:{w:[1]}}}]);
+  assert.deepEqual(plain(play.select(1).commandsAt(0)),[{type:'t',data:null},{type:'u',data:null},{type:'v',data:'converti'}]);
+  // Le lecteur rend des commandes neuves à chaque select : les modifier ne change pas l'enregistrement.
+  play.select(0).commandsAt(0)[0].data.v=5;
+  assert.equal(play.select(0).commandsAt(0)[0].data.v,1);
+});
+
+test('D14 rec.step et play.next : aucune allocation par pas (3.7, 3.8)',async()=>{
+  // Domaine principal, comme B8 et C9, entrées aux nombres déjà en boîte (voir C9). Capacité réservée d'avance :
+  // l'agrandissement du tampon, seule allocation permise, n'a pas lieu pendant les passes mesurées.
+  v8.setFlagsFromString('--expose-gc');const gc=vm.runInNewContext('gc');
+  const F=loadRealm({modules:['demo']}).window.FDemo,N=5e5,TRIES=3,settle=()=>new Promise(r=>setImmediate(r)),state={x:0};
+  const inputs=Array.from({length:1024},(_,i)=>{const raw={moveX:null,moveY:null,lookX:null,lookY:null};toyPilot(i*7,state,raw);return raw;});
+  const dts=new Array(1024).fill(null);for(let i=0;i<1024;i++)dts[i]=(16.7+4*Math.sin(1.7*i))/1000;
+  const fixed={game:'g',simHash:'h',fields:METAL_FIELDS},ticks={...fixed,dtTicks:48000},room={initialSteps:(TRIES+1)*N,maxBytes:2**30};
+  const record=(header,options,n)=>{const rec=F.recorder(header,options);rec.scene({});for(let i=0;i<n;i++){rec.step(inputs[i&1023],dts[i&1023]);if(rec.checksumDue())rec.checksum(i);}return rec;};
+  const recorders={fixed:record(fixed,room,0),ticks:record(ticks,room,0),full:record(fixed,{maxBytes:0},0),fullTicks:record(ticks,{maxBytes:0},0)};
+  const players={fixed:F.player(record(fixed,room,N).end()),ticks:F.player(record(ticks,room,N).end())},out={};
+  const stepLoop=rec=>({prepare(){},run(){for(let i=0;i<N;i++){rec.step(inputs[i&1023],dts[i&1023]);if(rec.checksumDue())rec.checksum(i);}}});
+  const nextLoop=play=>({prepare(){play.select(0);},run(){for(let i=0;i<N&&play.next(out);i++){const n=play.step,want=play.expected(n);play.verify(n,want===undefined?0:want);}}});
+  const loops={stepFixed:stepLoop(recorders.fixed),stepTicks:stepLoop(recorders.ticks),stepFull:stepLoop(recorders.full),stepFullTicks:stepLoop(recorders.fullTicks),
+    nextFixed:nextLoop(players.fixed),nextTicks:nextLoop(players.ticks)};
+  // Passe propre : aucun ramassage et un tas grandi de moins d'un octet par pas depuis gc(). Le tas compte ce que la
+  // jeune génération, agrandie par les tests précédents (64 Mio vus), absorberait sans ramassage : 16 octets par pas.
+  const starts=[],observer=new PerformanceObserver(list=>{for(const e of list.getEntries())starts.push(e.startTime);}),heap=()=>v8.getHeapStatistics().used_heap_size;
+  observer.observe({entryTypes:['gc']});
+  const passes={},clean=p=>p.gcs===0&&p.grown<N;
+  try{
+    for(const [name,loop] of Object.entries(loops)){
+      loop.prepare();loop.run();passes[name]=[];
+      for(let k=0;k<TRIES&&!passes[name].some(clean);k++){
+        loop.prepare();gc();
+        const h0=heap(),t0=performance.now();loop.run();const t1=performance.now(),grown=heap()-h0;
+        for(let j=0;j<4;j++)await settle();
+        passes[name].push({gcs:starts.filter(t=>t>=t0&&t<=t1).length,grown});
+      }
+    }
+  }finally{observer.disconnect();}
+  for(const [name,list] of Object.entries(passes))assert.ok(list.some(clean),name+' : '+JSON.stringify(list)+', '+N+' pas par passe');
+  assert.ok(recorders.fixed.steps>=2*N);assert.equal(recorders.fixed.full,false);assert.equal(recorders.full.full,true);assert.equal(recorders.fullTicks.full,true);
+  assert.equal(players.ticks.step,N);assert.equal(players.fixed.divergence,null);
+});
+
+test('D15 verify : première divergence gardée',()=>{
+  const {rec,scenes}=recordToy(TOY_HEADER,TOY_PLAN),play=D.player(rec.end()),sums=scenes[0].sums;
+  assert.equal(play.divergence,null);
+  assert.equal(play.verify(60,sums[60]),true);assert.equal(play.verify(61,123),true,'aucune empreinte attendue en 61');
+  assert.equal(play.verify(60,sums[60]+2**32),true,'valeur>>>0');
+  assert.equal(play.verify(120,sums[120]^1),false);
+  assert.deepEqual(plain(play.divergence),{scene:0,step:120,expected:sums[120],actual:(sums[120]^1)>>>0});
+  play.select(1);assert.equal(play.verify(60,scenes[1].sums[60]^2),false);
+  assert.equal(play.divergence.step,120,'la première divergence reste');assert.equal(play.divergence.scene,0);
 });
