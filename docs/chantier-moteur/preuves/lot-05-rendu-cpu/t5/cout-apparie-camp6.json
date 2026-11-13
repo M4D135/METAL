@@ -1,0 +1,37 @@
+{
+ "monde": "camp:6",
+ "frames": 400,
+ "repetitionsParExecution": 5,
+ "note": "Comparaison appariée alternée base (T4, 088f2c6) contre tete (T5). models() est la portion concernée par le culling des ramassages.",
+ "executions": [
+  {
+   "execution": 0,
+   "charge": 5.29,
+   "baseModeles": 0.514,
+   "teteModeles": 0.481,
+   "ratioModeles": 0.9358,
+   "baseDraw": 2.301,
+   "teteDraw": 2.281
+  },
+  {
+   "execution": 1,
+   "charge": 4.95,
+   "baseModeles": 0.389,
+   "teteModeles": 0.404,
+   "ratioModeles": 1.0386,
+   "baseDraw": 2.283,
+   "teteDraw": 2.369
+  },
+  {
+   "execution": 2,
+   "charge": 4.55,
+   "baseModeles": 0.441,
+   "teteModeles": 0.396,
+   "ratioModeles": 0.898,
+   "baseDraw": 2.352,
+   "teteDraw": 2.339
+  }
+ ],
+ "ratioModelesRetenu": 0.9358,
+ "ratioDrawRetenu": 0.9945
+}

@@ -1,10 +1,10 @@
 {
   "version": "0.9.1",
-  "html_bytes": 860450,
-  "html_decimal_kb": 860.45,
-  "html_kib": 840.28,
-  "gzip_bytes": 263687,
-  "sha256": "346de3e47cf624d1f34704cd64b3a4dc5fe894dd309d16bcbd859d46193beab0",
+  "html_bytes": 860628,
+  "html_decimal_kb": 860.63,
+  "html_kib": 840.46,
+  "gzip_bytes": 263757,
+  "sha256": "6c96e956ecf7ccde4b49365fc477c86ecc0ca7e16ac9b7e03dbf502013539bf1",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
@@ -22,6 +22,6 @@
     "actors.js": 27015,
     "effects.js": 18725,
     "options.js": 7108,
-    "game.js": 104907
+    "game.js": 105085
   }
 }
