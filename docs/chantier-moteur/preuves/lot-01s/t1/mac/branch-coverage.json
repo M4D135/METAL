@@ -1,0 +1,24 @@
+{
+ "schema": "metal-fmath-branch-coverage-v1",
+ "counters": {
+  "mediumSecondIteration": 958,
+  "mediumThirdIteration": 710,
+  "nearPlusPio2": 20,
+  "nearMinusPio2": 10,
+  "largeZeroTermSkipped": 48,
+  "remQ0Positive": 128,
+  "remQ0Zero": 56,
+  "remIh2": 416,
+  "remCarryScalbn": 416,
+  "remMaskQ0Is1": 24,
+  "remMaskQ0Is2": 40,
+  "remRecompute": 206,
+  "remChopZeroTerms": 206,
+  "remChopLoop": 8,
+  "remBreakInto24Bits": 4,
+  "atan2KOver60": 53,
+  "atan2KUnderMinus60": 31,
+  "remRecomputeSeveralTerms": 8
+ },
+ "missing": []
+}

@@ -1,11 +1,15 @@
 /* Lot 01 suite / T1 — C witness: V8's fdlibm (src/base/ieee754.cc) for sin, cos,
  * atan, atan2 and __ieee754_rem_pio2 (with __kernel_rem_pio2), transcribed with
- * the same expressions as V8 so that clang contracts them the same way.
+ * the same expressions as V8 so that a compiler contracts them the same way.
  *
- *   clang -O2 -ffp-contract=off  -> what V8 computes without FMA (x86-64 baseline);
- *                                   FMath (src/fmath.js) must equal it bit for bit.
- *   clang -O2 -ffp-contract=on   -> what V8 computes when its C++ is compiled with
- *                                   contraction on an FMA target (darwin-arm64).
+ *   clang|gcc -O2 -ffp-contract=off -> what V8 computes without FMA (x86-64
+ *                                      baseline); FMath (src/fmath.js) must
+ *                                      equal it bit for bit.
+ *   clang -O2 -ffp-contract=on      -> what V8 computes when its C++ is compiled
+ *                                      with contraction on an FMA target
+ *                                      (clang's default; Node on darwin-arm64).
+ *   gcc -O2 -ffp-contract=fast      -> the same with gcc's default (Node on
+ *                                      linux-arm64); gcc 13 treats =on as =off.
  *
  * Reads one request per line on stdin, hexadecimal IEEE-754 bit patterns:
  *   sin X | cos X | atan X | atan2 Y X   -> prints the result bits
@@ -15,6 +19,31 @@
  * Developed at SunSoft, a Sun Microsystems, Inc. business. Permission to use,
  * copy, modify, and distribute this software is freely granted, provided that
  * this notice is preserved.
+ *
+ * V8 (src/base/ieee754.cc): the original source code covered by the above
+ * license has been modified significantly by Google Inc.
+ * Copyright 2016 the V8 project authors. All rights reserved.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *   * Redistributions of source code must retain the above copyright notice,
+ *     this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *   * Neither the name of Google Inc. nor the names of its contributors may be
+ *     used to endorse or promote products derived from this software without
+ *     specific prior written permission.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <math.h>
 #include <stdint.h>

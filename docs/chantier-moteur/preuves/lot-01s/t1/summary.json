@@ -1,0 +1,1278 @@
+{
+ "schema": "metal-lot01s-t1-summary-v1",
+ "machines": {
+  "mac": {
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "platform": "darwin",
+   "arch": "arm64",
+   "osRelease": "27.2.0",
+   "cpu": "Apple M5",
+   "logicalCpus": 10,
+   "compiler": "Apple clang version 21.0.0 (clang-2100.4.1.1)",
+   "chrome": "Google Chrome 157.0.8103.39",
+   "jsc": "/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc"
+  },
+  "spark": {
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "platform": "linux",
+   "arch": "arm64",
+   "osRelease": "6.17.0-1026-nvidia",
+   "cpu": "Cortex-X925 + Cortex-A725",
+   "logicalCpus": 20,
+   "compiler": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+   "chrome": "Google Chrome 151.0.7922.137",
+   "jsc": null
+  }
+ },
+ "sameSourcesOnBothMachines": true,
+ "goldenTests": {
+  "mac": {
+   "host": "0/8",
+   "fmath": "8/8",
+   "patternsByPortedSubset": {
+    "sin+cos": "00001000",
+    "atan+atan2": "01000000",
+    "sin+cos+atan2": "11111111",
+    "sin+cos+atan+atan2": "11111111"
+   },
+   "campaignWorldsChangedByFMath": {
+    "v1": "54/54",
+    "v2": "54/54"
+   }
+  },
+  "spark": {
+   "host": "0/8",
+   "fmath": "8/8",
+   "patternsByPortedSubset": {
+    "sin+cos": "00000000",
+    "atan+atan2": "01000000",
+    "sin+cos+atan2": "11111111",
+    "sin+cos+atan+atan2": "11111111"
+   },
+   "campaignWorldsChangedByFMath": {
+    "v1": "51/54",
+    "v2": "51/54"
+   }
+  }
+ },
+ "census": {
+  "mac": {
+   "worlds": 114,
+   "largeArgumentCalls": 0,
+   "hypotCalls": 96785877,
+   "divergent": {
+    "sin": {
+     "divergent": 13414,
+     "calls": 5808589,
+     "maxAbsArg": 14.215732645871089
+    },
+    "cos": {
+     "divergent": 8267,
+     "calls": 5809615,
+     "maxAbsArg": 14.215732645871089
+    },
+    "atan": {
+     "divergent": 4,
+     "calls": 1026,
+     "maxAbsArg": 0.27044533079421773
+    },
+    "atan2": {
+     "divergent": 707,
+     "calls": 325622,
+     "maxAbsArg": 68.58085638275371
+    }
+   },
+   "worldsWithDivergence": {
+    "legacy": {
+     "worlds": 6,
+     "withDivergentCall": 6,
+     "withDivergentSin": 6,
+     "withDivergentCos": 6,
+     "withDivergentAtan2": 6,
+     "withDivergentAtan": 0
+    },
+    "v1": {
+     "worlds": 54,
+     "withDivergentCall": 54,
+     "withDivergentSin": 54,
+     "withDivergentCos": 54,
+     "withDivergentAtan2": 53,
+     "withDivergentAtan": 1
+    },
+    "v2": {
+     "worlds": 54,
+     "withDivergentCall": 54,
+     "withDivergentSin": 54,
+     "withDivergentCos": 54,
+     "withDivergentAtan2": 53,
+     "withDivergentAtan": 1
+    }
+   }
+  },
+  "spark": {
+   "worlds": 114,
+   "largeArgumentCalls": 0,
+   "hypotCalls": 96785877,
+   "divergent": {
+    "sin": {
+     "divergent": 13414,
+     "calls": 5808589,
+     "maxAbsArg": 14.215732645871089
+    },
+    "cos": {
+     "divergent": 8267,
+     "calls": 5809615,
+     "maxAbsArg": 14.215732645871089
+    },
+    "atan": {
+     "divergent": 0,
+     "calls": 1026,
+     "maxAbsArg": 0.27044533079421773
+    },
+    "atan2": {
+     "divergent": 368,
+     "calls": 325622,
+     "maxAbsArg": 68.58085638275371
+    }
+   },
+   "worldsWithDivergence": {
+    "legacy": {
+     "worlds": 6,
+     "withDivergentCall": 6,
+     "withDivergentSin": 6,
+     "withDivergentCos": 6,
+     "withDivergentAtan2": 6,
+     "withDivergentAtan": 0
+    },
+    "v1": {
+     "worlds": 54,
+     "withDivergentCall": 54,
+     "withDivergentSin": 54,
+     "withDivergentCos": 54,
+     "withDivergentAtan2": 44,
+     "withDivergentAtan": 0
+    },
+    "v2": {
+     "worlds": 54,
+     "withDivergentCall": 54,
+     "withDivergentSin": 54,
+     "withDivergentCos": 54,
+     "withDivergentAtan2": 45,
+     "withDivergentAtan": 0
+    }
+   }
+  }
+ },
+ "checkpoints": {
+  "mac": {
+   "summary": {
+    "legacy": {
+     "worlds": 6,
+     "worldJsonChanged": 6,
+     "checkpointFingerprintChanged": 3,
+     "changedWorlds": [
+      "1:s2",
+      "96:s0",
+      "96:s2"
+     ]
+    },
+    "v1": {
+     "worlds": 18,
+     "worldJsonChanged": 18,
+     "checkpointFingerprintChanged": 8,
+     "changedWorlds": [
+      "96:w1",
+      "96:w3",
+      "96:w5",
+      "96:w6",
+      "96:w8",
+      "96:w9",
+      "96:w10",
+      "96:w15"
+     ]
+    },
+    "v2": {
+     "worlds": 18,
+     "worldJsonChanged": 18,
+     "checkpointFingerprintChanged": 8,
+     "changedWorlds": [
+      "96:w1",
+      "96:w3",
+      "96:w5",
+      "96:w6",
+      "96:w8",
+      "96:w9",
+      "96:w10",
+      "96:w15"
+     ]
+    }
+   },
+   "differingTopLevelFields": {
+    "meshes": 42,
+    "destructibles": 19
+   },
+   "maxAbsDifference": 2.3203661214665772e-14,
+   "numericDifferencesPerChangedWorld": {
+    "min": 1,
+    "max": 72
+   },
+   "structuralDifferences": 0,
+   "maxAbsByField": {
+    "meshes.r": 2.3203661214665772e-14,
+    "meshes.p": 7.105427357601002e-15,
+    "meshes.s": 6.439293542825908e-15,
+    "destructibles.bounds.minZ": 3.552713678800501e-15,
+    "destructibles.bounds.maxZ": 1.7763568394002505e-15,
+    "destructibles.bounds.maxY": 1.7763568394002505e-15,
+    "destructibles.bounds.minY": 5.551115123125783e-17,
+    "destructibles.bounds.minX": 8.881784197001252e-16
+   }
+  },
+  "spark": {
+   "summary": {
+    "legacy": {
+     "worlds": 6,
+     "worldJsonChanged": 6,
+     "checkpointFingerprintChanged": 3,
+     "changedWorlds": [
+      "1:s2",
+      "96:s0",
+      "96:s2"
+     ]
+    },
+    "v1": {
+     "worlds": 18,
+     "worldJsonChanged": 18,
+     "checkpointFingerprintChanged": 7,
+     "changedWorlds": [
+      "96:w1",
+      "96:w3",
+      "96:w5",
+      "96:w6",
+      "96:w8",
+      "96:w9",
+      "96:w15"
+     ]
+    },
+    "v2": {
+     "worlds": 18,
+     "worldJsonChanged": 18,
+     "checkpointFingerprintChanged": 7,
+     "changedWorlds": [
+      "96:w1",
+      "96:w3",
+      "96:w5",
+      "96:w6",
+      "96:w8",
+      "96:w9",
+      "96:w15"
+     ]
+    }
+   },
+   "differingTopLevelFields": {
+    "meshes": 42,
+    "destructibles": 17
+   },
+   "maxAbsDifference": 2.3203661214665772e-14,
+   "numericDifferencesPerChangedWorld": {
+    "min": 1,
+    "max": 74
+   },
+   "structuralDifferences": 0,
+   "maxAbsByField": {
+    "meshes.r": 2.3203661214665772e-14,
+    "meshes.p": 7.105427357601002e-15,
+    "meshes.s": 6.439293542825908e-15,
+    "destructibles.bounds.minZ": 3.552713678800501e-15,
+    "destructibles.bounds.maxZ": 1.7763568394002505e-15,
+    "destructibles.bounds.maxY": 1.7763568394002505e-15,
+    "destructibles.bounds.minY": 5.551115123125783e-17,
+    "destructibles.bounds.minX": 8.881784197001252e-16
+   }
+  }
+ },
+ "replay": {
+  "mac": {
+   "native": {
+    "checksum": "b657e97be053f3eeafdfae7944ede52a3e4bbb378def90e3405a404c11502479",
+    "driverFirstDivergentIndex": 42,
+    "scenarios": {
+     "legacy-s0": {
+      "chainHash": "576ce3b4",
+      "oracleChainHash": "4c43a6fb",
+      "identical": false,
+      "firstDivergentStepNumber": 44
+     },
+     "legacy-s2": {
+      "chainHash": "54574123",
+      "oracleChainHash": "c8706f53",
+      "identical": false,
+      "firstDivergentStepNumber": 44
+     },
+     "campaign-w10": {
+      "chainHash": "6cd12673",
+      "oracleChainHash": "59e36477",
+      "identical": false,
+      "firstDivergentStepNumber": 44
+     },
+     "campaign-w16": {
+      "chainHash": "6de7419e",
+      "oracleChainHash": "b4e5f58e",
+      "identical": false,
+      "firstDivergentStepNumber": 44
+     }
+    }
+   },
+   "fmath": {
+    "checksum": "09a3eca48720a54628e92b5133100ae66df5e156026047c228ac818057d98acf",
+    "scenarios": {
+     "legacy-s0": {
+      "chainHash": "4c43a6fb",
+      "oracleChainHash": "4c43a6fb",
+      "identical": true,
+      "firstDivergentStepNumber": null
+     },
+     "legacy-s2": {
+      "chainHash": "c8706f53",
+      "oracleChainHash": "c8706f53",
+      "identical": true,
+      "firstDivergentStepNumber": null
+     },
+     "campaign-w10": {
+      "chainHash": "59e36477",
+      "oracleChainHash": "59e36477",
+      "identical": true,
+      "firstDivergentStepNumber": null
+     },
+     "campaign-w16": {
+      "chainHash": "b4e5f58e",
+      "oracleChainHash": "b4e5f58e",
+      "identical": true,
+      "firstDivergentStepNumber": null
+     }
+    }
+   },
+   "v2ShortNative": {
+    "campaign2-w1": {
+     "chainHash": "b526292d",
+     "oracleChainHash": "2d73cf2a",
+     "identical": false,
+     "firstDivergentStepNumber": 84
+    },
+    "campaign2-w10": {
+     "chainHash": "e8f48034",
+     "oracleChainHash": "65883f09",
+     "identical": false,
+     "firstDivergentStepNumber": 44
+    }
+   },
+   "v2ShortFMath": {
+    "campaign2-w1": {
+     "chainHash": "2d73cf2a",
+     "oracleChainHash": "2d73cf2a",
+     "identical": true,
+     "firstDivergentStepNumber": null
+    },
+    "campaign2-w10": {
+     "chainHash": "65883f09",
+     "oracleChainHash": "65883f09",
+     "identical": true,
+     "firstDivergentStepNumber": null
+    }
+   }
+  },
+  "spark": {
+   "native": {
+    "checksum": "5d26435642ac4377fd503d1d37eb9f3ef1a27f86e16059c5a0d6c3d5a76fae6a",
+    "driverFirstDivergentIndex": 42,
+    "scenarios": {
+     "legacy-s0": {
+      "chainHash": "fee1bbf7",
+      "oracleChainHash": "4c43a6fb",
+      "identical": false,
+      "firstDivergentStepNumber": 38
+     },
+     "legacy-s2": {
+      "chainHash": "399f56d4",
+      "oracleChainHash": "c8706f53",
+      "identical": false,
+      "firstDivergentStepNumber": 38
+     },
+     "campaign-w10": {
+      "chainHash": "fa45f9a6",
+      "oracleChainHash": "59e36477",
+      "identical": false,
+      "firstDivergentStepNumber": 38
+     },
+     "campaign-w16": {
+      "chainHash": "a3531476",
+      "oracleChainHash": "b4e5f58e",
+      "identical": false,
+      "firstDivergentStepNumber": 38
+     }
+    }
+   },
+   "fmath": {
+    "checksum": "09a3eca48720a54628e92b5133100ae66df5e156026047c228ac818057d98acf",
+    "scenarios": {
+     "legacy-s0": {
+      "chainHash": "4c43a6fb",
+      "oracleChainHash": "4c43a6fb",
+      "identical": true,
+      "firstDivergentStepNumber": null
+     },
+     "legacy-s2": {
+      "chainHash": "c8706f53",
+      "oracleChainHash": "c8706f53",
+      "identical": true,
+      "firstDivergentStepNumber": null
+     },
+     "campaign-w10": {
+      "chainHash": "59e36477",
+      "oracleChainHash": "59e36477",
+      "identical": true,
+      "firstDivergentStepNumber": null
+     },
+     "campaign-w16": {
+      "chainHash": "b4e5f58e",
+      "oracleChainHash": "b4e5f58e",
+      "identical": true,
+      "firstDivergentStepNumber": null
+     }
+    }
+   },
+   "v2ShortNative": {
+    "campaign2-w1": {
+     "chainHash": "01271377",
+     "oracleChainHash": "2d73cf2a",
+     "identical": false,
+     "firstDivergentStepNumber": 78
+    },
+    "campaign2-w10": {
+     "chainHash": "48bc87e9",
+     "oracleChainHash": "65883f09",
+     "identical": false,
+     "firstDivergentStepNumber": 38
+    }
+   },
+   "v2ShortFMath": {
+    "campaign2-w1": {
+     "chainHash": "2d73cf2a",
+     "oracleChainHash": "2d73cf2a",
+     "identical": true,
+     "firstDivergentStepNumber": null
+    },
+    "campaign2-w10": {
+     "chainHash": "65883f09",
+     "oracleChainHash": "65883f09",
+     "identical": true,
+     "firstDivergentStepNumber": null
+    }
+   }
+  }
+ },
+ "witness": {
+  "mac": {
+   "compiler": {
+    "cc": "clang",
+    "version": "Apple clang version 21.0.0 (clang-2100.4.1.1)",
+    "flags": {
+     "off": "clang -O2 -ffp-contract=off",
+     "on": "clang -O2 -ffp-contract=on"
+    },
+    "off": "-ffp-contract=off",
+    "contracted": "-ffp-contract=on"
+   },
+   "vectors": {
+    "identicalToExisting": true,
+    "lines": 2975,
+    "all": {
+     "cases": 6979,
+     "witnessContractedEqHost": 6979,
+     "witnessOffEqFMath": 6979,
+     "witnessOffEqHost": 5308
+    },
+    "rem": {
+     "cases": 455,
+     "witnessContractedEqWitnessOff": 455
+    },
+    "extraModes": {}
+   },
+   "exhaustive": {
+    "fmath": {
+     "distinctInputs": 1761019,
+     "byFunction": {
+      "sin": {
+       "distinct": 818722,
+       "fmathEqOff": 818722,
+       "hostEqContracted": 818722,
+       "hostEqOff": 814251,
+       "offEqContracted": 814251,
+       "hostEqFMath": 814251
+      },
+      "cos": {
+       "distinct": 818794,
+       "fmathEqOff": 818794,
+       "hostEqContracted": 818794,
+       "hostEqOff": 816798,
+       "offEqContracted": 816798,
+       "hostEqFMath": 816798
+      },
+      "atan": {
+       "distinct": 216,
+       "fmathEqOff": 216,
+       "hostEqContracted": 216,
+       "hostEqOff": 215,
+       "offEqContracted": 215,
+       "hostEqFMath": 215
+      },
+      "atan2": {
+       "distinct": 123287,
+       "fmathEqOff": 123287,
+       "hostEqContracted": 123287,
+       "hostEqOff": 122945,
+       "offEqContracted": 122945,
+       "hostEqFMath": 122945
+      }
+     },
+     "total": {
+      "distinct": 1761019,
+      "fmathEqOff": 1761019,
+      "hostEqContracted": 1761019,
+      "hostEqOff": 1754209,
+      "offEqContracted": 1754209,
+      "hostEqFMath": 1754209
+     }
+    },
+    "host": {
+     "distinctInputs": 1761019,
+     "byFunction": {
+      "sin": {
+       "distinct": 818722,
+       "fmathEqOff": 818722,
+       "hostEqContracted": 818722,
+       "hostEqOff": 814257,
+       "offEqContracted": 814257,
+       "hostEqFMath": 814257
+      },
+      "cos": {
+       "distinct": 818794,
+       "fmathEqOff": 818794,
+       "hostEqContracted": 818794,
+       "hostEqOff": 816799,
+       "offEqContracted": 816799,
+       "hostEqFMath": 816799
+      },
+      "atan": {
+       "distinct": 216,
+       "fmathEqOff": 216,
+       "hostEqContracted": 216,
+       "hostEqOff": 215,
+       "offEqContracted": 215,
+       "hostEqFMath": 215
+      },
+      "atan2": {
+       "distinct": 123287,
+       "fmathEqOff": 123287,
+       "hostEqContracted": 123287,
+       "hostEqOff": 122948,
+       "offEqContracted": 122948,
+       "hostEqFMath": 122948
+      }
+     },
+     "total": {
+      "distinct": 1761019,
+      "fmathEqOff": 1761019,
+      "hostEqContracted": 1761019,
+      "hostEqOff": 1754219,
+      "offEqContracted": 1754219,
+      "hostEqFMath": 1754219
+     }
+    }
+   },
+   "sweep": {
+    "seed": 6221059,
+    "countPerFunction": 500000,
+    "total": {
+     "cases": 2000000,
+     "fmathEqOff": 2000000,
+     "hostEqContracted": 2000000,
+     "hostEqOff": 1997096,
+     "offEqContracted": 1997096
+    }
+   }
+  },
+  "spark": {
+   "compiler": {
+    "cc": "gcc",
+    "version": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "flags": {
+     "off": "gcc -O2 -ffp-contract=off",
+     "fast": "gcc -O2 -ffp-contract=fast",
+     "on": "gcc -O2 -ffp-contract=on"
+    },
+    "off": "-ffp-contract=off",
+    "contracted": "-ffp-contract=fast"
+   },
+   "vectors": {
+    "identicalToExisting": true,
+    "lines": 2975,
+    "all": {
+     "cases": 6979,
+     "witnessContractedEqHost": 6979,
+     "witnessOffEqFMath": 6979,
+     "witnessOffEqHost": 5695
+    },
+    "rem": {
+     "cases": 455,
+     "witnessContractedEqWitnessOff": 455
+    },
+    "extraModes": {
+     "on": {
+      "flags": "gcc -O2 -ffp-contract=on",
+      "cases": 7434,
+      "equalToOff": 7434,
+      "equalToContracted": 6150
+     }
+    }
+   },
+   "exhaustive": {
+    "fmath": {
+     "distinctInputs": 1761019,
+     "byFunction": {
+      "sin": {
+       "distinct": 818722,
+       "fmathEqOff": 818722,
+       "hostEqContracted": 818722,
+       "hostEqOff": 814251,
+       "offEqContracted": 814251,
+       "hostEqFMath": 814251,
+       "onEqOff": 818722
+      },
+      "cos": {
+       "distinct": 818794,
+       "fmathEqOff": 818794,
+       "hostEqContracted": 818794,
+       "hostEqOff": 816798,
+       "offEqContracted": 816798,
+       "hostEqFMath": 816798,
+       "onEqOff": 818794
+      },
+      "atan": {
+       "distinct": 216,
+       "fmathEqOff": 216,
+       "hostEqContracted": 216,
+       "hostEqOff": 216,
+       "offEqContracted": 216,
+       "hostEqFMath": 216,
+       "onEqOff": 216
+      },
+      "atan2": {
+       "distinct": 123287,
+       "fmathEqOff": 123287,
+       "hostEqContracted": 123287,
+       "hostEqOff": 123108,
+       "offEqContracted": 123108,
+       "hostEqFMath": 123108,
+       "onEqOff": 123287
+      }
+     },
+     "total": {
+      "distinct": 1761019,
+      "fmathEqOff": 1761019,
+      "hostEqContracted": 1761019,
+      "hostEqOff": 1754373,
+      "offEqContracted": 1754373,
+      "hostEqFMath": 1754373,
+      "onEqOff": 1761019
+     }
+    },
+    "host": {
+     "distinctInputs": 1761019,
+     "byFunction": {
+      "sin": {
+       "distinct": 818722,
+       "fmathEqOff": 818722,
+       "hostEqContracted": 818722,
+       "hostEqOff": 814259,
+       "offEqContracted": 814259,
+       "hostEqFMath": 814259,
+       "onEqOff": 818722
+      },
+      "cos": {
+       "distinct": 818794,
+       "fmathEqOff": 818794,
+       "hostEqContracted": 818794,
+       "hostEqOff": 816798,
+       "offEqContracted": 816798,
+       "hostEqFMath": 816798,
+       "onEqOff": 818794
+      },
+      "atan": {
+       "distinct": 216,
+       "fmathEqOff": 216,
+       "hostEqContracted": 216,
+       "hostEqOff": 216,
+       "offEqContracted": 216,
+       "hostEqFMath": 216,
+       "onEqOff": 216
+      },
+      "atan2": {
+       "distinct": 123287,
+       "fmathEqOff": 123287,
+       "hostEqContracted": 123287,
+       "hostEqOff": 123109,
+       "offEqContracted": 123109,
+       "hostEqFMath": 123109,
+       "onEqOff": 123287
+      }
+     },
+     "total": {
+      "distinct": 1761019,
+      "fmathEqOff": 1761019,
+      "hostEqContracted": 1761019,
+      "hostEqOff": 1754382,
+      "offEqContracted": 1754382,
+      "hostEqFMath": 1754382,
+      "onEqOff": 1761019
+     }
+    }
+   },
+   "sweep": {
+    "seed": 6221059,
+    "countPerFunction": 500000,
+    "total": {
+     "cases": 2000000,
+     "fmathEqOff": 2000000,
+     "hostEqContracted": 2000000,
+     "hostEqOff": 1997144,
+     "offEqContracted": 1997144
+    }
+   }
+  }
+ },
+ "engines": {
+  "mac": {
+   "chrome": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "fmathVectors": "3836/3836",
+    "correctlyRounded": {
+     "driver:sin": {
+      "chrome": "1800/1800",
+      "nodeHost": "1749/1800",
+      "fmath": "1742/1800",
+      "chromeEqFMath": "1742/1800",
+      "chromeEqNodeHost": "1749/1800",
+      "undecided": 0
+     },
+     "world-divergent:sin": {
+      "chrome": "150/150",
+      "nodeHost": "89/150",
+      "fmath": "61/150",
+      "chromeEqFMath": "61/150",
+      "chromeEqNodeHost": "89/150",
+      "undecided": 0
+     },
+     "world-divergent:cos": {
+      "chrome": "150/150",
+      "nodeHost": "86/150",
+      "fmath": "64/150",
+      "chromeEqFMath": "64/150",
+      "chromeEqNodeHost": "86/150",
+      "undecided": 0
+     },
+     "world-divergent:atan": {
+      "chrome": "1/1",
+      "nodeHost": "1/1",
+      "fmath": "0/1",
+      "chromeEqFMath": "0/1",
+      "chromeEqNodeHost": "1/1",
+      "undecided": 0
+     },
+     "world-divergent:atan2": {
+      "chrome": "150/150",
+      "nodeHost": "81/150",
+      "fmath": "69/150",
+      "chromeEqFMath": "69/150",
+      "chromeEqNodeHost": "81/150",
+      "undecided": 0
+     }
+    },
+    "checkpoints": {
+     "worlds": 42,
+     "fingerprintChangedByFMathInChrome": 42,
+     "fmathFingerprintChromeEqNode": 42,
+     "nativeFingerprintChromeEqNodeHost": 0,
+     "fmathWorldFnvChromeEqNode": 42
+    }
+   },
+   "jsc": {
+    "fmathVectors": "3836/3836",
+    "worlds": 10,
+    "jscNativeEqNodeHost": 0,
+    "jscFMathEqNodeFMath": 0,
+    "jscNativeV8HypotEqNodeHost": 0,
+    "jscFMathV8HypotEqNodeFMath": 10
+   }
+  },
+  "spark": {
+   "chrome": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+    "fmathVectors": "3836/3836",
+    "correctlyRounded": {
+     "driver:sin": {
+      "chrome": "1800/1800",
+      "nodeHost": "1749/1800",
+      "fmath": "1742/1800",
+      "chromeEqFMath": "1742/1800",
+      "chromeEqNodeHost": "1749/1800",
+      "undecided": 0
+     },
+     "world-divergent:sin": {
+      "chrome": "150/150",
+      "nodeHost": "89/150",
+      "fmath": "61/150",
+      "chromeEqFMath": "61/150",
+      "chromeEqNodeHost": "89/150",
+      "undecided": 0
+     },
+     "world-divergent:cos": {
+      "chrome": "150/150",
+      "nodeHost": "86/150",
+      "fmath": "64/150",
+      "chromeEqFMath": "64/150",
+      "chromeEqNodeHost": "86/150",
+      "undecided": 0
+     },
+     "world-divergent:atan2": {
+      "chrome": "150/150",
+      "nodeHost": "67/150",
+      "fmath": "83/150",
+      "chromeEqFMath": "83/150",
+      "chromeEqNodeHost": "67/150",
+      "undecided": 0
+     }
+    },
+    "checkpoints": {
+     "worlds": 42,
+     "fingerprintChangedByFMathInChrome": 42,
+     "fmathFingerprintChromeEqNode": 42,
+     "nativeFingerprintChromeEqNodeHost": 0,
+     "fmathWorldFnvChromeEqNode": 42
+    }
+   },
+   "jsc": {
+    "skipped": "not found: /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc"
+   }
+  }
+ },
+ "crossMachine": {
+  "note": "Mac = Node 24.18 darwin-arm64 (V8 compiled by clang with contraction); Spark = Node 24.18 linux-arm64 (V8 compiled by gcc with contraction). Computed from the outputs only.",
+  "worldJsonSha256": {
+   "fmath": {
+    "equal": "114/114",
+    "differing": []
+   },
+   "host": {
+    "equal": "2/114",
+    "differing": [
+     "legacy:1:0",
+     "legacy:1:1",
+     "legacy:1:2",
+     "legacy:96:0",
+     "legacy:96:1",
+     "legacy:96:2",
+     "v1:1:1",
+     "v1:1:2",
+     "v1:1:3",
+     "v1:1:4",
+     "v1:1:5",
+     "v1:1:6",
+     "v1:1:7",
+     "v1:1:8",
+     "v1:1:9",
+     "v1:1:10",
+     "v1:1:11",
+     "v1:1:12",
+     "v1:1:13",
+     "v1:1:14",
+     "v1:1:15",
+     "v1:1:16",
+     "v1:1:17",
+     "v1:1:18",
+     "v1:96:1",
+     "v1:96:2",
+     "v1:96:3",
+     "v1:96:4",
+     "v1:96:5",
+     "v1:96:6",
+     "v1:96:7",
+     "v1:96:9",
+     "v1:96:10",
+     "v1:96:11",
+     "v1:96:12",
+     "v1:96:13",
+     "v1:96:14",
+     "v1:96:15",
+     "v1:96:16",
+     "v1:96:17",
+     "v1:96:18",
+     "v1:2026:1",
+     "v1:2026:2",
+     "v1:2026:3",
+     "v1:2026:4",
+     "v1:2026:5",
+     "v1:2026:6",
+     "v1:2026:7",
+     "v1:2026:8",
+     "v1:2026:9",
+     "v1:2026:10",
+     "v1:2026:11",
+     "v1:2026:12",
+     "v1:2026:13",
+     "v1:2026:14",
+     "v1:2026:15",
+     "v1:2026:16",
+     "v1:2026:17",
+     "v1:2026:18",
+     "v2:1:1",
+     "v2:1:2",
+     "v2:1:3",
+     "v2:1:4",
+     "v2:1:5",
+     "v2:1:6",
+     "v2:1:7",
+     "v2:1:8",
+     "v2:1:9",
+     "v2:1:10",
+     "v2:1:11",
+     "v2:1:12",
+     "v2:1:13",
+     "v2:1:14",
+     "v2:1:15",
+     "v2:1:16",
+     "v2:1:17",
+     "v2:1:18",
+     "v2:96:1",
+     "v2:96:2",
+     "v2:96:3",
+     "v2:96:4",
+     "v2:96:5",
+     "v2:96:6",
+     "v2:96:7",
+     "v2:96:9",
+     "v2:96:10",
+     "v2:96:11",
+     "v2:96:12",
+     "v2:96:13",
+     "v2:96:14",
+     "v2:96:15",
+     "v2:96:16",
+     "v2:96:17",
+     "v2:96:18",
+     "v2:2026:1",
+     "v2:2026:2",
+     "v2:2026:3",
+     "v2:2026:4",
+     "v2:2026:5",
+     "v2:2026:6",
+     "v2:2026:7",
+     "v2:2026:8",
+     "v2:2026:9",
+     "v2:2026:10",
+     "v2:2026:11",
+     "v2:2026:12",
+     "v2:2026:13",
+     "v2:2026:14",
+     "v2:2026:15",
+     "v2:2026:16",
+     "v2:2026:17",
+     "v2:2026:18"
+    ]
+   }
+  },
+  "checkpointFingerprint": {
+   "fmath": {
+    "equal": "42/42",
+    "differing": []
+   },
+   "host": {
+    "equal": "40/42",
+    "differing": [
+     "v1:96:w10",
+     "v2:96:w10"
+    ]
+   }
+  },
+  "chrome": {
+   "nativeFingerprint": {
+    "equal": "42/42",
+    "differing": []
+   },
+   "nativeWorldFnv": {
+    "equal": "42/42",
+    "differing": []
+   },
+   "fmathFingerprint": {
+    "equal": "42/42",
+    "differing": []
+   },
+   "fmathWorldFnv": {
+    "equal": "42/42",
+    "differing": []
+   }
+  },
+  "replayChainHashes": {
+   "fmathEqual": true,
+   "nativeEqual": false,
+   "v2ShortFMathEqual": true,
+   "v2ShortNativeEqual": false
+  },
+  "censusDivergent": {
+   "sin": {
+    "mac": 13414,
+    "spark": 13414
+   },
+   "cos": {
+    "mac": 8267,
+    "spark": 8267
+   },
+   "atan": {
+    "mac": 4,
+    "spark": 0
+   },
+   "atan2": {
+    "mac": 707,
+    "spark": 368
+   }
+  },
+  "witnessResults": {
+   "exhaustiveFMathPath": {
+    "sin": {
+     "inputsEqual": true,
+     "fmathEqual": true,
+     "hostEqual": true,
+     "offEqual": true,
+     "contractedEqual": true
+    },
+    "cos": {
+     "inputsEqual": true,
+     "fmathEqual": true,
+     "hostEqual": true,
+     "offEqual": true,
+     "contractedEqual": true
+    },
+    "atan": {
+     "inputsEqual": true,
+     "fmathEqual": true,
+     "hostEqual": false,
+     "offEqual": true,
+     "contractedEqual": false
+    },
+    "atan2": {
+     "inputsEqual": true,
+     "fmathEqual": true,
+     "hostEqual": false,
+     "offEqual": true,
+     "contractedEqual": false
+    }
+   },
+   "exhaustiveHostPath": {
+    "sin": {
+     "inputsEqual": false,
+     "fmathEqual": false,
+     "hostEqual": false,
+     "offEqual": false,
+     "contractedEqual": false
+    },
+    "cos": {
+     "inputsEqual": false,
+     "fmathEqual": false,
+     "hostEqual": false,
+     "offEqual": false,
+     "contractedEqual": false
+    },
+    "atan": {
+     "inputsEqual": true,
+     "fmathEqual": true,
+     "hostEqual": false,
+     "offEqual": true,
+     "contractedEqual": false
+    },
+    "atan2": {
+     "inputsEqual": false,
+     "fmathEqual": false,
+     "hostEqual": false,
+     "offEqual": false,
+     "contractedEqual": false
+    }
+   },
+   "sweep": {
+    "sin": {
+     "inputsEqual": true,
+     "fmathEqual": true,
+     "hostEqual": true,
+     "offEqual": true,
+     "contractedEqual": true
+    },
+    "cos": {
+     "inputsEqual": true,
+     "fmathEqual": true,
+     "hostEqual": true,
+     "offEqual": true,
+     "contractedEqual": true
+    },
+    "atan": {
+     "inputsEqual": true,
+     "fmathEqual": true,
+     "hostEqual": false,
+     "offEqual": true,
+     "contractedEqual": false
+    },
+    "atan2": {
+     "inputsEqual": true,
+     "fmathEqual": true,
+     "hostEqual": false,
+     "offEqual": true,
+     "contractedEqual": false
+    }
+   }
+  }
+ },
+ "fmathQuality": {
+  "tests": 10,
+  "branchCoverageMissing": {
+   "mac": [],
+   "spark": []
+  },
+  "branchCounters": {
+   "mediumSecondIteration": 958,
+   "mediumThirdIteration": 710,
+   "nearPlusPio2": 20,
+   "nearMinusPio2": 10,
+   "largeZeroTermSkipped": 48,
+   "remQ0Positive": 128,
+   "remQ0Zero": 56,
+   "remIh2": 416,
+   "remCarryScalbn": 416,
+   "remMaskQ0Is1": 24,
+   "remMaskQ0Is2": 40,
+   "remRecompute": 206,
+   "remChopZeroTerms": 206,
+   "remChopLoop": 8,
+   "remBreakInto24Bits": 4,
+   "atan2KOver60": 53,
+   "atan2KUnderMinus60": 31,
+   "remRecomputeSeveralTerms": 8
+  },
+  "mutations": {
+   "real": "7/7",
+   "equivalent": [
+    {
+     "mutation": "atan threshold 2^-29 (fdlibm 5.3) instead of 2^-27",
+     "probeInputs": 200008,
+     "differences": 0
+    },
+    {
+     "mutation": "__kernel_rem_pio2 adds one term per recomputation",
+     "probeInputs": 200002,
+     "differences": 0
+    }
+   ],
+   "controlDetected": false,
+   "sameOnSpark": true
+  }
+ },
+ "profiles": {
+  "mac": [
+   {
+    "tool": "tools/campaign-profiles.mjs",
+    "bytesIdentical": false,
+    "differingPaths": [
+     "$.sourceSha256.simulation"
+    ]
+   },
+   {
+    "tool": "tools/campaign-balance.mjs",
+    "bytesIdentical": true,
+    "differingPaths": []
+   },
+   {
+    "tool": "tools/boss-profiles.mjs",
+    "bytesIdentical": true,
+    "differingPaths": []
+   }
+  ],
+  "spark": [
+   {
+    "tool": "tools/campaign-profiles.mjs",
+    "bytesIdentical": false,
+    "differingPaths": [
+     "$.sourceSha256.simulation"
+    ]
+   },
+   {
+    "tool": "tools/campaign-balance.mjs",
+    "bytesIdentical": true,
+    "differingPaths": []
+   },
+   {
+    "tool": "tools/boss-profiles.mjs",
+    "bytesIdentical": true,
+    "differingPaths": []
+   }
+  ]
+ },
+ "npmTest": {
+  "mac": {
+   "log": "mac/npm-test.log.gz",
+   "tests": 480,
+   "pass": 472,
+   "fail": 8,
+   "notOk": [
+    "legacy seed 1, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 2: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 2: exact pre-campaign world fingerprint",
+    "campaign mode is strictly opt-in and keeps historical clamping otherwise",
+    "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout"
+   ]
+  },
+  "spark": {
+   "log": "spark/npm-test.log.gz",
+   "tests": 480,
+   "pass": 472,
+   "fail": 8,
+   "notOk": [
+    "legacy seed 1, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 2: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 2: exact pre-campaign world fingerprint",
+    "campaign mode is strictly opt-in and keeps historical clamping otherwise",
+    "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout"
+   ]
+  },
+  "sparkBase": {
+   "log": "spark/npm-test-base-9f35223.log.gz",
+   "tests": 480,
+   "pass": 472,
+   "fail": 8,
+   "notOk": [
+    "legacy seed 1, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 2: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 2: exact pre-campaign world fingerprint",
+    "campaign mode is strictly opt-in and keeps historical clamping otherwise",
+    "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout"
+   ]
+  }
+ }
+}

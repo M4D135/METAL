@@ -1,0 +1,90 @@
+{
+ "schema": "metal-fmath-mutation-check-v1",
+ "rows": [
+  {
+   "mutation": "none (control)",
+   "detected": false,
+   "failingTests": []
+  },
+  {
+   "mutation": "atan2 without \"m &= 1\"",
+   "detected": true,
+   "failingTests": [
+    "atan and atan2 match the no-FMA C witness bit for bit",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "last chunk of two_over_pi",
+   "detected": true,
+   "failingTests": [
+    "reduction tables and pi-derived constants are the digits of pi"
+   ]
+  },
+  {
+   "mutation": "word order hard-coded little-endian",
+   "detected": true,
+   "failingTests": [
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "__kernel_cos without qx",
+   "detected": true,
+   "failingTests": [
+    "sin and cos match the no-FMA C witness bit for bit",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "S3 changed in its last digits",
+   "detected": true,
+   "failingTests": [
+    "fdlibm constants match their hexadecimal words"
+   ]
+  },
+  {
+   "mutation": "__kernel_sin regrouped like a fused multiply-add",
+   "detected": true,
+   "failingTests": [
+    "sin and cos match the no-FMA C witness bit for bit",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "npio2_hw entry off by one",
+   "detected": true,
+   "failingTests": [
+    "sin and cos match the no-FMA C witness bit for bit",
+    "__ieee754_rem_pio2 and __kernel_rem_pio2 match the C witness (n, y0, y1)",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)",
+    "reduction tables and pi-derived constants are the digits of pi"
+   ]
+  },
+  {
+   "mutation": "atan threshold 2^-29 (fdlibm 5.3) instead of 2^-27",
+   "detected": false,
+   "failingTests": [],
+   "equivalenceProbe": {
+    "inputs": 200008,
+    "differences": 0,
+    "firstDifferences": []
+   }
+  },
+  {
+   "mutation": "__kernel_rem_pio2 adds one term per recomputation",
+   "detected": false,
+   "failingTests": [],
+   "equivalenceProbe": {
+    "inputs": 200002,
+    "differences": 0,
+    "firstDifferences": [],
+    "inputsTakingSeveralTermsPath": 4
+   }
+  }
+ ]
+}

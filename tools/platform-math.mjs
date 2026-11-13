@@ -141,10 +141,12 @@ export function golden(root,{seeds=[1,96,2026]}={}){
     const checks=goldenChecks(worldFactory(root,M).create,hashes);
     result.subsets.push({ported:subset,passed:checks.passed,of:checks.of,pattern:checks.rows.map(r=>r.pass?1:0).join('')});
   }
+  // SHA-256 of JSON.stringify(world) for every campaign world, under both Math,
+  // so that two machines can be compared from their outputs.
   for(const kind of ['v1','v2']){
-    const rows=worldList(seeds,[]).filter(w=>w.kind===kind),changed=[];
-    for(const w of rows)if(digest(make(host,w))!==digest(make(port,w)))changed.push(w.seed+':'+(w.index+1));
-    result.campaign[kind]={worlds:rows.length,changedByFMath:changed.length,changed};
+    const rows=worldList(seeds,[]).filter(w=>w.kind===kind),changed=[],digests=[];
+    for(const w of rows){const h=digest(make(host,w)),f=digest(make(port,w));digests.push({seed:w.seed,index:w.index,host:h,fmath:f});if(h!==f)changed.push(w.seed+':'+(w.index+1));}
+    result.campaign[kind]={worlds:rows.length,changedByFMath:changed.length,changed,digests};
   }
   return result;
 }
@@ -336,18 +338,24 @@ export function engines(root,{dir,census:censusFile,chrome='/Applications/Google
     });
     const fp=run('fp.html');
     let fpChromeEqNode=0,fpChromeNativeEqNodeHost=0,fnvChromeEqNode=0,changedInChrome=0;
+    // World by world, so that the outputs of two machines (Chrome on macOS and on
+    // Linux, Node on each) can be compared afterwards without rerunning anything.
+    const worlds=[];
     if(!fp.err){
       const host=loadRealm({root}),port=worldFactory(root,fmathMath(F));
       for(const r of fp.res){
         const options=r.k==='legacy'?undefined:r.k==='v1'?{campaign:true}:{campaign:true,campaignVersion:2};
         const wn=host.window.FWorld.create(r.s,r.i,options&&{...options}),wp=port.create(r.s,r.i,options&&{...options});
         const sn=host.window.FSimulation.create(wn),sp=host.window.FSimulation.create(wp);
-        if(sp.snapshot().fingerprint===r.fmath)fpChromeEqNode++;if(sn.snapshot().fingerprint===r.native)fpChromeNativeEqNodeHost++;
-        if(fnv(JSON.stringify(wp))===r.fmathFnv)fnvChromeEqNode++;if(r.native!==r.fmath)changedInChrome++;
+        const nodeHost=sn.snapshot().fingerprint,nodeFMath=sp.snapshot().fingerprint,nodeHostWorldFnv=fnv(JSON.stringify(wn)),nodeFMathWorldFnv=fnv(JSON.stringify(wp));
+        if(nodeFMath===r.fmath)fpChromeEqNode++;if(nodeHost===r.native)fpChromeNativeEqNodeHost++;
+        if(nodeFMathWorldFnv===r.fmathFnv)fnvChromeEqNode++;if(r.native!==r.fmath)changedInChrome++;
+        worlds.push({kind:r.k,seed:r.s,index:r.i,chromeNative:r.native,chromeFMath:r.fmath,nodeHost,nodeFMath,chromeNativeWorldFnv:r.nativeFnv,chromeFMathWorldFnv:r.fmathFnv,nodeHostWorldFnv,nodeFMathWorldFnv});
         sn.dispose?.();sp.dispose?.();
       }
     }
-    out.chrome={path:chrome,userAgent:trig.ua,fmathVectors:trig.fmathVectors,trig:by,checkpoints:fp.err?{error:fp.err}:{worlds:fp.res.length,fingerprintChangedByFMathInChrome:changedInChrome,fmathFingerprintChromeEqNode:fpChromeEqNode,nativeFingerprintChromeEqNodeHost:fpChromeNativeEqNodeHost,fmathWorldFnvChromeEqNode:fnvChromeEqNode}};
+    out.chrome={path:chrome,userAgent:trig.ua,fmathVectors:trig.fmathVectors,trig:by,checkpoints:fp.err?{error:fp.err}:{worlds:fp.res.length,fingerprintChangedByFMathInChrome:changedInChrome,fmathFingerprintChromeEqNode:fpChromeEqNode,nativeFingerprintChromeEqNodeHost:fpChromeNativeEqNodeHost,fmathWorldFnvChromeEqNode:fnvChromeEqNode,
+      note:'Fingerprint = FSimulation snapshot().fingerprint of the generated world; WorldFnv = FNV-1a of JSON.stringify(world). native: the Math of the engine; fmath: FMath for sin, cos, atan and atan2 during generation.',perWorld:worlds}};
   }else out.chrome={skipped:'not found: '+chrome};
   if(existsSync(jsc)){
     const text=execFileSync(jsc,[join(dir,'jsc-worlds.js')],{maxBuffer:1<<26,timeout:600000}).toString(),j=JSON.parse(text.trim().split('\n').pop());
