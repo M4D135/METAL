@@ -162,3 +162,40 @@ test('reduction tables and pi-derived constants are the digits of pi', () => {
   assert.equal(bits(I.pi_o_4), bits(nearest(PI >> 2n))); assert.equal(bits(I.pi_o_2), bits(nearest(HALF_PI))); assert.equal(bits(I.pi), bits(nearest(PI)));
   assert.equal(bits(I.pi_lo), bits(nearest(PI - toFixed(I.pi))));
 });
+
+test('world.js takes sin, cos, atan and atan2 from FMath only and refuses to load without it', () => {
+  const worldPath = fileURLToPath(new URL('../src/world.js', import.meta.url));
+  const world = readFileSync(worldPath, 'utf8');
+  const code = world.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  // Static guard: every Math function left in world.js is exact (IEEE-754 or
+  // integral results), or a constant. hypot stays tolerated until lot 01 suite T3.
+  const allowed = new Set(['abs', 'ceil', 'floor', 'round', 'trunc', 'sign', 'min', 'max', 'sqrt', 'imul', 'fround', 'clz32',
+    'PI', 'E', 'LN2', 'LN10', 'LOG2E', 'LOG10E', 'SQRT1_2', 'SQRT2', 'hypot']);
+  const union = "Math[k.startsWith('min')?'min':'max']";
+  const misuses = [];
+  for (const m of code.matchAll(/\bMath\b(?:\s*\.\s*([A-Za-z_$][\w$]*))?/g)) {
+    if (m[1] !== undefined) { if (!allowed.has(m[1])) misuses.push('Math.' + m[1]); }
+    else if (!code.startsWith(union, m.index)) misuses.push(code.slice(m.index, m.index + 40));
+  }
+  assert.deepEqual(misuses, [], 'inexact or indirect use of Math in world.js');
+  assert.equal(code.split(union).length, 2, 'the bounds union is the only computed Math access');
+  assert.ok(!code.includes('**'), 'no exponentiation operator in world.js');
+  // FMath is read once from window, never reassigned, and only its four functions are called.
+  assert.equal(code.split('const FMath = window.FMath;').length, 2, 'one alias, read at load');
+  const names = [...code.matchAll(/\bFMath\b(\s*\.\s*([A-Za-z_$][\w$]*))?/g)].filter(m => m[1]).map(m => m[2]);
+  assert.ok(names.length > 0 && names.every(name => ['sin', 'cos', 'atan', 'atan2'].includes(name)), 'FMath calls: ' + [...new Set(names)]);
+  assert.ok(!/\bFMath\s*=[^=]/.test(code.replace('const FMath = window.FMath;', '')), 'FMath is never reassigned');
+  // Without FMath, loading fails with an explicit message, before any world exists.
+  const bare = { window: {} };
+  assert.throws(() => vm.runInNewContext(world, bare, { filename: worldPath }), /charger src\/fmath\.js avant src\/world\.js/);
+  assert.equal(bare.window.FWorld, undefined);
+  // With the host trigonometry poisoned, a world is still generated: nothing reaches it.
+  const context = { window: {} };
+  vm.runInNewContext(source, context, { filename: sourcePath });
+  vm.runInNewContext(world, context, { filename: worldPath });
+  vm.runInNewContext('for (const name of ["sin", "cos", "atan", "atan2"]) Math[name] = () => { throw new Error("host Math." + name); };', context);
+  assert.throws(() => vm.runInNewContext('Math.atan2(1, 2)', context), /host Math\.atan2/);
+  const generated = context.window.FWorld.create(1, 0);
+  assert.equal(generated.generation, 6);
+  assert.ok(generated.meshes.length > 1000 && generated.enemies.length > 0, 'a full world without host trigonometry');
+});

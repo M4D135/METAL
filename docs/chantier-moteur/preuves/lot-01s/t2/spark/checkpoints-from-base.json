@@ -1,0 +1,523 @@
+{
+ "schema": "metal-platform-math-cross-checkpoints-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "linux",
+  "arch": "arm64"
+ },
+ "root": "~/metal-tests/lot01s-t2/nav",
+ "from": "~/metal-tests/lot01s-t2/base71",
+ "seed": 96,
+ "stepsBeforeSnapshot": 30,
+ "note": "Writer: FWorld and FSimulation of root \"from\"; reader: those of root. Restore as the shell does (recover:true), then without rubble when refused.",
+ "worlds": 42,
+ "restored": 25,
+ "refused": 17,
+ "refusedAlsoWithoutRubble": 17,
+ "refusedExactlyWhereFingerprintDiffers": true,
+ "summary": {
+  "legacy": {
+   "worlds": 6,
+   "restored": 3,
+   "refused": 3,
+   "refusedWorlds": [
+    "1:s2",
+    "96:s0",
+    "96:s2"
+   ]
+  },
+  "v1": {
+   "worlds": 18,
+   "restored": 11,
+   "refused": 7,
+   "refusedWorlds": [
+    "96:w1",
+    "96:w3",
+    "96:w5",
+    "96:w6",
+    "96:w8",
+    "96:w9",
+    "96:w15"
+   ]
+  },
+  "v2": {
+   "worlds": 18,
+   "restored": 11,
+   "refused": 7,
+   "refusedWorlds": [
+    "96:w1",
+    "96:w3",
+    "96:w5",
+    "96:w6",
+    "96:w8",
+    "96:w9",
+    "96:w15"
+   ]
+  }
+ },
+ "rows": [
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 0,
+   "world": "1:s0",
+   "writerFingerprint": "aebz7a",
+   "readerFingerprint": "aebz7a",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 1,
+   "world": "1:s1",
+   "writerFingerprint": "1s12rdw",
+   "readerFingerprint": "1s12rdw",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 2,
+   "world": "1:s2",
+   "writerFingerprint": "124o0my",
+   "readerFingerprint": "y93oey",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 0,
+   "world": "96:s0",
+   "writerFingerprint": "gtsp0p",
+   "readerFingerprint": "1o7sffm",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 1,
+   "world": "96:s1",
+   "writerFingerprint": "4m0ku9",
+   "readerFingerprint": "4m0ku9",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 2,
+   "world": "96:s2",
+   "writerFingerprint": "qz5q6f",
+   "readerFingerprint": "11342u4",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 0,
+   "world": "96:w1",
+   "writerFingerprint": "pyzqa3",
+   "readerFingerprint": "1eug0z8",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 1,
+   "world": "96:w2",
+   "writerFingerprint": "moazy2",
+   "readerFingerprint": "moazy2",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 2,
+   "world": "96:w3",
+   "writerFingerprint": "12pfoi6",
+   "readerFingerprint": "pcp3wj",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 3,
+   "world": "96:w4",
+   "writerFingerprint": "cqf8fy",
+   "readerFingerprint": "cqf8fy",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 4,
+   "world": "96:w5",
+   "writerFingerprint": "1mijpri",
+   "readerFingerprint": "1r7jead",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 5,
+   "world": "96:w6",
+   "writerFingerprint": "s0mlis",
+   "readerFingerprint": "1l8a2v7",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 6,
+   "world": "96:w7",
+   "writerFingerprint": "12grqg5",
+   "readerFingerprint": "12grqg5",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 7,
+   "world": "96:w8",
+   "writerFingerprint": "1c7ntad",
+   "readerFingerprint": "1ypdv2o",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 8,
+   "world": "96:w9",
+   "writerFingerprint": "i915u",
+   "readerFingerprint": "1dide6l",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 9,
+   "world": "96:w10",
+   "writerFingerprint": "u96uuo",
+   "readerFingerprint": "u96uuo",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 10,
+   "world": "96:w11",
+   "writerFingerprint": "vqfv7l",
+   "readerFingerprint": "vqfv7l",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 11,
+   "world": "96:w12",
+   "writerFingerprint": "1yicowc",
+   "readerFingerprint": "1yicowc",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 12,
+   "world": "96:w13",
+   "writerFingerprint": "eid3aw",
+   "readerFingerprint": "eid3aw",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 13,
+   "world": "96:w14",
+   "writerFingerprint": "6fe4no",
+   "readerFingerprint": "6fe4no",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 14,
+   "world": "96:w15",
+   "writerFingerprint": "1mcycss",
+   "readerFingerprint": "17ogweb",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 15,
+   "world": "96:w16",
+   "writerFingerprint": "1kpxhzn",
+   "readerFingerprint": "1kpxhzn",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 16,
+   "world": "96:w17",
+   "writerFingerprint": "pqwxjb",
+   "readerFingerprint": "pqwxjb",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 17,
+   "world": "96:w18",
+   "writerFingerprint": "1jmxgyx",
+   "readerFingerprint": "1jmxgyx",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 0,
+   "world": "96:w1",
+   "writerFingerprint": "q8r4a0",
+   "readerFingerprint": "rgj8tn",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 1,
+   "world": "96:w2",
+   "writerFingerprint": "mvmem1",
+   "readerFingerprint": "mvmem1",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 2,
+   "world": "96:w3",
+   "writerFingerprint": "11olkp9",
+   "readerFingerprint": "13dro66",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 3,
+   "world": "96:w4",
+   "writerFingerprint": "y6w7gz",
+   "readerFingerprint": "y6w7gz",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 4,
+   "world": "96:w5",
+   "writerFingerprint": "nuui31",
+   "readerFingerprint": "5b05vc",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 5,
+   "world": "96:w6",
+   "writerFingerprint": "1vs9c24",
+   "readerFingerprint": "1axgnk9",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 6,
+   "world": "96:w7",
+   "writerFingerprint": "zi4zd7",
+   "readerFingerprint": "zi4zd7",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 7,
+   "world": "96:w8",
+   "writerFingerprint": "13ah0e7",
+   "readerFingerprint": "xwf70a",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 8,
+   "world": "96:w9",
+   "writerFingerprint": "ri70gd",
+   "readerFingerprint": "hfdfk0",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 9,
+   "world": "96:w10",
+   "writerFingerprint": "1i9y70j",
+   "readerFingerprint": "1i9y70j",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 10,
+   "world": "96:w11",
+   "writerFingerprint": "8ueu68",
+   "readerFingerprint": "8ueu68",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 11,
+   "world": "96:w12",
+   "writerFingerprint": "yu92mn",
+   "readerFingerprint": "yu92mn",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 12,
+   "world": "96:w13",
+   "writerFingerprint": "u4h0k3",
+   "readerFingerprint": "u4h0k3",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 13,
+   "world": "96:w14",
+   "writerFingerprint": "thi161",
+   "readerFingerprint": "thi161",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 14,
+   "world": "96:w15",
+   "writerFingerprint": "ei6r6w",
+   "readerFingerprint": "qxenft",
+   "sameFingerprint": false,
+   "restored": false,
+   "restoredWithoutRubble": false
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 15,
+   "world": "96:w16",
+   "writerFingerprint": "15dro5r",
+   "readerFingerprint": "15dro5r",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 16,
+   "world": "96:w17",
+   "writerFingerprint": "2c6r0q",
+   "readerFingerprint": "2c6r0q",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 17,
+   "world": "96:w18",
+   "writerFingerprint": "auqyia",
+   "readerFingerprint": "auqyia",
+   "sameFingerprint": true,
+   "restored": true,
+   "restoredWithoutRubble": null
+  }
+ ]
+}

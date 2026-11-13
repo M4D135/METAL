@@ -7,8 +7,10 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import vm from 'node:vm';
 
+const fmathSource = fileURLToPath(new URL('../src/fmath.js', import.meta.url));
 const source = fileURLToPath(new URL('../src/world.js', import.meta.url));
 const context = { window: {} };
+vm.runInNewContext(readFileSync(fmathSource, 'utf8'), context, { filename: fmathSource });
 vm.runInNewContext(readFileSync(source, 'utf8'), context, { filename: source });
 const { create } = context.window.FWorld;
 const seeds = [1, 96, 2026], radius = .28, spacing = .5;

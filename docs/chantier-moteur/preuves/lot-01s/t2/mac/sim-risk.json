@@ -1,0 +1,499 @@
+{
+ "schema": "metal-platform-math-sim-risk-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64"
+ },
+ "root": "~/claude/metal-chantier/nav",
+ "worldUsesFMath": true,
+ "simulationTrigonometry": "host",
+ "steps": 1800,
+ "totalSteps": 7200,
+ "note": "World generation and the proof driver use FMath; the other modules use the host Math unless --sim-fmath. Reference: tools/proof/reference-63668ac.json (Linux x86-64). Unverified functions are counted only; WebNN (IA-12) is not covered: the brain runs in cpu mode.",
+ "rows": [
+  {
+   "id": "legacy-s0",
+   "steps": 1800,
+   "firstDivergentStepIndex": 43,
+   "identical": false,
+   "chainHash": "576ce3b4",
+   "referenceChainHash": "4c43a6fb"
+  },
+  {
+   "id": "legacy-s2",
+   "steps": 1800,
+   "firstDivergentStepIndex": 43,
+   "identical": false,
+   "chainHash": "afedbbcd",
+   "referenceChainHash": "c8706f53"
+  },
+  {
+   "id": "campaign-w10",
+   "steps": 1800,
+   "firstDivergentStepIndex": 43,
+   "identical": false,
+   "chainHash": "6cd12673",
+   "referenceChainHash": "59e36477"
+  },
+  {
+   "id": "campaign-w16",
+   "steps": 1800,
+   "firstDivergentStepIndex": 43,
+   "identical": false,
+   "chainHash": "6de7419e",
+   "referenceChainHash": "b4e5f58e"
+  }
+ ],
+ "driver": {
+  "firstDivergentIndex": 42,
+  "note": "first index where the host Math.sin(index/90) of the proof driver differs from FMath"
+ },
+ "total": {
+  "sin": {
+   "calls": 721136,
+   "divergent": 3070,
+   "perStep": 100.15777777777778,
+   "divergentRate": 0.004257172017483526
+  },
+  "cos": {
+   "calls": 727097,
+   "divergent": 546,
+   "perStep": 100.98569444444445,
+   "divergentRate": 0.0007509314438101107
+  },
+  "atan": {
+   "calls": 0,
+   "divergent": 0,
+   "perStep": 0,
+   "divergentRate": 0
+  },
+  "atan2": {
+   "calls": 451464,
+   "divergent": 652,
+   "perStep": 62.70333333333333,
+   "divergentRate": 0.001444190455938901
+  },
+  "exp": {
+   "calls": 136717,
+   "perStep": 18.98847222222222
+  },
+  "expm1": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "log": {
+   "calls": 40,
+   "perStep": 0.005555555555555556
+  },
+  "log1p": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "log2": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "log10": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "pow": {
+   "calls": 1762,
+   "perStep": 0.24472222222222223
+  },
+  "cbrt": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "tan": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "asin": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "acos": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "sinh": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "cosh": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "tanh": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "asinh": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "acosh": {
+   "calls": 0,
+   "perStep": 0
+  },
+  "atanh": {
+   "calls": 0,
+   "perStep": 0
+  }
+ },
+ "perModule": {
+  "renderer": {
+   "sin": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "cos": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "atan": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "atan2": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "exp": {
+    "calls": 0
+   },
+   "expm1": {
+    "calls": 0
+   },
+   "log": {
+    "calls": 0
+   },
+   "log1p": {
+    "calls": 0
+   },
+   "log2": {
+    "calls": 0
+   },
+   "log10": {
+    "calls": 0
+   },
+   "pow": {
+    "calls": 0
+   },
+   "cbrt": {
+    "calls": 0
+   },
+   "tan": {
+    "calls": 0
+   },
+   "asin": {
+    "calls": 0
+   },
+   "acos": {
+    "calls": 0
+   },
+   "sinh": {
+    "calls": 0
+   },
+   "cosh": {
+    "calls": 0
+   },
+   "tanh": {
+    "calls": 0
+   },
+   "asinh": {
+    "calls": 0
+   },
+   "acosh": {
+    "calls": 0
+   },
+   "atanh": {
+    "calls": 0
+   },
+   "exponentOperatorInSource": 18
+  },
+  "destruction": {
+   "sin": {
+    "calls": 1551,
+    "divergent": 0
+   },
+   "cos": {
+    "calls": 1551,
+    "divergent": 3
+   },
+   "atan": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "atan2": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "exp": {
+    "calls": 0
+   },
+   "expm1": {
+    "calls": 0
+   },
+   "log": {
+    "calls": 0
+   },
+   "log1p": {
+    "calls": 0
+   },
+   "log2": {
+    "calls": 0
+   },
+   "log10": {
+    "calls": 0
+   },
+   "pow": {
+    "calls": 1762
+   },
+   "cbrt": {
+    "calls": 0
+   },
+   "tan": {
+    "calls": 0
+   },
+   "asin": {
+    "calls": 0
+   },
+   "acos": {
+    "calls": 0
+   },
+   "sinh": {
+    "calls": 0
+   },
+   "cosh": {
+    "calls": 0
+   },
+   "tanh": {
+    "calls": 0
+   },
+   "asinh": {
+    "calls": 0
+   },
+   "acosh": {
+    "calls": 0
+   },
+   "atanh": {
+    "calls": 0
+   },
+   "exponentOperatorInSource": 0
+  },
+  "economy": {
+   "sin": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "cos": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "atan": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "atan2": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "exp": {
+    "calls": 0
+   },
+   "expm1": {
+    "calls": 0
+   },
+   "log": {
+    "calls": 0
+   },
+   "log1p": {
+    "calls": 0
+   },
+   "log2": {
+    "calls": 0
+   },
+   "log10": {
+    "calls": 0
+   },
+   "pow": {
+    "calls": 0
+   },
+   "cbrt": {
+    "calls": 0
+   },
+   "tan": {
+    "calls": 0
+   },
+   "asin": {
+    "calls": 0
+   },
+   "acos": {
+    "calls": 0
+   },
+   "sinh": {
+    "calls": 0
+   },
+   "cosh": {
+    "calls": 0
+   },
+   "tanh": {
+    "calls": 0
+   },
+   "asinh": {
+    "calls": 0
+   },
+   "acosh": {
+    "calls": 0
+   },
+   "atanh": {
+    "calls": 0
+   },
+   "exponentOperatorInSource": 1
+  },
+  "brain": {
+   "sin": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "cos": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "atan": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "atan2": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "exp": {
+    "calls": 0
+   },
+   "expm1": {
+    "calls": 0
+   },
+   "log": {
+    "calls": 0
+   },
+   "log1p": {
+    "calls": 0
+   },
+   "log2": {
+    "calls": 0
+   },
+   "log10": {
+    "calls": 0
+   },
+   "pow": {
+    "calls": 0
+   },
+   "cbrt": {
+    "calls": 0
+   },
+   "tan": {
+    "calls": 0
+   },
+   "asin": {
+    "calls": 0
+   },
+   "acos": {
+    "calls": 0
+   },
+   "sinh": {
+    "calls": 0
+   },
+   "cosh": {
+    "calls": 0
+   },
+   "tanh": {
+    "calls": 0
+   },
+   "asinh": {
+    "calls": 0
+   },
+   "acosh": {
+    "calls": 0
+   },
+   "atanh": {
+    "calls": 0
+   },
+   "exponentOperatorInSource": 0
+  },
+  "simulation": {
+   "sin": {
+    "calls": 719585,
+    "divergent": 3070
+   },
+   "cos": {
+    "calls": 725546,
+    "divergent": 543
+   },
+   "atan": {
+    "calls": 0,
+    "divergent": 0
+   },
+   "atan2": {
+    "calls": 451464,
+    "divergent": 652
+   },
+   "exp": {
+    "calls": 136717
+   },
+   "expm1": {
+    "calls": 0
+   },
+   "log": {
+    "calls": 40
+   },
+   "log1p": {
+    "calls": 0
+   },
+   "log2": {
+    "calls": 0
+   },
+   "log10": {
+    "calls": 0
+   },
+   "pow": {
+    "calls": 0
+   },
+   "cbrt": {
+    "calls": 0
+   },
+   "tan": {
+    "calls": 0
+   },
+   "asin": {
+    "calls": 0
+   },
+   "acos": {
+    "calls": 0
+   },
+   "sinh": {
+    "calls": 0
+   },
+   "cosh": {
+    "calls": 0
+   },
+   "tanh": {
+    "calls": 0
+   },
+   "asinh": {
+    "calls": 0
+   },
+   "acosh": {
+    "calls": 0
+   },
+   "atanh": {
+    "calls": 0
+   },
+   "exponentOperatorInSource": 4
+  }
+ }
+}

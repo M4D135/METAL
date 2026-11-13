@@ -1,0 +1,124 @@
+{
+ "schema": "metal-gen-ab-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadAverage": [
+   2.8974609375,
+   2.97412109375,
+   2.60791015625
+  ]
+ },
+ "roots": {
+  "a": "~/claude/metal-chantier/nav",
+  "b": "$W/base71"
+ },
+ "modules": {
+  "a": [
+   "fmath",
+   "world"
+  ],
+  "b": [
+   "world"
+  ]
+ },
+ "sourceSha256": {
+  "a": {
+   "fmath": "f63b2370100ba81379e902c44c2026813a033b3d278b37f55dd6f8c6db485e93",
+   "world": "d0ec60c433945edf3fd74e6c4ed192eb0ae21d357759e2518b8762d19f92182a"
+  },
+  "b": {
+   "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e"
+  }
+ },
+ "method": {
+  "seed": 96,
+  "reps": 21,
+  "warm": 3,
+  "realm": "main",
+  "clock": "process.threadCpuUsage (main thread), ms",
+  "order": "per repetition, one of the six permutations of A, B and A' (a second independent load of root A), in turn",
+  "reduction": "medians of the per-repetition ratios B/A and A'/A; A'/A is the noise of this run"
+ },
+ "rows": [
+  {
+   "spec": "l:0",
+   "meshesA": 14077,
+   "meshesB": 14077,
+   "cpuMs": {
+    "a": 38.88,
+    "b": 37.2,
+    "aa": 37.87
+   },
+   "wallMs": {
+    "a": 39.2,
+    "b": 37.54,
+    "aa": 37.91
+   },
+   "ratioBA": 0.958,
+   "ratioAA": 0.994,
+   "ratioBARange": [
+    0.794,
+    1.195
+   ],
+   "ratioAARange": [
+    0.87,
+    1.139
+   ]
+  },
+  {
+   "spec": "c:9",
+   "meshesA": 13838,
+   "meshesB": 13838,
+   "cpuMs": {
+    "a": 41.73,
+    "b": 40.92,
+    "aa": 41.2
+   },
+   "wallMs": {
+    "a": 41.89,
+    "b": 41.32,
+    "aa": 41.58
+   },
+   "ratioBA": 0.981,
+   "ratioAA": 1.003,
+   "ratioBARange": [
+    0.902,
+    1.081
+   ],
+   "ratioAARange": [
+    0.751,
+    1.427
+   ]
+  },
+  {
+   "spec": "c:17",
+   "meshesA": 17390,
+   "meshesB": 17390,
+   "cpuMs": {
+    "a": 54.54,
+    "b": 53.73,
+    "aa": 54.55
+   },
+   "wallMs": {
+    "a": 54.71,
+    "b": 53.9,
+    "aa": 54.74
+   },
+   "ratioBA": 0.979,
+   "ratioAA": 0.996,
+   "ratioBARange": [
+    0.704,
+    1.264
+   ],
+   "ratioAARange": [
+    0.745,
+    1.363
+   ]
+  }
+ ]
+}

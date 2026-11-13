@@ -1,18 +1,28 @@
-// Lot 01 suite / T1 (MURS-V1): platform sensitivity of world generation.
+// Lot 01 suite (MURS-V1): platform sensitivity of world generation.
 // Outside the game and outside npm test. Compares the host Math.sin, cos, atan and
 // atan2 with FMath (src/fmath.js, the portable fdlibm of V8 without FMA) in the
 // main Node realm (tools/realm-loader.mjs, never node:vm). Nothing is written in
 // src/, checks/ or dist/; FMath is injected through loadRealm globals or, for the
 // replays only, into this process' Math.
 //
-//   node tools/platform-math.mjs census      [root] [--seeds 1,96,2026] [--path fmath|host] [--samples 150] [--out F]
-//   node tools/platform-math.mjs golden      [root] [--seeds 1,96,2026] [--out F]
-//   node tools/platform-math.mjs checkpoints [root] [--seed 96] [--out F]
-//   node tools/platform-math.mjs replay      [root] [--fmath] [--scenario all] [--steps 1800] [--profile-out F] [--out F]
-//   node tools/platform-math.mjs pages       [root] --dir D [--census F]
-//   node tools/platform-math.mjs engines     [root] --dir D [--census F] [--chrome PATH] [--jsc PATH]
+// Since T2, src/world.js takes sin, cos, atan and atan2 from FMath itself, so an
+// injected Math no longer changes its trigonometry. The host variant (native
+// trigonometry) comes from a world.js before the fix: --base <root>. A root whose
+// world.js still calls Math (before T2) is its own base.
 //
-// "engines" runs Google Chrome headless on file:// pages (--dump-dom, private
+//   node tools/platform-math.mjs census      [root] [--base B] [--seeds 1,96,2026] [--path fmath|host] [--samples 150] [--out F]
+//   node tools/platform-math.mjs golden      [root] [--base B] [--seeds 1,96,2026] [--out F]
+//   node tools/platform-math.mjs worlds      [root] [--base B] [--seeds 1,96,2026] [--out F]
+//   node tools/platform-math.mjs checkpoints [root] [--base B | --from W] [--seed 96] [--out F]
+//   node tools/platform-math.mjs replay      [root] [--fmath] [--scenario all] [--steps 1800] [--profile-out F] [--out F]
+//   node tools/platform-math.mjs sim-risk    [root] [--sim-fmath] [--steps 1800] [--out F]
+//   node tools/platform-math.mjs pages       [root] [--base B] --dir D [--census F]
+//   node tools/platform-math.mjs engines     [root] [--base B] --dir D [--census F] [--chrome PATH] [--jsc PATH]
+//
+// "worlds": SHA-256 of the 114 worlds; with --base, also those of the world.js of
+// B with FMath injected. "checkpoints --from W": points written by root W (world
+// and simulation, as a player before the fix) and read back by root. "engines"
+// runs Google Chrome headless on file:// pages (--dump-dom, private
 // --user-data-dir under D, no port, no server) and JavaScriptCore's jsc shell.
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {resolve,join} from 'node:path';
@@ -20,7 +30,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {execFileSync} from 'node:child_process';
-import {loadRealm,DEFAULT_ROOT} from './realm-loader.mjs';
+import {loadRealm,defaultModules,DEFAULT_ROOT} from './realm-loader.mjs';
 
 export const PORTED=Object.freeze(['sin','cos','atan','atan2']);
 const f64=new Float64Array(1),u64=new BigUint64Array(f64.buffer);
@@ -32,9 +42,26 @@ const highWord=x=>{f64[0]=x;return Number(u64[0]>>32n)&0x7fffffff;};
 // fdlibm argument classes of sin/cos, by high word: no reduction, n=+-1, medium, __kernel_rem_pio2.
 const reductionClass=x=>{const ix=highWord(x);return ix<=0x3fe921fb?'none':ix<0x4002d97c?'pio2':ix<=0x413921fb?'medium':ix>=0x7ff00000?'nonFinite':'large';};
 
-export function loadFMath(root=DEFAULT_ROOT){return loadRealm({root,modules:['fmath']}).window.FMath;}
+// FMath of a root, or of this repository for a root from before src/fmath.js.
+export function loadFMath(root=DEFAULT_ROOT){return loadRealm({root:existsSync(join(root,'src/fmath.js'))?root:DEFAULT_ROOT,modules:['fmath']}).window.FMath;}
 export function fmathMath(F){const M=Object.create(Math);for(const name of PORTED)M[name]=F[name];return M;}
-export function worldFactory(root,M){return loadRealm({root,modules:['world'],...(M?{globals:{Math:M}}:{})}).window.FWorld;}
+// True when the world.js of a root takes its trigonometry from FMath (T2 and later).
+export function worldUsesFMath(root){return /\bFMath\b/.test(readFileSync(join(root,'src/world.js'),'utf8'));}
+// FWorld of a root: fmath loads first when world.js needs it. M replaces Math;
+// FM replaces FMath (window.FMath), for instrumentation.
+export function worldFactory(root,M,FM){
+  const modules=worldUsesFMath(root)&&!FM?['fmath','world']:['world'],globals={...(M?{Math:M}:{}),...(FM?{FMath:FM}:{})};
+  return loadRealm({root,modules,globals}).window.FWorld;
+}
+// Host variant: the native trigonometry of this machine, from a world.js before the fix.
+export function hostWorld(root,base){
+  if(base)return worldFactory(base);
+  if(!worldUsesFMath(root))return worldFactory(root);
+  throw new Error(`src/world.js of ${root} takes its trigonometry from FMath: give --base <root before the fix> for the host variant`);
+}
+// FMath variant: a wired world.js as it is, an older one with FMath injected.
+export function fmathWorld(root,F=loadFMath(root)){return worldUsesFMath(root)?worldFactory(root):worldFactory(root,fmathMath(F));}
+const hostRoot=(root,base)=>base??(worldUsesFMath(root)?null:root);
 
 // The six golden digests, read from the test itself so the tool can never drift from it.
 export function legacyHashes(root){
@@ -82,7 +109,8 @@ export function census(root,{seeds=[1,96,2026],path='fmath',samples=150}={}){
     else M[name]=function(){slot(name).calls++;return host.apply(Math,arguments);};
   }
   bucket=byKind.load={};world={kind:'load',divergent:{}};
-  const W=worldFactory(root,M);
+  // A wired world.js (T2) calls FMath: the same comparison runs on an instrumented FMath.
+  const wired=worldUsesFMath(root),W=wired?worldFactory(root,M,Object.freeze(Object.fromEntries(PORTED.map(name=>[name,M[name]])))):worldFactory(root,M);
   if(!Object.keys(byKind.load).length)delete byKind.load;
   for(const w of worldList(seeds)){
     bucket=byKind[w.kind]??={};world={kind:w.kind,seed:w.seed,index:w.index,divergent:{}};
@@ -96,8 +124,8 @@ export function census(root,{seeds=[1,96,2026],path='fmath',samples=150}={}){
   }
   for(const group of [total,...Object.values(byKind)])for(const s of Object.values(group))if(s.divergent!==undefined)s.divergentRate=s.calls?s.divergent/s.calls:0;
   const worldsWithDivergence=Object.fromEntries(['legacy','v1','v2'].map(kind=>{const rows=perWorld.filter(w=>w.kind===kind);return [kind,{worlds:rows.length,withDivergentCall:rows.filter(w=>Object.keys(w.divergent).length).length,withDivergentSin:rows.filter(w=>w.divergent.sin).length,withDivergentCos:rows.filter(w=>w.divergent.cos).length,withDivergentAtan2:rows.filter(w=>w.divergent.atan2).length,withDivergentAtan:rows.filter(w=>w.divergent.atan).length}];}));
-  return {schema:'metal-platform-math-census-v1',environment:env(),root,path,seeds,legacySeeds:[1,96],worlds:perWorld.length,
-    note:'Every Math function called by src/world.js is counted. Only sin, cos, atan and atan2 are compared with FMath; the others are exact by specification (abs, ceil, floor, imul, max, min, round, sign, sqrt) or, for hypot, the same Torque algorithm on every V8 build.',
+  return {schema:'metal-platform-math-census-v1',environment:env(),root,worldUsesFMath:wired,path,seeds,legacySeeds:[1,96],worlds:perWorld.length,
+    note:'Every Math function called by src/world.js is counted, and FMath too when world.js calls it (path fmath: FMath results; path host: the host results instead). Only sin, cos, atan and atan2 are compared with FMath; the others are exact by specification (abs, ceil, floor, imul, max, min, round, sign, sqrt) or, for hypot, the same Torque algorithm on every V8 build.',
     largeArgumentCalls:(total.sin?.reduction?.large||0)+(total.cos?.reduction?.large||0),total,byKind,worldsWithDivergence,perWorld,divergentSamples};
 }
 
@@ -131,24 +159,42 @@ export function goldenChecks(create,hashes){
   return {passed:rows.filter(r=>r.pass).length,of:rows.length,rows};
 }
 
-export function golden(root,{seeds=[1,96,2026]}={}){
-  const hashes=legacyHashes(root),F=loadFMath(root),host=worldFactory(root),port=worldFactory(root,fmathMath(F));
-  const result={schema:'metal-platform-math-golden-v1',environment:env(),root,host:goldenChecks(host.create,hashes),fmath:goldenChecks(port.create,hashes),campaign:{}};
-  // Subsets: which ported functions are needed to recover the golden worlds?
+export function golden(root,{seeds=[1,96,2026],base}={}){
+  const hashes=legacyHashes(root),F=loadFMath(root),hr=hostRoot(root,base),host=hr?worldFactory(hr):null,port=fmathWorld(root,F);
+  const result={schema:'metal-platform-math-golden-v1',environment:env(),root,base:base??null,worldUsesFMath:worldUsesFMath(root),
+    host:host?goldenChecks(host.create,hashes):{skipped:'world.js takes FMath; give --base for the host variant'},fmath:goldenChecks(port.create,hashes),campaign:{}};
+  // Subsets: which ported functions are needed to recover the golden worlds? (a world.js before the fix)
   result.subsets=[];
-  for(const subset of [['sin','cos'],['atan','atan2'],['sin','cos','atan2'],['sin','cos','atan','atan2']]){
+  if(hr)for(const subset of [['sin','cos'],['atan','atan2'],['sin','cos','atan2'],['sin','cos','atan','atan2']]){
     const M=Object.create(Math);for(const name of subset)M[name]=F[name];
-    const checks=goldenChecks(worldFactory(root,M).create,hashes);
+    const checks=goldenChecks(worldFactory(hr,M).create,hashes);
     result.subsets.push({ported:subset,passed:checks.passed,of:checks.of,pattern:checks.rows.map(r=>r.pass?1:0).join('')});
   }
   // SHA-256 of JSON.stringify(world) for every campaign world, under both Math,
   // so that two machines can be compared from their outputs.
   for(const kind of ['v1','v2']){
     const rows=worldList(seeds,[]).filter(w=>w.kind===kind),changed=[],digests=[];
-    for(const w of rows){const h=digest(make(host,w)),f=digest(make(port,w));digests.push({seed:w.seed,index:w.index,host:h,fmath:f});if(h!==f)changed.push(w.seed+':'+(w.index+1));}
-    result.campaign[kind]={worlds:rows.length,changedByFMath:changed.length,changed,digests};
+    for(const w of rows){const f=digest(make(port,w)),h=host?digest(make(host,w)):null;digests.push({seed:w.seed,index:w.index,host:h,fmath:f});if(host&&h!==f)changed.push(w.seed+':'+(w.index+1));}
+    result.campaign[kind]={worlds:rows.length,changedByFMath:host?changed.length:null,changed,digests};
   }
   return result;
+}
+
+// ---------------------------------------------------------------- worlds
+// SHA-256 of JSON.stringify(world) for the 114 worlds (classic seeds 1 and 96,
+// V1 and V2 of the seeds), as the game generates them after the fix. With --base,
+// the same worlds from the world.js of B with FMath injected (the path checked in
+// T1): equal digests show that the wiring changes nothing but the trigonometry.
+export function worlds(root,{seeds=[1,96,2026],base}={}){
+  const F=loadFMath(root),W=fmathWorld(root,F),B=base?fmathWorld(base,F):null,rows=[];
+  for(const w of worldList(seeds)){
+    const row={kind:w.kind,seed:w.seed,index:w.index,sha256:digest(make(W,w))};
+    if(B){row.baseFMathSha256=digest(make(B,w));row.equal=row.baseFMathSha256===row.sha256;}
+    rows.push(row);
+  }
+  return {schema:'metal-platform-math-worlds-v1',environment:env(),root,base:base??null,worldUsesFMath:worldUsesFMath(root),baseWorldUsesFMath:base?worldUsesFMath(base):null,
+    worlds:rows.length,...(B?{equalToBaseWithFMath:rows.filter(r=>r.equal).length}:{}),
+    digestOfDigests:createHash('sha256').update(rows.map(r=>r.sha256).join('\n')).digest('hex'),rows};
 }
 
 // ---------------------------------------------------------------- checkpoints
@@ -170,21 +216,48 @@ function walk(a,b,path,acc){
   if(a!==b)acc.structural.push(path+' value');
 }
 
-export function checkpoints(root,{seed=96}={}){
-  const F=loadFMath(root),host=loadRealm({root}),port=worldFactory(root,fmathMath(F)),rows=[],fields={},byField={};
-  const list=[...worldList([],[1,96]),...worldList([seed],[]).filter(w=>w.kind==='v1'),...worldList([seed],[]).filter(w=>w.kind==='v2')];
-  for(const w of list){
-    const a=make(host.window.FWorld,w),b=make(port,w),changed=digest(a)!==digest(b);
+const checkpointList=seed=>[...worldList([],[1,96]),...worldList([seed],[]).filter(w=>w.kind==='v1'),...worldList([seed],[]).filter(w=>w.kind==='v2')];
+const worldLabel=w=>w.seed+':'+(w.kind==='legacy'?'s'+w.index:'w'+(w.index+1));
+
+export function checkpoints(root,{seed=96,base,from}={}){
+  if(from)return crossCheckpoints(root,{seed,from});
+  const F=loadFMath(root),host=hostWorld(root,base),FSimulation=loadRealm({root}).window.FSimulation,port=fmathWorld(root,F),rows=[],fields={},byField={};
+  for(const w of checkpointList(seed)){
+    const a=make(host,w),b=make(port,w),changed=digest(a)!==digest(b);
     const differing=Object.keys(a).filter(k=>digest(a[k])!==digest(b[k]));for(const k of differing)fields[k]=(fields[k]||0)+1;
     const acc={numeric:0,maxAbs:0,maxRel:0,maxPath:'',structural:[],byField};walk(a,b,'$',acc);
-    const sa=host.window.FSimulation.create(a),sb=host.window.FSimulation.create(b);
+    const sa=FSimulation.create(a),sb=FSimulation.create(b);
     const fa=sa.snapshot().fingerprint,fb=sb.snapshot().fingerprint;sa.dispose?.();sb.dispose?.();
     rows.push({kind:w.kind,seed:w.seed,index:w.index,worldJsonChanged:changed,checkpointFingerprintHost:fa,checkpointFingerprintFMath:fb,checkpointFingerprintChanged:fa!==fb,differingTopLevelFields:differing,numericDifferences:acc.numeric,maxAbsDifference:acc.maxAbs,maxRelDifference:acc.maxRel,maxAbsPath:acc.maxPath,structuralDifferences:acc.structural.length});
   }
-  const summary=Object.fromEntries(['legacy','v1','v2'].map(kind=>{const r=rows.filter(x=>x.kind===kind);return [kind,{worlds:r.length,worldJsonChanged:r.filter(x=>x.worldJsonChanged).length,checkpointFingerprintChanged:r.filter(x=>x.checkpointFingerprintChanged).length,changedWorlds:r.filter(x=>x.checkpointFingerprintChanged).map(x=>x.seed+':'+(x.kind==='legacy'?'s'+x.index:'w'+(x.index+1)))}];}));
+  const summary=Object.fromEntries(['legacy','v1','v2'].map(kind=>{const r=rows.filter(x=>x.kind===kind);return [kind,{worlds:r.length,worldJsonChanged:r.filter(x=>x.worldJsonChanged).length,checkpointFingerprintChanged:r.filter(x=>x.checkpointFingerprintChanged).length,changedWorlds:r.filter(x=>x.checkpointFingerprintChanged).map(worldLabel)}];}));
   const numeric=rows.map(r=>r.numericDifferences).filter(n=>n>0);
-  return {schema:'metal-platform-math-checkpoints-v1',environment:env(),root,note:'Fingerprint = FSimulation snapshot().fingerprint (src/simulation.js, identity of the world: colliders, destructibles, enemies...; meshes excluded). Simulation modules use the host Math; only world generation differs.',
+  return {schema:'metal-platform-math-checkpoints-v1',environment:env(),root,base:hostRoot(root,base),note:'Fingerprint = FSimulation snapshot().fingerprint (src/simulation.js, identity of the world: colliders, destructibles, enemies...; meshes excluded). Simulation modules use the host Math; only world generation differs.',
     summary,differingTopLevelFields:fields,differencesByField:byField,maxAbsDifference:Math.max(...rows.map(r=>r.maxAbsDifference)),maxRelDifference:Math.max(...rows.map(r=>r.maxRelDifference)),numericDifferencesPerChangedWorld:numeric.length?{min:Math.min(...numeric),max:Math.max(...numeric)}:null,structuralDifferences:rows.reduce((s,r)=>s+r.structuralDifferences,0),rows};
+}
+
+// A point written by the modules of root "from" (world.js and simulation.js, as
+// before the fix), after a few steps, then read back by the modules of root, as
+// the shell does: restore(point, {recover:true}), then the same point without its
+// rubble. Refused means the shell falls back to the entry of the same sector.
+export function crossCheckpoints(root,{from,seed=96,steps=30}={}){
+  const writer=loadRealm({root:from}).window,reader=loadRealm({root}).window,rows=[];
+  for(const w of checkpointList(seed)){
+    const written=writer.FSimulation.create(make(writer.FWorld,w));
+    for(let i=0;i<steps;i++){written.step(1/60,{});written.state.events.length=0;}
+    const text=JSON.stringify(written.snapshot());written.dispose?.();
+    const reading=reader.FSimulation.create(make(reader.FWorld,w)),readerFingerprint=reading.snapshot().fingerprint,point=JSON.parse(text);
+    const restored=reading.restore(JSON.parse(text),{recover:true});
+    let restoredWithoutRubble=null;
+    if(!restored){const bare=JSON.parse(text);delete bare.rubbleVersion;if(bare.state)delete bare.state.rubble;if(bare.timers)delete bare.timers.rubbleSerial;restoredWithoutRubble=reading.restore(bare,{recover:true});}
+    reading.dispose?.();
+    rows.push({kind:w.kind,seed:w.seed,index:w.index,world:worldLabel(w),writerFingerprint:point.fingerprint,readerFingerprint,sameFingerprint:point.fingerprint===readerFingerprint,restored,restoredWithoutRubble});
+  }
+  const summary=Object.fromEntries(['legacy','v1','v2'].map(kind=>{const r=rows.filter(x=>x.kind===kind);return [kind,{worlds:r.length,restored:r.filter(x=>x.restored).length,refused:r.filter(x=>!x.restored).length,refusedWorlds:r.filter(x=>!x.restored).map(x=>x.world)}];}));
+  return {schema:'metal-platform-math-cross-checkpoints-v1',environment:env(),root,from,seed,stepsBeforeSnapshot:steps,
+    note:'Writer: FWorld and FSimulation of root "from"; reader: those of root. Restore as the shell does (recover:true), then without rubble when refused.',
+    worlds:rows.length,restored:rows.filter(r=>r.restored).length,refused:rows.filter(r=>!r.restored).length,refusedAlsoWithoutRubble:rows.filter(r=>!r.restored&&!r.restoredWithoutRubble).length,
+    refusedExactlyWhereFingerprintDiffers:rows.every(r=>r.restored===r.sameFingerprint),summary,rows};
 }
 
 // ---------------------------------------------------------------- replay
@@ -219,6 +292,56 @@ export async function replayCheck(root,{fmath=false,scenario='all',steps=1800,pr
     for(let i=0;i<steps;i++)if(!Object.is(Math.sin(i/90),F.sin(i/90))){driverFirstDivergence=i;break;}
     return {schema:'metal-platform-math-replay-v1',environment:env(),root,fmathInProcess:fmath,scenario,steps,checksum:report.checksum,stable:report.identical,rows,
       driver:{note:'tools/proof/scenarios.mjs drive() uses Math.sin(index/90): first index where the Math of this run differs from FMath',firstIndex:driverFirstDivergence}};
+  }finally{for(const name of Object.keys(saved))Math[name]=saved[name];}
+}
+
+// ---------------------------------------------------------------- sim-risk
+// Lot 13 risk, measured without changing the simulation: the four proof
+// scenarios with FMath in world generation (the game after T2) and in the proof
+// driver (tools/proof/scenarios.mjs, Math.sin(index/90)), and the host Math in
+// every other module. The first step departing from the Linux x86-64 reference
+// is the platform sensitivity of the simulation itself. Each module gets its own
+// counting Math: sin, cos, atan and atan2 are compared with FMath; exp, log, pow
+// and the other inexact functions are only counted (no portable reference here),
+// and "**" is counted in the source. --sim-fmath gives FMath to every module.
+const UNVERIFIED=Object.freeze(['exp','expm1','log','log1p','log2','log10','pow','cbrt','tan','asin','acos','sinh','cosh','tanh','asinh','acosh','atanh']);
+export async function simRisk(root,{steps=1800,simFMath=false}={}){
+  const F=loadFMath(root),wired=worldUsesFMath(root),native=Object.fromEntries(PORTED.map(name=>[name,Math[name]])),perModule={},mathFor={};
+  let counting=false;
+  const counted=(name,host,port,s)=>(...args)=>{const h=host(...args);if(counting){const c=s[name];c.calls++;if(!Object.is(h,port(...args)))c.divergent++;}return simFMath?port(...args):h;};
+  const modules=defaultModules(root);
+  for(const name of modules){
+    if(name==='fmath'||name==='world')continue;
+    const s=perModule[name]={},M=Object.create(Math);
+    for(const fn of PORTED){s[fn]={calls:0,divergent:0};M[fn]=counted(fn,native[fn],F[fn],s);}
+    for(const fn of UNVERIFIED){const host=Math[fn];s[fn]={calls:0};M[fn]=(...args)=>{if(counting)s[fn].calls++;return host(...args);};}
+    const text=readFileSync(join(root,'src',name+'.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/.*$/gm,'');
+    s.exponentOperatorInSource=(text.match(/\*\*/g)||[]).length;
+    mathFor[name]=M;
+  }
+  const worldMath=wired?null:fmathMath(F);
+  const transform=(name,text)=>mathFor[name]?`(function(Math){${text}\n})(__math_${name});`:name==='world'&&worldMath?`(function(Math){${text}\n})(__worldMath);`:text;
+  const globals={...Object.fromEntries(Object.entries(mathFor).map(([name,M])=>['__math_'+name,M])),...(worldMath?{__worldMath:worldMath}:{})};
+  const saved={};for(const name of PORTED){saved[name]=Math[name];Math[name]=F[name];} // the proof driver uses the process Math
+  try{
+    const {SCENARIOS}=await import('./proof/scenarios.mjs'),{createRun,advance,finishRun}=await import('./proof/run.mjs');
+    const loaded=loadRealm({root,modules,transform,globals}),reference=JSON.parse(readFileSync(join(root,'tools/proof/reference-63668ac.json'),'utf8')),rows=[];
+    let totalSteps=0;
+    for(const scenario of SCENARIOS){
+      const run=createRun(loaded,scenario,{seed:96});counting=true;
+      try{for(let i=0;i<steps;i++){advance(run,i,{timed:false});totalSteps++;if(run.sim.state.dead||run.sim.state.won)break;}}
+      finally{counting=false;}
+      const result=finishRun(run),ref=reference.scenarios.find(s=>s.id===scenario.id).proof,first=result.rows.findIndex((row,i)=>row.stateHash!==ref.stateHashes[i]);
+      rows.push({id:scenario.id,steps:result.steps,firstDivergentStepIndex:first,identical:first<0&&result.chainHash===ref.chainHash&&result.snapshot.sha256===ref.snapshot.sha256,chainHash:result.chainHash,referenceChainHash:ref.chainHash});
+    }
+    let driverFirstDivergence=null;
+    for(let i=0;i<steps;i++)if(!Object.is(native.sin(i/90),F.sin(i/90))){driverFirstDivergence=i;break;}
+    const total={};
+    for(const s of Object.values(perModule))for(const [fn,c] of Object.entries(s)){if(typeof c!=='object')continue;const t=total[fn]??={calls:0};t.calls+=c.calls;if(c.divergent!==undefined)t.divergent=(t.divergent||0)+c.divergent;}
+    for(const [fn,c] of Object.entries(total)){c.perStep=totalSteps?c.calls/totalSteps:0;if(c.divergent!==undefined)c.divergentRate=c.calls?c.divergent/c.calls:0;}
+    return {schema:'metal-platform-math-sim-risk-v1',environment:env(),root,worldUsesFMath:wired,simulationTrigonometry:simFMath?'FMath':'host',steps,totalSteps,
+      note:'World generation and the proof driver use FMath; the other modules use the host Math unless --sim-fmath. Reference: tools/proof/reference-63668ac.json (Linux x86-64). Unverified functions are counted only; WebNN (IA-12) is not covered: the brain runs in cpu mode.',
+      rows,driver:{firstDivergentIndex:driverFirstDivergence,note:'first index where the host Math.sin(index/90) of the proof driver differs from FMath'},total,perModule};
   }finally{for(const name of Object.keys(saved))Math[name]=saved[name];}
 }
 
@@ -278,13 +401,13 @@ export function trigCases(censusFile){
   return cases;
 }
 
-export function pages(root,{dir,census:censusFile}={}){
+export function pages(root,{dir,census:censusFile,base}={}){
   if(!dir)throw new Error('--dir is required');
   mkdirSync(dir,{recursive:true});
-  const src=name=>pathToFileURL(join(root,'src',name+'.js')).href,cases=trigCases(censusFile);
+  const fmRoot=existsSync(join(root,'src/fmath.js'))?root:DEFAULT_ROOT,src=(r,name)=>pathToFileURL(join(r,'src',name+'.js')).href,cases=trigCases(censusFile);
   // FMath itself on the reference vectors of checks/fmath-vectors.txt, in each engine.
   const vectors=[];
-  for(const v of readFileSync(join(root,'checks/fmath-vectors.txt'),'utf8').split('\n').filter(l=>l&&!l.startsWith('#')).map(l=>l.split(' '))){
+  for(const v of readFileSync(join(fmRoot,'checks/fmath-vectors.txt'),'utf8').split('\n').filter(l=>l&&!l.startsWith('#')).map(l=>l.split(' '))){
     if(v[0]==='sincos')vectors.push(['sin',[v[1]],v[2]],['cos',[v[1]],v[3]]);
     else if(v[0]==='atan')vectors.push(['atan',[v[1]],v[2]]);
     else if(v[0]==='atan2')vectors.push(['atan2',[v[1],v[2]],v[3]]);
@@ -292,28 +415,41 @@ export function pages(root,{dir,census:censusFile}={}){
   const vectorCheck='function fmathVectors(F,V){var f=new Float64Array(1),u=new Uint32Array(f.buffer);f[0]=1;var hi=u[1]===0x3ff00000?1:0;'+
     'function val(h){u[hi]=parseInt(h.slice(0,8),16);u[1-hi]=parseInt(h.slice(8),16);return f[0];}function bits(x){f[0]=x;return (u[hi]>>>0).toString(16).padStart(8,"0")+(u[1-hi]>>>0).toString(16).padStart(8,"0");}'+
     'var ok=0,bad=[];for(var i=0;i<V.length;i++){var c=V[i],r=F[c[0]].apply(null,c[1].map(val));if(c[2]==="nan"?r!==r:bits(r)===c[2])ok++;else if(bad.length<5)bad.push(c[0]+"("+c[1].join(",")+")");}return {cases:V.length,equal:ok,firstDifferences:bad};}\n';
-  writeFileSync(join(dir,'trig.html'),'<!doctype html><meta charset=utf-8><title>trig</title><body><pre id=o>pending</pre>'+`<script src="${src('fmath')}"></script><script>`+vectorCheck+
+  writeFileSync(join(dir,'trig.html'),'<!doctype html><meta charset=utf-8><title>trig</title><body><pre id=o>pending</pre>'+`<script src="${src(fmRoot,'fmath')}"></script><script>`+vectorCheck+
     'const cases='+JSON.stringify(cases.map(c=>[c.fn,c.args]))+',vectors='+JSON.stringify(vectors)+';const f=new Float64Array(1),u=new BigUint64Array(f.buffer);'+
     'const bits=x=>{f[0]=x;return u[0].toString(16).padStart(16,"0");},val=h=>{u[0]=BigInt("0x"+h);return f[0];};'+
     'document.getElementById("o").textContent=JSON.stringify({ua:navigator.userAgent,results:cases.map(([fn,a])=>bits(Math[fn](...a.map(val)))),fmathVectors:fmathVectors(FMath,vectors)});</script>');
-  const modules=['renderer','world','destruction','economy','brain','simulation'];
-  writeFileSync(join(dir,'fp.html'),'<!doctype html><meta charset=utf-8><title>fp</title><body><pre id=o>pending</pre>'+
-    modules.map(m=>`<script src="${src(m)}"></script>`).join('')+`<script src="${src('fmath')}"></script><script>`+
+  // fp.html: the 42 worlds of seeds 1 and 96 (checkpoint fingerprint and FNV of
+  // the JSON), variant by variant. "game": a wired world.js as the page loads it
+  // (fmath first). "native" and "fmath": a world.js before the fix (--base, or
+  // root itself before T2) with the Math of the engine, then with FMath swapped
+  // in for the generation only. Each variant's scripts replace the previous ones.
+  const modules=['renderer','world','destruction','economy','brain','simulation'],scripts=(r,list)=>list.map(m=>`<script src="${src(r,m)}"></script>`).join('');
+  const wired=worldUsesFMath(root),old=wired?base:root;
+  let body=`<script src="${src(fmRoot,'fmath')}"></script><script>`+
     'const N={sin:Math.sin,cos:Math.cos,atan:Math.atan,atan2:Math.atan2},use=t=>{for(const k in N)Math[k]=t==="fmath"?FMath[k]:N[k];};'+
     'const fnv=s=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return (h>>>0).toString(16).padStart(8,"0");};'+
     'const cases=[];for(const s of [1,96])for(let i=0;i<3;i++)cases.push([s,i,null,"legacy"]);for(let i=0;i<18;i++){cases.push([96,i,{campaign:true},"v1"]);cases.push([96,i,{campaign:true,campaignVersion:2},"v2"]);}'+
-    'const res=[];let err=null;try{for(const [s,i,o,k] of cases){const r={s,i,k};for(const t of ["native","fmath"]){use(t);const w=FWorld.create(s,i,o&&{...o});use("native");const json=JSON.stringify(w);const sim=FSimulation.create(w);r[t]=sim.snapshot().fingerprint;r[t+"Fnv"]=fnv(json);sim.dispose&&sim.dispose();}res.push(r);}}catch(e){err=String(e&&e.stack||e);}'+
-    'document.getElementById("o").textContent=JSON.stringify({ua:navigator.userAgent,err,res});</script>');
-  const world=readFileSync(join(root,'src/world.js'),'utf8'),fmath=readFileSync(join(root,'src/fmath.js'),'utf8');
+    'const res=cases.map(([s,i,o,k])=>({s,i,k}));let err=null;'+
+    'function collect(label,trig){if(err)return;try{cases.forEach(([s,i,o],n)=>{if(trig)use(trig);const w=FWorld.create(s,i,o&&{...o});use("native");const json=JSON.stringify(w);const sim=FSimulation.create(w);res[n][label]=sim.snapshot().fingerprint;res[n][label+"Fnv"]=fnv(json);sim.dispose&&sim.dispose();});}catch(e){err=label+": "+String(e&&e.stack||e);}}'+
+    '</script>';
+  const variants=[];
+  if(wired){body+=scripts(root,modules)+'<script>collect("game",null);</script>';variants.push('game');}
+  if(old){body+=scripts(old,modules)+'<script>collect("native","native");collect("fmath","fmath");</script>';variants.push('native','fmath');}
+  writeFileSync(join(dir,'fp.html'),'<!doctype html><meta charset=utf-8><title>fp</title><body><pre id=o>pending</pre>'+body+
+    '<script>document.getElementById("o").textContent=JSON.stringify({ua:navigator.userAgent,err,variants:'+JSON.stringify(variants)+',res});</script>');
+  // jsc-worlds.js: ten worlds in JavaScriptCore; FMath is handed to world.js as
+  // window.FMath. For a wired world.js the trigonometry is FMath in every variant.
+  const world=readFileSync(join(root,'src/world.js'),'utf8'),fmath=readFileSync(join(fmRoot,'src/fmath.js'),'utf8');
   writeFileSync(join(dir,'jsc-worlds.js'),V8_HYPOT+'\nvar window={};\n'+fmath+'\nvar F=window.FMath;\n'+
     'function fnv(s){var h=2166136261;for(var i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return (h>>>0).toString(16);}\n'+
-    'function load(M){var w={};(new Function("window","Math",'+JSON.stringify(world)+'))(w,M);return w.FWorld;}\n'+
+    'function load(M){var w={FMath:F};(new Function("window","Math",'+JSON.stringify(world)+'))(w,M);return w.FWorld;}\n'+
     'function variant(trig,hypot){var M=Object.create(Math);if(trig){M.sin=F.sin;M.cos=F.cos;M.atan=F.atan;M.atan2=F.atan2;}if(hypot)M.hypot=v8hypot;return load(M);}\n'+
     'var V={native:variant(false,false),fmath:variant(true,false),nativeV8Hypot:variant(false,true),fmathV8Hypot:variant(true,true)},cases='+JSON.stringify(ENGINE_WORLDS)+',out=[];\n'+
     'for(var c of cases){var r={seed:c[0],index:c[1],v2:c[2]==="v2"};for(var k in V)r[k]=fnv(JSON.stringify(V[k].create(c[0],c[1],c[2]?{campaign:true,campaignVersion:2}:undefined)));out.push(r);}\n'+
     vectorCheck+'var vectors='+JSON.stringify(vectors)+';\n'+
-    'print(JSON.stringify({engine:"jsc",out:out,fmathVectors:fmathVectors(F,vectors)}));\n');
-  return {dir,files:['trig.html','fp.html','jsc-worlds.js'],trigCases:cases.length};
+    'print(JSON.stringify({engine:"jsc",worldUsesFMath:'+wired+',out:out,fmathVectors:fmathVectors(F,vectors)}));\n');
+  return {dir,files:['trig.html','fp.html','jsc-worlds.js'],trigCases:cases.length,fpVariants:variants,worldUsesFMath:wired,base:old??null};
 }
 
 function readDump(file){
@@ -324,11 +460,12 @@ function readDump(file){
   return JSON.parse(text);
 }
 
-export function engines(root,{dir,census:censusFile,chrome='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',jsc='/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'}={}){
-  const written=pages(root,{dir,census:censusFile}),F=loadFMath(root),out={schema:'metal-platform-math-engines-v1',environment:env(),root,pages:written};
+export function engines(root,{dir,census:censusFile,base,chrome='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',jsc='/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'}={}){
+  const written=pages(root,{dir,census:censusFile,base}),F=loadFMath(root),out={schema:'metal-platform-math-engines-v1',environment:env(),root,base:base??null,worldUsesFMath:worldUsesFMath(root),pages:written};
+  const hr=hostRoot(root,base),nodeHost=hr?worldFactory(hr):null,nodeFMath=fmathWorld(root,F);
   if(existsSync(chrome)){
     const run=page=>{const profile=join(dir,'chrome-profile-'+page.replace(/\W/g,''));mkdirSync(profile,{recursive:true});
-      const html=execFileSync(chrome,['--headless=new','--user-data-dir='+profile,'--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-component-update','--disable-sync','--no-pings','--dump-dom',pathToFileURL(join(dir,page)).href],{maxBuffer:1<<28,timeout:300000,stdio:['ignore','pipe','ignore']}).toString();
+      const html=execFileSync(chrome,['--headless=new','--user-data-dir='+profile,'--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-component-update','--disable-sync','--no-pings','--dump-dom',pathToFileURL(join(dir,page)).href],{maxBuffer:1<<28,timeout:600000,stdio:['ignore','pipe','ignore']}).toString();
       const file=join(dir,page+'.dump.html');writeFileSync(file,html);return readDump(file);};
     const trig=run('trig.html'),cases=trigCases(censusFile),by={};
     cases.forEach((c,i)=>{
@@ -337,35 +474,38 @@ export function engines(root,{dir,census:censusFile,chrome='/Applications/Google
       {const cr=correctlyRounded(c.fn,args[0],args[1]);if(cr===null)k.undecided=(k.undecided||0)+1;else{const crBits=bits(cr);k.withReference=(k.withReference||0)+1;if(chromeBits===crBits)k.chromeCorrectlyRounded=(k.chromeCorrectlyRounded||0)+1;if(node===crBits)k.nodeHostCorrectlyRounded=(k.nodeHostCorrectlyRounded||0)+1;if(port===crBits)k.fmathCorrectlyRounded=(k.fmathCorrectlyRounded||0)+1;}}
     });
     const fp=run('fp.html');
-    let fpChromeEqNode=0,fpChromeNativeEqNodeHost=0,fnvChromeEqNode=0,changedInChrome=0;
     // World by world, so that the outputs of two machines (Chrome on macOS and on
     // Linux, Node on each) can be compared afterwards without rerunning anything.
-    const worlds=[];
+    const worlds=[],count={};const inc=key=>count[key]++;
+    if((fp.variants||[]).includes('game'))Object.assign(count,{gameFingerprintChromeEqNodeFMath:0,gameWorldFnvChromeEqNodeFMath:0});
+    if((fp.variants||[]).includes('native'))Object.assign(count,{fmathFingerprintChromeEqNode:0,fmathWorldFnvChromeEqNode:0,fingerprintChangedByFMathInChrome:0,nativeChromePointRefusedAfterFix:0},nodeHost?{nativeFingerprintChromeEqNodeHost:0}:{});
     if(!fp.err){
-      const host=loadRealm({root}),port=worldFactory(root,fmathMath(F));
+      const FSimulation=loadRealm({root}).window.FSimulation;
+      const print=(W,r)=>{const options=r.k==='legacy'?undefined:r.k==='v1'?{campaign:true}:{campaign:true,campaignVersion:2},w=W.create(r.s,r.i,options&&{...options}),sim=FSimulation.create(w),fingerprint=sim.snapshot().fingerprint;sim.dispose?.();return {fingerprint,fnv:fnv(JSON.stringify(w))};};
       for(const r of fp.res){
-        const options=r.k==='legacy'?undefined:r.k==='v1'?{campaign:true}:{campaign:true,campaignVersion:2};
-        const wn=host.window.FWorld.create(r.s,r.i,options&&{...options}),wp=port.create(r.s,r.i,options&&{...options});
-        const sn=host.window.FSimulation.create(wn),sp=host.window.FSimulation.create(wp);
-        const nodeHost=sn.snapshot().fingerprint,nodeFMath=sp.snapshot().fingerprint,nodeHostWorldFnv=fnv(JSON.stringify(wn)),nodeFMathWorldFnv=fnv(JSON.stringify(wp));
-        if(nodeFMath===r.fmath)fpChromeEqNode++;if(nodeHost===r.native)fpChromeNativeEqNodeHost++;
-        if(nodeFMathWorldFnv===r.fmathFnv)fnvChromeEqNode++;if(r.native!==r.fmath)changedInChrome++;
-        worlds.push({kind:r.k,seed:r.s,index:r.i,chromeNative:r.native,chromeFMath:r.fmath,nodeHost,nodeFMath,chromeNativeWorldFnv:r.nativeFnv,chromeFMathWorldFnv:r.fmathFnv,nodeHostWorldFnv,nodeFMathWorldFnv});
-        sn.dispose?.();sp.dispose?.();
+        const nf=print(nodeFMath,r),nh=nodeHost?print(nodeHost,r):null,row={kind:r.k,seed:r.s,index:r.i,nodeFMath:nf.fingerprint,nodeFMathWorldFnv:nf.fnv,...(nh?{nodeHost:nh.fingerprint,nodeHostWorldFnv:nh.fnv}:{})};
+        if(r.game!==undefined){row.chromeGame=r.game;row.chromeGameWorldFnv=r.gameFnv;if(r.game===nf.fingerprint)inc('gameFingerprintChromeEqNodeFMath');if(r.gameFnv===nf.fnv)inc('gameWorldFnvChromeEqNodeFMath');}
+        if(r.native!==undefined){
+          row.chromeNative=r.native;row.chromeNativeWorldFnv=r.nativeFnv;row.chromeFMath=r.fmath;row.chromeFMathWorldFnv=r.fmathFnv;
+          if(r.fmath===nf.fingerprint)inc('fmathFingerprintChromeEqNode');if(r.fmathFnv===nf.fnv)inc('fmathWorldFnvChromeEqNode');
+          if(nh&&r.native===nh.fingerprint)inc('nativeFingerprintChromeEqNodeHost');if(r.native!==r.fmath)inc('fingerprintChangedByFMathInChrome');
+          if(r.native!==nf.fingerprint)inc('nativeChromePointRefusedAfterFix');
+        }
+        worlds.push(row);
       }
     }
-    out.chrome={path:chrome,userAgent:trig.ua,fmathVectors:trig.fmathVectors,trig:by,checkpoints:fp.err?{error:fp.err}:{worlds:fp.res.length,fingerprintChangedByFMathInChrome:changedInChrome,fmathFingerprintChromeEqNode:fpChromeEqNode,nativeFingerprintChromeEqNodeHost:fpChromeNativeEqNodeHost,fmathWorldFnvChromeEqNode:fnvChromeEqNode,
-      note:'Fingerprint = FSimulation snapshot().fingerprint of the generated world; WorldFnv = FNV-1a of JSON.stringify(world). native: the Math of the engine; fmath: FMath for sin, cos, atan and atan2 during generation.',perWorld:worlds}};
+    out.chrome={path:chrome,userAgent:trig.ua,fmathVectors:trig.fmathVectors,trig:by,checkpoints:fp.err?{error:fp.err}:{worlds:fp.res.length,variants:fp.variants,...count,
+      note:'Fingerprint = FSimulation snapshot().fingerprint of the generated world; WorldFnv = FNV-1a of JSON.stringify(world). game: the wired world.js of root; native: a world.js before the fix with the Math of the engine; fmath: the same with FMath for sin, cos, atan and atan2 during generation. nodeFMath: the worlds of root after the fix in Node. nativeChromePointRefusedAfterFix: a point saved in Chrome before the fix whose fingerprint differs from the world after the fix (restore refuses it).',perWorld:worlds}};
   }else out.chrome={skipped:'not found: '+chrome};
   if(existsSync(jsc)){
-    const text=execFileSync(jsc,[join(dir,'jsc-worlds.js')],{maxBuffer:1<<26,timeout:600000}).toString(),j=JSON.parse(text.trim().split('\n').pop());
-    const host=worldFactory(root),port=worldFactory(root,fmathMath(F)),rows=[];
+    const text=execFileSync(jsc,[join(dir,'jsc-worlds.js')],{maxBuffer:1<<26,timeout:600000}).toString(),j=JSON.parse(text.trim().split('\n').pop()),rows=[];
     for(const r of j.out){
-      const options=r.v2?{campaign:true,campaignVersion:2}:undefined,nn=fnv(JSON.stringify(host.create(r.seed,r.index,options&&{...options}))),np=fnv(JSON.stringify(port.create(r.seed,r.index,options&&{...options})));
-      rows.push({seed:r.seed,index:r.index,v2:r.v2,jscNativeEqNodeHost:r.native===nn,jscFMathEqNodeFMath:r.fmath===np,jscNativeV8HypotEqNodeHost:r.nativeV8Hypot===nn,jscFMathV8HypotEqNodeFMath:r.fmathV8Hypot===np});
+      const options=r.v2?{campaign:true,campaignVersion:2}:undefined,np=fnv(JSON.stringify(nodeFMath.create(r.seed,r.index,options&&{...options}))),nn=nodeHost?fnv(JSON.stringify(nodeHost.create(r.seed,r.index,options&&{...options}))):null;
+      rows.push({seed:r.seed,index:r.index,v2:r.v2,jscNativeEqNodeHost:nn!==null&&r.native===nn,jscFMathEqNodeFMath:r.fmath===np,jscNativeV8HypotEqNodeHost:nn!==null&&r.nativeV8Hypot===nn,jscFMathV8HypotEqNodeFMath:r.fmathV8Hypot===np});
     }
-    const count=key=>rows.filter(r=>r[key]).length;
-    out.jsc={path:jsc,fmathVectors:j.fmathVectors,worlds:rows.length,jscNativeEqNodeHost:count('jscNativeEqNodeHost'),jscFMathEqNodeFMath:count('jscFMathEqNodeFMath'),jscNativeV8HypotEqNodeHost:count('jscNativeV8HypotEqNodeHost'),jscFMathV8HypotEqNodeFMath:count('jscFMathV8HypotEqNodeFMath'),rows};
+    const tally=key=>rows.filter(r=>r[key]).length;
+    out.jsc={path:jsc,worldUsesFMath:j.worldUsesFMath,fmathVectors:j.fmathVectors,worlds:rows.length,jscNativeEqNodeHost:nodeHost?tally('jscNativeEqNodeHost'):null,jscFMathEqNodeFMath:tally('jscFMathEqNodeFMath'),jscNativeV8HypotEqNodeHost:nodeHost?tally('jscNativeV8HypotEqNodeHost'):null,jscFMathV8HypotEqNodeFMath:tally('jscFMathV8HypotEqNodeFMath'),
+      note:'For a wired world.js, the jsc variants all take sin, cos, atan and atan2 from FMath; Node host: the world.js before the fix (--base).',rows};
   }else out.jsc={skipped:'not found: '+jsc};
   return out;
 }
@@ -376,7 +516,7 @@ function parse(argv){
   const out={root:DEFAULT_ROOT,flags:{}};let rootSet=false;
   for(let i=0;i<argv.length;i++){
     const a=argv[i];
-    if(a==='--fmath'){out.flags.fmath=true;continue;}
+    if(a==='--fmath'||a==='--sim-fmath'){out.flags[a.slice(2)]=true;continue;}
     if(a.startsWith('--')){if(i+1>=argv.length)throw new Error('missing value for '+a);out.flags[a.slice(2)]=argv[++i];continue;}
     if(rootSet)throw new Error('unexpected argument '+a);out.root=resolve(a);rootSet=true;
   }
@@ -387,13 +527,16 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const [command,...rest]=process.argv.slice(2),{root,flags}=parse(rest);
   const seeds=flags.seeds?flags.seeds.split(',').map(Number):undefined;
   let result;
+  const base=flags.base?resolve(flags.base):undefined,from=flags.from?resolve(flags.from):undefined;
   if(command==='census')result=census(root,{seeds,path:flags.path,samples:flags.samples?Number(flags.samples):undefined});
-  else if(command==='golden')result=golden(root,{seeds});
-  else if(command==='checkpoints')result=checkpoints(root,{seed:flags.seed?Number(flags.seed):undefined});
+  else if(command==='golden')result=golden(root,{seeds,base});
+  else if(command==='worlds')result=worlds(root,{seeds,base});
+  else if(command==='checkpoints')result=checkpoints(root,{seed:flags.seed?Number(flags.seed):undefined,base,from});
   else if(command==='replay')result=await replayCheck(root,{fmath:!!flags.fmath,scenario:flags.scenario||'all',steps:flags.steps?Number(flags.steps):1800,profileOut:flags['profile-out']});
-  else if(command==='pages')result=pages(root,{dir:flags.dir&&resolve(flags.dir),census:flags.census});
-  else if(command==='engines')result=engines(root,{dir:flags.dir&&resolve(flags.dir),census:flags.census,...(flags.chrome?{chrome:flags.chrome}:{}),...(flags.jsc?{jsc:flags.jsc}:{})});
-  else{console.log(readFileSync(fileURLToPath(import.meta.url),'utf8').split('\n').slice(0,16).join('\n'));process.exit(command?2:0);}
+  else if(command==='sim-risk')result=await simRisk(root,{steps:flags.steps?Number(flags.steps):1800,simFMath:!!flags['sim-fmath']});
+  else if(command==='pages')result=pages(root,{dir:flags.dir&&resolve(flags.dir),census:flags.census,base});
+  else if(command==='engines')result=engines(root,{dir:flags.dir&&resolve(flags.dir),census:flags.census,base,...(flags.chrome?{chrome:flags.chrome}:{}),...(flags.jsc?{jsc:flags.jsc}:{})});
+  else{const lines=readFileSync(fileURLToPath(import.meta.url),'utf8').split('\n');console.log(lines.slice(0,lines.findIndex(line=>!line.startsWith('//'))).join('\n'));process.exit(command?2:0);}
   const text=JSON.stringify(result,null,1)+'\n';
   if(flags.out){mkdirSync(resolve(flags.out,'..'),{recursive:true});writeFileSync(flags.out,text);console.log(JSON.stringify({output:resolve(flags.out)}));}
   else process.stdout.write(text);

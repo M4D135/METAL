@@ -1,6 +1,12 @@
 /* FERRO — deterministic architecture, constructed entirely from primitives. */
 (function () {
   'use strict';
+  // sin, cos, atan and atan2 come from FMath (src/fmath.js, loaded before this
+  // file): the same bits on every platform, so a seed builds the same world on
+  // x86-64, on arm64 and in Chrome. Math keeps only exact functions, and hypot
+  // (one algorithm in every V8 build).
+  const FMath = window.FMath;
+  if (!FMath) throw new Error('FWorld: charger src/fmath.js avant src/world.js');
   const TAU = Math.PI * 2;
   const themes = [
     { title: 'La lisière rouillée', main: [0.12, 0.82, 0.78], alt: [1, 0.64, 0.24], wall: [0.33, 0.39, 0.36] },
@@ -64,7 +70,7 @@
     function limb(a,b,radius,mat=10,category='branch',region) {
       const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz);
       return mark(mesh('cylinder',[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[radius*2,length,radius*2],mat,
-        [Math.atan2(dz,Math.hypot(dx,dy)),0,Math.atan2(-dx,dy)]),category,region);
+        [FMath.atan2(dz,Math.hypot(dx,dy)),0,FMath.atan2(-dx,dy)]),category,region);
     }
     function tree(x,z,height,species,region,solid=true) {
       const width=species==='pine'?.72:species==='birch'?.45:.86,lean=(rand()-.5)*.6;
@@ -75,7 +81,7 @@
       // Root flare stays within a compact, visibly grounded tree footprint.
       for(let i=0;i<5;i++) {
         const a=i*TAU/5+rand()*.25;
-        limb([x,.25,z],[x+Math.cos(a)*.64,.065,z+Math.sin(a)*.64],.09,10,'root',region);
+        limb([x,.25,z],[x+FMath.cos(a)*.64,.065,z+FMath.sin(a)*.64],.09,10,'root',region);
       }
       if(species==='pine') {
         for(let k=0;k<4;k++) {
@@ -83,16 +89,16 @@
           mark(mesh('octa',[x+lean*k/4,y,z],[spread,height*.47,spread],11,[0,rand()*TAU,0],0,[.15+k*.018,.30+k*.023,.20+k*.012]),'canopy',region);
           for(let q=0;q<3;q++) {
             const a=q*TAU/3+k*1.2;
-            limb([x,y-.35,z],[x+Math.cos(a)*spread*.34,y-.02,z+Math.sin(a)*spread*.34],.055,10,'branch',region);
+            limb([x,y-.35,z],[x+FMath.cos(a)*spread*.34,y-.02,z+FMath.sin(a)*spread*.34],.055,10,'branch',region);
           }
         }
       } else {
         const bare=species==='dead',count=bare?5:6;
         for(let i=0;i<count;i++) {
           const a=i*TAU/count+.45,reach=height*(.23+rand()*.10),y=height*(.58+rand()*.22);
-          const bx=x+Math.cos(a)*reach+lean,bz=z+Math.sin(a)*reach;
+          const bx=x+FMath.cos(a)*reach+lean,bz=z+FMath.sin(a)*reach;
           limb([x+lean*.4,height*(.40+i*.035),z],[bx,y,bz],bare?.10:.12,10,'branch',region);
-          limb([bx,y,bz],[bx+Math.cos(a+.4)*.65,y+.65,bz+Math.sin(a+.4)*.65],.045,10,'twig',region);
+          limb([bx,y,bz],[bx+FMath.cos(a+.4)*.65,y+.65,bz+FMath.sin(a+.4)*.65],.045,10,'twig',region);
           if(!bare) {
             const green=species==='birch'?[.38,.46,.22]:stage===2?[.28,.41,.32]:[.22,.38,.23];
             mark(mesh('sphere',[bx,y+.35,bz],[height*.47,height*.35,height*.44],11,[0,a,0],0,green),'canopy',region);
@@ -422,7 +428,7 @@
           mesh('ring',[r.x,6.05,r.z],[5.3,.15,5.3],5,null,1.1,theme.main);
           for(let i=0;i<8;i++){
             const a=i*TAU/8;
-            pipe(r.x+Math.cos(a)*2.85,7.2,r.z+Math.sin(a)*2.85,2.1,.1,'y',0);
+            pipe(r.x+FMath.cos(a)*2.85,7.2,r.z+FMath.sin(a)*2.85,2.1,.1,'y',0);
           }
           machinery.push({type:'fan',x:r.x,y:6.1,z:r.z,size:4.8,speed:.35,axis:'y'});
         }
@@ -433,7 +439,7 @@
           mesh('ring',[r.x,cy-.14,r.z],[diameter-.6,.13,diameter-.6],4,null,1.2,theme.main);
           mesh('ring',[r.x,cy+1.3,r.z],[diameter-1,.2,diameter-1],0);
           for(let i=0;i<8;i++){
-            const a=i*TAU/8,px=r.x+Math.cos(a)*diameter*.47,pz=r.z+Math.sin(a)*diameter*.47;
+            const a=i*TAU/8,px=r.x+FMath.cos(a)*diameter*.47,pz=r.z+FMath.sin(a)*diameter*.47;
             pipe(px,(cy+r.h)/2,pz,r.h-cy,.1,'y',1);
             mesh('octa',[px,cy+.6,pz],[.3,1,.3],4,null,.9,theme.main);
           }
@@ -604,7 +610,7 @@
     ][stage];
     padRoutes.forEach(([from,to,dx,dz,tx,tz,flightTime],i)=>{
       const a=rooms[from],b=rooms[to],x=a.x+dx,z=a.z+dz,target={x:b.x+tx,y:b.y,z:b.z+tz};
-      const yaw=Math.atan2(target.x-x,z-target.z),c=Math.cos(yaw),sn=Math.sin(yaw);
+      const yaw=FMath.atan2(target.x-x,z-target.z),c=FMath.cos(yaw),sn=FMath.sin(yaw);
       const pad={id:'pad-'+i,x,y:a.y,z,r:1.15,target,flightTime,yaw};jumpPads.push(pad);
       regionContext='room-'+a.id;outdoorContext=a.outdoor;
       mark(mesh('cylinder',[x,.035,z],[2.45,.07,2.45],0,null,0,[.20,.24,.27]),'jump_pad_base',regionContext);
@@ -615,13 +621,13 @@
         mark(mesh('box',[px,.106,pz],[.075,.018,.36],4,[0,-yaw+q*.58,0],.65,theme.main),'jump_pad_arrow',regionContext);
       }
       for(let j=0;j<3;j++){
-        const angle=j*TAU/3+.4,px=x+Math.cos(angle)*1.10,pz=z+Math.sin(angle)*1.10;
+        const angle=j*TAU/3+.4,px=x+FMath.cos(angle)*1.10,pz=z+FMath.sin(angle)*1.10;
         mark(mesh('box',[px,.06,pz],[.34,.08,.30],1,[0,-angle,0],0,[.43,.38,.29]),'jump_pad_clamp',regionContext);
         mark(mesh('box',[px,.105,pz],[.20,.018,.075],5,[0,-angle,0],.45,theme.alt),'jump_pad_signal',regionContext);
       }
       for(let j=0;j<6;j++){
         const angle=j*TAU/6;
-        mark(mesh('cylinder',[x+Math.cos(angle)*.90,.11,z+Math.sin(angle)*.90],[.055,.03,.055],3),'jump_pad_bolt',regionContext);
+        mark(mesh('cylinder',[x+FMath.cos(angle)*.90,.11,z+FMath.sin(angle)*.90],[.055,.03,.055],3),'jump_pad_bolt',regionContext);
       }
       regionContext='room-'+b.id;outdoorContext=b.outdoor;
       mark(mesh('ring',[target.x,.024,target.z],[3.55,.045,3.55],4,null,.22,theme.main),'jump_landing',regionContext);
@@ -690,14 +696,14 @@
       const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz);
       if(length<.005)return;
       return add('cylinder',[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[radius*2,length,radius*2],mat,
-        [Math.atan2(dz,Math.hypot(dx,dy)),0,Math.atan2(-dx,dy)],detail,category);
+        [FMath.atan2(dz,Math.hypot(dx,dy)),0,FMath.atan2(-dx,dy)],detail,category);
     }
     function flange(p,radius,axis,bolts=true) {
       const rotation=axes[axis];
       add('cylinder',p,[radius*2.8,.075,radius*2.8],1,rotation,1,'flange');
       add('ring',p,[radius*3.3,.14,radius*3.3],0,axis==='x'?[0,0,Math.PI/2]:axis==='z'?[Math.PI/2,0,0]:[0,0,0],1,'flange');
       if(bolts)for(let j=0;j<4;j++) {
-        const a=j*TAU/4+.785,c=Math.cos(a)*radius*1.2,s=Math.sin(a)*radius*1.2;
+        const a=j*TAU/4+.785,c=FMath.cos(a)*radius*1.2,s=FMath.sin(a)*radius*1.2;
         const at=axis==='x'?[p[0]+.045,p[1]+c,p[2]+s]:axis==='z'?[p[0]+c,p[1]+s,p[2]+.045]:[p[0]+c,p[1]+.045,p[2]+s];
         add('cylinder',at,[.065,.035,.065],3,rotation,2,'bolt');
       }
@@ -705,7 +711,7 @@
     function elbow(cx,y,cz,radius,start,end,thickness,mat=1) {
       for(let j=0;j<5;j++) {
         const a=start+(end-start)*j/5,b=start+(end-start)*(j+1)/5;
-        tube([cx+Math.cos(a)*radius,y,cz+Math.sin(a)*radius],[cx+Math.cos(b)*radius,y,cz+Math.sin(b)*radius],thickness,mat,'elbow');
+        tube([cx+FMath.cos(a)*radius,y,cz+FMath.sin(a)*radius],[cx+FMath.cos(b)*radius,y,cz+FMath.sin(b)*radius],thickness,mat,'elbow');
       }
     }
     function surface(x,z,nx,nz) {
@@ -722,9 +728,9 @@
       add('cylinder',s.at(u,y,.096),[.28,.014,.28],3,rot,2,'gauge',0,[.56,.61,.55]);
       for(let k=0;k<8;k++) {
         const a=(k/7*1.5+.25)*Math.PI;
-        s.plate(u+Math.cos(a)*.11,y+Math.sin(a)*.11,.108,.024,.024,.012,0,'gauge',2);
+        s.plate(u+FMath.cos(a)*.11,y+FMath.sin(a)*.11,.108,.024,.024,.012,0,'gauge',2);
       }
-      const a=.4+rand()*1.9,centre=s.at(u+Math.sin(a)*.043,y+Math.cos(a)*.043,.12);
+      const a=.4+rand()*1.9,centre=s.at(u+FMath.sin(a)*.043,y+FMath.cos(a)*.043,.12);
       box(centre,s.nx?[.016,.13,.018]:[.018,.13,.016],6,2,'gauge',s.nx?[a,0,0]:[0,0,-a]);
     }
     function servicePanel(s,u,y,width,screen,room) {
@@ -896,7 +902,7 @@
           const x=r.x+q*(r.w/2-1.7),z=r.z-2.9,s=surface(x-q*.67,z,-q,0);
           gauge(s,.49,2.65);
           for(let j=0;j<6;j++) {
-            const a=j*TAU/6,at=s.at(Math.cos(a)*.35,1.75+Math.sin(a)*.35,.025);
+            const a=j*TAU/6,at=s.at(FMath.cos(a)*.35,1.75+FMath.sin(a)*.35,.025);
             add('cylinder',at,[.05,.04,.05],3,axes.x,2,'bolt');
           }
           for(const k of [-1,1])tube([x+k*.35,3.25,z],[x+k*.35,4.7,z],.055,0,'pipe');
@@ -906,7 +912,7 @@
       } else {
         const ringY=r.archetype==='reactor'?5.3:r.archetype==='arena'?5.8:4.5,diameter=r.archetype==='reactor'?8:r.archetype==='arena'?6.5:3.1;
         for(let j=0;j<12;j++) {
-          const a=j*TAU/12,x=r.x+Math.cos(a)*diameter*.5,z=r.z+Math.sin(a)*diameter*.5;
+          const a=j*TAU/12,x=r.x+FMath.cos(a)*diameter*.5,z=r.z+FMath.sin(a)*diameter*.5;
           box([x,ringY,z],[.25,.36,.42],0,1,'reactor_fins',[0,-a,0]);
           box([x,ringY-.21,z],[.12,.045,.32],4,1,'reactor_fins',[0,-a,0],.45,theme.main);
           for(const q of [-1,1])add('cylinder',[x,ringY+q*.21,z],[.065,.035,.065],1,[0,0,0],2,'bolt');
@@ -947,9 +953,9 @@
       owner='vent';
       outside=w.environment.outdoorZones.some(r=>Math.abs(h.x-r.x)<=r.w/2&&Math.abs(h.z-r.z)<=r.d/2);
       for(let j=0;j<12;j++) {
-        const a=j*TAU/12,r=h.r+.37,x=h.x+Math.cos(a)*r,z=h.z+Math.sin(a)*r;
+        const a=j*TAU/12,r=h.r+.37,x=h.x+FMath.cos(a)*r,z=h.z+FMath.sin(a)*r;
         box([x,.028,z],[.12,.018,.28],5,1,'hazard_marking',[0,-a,0],.12,theme.alt);
-        if(j%2===0)add('cylinder',[h.x+Math.cos(a)*(h.r+.15),.06,h.z+Math.sin(a)*(h.r+.15)],[.065,.025,.065],3,[0,0,0],2,'bolt');
+        if(j%2===0)add('cylinder',[h.x+FMath.cos(a)*(h.r+.15),.06,h.z+FMath.sin(a)*(h.r+.15)],[.065,.025,.065],3,[0,0,0],2,'bolt');
       }
     }
     w.ambience=ambience;
@@ -972,19 +978,19 @@
     const patch=(x,z,sx,sz,mat=8,color)=>add('octa',[x,.013,z],[sx,.018,sz],mat,'ground_patch',[0,rand()*TAU,0],1,color);
     function grass(x,z,dry=false) {
       const a=rand()*TAU,height=(dry?.30:.34)+rand()*.24;
-      for(let j=0;j<4;j++)add('octa',[x+Math.cos(a+j*1.6)*.09,height*.44,z+Math.sin(a+j*1.6)*.09],
+      for(let j=0;j<4;j++)add('octa',[x+FMath.cos(a+j*1.6)*.09,height*.44,z+FMath.sin(a+j*1.6)*.09],
         [.055,height,.15],11,'grass',[.12+rand()*.25,a+j*1.6,(rand()-.5)*.7],1,dry?[.45,.40,.25]:green);
     }
     function fern(x,z,size=1) {
       for(let j=0;j<7;j++) {
-        const a=j*TAU/7,dx=Math.cos(a),dz=Math.sin(a);
+        const a=j*TAU/7,dx=FMath.cos(a),dz=FMath.sin(a);
         add('octa',[x+dx*.23*size,.28*size,z+dz*.23*size],[.12*size,.68*size,.19*size],11,'fern',[.7,a,.24],1,green);
         for(const q of [-1,1])add('octa',[x+dx*.27*size+dz*q*.10,.25*size,z+dz*.27*size-dx*q*.10],
           [.12*size,.27*size,.045*size],11,'fern_leaf',[.65,a+q*.65,0],2,green.map(c=>c*1.11));
       }
     }
     function shrub(x,z,size=1) {
-      for(let j=0;j<3;j++)add(j===1?'sphere':'octa',[x+Math.cos(j*2.1)*.25*size,.38*size,z+Math.sin(j*2.1)*.25*size],
+      for(let j=0;j<3;j++)add(j===1?'sphere':'octa',[x+FMath.cos(j*2.1)*.25*size,.38*size,z+FMath.sin(j*2.1)*.25*size],
         [size,.9*size,size*.9],11,'undergrowth',[0,rand()*TAU,0],1,green.map(c=>c*(.85+j*.1)));
     }
     function pebble(x,z) {
@@ -1037,7 +1043,7 @@
         }
         for(const t of w.trees.filter(t=>t.region===region&&t.solid)) {
           for(let j=0;j<5;j++) {
-            const a=rand()*TAU,x=t.x+Math.cos(a)*(.4+rand()*.25),z=t.z+Math.sin(a)*(.4+rand()*.25);
+            const a=rand()*TAU,x=t.x+FMath.cos(a)*(.4+rand()*.25),z=t.z+FMath.sin(a)*(.4+rand()*.25);
             add('cylinder',[x,.08,z],[.04,.15,.04],3,'mushroom',[0,0,0],2,[.64,.59,.43]);
             add('sphere',[x,.16,z],[.18,.09,.18],5,'mushroom',[0,0,0],2,[.60,.35,.15]);
           }
@@ -1057,7 +1063,7 @@
         }
         for(const t of w.trees.filter(t=>t.region===region&&t.solid))for(let j=0;j<9;j++) {
           const a=j*1.6;
-          add('octa',[t.x+Math.cos(a)*.24,.35+j*.21,t.z+Math.sin(a)*.24],[.27,.19,.09],11,'ivy',[.2,a,.5],2,green);
+          add('octa',[t.x+FMath.cos(a)*.24,.35+j*.21,t.z+FMath.sin(a)*.24],[.27,.19,.09],11,'ivy',[.2,a,.5],2,green);
         }
         if(room.id===0||room.id===5) {
           add('cylinder',[room.x+4.9,.021,room.z-5.4],[2,.025,1.2],12,'puddle',[0,.4,0],1,[.23,.35,.39]);
@@ -1119,13 +1125,13 @@
         const span=m.s[axis]*Math.abs(k);
         m.p[1]+=y;m.s[1]+=span;
       } else if(k&&m.shape==='box'&&(!(m.r)||m.r.every(v=>Math.abs(v)<1e-8))&&(ground||m.s[axis]>(axis===0?r.w:r.d)*.55)) {
-        const angle=Math.atan(k),cos=Math.cos(angle),thickness=m.s[1];
+        const angle=FMath.atan(k),cos=FMath.cos(angle),thickness=m.s[1];
         m.p[1]+=y+(ground?thickness/2-thickness/(2*cos):0);
         m.s[axis]/=cos;m.r=axis===0?[0,0,angle]:[-angle,0,0];
       } else if(k&&m.shape==='cylinder'&&m.s[1]>(axis===0?r.w:r.d)*.55) {
         const dx=axis===0?1:0,dz=axis===2?1:0;
         m.p[1]+=y;m.s[1]*=Math.sqrt(1+k*k);
-        m.r=[Math.atan2(dz,Math.hypot(dx,k)),0,Math.atan2(-dx,k)];
+        m.r=[FMath.atan2(dz,Math.hypot(dx,k)),0,FMath.atan2(-dx,k)];
       } else m.p[1]+=y;
     }
     for(const c of w.colliders) {
@@ -1155,11 +1161,11 @@
     for(const t of w.trees){
       const random=randomFor('METAL-botanical:'+w.seed+':'+t.mesh,w.campaign===true?w.index:w.stage),parts=w.meshes.slice(t.mesh,t.mesh+t.meshCount);
       const originals=parts.map(m=>({...m,p:m.p.slice(),s:m.s.slice(),r:(m.r||[0,0,0]).slice()}));
-      const endpoints=m=>{const [rx,ry,rz]=m.r,cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry),cz=Math.cos(rz),sz=Math.sin(rz),axis=[cz*sy*sx-sz*cx,sz*sy*sx+cz*cx,cy*sx];return [-1,1].map(q=>m.p.map((v,i)=>v+q*axis[i]*m.s[1]/2));};
+      const endpoints=m=>{const [rx,ry,rz]=m.r,cx=FMath.cos(rx),sx=FMath.sin(rx),cy=FMath.cos(ry),sy=FMath.sin(ry),cz=FMath.cos(rz),sz=FMath.sin(rz),axis=[cz*sy*sx-sz*cx,sz*sy*sx+cz*cx,cy*sx];return [-1,1].map(q=>m.p.map((v,i)=>v+q*axis[i]*m.s[1]/2));};
       const wood=t.species==='birch'?[.57,.58,.49]:t.species==='dead'?[.35,.29,.23]:[.27,.23,.16];
-      const segment=(m,a,b,diameter,category)=>{const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2];m.shape='cylinder';m.p=a.map((v,i)=>(v+b[i])/2);m.s=[diameter,Math.hypot(dx,dy,dz),diameter];m.r=[Math.atan2(dz,Math.hypot(dx,dy)),0,Math.atan2(-dx,dy)];m.category=category;m.mat=10;m.color=wood.map(v=>v*(.91+random()*.15));};
+      const segment=(m,a,b,diameter,category)=>{const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2];m.shape='cylinder';m.p=a.map((v,i)=>(v+b[i])/2);m.s=[diameter,Math.hypot(dx,dy,dz),diameter];m.r=[FMath.atan2(dz,Math.hypot(dx,dy)),0,FMath.atan2(-dx,dy)];m.category=category;m.mat=10;m.color=wood.map(v=>v*(.91+random()*.15));};
       const [base,top]=endpoints(originals[1]),bend=base.map((v,i)=>v+(top[i]-v)*.54),angle=random()*TAU;
-      bend[0]+=Math.cos(angle)*.14;bend[2]+=Math.sin(angle)*.14;
+      bend[0]+=FMath.cos(angle)*.14;bend[2]+=FMath.sin(angle)*.14;
       segment(parts[1],base,bend,originals[1].s[0],'trunk');
       segment(parts[2],bend,top,originals[1].s[0]*.63,'trunk');
       const spine=y=>{const a=y<=bend[1]?base:bend,b=y<=bend[1]?bend:top,q=Math.max(0,Math.min(1,(y-a[1])/(b[1]-a[1])));return [a[0]+(b[0]-a[0])*q,y,a[2]+(b[2]-a[2])*q];};
@@ -1168,9 +1174,9 @@
         for(let k=0;k<4;k++){
           const canopy=parts[crowns[k]],old=originals[crowns[k]],spread=old.s[0],direction=t.phase+k*2.399+(random()-.5)*.42;
           canopy.shape='foliage';canopy.s=[old.s[0],old.s[1]*.74,old.s[2]];
-          const y=Math.min(top[1]-.1,Math.max(t.y+2.25,old.p[1]-.35)),a=spine(y),hub=[a[0]+Math.cos(direction)*spread*.19,y+.21,a[2]+Math.sin(direction)*spread*.19];
+          const y=Math.min(top[1]-.1,Math.max(t.y+2.25,old.p[1]-.35)),a=spine(y),hub=[a[0]+FMath.cos(direction)*spread*.19,y+.21,a[2]+FMath.sin(direction)*spread*.19];
           segment(parts[branches[k*3]],a,hub,.13-k*.016,'branch');
-          for(let j=0;j<2;j++){const q=direction+(j?.55:-.62),reach=spread*(j?.37:.40),end=[a[0]+Math.cos(q)*reach,y+.27+j*.12,a[2]+Math.sin(q)*reach];segment(parts[branches[k*3+j+1]],hub,end,.078-k*.009,'twig');}
+          for(let j=0;j<2;j++){const q=direction+(j?.55:-.62),reach=spread*(j?.37:.40),end=[a[0]+FMath.cos(q)*reach,y+.27+j*.12,a[2]+FMath.sin(q)*reach];segment(parts[branches[k*3+j+1]],hub,end,.078-k*.009,'twig');}
         }
       }else{
         const bare=t.species==='dead';
@@ -1224,7 +1230,7 @@
     // adding obstacles or one enormous mesh to the spatial render index.
     for(const radius of [12,20,26])for(let i=0;i<72;i++){
       const a=i*TAU/72,length=TAU*radius/72*.72;
-      add([arena.x+Math.cos(a)*radius,arena.y+.014,arena.z+Math.sin(a)*radius],[.075,.022,length],i%6===0?4:1,'arena_inlay',region,false,{r:[0,-a,0],emissive:i%6===0?.17:0,color:i%6===0?theme.main:undefined});
+      add([arena.x+FMath.cos(a)*radius,arena.y+.014,arena.z+FMath.sin(a)*radius],[.075,.022,length],i%6===0?4:1,'arena_inlay',region,false,{r:[0,-a,0],emissive:i%6===0?.17:0,color:i%6===0?theme.main:undefined});
     }
     for(const side of [-1,1])for(let i=0;i<13;i++){
       const x=edge+(i+.5)*gap/13,z=c.z+side*(aperture/2+.24);
@@ -1327,7 +1333,7 @@
       // The discharge has a real metal mouth, including in the unbroken scene.
       // Its rear end enters the manifold; its front cap is the physical nozzle.
       pipe.nozzleMesh=w.meshes.length;
-      add('cylinder',[x+pipe.dx*.28,pipe.y,z+pipe.dz*.28],[.24,.36,.24],0,'pressure_nozzle',{region,assembly,r:[Math.PI/2,Math.atan2(pipe.dx,pipe.dz),0]});
+      add('cylinder',[x+pipe.dx*.28,pipe.y,z+pipe.dz*.28],[.24,.36,.24],0,'pressure_nozzle',{region,assembly,r:[Math.PI/2,FMath.atan2(pipe.dx,pipe.dz),0]});
       for(const q of [-1,1]){
         add('cylinder',[x+q*.85,y+1.03,z],[.43,.1,.43],0,'pressure_flange',{region,assembly,r:[0,0,Math.PI/2]});
         box([x+q*.85,y+.46,z],[.12,.92,.16],1,'pressure_support',{region,assembly});
@@ -1339,7 +1345,7 @@
   }
   function demolitionMetadata(w){
     const out=w.meshes,groups=[],owners=new Map(),byRegion=new Map(),explicit=new Map();
-    const bbox=m=>{const [rx,ry,rz]=m.r||[0,0,0],a=Math.cos(rx),b=Math.sin(rx),c=Math.cos(ry),d=Math.sin(ry),e=Math.cos(rz),f=Math.sin(rz),r=[e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a],h=[0,1,2].map(k=>(Math.abs(r[k*3]*m.s[0])+Math.abs(r[k*3+1]*m.s[1])+Math.abs(r[k*3+2]*m.s[2]))/2);return {minX:m.p[0]-h[0],maxX:m.p[0]+h[0],minY:m.p[1]-h[1],maxY:m.p[1]+h[1],minZ:m.p[2]-h[2],maxZ:m.p[2]+h[2]};};
+    const bbox=m=>{const [rx,ry,rz]=m.r||[0,0,0],a=FMath.cos(rx),b=FMath.sin(rx),c=FMath.cos(ry),d=FMath.sin(ry),e=FMath.cos(rz),f=FMath.sin(rz),r=[e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a],h=[0,1,2].map(k=>(Math.abs(r[k*3]*m.s[0])+Math.abs(r[k*3+1]*m.s[1])+Math.abs(r[k*3+2]*m.s[2]))/2);return {minX:m.p[0]-h[0],maxX:m.p[0]+h[0],minY:m.p[1]-h[1],maxY:m.p[1]+h[1],minZ:m.p[2]-h[2],maxZ:m.p[2]+h[2]};};
     const boxes=out.map(bbox),keys=['minX','maxX','minY','maxY','minZ','maxZ'];
     const union=list=>Object.fromEntries(keys.map(k=>[k,Math[k.startsWith('min')?'min':'max'](...list.map(b=>b[k]))]));
     const distance=(p,b)=>Math.hypot(Math.max(b.minX-p[0],0,p[0]-b.maxX),Math.max(b.minY-p[1],0,p[1]-b.maxY),Math.max(b.minZ-p[2],0,p[2]-b.maxZ));
@@ -1455,7 +1461,7 @@
         return boxes.some(c=>{let lo=0,hi=1;for(const [i,min,max] of [[0,c.minX,c.maxX],[1,c.minY,c.maxY],[2,c.minZ,c.maxZ]]){const d=target[i]-eye[i];if(Math.abs(d)<1e-8){if(eye[i]<min||eye[i]>max)return false;}else{const a=(min-eye[i])/d,z=(max-eye[i])/d;lo=Math.max(lo,Math.min(a,z));hi=Math.min(hi,Math.max(a,z));if(lo>hi)return false;}}return hi>0&&lo<.98;});
       }
       function maskFor(q){
-        const yaw=Math.atan2(r.x-q.x,q.z-r.z),samples=[[0,0],[-.9,0],[.9,0],[0,-.9],[0,.9],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65],[Math.sin(yaw)*1.5,-Math.cos(yaw)*1.5]];let mask=0;
+        const yaw=FMath.atan2(r.x-q.x,q.z-r.z),samples=[[0,0],[-.9,0],[.9,0],[0,-.9],[0,.9],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65],[FMath.sin(yaw)*1.5,-FMath.cos(yaw)*1.5]];let mask=0;
         for(let i=0;i<probes.length;i++){
           const eye=probes[i];if(Math.hypot(q.x-eye[0],q.z-eye[2])<10)continue;
           const boxes=w.colliders.filter(c=>c.maxX>=Math.min(eye[0],q.x-1.5)&&c.minX<=Math.max(eye[0],q.x+1.5)&&c.maxZ>=Math.min(eye[2],q.z-1.5)&&c.minZ<=Math.max(eye[2],q.z+1.5)&&c.maxY>=Math.min(eye[1],q.y+.2)&&c.minY<=Math.max(eye[1],q.y+2.15));
@@ -1644,7 +1650,7 @@
       add('box',[p.x+side*.78,p.y+.065,p.z+end*.78],[.19,.05,.19],3,'trophy_corner');
       add('box',[p.x+side*.66,p.y+.095,p.z+end*.78],[.16,.018,.055],4,'trophy_inlay',{color:theme.alt,emissive:.35});
     }
-    for(let i=0;i<12;i++){const a=i*TAU/12;add('box',[p.x+Math.cos(a)*1.14,p.y+.016,p.z+Math.sin(a)*1.14],[.12,.022,.27],5,'trophy_floor_mark',{r:[0,-a,0],color:theme.alt,emissive:.15});}
+    for(let i=0;i<12;i++){const a=i*TAU/12;add('box',[p.x+FMath.cos(a)*1.14,p.y+.016,p.z+FMath.sin(a)*1.14],[.12,.022,.27],5,'trophy_floor_mark',{r:[0,-a,0],color:theme.alt,emissive:.15});}
     // A narrow portal carries the lamp from the indestructible plinth. Its
     // opening faces the service wall; the approach and pickup stay unobstructed.
     const frameBox=(pos,size,category)=>{const mesh=w.meshes.length;add('box',pos,size,3,category,{solid:true});w.colliders.push({minX:pos[0]-size[0]/2,maxX:pos[0]+size[0]/2,minY:pos[1]-size[1]/2,maxY:pos[1]+size[1]/2,minZ:pos[2]-size[2]/2,maxZ:pos[2]+size[2]/2,mesh});};
@@ -1659,7 +1665,7 @@
     const lightIndex=w.lights.length;w.lights.push({p:[p.x,p.y+2.45,p.z],color:theme.alt.slice(),power:5.5,region,trophyId:id});
     w.pickups.push({id:'trial-cache-'+key,kind:key==='shield'?'health':'ammo',...(key==='shield'?{}:{weapon:gift.weapon,requiresWeapon:gift.weapon}),amount:key==='shield'?24:Math.max(2,Math.ceil(gift.amount/2)),...cache,zoneId:r.id,trophyCache:id});
     const boss=w.enemies.pop(),ids=[];
-    for(let i=0;i<3;i++){const point=bay.spawnEntries[i],type=key==='shotgun'||key==='rocket'?1:0;ids.push(w.enemies.length);w.enemies.push({...point,type,zoneId:r.id,squadId:1000+w.index,encounterId,wave:0,deployed:false,role:'assault',yaw:Math.atan2(p.x-point.x,point.z-p.z),drop:key==='shield'?false:{weapon:gift.weapon,amount:gift.weapon===0?4:gift.weapon===1?2:1},trophyGuard:id});}
+    for(let i=0;i<3;i++){const point=bay.spawnEntries[i],type=key==='shotgun'||key==='rocket'?1:0;ids.push(w.enemies.length);w.enemies.push({...point,type,zoneId:r.id,squadId:1000+w.index,encounterId,wave:0,deployed:false,role:'assault',yaw:FMath.atan2(p.x-point.x,point.z-p.z),drop:key==='shield'?false:{weapon:gift.weapon,amount:gift.weapon===0?4:gift.weapon===1?2:1},trophyGuard:id});}
     const bossId=w.enemies.length;w.enemies.push(boss);for(const e of w.enemies)if(e.bossWave)e.bossId=bossId;
     w.encounters.push({id:encounterId,label:'Épreuve — '+name,zoneId:r.id,trigger:{x:r.x,y:r.y,z:r.z,w:r.w+4,d:r.d+4},leashRadius:38,maxActive:3,waveGap:4,spawnEntries:bay.spawnEntries.map(q=>({...q})),waves:[{enemyIds:ids}],requiresTrophy:id});
     w.trophies.push({id,key,name,usage:usage[key],pickupId:gift.id,encounterId,grace:3,...p,zoneId:r.id,...(key==='shield'?{shield:true}:{weapon:gift.weapon}),meshStart,meshCount:w.meshes.length-meshStart,lightIndex,cacheId:'trial-cache-'+key,coverMesh:bay.coverMesh});
@@ -1707,7 +1713,7 @@
         for(let j=0;j<n;j++){
           const homes=w.campaignVersion===2?bay.reserveEntries:bay.spawnEntries,index=w.enemies.length,deployed=opening&&wave===0,p=deployed?patrol[j]:homes[j%homes.length];
           const type=opening?(j%3===2?2:0):(j+wave+r.id)%3;
-          const e={...p,type,zoneId:r.id,squadId:r.id*10+wave,encounterId:encounter.id,wave,deployed,role:type===1?'assault':type===2?'suppressor':['flanker','assault','suppressor'][(j+wave)%3],yaw:Math.atan2(r.x-p.x,p.z-r.z)};
+          const e={...p,type,zoneId:r.id,squadId:r.id*10+wave,encounterId:encounter.id,wave,deployed,role:type===1?'assault':type===2?'suppressor':['flanker','assault','suppressor'][(j+wave)%3],yaw:FMath.atan2(r.x-p.x,p.z-r.z)};
           w.enemies.push(e);ids.push(index);
         }
         encounter.waves.push({enemyIds:ids});
@@ -1720,7 +1726,7 @@
     for(const {enemy:e} of candidates){const weapon=grenades<grenadeGoal&&(grenades<=rockets||rockets===rocketGoal)?'grenade':rockets<rocketGoal?'rocket':null;if(!weapon)break;e.type=1;e.role='assault';e.weapon=weapon;if(weapon==='grenade')grenades++;else rockets++;}
     if(grenades!==grenadeGoal||rockets!==rocketGoal)throw new Error('Insufficient later heavy waves');
     const arena=w.bossArena;
-    for(let i=0;i<6;i++){const a=(i+.5)*TAU/6;w.enemies.push({x:arena.x+Math.cos(a)*26,y:arena.y,z:arena.z+Math.sin(a)*26,type:0,zoneId:arena.room,squadId:200+Math.floor(i/3),role:'flanker',bossWave:1+Math.floor(i/3),bossId:target-1,deployed:true});}
+    for(let i=0;i<6;i++){const a=(i+.5)*TAU/6;w.enemies.push({x:arena.x+FMath.cos(a)*26,y:arena.y,z:arena.z+FMath.sin(a)*26,type:0,zoneId:arena.room,squadId:200+Math.floor(i/3),role:'flanker',bossWave:1+Math.floor(i/3),bossId:target-1,deployed:true});}
     w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:w.campaignVersion===2?w.campaignProfile.bossHp:w.campaign?Math.max(30,Math.round([130,180,240][w.stage]*w.campaignProfile.bossHpScale)):[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
     for(const [i,e] of w.enemies.entries())e.drop=e.type===3?false:e.weapon==='rocket'?{weapon:2,amount:1}:e.weapon==='grenade'?{weapon:3,amount:1}:e.type===1?{weapon:1,amount:2}:e.type===2||i%2===0?{weapon:0,amount:4}:false;
     if(w.enemies.length!==target-trialCount)throw new Error('Incorrect finite garrison size');

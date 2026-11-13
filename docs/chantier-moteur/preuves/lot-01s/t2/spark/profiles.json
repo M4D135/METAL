@@ -1,0 +1,48 @@
+{
+ "schema": "metal-profiles-platform-check-v1",
+ "node": "v24.18.0",
+ "v8": "13.6.233.17-node.50",
+ "platform": "linux",
+ "arch": "arm64",
+ "note": "The lot 00 archives were produced under Linux x86-64 (Node 24.22.1) from 63668ac; sourceSha256 records the source files, of which src/simulation.js changed in the lot 01.",
+ "rows": [
+  {
+   "tool": "tools/campaign-profiles.mjs",
+   "archive": "docs/chantier-moteur/preuves/lot-00/campaign-profiles.json.gz",
+   "bytes": 36929,
+   "archiveBytes": 36819,
+   "sha256": "c91053188fe610e3a0d665b359ecbb221ec2b17bbe61faf0d9f1959b7851f1e3",
+   "archiveSha256": "547f52b071579bee39b9700c27e352b9bd4b768d422f32246370918a1078e717",
+   "bytesIdentical": false,
+   "differingPaths": [
+    "$.sources.fmath",
+    "$.sourceSha256.fmath",
+    "$.sourceSha256.world",
+    "$.sourceSha256.simulation"
+   ],
+   "onlySourceHashesDiffer": false
+  },
+  {
+   "tool": "tools/campaign-balance.mjs",
+   "archive": "docs/chantier-moteur/preuves/lot-00/campaign-balance.json.gz",
+   "bytes": 49966,
+   "archiveBytes": 49966,
+   "sha256": "2dc0f40d9ac5e0c38a376340d87813ce4fb9ddee483b0e03b76fb25f5d597b77",
+   "archiveSha256": "2dc0f40d9ac5e0c38a376340d87813ce4fb9ddee483b0e03b76fb25f5d597b77",
+   "bytesIdentical": true,
+   "differingPaths": [],
+   "onlySourceHashesDiffer": false
+  },
+  {
+   "tool": "tools/boss-profiles.mjs",
+   "archive": "docs/chantier-moteur/preuves/lot-00/boss-profiles.json.gz",
+   "bytes": 25558,
+   "archiveBytes": 25558,
+   "sha256": "4a789e0274932796291b256900a9f5d21ad09995321d104bb6ccb0bb3462a621",
+   "archiveSha256": "4a789e0274932796291b256900a9f5d21ad09995321d104bb6ccb0bb3462a621",
+   "bytesIdentical": true,
+   "differingPaths": [],
+   "onlySourceHashesDiffer": false
+  }
+ ]
+}
