@@ -21,7 +21,7 @@ tirent aucun hasard et ne savent rien de METAL (T-F24, S22) : le temps leur arri
 | Constat | Ce que livre la voie | Sections |
 |---|---|---|
 | STAB-06 (P1, lot 07 T1), qui absorbe LOOP-05 | pas fixe, verrouillage, dette bornée, interpolation ; une seule empreinte d'état pour 9 écrans ; écart temps simulé / temps réel sous un pas sur 10 minutes (réserve 2) ; réserves 3 et 4 reprises en limites | 2.2 à 2.7, 3, 4.1, 4.2, 6 |
-| STAB-07 (P2, lot 07 T8) | ordonnanceur à deux files et ses 5 règles de déterminisme ; réserves 1 et 3 reprises au plan | 2.8 à 2.12, 3.10, 4.3, 5.11, 5.12 |
+| STAB-07 (P2, lot 07 T8) | ordonnanceur à deux files et ses 5 règles de déterminisme ; réserves 1 et 3 reprises au plan ; sur la vraie pré-synthèse audio, plus longue tranche −44 à −46 % au calme, PCM identique, sous les 32 ms de T8 | 2.8 à 2.12, 3.10, 4.3, 4.6, 5.11, 5.12 |
 | DEMO-V3, côté interpolation | `track` : aucune image répétée, contre 50 % des images où le joueur avance à 120 Hz et 58 % à 144 Hz sans interpolation | 2.6 |
 | PARA-V1 | la simulation reste sur le fil principal : le rappel de pas appelle `sim.step` dans le rappel rAF, avant le dessin | 4.2, 5.7 |
 | MASTER-PROMPT §6, décision prise | pas fixe de 1/60 s, accumulateur, verrouillage, rattrapage borné à 5 pas, interpolation, rotation de la vue à chaque image. Elle remplace l'arbitrage « LOOP-05, FEEL-08, LOOP-08, SIM-12 » (pas variable) | tout le module |
@@ -30,7 +30,7 @@ Traités seulement dans le plan de raccord (section 5), sans rien appliquer :
 - LOOP-06 : les impulsions restent en file jusqu'à une image qui a au moins un pas (5.6) ;
 - LOOP-09 : `FOptions.frameGate`, déjà dans main, reste devant FLoop (5.4, 5.5, limite 6) ;
 - LOAD-03 et l'arbitrage « LOOP-03, LOAD-03, SIM-01 » : instantané synchrone, écriture différée seulement en P2 (5.11) ;
-- LOAD-13 : pré-synthèse audio, une tâche par tampon (5.12) ;
+- LOAD-13 : pré-synthèse audio, une tâche par tampon (5.12), mesurée sur la vraie synthèse sans rien brancher (4.6) ;
 - PARA-V2 : l'écho `input.weapon` reste tel quel (5.14, question 5) ;
 - l'arbitrage « RCPU-08, RGPU-09, LOOP-12, RGPU-02, LOOP-09 » : une seule estimation partagée de la période
   d'affichage (question 1).
@@ -54,7 +54,7 @@ section 5, non appliqué.
 - Un relais OpenCode du Spark avait commencé la voie (branche `spark/spark-wip/boucle`). Les fichiers qu'il avait
   laissés (squelette de ce document, `src/loop.js`, `src/schedule.js`, les deux suites de tests, l'outil d'horloge) sont
   repris aux étapes 0 à 4, après relecture ligne à ligne contre la mission. Ils sont renforcés là où ils étaient plus
-  faibles que sa lettre (T-F18, T-F22, S10, S18, entre autres). Les étapes 5 à 7 sont écrites depuis la mission.
+  faibles que sa lettre (T-F18, T-F22, S10, S18, entre autres). Les étapes 5 à 8 sont écrites depuis la mission.
 
 ## 2. API
 
@@ -348,7 +348,8 @@ run(left, task)                   file « sim » : rend un entier de 0 à left, 
 Taille : STAB-07 estimait l'ordonnanceur à « environ 1,5 Ko » ; le code normatif fait 4,2 Ko, parce qu'il valide
 ses entrées, tient deux files, garde `flush` contre une tâche sans fin et compte 7 statistiques. C'est sous la
 limite de 6 000 octets et sous la cible de 4 300. Le prototype de l'audit (`bancs/stab/sched.mjs`, pré-synthèse
-audio sur la 0.8.0) a seulement été lu : rien n'en est repris.
+audio sur la 0.8.0) a seulement été lu : rien n'en est repris dans le module. L'étape 8 le lance comme banc de
+départ, à côté de son propre banc (4.6).
 
 ### 2.9 `FSchedule.create({now, agingFrames = 30})` — ordonnanceur à deux files
 
@@ -607,8 +608,8 @@ Les bancs chargent les modules dans le domaine principal de Node (`loadRealm({ro
 jamais sous `node:vm`, qui ralentit le code de 4,5 à 9 fois (MASTER-PROMPT §4). Chaque JSON de
 `preuves/module-boucle/` commence par `schema`, `node`, `arch`, `platform`, `cpu` et `loadavg` : la machine et sa
 charge au moment de la mesure. Horloge (4.1) et simulation réelle (4.2) : étapes 4 et 5 ; coûts (4.3), assemblage
-de la page (4.4) et navigateur réel (4.5) : étape 6. L'émulation de l'étape 2 (`aim` et `track` sur la vraie
-simulation) est résumée en 2.5 et 2.6.
+de la page (4.4) et navigateur réel (4.5) : étape 6 ; pré-synthèse audio (4.6) : étape 8, facultative. L'émulation
+de l'étape 2 (`aim` et `track` sur la vraie simulation) est résumée en 2.5 et 2.6.
 
 ### 4.1 Horloge : `banc-horloge.json` (étape 4)
 
@@ -1026,6 +1027,132 @@ période). Il prouve l'égalité au bit près, pas seulement celle des comptes.
    (59,94 Hz, VRR), Safari et Firefox. Ils sont absents ici : Safari n'a pas de mode sans tête, et son pilote
    d'automatisation demande un réglage système ; Firefox n'est pas installé sur le Mac.
 
+### 4.6 Pré-synthèse audio : `banc-audio.json` (étape 8, facultative)
+
+Constats : STAB-07 (preuve du lot 07 T8 : plus longue tâche de pré-synthèse au plus 32 ms) et LOAD-13 (lots de
+synthèse découpés par nombre d'effets, et non par durée) ; arbitrage « FEEL-06, FEEL-07, LOAD-13, LOOP-14,
+BOSS-04 » (LOAD-13 d'abord, lots bornés en temps). Classe de preuve : état identique, PCM et jeu inchangés ; les
+durées sont une information. Rien n'est branché : `audio.js` est mesuré tel qu'il est sur la base.
+
+- **Commande** : `node tools/boucle-banc-audio.mjs`, depuis la racine. Trois lignes (A, B, PCM), puis un bilan ;
+  code 0, ou 1 si un critère tombe. Durée : 0,9 s au calme, 1,3 à 1,9 s sous charge.
+- **Protocole** (§7.8 de la mission) :
+  - `FAudio` vient de `loadRealm({root, modules: ['music', 'audio'], realm: 'main'})`, et FSchedule de
+    `loadRealm({root, modules: ['schedule'], realm: 'main'})` : domaine principal.
+  - Horloge : le temps CPU du fil, `process.threadCpuUsage()` (utilisateur + système, en ms). C'est aussi l'horloge
+    `now` passée à FSchedule : le module ne lit rien lui-même.
+  - Tampons : chaque nom de `FAudio.effectNames`, variantes 0 et 1, une seule pour `motor:*`. Cela fait 34 noms et
+    64 tampons à 22 050 Hz. Chauffe : chacun une fois.
+  - **A, aujourd'hui** : des lots de 2 noms, avec toutes leurs variantes, comme `warmBank` (`audio.js:311`) ; une
+    tranche chronométrée par lot.
+  - **B, FSchedule** : une tâche « image » par tampon (clé `'pcm:'+nom+':'+variante`, priorité 6, coût 2), puis
+    `while (S.count('frame')) tranches.push(S.pump(4))`, et `stats.maxSliceMs`.
+  - 5 répétitions au lieu des 3 de la fiche, pour suivre la règle du chantier (au moins cinq, appariées et
+    alternées). A passe avant B aux répétitions impaires, après B aux paires. On retient les médianes.
+  - **PCM** : le sha256 des 64 `Float32Array`, dans l'ordre canonique, est comparé à celui de la chauffe, pour
+    chacune des 11 constructions (chauffe, 5 fois A, 5 fois B).
+- **Critères** (code 1 si l'un tombe) : PCM identique partout ; dans B, chaque tampon construit une fois, sans
+  erreur ; dans A, une tranche par paire de noms ; dans B, la plus longue tranche et la plus longue tâche au plus à
+  32 ms.
+- **Sortie** : seulement `preuves/module-boucle/banc-audio.json` (7,6 Ko), sans aucune tranche une à une.
+  - Par répétition : le nombre de tranches, la plus longue, la médiane, le total, et les comptes au-delà de 4, 8,
+    16,7 et 32 ms.
+  - Pour B, en plus : la plus longue tâche (`stats.maxSliceMs`) et son tampon, `ran`, `skipped` et `overrunMs`.
+  - Les médianes, les trois lots et les trois tampons les plus lourds.
+  - En tête : la taille et le sha256 de `audio.js`, `music.js` et `schedule.js`.
+- **Machine et charge** : Apple M5, 10 cœurs, macOS 27.2.1 (`darwin`, `arm64`), Node v24.18.0. Le JSON rangé est la
+  dernière de trois passes faites au calme (`loadavg` 1,88 / 3,55 / 3,77).
+
+**Avant : le banc de départ.** Le prototype de l'audit, `node …/metal-audit/bancs/stab/sched.mjs <clone>`, tourne
+sur la base du clone juste avant chaque passe. Il mesure dans le domaine principal, sur les mêmes 64 tampons et avec
+la même horloge.
+
+| Lancement | Lots actuels : tranches ; plus longue ; total | Prototype à 4 ms : tranches ; plus longue ; tâche la plus longue |
+|---|---|---|
+| 3 passes au calme (charge 1,9 à 2,0) | 17 ; 18,1 à 20,4 ms ; 72 à 82 ms | 17 ou 18 ; 9,8 à 11,2 ms ; 8,4 à 9,8 ms |
+| 3 passes sous charge (3,2 à 3,3) | 17 ; 22,8 à 35,1 ms ; 92 à 146 ms | 22 à 25 ; 11,6 à 16,3 ms ; 11,6 à 15,0 ms |
+| 1er lancement (charge 11,6) | 17 ; 24,6 à 27,8 ms ; 103 à 111 ms | 22 à 24 ; 12,5 à 15,6 ms ; 12,5 à 14,2 ms |
+| pré-mesure du chef de lot (même M5) | 17 ; 18,1 à 18,3 ms ; 73 à 79 ms | 17 ou 18 ; 9,8 à 10,6 ms |
+
+**Après : FSchedule (code normatif)**, `node tools/boucle-banc-audio.mjs`. Valeurs en ms : la médiane des 5
+répétitions, et entre parenthèses l'étendue. « Écart » est l'écart de la plus longue tranche, tiré du rapport
+apparié B/A médian.
+
+| Passe (charge 1 min) | A : plus longue ; total | B : tranches ; plus longue ; tâche la plus longue ; total | Rapport B/A (plus longue) | Écart | Total B/A |
+|---|---|---|---|---|---|
+| 1 (1,95) | 18,9 (18,5 à 21,0) ; 75,4 | 18 ; 10,5 (10,1 à 10,9) ; 8,8 ; 76,9 | 0,552 (0,516 à 0,573) | −45 % | 1,01 |
+| 2 (1,95) | 19,1 (18,5 à 21,1) ; 75,9 | 18 (17 à 20) ; 11,0 (10,0 à 11,4) ; 9,3 ; 75,8 | 0,564 (0,527 à 0,594) | −44 % | 1,00 |
+| **3, rangée** (1,88) | **18,1** (18,0 à 18,9) ; **72,8** | **17** (17 à 19) ; **9,8** (9,7 à 10,0) ; **8,4** ; **73,0** | **0,540** (0,529 à 0,545) | **−46 %** | **1,00** |
+| 4 passes préliminaires, sous charge (3,2 à 3,4) | 27,7 à 40,4 ; 111 à 161 | 23 à 25 (22 à 27) ; 13,0 à 20,3 ; 13,0 à 18,8 ; 108 à 162 | 0,455 à 0,505 | −49 à −55 % | 1,00 à 1,03 |
+| Spark, 3 passes (1,4) | 20,6 à 21,0 ; 86 à 87 | 17 ou 18 (17 à 20) ; 11,0 ; 10,0 ; 86 à 87 | 0,524 | −48 % | 1,00 à 1,01 |
+
+A compte toujours 17 tranches. Les passes préliminaires suivent le même protocole : depuis, seul l'affichage du
+résumé a changé. La ligne du Spark (Linux arm64, 20 cœurs, Node v24.18.0) est une passe faite au-delà de la
+fiche, sous `~/metal-tests/` ; son JSON n'est pas rangé.
+
+**Ce que montre le banc.**
+1. **PCM et jeu inchangés.**
+   - Dans chaque passe, les 64 tampons ont les mêmes octets dans les 11 constructions, dans les deux ordres :
+     sha256 `12eb48d9f0ca0e7da0228390f3ce4c9142a9ca20c725e2dd9ddbc9f370f3d50e`, soit 473 216 échantillons et
+     1 892 864 octets de `Float32`, ou 1 848,5 Kio (les « 1,85 Mo » de LOAD-13).
+   - Le Spark donne le même sha256 : la synthèse ne dépend ni de l'ordre de construction ni du système.
+   - Aucun fichier du jeu n'est touché : rien n'est branché.
+2. **La plus longue tranche baisse de 44 à 46 % au calme**, ce qui est l'« environ −45 % » attendu. Elle baisse de
+   49 à 55 % sous charge et de 48 % sur le Spark.
+   - Au calme, avec FSchedule, aucune tranche ne dépasse 16,7 ms, contre 1 ou 2 lots sur 17 aujourd'hui. Dans la
+     pire passe sous charge, 3 ou 4 tranches dépassent 16,7 ms (la plus longue de 20,2 à 22,5 ms), contre 4 lots
+     (le plus long de 40,0 à 42,0 ms).
+   - Le total ne change pas (rapport de 1,00 à 1,03) : l'ordonnanceur étale le travail, il ne le réduit pas.
+3. **Le seuil de 32 ms du lot 07 T8 tient.** La tâche la plus longue fait 8,4 à 9,3 ms au calme (médianes des
+   passes), soit une marge de 3,4 à 3,8. Dans la pire passe sous charge, elle va jusqu'à 20,6 ms : la marge est
+   encore de 1,55.
+4. **Ce qui borne la tranche, c'est le tampon indivisible le plus lourd.**
+   - Le plus lourd est `break:glass` (8,4 ms par variante au calme), devant `break:metal` (7,7 ms). Aujourd'hui, le
+     lot le plus lourd est `impact:glass` et `break:glass` (18,1 ms), devant `impact:metal` et `break:metal`
+     (16,7 ms).
+   - Une tranche de B peut dépasser la tâche la plus longue d'au plus 2 ms. Toutes les tâches ont le coût estimé
+     de 2 : un tampon lourd part donc tant qu'il reste 2 ms, y compris après un tampon léger (9,8 ms de tranche pour
+     8,4 ms de tâche).
+   - Pour descendre sous 4 ms, il faudrait découper `synthesize` (STAB-07). C'est hors du périmètre.
+5. **Plus de tranches, plus courtes.** FSchedule fait 17 à 20 pompes au calme pour toute la banque, contre 17 lots
+   aujourd'hui, et 22 à 27 sous charge. Ce nombre suit la vitesse de la machine : c'est le principe de la file
+   « image ».
+6. **Le plafond de pompe pendant le chargement** (point 12). Une passe à part le mesure, hors banc
+   (`preuves/module-boucle/etape-8-plafond.mjs`, protocole B, 5 répétitions alternées, 3 passes sous une charge
+   de 2,8) :
+
+   | Plafond | Tranches | Plus longue (ms) | Au-delà de 16,7 ms | Images à 60 Hz, une pompe par image |
+   |---|---|---|---|---|
+   | `pump(4)` | 17 à 20 | 9,8 à 10,0 (9,7 à 11,1) | 0 | 17 à 20, soit 0,28 à 0,33 s |
+   | `pump(8)` | 9 à 11 | 13,3 à 13,5 (10,5 à 13,7) | 0 | 9 à 11 |
+   | `pump(12)` | 7 | 13,3 à 13,4 (13,2 à 14,4) | 0 | 7, soit 0,12 s |
+
+   Le total (73 ms) et le PCM ne changent pas. Sur ce M5, un plafond de 12 ms construit la banque en 7 images au
+   lieu de 18, sans aucune tranche au-delà d'une image à 60 Hz.
+7. **Les repères ne se reproduisent pas tous.**
+   - La pré-mesure du chef de lot (même M5) est reproduite par les passes au calme.
+   - Le repère du §7.8 de la mission (A à 24 à 28 ms ; B à 21 ou 22 tranches et 11 ms) correspond au régime
+     chargé de ce Mac, pas à son régime au calme.
+   - STAB-07 donnait 52 à 86 ms aujourd'hui et 28 à 32 ms avec le prototype, sur la 0.8.0 et une autre machine.
+     Les chiffres d'ici sont 2,5 à 4,8 fois plus petits. Le rapport reste du même ordre : STAB-07 annonçait −55 à
+     −67 %.
+   - LOAD-13 donnait des lots de 110 à 177 ms et 559 à 764 ms au total, soit 5 à 10 fois les chiffres d'ici. Il a
+     mesuré sous `node:vm` (`bancs/load/music.mjs`, lignes 11 et 12 : `vm.createContext`, puis `vm.runInContext`),
+     à l'horloge murale. Or ce contexte ralentit le code de 4,5 à 9 fois (MASTER-PROMPT §4) : cela explique
+     l'essentiel de l'écart.
+8. **Limites de la mesure.**
+   - Node seulement : `warmBank` appelle aussi `ctx.createBuffer` et copie le PCM dans le tampon WebAudio. Ce coût
+     n'est compté ni dans A ni dans B.
+   - Sur ce Mac, le temps CPU d'un même travail varie d'un facteur 2,2 d'une passe à l'autre (charge, type de
+     cœur). Seuls les rapports appariés d'une même passe se comparent.
+   - Sur le Spark, l'horloge du fil avance par pas de 1 ms (comptage au tic), d'où les valeurs rondes.
+   - `process.threadCpuUsage()` coûte 2,2 µs par appel sur le Mac et 0,19 µs sur le Spark. Une construction B en
+     fait 209 à 219 (trois par tâche, une par pompe), soit moins de 0,5 ms en tout, comptées dans les tranches ; une
+     construction A en fait 34.
+9. **À relancer au raccord si `audio.js` change** (lot 11, recettes d'armes de FEEL-06). Le banc mesure
+   l'`audio.js` de la base, dont le sha256 (`4b36fde2…`) est en tête du JSON. Le nombre de tampons suit
+   `effectNames`.
+
 ## 5. Plan de raccord, non appliqué
 
 Rien de ce qui suit n'est appliqué : aucun fichier existant n'est modifié, et FLoop et FSchedule ne sont ni dans
@@ -1312,18 +1439,26 @@ chargement (`game.js:271`).
   `finish()` (démarrage des moteurs, `pcmReady`) tourne après la dernière. `audio.js` étant un module FERRO,
   l'ordonnanceur lui est passé en paramètre (par exemple `audio.prepare(n,{schedule:sched})`) ; sans ordonnanceur, le
   chemin reste celui d'aujourd'hui.
-- La plus longue tranche devient celle du tampon le plus lourd, indivisible tant que `synthesize` n'est pas découpée.
+- La plus longue tranche devient celle du tampon le plus lourd, indivisible tant que `synthesize` n'est pas découpée :
+  `break:glass`, 8,4 ms au calme sur le Mac M5, et 10 ms sur le Spark (4.6).
 - Réserve 1 de la contre-vérification de STAB-07 : cette pré-synthèse tourne derrière l'écran de chargement. Le
   découpage rend la barre plus fluide, pas la partie.
-- Pendant le chargement, le plafond de 4 ms étalerait la pré-synthèse sur environ (durée totale / 4 ms) images : plus
-  d'une seconde de chargement en plus à 60 Hz (estimation, non mesurée). L'image est presque vide (`frame()` sort à
-  `:789`) : un plafond plus haut, par exemple `FSchedule.budget(P,travail,12)`, garde la barre animée sans allonger le
-  chargement.
+- **Plafond pendant le chargement**, mesuré en Node (4.6, point 6). Avec `pump(4)`, il faut 17 à 20 pompes pour toute
+  la banque, soit 0,28 à 0,33 s à 60 Hz avec une pompe par image. Avec `pump(12)`, il en faut 7, soit 0,12 s, et la
+  plus longue tranche fait 13,3 à 14,4 ms, sous une image à 60 Hz. L'image de chargement est presque vide (`frame()`
+  sort à `:789`) : un plafond de 12 ms, `FSchedule.budget(P,travail,12)`, garde la barre animée sans allonger le
+  chargement. L'estimation d'avant l'étape 8 (« plus d'une seconde en plus ») partait des totaux de LOAD-13, mesurés
+  sous `node:vm`.
 - Le PCM doit rester identique au bit près (`checks/audio.test.mjs`, `checks/music.test.mjs`) : l'ordre de
-  construction est indifférent si chaque synthèse est pure (LOAD-13).
-- Repères du §7.8 de la mission (Mac, main 0.8.1) : aujourd'hui 17 tranches, la plus longue de 24 à 28 ms ; avec
-  FSchedule, 21 à 22 tranches, la plus longue de 11 ms. Ils ne sont pas mesurés ici : l'étape 8 (banc audio,
-  facultative) n'est pas faite.
+  construction est indifférent si chaque synthèse est pure (LOAD-13). Le banc le vérifie : même sha256 dans les deux
+  ordres, sur le Mac comme sur le Spark (4.6, point 1).
+- Mesuré à l'étape 8 (4.6), sur le Mac M5 au calme : aujourd'hui, 17 tranches, la plus longue de 18,0 à 21,1 ms ;
+  avec FSchedule, 17 à 20 tranches, la plus longue de 9,7 à 11,4 ms, pour le même total (73 à 77 ms). L'écart est de
+  −44 à −46 %. Les repères du §7.8 de la mission (24 à 28 ms ; 21 ou 22 tranches et 11 ms) sont ceux du même Mac
+  sous charge.
+- Le coût estimé de 2 ms, le même pour tous, laisse un tampon lourd suivre un tampon léger dans la même pompe : la
+  tranche dépasse alors la tâche d'au plus 2 ms (9,8 ms de tranche pour 8,4 ms de tâche). Un coût par tampon (plus
+  lourd pour `break:*`) ne gagnerait que ces 2 ms, derrière l'écran de chargement : on garde le coût de 2.
 
 ### 5.13 Ce qui reste au dt d'affichage
 
@@ -1437,10 +1572,12 @@ Corrections proposées, sans baisser aucune valeur attendue (calcul, `fixes` dan
 
    L'interpolation garde le mouvement fluide dans tous les cas ; ce sont la latence et la régularité du travail par
    image qui changent (question 9).
-7. **La file « image » ne coupe jamais une tâche** : la plus longue tâche indivisible borne l'image (pour la
-   pré-synthèse, le tampon le plus lourd).
+7. **La file « image » ne coupe jamais une tâche** : la plus longue tâche indivisible borne l'image. Pour la
+   pré-synthèse, c'est le tampon le plus lourd, `break:glass` : 8,4 ms au calme sur le Mac M5, jusqu'à 20,6 ms sous
+   charge. Une tranche peut y ajouter jusqu'à 2 ms d'un tampon léger (4.6).
 8. **Mesures de CPU sur une machine partagée** (Mac, charge de 2 à 5) : un facteur 3 entre des exécutions identiques
-   (4.2). Les rapports de CPU de 4.2 ne sont qu'une information.
+   (4.2). Les rapports de CPU de 4.2 ne sont qu'une information. Au banc audio (4.6), le temps CPU du fil d'un même
+   travail varie d'un facteur 2,2 d'une passe à l'autre ; seuls les rapports appariés d'une même passe se comparent.
 9. **Rattrapage borné à 5 pas** : sous 12 images par seconde, le jeu ralentit (le temps abandonné est compté) ;
    aujourd'hui, il ralentit sous 8,3 images par seconde (dt borné à 0,12 s).
 10. **Réparation de la navigation** : 46 080 cellules par seconde simulée partout ; sur un écran 144 Hz, 2,4 fois moins
@@ -1585,5 +1722,23 @@ puis ceux des notes d'étape (`preuves/module-boucle/`), puis ceux de cette éta
   72 i/s (limite 4).
 - Invariant 3 du §4.6 (« |dilatation| ≤ un pas + 1 % du temps réel ») : vrai sur les 21 motifs, mais pas garanti par
   l'algorithme, dont l'hystérésis garde le verrou jusqu'à 2 % (limite 13, question 3).
-- La preuve du lot 07 T8 (plus longue tâche de pré-synthèse sous 32 ms) n'est pas faite ici : le banc audio (étape 8,
-  facultative) n'est pas lancé.
+- La preuve du lot 07 T8 (plus longue tâche de pré-synthèse sous 32 ms) est faite à l'étape 8 (4.6), sans rien
+  brancher.
+
+**De l'étape 8** (banc audio, 4.6).
+- Lot 07 T8, preuve exigée : « plusLongueTacheMs ≤ 32 ms (vs 66-86 ms actuel) ». Avec FSchedule, la tâche la plus
+  longue fait 8,4 à 9,3 ms au calme sur le Mac M5, et jusqu'à 20,6 ms sous charge. « 66-86 ms actuel » ne se
+  reproduit pas : les lots actuels font 18,0 à 21,1 ms au calme, et 22,8 à 42,0 ms sous charge.
+- §7.8 de la mission : 3 répétitions. Le banc en fait 5, en alternant A et B, pour suivre la règle du chantier (au
+  moins cinq répétitions, appariées et alternées) ; les trois premières sont celles de la fiche.
+- §7.8 de la mission, repère « A fait 17 tranches, la plus longue de 24 à 28 ms ; B fait 21 à 22 tranches, la plus
+  longue de 11 ms » (Mac, main 0.8.1). Ce sont les chiffres du même Mac sous charge. Au calme : 18,0 à 21,1 ms pour A
+  ; 17 à 20 tranches et 9,7 à 11,4 ms pour B.
+- STAB-07 (52 à 86 ms, puis 28 à 32 ms avec le prototype) et LOAD-13 (lots de 110 à 177 ms, 559 à 764 ms au total)
+  ont mesuré la 0.8.0, sur une autre machine. LOAD-13 l'a fait de plus sous `node:vm` (`bancs/load/music.mjs`, lignes
+  11 et 12), à l'horloge murale. LOAD-13 donne `break:metal` comme l'effet le plus lourd ; ici, c'est `break:glass`
+  (8,4 ms par variante, contre 7,7 ms), comme le dit STAB-07 (« un seul tampon, break:glass »).
+- Plan de raccord, point 12 : l'estimation « plus d'une seconde de chargement en plus à 60 Hz » avec un plafond de
+  4 ms partait des totaux de LOAD-13. Mesuré : 17 à 20 pompes, soit 0,28 à 0,33 s à 60 Hz ; et 7 pompes avec un
+  plafond de 12 ms (5.12).
+- Sur le Spark, l'horloge du fil (`process.threadCpuUsage()`) avance par pas de 1 ms : ses durées sont arrondies.
