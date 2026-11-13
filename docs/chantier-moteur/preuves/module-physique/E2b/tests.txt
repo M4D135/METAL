@@ -1,0 +1,78 @@
+# 2026-11-13 10:19, Mac, v24.18.0, charge 2.75 4.13 4.08
+$ node --test checks/fphysics.test.mjs
+✔ P01 Chargement : un seul global FPhysics, matières gelées, chargement vm (5.252958ms)
+✔ P02 Source : taille, motifs interdits, membres de Math, blocs TRIG (11.801458ms)
+ℹ src/physics.js : 63989 octets
+ℹ au-dessus de la cible de 60 000 octets : 63989
+ℹ 1 bloc(s) TRIG, 79 appels à Math vérifiés
+✔ P03 Angles : quaternions unitaires, matrice du jeu, aller-retour, blocage de cardan (1.956625ms)
+ℹ 1 000 triplets : |q| - 1 ≤ 3.33e-16, matrice ≤ 8.88e-16, aller-retour ≤ 4.22e-15
+ℹ blocage de cardan ry = 1.5708 : matrice 1.66e-16, aller-retour 1.49e-8
+ℹ blocage de cardan ry = -1.5708 : matrice 1.66e-16, aller-retour 1.11e-16
+✔ P04 Création : validation, réglages par défaut, empreinte (6.607084ms)
+ℹ 58 jeux d'options invalides refusés par TypeError
+ℹ empreinte par défaut sur B64 : 04031f9d ; 49 réglages, chacun change l'empreinte
+✔ P05 Chute libre exacte (1.574917ms)
+ℹ après 120 sous-pas : y = 3.950000000000008, vy = -11.999999999999973 (attendu 3,95 et -12, Euler semi-implicite)
+✔ P06 Repos (2.314708ms)
+ℹ au bout de 2 s : y = 0.394672 (enfoncement 5.33 mm), endormie au sous-pas 63
+✔ P11 Pile de 10 (stack10) (41.352708ms)
+ℹ NOSLEEP : dérive 30.69 mm à 1 s, 16.83 mm à 5 s, 23.39 mm à 10 s (seuil 30 mm ; prototype sur dalle 30,7 / 16,8 / 23,4)
+ℹ tassement du sommet à 10 s : 86.06 mm (attendu ≈ 85 mm)
+ℹ plus bas sommet : -9.24 mm de 1 s à 10 s (sous-pas 1113) ; -23.56 mm sur tout l'essai (sous-pas 21, chute initiale)
+ℹ réglages par défaut : toute la pile dort au sous-pas 123 (1.025 s)
+✔ P12 Pyramide de 55 (pyramid55) (260.696208ms)
+ℹ NOSLEEP : dérive 9.63 mm à 1 s, 16.39 mm à 5 s, 19.39 mm à 10 s (seuil 20 mm ; prototype sur dalle 9,6 / 16,4 / 19,4)
+ℹ plus bas sommet : -11.73 mm de 1 s à 10 s (sous-pas 195) ; -13.71 mm sur tout l'essai (sous-pas 16, chute initiale)
+ℹ réglages par défaut : tout dort au sous-pas 87 (0.725 s)
+✔ P19 Traversées (boîtes) : 800 tirs contre un mur de 12 cm à 120 Hz (147.349917ms)
+ℹ 14 m/s : 0/200 traversées ; centre le plus avancé à x = 4.9205 (face du mur à 5)
+ℹ 24 m/s : 0/200 traversées ; centre le plus avancé à x = 4.8785 (face du mur à 5)
+ℹ 30 m/s : 0/200 traversées ; centre le plus avancé à x = 4.9098 (face du mur à 5)
+ℹ 40 m/s : 0/200 traversées ; centre le plus avancé à x = 4.8276 (face du mur à 5)
+✔ P41 Même processus : chaque chaîne calculée deux fois est identique (790.239042ms)
+ℹ stack10 à 600 sous-pas : 5af686dc/283b179e
+ℹ pyramid55 à 600 sous-pas : f1a824a1/6a47467f
+ℹ rubble300 à 300 sous-pas : e9d0d0c3/3975d516
+ℹ blast200 à 300 sous-pas : 01b0c057/70fd66db
+✔ P45 Aller-retour JSON (656.714292ms)
+ℹ stack10 à 100 sous-pas (10 éveillés) : b219608d, puis 283b179e des deux côtés 300 sous-pas plus tard ; instantané de 7022 caractères, cache de 40 entrées
+ℹ pyramid55 à 1200 sous-pas (0 éveillés) : 6a47467f, puis 6a47467f des deux côtés 300 sous-pas plus tard ; instantané de 44043 caractères, cache de 492 entrées
+ℹ rubble300 à 240 sous-pas (298 éveillés) : 91d8970c, puis 9704212d des deux côtés 300 sous-pas plus tard ; instantané de 233899 caractères, cache de 1548 entrées
+ℹ blast200 à 300 sous-pas (199 éveillés) : bf7010a0, puis c24f1549 des deux côtés 300 sous-pas plus tard ; instantané de 120227 caractères, cache de 525 entrées
+✔ P46 snapshot ne modifie rien (59.672917ms)
+ℹ stack10 : 283b179e après 300 sous-pas, avec ou sans instantanés ; chaîne b4d9490c/283b179e
+ℹ pyramid55 : 6a47467f après 300 sous-pas, avec ou sans instantanés ; chaîne 0d00077d/6a47467f
+✔ Étape 2a — corps : description, poignées, body() (0.981958ms)
+✔ Étape 2a — attente, création endormie, réveil différé (3.756084ms)
+ℹ le dormeur est réveillé au sous-pas 30 par la caisse qui tombe ; réveils : 1
+✔ Étape 2a — setStatics : boîtes, dalle, empreinte, réveil (2.350334ms)
+ℹ caisse posée sur la boîte statique : y = 1.39466 ; sans le bit 1 du masque : y = -22.78
+✔ Étape 2a — pas de temps : erreurs, accumulateur, découpage (31.177542ms)
+ℹ step(0.2) : 8 sous-pas, 16 sous-pas jetés
+ℹ stack10, 300 sous-pas par 1/60, 1/120 et 1/30 : 283b179e, 283b179e, 283b179e
+✔ Étape 2a — restore refusé sans rien changer, zéros négatifs (8.881958ms)
+ℹ 13 instantanés corrompus refusés, hachage inchangé (b219608d)
+✔ Étape 2a — pose, matrix, chronométrage (8.134166ms)
+ℹ phaseMs avec une horloge factice : 15, 15, 15, 30
+ℹ stack10 à 60 sous-pas : 40 points, 10 paires, 10 tests, 10 éveillés
+✔ Étape 2b — impulse et setVelocity : un seul corps réveillé, vitesse gardée en attente, bornes (2.251209ms)
+ℹ impulsion (0, 6, 0) au coin de la barre : dv = 0, 0.5, 0 ; dw = -2.4000, 0.0000, 2.4000
+✔ Étape 2b — blast de base, sans occultation : portée, direction, plafond, réveil (5.393ms)
+ℹ corps 0 : point le plus proche à 0.6000 m, |dv| = 14.0000 m/s
+ℹ corps 1 : point le plus proche à 2.6000 m, |dv| = 9.4444 m/s
+ℹ corps 3 : point le plus proche à 2.4807 m, |dv| = 9.7758 m/s
+✔ Étape 2b — scènes rubble300 et blast200 : construction, chute, souffle (700.309709ms)
+ℹ rubble300 : tout dort à la fin du sous-pas 587 (4.89 s ; prototype 11,93 s) ; pic de 300 éveillés ; centre le plus bas 0.0395 ; 0 pièce(s) hors de la cour ; plus bas sommet au repos -12.77 mm
+ℹ blast200 : 29 barils, 171 cubes
+ℹ souffle : 198 corps poussés, 2 hors de portée ; tout dort 4.38 s après ; plus bas sommet -48.67 mm pendant les 15 s (P29, étape 7 : ≥ -15 mm)
+✔ Étape 2b — découpage du temps sur rubble300 (P44, première partie) (542.538292ms)
+ℹ rubble300, 300 sous-pas par 1/60, 1/120 et 1/30 : 3975d516, 3975d516, 3975d516
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3329.760625

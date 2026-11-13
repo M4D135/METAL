@@ -1,0 +1,26 @@
+# 2026-11-13 09:50, Mac, v24.18.0, charge 3.17 3.16 3.07 (relevée par uptime au départ)
+# Départ (commit 16820ec, avant E2b), bancs du prototype, sortie brute :
+$ uptime; node docs/chantier-moteur/bancs/phys/bench.mjs 3 120 1; node docs/chantier-moteur/bancs/phys-verif/tunnel2.mjs; node docs/chantier-moteur/bancs/phys/determinism.mjs; node docs/chantier-moteur/bancs/phys/phases.mjs rubble300 900; uptime
+ 9:50  up 1 day, 18:56, 2 users, load averages: 3.17 3.16 3.07
+stack10: 120 Hz x1 | awake steps 123/1200 | us/step mean 16.6 p50 16.1 p95 19.0 max 19.7 | awake mean 10 max 10 | contact pts mean 40 max 40 | SAT tests mean 9 | us per awake body-step 1.660 | us per contact pt 0.415 | all asleep at step 123 (1.02 s) | hashes fb79204a DETERMINISTIC
+   final pose error: horizontal max 24.33 mm, vertical max 84.87 mm, max tilt 0.156 deg
+pyramid55: 120 Hz x1 | awake steps 92/1200 | us/step mean 135.4 p50 134.4 p95 145.3 max 148.2 | awake mean 55 max 55 | contact pts mean 518 max 549 | SAT tests mean 135 | us per awake body-step 2.461 | us per contact pt 0.261 | all asleep at step 92 (0.77 s) | hashes 6d172292 DETERMINISTIC
+   final pose error: horizontal max 10.62 mm, vertical max 65.26 mm, max tilt 0.400 deg
+rubble300: 120 Hz x1 | awake steps 1432/1800 | us/step mean 431.0 p50 448.0 p95 487.3 max 525.7 | awake mean 289 max 300 | contact pts mean 1460 max 1590 | SAT tests mean 1055 | us per awake body-step 1.493 | us per contact pt 0.295 | all asleep at step 1432 (11.93 s) | hashes 5bc16ddf DETERMINISTIC
+   final: centre y min 0.036 max 1.468, bodies escaped or under ground 0
+blast200: 120 Hz x1 | awake steps 676/1500 | us/step mean 127.0 p50 142.1 p95 225.1 max 248.4 | awake mean 119 max 200 | contact pts mean 451 max 813 | SAT tests mean 153 | us per awake body-step 1.063 | us per contact pt 0.282 | all asleep at step 849 (7.08 s) | hashes 3fa55997 DETERMINISTIC
+   final: centre y min 0.294 max 3.001, bodies escaped or under ground 0
+fit (min-filtered, 2243 steps): us/step = 0.315*awake + 0.156*contactPts + 0.107*satTests ; mean abs error 4.1 %
+120 Hz x1, mur de 12 cm (epaisseur minimale des murs de METAL), 14 m/s: 0/200 traversees
+120 Hz x1, mur de 12 cm (epaisseur minimale des murs de METAL), 24 m/s: 0/200 traversees
+120 Hz x1, mur de 12 cm (epaisseur minimale des murs de METAL), 30 m/s: 0/200 traversees
+120 Hz x1, mur de 12 cm (epaisseur minimale des murs de METAL), 40 m/s: 0/200 traversees
+60 Hz x2, mur de 12 cm (epaisseur minimale des murs de METAL), 14 m/s: 0/200 traversees
+60 Hz x2, mur de 12 cm (epaisseur minimale des murs de METAL), 24 m/s: 1/200 traversees
+60 Hz x2, mur de 12 cm (epaisseur minimale des murs de METAL), 30 m/s: 0/200 traversees
+60 Hz x2, mur de 12 cm (epaisseur minimale des murs de METAL), 40 m/s: 2/200 traversees
+stack10:37d0ca59/fb79204a pyramid55:56c8b99b/6d172292 rubble300:170702f6/51f34c6c blast200:fe961b81/58e47dd1
+rubble300 rep 0 awake steps 900 ms/awake-step 0.471 collide 0.216 prepare 0.036 solve 0.200 finish 0.018 | avg awake 291 contacts 1359 tests 984
+rubble300 rep 1 awake steps 900 ms/awake-step 0.526 collide 0.244 prepare 0.042 solve 0.219 finish 0.020 | avg awake 291 contacts 1359 tests 984
+rubble300 rep 2 awake steps 900 ms/awake-step 0.468 collide 0.207 prepare 0.040 solve 0.203 finish 0.017 | avg awake 291 contacts 1359 tests 984
+ 9:50  up 1 day, 18:56, 2 users, load averages: 2.99 3.12 3.06

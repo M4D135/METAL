@@ -169,8 +169,9 @@
     // Settings read inside the step, copied once (config is a plain object: a number read from it is a boxed
     // value, and a boxed input can make the optimiser box the floats it meets): [14] margin; [15] maxLinear;
     // [16] maxAngular; [17] pushout; [18] restitutionThreshold; [19] sleepLinear^2; [20] sleepAngular^2;
-    // [21] sleepSteps (a float: NOSLEEP gives 1.2e11 sub-steps).
-    const SCR=new Float64Array(22),ITER=C.iterations,RELAX=C.relaxIterations,MAXSUB=C.maxSubsteps;
+    // [21] sleepSteps (a float: NOSLEEP gives 1.2e11 sub-steps). Actions (outside the step): [22] [23] [24] world point
+    // and [25] [26] [27] impulse of push().
+    const SCR=new Float64Array(28),ITER=C.iterations,RELAX=C.relaxIterations,MAXSUB=C.maxSubsteps;
     // Integer scratch: [0] [1] [2] [3] cells x0, x1, z0, z1 of the last cellRange; [4] [5] used cells and
     // [6] [7] entries of the body grids 0 and 1.
     const ISCR=new Int32Array(8);
@@ -378,6 +379,64 @@
     }
     // Wake one body (never a whole island).
     function wake(i){FL[i]&=~ASLEEP;ST[i]=0;AT[i]=0;FN[i]=0;const p=i*3;RP[p]=P[p];RP[p+1]=P[p+1];RP[p+2]=P[p+2];stats.wakes++;stats.sleeping--;restDirty=true;}
+
+    // ---- Actions (outside the step, no allocation). A pending body only has its kept velocity changed.
+    // Speed caps: |v| <= maxLinear and |w| <= maxAngular (end of each sub-step, and after every action, so that a
+    // snapshot taken between two steps always restores).
+    function cap(i){
+      const v=i*6,ml=SCR[15],ma=SCR[16],l2=V[v]*V[v]+V[v+1]*V[v+1]+V[v+2]*V[v+2],w2=V[v+3]*V[v+3]+V[v+4]*V[v+4]+V[v+5]*V[v+5];
+      if(l2>ml*ml){const k=ml/Math.sqrt(l2);V[v]*=k;V[v+1]*=k;V[v+2]*=k;}
+      if(w2>ma*ma){const k=ma/Math.sqrt(w2);V[v+3]*=k;V[v+4]*=k;V[v+5]*=k;}
+    }
+    // Impulse SCR[25..27] at the world point SCR[22..24] (prototype impulseAt): V += J*IM, W += IW*((p - P) x J), caps.
+    function push(i){
+      const p=i*3,v=i*6,im=IM[i],jx=SCR[25],jy=SCR[26],jz=SCR[27],rx=SCR[22]-P[p],ry=SCR[23]-P[p+1],rz=SCR[24]-P[p+2];
+      const tx=ry*jz-rz*jy,ty=rz*jx-rx*jz,tz=rx*jy-ry*jx;
+      V[v]+=jx*im;V[v+1]+=jy*im;V[v+2]+=jz*im;
+      V[v+3]+=IW[v]*tx+IW[v+1]*ty+IW[v+2]*tz;V[v+4]+=IW[v+1]*tx+IW[v+3]*ty+IW[v+4]*tz;V[v+5]+=IW[v+2]*tx+IW[v+4]*ty+IW[v+5]*tz;
+      cap(i);
+    }
+    // Explicit wake of an action: a sleeper wakes alone; an awake body restarts its sleep count (prototype wake).
+    function rouse(i){if(FL[i]&ASLEEP)wake(i);else ST[i]=0;}
+    const finite6=(a,b,c,d,e,f)=>finite(a)&&finite(b)&&finite(c)&&finite(d)&&finite(e)&&finite(f);
+    // Row of the target of impulse or setVelocity (live, dynamic, not lost), or 0; non-finite numbers throw.
+    function target(where,h,a,b,c,d,e,f){
+      if(!finite6(a,b,c,d,e,f))wrong(where,'the six numbers after the handle must be finite');
+      const i=slot(h);return i&&!(FL[i]&(KINEMATIC|LOST))?i:0;
+    }
+    // Impulse (jx, jy, jz) at the world point (px, py, pz); the body wakes. false: invalid handle, kinematic or lost.
+    function impulse(h,px,py,pz,jx,jy,jz){
+      const i=target('impulse',h,px,py,pz,jx,jy,jz);if(!i)return false;
+      SCR[22]=px;SCR[23]=py;SCR[24]=pz;SCR[25]=jx;SCR[26]=jy;SCR[27]=jz;push(i);rouse(i);return true;
+    }
+    // Linear and angular velocities (world frame, capped); the body wakes. false as for impulse.
+    function setVelocity(h,vx,vy,vz,wx,wy,wz){
+      const i=target('setVelocity',h,vx,vy,vz,wx,wy,wz);if(!i)return false;
+      const v=i*6;V[v]=vx+0;V[v+1]=vy+0;V[v+2]=vz+0;V[v+3]=wx+0;V[v+4]=wy+0;V[v+5]=wz+0;cap(i);rouse(i);return true;
+    }
+    // Radial blast (prototype explode), for each live, active, dynamic body that is not lost, by increasing index: at the
+    // body point nearest to the centre (distance d < radius), the impulse strength*(1 - d/radius), capped at maxDv times
+    // the physical mass, along (body centre - centre + (0, 0.35, 0)) normalised; the body wakes alone. Returns the bodies
+    // pushed. occlude (static boxes that shelter a body) comes with module step 7: until then every body in range is pushed.
+    function blast(x,y,z,radius,strength,maxDv=14,occlude=true){
+      if(!finite6(x,y,z,radius,strength,maxDv)||radius<0||strength<0||maxDv<0)wrong('blast','centre, radius, strength and maxDv must be finite, the last three >= 0');
+      if(typeof occlude!=='boolean')wrong('blast','occlude must be a boolean');
+      let n=0;
+      for(let i=1;i<top;i++){
+        if((FL[i]&(ALIVE|PENDING|KINEMATIC|LOST))!==ALIVE)continue;
+        const p=i*3,r=i*9,hx=H[p],hy=H[p+1],hz=H[p+2],dx=x-P[p],dy=y-P[p+1],dz=z-P[p+2];
+        // Nearest point of the box: the centre in the local frame, clamped to the collision half-sizes.
+        let lx=dx*R[r]+dy*R[r+3]+dz*R[r+6],ly=dx*R[r+1]+dy*R[r+4]+dz*R[r+7],lz=dx*R[r+2]+dy*R[r+5]+dz*R[r+8];
+        lx=lx>hx?hx:lx<-hx?-hx:lx;ly=ly>hy?hy:ly<-hy?-hy:ly;lz=lz>hz?hz:lz<-hz?-hz:lz;
+        const ax=P[p]+R[r]*lx+R[r+1]*ly+R[r+2]*lz,ay=P[p+1]+R[r+3]*lx+R[r+4]*ly+R[r+5]*lz,az=P[p+2]+R[r+6]*lx+R[r+7]*ly+R[r+8]*lz;
+        const d=Math.sqrt((ax-x)*(ax-x)+(ay-y)*(ay-y)+(az-z)*(az-z));if(d>=radius)continue;
+        let ex=P[p]-x,ey=P[p+1]-y+.35,ez=P[p+2]-z;const l=Math.sqrt(ex*ex+ey*ey+ez*ez);
+        if(l<1e-6){ex=0;ey=1;ez=0;}else{ex/=l;ey/=l;ez/=l;}
+        let j=strength*(1-d/radius);const c=maxDv/IM[i];if(j>c)j=c;
+        SCR[22]=ax;SCR[23]=ay;SCR[24]=az;SCR[25]=ex*j;SCR[26]=ey*j;SCR[27]=ez*j;push(i);rouse(i);n++;
+      }
+      return n;
+    }
 
     // ---- Step: whole sub-steps of tick seconds through an accumulator.
     function step(dt){
@@ -660,14 +719,7 @@
       }
     }
     // Velocity caps again after the bounce: |v| <= maxLinear and |w| <= maxAngular at the end of each sub-step.
-    function clamp(na){
-      const ml=SCR[15],ma=SCR[16],ml2=ml*ml,ma2=ma*ma;
-      for(let n=0;n<na;n++){
-        const v=AL[n]*6,l2=V[v]*V[v]+V[v+1]*V[v+1]+V[v+2]*V[v+2],w2=V[v+3]*V[v+3]+V[v+4]*V[v+4]+V[v+5]*V[v+5];
-        if(l2>ml2){const k=ml/Math.sqrt(l2);V[v]*=k;V[v+1]*=k;V[v+2]*=k;}
-        if(w2>ma2){const k=ma/Math.sqrt(w2);V[v+3]*=k;V[v+4]*=k;V[v+5]*=k;}
-      }
-    }
+    function clamp(na){for(let n=0;n<na;n++)cap(AL[n]);}
     // The points of this sub-step become the cache of the next one (-0 normalised); emptied only by setStatics and
     // restore, never when nothing is active.
     function cacheStore(){
@@ -789,7 +841,7 @@
     }
 
     const w={config:C,fingerprint:fp,staticsHash:'',stats,phaseMs:PH,setStatics,updateStatics:setStatics,addBody,valid,isAsleep,isLost,body,
-      pose,matrix,step,snapshot,restore,hash};
+      impulse,setVelocity,blast,pose,matrix,step,snapshot,restore,hash};
     setStatics([],[]);
     return w;
   }

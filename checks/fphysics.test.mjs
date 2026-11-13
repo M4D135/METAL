@@ -2,7 +2,7 @@
 // Not in npm test until the module is wired into the game (see docs/chantier-moteur/modules/physique.md, §6).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {source, load, loadVm, lcg, B64, NOSLEEP, SCENES, runChain, crate, drift, lowest} from './fphysics-scenes.mjs';
+import {source, load, loadVm, lcg, B64, NOSLEEP, SCENES, runChain, crate, drift, lowest, twin, chain, hashes, HASH_SCENES, YARD, WALLS30} from './fphysics-scenes.mjs';
 
 const SMALL = Object.freeze({capacity: 8, maxContacts: 256, maxStatics: 16, maxJoints: 4});
 
@@ -310,29 +310,71 @@ test('P12 Pyramide de 55 (pyramid55)', t => {
   assert.ok(at > 0 && at < 1200, 'asleep before 10 s');
 });
 
-// ---- Determinism and saving (module step 2a: bodies and cache) ----
+// ---- Tunnelling (module step 2b: boxes; the sphere part comes with step 3) ----
+
+test('P19 Traversées (boîtes) : 800 tirs contre un mur de 12 cm à 120 Hz', t => {
+  // bancs/phys-verif/tunnel2.mjs at 120 Hz x 1: wall x 5..5.12, small spinning boxes at 14 to 40 m/s, 120 sub-steps.
+  const F = load(), wall = [{minX: 5, maxX: 5.12, minY: 0, maxY: 6, minZ: -6, maxZ: 6}], through = [];
+  for (const s of [14, 24, 30, 40]) {
+    let n = 0, far = -Infinity;
+    for (let k = 0; k < 200; k++) {
+      const w = F.create({bounds: B64, ...SMALL, ground: 0, maxLinear: 60}), h = 0.05 + 0.01 * (k % 9);
+      w.setStatics(wall, []);
+      const b = w.addBody({size: [2 * h, 2 * h * (1 + k % 3), 2 * h], pos: [3.5 - 0.0137 * k, 1.5 + 0.1 * (k % 7), -4 + 0.04 * k],
+        quat: [0.1 * (k % 4), 0.2, 0.05 * (k % 3), 0.97], mass: 2, friction: 0.5, restitution: 0.2, vel: [s, 1, (k % 11 - 5) * 0.6], ang: [3 * (k % 5), 7, 0]});
+      for (let i = 0; i < 120; i++) w.step(1 / 120);
+      const x = w.body(b).pos[0];
+      if (x > 5.06) n++;
+      if (x > far) far = x;
+    }
+    through.push(n);
+    t.diagnostic(`${s} m/s : ${n}/200 traversées ; centre le plus avancé à x = ${far.toFixed(4)} (face du mur à 5)`);
+  }
+  assert.deepEqual(through, [0, 0, 0, 0], 'no box goes through the 12 cm wall');
+});
+
+// ---- Determinism and saving (module steps 2a and 2b: bodies and cache) ----
+
+test('P41 Même processus : chaque chaîne calculée deux fois est identique', t => {
+  const F = load(), G = load(), plan = [['stack10', 600], ['pyramid55', 600], ['rubble300', 300], ['blast200', 300]];
+  assert.deepEqual(plan.map(p => p[0]), HASH_SCENES, 'the scenes of hashes() (mix comes with module step 10)');
+  const first = {};
+  for (const [name, steps] of plan) {
+    first[name] = chain(F, name, steps);
+    assert.match(first[name], /^[0-9a-f]{8}\/[0-9a-f]{8}$/);
+    assert.equal(chain(G, name, steps), first[name], name + ': same chain from a second load of the module');
+    t.diagnostic(`${name} à ${steps} sous-pas : ${first[name]}`);
+  }
+  const h = hashes(F, 300);
+  assert.deepEqual(Object.keys(h), HASH_SCENES);
+  assert.equal(h.rubble300, first.rubble300);
+  assert.equal(h.blast200, first.blast200, 'hashes() blasts blast200 at sub-step 60');
+  assert.notEqual(runChain(F, 'blast200', 300), first.blast200, 'the default scene blasts at 240');
+});
 
 test('P45 Aller-retour JSON', t => {
   const F = load();
-  for (const [name, steps] of [['stack10', 100], ['pyramid55', 1200]]) {
-    const {w, ids} = SCENES[name](F);
-    for (let i = 0; i < steps; i++) w.step(1 / 120);
+  for (const [name, steps] of [['stack10', 100], ['pyramid55', 1200], ['rubble300', 240], ['blast200', 300]]) {
+    const scene = SCENES[name](F), {w, ids, tick} = scene;
+    for (let i = 0; i < steps; i++) { if (tick) tick(i); w.step(1 / 120); }
     if (name === 'pyramid55') {
       assert.ok(ids.every(h => w.isAsleep(h)), 'pyramid55 is asleep at 1 200');
       assert.ok(w.snapshot().c.n > 0, 'the impulse cache is kept while everything sleeps');
     }
+    const awake = w.stats.awake;
+    if (name === 'rubble300' || name === 'blast200') assert.ok(awake >= 100, `${name}: in motion at ${steps} (${awake} awake)`);
     const text = JSON.stringify(w.snapshot()), snap = JSON.parse(text);
-    const w2 = F.create(w.config);
+    const w2 = twin(F, scene);
     assert.equal(w2.staticsHash, w.staticsHash, 'same statics');
     assert.notEqual(w2.hash(), w.hash());
     w2.restore(snap);
     assert.equal(w2.hash(), w.hash(), name + ': same hash after restore');
     assert.deepStrictEqual(w2.snapshot(), snap, name + ': same snapshot after restore');
     const before = w.hash();
-    for (let i = 0; i < 300; i++) { w.step(1 / 120); w2.step(1 / 120); }
+    for (let i = steps; i < steps + 300; i++) { if (tick) { tick(i); tick(i, w2); } w.step(1 / 120); w2.step(1 / 120); }
     assert.equal(w2.hash(), w.hash(), name + ': same hash 300 sub-steps later');
     if (name === 'pyramid55') assert.equal(w.hash(), before, 'a sleeping pyramid does not change');
-    t.diagnostic(`${name} à ${steps} sous-pas : ${before}, puis ${w.hash()} des deux côtés 300 sous-pas plus tard ; instantané de ${text.length} caractères, cache de ${snap.c.n} entrées`);
+    t.diagnostic(`${name} à ${steps} sous-pas (${awake} éveillés) : ${before}, puis ${w.hash()} des deux côtés 300 sous-pas plus tard ; instantané de ${text.length} caractères, cache de ${snap.c.n} entrées`);
   }
 });
 
@@ -537,4 +579,162 @@ test('Étape 2a — pose, matrix, chronométrage', t => {
   t.diagnostic(`stack10 à 60 sous-pas : ${st.contacts} points, ${st.manifolds} paires, ${st.tests} tests, ${st.awake} éveillés`);
   assert.ok(st.contacts >= 4 * 10 && st.manifolds === 10 && st.awake === 10 && st.bodies === 10);
   for (const [k, v] of Object.entries(st)) assert.ok(Number.isInteger(v), k);
+});
+
+// ---- Module step 2b: base actions (impulse, setVelocity, blast without shelter) and the scenes rubble300, blast200 ----
+
+// Expected change of an unrotated box (or of a cube) under the impulse j at the world point p (prototype impulseAt):
+// dv = j*im, dw = IL*((p - c) x j), IL = [3im/(hy²+hz²), 3im/(hx²+hz²), 3im/(hx²+hy²)] from the collision half-sizes.
+function kick(c, [hx, hy, hz], im, p, j) {
+  const rx = p[0] - c[0], ry = p[1] - c[1], rz = p[2] - c[2];
+  const il = [3 * im / (hy * hy + hz * hz), 3 * im / (hx * hx + hz * hz), 3 * im / (hx * hx + hy * hy)];
+  return {dv: j.map(v => v * im), dw: [il[0] * (ry * j[2] - rz * j[1]), il[1] * (rz * j[0] - rx * j[2]), il[2] * (rx * j[1] - ry * j[0])]};
+}
+// Point of a box body nearest to c (local position clamped to the collision half-sizes) and its distance to c.
+function nearest(w, h, c) {
+  const b = w.body(h), m = w.matrix(h), e = b.size.map(s => s / 2), d = [0, 1, 2].map(k => c[k] - b.pos[k]);
+  const l = [0, 1, 2].map(k => Math.max(-e[k], Math.min(e[k], d[0] * m[k] + d[1] * m[3 + k] + d[2] * m[6 + k])));
+  const p = [0, 1, 2].map(r => b.pos[r] + m[3 * r] * l[0] + m[3 * r + 1] * l[1] + m[3 * r + 2] * l[2]);
+  return {p, d: Math.hypot(p[0] - c[0], p[1] - c[1], p[2] - c[2])};
+}
+
+test('Étape 2b — impulse et setVelocity : un seul corps réveillé, vitesse gardée en attente, bornes', t => {
+  const F = load(), w = F.create({bounds: B64, ...SMALL, ground: 0});
+  const low = w.addBody({size: [0.8, 0.8, 0.8], pos: [0, 0.4, 0], mass: 30, asleep: true});
+  const top = w.addBody({size: [0.8, 0.8, 0.8], pos: [0, 1.2, 0], mass: 30, asleep: true});
+  const bar = w.addBody({size: [1, 0.5, 0.25], pos: [3, 0.25, 0], mass: 12, asleep: true});
+  const start = w.hash();
+  for (const h of [0, -1, 99, 4096 + top, 1.5, '2', null, undefined]) {
+    assert.equal(w.impulse(h, 0, 0, 0, 1, 0, 0), false, String(h));
+    assert.equal(w.setVelocity(h, 1, 0, 0, 0, 0, 0), false, String(h));
+  }
+  for (const bad of [NaN, Infinity, -Infinity, '1', undefined, null]) {
+    assert.throws(() => w.impulse(top, 0, 1.2, 0, bad, 0, 0), {name: 'TypeError', message: /^FPhysics\.impulse: /});
+    assert.throws(() => w.setVelocity(top, 0, 0, 0, 0, bad, 0), {name: 'TypeError', message: /^FPhysics\.setVelocity: /});
+  }
+  assert.equal(w.hash(), start, 'refused calls change nothing');
+  // At the centre: dv = J/m, no spin; the struck crate wakes alone, the crate under it stays asleep.
+  assert.equal(w.impulse(top, 0, 1.2, 0, 3, 0, 1.5), true);
+  let k = kick([0, 1.2, 0], [0.4, 0.4, 0.4], 1 / 30, [0, 1.2, 0], [3, 0, 1.5]);
+  assert.ok(gap(w.body(top).vel, k.dv) <= 1e-15 && gap(w.body(top).ang, k.dw) <= 1e-15, 'dv = J/m');
+  assert.ok(!w.isAsleep(top) && w.isAsleep(low) && w.isAsleep(bar), 'only the struck body wakes');
+  assert.deepEqual([w.stats.wakes, w.stats.sleeping], [1, 2]);
+  // Off the centre: spin IW (r x J).
+  assert.equal(w.impulse(bar, 3.5, 0.25, 0.125, 0, 6, 0), true);
+  k = kick([3, 0.25, 0], [0.5, 0.25, 0.125], 1 / 12, [3.5, 0.25, 0.125], [0, 6, 0]);
+  assert.ok(gap(w.body(bar).vel, k.dv) <= 1e-12 && gap(w.body(bar).ang, k.dw) <= 1e-12, `dw ${w.body(bar).ang} against ${k.dw}`);
+  t.diagnostic(`impulsion (0, 6, 0) au coin de la barre : dv = ${w.body(bar).vel.join(', ')} ; dw = ${w.body(bar).ang.map(v => v.toFixed(4)).join(', ')}`);
+  // An awake body only restarts its sleep count (prototype wake); no wake is counted.
+  const u = F.create({bounds: B64, ...SMALL, ground: 0}), c = crate(u, 0, 0.4, 0), row = c & 4095;
+  for (let i = 0; i < 30; i++) u.step(1 / 120);
+  assert.ok(!u.isAsleep(c) && u.snapshot().b.ST[row] > 0, 'awake, counting towards sleep');
+  assert.equal(u.impulse(c, 0, 0.4, 0, 1e-6, 0, 0), true);
+  assert.deepEqual([u.snapshot().b.ST[row], u.stats.wakes], [0, 0]);
+  // A pending body keeps the velocity for its activation.
+  const p = u.addBody({size: [0.8, 0.8, 0.8], pos: [-3, 2, 0], mass: 30});
+  assert.equal(u.setVelocity(p, 1, 0, 0, 0, 0.5, 0), true);
+  assert.equal(u.impulse(p, -3, 2, 0, 30, 0, 0), true);
+  let b = u.body(p);
+  assert.ok(b.pending && gap(b.vel, [2, 0, 0]) <= 1e-15 && gap(b.ang, [0, 0.5, 0]) <= 1e-15, 'still pending, velocity kept');
+  u.step(1 / 120);
+  b = u.body(p);
+  assert.ok(!b.pending && b.pos[0] > -3 + 1.9 / 120, `activated with its velocity: x = ${b.pos[0]}`);
+  // Caps (the same as at the end of a sub-step), -0 normalised: a snapshot taken between two steps restores exactly.
+  assert.equal(u.impulse(c, 0, 0.4, 0, 1e6, 0, 0), true);
+  assert.ok(Math.abs(Math.hypot(...u.body(c).vel) - 40) <= 1e-9, 'linear speed capped at maxLinear');
+  assert.equal(u.setVelocity(c, -0, -0, -0, 0, 0, -1e3), true);
+  b = u.body(c);
+  assert.ok(b.vel.every(v => Object.is(v, 0)), '-0 normalised');
+  assert.ok(Math.abs(Math.hypot(...b.ang) - 30) <= 1e-9, 'angular speed capped at maxAngular');
+  const v = F.create(u.config);
+  v.restore(JSON.parse(JSON.stringify(u.snapshot())));
+  assert.equal(v.hash(), u.hash(), 'same bits after a JSON round trip');
+});
+
+test('Étape 2b — blast de base, sans occultation : portée, direction, plafond, réveil', t => {
+  const F = load(), w = F.create({bounds: B64, ...SMALL, ground: 0}), A = {size: [0.8, 0.8, 0.8], mass: 30, asleep: true}, c = [0, 0.5, 0];
+  const near = w.addBody({...A, pos: [1, 0.4, 0]}), mid = w.addBody({...A, pos: [-3, 0.4, 0]}), far = w.addBody({...A, pos: [0, 0.4, 6.5]});
+  const turned = w.addBody({...A, pos: [0.5, 0.4, -3], rot: [0, 0.5, 0]}), pend = w.addBody({size: [0.8, 0.8, 0.8], mass: 30, pos: [0, 0.4, 2]});
+  const ids = [near, mid, far, turned, pend], before = ids.map(h => w.body(h)), start = w.hash();
+  for (const args of [[NaN, 0.5, 0, 6, 500], [0, 0.5, 0, -1, 500], [0, 0.5, 0, 6, -1], [0, 0.5, 0, 6, 500, -1], [0, 0.5, 0, 6, '500'], [0, 0.5, 0, 6, 500, 14, 'yes']])
+    assert.throws(() => w.blast(...args), {name: 'TypeError', message: /^FPhysics\.blast: /}, JSON.stringify(args));
+  assert.equal(w.hash(), start, 'refused calls change nothing');
+  assert.equal(w.blast(0, 0.5, 0, 6, 500), 3, 'near, mid and turned; far is out of range and pend is pending');
+  for (const [n, h] of ids.entries()) {
+    const b0 = before[n], b = w.body(h), dv = b.vel.map((x, i) => x - b0.vel[i]), dw = b.ang.map((x, i) => x - b0.ang[i]), {p, d} = nearest(w, h, c);
+    if (h === far || h === pend) {
+      assert.ok(dv.concat(dw).every(x => x === 0), 'untouched');
+      assert.equal(w.body(h).asleep, h === far);
+      continue;
+    }
+    let e = [b0.pos[0] - c[0], b0.pos[1] - c[1] + 0.35, b0.pos[2] - c[2]];
+    const l = Math.hypot(...e);
+    e = e.map(x => x / l);
+    const j = Math.min(500 * (1 - d / 6), 14 * 30), k = kick(b0.pos, [0.4, 0.4, 0.4], 1 / 30, p, e.map(x => x * j));
+    assert.ok(gap(dv, k.dv) <= 1e-12 && gap(dw, k.dw) <= 1e-12, `body ${n}: dv ${dv} against ${k.dv}`);
+    assert.ok(Math.hypot(...dv) <= 14 + 1e-12 && !b.asleep);
+    t.diagnostic(`corps ${n} : point le plus proche à ${d.toFixed(4)} m, |dv| = ${Math.hypot(...dv).toFixed(4)} m/s`);
+  }
+  assert.ok(Math.abs(Math.hypot(...w.body(near).vel) - 14) <= 1e-12, 'capped at maxDv = 14');
+  assert.equal(w.stats.wakes, 3);
+  // maxDv and occlude given; a centre inside a body pushes it straight up.
+  const u = F.create({bounds: B64, ...SMALL, ground: 0}), q = u.addBody({...A, pos: [1, 0.4, 0]}), r = u.addBody({...A, pos: [5, 0.4, 5]});
+  assert.equal(u.blast(0, 0.5, 0, 6, 500, 2, false), 1);
+  assert.ok(Math.abs(Math.hypot(...u.body(q).vel) - 2) <= 1e-12, 'maxDv caps the change of speed');
+  assert.equal(u.blast(5, 0.75, 5, 2, 30), 1);
+  const vr = u.body(r).vel;
+  assert.ok(vr[0] === 0 && vr[2] === 0 && Math.abs(vr[1] - 1) <= 1e-12, `straight up: ${vr}`);
+  for (let i = 0; i < 120; i++) { w.step(1 / 120); u.step(1 / 120); }
+  assert.ok([w, u].every(x => /^[0-9a-f]{8}$/.test(x.hash())) && Number.isFinite(w.body(near).pos[0]));
+});
+
+test('Étape 2b — scènes rubble300 et blast200 : construction, chute, souffle', t => {
+  const F = load(), r = SCENES.rubble300(F), w = r.w;
+  assert.deepEqual([w.stats.bodies, w.stats.pending, w.stats.statics, r.ids.length], [300, 300, 6, 300]);
+  assert.equal(r.statics, YARD);
+  r.ids.forEach((h, i) => {
+    const b = w.body(h), m = F.MATERIALS[i % 5];
+    assert.deepEqual([b.material, b.friction, b.restitution], [i % 5, m.friction, m.restitution], 'material i % 5');
+    assert.ok(b.originalMass >= 0.5 && b.originalMass <= 160 && b.mass === Math.min(Math.max(b.originalMass, 3), 120), 'masses');
+  });
+  // P22, first part: the whole heap sleeps before 8 s (provisional single-body wake until module step 6).
+  let at = -1, peak = 0;
+  for (let i = 1; i <= 960 && at < 0; i++) { w.step(1 / 120); peak = Math.max(peak, w.stats.awake); if (w.stats.sleeping === 300) at = i; }
+  const yMin = Math.min(...r.ids.map(h => w.body(h).pos[1])), out = r.ids.filter(h => w.body(h).pos.some((x, k) => k !== 1 && Math.abs(x) > 4)).length;
+  t.diagnostic(`rubble300 : tout dort à la fin du sous-pas ${at} (${(at / 120).toFixed(2)} s ; prototype 11,93 s) ; pic de ${peak} éveillés ; centre le plus bas ${yMin.toFixed(4)} ; ${out} pièce(s) hors de la cour ; plus bas sommet au repos ${mm(lowest(w, r.ids))}`);
+  assert.ok(at > 0, 'asleep before 8 s');
+  assert.ok(yMin > 0, 'no piece under the ground');
+  // blast200 without its tick (P29 a, first part): 240 sub-steps, then the blast of the scene.
+  const s = SCENES.blast200(F, {blastAt: -1}), x = s.w, centre = [0, 0.5, 0];
+  assert.deepEqual([x.stats.bodies, x.stats.statics, s.ids.length], [200, 5, 200]);
+  assert.equal(s.statics, WALLS30);
+  t.diagnostic(`blast200 : ${s.ids.filter(h => x.body(h).mass === 25).length} barils, ${s.ids.filter(h => x.body(h).mass !== 25).length} cubes`);
+  for (let i = 0; i < 240; i++) x.step(1 / 120);
+  const v0 = s.ids.map(h => x.body(h).vel), n = x.blast(0, 0.5, 0, 14, 900);
+  let pushed = 0, beyond = 0;
+  for (const [k, h] of s.ids.entries()) {
+    const b = x.body(h), dv = b.vel.map((v, i) => v - v0[k][i]), {d} = nearest(x, h, centre);
+    if (d >= 14) { beyond++; assert.ok(dv.every(v => v === 0), 'out of range: unchanged'); continue; }
+    pushed++;
+    assert.ok(dv[0] * b.pos[0] + dv[1] * (b.pos[1] - 0.5 + 0.35) + dv[2] * b.pos[2] > 0 && Math.hypot(...dv) <= 14 + 1e-9, 'outwards, at most 14 m/s');
+  }
+  assert.ok(n > 0 && pushed === n, `${n} bodies pushed`);
+  let low = Infinity, sleep = -1;
+  for (let i = 1; i <= 1800; i++) {
+    x.step(1 / 120);
+    low = Math.min(low, lowest(x, s.ids));
+    if (sleep < 0 && x.stats.sleeping === 200) sleep = i;
+  }
+  const outside = s.ids.filter(h => x.body(h).pos.some((v, k) => k !== 1 && Math.abs(v) >= 12.5)).length;
+  t.diagnostic(`souffle : ${n} corps poussés, ${beyond} hors de portée ; tout dort ${(sleep / 120).toFixed(2)} s après ; plus bas sommet ${mm(low)} pendant les 15 s (P29, étape 7 : ≥ -15 mm)`);
+  assert.equal(outside, 0, 'every centre inside the walls');
+  assert.ok(x.stats.sleeping === 200, 'all asleep 15 s after the blast');
+});
+
+test('Étape 2b — découpage du temps sur rubble300 (P44, première partie)', t => {
+  const F = load();
+  const out = [[1 / 60, 150], [1 / 120, 300], [1 / 30, 75]].map(([dt, n]) => { const s = SCENES.rubble300(F); for (let i = 0; i < n; i++) s.w.step(dt); return s.w.hash(); });
+  t.diagnostic(`rubble300, 300 sous-pas par 1/60, 1/120 et 1/30 : ${out.join(', ')}`);
+  assert.deepEqual(out, [out[1], out[1], out[1]]);
+  assert.equal(out[1], chain(F, 'rubble300', 300).slice(9), 'same as the chain at 300 sub-steps');
 });
