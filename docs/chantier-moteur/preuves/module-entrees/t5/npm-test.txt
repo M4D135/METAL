@@ -1,0 +1,32 @@
+Module entrées, T5 (étape 5) — npm test sur le Spark (outils/npm-test-spark.sh, copie de l'arbre de travail sous ~/metal-tests/), 13/11/2026
+Node v24.18.0, aarch64 ; durée 137 s (duration_ms 137310), 2 min 53 s avec la copie et l'attente
+(second passage, sur l'arbre final ; le premier, sur une version antérieure de checks/finput.test.mjs
+(sha256 951d2f99…, avant l'échappement de trois caractères invisibles d'une ligne de E39b),
+avait rendu les mêmes chiffres, les mêmes 8 échecs et 67 sur 67)
+
+# tests 470
+# suites 0
+# pass 462
+# fail 8
+# cancelled 0
+# skipped 0
+# todo 0
+
+not ok 108 - legacy seed 1, sector 0: exact pre-campaign world fingerprint
+not ok 109 - legacy seed 1, sector 1: exact pre-campaign world fingerprint
+not ok 110 - legacy seed 1, sector 2: exact pre-campaign world fingerprint
+not ok 111 - legacy seed 96, sector 0: exact pre-campaign world fingerprint
+not ok 112 - legacy seed 96, sector 1: exact pre-campaign world fingerprint
+not ok 113 - legacy seed 96, sector 2: exact pre-campaign world fingerprint
+not ok 114 - campaign mode is strictly opt-in and keeps historical clamping otherwise
+not ok 115 - the first three campaign worlds preserve historical geometry outside campaign supplies and loadout
+
+Référence (etat-initial.md, base 71eca61), étapes 2 à 4 (t2, t3 et t4/npm-test.txt) : 470 tests, 462 réussis,
+les mêmes 8 échecs de checks/campaign-world.test.mjs (arm64).
+checks/finput.test.mjs n'entre dans npm test qu'au raccord (package.json non modifié).
+npm test s'arrête au premier échec de la chaîne ; node checks/build.test.mjs, lancé à part : status PASS,
+html_bytes 812 696 (assemblage.txt).
+Sur la même copie du Spark (src/input.js sha256 40c4cdfc…, checks/finput.test.mjs sha256 1d9a917b…,
+checks/finput-fixture.mjs sha256 48ddf2e5…, les mêmes que sur le Mac) :
+node --test checks/finput.test.mjs checks/options.test.mjs → 67 tests, 67 réussis, 0 échec
+(54 de FInput, 13 de FOptions ; sur le Mac : tests.txt et banc-depart.txt).

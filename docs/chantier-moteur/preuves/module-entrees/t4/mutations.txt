@@ -1,0 +1,75 @@
+détectée — radial : pas de remise à l’échelle → E24, E25, E26, E27, E28, E29, E32
+détectée — radial : norme non bornée à 1 → E24, E25, E26, E27, E28, E32, E33, E36, E37
+détectée — radial : direction perdue → E24, E25, E26, E27, E28, E29, E32
+détectée — radial : -0 gardé → E24
+détectée — padStyle : PlayStation lue comme Xbox → E33
+détectée — getGamepads détaché de navigator → E33b
+détectée — getGamepads de la déclaration ignoré → E33
+détectée — lecture hors du try → E33, E33b
+détectée — entrée qui n’est pas un objet acceptée → E33
+détectée — manette connected === false lue → E33
+détectée — clé sans l’id → E33
+détectée — index : place dans la liste → E33
+détectée — index : sans repli sur la place → E33
+détectée — bouton en nombre ignoré → E33
+détectée — bouton : pressed ignoré → E34
+détectée — bouton : seuil .5 inclus → E34
+détectée — gâchettes lues comme des boutons → E30, E31, E33, E34, E36
+détectée — gâchettes : dernière manette au lieu du maximum → E30
+détectée — gâchettes : sans hystérésis → E30
+détectée — gâchettes : seuils inclus → E30
+détectée — activité : pressed ignoré → E35
+détectée — activité : toute valeur de bouton → E35
+détectée — activité : axe signé → E35
+détectée — activité : tous les axes → E35
+détectée — activité : appareil jamais manette → E33b, E35
+détectée — swapSticks ignoré → E37
+détectée — zones mortes échangées entre les rôles → E25, E26, E27, E28, E29, E32, E37
+détectée — stick : dernière manette au lieu de la plus forte → E32
+détectée — stick : première manette au lieu de la plus forte → E32
+détectée — rôle visée lu sur le stick de déplacement → E25, E26, E27, E28, E29, E32, E37
+détectée — axe non fini gardé → E33
+détectée — branchement : connected à chaque image → E33
+détectée — branchement : disconnected jamais rendu → E33
+détectée — branchement : manettes vues jamais mises à jour → E33
+détectée — branchement : fiches partagées avec l’état interne → E33
+détectée — branchement : standard toujours vrai → E33
+détectée — capture : Home capturé → E36
+détectée — capture : bouton déjà tenu capturé → E36
+détectée — capture : fronts de l’image gardés → E36
+détectée — capture : jamais finie → E36
+détectée — image calme jamais levée → E36 (relancée 1 fois)
+détectée — boutons de l’image précédente jamais retenus → E34b, E36
+détectée — valeur : sans zone morte → E31
+détectée — valeur : bouton ordinaire à 0 → E31
+détectée — valeur : premier bouton seulement → E31
+détectée — actions : manette sans règle des fronts → E30, E32, E33, E33b, E34, E34b, E36, E37
+détectée — actions : image calme ignorée → E36
+détectée — déplacement : avant négatif → E25, E32, E33, E36, E37
+détectée — course : jamais au bout du stick → E25, E36, E37
+détectée — course : seuil .90 → E25
+détectée — course : fronts dans l’image calme → E36
+détectée — visée : sans courbe → E26, E27, E28, E29, E32
+détectée — visée : maintien compté après la rampe → E28
+détectée — visée : maintien dès .90 → E28
+détectée — visée : surcroît aussi au tangage → E28
+détectée — visée : surcroît ignoré → E28
+détectée — visée : lookScale ignoré → E29
+détectée — visée : lookScale aussi au clavier → E29
+détectée — visée : lookScale non fini accepté → E29
+détectée — tangage : padInvertY ignoré → E27
+détectée — tangage : invertY de la souris → E27
+détectée — tangage : signe inversé → E27, E37
+détectée — configure : boutons tenus non repris → E34b
+détectée — configure : table pad des réglages ignorée → E34, E34b
+détectée — clear : boutons non relâchés → E36
+détectée — clear : déplacement manette gardé → E36
+détectée — clear : maintien de la visée gardé → E28
+détectée — clear : image suivante avec fronts → E36
+détectée — étape 3 — capture : résultat jamais rendu → E23, E36
+détectée — étape 3 — clear garde la capture → E23, E36
+détectée — étape 2 — clear garde le regard → E12
+détectée — étape 2 — clear garde les verrous → E12
+détectée — étape 2 — clear garde les doigts → E12
+module intact : tous les tests passent
+73 mutations détectées sur 73

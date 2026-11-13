@@ -1,0 +1,15 @@
+Module entrées, T3 (étape 3) — assemblage, relevé le 13/11/2026 sur le Mac (Python 3.14.7, Node v24.18.0, arm64)
+
+Le module n'est pas encore dans la liste `modules` de tools/build.py : la page ne doit pas changer.
+Copie de l'arbre de travail de ce commit (sans .git) dans un dossier temporaire, puis python3 tools/build.py dans la copie :
+  dist/index.html   812 696 octets, sha256 4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a
+                    identique octet pour octet (cmp) au fichier du dépôt, à la référence etat-initial.md et à l'étape 2
+  SIZE.json         sha256 4221722ac3099aa28dd1972d61b157f84aa99748939cc21cf3ae08673062c972, identique (cmp)
+                    gzip_bytes 245 325, version 0.8.1 (inchangée)
+  node checks/build.test.mjs dans la copie : status PASS, html_bytes 812 696, external_assets 0
+Le dist/index.html et le SIZE.json du dépôt n'ont pas été réécrits.
+
+src/input.js : 13 255 octets (5 468 avec gzip -9 -c src/input.js, la mesure de l'étape 2), pour 18 000 au plus
+(étape 2 : 11 000 et 4 612 ; étape 1 : 6 427). reglages.json mesure avec zlib de Node (gzipSync, niveau 9),
+dont la compression diffère de la commande gzip : 4 663 avant, 5 525 après.
+Au raccord, la page grossira de la taille du module plus 3 octets (séparateur '\n;\n') ; mesure exacte à l'étape 8.

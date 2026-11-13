@@ -1,0 +1,61 @@
+{
+ "tool": "chrome.mjs",
+ "chrome": "Chrome/157.0.8103.39",
+ "page": "file:// (src/input.js tel quel)",
+ "bureau": {
+  "coarse": false,
+  "hoverNone": false,
+  "maxTouchPoints": 0,
+  "guess": "keyboard"
+ },
+ "clavier": {
+  "vus": [
+   [
+    "KeyW",
+    "z"
+   ],
+   [
+    "KeyM",
+    ","
+   ]
+  ],
+  "KeyW": "Z",
+  "KeyM": ",",
+  "forward": "Z / Z / ↑",
+  "map": ",",
+  "device": "keyboard"
+ },
+ "tableDuClavier": {
+  "getLayoutMap": "function",
+  "taille": 50,
+  "KeyQ": "a",
+  "KeyW": "z",
+  "KeyM": ",",
+  "labelKeyQ": "A",
+  "labelKeyM": ",",
+  "forward": "Z / W / ↑",
+  "map": ","
+ },
+ "vibration": {
+  "getGamepads": "[null,null,null,null,null,null,null,null]",
+  "frame": 0,
+  "rumble": false,
+  "exception": null
+ },
+ "mobileTactile": {
+  "coarse": true,
+  "hoverNone": true,
+  "maxTouchPoints": 5,
+  "guess": "touch"
+ },
+ "exceptionsDeLaPage": [],
+ "attendu": {
+  "bureau": "keyboard",
+  "clavier": "KeyW → Z, KeyM → ,",
+  "vibration": "rumble false, aucune exception",
+  "mobileTactile": "touch",
+  "exceptionsDeLaPage": 0
+ },
+ "ok": true,
+ "module": "6b4e98c + arbre de travail"
+}

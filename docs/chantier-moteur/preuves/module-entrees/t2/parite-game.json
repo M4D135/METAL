@@ -1,0 +1,247 @@
+{
+ "tool": "parite-game.mjs",
+ "node": "v24.18.0",
+ "arch": "arm64",
+ "sessions": [
+  {
+   "name": "sensibilité 1",
+   "prefs": {
+    "sensitivity": 1,
+    "invertY": false
+   },
+   "bindings": {
+    "forward": [
+     "KeyW",
+     "KeyZ",
+     "ArrowUp"
+    ],
+    "back": [
+     "KeyS",
+     "ArrowDown"
+    ],
+    "left": [
+     "KeyA",
+     "KeyQ"
+    ],
+    "right": [
+     "KeyD"
+    ],
+    "turnLeft": [
+     "ArrowLeft"
+    ],
+    "turnRight": [
+     "ArrowRight"
+    ],
+    "fire": [
+     "Enter"
+    ],
+    "fireLeft": [
+     "KeyC"
+    ],
+    "leftHand": [
+     "KeyX"
+    ],
+    "sprint": [
+     "ShiftLeft",
+     "ShiftRight"
+    ],
+    "jump": [],
+    "dash": [
+     "Space"
+    ],
+    "pulse": [
+     "KeyE"
+    ],
+    "melee": [
+     "KeyV"
+    ],
+    "interact": [
+     "KeyF"
+    ],
+    "weaponNext": [],
+    "weapon1": [
+     "Digit1"
+    ],
+    "weapon2": [
+     "Digit2"
+    ],
+    "weapon3": [
+     "Digit3"
+    ],
+    "weapon4": [
+     "Digit4"
+    ],
+    "weapon5": [
+     "Digit5"
+    ],
+    "map": [
+     "KeyM"
+    ],
+    "pause": [
+     "KeyP"
+    ]
+   },
+   "frames": 900,
+   "steps": 1445,
+   "twoStepFrames": 545,
+   "framesCutByModeChange": 0,
+   "mismatches": {
+    "moveX": 0,
+    "moveY": 0,
+    "lookX": 0,
+    "lookY": 0,
+    "fire": 0,
+    "fireLeft": 0,
+    "sprint": 0,
+    "dash": 0,
+    "pulse": 0,
+    "melee": 0,
+    "interact": 0
+   },
+   "firstMismatch": null,
+   "trueCounts": {
+    "fire": 1112,
+    "fireLeft": 777,
+    "sprint": 1051,
+    "dash": 28,
+    "pulse": 29,
+    "melee": 27,
+    "interact": 27
+   },
+   "distinctValues": {
+    "moveX": 3,
+    "moveY": 3,
+    "lookX": 604,
+    "lookY": 146
+   },
+   "shopsOpened": 0,
+   "repeatsAfterClear": 0,
+   "shots": 53,
+   "hashSession": "dfc95827",
+   "hashReplayGame": "dfc95827",
+   "hashReplayFInput": "dfc95827",
+   "sameHash": true
+  },
+  {
+   "name": "sensibilité 1,7 et invertY",
+   "prefs": {
+    "sensitivity": 1.7,
+    "invertY": true
+   },
+   "bindings": {
+    "forward": [
+     "KeyW",
+     "KeyZ",
+     "ArrowUp"
+    ],
+    "back": [
+     "KeyS",
+     "ArrowDown"
+    ],
+    "left": [
+     "KeyA",
+     "KeyQ"
+    ],
+    "right": [
+     "KeyD"
+    ],
+    "turnLeft": [
+     "ArrowLeft"
+    ],
+    "turnRight": [
+     "ArrowRight"
+    ],
+    "fire": [
+     "Enter"
+    ],
+    "fireLeft": [
+     "KeyC"
+    ],
+    "leftHand": [
+     "KeyX"
+    ],
+    "sprint": [
+     "ShiftLeft",
+     "ShiftRight"
+    ],
+    "jump": [],
+    "dash": [
+     "Space"
+    ],
+    "pulse": [
+     "KeyE"
+    ],
+    "melee": [
+     "KeyV"
+    ],
+    "interact": [
+     "KeyF"
+    ],
+    "weaponNext": [],
+    "weapon1": [
+     "Digit1"
+    ],
+    "weapon2": [
+     "Digit2"
+    ],
+    "weapon3": [
+     "Digit3"
+    ],
+    "weapon4": [
+     "Digit4"
+    ],
+    "weapon5": [
+     "Digit5"
+    ],
+    "map": [
+     "KeyM"
+    ],
+    "pause": [
+     "KeyP"
+    ]
+   },
+   "frames": 900,
+   "steps": 1429,
+   "twoStepFrames": 536,
+   "framesCutByModeChange": 7,
+   "mismatches": {
+    "moveX": 0,
+    "moveY": 0,
+    "lookX": 0,
+    "lookY": 0,
+    "fire": 0,
+    "fireLeft": 0,
+    "sprint": 0,
+    "dash": 0,
+    "pulse": 0,
+    "melee": 0,
+    "interact": 0
+   },
+   "firstMismatch": null,
+   "trueCounts": {
+    "fire": 951,
+    "fireLeft": 779,
+    "sprint": 1072,
+    "dash": 28,
+    "pulse": 29,
+    "melee": 27,
+    "interact": 29
+   },
+   "distinctValues": {
+    "moveX": 3,
+    "moveY": 3,
+    "lookX": 607,
+    "lookY": 164
+   },
+   "shopsOpened": 10,
+   "repeatsAfterClear": 93,
+   "shots": 46,
+   "hashSession": "bdd2418f",
+   "hashReplayGame": "bdd2418f",
+   "hashReplayFInput": "bdd2418f",
+   "sameHash": true
+  }
+ ],
+ "ok": true,
+ "seconds": 12.244915833
+}

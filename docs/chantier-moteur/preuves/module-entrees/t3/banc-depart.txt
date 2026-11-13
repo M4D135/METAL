@@ -1,0 +1,27 @@
+Module entrées, T3 (étape 3) — banc de départ, relevé le 13/11/2026 sur le Mac (Node v24.18.0, arm64)
+Base 71eca61 ; branche chantier/module-entrees, HEAD 538e16d (étape 2).
+« Avant » = 538e16d, extrait dans un worktree à part (git worktree add, retiré après les mesures).
+« Après » = l'arbre de travail livré par ce commit ; reglages.json et cout.json le nomment
+« 538e16d + arbre de travail » (src/input.js : 13 255 octets, sha256 ebde4c6b47e0a9ce2af49031a1bcc68c4e38b27a1425f320f57e4a07f19c0256).
+
+1. Chiffre de départ : les réglages de l'étape 2 ne savent ni réaffecter, ni capturer, ni migrer.
+   src/input.js à 538e16d : 11 000 octets (sha256 e56dfbb744334b2da1f1a8685d46828c19e24a12f928fef20d3c961442b62701).
+   FInput.assign, FInput.unbind, inp.assign, inp.unbind et inp.capture n'existent pas (undefined).
+   normalize ignore la table pad stockée ({pad:{fire:['RB']}} → pad.fire ['RT']), n'appelle jamais migrate
+   (appels pour un profil v2 puis v1 : [0, 0]) et n'a pas de repli alt (melee absente, V prise → [] ;
+   weapon5 absente, Digit5 prise → []). Profil v1 (V1_KEYS, Espace sur l'esquive) : dash ['Space'], jump [],
+   donc différent de defaults(METAL_INPUT) (dash ['KeyR'], jump ['Space']). Détail : reglages.json, colonne « avant ».
+
+2. Tests de l'étape 3 contre le module de 538e16d (copie dans un dossier temporaire : src/input.js et src/options.js
+   du worktree, checks/finput.test.mjs et checks/finput-fixture.mjs de ce commit) :
+   node --test checks/finput.test.mjs : 31 tests, 21 réussis, 10 échecs.
+   Échouent : E15, E16, E17, E18, E18b, E19, E21, E21b, E22, E23.
+   Passent : les 19 tests des étapes 1 et 2, E38, et E20 (les bornes de tune sont celles de l'étape 2).
+   Après (tests.txt) : 31 tests, 31 réussis.
+
+3. Référence de FOptions, que E21b et le raccord du §4.2 doivent tenir :
+   src/options.js, checks/options.test.mjs et src/game.js inchangés depuis 71eca61
+   (src/options.js sha256 46a02bba9a6e8394…).
+   node --test checks/options.test.mjs : 13 tests, 13 réussis (0,1 s).
+   Réponses relevées par E21b et rejouées contre FInput : frappe sur B quand V est prise, pistolet sur G
+   puis Digit6, conflit « Déjà utilisée : Onde défensive. » pour E, doublon de liaisons → Entrée pour le tir.
