@@ -1,0 +1,1127 @@
+{
+ "schema": "boucle-etape-2-emulation-v1",
+ "node": "v24.18.0",
+ "arch": "arm64",
+ "platform": "darwin",
+ "cpu": "Apple M5",
+ "loadavg": [
+  2.6884765625,
+  3.072265625,
+  2.74951171875
+ ],
+ "steps": 1800,
+ "seed": 96,
+ "patterns": [
+  "60",
+  "120",
+  "144",
+  "jit144"
+ ],
+ "checks": {
+  "aimExact": true,
+  "aimConsumingSteps": 32400,
+  "aimClampedPitchSteps": 5441,
+  "aimMaxErrRad": 8.171241461241152e-14,
+  "readOnly": true,
+  "allSteps": true,
+  "snapsDefault": 0,
+  "snapsRockets": 2,
+  "camFrozenTrack": 0,
+  "maxStepMeters": {
+   "player": 0.40226183781212066,
+   "enemies": 0.09717702053999784,
+   "projectiles": 0.3980000000000111,
+   "rubble": 2.2453480728923334
+  },
+  "maxTracked": {
+   "player": 1,
+   "enemies": 170,
+   "projectiles": 3,
+   "rubble": 128
+  }
+ },
+ "identity": [
+  {
+   "scenario": "legacy-s0",
+   "pattern": "60",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "legacy-s0",
+   "pattern": "120",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "legacy-s0",
+   "pattern": "144",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "legacy-s0",
+   "pattern": "jit144",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "60",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "120",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "144",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "jit144",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "campaign-w10",
+   "pattern": "60",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "campaign-w10",
+   "pattern": "120",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "campaign-w10",
+   "pattern": "144",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "campaign-w10",
+   "pattern": "jit144",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "campaign-w16",
+   "pattern": "60",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "campaign-w16",
+   "pattern": "120",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "campaign-w16",
+   "pattern": "144",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "campaign-w16",
+   "pattern": "jit144",
+   "weapon": null,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "144",
+   "weapon": 2,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "jit144",
+   "weapon": 2,
+   "sameChainHash": true,
+   "sameSnapshot": true
+  }
+ ],
+ "rows": [
+  {
+   "scenario": "legacy-s0",
+   "pattern": "60",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "d1615ac2",
+   "snapshotSha256": "f3b176668fa5014322fc9a16d15b7e0b3f1e1c49a598ab9df01a198db09acc9d",
+   "dead": false,
+   "won": false,
+   "frames": 1800,
+   "zeroStepFrames": 0,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 298,
+   "aimMaxErrRad": 0,
+   "naiveLagFrames": 0,
+   "naiveMaxLagRad": 0,
+   "movingFrames": 838,
+   "camFrozenNaive": 0,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2533333333333376,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.08704685449332313
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 22
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 120,
+    "projectiles": 0,
+    "rubble": 22
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 8
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "legacy-s0",
+   "pattern": "120",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "9f978b3c",
+   "snapshotSha256": "5a543d47adf24eca98f2379f5fc74ce72112f3c820d84ded753f483d69220dda",
+   "dead": false,
+   "won": false,
+   "frames": 3598,
+   "zeroStepFrames": 1798,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 291,
+   "aimMaxErrRad": 2.398081733190338e-14,
+   "naiveLagFrames": 1798,
+   "naiveMaxLagRad": 0.00699887402913113,
+   "movingFrames": 1705,
+   "camFrozenNaive": 852,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2533333333333397,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.08704685449332313
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 110
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 120,
+    "projectiles": 0,
+    "rubble": 55
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 9
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "legacy-s0",
+   "pattern": "144",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "7d24cf43",
+   "snapshotSha256": "b2e19b451078400333fd7c438667dd18403f94ef684844297773142f18c4d907",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 308,
+   "aimMaxErrRad": 8.171241461241152e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.01193661897197984,
+   "movingFrames": 2039,
+   "camFrozenNaive": 1188,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2533333333333336,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.08704685449332313
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 165
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 120,
+    "projectiles": 0,
+    "rubble": 55
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 8
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "legacy-s0",
+   "pattern": "jit144",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "8093adf3",
+   "snapshotSha256": "38546757d96e8c6d3e5a70eaeef5fb81bde03fcca0a98efc7bf49138352d1d0d",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 309,
+   "aimMaxErrRad": 6.394884621840902e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.012183014117774782,
+   "movingFrames": 2046,
+   "camFrozenNaive": 1192,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2533333333333269,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.08704685449332313
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 124
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 120,
+    "projectiles": 0,
+    "rubble": 55
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 8
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "60",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "bc9de0b4",
+   "snapshotSha256": "8f88312733226241a867838d77a6b1c15ca9291d212230913f4f2755a059f26c",
+   "dead": false,
+   "won": false,
+   "frames": 1800,
+   "zeroStepFrames": 0,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 298,
+   "aimMaxErrRad": 0,
+   "naiveLagFrames": 0,
+   "naiveMaxLagRad": 0,
+   "movingFrames": 1331,
+   "camFrozenNaive": 0,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.25333333333332414,
+    "enemies": 0.09621781737099032,
+    "projectiles": 0,
+    "rubble": 0.09224070123194056
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 105
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 170,
+    "projectiles": 0,
+    "rubble": 105
+   },
+   "maxWithoutId": {
+    "bullets": 8,
+    "chips": 8
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "120",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "5dc971e9",
+   "snapshotSha256": "dcd769590cfc9bd6eddf28559195080e3ed0097b6c67cb55957520a24f1fee0f",
+   "dead": false,
+   "won": false,
+   "frames": 3598,
+   "zeroStepFrames": 1798,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 291,
+   "aimMaxErrRad": 2.398081733190338e-14,
+   "naiveLagFrames": 1798,
+   "naiveMaxLagRad": 0.00699887402913113,
+   "movingFrames": 2493,
+   "camFrozenNaive": 1246,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2533333333333394,
+    "enemies": 0.060000000000001164,
+    "projectiles": 0,
+    "rubble": 0.17165899943142468
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 270
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 170,
+    "projectiles": 0,
+    "rubble": 128
+   },
+   "maxWithoutId": {
+    "bullets": 7,
+    "chips": 8
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "144",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "6479e4fb",
+   "snapshotSha256": "8d1d4ee60b27234fe926186703d31103236f05e9ad3dc2996f5e1bdebd564d4e",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 308,
+   "aimMaxErrRad": 8.171241461241152e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.01193661897197984,
+   "movingFrames": 3439,
+   "camFrozenNaive": 2004,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.40226183781212066,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.1874231012268396
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 510
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 170,
+    "projectiles": 0,
+    "rubble": 128
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 10
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "jit144",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "207a48e7",
+   "snapshotSha256": "af17f370d136bf81c8b4423b7512d8ead1f5d99a5047811f9e33a5b013ec8c95",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 309,
+   "aimMaxErrRad": 6.394884621840902e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.012183014117774782,
+   "movingFrames": 3044,
+   "camFrozenNaive": 1775,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.25333333333333363,
+    "enemies": 0.09717702053999784,
+    "projectiles": 0,
+    "rubble": 0.08682259289893204
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 128
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 170,
+    "projectiles": 0,
+    "rubble": 60
+   },
+   "maxWithoutId": {
+    "bullets": 5,
+    "chips": 8
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "campaign-w10",
+   "pattern": "60",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "ea2ba54c",
+   "snapshotSha256": "315dd5d25581cf3ce111555a339e392bc10dfac3e3ce52291a4e3124ab4f4f14",
+   "dead": false,
+   "won": false,
+   "frames": 1800,
+   "zeroStepFrames": 0,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 298,
+   "aimMaxErrRad": 0,
+   "naiveLagFrames": 0,
+   "naiveMaxLagRad": 0,
+   "movingFrames": 844,
+   "camFrozenNaive": 0,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2533333333333376,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.1919816068166411
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 97
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 84,
+    "projectiles": 0,
+    "rubble": 97
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 9
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "campaign-w10",
+   "pattern": "120",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "9c12ccda",
+   "snapshotSha256": "a215b7cce01e2262a3f5d52434231d11ff089e4e32b6c623df4e93b8de4e84d2",
+   "dead": false,
+   "won": false,
+   "frames": 3598,
+   "zeroStepFrames": 1798,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 291,
+   "aimMaxErrRad": 2.398081733190338e-14,
+   "naiveLagFrames": 1798,
+   "naiveMaxLagRad": 0.00699887402913113,
+   "movingFrames": 1897,
+   "camFrozenNaive": 948,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2758465711962496,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.1919716371460138
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 162
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 84,
+    "projectiles": 0,
+    "rubble": 81
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 8
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "campaign-w10",
+   "pattern": "144",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "4dcaa97d",
+   "snapshotSha256": "0006013814156444b5ad2f383cf7a07d7b33f724103d3c117dc9878965326aad",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 308,
+   "aimMaxErrRad": 8.171241461241152e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.01193661897197984,
+   "movingFrames": 2262,
+   "camFrozenNaive": 1318,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2756983446953495,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.19196673827934096
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 237
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 84,
+    "projectiles": 0,
+    "rubble": 79
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 8
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "campaign-w10",
+   "pattern": "jit144",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "b11cfb66",
+   "snapshotSha256": "d996142d8606afa19c3c3881a4e7b1cb470aa6e8c0378352e8e054e58928953c",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 309,
+   "aimMaxErrRad": 6.394884621840902e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.012183014117774782,
+   "movingFrames": 2268,
+   "camFrozenNaive": 1322,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.27569778020942287,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.19196651088126263
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 170
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 84,
+    "projectiles": 0,
+    "rubble": 79
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 8
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "campaign-w16",
+   "pattern": "60",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "2fa89aee",
+   "snapshotSha256": "86c98c7f4f866c8df8482b6051a19452dfb8aa956f57607c7e0426ec74657fbd",
+   "dead": false,
+   "won": false,
+   "frames": 1800,
+   "zeroStepFrames": 0,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 298,
+   "aimMaxErrRad": 0,
+   "naiveLagFrames": 0,
+   "naiveMaxLagRad": 0,
+   "movingFrames": 927,
+   "camFrozenNaive": 0,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.27571164688610755,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.19239442215876337
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 71
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 120,
+    "projectiles": 0,
+    "rubble": 71
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 9
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "campaign-w16",
+   "pattern": "120",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "087fb2ad",
+   "snapshotSha256": "ad6505eedfc13d71604945da0aa3b0b05bfd78bb04c6fb2e0f5d8b3fc05e73c7",
+   "dead": false,
+   "won": false,
+   "frames": 3598,
+   "zeroStepFrames": 1798,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 291,
+   "aimMaxErrRad": 2.398081733190338e-14,
+   "naiveLagFrames": 1798,
+   "naiveMaxLagRad": 0.00699887402913113,
+   "movingFrames": 1909,
+   "camFrozenNaive": 954,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2758465711962496,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.1923911300742516
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 136
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 120,
+    "projectiles": 0,
+    "rubble": 68
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 9
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "campaign-w16",
+   "pattern": "144",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "87805da0",
+   "snapshotSha256": "0f2f92b2b3a5fe44ebc25a57df7db00e2b0811c778a2f860f5351a7a87848fd5",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 308,
+   "aimMaxErrRad": 8.171241461241152e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.01193661897197984,
+   "movingFrames": 2279,
+   "camFrozenNaive": 1328,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.27447193256707164,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.19238947972915815
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 210
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 120,
+    "projectiles": 0,
+    "rubble": 70
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 9
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "campaign-w16",
+   "pattern": "jit144",
+   "weapon": null,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "aa408684",
+   "snapshotSha256": "4d2ee17f1ca91884ced99736a64861a7105dd8860322ac7077731af04dffb7a3",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 309,
+   "aimMaxErrRad": 6.394884621840902e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.012183014117774782,
+   "movingFrames": 2269,
+   "camFrozenNaive": 1323,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0
+   },
+   "maxStepMeters": {
+    "player": 0.2744643262910376,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 0.1923893764532732
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 147
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 120,
+    "projectiles": 0,
+    "rubble": 70
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 9
+   },
+   "snapSamples": []
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "144",
+   "weapon": 2,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "f3e7e0e6",
+   "snapshotSha256": "88c210b7556b1f695831c57494de2734546f345dd13d41d51eed6eecdd84b979",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 308,
+   "aimMaxErrRad": 8.171241461241152e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.01193661897197984,
+   "movingFrames": 3645,
+   "camFrozenNaive": 2125,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 1
+   },
+   "maxStepMeters": {
+    "player": 0.2533333333333336,
+    "enemies": 0,
+    "projectiles": 0.39800000000000607,
+    "rubble": 2.2453480728923334
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 7,
+    "rubble": 192
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 170,
+    "projectiles": 3,
+    "rubble": 64
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 8
+   },
+   "snapSamples": [
+    {
+     "kind": "rubble",
+     "id": 23,
+     "step": 287,
+     "dx": 0.000001071916798878192,
+     "dy": 2.2300840463571134,
+     "dz": -0.2613677765594886
+    }
+   ]
+  },
+  {
+   "scenario": "legacy-s2",
+   "pattern": "jit144",
+   "weapon": 2,
+   "display": true,
+   "steps": 1800,
+   "chainHash": "08f21a07",
+   "snapshotSha256": "b4a8310b52c3c8d351ab1629cd74fdf9b4cab27bd6bd06c58f8d8182ff220984",
+   "dead": false,
+   "won": false,
+   "frames": 4317,
+   "zeroStepFrames": 2517,
+   "consumingSteps": 1800,
+   "aimMismatch": 0,
+   "notConsumed": 0,
+   "clampedPitchSteps": 309,
+   "aimMaxErrRad": 6.394884621840902e-14,
+   "naiveLagFrames": 2517,
+   "naiveMaxLagRad": 0.012183014117774782,
+   "movingFrames": 3651,
+   "camFrozenNaive": 2130,
+   "camFrozenTrack": 0,
+   "snaps": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 0,
+    "rubble": 1
+   },
+   "maxStepMeters": {
+    "player": 0.25333333333333363,
+    "enemies": 0,
+    "projectiles": 0.3980000000000111,
+    "rubble": 2.245346959960929
+   },
+   "unknownPoses": {
+    "player": 0,
+    "enemies": 0,
+    "projectiles": 5,
+    "rubble": 172
+   },
+   "maxTracked": {
+    "player": 1,
+    "enemies": 170,
+    "projectiles": 3,
+    "rubble": 62
+   },
+   "maxWithoutId": {
+    "bullets": 0,
+    "chips": 8
+   },
+   "snapSamples": [
+    {
+     "kind": "rubble",
+     "id": 23,
+     "step": 287,
+     "dx": 0.0000010719066310116432,
+     "dy": 2.2300840463571134,
+     "dz": -0.2613582154593992
+    }
+   ]
+  }
+ ]
+}

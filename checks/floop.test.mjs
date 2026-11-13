@@ -382,6 +382,140 @@ test('T-F25 régularité', () => {
     assert.ok(runPattern(F, name).cvPct < .001, name + ' cvPct');
 });
 
+test('T-F26 aim : mêmes opérations que le pas de simulation', () => {
+  // Calcul du pas de src/simulation.js, transcrit (§6.2) : p.yaw+=…lookX…; p.pitch=clamp(p.pitch+…lookY…,-1.2,1.2).
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const written = (p, input) => {
+    p.yaw += Number.isFinite(input.lookX) ? input.lookX : 0;
+    p.pitch = clamp(p.pitch + (Number.isFinite(input.lookY) ? input.lookY : 0), -1.2, 1.2);
+  };
+  // Contrat avec le jeu (PARA-05) : la même opération, relue dans src/simulation.js et exécutée telle quelle
+  // (sa définition de clamp, puis l'unique ligne qui écrit le lacet et le tangage à partir du regard).
+  // Si ce test casse, la simulation consomme le regard autrement : revoir l'usage de FLoop.aim au raccord.
+  const lines = readFileSync(new URL('../src/simulation.js', import.meta.url), 'utf8').split('\n');
+  const look = lines.filter(l => /input\.look[XY]/.test(l) && /\.(?:yaw|pitch)\s*[-+]?=(?!=)/.test(l)), clampDef = lines.filter(l => /\bconst clamp=/.test(l));
+  assert.equal(look.length, 1, 'src/simulation.js : une seule ligne écrit le lacet et le tangage à partir de input.lookX et input.lookY');
+  assert.equal(clampDef.length, 1, 'src/simulation.js : une seule définition de clamp');
+  const real = new Function('p', 'input', "'use strict';" + clampDef[0] + '\n' + look[0]);
+  const same = (yaw, pitch, lookX, lookY, label) => {
+    const out = {}, a = {yaw, pitch}, b = {yaw, pitch};
+    assert.equal(F.aim(yaw, pitch, lookX, lookY, -1.2, 1.2, out), out, label + ' : aim rend out');
+    written(a, {lookX, lookY});
+    real(b, {lookX, lookY});
+    assert.ok(Object.is(out.yaw, a.yaw) && Object.is(out.pitch, a.pitch), label + ' : ' + JSON.stringify({out, a}));
+    assert.ok(Object.is(out.yaw, b.yaw) && Object.is(out.pitch, b.pitch), label + ', src/simulation.js : ' + JSON.stringify({out, b}));
+    return out;
+  };
+  let k = 7, low = 0, high = 0, wide = 0;
+  const r = () => (k = (Math.imul(k, 1103515245) + 12345) >>> 0) / 4294967296 * 8 - 4;
+  for (let n = 0; n < 1000; n++) {
+    const yaw = r(), pitch = r() * .3, lookX = r() * .1, lookY = r() * .1, out = same(yaw, pitch, lookX, lookY, 'tuple ' + n);
+    if (pitch + lookY < -1.2) low++;
+    if (pitch + lookY > 1.2) high++;
+    if (Math.abs(out.yaw) > Math.PI) wide++;
+  }
+  // Les tuples touchent les deux bornes du tangage et sortent de [-π, π] en lacet (le lacet n'est jamais replié).
+  assert.ok(low > 0 && high > 0 && wide > 0, JSON.stringify({low, high, wide}));
+  const a = F.aim(1, .5, NaN, undefined, -1.2, 1.2);
+  assert.equal(a.yaw, 1);
+  assert.equal(a.pitch, .5);
+  // Tout regard non fini ou non numérique compte pour 0, comme Number.isFinite dans le pas ; tangage hors bornes ramené.
+  for (const bad of [NaN, undefined, Infinity, -Infinity, null, '0.1']) same(1, .5, bad, bad, String(bad));
+  assert.equal(same(0, 2, 0, NaN, 'tangage hors bornes').pitch, 1.2);
+  assert.equal(same(1000.5, 0, .25, 0, 'lacet après de nombreux tours').yaw, 1000.75);
+  assert.equal(F.aim(0, 1, 0, 5).pitch, 6);
+  assert.equal(F.aim(0, 1, 0, 5, -1.2, 1.2).pitch, 1.2);
+  assert.equal(F.aim(0, -1, 0, -5, -1.2, 1.2).pitch, -1.2);
+  assert.equal(F.aim(3, 0, 1, 0).yaw, 4);
+});
+
+test('T-F27 track : interpolation, chemin court, seuil de 2 m, taille', () => {
+  const T = F.track({snap: 2}), o = {};
+  T.begin();
+  T.save(1, 0, 0, 0, 0);
+  assert.equal(T.pose(1, 1, 1, -1, .4, .25, o), o);
+  assert.ok(near(o.x, .25, 1e-15) && near(o.y, .25, 1e-15) && near(o.z, -.25, 1e-15) && near(o.a, .1, 1e-15), JSON.stringify(o));
+  T.save(2, 0, 0, 0, 3.1);
+  assert.ok(near(T.pose(2, 0, 0, 0, -3.1, .5).a, Math.PI, 1e-12), 'chemin court');
+  const p5 = {};
+  assert.equal(T.pose(1, 5, 0, 0, 0, .5, p5), p5);
+  assert.deepEqual(p5, {x: 5, y: 0, z: 0, a: 0});
+  assert.equal(T.pose(1, 2, 0, 0, 0, .5).x, 1);
+  const p9 = {};
+  assert.equal(T.pose(9, 3, 4, 5, 1, .5, p9), p9);
+  assert.deepEqual(p9, {x: 3, y: 4, z: 5, a: 1});
+  assert.equal(T.size, 2);
+  T.begin();
+  T.save(1, 0, 0, 0, 0);
+  T.prune();
+  assert.equal(T.size, 1);
+  // C'est bien l'id 2, non sauvé depuis begin(), qui est oublié.
+  assert.equal(T.pose(1, 1, 0, 0, 0, .5).x, .5);
+  assert.equal(T.pose(2, 1, 0, 0, 0, .5).x, 1);
+  T.clear();
+  assert.equal(T.size, 0);
+  // Au-delà du §6.2 : chemin court dans l'autre sens, angle rendu modulo 2π, distance en 3D (ascenseur : saut vertical).
+  const U = F.track({snap: 2});
+  U.begin();
+  U.save(1, 0, 0, 0, -3.1);
+  assert.ok(near(U.pose(1, 0, 0, 0, 3.1, .5).a, -Math.PI, 1e-12), 'chemin court, sens inverse');
+  U.save(2, 0, 0, 0, 0);
+  assert.ok(near(U.pose(2, 0, 0, 0, 2 * Math.PI + .4, 1).a, .4, 1e-12), 'tour complet : angle rendu modulo 2π');
+  for (const [x, y, z] of [[0, 5, 0], [0, 0, -5], [1.2, 1.2, 1.2]]) {
+    const q = plain(U.pose(2, x, y, z, 0, .5));
+    assert.deepEqual(q, {x, y, z, a: 0}, 'saut de ' + Math.hypot(x, y, z).toFixed(3) + ' m');
+  }
+  // Valeurs par défaut (snap 2 m, a = 0 à la sauvegarde, alpha = 1) et option snap respectée.
+  const D = F.track(), S = F.track({snap: .5});
+  D.begin();
+  S.begin();
+  D.save(1, 0, 0, 0);
+  S.save(1, 0, 0, 0);
+  assert.equal(D.pose(1, 2, 0, 0, 0, .5).x, 1);
+  assert.equal(D.pose(1, 2.01, 0, 0, 0, .5).x, 2.01);
+  assert.deepEqual(plain(D.pose(1, 1, 0, 0, .3)), {x: 1, y: 0, z: 0, a: .3});
+  assert.equal(S.pose(1, .5, 0, 0, 0, .5).x, .25);
+  assert.equal(S.pose(1, 1, 0, 0, 0, .5).x, 1);
+  // Un traqueur par type d'entité : deux traqueurs ne partagent pas leurs id.
+  const E = F.track(), Q = F.track();
+  E.begin();
+  Q.begin();
+  E.save(7, 0, 0, 0);
+  Q.save(7, 10, 0, 0);
+  assert.equal(E.pose(7, 1, 0, 0, 0, .5).x, .5);
+  assert.equal(Q.pose(7, 11, 0, 0, 0, .5).x, 10.5);
+  E.clear();
+  assert.ok(E.size === 0 && Q.size === 1);
+  // Boucle réelle. Un corps avance de 0,05 par pas ; begin() au premier pas de l'image, save avant chaque pas,
+  // prune() après les pas si l'image en a eu ; rendu par pose(…, frame.alpha).
+  const run = (name, frames, each) => {
+    const L = F.create(), N = F.track({snap: 2}), next = pattern(name);
+    let x = 0, before = 0;
+    for (let i = 1; i <= frames; i++) {
+      const f = L.advance(next(i).stamp, (h, idx) => { if (idx === 0) N.begin(); N.save(1, x, 0, 0, 0); before = x; x += .05; });
+      if (f.steps) N.prune();
+      each(i, N.pose(1, x, 0, 0, 0, f.alpha).x, f, before, x);
+    }
+  };
+  // 144 Hz, 2 000 images : à partir de l'image 41, chaque incrément affiché vaut 0,05·60/144 à 1e-9 près,
+  // y compris sur les images sans pas (58 %), où pose interpole entre les deux mêmes états avec l'alpha qui grandit.
+  let lastShown = null;
+  run('144', 2000, (i, shown) => {
+    if (lastShown !== null && i >= 41) assert.ok(Math.abs((shown - lastShown) - .05 * 60 / 144) < 1e-9, 'incrément image ' + i + ' : ' + (shown - lastShown));
+    lastShown = shown;
+  });
+  // Images à plusieurs pas (30 Hz : 2 pas ; 'long60' : 3 et 5 pas) : la dernière sauvegarde écrase les précédentes,
+  // la pose part de l'état d'avant le dernier pas.
+  for (const name of ['30', 'long60']) {
+    let worst = 0, multi = 0;
+    run(name, 6000, (i, shown, f, before, x) => {
+      if (f.steps > 1) multi++;
+      worst = Math.max(worst, Math.abs(shown - (before + (x - before) * f.alpha)));
+    });
+    assert.ok(multi > 0 && worst < 1e-12, name + ' : ' + JSON.stringify({multi, worst}));
+  }
+});
+
 test('T-F28 table de référence', () => {
   for (const name of Object.keys(FRAMES)) assert.deepEqual(compare(runPattern(F, name), REFERENCE[name]), [], name);
 });
