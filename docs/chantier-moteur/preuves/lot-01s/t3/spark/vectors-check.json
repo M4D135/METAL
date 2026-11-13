@@ -1,0 +1,1 @@
+{"table":"~/metal-tests/lot01s-t3/repo/checks/fmath-hypot-vectors.txt","rows":1578,"groups":{"special":768,"edge":35,"random":300,"kahan":60,"order":48,"arity":48,"world":200,"many":119},"identicalToExisting":true,"rowsIdenticalToExisting":true}

@@ -1,0 +1,1057 @@
+{
+ "schema": "metal-lot01s-t3-hypot-worlds-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "loadAverage": [
+   6.2470703125,
+   4.84033203125,
+   4.005859375
+  ]
+ },
+ "root": "~/claude/metal-chantier/nav",
+ "worlds": 114,
+ "seconds": 67,
+ "note": "Every hypot2 and hypot3 call of src/world.js during the generation of the 114 worlds (legacy seeds 1 and 96, V1 and V2 campaigns of seeds 1, 96 and 2026) is also computed by Math.hypot of V8; differences counted with Object.is. Distinct inputs are counted per world (IEEE-754 bit patterns, -0 and 0 distinct) and summed.",
+ "hypot2": {
+  "calls": 67577290,
+  "differences": 0,
+  "distinctInputsSummedOverWorlds": 56043049
+ },
+ "hypot3": {
+  "calls": 29208587,
+  "differences": 0,
+  "distinctInputsSummedOverWorlds": 20614713
+ },
+ "perWorld": [
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 0,
+   "calls2": 498472,
+   "calls3": 245046,
+   "distinct2": 409632,
+   "distinct3": 166476
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 1,
+   "calls2": 544632,
+   "calls3": 229271,
+   "distinct2": 456423,
+   "distinct3": 169691
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 2,
+   "calls2": 694206,
+   "calls3": 309510,
+   "distinct2": 587732,
+   "distinct3": 217887
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 0,
+   "calls2": 508073,
+   "calls3": 244964,
+   "distinct2": 418166,
+   "distinct3": 165468
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 1,
+   "calls2": 540480,
+   "calls3": 229698,
+   "distinct2": 452556,
+   "distinct3": 169871
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 2,
+   "calls2": 699618,
+   "calls3": 306817,
+   "distinct2": 585680,
+   "distinct3": 216197
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 0,
+   "calls2": 498836,
+   "calls3": 245046,
+   "distinct2": 409988,
+   "distinct3": 166476
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 0,
+   "calls2": 520764,
+   "calls3": 236358,
+   "distinct2": 420013,
+   "distinct3": 159954
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 1,
+   "calls2": 544972,
+   "calls3": 229271,
+   "distinct2": 456752,
+   "distinct3": 169691
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 1,
+   "calls2": 559931,
+   "calls3": 222326,
+   "distinct2": 463527,
+   "distinct3": 164546
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 2,
+   "calls2": 694570,
+   "calls3": 309510,
+   "distinct2": 588090,
+   "distinct3": 217887
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 2,
+   "calls2": 720784,
+   "calls3": 300174,
+   "distinct2": 600635,
+   "distinct3": 211023
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 3,
+   "calls2": 507074,
+   "calls3": 244113,
+   "distinct2": 421858,
+   "distinct3": 165342
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 3,
+   "calls2": 529658,
+   "calls3": 235463,
+   "distinct2": 432391,
+   "distinct3": 158695
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 4,
+   "calls2": 545387,
+   "calls3": 227570,
+   "distinct2": 456341,
+   "distinct3": 167534
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 4,
+   "calls2": 560585,
+   "calls3": 220643,
+   "distinct2": 463366,
+   "distinct3": 162421
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 5,
+   "calls2": 700309,
+   "calls3": 304791,
+   "distinct2": 592537,
+   "distinct3": 214236
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 5,
+   "calls2": 727534,
+   "calls3": 295563,
+   "distinct2": 605658,
+   "distinct3": 207106
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 6,
+   "calls2": 505767,
+   "calls3": 244996,
+   "distinct2": 416078,
+   "distinct3": 166685
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 6,
+   "calls2": 527693,
+   "calls3": 236305,
+   "distinct2": 426276,
+   "distinct3": 160001
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 7,
+   "calls2": 548145,
+   "calls3": 226053,
+   "distinct2": 459599,
+   "distinct3": 166622
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 7,
+   "calls2": 562856,
+   "calls3": 219202,
+   "distinct2": 466386,
+   "distinct3": 161549
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 8,
+   "calls2": 704709,
+   "calls3": 306152,
+   "distinct2": 587846,
+   "distinct3": 215960
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 8,
+   "calls2": 731518,
+   "calls3": 296977,
+   "distinct2": 600534,
+   "distinct3": 208865
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 9,
+   "calls2": 503223,
+   "calls3": 243794,
+   "distinct2": 415409,
+   "distinct3": 165064
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 9,
+   "calls2": 524289,
+   "calls3": 235162,
+   "distinct2": 425204,
+   "distinct3": 158449
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 10,
+   "calls2": 554080,
+   "calls3": 228286,
+   "distinct2": 464772,
+   "distinct3": 169005
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 10,
+   "calls2": 569927,
+   "calls3": 221380,
+   "distinct2": 472041,
+   "distinct3": 163918
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 11,
+   "calls2": 703700,
+   "calls3": 306482,
+   "distinct2": 593659,
+   "distinct3": 215930
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 11,
+   "calls2": 731162,
+   "calls3": 297238,
+   "distinct2": 606818,
+   "distinct3": 208783
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 12,
+   "calls2": 506405,
+   "calls3": 243931,
+   "distinct2": 417100,
+   "distinct3": 164880
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 12,
+   "calls2": 528082,
+   "calls3": 235355,
+   "distinct2": 427145,
+   "distinct3": 158324
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 13,
+   "calls2": 537359,
+   "calls3": 230311,
+   "distinct2": 450578,
+   "distinct3": 170843
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 13,
+   "calls2": 551064,
+   "calls3": 223353,
+   "distinct2": 456840,
+   "distinct3": 165695
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 14,
+   "calls2": 695428,
+   "calls3": 310226,
+   "distinct2": 581750,
+   "distinct3": 219668
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 14,
+   "calls2": 720761,
+   "calls3": 300863,
+   "distinct2": 593609,
+   "distinct3": 212398
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 15,
+   "calls2": 502956,
+   "calls3": 244515,
+   "distinct2": 415090,
+   "distinct3": 165558
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 15,
+   "calls2": 524328,
+   "calls3": 235883,
+   "distinct2": 424782,
+   "distinct3": 158968
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 16,
+   "calls2": 548890,
+   "calls3": 228968,
+   "distinct2": 459989,
+   "distinct3": 169419
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 16,
+   "calls2": 564088,
+   "calls3": 221992,
+   "distinct2": 467031,
+   "distinct3": 164235
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 17,
+   "calls2": 692116,
+   "calls3": 308613,
+   "distinct2": 584083,
+   "distinct3": 217312
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 17,
+   "calls2": 718870,
+   "calls3": 299373,
+   "distinct2": 596946,
+   "distinct3": 210518
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 0,
+   "calls2": 508437,
+   "calls3": 244964,
+   "distinct2": 418521,
+   "distinct3": 165468
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 0,
+   "calls2": 531600,
+   "calls3": 236353,
+   "distinct2": 429297,
+   "distinct3": 158912
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 1,
+   "calls2": 540820,
+   "calls3": 229698,
+   "distinct2": 452885,
+   "distinct3": 169871
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 1,
+   "calls2": 556166,
+   "calls3": 222690,
+   "distinct2": 459957,
+   "distinct3": 164673
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 2,
+   "calls2": 699982,
+   "calls3": 306817,
+   "distinct2": 586038,
+   "distinct3": 216197
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 2,
+   "calls2": 725614,
+   "calls3": 297609,
+   "distinct2": 598236,
+   "distinct3": 209080
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 3,
+   "calls2": 493600,
+   "calls3": 243825,
+   "distinct2": 407602,
+   "distinct3": 165085
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 3,
+   "calls2": 514186,
+   "calls3": 235230,
+   "distinct2": 417157,
+   "distinct3": 158502
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 4,
+   "calls2": 553053,
+   "calls3": 229119,
+   "distinct2": 463635,
+   "distinct3": 169717
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 4,
+   "calls2": 568877,
+   "calls3": 222147,
+   "distinct2": 471007,
+   "distinct3": 164535
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 5,
+   "calls2": 699965,
+   "calls3": 311192,
+   "distinct2": 588138,
+   "distinct3": 220603
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 5,
+   "calls2": 728427,
+   "calls3": 301750,
+   "distinct2": 601766,
+   "distinct3": 213255
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 6,
+   "calls2": 510716,
+   "calls3": 245683,
+   "distinct2": 423417,
+   "distinct3": 166704
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 6,
+   "calls2": 532561,
+   "calls3": 236976,
+   "distinct2": 433590,
+   "distinct3": 160042
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 7,
+   "calls2": 544899,
+   "calls3": 230433,
+   "distinct2": 456833,
+   "distinct3": 170613
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 7,
+   "calls2": 560041,
+   "calls3": 223480,
+   "distinct2": 463762,
+   "distinct3": 165479
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 8,
+   "calls2": 698019,
+   "calls3": 307302,
+   "distinct2": 591298,
+   "distinct3": 216049
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 8,
+   "calls2": 724358,
+   "calls3": 298088,
+   "distinct2": 604015,
+   "distinct3": 209296
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 9,
+   "calls2": 504928,
+   "calls3": 241773,
+   "distinct2": 419232,
+   "distinct3": 162951
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 9,
+   "calls2": 526821,
+   "calls3": 233220,
+   "distinct2": 429340,
+   "distinct3": 156426
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 10,
+   "calls2": 543224,
+   "calls3": 227793,
+   "distinct2": 454987,
+   "distinct3": 169520
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 10,
+   "calls2": 557156,
+   "calls3": 220801,
+   "distinct2": 461306,
+   "distinct3": 164325
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 11,
+   "calls2": 696776,
+   "calls3": 307174,
+   "distinct2": 588217,
+   "distinct3": 216737
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 11,
+   "calls2": 723498,
+   "calls3": 297939,
+   "distinct2": 600880,
+   "distinct3": 209593
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 12,
+   "calls2": 507105,
+   "calls3": 245191,
+   "distinct2": 421370,
+   "distinct3": 166522
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 12,
+   "calls2": 528706,
+   "calls3": 236508,
+   "distinct2": 431216,
+   "distinct3": 160007
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 13,
+   "calls2": 539929,
+   "calls3": 228921,
+   "distinct2": 451890,
+   "distinct3": 169575
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 13,
+   "calls2": 553537,
+   "calls3": 221960,
+   "distinct2": 458135,
+   "distinct3": 164408
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 14,
+   "calls2": 693148,
+   "calls3": 308094,
+   "distinct2": 584363,
+   "distinct3": 217408
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 14,
+   "calls2": 718643,
+   "calls3": 298841,
+   "distinct2": 596385,
+   "distinct3": 210250
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 15,
+   "calls2": 498500,
+   "calls3": 244000,
+   "distinct2": 413054,
+   "distinct3": 165299
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 15,
+   "calls2": 519959,
+   "calls3": 235367,
+   "distinct2": 422989,
+   "distinct3": 158828
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 16,
+   "calls2": 545097,
+   "calls3": 228488,
+   "distinct2": 456597,
+   "distinct3": 169355
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 16,
+   "calls2": 559875,
+   "calls3": 221517,
+   "distinct2": 463461,
+   "distinct3": 164161
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 17,
+   "calls2": 694742,
+   "calls3": 307427,
+   "distinct2": 583588,
+   "distinct3": 216946
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 17,
+   "calls2": 722004,
+   "calls3": 298144,
+   "distinct2": 596511,
+   "distinct3": 209751
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 0,
+   "calls2": 499190,
+   "calls3": 244099,
+   "distinct2": 412967,
+   "distinct3": 165537
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 0,
+   "calls2": 520398,
+   "calls3": 235466,
+   "distinct2": 422741,
+   "distinct3": 158928
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 1,
+   "calls2": 545757,
+   "calls3": 229533,
+   "distinct2": 458145,
+   "distinct3": 169907
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 1,
+   "calls2": 560992,
+   "calls3": 222517,
+   "distinct2": 465121,
+   "distinct3": 164687
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 2,
+   "calls2": 694803,
+   "calls3": 307402,
+   "distinct2": 581870,
+   "distinct3": 216107
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 2,
+   "calls2": 722496,
+   "calls3": 298213,
+   "distinct2": 595194,
+   "distinct3": 209371
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 3,
+   "calls2": 510391,
+   "calls3": 244260,
+   "distinct2": 420311,
+   "distinct3": 165362
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 3,
+   "calls2": 532032,
+   "calls3": 235598,
+   "distinct2": 430221,
+   "distinct3": 158767
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 4,
+   "calls2": 541884,
+   "calls3": 227340,
+   "distinct2": 453294,
+   "distinct3": 168205
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 4,
+   "calls2": 555638,
+   "calls3": 220464,
+   "distinct2": 459562,
+   "distinct3": 163131
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 5,
+   "calls2": 704315,
+   "calls3": 307597,
+   "distinct2": 588903,
+   "distinct3": 216204
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 5,
+   "calls2": 732754,
+   "calls3": 298303,
+   "distinct2": 602696,
+   "distinct3": 209381
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 6,
+   "calls2": 514312,
+   "calls3": 243964,
+   "distinct2": 421881,
+   "distinct3": 165105
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 6,
+   "calls2": 537825,
+   "calls3": 235309,
+   "distinct2": 432733,
+   "distinct3": 158492
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 7,
+   "calls2": 549355,
+   "calls3": 226095,
+   "distinct2": 460551,
+   "distinct3": 166927
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 7,
+   "calls2": 563273,
+   "calls3": 219176,
+   "distinct2": 466892,
+   "distinct3": 161824
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 8,
+   "calls2": 695311,
+   "calls3": 304657,
+   "distinct2": 587351,
+   "distinct3": 215197
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 8,
+   "calls2": 722307,
+   "calls3": 295392,
+   "distinct2": 600239,
+   "distinct3": 208003
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 9,
+   "calls2": 501737,
+   "calls3": 243996,
+   "distinct2": 413029,
+   "distinct3": 165140
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 9,
+   "calls2": 524098,
+   "calls3": 235375,
+   "distinct2": 423401,
+   "distinct3": 158547
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 10,
+   "calls2": 545032,
+   "calls3": 228119,
+   "distinct2": 456561,
+   "distinct3": 168828
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 10,
+   "calls2": 560968,
+   "calls3": 221200,
+   "distinct2": 463914,
+   "distinct3": 163663
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 11,
+   "calls2": 704155,
+   "calls3": 309063,
+   "distinct2": 591725,
+   "distinct3": 217458
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 11,
+   "calls2": 731797,
+   "calls3": 299727,
+   "distinct2": 604965,
+   "distinct3": 210578
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 12,
+   "calls2": 502602,
+   "calls3": 242719,
+   "distinct2": 415241,
+   "distinct3": 163833
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 12,
+   "calls2": 523134,
+   "calls3": 234132,
+   "distinct2": 424583,
+   "distinct3": 157257
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 13,
+   "calls2": 549336,
+   "calls3": 230343,
+   "distinct2": 460759,
+   "distinct3": 170624
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 13,
+   "calls2": 564548,
+   "calls3": 223323,
+   "distinct2": 467695,
+   "distinct3": 165414
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 14,
+   "calls2": 703714,
+   "calls3": 307454,
+   "distinct2": 588689,
+   "distinct3": 217137
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 14,
+   "calls2": 731953,
+   "calls3": 298145,
+   "distinct2": 602241,
+   "distinct3": 209919
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 15,
+   "calls2": 506801,
+   "calls3": 245148,
+   "distinct2": 417114,
+   "distinct3": 165643
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 15,
+   "calls2": 529977,
+   "calls3": 236468,
+   "distinct2": 427854,
+   "distinct3": 159010
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 16,
+   "calls2": 538400,
+   "calls3": 227629,
+   "distinct2": 451288,
+   "distinct3": 168716
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 16,
+   "calls2": 553959,
+   "calls3": 220730,
+   "distinct2": 458373,
+   "distinct3": 163610
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 17,
+   "calls2": 698413,
+   "calls3": 305388,
+   "distinct2": 585268,
+   "distinct3": 214834
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 17,
+   "calls2": 725363,
+   "calls3": 296185,
+   "distinct2": 598092,
+   "distinct3": 208074
+  }
+ ]
+}

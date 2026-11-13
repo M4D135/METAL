@@ -1,0 +1,213 @@
+{
+ "schema": "metal-lot01s-t3-mutation-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64"
+ },
+ "note": "Each mutant src/fmath.js runs checks/fmath.test.mjs (with copies of src/world.js and both vector tables). caught = at least one failing test.",
+ "mutants": 13,
+ "caught": 13,
+ "controlPasses": true,
+ "equivalentPass": true,
+ "results": [
+  {
+   "mutation": "none (control)",
+   "tests": 15,
+   "pass": 15,
+   "fail": 0,
+   "expected": "control",
+   "caught": null,
+   "failedTests": []
+  },
+  {
+   "mutation": "hypot3 without the Kahan compensation",
+   "tests": 15,
+   "pass": 11,
+   "fail": 4,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "on this V8, the table is Math.hypot, and FMath agrees with it on 120 000 seeded inputs",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "hypot3 compensation of the other order",
+   "tests": 15,
+   "pass": 11,
+   "fail": 4,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "on this V8, the table is Math.hypot, and FMath agrees with it on 120 000 seeded inputs",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "hypot3 sums y before x",
+   "tests": 15,
+   "pass": 11,
+   "fail": 4,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "on this V8, the table is Math.hypot, and FMath agrees with it on 120 000 seeded inputs",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "hypot3 Infinity tested on max only",
+   "tests": 15,
+   "pass": 11,
+   "fail": 4,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "hypot3 returns 0 for zeros beside NaN",
+   "tests": 15,
+   "pass": 11,
+   "fail": 4,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "hypot2 as sqrt(x*x+y*y)",
+   "tests": 15,
+   "pass": 10,
+   "fail": 5,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "on this V8, the table is Math.hypot, and FMath agrees with it on 120 000 seeded inputs",
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "equivalent, not a mistake: hypot2 in the literal form of V8 (two quotients, 0+p*p+q*q)",
+   "tests": 15,
+   "pass": 15,
+   "fail": 0,
+   "expected": "equivalent: every test passes",
+   "caught": null,
+   "failedTests": []
+  },
+  {
+   "mutation": "hypot2 NaN before Infinity",
+   "tests": 15,
+   "pass": 11,
+   "fail": 4,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "hypot2 returns 0 for 0 beside NaN",
+   "tests": 15,
+   "pass": 10,
+   "fail": 5,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "on this V8, the table is Math.hypot, and FMath agrees with it on 120 000 seeded inputs",
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "hypot2 converts y before x",
+   "tests": 15,
+   "pass": 14,
+   "fail": 1,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values"
+   ]
+  },
+  {
+   "mutation": "hypot2 converts x twice",
+   "tests": 15,
+   "pass": 14,
+   "fail": 1,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values"
+   ]
+  },
+  {
+   "mutation": "hypot (any arity) NaN before Infinity",
+   "tests": 15,
+   "pass": 11,
+   "fail": 4,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "hypot (any arity) without compensation",
+   "tests": 15,
+   "pass": 11,
+   "fail": 4,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "on this V8, the table is Math.hypot, and FMath agrees with it on 120 000 seeded inputs",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  },
+  {
+   "mutation": "hypot (one argument) keeps the sign",
+   "tests": 15,
+   "pass": 10,
+   "fail": 5,
+   "expected": "caught",
+   "caught": true,
+   "failedTests": [
+    "hypot, hypot2 and hypot3 match the V8 table bit for bit",
+    "on this V8, the table is Math.hypot, and FMath agrees with it on 120 000 seeded inputs",
+    "hypot converts its arguments once, in order, and keeps Math.hypot special values",
+    "results do not depend on call order or on the previous call",
+    "results do not depend on the byte order of the host (simulated big-endian words)"
+   ]
+  }
+ ]
+}

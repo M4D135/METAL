@@ -1,14 +1,15 @@
 // Lot 01 suite (MURS-V1): platform sensitivity of world generation.
 // Outside the game and outside npm test. Compares the host Math.sin, cos, atan and
-// atan2 with FMath (src/fmath.js, the portable fdlibm of V8 without FMA) in the
-// main Node realm (tools/realm-loader.mjs, never node:vm). Nothing is written in
-// src/, checks/ or dist/; FMath is injected through loadRealm globals or, for the
-// replays only, into this process' Math.
+// atan2 with FMath (src/fmath.js, the portable fdlibm of V8 without FMA), and the
+// host Math.hypot with FMath.hypot2 and hypot3 (the MathHypot builtin of V8), in
+// the main Node realm (tools/realm-loader.mjs, never node:vm). Nothing is written
+// in src/, checks/ or dist/; FMath is injected through loadRealm globals or, for
+// the replays only, into this process' Math.
 //
-// Since T2, src/world.js takes sin, cos, atan and atan2 from FMath itself, so an
-// injected Math no longer changes its trigonometry. The host variant (native
-// trigonometry) comes from a world.js before the fix: --base <root>. A root whose
-// world.js still calls Math (before T2) is its own base.
+// Since T2, src/world.js takes sin, cos, atan and atan2 from FMath itself, and
+// since T3 hypot too (hypot2, hypot3), so an injected Math no longer changes it.
+// The host variant (native trigonometry) comes from a world.js before the fix:
+// --base <root>. A root whose world.js still calls Math (before T2) is its own base.
 //
 //   node tools/platform-math.mjs census      [root] [--base B] [--seeds 1,96,2026] [--path fmath|host] [--samples 150] [--out F]
 //   node tools/platform-math.mjs golden      [root] [--base B] [--seeds 1,96,2026] [--out F]
@@ -23,7 +24,8 @@
 // B with FMath injected. "checkpoints --from W": points written by root W (world
 // and simulation, as a player before the fix) and read back by root. "engines"
 // runs Google Chrome headless on file:// pages (--dump-dom, private
-// --user-data-dir under D, no port, no server) and JavaScriptCore's jsc shell.
+// --user-data-dir under D, no port, no server) and JavaScriptCore's jsc shell; in
+// jsc, the 114 worlds of root are hashed with SHA-256 and compared with Node.
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -33,6 +35,7 @@ import {execFileSync} from 'node:child_process';
 import {loadRealm,defaultModules,DEFAULT_ROOT} from './realm-loader.mjs';
 
 export const PORTED=Object.freeze(['sin','cos','atan','atan2']);
+export const HYPOT=Object.freeze(['hypot2','hypot3']); // FMath since T3, compared with the host Math.hypot
 const f64=new Float64Array(1),u64=new BigUint64Array(f64.buffer);
 export const bits=x=>{f64[0]=x;return u64[0].toString(16).padStart(16,'0');};
 export const fromBits=hex=>{u64[0]=BigInt('0x'+hex);return f64[0];};
@@ -86,7 +89,7 @@ const make=(W,w)=>W.create(w.seed,w.index,w.options&&{...w.options});
 // ---------------------------------------------------------------- census
 export function census(root,{seeds=[1,96,2026],path='fmath',samples=150}={}){
   if(!['fmath','host'].includes(path))throw new Error('--path must be fmath or host');
-  const F=loadFMath(root),byKind={},perWorld=[],seen=new Set(),divergentSamples={sin:[],cos:[],atan:[],atan2:[]};
+  const F=loadFMath(root),byKind={},perWorld=[],seen=new Set(),divergentSamples={sin:[],cos:[],atan:[],atan2:[],hypot2:[],hypot3:[]};
   let bucket=null,world=null;
   const slot=name=>bucket[name]??={calls:0};
   const trig=(name,args,host,port)=>{
@@ -109,8 +112,17 @@ export function census(root,{seeds=[1,96,2026],path='fmath',samples=150}={}){
     else M[name]=function(){slot(name).calls++;return host.apply(Math,arguments);};
   }
   bucket=byKind.load={};world={kind:'load',divergent:{}};
-  // A wired world.js (T2) calls FMath: the same comparison runs on an instrumented FMath.
-  const wired=worldUsesFMath(root),W=wired?worldFactory(root,M,Object.freeze(Object.fromEntries(PORTED.map(name=>[name,M[name]])))):worldFactory(root,M);
+  // A wired world.js (T2) calls FMath: the same comparison runs on an instrumented
+  // FMath. Since T3 it also calls FMath.hypot2 and hypot3, compared with the host
+  // Math.hypot at the same arity (path host: the host result is returned).
+  const FM=Object.fromEntries(PORTED.map(name=>[name,M[name]])),hostHypot=Math.hypot;
+  const hyp=(name,args,host,port)=>{
+    const s=slot(name);s.calls++;s.divergent??=0;
+    const magnitude=Math.max(...args.map(Math.abs));if(!(magnitude<=(s.maxAbsArg??0))){s.maxAbsArg=magnitude;s.maxAbsArgBits=bits(magnitude);}
+    if(!Object.is(host,port)&&!(host!==host&&port!==port)){s.divergent++;world.divergent[name]=(world.divergent[name]||0)+1;if(divergentSamples[name].length<samples)divergentSamples[name].push({args:args.map(bits),host:bits(host),fmath:bits(port),kind:world.kind});}
+  };
+  if(typeof F.hypot2==='function'){FM.hypot2=(x,y)=>{const h=hostHypot(x,y),p=F.hypot2(x,y);hyp('hypot2',[x,y],h,p);return path==='host'?h:p;};FM.hypot3=(x,y,z)=>{const h=hostHypot(x,y,z),p=F.hypot3(x,y,z);hyp('hypot3',[x,y,z],h,p);return path==='host'?h:p;};}
+  const wired=worldUsesFMath(root),W=wired?worldFactory(root,M,Object.freeze(FM)):worldFactory(root,M);
   if(!Object.keys(byKind.load).length)delete byKind.load;
   for(const w of worldList(seeds)){
     bucket=byKind[w.kind]??={};world={kind:w.kind,seed:w.seed,index:w.index,divergent:{}};
@@ -123,9 +135,9 @@ export function census(root,{seeds=[1,96,2026],path='fmath',samples=150}={}){
     for(const field of ['reduction','arity'])if(s[field]){t[field]??={};for(const [k,v] of Object.entries(s[field]))t[field][k]=(t[field][k]||0)+v;}
   }
   for(const group of [total,...Object.values(byKind)])for(const s of Object.values(group))if(s.divergent!==undefined)s.divergentRate=s.calls?s.divergent/s.calls:0;
-  const worldsWithDivergence=Object.fromEntries(['legacy','v1','v2'].map(kind=>{const rows=perWorld.filter(w=>w.kind===kind);return [kind,{worlds:rows.length,withDivergentCall:rows.filter(w=>Object.keys(w.divergent).length).length,withDivergentSin:rows.filter(w=>w.divergent.sin).length,withDivergentCos:rows.filter(w=>w.divergent.cos).length,withDivergentAtan2:rows.filter(w=>w.divergent.atan2).length,withDivergentAtan:rows.filter(w=>w.divergent.atan).length}];}));
+  const worldsWithDivergence=Object.fromEntries(['legacy','v1','v2'].map(kind=>{const rows=perWorld.filter(w=>w.kind===kind);return [kind,{worlds:rows.length,withDivergentCall:rows.filter(w=>Object.keys(w.divergent).length).length,withDivergentSin:rows.filter(w=>w.divergent.sin).length,withDivergentCos:rows.filter(w=>w.divergent.cos).length,withDivergentAtan2:rows.filter(w=>w.divergent.atan2).length,withDivergentAtan:rows.filter(w=>w.divergent.atan).length,withDivergentHypot:rows.filter(w=>w.divergent.hypot2||w.divergent.hypot3).length}];}));
   return {schema:'metal-platform-math-census-v1',environment:env(),root,worldUsesFMath:wired,path,seeds,legacySeeds:[1,96],worlds:perWorld.length,
-    note:'Every Math function called by src/world.js is counted, and FMath too when world.js calls it (path fmath: FMath results; path host: the host results instead). Only sin, cos, atan and atan2 are compared with FMath; the others are exact by specification (abs, ceil, floor, imul, max, min, round, sign, sqrt) or, for hypot, the same Torque algorithm on every V8 build.',
+    note:'Every Math function called by src/world.js is counted, and FMath too when world.js calls it (path fmath: FMath results; path host: the host results instead). sin, cos, atan and atan2 are compared with FMath, and FMath.hypot2 and hypot3 (T3) with the host Math.hypot; the others are exact by specification (abs, ceil, floor, imul, max, min, round, sign, sqrt). A Math.hypot of an older world.js is only counted: it is the same Torque algorithm on every V8 build.',
     largeArgumentCalls:(total.sin?.reduction?.large||0)+(total.cos?.reduction?.large||0),total,byKind,worldsWithDivergence,perWorld,divergentSamples};
 }
 
@@ -386,13 +398,48 @@ export function correctlyRounded(name,x,y){
   return toDouble(value);
 }
 
-// Port of V8's Torque MathHypot (src/builtins/math.tq), only for the jsc comparison (T3).
+// Port of V8's Torque MathHypot (src/builtins/math.tq), for the jsc comparison of a
+// root whose FMath has no hypot (before T3); FMath.hypot is used otherwise.
 const V8_HYPOT=`function v8hypot(){var length=arguments.length;if(length===0)return 0;var abs=new Array(length),oneArgIsNaN=false,max=0,i;
 for(i=0;i<length;i++){var value=+arguments[i];if(value!==value){oneArgIsNaN=true;abs[i]=0;}else{var a=Math.abs(value);abs[i]=a;if(a>max)max=a;}}
 if(max===Infinity)return Infinity;if(oneArgIsNaN)return NaN;if(max===0)return 0;var sum=0,compensation=0;
 for(i=0;i<length;i++){var n=abs[i]/max,summand=n*n-compensation,preliminary=sum+summand;compensation=(preliminary-sum)-summand;sum=preliminary;}
 return Math.sqrt(sum)*max;}`;
-const ENGINE_WORLDS=[[1,0,null],[1,1,null],[1,2,null],[96,0,null],[96,1,null],[96,2,null],[96,0,'v2'],[96,9,'v2'],[96,17,'v2'],[2026,4,'v2']];
+
+// SHA-256 of a string's UTF-8 bytes in plain JavaScript, for the jsc shell (no
+// crypto there): the same digest as Node's createHash('sha256').update(text).
+// Round constants and initial values are computed exactly with BigInt (integer
+// roots of the first primes), and the code is checked against node:crypto.
+function rootFraction(p,k,bitsOut){const scale=1n<<BigInt(bitsOut*k),n=BigInt(p)*scale;let lo=0n,hi=1n<<BigInt(bitsOut+4);while(lo<hi){const mid=(lo+hi+1n)>>1n;if(mid**BigInt(k)<=n)lo=mid;else hi=mid-1n;}return Number(lo&0xffffffffn);}
+const PRIMES=[];for(let n=2;PRIMES.length<64;n++)if(PRIMES.every(p=>n%p))PRIMES.push(n);
+export const SHA256_JS='var SHA256_K=['+PRIMES.map(p=>rootFraction(p,3,32)).join(',')+'],SHA256_H=['+PRIMES.slice(0,8).map(p=>rootFraction(p,2,32)).join(',')+'];\n'+
+`function sha256(text){var n=text.length,buf=new Uint8Array(n*3+72),len=0,i,c,d;
+for(i=0;i<n;i++){c=text.charCodeAt(i);
+if(c<0x80)buf[len++]=c;else if(c<0x800){buf[len++]=0xc0|c>>6;buf[len++]=0x80|c&63;}
+else if(c>=0xd800&&c<0xdc00&&i+1<n&&(d=text.charCodeAt(i+1))>=0xdc00&&d<0xe000){i++;c=0x10000+((c-0xd800)<<10)+(d-0xdc00);buf[len++]=0xf0|c>>18;buf[len++]=0x80|c>>12&63;buf[len++]=0x80|c>>6&63;buf[len++]=0x80|c&63;}
+else if(c>=0xd800&&c<0xe000){buf[len++]=0xef;buf[len++]=0xbf;buf[len++]=0xbd;}
+else{buf[len++]=0xe0|c>>12;buf[len++]=0x80|c>>6&63;buf[len++]=0x80|c&63;}}
+var total=((len+9+63)>>6)<<6;buf[len]=0x80;for(i=len+1;i<total;i++)buf[i]=0;
+var hiBits=Math.floor(len/0x20000000),loBits=(len*8)>>>0;
+buf[total-8]=hiBits>>>24;buf[total-7]=hiBits>>>16&255;buf[total-6]=hiBits>>>8&255;buf[total-5]=hiBits&255;buf[total-4]=loBits>>>24;buf[total-3]=loBits>>>16&255;buf[total-2]=loBits>>>8&255;buf[total-1]=loBits&255;
+var H=new Int32Array(SHA256_H),K=new Int32Array(SHA256_K),W=new Int32Array(64),off,t,a,b,e,f,g,h,cc,dd,t1,t2;
+for(off=0;off<total;off+=64){
+for(t=0;t<16;t++){i=off+4*t;W[t]=buf[i]<<24|buf[i+1]<<16|buf[i+2]<<8|buf[i+3];}
+for(t=16;t<64;t++){a=W[t-15];b=W[t-2];W[t]=(W[t-16]+((a>>>7|a<<25)^(a>>>18|a<<14)^(a>>>3))+W[t-7]+((b>>>17|b<<15)^(b>>>19|b<<13)^(b>>>10)))|0;}
+a=H[0];b=H[1];cc=H[2];dd=H[3];e=H[4];f=H[5];g=H[6];h=H[7];
+for(t=0;t<64;t++){t1=(h+((e>>>6|e<<26)^(e>>>11|e<<21)^(e>>>25|e<<7))+((e&f)^(~e&g))+K[t]+W[t])|0;t2=(((a>>>2|a<<30)^(a>>>13|a<<19)^(a>>>22|a<<10))+((a&b)^(a&cc)^(b&cc)))|0;h=g;g=f;f=e;e=(dd+t1)|0;dd=cc;cc=b;b=a;a=(t1+t2)|0;}
+H[0]=H[0]+a|0;H[1]=H[1]+b|0;H[2]=H[2]+cc|0;H[3]=H[3]+dd|0;H[4]=H[4]+e|0;H[5]=H[5]+f|0;H[6]=H[6]+g|0;H[7]=H[7]+h|0;}
+var out="";for(i=0;i<8;i++)out+=(H[i]>>>0).toString(16).padStart(8,"0");return out;}`;
+// Checked once per process against node:crypto: ASCII, accents, a surrogate
+// pair, block boundaries and one megabyte of mixed text.
+let sha256Checked=false;
+export function checkSha256Source(){
+  if(sha256Checked)return;
+  const js=new Function(SHA256_JS+'\nreturn sha256;')(),probes=['','abc','L’Éveil des forges','\u{1F600}x',...[55,56,63,64,65,119,120,128].map(n=>'a'.repeat(n))];
+  let big='';for(let i=0;i<1<<20;i++)big+=String.fromCharCode(i%7===0?0xe9:i%11===0?0x2019:32+(i*7919)%90);probes.push(big);
+  for(const text of probes)if(js(text)!==createHash('sha256').update(text).digest('hex'))throw new Error('SHA256_JS differs from node:crypto for a probe of length '+text.length);
+  sha256Checked=true;
+}
 
 export function trigCases(censusFile){
   const cases=[];
@@ -405,12 +452,19 @@ export function pages(root,{dir,census:censusFile,base}={}){
   if(!dir)throw new Error('--dir is required');
   mkdirSync(dir,{recursive:true});
   const fmRoot=existsSync(join(root,'src/fmath.js'))?root:DEFAULT_ROOT,src=(r,name)=>pathToFileURL(join(r,'src',name+'.js')).href,cases=trigCases(censusFile);
-  // FMath itself on the reference vectors of checks/fmath-vectors.txt, in each engine.
-  const vectors=[];
+  // FMath itself on the reference vectors of checks/fmath-vectors.txt, in each
+  // engine, and on those of checks/fmath-hypot-vectors.txt (since T3).
+  const vectors=[],hypotVectors=[];
   for(const v of readFileSync(join(fmRoot,'checks/fmath-vectors.txt'),'utf8').split('\n').filter(l=>l&&!l.startsWith('#')).map(l=>l.split(' '))){
     if(v[0]==='sincos')vectors.push(['sin',[v[1]],v[2]],['cos',[v[1]],v[3]]);
     else if(v[0]==='atan')vectors.push(['atan',[v[1]],v[2]]);
     else if(v[0]==='atan2')vectors.push(['atan2',[v[1],v[2]],v[3]]);
+  }
+  const hypotTable=join(fmRoot,'checks/fmath-hypot-vectors.txt');
+  if(existsSync(hypotTable))for(const v of readFileSync(hypotTable,'utf8').split('\n').filter(l=>l&&!l.startsWith('#')).map(l=>l.split(' '))){
+    const args=v.slice(2,-1),want=v[v.length-1];hypotVectors.push(['hypot',args,want]);
+    if(args.length===2)hypotVectors.push(['hypot2',args,want]);
+    if(args.length===3)hypotVectors.push(['hypot3',args,want]);
   }
   const vectorCheck='function fmathVectors(F,V){var f=new Float64Array(1),u=new Uint32Array(f.buffer);f[0]=1;var hi=u[1]===0x3ff00000?1:0;'+
     'function val(h){u[hi]=parseInt(h.slice(0,8),16);u[1-hi]=parseInt(h.slice(8),16);return f[0];}function bits(x){f[0]=x;return (u[hi]>>>0).toString(16).padStart(8,"0")+(u[1-hi]>>>0).toString(16).padStart(8,"0");}'+
@@ -418,7 +472,8 @@ export function pages(root,{dir,census:censusFile,base}={}){
   writeFileSync(join(dir,'trig.html'),'<!doctype html><meta charset=utf-8><title>trig</title><body><pre id=o>pending</pre>'+`<script src="${src(fmRoot,'fmath')}"></script><script>`+vectorCheck+
     'const cases='+JSON.stringify(cases.map(c=>[c.fn,c.args]))+',vectors='+JSON.stringify(vectors)+';const f=new Float64Array(1),u=new BigUint64Array(f.buffer);'+
     'const bits=x=>{f[0]=x;return u[0].toString(16).padStart(16,"0");},val=h=>{u[0]=BigInt("0x"+h);return f[0];};'+
-    'document.getElementById("o").textContent=JSON.stringify({ua:navigator.userAgent,results:cases.map(([fn,a])=>bits(Math[fn](...a.map(val)))),fmathVectors:fmathVectors(FMath,vectors)});</script>');
+    'const hypotVectors='+JSON.stringify(hypotVectors)+';'+
+    'document.getElementById("o").textContent=JSON.stringify({ua:navigator.userAgent,results:cases.map(([fn,a])=>bits(Math[fn](...a.map(val)))),fmathVectors:fmathVectors(FMath,vectors),fmathHypotVectors:hypotVectors.length?fmathVectors(FMath,hypotVectors):null});</script>');
   // fp.html: the 42 worlds of seeds 1 and 96 (checkpoint fingerprint and FNV of
   // the JSON), variant by variant. "game": a wired world.js as the page loads it
   // (fmath first). "native" and "fmath": a world.js before the fix (--base, or
@@ -438,17 +493,27 @@ export function pages(root,{dir,census:censusFile,base}={}){
   if(old){body+=scripts(old,modules)+'<script>collect("native","native");collect("fmath","fmath");</script>';variants.push('native','fmath');}
   writeFileSync(join(dir,'fp.html'),'<!doctype html><meta charset=utf-8><title>fp</title><body><pre id=o>pending</pre>'+body+
     '<script>document.getElementById("o").textContent=JSON.stringify({ua:navigator.userAgent,err,variants:'+JSON.stringify(variants)+',res});</script>');
-  // jsc-worlds.js: ten worlds in JavaScriptCore; FMath is handed to world.js as
-  // window.FMath. For a wired world.js the trigonometry is FMath in every variant.
-  const world=readFileSync(join(root,'src/world.js'),'utf8'),fmath=readFileSync(join(fmRoot,'src/fmath.js'),'utf8');
-  writeFileSync(join(dir,'jsc-worlds.js'),V8_HYPOT+'\nvar window={};\n'+fmath+'\nvar F=window.FMath;\n'+
-    'function fnv(s){var h=2166136261;for(var i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return (h>>>0).toString(16);}\n'+
-    'function load(M){var w={FMath:F};(new Function("window","Math",'+JSON.stringify(world)+'))(w,M);return w.FWorld;}\n'+
-    'function variant(trig,hypot){var M=Object.create(Math);if(trig){M.sin=F.sin;M.cos=F.cos;M.atan=F.atan;M.atan2=F.atan2;}if(hypot)M.hypot=v8hypot;return load(M);}\n'+
-    'var V={native:variant(false,false),fmath:variant(true,false),nativeV8Hypot:variant(false,true),fmathV8Hypot:variant(true,true)},cases='+JSON.stringify(ENGINE_WORLDS)+',out=[];\n'+
-    'for(var c of cases){var r={seed:c[0],index:c[1],v2:c[2]==="v2"};for(var k in V)r[k]=fnv(JSON.stringify(V[k].create(c[0],c[1],c[2]?{campaign:true,campaignVersion:2}:undefined)));out.push(r);}\n'+
-    vectorCheck+'var vectors='+JSON.stringify(vectors)+';\n'+
-    'print(JSON.stringify({engine:"jsc",worldUsesFMath:'+wired+',out:out,fmathVectors:fmathVectors(F,vectors)}));\n');
+  // jsc-worlds.js, for JavaScriptCore (the engine of Safari). "game": the world.js
+  // of root as the page loads it (fmath.js first, the engine's own Math), for the
+  // 114 worlds, hashed with SHA-256 like "worlds". With a world.js before the fix
+  // (--base B, or root before T2), on the 42 worlds of seed 96: "native" (the
+  // Math of the engine), "fmath" (FMath's trigonometry: the state after T2) and
+  // "fmathV8Hypot" (FMath's trigonometry and hypot: what T3 wires).
+  checkSha256Source();
+  const world=readFileSync(join(root,'src/world.js'),'utf8'),fmath=readFileSync(join(fmRoot,'src/fmath.js'),'utf8'),oldWorld=old?readFileSync(join(old,'src/world.js'),'utf8'):null;
+  const jscCase=w=>[w.kind,w.seed,w.index];
+  writeFileSync(join(dir,'jsc-worlds.js'),V8_HYPOT+'\n'+SHA256_JS+'\nvar window={};\n'+fmath+'\nvar F=window.FMath;\n'+
+    'function optionsOf(kind){return kind==="legacy"?undefined:kind==="v1"?{campaign:true}:{campaign:true,campaignVersion:2};}\n'+
+    'function load(source,M){var w={FMath:F};(new Function("window","Math",source))(w,M);return w.FWorld;}\n'+
+    'var game=load('+JSON.stringify(world)+',Math),gameCases='+JSON.stringify(worldList().map(jscCase))+',gameOut=[];\n'+
+    'for(var c of gameCases)gameOut.push({kind:c[0],seed:c[1],index:c[2],sha256:sha256(JSON.stringify(game.create(c[1],c[2],optionsOf(c[0]))))});\n'+
+    'var baseOut=[];\n'+
+    (oldWorld?'var H=typeof F.hypot==="function"?F.hypot:v8hypot,oldSource='+JSON.stringify(oldWorld)+';\n'+
+      'function variant(trig,hypot){var M=Object.create(Math);if(trig){M.sin=F.sin;M.cos=F.cos;M.atan=F.atan;M.atan2=F.atan2;}if(hypot)M.hypot=H;return load(oldSource,M);}\n'+
+      'var V={native:variant(false,false),fmath:variant(true,false),fmathV8Hypot:variant(true,true)},baseCases='+JSON.stringify(checkpointList(96).map(jscCase))+';\n'+
+      'for(var c of baseCases){var r={kind:c[0],seed:c[1],index:c[2]};for(var k in V)r[k]=sha256(JSON.stringify(V[k].create(c[1],c[2],optionsOf(c[0]))));baseOut.push(r);}\n':'')+
+    vectorCheck+'var vectors='+JSON.stringify(vectors)+',hypotVectors='+JSON.stringify(hypotVectors)+';\n'+
+    'print(JSON.stringify({engine:"jsc",worldUsesFMath:'+wired+',hypotFromFMath:typeof F.hypot==="function",game:gameOut,base:baseOut,fmathVectors:fmathVectors(F,vectors),fmathHypotVectors:hypotVectors.length?fmathVectors(F,hypotVectors):null}));\n');
   return {dir,files:['trig.html','fp.html','jsc-worlds.js'],trigCases:cases.length,fpVariants:variants,worldUsesFMath:wired,base:old??null};
 }
 
@@ -494,18 +559,22 @@ export function engines(root,{dir,census:censusFile,base,chrome='/Applications/G
         worlds.push(row);
       }
     }
-    out.chrome={path:chrome,userAgent:trig.ua,fmathVectors:trig.fmathVectors,trig:by,checkpoints:fp.err?{error:fp.err}:{worlds:fp.res.length,variants:fp.variants,...count,
+    out.chrome={path:chrome,userAgent:trig.ua,fmathVectors:trig.fmathVectors,fmathHypotVectors:trig.fmathHypotVectors??null,trig:by,checkpoints:fp.err?{error:fp.err}:{worlds:fp.res.length,variants:fp.variants,...count,
       note:'Fingerprint = FSimulation snapshot().fingerprint of the generated world; WorldFnv = FNV-1a of JSON.stringify(world). game: the wired world.js of root; native: a world.js before the fix with the Math of the engine; fmath: the same with FMath for sin, cos, atan and atan2 during generation. nodeFMath: the worlds of root after the fix in Node. nativeChromePointRefusedAfterFix: a point saved in Chrome before the fix whose fingerprint differs from the world after the fix (restore refuses it).',perWorld:worlds}};
   }else out.chrome={skipped:'not found: '+chrome};
   if(existsSync(jsc)){
-    const text=execFileSync(jsc,[join(dir,'jsc-worlds.js')],{maxBuffer:1<<26,timeout:600000}).toString(),j=JSON.parse(text.trim().split('\n').pop()),rows=[];
-    for(const r of j.out){
-      const options=r.v2?{campaign:true,campaignVersion:2}:undefined,np=fnv(JSON.stringify(nodeFMath.create(r.seed,r.index,options&&{...options}))),nn=nodeHost?fnv(JSON.stringify(nodeHost.create(r.seed,r.index,options&&{...options}))):null;
-      rows.push({seed:r.seed,index:r.index,v2:r.v2,jscNativeEqNodeHost:nn!==null&&r.native===nn,jscFMathEqNodeFMath:r.fmath===np,jscNativeV8HypotEqNodeHost:nn!==null&&r.nativeV8Hypot===nn,jscFMathV8HypotEqNodeFMath:r.fmathV8Hypot===np});
-    }
-    const tally=key=>rows.filter(r=>r[key]).length;
-    out.jsc={path:jsc,worldUsesFMath:j.worldUsesFMath,fmathVectors:j.fmathVectors,worlds:rows.length,jscNativeEqNodeHost:nodeHost?tally('jscNativeEqNodeHost'):null,jscFMathEqNodeFMath:tally('jscFMathEqNodeFMath'),jscNativeV8HypotEqNodeHost:nodeHost?tally('jscNativeV8HypotEqNodeHost'):null,jscFMathV8HypotEqNodeFMath:tally('jscFMathV8HypotEqNodeFMath'),
-      note:'For a wired world.js, the jsc variants all take sin, cos, atan and atan2 from FMath; Node host: the world.js before the fix (--base).',rows};
+    const text=execFileSync(jsc,[join(dir,'jsc-worlds.js')],{maxBuffer:1<<26,timeout:1800000}).toString(),j=JSON.parse(text.trim().split('\n').pop());
+    // Node side: the same worlds, SHA-256 of their JSON (as "worlds").
+    const sha=(W,r)=>digest(make(W,{seed:r.seed,index:r.index,options:r.kind==='legacy'?undefined:r.kind==='v1'?{campaign:true}:{campaign:true,campaignVersion:2}}));
+    const gameRows=j.game.map(r=>{const node=sha(nodeFMath,r);return {kind:r.kind,seed:r.seed,index:r.index,node,jsc:r.sha256,equal:r.sha256===node};});
+    const baseRows=j.base.map(r=>{const nf=sha(nodeFMath,r),nh=nodeHost?sha(nodeHost,r):null;return {kind:r.kind,seed:r.seed,index:r.index,jscNativeEqNodeHost:nh!==null&&r.native===nh,jscFMathEqNodeFMath:r.fmath===nf,jscFMathV8HypotEqNodeFMath:r.fmathV8Hypot===nf};});
+    const tally=key=>baseRows.filter(r=>r[key]).length,byKind=Object.fromEntries(['legacy','v1','v2'].map(kind=>{const rows=gameRows.filter(r=>r.kind===kind);return [kind,rows.filter(r=>r.equal).length+'/'+rows.length];}));
+    out.jsc={path:jsc,worldUsesFMath:j.worldUsesFMath,hypotFromFMath:j.hypotFromFMath,fmathVectors:j.fmathVectors,fmathHypotVectors:j.fmathHypotVectors,
+      worlds:gameRows.length,jscGameEqNode:gameRows.filter(r=>r.equal).length,jscGameEqNodeByKind:byKind,
+      jscGameEqNodeSeed96:gameRows.filter(r=>r.equal&&(r.kind==='legacy'||r.seed===96)).length+'/'+gameRows.filter(r=>r.kind==='legacy'||r.seed===96).length,
+      baseWorlds:baseRows.length,...(baseRows.length?{jscNativeEqNodeHost:nodeHost?tally('jscNativeEqNodeHost'):null,jscFMathEqNodeFMath:tally('jscFMathEqNodeFMath'),jscFMathV8HypotEqNodeFMath:tally('jscFMathV8HypotEqNodeFMath')}:{}),
+      note:'game: the world.js of root in JavaScriptCore (fmath.js first, the Math of jsc otherwise), SHA-256 of JSON.stringify(world), compared with the same worlds in Node. base: a world.js before the fix (--base) on the 42 worlds of seed 96, with the Math of jsc (native), FMath trigonometry (fmath: the state after T2) and FMath trigonometry and hypot (fmathV8Hypot); compared with the Node worlds of root (nodeFMath) or of the base with the Math of Node (nodeHost).',
+      game:gameRows,base:baseRows};
   }else out.jsc={skipped:'not found: '+jsc};
   return out;
 }

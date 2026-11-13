@@ -1,0 +1,45 @@
+{
+ "schema": "metal-lot01s-t3-hypot-micro-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "loadAverage": [
+   5.01953125,
+   4.44580078125,
+   4.20556640625
+  ]
+ },
+ "root": "~/claude/metal-chantier/nav",
+ "recorded": {
+  "calls2": 3688425,
+  "calls3": 1624289,
+  "worlds": "96:s0, 96:s2, V2 96:w1, 96:w10, 96:w18, V1 1:w6"
+ },
+ "reps": 11,
+ "sameSums": {
+  "resident2": true,
+  "resident3": true,
+  "streamed2": true,
+  "streamed3": true
+ },
+ "nsPerCall": {
+  "resident builtin 2": 7.92,
+  "resident hypot2": 1.23,
+  "resident builtin 3": 10.52,
+  "resident hypot3": 2.01,
+  "streamed builtin 2": 8.15,
+  "streamed hypot2": 1.97,
+  "streamed builtin 3": 9.92,
+  "streamed hypot3": 3.23
+ },
+ "portOverBuiltin": {
+  "resident2": 0.155,
+  "resident3": 0.191,
+  "streamed2": 0.242,
+  "streamed3": 0.326
+ },
+ "method": "process.hrtime per pass, passes alternated (forward, then reverse order), medians; resident: the first 4 096 recorded inputs, 400 passes per timing; streamed: every recorded input once per timing."
+}

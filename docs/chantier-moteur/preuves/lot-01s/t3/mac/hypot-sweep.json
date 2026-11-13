@@ -1,0 +1,186 @@
+{
+ "schema": "metal-lot01s-t3-hypot-sweep-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "loadAverage": [
+   4.9658203125,
+   4.37841796875,
+   3.7861328125
+  ]
+ },
+ "seed": 1592591107,
+ "countPerArity": 10000000,
+ "calls": 41012760,
+ "differences": 0,
+ "seconds": 39.5,
+ "note": "Object.is(FMath, Math.hypot of V8) on every input; a NaN equals any NaN. Classes of the first 100 000 pairs: {\"unit\":35499,\"near\":50042,\"zero\":7047,\"any\":35250,\"world\":17525,\"large\":13994,\"small\":14193,\"huge\":6992,\"subnormal\":7060,\"nan\":1704,\"infinity\":1742,\"tiny\":7127,\"max\":1825}",
+ "byFunction": {
+  "hypot2": {
+   "calls": 10000000,
+   "differences": 0
+  },
+  "hypot(2)": {
+   "calls": 10000000,
+   "differences": 0
+  },
+  "hypot3": {
+   "calls": 10000000,
+   "differences": 0
+  },
+  "hypot(3)": {
+   "calls": 10000000,
+   "differences": 0
+  },
+  "hypot(0)": {
+   "calls": 142858,
+   "differences": 0
+  },
+  "hypot(1)": {
+   "calls": 142857,
+   "differences": 0
+  },
+  "hypot(4)": {
+   "calls": 142857,
+   "differences": 0
+  },
+  "hypot(5)": {
+   "calls": 142857,
+   "differences": 0
+  },
+  "hypot(6)": {
+   "calls": 142857,
+   "differences": 0
+  },
+  "hypot(7)": {
+   "calls": 142857,
+   "differences": 0
+  },
+  "hypot(8)": {
+   "calls": 142857,
+   "differences": 0
+  },
+  "grid hypot2": {
+   "calls": 529,
+   "differences": 0
+  },
+  "grid hypot3": {
+   "calls": 12167,
+   "differences": 0
+  },
+  "infinity and NaN": {
+   "calls": 64,
+   "differences": 0
+  }
+ },
+ "classes": {
+  "first": [
+   [
+    "zero",
+    4
+   ],
+   [
+    "subnormal",
+    4
+   ],
+   [
+    "tiny",
+    4
+   ],
+   [
+    "small",
+    8
+   ],
+   [
+    "unit",
+    20
+   ],
+   [
+    "large",
+    8
+   ],
+   [
+    "huge",
+    4
+   ],
+   [
+    "max",
+    1
+   ],
+   [
+    "infinity",
+    1
+   ],
+   [
+    "nan",
+    1
+   ],
+   [
+    "any",
+    20
+   ],
+   [
+    "world",
+    10
+   ]
+  ],
+  "other": [
+   [
+    "zero",
+    4
+   ],
+   [
+    "subnormal",
+    4
+   ],
+   [
+    "tiny",
+    4
+   ],
+   [
+    "small",
+    8
+   ],
+   [
+    "unit",
+    20
+   ],
+   [
+    "large",
+    8
+   ],
+   [
+    "huge",
+    4
+   ],
+   [
+    "max",
+    1
+   ],
+   [
+    "infinity",
+    1
+   ],
+   [
+    "nan",
+    1
+   ],
+   [
+    "any",
+    20
+   ],
+   [
+    "world",
+    10
+   ],
+   [
+    "near",
+    85
+   ]
+  ],
+  "specialValues": 23
+ }
+}

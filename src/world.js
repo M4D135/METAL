@@ -1,10 +1,11 @@
 /* FERRO — deterministic architecture, constructed entirely from primitives. */
 (function () {
   'use strict';
-  // sin, cos, atan and atan2 come from FMath (src/fmath.js, loaded before this
-  // file): the same bits on every platform, so a seed builds the same world on
-  // x86-64, on arm64 and in Chrome. Math keeps only exact functions, and hypot
-  // (one algorithm in every V8 build).
+  // sin, cos, atan, atan2 and hypot come from FMath (src/fmath.js, loaded before
+  // this file): the same bits on every platform, so a seed builds the same world
+  // on x86-64, on arm64, in Chrome and in JavaScriptCore (Safari). hypot2 and
+  // hypot3 keep the arity and the argument order of the former Math.hypot calls.
+  // Math keeps only exact functions.
   const FMath = window.FMath;
   if (!FMath) throw new Error('FWorld: charger src/fmath.js avant src/world.js');
   const TAU = Math.PI * 2;
@@ -68,9 +69,9 @@
     const light = (x, y, z, color, power) => lights.push({ p: [x, y, z], color, power, region:regionContext });
     const mark=(m,category,region)=>{m.category=category;if(region!==undefined)m.region=region;return m;};
     function limb(a,b,radius,mat=10,category='branch',region) {
-      const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz);
+      const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=FMath.hypot3(dx,dy,dz);
       return mark(mesh('cylinder',[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[radius*2,length,radius*2],mat,
-        [FMath.atan2(dz,Math.hypot(dx,dy)),0,FMath.atan2(-dx,dy)]),category,region);
+        [FMath.atan2(dz,FMath.hypot2(dx,dy)),0,FMath.atan2(-dx,dy)]),category,region);
     }
     function tree(x,z,height,species,region,solid=true) {
       const width=species==='pine'?.72:species==='birch'?.45:.86,lean=(rand()-.5)*.6;
@@ -654,7 +655,7 @@
       {biome:'garden',skyTop:[.025,.035,.08],skyBottom:[.14,.16,.26],fog:[.10,.135,.22],sunDirection:[.42,.45,-.79],sunColor:[.36,.48,.74],ambient:[.14,.18,.26],wind:.45,weather:'motes'}
     ];
     const environment={...environments[stage],outdoorZones:rooms.concat(corridors).filter(r=>r.outdoor).map(({x,z,w,d})=>({x,z,w,d}))};
-    const sunLength=Math.hypot(...environment.sunDirection);
+    const [sunX,sunY,sunZ]=environment.sunDirection,sunLength=FMath.hypot3(sunX,sunY,sunZ);
     environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
     const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
     if(campaign)Object.assign(world,{campaign:true,...(options.campaignVersion===2?{campaignVersion:2}:{}),index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
@@ -693,10 +694,10 @@
     }
     const box=(p,s,mat=0,detail=1,category='panel',r=[0,0,0],emissive=0,color)=>add('box',p,s,mat,r,detail,category,emissive,color);
     function tube(a,b,radius,mat=1,category='pipe',detail=1) {
-      const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz);
+      const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=FMath.hypot3(dx,dy,dz);
       if(length<.005)return;
       return add('cylinder',[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[radius*2,length,radius*2],mat,
-        [FMath.atan2(dz,Math.hypot(dx,dy)),0,FMath.atan2(-dx,dy)],detail,category);
+        [FMath.atan2(dz,FMath.hypot2(dx,dy)),0,FMath.atan2(-dx,dy)],detail,category);
     }
     function flange(p,radius,axis,bolts=true) {
       const rotation=axes[axis];
@@ -998,7 +999,7 @@
       add('octa',[x,size*.24,z],[size,size*.48,size*.76],9,'pebble',[0,rand()*TAU,.12],2,w.stage===1?[.57,.43,.30]:[.42,.47,.39]);
     }
     function safePlant(x,z) {
-      return !w.hazards.some(h=>Math.hypot(h.x-x,h.z-z)<h.r+.55)&&!w.colliders.some(c=>
+      return !w.hazards.some(h=>FMath.hypot2(h.x-x,h.z-z)<h.r+.55)&&!w.colliders.some(c=>
         c.minY<1&&c.maxY>.05&&x>c.minX-.15&&x<c.maxX+.15&&z>c.minZ-.15&&z<c.maxZ+.15);
     }
     for(const room of w.rooms) {
@@ -1131,7 +1132,7 @@
       } else if(k&&m.shape==='cylinder'&&m.s[1]>(axis===0?r.w:r.d)*.55) {
         const dx=axis===0?1:0,dz=axis===2?1:0;
         m.p[1]+=y;m.s[1]*=Math.sqrt(1+k*k);
-        m.r=[FMath.atan2(dz,Math.hypot(dx,k)),0,FMath.atan2(-dx,k)];
+        m.r=[FMath.atan2(dz,FMath.hypot2(dx,k)),0,FMath.atan2(-dx,k)];
       } else m.p[1]+=y;
     }
     for(const c of w.colliders) {
@@ -1147,7 +1148,7 @@
     }
     for(const t of w.trees)t.y=at(regions.get(t.region),t.x,t.z);
     for(const b of w.outdoorBoundaries){const m=w.meshes[b.mesh];b.y=m.p[1]-m.s[1]/2;b.height=m.s[1];}
-    w.routeLength=w.connections.reduce((n,c)=>n+Math.hypot(c.x2-c.x1,c.z2-c.z1,c.y2-c.y1),0);
+    w.routeLength=w.connections.reduce((n,c)=>n+FMath.hypot3(c.x2-c.x1,c.z2-c.z1,c.y2-c.y1),0);
   }
   function floorHeight(world,x,z) {
     let fallback=null;
@@ -1163,7 +1164,7 @@
       const originals=parts.map(m=>({...m,p:m.p.slice(),s:m.s.slice(),r:(m.r||[0,0,0]).slice()}));
       const endpoints=m=>{const [rx,ry,rz]=m.r,cx=FMath.cos(rx),sx=FMath.sin(rx),cy=FMath.cos(ry),sy=FMath.sin(ry),cz=FMath.cos(rz),sz=FMath.sin(rz),axis=[cz*sy*sx-sz*cx,sz*sy*sx+cz*cx,cy*sx];return [-1,1].map(q=>m.p.map((v,i)=>v+q*axis[i]*m.s[1]/2));};
       const wood=t.species==='birch'?[.57,.58,.49]:t.species==='dead'?[.35,.29,.23]:[.27,.23,.16];
-      const segment=(m,a,b,diameter,category)=>{const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2];m.shape='cylinder';m.p=a.map((v,i)=>(v+b[i])/2);m.s=[diameter,Math.hypot(dx,dy,dz),diameter];m.r=[FMath.atan2(dz,Math.hypot(dx,dy)),0,FMath.atan2(-dx,dy)];m.category=category;m.mat=10;m.color=wood.map(v=>v*(.91+random()*.15));};
+      const segment=(m,a,b,diameter,category)=>{const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2];m.shape='cylinder';m.p=a.map((v,i)=>(v+b[i])/2);m.s=[diameter,FMath.hypot3(dx,dy,dz),diameter];m.r=[FMath.atan2(dz,FMath.hypot2(dx,dy)),0,FMath.atan2(-dx,dy)];m.category=category;m.mat=10;m.color=wood.map(v=>v*(.91+random()*.15));};
       const [base,top]=endpoints(originals[1]),bend=base.map((v,i)=>v+(top[i]-v)*.54),angle=random()*TAU;
       bend[0]+=FMath.cos(angle)*.14;bend[2]+=FMath.sin(angle)*.14;
       segment(parts[1],base,bend,originals[1].s[0],'trunk');
@@ -1181,7 +1182,7 @@
       }else{
         const bare=t.species==='dead';
         for(const [j,i] of branches.entries()){
-          const [oldA,joint]=endpoints(originals[i]),[,tip]=endpoints(originals[i+1]),a=spine(Math.max(t.y+2.3,oldA[1])),dx=joint[0]-a[0],dz=joint[2]-a[2],length=Math.hypot(dx,dz)||1,bow=(random()-.5)*t.height*.10;
+          const [oldA,joint]=endpoints(originals[i]),[,tip]=endpoints(originals[i+1]),a=spine(Math.max(t.y+2.3,oldA[1])),dx=joint[0]-a[0],dz=joint[2]-a[2],length=FMath.hypot2(dx,dz)||1,bow=(random()-.5)*t.height*.10;
           const knee=a.map((v,k)=>v+(joint[k]-v)*.58);knee[0]-=dz/length*bow;knee[2]+=dx/length*bow;knee[1]+=.10+random()*.10;
           segment(parts[i],a,knee,originals[i].s[0], 'branch');
           segment(parts[i+1],knee,tip,originals[i].s[0]*.54,'twig');
@@ -1273,7 +1274,7 @@
     w.bounds.maxX=Math.ceil(arena.x+30+.8);w.bounds.minZ=Math.min(w.bounds.minZ,Math.floor(arena.z-30-.8));w.bounds.maxZ=Math.max(w.bounds.maxZ,Math.ceil(arena.z+30+.8));
     w.natureStats.outdoorRooms++;w.natureStats.outdoorPaths++;
     w.detailStats.regions[region]=w.meshes.filter(m=>m.region===region).length;w.detailStats.regions['corridor-'+corridorId]=w.meshes.filter(m=>m.region==='corridor-'+corridorId).length;
-    w.routeLength=w.connections.reduce((n,c)=>n+Math.hypot(c.x2-c.x1,c.z2-c.z1,c.y2-c.y1),0);
+    w.routeLength=w.connections.reduce((n,c)=>n+FMath.hypot3(c.x2-c.x1,c.z2-c.z1,c.y2-c.y1),0);
   }
   // A continuous, visible terrain bed makes a demolished boundary a usable
   // opening. Tiles keep the render spatial index local; no map-sized mesh.
@@ -1294,11 +1295,11 @@
         add('octa',[x,1.4,z],along?[length,1.5,1.5]:[1.5,1.5,length],9,'terrain_edge',{terrain:true,color:color.map(v=>v*1.25)});
       }
     }
-    const segmentDistance=(x,z,a,c)=>{const dx=c.x-a.x,dz=c.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1)));return Math.hypot(x-a.x-dx*t,z-a.z-dz*t);};
+    const segmentDistance=(x,z,a,c)=>{const dx=c.x-a.x,dz=c.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1)));return FMath.hypot2(x-a.x-dx*t,z-a.z-dz*t);};
     const reserved=[w.spawn,w.exit,...w.cores,...w.pickups,...w.mechanisms,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(j=>[j,j.target])],chosen=[];
     function spot(room,radius,ambient=false){
       const candidates=[];for(const dx of [-4.5,4.5,-2.8,2.8,-6,6,0])for(const dz of [-1.8,1.8,-5.6,5.6,-3.4,3.4])candidates.push({x:room.x+dx,z:room.z+dz});
-      return candidates.find(p=>Math.abs(p.x-room.x)<room.w/2-radius-.3&&Math.abs(p.z-room.z)<room.d/2-radius-.3&&isWalkable(w,p.x,p.z,radius)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>radius+1.8)&&chosen.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>radius+q.r+1)&&w.jumpPads.every(j=>segmentDistance(p.x,p.z,j,j.target)>radius+1.5)&&(!ambient||reserved.every(q=>{const dx=room.x-p.x,dz=room.z-p.z,n=Math.hypot(dx,dz),a={x:p.x+dx/n*.54,z:p.z+dz/n*.54},c={x:p.x+dx/n*3.46,z:p.z+dz/n*3.46};return Math.hypot(q.x-a.x,q.z-a.z)>3.2&&segmentDistance(q.x,q.z,a,c)>1.8;})));
+      return candidates.find(p=>Math.abs(p.x-room.x)<room.w/2-radius-.3&&Math.abs(p.z-room.z)<room.d/2-radius-.3&&isWalkable(w,p.x,p.z,radius)&&reserved.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>radius+1.8)&&chosen.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>radius+q.r+1)&&w.jumpPads.every(j=>segmentDistance(p.x,p.z,j,j.target)>radius+1.5)&&(!ambient||reserved.every(q=>{const dx=room.x-p.x,dz=room.z-p.z,n=FMath.hypot2(dx,dz),a={x:p.x+dx/n*.54,z:p.z+dz/n*.54},c={x:p.x+dx/n*3.46,z:p.z+dz/n*3.46};return FMath.hypot2(q.x-a.x,q.z-a.z)>3.2&&segmentDistance(q.x,q.z,a,c)>1.8;})));
     }
     w.traps=[];w.pipes=[];
     const yards=w.rooms.filter(r=>r.outdoor&&r.id!==0&&!r.bossArena);
@@ -1324,7 +1325,7 @@
       let room,point;
       for(const r of yards.slice(i%yards.length).concat(w.rooms.filter(r=>r.id!==0&&!r.bossArena))){const q=spot(r,.7,i===3);if(q){room=r;point=q;break;}}
       if(!point)throw new Error('No safe pressure pipe position');
-      const {x,z}=point,y=room.y,dx=room.x-x,dz=room.z-z,len=Math.hypot(dx,dz),id='pipe-'+i,region='room-'+room.id,assembly='pressure-'+i;
+      const {x,z}=point,y=room.y,dx=room.x-x,dz=room.z-z,len=FMath.hypot2(dx,dz),id='pipe-'+i,region='room-'+room.id,assembly='pressure-'+i;
       const pipe={id,x,y:y+1.03,z,dx:dx/len,dy:0,dz:dz/len,length:3,radius:.45,r:1.6,delay:i===3?1.4:1,duration:i===3?3:7,damage:8,period:i===3?16:0,phase:i===3?5:0};
       pipe.nozzle=[x+pipe.dx*.46,pipe.y,z+pipe.dz*.46];
       w.pipes.push(pipe);chosen.push({...point,r:.8});
@@ -1348,7 +1349,7 @@
     const bbox=m=>{const [rx,ry,rz]=m.r||[0,0,0],a=FMath.cos(rx),b=FMath.sin(rx),c=FMath.cos(ry),d=FMath.sin(ry),e=FMath.cos(rz),f=FMath.sin(rz),r=[e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a],h=[0,1,2].map(k=>(Math.abs(r[k*3]*m.s[0])+Math.abs(r[k*3+1]*m.s[1])+Math.abs(r[k*3+2]*m.s[2]))/2);return {minX:m.p[0]-h[0],maxX:m.p[0]+h[0],minY:m.p[1]-h[1],maxY:m.p[1]+h[1],minZ:m.p[2]-h[2],maxZ:m.p[2]+h[2]};};
     const boxes=out.map(bbox),keys=['minX','maxX','minY','maxY','minZ','maxZ'];
     const union=list=>Object.fromEntries(keys.map(k=>[k,Math[k.startsWith('min')?'min':'max'](...list.map(b=>b[k]))]));
-    const distance=(p,b)=>Math.hypot(Math.max(b.minX-p[0],0,p[0]-b.maxX),Math.max(b.minY-p[1],0,p[1]-b.maxY),Math.max(b.minZ-p[2],0,p[2]-b.maxZ));
+    const distance=(p,b)=>FMath.hypot3(Math.max(b.minX-p[0],0,p[0]-b.maxX),Math.max(b.minY-p[1],0,p[1]-b.maxY),Math.max(b.minZ-p[2],0,p[2]-b.maxZ));
     function group(id,kind,members,colliders=[],strength=6){const g={id,kind,meshes:members,colliders,strength,region:out[members[0]].region,bounds:union(members.map(i=>boxes[i]))};groups.push(g);for(const i of members)owners.set(i,g);return g;}
     for(const t of w.trees){const members=Array.from({length:t.meshCount},(_,j)=>t.mesh+j),indices=w.colliders.flatMap((c,i)=>members.includes(c.mesh)?[i]:[]);const g=group('tree-'+t.mesh,'tree',members,indices,7);t.destructibleId=g.id;}
     out.forEach((m,i)=>{if(m.assembly){if(!explicit.has(m.assembly))explicit.set(m.assembly,[]);explicit.get(m.assembly).push(i);}});
@@ -1384,7 +1385,7 @@
     for(const m of w.mechanisms){const g=nearest(m.x,m.y+.6,m.z);if(g)m.destructibleId=g.id;}
     // Anchors are existing pressure systems and trap machinery, never invisible
     // colliders or freshly spawned props. The director may only play real cues.
-    w.horrorSites=w.pipes.map(p=>({id:'horror-'+p.id,x:p.x,y:p.y-1.03,z:p.z,kind:'steam',radius:3,destructibleId:p.destructibleId})).concat(w.traps.map(t=>({id:'horror-'+t.id,x:t.x,y:t.baseY,z:t.z,kind:t.kind==='press'?'collapse':'alarm',radius:3,destructibleId:t.destructibleId}))).filter(q=>Math.hypot(q.x-w.spawn.x,q.z-w.spawn.z)>16);
+    w.horrorSites=w.pipes.map(p=>({id:'horror-'+p.id,x:p.x,y:p.y-1.03,z:p.z,kind:'steam',radius:3,destructibleId:p.destructibleId})).concat(w.traps.map(t=>({id:'horror-'+t.id,x:t.x,y:t.baseY,z:t.z,kind:t.kind==='press'?'collapse':'alarm',radius:3,destructibleId:t.destructibleId}))).filter(q=>FMath.hypot2(q.x-w.spawn.x,q.z-w.spawn.z)>16);
     w.destructibles=groups;w.destructionVersion=1;
   }
   function roomDepths(w){
@@ -1392,13 +1393,13 @@
     for(let pass=0;pass<w.rooms.length;pass++)for(const c of w.connections)for(const [a,b] of [[c.from,c.to],[c.to,c.from]])if(depth.has(a)&&(!depth.has(b)||depth.get(b)>depth.get(a)+1))depth.set(b,depth.get(a)+1);
     return depth;
   }
-  function pointSegment(x,z,a,b){const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1)));return Math.hypot(x-a.x-dx*t,z-a.z-dz*t);}
-  function nearBox(x,z,b,r){return Math.hypot(Math.max(b.minX-x,0,x-b.maxX),Math.max(b.minZ-z,0,z-b.maxZ))<r;}
+  function pointSegment(x,z,a,b){const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1)));return FMath.hypot2(x-a.x-dx*t,z-a.z-dz*t);}
+  function nearBox(x,z,b,r){return FMath.hypot2(Math.max(b.minX-x,0,x-b.maxX),Math.max(b.minZ-z,0,z-b.maxZ))<r;}
   function safeSupply(w,x,z,r=.6){
     const y=floorHeight(w,x,z);if(y===null||!isWalkable(w,x,z,r))return false;
-    if(w.hazards.some(h=>Math.abs(h.y-y)<.5&&Math.hypot(x-h.x,z-h.z)<h.r+r+.45))return false;
-    if(w.traps.some(t=>Math.abs(t.baseY-y)<.5&&Math.hypot(x-t.x,z-t.z)<(t.kind==='blade'?3:1.8)+r))return false;
-    for(const p of w.pipes)if(Math.abs(p.y-1.03-y)<.5){const a={x:p.nozzle[0],z:p.nozzle[2]},b={x:a.x+p.dx*p.length,z:a.z+p.dz*p.length};if(Math.hypot(x-p.x,z-p.z)<2+r||pointSegment(x,z,a,b)<1.8+r||p.period&&Math.hypot(x-a.x,z-a.z)<3.2+r)return false;}
+    if(w.hazards.some(h=>Math.abs(h.y-y)<.5&&FMath.hypot2(x-h.x,z-h.z)<h.r+r+.45))return false;
+    if(w.traps.some(t=>Math.abs(t.baseY-y)<.5&&FMath.hypot2(x-t.x,z-t.z)<(t.kind==='blade'?3:1.8)+r))return false;
+    for(const p of w.pipes)if(Math.abs(p.y-1.03-y)<.5){const a={x:p.nozzle[0],z:p.nozzle[2]},b={x:a.x+p.dx*p.length,z:a.z+p.dz*p.length};if(FMath.hypot2(x-p.x,z-p.z)<2+r||pointSegment(x,z,a,b)<1.8+r||p.period&&FMath.hypot2(x-a.x,z-a.z)<3.2+r)return false;}
     return true;
   }
   function shopsWorld(w,theme){
@@ -1407,7 +1408,7 @@
     for(const [i,r] of rooms.entries()){
       const candidates=i===2?[[-23,-17],[-23,17],[-22,-23],[-22,23]]:[[-2.8,1.8],[-4.8,1.8],[4.8,-1.8],[-5.8,-4.2],[5.8,4.2],[-6.8,4.2],[6.8,-4.2]];
       let spot;
-      for(const [dx,dz] of candidates){const p={x:r.x+dx,y:r.y,z:r.z+dz},front={x:p.x,y:p.y,z:p.z+1.05};if(safeSupply(w,p.x,p.z,.75)&&safeSupply(w,front.x,front.z,.42)&&[p,front].every(a=>reserved.every(q=>Math.hypot(a.x-q.x,a.z-q.z)>1.2))){spot=p;break;}}
+      for(const [dx,dz] of candidates){const p={x:r.x+dx,y:r.y,z:r.z+dz},front={x:p.x,y:p.y,z:p.z+1.05};if(safeSupply(w,p.x,p.z,.75)&&safeSupply(w,front.x,front.z,.42)&&[p,front].every(a=>reserved.every(q=>FMath.hypot2(a.x-q.x,a.z-q.z)>1.2))){spot=p;break;}}
       if(!spot)throw new Error('No safe workshop '+w.stage+'/'+i);
       const {x,y,z}=spot,region='room-'+r.id,add=(p,s,mat,category,extra={})=>{const m={shape:'box',p,s,mat,region,category,outdoor:r.outdoor,structural:true,indestructible:true,...extra};w.meshes.push(m);return m;};
       const mesh=w.meshes.length;add([x,y+.72,z],[1.02,1.44,.66],0,'shop_terminal',{solid:true});
@@ -1433,7 +1434,7 @@
       const step=.4,nx=Math.ceil(r.w/step),nz=Math.ceil(r.d/step),count=nx*nz,px=i=>bounds.minX+(i+.5)*step,pz=i=>bounds.minZ+(i+.5)*step;
       const free=(x,z,rad=.42)=>Math.abs(x-r.x)<r.w/2-rad-.08&&Math.abs(z-r.z)<r.d/2-rad-.08&&!boxes.some(c=>c.minY<r.y+2.2&&nearBox(x,z,c,rad));
       const base=new Uint8Array(count);for(let z=0;z<nz;z++)for(let x=0;x<nx;x++)base[z*nx+x]=free(px(x),pz(z));
-      const nearest=(p,mask)=>{const a=[];for(let i=0;i<count;i++)if(mask[i]&&Math.hypot(px(i%nx)-p.x,pz(Math.floor(i/nx))-p.z)<.6)a.push(i);return a;};
+      const nearest=(p,mask)=>{const a=[];for(let i=0;i<count;i++)if(mask[i]&&FMath.hypot2(px(i%nx)-p.x,pz(Math.floor(i/nx))-p.z)<.6)a.push(i);return a;};
       const parents=w.connections.flatMap(c=>c.from===r.id?[c.to]:c.to===r.id?[c.from]:[]).filter(id=>depths.get(id)<depths.get(r.id)).sort((a,b)=>a-b),parent=w.rooms[parents[0]],preferred=[Math.sign(r.x-parent.x),Math.sign(r.z-parent.z)];
       const normals=[preferred,...[[0,1],[0,-1],[1,0],[-1,0]].filter(n=>n[0]!==preferred[0]||n[1]!==preferred[1])];
       for(const normal of normals)for(const width of [5.4,5.1,4.8])for(const depth of [4.6,3.8,3.0,2.6,5.4,6.3,7.3,8.3])for(const lateral of [0,1.4,-1.4,3.6,-3.6,4.8,-4.8]){
@@ -1441,7 +1442,7 @@
         const panel={minX:x-(normal[0]?.42:width)/2,maxX:x+(normal[0]?.42:width)/2,minZ:z-(normal[1]?.42:width)/2,maxZ:z+(normal[1]?.42:width)/2,minY:r.y,maxY:r.y+3.05};
         if(boxes.some(c=>overlap(panel,c))||avoid.some(p=>nearBox(p.x,p.z,panel,p.r))||points.some(p=>nearBox(p.x,p.z,panel,.7))||w.jumpPads.some(p=>pointSegment(x,z,p,p.target)<width/2+1.5))continue;
         const entries=[[-.85,1.9],[.85,1.9],[-.85,3.4],[.85,3.4]].map(([t,d])=>({x:x+normal[0]*d+tangent[0]*t,y:r.y,z:z+normal[1]*d+tangent[1]*t}));
-        if(entries.some(p=>!free(p.x,p.z,.70)||avoid.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<q.r+.6)||points.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<.9)||w.jumpPads.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<2||Math.hypot(p.x-q.target.x,p.z-q.target.z)<2)))continue;
+        if(entries.some(p=>!free(p.x,p.z,.70)||avoid.some(q=>FMath.hypot2(p.x-q.x,p.z-q.z)<q.r+.6)||points.some(q=>FMath.hypot2(p.x-q.x,p.z-q.z)<.9)||w.jumpPads.some(q=>FMath.hypot2(p.x-q.x,p.z-q.z)<2||FMath.hypot2(p.x-q.target.x,p.z-q.target.z)<2)))continue;
         const mask=base.map((v,i)=>v&&!nearBox(px(i%nx),pz(Math.floor(i/nx)),panel,.42)),starts=nearest(r,mask);if(!starts.length)continue;
         const seen=new Uint8Array(count),queue=starts.slice();for(const i of starts)seen[i]=1;
         for(let j=0;j<queue.length;j++){const i=queue[j],ix=i%nx,iz=Math.floor(i/nx);for(const k of [ix?i-1:-1,ix+1<nx?i+1:-1,iz?i-nx:-1,iz+1<nz?i+nx:-1])if(k>=0&&mask[k]&&!seen[k]){seen[k]=1;queue.push(k);}}
@@ -1454,7 +1455,7 @@
       // Natural cover may be a full adjoining room away: layout centres are
       // 41–52 m apart. Lifts are not infantry routes; use actual walking links.
       const links=w.connections.filter(c=>!c.liftId&&(c.from===r.id||c.to===r.id)),neighbors=links.map(c=>w.rooms[c.from===r.id?c.to:c.from]).filter(q=>q&&!q.bossArena),rooms=[r,...neighbors];
-      const approach=(q,room)=>Math.hypot(q.x-room.x,q.z-room.z)+Math.hypot(room.x-r.x,room.y-r.y,room.z-r.z)+4;
+      const approach=(q,room)=>FMath.hypot2(q.x-room.x,q.z-room.z)+FMath.hypot3(room.x-r.x,room.y-r.y,room.z-r.z)+4;
       const avoid=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.jumpPads.flatMap(q=>[q,q.target])],candidates=b.entries.map(q=>({...q,room:r.id,travel:approach(q,r),mask:0,rank:0}));
       const incoming=(b.normal[0]?r.w:r.d)/2-1.5,probes=[[r.x,r.z],[r.x-b.normal[0]*incoming,r.z-b.normal[1]*incoming],[r.x-r.w*.27,r.z+r.d*.23],[r.x+r.w*.27,r.z-r.d*.23]].filter(([x,z])=>isWalkable(w,x,z,.28)&&Math.abs((floorHeight(w,x,z)??-999)-r.y)<.08).map(([x,z])=>[x,r.y+1.62,z]);
       function covers(eye,target,boxes){
@@ -1463,7 +1464,7 @@
       function maskFor(q){
         const yaw=FMath.atan2(r.x-q.x,q.z-r.z),samples=[[0,0],[-.9,0],[.9,0],[0,-.9],[0,.9],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65],[FMath.sin(yaw)*1.5,-FMath.cos(yaw)*1.5]];let mask=0;
         for(let i=0;i<probes.length;i++){
-          const eye=probes[i];if(Math.hypot(q.x-eye[0],q.z-eye[2])<10)continue;
+          const eye=probes[i];if(FMath.hypot2(q.x-eye[0],q.z-eye[2])<10)continue;
           const boxes=w.colliders.filter(c=>c.maxX>=Math.min(eye[0],q.x-1.5)&&c.minX<=Math.max(eye[0],q.x+1.5)&&c.maxZ>=Math.min(eye[2],q.z-1.5)&&c.minZ<=Math.max(eye[2],q.z+1.5)&&c.maxY>=Math.min(eye[1],q.y+.2)&&c.minY<=Math.max(eye[1],q.y+2.15));
           if([.2,1.1,2.15].every(h=>samples.every(([dx,dz])=>covers(eye,[q.x+dx,q.y+h,q.z+dz],boxes))))mask|=1<<i;
         }
@@ -1471,8 +1472,8 @@
       }
       const bits=n=>{let count=0;for(;n;n&=n-1)count++;return count;};
       function offer(q,room,travel=approach(q,room)){
-        if(!Number.isFinite(q.y)||Math.hypot(q.x-r.x,q.z-r.z)>80||!isWalkable(w,q.x,q.z,.85)||Math.abs((floorHeight(w,q.x,q.z)??-999)-q.y)>.08||avoid.some(a=>Math.hypot(a.x-q.x,a.z-q.z)<2)||!w.walkable.some(f=>!f.substrate&&!f.fallback&&Math.abs(q.x-f.x)<=f.w/2&&Math.abs(q.z-f.z)<=f.d/2))return;
-        if(candidates.some(a=>Math.hypot(a.x-q.x,a.z-q.z)<.2))return;
+        if(!Number.isFinite(q.y)||FMath.hypot2(q.x-r.x,q.z-r.z)>80||!isWalkable(w,q.x,q.z,.85)||Math.abs((floorHeight(w,q.x,q.z)??-999)-q.y)>.08||avoid.some(a=>FMath.hypot2(a.x-q.x,a.z-q.z)<2)||!w.walkable.some(f=>!f.substrate&&!f.fallback&&Math.abs(q.x-f.x)<=f.w/2&&Math.abs(q.z-f.z)<=f.d/2))return;
+        if(candidates.some(a=>FMath.hypot2(a.x-q.x,a.z-q.z)<.2))return;
         q.room=room.id;q.travel=travel;q.mask=maskFor(q);q.rank=bits(q.mask)*20+(room!==r?3:0)+(depths.get(room.id)<depths.get(r.id)?2:0)-q.travel*.015;candidates.push(q);
       }
       for(const room of rooms)for(const sx of [-1,1])for(const sz of [-1,1])for(const inset of [2.6,4.5,1.7,6.3,7.8]){
@@ -1484,12 +1485,12 @@
       // beyond the adjacent room provide cover without planting a new baffle.
       for(const room of neighbors)for(const link of w.connections.filter(c=>!c.liftId&&(c.from===room.id||c.to===room.id))){
         const other=w.rooms[link.from===room.id?link.to:link.from];if(!other||other===r||other.bossArena)continue;
-        const length=Math.hypot(other.x-room.x,other.z-room.z),dx=(other.x-room.x)/length,dz=(other.z-room.z)/length,near=(dx?room.w:room.d)/2,far=length-(dx?other.w:other.d)/2-1.3;
-        for(const at of [near+2,near+6,near+10])if(at<far)for(const side of [-.8,.8]){const q={x:room.x+dx*at-dz*side,z:room.z+dz*at+dx*side};q.y=floorHeight(w,q.x,q.z);offer(q,room,Math.hypot(room.x-r.x,room.z-r.z)+at+4);}
+        const length=FMath.hypot2(other.x-room.x,other.z-room.z),dx=(other.x-room.x)/length,dz=(other.z-room.z)/length,near=(dx?room.w:room.d)/2,far=length-(dx?other.w:other.d)/2-1.3;
+        for(const at of [near+2,near+6,near+10])if(at<far)for(const side of [-.8,.8]){const q={x:room.x+dx*at-dz*side,z:room.z+dz*at+dx*side};q.y=floorHeight(w,q.x,q.z);offer(q,room,FMath.hypot2(room.x-r.x,room.z-r.z)+at+4);}
       }
       const selected=[];let covered=0;
       while(selected.length<8){
-        const q=candidates.filter(q=>selected.every(a=>Math.hypot(a.x-q.x,a.z-q.z)>=1.75)).sort((a,b)=>(bits(b.mask&~covered)*40+b.rank-selected.filter(q=>q.room===b.room).length*2)-(bits(a.mask&~covered)*40+a.rank-selected.filter(q=>q.room===a.room).length*2))[0];
+        const q=candidates.filter(q=>selected.every(a=>FMath.hypot2(a.x-q.x,a.z-q.z)>=1.75)).sort((a,b)=>(bits(b.mask&~covered)*40+b.rank-selected.filter(q=>q.room===b.room).length*2)-(bits(a.mask&~covered)*40+a.rank-selected.filter(q=>q.room===a.room).length*2))[0];
         if(!q)break;selected.push(q);covered|=q.mask;
       }
       return (selected.length>=4?selected:candidates.slice(0,4)).map(q=>({x:q.x,y:q.y,z:q.z,travel:q.travel}));
@@ -1513,16 +1514,16 @@
     const depths=roomDepths(w),initial=new Set(w.connections.flatMap(c=>c.from===0?[c.to]:c.to===0?[c.from]:[]));
     w.progression={version:1,weaponSlots:4,startWeapons:w.stage===0?[true,false,false,false]:[true,true,true,false],startAmmo:[[48,0,0,0],[72,12,4,0],[84,16,5,0]][w.stage],startShield:false,ammoCaps:[180,36,12,16],maxActive:[8,10,12][w.stage]};
     if(w.campaign)Object.assign(w.progression,{weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],startShield:w.campaignVersion===2,ammoCaps:[180,36,12,16,1],maxActive:w.campaignProfile.maxActive});
-    w.pickups=w.pickups.filter(p=>{const r=w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);return r&&(r.id===0||r.bossArena||Math.hypot(p.x-r.x-2.5,p.z-r.z-1.5)<.1);}).map((p,i)=>({...p,id:'health-'+i,kind:'health',amount:28,zoneId:w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2).id}));
+    w.pickups=w.pickups.filter(p=>{const r=w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);return r&&(r.id===0||r.bossArena||FMath.hypot2(p.x-r.x-2.5,p.z-r.z-1.5)<.1);}).map((p,i)=>({...p,id:'health-'+i,kind:'health',amount:28,zoneId:w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2).id}));
     const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target])];
     // Service-bay cover follows the real incoming corridor. A small health case
     // may move to a nearby free tile rather than force its screen to face sideways.
     for(const p of w.pickups)if(!isWalkable(w,p.x,p.z,.6)){
       const r=w.rooms[p.zoneId],candidates=[[-2.1,-1.5],[2.8,-4.7],[-.7,1.7],[1.4,-1.5],[-1.4,-3.0]];
-      const q=candidates.map(([dx,dz])=>({x:r.x+dx,z:r.z+dz})).find(q=>safeSupply(w,q.x,q.z,.6)&&reserved.every(a=>Math.hypot(q.x-a.x,q.z-a.z)>1.2)&&w.pickups.every(a=>a===p||Math.hypot(q.x-a.x,q.z-a.z)>1.12)&&w.encounterBays.every(b=>b.spawnEntries.every(a=>Math.hypot(q.x-a.x,q.z-a.z)>1.2)));
+      const q=candidates.map(([dx,dz])=>({x:r.x+dx,z:r.z+dz})).find(q=>safeSupply(w,q.x,q.z,.6)&&reserved.every(a=>FMath.hypot2(q.x-a.x,q.z-a.z)>1.2)&&w.pickups.every(a=>a===p||FMath.hypot2(q.x-a.x,q.z-a.z)>1.12)&&w.encounterBays.every(b=>b.spawnEntries.every(a=>FMath.hypot2(q.x-a.x,q.z-a.z)>1.2)));
       if(!q)throw new Error('No clear health case '+w.stage+'/'+p.zoneId);p.x=q.x;p.z=q.z;p.y=floorHeight(w,q.x,q.z);
     }
-    const free=(p,radius=.65)=>safeSupply(w,p.x,p.z,radius)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.2)&&w.pickups.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.12)&&w.encounterBays.every(b=>b.spawnEntries.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.2));
+    const free=(p,radius=.65)=>safeSupply(w,p.x,p.z,radius)&&reserved.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>1.2)&&w.pickups.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>1.12)&&w.encounterBays.every(b=>b.spawnEntries.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>1.2));
     const place=(room,kind,weapon,amount,candidates,label)=>{
       const p=candidates.find(p=>free(p,kind==='weapon'?.75:.57));if(!p)throw new Error('No supply position '+w.seed+'/'+w.stage+'/'+room.id+'/'+label);
       const value={id:'supply-'+room.id+'-'+label,kind,weapon,amount,x:p.x,y:floorHeight(w,p.x,p.z),z:p.z,zoneId:room.id};w.pickups.push(value);return value;
@@ -1563,7 +1564,7 @@
     const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target]),...w.encounters.flatMap(e=>e.spawnEntries),...w.enemies.filter(e=>e.deployed)];
     const add=(room,kind,amount,label,preferred=[])=>{
       const candidates=preferred.slice();for(const z of [-1.8,1.8,-3.6,3.6,0,-5.4,5.4])for(const x of [-1.8,1.8,-3.6,3.6,0,-5.4,5.4])candidates.push({x:room.x+x,z:room.z+z});
-      const point=candidates.find(p=>Math.abs(p.x-room.x)<room.w/2-1&&Math.abs(p.z-room.z)<room.d/2-1&&Math.abs(floorHeight(w,p.x,p.z)-room.y)<.01&&safeSupply(w,p.x,p.z,.75)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.65)&&w.pickups.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.35));
+      const point=candidates.find(p=>Math.abs(p.x-room.x)<room.w/2-1&&Math.abs(p.z-room.z)<room.d/2-1&&Math.abs(floorHeight(w,p.x,p.z)-room.y)<.01&&safeSupply(w,p.x,p.z,.75)&&reserved.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>1.65)&&w.pickups.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>1.35));
       if(!point)throw new Error('No equipment position '+w.seed+'/'+w.stage+'/'+label);
       w.pickups.push({id:'arsenal-'+label,kind,...(kind==='shield'?{}:{weapon:3}),amount,x:point.x,y:room.y,z:point.z,zoneId:room.id});
     };
@@ -1623,7 +1624,7 @@
     const key=gift.trophyId.slice(7),names={shield:'Bouclier',smg:'Mitraillette',shotgun:'Double pompe',grenade:'Lance-grenades',rocket:'Lance-roquettes'},usage={shield:'Protégez-vous, puis frappez au contact.',smg:'Enchaînez les rafales et surveillez la chauffe.',shotgun:'Approchez, frappez fort, reprenez votre distance.',grenade:'Faites rebondir les grenades derrière les couverts.',rocket:'Visez les groupes et gardez vos distances.'},depths=roomDepths(w);
     const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target]),...w.pickups.filter(q=>q!==gift),...w.enemies.filter(e=>e.deployed)];
     const segmentHit=(a,b,c)=>{let low=0,high=1;for(const [i,min,max] of [[0,c.minX,c.maxX],[1,c.minY,c.maxY],[2,c.minZ,c.maxZ]]){const d=b[i]-a[i];if(Math.abs(d)<1e-9){if(a[i]<min||a[i]>max)return false;}else{const x=(min-a[i])/d,y=(max-a[i])/d;low=Math.max(low,Math.min(x,y));high=Math.min(high,Math.max(x,y));if(low>high)return false;}}return high>0&&low<.999;};
-    const safe=(p,r,rad)=>Math.abs(p.x-r.x)<r.w/2-rad-.3&&Math.abs(p.z-r.z)<r.d/2-rad-.3&&Math.abs(floorHeight(w,p.x,p.z)-r.y)<.01&&safeSupply(w,p.x,p.z,rad)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>rad+.7)&&w.jumpPads.every(q=>pointSegment(p.x,p.z,q,q.target)>rad+1.6);
+    const safe=(p,r,rad)=>Math.abs(p.x-r.x)<r.w/2-rad-.3&&Math.abs(p.z-r.z)<r.d/2-rad-.3&&Math.abs(floorHeight(w,p.x,p.z)-r.y)<.01&&safeSupply(w,p.x,p.z,rad)&&reserved.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>rad+.7)&&w.jumpPads.every(q=>pointSegment(p.x,p.z,q,q.target)>rad+1.6);
     let chosen;
     const rooms=w.rooms.filter(r=>r.id&&!r.bossArena&&r.y===0&&depths.get(r.id)===1).sort((a,b)=>(a.id===3?-1:0)-(b.id===3?-1:0)||a.id-b.id);
     for(const r of rooms){
@@ -1632,7 +1633,7 @@
         const p={x:bay.x-bay.normal[0]*d+bay.normal[1]*lateral,y:r.y,z:bay.z-bay.normal[1]*d-bay.normal[0]*lateral};
         if(Math.abs(p.x-r.x)<1.2||Math.abs(p.z-r.z)<1.2||!safe(p,r,.95))continue;
         const origin=[p.x,p.y+1.62,p.z];
-        if(!bay.spawnEntries.every(q=>Math.hypot(q.x-p.x,q.z-p.z)>=10&&[.2,1.1,2.15].every(h=>[[0,0],[-1.5,0],[1.5,0],[0,-1.5],[0,1.5],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65]].every(([dx,dz])=>segmentHit(origin,[q.x+dx,q.y+h,q.z+dz],screen)))))continue;
+        if(!bay.spawnEntries.every(q=>FMath.hypot2(q.x-p.x,q.z-p.z)>=10&&[.2,1.1,2.15].every(h=>[[0,0],[-1.5,0],[1.5,0],[0,-1.5],[0,1.5],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65]].every(([dx,dz])=>segmentHit(origin,[q.x+dx,q.y+h,q.z+dz],screen)))))continue;
         const cache=[[-2.4,0],[2.4,0],[-2.4,1.2],[2.4,1.2],[0,2.4],[0,-2.4]].map(([u,v])=>({x:p.x+bay.normal[1]*u+bay.normal[0]*v,y:r.y,z:p.z-bay.normal[0]*u+bay.normal[1]*v})).find(q=>safe(q,r,.57));
         if(!cache)continue;chosen={r,bay,p,cache};break search;
       }
@@ -1684,7 +1685,7 @@
       for(const [x,z] of [[2.4,0],[-2.4,0],[0,-2.4],[0,2.4],[2.4,-2.4],[-2.4,2.4]])candidates.push({x:a.x+x,z:a.z+z});
       if(r.bossArena)for(const x of [-20,20,-22,22])for(const z of [-11,11,-16,16,-20,20])candidates.push({x:r.x+x,z:r.z+z});
       for(const z of [-1.8,1.8,-3.6,3.6,-5.4,5.4,-7.2,7.2,0])for(const x of [-1.8,1.8,-3.6,3.6,-5.4,5.4,-7.2,7.2,0])candidates.push({x:r.x+x,z:r.z+z});
-      const point=candidates.find(p=>Math.abs(p.x-r.x)<r.w/2-1&&Math.abs(p.z-r.z)<r.d/2-1&&Math.abs(floorHeight(w,p.x,p.z)-r.y)<.01&&safeSupply(w,p.x,p.z,.65)&&reserved.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>1.8)&&w.pickups.every(q=>Math.hypot(p.x-q.x,p.z-q.z)>2.1)&&w.enemies.filter(e=>e.deployed).every(e=>Math.hypot(p.x-e.x,p.z-e.z)>(e.bossScale?1.5*e.bossScale+1.1:1.8))&&w.jumpPads.every(q=>pointSegment(p.x,p.z,q,q.target)>2));
+      const point=candidates.find(p=>Math.abs(p.x-r.x)<r.w/2-1&&Math.abs(p.z-r.z)<r.d/2-1&&Math.abs(floorHeight(w,p.x,p.z)-r.y)<.01&&safeSupply(w,p.x,p.z,.65)&&reserved.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>1.8)&&w.pickups.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>2.1)&&w.enemies.filter(e=>e.deployed).every(e=>FMath.hypot2(p.x-e.x,p.z-e.z)>(e.bossScale?1.5*e.bossScale+1.1:1.8))&&w.jumpPads.every(q=>pointSegment(p.x,p.z,q,q.target)>2));
       if(!point)throw new Error('No safe armor reserve '+w.seed+'/'+w.index+'/'+plan.id);
       w.pickups.push({id:plan.id,kind:'armor',amount:plan.amount,x:point.x,y:r.y,z:point.z,zoneId:r.id});
     }
@@ -1702,11 +1703,11 @@
     for(const r of w.rooms.filter(r=>r.id&&!r.bossArena)){
       const bay=w.encounterBays.find(b=>b.zoneId===r.id),opening=early.has(r.id),sizes=waveSizes(counts[r.id-1],opening),patrol=[];
       if(opening)for(const dz of [0,2.4,-2.4,4.8,-4.8])for(const dx of [-2.4,0,2.4,-4.8,4.8]){
-        const x=r.x+dx,z=r.z+dz;if(!safeSupply(w,x,z,.7)||Math.hypot(x-w.spawn.x,z-w.spawn.z)<18||(x-bay.x)*bay.normal[0]+(z-bay.z)*bay.normal[1]>-.8||w.pickups.some(p=>Math.hypot(x-p.x,z-p.z)<1.3)||w.mechanisms.some(p=>Math.hypot(x-p.x,z-p.z)<1.3)||w.jumpPads.some(p=>Math.hypot(x-p.x,z-p.z)<2||Math.hypot(x-p.target.x,z-p.target.z)<2))continue;
+        const x=r.x+dx,z=r.z+dz;if(!safeSupply(w,x,z,.7)||FMath.hypot2(x-w.spawn.x,z-w.spawn.z)<18||(x-bay.x)*bay.normal[0]+(z-bay.z)*bay.normal[1]>-.8||w.pickups.some(p=>FMath.hypot2(x-p.x,z-p.z)<1.3)||w.mechanisms.some(p=>FMath.hypot2(x-p.x,z-p.z)<1.3)||w.jumpPads.some(p=>FMath.hypot2(x-p.x,z-p.z)<2||FMath.hypot2(x-p.target.x,z-p.target.z)<2))continue;
         patrol.push({x,y:r.y,z});
       }
       const encounter={id:'encounter-'+r.id,label:r.name,zoneId:r.id,trigger:{x:r.x,y:r.y,z:r.z,w:r.w+4,d:r.d+4},leashRadius:38,maxActive:Math.max(...sizes),waveGap:4,spawnEntries:bay.spawnEntries.map(p=>({...p})),waves:[]};
-      if(w.campaignVersion===2){encounter.naturalEntries=true;encounter.leashRadius=Math.max(38,...bay.spawnEntries.map(p=>Math.hypot(p.x-r.x,p.z-r.z)+8));}
+      if(w.campaignVersion===2){encounter.naturalEntries=true;encounter.leashRadius=Math.max(38,...bay.spawnEntries.map(p=>FMath.hypot2(p.x-r.x,p.z-r.z)+8));}
       if(opening&&patrol.length<sizes[0])throw new Error('No opening patrol positions '+w.stage+'/'+r.id);
       for(const [wave,n] of sizes.entries()){
         const ids=[];

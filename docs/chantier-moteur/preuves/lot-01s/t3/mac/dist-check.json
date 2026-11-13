@@ -1,0 +1,358 @@
+{
+ "schema": "metal-lot01s-t3-dist-check-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64"
+ },
+ "chrome": {
+  "path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+ },
+ "distSha256": "f4efa37800fdda0e68c66496c6e198b89f805827999bca330002abae8b486787",
+ "distBytes": 833373,
+ "pageErrors": [],
+ "probeError": null,
+ "worlds": 42,
+ "equalToNode": 42,
+ "note": "dist/index.html as built, opened from file:// in Chrome headless; FWorld of the page, SHA-256 of JSON.stringify(world); Node: src/fmath.js and src/world.js of the same root in the main realm.",
+ "rows": [
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 0,
+   "chrome": "2a488a2ae7b6b92626cc7d8b099472c2e843dd81f476c268919e8e3be026abb6",
+   "node": "2a488a2ae7b6b92626cc7d8b099472c2e843dd81f476c268919e8e3be026abb6",
+   "equal": true
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 1,
+   "chrome": "530cc4da44cfbdee311cef3bde99c1835b8772ad9d9804a2d768cefa2f18cd2e",
+   "node": "530cc4da44cfbdee311cef3bde99c1835b8772ad9d9804a2d768cefa2f18cd2e",
+   "equal": true
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 2,
+   "chrome": "360ff380dafda6b98058cc6ca8869961f6f85e2a63f2b0332f851deea7d55d4f",
+   "node": "360ff380dafda6b98058cc6ca8869961f6f85e2a63f2b0332f851deea7d55d4f",
+   "equal": true
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 0,
+   "chrome": "173c9d30b0bad0d8a734898ff086353315c8b47c45f4faf0b86c9019674638d7",
+   "node": "173c9d30b0bad0d8a734898ff086353315c8b47c45f4faf0b86c9019674638d7",
+   "equal": true
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 1,
+   "chrome": "3ddc4fabaa9873c6979324d724f7d8de4ae2e0c8ad22571d10770e3fa1d791ea",
+   "node": "3ddc4fabaa9873c6979324d724f7d8de4ae2e0c8ad22571d10770e3fa1d791ea",
+   "equal": true
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 2,
+   "chrome": "4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42",
+   "node": "4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 0,
+   "chrome": "c84112dc41fcfdb1fa8de8c44331e5345c2bc7ec329e0bb14a09e28e60023835",
+   "node": "c84112dc41fcfdb1fa8de8c44331e5345c2bc7ec329e0bb14a09e28e60023835",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 0,
+   "chrome": "68c5b1eaf2825f94b3438cadf735e349411e25d908ab19a2842bd47fd7de39a5",
+   "node": "68c5b1eaf2825f94b3438cadf735e349411e25d908ab19a2842bd47fd7de39a5",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 1,
+   "chrome": "ebaf8a169a2a0d295609402b4fe4e380320784bda710cc2a30892487b973daf7",
+   "node": "ebaf8a169a2a0d295609402b4fe4e380320784bda710cc2a30892487b973daf7",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 1,
+   "chrome": "c932078322c32bc9bb32febe44af9ea3821ec11d9dbc25a314e4328380acc608",
+   "node": "c932078322c32bc9bb32febe44af9ea3821ec11d9dbc25a314e4328380acc608",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 2,
+   "chrome": "81e76baf373b4b08fb449dc63b469895083a3a526b987f4472a311cd6cbfa223",
+   "node": "81e76baf373b4b08fb449dc63b469895083a3a526b987f4472a311cd6cbfa223",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 2,
+   "chrome": "271310a08b0af37a6898863918b159f3e4bcfefe22a0575fe6c67f343f7d276b",
+   "node": "271310a08b0af37a6898863918b159f3e4bcfefe22a0575fe6c67f343f7d276b",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 3,
+   "chrome": "c2405de79510df7431623c0b05b4035e75789d0b92df0b4f217c345b49b2d8bc",
+   "node": "c2405de79510df7431623c0b05b4035e75789d0b92df0b4f217c345b49b2d8bc",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 3,
+   "chrome": "bba374412c60d78b18765451650b7dc9b668ea531df87a2fbef8fc8f1d3c312c",
+   "node": "bba374412c60d78b18765451650b7dc9b668ea531df87a2fbef8fc8f1d3c312c",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 4,
+   "chrome": "83b0603c8703eb8ed1fd25b74f2701d5120d0f6ffaf865e9b7e6cfcd61a5fc36",
+   "node": "83b0603c8703eb8ed1fd25b74f2701d5120d0f6ffaf865e9b7e6cfcd61a5fc36",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 4,
+   "chrome": "98258a0131f47032f28b7cb7f187c81c7ff3c7bc614a9c6ffed10803c3e124ad",
+   "node": "98258a0131f47032f28b7cb7f187c81c7ff3c7bc614a9c6ffed10803c3e124ad",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 5,
+   "chrome": "a4bb28e928c6c4f250fedf566649465ded0e66e8fa25d81e6b58df7373f88066",
+   "node": "a4bb28e928c6c4f250fedf566649465ded0e66e8fa25d81e6b58df7373f88066",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 5,
+   "chrome": "009aec9c21da5b06d6a35f7e044d78d7cf7d2e37473a88a9eb929652f48a4a23",
+   "node": "009aec9c21da5b06d6a35f7e044d78d7cf7d2e37473a88a9eb929652f48a4a23",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 6,
+   "chrome": "c7f385c3a3c50f2e1d01c89848a3545f6f830a83ba6665a08f75c205f816a7df",
+   "node": "c7f385c3a3c50f2e1d01c89848a3545f6f830a83ba6665a08f75c205f816a7df",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 6,
+   "chrome": "f90f0cc4d76feaa8a946ca8386eb2f1be5c5a8e3fb07101e3bdc686f5263ea5e",
+   "node": "f90f0cc4d76feaa8a946ca8386eb2f1be5c5a8e3fb07101e3bdc686f5263ea5e",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 7,
+   "chrome": "e7d2f841fa65f1f2ce4ef216119ed3ee8d18af05ac826ec243b24f3a548a7412",
+   "node": "e7d2f841fa65f1f2ce4ef216119ed3ee8d18af05ac826ec243b24f3a548a7412",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 7,
+   "chrome": "30728a6b7338685b69f92a36882de5cb1ceed0a8c466853de8d52ecffd1627ef",
+   "node": "30728a6b7338685b69f92a36882de5cb1ceed0a8c466853de8d52ecffd1627ef",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 8,
+   "chrome": "9fbd1ee5fd08625f19bc25b74e57ea5168a18d389318f1402bba1367953e4926",
+   "node": "9fbd1ee5fd08625f19bc25b74e57ea5168a18d389318f1402bba1367953e4926",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 8,
+   "chrome": "ab4aedfdee85e586be81055bd6c82153cc50269ae74bb94fd378f352dcb8b24b",
+   "node": "ab4aedfdee85e586be81055bd6c82153cc50269ae74bb94fd378f352dcb8b24b",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 9,
+   "chrome": "72eb52dcb5847b13751306cf403ad1cee56ed48aeb07b1433e4cb25e7aa19e19",
+   "node": "72eb52dcb5847b13751306cf403ad1cee56ed48aeb07b1433e4cb25e7aa19e19",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 9,
+   "chrome": "d3393d5559ba63e67babf29953433eca326ed913816cdbf6dd27c83f41ea65f3",
+   "node": "d3393d5559ba63e67babf29953433eca326ed913816cdbf6dd27c83f41ea65f3",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 10,
+   "chrome": "b8c43c2799b9c1fb5c64d36941f52d511a073ac6461463c20260f493a3b54190",
+   "node": "b8c43c2799b9c1fb5c64d36941f52d511a073ac6461463c20260f493a3b54190",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 10,
+   "chrome": "7be99e4c6c4f9b34e114c6d3a41e66003989e859ffd77f385060e590512aae07",
+   "node": "7be99e4c6c4f9b34e114c6d3a41e66003989e859ffd77f385060e590512aae07",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 11,
+   "chrome": "ceda4b259cfc18764040446a41079b5619bfc34587432547b58ad678f30a6748",
+   "node": "ceda4b259cfc18764040446a41079b5619bfc34587432547b58ad678f30a6748",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 11,
+   "chrome": "6552df3977297ccaa47658a0e261f45a5158bb953a29905406b9d234c0ecfc6c",
+   "node": "6552df3977297ccaa47658a0e261f45a5158bb953a29905406b9d234c0ecfc6c",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 12,
+   "chrome": "1967594558dea3b0f903047bdfa50e3a0782a4960269f419e14f735a8c6bc372",
+   "node": "1967594558dea3b0f903047bdfa50e3a0782a4960269f419e14f735a8c6bc372",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 12,
+   "chrome": "160b2d13ec7e35f18097def7cb46001e1d91f8197d370a436e8004588ac668e4",
+   "node": "160b2d13ec7e35f18097def7cb46001e1d91f8197d370a436e8004588ac668e4",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 13,
+   "chrome": "6acf78786afde5d99b9316a28b0ddf43c6a045077486b82c96e346044c310b33",
+   "node": "6acf78786afde5d99b9316a28b0ddf43c6a045077486b82c96e346044c310b33",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 13,
+   "chrome": "e22ce78d05313ded388742ad736612980d7a1499edc287dfc334cb496297d32c",
+   "node": "e22ce78d05313ded388742ad736612980d7a1499edc287dfc334cb496297d32c",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 14,
+   "chrome": "d6513389e052f28fb8ac51167d0b88a72126af5405196cfb8542f598c0eebac5",
+   "node": "d6513389e052f28fb8ac51167d0b88a72126af5405196cfb8542f598c0eebac5",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 14,
+   "chrome": "e7b70fca9ad5a81a3066a72b1c0afbe7ef1f7af1b25de30a2bf4f089a7472218",
+   "node": "e7b70fca9ad5a81a3066a72b1c0afbe7ef1f7af1b25de30a2bf4f089a7472218",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 15,
+   "chrome": "82914f58e187e994a3cf3f3bd3a19c9e7c1ba2c31879b99599a2f099f14409e6",
+   "node": "82914f58e187e994a3cf3f3bd3a19c9e7c1ba2c31879b99599a2f099f14409e6",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 15,
+   "chrome": "dcd2836c3e042db5144a439e3ea53b00b91b881890cd8cf24a0a3830407a429c",
+   "node": "dcd2836c3e042db5144a439e3ea53b00b91b881890cd8cf24a0a3830407a429c",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 16,
+   "chrome": "e017243ac4bb977571edfbca68715a4985e1478a682945425b0c64432ff3958a",
+   "node": "e017243ac4bb977571edfbca68715a4985e1478a682945425b0c64432ff3958a",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 16,
+   "chrome": "c9317cf6a7f24387960b1cdc6824527e34b2f425064fd9b66ff95da13677e579",
+   "node": "c9317cf6a7f24387960b1cdc6824527e34b2f425064fd9b66ff95da13677e579",
+   "equal": true
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 17,
+   "chrome": "acf3dfd8d50f0342a5446e946af985f08e60bc9daa08e0a18991c2bf6cdcc706",
+   "node": "acf3dfd8d50f0342a5446e946af985f08e60bc9daa08e0a18991c2bf6cdcc706",
+   "equal": true
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 17,
+   "chrome": "7d6c872e5666da77619bab04227d7d187d8bc2be60b910a54aff3ffddcc9fbbf",
+   "node": "7d6c872e5666da77619bab04227d7d187d8bc2be60b910a54aff3ffddcc9fbbf",
+   "equal": true
+  }
+ ]
+}

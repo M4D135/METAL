@@ -1,4 +1,4 @@
-/* FERRO — FMath: sin, cos, atan and atan2 identical on every platform.
+/* FERRO — FMath: sin, cos, atan, atan2 and hypot identical on every platform.
  *
  * A plain-JavaScript port of fdlibm 5.3 as adapted by V8 (src/base/ieee754.cc):
  * __ieee754_rem_pio2 with the npio2_hw table, __kernel_rem_pio2 for huge
@@ -7,18 +7,22 @@
  * no fused multiply-add can creep in: the results are those of V8 compiled
  * without FMA contraction (x86-64), whatever the host. Host Math.sin/cos/atan/
  * atan2 may differ in the last bit (V8 for arm64 is compiled with contraction).
+ * hypot, hypot2 and hypot3 port V8's MathHypot builtin (src/builtins/math.tq),
+ * which every V8 build computes alike; JavaScriptCore (Safari) does not.
  *
  * Standalone engine module: it knows nothing about the game. It reads the words
  * of a double through one shared typed array (endianness detected at load), and
- * never allocates per call. Only exact Math helpers (abs, floor) are used.
+ * never allocates per call (hypot with more than three arguments excepted).
+ * Only exact Math helpers are used: abs, floor and the correctly rounded sqrt.
  *
  * fdlibm: Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
  * Developed at SunSoft, a Sun Microsystems, Inc. business. Permission to use,
  * copy, modify, and distribute this software is freely granted, provided that
  * this notice is preserved.
  *
- * V8 (src/base/ieee754.cc): the original source code covered by the above
- * license has been modified significantly by Google Inc.
+ * V8 (src/base/ieee754.cc; MathHypot of src/builtins/math.tq for hypot): the
+ * original source code covered by the above license has been modified
+ * significantly by Google Inc.
  * Copyright 2016 the V8 project authors. All rights reserved.
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -44,7 +48,8 @@
  */
 (function(G){
   'use strict';
-  const fabs=Math.abs,floor=Math.floor;
+  const fabs=Math.abs,floor=Math.floor,sqrt=Math.sqrt;
+  const INF=1/0,NAN=0/0; // local constants: no global lookup in the hot paths
 
   // Word access. HI/LO index the high and low 32-bit words of f64[0].
   const f64=new Float64Array(1),u32=new Uint32Array(f64.buffer);
@@ -375,5 +380,55 @@
     }
   }
 
-  G.FMath=Object.freeze({sin,cos,atan,atan2});
+  /* hypot as V8's MathHypot builtin computes it on every platform: ToNumber in
+   * argument order; Infinity if one argument is infinite, even beside a NaN;
+   * then NaN; 0 if every argument is zero; otherwise, with max the largest
+   * magnitude, a Kahan-compensated sum of (|arg|/max)^2 in argument order, and
+   * sqrt(sum)*max. NaN results are only guaranteed to be NaN (any payload). */
+  /* hypot2(x, y) == Math.hypot(x, y) of V8, exactly two arguments, no allocation.
+   * The first Kahan step is exact and the largest term is exactly 1, so the sum
+   * is 1+r*r with r = min/max. A NaN in x lands in max, a NaN in y in min. */
+  function hypot2(x,y){
+    x=fabs(x);y=fabs(y);
+    const max=y>x?y:x,min=y>x?x:y;
+    if(max===INF||min===INF)return INF;
+    if(max===0)return min; /* +0, or NaN */
+    const r=min/max; /* NaN when an argument is NaN */
+    return sqrt(1+r*r)*max;
+  }
+  /* hypot3(x, y, z) == Math.hypot(x, y, z) of V8, exactly three arguments, no
+   * allocation. The compensation of the second step corrects the third. A NaN
+   * in x stays in max; any other NaN reaches the sum. */
+  function hypot3(x,y,z){
+    x=fabs(x);y=fabs(y);z=fabs(z);
+    if(x===INF||y===INF||z===INF)return INF;
+    let max=x;
+    if(y>max)max=y;
+    if(z>max)max=z;
+    if(max===0)return x+y+z; /* +0, or NaN */
+    const a=x/max,b=y/max,c=z/max,a2=a*a,b2=b*b,s=a2+b2;
+    return sqrt(s+(c*c-((s-a2)-b2)))*max;
+  }
+  /* hypot(...values) == Math.hypot(...values) of V8, any number of arguments.
+   * Two and three go to hypot2 and hypot3; more allocate one Float64Array. */
+  function hypot(){
+    const n=arguments.length;
+    if(n===2)return hypot2(arguments[0],arguments[1]);
+    if(n===3)return hypot3(arguments[0],arguments[1],arguments[2]);
+    if(n<2)return n===0?0:fabs(arguments[0]); /* sqrt(1)*|x| */
+    const v=new Float64Array(n);
+    let max=0,nan=false;
+    for(let i=0;i<n;i++){const a=fabs(arguments[i]);if(a!==a)nan=true;else{v[i]=a;if(a>max)max=a;}}
+    if(max===INF)return INF;
+    if(nan)return NAN;
+    if(max===0)return 0;
+    let sum=0,compensation=0;
+    for(let i=0;i<n;i++){
+      const q=v[i]/max,summand=q*q-compensation,preliminary=sum+summand;
+      compensation=(preliminary-sum)-summand;sum=preliminary;
+    }
+    return sqrt(sum)*max;
+  }
+
+  G.FMath=Object.freeze({sin,cos,atan,atan2,hypot,hypot2,hypot3});
 })(typeof window!=='undefined'?window:globalThis);

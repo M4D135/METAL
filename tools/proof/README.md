@@ -188,7 +188,8 @@ vraie comparaison main/VM avec temps CPU et checksums.
 
 Depuis le lot 01 suite (T2), `src/world.js` prend `sin`, `cos`, `atan` et
 `atan2` dans `FMath` (`src/fmath.js`), identique bit à bit sur toutes les
-plateformes. Sans `modules`, `loadRealm` charge donc `fmath` en tête quand la
+plateformes, et depuis T3 `hypot2` et `hypot3` (le `Math.hypot` de V8, que
+JavaScriptCore calcule autrement). Sans `modules`, `loadRealm` charge donc `fmath` en tête quand la
 racine a `src/fmath.js` (`defaultModules(root)`) ; une racine plus ancienne
 garde la liste historique, et une racine dont `world.js` cite `FMath` sans
 `src/fmath.js` est refusée. Une liste explicite qui contient `world` doit
