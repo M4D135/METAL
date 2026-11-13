@@ -76,7 +76,7 @@ export function verifyGL(gl, root) {
 export function makeRecorder({content = true} = {}) {
   const hash = crypto.createHash('sha256');
   const contentHash = crypto.createHash('sha256');
-  const out = [];
+  const out = [], frames = [];
   // Contenu réellement présent dans le tampon d'instances à chaque dessin :
   // rend la preuve indépendante de la stratégie de téléversement (bufferData / bufferSubData / capacité).
   const contents = new Map();
@@ -115,7 +115,7 @@ export function makeRecorder({content = true} = {}) {
         const rows = contents.get(boundArray), base = (attribs.get(2) || 0) / 4, count = (args[4] || 0) * 16;
         out.length = 0;
         out.push('D', args[1], args[3], args[4], ':');
-        state.contentDraws++;if(rows&&rows.length)state.contentLen=(state.contentLen||0)+rows.length;out.push(rows?rows.slice(base, base + count).join(","):"!");
+        state.contentDraws++;frames.push(args[1]+'@'+args[4]+'|'+(rows?rows.slice(base,base+count).sort().join(','):'!'));if(rows&&rows.length)state.contentLen=(state.contentLen||0)+rows.length;out.push(rows?rows.slice(base, base + count).join(","):"!");
         contentHash.update(out.join(''));
       }
       out.length = 0;
@@ -123,6 +123,7 @@ export function makeRecorder({content = true} = {}) {
       serialize(args, out);
       hash.update(out.join(','));
     },
+    frames,
     digest() { stopped = true; return hash.digest('hex'); },
     contentDigest() { stopped = true; return contentHash.digest('hex'); },
   };

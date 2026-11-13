@@ -822,7 +822,7 @@
       if(!map.has(key))map.set(key,[]);map.get(key).push(e);maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
       if(!retained){const p=e.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
         e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment)+(e.detail+1)*8,c[0],c[1],c[2],mesh.color?1:0]);}
-      entries.push(e);byMesh.set(mesh,e);
+      e.order=entries.length;entries.push(e);byMesh.set(mesh,e);
     }
     function query(eye,ranges,out){
       const result=out||[];result.length=0;
@@ -1333,9 +1333,10 @@
     let program,depthProgram,postProgram,skyProgram,fxProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer,uniforms,postUniforms,skyUniforms,fxUniforms,depthMatrix,depthWind,depthCullCentre,depthCullRange;
     let post=null,shadowTarget=null,whiteTexture=null,targetKey='',shadowKey='',shadowLight=null;
     let world=[],worldIndex=spatialIndex([]),lights=[],environment=null,worldBatch=pack([]),quality='auto',disposed=false,worldRevision=0;
-    let staticCaches=[],lampCasters=[],actorLightPlan=null;
-    const sunCasterOut=[],SHADOW_RANGES=[32,18,0];
-    const capacity=new Map(),dynamicRows=scratchRows(),overlayRows=scratchRows(),fxRows=scratchRows(),candidateRows=[],sunCandidateRows=[];
+    let staticCaches=[],lampCasters=[],actorLightPlan=null,viewCache=null,torchCache=null,sunCache=null,indexRevision=0,selectionGen=0;
+    const cacheStats={viewFrames:0,viewRebuilds:0,torchRebuilds:0,sunRebuilds:0};
+    const sunCasterOut=[],SHADOW_RANGES=[32,18,0],VIEW_MARGIN=1,VIEW_TILT=8*Math.PI/180,SUN_GRID=4,SUN_PAD=1.74*SUN_GRID;
+    const capacity=new Map(),dynamicRows=scratchRows(),overlayRows=scratchRows(),fxRows=scratchRows();
     const governor=resolutionGovernor();let autoScale=1;
 
     function compile(type,code) {
@@ -1418,8 +1419,8 @@
 
     function setWorld(meshes,points,atmosphere) {
       environment=environmentInfo(atmosphere);world=meshes||[];worldIndex=spatialIndex(world,environment);lights=points||[];worldBatch=pack([]);shadowLight=null;actorLightPlan=null;stats.staticTotal=world.length;stats.biome=environment?environment.biome:null;
-      worldRevision=0;stats.worldRevision=0;
-      lampCasters=[];for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);}
+      worldRevision=0;stats.worldRevision=0;indexRevision++;viewCache=torchCache=sunCache=null;
+      lampCasters=[];for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);cache.gen=undefined;}
       governor.reset();autoScale=1;
       if(stats.contextLost||disposed) return;
       gl.bindBuffer(gl.ARRAY_BUFFER,worldBuffer);capacity.delete(worldBuffer);uploadRows(worldBuffer,worldBatch.values,gl.STATIC_DRAW);
@@ -1430,8 +1431,8 @@
       world=meshes||[];worldIndex=spatialIndex(world,environment,worldIndex);worldBatch=pack([]);
       // Every depth view must stop referencing removed walls immediately. GPU
       // storage is reused; only the affected instance lists upload next draw.
-      lampCasters=[];actorLightPlan=null;for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);}
-      worldRevision=revision===undefined?worldRevision+1:revision;stats.worldRevision=worldRevision;stats.staticTotal=world.length;
+      lampCasters=[];actorLightPlan=null;for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);cache.gen=undefined;}
+      worldRevision=revision===undefined?worldRevision+1:revision;stats.worldRevision=worldRevision;stats.staticTotal=world.length;indexRevision++;viewCache=torchCache=sunCache=null;
       return true;
     }
     function resize(next) {
@@ -1464,10 +1465,37 @@
         stats.drawCalls++;stats.triangles+=shape.count/3*group.count;if(!shadowPass)stats.instances+=group.count;
       }
     }
+    function cached(e,origin,forward,demiDiag,k,margin,tilt,near,far){
+      const dx=e.p[0]-origin[0],dy=e.p[1]-origin[1],dz=e.p[2]-origin[2],r=e.radius+margin,dist=Math.hypot(dx,dy,dz);
+      if(dist>r+far)return false;
+      if(dist<r+near+margin)return true;
+      const c=(dx*forward[0]+dy*forward[1]+dz*forward[2])/dist;
+      return c>=Math.cos(demiDiag+tilt+Math.asin(Math.min(1,r*k/dist)));
+    }
+    // Sélection de garde : un sur-ensemble reconstruit seulement quand la caméra sort de la
+    // marge (D mètres, θ radians) ou quand le monde, le cadrage ou la portée changent.
+    function selectionCache(previous,revision,origin,axes,horizontal,vertical,far,ranges,near){
+      if(previous&&previous.revision===revision&&previous.horizontal===horizontal&&previous.vertical===vertical&&previous.far>=far
+        &&previous.ranges[0]>=ranges[0]&&previous.ranges[1]>=ranges[1]&&previous.ranges[2]>=ranges[2]
+        &&Math.hypot(origin[0]-previous.origin[0],origin[1]-previous.origin[1],origin[2]-previous.origin[2])<=previous.margin
+        &&axes.forward[0]*previous.forward[0]+axes.forward[1]*previous.forward[1]+axes.forward[2]*previous.forward[2]>=Math.cos(previous.tilt))return previous;
+      cacheStats.viewRebuilds++;
+      const demiDiag=Math.atan(Math.hypot(horizontal,vertical)),k=Math.hypot(1,horizontal,vertical);
+      // Un niveau à portée nulle doit rester exclu : ajouter la marge le ferait revenir dans la requête.
+      const query0=[ranges[0]>0?ranges[0]+VIEW_MARGIN:0,ranges[1]>0?ranges[1]+VIEW_MARGIN:0,ranges[2]>0?ranges[2]+VIEW_MARGIN:0],candidates=worldIndex.query(origin,query0),entries=[];
+      for(let i=0;i<candidates.length;i++){const e=candidates[i];if(cached(e,origin,axes.forward,demiDiag,k,VIEW_MARGIN,VIEW_TILT,near,far))entries.push(e);}
+      // Pas de tri par index ici : le balayage de l'index spatial est deja deterministe et
+      // stable tant que le cache est valide. Trier les casters d'ombre changerait l'ordre
+      // d'emission et quelques pixels sur les faces coplanaires (preuve Chrome : ecart
+      // 16/255 sur 30 pixels des scenarios camp17-a, camp17-b, camp6-a, legacy0-b).
+      entries.gen=++selectionGen;
+      return {revision,origin:[origin[0],origin[1],origin[2]],forward:[axes.forward[0],axes.forward[1],axes.forward[2]],horizontal,vertical,far,ranges:query0,margin:VIEW_MARGIN,tilt:VIEW_TILT,entries};
+    }
     function renderStatic(entries,slot,shadow=false,reuse=false){
       const cache=staticCaches[slot];
-      const same=cache.entries.length===entries.length&&entries.every((entry,i)=>entry===cache.entries[i]);
-      if(!same){cache.entries=reuse?entries.slice():entries;cache.batch=packIndexed(entries,cache.rows||(cache.rows=scratchRows()));}
+      const same=cache.entries===entries||entries.gen!==undefined&&cache.gen===entries.gen&&cache.count===entries.count
+        ||entries.gen===undefined&&cache.entries.length===entries.length&&entries.every((entry,i)=>entry===cache.entries[i]);
+      if(!same){cache.entries=reuse?entries.slice():entries;cache.gen=entries.gen;cache.count=entries.count;cache.batch=packIndexed(entries,cache.rows||(cache.rows=scratchRows()));}
       renderBatch(cache.batch,cache.buffer,!same,shadow);
     }
     function renderEffects(meshes,eye,time){
@@ -1492,8 +1520,20 @@
       const tangent=1/f;
       const previous=lampCasters[slot];
       const stable=!torchAxes&&previous&&previous.light===light&&previous.p.every((v,k)=>v===p[k]);
-      const casters=stable?previous.entries:worldIndex.query(p,SHADOW_RANGES).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));
-      if(!torchAxes&&!stable)lampCasters[slot]={light,p:p.slice(),entries:casters};
+      let casters;
+      if(stable)casters=previous.entries;
+      else if(torchAxes){
+        const before=torchCache,guard=torchCache=selectionCache(torchCache,indexRevision,p,shadowAxes,tangent,tangent,32,SHADOW_RANGES,.08);
+        if(guard!==before)cacheStats.torchRebuilds++;
+        casters=[];let hash=0;
+        for(let i=0;i<guard.entries.length;i++){
+          const e=guard.entries[i],limit=SHADOW_RANGES[e.detail]+e.radius,dx=e.p[0]-p[0],dy=e.p[1]-p[1],dz=e.p[2]-p[2];
+          if(dx*dx+dy*dy+dz*dz>limit*limit||!visible(e,p,shadowAxes,tangent,tangent,32))continue;
+          casters.push(e);hash=(hash*31+e.order)|0;
+        }
+        casters.gen=hash;casters.count=casters.length;
+      }
+      else{casters=worldIndex.query(p,SHADOW_RANGES).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));lampCasters[slot]={light,p:p.slice(),entries:casters};}
       gl.uniform3fv(depthCullCentre,p);gl.uniform3fv(depthCullRange,SHADOW_RANGES);
       renderStatic(casters,slot+1,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
@@ -1511,14 +1551,19 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.viewport(shadowTarget.size,0,shadowTarget.size,shadowTarget.size);
       gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2);
       gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);gl.uniform2f(depthWind,environment.wind,time);
-      const sunRanges=[extent+24,26,0];
-      const candidates=worldIndex.query(center,sunRanges,sunCandidateRows);
+      const sunRanges=[extent+24,26,0],grid=[Math.round(center[0]/SUN_GRID),Math.round(center[1]/SUN_GRID),Math.round(center[2]/SUN_GRID)];
+      if(!sunCache||sunCache.revision!==indexRevision||sunCache.extent!==extent||sunCache.grid[0]!==grid[0]||sunCache.grid[1]!==grid[1]||sunCache.grid[2]!==grid[2])
+        {sunCache={revision:indexRevision,extent,grid,candidates:worldIndex.query(center,[sunRanges[0]+SUN_PAD,sunRanges[1]+SUN_PAD,0])};cacheStats.sunRebuilds++;}
+      const candidates=sunCache.candidates;
       const px=p[0],py=p[1],pz=p[2],rx=r[0],ry=r[1],rz=r[2],ux=u[0],uy=u[1],uz=u[2],fwx=fw[0],fwy=fw[1],fwz=fw[2];
       sunCasterOut.length=0;
+      let sunHash=0;
       for(let i=0;i<candidates.length;i++){
         const e=candidates[i],dx=e.p[0]-px,dy=e.p[1]-py,dz=e.p[2]-pz,radius=e.radius,z=dx*fwx+dy*fwy+dz*fwz;
-        if(Math.abs(dx*rx+dy*ry+dz*rz)<extent+radius&&Math.abs(dx*ux+dy*uy+dz*uz)<extent+radius&&z+radius>near&&z-radius<far)sunCasterOut.push(e);
+        const sx=e.p[0]-center[0],sy=e.p[1]-center[1],sz=e.p[2]-center[2],limit=sunRanges[e.detail]+radius,sq=sx*sx+sy*sy+sz*sz;
+        if(sq<=limit*limit&&Math.abs(dx*rx+dy*ry+dz*rz)<extent+radius&&Math.abs(dx*ux+dy*uy+dz*uz)<extent+radius&&z+radius>near&&z-radius<far){sunCasterOut.push(e);sunHash=(sunHash*31+e.order)|0;}
       }
+      sunCasterOut.gen=sunHash;sunCasterOut.count=sunCasterOut.length;
       gl.uniform3fv(depthCullCentre,center);gl.uniform3fv(depthCullRange,sunRanges);
       renderStatic(sunCasterOut,2,true,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
@@ -1607,9 +1652,17 @@
       projection.fill(0);projection[0]=f/(canvas.width/canvas.height);projection[5]=f;projection[10]=(far+near)/(near-far);projection[11]=-1;projection[14]=2*far*near/(near-far);
       multiply(projection,view,vp);
       const ranges=detailRanges(quality);ranges[0]=extendedDistance(ranges[0],environment,eye);stats.viewDistance=ranges[0];
-      const candidates=worldIndex.query(eye,ranges,candidateRows);
-      const shown=candidates.filter(e=>visible(e,eye,axes,canvas.width/canvas.height/f,1/f,ranges[0]));
-      stats.staticVisible=shown.length;stats.staticCulled=world.length-shown.length;
+      const horizontal=canvas.width/canvas.height/f,vertical=1/f;
+      cacheStats.viewFrames++;
+      const guard=viewCache=selectionCache(viewCache,indexRevision,eye,axes,horizontal,vertical,ranges[0],ranges,near);
+      const shown=[];let viewHash=0;
+      for(let i=0;i<guard.entries.length;i++){
+        const e=guard.entries[i],limit=ranges[e.detail]+e.radius,dx=e.p[0]-eye[0],dy=e.p[1]-eye[1],dz=e.p[2]-eye[2];
+        if(dx*dx+dy*dy+dz*dz>limit*limit||!visible(e,eye,axes,horizontal,vertical,ranges[0]))continue;
+        shown.push(e);viewHash=(viewHash*31+e.order)|0;
+      }
+      shown.gen=viewHash;shown.count=shown.length;
+      stats.staticVisible=shown.length;stats.staticSuperset=guard.entries.length;stats.staticCulled=world.length-shown.length;stats.cache=cacheStats;
       const planned=actorLightPlan&&actorLightPlan.previous===shadowLight&&eye.every((v,k)=>v===actorLightPlan.eye[k])?actorLightPlan.plan:lightPlan(eye);actorLightPlan=null;
       const {sorted,distanceTo,chosen,shadowLights}=planned;shadowLight=chosen;
       const transient=transientLights(fx.lights,eye,quality==='low'?2:3);stats.dynamicLights=transient.length;
