@@ -5,7 +5,56 @@ le raccord est décrit en section 5, non appliqué. Base : `71eca61` (branche `c
 
 ## 1. Rôle et périmètre
 
-(à compléter à l'étape 7)
+Deux modules génériques du moteur FERRO, prêts à brancher dans METAL :
+
+- **`FLoop`** (`src/loop.js`, 6 042 octets) : pas fixe de simulation de 1/60 s, avec accumulateur, verrouillage sur la
+  période de l'écran, rattrapage borné à 5 pas et dette de temps bornée. `FLoop.aim` donne les angles de la vue à
+  chaque image, `FLoop.track` interpole le rendu.
+- **`FSchedule`** (`src/schedule.js`, 4 221 octets) : une file « image » budgétée en millisecondes (présentation,
+  caches, sérialisation) et une file « sim » déterministe, budgétée en unités de travail.
+
+Ce sont des scripts classiques qui posent chacun un global, comme `src/options.js`. Ils ne lisent aucune horloge, ne
+tirent aucun hasard et ne savent rien de METAL (T-F24, S22) : le temps leur arrive en paramètre.
+
+**Constats couverts.**
+
+| Constat | Ce que livre la voie | Sections |
+|---|---|---|
+| STAB-06 (P1, lot 07 T1), qui absorbe LOOP-05 | pas fixe, verrouillage, dette bornée, interpolation ; une seule empreinte d'état pour 9 écrans ; écart temps simulé / temps réel sous un pas sur 10 minutes (réserve 2) ; réserves 3 et 4 reprises en limites | 2.2 à 2.7, 3, 4.1, 4.2, 6 |
+| STAB-07 (P2, lot 07 T8) | ordonnanceur à deux files et ses 5 règles de déterminisme ; réserves 1 et 3 reprises au plan | 2.8 à 2.12, 3.10, 4.3, 5.11, 5.12 |
+| DEMO-V3, côté interpolation | `track` : aucune image répétée, contre 50 % des images où le joueur avance à 120 Hz et 58 % à 144 Hz sans interpolation | 2.6 |
+| PARA-V1 | la simulation reste sur le fil principal : le rappel de pas appelle `sim.step` dans le rappel rAF, avant le dessin | 4.2, 5.7 |
+| MASTER-PROMPT §6, décision prise | pas fixe de 1/60 s, accumulateur, verrouillage, rattrapage borné à 5 pas, interpolation, rotation de la vue à chaque image. Elle remplace l'arbitrage « LOOP-05, FEEL-08, LOOP-08, SIM-12 » (pas variable) | tout le module |
+
+Traités seulement dans le plan de raccord (section 5), sans rien appliquer :
+- LOOP-06 : les impulsions restent en file jusqu'à une image qui a au moins un pas (5.6) ;
+- LOOP-09 : `FOptions.frameGate`, déjà dans main, reste devant FLoop (5.4, 5.5, limite 6) ;
+- LOAD-03 et l'arbitrage « LOOP-03, LOAD-03, SIM-01 » : instantané synchrone, écriture différée seulement en P2 (5.11) ;
+- LOAD-13 : pré-synthèse audio, une tâche par tampon (5.12) ;
+- PARA-V2 : l'écho `input.weapon` reste tel quel (5.14, question 5) ;
+- l'arbitrage « RCPU-08, RGPU-09, LOOP-12, RGPU-02, LOOP-09 » : une seule estimation partagée de la période
+  d'affichage (question 1).
+
+**Hors périmètre** (§4.12 de la mission) :
+- ni limiteur d'images ni `setLimit` : c'est LOOP-09, déjà dans `src/options.js` ;
+- ni gouverneur de qualité ;
+- ni worker, ni DOM, ni lecture d'horloge ;
+- pas de pas à 120 Hz automatique : `hz:120` existe, le choix revient au jeu (question 2) ;
+- ni regroupement des événements ni écho d'arme (lot 07 T2) ;
+- aucune modification de `pumpNav`.
+
+**Rien n'est branché dans le jeu.** Aucun fichier existant n'est modifié : `git diff --name-status 71eca61` ne montre
+que des ajouts. Les deux modules ne sont pas dans la liste `modules` de `tools/build.py`, donc pas dans
+`dist/index.html` (812 696 octets, inchangé), et leurs tests ne sont pas dans `npm test`. Le raccord est décrit en
+section 5, non appliqué.
+
+**Origine.**
+- `REPRISE-ENVIRONNEMENT-2026-11-12.md` (section « Lot 07 — cadence ») est une piste. L'essai de ChatGPT n'a jamais été
+  commité et il est perdu : rien n'en est repris.
+- Un relais OpenCode du Spark avait commencé la voie (branche `spark/spark-wip/boucle`). Les fichiers qu'il avait
+  laissés (squelette de ce document, `src/loop.js`, `src/schedule.js`, les deux suites de tests, l'outil d'horloge) sont
+  repris aux étapes 0 à 4, après relecture ligne à ligne contre la mission. Ils sont renforcés là où ils étaient plus
+  faibles que sa lettre (T-F18, T-F22, S10, S18, entre autres). Les étapes 5 à 7 sont écrites depuis la mission.
 
 ## 2. API
 
@@ -432,7 +481,125 @@ mesuré, risque de perdre le dernier point), à décider après une mesure dans 
 
 ## 3. Algorithme
 
-(à compléter à l'étape 7)
+Ce qui suit décrit le code normatif de `src/loop.js` (§4.5 de la mission), dans l'ordre où `advance(now, step)`
+l'exécute. H = `stepMs` = 1000/hz, soit 16,667 ms à 60 Hz ; les seuils sont les options par défaut (2.2).
+
+### 3.1 Intervalle brut
+
+- `raw = now − last`, l'écart entre deux appels. Au premier appel, et au premier après `reset()`, il n'y a pas
+  d'intervalle : un pas, compté en dilatation (H).
+- `now` non fini : rien ne change. Horloge qui recule : la référence est reprise, et l'image fait 0 pas.
+- Au-delà de 250 ms (`maxFrameMs`), l'intervalle est coupé à 250 ms (`clampedMs`) et n'entre pas dans l'estimation de
+  la période : une image très longue ne la fausse pas.
+
+### 3.2 Période de l'écran
+
+- Chaque intervalle est ramené à une période : k = round(raw / période), au moins 1, et l'échantillon vaut raw / k. Une
+  image perdue (2 périodes), ou une image sautée par le limiteur, donne donc encore un échantillon d'une période.
+- La période est la moyenne des 30 derniers échantillons (`samples`).
+- Une fois la période calibrée (8 échantillons, `minSamples`), un échantillon à plus de 30 % de la période
+  (`sampleTol`) est ignoré. Huit d'affilée vident l'anneau : l'écran a changé, et le huitième devient le premier
+  échantillon de la nouvelle période.
+- `observe(now)` fait la même estimation hors jeu, sans avancer le temps simulé.
+
+### 3.3 Verrouillage et hystérésis
+
+- La boucle compare la période au multiple du pas le plus proche, m × H (m = round(période / H), au moins 1). Elle se
+  verrouille quand l'écart relatif passe sous 1 % (`lock`), et ne se déverrouille qu'au-delà de 2 % (`unlock`). Une
+  période qui hésite autour de 1 % ne fait donc pas basculer la boucle à chaque image.
+- Verrouillée, la boucle fait n = round(raw / H) pas, sans passer par l'accumulateur : chaque image d'une période fait
+  exactement un pas. La différence n × H − raw est comptée en dilatation (3.7).
+- Seules les périodes multiples du pas se verrouillent : 60, 30 ou 20 Hz, et 59,94 Hz (0,1 % d'écart). À 120 Hz, la
+  période vaut un demi-pas : m = 1, l'écart vaut 50 %, et la boucle, non verrouillée, fait un pas une image sur deux.
+
+### 3.4 Hors verrouillage : accrochage et dette
+
+- L'intervalle est accroché à k périodes s'il est à moins de 0,2 période d'un tel multiple (`snap`) : dt = k × période,
+  et la différence raw − dt va dans la dette. Des horodatages arrondis à 0,1 ou 1 ms donnent ainsi un dt régulier.
+- Chaque image rend 10 % de la dette (`debtRate`), prise au plus à 2 ms (`debtCap`) : au plus 0,2 ms par image, trop
+  peu pour se voir.
+- La dette reste sous un pas : si ce qui reste dépassait H, le remboursement est augmenté pour la ramener à H. C'est
+  l'invariant 2 (2.4).
+- Le dt, remboursement compris, va dans l'accumulateur ; tant qu'il contient un pas (à 1e-9 près, pour le bruit
+  flottant), la boucle fait un pas.
+- Le temps simulé suit donc le temps réel à la dette près : 6,26 ms au pire sur les 21 motifs (`bimodal`), 0,08 à
+  0,8 ms sous gigue ou avec des horodatages arrondis à 144 Hz (4.1).
+
+### 3.5 Remplissage à 0,999 et remise en phase
+
+- La remise en phase met l'accumulateur à 0,999 pas (`fill`) et la dette à 0, et compte le saut en dilatation. Elle a
+  lieu à l'entrée en verrouillage et à chaque `reset()`.
+- Pourquoi 0,999 : l'image suivante d'une période porte l'accumulateur à 1,999 pas, soit exactement un pas, et il
+  revient à 0,999. alpha reste à 0,999 : l'image montre l'état courant, sans retard ajouté. 0,999 plutôt que 1 laisse
+  une marge au bruit flottant (un intervalle un peu long ne fait pas 2 pas) ; 0,999 plutôt que 0 évite d'afficher un
+  pas entier de retard.
+
+### 3.6 Rattrapage et abandon
+
+- Au plus 5 pas par image (`maxSteps`). Le surplus est abandonné et compté (`frame.dropped`, `stats.droppedMs`) : hors
+  verrouillage, l'accumulateur revient à 0,999 pas ; verrouillée, les pas en trop sont comptés en abandon.
+- Une image longue (ramasse-miettes, onglet repris) ne lance donc jamais de spirale de rattrapage : au plus 83 ms de
+  simulation par image. Sous 12 images par seconde, le jeu ralentit, et le temps perdu est compté.
+- Exemple, `long60` (4.1) : une image de 116,67 ms fait 5 pas et abandonne 33,33 ms ; une image de 500 ms est coupée à
+  250 ms, fait 5 pas et abandonne 166,67 ms.
+
+### 3.7 Dilatation contre dérive
+
+Le temps simulé peut s'écarter du temps réel de deux façons, que la boucle sépare :
+- la **dette**, hors verrouillage : bornée à un pas et remboursée, elle ne s'accumule pas. Il n'y a pas de dérive :
+  c'est le critère de STAB-06, un écart inférieur à un pas sur 10 minutes ;
+- la **dilatation** (verrouillage, premier pas, remises en phase) : voulue, et comptée dans `stats.dilationMs`.
+  Verrouillée, la simulation suit l'écran pour garder un pas par image : à 59,94 Hz, elle prend 0,0944 % de retard,
+  soit −566,65 ms sur 10 minutes, sans à-coup.
+
+L'invariant 1 (2.4) relie les deux, à 1e-6 ms près : pas × H + (acc − 0,999 H) = temps réel − dette − abandons +
+dilatation. L'invariant 3 borne la dilatation à un pas plus 1 % du temps réel, et il tient sur les 21 motifs.
+L'hystérésis laisse pourtant la boucle verrouillée jusqu'à 2 % d'écart : une période qui glisse après le verrouillage
+peut dépasser cette borne (limite 13 de la section 6, question 3).
+
+### 3.8 Modes, arrêt anticipé, `observe`, `reset`, `resetPeriod`, alpha
+
+- **Mode rappel** : `advance(now, step)` appelle `step(h, i)` pour chaque pas. Un retour `false` arrête l'image : le pas
+  compte comme fait, et le reste va dans `stats.abortedMs`. Une exception remonte, après le même compte.
+- **Mode plan** : `frame.steps` dit combien de pas faire. L'appelant les fait, et appelle `abort(done)` s'il s'arrête
+  avant. Les deux modes donnent les mêmes pas (T-F16).
+- **`observe(now)`** : estimation de la période et verrouillage, sans pas. La référence est gardée : le prochain
+  `advance` mesure l'intervalle depuis la dernière image observée.
+- **`reset()`** : remise en phase, puis oubli de la référence. Le prochain `advance` fait exactement un pas, sans
+  rattraper le temps passé en pause ; la période et le verrouillage sont gardés.
+- **`resetPeriod()`** : vide l'anneau et déverrouille, sans toucher à l'accumulateur.
+- **alpha** = acc / H, borné à [0, 1] : la part du pas suivant déjà écoulée, 0,999 en verrouillage. Le rendu se place
+  entre l'état d'avant le dernier pas et l'état courant (`track`, 2.6), au temps `sim.state.time − (1 − alpha) × h`.
+
+### 3.9 Pourquoi « moyenne + dette », et pas la médiane sans dette
+
+Le prototype de l'audit (`bancs/stab/cadence.mjs`) a deux variantes de lissage. Celle qui a servi aux empreintes et au
+CPU, une médiane glissante sans dette, fait courir l'horloge : 2 086 images au lieu de 2 160 avec la gigue à 144 Hz
+(+3,5 %), 882 au lieu de 900 avec des horodatages à 1 ms (+2 %) (contre-vérification de STAB-06, réserve 2). Deux
+causes s'ajoutent :
+- la médiane d'intervalles arrondis est biaisée. À 60 Hz, avec des horodatages à la milliseconde, les intervalles
+  valent 17, 16 et 17 ms : la médiane vaut 17 ms, 2 % de trop ;
+- sans dette, rien ne rend la différence entre l'intervalle réel et le dt ajouté : le biais devient une dérive.
+
+La variante retenue, celle de la proposition de STAB-06, corrige les deux. La moyenne des échantillons normalisés n'a
+pas ce biais : sur 30 intervalles de 17, 16 et 17 ms, elle vaut 16,667 ms. Et toute différence entre l'intervalle réel
+et le dt accroché va dans la dette, rendue et bornée à un pas. Mesuré (4.1) : 6,26 ms d'écart au pire sur 10 minutes
+pour les 21 motifs ; hors verrouillage, la seule dilatation est celle du premier pas (0,0028 %). La vitesse affichée
+reste régulière : CV de 0 à 0,9 % selon le motif, contre ±4 % de vitesse perçue avec des horodatages à 1 ms sur la
+boucle de la 0.8.0 (STAB-06).
+
+### 3.10 FSchedule, en bref
+
+- **File « image »** : `pump(budget)` une fois par image, après le dessin, avec `FSchedule.budget` = min(4 ms,
+  0,85 × période − travail déjà fait). Le budget est nul dans une image en retard : on n'y pompe jamais.
+- Ordre : la priorité, diminuée d'un point toutes les 30 pompes d'attente (vieillissement, contre la famine), puis
+  l'ordre d'arrivée. Une tâche dont le coût estimé dépasse le reste du budget est sautée, sauf si rien n'a tourné dans
+  cette pompe : une tâche longue part seule. L'estimation suit la durée mesurée (moyenne à 0,5).
+- **File « sim »** : `pumpSim(unités)` à un point fixe du pas, en unités entières, sans horloge ni vieillissement. Le
+  découpage est le même sur toutes les machines (S11, S14).
+- **`flush(key)`** force une tâche sans lire l'horloge, avec une garde à 1e6 appels.
+- Pourquoi deux files : ce que la simulation relit ne peut pas dépendre de la vitesse de la machine (règle 1, 2.11) ; la
+  présentation, les caches et la sérialisation peuvent, eux, prendre le temps libre de l'image.
 
 ## 4. Mesures
 
@@ -861,12 +1028,562 @@ période). Il prouve l'égalité au bit près, pas seulement celle des comptes.
 
 ## 5. Plan de raccord, non appliqué
 
-(à compléter à l'étape 7)
+Rien de ce qui suit n'est appliqué : aucun fichier existant n'est modifié, et FLoop et FSchedule ne sont ni dans
+`tools/build.py` ni dans `npm test`. Les extraits et les numéros de ligne sont ceux de la base du clone (`71eca61`, dont
+`src/` est identique à main 0.8.1, `363473a`) ; les constats citent souvent ceux de la 0.8.0. Les chiffres marqués
+« calcul » viennent de `preuves/module-boucle/etape-7-raccord-calculs.mjs` : FLoop et `FOptions.frameGate` seuls,
+horodatages synthétiques, sortie dans `etape-7-raccord-calculs.json`. Ce sont des calculs sur la boucle, pas des
+mesures du jeu.
+
+Ordre conseillé : les points 1 à 9 et 13 à 16 forment un seul changement, la boucle (le banc de 4.2 et les tests du
+point 16 le vérifient) ; l'ordonnanceur (points 10 et 12) peut suivre ; le report du point de reprise (point 11)
+attend une mesure dans Chrome.
+
+### 5.1 Assemblage (§4.13 de la mission)
+
+- `tools/build.py:6`, liste `modules` : ajouter `'loop.js','schedule.js'` juste après `'options.js'`, avant
+  `'game.js'`. La page passe de 812 696 à 822 965 octets (+10 269 = 6 042 + 4 221 + 6), avec une marge de 577 035
+  octets sous 1 400 000 (4.4).
+- `checks/build.test.mjs:14` : ajouter `html.includes('FLoop')&&html.includes('FSchedule')`.
+- `package.json:8`, script `test` : ajouter `checks/floop.test.mjs checks/fschedule.test.mjs`.
+- `tools/realm-loader.mjs:12` : n'ajouter `'schedule'` aux `DEFAULT_MODULES`, et ne placer `schedule.js` avant
+  `simulation.js`, que si la simulation se sert un jour de `pumpSim`.
+- `dist/index.html` et `SIZE.json` sont reconstruits par `tools/build.py` au raccord.
+
+### 5.2 Création
+
+À côté de `game.js:14`, aujourd'hui :
+
+```js
+const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
+```
+
+ajouter :
+
+```js
+const loop=FLoop.create({hz:60,maxSteps:5}),sched=FSchedule.create({now:()=>performance.now()});
+const track={player:FLoop.track(),enemies:FLoop.track(),projectiles:FLoop.track(),rubble:FLoop.track()};
+const aimView={},playerView={};let pacerHz=0;
+```
+
+- Un traqueur par type d'entité, car les `id` se recouvrent d'un type à l'autre (2.6) : joueur, ennemis, projectiles
+  (`id:++projectileSerial`, `simulation.js:989`), débris structurels (`id:++rubbleSerial`, `simulation.js:893`). Les
+  corps sans `id` sont au point 9.
+- `for(const k in track)track[k].clear()` quand les `id` changent de sens : nouvelle simulation dans `load()`
+  (`game.js:225`) et reprise d'un point (`sim.restore`, `game.js:185` et `:198`).
+
+### 5.3 Remise en phase
+
+Une seule ligne dans `setMode` (`game.js:210-217`), le seul endroit où `mode` change (`:214`) :
+
+```js
+if(value==='playing')loop.reset();
+```
+
+- Elle couvre les quatre cas du §7.7 : entrée en jeu (`start`, `:261`), reprise après la pause ou la boutique
+  (`togglePause`, `:846`), retour d'onglet, et fin de chargement (`preparePlay`, puis `action()` et `start`, `:274`).
+- Le retour d'onglet passe par la pause : `visibilitychange` (`:983`), `blur` (`:981`) et `webglcontextlost` (`:985`)
+  mettent le jeu en pause, et la reprise repasse par `setMode('playing')`. Aucun écouteur de plus n'est nécessaire.
+- `last` (`:12`, `:212`, `:787`) reste pour le dt d'affichage (point 13). `setMode` appelle déjà `clearInput()`
+  (définie en `:209`, appelée en `:214`), qui vide le regard et les impulsions en attente.
+
+### 5.4 Hors jeu
+
+Après `if(!present)return;` (`game.js:786`), avant les retours de `:788` et `:789` :
+
+```js
+if(mode!=='playing')loop.observe(now);
+```
+
+- Menus, pause, options, boutique, écrans de fin et chargement : FLoop continue d'estimer la période, sans avancer le
+  temps simulé.
+- Les images refusées par `frameGate` (`!present`) n'appellent pas FLoop. Il ne voit que les images présentées, et sa
+  période devient la leur : 13,9 ms pour une limite de 60 sur un écran 144 Hz (calcul).
+
+### 5.5 Changement de période
+
+Le §7.7 demande `loop.resetPeriod()` quand `prefs.fpsLimit` change ou que l'écran change. Le calcul montre où
+l'appeler.
+- Dans l'écouteur de l'option (`game.js:891`), c'est trop tôt. `frameGate` montre la première image de la nouvelle
+  cadence en phase 0, et cette image mesure encore un intervalle de l'ancienne. FLoop repart de 8,333 ms, lit ensuite
+  16,667 ms comme deux périodes et reste pris au sous-multiple : un pas par image, sans verrouillage, alpha figé.
+- Juste après `advance`, à l'image où `framePacer.effectiveHz` s'écarte de plus de 5 % de sa valeur au dernier
+  `resetPeriod()`, la boucle se verrouille sur la nouvelle période. Le même test couvre le changement d'écran, qu'aucun
+  événement ne signale.
+
+```js
+const ehz=framePacer.effectiveHz;           // juste après loop.advance(…)
+if(ehz>0){if(!pacerHz)pacerHz=ehz;else if(Math.abs(ehz/pacerHz-1)>.05){loop.resetPeriod();pacerHz=ehz;}}
+```
+
+| Cas (calcul, 50 s après le changement) | `resetPeriod()` | Verrouillée à la fin | Période | Pas par image après le changement | alpha à la fin |
+|---|---|---|---|---|---|
+| limite 0 → 60, écran 120 Hz | aucun | non | 8,333 ms | 1 : 3 000 | 0,001 |
+| limite 0 → 60, écran 120 Hz | dans l'écouteur de l'option | non | 8,333 ms | 0 : 5, 1 : 2 990, 2 : 5 | 0,001 |
+| limite 0 → 60, écran 120 Hz | après `advance`, sur écart de `effectiveHz` | oui | 16,667 ms | 0 : 1, 1 : 2 998, 2 : 1 | 0,999 |
+| écran 144 → 60 Hz, sans limite | aucun | non | 8,333 ms | 1 : 3 000 | 0,585 |
+| écran 144 → 60 Hz, sans limite | après `advance`, sur écart de `effectiveHz` (2 appels) | oui | 16,667 ms | 1 : 3 000 | 0,999 |
+
+Pris au piège, la boucle reste juste (un pas par image), mais l'interpolation affiche un retard constant de
+(1 − alpha) × h : 16,65 ms, un pas entier, dans le cas de la limite, au lieu de 0 une fois verrouillée. Hors jeu, la
+même règle après `observe` n'est pas calculée ici : à vérifier au raccord.
+
+### 5.6 Entrées
+
+Aujourd'hui (`game.js:795-799`), le regard et les impulsions sont lus une fois par image, puis effacés avant la boucle
+de pas :
+
+```js
+input.lookX=lookDX+(Number(held('turnRight'))-Number(held('turnLeft')))*dt*1.9;input.lookY=lookDY;
+…input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;…
+lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;
+```
+
+Avec FLoop, à 144 Hz sans limite, 58 % des images n'ont aucun pas (calcul : 58,322 %) : ce qui est effacé sur une
+image sans pas est perdu (LOOP-06).
+- **Regard** : il s'accumule d'image en image dans `lookDX` et `lookDY` (souris `:956`, toucher `:965`), touches de
+  rotation comprises : `lookDX+=(Number(held('turnRight'))-Number(held('turnLeft')))*dt*1.9;`. Il n'est remis à zéro
+  qu'après le premier pas qui le consomme (point 7) ; entre-temps, `aim` l'affiche (point 8).
+- **Impulsions** `dashQueued`, `pulseQueued`, `meleeQueued` et `interactQueued` (posées par le clavier et par les
+  boutons, `:977-980`) : copiées dans `input` au premier pas, effacées après ce pas seulement. La ligne `:799`
+  disparaît.
+- **Tir** : rien à changer. Depuis le lot 01 T2 (LOOP-06), `firePressed` et `fireLeftPressed` restent posés jusqu'au
+  tir (`events()`, `:296-297`) ou 150 ms (`expireFireIntents`, `:33-36`), et `input.fire=fireHeld||firePressed` reste
+  posé avant les pas (`:797`). L'écart le plus long entre deux images à pas est de 27,8 ms (72 i/s, calcul), loin des
+  150 ms.
+- `input.moveX`, `input.moveY`, `input.sprint`, `input.fire`, `input.fireLeft` et `input.weapon` restent posés avant
+  les pas, comme aujourd'hui (`:793-797`).
+
+### 5.7 Pas
+
+Aujourd'hui (`game.js:802-811`) :
+
+```js
+const steps=Math.max(1,Math.ceil(dt*60-.06)),part=dt/steps;
+for(let i=0;i<steps;i++){
+  sim.step(part,input);input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=false;
+  events();
+  if(mode!=='playing')break;
+  input.fire=fireHeld;input.fireLeft=fireLeftHeld;
+  input.weapon=selectedWeapon;
+}
+```
+
+Après :
+
+```js
+const f=loop.advance(now,(h,i)=>{
+  if(i===0){for(const k in track)track[k].begin();
+    input.lookX=lookDX;input.lookY=lookDY;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;}
+  saveTracks();                       // track.*.save(id,x,y,z,a) de chaque entité suivie, avant le pas
+  sim.step(h,input);
+  if(i===0){lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;}
+  input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=false;
+  events();
+  if(mode!=='playing')return false;
+  input.fire=fireHeld;input.fireLeft=fireLeftHeld;input.weapon=selectedWeapon;
+});
+if(f.steps)for(const k in track)track[k].prune();
+```
+
+- `saveTracks()`, fonction neuve, sauve avant chaque pas la pose que lira le rendu : joueur (`p.x`, `p.y||0`, `p.z`,
+  `p.yaw`), ennemis (`e.x`, `e.baseY`, `e.z`, `e.yaw`, ce que lit `FActors.build`), projectiles et débris structurels.
+- `h` vaut toujours 1/60 s : `sim.step` ne reçoit plus un dt qui dépend de l'écran.
+- Le retour `false` arrête l'image après un pas qui a changé de mode (victoire, mort, boutique), comme le `break`
+  d'aujourd'hui. Le reste est compté en abandon (`stats.abortedMs`), et `reset()` remettra la boucle en phase à la
+  reprise.
+- Le rappel tourne de façon synchrone, dans le rappel rAF et avant le dessin : la simulation reste sur le fil
+  principal, sans image de latence (PARA-V1).
+
+### 5.8 Rendu
+
+Aujourd'hui (`game.js:832-837`), la caméra et les modèles lisent l'état courant :
+
+```js
+const p=sim.state.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
+const camera={pos:[p.x,(p.y||0)+1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch,…};
+```
+
+Après :
+
+```js
+const p=sim.state.player,isPlay=mode==='playing'||mode==='paused',alpha=loop.frame.alpha,t=mode==='menu'?clock:sim.state.time-(1-alpha)*loop.step;
+const a=FLoop.aim(p.yaw,p.pitch,lookDX,lookDY,-1.2,1.2,aimView),q=track.player.pose(0,p.x,p.y||0,p.z,p.yaw,alpha,playerView);
+const camera={pos:[q.x,q.y+1.62+(isPlay?view.height:0),q.z],yaw:a.yaw,pitch:a.pitch,…};
+```
+
+- **Angles** : `FLoop.aim` ajoute aux angles de la simulation le regard pas encore consommé, avec les opérations exactes
+  du pas (`simulation.js:1909`) : le pas suivant arrive au même angle, au bit près (2.5). Les bornes sont celles du
+  pas, −1,2 et 1,2.
+- **Positions** : `track.*.pose(…, alpha, out)`, avec des objets `out` créés une fois et réutilisés.
+- **Temps de rendu** `t = sim.state.time − (1 − alpha) × loop.step`, pour `signals.time`, `models(t, …)` et
+  `renderer.draw({time:t})`. Sans lui, les animations n'avancent qu'aux images qui ont un pas : à-coups à 144 Hz.
+- **Modèles** : `models()` (`:521`) lit l'état directement. Les ennemis passent par `FActors.build(e, options)` (`:541`,
+  qui lit `e.x`, `e.baseY`, `e.z` et `e.yaw`), avec leurs anneaux et repères (`:544-553`). Les projectiles et les
+  débris passent par `FEffects.build(s, world, camera, options)` (`:523` ; `effects.js:145`, `:173`, et les traînées
+  de roquette, `:214`). Il leur faut une pose de rendu : une option `pose` dans `FActors.build` et `FEffects.build`, ou
+  une vue de rendu par entité. Ne jamais écrire la pose interpolée dans `sim.state` : l'état reste celui des pas
+  (lecture seule, 2.6).
+- La rotation des débris (trois angles) n'est pas couverte par `track`, qui n'a qu'un angle. La laisser à l'état
+  courant, ou ajouter un second traqueur dont x, y et z sont les trois angles, avec un `snap` d'environ 1 rad pour
+  qu'un repli à ±π rende la pose courante. À juger à l'écran.
+- Menus et options (`:836`) : la caméra reste celle d'aujourd'hui.
+
+### 5.9 Corps sans `id`
+
+Trois sortes de corps n'ont pas d'`id` : les balles ennemies (`s.bullets`, créées à `simulation.js:1252`, dessinées à
+`game.js:569`), les éclats non structurels (`simulation.js:892`, dessinés par `FEffects`) et les particules
+(`simulation.js:525`, dessinées à `game.js:570`).
+- **Voie du §7.7 : extrapolation arrière.** Le corps est dessiné à `position − vitesse × (1 − alpha) × h`.
+  - Balles : exacte, elles vont en ligne droite à vitesse constante (`dx`, `dy`, `dz`, `simulation.js:1930`).
+  - Particules : leur vitesse verticale perd 3 m/s par seconde (`q.vy-=dt*3`, `:1936`). Erreur de 3 × h² × (1 − alpha),
+    0,83 mm au plus.
+  - Éclats : gravité de 12 m/s² et rebonds (`updateDebris`, `:1028`). Erreur de |Δv| × h × (1 − alpha), 3,3 mm au plus
+    pour la gravité seule, davantage sur un rebond.
+  - Un corps né pendant le dernier pas serait dessiné en arrière de son point de départ : ne pas extrapoler un corps de
+    moins d'un pas (balles : `5 − life < h` ; éclats : `age < h`).
+- **Autre voie, sans changement de format : `track` avec l'objet pour clé.** `track.save(id, …)` range la pose dans une
+  `Map`, dont la clé peut être l'objet lui-même : `track.bullets.save(q,q.x,q.y,q.z)`, un traqueur par sorte de corps.
+  L'interpolation est alors exacte, comme pour les entités à `id`, et rien n'est écrit dans `sim.state`.
+  - Condition : la simulation garde le même objet d'un pas à l'autre. C'est le cas dans le code lu : mises à jour en
+    place (`:1930`, `:1936`, `updateDebris`), filtres qui gardent les objets (`:1064`, `:1186`, `:1932`, `:1937`).
+    `restore` en crée de nouveaux (`:2210-2211`), d'où le `clear()` du point 2.
+  - Coût : environ 23 ns par corps et par image (4.3 : 0,92 µs pour 40), soit 4 µs pour 180 particules.
+  - À vérifier par un test au raccord ; aucun calcul ici.
+- **Voie du §7.7, aussi : leur donner un `id`**, ce qui change le format des points de reprise (lot 12).
+
+Recommandation : question 4.
+
+### 5.10 Ordonnanceur
+
+Après `renderer.draw` (`game.js:837`) :
+
+```js
+sched.pump(FSchedule.budget(loop.period||1000/60,performance.now()-frameStart));
+```
+
+- `frameStart=performance.now()` est lu au début de `frame()`.
+- `loop.period` est la période des images présentées (13,9 ms pour une limite de 60 sur 144 Hz) : c'est le bon budget.
+  Tant qu'aucun intervalle n'est mesuré, elle vaut 0, et le budget part de 1000/60.
+- En mode « loading », `frame()` sort à `:789`, avant le dessin. Pour que la pré-synthèse du point 12 avance pendant
+  l'écran de chargement, pomper aussi juste avant ce retour.
+- La file « image » ne contient que de la présentation, des caches et de la sérialisation (règle 5) ; la simulation
+  n'appelle jamais `pump` (règle 3).
+- Le coût propre de `pump` est surtout celui de ses lectures d'horloge (4.3) : à mesurer dans le navigateur.
+
+### 5.11 Point de reprise (LOAD-03, lot 02 T4)
+
+Aujourd'hui (`game.js:165-174`), tout se fait dans l'image :
+
+```js
+checkpoint=sim.snapshot();
+savedRun={version:…,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
+try{preserveRefusedSave();localStorage.setItem(SAVE_KEY,JSON.stringify(savedRun));saveAvailable=true;}catch{saveAvailable=false;}
+$('checkpoint-status').textContent=…;refreshContinue();
+```
+
+- **L'instantané reste synchrone** (`:169`) : l'arbitrage « LOOP-03, LOAD-03, SIM-01 » interdit de le différer (SIM-01,
+  puis LOAD-03).
+- **Ce qui peut devenir une tâche « image »** : les lignes `:171-173`, dans
+  `sched.add({key:'save',priority:2,run(){…}})`. La clé unique fusionne les points d'une même image en une écriture :
+  une nouvelle tâche `'save'` remplace l'ancienne.
+- **Forcer l'écriture** : `sched.flush('save')` dans un écouteur `pagehide`, qui n'existe pas aujourd'hui (aucun dans
+  `src/`), et dans l'écouteur `visibilitychange` (`:983`) quand `document.hidden`.
+- **Deux réserves, à lever avant de différer quoi que ce soit** :
+  1. Réserve 3 de la contre-vérification de STAB-07 : différer `stringify` exige que `snapshot()` rende une copie sans
+     aucune référence vers l'état vivant. À garantir par un test : instantané, 60 pas, puis JSON identique à celui pris
+     tout de suite. Le test porte sur tout `savedRun`, dont `runStats` (copie superficielle, `:170`) et `entryLoadout`.
+  2. Réserve de LOAD-03 : le report rapporte peu (`stringify` de 1,0 à 1,2 ms pour 167 K caractères, `setItem` non
+     mesuré) et risque de perdre le dernier point. C'est du P2, à décider après une mesure dans Chrome (`file://`,
+     panneau Performance). Le gros du coût (33 à 35 ms après une brèche) part avec la réduction de la file de
+     navigation (LOAD-02, SIM-01), sans rien différer.
+- **Appels hors de l'image** : `saveCheckpoint()` est aussi appelé depuis des menus, la boutique et les chargements
+  (`:200`, `:206`, `:207`, `:264`, `:350`, `:867`, `:873`). Seul l'appel d'`events()` (`:341`), pendant les pas, gagne
+  à être différé ; les autres peuvent rester synchrones.
+- L'échéance du report « en l'air » (`:167`, `checkpointPending`), que demande le même arbitrage, est au lot 02 T4,
+  hors de cette voie.
+
+### 5.12 Pré-synthèse audio (LOAD-13, lot 11)
+
+Aujourd'hui, `warmBank` (`audio.js:290-313`) construit la banque par lots de 2 effets, un lot par `setTimeout`
+(`:311`), sans borne de temps. `audio.prepare` l'appelle (`:458`), et `preparePlay` l'attend derrière l'écran de
+chargement (`game.js:271`).
+- Avec FSchedule : une tâche « image » par tampon (nom et variante), priorité 6, coût 2, clé `'pcm:'+nom+':'+variante`.
+  `finish()` (démarrage des moteurs, `pcmReady`) tourne après la dernière. `audio.js` étant un module FERRO,
+  l'ordonnanceur lui est passé en paramètre (par exemple `audio.prepare(n,{schedule:sched})`) ; sans ordonnanceur, le
+  chemin reste celui d'aujourd'hui.
+- La plus longue tranche devient celle du tampon le plus lourd, indivisible tant que `synthesize` n'est pas découpée.
+- Réserve 1 de la contre-vérification de STAB-07 : cette pré-synthèse tourne derrière l'écran de chargement. Le
+  découpage rend la barre plus fluide, pas la partie.
+- Pendant le chargement, le plafond de 4 ms étalerait la pré-synthèse sur environ (durée totale / 4 ms) images : plus
+  d'une seconde de chargement en plus à 60 Hz (estimation, non mesurée). L'image est presque vide (`frame()` sort à
+  `:789`) : un plafond plus haut, par exemple `FSchedule.budget(P,travail,12)`, garde la barre animée sans allonger le
+  chargement.
+- Le PCM doit rester identique au bit près (`checks/audio.test.mjs`, `checks/music.test.mjs`) : l'ordre de
+  construction est indifférent si chaque synthèse est pure (LOAD-13).
+- Repères du §7.8 de la mission (Mac, main 0.8.1) : aujourd'hui 17 tranches, la plus longue de 24 à 28 ms ; avec
+  FSchedule, 21 à 22 tranches, la plus longue de 11 ms. Ils ne sont pas mesurés ici : l'étape 8 (banc audio,
+  facultative) n'est pas faite.
+
+### 5.13 Ce qui reste au dt d'affichage
+
+Le dt de l'image (`dt`, `game.js:787`) reste celui de la présentation :
+- `:812-829` : mélange extérieur, paysage sonore, `audio.tick(dt)`, bruits de pas, phases d'animation des acteurs
+  (`actorMotion`), mécanismes (`systemMotion`), toasts, rencontre, tic de HUD, réticule et dégâts ;
+- `:833-834` : `motion.update` et `leftMotion.update` (balancement de l'arme), `shieldLift` ;
+- `signals.lookYaw` et `signals.lookPitch` (`:798`) : le regard **reçu dans l'image**, divisé par dt, et non le regard
+  consommé par le pas ; sinon le balancement de l'arme saute d'une image à pas à l'autre. Par exemple, garder la part
+  de `lookDX` laissée en attente à la fin de l'image précédente, et la retrancher au début de la suivante.
+
+### 5.14 À ne pas toucher
+
+- `pumpNav` (`simulation.js:1379`) : le modifier casse `checks/simulation.test.mjs` (fiche T1 ; `:1866` vérifie au
+  plus 768 cellules par pas). Avec le pas fixe, il répare 768 cellules par pas, donc 46 080 par seconde simulée, quel
+  que soit l'écran : c'est déjà le « pumpNav en cellules par seconde » de l'arbitrage « LOOP-05, FEEL-08, LOOP-08,
+  SIM-12 », sans y toucher. À 144 Hz, la boucle actuelle en répare 110 592 par seconde : la réparation après une
+  brèche y sera 2,4 fois plus lente qu'aujourd'hui, comme à 60 Hz.
+- L'écho `input.weapon=selectedWeapon` à chaque pas (`game.js:797` et `:810`, PARA-V2, lot 07 T2) : gardé tel quel dans
+  le rappel (point 7), à traiter à part (question 5).
+
+### 5.15 Retour anticipé de `sim.step`
+
+`simulation.js:1902` :
+
+```js
+dt=Number.isFinite(dt)?clamp(dt,0,.05):0;if(s.won||s.dead||checkPlayerBounds())return;
+```
+
+Ce retour vient avant la ligne du regard (`:1909`) : le regard du pas n'est pas consommé. Le rappel du point 7 vide
+`lookDX` et `lookDY` après le premier pas sans condition, retour anticipé compris : `aim` montre alors les angles de la
+simulation, et l'image n'affiche jamais un regard que la simulation n'appliquera pas (condition 3 de 2.5). Les retours
+de `:1913`, `:1915` et `:1920` viennent après la ligne du regard, qui est alors consommé. Aujourd'hui, le regard est
+déjà jeté de la même façon, à chaque image (`game.js:799`).
+
+### 5.16 Tests et outils à adapter
+
+- `checks/cadence.test.mjs:8` et `tools/cadence-profile.mjs:20` lisent la formule par l'expression
+  `/const steps=([^\n]+?),part=dt\/steps;/`, qui ne trouvera plus rien. Les remplacer par `checks/floop.test.mjs` et
+  un test du raccord : `game.js` crée `FLoop.create({hz:60,maxSteps:5})` et `frame()` appelle `loop.advance` ; même
+  empreinte d'état à travers `frame()` à 60, 75, 120 et 144 Hz et avec des horodatages arrondis, pour des entrées
+  scriptées (le « Vérifier par » de STAB-06). `tools/cadence-profile.mjs` est à réécrire sur FLoop, ou à retirer.
+- Les tests qui appellent `frame()` : `checks/input.test.mjs` et son harnais, `checks/checkpoint.test.mjs`,
+  `checks/audio.test.mjs`. Calcul : FLoop seul après `reset()` (entrée en jeu), contre la formule actuelle
+  (`game.js:787` et `:802`).
+
+| Suite | Images (ms) | Pas FLoop par image | Temps simulé, FLoop | Aujourd'hui | Effet attendu |
+|---|---|---|---|---|---|
+| `input.test.mjs:82-89` | une première image de 50, 33,3, 16,7 ou 6,94 | 1 | 16,667 ms | 3, 2, 1 ou 1 pas | l'appui est consommé par ce pas : le test devrait passer |
+| `input.test.mjs:91-95` | 120, 120 | 1, puis 5 (36,667 ms abandonnés) | 100 ms | 8, 8 (240 ms) | `assert(app.steps.length>1)` échoue : la première image après `reset()` fait un seul pas |
+| `input.test.mjs:97-102` | 10, 100, 100, 60 | 1, 5, 5, 4 (16,667 ms abandonnés deux fois) | 250 ms | 1, 6, 6, 4 (270 ms) | délai restant du pistolet de 0,087 s au lieu de 0,06 : la fenêtre ]0 ; 0,07[ échoue |
+| `checkpoint.test.mjs` | 7 images de 100 | 1, puis 5 par image (16,667 ms abandonnés à chaque) | 516,667 ms | 6 par image (700 ms) | 83,3 ms simulés par image au lieu de 100 : les attentes de N images donnent 17 % de temps en moins |
+| `input.test.mjs` | 10 images de 20 | 1, 2, 1, 1, 1, 1, 2, 1, 1, 1 | 200 ms | 2 par image (200 ms) | même temps simulé, moitié moins de pas |
+| `audio.test.mjs` | 10 images de 40 | 1, 3, 2, 3, 2, 2, 3, 2, 3, 2 | 383,333 ms | 3 par image (400 ms) | à vérifier |
+
+Corrections proposées, sans baisser aucune valeur attendue (calcul, `fixes` dans le JSON) :
+- `input.test.mjs:91-95` : une image d'amorce (`app.frame(1000/60)`) avant l'appui. Les images de 120 ms font alors
+  5 pas, dont un seul reçoit le tir verrouillé.
+- `input.test.mjs:97-102` : après `firstShot`, 16 images de 1000/60 ms au lieu de 100, 100 et 60 ms. Cela fait 16 pas
+  et un délai restant de 0,053 s, dans la fenêtre. Les 6 images de 20 ms font ensuite 1, 2, 1, 1, 1 et 1 pas, et le
+  pistolet est prêt au quatrième pas, bien avant les 150 ms du tampon d'appui.
+- `checkpoint.test.mjs:390` (6 images de 100 ms « pour laisser finir la récupération de la Fracture ») : 0,5 s
+  simulée au lieu de 0,6. À vérifier, et ajouter une image si la récupération dure plus.
+- Ajouter un test de LOOP-06 sur les images sans pas : à 144 Hz, une impulsion (esquive) posée sur une image sans pas
+  est consommée une fois, par le pas suivant, et un tap n'est jamais perdu.
+- Ajouter le test de la réserve 3 de STAB-07 (point 11) avant tout report de `stringify`.
+- `checks/floop.test.mjs` et `checks/fschedule.test.mjs` entrent dans `npm test` (point 1).
 
 ## 6. Limites connues
 
-(à compléter à l'étape 7)
+1. **Environnements.** Seulement Node (Mac et Spark) et Chrome sans tête (deux versions), avec des horodatages
+   synthétiques ; `--dump-dom` rend la page avant toute image rAF. Pas testés : une vraie boucle rAF, un vrai écran à
+   59,94 Hz, le VRR (G-Sync, FreeSync), la quantification des horodatages de Safari et de Firefox.
+2. **Piège du sous-multiple** (T-F22). Après le passage d'un écran rapide à un lent, ou d'une limite à une autre, la
+   boucle reste juste (un pas par image), mais ne se verrouille plus : sa période reste à 8,333 ms. alpha reste figé à
+   une valeur quelconque, et les positions affichées gardent un retard constant de (1 − alpha) × h. Calcul : 16,65 ms
+   (alpha 0,001) pour une limite passée de 0 à 60 sur un écran 120 Hz, 6,9 ms (alpha 0,585) pour un écran passé de 144
+   à 60 Hz. Remède : `resetPeriod()` placé comme au point 5 ; appelé dans l'écouteur de l'option, il ne suffit pas.
+3. **Latence hors verrouillage** : un demi-pas en moyenne (8,3 ms) sur les positions, zéro sur les angles (`aim`).
+4. **Réserve 3 de STAB-06 : tir et impulsions sur écran rapide.** Ce qui passe par un pas (tir, esquive,
+   déplacement) attend la prochaine image qui a un pas. Calcul : appui uniforme dans le temps, attente jusqu'au pas qui
+   le consomme, hors latence du navigateur et de la composition, qui est la même dans les deux cas.
+
+   | Cadence | FLoop : moyenne / pire (ms) | Aujourd'hui : moyenne / pire (ms) | Écart entre deux images à pas (ms) |
+   |---|---|---|---|
+   | 60 Hz | 8,3 / 16,7 | 8,3 / 16,7 | 16,7 |
+   | 72 i/s (limite 60 sur 144 Hz) | 9,3 / 27,8 | 6,9 / 13,9 | 13,9 et 27,8 |
+   | 75 Hz | 9,3 / 26,7 | 6,7 / 13,3 | 13,3 et 26,7 |
+   | 120 Hz | 8,3 / 16,7 | 4,2 / 8,3 | 16,7 |
+   | 144 Hz | 8,7 / 20,8 | 3,5 / 6,9 | 13,9 et 20,8 |
+   | 144 Hz avec gigue (`jit144`) | 8,7 / 21,6 | 3,5 / 7,2 | 13,5 à 21,6 |
+   | 165 Hz | 8,5 / 18,2 | 3,0 / 6,1 | 12,1 et 18,2 |
+
+   La réserve dit qu'« un tir attend jusqu'à 16,7 ms » : c'est 20,8 ms à 144 Hz, où les images à pas sont espacées de
+   2 ou 3 images. À 60 Hz, rien ne change. Les angles restent immédiats. Le remède de la réserve, le pas à 120 Hz
+   automatique, n'est pas dans le module (question 2).
+5. **Réserve 4 de STAB-06.** « Même partie sur tous les écrans » vaut par construction pour des entrées scriptées
+   (démo, banc, 4.2), pas pour un joueur, dont les gestes n'arrivent pas aux mêmes instants.
+6. **Limite à 60 par défaut** (MASTER-PROMPT §6, lot 07 ; aujourd'hui `fpsLimit` vaut 0, `options.js:6`). Avec
+   `frameGate` tel quel, seuls les écrans 60, 120 et 240 Hz donnent une boucle verrouillée. Calcul, 60 s par cas,
+   horodatages arrondis à 0,1 ms ; une limite d'au moins 95 % de la fréquence ne limite rien (LOOP-09), et ces cas ne
+   sont pas recalculés :
+
+   | Écran | Sans limite | Limite 30 | Limite 60 | Limite 120 |
+   |---|---|---|---|---|
+   | 60 Hz | verrouillée, 1 pas par image | 30 i/s, verrouillée, 2 pas par image | comme sans limite | comme sans limite |
+   | 120 Hz | non verrouillée, 50 % d'images sans pas | 30 i/s, verrouillée | 60 i/s, verrouillée | comme sans limite |
+   | 144 Hz | non verrouillée, 58 % sans pas | 28,8 i/s, non verrouillée, 1 image sur 12 à 3 pas | **72 i/s, non verrouillée, 1 image sur 6 sans pas** | 144 i/s, comme sans limite |
+   | 165 Hz | non verrouillée, 64 % sans pas | 33,0 i/s, non verrouillée, 1 image sur 5,5 à un seul pas | **55 i/s, non verrouillée, 1 image sur 11 à 2 pas** | 165 i/s, comme sans limite |
+   | 240 Hz | non verrouillée, 75 % sans pas | 30 i/s, verrouillée | 60 i/s, verrouillée | 120 i/s, non verrouillée, 50 % sans pas |
+
+   L'interpolation garde le mouvement fluide dans tous les cas ; ce sont la latence et la régularité du travail par
+   image qui changent (question 9).
+7. **La file « image » ne coupe jamais une tâche** : la plus longue tâche indivisible borne l'image (pour la
+   pré-synthèse, le tampon le plus lourd).
+8. **Mesures de CPU sur une machine partagée** (Mac, charge de 2 à 5) : un facteur 3 entre des exécutions identiques
+   (4.2). Les rapports de CPU de 4.2 ne sont qu'une information.
+9. **Rattrapage borné à 5 pas** : sous 12 images par seconde, le jeu ralentit (le temps abandonné est compté) ;
+   aujourd'hui, il ralentit sous 8,3 images par seconde (dt borné à 0,12 s).
+10. **Réparation de la navigation** : 46 080 cellules par seconde simulée partout ; sur un écran 144 Hz, 2,4 fois moins
+    vite qu'aujourd'hui (point 14).
+11. **Entités nées pendant le dernier pas**, ou déplacées de plus de 2 m en un pas (téléportation, ascenseur,
+    propulsion) : dessinées à leur pose courante, sans interpolation, pendant une image.
+12. **Corps sans `id`** : l'extrapolation se trompe d'au plus 0,83 mm pour les particules, davantage pour un éclat qui
+    rebondit (point 9) ; avec l'objet pour clé, l'interpolation est exacte.
+13. **Dilatation dans la bande d'hystérésis.** L'invariant 3 (au plus un pas plus 1 % du temps réel) tient sur les 21
+    motifs. Mais une boucle verrouillée garde son verrou jusqu'à 2 % d'écart : si la période glisse après le
+    verrouillage, la simulation prend autant de retard. Calcul, boucle verrouillée 5 s à 60 Hz, puis période allongée
+    pendant 10 minutes :
+
+    | Glissement de la période | Verrouillée à la fin | Dilatation sur 10 min | Borne de l'invariant 3 | Invariant 3 |
+    |---|---|---|---|---|
+    | +0,5 % | oui | −2 968 ms (−0,49 %) | 6 067 ms | tenu |
+    | +0,9 % | oui | −5 335 ms (−0,88 %) | 6 067 ms | tenu |
+    | +1,2 % | oui | −7 098 ms (−1,17 %) | 6 066 ms | **dépassé** |
+    | +1,5 % | oui | −8 850 ms (−1,46 %) | 6 067 ms | **dépassé** |
+    | +1,9 % | oui | −11 171 ms (−1,85 %) | 6 067 ms | **dépassé** |
+    | +2,1 % | non, déverrouillée | +7 ms (0,001 %) | 6 067 ms | tenu |
+    | +1,5 % dès le départ | jamais verrouillée | +17 ms (0,0028 %) | 6 017 ms | tenu |
+
+    Il n'y a pas d'à-coup : un pas par image, et une partie 1 à 2 % plus lente. Un écran qui passerait de 60 à 59 Hz
+    (1,7 %) en cours de partie, ou un écran VRR, pourrait le faire (non essayé). Question 3.
+14. **`pump` et l'horloge** : 31 lectures de `now()` pour 10 tâches (4.3). Dans le navigateur, le coût et la
+    granularité de `performance.now()` restent à mesurer.
+15. **`track` n'interpole qu'un angle**, le lacet : la rotation des débris n'est pas couverte (point 8).
 
 ## 7. Questions ouvertes
 
-(à compléter à l'étape 7)
+### 7.1 Questions, chacune avec une recommandation
+
+Les cinq premières sont celles du §10 de la mission, dans son ordre (la section 4.1 renvoie à la question 3).
+
+1. **Deux estimations de la période d'affichage.** `frameGate` prend la médiane de 30 intervalles rAF bruts ; FLoop, la
+   moyenne de 30 intervalles normalisés, sur les seules images présentées. L'arbitrage « RCPU-08, RGPU-09, LOOP-12,
+   RGPU-02, LOOP-09 » demande une seule période, estimée une fois et partagée.
+   *Recommandation* : `frameGate` reste la seule estimation de l'écran (`refreshHz`, `effectiveHz`), lue par le
+   limiteur, `cadenceHint`, le futur gouverneur et le déclenchement de `resetPeriod()` (point 5). `loop.period`
+   n'estime pas l'écran : c'est la période des images présentées, interne au pas et au budget de FSchedule (point 10).
+   Les deux ne mesurent pas la même chose (intervalles bruts, images présentées) : ne pas brancher l'une sur l'autre.
+   À confirmer avec le lot du gouverneur.
+2. **Pas à 120 Hz automatique** quand la période est sous 10 ms.
+   *Recommandation* : non. Il casse « une seule empreinte quel que soit l'écran », dont le banc et la démo ont besoin.
+   Une option explicite, désactivée par défaut (`FLoop.create({hz:120})` existe). Le prix est la latence sur écran
+   rapide (limite 4 : jusqu'à 20,8 ms à 144 Hz). Le lot 07 propose « activé », le lot 13 et la proposition de STAB-06
+   « désactivé » (7.2). À trancher par David.
+3. **Critère des 10 minutes.** Il est appliqué hors verrouillage (|dette| < 1 pas, 6,26 ms au pire) ; en verrouillage,
+   la dilatation est bornée et comptée (−0,0944 % à 59,94 Hz). Fait nouveau : l'hystérésis laisse la dilatation aller
+   jusqu'à 2 % si la période glisse après le verrouillage (limite 13).
+   *Recommandation* : confirmer le critère tel quel, et lire l'invariant 3 comme « au plus un pas plus 2 % du temps
+   réel » (le seuil de sortie), sans toucher aux constantes (règle 10 de la mission). Si 2 % paraît trop, le raccord
+   peut appeler `resetPeriod()` quand `stats.dilationMs` croît de plus de 1 % du temps réel sur quelques secondes.
+   À confirmer.
+4. **Balles ennemies, éclats et particules sans `id`.**
+   *Recommandation* : `track` avec l'objet pour clé (point 9) : interpolation exacte, sans changement de format, sans
+   rien écrire dans `sim.state`, après un test du raccord qui vérifie que les objets restent les mêmes d'un pas à
+   l'autre. L'extrapolation arrière en repli. Des `id` (lot 12) ne sont pas nécessaires pour le rendu.
+5. **Écho d'arme (PARA-V2) et regroupement des événements après rattrapage** (lot 07 T2).
+   *Recommandation* : brancher d'abord avec `events()` à chaque pas et l'écho tel quel (points 7 et 14), pour que le
+   banc d'empreintes juge la boucle seule. Ensuite, T2 : `input.weapon` seulement sur l'image d'un geste, et `events()`
+   une fois après `advance`, le rappel rendant `false` après un pas qui a émis `shopOpen`, `win` ou `dead`. Le rappel
+   de FLoop tient alors le rôle de `stepFrame` pour le découpage en pas.
+6. **Tâches sans clé dans FSchedule.** `cancel()`, `has()` et `flush()`, appelés avec une clé indéfinie, visent les
+   tâches sans clé, et `cancel()` les retire toutes (2.9).
+   *Recommandation* : garder le code normatif ; au raccord, donner une clé à toute tâche (`'save'`,
+   `'pcm:'+nom+':'+variante`) et ne jamais passer une clé qui peut être indéfinie.
+7. **`capMs` non validé** (2.10) : un `capMs` NaN donne un budget NaN, que `pump` traite comme nul.
+   *Recommandation* : laisser ainsi ; le jeu passe des constantes (4, ou 12 pendant le chargement, point 12).
+8. **Sortie du piège du sous-multiple.** FLoop devrait-il en sortir seul ?
+   *Recommandation* : non, le module ne change pas (règle 10) ; le `resetPeriod()` du point 5 couvre les deux cas
+   calculés. Un changement d'écran que `effectiveHz` ne voit pas laisserait la boucle juste mais non verrouillée : à
+   observer sur de vrais écrans.
+9. **Quelle cadence « 60 » sur un écran 144 ou 165 Hz ?** `frameGate` arrondit le saut d'images : 72 i/s sur 144 Hz,
+   55 i/s sur 165 Hz. Aucune des deux ne verrouille, et 48 i/s sur 144 Hz (une image sur 3) ne verrouillerait pas non
+   plus (1,25 pas par image). « 60 constant », au sens strict, n'existe que sur les écrans 60, 120 et 240 Hz.
+   *Recommandation* : garder `frameGate` tel quel. La cadence est constante (décision 2 de David du 12 novembre :
+   « tant que c'est constant »), et l'interpolation garde le mouvement fluide. À confirmer par David.
+
+### 7.2 Écarts relevés
+
+Il n'y a pas de `.relais/RESULTAT.md` dans ce clone : les écarts sont rangés ici. D'abord ceux du §10 de la mission,
+puis ceux des notes d'étape (`preuves/module-boucle/`), puis ceux de cette étape.
+
+**Du §10 de la mission.**
+- Lot 07, chemins des bancs : la fiche cite `bancs/loop/cadence.mjs` (T1) et `bancs/sched.mjs` (T8). Les vrais
+  fichiers sont `bancs/stab/cadence.mjs` et `bancs/stab/sched.mjs`.
+- Lot 07 T1, « dilatation ≤ 0,33 ms » : 0,33 ms est la dérive d'horloge du prototype, pas la dilatation du
+  verrouillage (−566,65 ms sur 10 minutes à 59,94 Hz, voulus et comptés, 4.1).
+- Lot 07 T8, `create({now})` : `now` est facultatif ici ; seule `pump` en a besoin (2.9).
+- Lot 07 T8 et STAB-07, « flush (compté saccade) » : ici, seulement `stats.flushes` ; le reste revient à
+  l'enregistreur STAB-08.
+- STAB-06 proposait `advance` → `workBudget`, `reset(now)` et `setLimit` : ici, `FSchedule.budget`, un `reset()` sans
+  argument, et pas de limiteur (LOOP-09, déjà dans `src/options.js`).
+- REPRISE : ses noms de tests (`checks/loop.test.mjs`, `checks/schedule.test.mjs`) diffèrent des nôtres
+  (`checks/floop.test.mjs`, `checks/fschedule.test.mjs`).
+
+**Des notes d'étape.**
+- Étape 0 : les 8 rouges de `checks/campaign-world.test.mjs` ne tiennent pas qu'à l'architecture. Le Mac (macOS
+  arm64) et le Spark (Linux arm64) donnent des condensés différents l'un de l'autre, sous la même version de Node
+  (`etat-initial.md`) ; la mission les dit verts sous Linux x64. Des condensés régénérés sur une machine resteraient
+  rouges sur l'autre : à signaler au lot « 01 suite ».
+- Étape 0 : la mission attend `?? .relais/` dans `git status --short`. Il n'y a pas de `.relais/` dans ce clone, et le
+  statut est vide.
+- Étapes 1 à 3 : les tests du relais gardaient les valeurs du §6, mais certaines vérifications étaient plus faibles que
+  sa lettre. T-F22 ne regardait que la dernière image (le même objet `frame` poussé 1 700 fois), T-F18 laissait passer
+  un mutant, S10 ne vérifiait que la clé, S18 que le dernier argument. Ils sont renforcés sans changer aucune valeur
+  attendue (2.7, 2.12).
+- Étape 3 : STAB-07 estimait l'ordonnanceur à « environ 1,5 Ko » ; le code normatif fait 4 221 octets.
+- Étape 5 : la liste `cpu[]` du §7.3 s'appelle `cpuRatios`, la clé `cpu` étant déjà le modèle du processeur, dans
+  l'en-tête de chaque JSON (§7).
+- Étape 6 : la commande Chrome du §7.6 est adaptée au Mac (binaire de Google Chrome, `--no-default-browser-check`,
+  profil temporaire hors dépôt) ; sur le Spark, `google-chrome`.
+
+**De cette étape.**
+- Lot 07 T1 et proposition de STAB-06, « dette résorbée à 10 %/image bornée ±2 ms » : dans le code normatif, 2 ms est
+  la part de la dette prise en compte par image avant le facteur de 10 % (`debtCap`). Le remboursement est donc d'au
+  plus 0,2 ms par image, et c'est la dette elle-même qui est bornée, à un pas (16,667 ms ; 6,26 ms au pire mesuré).
+- Lot 08b T3 (« pas fixe NON imposé (STAB-06 : pas variable borné + accumulateur) »), lot 13 T10 et T11 (pas fixe
+  réservé au banc et au rejeu ; démo affichée au dt de l'image) et la proposition de DEMO-V3 suivent l'ancien
+  arbitrage, en faveur du pas variable. La décision du MASTER-PROMPT §6 le remplace : le pas fixe vaut aussi en jeu, et
+  la démo affichée, jouée par la boucle normale, est fluide grâce à l'interpolation (2.6).
+- Lot 17 T3 suppose un dt variable (« 1 à 3 pas par image ») pour son accumulateur interne à 1/120 s. Avec FLoop,
+  `sim.step` reçoit toujours 1/60 s, donc exactement deux pas de physique par pas.
+- Pas à 120 Hz : le lot 07 (« Décisions à confirmer par David ») le propose « activé » par défaut ; le lot 13 (« Options
+  désactivées par défaut ») et la proposition de STAB-06 le veulent désactivé. La mission recommande désactivé
+  (question 2).
+- Points du §7.7 précisés au plan, sans contredire la mission :
+  - point 3 : une ligne dans `setMode` couvre les quatre cas, et le retour d'onglet passe par la pause ;
+  - point 5 : `resetPeriod()` dans l'écouteur de l'option ne suffit pas (calcul) ;
+  - point 6 : `firePressed` et `fireLeftPressed` sont déjà verrouillés depuis le lot 01 T2 ;
+  - point 8 : `FActors.build` et `FEffects.build` lisent l'état directement ;
+  - point 9 : les particules non plus n'ont pas d'`id` ;
+  - points 10 et 12 : en mode « loading », `frame()` sort avant le dessin ;
+  - point 11 : `saveCheckpoint()` est aussi appelé hors de l'image ;
+  - point 16 : deux tests de `input.test.mjs` échouent tels quels (calcul).
+- Les constats citent les lignes de la 0.8.0. La formule des pas est en `game.js:690` dans STAB-06, en `:802` sur la
+  base ; `stringify` et `setItem` en `game.js:100` dans STAB-07, en `:171` ; le lot de 2 effets en `audio.js:302`, en
+  `:311` ; le report « en l'air » en `game.js:96` dans l'arbitrage, en `:167`.
+- Réserve 3 de STAB-06, « un tir attend jusqu'à 16,7 ms » : le calcul donne jusqu'à 20,8 ms à 144 Hz, et 27,8 ms à
+  72 i/s (limite 4).
+- Invariant 3 du §4.6 (« |dilatation| ≤ un pas + 1 % du temps réel ») : vrai sur les 21 motifs, mais pas garanti par
+  l'algorithme, dont l'hystérésis garde le verrou jusqu'à 2 % (limite 13, question 3).
+- La preuve du lot 07 T8 (plus longue tâche de pré-synthèse sous 32 ms) n'est pas faite ici : le banc audio (étape 8,
+  facultative) n'est pas lancé.
