@@ -1,0 +1,113 @@
+{
+ "schema": "lot02-t3-repos-v1",
+ "node": "v24.18.0",
+ "clock": "performance.now par sim.step et autour de updateDebris(dt)",
+ "identical": true,
+ "rows": [
+  {
+   "spec": "l:0",
+   "walls": 8,
+   "steps": 7080,
+   "identical": true,
+   "snapshotsSame": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "revision": 21,
+   "rubble": 128,
+   "resting": 118,
+   "blocks": 11,
+   "stepsPerBlock": 150,
+   "stepMsMedian": {
+    "a": 0.114,
+    "b": 0.071
+   },
+   "debrisMsMedian": {
+    "a": 0.063,
+    "b": 0.021
+   },
+   "stepMsMin": {
+    "a": 0.107,
+    "b": 0.066
+   },
+   "debrisMsMin": {
+    "a": 0.061,
+    "b": 0.02
+   },
+   "stepRatioMedian": 0.624,
+   "debrisRatioMedian": 0.325
+  },
+  {
+   "spec": "l:2",
+   "walls": 8,
+   "steps": 7080,
+   "identical": true,
+   "snapshotsSame": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "revision": 18,
+   "rubble": 127,
+   "resting": 125,
+   "blocks": 11,
+   "stepsPerBlock": 150,
+   "stepMsMedian": {
+    "a": 0.186,
+    "b": 0.134
+   },
+   "debrisMsMedian": {
+    "a": 0.063,
+    "b": 0.008
+   },
+   "stepMsMin": {
+    "a": 0.179,
+    "b": 0.127
+   },
+   "debrisMsMin": {
+    "a": 0.06,
+    "b": 0.007
+   },
+   "stepRatioMedian": 0.706,
+   "debrisRatioMedian": 0.121
+  },
+  {
+   "spec": "c:9",
+   "walls": 8,
+   "steps": 7080,
+   "identical": true,
+   "snapshotsSame": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "revision": 14,
+   "rubble": 128,
+   "resting": 113,
+   "blocks": 11,
+   "stepsPerBlock": 150,
+   "stepMsMedian": {
+    "a": 0.176,
+    "b": 0.072
+   },
+   "debrisMsMedian": {
+    "a": 0.144,
+    "b": 0.04
+   },
+   "stepMsMin": {
+    "a": 0.164,
+    "b": 0.067
+   },
+   "debrisMsMin": {
+    "a": 0.134,
+    "b": 0.037
+   },
+   "stepRatioMedian": 0.41,
+   "debrisRatioMedian": 0.273
+  }
+ ]
+}

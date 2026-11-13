@@ -1,0 +1,56 @@
+{
+ "schema": "lot02-t2-gain-v1",
+ "checksum": "4dd7094c6038450cb8bd6121db0eb293b1c6a7da592510e7bf7d0ea44f58ecba",
+ "identical": true,
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "release": "27.2.0",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadAverage": [
+   3.28369140625,
+   2.82763671875,
+   2.58154296875
+  ]
+ },
+ "method": {
+  "steps": 1800,
+  "warmups": 1,
+  "reps": 5,
+  "weapon": 2,
+  "seed": 96
+ },
+ "sourceSha256": {
+  "a": "f03e2082be2962a1a44abe8ab6b4729c39f00baa78e794fde6dd4ec976387648",
+  "b": "32709a91920df8ca684163aa849a61194bd52532d722fd28b12b7b93a8b19316"
+ },
+ "medianOfMedianPassRatios": 0.5435,
+ "scenarios": [
+  {
+   "id": "legacy-s2",
+   "identical": true,
+   "chain": [
+    "4cb96028",
+    "4cb96028"
+   ],
+   "passes": 5,
+   "totalUs": [
+    8482301,
+    4604613
+   ],
+   "passRatios": [
+    0.5868,
+    0.5581,
+    0.5435,
+    0.5072,
+    0.4691
+   ],
+   "medianPassRatio": 0.5435,
+   "totalRatio": 0.5428,
+   "medianPairedRatio": 0.5096
+  }
+ ]
+}

@@ -1,0 +1,323 @@
+{
+ "schema": "lot02-t2-ground-equiv2-v1",
+ "roots": {
+  "a": "A",
+  "b": "B"
+ },
+ "nr": 4000000,
+ "scenarios": [
+  {
+   "id": "legacy-s0",
+   "points": 6239381,
+   "mismatches": 0,
+   "trapSamples": 300000,
+   "trapMismatches": 0,
+   "nsUniform": [
+    71,
+    14.8
+   ],
+   "nsTrace": [
+    82.4,
+    20.6
+   ]
+  },
+  {
+   "id": "legacy-s2",
+   "points": 6341761,
+   "mismatches": 0,
+   "trapSamples": 300000,
+   "trapMismatches": 0,
+   "nsUniform": [
+    70,
+    16.2
+   ],
+   "nsTrace": [
+    78,
+    19.8
+   ]
+  },
+  {
+   "id": "campaign-w10",
+   "points": 6206361,
+   "mismatches": 0,
+   "trapSamples": 300000,
+   "trapMismatches": 0,
+   "nsUniform": [
+    69.6,
+    16
+   ],
+   "nsTrace": [
+    78.4,
+    21.8
+   ]
+  },
+  {
+   "id": "campaign-w16",
+   "points": 6235117,
+   "mismatches": 0,
+   "trapSamples": 300000,
+   "trapMismatches": 0,
+   "nsUniform": [
+    66,
+    15.6
+   ],
+   "nsTrace": [
+    78.9,
+    21.3
+   ]
+  }
+ ],
+ "extras": [
+  {
+   "id": "legacy-s0+",
+   "points": 4021,
+   "mismatches": 0,
+   "trapSamples": 0,
+   "trapMismatches": 0
+  },
+  {
+   "id": "legacy-s2+",
+   "points": 4021,
+   "mismatches": 0,
+   "trapSamples": 0,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign-w10+",
+   "points": 4021,
+   "mismatches": 0,
+   "trapSamples": 0,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign-w16+",
+   "points": 4021,
+   "mismatches": 0,
+   "trapSamples": 0,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w1",
+   "points": 994555,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w2",
+   "points": 983045,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w3",
+   "points": 1020233,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w4",
+   "points": 999439,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w5",
+   "points": 989357,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w6",
+   "points": 1028007,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w7",
+   "points": 1005513,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w8",
+   "points": 995717,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w9",
+   "points": 1036811,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w10",
+   "points": 1010025,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w11",
+   "points": 1001945,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w12",
+   "points": 1044399,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w13",
+   "points": 1016395,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w14",
+   "points": 1008265,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w15",
+   "points": 1050175,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w16",
+   "points": 1021495,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w17",
+   "points": 1014617,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "campaign2-w18",
+   "points": 1059551,
+   "mismatches": 0,
+   "trapSamples": 30000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-vide",
+   "points": 474081,
+   "mismatches": 0,
+   "trapSamples": 0,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-plat-seul",
+   "points": 479121,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-champs-absents",
+   "points": 494241,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-egalites",
+   "points": 499222,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-rampes-et-plats",
+   "points": 499281,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-repli-sans-substrat",
+   "points": 489142,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-zeros-signes",
+   "points": 489201,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-nan-et-infinis",
+   "points": 499281,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-enormes",
+   "points": 474022,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-tailles-negatives",
+   "points": 494241,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-hors-bornes",
+   "points": 494241,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-bords-a-1e-7",
+   "points": 504262,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  },
+  {
+   "id": "synthetique-bords-pile",
+   "points": 504262,
+   "mismatches": 0,
+   "trapSamples": 20000,
+   "trapMismatches": 0
+  }
+ ],
+ "totals": {
+  "points": 49712846,
+  "mismatches": 0,
+  "trapSamples": 1980000,
+  "trapMismatches": 0
+ }
+}

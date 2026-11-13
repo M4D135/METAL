@@ -1,0 +1,26 @@
+# Lot 02 / T3 : banc de départ du plan, avant tout code, sur l'état 4e184e9 (simulation.js identique à T2, 4a06bbf) ; METAL_ROOT=$PREV (git archive HEAD src), S = dossier de session, B = docs/chantier-moteur/bancs.
+### env STEPS=1800 REPS=2 node $B/sim/ab2.mjs debris-v2.mjs debrisPatch
+11:07  up 1 day, 20:13, 2 users, load averages: 1.22 2.20 2.80
+legacy-s0     identical=true | total 161 -> 148 ms (-8%) | median step ratio 0.76 | mean 0.090 -> 0.082 | p99 0.59 -> 0.57 | max 8.4 -> 13.4 | steps>4ms 1 -> 1
+legacy-s2     identical=true | total 182 -> 137 ms (-25%) | median step ratio 0.70 | mean 0.101 -> 0.076 | p99 0.96 -> 0.54 | max 7.0 -> 6.6 | steps>4ms 1 -> 1
+campaign-w10  identical=true | total 134 -> 108 ms (-19%) | median step ratio 0.73 | mean 0.074 -> 0.060 | p99 0.67 -> 0.64 | max 4.6 -> 4.9 | steps>4ms 1 -> 1
+campaign-w16  identical=true | total 145 -> 119 ms (-18%) | median step ratio 0.74 | mean 0.080 -> 0.066 | p99 0.69 -> 0.66 | max 5.4 -> 5.1 | steps>4ms 2 -> 2
+(exit 0, 4 s)
+### env WEAPON=2 SCEN=legacy-s2 STEPS=1800 REPS=2 node $B/sim/ab2.mjs debris-v2.mjs debrisPatch
+11:07  up 1 day, 20:13, 2 users, load averages: 1.37 2.21 2.80
+legacy-s2     identical=true | total 416 -> 209 ms (-50%) | median step ratio 0.44 | mean 0.231 -> 0.116 | p99 0.71 -> 0.37 | max 2.6 -> 2.3 | steps>4ms 0 -> 0
+(exit 0, 2 s)
+### node $B/load-verif2/v05.mjs l:0 8
+11:07  up 1 day, 20:13, 2 users, load averages: 1.37 2.21 2.80
+{"spec":"l:0","walls":10,"rubble":128,"awakeAfter10s":9,"stillAwakeAfter70s":8,"debrisMsMin":{"all":0.063,"restingOnly":0.041,"neverRestingOnly":0.022,"empty":0},"stepMsMin":{"all":0.136,"restingOnly":0.106,"empty":0.068},"awakeDetail":[{"shape":"box","speed":0.1,"size":[5.54,0.34,2.77]},{"shape":"cylinder","speed":0.1,"size":[0.1,14.07,0.1]},{"shape":"box","speed":0,"size":[4.47,2.25,0.02]},{"shape":"box","speed":0,"size":[0.55,0.12,2.77]},{"shape":"box","speed":0,"size":[0.66,3.65,2.99]}]}
+(exit 0, 2 s)
+### node $B/load-verif2/v05b.mjs l:0 8
+11:07  up 1 day, 20:13, 2 users, load averages: 1.82 2.29 2.83
+{"spec":"l:0","skippedChecks":581086,"dynChecks":25385,"steps":5880,"rubble":128,"resting":118,"snapshotChecks":23,"mismatch":0,"idleStepMsMin":{"orig":0.111,"proto":0.082},"gain":"26%"}
+(exit 0, 3 s)
+### env SCEN=2,c9 STEPS=600 node $B/sim-verif2/ab.mjs $S/lot02c/variants.mjs debris
+11:07  up 1 day, 20:13, 2 users, load averages: 1.82 2.29 2.83
+2    steps=600 identical=true | CPU 543->282 ms (-48%) cpuMax 12.5->13.8 warm(>=600) 0->0 (NaN%) cpuMedRatio 0.46 cpu>2ms 73->30 | wall total 189->111 ms (-41%) medRatio 0.50 | mean 0.315->0.184 p99 1.17->0.65 max 5.2->6.2 >4ms 2->2 | materialBreak=24 doorOpen=0 waveStart=0 explosion=2 rocket=3 grenade=0 kill=0 trap=2
+c9   steps=600 identical=true | CPU 90->98 ms (9%) cpuMax 6.2->10.1 warm(>=600) 0->0 (NaN%) cpuMedRatio 0.96 cpu>2ms 3->5 | wall total 36->36 ms (-1%) medRatio 0.95 | mean 0.060->0.060 p99 0.50->0.64 max 1.4->1.4 >4ms 0->0 | materialBreak=4 doorOpen=0 waveStart=0 explosion=0 rocket=0 grenade=0 kill=0 trap=2
+(exit 0, 1 s)
+DONE

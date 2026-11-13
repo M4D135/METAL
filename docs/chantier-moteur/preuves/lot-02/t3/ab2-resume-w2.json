@@ -1,0 +1,72 @@
+{
+ "schema": "metal-ab2-v1",
+ "checksum": "4dd7094c6038450cb8bd6121db0eb293b1c6a7da592510e7bf7d0ea44f58ecba",
+ "identical": true,
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "release": "27.2.0",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadAverage": [
+   4.177734375,
+   2.76025390625,
+   2.53515625
+  ]
+ },
+ "method": {
+  "steps": 1800,
+  "reps": 2,
+  "weapon": 2,
+  "seed": 96
+ },
+ "sourceSha256": {
+  "a": {
+   "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+   "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+   "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+   "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+   "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+   "simulation": "f03e2082be2962a1a44abe8ab6b4729c39f00baa78e794fde6dd4ec976387648"
+  },
+  "b": {
+   "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+   "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+   "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+   "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+   "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+   "simulation": "32709a91920df8ca684163aa849a61194bd52532d722fd28b12b7b93a8b19316"
+  }
+ },
+ "scenarios": [
+  {
+   "id": "legacy-s2",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "4cb96028",
+    "4cb96028"
+   ],
+   "medianPairedRatio": 0.4458,
+   "totalRatio": 0.5244,
+   "medianUs": [
+    226,
+    109
+   ],
+   "p99Us": [
+    1317,
+    953
+   ],
+   "maxUs": [
+    15815,
+    11076
+   ],
+   "totalUs": [
+    1058032,
+    554844
+   ]
+  }
+ ]
+}

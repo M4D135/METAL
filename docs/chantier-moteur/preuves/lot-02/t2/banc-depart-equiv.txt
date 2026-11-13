@@ -1,0 +1,10 @@
+# depuis docs/chantier-moteur/bancs/sim, PREV = export de src/ de 51a85e9 (T1), avant tout code de T2
+legacy-s0 GCS 2 points 6239381 mismatches 0  | trap-list samples 300000 mismatches 0
+   ns/call uniform: original 64.2 v2 15.9 speedup x4.03 | trace points: original 75.7 v2 18.7
+legacy-s2 GCS 2 points 6341761 mismatches 0  | trap-list samples 300000 mismatches 0
+   ns/call uniform: original 68.1 v2 20.7 speedup x3.29 | trace points: original 77.2 v2 20.0
+campaign-w10 GCS 2 points 6206361 mismatches 0  | trap-list samples 300000 mismatches 0
+   ns/call uniform: original 69.8 v2 20.6 speedup x3.39 | trace points: original 76.9 v2 23.4
+campaign-w16 GCS 2 points 6235117 mismatches 0  | trap-list samples 300000 mismatches 0
+   ns/call uniform: original 76.0 v2 23.5 speedup x3.23 | trace points: original 89.6 v2 25.3
+METAL_ROOT=$PREV node ground-equiv.mjs 2  15.62s user 0.21s system 119% cpu 13.300 total

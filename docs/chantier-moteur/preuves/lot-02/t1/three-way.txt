@@ -1,0 +1,8 @@
+legacy-s0     300 pas × 8 | identique true | total A 405.2 P 309.4 T 324 ms | ratios totaux P/A 0.764 T/A 0.8 T/P 1.047 | médianes par pas P/A 0.961 T/A 0.954 T/P 0.994 | max A 3.11 P 3.83 T 23.24
+legacy-s2     300 pas × 8 | identique true | total A 619.6 P 433.3 T 495.1 ms | ratios totaux P/A 0.699 T/A 0.799 T/P 1.143 | médianes par pas P/A 0.904 T/A 0.945 T/P 1.17 | max A 5.36 P 4.22 T 5.53
+campaign-w10  300 pas × 8 | identique true | total A 308.6 P 261.9 T 265.6 ms | ratios totaux P/A 0.849 T/A 0.861 T/P 1.014 | médianes par pas P/A 0.998 T/A 1.04 T/P 1.035 | max A 4.04 P 3.15 T 2.52
+campaign-w16  300 pas × 8 | identique true | total A 399.1 P 321.6 T 283.7 ms | ratios totaux P/A 0.806 T/A 0.711 T/P 0.882 | médianes par pas P/A 0.942 T/A 0.849 T/P 0.92 | max A 3.87 P 3.25 T 2.92
+legacy-s0     1800 pas × 3 | identique true | total A 1339 P 1026 T 1021.2 ms | ratios totaux P/A 0.766 T/A 0.763 T/P 0.995 | médianes par pas P/A 0.987 T/A 0.989 T/P 1.002 | max A 32.03 P 31.03 T 21.21
+legacy-s2     1800 pas × 3 | identique true | total A 1911.3 P 1393.9 T 1376 ms | ratios totaux P/A 0.729 T/A 0.72 T/P 0.987 | médianes par pas P/A 0.972 T/A 0.973 T/P 0.999 | max A 15.02 P 15.99 T 13.12
+campaign-w10  1800 pas × 3 | identique true | total A 1668.7 P 1129.9 T 1119.6 ms | ratios totaux P/A 0.677 T/A 0.671 T/P 0.991 | médianes par pas P/A 0.97 T/A 0.965 T/P 0.992 | max A 18.38 P 15.94 T 15.69
+campaign-w16  1800 pas × 3 | identique true | total A 1887.3 P 1303.1 T 1227.8 ms | ratios totaux P/A 0.69 T/A 0.651 T/P 0.942 | médianes par pas P/A 0.976 T/A 0.973 T/P 0.996 | max A 20.55 P 18.01 T 15.85

@@ -1,0 +1,4 @@
+legacy-s0     avant : 69/300 pas (52474 cellules), 305/1800 pas (231650 cellules) | après : 0/300 pas (0 cellules), 1/1800 pas (6 cellules)
+legacy-s2     avant : 134/300 pas (102902 cellules), 690/1800 pas (529870 cellules) | après : 0/300 pas (0 cellules), 2/1800 pas (19 cellules)
+campaign-w10  avant : 49/300 pas (36960 cellules), 541/1800 pas (409440 cellules) | après : 0/300 pas (0 cellules), 2/1800 pas (7 cellules)
+campaign-w16  avant : 49/300 pas (36960 cellules), 570/1800 pas (431040 cellules) | après : 0/300 pas (0 cellules), 2/1800 pas (7 cellules)

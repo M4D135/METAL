@@ -1629,6 +1629,133 @@ test('Fallback outdoor substrate never overrides a higher ramp or terrace', () =
   walkTo(sim, { x: 0, z: -14 }); assert(Math.abs(sim.state.player.y - 3.2) < 1e-8);
 });
 
+// The rule ground() followed before its typed index (SIM-02), restated without any index: the
+// floors of the 8 m bucket holding the point (all floors outside the bucket grid), the highest
+// flat floor first, then the highest ramp, then the substrate, then the floor traps in order.
+function referenceGround(world, x, z, traps = []) {
+  const floors = world.walkable || [];
+  if (!floors.length) return 0;
+  const b = world.bounds, gx = Math.floor(b.minX / 8), gz = Math.floor(b.minZ / 8), gw = Math.floor(b.maxX / 8) - gx + 1, gd = Math.floor(b.maxZ / 8) - gz + 1;
+  const bx = Math.floor(x / 8) - gx, bz = Math.floor(z / 8) - gz, gridded = bx >= 0 && bx < gw && bz >= 0 && bz < gd;
+  let ramp = -Infinity, flat = -Infinity, fallback = -Infinity;
+  for (const f of floors) {
+    if (gridded) {
+      const x0 = Math.max(0, Math.floor((f.x - f.w / 2 - 1e-7) / 8) - gx), x1 = Math.min(gw - 1, Math.floor((f.x + f.w / 2 + 1e-7) / 8) - gx);
+      const z0 = Math.max(0, Math.floor((f.z - f.d / 2 - 1e-7) / 8) - gz), z1 = Math.min(gd - 1, Math.floor((f.z + f.d / 2 + 1e-7) / 8) - gz);
+      if (!(bx >= x0 && bx <= x1 && bz >= z0 && bz <= z1)) continue;
+    }
+    if (Math.abs(x - f.x) <= f.w / 2 + 1e-7 && Math.abs(z - f.z) <= f.d / 2 + 1e-7) {
+      const h = (f.y || 0) + (x - f.x) * (f.slopeX || 0) + (z - f.z) * (f.slopeZ || 0);
+      if (f.substrate || f.fallback) fallback = Math.max(fallback, h);
+      else if (!f.slopeX && !f.slopeZ) flat = Math.max(flat, h);
+      else ramp = Math.max(ramp, h);
+    }
+  }
+  let result = Number.isFinite(flat) ? flat : Number.isFinite(ramp) ? ramp : fallback;
+  for (const t of traps) if (t.kind === 'floor' && Math.abs(x - t.x) < t.w / 2 && Math.abs(z - t.z) < t.d / 2 && Math.abs(result - t.y) < .1) result = t.y - (t.travel || .85) * t.progress;
+  return result;
+}
+
+test('ground() answers exactly like a scan of its 8 m bucket, on floor edges, cell borders and odd values', () => {
+  let seed = 20261113; const rnd = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296;
+  const bits = new Float64Array(1), word = new BigInt64Array(bits.buffer), ulp = v => { bits[0] = Math.abs(v); word[0] += 1n; return bits[0] - Math.abs(v); };
+  const edge = w => w / 2 + 1e-7, tiny = [0, -0, 5e-324, -5e-324, 1e-323, -1e-323, 1.5e-323, -1.5e-323, 1e-310, -1e-310, 2.2250738585072014e-308, -2.2250738585072014e-308, 1e-200, -1e-200];
+  const odd = [NaN, Infinity, -Infinity, 1e300, -1e300, Number.MAX_VALUE, -Number.MAX_VALUE, 3e7, -3e7];
+  const worlds = [
+    ['ties, ramps, substrates, edges on cell borders', fixture({ generation: 5, walkable: [
+      { x: 0, z: 0, w: 60, d: 60, y: -.25, substrate: true, fallback: true }, { x: 0, z: 0, w: 16, d: 16, y: 2 }, { x: 2, z: 2, w: 6, d: 6, y: 2 }, { x: -3, z: 1, w: 4, d: 12, y: 2 },
+      { x: 0, z: 0, w: 8, d: 8, y: 1.99999999 }, { x: 1, z: 1, w: 2, d: 2, y: 3 }, { x: 4, z: 4, w: 4 - 2e-7, d: 4 - 2e-7, y: 3.5 }, { x: 4, z: 4, w: 4 + 4e-6, d: 4 + 4e-6, y: 2.5 },
+      { x: 8 + edge(4), z: -8, w: 4, d: 8, y: 1 }, { x: 16 - edge(6), z: -16 + edge(6), w: 6, d: 6, y: 4 }, { x: -1, z: -9, w: 2 - 1.8e-6, d: 2 + 1.8e-6, y: 1.5 },
+      { x: -12, z: 12, w: 10, d: 6, y: 1, slopeX: .1, slopeZ: .05 }, { x: -12, z: -12, w: 6, d: 10, y: .5, slopeZ: -.3 }, { x: -12, z: -12, w: 2, d: 2, y: 0 },
+      { x: 20, z: -20, w: 8, d: 8, y: -.1, fallback: true }, { x: 20, z: 20, w: 12, d: 12, y: .3, substrate: true, slopeX: .02 }, { x: -20, z: 20, w: 6, d: 6 },
+      { x: -0, z: -0, w: 2, d: 2, y: -0, slopeX: -0, slopeZ: -0 }, { x: 24, z: 4, w: 2.5, d: 2.5, y: 6, slopeX: 0, slopeZ: 0 }, { x: 27, z: 27, w: 8, d: 8, y: 1.25 },
+      // Indexed in the bucket left of x = 0 only, yet reaching x = 0; seems to cover the cell
+      // [20, 22) although x = 20 is just outside it; a flat floor and a ramp beyond the grid.
+      { x: -edge(2), z: 0, w: 2, d: 2, y: 9 }, { x: 22.1600001, z: -25, w: 4.32, d: 6, y: 5 }, { x: 40, z: 0, w: 6, d: 6, y: 1, slopeX: .2 }, { x: 40, z: 0, w: 4, d: 4, y: .5 },
+    ], traps: [
+      { id: 'trap-a', kind: 'floor', x: -2, z: -3, w: 3, d: 3, y: 2, travel: 1.2 }, { id: 'trap-b', kind: 'floor', x: -20, z: 20, w: 2, d: 2, y: 0 },
+      { id: 'trap-c', kind: 'spikes', x: 10, z: 10, w: 1.6, d: 1.6, y: 2, h: 1.1, active: 1.8, warning: 1.2, damage: 18 },
+      { id: 'trap-d', kind: 'floor', x: -2.5, z: -3.5, w: 2, d: 2, y: 2, travel: .5 },
+    ] })],
+    ['missing, infinite, huge, negative and out-of-bounds floors', fixture({ walkable: [
+      { x: NaN, z: 0, w: 10, d: 10 }, { x: 0, z: NaN, w: 10, d: 10, y: 5 }, { x: 0, z: 0, w: NaN, d: 4, y: 3 }, { x: Infinity, z: 0, w: Infinity, d: 10, y: 4 },
+      { x: 0, z: 0, w: Infinity, d: 6, y: -1 }, { x: 2, z: 2, w: 4, d: 4, y: Infinity }, { x: -2, z: -2, w: 4, d: 4, y: -Infinity }, { x: 6, z: 6, w: 4, d: 4, y: NaN },
+      { x: 0, z: -6, w: 4, d: 4, slopeX: NaN, y: 2 }, { x: -6, z: 0, w: 4, d: 4, slopeZ: Infinity, y: 2 }, { x: 1e20, z: 0, w: 2e20, d: 20, y: 1 },
+      { x: -1e9, z: -1e9, w: 2e9 + 3, d: 2e9 + 3, y: .5 }, { x: 0, z: 0, w: 1e300, d: 1e300, y: -3, substrate: true }, { x: 0, z: 12, w: -4, d: 4, y: 5 },
+      { x: 12, z: 0, w: 4, d: -4, y: 6 }, { x: -12, z: 0, w: -0, d: -0, y: 7 }, { x: 80, z: 0, w: 30, d: 30, y: 2 }, { x: -29, z: -29, w: 6, d: 6, y: 1 }, { x: 0, z: 40, w: 60, d: 30, y: .5 },
+      { x: 9, z: 9, w: 1.5, d: 1.5, y: .25 }, { x: 9, z: 9, w: 1.5, d: 1.5, y: 1, slopeX: .1 },
+    ] })],
+    ['no floor at all', fixture({ walkable: [] })],
+    ['seed 96, stage 0', FWorld.create(96, 0)],
+    ['seed 96, stage 2', FWorld.create(96, 2)],
+  ];
+  let samples = 0;
+  for (const [label, world] of worlds) {
+    const sim = FSimulation.create(world), b = world.bounds, floors = world.walkable || [], points = [];
+    sim.state.traps.forEach((t, i) => { t.progress = (i + 1) / 4; });
+    for (let i = 0; i < 4000; i++) points.push([b.minX - 10 + rnd() * (b.maxX - b.minX + 20), b.minZ - 10 + rnd() * (b.maxZ - b.minZ + 20)]);
+    for (const f of floors) {
+      if (![f.x, f.z, f.w, f.d].every(Number.isFinite) || Math.abs(f.x) + Math.abs(f.w) > 1e7 || Math.abs(f.z) + Math.abs(f.d) > 1e7) continue;
+      for (const [ex, ez] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let k = 0; k < 6; k++) {
+        const along = k ? rnd() - .5 : .5, x = f.x + ex * f.w / 2 + (ez ? along * f.w : 0), z = f.z + ez * f.d / 2 + (ex ? along * f.d : 0);
+        for (const d of [0, 1e-7, -1e-7, 1e-7 + ulp(x), 1e-7 - ulp(x), 2e-7, -2e-7, 1e-6, -1e-6, 1.000001e-6, -1.000001e-6, 1e-9, -1e-9, ulp(x), -ulp(x), 3 * ulp(x), -3 * ulp(x)]) points.push([x + ex * d, z + ez * d]);
+      }
+    }
+    for (let k = 0; k < 1200; k++) {
+      const size = [2, 8][k % 2], x = Math.round((b.minX + rnd() * (b.maxX - b.minX)) / size) * size, z = Math.round((b.minZ + rnd() * (b.maxZ - b.minZ)) / size) * size, u = ulp(x), v = ulp(z);
+      for (const [dx, dz] of [[0, 0], [u, 0], [-u, 0], [0, v], [0, -v], [2 * u, -2 * v], [1e-9, -1e-9], [1e-6, 1e-6], [-1e-6, -1e-6]]) points.push([x + dx, z + dz]);
+    }
+    for (let x = Math.floor(b.minX / 2) * 2 - 2; x <= b.maxX + 2; x += 2) for (let z = Math.floor(b.minZ / 2) * 2 - 2; z <= b.maxZ + 2; z += 2) points.push([x, z + 1], [x + 1, z], [x - ulp(x), z - ulp(z)]);
+    for (const x of tiny) { for (const z of tiny) points.push([x, z]); for (let k = 0; k < 8; k++) { const r = b.minX + rnd() * (b.maxX - b.minX); points.push([x, r], [r, x]); } }
+    for (const x of odd) for (const z of [...odd, 0, -0, 5e-324, b.minZ, b.maxZ]) points.push([x, z], [z, x]);
+    points.push([b.minX, b.minZ], [b.maxX, b.maxZ], [b.minX - 1e-9, b.minZ], [b.maxX + 1e-9, b.maxZ], [b.minX - 8, b.minZ - 8], [b.maxX + 8, b.maxZ + 8]);
+    // Explicit lists: none, the state traps in reverse order (overlapping floor traps apply in
+    // order), and floor traps laid on the first floors, one of them of another kind.
+    const lists = [[], sim.state.traps.slice().reverse(), floors.filter(f => Number.isFinite(f.x) && Number.isFinite(f.z) && Math.abs(f.x) < 1e3 && Math.abs(f.z) < 1e3).slice(0, 5).map((f, i) => ({
+      kind: i === 2 ? 'blade' : 'floor', x: f.x, z: f.z, w: Math.min(3, Math.abs(f.w) || 3), d: Math.min(3, Math.abs(f.d) || 3), y: f.y || 0, travel: i % 2 ? undefined : 1.2, progress: (i + 1) / 7,
+    }))];
+    for (const t of [...sim.state.traps, ...lists[2]]) for (let k = 0; k < 300; k++) points.push([t.x + (rnd() - .5) * (t.w + .5), t.z + (rnd() - .5) * (t.d + .5)]);
+    let bad = 0, first = null;
+    const check = (x, z, list) => {
+      const got = list ? sim.ground(x, z, list) : sim.ground(x, z), want = referenceGround(world, x, z, list || sim.state.traps); samples++;
+      if (!Object.is(got, want)) { bad++; first ||= `(${x}, ${z}) with ${list ? 'an explicit' : 'the state'} trap list: ${got} instead of ${want}`; }
+    };
+    points.forEach(([x, z], i) => { check(x, z); if (i % 3 === 0) check(x, z, lists[i / 3 % 3]); });
+    assert.equal(bad, 0, `${label}: ${bad} heights differ, first ${first}`);
+  }
+  assert(samples > 60000, `Only ${samples} points were compared`);
+});
+
+test('ground() follows the floor list and the trap list it reads, including restored traps', () => {
+  const world = fixture({ generation: 5, walkable: [{ x: 0, z: 0, w: 60, d: 60, y: 0 }], traps: [{ id: 'trap-0', kind: 'floor', x: -10, z: -10, w: 4, d: 4, y: 0, travel: 1.2 }] });
+  const sim = FSimulation.create(world);
+  assert.equal(sim.ground(20, 20), 0);
+  world.walkable.push({ x: 20, z: 20, w: 2, d: 2, y: 1.5 });
+  assert.equal(sim.ground(20, 20), 1.5, 'A floor added to the list must be found'); assert.equal(sim.ground(20.9, 19.1), 1.5); assert.equal(sim.ground(23, 20), 0);
+  world.walkable.pop();
+  assert.equal(sim.ground(20, 20), 0, 'A floor removed from the list must be forgotten');
+  const bare = fixture({ walkable: [] }), empty = FSimulation.create(bare);
+  assert.equal(empty.ground(5, 5), 0);
+  bare.walkable.push({ x: 5, z: 5, w: 2, d: 2, y: .75 });
+  assert.equal(empty.ground(5, 5), .75); assert.equal(empty.ground(9, 9), -Infinity); assert.equal(empty.ground(90, 90), -Infinity);
+  bare.walkable.pop(); assert.equal(empty.ground(5, 5), 0);
+
+  const trap = sim.state.traps[0];
+  assert.equal(sim.ground(-10, -10), 0);
+  trap.progress = .5; assert.equal(sim.ground(-10, -10), 0 - 1.2 * .5, 'A trap moved in place must move the floor');
+  assert.equal(sim.ground(-10, -10, []), 0);
+  const other = [{ kind: 'floor', x: -10, z: -10, w: 4, d: 4, y: 0, travel: 2, progress: 1 }];
+  assert.equal(sim.ground(-10, -10, other), -2); assert.equal(sim.ground(10, 10, other), 0);
+  other.push({ kind: 'floor', x: 10, z: 10, w: 4, d: 4, y: 0, progress: 1 });
+  assert.equal(sim.ground(10, 10, other), -.85, 'A trap added to the same list must be seen');
+  assert.equal(sim.ground(-10, -10), 0 - 1.2 * .5);
+  const point = sim.snapshot();
+  trap.progress = .25; assert.equal(sim.ground(-10, -10), 0 - 1.2 * .25);
+  assert.equal(sim.restore(point), true); assert.notEqual(sim.state.traps[0], trap);
+  assert.equal(sim.ground(-10, -10), 0 - 1.2 * .5, 'After a restore, ground() must read the restored traps');
+  sim.state.traps[0].progress = 0; assert.equal(sim.ground(-10, -10), 0);
+});
+
 function fallFixture(extra = {}) {
   return fixture({ generation: 6, spawn: { x: -.1, y: 3.2, z: 0, yaw: -Math.PI / 2 },
     bounds: { minX: -10, maxX: 10, minZ: -10, maxZ: 10 },
@@ -1859,15 +1986,98 @@ test('Director pressure, difficulty and event timing round-trip exactly and malf
   }
 });
 
-test('A breach changes collision immediately while a large navigation grid is refreshed in bounded batches', () => {
+// Lot 02 T1 (SIM-01, SIM-V1, BOSS-08): the walking map follows changes locally. This test
+// replaces the former 'navPending > 0' requirement on a local breach, which now fits a step.
+test('A breach changes collision immediately; the walking map follows it locally in bounded batches, and a change beyond a quarter of the grid stays amortised', () => {
   const world = demolitionFixture({ bounds: { minX: -100, maxX: 100, minZ: -100, maxZ: 100 }, walkable: [{ x: 0, z: 0, w: 200, d: 200, y: 0 }] });
   const sim = FSimulation.create(world); sim.step(.01, { weapon: 2, fire: true });
-  let pending = false;
-  for (let i = 0; i < 50; i++) { sim.step(.01); assert(sim.state.aiStats.navUpdates <= 768); pending ||= sim.state.aiStats.navPending > 0; }
-  assert(pending, 'Large-grid maintenance must actually be amortised'); assert.equal(sim.blocked(0, -8), false);
+  let pending = 0, updates = 0;
+  for (let i = 0; i < 50; i++) { sim.step(.01); assert(sim.state.aiStats.navUpdates <= 768); updates += sim.state.aiStats.navUpdates; pending = Math.max(pending, sim.state.aiStats.navPending); }
+  assert(sim.state.destructionRevision > 0); assert.equal(sim.blocked(0, -8), false);
+  assert.equal(pending, 0, 'A local breach must not queue the whole large grid again'); assert(updates > 0 && updates < 200, 'Only cells beside the changed boxes are evaluated');
+  assert.equal(sim.nav.cells[sim.nav.idx(0, -8)], 1, 'The walking map must follow the breach without waiting for a queue');
   sim.move(sim.state.player, 0, -10); assert(sim.state.player.z < -9.8, 'Physical passage must not wait for the advisory navigation queue');
-  const point = sim.snapshot(); assert.equal(FSimulation.create(world).restore(point), true);
-  assert.equal(sim.nav.cells[sim.nav.idx(0, -8)], 1, 'A checkpoint must materialise the updated walking map');
+  const restored = FSimulation.create(world); assert.equal(restored.restore(sim.snapshot()), true);
+  assert.deepEqual(restored.nav.cells, sim.nav.cells, 'The local walking map must equal the full rebuild of a restored checkpoint');
+  // A wall across a smaller level: the marked area exceeds a quarter of the grid, which is queued again as a whole.
+  const wide = demolitionFixture({ bounds: { minX: -10, maxX: 10, minZ: -12, maxZ: 12 }, walkable: [{ x: 0, z: 0, w: 20, d: 24, y: 0 }],
+    colliders: [{ minX: -10, maxX: 10, minY: 0, maxY: 4, minZ: -8.09, maxZ: -7.91, mesh: 0 }], meshes: [{ shape: 'box', p: [0, 2, -8], s: [20, 4, .18], r: [0, 0, 0], mat: 3 }] });
+  const amortised = FSimulation.create(wide); assert(amortised.nav.cells.length > 768); amortised.step(.01, { weapon: 2, fire: true });
+  for (let i = 0; i < 50 && !amortised.state.aiStats.navPending; i++) { amortised.step(.01); assert(amortised.state.aiStats.navUpdates <= 768); }
+  assert(amortised.state.aiStats.navPending > 0, 'Large-area maintenance must actually be amortised'); assert.equal(amortised.blocked(0, -8), false);
+  const copy = FSimulation.create(wide); assert.equal(copy.restore(amortised.snapshot()), true);
+  assert.equal(amortised.state.aiStats.navPending, 0, 'A checkpoint must materialise the queued walking map');
+  assert.deepEqual(copy.nav.cells, amortised.nav.cells); assert.equal(amortised.nav.cells[amortised.nav.idx(0, -8)], 1);
+});
+
+// Compares the live walking map and every cached A* edge with a full recomputation from the
+// static map (the walking cells and the cached edges both ignore moving trap poses).
+function navAgainstRebuild(sim) {
+  const { cells, nx, coord, edgeKnown, edgeOpen, canTraverse } = sim.nav;
+  let cellErrors = 0, known = 0, edgeErrors = 0;
+  for (let i = 0; i < cells.length; i++) {
+    const [x, z] = coord(i), free = sim.blocked(x, z, .4, sim.ground(x, z), undefined, undefined, []) ? 0 : 1;
+    if (cells[i] !== free) cellErrors++;
+    const ix = i % nx, neighbors = [ix ? i - 1 : -1, ix < nx - 1 ? i + 1 : -1, i - nx, i + nx];
+    for (let k = 0; k < 4; k++) {
+      const j = neighbors[k], mask = 1 << k;
+      if (j < 0 || j >= cells.length || !(edgeKnown[i] & mask)) continue;
+      known++; if (Boolean(edgeOpen[i] & mask) !== canTraverse(...coord(i), ...coord(j), .4)) edgeErrors++;
+    }
+  }
+  return { cellErrors, known, edgeErrors };
+}
+function gateFixture(extra = {}) {
+  const wall = (minX, maxX) => ({ minX, maxX, minY: 0, maxY: 4, minZ: -6.09, maxZ: -5.91 }), colliders = [{ ...wall(-12, -2), mesh: 0 }, { ...wall(2, 12), mesh: 1 }];
+  return fixture({ generation: 5, bounds: { minX: -12, maxX: 12, minZ: -14, maxZ: 6 }, walkable: [{ x: 0, z: -4, w: 24, d: 20, y: 0 }], lights: [], colliders,
+    meshes: colliders.map(q => ({ shape: 'box', p: [(q.minX + q.maxX) / 2, 2, -6], s: [q.maxX - q.minX, 4, .18], r: [0, 0, 0], mat: 3 })),
+    destructibles: [{ id: 'west', kind: 'wall', strength: 18, meshes: [0], colliders: [0] }, { id: 'east', kind: 'wall', strength: 18, meshes: [1], colliders: [1] }],
+    mechanisms: [{ id: 'power', x: 0, y: 0, z: 1, name: 'Alimentation', kind: 'breaker', required: true }],
+    doors: [{ id: 'gate', x: 0, y: 0, z: -6, w: 4, d: .34, h: 3.1, requires: 'power' }],
+    enemies: [{ x: 0, z: -9.5, type: 0 }], ...extra });
+}
+
+test('After several breaches and a door opening, the walking map and every cached edge at rest equal a full rebuild', () => {
+  const world = gateFixture({ enemies: [{ x: 0, z: -9.5, type: 0 }, { x: -7, z: -11, type: 0 }],
+    traps: [{ id: 'blade', kind: 'blade', x: 7, y: .8, z: -10, w: .3, d: 1.35, h: .3, axis: 'x', travel: 1.65, period: 3, active: 2, warning: 1.2, phase: 0, damage: 18 }] });
+  const sim = FSimulation.create(world); let pending = 0;
+  const calm = () => { for (const e of sim.state.enemies) e.cooldown = 30; pending = Math.max(pending, sim.state.aiStats.navPending || 0); };
+  const run = seconds => { for (let t = 0; t < seconds - 1e-8; t += .025) { calm(); sim.step(.025); } calm(); };
+  sim.fire(); run(1); assert(navAgainstRebuild(sim).known > 0, 'An investigating enemy must have searched routes behind the wall');
+  for (const x of [-7, 7]) { const revision = sim.state.destructionRevision; aimAt(sim, x, 1.5, -6); sim.step(.01, { weapon: 2, fire: true }); run(1.6); assert(sim.state.destructionRevision > revision); assert.equal(sim.blocked(x, -6), false); }
+  assert.equal(sim.interact(), true); run(1.5); assert.equal(sim.state.doors[0].open, true); run(2);
+  assert.equal(pending, 0, 'Small breaches and a door must stay local'); assert.equal(sim.state.aiStats.navPending, 0);
+  const rest = navAgainstRebuild(sim); assert(rest.known > 0);
+  assert.equal(rest.cellErrors, 0, 'Walking cells at rest must equal a full rebuild'); assert.equal(rest.edgeErrors, 0, 'Cached edges at rest must equal a fresh test');
+  const copy = FSimulation.create(world); assert.equal(copy.restore(sim.snapshot()), true); assert.deepEqual(copy.nav.cells, sim.nav.cells);
+});
+
+test('A door opened by progression updates the walking map beside it as soon as it clears a body, matching a full rebuild at every step', () => {
+  const world = gateFixture(), sim = FSimulation.create(world), e = sim.state.enemies[0], { cells, idx } = sim.nav;
+  sim.fire(); for (let i = 0; i < 40; i++) { e.cooldown = 30; sim.step(.025); }
+  assert(navAgainstRebuild(sim).known > 0, 'Edges beside the closed door must be cached before it opens'); assert.equal(cells[idx(0, -6)], 0);
+  assert.equal(sim.interact(), true); let early = false;
+  for (let i = 0; i < 60; i++) {
+    e.cooldown = 30; sim.step(.025); const check = navAgainstRebuild(sim), door = sim.state.doors[0];
+    assert.equal(check.cellErrors, 0, `Walking cells at door progress ${door.progress}`); assert.equal(check.edgeErrors, 0, `Cached edges at door progress ${door.progress}`);
+    early ||= door.progress < 1 && cells[idx(0, -6)] === 1;
+  }
+  assert(early, 'The passage must enter the walking map once the door clears a body, before it is fully open');
+  assert.equal(sim.state.doors[0].open, true); assert.equal(cells[idx(0, -6)], 1);
+  const copy = FSimulation.create(world); assert.equal(copy.restore(sim.snapshot()), true); assert.deepEqual(copy.nav.cells, cells);
+});
+
+test('Route tests and cached edges read the static map only; a moving blade still blocks bodies (SIM-V1)', () => {
+  const world = fixture({ generation: 5, walkable: [{ x: 0, z: 0, w: 60, d: 60, y: 0 }],
+    traps: [{ id: 'blade', kind: 'blade', x: 0, y: .8, z: -4, w: .3, d: 1.35, h: .3, axis: 'x', travel: 1.65, period: 7, active: 2, warning: 1.2, phase: 0, damage: 18 }] });
+  const sim = FSimulation.create(world); let seen = 0;
+  for (let i = 0; i < 280; i++) {
+    sim.step(.025); const q = sim.state.traps[0].box; if (!q) continue;
+    const x = (q.minX + q.maxX) / 2, z = (q.minZ + q.maxZ) / 2; if (!sim.blocked(x, z)) continue; seen++;
+    assert.equal(sim.nav.canTraverse(x, z - 1.2, x, z + 1.2), true, 'A momentary trap pose must not enter a route test or the edge cache');
+    assert.equal(sim.nav.cells[sim.nav.idx(x, z)], 1);
+  }
+  assert(seen > 0, 'The blade must actually block a body during the test');
 });
 
 test('Periodic pipe bursts spare their physical source, but external destruction ends future autonomous bursts', () => {
@@ -1994,4 +2204,64 @@ test('a demolition storm has a finite rubble budget and cannot retire settled wr
   advance(sim, 8); assert(peak <= 192, 'debris grows without a finite memory/physics budget'); assert(protectedIds.every(id => sim.state.debris.some(q => q.id === id)), 'budget pressure popped visible settled rubble under the player');
   assert(sim.state.debris.filter(q => q.structural).length > 80); assert(sim.state.debris.every(q => [q.x, q.y, q.z, ...q.rotation].every(Number.isFinite)));
   const copy = FSimulation.create(sim.state.world); assert(copy.restore(sim.snapshot()), 'a saturated valid rubble state could not be restored');
+});
+
+// SIM-03: resting rubble sleeps while its floor or static support cannot change.
+function rubblePiece(id, x, y, z, size = [.5, .2, .5]) {
+  return { x, y, z, vx: 0, vy: 0, vz: 0, size, age: 0, life: 1e7, mat: 3, seed: id, structural: true, id, sourceId: 'test', shape: 'box', material: 'stone',
+    mass: 2, rotation: [0, 0, 0], angularVelocity: [0, 0, 0], resting: false, impactWait: 0, settleTime: 0 };
+}
+const restingPose = q => [q.resting, q.x, q.y, q.z, ...q.rotation];
+const restsOn = (q, top) => q.resting && q.y - .1 > top && q.y - .1 < top + .004; // half height .1
+
+test('Rubble sleep: a sleeping piece wakes when a revision removes its own support, while other resting pieces keep their exact pose', () => {
+  const crate = x => ({ shape: 'box', p: [x, .7, -4], s: [1.4, 1.4, 1.4], mat: 3 });
+  const world = demolitionFixture({ meshes: [crate(-4), crate(4)], colliders: [{ minX: -4.7, maxX: -3.3, minY: 0, maxY: 1.4, minZ: -4.7, maxZ: -3.3, mesh: 0 }, { minX: 3.3, maxX: 4.7, minY: 0, maxY: 1.4, minZ: -4.7, maxZ: -3.3, mesh: 1 }],
+    destructibles: [{ id: 'left', kind: 'support', strength: 18, meshes: [0], colliders: [0] }, { id: 'right', kind: 'support', strength: 18, meshes: [1], colliders: [1] }] });
+  const sim = FSimulation.create(world), left = rubblePiece(1, -4, 2, -4), right = rubblePiece(2, 4, 2, -4), floor = rubblePiece(3, 0, .6, 3);
+  sim.state.debris.push(left, right, floor); advance(sim, 4);
+  for (const q of [left, right]) assert(restsOn(q, 1.4), 'rubble did not settle on its crate');
+  assert(restsOn(floor, 0));
+  const still = restingPose(right), ground = restingPose(floor), revision = sim.state.destructionRevision;
+  sim.destruction.blast([-4, .7, -4], 2.2, 55); sim.step(.025);
+  assert(sim.state.destructionRevision > revision && !sim.destruction.isAlive('left') && sim.destruction.isAlive('right'));
+  assert(!left.resting, 'a sleeping piece floated after its support vanished');
+  assert.deepEqual(restingPose(right), still); assert.deepEqual(restingPose(floor), ground);
+  advance(sim, 4); assert(restsOn(left, 0), 'the woken piece did not land on the floor');
+  assert.deepEqual(restingPose(right), still, 'a revision elsewhere moved a piece on an intact support'); assert.deepEqual(restingPose(floor), ground);
+  sim.destruction.blast([4, .7, -4], 2.2, 55); sim.step(.025); assert(!right.resting, 'a piece put back to sleep under the new revision floated at the next one');
+  advance(sim, 4); assert(restsOn(right, 0)); assert.deepEqual(restingPose(floor), ground);
+});
+
+test('Rubble sleep: a piece resting on a lift deck is re-checked every step and follows the deck down', () => {
+  const world = fixture({ generation: 5, walkable: [{ x: 0, y: 0, z: 0, w: 60, d: 60 }], lifts: [{ id: 'deck', x: 0, z: -6, w: 3, d: 3, minY: 0, maxY: 3, speed: 1.6 }] });
+  const sim = FSimulation.create(world), deck = sim.state.lifts[0];
+  deck.target = 3; deck.moving = true; advance(sim, 2.2); assert.equal(deck.y, 3);
+  const q = rubblePiece(1, .4, 3.6, -6); sim.state.debris.push(q); advance(sim, 3);
+  assert(restsOn(q, 3), 'rubble did not settle on the raised deck');
+  deck.target = 0; deck.moving = true; let highest = 0;
+  for (let i = 0; i < 100; i++) { sim.step(.025); highest = Math.max(highest, q.y - deck.y); }
+  assert.equal(deck.y, 0); assert(highest < .5, 'rubble hovered above a descending deck');
+  advance(sim, 1); assert(sim.state.debris.includes(q) && restsOn(q, 0));
+});
+
+test('Rubble sleep: a sinking floor trap drops the rubble resting on it, as nothing sleeps while a floor trap exists', () => {
+  const world = fixture({ generation: 5, walkable: [{ x: 0, y: 0, z: 0, w: 60, d: 60 }], traps: [{ id: 'pit', kind: 'floor', x: 0, y: 0, z: -6, w: 3, d: 3, travel: .85, warning: .8, active: 2.4 }] });
+  const sim = FSimulation.create(world), p = sim.state.player, q = rubblePiece(1, .6, .5, -6);
+  sim.state.debris.push(q); advance(sim, 3); assert(restsOn(q, 0));
+  Object.assign(p, { x: -.8, z: -6 }); let lowest = q.y;
+  for (let i = 0; i < 120; i++) { sim.step(.025); lowest = Math.min(lowest, q.y); }
+  assert(sim.state.traps[0].triggered, 'the player never triggered the floor trap'); assert(lowest < -.6, 'rubble hovered over a sunken floor trap');
+});
+
+test('Rubble sleep: restored resting rubble is revalidated at its first step, as sleep is never saved', () => {
+  const world = fenceDemolitionFixture(), sim = FSimulation.create(world); assert(sim.fire()); advance(sim, 10);
+  const rail = sim.state.debris.find(q => q.structural); assert(rail?.resting);
+  const lifted = JSON.parse(JSON.stringify(sim.snapshot())), saved = lifted.state.rubble.find(q => q.id === rail.id);
+  saved.y += .02; // within the .03 tolerance of restore, beyond the .018 of a resting contact
+  for (const target of [FSimulation.create(world), sim]) {
+    assert(target.restore(lifted)); const copy = target.state.debris.find(q => q.id === rail.id);
+    assert(copy.resting && copy !== rail); target.step(.025); assert(!copy.resting, 'a restored piece was trusted asleep');
+    advance(target, 3); assert(copy.resting && copy.y < saved.y - .015 && Math.abs(copy.y - rail.y) < .005, 'the revalidated piece did not settle back');
+  }
 });

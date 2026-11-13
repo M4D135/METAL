@@ -1,0 +1,130 @@
+{
+ "schema": "metal-lot02-t1-three-way-v1",
+ "clock": "performance.now par sim.step",
+ "rows": [
+  {
+   "scenario": "legacy-s0",
+   "steps": 1800,
+   "measuredReps": 3,
+   "load": [
+    "A",
+    "P",
+    "T"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 1339,
+    "P": 1026,
+    "T": 1021.2
+   },
+   "totalRatio": {
+    "P/A": 0.766,
+    "T/A": 0.763,
+    "T/P": 0.995
+   },
+   "medianStepRatio": {
+    "P/A": 0.987,
+    "T/A": 0.989,
+    "T/P": 1.002
+   },
+   "maxMs": {
+    "A": 32.03,
+    "P": 31.03,
+    "T": 21.21
+   }
+  },
+  {
+   "scenario": "legacy-s2",
+   "steps": 1800,
+   "measuredReps": 3,
+   "load": [
+    "A",
+    "P",
+    "T"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 1911.3,
+    "P": 1393.9,
+    "T": 1376
+   },
+   "totalRatio": {
+    "P/A": 0.729,
+    "T/A": 0.72,
+    "T/P": 0.987
+   },
+   "medianStepRatio": {
+    "P/A": 0.972,
+    "T/A": 0.973,
+    "T/P": 0.999
+   },
+   "maxMs": {
+    "A": 15.02,
+    "P": 15.99,
+    "T": 13.12
+   }
+  },
+  {
+   "scenario": "campaign-w10",
+   "steps": 1800,
+   "measuredReps": 3,
+   "load": [
+    "A",
+    "P",
+    "T"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 1668.7,
+    "P": 1129.9,
+    "T": 1119.6
+   },
+   "totalRatio": {
+    "P/A": 0.677,
+    "T/A": 0.671,
+    "T/P": 0.991
+   },
+   "medianStepRatio": {
+    "P/A": 0.97,
+    "T/A": 0.965,
+    "T/P": 0.992
+   },
+   "maxMs": {
+    "A": 18.38,
+    "P": 15.94,
+    "T": 15.69
+   }
+  },
+  {
+   "scenario": "campaign-w16",
+   "steps": 1800,
+   "measuredReps": 3,
+   "load": [
+    "A",
+    "P",
+    "T"
+   ],
+   "identical": true,
+   "totalMs": {
+    "A": 1887.3,
+    "P": 1303.1,
+    "T": 1227.8
+   },
+   "totalRatio": {
+    "P/A": 0.69,
+    "T/A": 0.651,
+    "T/P": 0.942
+   },
+   "medianStepRatio": {
+    "P/A": 0.976,
+    "T/A": 0.973,
+    "T/P": 0.996
+   },
+   "maxMs": {
+    "A": 20.55,
+    "P": 18.01,
+    "T": 15.85
+   }
+  }
+ ]
+}

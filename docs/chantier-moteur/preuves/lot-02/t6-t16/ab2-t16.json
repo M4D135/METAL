@@ -1,0 +1,267 @@
+{
+ "schema": "lot02-t6-t16-resume-v1",
+ "checksum": "69d5849e69db9c1807ad3ab6383bd2bc8783a2419416e68c99b548aaf2f05166",
+ "identical": true,
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "release": "27.2.0",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadAverage": [
+   2.1396484375,
+   2.22802734375,
+   2.06591796875
+  ]
+ },
+ "method": {
+  "steps": 1800,
+  "warmups": 1,
+  "reps": 2,
+  "weapon": null,
+  "seed": 96
+ },
+ "sourceSha256": {
+  "a": "32709a91920df8ca684163aa849a61194bd52532d722fd28b12b7b93a8b19316",
+  "b": "3c2d772304717f8524545bbf9b517aea7f39e6e9ccad5b0ccc0c6895d54b6a3e"
+ },
+ "medianOfMedianPassRatios": 1.009,
+ "scenarios": [
+  {
+   "id": "legacy-s0",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "576ce3b4",
+    "576ce3b4"
+   ],
+   "snapshot": [
+    "a22ac96592c9466c2f9822bd0296bb4c6acbc6bdebf30d80e3819b8b895db19d",
+    "a22ac96592c9466c2f9822bd0296bb4c6acbc6bdebf30d80e3819b8b895db19d"
+   ],
+   "passes": 2,
+   "totalUs": [
+    336480,
+    302282
+   ],
+   "passRatios": [
+    0.8954,
+    0.9032
+   ],
+   "medianPassRatio": 0.8993,
+   "totalRatio": 0.8984,
+   "medianPairedRatio": 0.9697
+  },
+  {
+   "id": "legacy-s2",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "afedbbcd",
+    "afedbbcd"
+   ],
+   "snapshot": [
+    "a87c4d3029ca371bade5a227fb67c55696b7883d5bbc6d6a1187c4d2df474152",
+    "a87c4d3029ca371bade5a227fb67c55696b7883d5bbc6d6a1187c4d2df474152"
+   ],
+   "passes": 2,
+   "totalUs": [
+    307237,
+    311103
+   ],
+   "passRatios": [
+    1.0781,
+    0.9399
+   ],
+   "medianPassRatio": 1.009,
+   "totalRatio": 1.0126,
+   "medianPairedRatio": 0.9576
+  },
+  {
+   "id": "campaign-w10",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "6cd12673",
+    "6cd12673"
+   ],
+   "snapshot": [
+    "657ca0c67c5f9d1118e80df4f9dce2db849de826dca2fa6b8527281c0343ae87",
+    "657ca0c67c5f9d1118e80df4f9dce2db849de826dca2fa6b8527281c0343ae87"
+   ],
+   "passes": 2,
+   "totalUs": [
+    293790,
+    329899
+   ],
+   "passRatios": [
+    0.967,
+    1.2655
+   ],
+   "medianPassRatio": 1.1163,
+   "totalRatio": 1.1229,
+   "medianPairedRatio": 1.0392
+  },
+  {
+   "id": "campaign-w16",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "6de7419e",
+    "6de7419e"
+   ],
+   "snapshot": [
+    "378bf459f73240e34689da0b9b1211b2293ae8a594ee7ce4c223f98abc4ab304",
+    "378bf459f73240e34689da0b9b1211b2293ae8a594ee7ce4c223f98abc4ab304"
+   ],
+   "passes": 2,
+   "totalUs": [
+    293847,
+    278143
+   ],
+   "passRatios": [
+    1.0408,
+    0.8627
+   ],
+   "medianPassRatio": 0.9517,
+   "totalRatio": 0.9466,
+   "medianPairedRatio": 1.0156
+  },
+  {
+   "id": "campaign2-w1",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "36b0dc6a",
+    "36b0dc6a"
+   ],
+   "snapshot": [
+    "af64921f2dc69e885f7f6d27b0622d297b73c31224715340f602c4771acf36a6",
+    "af64921f2dc69e885f7f6d27b0622d297b73c31224715340f602c4771acf36a6"
+   ],
+   "passes": 2,
+   "totalUs": [
+    296307,
+    289351
+   ],
+   "passRatios": [
+    0.9965,
+    0.9433
+   ],
+   "medianPassRatio": 0.9699,
+   "totalRatio": 0.9765,
+   "medianPairedRatio": 1
+  },
+  {
+   "id": "campaign2-w7",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "357d17e8",
+    "357d17e8"
+   ],
+   "snapshot": [
+    "733e197a01c0fbb966dc2cb7a9a6266952e91626b1751f5ed7787703a436b3a4",
+    "733e197a01c0fbb966dc2cb7a9a6266952e91626b1751f5ed7787703a436b3a4"
+   ],
+   "passes": 2,
+   "totalUs": [
+    232379,
+    243688
+   ],
+   "passRatios": [
+    1.0971,
+    1
+   ],
+   "medianPassRatio": 1.0485,
+   "totalRatio": 1.0487,
+   "medianPairedRatio": 1
+  },
+  {
+   "id": "campaign2-w10",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "8f6aafe7",
+    "8f6aafe7"
+   ],
+   "snapshot": [
+    "682f4e09d2e5ced59ade49aec55c6410f98f7211231ce7331996dec3d2ef9dc3",
+    "682f4e09d2e5ced59ade49aec55c6410f98f7211231ce7331996dec3d2ef9dc3"
+   ],
+   "passes": 2,
+   "totalUs": [
+    225138,
+    223405
+   ],
+   "passRatios": [
+    1.0057,
+    0.9789
+   ],
+   "medianPassRatio": 0.9923,
+   "totalRatio": 0.9923,
+   "medianPairedRatio": 0.9787
+  },
+  {
+   "id": "campaign2-w13",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "7e60456d",
+    "7e60456d"
+   ],
+   "snapshot": [
+    "c7187d1870e66addbea396397ddd18f581bfcbe1ee9e62922c6b16f6fbc47df6",
+    "c7187d1870e66addbea396397ddd18f581bfcbe1ee9e62922c6b16f6fbc47df6"
+   ],
+   "passes": 2,
+   "totalUs": [
+    301775,
+    324908
+   ],
+   "passRatios": [
+    1.1376,
+    1.0089
+   ],
+   "medianPassRatio": 1.0733,
+   "totalRatio": 1.0767,
+   "medianPairedRatio": 1.0656
+  },
+  {
+   "id": "campaign2-w18",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "89ab7825",
+    "89ab7825"
+   ],
+   "snapshot": [
+    "0247891a7f0c9ebfb04759ab967183a1d95dff98d3e26ecf0697bb4d8288acec",
+    "0247891a7f0c9ebfb04759ab967183a1d95dff98d3e26ecf0697bb4d8288acec"
+   ],
+   "passes": 2,
+   "totalUs": [
+    317674,
+    380044
+   ],
+   "passRatios": [
+    1.3205,
+    1.0701
+   ],
+   "medianPassRatio": 1.1953,
+   "totalRatio": 1.1963,
+   "medianPairedRatio": 1.069
+  }
+ ]
+}

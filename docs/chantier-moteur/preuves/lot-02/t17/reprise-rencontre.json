@@ -1,0 +1,29 @@
+[
+ {
+  "run": {"root":"arbre 2b89360 (chantier/lot-02-simulation)","world":"campaign2-w1","encounter":"encounter-1","members":3,"deployedAtCreate":3,"trigger":{"distanceFromSpawnM":41.7},"playerMovedM":0,"everInsideTriggerPlus8m":false,"shots":27,"hits":10,"kills":3,"firstKill":220,"clearedAt":520,"dead":false,"tracePatchNeutral":true},
+  "checks": [
+   {"label":"création","step":0,"encounter":{"status":"dormant","wave":-1,"pendingWave":-1},"released":0,"restore":true},
+   {"label":"après le premier mort","step":220,"encounter":{"status":"warning","wave":-1,"pendingWave":0},"released":1,"restore":true},
+   {"label":"encounterClear (point de reprise du jeu)","step":520,"encounter":{"status":"cleared","wave":-1,"pendingWave":-1},"released":3,"restore":false,"failingCheck":"src/simulation.js:2258:421"},
+   {"label":"1 800 pas plus tard","step":2320,"encounter":{"status":"cleared","wave":-1,"pendingWave":-1},"released":3,"restore":false,"failingCheck":"src/simulation.js:2258:421"}
+  ]
+ },
+ {
+  "run": {"root":"main 363473a (0.8.1)","world":"campaign2-w1","encounter":"encounter-1","members":3,"deployedAtCreate":3,"trigger":{"distanceFromSpawnM":41.7},"playerMovedM":0,"everInsideTriggerPlus8m":false,"shots":27,"hits":10,"kills":3,"firstKill":220,"clearedAt":520,"dead":false,"tracePatchNeutral":true},
+  "checks": [
+   {"label":"création","step":0,"encounter":{"status":"dormant","wave":-1,"pendingWave":-1},"released":0,"restore":true},
+   {"label":"après le premier mort","step":220,"encounter":{"status":"warning","wave":-1,"pendingWave":0},"released":1,"restore":true},
+   {"label":"encounterClear (point de reprise du jeu)","step":520,"encounter":{"status":"cleared","wave":-1,"pendingWave":-1},"released":3,"restore":false,"failingCheck":"src/simulation.js:2158:421"},
+   {"label":"1 800 pas plus tard","step":2320,"encounter":{"status":"cleared","wave":-1,"pendingWave":-1},"released":3,"restore":false,"failingCheck":"src/simulation.js:2158:421"}
+  ]
+ },
+ {
+  "run": {"root":"0.8.0 673d6b2","world":"campaign2-w1","encounter":"encounter-1","members":3,"deployedAtCreate":3,"trigger":{"distanceFromSpawnM":41.7},"playerMovedM":0,"everInsideTriggerPlus8m":false,"shots":27,"hits":10,"kills":3,"firstKill":220,"clearedAt":520,"dead":false,"tracePatchNeutral":true},
+  "checks": [
+   {"label":"création","step":0,"encounter":{"status":"dormant","wave":-1,"pendingWave":-1},"released":0,"restore":true},
+   {"label":"après le premier mort","step":220,"encounter":{"status":"warning","wave":-1,"pendingWave":0},"released":1,"restore":true},
+   {"label":"encounterClear (point de reprise du jeu)","step":520,"encounter":{"status":"cleared","wave":-1,"pendingWave":-1},"released":3,"restore":false,"failingCheck":"src/simulation.js:2158:421"},
+   {"label":"1 800 pas plus tard","step":2320,"encounter":{"status":"cleared","wave":-1,"pendingWave":-1},"released":3,"restore":false,"failingCheck":"src/simulation.js:2158:421"}
+  ]
+ }
+]

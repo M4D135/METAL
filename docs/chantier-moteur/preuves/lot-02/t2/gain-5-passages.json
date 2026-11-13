@@ -1,0 +1,286 @@
+{
+ "schema": "lot02-t2-gain-v1",
+ "checksum": "c99c9f5fab27d2ab6da432496d7f03b0174ed8f01f2cac1c61ce2e54e4e6a23d",
+ "identical": true,
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "release": "27.2.0",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadAverage": [
+   2.09765625,
+   1.8505859375,
+   1.87353515625
+  ]
+ },
+ "method": {
+  "steps": 1800,
+  "warmups": 1,
+  "reps": 5,
+  "weapon": null,
+  "seed": 96
+ },
+ "sourceSha256": {
+  "a": "985aa31c8d8109461d553955347da0ddf88649ff3d962ce7662fd10905b25cd8",
+  "b": "f03e2082be2962a1a44abe8ab6b4729c39f00baa78e794fde6dd4ec976387648"
+ },
+ "medianOfMedianPassRatios": 0.7378,
+ "scenarios": [
+  {
+   "id": "legacy-s0",
+   "identical": true,
+   "chain": [
+    "576ce3b4",
+    "576ce3b4"
+   ],
+   "passes": 5,
+   "totalUs": [
+    1299375,
+    1068508
+   ],
+   "passRatios": [
+    0.8001,
+    0.8824,
+    0.8968,
+    0.782,
+    0.7564
+   ],
+   "medianPassRatio": 0.8001,
+   "totalRatio": 0.8223,
+   "medianPairedRatio": 0.8144
+  },
+  {
+   "id": "legacy-s2",
+   "identical": true,
+   "chain": [
+    "54574123",
+    "54574123"
+   ],
+   "passes": 5,
+   "totalUs": [
+    1873923,
+    1238519
+   ],
+   "passRatios": [
+    0.6282,
+    0.6728,
+    0.6748,
+    0.6665,
+    0.6675
+   ],
+   "medianPassRatio": 0.6675,
+   "totalRatio": 0.6609,
+   "medianPairedRatio": 0.6729
+  },
+  {
+   "id": "campaign-w10",
+   "identical": true,
+   "chain": [
+    "6cd12673",
+    "6cd12673"
+   ],
+   "passes": 5,
+   "totalUs": [
+    1171436,
+    896286
+   ],
+   "passRatios": [
+    0.8042,
+    0.7263,
+    0.7214,
+    0.7378,
+    0.825
+   ],
+   "medianPassRatio": 0.7378,
+   "totalRatio": 0.7651,
+   "medianPairedRatio": 0.7667
+  },
+  {
+   "id": "campaign-w16",
+   "identical": true,
+   "chain": [
+    "6de7419e",
+    "6de7419e"
+   ],
+   "passes": 5,
+   "totalUs": [
+    1185433,
+    895790
+   ],
+   "passRatios": [
+    0.7839,
+    0.7223,
+    0.7735,
+    0.7379,
+    0.7614
+   ],
+   "medianPassRatio": 0.7614,
+   "totalRatio": 0.7557,
+   "medianPairedRatio": 0.7586
+  },
+  {
+   "id": "campaign2-w1",
+   "identical": true,
+   "chain": [
+    "36b0dc6a",
+    "36b0dc6a"
+   ],
+   "passes": 5,
+   "totalUs": [
+    1070628,
+    811734
+   ],
+   "passRatios": [
+    0.8001,
+    0.8609,
+    0.7146,
+    0.7321,
+    0.6608
+   ],
+   "medianPassRatio": 0.7321,
+   "totalRatio": 0.7582,
+   "medianPairedRatio": 0.7451
+  },
+  {
+   "id": "campaign2-w5",
+   "identical": true,
+   "chain": [
+    "9d97be87",
+    "9d97be87"
+   ],
+   "passes": 5,
+   "totalUs": [
+    1919440,
+    1110921
+   ],
+   "passRatios": [
+    0.5896,
+    0.5667,
+    0.5773,
+    0.5929,
+    0.5667
+   ],
+   "medianPassRatio": 0.5773,
+   "totalRatio": 0.5788,
+   "medianPairedRatio": 0.5714
+  },
+  {
+   "id": "campaign2-w7",
+   "identical": true,
+   "chain": [
+    "357d17e8",
+    "357d17e8"
+   ],
+   "passes": 5,
+   "totalUs": [
+    846893,
+    711172
+   ],
+   "passRatios": [
+    0.8356,
+    0.8113,
+    0.7751,
+    0.7952,
+    0.9505
+   ],
+   "medianPassRatio": 0.8113,
+   "totalRatio": 0.8397,
+   "medianPairedRatio": 0.8163
+  },
+  {
+   "id": "campaign2-w9",
+   "identical": true,
+   "chain": [
+    "8057719c",
+    "8057719c"
+   ],
+   "passes": 5,
+   "totalUs": [
+    1235782,
+    934651
+   ],
+   "passRatios": [
+    0.6957,
+    0.7891,
+    0.8808,
+    0.6918,
+    0.717
+   ],
+   "medianPassRatio": 0.717,
+   "totalRatio": 0.7563,
+   "medianPairedRatio": 0.7368
+  },
+  {
+   "id": "campaign2-w10",
+   "identical": true,
+   "chain": [
+    "8f6aafe7",
+    "8f6aafe7"
+   ],
+   "passes": 5,
+   "totalUs": [
+    805488,
+    638027
+   ],
+   "passRatios": [
+    0.7388,
+    0.8227,
+    0.7877,
+    0.8055,
+    0.8128
+   ],
+   "medianPassRatio": 0.8055,
+   "totalRatio": 0.7921,
+   "medianPairedRatio": 0.8209
+  },
+  {
+   "id": "campaign2-w13",
+   "identical": true,
+   "chain": [
+    "7e60456d",
+    "7e60456d"
+   ],
+   "passes": 5,
+   "totalUs": [
+    983138,
+    812245
+   ],
+   "passRatios": [
+    0.8301,
+    0.8024,
+    0.7864,
+    0.8414,
+    0.8686
+   ],
+   "medianPassRatio": 0.8301,
+   "totalRatio": 0.8262,
+   "medianPairedRatio": 0.8235
+  },
+  {
+   "id": "campaign2-w18",
+   "identical": true,
+   "chain": [
+    "89ab7825",
+    "89ab7825"
+   ],
+   "passes": 5,
+   "totalUs": [
+    1486126,
+    1083693
+   ],
+   "passRatios": [
+    0.7054,
+    0.6464,
+    0.7242,
+    0.7244,
+    0.8598
+   ],
+   "medianPassRatio": 0.7242,
+   "totalRatio": 0.7292,
+   "medianPairedRatio": 0.7273
+  }
+ ]
+}
