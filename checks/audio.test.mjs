@@ -200,6 +200,50 @@ test('effect preparation yields in bounded batches and disposal cancels its pend
   r.audio.dispose();assert.equal(await pending,false);assert.equal(r.timers.size,0);const buffers=r.ctx.buffers.length;r.advanceTimers(2);assert.equal(r.ctx.buffers.length,buffers);assert.equal(r.ctx.closes,1);
 });
 
+test('effect preparation slices on a time budget instead of an effect count and rebuilds the same bank bit for bit (LOAD-13)',async()=>{
+  const key=b=>Buffer.from(b.getChannelData(0).buffer,b.getChannelData(0).byteOffset,b.getChannelData(0).byteLength).toString('base64');
+  const bank=r=>r.ctx.buffers.filter(b=>b.sampleRate===22050).map(key);
+  const plain=rig();await plain.audio.start();plain.scope.FMusic.warmup=async()=>true;
+  const plainPending=plain.audio.prepare(0);plain.advanceTimers(30);
+  assert.equal(await plainPending,true,'the uncut preparation still completes');
+  const synchronous=bank(plain);
+  const r=rig();await r.audio.start();r.scope.FMusic.warmup=async()=>true;
+  // A synthetic clock that ticks .05 ms per reading: the budget check itself
+  // reads it three times per block, so a slice may overshoot by well under a
+  // millisecond. The real 8 ms figure is measured by tools/audio-prep-profile.
+  let fake=0;const clock=()=>(fake+=.05,fake);r.scope.performance={now:clock};
+  const slices=[];
+  const pending=r.audio.prepare(0);
+  for(let guard=0;r.timers.size;guard++){
+    assert(guard<4000,'the time-budgeted preparation terminates');
+    const [id,timer]=[...r.timers][0];r.timers.delete(id);
+    const t0=clock(),before=r.ctx.buffers.length;
+    timer.fn();
+    slices.push({buffers:r.ctx.buffers.length-before,ms:clock()-t0});
+  }
+  assert.equal(await pending,true);
+  assert.deepEqual(bank(r),synchronous,'a sliced bank is the synchronous bank, bit for bit');
+  assert(Math.max(...slices.map(s=>s.ms))<=9,'no slice exceeds the 8 ms budget');
+  assert(slices.length>=20,'the bank is spread over many time slices, not a handful of batches');
+  assert(slices.some(s=>s.buffers>1),'a slice batches several variants, not a fixed effect count');
+  assert(slices.some(s=>s.buffers===0),'a heavy report is cut and resumed on the next slice');
+  plain.audio.dispose();r.audio.dispose();
+});
+
+test('every effect renders the same bytes whatever the build order and the prepared bank is exactly those renders (MIX-09)',async()=>{
+  const r=rig();await r.audio.start();r.scope.FMusic.warmup=async()=>true;
+  const FAudio=r.scope.FAudio,variantsOf=name=>name.indexOf('motor:')===0?1:2;
+  const render=order=>{const seen=[];for(const name of order)for(let v=0;v<variantsOf(name);v++)seen.push({key:name+'#'+v,digest:pcmKey(FAudio.synthesize(name,v,22050))});return seen;};
+  const forward=render(FAudio.effectNames),backward=render([...FAudio.effectNames].reverse());
+  const mirror=new Map(backward.map(entry=>[entry.key,entry.digest]));
+  for(const entry of forward)assert.equal(entry.digest,mirror.get(entry.key),'order never changes one sample of '+entry.key);
+  const pending=r.audio.prepare(0);r.advanceTimers(30);assert.equal(await pending,true);
+  const banked=r.ctx.buffers.filter(b=>b.sampleRate===22050).map(b=>pcmKey(b.getChannelData(0)));
+  assert.equal(banked.length,forward.length,'one buffer per effect variant');
+  assert.deepEqual(banked.slice().sort(),forward.map(entry=>entry.digest).sort(),'the sliced bank is exactly the set of pure renders');
+  r.audio.dispose();
+});
+
 test('pre-start settings reach the tracker and independent buses through one lazily created context',async()=>{
   const r=rig();r.audio.setStage(2);r.audio.setThreat(1);r.audio.setMix({master:.7,music:.3,effects:.4,ambience:.2});r.audio.setMuted(true);r.audio.tick();
   assert.equal(r.contexts.length,0,'menus do not open audio before a user action');

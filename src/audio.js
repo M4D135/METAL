@@ -17,7 +17,11 @@
   // sweeps; every shot contains its crack, body and mechanical action in one
   // voice. Two seeded variants avoid identical automatic-fire transients.
   // The pure renderer is exposed for offline waveform/peak/duration checks.
-  function synthesize(name, variant, sampleRate) {
+  // LOAD-13: the renderer is resumable. step(n) advances n samples and keeps
+  // the filter state, so warmBank can slice a heavy effect across loading
+  // frames without changing one sample; synthesize runs the same renderer to
+  // its end and therefore returns exactly the same Float32Array.
+  function synthJob(name, variant, sampleRate) {
     var exp=Math.exp,sin=Math.sin,abs=Math.abs,max=Math.max,min=Math.min,PI=Math.PI;
     var rate = max(8000,min(48000,Number(sampleRate)||22050)), split=name.split(':'), action=split[0], material=materials[split[1]], motor=action==='motor';
     if (effectNames.indexOf(name)<0) throw new Error('Unknown procedural sound: '+name);
@@ -32,7 +36,12 @@
       var count=action==='break'?7:3;
       for(var b=1;b<count;b++){starts.push(action==='land'?b*.052+rand()*.009:[0,.022,.054,.096,.16,.25,.38][b]+rand()*.012);weights.push((action==='land'?.32:.64)*exp(-b*(action==='land'?.5:.24)));}
     }
-    for(var i=0;i<out.length;i++){
+    var i=0, sealed=false;
+    return {
+      total: out.length,
+      step: function (count) {
+        var end=min(out.length,i+(count>0?count:out.length));
+        for(;i<end;i++){
       var t=i/rate,white=rand()*2-1;low+=alpha*(white-low);soft+=slow*(white-soft);
       var bright=white-low,band=low-soft,x=0,u,j;
       if(material){
@@ -81,11 +90,20 @@
       // natural crest factor. No clipping/normalization runs during combat.
       highpass=.991*(highpass+x-previous);previous=x;
       var fade=min(1,t/(motor?.006:.00045),(duration-t)/.009);out[i]=highpass*max(0,fade);peak=max(peak,abs(out[i]));
-    }
-    var normal=peak>0?.84/peak:0;
-    for(i=0;i<out.length;i++)out[i]*=normal;
-    out[0]=0;out[out.length-1]=0;return out;
+        }
+        return i>=out.length;
+      },
+      // Same normalization as the synchronous path, applied once, after the
+      // last sample: crest factor and both zero ends are unchanged.
+      seal: function () {
+        if(sealed)return out; sealed=true;
+        var normal=peak>0?.84/peak:0;
+        for(var k=0;k<out.length;k++)out[k]*=normal;
+        out[0]=0;out[out.length-1]=0;return out;
+      }
+    };
   }
+  function synthesize(name, variant, sampleRate) { var job=synthJob(name,variant,sampleRate); job.step(0); return job.seal(); }
   // FEEL-06 / MIX-01: parametric layered report for a game's recipe table.
   // Crack [gain, ms], pitched thump {f0,f1,tp,ta,g}, saturated two-pole noise
   // body {cut,tb,g,drive}, mechanism clicks [[s,gain,Hz]], short room {tr,g},
@@ -349,13 +367,16 @@
       function warmBank(yieldWork) {
         if(!ctx||disposed)return Promise.resolve(false);
         if(stats.pcmReady)return Promise.resolve(true);
+        function variantsOf(name){var recipe=recipes[name];return recipe?recipe.variants:name.indexOf('motor:')===0?1:2;}
+        function recipeData(name,variant){var recipe=recipes[name];return recipe&&tablePCM(recipes,name,variant,22050)||synthesize(name,variant,22050);}
+        function bufferFor(name,data){
+          var buffer=ctx.createBuffer(1,data.length,22050);
+          buffer.getChannelData(0).set(data);bank[name].push(buffer);stats.pcmBuffers++;stats.pcmBytes+=data.byteLength;
+        }
         function build(name){
           if(bank[name]||!ctx||disposed)return;
-          var recipe=recipes[name],variants=recipe?recipe.variants:name.indexOf('motor:')===0?1:2;bank[name]=[];
-          for(var v=0;v<variants;v++){
-            var data=recipe&&tablePCM(recipes,name,v,22050)||synthesize(name,v,22050),buffer=ctx.createBuffer(1,data.length,22050);
-            buffer.getChannelData(0).set(data);bank[name].push(buffer);stats.pcmBuffers++;stats.pcmBytes+=data.byteLength;
-          }
+          bank[name]=[];
+          for(var v=0;v<variantsOf(name);v++)bufferFor(name,recipeData(name,v));
         }
         function finish(){
           if(!ctx||disposed)return false;
@@ -366,8 +387,63 @@
         // play without prepare gets the same complete bank before play begins.
         if(!yieldWork||typeof setTimeout!=='function'){effectNames.forEach(build);return Promise.resolve(finish());}
         if(warming)return warming;
-        var index=0;
-        warming=new Promise(function(resolve){warmResolve=resolve;function batch(){warmTimer=null;if(!ctx||disposed){warmResolve=null;resolve(false);return;}for(var i=0;i<2&&index<effectNames.length;i++)build(effectNames[index++]);if(index<effectNames.length)warmTimer=setTimeout(batch,0);else{warmResolve=null;resolve(finish());}}batch();});
+        // LOAD-13: the loading screen yields on a time budget, never on an
+        // effect count. One unit of work is one variant, and the built-in
+        // renderer is resumable, so even the heaviest break stops inside the
+        // budget and resumes on the next slice; an opaque recipe from a game
+        // cannot be cut, so it always opens a fresh slice. Without a clock
+        // (test rigs, cold realms) the same queue advances one variant per
+        // slice, deterministically: no slice count depends on time there.
+        // The bank stays bit for bit the synchronous one.
+        var SLICE_MS=8,BLOCK=256,jobs=[],index=0,cost=Object.create(null),worst=0;
+        for(var ni=0;ni<effectNames.length;ni++){var jobName=effectNames[ni];for(var jobVariant=0;jobVariant<variantsOf(jobName);jobVariant++)jobs.push({name:jobName,variant:jobVariant,opaque:!!recipes[jobName],renderer:null,total:0,opened:false,blockMs:0,ms:0});}
+        var clock=typeof performance==='object'&&performance&&typeof performance.now==='function'?function(){return performance.now();}:null;
+        function open(job){job.opened=true;if(job.opaque)return;job.renderer=synthJob(job.name,job.variant,22050);job.total=job.renderer.total;}
+        function predict(job){var seen=cost[job.name];return seen!==undefined?seen:worst*job.total;}
+        function run(job,deadline){
+          if(bank[job.name]&&bank[job.name].length>job.variant)return true;
+          if(!bank[job.name])bank[job.name]=[];
+          var t0=clock?clock():0;
+          if(job.opaque){
+            bufferFor(job.name,recipeData(job.name,job.variant));
+            if(clock){var ms=clock()-t0;if(job.variant===0&&cost[job.name]===undefined)cost[job.name]=ms;}
+            return true;
+          }
+          for(;;){
+            if(clock&&job.blockMs>0&&clock()+job.blockMs>deadline)return false;
+            var b0=clock?clock():0;
+            var done=job.renderer.step(BLOCK);
+            if(clock)job.blockMs=clock()-b0;
+            if(done)break;
+          }
+          if(clock){
+            job.ms+=clock()-t0;
+            if(job.variant===0&&cost[job.name]===undefined)cost[job.name]=job.ms;
+            var per=job.total>0?job.ms/job.total:0;
+            if(per>worst)worst=per;
+          }
+          bufferFor(job.name,job.renderer.seal());
+          job.renderer=null;
+          return true;
+        }
+        warming=new Promise(function(resolve){warmResolve=resolve;function pump(){
+          warmTimer=null;
+          if(!ctx||disposed){warmResolve=null;resolve(false);return;}
+          var sliceT0=clock?clock():0,work=false;
+          for(;;){
+            if(index>=jobs.length)break;
+            var job=jobs[index];
+            if(!job.opened)open(job);
+            if(clock){
+              var left=SLICE_MS-(clock()-sliceT0);
+              if(left<=.2)break;
+              if(work&&job.opaque&&predict(job)>left)break;
+            }else if(work)break;
+            if(!run(job,sliceT0+SLICE_MS))break;
+            index++;work=true;
+          }
+          if(index<jobs.length)warmTimer=setTimeout(pump,0);else{warmResolve=null;resolve(finish());}
+        }pump();});
         return warming;
       }
       function initialize() {

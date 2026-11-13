@@ -4599,20 +4599,38 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       for(let i=0;i<6;i++)if(!instrumentBank?.[i]){await pause();instrument(i);}
       if(stage==='title')for(let i=0;i<5;i++)if(!titleBank?.[i]){await pause();titleInstrument(i);}
       if(!tensionSample){await pause();tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};}
+      const steps=moduleSteps(stage);
+      if(steps){await pause();steps.kit();await pause();steps.compose();await pause();steps.serialize();await pause();steps.decode();}
       await pause();return info();
     });
     preparing.set(stage,task);preparation=task.catch(()=>{});
     task.then(()=>preparing.delete(stage),()=>preparing.delete(stage));return task;
   }
+  function moduleSteps(stage){
+    // LOAD-13: the four expensive phases of a module — drum kit, compose,
+    // serialize, decode — are separate resumable sub-tasks, so warmup can
+    // yield between them and a loading screen paints inside the budget.
+    // Running them back to back is exactly what moduleFor always did.
+    stage=stageOf(stage);if(modules.has(stage))return null;
+    const title=stage==='title',song=songOf(stage),built={title,samples:Array.from({length:6},(_,i)=>title&&i<3?titleInstrument(i):instrument(i)),score:null,bytes:null};
+    return {
+      kit(){
+        if(!percussionBank){percussionBank={};for(const [i,kind] of ['kick','snare','hat','open','crash','tom','ride'].entries())percussionBank[kind]=drumHit(kind,907+i*113);}
+        for(let i=0;i<8;i++)built.samples.push({name:'MTL KIT '+song.bpm+' '+String.fromCharCode(65+i),volume:60,pcm:title?titleDrumBar(i,percussionBank):drumBar(stage,i,percussionBank)});
+        if(!tensionSample)tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};
+        built.samples.push(tensionSample);
+        if(title)built.samples.push(titleInstrument(3),titleInstrument(4));
+      },
+      compose(){built.score=title?composeTitle(built.samples):compose(stage,built.samples);},
+      serialize(){built.bytes=serialize(built.score);},
+      decode(){if(!modules.has(stage))modules.set(stage,decode(built.bytes));}
+    };
+  }
   function moduleFor(stage){
-    stage=stageOf(stage);if(modules.has(stage))return modules.get(stage);
-    const title=stage==='title',song=songOf(stage),samples=Array.from({length:6},(_,i)=>title&&i<3?titleInstrument(i):instrument(i));
-    if(!percussionBank){percussionBank={};for(const [i,kind] of ['kick','snare','hat','open','crash','tom','ride'].entries())percussionBank[kind]=drumHit(kind,907+i*113);}
-    for(let i=0;i<8;i++)samples.push({name:'MTL KIT '+song.bpm+' '+String.fromCharCode(65+i),volume:60,pcm:title?titleDrumBar(i,percussionBank):drumBar(stage,i,percussionBank)});
-    if(!tensionSample)tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};
-    samples.push(tensionSample);
-    if(title)samples.push(titleInstrument(3),titleInstrument(4));
-    const value=decode(serialize(title?composeTitle(samples):compose(stage,samples)));modules.set(stage,value);return value;
+    stage=stageOf(stage);
+    const steps=moduleSteps(stage);
+    if(steps){steps.kit();steps.compose();steps.serialize();steps.decode();}
+    return modules.get(stage);
   }
   function getModule(stage){return moduleFor(stage).bytes.slice();}
   function getTrack(stage){stage=stageOf(stage);const song=songOf(stage);return {title:song.title,bpm:song.bpm,style:song.style,duration:(stage==='title'?TITLE_ORDERS.length*960:7680)/song.bpm,channels:4};}
@@ -4717,7 +4735,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   // sweeps; every shot contains its crack, body and mechanical action in one
   // voice. Two seeded variants avoid identical automatic-fire transients.
   // The pure renderer is exposed for offline waveform/peak/duration checks.
-  function synthesize(name, variant, sampleRate) {
+  // LOAD-13: the renderer is resumable. step(n) advances n samples and keeps
+  // the filter state, so warmBank can slice a heavy effect across loading
+  // frames without changing one sample; synthesize runs the same renderer to
+  // its end and therefore returns exactly the same Float32Array.
+  function synthJob(name, variant, sampleRate) {
     var exp=Math.exp,sin=Math.sin,abs=Math.abs,max=Math.max,min=Math.min,PI=Math.PI;
     var rate = max(8000,min(48000,Number(sampleRate)||22050)), split=name.split(':'), action=split[0], material=materials[split[1]], motor=action==='motor';
     if (effectNames.indexOf(name)<0) throw new Error('Unknown procedural sound: '+name);
@@ -4732,7 +4754,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       var count=action==='break'?7:3;
       for(var b=1;b<count;b++){starts.push(action==='land'?b*.052+rand()*.009:[0,.022,.054,.096,.16,.25,.38][b]+rand()*.012);weights.push((action==='land'?.32:.64)*exp(-b*(action==='land'?.5:.24)));}
     }
-    for(var i=0;i<out.length;i++){
+    var i=0, sealed=false;
+    return {
+      total: out.length,
+      step: function (count) {
+        var end=min(out.length,i+(count>0?count:out.length));
+        for(;i<end;i++){
       var t=i/rate,white=rand()*2-1;low+=alpha*(white-low);soft+=slow*(white-soft);
       var bright=white-low,band=low-soft,x=0,u,j;
       if(material){
@@ -4781,15 +4808,71 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       // natural crest factor. No clipping/normalization runs during combat.
       highpass=.991*(highpass+x-previous);previous=x;
       var fade=min(1,t/(motor?.006:.00045),(duration-t)/.009);out[i]=highpass*max(0,fade);peak=max(peak,abs(out[i]));
+        }
+        return i>=out.length;
+      },
+      // Same normalization as the synchronous path, applied once, after the
+      // last sample: crest factor and both zero ends are unchanged.
+      seal: function () {
+        if(sealed)return out; sealed=true;
+        var normal=peak>0?.84/peak:0;
+        for(var k=0;k<out.length;k++)out[k]*=normal;
+        out[0]=0;out[out.length-1]=0;return out;
+      }
+    };
+  }
+  function synthesize(name, variant, sampleRate) { var job=synthJob(name,variant,sampleRate); job.step(0); return job.seal(); }
+  // FEEL-06 / MIX-01: parametric layered report for a game's recipe table.
+  // Crack [gain, ms], pitched thump {f0,f1,tp,ta,g}, saturated two-pole noise
+  // body {cut,tb,g,drive}, mechanism clicks [[s,gain,Hz]], short room {tr,g},
+  // then a rate-aware 25 Hz DC blocker and gentle density saturation. Every
+  // number comes from the game; this knows no weapon. Seeded by name+variant.
+  var ROOM_TAPS=[[.011,.34],[.017,.27],[.023,.21],[.031,.15],[.043,.10]];
+  function layered(name,spec,variant,sampleRate){
+    var exp=Math.exp,sin=Math.sin,tanh=Math.tanh,min=Math.min,PI=Math.PI,s=spec||{},key=String(name);
+    var rate=Math.max(8000,min(48000,Number(sampleRate)||22050)),seed=(0x5eed^Math.imul((variant|0)+1,0x9e3779b9))>>>0;
+    for(var h=0;h<key.length;h++)seed=(Math.imul(seed,33)^key.charCodeAt(h))>>>0;
+    function rnd(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296*2-1;}
+    function one(f){return 1-exp(-2*PI*f/rate);}
+    var n=Math.max(0,Math.ceil(Number(s.dur)*rate))||0,out=new Float32Array(n),tune=1+(rnd()*.03);
+    var c=s.crack,th=s.thump,b=s.body,room=s.room,mech=[],taps=[],hist=room?new Float32Array(n):null,i,k,m,u;
+    (s.mech||[]).forEach(function(q){mech.push([q[0],q[1],q[2],one(q[2]*1.4),one(q[2]*.7)]);});
+    if(room)ROOM_TAPS.forEach(function(q){taps.push([Math.round(q[0]*rate),q[1]]);});
+    var crackPole=one(2500),crackTau=c?c[1]/1000:1,bodyPole=b?one(b.cut):0,bodyNorm=b?tanh(b.drive):1,roomPole=one(900),dcR=exp(-2*PI*25/rate),density=tanh(1.25);
+    var hp=0,phase=0,lp1=0,lp2=0,bandA=0,bandB=0,roomLp=0,dcx=0,dcy=0;
+    for(i=0;i<n;i++){
+      var t=i/rate,w=rnd(),x=0,clicks=0;
+      if(c){hp+=crackPole*(w-hp);x=(w-hp)*c[0]*exp(-t/crackTau);}
+      if(th){phase+=2*PI*((th.f1+(th.f0-th.f1)*exp(-t/th.tp))*tune)/rate;x+=sin(phase)*th.g*min(1,t/.0006)*exp(-t/th.ta);}
+      if(b){lp1+=bodyPole*(w-lp1);lp2+=bodyPole*(lp1-lp2);x+=tanh(lp2*3.2*b.g*exp(-t/b.tb)*b.drive)/bodyNorm;}
+      for(k=0;k<mech.length;k++){m=mech[k];u=t-m[0];if(u>=0&&u<.06){bandA+=m[3]*(w-bandA);bandB+=m[4]*(bandA-bandB);clicks+=((bandA-bandB)*2.2*exp(-u/.004)+.35*sin(2*PI*m[2]*u)*exp(-u/.011))*m[1];}}
+      x+=clicks;
+      if(room){hist[i]=x;for(k=0;k<taps.length;k++)if(i>=taps[k][0])x+=hist[i-taps[k][0]]*taps[k][1]*room.g*2.2;roomLp+=roomPole*(w-roomLp);x+=roomLp*room.g*1.6*exp(-t/room.tr)*min(1,t/.012);}
+      dcy=x-dcx+dcR*dcy;dcx=x;out[i]=tanh(dcy*1.25)/density;
     }
-    var normal=peak>0?.84/peak:0;
-    for(i=0;i<out.length;i++)out[i]*=normal;
-    out[0]=0;out[out.length-1]=0;return out;
+    var fade=Math.round((Number.isFinite(s.fade)?s.fade:.012)*rate),peak=0;
+    for(i=0;i<fade&&i<n;i++)out[n-1-i]*=i/fade;
+    for(i=0;i<n;i++)peak=Math.max(peak,Math.abs(out[i]));
+    var gain=peak>0?.84/peak:0;for(i=0;i<n;i++)out[i]*=gain;
+    if(n){out[0]=0;out[n-1]=0;}return out;
+  }
+  // A recipe table only replaces built-in names. Output that throws, is empty
+  // or not finite falls back to the v0.2 recipe: without a table, PCM is v0.2.
+  function tablePCM(recipes,name,variant,sampleRate){
+    var r=recipes&&effectNames.indexOf(name)>=0&&Object.prototype.hasOwnProperty.call(recipes,name)?recipes[name]:null,data=null;
+    if(!r||typeof r.synth!=='function')return null;
+    try{data=r.synth(variant|0,Math.max(8000,Math.min(48000,Number(sampleRate)||22050)));}catch(_){return null;}
+    if(!data||!(data.length>0))return null;
+    for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i]))return null;
+    return data;
   }
   window.FAudio = {
-    synthesize: synthesize,
+    synthesize: function (name, variant, sampleRate, recipes) { return tablePCM(recipes,name,variant,sampleRate)||synthesize(name,variant,sampleRate); },
+    recipe: function (name, spec) { return {variants:spec&&spec.variants===1?1:2,synth:function(variant,rate){return layered(name,spec,variant,rate);}}; },
     effectNames: effectNames.slice(),
-    create: function () {
+    create: function (options) {
+      var recipes = Object.create(null), table = options && options.recipes;
+      if (table) Object.keys(table).forEach(function (name) { var r = table[name]; if (r && typeof r.synth === 'function' && effectNames.indexOf(name) >= 0) recipes[name] = {synth: r.synth, variants: r.variants === 1 ? 1 : 2}; });
       var ctx = null, master, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
       var lastStep = -1, stepSide = 1, lastAlert = -1;
@@ -5002,13 +5085,16 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       function warmBank(yieldWork) {
         if(!ctx||disposed)return Promise.resolve(false);
         if(stats.pcmReady)return Promise.resolve(true);
+        function variantsOf(name){var recipe=recipes[name];return recipe?recipe.variants:name.indexOf('motor:')===0?1:2;}
+        function recipeData(name,variant){var recipe=recipes[name];return recipe&&tablePCM(recipes,name,variant,22050)||synthesize(name,variant,22050);}
+        function bufferFor(name,data){
+          var buffer=ctx.createBuffer(1,data.length,22050);
+          buffer.getChannelData(0).set(data);bank[name].push(buffer);stats.pcmBuffers++;stats.pcmBytes+=data.byteLength;
+        }
         function build(name){
           if(bank[name]||!ctx||disposed)return;
-          var variants=name.indexOf('motor:')===0?1:2;bank[name]=[];
-          for(var v=0;v<variants;v++){
-            var data=synthesize(name,v,22050),buffer=ctx.createBuffer(1,data.length,22050);
-            buffer.getChannelData(0).set(data);bank[name].push(buffer);stats.pcmBuffers++;stats.pcmBytes+=data.byteLength;
-          }
+          bank[name]=[];
+          for(var v=0;v<variantsOf(name);v++)bufferFor(name,recipeData(name,v));
         }
         function finish(){
           if(!ctx||disposed)return false;
@@ -5019,8 +5105,63 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         // play without prepare gets the same complete bank before play begins.
         if(!yieldWork||typeof setTimeout!=='function'){effectNames.forEach(build);return Promise.resolve(finish());}
         if(warming)return warming;
-        var index=0;
-        warming=new Promise(function(resolve){warmResolve=resolve;function batch(){warmTimer=null;if(!ctx||disposed){warmResolve=null;resolve(false);return;}for(var i=0;i<2&&index<effectNames.length;i++)build(effectNames[index++]);if(index<effectNames.length)warmTimer=setTimeout(batch,0);else{warmResolve=null;resolve(finish());}}batch();});
+        // LOAD-13: the loading screen yields on a time budget, never on an
+        // effect count. One unit of work is one variant, and the built-in
+        // renderer is resumable, so even the heaviest break stops inside the
+        // budget and resumes on the next slice; an opaque recipe from a game
+        // cannot be cut, so it always opens a fresh slice. Without a clock
+        // (test rigs, cold realms) the same queue advances one variant per
+        // slice, deterministically: no slice count depends on time there.
+        // The bank stays bit for bit the synchronous one.
+        var SLICE_MS=8,BLOCK=256,jobs=[],index=0,cost=Object.create(null),worst=0;
+        for(var ni=0;ni<effectNames.length;ni++){var jobName=effectNames[ni];for(var jobVariant=0;jobVariant<variantsOf(jobName);jobVariant++)jobs.push({name:jobName,variant:jobVariant,opaque:!!recipes[jobName],renderer:null,total:0,opened:false,blockMs:0,ms:0});}
+        var clock=typeof performance==='object'&&performance&&typeof performance.now==='function'?function(){return performance.now();}:null;
+        function open(job){job.opened=true;if(job.opaque)return;job.renderer=synthJob(job.name,job.variant,22050);job.total=job.renderer.total;}
+        function predict(job){var seen=cost[job.name];return seen!==undefined?seen:worst*job.total;}
+        function run(job,deadline){
+          if(bank[job.name]&&bank[job.name].length>job.variant)return true;
+          if(!bank[job.name])bank[job.name]=[];
+          var t0=clock?clock():0;
+          if(job.opaque){
+            bufferFor(job.name,recipeData(job.name,job.variant));
+            if(clock){var ms=clock()-t0;if(job.variant===0&&cost[job.name]===undefined)cost[job.name]=ms;}
+            return true;
+          }
+          for(;;){
+            if(clock&&job.blockMs>0&&clock()+job.blockMs>deadline)return false;
+            var b0=clock?clock():0;
+            var done=job.renderer.step(BLOCK);
+            if(clock)job.blockMs=clock()-b0;
+            if(done)break;
+          }
+          if(clock){
+            job.ms+=clock()-t0;
+            if(job.variant===0&&cost[job.name]===undefined)cost[job.name]=job.ms;
+            var per=job.total>0?job.ms/job.total:0;
+            if(per>worst)worst=per;
+          }
+          bufferFor(job.name,job.renderer.seal());
+          job.renderer=null;
+          return true;
+        }
+        warming=new Promise(function(resolve){warmResolve=resolve;function pump(){
+          warmTimer=null;
+          if(!ctx||disposed){warmResolve=null;resolve(false);return;}
+          var sliceT0=clock?clock():0,work=false;
+          for(;;){
+            if(index>=jobs.length)break;
+            var job=jobs[index];
+            if(!job.opened)open(job);
+            if(clock){
+              var left=SLICE_MS-(clock()-sliceT0);
+              if(left<=.2)break;
+              if(work&&job.opaque&&predict(job)>left)break;
+            }else if(work)break;
+            if(!run(job,sliceT0+SLICE_MS))break;
+            index++;work=true;
+          }
+          if(index<jobs.length)warmTimer=setTimeout(pump,0);else{warmResolve=null;resolve(finish());}
+        }pump();});
         return warming;
       }
       function initialize() {
@@ -5474,6 +5615,28 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       return api;
     }
   };
+}());
+
+;
+/* METAL: weapon report recipes for FAudio (FEEL-06, MIX-01). Original numbers
+   for a heavy, classic-shooter weight; no samples and no copied code. */
+(function () {
+  'use strict';
+  if (!window.FAudio || typeof FAudio.recipe !== 'function') return;
+  // Crack [gain, decay ms]; thump pitch f0->f1 Hz, pitch/amplitude decays s,
+  // gain; body low-pass Hz, decay s, gain, drive; mechanism [s, gain, Hz];
+  // room tail s and gain; final fade s. Rocket and grenade fade over 40 and
+  // 80 ms so both bank variants end below .04. The grenade launch (also the
+  // enemy grenadier) is the MIX bench hypothesis, 520 ms, to confirm by ear.
+  var weapons = {
+    pistol: {dur:.34, crack:[.55,1.6], thump:{f0:150,f1:55,tp:.020,ta:.060,g:.85}, body:{cut:2000,tb:.038,g:.75,drive:3.0}, mech:[[.055,.22,2600]], room:{tr:.085,g:.20}},
+    smg: {dur:.24, crack:[.60,1.2], thump:{f0:175,f1:62,tp:.016,ta:.040,g:.80}, body:{cut:2300,tb:.026,g:.70,drive:3.4}, mech:[[.030,.16,3000]], room:{tr:.070,g:.18}},
+    shotgun: {dur:.92, crack:[.70,2.2], thump:{f0:120,f1:42,tp:.032,ta:.130,g:1.0}, body:{cut:1500,tb:.085,g:.95,drive:4.0}, mech:[[.47,.30,2200],[.56,.34,1700]], room:{tr:.160,g:.24}},
+    rocket: {dur:.80, fade:.04, crack:[.45,2.5], thump:{f0:95,f1:38,tp:.060,ta:.200,g:.95}, body:{cut:1100,tb:.180,g:.90,drive:2.6}, mech:[[.020,.20,1900]], room:{tr:.220,g:.22}},
+    grenade: {dur:.52, fade:.08, crack:[.45,2.5], thump:{f0:110,f1:45,tp:.060,ta:.200,g:.95}, body:{cut:1100,tb:.120,g:.90,drive:2.6}, mech:[[.020,.20,1900]], room:{tr:.160,g:.22}}
+  }, recipes = {};
+  Object.keys(weapons).forEach(function (name) { recipes[name] = FAudio.recipe(name, weapons[name]); });
+  window.MetalAudio = {recipes: recipes, options: function () { return {recipes: recipes}; }};
 }());
 
 ;
@@ -9009,7 +9172,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   try{prefs=FOptions.normalize(JSON.parse(localStorage.getItem('ferro-settings')||'{}'),touch);}catch{}
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)prefs.softMotion=false;
   let {muted,quality,softMotion}=prefs,bindingAction=null,optionsTab='game';
-  const audio=FAudio.create(),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
+  const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
