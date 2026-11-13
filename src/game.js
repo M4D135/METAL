@@ -162,17 +162,31 @@
   function preserveRefusedSave(){
     if(refusedSave!==null){localStorage.setItem(SAVE_KEY+'-refuse',refusedSave);refusedSave=null;}
   }
+  // LOAD-03: the snapshot stays in the frame that takes it; JSON and storage leave
+  // that frame. One idle write carries the latest point. It is forced as the page
+  // hides or unloads, and before the save slots are read or replaced.
+  let pendingSave=null,saveQueued=false;
+  function writeSave(){
+    if(pendingSave===null)return;const run=pendingSave;pendingSave=null;
+    try{preserveRefusedSave();localStorage.setItem(SAVE_KEY,JSON.stringify(run));saveAvailable=true;}catch{saveAvailable=false;}
+    $('checkpoint-status').textContent='Reprise au dernier point enregistré.'+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
+  }
+  function queueSave(run){
+    pendingSave=run;if(saveQueued)return;saveQueued=true;
+    const later=()=>{saveQueued=false;writeSave();};
+    if(typeof requestIdleCallback==='function')requestIdleCallback(later,{timeout:500});else setTimeout(later,0);
+  }
+  addEventListener('pagehide',writeSave);document.addEventListener('visibilitychange',()=>{if(document.hidden)writeSave();});
   function saveCheckpoint(){
     if(!sim||sim.state.dead||sim.state.won)return;
     if(sim.state.player.airborne){checkpointPending=true;return;}
     checkpointPending=false;
     checkpoint=sim.snapshot();
     savedRun={version:world.campaign?3:2,...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
-    try{preserveRefusedSave();localStorage.setItem(SAVE_KEY,JSON.stringify(savedRun));saveAvailable=true;}catch{saveAvailable=false;}
-    $('checkpoint-status').textContent='Reprise au dernier point enregistré.'+(saveAvailable?' Sauvegarde locale active.':' Reprise disponible pendant cette session.');
+    queueSave(savedRun);
     refreshContinue();
   }
-  function clearSave(){checkpoint=null;savedRun=null;try{preserveRefusedSave();localStorage.removeItem(SAVE_KEY);}catch{}refreshContinue();}
+  function clearSave(){checkpoint=null;savedRun=pendingSave=null;try{preserveRefusedSave();localStorage.removeItem(SAVE_KEY);}catch{}refreshContinue();}
   function acceptRestoredRun(v,point=v.checkpoint){
     sim.setDifficulty?.(prefs.difficulty);
     runStats={...v.runStats};checkpoint=point;savedRun={...v,checkpoint};selectedWeapon=sim.state.weapon;
@@ -186,6 +200,7 @@
     return acceptRestoredRun(v);
   }
   function resumeSaved(v){
+    writeSave();
     if(restoreRun(v)){start('Signal retrouvé. Reprise au dernier point enregistré.');return;}
     if(validSave(v)){
       // Preserve each refused source before any replacement, even when storage fails temporarily.

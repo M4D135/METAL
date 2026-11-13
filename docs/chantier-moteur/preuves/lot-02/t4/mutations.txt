@@ -1,0 +1,80 @@
+sync-write (code d avant): 8 échec(s)
+   - LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+   - LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+   - LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+   - LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+   - LOAD-03: finishing the expedition cancels a pending checkpoint write
+   - LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+   - LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+   - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+clearSave sans annulation: 1 échec(s)
+   - LOAD-03: finishing the expedition cancels a pending checkpoint write
+sans pagehide: 1 échec(s)
+   - LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+sans visibilitychange: 1 échec(s)
+   - LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+resumeSaved sans vidage: 1 échec(s)
+   - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+sans preserveRefusedSave dans l ecriture: 2 échec(s)
+   - LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+   - LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+une ecriture par appel (pas de fusion): 5 échec(s)
+   - LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+   - LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+   - LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+   - LOAD-03: finishing the expedition cancels a pending checkpoint write
+   - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+echec ignore (saveAvailable reste vrai): 1 échec(s)
+   - LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+instantane differe: 9 échec(s)
+   - LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+   - LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+   - LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+   - LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+   - LOAD-03: finishing the expedition cancels a pending checkpoint write
+   - LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+   - LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+   - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+   - LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+setTimeout seul: 39 échec(s)
+   - V2 shell starts pistol and shield, shows physical boss rewards and resumes claimed upgrades exactly once
+   - V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world
+   - The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen
+   - A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode
+   - Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly
+   - Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell
+   - A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial
+   - Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint
+   - Physical armor pickups update the HUD, retain excess and gain capacity only from the equipped shield
+   - The browser shell carries fractional armor through Continue, resume and entry restart without refilling
+   - Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill
+   - Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue a
+   - A real fall below a terrace opens the death screen and Continue restores the safe checkpoint
+   - Continue migrates generation 4 to the same sector without losing prior-sector totals
+   - Continue migrates generation 3 to the same sector without losing prior-sector totals
+   - Continue migrates generation legacy to the same sector without losing prior-sector totals
+   - An invalid snapshot restarts its sector and preserves the first migration backup
+   - LOAD-01: an unrecoverable classic point restarts with its exact entry equipment
+   - LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment
+   - LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment
+   - LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment
+   - LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoi
+   - LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy c
+   - LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+   - F activates a mechanism once through a multi-substep frame and writes its checkpoint
+   - The contextual button operates a real lift, carries the camera, and saves the arrival
+   - audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint
+   - audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources
+   - audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout
+   - audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage
+   - audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule
+   - LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+   - LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+   - LOAD-03: finishing the expedition cancels a pending checkpoint write
+   - LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+   - LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+   - LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+   - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+   - LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+timeout absent: 1 échec(s)
+   - LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write

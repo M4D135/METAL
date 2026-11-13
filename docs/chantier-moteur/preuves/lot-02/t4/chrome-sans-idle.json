@@ -1,0 +1,130 @@
+[
+ {
+  "file": "sans-idle-legacy.json",
+  "product": "Chrome/157.0.8103.39",
+  "gl": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+  "world": {
+   "campaign": false,
+   "index": 2
+  },
+  "reps": 5,
+  "A": {
+   "pages": 5,
+   "prises": 15,
+   "errors": 0,
+   "chars": [
+    209854,
+    210536
+   ],
+   "snapshotAllInFrame": true,
+   "snapshotInFlight": 0,
+   "breaches": 15,
+   "inFrameStringify": 15,
+   "inFrameSetItem": 15,
+   "inFrameStringifySetItemMs": {
+    "median": 0.4,
+    "max": 0.8
+   },
+   "deferredWrites": 0,
+   "deferredStringifySetItemMs": {
+    "median": null,
+    "max": null
+   },
+   "writeDelayMs": {
+    "median": 1.8,
+    "max": 2.7
+   },
+   "snapshotMs": {
+    "median": 1.5,
+    "max": 2.3
+   },
+   "priseFrameMs": {
+    "median": 5.8,
+    "max": 10.4
+   },
+   "priseMinusNeighbourMs": {
+    "median": 4
+   },
+   "ordinaryFrameMs": {
+    "median": 1.5,
+    "p95": 3.7
+   },
+   "longTasksOverPrise": 0,
+   "longTasksPerPage": 2,
+   "longTaskMaxMs": 200,
+   "pageErrors": 0
+  },
+  "B": {
+   "pages": 5,
+   "prises": 15,
+   "errors": 0,
+   "chars": [
+    209846,
+    210536
+   ],
+   "snapshotAllInFrame": true,
+   "snapshotInFlight": 0,
+   "breaches": 15,
+   "inFrameStringify": 0,
+   "inFrameSetItem": 0,
+   "inFrameStringifySetItemMs": {
+    "median": 0,
+    "max": 0
+   },
+   "deferredWrites": 15,
+   "deferredStringifySetItemMs": {
+    "median": 0.6,
+    "max": 1.3
+   },
+   "writeDelayMs": {
+    "median": 5.9,
+    "max": 10.6
+   },
+   "snapshotMs": {
+    "median": 1.7,
+    "max": 2.6
+   },
+   "priseFrameMs": {
+    "median": 5.9,
+    "max": 14.2
+   },
+   "priseMinusNeighbourMs": {
+    "median": 4.4
+   },
+   "ordinaryFrameMs": {
+    "median": 1.7,
+    "p95": 3.6
+   },
+   "longTasksOverPrise": 0,
+   "longTasksPerPage": 2,
+   "longTaskMaxMs": 249,
+   "pageErrors": 0
+  },
+  "pairedPriseFrameMs": {
+   "pairs": [
+    [
+     5.8,
+     8.4
+    ],
+    [
+     8.1,
+     5.9
+    ],
+    [
+     5.7,
+     4.6
+    ],
+    [
+     4.7,
+     5.6
+    ],
+    [
+     7,
+     5.9
+    ]
+   ],
+   "medianDifferenceMs": 1.1,
+   "medianRatio": 0.84
+  }
+ }
+]

@@ -1,0 +1,5 @@
+# Passage 1, sous une charge plus forte (étiquettes de la première version du script : orig = avant T1, local = arbre)
+{"spec":"l:0","orig":{"pending":36346,"breachStep":14,"chars":167158,"coldMin":0.99,"hotMin":9.79,"hotMed":10.66,"againMin":1.01,"strMin":0.39},"local":{"pending":0,"breachStep":14,"chars":167158,"coldMin":0.99,"hotMin":1.09,"hotMed":1.26,"againMin":0.93,"strMin":0.43}}
+# Passages 2 et 3 (7 passages alternés chacun)
+{"spec":"l:0","reps":7,"avantT1":{"pending":36346,"breachStep":14,"chars":167158,"coldMin":0.58,"hotMin":5.17,"hotMed":5.29,"againMin":0.56,"strMin":0.28},"arbre":{"pending":0,"breachStep":14,"chars":167158,"coldMin":0.55,"hotMin":0.58,"hotMed":0.66,"againMin":0.54,"strMin":0.28}}
+{"spec":"l:0","reps":7,"avantT1":{"pending":36346,"breachStep":14,"chars":167158,"coldMin":0.7,"hotMin":6.49,"hotMed":7.39,"againMin":0.72,"strMin":0.32},"arbre":{"pending":0,"breachStep":14,"chars":167158,"coldMin":0.72,"hotMin":0.74,"hotMed":0.82,"againMin":0.71,"strMin":0.37}}
