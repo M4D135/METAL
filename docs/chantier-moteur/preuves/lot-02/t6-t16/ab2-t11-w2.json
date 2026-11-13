@@ -1,0 +1,85 @@
+{
+ "schema": "lot02-t6-t16-resume-v1",
+ "checksum": "0ff661b65edacb9fe9ac9775c6c8d1c89f2cc64b0b608262597c1d73ba61b2df",
+ "identical": true,
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "release": "27.2.0",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadAverage": [
+   2.66845703125,
+   2.42919921875,
+   2.21484375
+  ]
+ },
+ "method": {
+  "steps": 1800,
+  "warmups": 1,
+  "reps": 2,
+  "weapon": 2,
+  "seed": 96
+ },
+ "sourceSha256": {
+  "a": "219c6c94fedfdb5fae60fe50cf92d846c42e936c0ce3f14d40392a9642dd4efc",
+  "b": "91174f7300991105eb5854576e325502838e3d04ac2d190ace287719a284845c"
+ },
+ "medianOfMedianPassRatios": 0.9533,
+ "scenarios": [
+  {
+   "id": "legacy-s2",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "653ff30f",
+    "653ff30f"
+   ],
+   "snapshot": [
+    "3deae118afb2101f5695773dd00ecbb32daabf52bd7c588a23006d6c1190fe63",
+    "3deae118afb2101f5695773dd00ecbb32daabf52bd7c588a23006d6c1190fe63"
+   ],
+   "passes": 2,
+   "totalUs": [
+    476492,
+    422303
+   ],
+   "passRatios": [
+    0.8512,
+    0.9273
+   ],
+   "medianPassRatio": 0.8892,
+   "totalRatio": 0.8863,
+   "medianPairedRatio": 0.9508
+  },
+  {
+   "id": "campaign2-w10",
+   "identical": true,
+   "stableA": true,
+   "stableB": true,
+   "chain": [
+    "8f6aafe7",
+    "8f6aafe7"
+   ],
+   "snapshot": [
+    "682f4e09d2e5ced59ade49aec55c6410f98f7211231ce7331996dec3d2ef9dc3",
+    "682f4e09d2e5ced59ade49aec55c6410f98f7211231ce7331996dec3d2ef9dc3"
+   ],
+   "passes": 2,
+   "totalUs": [
+    278857,
+    284611
+   ],
+   "passRatios": [
+    1.0379,
+    0.9966
+   ],
+   "medianPassRatio": 1.0173,
+   "totalRatio": 1.0206,
+   "medianPairedRatio": 1.0541
+  }
+ ]
+}

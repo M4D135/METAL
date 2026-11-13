@@ -428,6 +428,22 @@ Déploiement sur https://fps.estrasse.fr (VPS amiga) : release
 et après la bascule, trois versions gardées (la plus ancienne, `673d6b2`, est
 retirée). La page servie est identique octet à octet au fichier testé.
 
+### Lot 02, première tranche (13/11/2026, branche seulement)
+
+Sur `chantier/lot-02-simulation`, après reprise de `main` (lot 01 suite), quatre
+groupes de la fiche sont livrés et prouvés : T16 (SIM-10), T6 (SIM-04,
+SIM-09), T7/T10 (SIM-06, RESTE-04) et T11 (RESTE-05). L'état est identique sur
+les neuf scénarios `$SC9` pendant 1 800 pas, pas à pas et au snapshot, et sur
+`legacy-s2` arme 2. Le gain cumulé mesuré est de **−12 %** sur la somme du CPU
+des neuf scénarios (4 598 → 4 042 ms, arme 2, trois passages) et de −14 à −21 %
+sur les pas appariés. **Le but de −40 à −60 % n'est pas atteint** : les tâches
+T5, T8, T9, T12 et T15 ne sont pas commencées.
+
+`npm test` passe **505/505** au Mac et au Spark. Build : **850 859 octets**
+bruts, sha256 `0972ca16a2d8f7eb…`, version toujours 0.9.0. Rien n'est encore
+fusionné dans `main` ni déployé ; la preuve détaillée est dans
+`docs/chantier-moteur/preuves/lot-02/t6-t16/README.md`.
+
 ### Ce qui n'est pas prouvé
 
 - Aucun banc de non-régression apparié contre la page 0.8.1 n'a été exécuté :
