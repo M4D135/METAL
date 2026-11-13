@@ -67,5 +67,81 @@
     if(h!==0||dy!==0){out.yaw=Math.atan2(dx,-dz);out.pitch=Math.atan2(dy,h);}
     return out;
   }
-  G.FDemo={FORMAT:1,MAGIC:'FDM1',rng,hasher,seedFor,smootherstep,wrapAngle,lookAt};
+  // Schéma d'enregistrement : les champs dans l'ordre des octets, entiers en petit-boutiste.
+  const usable=key=>typeof key==='string'&&key!==''&&key!=='__proto__';
+  const quantize=(v,scale,max)=>{
+    if(!Number.isFinite(v))return 0;
+    const q=Math.round(v*scale);
+    return q<-max?-max:q>max?max:q;
+  };
+  function schema(fields){
+    if(!Array.isArray(fields)||!fields.length)fail('FDEMO_ARG','schéma : tableau de champs non vide attendu');
+    const ops=[],copy=[],names=[],seen=new Map();let size=0;
+    const claim=(key,index)=>{
+      if(seen.has(key))fail('FDEMO_ARG','schéma : propriété '+key+' en double',{field:key,index});
+      seen.set(key,index);names.push(key);
+    };
+    for(let i=0;i<fields.length;i++){
+      const f=fields[i];
+      if(!f||typeof f!=='object'||Array.isArray(f))fail('FDEMO_ARG','schéma : champ '+i+' : objet attendu',{index:i});
+      const {name,type,scale,names:list}=f;
+      if(!usable(name))fail('FDEMO_ARG','schéma : champ '+i+' : name attendu, chaîne non vide',{index:i});
+      const bad=why=>fail('FDEMO_ARG','schéma : '+name+' : '+why,{field:name,index:i});
+      const kind=type==='i8'?1:type==='i16'?2:type==='u8'?3:type==='u16'?4:type==='bits'?5:0,max=kind===1?127:kind===2?32767:0;
+      if(!kind)bad('type inconnu');
+      // Une échelle dont max/scale déborde décoderait l'infini : la quantification ne serait plus idempotente.
+      if(max&&!(Number.isFinite(scale)&&scale>0&&Number.isFinite(max/scale)))bad('scale attendu, nombre fini > 0');
+      if(!max&&scale!==undefined)bad('scale interdit pour '+type);
+      if(kind!==5&&list!==undefined)bad('names réservé au type bits');
+      const op={kind,name,at:size,scale:max?scale:0,bias:max+1,names:null,count:0,pages:max?new Array(max+1>>7).fill(null):null};
+      if(kind===5){
+        if(!Array.isArray(list)||list.length<1||list.length>32)bad('names attendu, de 1 à 32 chaînes');
+        op.names=[];
+        for(let k=0;k<list.length;k++){
+          const key=list[k];
+          if(!usable(key))bad('nom de bit '+k+' vide ou invalide');
+          claim(key,i);op.names.push(key);
+        }
+        op.count=list.length;size+=list.length+7>>3;
+        copy.push({name,type,names:op.names.slice()});
+      }else{
+        claim(name,i);size+=kind===2||kind===4?2:1;
+        copy.push(max?{name,type,scale}:{name,type});
+      }
+      ops.push(op);
+    }
+    function encode(input,view,offset){
+      for(let i=0;i<ops.length;i++){
+        const o=ops[i],at=offset+o.at;
+        if(o.kind===1)view.setInt8(at,quantize(input[o.name],o.scale,127));
+        else if(o.kind===2)view.setInt16(at,quantize(input[o.name],o.scale,32767),true);
+        else if(o.kind===3){const v=input[o.name];view.setUint8(at,Number.isInteger(v)&&v>=0&&v<=254?v:255);}
+        else if(o.kind===4){const v=input[o.name];view.setUint16(at,Number.isInteger(v)&&v>=0&&v<=65534?v:65535,true);}
+        else for(let b=0,k=0;k<o.count;b++){
+          let bits=0;
+          for(let j=0;j<8&&k<o.count;j++,k++)if(input[o.names[k]])bits|=1<<j;
+          view.setUint8(at+b,bits);
+        }
+      }
+    }
+    // Sur V8, écrire sous un nom variable un nombre non entier crée une boîte : decode écrit des valeurs déjà
+    // en boîte, gardées par niveau dans des pages de 256 créées au premier usage, et n'alloue plus ensuite.
+    function decode(view,offset,out){
+      for(let i=0;i<ops.length;i++){
+        const o=ops[i],at=offset+o.at;
+        if(o.kind<3){
+          const q=o.kind===1?view.getInt8(at):view.getInt16(at,true),u=q+o.bias;
+          const page=o.pages[u>>8]||(o.pages[u>>8]=new Array(256).fill(null));
+          let v=page[u&255];
+          if(v===null)v=page[u&255]=q/o.scale;
+          out[o.name]=v;
+        }else if(o.kind===3){const v=view.getUint8(at);out[o.name]=v===255?undefined:v;}
+        else if(o.kind===4){const v=view.getUint16(at,true);out[o.name]=v===65535?undefined:v;}
+        else for(let k=0;k<o.count;k++)out[o.names[k]]=(view.getUint8(at+(k>>3))>>(k&7)&1)===1;
+      }
+      return out;
+    }
+    return {fields:copy,size,names,encode,decode};
+  }
+  G.FDemo={FORMAT:1,MAGIC:'FDM1',rng,hasher,seedFor,smootherstep,wrapAngle,lookAt,schema};
 })(typeof window!=='undefined'?window:globalThis);
