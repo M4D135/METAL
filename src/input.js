@@ -1,102 +1,66 @@
 /* FERRO — generic input layer: named actions, keyboard by event.code, standard gamepad, touch widgets, menu focus. */
+/* Rules, units and reasons: docs/chantier-moteur/modules/entrees.md. */
 (function(G){
   'use strict';
   const PAD_BUTTONS=Object.freeze(['A','B','X','Y','LB','RB','LT','RT','Back','Start','L3','R3','Up','Down','Left','Right','Home']);
   // [default, min, max] for numbers, [default] for booleans
   const TUNE={sensitivity:[1,.25,3],invertY:[false],padYaw:[300,60,600],padPitch:[190,40,400],padDead:[.12,0,.4],moveDead:[.15,0,.4],padCurve:[1.7,1,3],padBoost:[.8,0,1.5],padInvertY:[false],padVibration:[1,0,1],swapSticks:[false],touchAccel:[1,0,1],touchPitch:[1,.5,1.5],stickRadius:[56,32,96]};
-  for(const k in TUNE)Object.freeze(TUNE[k]);
-  Object.freeze(TUNE);
+  for(const k in TUNE)Object.freeze(TUNE[k]);Object.freeze(TUNE);
   const K={outer:.97,boostAt:.97,boostAfter:.18,boostRamp:.30,trigOn:.30,trigOff:.18,valueDead:.05,padRun:.92,activeAxis:.3,navAxis:.5,navDelay:.40,navRepeat:.12,touchDead:.12,follow:1.6,runOn:1.25,runOff:1.05,touchRad:.004,v0:400,v1:2200,accel:2.2,slop:4,compatMs:800,rumbleGap:40,dtMax:.25,tdtMin:.008,tdtMax:.05};
   const allowKey=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space|Enter|Backspace|Tab)$/.test(code);
   const NAMES={Space:'Espace',Enter:'Entrée',ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',ShiftLeft:'Maj G',ShiftRight:'Maj D',ControlLeft:'Ctrl G',ControlRight:'Ctrl D',Backspace:'Retour',Tab:'Tab'};
-  const DEVICES=['keyboard','mouse','touch','gamepad'];
-  const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
-  const isObj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
-  const need=(ok,what)=>{if(!ok)throw new Error('FInput : '+what+'.');};
-  const padOk=name=>name!=='Home'&&PAD_BUTTONS.includes(name);
-  const fin=v=>Number.isFinite(v)?v:0,copy=o=>JSON.parse(JSON.stringify(o));
+  const GLYPHS={xbox:{Back:'Vue',Start:'Menu',L3:'LS',R3:'RS',Home:'Xbox'},ps:{A:'✕',B:'○',X:'□',Y:'△',LB:'L1',RB:'R1',LT:'L2',RT:'R2',Back:'Create',Start:'Options',Home:'PS'}};
+  const DEVICES=['keyboard','mouse','touch','gamepad'],own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k),isObj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+  const need=(ok,what)=>{if(!ok)throw new Error('FInput : '+what+'.');},padOk=name=>name!=='Home'&&PAD_BUTTONS.includes(name),letter=c=>typeof c==='string'&&/^Key/.test(c);
+  const fin=v=>Number.isFinite(v)?v:0,copy=o=>JSON.parse(JSON.stringify(o)),clamp=(v,hi)=>Math.min(hi,Math.max(0,v))||0;
   function keyName(code){return own(NAMES,code)?NAMES[code]:String(code).replace(/^(Key|Digit)/,'');}
-  // Checks a game declaration and returns a private copy; the config itself is never modified.
   function compile(config){
     need(isObj(config),'config invalide');
-    const allow=config.allowKey===undefined?allowKey:config.allowKey,list=config.actions;
-    need(typeof allow==='function','allowKey doit être une fonction');
-    need(Array.isArray(list)&&list.length>0,'actions doit être un tableau non vide');
+    const allow=config.allowKey===undefined?allowKey:config.allowKey,list=config.actions,actions=[],index=new Map(),owner=new Map();
+    need(typeof allow==='function','allowKey invalide');need(Array.isArray(list)&&list.length>0,'actions invalides');
     const isKey=c=>typeof c==='string'&&!!allow(c),text=v=>v===undefined||typeof v==='string';
-    const actions=[],index=new Map(),owner=new Map();
-    // keys and pad: list length, accepted codes, no code twice (one owner per code and device)
-    const codes=(id,v,max,ok,dev)=>{
-      const r=v===undefined?[]:v;
-      need(Array.isArray(r)&&r.length<=max&&r.every(ok),(dev==='k'?'touches':'boutons')+' invalides pour '+id);
-      for(const c of r){need(!owner.has(dev+c),c+' déjà affecté à '+owner.get(dev+c));owner.set(dev+c,id);}
-      return r.slice();
-    };
+    const codes=(id,v,max,ok,dev)=>{const r=v===undefined?[]:v;need(Array.isArray(r)&&r.length<=max&&r.every(ok),(dev==='k'?'touches':'boutons')+' invalides pour '+id);for(const c of r){need(!owner.has(dev+c),c+' déjà affecté à '+owner.get(dev+c));owner.set(dev+c,id);}return r.slice();};
     for(const a of list){
       const id=isObj(a)?a.id:undefined;
-      need(typeof id==='string'&&/^[A-Za-z][A-Za-z0-9]*$/.test(id),'identifiant d’action invalide : '+String(id));
-      need(!index.has(id),'identifiant en double : '+id);
-      need(a.type==='hold'||a.type==='press'||a.type==='value','type inconnu pour '+id);
+      need(typeof id==='string'&&/^[A-Za-z][A-Za-z0-9]*$/.test(id),'id invalide : '+String(id));need(!index.has(id),'id en double : '+id);need(a.type==='hold'||a.type==='press'||a.type==='value','type inconnu pour '+id);
       const label=a.label===undefined?id:a.label;
-      need(typeof label==='string'&&text(a.touch)&&text(a.mouse),'libellé invalide pour '+id);
-      need(a.alt===undefined||Array.isArray(a.alt)&&a.alt.every(isKey),'repli invalide pour '+id);
-      actions.push({id,label,type:a.type,keys:codes(id,a.keys,3,isKey,'k'),pad:codes(id,a.pad,2,padOk,'p'),touch:a.touch,mouse:a.mouse,alt:a.alt?a.alt.slice():[]});
-      index.set(id,actions.length-1);
+      need(typeof label==='string'&&text(a.touch)&&text(a.mouse),'libellé invalide pour '+id);need(a.alt===undefined||Array.isArray(a.alt)&&a.alt.every(isKey),'repli invalide pour '+id);
+      actions.push({id,label,type:a.type,keys:codes(id,a.keys,3,isKey,'k'),pad:codes(id,a.pad,2,padOk,'p'),touch:a.touch,mouse:a.mouse,alt:a.alt?a.alt.slice():[]});index.set(id,actions.length-1);
     }
-    const held=id=>index.has(id)&&actions[index.get(id)].type==='hold';
-    const decl=config.sticks===undefined?{}:config.sticks,sticks=[];
+    const held=id=>index.has(id)&&actions[index.get(id)].type==='hold',decl=config.sticks===undefined?{}:config.sticks,sticks=[];
     need(isObj(decl),'sticks invalides');
     for(const name of Object.keys(decl)){
       const s=decl[name],w='stick '+name;
-      need(/^[a-z][A-Za-z0-9]*$/.test(name)&&!index.has(name+'X')&&!index.has(name+'Y'),'nom de stick invalide : '+name);
-      need(isObj(s)&&(s.type==='move'||s.type==='look')&&!sticks.some(t=>t.type===s.type),w+' : type invalide ou en double');
-      // axis: [] or [negative, positive], hold actions only
-      const axis=v=>{const r=v===undefined?[]:v;need(Array.isArray(r)&&(r.length===0||r.length===2)&&r.every(held),w+' : axe invalide');return r.slice();};
-      const x=axis(s.x),y=axis(s.y);
-      need(new Set(x.concat(y)).size===x.length+y.length,w+' : action en double');
-      need(s.pad===undefined||(s.pad==='LS'||s.pad==='RS')&&!sticks.some(t=>t.pad===s.pad),w+' : pad invalide');
-      need(s.run===undefined||s.type==='move'&&held(s.run),w+' : run invalide');
-      need(s.rate===undefined||s.type==='look'&&Number.isFinite(s.rate)&&s.rate>0,w+' : rate invalide');
+      need(/^[a-z][A-Za-z0-9]*$/.test(name)&&!index.has(name+'X')&&!index.has(name+'Y'),'nom de stick invalide : '+name);need(isObj(s)&&(s.type==='move'||s.type==='look')&&!sticks.some(t=>t.type===s.type),w+' : type invalide ou en double');
+      const axis=v=>{const r=v===undefined?[]:v;need(Array.isArray(r)&&(r.length===0||r.length===2)&&r.every(held),w+' : axe invalide');return r.slice();},x=axis(s.x),y=axis(s.y);
+      need(new Set(x.concat(y)).size===x.length+y.length,w+' : action en double');need(s.pad===undefined||(s.pad==='LS'||s.pad==='RS')&&!sticks.some(t=>t.pad===s.pad),w+' : pad invalide');
+      need(s.run===undefined||s.type==='move'&&held(s.run),w+' : run invalide');need(s.rate===undefined||s.type==='look'&&Number.isFinite(s.rate)&&s.rate>0,w+' : rate invalide');
       sticks.push({name,type:s.type,x,y,pad:s.pad||null,run:s.run===undefined?null:s.run,rate:s.rate===undefined?2:s.rate});
     }
     const version=config.version===undefined?1:config.version,device=config.device===undefined?'keyboard':config.device,mouseScale=config.mouseScale===undefined?.0022:config.mouseScale;
-    need(Number.isInteger(version)&&version>=1,'version invalide');
-    need(DEVICES.includes(device),'appareil invalide : '+String(device));
-    need(Number.isFinite(mouseScale),'mouseScale invalide');
-    need(config.getGamepads===undefined||typeof config.getGamepads==='function','getGamepads doit être une fonction');
+    need(Number.isInteger(version)&&version>=1,'version invalide');need(DEVICES.includes(device),'appareil invalide : '+String(device));need(Number.isFinite(mouseScale),'mouseScale invalide');
+    need(config.getGamepads===undefined||typeof config.getGamepads==='function','getGamepads invalide');
     return {actions,index,sticks,version,device,mouseScale,isKey,getGamepads:config.getGamepads||null,migrate:typeof config.migrate==='function'?config.migrate:null,settings:config.settings};
   }
-  // Radial dead zone, rescaled: [x', y', n].
   function radial(x,y,inner,outer){const m=Math.hypot(x,y),n=Math.min(1,(m-inner)/(outer-inner));return m>inner?[x/m*n||0,y/m*n||0,n]:[0,0,0];}
   function padStyle(id){return /054c|playstation|dualshock|dualsense|sony/i.test(id)?'ps':/045e|xbox|xinput/i.test(id)?'xbox':'generic';}
-  // Filled in by the next steps of docs/chantier-moteur/modules/entrees.md (§2, delivery table).
-  function glyph(name,style){/* step 5 */}
-  // Settings (JSON): {v, keys, pad, tune}; tables follow the declaration order.
+  function glyph(name,style){const g=own(GLYPHS,style)?GLYPHS[style]:{},a='Arrow'+name;return own(g,name)?g[name]:own(NAMES,a)?NAMES[a]:name;}
   function initial(C){const s={v:C.version,keys:{},pad:{},tune:{}};for(const a of C.actions){s.keys[a.id]=a.keys.slice();s.pad[a.id]=a.pad.slice();}for(const k in TUNE)s.tune[k]=TUNE[k][0];return s;}
-  // A stored table is kept whole or not at all. A missing action takes its default codes that no entry uses,
-  // else its first free alt code (keys only), else none; each code given out is used for the next actions.
   function table(t,C,f,max,ok){
     if(!isObj(t))return null;
     const used=new Set(),out={},free=c=>!used.has(c);
     for(const a of C.actions)if(own(t,a.id)){const v=t[a.id];if(!Array.isArray(v)||v.length>max||!v.every(c=>ok(c)&&free(c)&&used.add(c)))return null;}
-    for(const a of C.actions){
-      let v=t[a.id];
-      if(!own(t,a.id)){v=a[f].filter(free);if(!v.length&&f==='keys')v=a.alt.filter(free).slice(0,1);for(const c of v)used.add(c);}
-      out[a.id]=v;
-    }
+    for(const a of C.actions){let v=t[a.id];if(!own(t,a.id)){v=a[f].filter(free);if(!v.length&&f==='keys')v=a.alt.filter(free).slice(0,1);for(const c of v)used.add(c);}out[a.id]=v;}
     return out;
   }
-  // Lenient and idempotent. An older format (v below the version, or not an integer) goes through the game's
-  // migrate, called on its own copy: a migrate that throws or returns no object changes nothing.
   function settle(raw,C){
     let r={};if(isObj(raw))try{r=copy(raw);}catch(e){}if(!isObj(r))r={};
     const from=Number.isInteger(r.v)?r.v:0,{migrate}=C;
     if(from<C.version&&migrate)try{const m=copy(migrate(copy(r),from));if(isObj(m))r=m;}catch(e){}
-    const s=initial(C),t=isObj(r.tune)?r.tune:{};
-    s.keys=table(r.keys,C,'keys',3,C.isKey)||s.keys;s.pad=table(r.pad,C,'pad',2,padOk)||s.pad;
+    const s=initial(C),t=isObj(r.tune)?r.tune:{};s.keys=table(r.keys,C,'keys',3,C.isKey)||s.keys;s.pad=table(r.pad,C,'pad',2,padOk)||s.pad;
     for(const k in TUNE){const [d,lo,hi]=TUNE[k],v=own(t,k)?t[k]:d;s.tune[k]=lo===undefined?typeof v==='boolean'?v:d:Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d;}
     return s;
   }
-  // Rebinding works on normalize(settings), a new object: the arguments are never modified.
   function rebind(C,settings,device,action,code,none){
     const kb=device==='keyboard',f=kb?'keys':'pad',no=reason=>({ok:false,reason});
     if(!kb&&device!=='gamepad')return no('Appareil inconnu.');
@@ -104,35 +68,30 @@
     if(!none&&!(kb?C.isKey(code):padOk(code)))return no(kb?'Cette touche est réservée au navigateur.':code==='Home'?'Ce bouton est réservé au système.':'Bouton inconnu.');
     const s=settle(settings,C),other=none?null:C.actions.find(a=>a.id!==action&&s[f][a.id].includes(code));
     if(other)return {ok:false,conflict:other.id,reason:'Déjà utilisé'+(kb?'e':'')+' : '+other.label+'.'};
-    s[f][action]=none?[]:[code];
-    return {ok:true,settings:s};
+    s[f][action]=none?[]:[code];return {ok:true,settings:s};
   }
   function defaults(config){return initial(compile(config));}
   function normalize(raw,config){return settle(raw,compile(config));}
   function assign(config,settings,device,action,code){return rebind(compile(config),settings,device,action,code);}
   function unbind(config,settings,device,action){return rebind(compile(config),settings,device,action,null,true);}
-  function guessDevice(win){/* step 5 */} function focusMove(root,cmd,doc){/* step 6 */}
+  // matchMedia is a method of the window (detached, it throws in browsers)
+  function guessDevice(win=G){try{const m=q=>win.matchMedia(q).matches;return m('(pointer: coarse)')||win.navigator?.maxTouchPoints>0&&m('(hover: none)')?'touch':'keyboard';}catch(e){return 'keyboard';}}
+  function focusMove(root,cmd,doc){/* step 6 */}
   function create(config){
-    const C=compile(config),held=new Set(),pressed=[];
-    // Per action: keys (k), mouse (m), fingers (t), pad buttons (g, indexes pi), stick ends (gr, tr), pad value (gv).
+    const C=compile(config),held=new Set(),pressed=[],learnt=new Map();
+    // per action: keys k, mouse m, fingers t, pad buttons g (indexes pi), stick ends gr and tr, pad value gv
     const A=C.actions.map(a=>({a,k:0,m:false,t:0,g:false,gr:false,tr:false,gv:0,latch:false,edge:false})),at=id=>A[C.index.get(id)];
-    const sticks=C.sticks.map(s=>({kx:s.name+'X',ky:s.name+'Y',move:s.type==='move',x:s.x.map(at),y:s.y.map(at),rate:s.rate,pad:s.pad,run:s.run&&at(s.run)}));
-    const look=sticks.find(s=>!s.move),walk=sticks.find(s=>s.move);
-    // pm, tm: move vectors of the gamepad and of the touch stick (step 7); cap: capture under way, got: its result;
-    // seen, pb: pads and buttons of the last frame; hold: time at full aim; quiet: no pad edge in this frame.
-    let S,codes,dev=C.device,shown=dev,touchT=-Infinity,px=0,py=0,pmx=0,pmy=0,tmx=0,tmy=0,cap=null,got=null,seen=new Map(),pb=[],hold=0,quiet=false;
+    const sticks=C.sticks.map(s=>({kx:s.name+'X',ky:s.name+'Y',move:s.type==='move',x:s.x.map(at),y:s.y.map(at),rate:s.rate,pad:s.pad,run:s.run&&at(s.run)})),look=sticks.find(s=>!s.move),walk=sticks.find(s=>s.move);
+    let S,codes,lay=null,lp=null,rt=-Infinity,dev=C.device,shown=dev,touchT=-Infinity,px=0,py=0,pmx=0,pmy=0,tmx=0,tmy=0,cap=null,got=null,seen=new Map(),gp=new Map(),pb=[],hold=0,quiet=false;
     const trig=[false,false],on=s=>s.k>0||s.m||s.t>0||s.g||s.gr||s.tr,axis=v=>v.length?Number(on(v[1]))-Number(on(v[0])):0;
-    // Edge: released → held latches the action and lists it once per frame.
-    const rise=(s,was,pad)=>{if(!was&&on(s)&&!(pad&&quiet)){s.latch=true;if(!s.edge){s.edge=true;pressed.push(s.a.id);}}};
-    const mouse=t=>{if(!(t-touchT<K.compatMs))dev='mouse';};
-    // Held keys and buttons hold their new action, without an edge.
+    const rise=(s,was,pad)=>{if(!was&&on(s)&&!(pad&&quiet)){s.latch=true;if(!s.edge){s.edge=true;pressed.push(s.a.id);}}},mouse=t=>{if(!(t-touchT<K.compatMs))dev='mouse';};
+    const keyLabel=code=>{if(letter(code)){if(learnt.has(code))return learnt.get(code);const v=lay&&(typeof lay.get==='function'?lay.get(code):lay[code]);if(typeof v==='string'&&v)return [...v].length>1?v:v.toUpperCase();}return keyName(code);};
+    const list=(v,f)=>v.length?v.map(f).join(' / '):'—';
     function configure(raw){S=settle(raw,C);codes=new Map();for(const s of A){s.k=0;for(const c of S.keys[s.a.id]){codes.set(c,s);if(held.has(c))s.k++;}s.pi=S.pad[s.a.id].map(n=>PAD_BUTTONS.indexOf(n));s.g=s.pi.some(j=>pb[j]);}return copy(S);}
     configure(C.settings);
     return {
-      // A capture hands the next new press to frame().captured, never to the game; its repeats are swallowed.
-      // Otherwise a repeat restores a key held across clear(), without an edge.
-      keyDown(code,t,repeat){
-        dev='keyboard';
+      keyDown(code,t,repeat,key){
+        dev='keyboard';if(letter(code)&&typeof key==='string'&&/^[^\s\p{C}]$/u.test(key))learnt.set(code,key.toUpperCase());
         if(cap==='keyboard'){if(!repeat&&typeof code==='string'){got={device:'keyboard',code};cap=null;}return true;}
         const s=codes.get(code);if(typeof code==='string'&&!held.has(code)){held.add(code);if(s){const was=on(s);s.k++;if(!repeat)rise(s,was);}}return !!s;
       },
@@ -141,50 +100,53 @@
       mouseMove(dx,dy,t){const T=S.tune;px+=fin(dx)*C.mouseScale*T.sensitivity;py-=fin(dy)*C.mouseScale*T.sensitivity*(T.invertY?-1:1);mouse(t);},
       button(id,down,t,device){
         const s=at(id);if(!s||device!=='mouse'&&device!=='touch')return false;
-        const was=on(s);if(device==='mouse'){s.m=!!down;mouse(t);}else{s.t=down?s.t+1:Math.max(0,s.t-1);dev='touch';touchT=t;}
-        rise(s,was);return true;
+        const was=on(s);if(device==='mouse'){s.m=!!down;mouse(t);}else{s.t=down?s.t+1:Math.max(0,s.t-1);dev='touch';touchT=t;}rise(s,was);return true;
       },
       addLook(x,y,device){px+=fin(x);py+=fin(y);if(DEVICES.includes(device))dev=device;},
-      // The next frame reads the pad without edges: a button still down is held.
       clear(){held.clear();for(const s of A){s.k=s.t=s.gv=0;s.m=s.g=s.gr=s.tr=s.latch=s.edge=false;}pressed.length=0;px=py=pmx=pmy=tmx=tmy=hold=0;cap=got=null;quiet=true;},
       configure,get settings(){return copy(S);},get device(){return dev;},
-      // Nothing is applied: the game calls configure(r.settings) when it accepts the result.
       assign:(device,action,code)=>rebind(C,S,device,action,code),
       unbind:(device,action)=>rebind(C,S,device,action,null,true),
-      // A new capture, or null to cancel; either drops a result frame() has not handed out yet.
       capture(device){cap=device==='keyboard'||device==='gamepad'?device:null;got=null;},
+      keyLabel,setLayout(map){lay=isObj(map)?map:null;},
+      label(id,device=dev){
+        const s=at(id);if(!s)return '?';
+        const a=s.a;return device==='gamepad'?list(S.pad[id],n=>glyph(n,lp?.style||'generic')):device==='touch'?a.touch??a.label:device==='mouse'&&a.mouse!==undefined?a.mouse:list(S.keys[id],keyLabel);
+      },
+      // no pad, actuator or playEffect: it throws
+      rumble(strong,weak,ms,t){
+        const v=S.tune.padVibration;if(v<=0||t-rt<K.rumbleGap)return false;
+        try{const r=(gp.get(lp)||gp.values().next().value).vibrationActuator.playEffect('dual-rumble',{startDelay:0,duration:clamp(ms,5000),weakMagnitude:clamp(weak,1)*v,strongMagnitude:clamp(strong,1)*v});if(typeof r?.catch==='function')r.catch(()=>{});}catch(e){return false;}
+        rt=t;return true;
+      },
       frame(dt,ctx){
         dt=Number.isFinite(dt)?Math.min(K.dtMax,Math.max(0,dt)):0;
-        const T=S.tune,sc=Number.isFinite(ctx?.lookScale)?ctx.lookScale:1,now=new Map(),con=[],dis=[],b=[],tv=[0,0],card=o=>({...o});
-        // axes 0-1: left stick, 2-3: right stick
+        const T=S.tune,sc=Number.isFinite(ctx?.lookScale)?ctx.lookScale:1,now=new Map(),P=new Map(),con=[],dis=[],b=[],tv=[0,0],card=o=>({...o});
         const side=s=>s&&s.pad?s.pad==='LS'!==T.swapSticks?0:2:-1,ms=side(walk),ls=side(look);
-        let L=[],act=false,mv=[0,0,0],lk=mv;
+        let L=[],fa=null,mv=[0,0,0],lk=mv;
         // a method call (detached, it throws in browsers); any mapping read by index
         try{L=Array.from((C.getGamepads?C.getGamepads():G.navigator.getGamepads())||[]);}catch(e){}
         L.forEach((p,i)=>{
           if(!p||typeof p!=='object'||p.connected===false)return;
           const id=String(p.id??''),index=p.index??i,key=index+':'+id,ax=j=>fin((p.axes||[])[j]),bt=p.buttons||[];
-          if(!now.has(key)){const o=seen.get(key)||{index,id,style:padStyle(id),standard:p.mapping==='standard'};if(!seen.has(key))con.push(card(o));now.set(key,o);}
-          // LT, RT: highest value, then hysteresis
+          const o=now.get(key)||seen.get(key)||{index,id,style:padStyle(id),standard:p.mapping==='standard'};
+          if(!now.has(key)){if(!seen.has(key))con.push(card(o));now.set(key,o);P.set(o,p);}
+          let act=false;
           for(let j=0;j<17;j++){const q=bt[j]||0,v=fin(q.value??q),d=!!q.pressed;act=act||d||v>K.activeAxis;if(j===6||j===7)tv[j-6]=Math.max(tv[j-6],v);else b[j]=b[j]||d||v>.5;}
           for(let j=0;j<4;j++)act=act||Math.abs(ax(j))>K.activeAxis;
-          // strongest stick per role
-          const r=(o,dz,w)=>{const v=o<0?w:radial(ax(o),ax(o+1),dz,K.outer);return v[2]>w[2]?v:w;};
-          mv=r(ms,T.moveDead,mv);lk=r(ls,T.padDead,lk);
+          if(act&&!(fa&&fa.index<=index))fa=o;
+          const r=(o,dz,w)=>{const v=o<0?w:radial(ax(o),ax(o+1),dz,K.outer);return v[2]>w[2]?v:w;};mv=r(ms,T.moveDead,mv);lk=r(ls,T.padDead,lk);
         });
         for(const [key,o] of seen)if(!now.has(key))dis.push({index:o.index,id:o.id});
-        seen=now;
-        for(let j=0;j<2;j++)b[j+6]=trig[j]=trig[j]?tv[j]>K.trigOff:tv[j]>K.trigOn;
-        if(act)dev='gamepad';
-        // capture: the first new button but Home; no pad edge in this frame
+        seen=now;gp=P;for(let j=0;j<2;j++)b[j+6]=trig[j]=trig[j]?tv[j]>K.trigOff:tv[j]>K.trigOn;
+        if(fa)dev='gamepad';lp=fa||(P.has(lp)?lp:null);
         const code=cap==='gamepad'&&PAD_BUTTONS.find((n,j)=>j<16&&b[j]&&!pb[j]);
         if(code){got={device:cap,code};cap=null;quiet=true;}
         const val=j=>j===6||j===7?tv[j-6]>K.valueDead?Math.min(1,(tv[j-6]-K.valueDead)/(1-K.valueDead)):0:+!!b[j];
         for(const s of A){const was=on(s);s.g=s.pi.some(j=>b[j]);s.gv=s.pi.reduce((m,j)=>Math.max(m,val(j)),0);rise(s,was,1);}
-        // forward positive; run held at the end of the stick
         pmx=mv[0];pmy=-mv[1];
         if(walk&&walk.run){const s=walk.run,was=on(s);s.gr=mv[2]>=K.padRun;rise(s,was,1);}
-        // aim: curve, extra yaw after a hold at full deflection (time counted first), slowdown
+        // the hold at full deflection counts before the boost
         const [x,y,n]=lk,c=n>0?Math.pow(n,T.padCurve)/n:0;hold=n>K.boostAt?hold+dt:0;
         const e=hold>K.boostAfter?Math.min(1,(hold-K.boostAfter)/K.boostRamp):0;
         px+=x*c*T.padYaw*(1+T.padBoost*e)*sc*Math.PI/180*dt;py+=-y*c*T.padPitch*sc*(T.padInvertY?-1:1)*Math.PI/180*dt;
@@ -195,12 +157,8 @@
       },
       step(){
         const o={};
-        for(const s of sticks){
-          let x=px,y=py;
-          // strongest move source; a later one (pad, touch) needs a strictly greater norm
-          if(s.move){x=axis(s.x);y=axis(s.y);if(pmx*pmx+pmy*pmy>x*x+y*y){x=pmx;y=pmy;}if(tmx*tmx+tmy*tmy>x*x+y*y){x=tmx;y=tmy;}}
-          o[s.kx]=x||0;o[s.ky]=y||0;
-        }
+        // strongest move source; a later one needs a strictly greater norm
+        for(const s of sticks){let x=px,y=py;if(s.move){x=axis(s.x);y=axis(s.y);if(pmx*pmx+pmy*pmy>x*x+y*y){x=pmx;y=pmy;}if(tmx*tmx+tmy*tmy>x*x+y*y){x=tmx;y=tmy;}}o[s.kx]=x||0;o[s.ky]=y||0;}
         px=py=0;
         for(const s of A){const k=s.a.type;o[s.a.id]=k==='press'?s.latch:k==='hold'?on(s)||s.latch:Math.max(s.gv,s.k>0||s.m||s.t>0?1:0);s.latch=false;}
         return o;

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {METAL_INPUT as M, V1_KEYS, lcg, fakePad, PAD_IDS} from './finput-fixture.mjs';
+import {METAL_INPUT as M, V1_KEYS, lcg, fakePad, fakeActuator, PAD_IDS} from './finput-fixture.mjs';
 const source = readFileSync(new URL('../src/input.js', import.meta.url), 'utf8');
 function load(){ const pads = {list: []};
   const window = {navigator: {getGamepads: () => pads.list}, Event: class {constructor(type, init){this.type = type; this.bubbles = !!(init && init.bubbles);}}};
@@ -1333,4 +1333,211 @@ test('E38 — keyName : mêmes noms que FOptions.keyName', () => {
     assert.equal(F.keyName(code), window.FOptions.keyName(code), code);
   // own names only: a property of Object.prototype is not a key name
   assert.equal(F.keyName('toString'), 'toString'); assert.equal(F.keyName('constructor'), 'constructor');
+});
+
+// ——— Step 5: prompts and rumble — keyLabel, setLayout, label, glyph, guessDevice, rumble ———
+// The glyph table of the mission (§4.8), in the order of PAD_BUTTONS.
+const GLYPH_SPEC = {
+  xbox: ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'Vue', 'Menu', 'LS', 'RS', '↑', '↓', '←', '→', 'Xbox'],
+  ps: ['✕', '○', '□', '△', 'L1', 'R1', 'L2', 'R2', 'Create', 'Options', 'L3', 'R3', '↑', '↓', '←', '→', 'PS'],
+  generic: ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'Back', 'Start', 'L3', 'R3', '↑', '↓', '←', '→', 'Home']
+};
+// French AZERTY: event.key (unshifted) of the Key… codes whose letter differs from QWERTY.
+const AZERTY = {KeyQ: 'a', KeyW: 'z', KeyA: 'q', KeyZ: 'w', KeyM: ','};
+
+test('E39 — Libellés appris : la touche vue par keyDown (AZERTY), la table de setLayout, sinon keyName ; les chiffres gardent leur nom', () => {
+  const {F} = load();
+  const inp = F.create(M);
+  inp.keyDown('KeyW', 0, false, 'z'); assert.equal(inp.keyLabel('KeyW'), 'Z');
+  inp.keyDown('Digit1', 0, false, '&'); assert.equal(inp.keyLabel('Digit1'), '1');
+  inp.setLayout(new Map([['KeyQ', 'a'], ['KeyM', ',']]));
+  assert.equal(inp.keyLabel('KeyQ'), 'A'); assert.equal(inp.keyLabel('KeyM'), ',');
+  assert.equal(inp.label('jump', 'keyboard'), 'Espace'); assert.equal(inp.label('dash', 'keyboard'), 'R');
+});
+
+test('E39b — Libellés : un caractère visible, codes Key… seulement, appris avant la table, invite clavier jointe par « / » ou « — »', () => {
+  const {F} = load();
+  const fresh = () => F.create(M);
+  // No key seen and no layout: keyName, i.e. the QWERTY names.
+  let inp = fresh();
+  assert.equal(json(['KeyW', 'KeyQ', 'KeyM', 'Space', 'ShiftLeft', 'ArrowUp', 'Digit5', 'Enter'].map(c => inp.keyLabel(c))), json(['W', 'Q', 'M', 'Espace', 'Maj G', '↑', '5', 'Entrée']));
+  assert.equal(inp.label('forward', 'keyboard'), 'W / Z / ↑'); assert.equal(inp.label('sprint', 'keyboard'), 'Maj G / Maj D'); assert.equal(inp.label('map', 'keyboard'), 'M');
+  // An AZERTY session: each key teaches its label when the player presses it, bound or not.
+  for (const [code, key] of Object.entries(AZERTY)) inp.keyDown(code, 0, false, key);
+  assert.equal(inp.label('forward', 'keyboard'), 'Z / W / ↑'); assert.equal(inp.label('left', 'keyboard'), 'Q / A'); assert.equal(inp.label('map', 'keyboard'), ',');
+  // One visible character only: no space, no named key value, nothing empty, no control or format character.
+  for (const key of [' ', 'Dead', 'Unidentified', '', 'ab', '\u0000', '\t', '\u00a0', '\u200b', '\ue000', undefined, null, 5, ['e']]) {
+    inp = fresh(); inp.keyDown('KeyE', 0, false, key); assert.equal(inp.keyLabel('KeyE'), 'E', 'key ' + json(String(key)));
+  }
+  // Upper case; one code point, not one UTF-16 unit.
+  for (const [key, want] of [['é', 'É'], ['e', 'E'], ['E', 'E'], ['ö', 'Ö'], [',', ','], ['😀', '😀']]) { inp = fresh(); inp.keyDown('KeyE', 0, false, key); assert.equal(inp.keyLabel('KeyE'), want, key); }
+  // Key… codes only: digits keep their names (Digit2 is é on AZERTY), other codes too.
+  inp = fresh(); inp.keyDown('Digit2', 0, false, 'é'); inp.keyDown('Semicolon', 0, false, 'm'); inp.keyDown('Space', 0, false, 'x');
+  assert.equal(json(['Digit2', 'Semicolon', 'Space'].map(c => inp.keyLabel(c))), json(['2', 'Semicolon', 'Espace']));
+  // The last key seen wins; what was learnt goes before the layout; learnt on a repeat, and during a capture.
+  inp = fresh(); inp.keyDown('KeyW', 0, false, 'z'); inp.keyUp('KeyW', 0); inp.keyDown('KeyW', 0, false, 'w'); assert.equal(inp.keyLabel('KeyW'), 'W');
+  inp.setLayout({KeyW: 'z', KeyY: 'z'}); assert.equal(inp.keyLabel('KeyW'), 'W', 'appris d’abord'); assert.equal(inp.keyLabel('KeyY'), 'Z', 'table en objet');
+  assert.equal(inp.keyDown('KeyY', 0, true, 'y'), false); assert.equal(inp.keyLabel('KeyY'), 'Y', 'répétition, touche non affectée');
+  inp.capture('keyboard'); assert.equal(inp.keyDown('KeyM', 0, false, ','), true); assert.equal(inp.keyLabel('KeyM'), ',', 'capture');
+  assert.equal(json(inp.frame(DT).captured), json({device: 'keyboard', code: 'KeyM'}));
+  // Layout: map.get(code) when get is a function (KeyboardLayoutMap, Map), called as a method; else map[code].
+  // One character is upper-cased, several are kept; anything else, and Digit codes, → keyName.
+  inp = fresh(); inp.setLayout(new Map([['KeyA', 'q'], ['KeyB', 'ab'], ['KeyC', ''], ['KeyD', 5], ['Digit1', '&']]));
+  assert.equal(json(['KeyA', 'KeyB', 'KeyC', 'KeyD', 'KeyE', 'Digit1'].map(c => inp.keyLabel(c))), json(['Q', 'ab', 'C', 'D', 'E', '1']));
+  const seen = [], layout = {get(code) { seen.push(this === layout); return code === 'KeyQ' ? 'a' : undefined; }};
+  inp.setLayout(layout); assert.equal(inp.keyLabel('KeyQ'), 'A'); assert.equal(inp.keyLabel('KeyW'), 'W'); assert.equal(json(seen), '[true,true]');
+  // Only a non-array object is a table: a function with get() or an array with a KeyQ property clears it too.
+  for (const off of [null, undefined, 5, 'azerty', () => 'a', Object.assign(() => 'a', {get: () => 'a'}), Object.assign(['a'], {KeyQ: 'a'})]) { inp.setLayout(off); assert.equal(inp.keyLabel('KeyQ'), 'Q', String(off)); }
+  // Labels belong to the instance; FInput.keyName does not change.
+  assert.equal(fresh().keyLabel('KeyW'), 'W'); assert.equal(F.keyName('KeyW'), 'W');
+  // Keyboard prompt: the keys of the settings, through keyLabel, joined by ' / '; none → '—'.
+  inp = fresh(); assert.equal(inp.label('weaponNext', 'keyboard'), '—');
+  inp.configure(inp.unbind('keyboard', 'jump').settings); assert.equal(inp.label('jump', 'keyboard'), '—');
+  inp.configure(inp.assign('keyboard', 'jump', 'KeyJ').settings); assert.equal(inp.label('jump', 'keyboard'), 'J');
+  inp.keyDown('KeyJ', 0, false, 'j'); assert.equal(inp.label('jump', 'keyboard'), 'J');
+  // keyDown still returns whether the code is bound.
+  assert.equal(fresh().keyDown('KeyL', 0, false, 'l'), false); assert.equal(fresh().keyDown('KeyW', 0, false, 'z'), true);
+});
+
+test('E40 — Glyphes : Xbox, PlayStation, générique ; invites tactile et souris, action non affectée, action inconnue', () => {
+  const {F, pads} = load();
+  assert.equal(F.padStyle(PAD_IDS.xbox), 'xbox'); assert.equal(F.padStyle(PAD_IDS.ps), 'ps'); assert.equal(F.padStyle(PAD_IDS.other), 'generic');
+  const inp = F.create(M);
+  pads.list = [fakePad({press: {A: 1}})]; one(inp);
+  assert.equal(inp.label('jump', 'gamepad'), 'A');
+  pads.list = [fakePad({id: PAD_IDS.ps, press: {A: 1}})]; one(inp);
+  assert.equal(inp.label('jump', 'gamepad'), '✕'); assert.equal(inp.label('dash', 'gamepad'), '○');
+  assert.equal(inp.label('fire', 'touch'), 'TIR'); assert.equal(inp.label('fire', 'mouse'), 'Clic');
+  assert.equal(inp.label('weapon5', 'gamepad'), '—'); assert.equal(inp.label('inconnu'), '?');
+});
+
+test('E40b — glyph et dernière manette active : tables complètes, nom ou style inconnus, index le plus bas, remise à null au débranchement', () => {
+  const {F, pads} = load();
+  for (const [style, want] of Object.entries(GLYPH_SPEC)) assert.equal(json(PAD_SPEC.map(n => F.glyph(n, style))), json(want), style);
+  // An unknown name gives the name itself; an unknown style gives the generic glyphs.
+  for (const style of ['xbox', 'ps', 'generic', 'steam', undefined, '__proto__', 'toString']) for (const n of ['Z9', 'toString', 'constructor', 'name', 'ArrowUp', 'up', '']) assert.equal(F.glyph(n, style), n, style + ' : ' + n);
+  for (const style of ['steam', undefined, null, 'toString', '__proto__', 'XBOX']) assert.equal(json(PAD_SPEC.map(n => F.glyph(n, style))), json(GLYPH_SPEC.generic), String(style));
+  // No pad, then a pad never used: generic glyphs.
+  const inp = F.create(M);
+  assert.equal(inp.label('map', 'gamepad'), 'Back');
+  pads.list = [fakePad({id: PAD_IDS.ps})]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Back', 'branchée, jamais active');
+  // The style of the last active pad: the active pad of lowest index in the frame, kept while it stays connected.
+  const xbox = (press = {}, axes) => fakePad({index: 0, press, axes}), ps = (press = {}, axes) => fakePad({index: 1, id: PAD_IDS.ps, press, axes});
+  pads.list = [xbox(), ps({A: 1})]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Create');
+  pads.list = [xbox(), ps()]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Create', 'gardée sans activité');
+  pads.list = [xbox({B: 1}), ps({B: 1})]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Vue', 'deux actives : index 0');
+  pads.list = [ps(), xbox()]; one(inp); pads.list = [ps({X: 1}), xbox({X: 1})]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Vue', 'par index, pas par place');
+  pads.list = [xbox(), ps({}, [0, 0, .31, 0])]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Create', 'un axe au-delà de .3');
+  pads.list = [xbox(), ps({}, [0, 0, .3, 0])]; one(inp); pads.list = [xbox({}, [.3, 0, 0, 0]), ps()]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Create', '.3 ne suffit pas');
+  // Unplugged: back to null, so generic, until a pad is used again (the other one is still connected).
+  pads.list = [xbox()]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Back', 'débranchée');
+  pads.list = [xbox(), ps()]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Back', 'rebranchée sans appui');
+  pads.list = [xbox({Y: 1}), ps()]; one(inp); assert.equal(inp.label('map', 'gamepad'), 'Vue');
+  // Buttons of the settings, joined like keys.
+  const s = inp.settings; s.pad.weaponNext = []; s.pad.pulse = ['LB', 'Y']; inp.configure(s);
+  assert.equal(inp.label('pulse', 'gamepad'), 'LB / Y'); assert.equal(inp.label('weaponNext', 'gamepad'), '—');
+  pads.list = [ps({A: 1})]; one(inp); assert.equal(inp.label('pulse', 'gamepad'), 'L1 / △'); assert.equal(inp.label('sprint', 'gamepad'), 'L3'); assert.equal(inp.label('melee', 'gamepad'), 'R3');
+  // Touch: its own label, else the action label. Mouse: its own label, else the keyboard prompt.
+  assert.equal(inp.label('interact', 'touch'), 'Interagir'); assert.equal(inp.label('jump', 'touch'), 'SAUT'); assert.equal(inp.label('fireLeft', 'touch'), 'TIR G / GARDE');
+  assert.equal(inp.label('weaponNext', 'mouse'), 'Molette'); assert.equal(inp.label('fireLeft', 'mouse'), 'Clic droit'); assert.equal(inp.label('jump', 'mouse'), 'Espace');
+  // Default device: the active one (TACT-08).
+  const d = F.create(M); pads.list = [];
+  assert.equal(d.label('jump'), 'Espace', 'appareil de la déclaration');
+  pads.list = [ps({A: 1})]; d.frame(DT); assert.equal(d.label('jump'), '✕');
+  d.button('fire', true, 1000, 'touch'); assert.equal(d.label('jump'), 'SAUT'); d.button('fire', false, 1000, 'touch');
+  d.mouseMove(1, 0, 1900); assert.equal(d.label('fire'), 'Clic'); assert.equal(d.label('jump'), 'Espace');
+  d.keyDown('KeyL', 2000, false, 'l'); assert.equal(d.label('fire'), 'Entrée');
+  // Any other device: the keyboard prompt. An unknown action: '?' on every device (own ids only).
+  for (const dev of ['pilot', null, 5]) assert.equal(d.label('jump', dev), 'Espace', String(dev));
+  for (const dev of ['keyboard', 'mouse', 'touch', 'gamepad', undefined]) for (const id of ['inconnu', 'toString', 'constructor', '', undefined]) assert.equal(d.label(id, dev), '?', dev + ' : ' + id);
+});
+
+test('E41 — guessDevice : règle de BITUME (TACT-08), matchMedia appelé comme une méthode, toute erreur → keyboard', () => {
+  const {F} = load();
+  assert.equal(F.guessDevice({matchMedia: q => ({matches: q === '(pointer: coarse)'})}), 'touch');
+  assert.equal(F.guessDevice({matchMedia: q => ({matches: q === '(hover: none)'}), navigator: {maxTouchPoints: 5}}), 'touch');
+  assert.equal(F.guessDevice({matchMedia: () => ({matches: false}), navigator: {maxTouchPoints: 10}}), 'keyboard');
+  assert.equal(F.guessDevice({matchMedia: q => ({matches: q === '(hover: none)'}), navigator: {maxTouchPoints: 1}}), 'touch', 'un seul point de contact');
+  // hover: none counts only with a touch point; exactly these two queries, in this order.
+  assert.equal(F.guessDevice({matchMedia: q => ({matches: q === '(hover: none)'}), navigator: {maxTouchPoints: 0}}), 'keyboard');
+  assert.equal(F.guessDevice({matchMedia: q => ({matches: q === '(hover: none)'})}), 'keyboard', 'sans navigator');
+  const asked = []; F.guessDevice({matchMedia: q => { asked.push(q); return {matches: false}; }, navigator: {maxTouchPoints: 2}});
+  assert.equal(json(asked), json(['(pointer: coarse)', '(hover: none)']));
+  // A method of the window: detached, it throws « Illegal invocation » in browsers.
+  const win = {matchMedia(q) { if (this !== win) throw new TypeError('Illegal invocation'); return {matches: q === '(pointer: coarse)'}; }};
+  assert.equal(F.guessDevice(win), 'touch');
+  // Any error → 'keyboard', never an exception.
+  for (const bad of [null, 5, 'x', {}, {matchMedia: 5}, {matchMedia: () => null}, {matchMedia: () => { throw new Error('test'); }}, {matchMedia: () => ({matches: false}), get navigator() { throw new Error('test'); }}])
+    assert.equal(F.guessDevice(bad), 'keyboard', json(String(bad)));
+  // Default: the global object of the module (the window of load(), without matchMedia; then a window with one).
+  assert.equal(F.guessDevice(), 'keyboard');
+  const window = {matchMedia: q => ({matches: q === '(pointer: coarse)'}), navigator: {maxTouchPoints: 0}}; vm.runInContext(source, vm.createContext({window}));
+  assert.equal(window.FInput.guessDevice(), 'touch');
+});
+
+test('E42 — Vibrations : appel exact, limiteur de 40 ms, intensité .5, sans actionneur, exception, aucun rejet non traité', async () => {
+  const {F, pads} = load();
+  const act = fakeActuator(), inp = F.create(M);
+  pads.list = [fakePad({actuator: act})]; inp.frame(DT);
+  assert.equal(inp.rumble(.55, .35, 140, 1000), true);
+  assert.equal(json(act.calls), json([{type: 'dual-rumble', startDelay: 0, duration: 140, weakMagnitude: .35, strongMagnitude: .55}]));
+  assert.equal(inp.rumble(.55, .35, 140, 1020), false); assert.equal(inp.rumble(.55, .35, 140, 1041), true); assert.equal(act.calls.length, 2);
+  const tuned = v => { const c = withTune(F, {padVibration: v}); c.frame(DT); return c; };
+  assert.equal(tuned(0).rumble(.55, .35, 140, 1000), false); assert.equal(act.calls.length, 2, 'aucun appel à 0');
+  assert.equal(tuned(.5).rumble(.55, .35, 140, 1000), true);
+  const half = act.calls[2]; assert.equal(half.strongMagnitude, .275); assert.equal(half.weakMagnitude, .175);
+  pads.list = [fakePad()]; assert.equal(tuned(1).rumble(.55, .35, 140, 1000), false, 'sans actionneur');
+  const thrower = fakeActuator('throw'); pads.list = [fakePad({actuator: thrower})];
+  let r; assert.doesNotThrow(() => { r = tuned(1).rumble(.55, .35, 140, 1000); }); assert.equal(r, false); assert.equal(thrower.calls.length, 1);
+  // A rejected promise gets an empty catch: no unhandled rejection after one turn.
+  let unhandled = 0; const count = () => { unhandled++; }; process.on('unhandledRejection', count);
+  try {
+    const rejecting = fakeActuator('reject'); pads.list = [fakePad({actuator: rejecting})];
+    assert.equal(tuned(1).rumble(.55, .35, 140, 1000), true); assert.equal(rejecting.calls.length, 1);
+    await new Promise(done => setTimeout(done, 0));
+    assert.equal(unhandled, 0, 'rejet non traité');
+  } finally { process.off('unhandledRejection', count); }
+  pads.list = [];
+});
+
+test('E42b — rumble : bornes, manette visée, limiteur mis à jour au seul succès, rien avant frame()', () => {
+  const {F, pads} = load();
+  const act = fakeActuator(), inp = F.create(M), last = () => act.calls[act.calls.length - 1];
+  assert.equal(inp.rumble(.5, .5, 100, 0), false, 'aucune manette vue par frame()');
+  pads.list = [fakePad({actuator: act})]; inp.frame(DT);
+  // ms bounded to [0 ; 5000], intensities to [0 ; 1] then × padVibration; anything else counts for 0.
+  let t = 0; const at = (...a) => { t += 100; assert.equal(inp.rumble(...a, t), true, json(a)); return last(); };
+  assert.equal(json(at(2, -1, 9000)), json({type: 'dual-rumble', startDelay: 0, duration: 5000, weakMagnitude: 0, strongMagnitude: 1}));
+  assert.equal(json(at(-1, 2, -5)), json({type: 'dual-rumble', startDelay: 0, duration: 0, weakMagnitude: 1, strongMagnitude: 0}));
+  assert.equal(json(at(NaN, undefined, NaN)), json({type: 'dual-rumble', startDelay: 0, duration: 0, weakMagnitude: 0, strongMagnitude: 0}));
+  assert.equal(json(at(Infinity, -Infinity, Infinity)), json({type: 'dual-rumble', startDelay: 0, duration: 5000, weakMagnitude: 0, strongMagnitude: 1}));
+  for (const v of Object.values(at(-0, -0, -0))) assert.ok(!Object.is(v, -0));
+  // The gap is 40 ms exactly: refused at 39.9, accepted at 40.
+  assert.equal(inp.rumble(.5, .5, 50, t + 39.9), false); assert.equal(inp.rumble(.5, .5, 50, t + 40), true); t += 40;
+  // padVibration is read at each call, after configure.
+  const s = inp.settings; s.tune.padVibration = .25; inp.configure(s); t += 100; inp.rumble(1, .8, 50, t); assert.equal(last().strongMagnitude, .25); assert.equal(last().weakMagnitude, .2);
+  s.tune.padVibration = 0; inp.configure(s); const n = act.calls.length; assert.equal(inp.rumble(1, 1, 50, t + 500), false); assert.equal(act.calls.length, n);
+  // Target: the last active pad, else the first connected one.
+  const a0 = fakeActuator(), a1 = fakeActuator(), two = F.create(M);
+  pads.list = [fakePad({index: 0, actuator: a0}), fakePad({index: 1, id: PAD_IDS.ps, actuator: a1})]; two.frame(DT);
+  assert.equal(two.rumble(.5, .5, 50, 0), true); assert.equal(json([a0.calls.length, a1.calls.length]), '[1,0]', 'première branchée');
+  pads.list = [fakePad({index: 0, actuator: a0}), fakePad({index: 1, id: PAD_IDS.ps, actuator: a1, press: {A: 1}})]; two.frame(DT);
+  assert.equal(two.rumble(.5, .5, 50, 100), true); assert.equal(json([a0.calls.length, a1.calls.length]), '[1,1]', 'dernière active');
+  pads.list = [fakePad({index: 0, actuator: a0}), fakePad({index: 1, id: PAD_IDS.ps, actuator: a1})]; two.frame(DT);
+  assert.equal(two.rumble(.5, .5, 50, 200), true); assert.equal(json([a0.calls.length, a1.calls.length]), '[1,2]', 'gardée sans activité');
+  pads.list = [fakePad({index: 0, actuator: a0})]; two.frame(DT);
+  assert.equal(two.rumble(.5, .5, 50, 300), true); assert.equal(json([a0.calls.length, a1.calls.length]), '[2,2]', 'débranchée : première branchée');
+  // The pad object of the last frame; nothing after it is unplugged.
+  const a2 = fakeActuator(); pads.list = [fakePad({index: 0, actuator: a2})]; two.frame(DT);
+  assert.equal(two.rumble(.5, .5, 50, 400), true); assert.equal(json([a0.calls.length, a2.calls.length]), '[2,1]');
+  pads.list = []; two.frame(DT); assert.equal(two.rumble(.5, .5, 50, 500), false);
+  // A refusal (no actuator, playEffect missing or throwing) does not move the time of the last success.
+  const c = F.create(M), ok = fakeActuator();
+  for (const pad of [fakePad(), {...fakePad(), vibrationActuator: {}}, fakePad({actuator: fakeActuator('throw')})]) {
+    pads.list = [pad]; c.frame(DT); assert.equal(c.rumble(.5, .5, 50, 1000), false);
+  }
+  pads.list = [fakePad({actuator: ok})]; c.frame(DT); assert.equal(c.rumble(.5, .5, 50, 1001), true); assert.equal(ok.calls.length, 1);
+  // The limiter belongs to the instance.
+  const other = F.create(M); other.frame(DT); assert.equal(other.rumble(.5, .5, 50, 1002), true); assert.equal(ok.calls.length, 2);
+  pads.list = [];
 });
