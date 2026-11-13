@@ -1,0 +1,82 @@
+
+=== legacy-s0 ===
+pas simulés        : 1800 / 1800
+chaîne d'étapes    : fee1bbf7 vs fee1bbf7 → identique
+empreintes par pas : identiques sur tous les pas
+empreinte du point : a22ac96592c9466c… vs 0726af329e7ad7d4… (166624 → 166521 octets)
+champs seuls avant: 6
+  - state.shield.energy
+  - state.shield.raised
+  - state.shield.rechargeDelay
+  - state.shield.bashCooldown
+  - state.shield.bashVisual
+  - state.inventory.shield
+champs seuls après : 0
+valeurs modifiées  : 2
+  ~ fingerprint : "1o7sffm" → "1e90ffc"
+  ~ state.pickupRemaining.49 : 1 → 24
+
+=== legacy-s2 ===
+pas simulés        : 1800 / 1800
+chaîne d'étapes    : 7e982843 vs 7e982843 → identique
+empreintes par pas : identiques sur tous les pas
+empreinte du point : 8614b6f5acaba021… vs 01f50b59d8b0640d… (266845 → 266740 octets)
+champs seuls avant: 6
+  - state.shield.energy
+  - state.shield.raised
+  - state.shield.rechargeDelay
+  - state.shield.bashCooldown
+  - state.shield.bashVisual
+  - state.inventory.shield
+champs seuls après : 0
+valeurs modifiées  : 3
+  ~ fingerprint : "11342u4" → "1c27bn8"
+  ~ state.director.nextEvent : 0.23333333333333717 → 1.650000000000003
+  ~ state.pickupRemaining.49 : 1 → 24
+
+=== campaign-w10 ===
+pas simulés        : 1800 / 1800
+chaîne d'étapes    : fa45f9a6 vs fa45f9a6 → identique
+empreintes par pas : identiques sur tous les pas
+empreinte du point : a5e416ae8ec7150e… vs 2f447b6dc648f394… (124913 → 124818 octets)
+champs seuls avant: 6
+  - state.shield.energy
+  - state.shield.raised
+  - state.shield.rechargeDelay
+  - state.shield.bashCooldown
+  - state.shield.bashVisual
+  - state.inventory.shield
+champs seuls après : 2
+  + state.pickupRemaining.42
+  + state.pickups.42
+valeurs modifiées  : 5
+  ~ fingerprint : "u96uuo" → "arf5r1"
+  ~ state.pickupRemaining.37 : 12 → 17
+  ~ state.pickupRemaining.38 : 6 → 12
+  ~ state.pickupRemaining.39 : 25 → 6
+  ~ state.pickupRemaining.41 : 50 → 25
+
+=== campaign-w16 ===
+pas simulés        : 1800 / 1800
+chaîne d'étapes    : a3531476 vs a3531476 → identique
+empreintes par pas : identiques sur tous les pas
+empreinte du point : d37b4df0af5b87af… vs 83f2be768be8c611… (168196 → 168100 octets)
+champs seuls avant: 6
+  - state.shield.energy
+  - state.shield.raised
+  - state.shield.rechargeDelay
+  - state.shield.bashCooldown
+  - state.shield.bashVisual
+  - state.inventory.shield
+champs seuls après : 2
+  + state.pickupRemaining.51
+  + state.pickups.51
+valeurs modifiées  : 5
+  ~ fingerprint : "1kpxhzn" → "i37nb6"
+  ~ state.pickupRemaining.44 : 4 → 24
+  ~ state.pickupRemaining.47 : 2 → 4
+  ~ state.pickupRemaining.48 : 25 → 2
+  ~ state.pickupRemaining.50 : 50 → 25
+
+résultat : chaîne identique sur tous les scénarios = true ; empreintes par pas identiques = true
+/home/m4d135/metal-chantier/voies/sim/docs/chantier-moteur/preuves/jeu-bouclier-supprime/t1-retrait/diff-snapshots.mjs

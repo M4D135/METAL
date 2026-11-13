@@ -99,6 +99,56 @@ même position) pour ne pas laisser un trou d'équipement en ouverture ; l'ancre
 - `sha256` `b1fe2f5f9d820590375486a8165fe5a307ac310b08ed7989556cc36b75c6bcad`, identique à `SIZE.json` ;
 - 0 actif externe, aucune dépendance d'exécution.
 
+## Comparaison avant / après sur la simulation
+
+`ab2.mjs` compare la base du lot (`35c654a`, arbre de travail séparé) et l'arbre courant, dans le même
+processus Node, en paires appariées alternées AB/BA, `--realm main`, 1 800 pas, 1 échauffement +
+5 répétitions mesurées (9 000 paires par scénario) :
+
+```
+node tools/ab2.mjs <base> . --scenario all --steps 1800 --reps 5 --warmups 1 --realm main --out ab2-etat.json
+```
+
+Le rapport complet (lignes par pas) pèse 25 Mo et n'est pas commité ; `ab2-etat-resume.json` en conserve
+l'environnement, les empreintes des sources, la méthode, les chaînes d'étapes, les empreintes de point de
+reprise, l'accord des empreintes par pas et les agrégats de temps pour les quatre scénarios.
+
+| Scénario | Pas | Chaîne d'étapes | Empreintes par pas | Ratio médian B/A |
+| --- | --- | --- | --- | --- |
+| `legacy-s0` | 1 800 | `fee1bbf7` identique | identiques sur tous les pas | 1,0286 |
+| `legacy-s2` | 1 800 | `7e982843` identique | identiques sur tous les pas | 1,0152 |
+| `campaign-w10` | 1 800 | `fa45f9a6` identique | identiques sur tous les pas | 1,0000 |
+| `campaign-w16` | 1 800 | `a3531476` identique | identiques sur tous les pas | 1,0053 |
+
+**La dynamique simulée est bit à bit identique** : même chaîne d'étapes et même empreinte d'état à chacun
+des 1 800 pas, sur les quatre scénarios. Le retrait n'accélère pas mesurablement la simulation
+(ratio dans le bruit, médianes par pas de 55 à 152 µs) : le code du bouclier était déjà court-circuité
+quand le joueur ne le possédait pas. Aucune revendication de gain de vitesse n'est faite ici ; les gains
+ éventuels seront cherchés à l'étape de profilage.
+
+`ab2` rend `identical:false` : la comparaison inclut l'empreinte du **point de reprise sérialisé**, qui ne
+peut pas être identique puisque le bouclier a disparu de l'état. `diff-snapshots.mjs` (même dossier) isole
+précisément les écarts :
+
+```
+node docs/chantier-moteur/preuves/jeu-bouclier-supprime/t1-retrait/diff-snapshots.mjs <base> . > diff-snapshots.txt
+```
+
+Écarts relevés sur les quatre scénarios, et leur cause :
+
+| Écart | Cause |
+| --- | --- |
+| `state.shield.{energy,raised,rechargeDelay,bashCooldown,bashVisual}` et `state.inventory.shield` absents | le bouclier est retiré de l'état (objectif du lot) |
+| `fingerprint` différent | l'empreinte de monde hache `world.pickups` et `world.progression` ; le ramassage d'ouverture et les trophées ont changé |
+| `state.pickupRemaining.*` décalés (ex. `49 : 1 → 24` en classique, `44 : 4 → 24` en campagne) | `arsenal-shield` (1) remplacé par `arsenal-smg-cells` (24 cellules) ; trophée d'index 3 supprimé, donc index de ramassages décalés |
+| `state.director.nextEvent` (monde classique 3) | la graine du directeur dérive de `fingerprint` ; conséquence déterministe, pas une divergence de comportement |
+
+Conséquence assumée : un point de reprise écrit avant le lot est **refusé proprement** par la vérification
+d'empreinte (monde réellement différent), et la coquille redémarre le secteur avec l'équipement d'entrée —
+comportement couvert par les tests `LOAD-01` de `checks/checkpoint.test.mjs`. Un point de reprise dont
+l'empreinte correspond (même génération) mais qui mentionne encore le bouclier est, lui, **chargé** grâce à
+la tolérance décrite plus haut.
+
 ## Ce qui reste à vérifier hors simulation
 
 Le navigateur n'est pas exercé par ces tests : HUD sans jauge, sélecteur de main gauche sans « Garde »,
