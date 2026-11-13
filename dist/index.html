@@ -5460,18 +5460,71 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     // Static height rectangles share a small spatial index. Breach updates never
     // invalidate terrain, so path probes no longer rescan the entire landscape.
     const floorGX=Math.floor(world.bounds.minX/8),floorGZ=Math.floor(world.bounds.minZ/8),floorGW=Math.floor(world.bounds.maxX/8)-floorGX+1,floorGD=Math.floor(world.bounds.maxZ/8)-floorGZ+1;
-    const floorBuckets=Array.from({length:floorGW*floorGD},()=>[]);
-    for(const f of floors){const x0=Math.max(0,Math.floor((f.x-f.w/2-1e-7)/8)-floorGX),x1=Math.min(floorGW-1,Math.floor((f.x+f.w/2+1e-7)/8)-floorGX),z0=Math.max(0,Math.floor((f.z-f.d/2-1e-7)/8)-floorGZ),z1=Math.min(floorGD-1,Math.floor((f.z+f.d/2+1e-7)/8)-floorGZ);for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)floorBuckets[z*floorGW+x].push(f);}
-    function ground(x,z,activeTraps=trapStates){
-      if(!floors.length)return 0;
-      let y=-Infinity,flat=-Infinity,fallback=-Infinity;
-      const gx=Math.floor(x/8)-floorGX,gz=Math.floor(z/8)-floorGZ,local=gx>=0&&gx<floorGW&&gz>=0&&gz<floorGD?floorBuckets[gz*floorGW+gx]:floors;
-      for(const f of local)if(Math.abs(x-f.x)<=f.w/2+1e-7&&Math.abs(z-f.z)<=f.d/2+1e-7){
-        const h=(f.y||0)+(x-f.x)*(f.slopeX||0)+(z-f.z)*(f.slopeZ||0);
-        if(f.substrate||f.fallback)fallback=Math.max(fallback,h);else if(!f.slopeX&&!f.slopeZ)flat=Math.max(flat,h);else y=Math.max(y,h);
+    // ground() reads its own copy of the floors (SIM-02): one typed array per field, so the
+    // object shapes of world.walkable (never written) stay out of its loop, and a 2 m grid
+    // nested in the 8 m buckets. Each cell lists the floors of its bucket that reach it,
+    // flat ones first and highest first; gTop holds the answers that need no scan. Same
+    // arithmetic and priority as the object loop it replaces. The 8 m buckets serve
+    // fallbackLanding and beneathTerrain. Both indexes are rebuilt as soon as the floor
+    // list changes identity or length; code editing a floor in place calls indexFloors().
+    const gGX=floorGX*4,gGZ=floorGZ*4,gGW=floorGW*4,gGD=floorGD*4;
+    let floorBuckets,floorList=null,floorCount=-1,gFX,gFZ,gHW,gHD,gFY,gSX,gSZ,gFK,gAll,gStart,gCells,gFlats,gTop,trapList,trapCount=-1,floorTraps=[];
+    function indexFloors(){
+      const n=floors.length,buckets=Array.from({length:floorGW*floorGD},()=>[]),owners=buckets.map(()=>[]),cells=gGW>0&&gGD>0?gGW*gGD:0,list=[],m=1e-6,big=16777216;
+      const fx=new Float64Array(n),fz=new Float64Array(n),hw=new Float64Array(n),hd=new Float64Array(n),fy=new Float64Array(n),sx=new Float64Array(n),sz=new Float64Array(n),kind=new Uint8Array(n),all=new Int32Array(n),start=new Int32Array(cells+1),flatsAt=new Uint8Array(cells),top=new Float64Array(cells).fill(NaN);
+      for(let i=0;i<n;i++){const f=floors[i],x0=Math.max(0,Math.floor((f.x-f.w/2-1e-7)/8)-floorGX),x1=Math.min(floorGW-1,Math.floor((f.x+f.w/2+1e-7)/8)-floorGX),z0=Math.max(0,Math.floor((f.z-f.d/2-1e-7)/8)-floorGZ),z1=Math.min(floorGD-1,Math.floor((f.z+f.d/2+1e-7)/8)-floorGZ);for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){buckets[z*floorGW+x].push(f);owners[z*floorGW+x].push(i);}
+        fx[i]=f.x;fz[i]=f.z;hw[i]=f.w/2+1e-7;hd[i]=f.d/2+1e-7;fy[i]=f.y||0;sx[i]=f.slopeX||0;sz[i]=f.slopeZ||0;kind[i]=f.substrate||f.fallback?2:!f.slopeX&&!f.slopeZ?0:1;all[i]=i;}
+      // Only a finite floor box below 2^24 m is left out of a cell or trusted to cover it:
+      // the margin then exceeds every rounding error. A flat floor with a finite centre and
+      // height answers exactly its own height wherever it applies.
+      const tight=i=>Math.abs(fx[i])+Math.abs(hw[i])<big&&Math.abs(fz[i])+Math.abs(hd[i])<big,finite=i=>Number.isFinite(fx[i])&&Number.isFinite(fz[i])&&Number.isFinite(fy[i]);
+      const covers=(i,x0,x1,z0,z1)=>tight(i)&&fx[i]-hw[i]+m<=x0&&x1<=fx[i]+hw[i]-m&&fz[i]-hd[i]+m<=z0&&z1<=fz[i]+hd[i]-m,near=[];
+      for(let cz=0,c=0;cz<gGD;cz++)for(let cx=0;cx<gGW;cx++,c++){
+        const x0=(gGX+cx)*2,x1=x0+2,z0=(gGZ+cz)*2,z1=z0+2,inside=Math.abs(x0)<big&&Math.abs(x1)<big&&Math.abs(z0)<big&&Math.abs(z1)<big,owned=owners[(cz>>2)*floorGW+(cx>>2)];
+        let flats=0,ramps=0,clean=inside,level=true,low=-Infinity;near.length=0;
+        for(let k=0;k<owned.length;k++){const i=owned[k];
+          if(inside&&tight(i)&&(fx[i]-hw[i]-m>x1||fx[i]+hw[i]+m<x0||fz[i]-hd[i]-m>z1||fz[i]+hd[i]+m<z0))continue;
+          near.push(i);if(kind[i]===0){flats++;if(!finite(i))clean=false;}else if(kind[i]===1)ramps++;else if(finite(i)&&sx[i]===0&&sz[i]===0)low=Math.max(low,fy[i]);else level=false;
+        }
+        // Flat candidates first, highest first (stable): when they are all finite, the first
+        // one under the point is the answer. gTop is the height of a highest flat floor that
+        // covers the whole cell (1e-6 margin) and then no test is needed; otherwise it is the
+        // answer under none of the flat floors: nothing, or a covering level substrate that
+        // tops the others, with no ramp around. NaN asks for the full scan.
+        const from=start[c]=list.length;
+        for(let k=0;k<near.length;k++){const i=near[k];if(kind[i]!==0)continue;let j=list.length;list.push(i);while(j>from&&fy[list[j-1]]<fy[i]){list[j]=list[j-1];j--;}list[j]=i;}
+        const end=list.length;for(let k=0;k<near.length;k++)if(kind[near[k]]!==0)list.push(near[k]);
+        let under=inside&&!ramps&&level?low:NaN;
+        if(low>-Infinity){let held=false;for(let k=end;k<list.length;k++)if(fy[list[k]]===low&&covers(list[k],x0,x1,z0,z1)){held=true;break;}if(!held)under=NaN;}
+        if(!flats)top[c]=under;
+        else if(clean&&flats<256){let whole=false;for(let k=from;k<end&&fy[list[k]]===fy[list[from]];k++)if(covers(list[k],x0,x1,z0,z1)){whole=true;break;}if(whole)top[c]=fy[list[from]];else{flatsAt[c]=flats;top[c]=under;}}
       }
-      let result=Number.isFinite(flat)?flat:Number.isFinite(y)?y:fallback;
-      for(const t of activeTraps)if(t.kind==='floor'&&Math.abs(x-t.x)<t.w/2&&Math.abs(z-t.z)<t.d/2&&Math.abs(result-t.y)<.1)result=t.y-(t.travel||.85)*t.progress;
+      start[cells]=list.length;
+      floorBuckets=buckets;gFX=fx;gFZ=fz;gHW=hw;gHD=hd;gFY=fy;gSX=sx;gSZ=sz;gFK=kind;gAll=all;gStart=start;gCells=Int32Array.from(list);gFlats=flatsAt;gTop=top;floorList=floors;floorCount=n;
+    }
+    indexFloors();
+    function groundScan(x,z,list,from,to){
+      let y=-Infinity,flat=-Infinity,fallback=-Infinity;
+      for(let k=from;k<to;k++){const i=list[k],fx=gFX[i],fz=gFZ[i];if(Math.abs(x-fx)<=gHW[i]&&Math.abs(z-fz)<=gHD[i]){
+        const h=gFY[i]+(x-fx)*gSX[i]+(z-fz)*gSZ[i],kind=gFK[i];
+        if(kind===2)fallback=Math.max(fallback,h);else if(kind===0)flat=Math.max(flat,h);else y=Math.max(y,h);
+      }}
+      return Number.isFinite(flat)?flat:Number.isFinite(y)?y:fallback;
+    }
+    function ground(x,z,activeTraps=trapStates){
+      if(floors.length!==floorCount||floors!==floorList)indexFloors();
+      if(!floorCount)return 0;
+      // x/8*4 keeps each cell inside the very bucket the 8 m index picks, even for subnormals.
+      const gx=Math.floor(x/8*4)-gGX,gz=Math.floor(z/8*4)-gGZ;let result;
+      if(gx>=0&&gx<gGW&&gz>=0&&gz<gGD){
+        const c=gz*gGW+gx,flats=gFlats[c];result=NaN;
+        if(flats)for(let k=gStart[c],end=k+flats;k<end;k++){const i=gCells[k];if(Math.abs(x-gFX[i])<=gHW[i]&&Math.abs(z-gFZ[i])<=gHD[i]){result=gFY[i];break;}}
+        if(result!==result){const top=gTop[c];result=top===top?top:groundScan(x,z,gCells,gStart[c],gStart[c+1]);}
+      }else result=groundScan(x,z,gAll,0,floorCount);
+      // Floor traps (none in the generated worlds) keep their order. The filtered list is
+      // cached per trap list: callers replace a list instead of reordering it in place.
+      if(activeTraps!==trapList||activeTraps.length!==trapCount){const list=[];for(const t of activeTraps)if(t.kind==='floor')list.push(t);floorTraps=list;trapList=activeTraps;trapCount=activeTraps.length;}
+      for(let k=0;k<floorTraps.length;k++){const t=floorTraps[k];if(Math.abs(x-t.x)<t.w/2&&Math.abs(z-t.z)<t.d/2&&Math.abs(result-t.y)<.1)result=t.y-(t.travel||.85)*t.progress;}
       return result;
     }
     function fallbackLanding(x,z,y){

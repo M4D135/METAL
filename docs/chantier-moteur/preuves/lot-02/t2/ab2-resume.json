@@ -1,0 +1,342 @@
+{
+ "schema": "metal-ab2-v1",
+ "checksum": "c99c9f5fab27d2ab6da432496d7f03b0174ed8f01f2cac1c61ce2e54e4e6a23d",
+ "identical": true,
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "release": "27.2.0",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadAverage": [
+   1.96484375,
+   2.1171875,
+   2.3154296875
+  ]
+ },
+ "method": {
+  "steps": 1800,
+  "reps": 2,
+  "weapon": null,
+  "seed": 96
+ },
+ "sourceSha256": {
+  "a": {
+   "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+   "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+   "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+   "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+   "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+   "simulation": "985aa31c8d8109461d553955347da0ddf88649ff3d962ce7662fd10905b25cd8"
+  },
+  "b": {
+   "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+   "world": "0360b7c05b0521c4b679c06eee538090128490bb6a251c08e5803c541333070e",
+   "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+   "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+   "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+   "simulation": "f03e2082be2962a1a44abe8ab6b4729c39f00baa78e794fde6dd4ec976387648"
+  }
+ },
+ "scenarios": [
+  {
+   "id": "legacy-s0",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "576ce3b4",
+    "576ce3b4"
+   ],
+   "medianPairedRatio": 0.8507,
+   "totalRatio": 0.8445,
+   "medianUs": [
+    93,
+    80
+   ],
+   "p99Us": [
+    1175,
+    1300
+   ],
+   "maxUs": [
+    44964,
+    30949
+   ],
+   "totalUs": [
+    581432,
+    491045
+   ]
+  },
+  {
+   "id": "legacy-s2",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "54574123",
+    "54574123"
+   ],
+   "medianPairedRatio": 0.7102,
+   "totalRatio": 0.7204,
+   "medianUs": [
+    145,
+    100
+   ],
+   "p99Us": [
+    1386,
+    1317
+   ],
+   "maxUs": [
+    35204,
+    17221
+   ],
+   "totalUs": [
+    735067,
+    529541
+   ]
+  },
+  {
+   "id": "campaign-w10",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "6cd12673",
+    "6cd12673"
+   ],
+   "medianPairedRatio": 0.7586,
+   "totalRatio": 0.8367,
+   "medianUs": [
+    99,
+    76
+   ],
+   "p99Us": [
+    1073,
+    1052
+   ],
+   "maxUs": [
+    8333,
+    9557
+   ],
+   "totalUs": [
+    503794,
+    421517
+   ]
+  },
+  {
+   "id": "campaign-w16",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "6de7419e",
+    "6de7419e"
+   ],
+   "medianPairedRatio": 0.76,
+   "totalRatio": 0.7533,
+   "medianUs": [
+    99,
+    75
+   ],
+   "p99Us": [
+    1083,
+    1041
+   ],
+   "maxUs": [
+    9218,
+    6694
+   ],
+   "totalUs": [
+    541936,
+    408224
+   ]
+  },
+  {
+   "id": "campaign2-w1",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "36b0dc6a",
+    "36b0dc6a"
+   ],
+   "medianPairedRatio": 0.7333,
+   "totalRatio": 0.7273,
+   "medianUs": [
+    62,
+    46
+   ],
+   "p99Us": [
+    776,
+    753
+   ],
+   "maxUs": [
+    8094,
+    5970
+   ],
+   "totalUs": [
+    335467,
+    243987
+   ]
+  },
+  {
+   "id": "campaign2-w5",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "9d97be87",
+    "9d97be87"
+   ],
+   "medianPairedRatio": 0.5738,
+   "totalRatio": 0.5825,
+   "medianUs": [
+    209,
+    116
+   ],
+   "p99Us": [
+    1157,
+    974
+   ],
+   "maxUs": [
+    3404,
+    2356
+   ],
+   "totalUs": [
+    795609,
+    463423
+   ]
+  },
+  {
+   "id": "campaign2-w7",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "357d17e8",
+    "357d17e8"
+   ],
+   "medianPairedRatio": 0.7582,
+   "totalRatio": 0.7692,
+   "medianUs": [
+    73,
+    54
+   ],
+   "p99Us": [
+    903,
+    661
+   ],
+   "maxUs": [
+    8952,
+    6679
+   ],
+   "totalUs": [
+    382112,
+    293920
+   ]
+  },
+  {
+   "id": "campaign2-w9",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "8057719c",
+    "8057719c"
+   ],
+   "medianPairedRatio": 0.6905,
+   "totalRatio": 0.7032,
+   "medianUs": [
+    98,
+    67
+   ],
+   "p99Us": [
+    830,
+    717
+   ],
+   "maxUs": [
+    7706,
+    5202
+   ],
+   "totalUs": [
+    452359,
+    318087
+   ]
+  },
+  {
+   "id": "campaign2-w10",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "8f6aafe7",
+    "8f6aafe7"
+   ],
+   "medianPairedRatio": 0.8065,
+   "totalRatio": 0.7835,
+   "medianUs": [
+    66,
+    54
+   ],
+   "p99Us": [
+    599,
+    483
+   ],
+   "maxUs": [
+    8434,
+    6890
+   ],
+   "totalUs": [
+    341510,
+    267590
+   ]
+  },
+  {
+   "id": "campaign2-w13",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "7e60456d",
+    "7e60456d"
+   ],
+   "medianPairedRatio": 0.8261,
+   "totalRatio": 0.8244,
+   "medianUs": [
+    82,
+    67
+   ],
+   "p99Us": [
+    851,
+    775
+   ],
+   "maxUs": [
+    9399,
+    7168
+   ],
+   "totalUs": [
+    411836,
+    339527
+   ]
+  },
+  {
+   "id": "campaign2-w18",
+   "identical": true,
+   "firstDifference": null,
+   "chain": [
+    "89ab7825",
+    "89ab7825"
+   ],
+   "medianPairedRatio": 0.767,
+   "totalRatio": 0.8083,
+   "medianUs": [
+    124,
+    97
+   ],
+   "p99Us": [
+    1000,
+    811
+   ],
+   "maxUs": [
+    5451,
+    13601
+   ],
+   "totalUs": [
+    551962,
+    446128
+   ]
+  }
+ ]
+}

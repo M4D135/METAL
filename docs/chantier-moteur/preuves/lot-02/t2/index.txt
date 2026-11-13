@@ -1,0 +1,48 @@
+legacy-s0      sols 26 cellules 6400 candidats 8572 | réponse directe 5276 plats d'abord 682 balayage 442 | octets 119078
+legacy-s1      sols 24 cellules 7680 candidats 9790 | réponse directe 6267 plats d'abord 618 balayage 795 | octets 140468
+legacy-s2      sols 28 cellules 7776 candidats 10058 | réponse directe 6294 plats d'abord 712 balayage 770 | octets 143032
+legacy-s3      sols 28 cellules 7776 candidats 10058 | réponse directe 6294 plats d'abord 712 balayage 770 | octets 143032
+legacy-s4      sols 28 cellules 7776 candidats 10058 | réponse directe 6294 plats d'abord 712 balayage 770 | octets 143032
+legacy-s5      sols 28 cellules 7776 candidats 10058 | réponse directe 6294 plats d'abord 712 balayage 770 | octets 143032
+campaign-w1    sols 26 cellules 6400 candidats 8572 | réponse directe 5276 plats d'abord 682 balayage 442 | octets 119078
+campaign-w2    sols 24 cellules 7680 candidats 9790 | réponse directe 6267 plats d'abord 618 balayage 795 | octets 140468
+campaign-w3    sols 28 cellules 7776 candidats 10058 | réponse directe 6294 plats d'abord 712 balayage 770 | octets 143032
+campaign-w4    sols 26 cellules 6400 candidats 8546 | réponse directe 5214 plats d'abord 684 balayage 502 | octets 118974
+campaign-w5    sols 24 cellules 7680 candidats 9788 | réponse directe 6261 plats d'abord 624 balayage 795 | octets 140460
+campaign-w6    sols 28 cellules 7776 candidats 10046 | réponse directe 6438 plats d'abord 710 balayage 628 | octets 142984
+campaign-w7    sols 26 cellules 6400 candidats 8562 | réponse directe 5212 plats d'abord 682 balayage 506 | octets 119038
+campaign-w8    sols 24 cellules 7680 candidats 9784 | réponse directe 6261 plats d'abord 624 balayage 795 | octets 140444
+campaign-w9    sols 28 cellules 7776 candidats 10050 | réponse directe 6362 plats d'abord 710 balayage 704 | octets 143000
+campaign-w10   sols 26 cellules 6400 candidats 8559 | réponse directe 5220 plats d'abord 678 balayage 502 | octets 119026
+campaign-w11   sols 24 cellules 7680 candidats 9786 | réponse directe 6261 plats d'abord 624 balayage 795 | octets 140452
+campaign-w12   sols 28 cellules 7776 candidats 10029 | réponse directe 6432 plats d'abord 712 balayage 632 | octets 142916
+campaign-w13   sols 26 cellules 6400 candidats 8562 | réponse directe 5276 plats d'abord 678 balayage 446 | octets 119038
+campaign-w14   sols 24 cellules 7680 candidats 9776 | réponse directe 6265 plats d'abord 620 balayage 795 | octets 140412
+campaign-w15   sols 28 cellules 7776 candidats 10020 | réponse directe 6434 plats d'abord 710 balayage 632 | octets 142880
+campaign-w16   sols 26 cellules 6400 candidats 8550 | réponse directe 5214 plats d'abord 680 balayage 506 | octets 118990
+campaign-w17   sols 24 cellules 7680 candidats 9776 | réponse directe 6263 plats d'abord 622 balayage 795 | octets 140412
+campaign-w18   sols 28 cellules 7776 candidats 10101 | réponse directe 6370 plats d'abord 710 balayage 696 | octets 143204
+campaign2-w1   sols 26 cellules 6400 candidats 8572 | réponse directe 5276 plats d'abord 682 balayage 442 | octets 119078
+campaign2-w2   sols 24 cellules 7680 candidats 9790 | réponse directe 6267 plats d'abord 618 balayage 795 | octets 140468
+campaign2-w3   sols 28 cellules 7776 candidats 10058 | réponse directe 6294 plats d'abord 712 balayage 770 | octets 143032
+campaign2-w4   sols 26 cellules 6400 candidats 8546 | réponse directe 5214 plats d'abord 684 balayage 502 | octets 118974
+campaign2-w5   sols 24 cellules 7680 candidats 9788 | réponse directe 6261 plats d'abord 624 balayage 795 | octets 140460
+campaign2-w6   sols 28 cellules 7776 candidats 10046 | réponse directe 6438 plats d'abord 710 balayage 628 | octets 142984
+campaign2-w7   sols 26 cellules 6400 candidats 8562 | réponse directe 5212 plats d'abord 682 balayage 506 | octets 119038
+campaign2-w8   sols 24 cellules 7680 candidats 9784 | réponse directe 6261 plats d'abord 624 balayage 795 | octets 140444
+campaign2-w9   sols 28 cellules 7776 candidats 10050 | réponse directe 6362 plats d'abord 710 balayage 704 | octets 143000
+campaign2-w10  sols 26 cellules 6400 candidats 8559 | réponse directe 5220 plats d'abord 678 balayage 502 | octets 119026
+campaign2-w11  sols 24 cellules 7680 candidats 9786 | réponse directe 6261 plats d'abord 624 balayage 795 | octets 140452
+campaign2-w12  sols 28 cellules 7776 candidats 10029 | réponse directe 6432 plats d'abord 712 balayage 632 | octets 142916
+campaign2-w13  sols 26 cellules 6400 candidats 8562 | réponse directe 5276 plats d'abord 678 balayage 446 | octets 119038
+campaign2-w14  sols 24 cellules 7680 candidats 9776 | réponse directe 6265 plats d'abord 620 balayage 795 | octets 140412
+campaign2-w15  sols 28 cellules 7776 candidats 10020 | réponse directe 6434 plats d'abord 710 balayage 632 | octets 142880
+campaign2-w16  sols 26 cellules 6400 candidats 8550 | réponse directe 5214 plats d'abord 680 balayage 506 | octets 118990
+campaign2-w17  sols 24 cellules 7680 candidats 9776 | réponse directe 6263 plats d'abord 622 balayage 795 | octets 140412
+campaign2-w18  sols 28 cellules 7776 candidats 10101 | réponse directe 6370 plats d'abord 710 balayage 696 | octets 143204
+42 mondes : octets 118974 à 143204 | cellules 6400 à 7776 | candidats 8546 à 10101 | sols 24 à 28
+legacy-s0     create avant 17.50 ms, arbre 15.18 ms | indexFloors médiane 0.637 ms, max 3.699 ms
+legacy-s2     create avant 19.72 ms, arbre 16.31 ms | indexFloors médiane 0.539 ms, max 1.672 ms
+campaign-w10  create avant 15.88 ms, arbre 13.95 ms | indexFloors médiane 0.575 ms, max 0.741 ms
+campaign-w16  create avant 15.95 ms, arbre 17.12 ms | indexFloors médiane 0.446 ms, max 2.767 ms
+processus neuf, legacy-s2, 3 fois : create avant 35.8 / 36.5 / 37.0 ms ; arbre 33.9 / 33.9 / 34.5 ms, dont indexFloors 3.51 / 3.47 / 2.38 ms

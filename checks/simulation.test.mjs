@@ -1629,6 +1629,133 @@ test('Fallback outdoor substrate never overrides a higher ramp or terrace', () =
   walkTo(sim, { x: 0, z: -14 }); assert(Math.abs(sim.state.player.y - 3.2) < 1e-8);
 });
 
+// The rule ground() followed before its typed index (SIM-02), restated without any index: the
+// floors of the 8 m bucket holding the point (all floors outside the bucket grid), the highest
+// flat floor first, then the highest ramp, then the substrate, then the floor traps in order.
+function referenceGround(world, x, z, traps = []) {
+  const floors = world.walkable || [];
+  if (!floors.length) return 0;
+  const b = world.bounds, gx = Math.floor(b.minX / 8), gz = Math.floor(b.minZ / 8), gw = Math.floor(b.maxX / 8) - gx + 1, gd = Math.floor(b.maxZ / 8) - gz + 1;
+  const bx = Math.floor(x / 8) - gx, bz = Math.floor(z / 8) - gz, gridded = bx >= 0 && bx < gw && bz >= 0 && bz < gd;
+  let ramp = -Infinity, flat = -Infinity, fallback = -Infinity;
+  for (const f of floors) {
+    if (gridded) {
+      const x0 = Math.max(0, Math.floor((f.x - f.w / 2 - 1e-7) / 8) - gx), x1 = Math.min(gw - 1, Math.floor((f.x + f.w / 2 + 1e-7) / 8) - gx);
+      const z0 = Math.max(0, Math.floor((f.z - f.d / 2 - 1e-7) / 8) - gz), z1 = Math.min(gd - 1, Math.floor((f.z + f.d / 2 + 1e-7) / 8) - gz);
+      if (!(bx >= x0 && bx <= x1 && bz >= z0 && bz <= z1)) continue;
+    }
+    if (Math.abs(x - f.x) <= f.w / 2 + 1e-7 && Math.abs(z - f.z) <= f.d / 2 + 1e-7) {
+      const h = (f.y || 0) + (x - f.x) * (f.slopeX || 0) + (z - f.z) * (f.slopeZ || 0);
+      if (f.substrate || f.fallback) fallback = Math.max(fallback, h);
+      else if (!f.slopeX && !f.slopeZ) flat = Math.max(flat, h);
+      else ramp = Math.max(ramp, h);
+    }
+  }
+  let result = Number.isFinite(flat) ? flat : Number.isFinite(ramp) ? ramp : fallback;
+  for (const t of traps) if (t.kind === 'floor' && Math.abs(x - t.x) < t.w / 2 && Math.abs(z - t.z) < t.d / 2 && Math.abs(result - t.y) < .1) result = t.y - (t.travel || .85) * t.progress;
+  return result;
+}
+
+test('ground() answers exactly like a scan of its 8 m bucket, on floor edges, cell borders and odd values', () => {
+  let seed = 20261113; const rnd = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296;
+  const bits = new Float64Array(1), word = new BigInt64Array(bits.buffer), ulp = v => { bits[0] = Math.abs(v); word[0] += 1n; return bits[0] - Math.abs(v); };
+  const edge = w => w / 2 + 1e-7, tiny = [0, -0, 5e-324, -5e-324, 1e-323, -1e-323, 1.5e-323, -1.5e-323, 1e-310, -1e-310, 2.2250738585072014e-308, -2.2250738585072014e-308, 1e-200, -1e-200];
+  const odd = [NaN, Infinity, -Infinity, 1e300, -1e300, Number.MAX_VALUE, -Number.MAX_VALUE, 3e7, -3e7];
+  const worlds = [
+    ['ties, ramps, substrates, edges on cell borders', fixture({ generation: 5, walkable: [
+      { x: 0, z: 0, w: 60, d: 60, y: -.25, substrate: true, fallback: true }, { x: 0, z: 0, w: 16, d: 16, y: 2 }, { x: 2, z: 2, w: 6, d: 6, y: 2 }, { x: -3, z: 1, w: 4, d: 12, y: 2 },
+      { x: 0, z: 0, w: 8, d: 8, y: 1.99999999 }, { x: 1, z: 1, w: 2, d: 2, y: 3 }, { x: 4, z: 4, w: 4 - 2e-7, d: 4 - 2e-7, y: 3.5 }, { x: 4, z: 4, w: 4 + 4e-6, d: 4 + 4e-6, y: 2.5 },
+      { x: 8 + edge(4), z: -8, w: 4, d: 8, y: 1 }, { x: 16 - edge(6), z: -16 + edge(6), w: 6, d: 6, y: 4 }, { x: -1, z: -9, w: 2 - 1.8e-6, d: 2 + 1.8e-6, y: 1.5 },
+      { x: -12, z: 12, w: 10, d: 6, y: 1, slopeX: .1, slopeZ: .05 }, { x: -12, z: -12, w: 6, d: 10, y: .5, slopeZ: -.3 }, { x: -12, z: -12, w: 2, d: 2, y: 0 },
+      { x: 20, z: -20, w: 8, d: 8, y: -.1, fallback: true }, { x: 20, z: 20, w: 12, d: 12, y: .3, substrate: true, slopeX: .02 }, { x: -20, z: 20, w: 6, d: 6 },
+      { x: -0, z: -0, w: 2, d: 2, y: -0, slopeX: -0, slopeZ: -0 }, { x: 24, z: 4, w: 2.5, d: 2.5, y: 6, slopeX: 0, slopeZ: 0 }, { x: 27, z: 27, w: 8, d: 8, y: 1.25 },
+      // Indexed in the bucket left of x = 0 only, yet reaching x = 0; seems to cover the cell
+      // [20, 22) although x = 20 is just outside it; a flat floor and a ramp beyond the grid.
+      { x: -edge(2), z: 0, w: 2, d: 2, y: 9 }, { x: 22.1600001, z: -25, w: 4.32, d: 6, y: 5 }, { x: 40, z: 0, w: 6, d: 6, y: 1, slopeX: .2 }, { x: 40, z: 0, w: 4, d: 4, y: .5 },
+    ], traps: [
+      { id: 'trap-a', kind: 'floor', x: -2, z: -3, w: 3, d: 3, y: 2, travel: 1.2 }, { id: 'trap-b', kind: 'floor', x: -20, z: 20, w: 2, d: 2, y: 0 },
+      { id: 'trap-c', kind: 'spikes', x: 10, z: 10, w: 1.6, d: 1.6, y: 2, h: 1.1, active: 1.8, warning: 1.2, damage: 18 },
+      { id: 'trap-d', kind: 'floor', x: -2.5, z: -3.5, w: 2, d: 2, y: 2, travel: .5 },
+    ] })],
+    ['missing, infinite, huge, negative and out-of-bounds floors', fixture({ walkable: [
+      { x: NaN, z: 0, w: 10, d: 10 }, { x: 0, z: NaN, w: 10, d: 10, y: 5 }, { x: 0, z: 0, w: NaN, d: 4, y: 3 }, { x: Infinity, z: 0, w: Infinity, d: 10, y: 4 },
+      { x: 0, z: 0, w: Infinity, d: 6, y: -1 }, { x: 2, z: 2, w: 4, d: 4, y: Infinity }, { x: -2, z: -2, w: 4, d: 4, y: -Infinity }, { x: 6, z: 6, w: 4, d: 4, y: NaN },
+      { x: 0, z: -6, w: 4, d: 4, slopeX: NaN, y: 2 }, { x: -6, z: 0, w: 4, d: 4, slopeZ: Infinity, y: 2 }, { x: 1e20, z: 0, w: 2e20, d: 20, y: 1 },
+      { x: -1e9, z: -1e9, w: 2e9 + 3, d: 2e9 + 3, y: .5 }, { x: 0, z: 0, w: 1e300, d: 1e300, y: -3, substrate: true }, { x: 0, z: 12, w: -4, d: 4, y: 5 },
+      { x: 12, z: 0, w: 4, d: -4, y: 6 }, { x: -12, z: 0, w: -0, d: -0, y: 7 }, { x: 80, z: 0, w: 30, d: 30, y: 2 }, { x: -29, z: -29, w: 6, d: 6, y: 1 }, { x: 0, z: 40, w: 60, d: 30, y: .5 },
+      { x: 9, z: 9, w: 1.5, d: 1.5, y: .25 }, { x: 9, z: 9, w: 1.5, d: 1.5, y: 1, slopeX: .1 },
+    ] })],
+    ['no floor at all', fixture({ walkable: [] })],
+    ['seed 96, stage 0', FWorld.create(96, 0)],
+    ['seed 96, stage 2', FWorld.create(96, 2)],
+  ];
+  let samples = 0;
+  for (const [label, world] of worlds) {
+    const sim = FSimulation.create(world), b = world.bounds, floors = world.walkable || [], points = [];
+    sim.state.traps.forEach((t, i) => { t.progress = (i + 1) / 4; });
+    for (let i = 0; i < 4000; i++) points.push([b.minX - 10 + rnd() * (b.maxX - b.minX + 20), b.minZ - 10 + rnd() * (b.maxZ - b.minZ + 20)]);
+    for (const f of floors) {
+      if (![f.x, f.z, f.w, f.d].every(Number.isFinite) || Math.abs(f.x) + Math.abs(f.w) > 1e7 || Math.abs(f.z) + Math.abs(f.d) > 1e7) continue;
+      for (const [ex, ez] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let k = 0; k < 6; k++) {
+        const along = k ? rnd() - .5 : .5, x = f.x + ex * f.w / 2 + (ez ? along * f.w : 0), z = f.z + ez * f.d / 2 + (ex ? along * f.d : 0);
+        for (const d of [0, 1e-7, -1e-7, 1e-7 + ulp(x), 1e-7 - ulp(x), 2e-7, -2e-7, 1e-6, -1e-6, 1.000001e-6, -1.000001e-6, 1e-9, -1e-9, ulp(x), -ulp(x), 3 * ulp(x), -3 * ulp(x)]) points.push([x + ex * d, z + ez * d]);
+      }
+    }
+    for (let k = 0; k < 1200; k++) {
+      const size = [2, 8][k % 2], x = Math.round((b.minX + rnd() * (b.maxX - b.minX)) / size) * size, z = Math.round((b.minZ + rnd() * (b.maxZ - b.minZ)) / size) * size, u = ulp(x), v = ulp(z);
+      for (const [dx, dz] of [[0, 0], [u, 0], [-u, 0], [0, v], [0, -v], [2 * u, -2 * v], [1e-9, -1e-9], [1e-6, 1e-6], [-1e-6, -1e-6]]) points.push([x + dx, z + dz]);
+    }
+    for (let x = Math.floor(b.minX / 2) * 2 - 2; x <= b.maxX + 2; x += 2) for (let z = Math.floor(b.minZ / 2) * 2 - 2; z <= b.maxZ + 2; z += 2) points.push([x, z + 1], [x + 1, z], [x - ulp(x), z - ulp(z)]);
+    for (const x of tiny) { for (const z of tiny) points.push([x, z]); for (let k = 0; k < 8; k++) { const r = b.minX + rnd() * (b.maxX - b.minX); points.push([x, r], [r, x]); } }
+    for (const x of odd) for (const z of [...odd, 0, -0, 5e-324, b.minZ, b.maxZ]) points.push([x, z], [z, x]);
+    points.push([b.minX, b.minZ], [b.maxX, b.maxZ], [b.minX - 1e-9, b.minZ], [b.maxX + 1e-9, b.maxZ], [b.minX - 8, b.minZ - 8], [b.maxX + 8, b.maxZ + 8]);
+    // Explicit lists: none, the state traps in reverse order (overlapping floor traps apply in
+    // order), and floor traps laid on the first floors, one of them of another kind.
+    const lists = [[], sim.state.traps.slice().reverse(), floors.filter(f => Number.isFinite(f.x) && Number.isFinite(f.z) && Math.abs(f.x) < 1e3 && Math.abs(f.z) < 1e3).slice(0, 5).map((f, i) => ({
+      kind: i === 2 ? 'blade' : 'floor', x: f.x, z: f.z, w: Math.min(3, Math.abs(f.w) || 3), d: Math.min(3, Math.abs(f.d) || 3), y: f.y || 0, travel: i % 2 ? undefined : 1.2, progress: (i + 1) / 7,
+    }))];
+    for (const t of [...sim.state.traps, ...lists[2]]) for (let k = 0; k < 300; k++) points.push([t.x + (rnd() - .5) * (t.w + .5), t.z + (rnd() - .5) * (t.d + .5)]);
+    let bad = 0, first = null;
+    const check = (x, z, list) => {
+      const got = list ? sim.ground(x, z, list) : sim.ground(x, z), want = referenceGround(world, x, z, list || sim.state.traps); samples++;
+      if (!Object.is(got, want)) { bad++; first ||= `(${x}, ${z}) with ${list ? 'an explicit' : 'the state'} trap list: ${got} instead of ${want}`; }
+    };
+    points.forEach(([x, z], i) => { check(x, z); if (i % 3 === 0) check(x, z, lists[i / 3 % 3]); });
+    assert.equal(bad, 0, `${label}: ${bad} heights differ, first ${first}`);
+  }
+  assert(samples > 60000, `Only ${samples} points were compared`);
+});
+
+test('ground() follows the floor list and the trap list it reads, including restored traps', () => {
+  const world = fixture({ generation: 5, walkable: [{ x: 0, z: 0, w: 60, d: 60, y: 0 }], traps: [{ id: 'trap-0', kind: 'floor', x: -10, z: -10, w: 4, d: 4, y: 0, travel: 1.2 }] });
+  const sim = FSimulation.create(world);
+  assert.equal(sim.ground(20, 20), 0);
+  world.walkable.push({ x: 20, z: 20, w: 2, d: 2, y: 1.5 });
+  assert.equal(sim.ground(20, 20), 1.5, 'A floor added to the list must be found'); assert.equal(sim.ground(20.9, 19.1), 1.5); assert.equal(sim.ground(23, 20), 0);
+  world.walkable.pop();
+  assert.equal(sim.ground(20, 20), 0, 'A floor removed from the list must be forgotten');
+  const bare = fixture({ walkable: [] }), empty = FSimulation.create(bare);
+  assert.equal(empty.ground(5, 5), 0);
+  bare.walkable.push({ x: 5, z: 5, w: 2, d: 2, y: .75 });
+  assert.equal(empty.ground(5, 5), .75); assert.equal(empty.ground(9, 9), -Infinity); assert.equal(empty.ground(90, 90), -Infinity);
+  bare.walkable.pop(); assert.equal(empty.ground(5, 5), 0);
+
+  const trap = sim.state.traps[0];
+  assert.equal(sim.ground(-10, -10), 0);
+  trap.progress = .5; assert.equal(sim.ground(-10, -10), 0 - 1.2 * .5, 'A trap moved in place must move the floor');
+  assert.equal(sim.ground(-10, -10, []), 0);
+  const other = [{ kind: 'floor', x: -10, z: -10, w: 4, d: 4, y: 0, travel: 2, progress: 1 }];
+  assert.equal(sim.ground(-10, -10, other), -2); assert.equal(sim.ground(10, 10, other), 0);
+  other.push({ kind: 'floor', x: 10, z: 10, w: 4, d: 4, y: 0, progress: 1 });
+  assert.equal(sim.ground(10, 10, other), -.85, 'A trap added to the same list must be seen');
+  assert.equal(sim.ground(-10, -10), 0 - 1.2 * .5);
+  const point = sim.snapshot();
+  trap.progress = .25; assert.equal(sim.ground(-10, -10), 0 - 1.2 * .25);
+  assert.equal(sim.restore(point), true); assert.notEqual(sim.state.traps[0], trap);
+  assert.equal(sim.ground(-10, -10), 0 - 1.2 * .5, 'After a restore, ground() must read the restored traps');
+  sim.state.traps[0].progress = 0; assert.equal(sim.ground(-10, -10), 0);
+});
+
 function fallFixture(extra = {}) {
   return fixture({ generation: 6, spawn: { x: -.1, y: 3.2, z: 0, yaw: -Math.PI / 2 },
     bounds: { minX: -10, maxX: 10, minZ: -10, maxZ: 10 },
