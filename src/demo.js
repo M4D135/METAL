@@ -301,5 +301,53 @@
     if(parts.length)play.select(0);
     return play;
   }
-  G.FDemo={FORMAT,MAGIC,rng,hasher,seedFor,smootherstep,wrapAngle,lookAt,schema,recorder,player};
+  // Rejoueur : par scène, open puis empreinte en 0 ; pour chaque n, commandes du pas n, enregistrement suivant (sinon fin
+  // de scène), step, empreinte en n+1. checksum() n'est appelé que si une empreinte est attendue ; advance reprend où il s'est arrêté.
+  function replay(bytes,game,options){
+    const {expect,stopOnDesync=true}=options??{};
+    if(!game||typeof game.open!=='function'||typeof stopOnDesync!=='boolean')fail('FDEMO_ARG','rejeu : game.open ou stopOnDesync invalide');
+    const play=player(bytes,expect),header=play.header,input={},result={ok:true,steps:0,checked:0,divergence:null,scenes:[]};
+    let k=0,h=null,part=null,done=false,busy=false;
+    const close=()=>{const x=h;h=null;if(typeof x.dispose==='function')x.dispose();};
+    function check(at){
+      const want=play.expected(at);
+      if(want===undefined)return true;
+      const actual=h.checksum()>>>0;
+      result.checked++;part.checked++;
+      if(actual===want)return true;
+      const d={scene:k,step:at,expected:want,actual};
+      part.divergence=part.divergence||d;
+      if(result.ok){result.ok=false;result.divergence=d;}
+      return !stopOnDesync;
+    }
+    function advance(max=Infinity){
+      if(!(max>=0&&(Number.isInteger(max)||max===Infinity)))fail('FDEMO_ARG','rejeu : maxSteps invalide');
+      if(busy)fail('FDEMO_STATE','rejeu : advance imbriqué');
+      busy=true;
+      try{
+        for(let taken=0;!done;){
+          if(!h){
+            if(k>=play.sceneCount){done=true;break;}
+            if(taken>=max)break;
+            play.select(k);result.scenes.push(part={index:k,steps:0,checked:0,divergence:null});
+            h=game.open(header.scenes[k].info,k,header);
+            if(!h||typeof h.step!=='function'||typeof h.checksum!=='function')fail('FDEMO_ARG','rejeu : poignée invalide, scène '+k);
+            if(!check(0)){close();done=true;break;}
+          }
+          if(play.step<play.steps&&taken>=max)break;
+          const list=play.commandsAt(play.step);
+          if(list.length&&typeof h.command!=='function')fail('FDEMO_COMMAND','rejeu : commande '+list[0].type+' sans h.command');
+          for(let i=0;i<list.length;i++)h.command(list[i].type,list[i].data);
+          if(!play.next(input)){close();k++;continue;}
+          h.step(input,play.dt);
+          taken++;result.steps++;part.steps++;
+          if(!check(play.step)){close();done=true;}
+        }
+      }catch(e){done=true;if(h)try{close();}catch{}throw e;}
+      finally{busy=false;}
+      return done;
+    }
+    return {advance,run(){advance();return result;},get done(){return done;},get result(){return result;}};
+  }
+  G.FDemo={FORMAT,MAGIC,rng,hasher,seedFor,smootherstep,wrapAngle,lookAt,schema,recorder,player,replay};
 })(typeof window!=='undefined'?window:globalThis);

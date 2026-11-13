@@ -14,7 +14,7 @@ const sameBytes=(a,b)=>a.length===b.length&&Array.from(a).every((v,i)=>v===b[i])
 const code=c=>e=>e&&e.code===c;                         // assert.throws(fn, code('FDEMO_FORMAT'))
 
 // Fonctions de 3.1 déjà livrées, dans l'ordre de l'export : à compléter à chaque étape.
-const API=['rng','hasher','seedFor','smootherstep','wrapAngle','lookAt','schema','recorder','player'];
+const API=['rng','hasher','seedFor','smootherstep','wrapAngle','lookAt','schema','recorder','player','replay'];
 const draws=(r,n,kind='u32')=>Array.from({length:n},()=>r[kind]());
 
 // Schéma METAL d'aujourd'hui (section 3.5) : un exemple pour les tests, il n'est pas dans FDemo.
@@ -58,6 +58,7 @@ function toySim(D,seed){
 
 // Enregistrement type (annexe 1), dans le même ordre partout. plan : [{info, seed, steps, commands:{n:[[type, data]…]}, dt(i)}].
 // Rend l'enregistreur et, par scène, la copie de chaque sortie de rec.step, les dt, les empreintes prises et l'état final.
+// onStep(rec, k, i, raw) voit aussi l'entrée brute du pas.
 function recordToy(header,plan,options,onStep=()=>{}){
   const rec=D.recorder(header,options),raw={},scenes=[];
   for(const [k,scene] of plan.entries()){
@@ -73,7 +74,7 @@ function recordToy(header,plan,options,onStep=()=>{}){
       outputs.push(plain(q));dts.push(rec.dt);
       sim.step(rec.dt,q);
       if(rec.checksumDue())sum();
-      onStep(rec,k,i);
+      onStep(rec,k,i,raw);
     }
     issue(scene.steps);
     scenes.push({outputs,dts,sums,state:plain(sim.state)});
@@ -962,4 +963,248 @@ test('D15 verify : première divergence gardée',()=>{
   assert.deepEqual(plain(play.divergence),{scene:0,step:120,expected:sums[120],actual:(sums[120]^1)>>>0});
   play.select(1);assert.equal(play.verify(60,scenes[1].sums[60]^2),false);
   assert.equal(play.divergence.step,120,'la première divergence reste');assert.equal(play.divergence.scene,0);
+});
+
+// ---------------------------------------------------------------- Groupe E : rejoueur
+
+// Enregistrement de E1 : 6 000 pas jouets, empreintes tous les 60 pas, boost en n = 1000 et deux en n = 3000.
+// Fait une fois ; garde les octets, les entrées brutes (copies), les sorties relues, les empreintes et l'état final.
+const E_PLAN=[{info:{seed:11,index:0},seed:11,steps:6000,commands:{1000:[['boost',{v:2}]],3000:[['boost',{v:-1}],['boost',{v:.5}]]}}];
+let recordedE=null;
+function recordingE(){
+  if(!recordedE){const raws=[],{rec,scenes}=recordToy(TOY_HEADER,E_PLAN,undefined,(rec,k,i,raw)=>raws.push(plain(raw)));recordedE={bytes:rec.end(),raws,...scenes[0]};}
+  return recordedE;
+}
+// Jeu jouet du rejeu : poignée de l'annexe 1 sur une simulation jouet neuve, graine prise dans info.
+// trace reçoit chaque appel en texte ; perturb : x + 1e−9 juste après le pas d'indice perturb ; watch(input, dt) voit chaque pas.
+function toyGame({trace=null,perturb=-1,commands=true,watch=null}={}){
+  const game={opened:[],sims:[],disposed:0,open(info,k,header){
+    const sim=toySim(D,info.seed);let count=0;
+    game.opened.push({info:plain(info),k,header});game.sims.push(sim);trace?.push('open '+k);
+    const handle={step(input,dt){watch?.(input,dt);sim.step(dt,input);if(count++===perturb)sim.state.x+=1e-9;trace?.push('step '+count+' '+dt);},
+      checksum(){trace?.push('checksum '+count);return sim.digest();},dispose(){trace?.push('dispose '+count);game.disposed++;}};
+    if(commands)handle.command=(type,data)=>{trace?.push('command '+count+' '+type);sim.command(type,data);};
+    return handle;
+  }};
+  return game;
+}
+
+test('E1 rejeu identique : 6 000 pas jouets, 101 empreintes, même état final',()=>{
+  const {bytes,state,sums}=recordingE(),game=toyGame(),rep=D.replay(bytes,game);
+  assert.equal(rep.done,false);assert.equal(game.opened.length,0,'rien n’est ouvert à la création');
+  const result=rep.run();
+  assert.equal(result,rep.result,'run() rend rep.result');assert.equal(rep.done,true);
+  assert.equal(result.ok,true);assert.equal(result.divergence,null);assert.equal(result.checked,101);assert.equal(result.steps,6000);
+  assert.deepEqual(plain(result),{ok:true,steps:6000,checked:101,divergence:null,scenes:[{index:0,steps:6000,checked:101,divergence:null}]});
+  assert.equal(JSON.stringify(game.sims[0].state),JSON.stringify(state),'état final identique (JSON)');
+  assert.equal(game.sims[0].digest(),sums[6000]);assert.equal(game.sims[0].state.boosts,3,'les trois boosts rejoués');
+  assert.equal(game.opened.length,1);assert.equal(game.disposed,1);
+  assert.equal(rep.advance(),true,'après la fin, advance ne fait plus rien');assert.equal(rep.run(),result);assert.equal(game.opened.length,1);assert.equal(game.disposed,1);
+});
+
+test('E2 désynchronisation : x + 1e−9 après le pas d’indice 1234, vue au pas 1260',()=>{
+  const {bytes,sums}=recordingE(),game=toyGame({perturb:1234}),rep=D.replay(bytes,game),r=plain(rep.run());
+  assert.equal(r.ok,false);assert.equal(r.divergence.scene,0);assert.equal(r.divergence.step,1260);assert.notEqual(r.divergence.expected,r.divergence.actual);
+  assert.equal(r.divergence.expected,sums[1260]);assert.equal(r.divergence.actual,game.sims[0].digest(),'actual : empreinte de l’état rejoué');
+  assert.equal(r.steps,1260,'arrêt au pas de la divergence');assert.equal(r.checked,22,'empreintes 0, 60… 1260');
+  assert.deepEqual(r.scenes,[{index:0,steps:1260,checked:22,divergence:r.divergence}]);
+  assert.equal(rep.done,true);assert.equal(game.disposed,1,'poignée disposée à l’arrêt');
+  const all=toyGame({perturb:1234}),going=plain(D.replay(bytes,all,{stopOnDesync:false}).run());
+  assert.equal(going.steps,6000);assert.equal(going.checked,101);assert.equal(going.ok,false);
+  assert.deepEqual(going.divergence,r.divergence,'la première divergence reste celle du pas 1260');
+  assert.deepEqual(going.scenes,[{index:0,steps:6000,checked:101,divergence:r.divergence}]);assert.equal(all.disposed,1);
+  // Témoin : sans perturbation, la même poignée rejoue juste.
+  assert.equal(D.replay(bytes,toyGame({perturb:-1})).run().ok,true);
+});
+
+test('E3 commande sans h.command : FDEMO_COMMAND, poignée disposée',()=>{
+  const game=toyGame({commands:false}),rep=D.replay(recordingE().bytes,game),e=refusal(()=>rep.run(),'commande sans h.command');
+  assert.equal(e.code,'FDEMO_COMMAND');assert.match(e.message,/^FDemo : .*boost/);
+  assert.equal(game.disposed,1);assert.equal(rep.done,true);assert.equal(rep.result.steps,1000,'refus à la première commande, avant le pas d’indice 1000');
+  assert.equal(rep.advance(),true);assert.equal(game.disposed,1,'disposée une seule fois');assert.equal(game.opened.length,1);
+  // Commande au pas 0 : refus avant tout pas ; un enregistrement sans commande n'exige pas h.command.
+  const early=toyGame({commands:false}),first=D.replay(recordToy(TOY_HEADER,TOY_PLAN).rec.end(),early);
+  assert.throws(()=>first.run(),code('FDEMO_COMMAND'));assert.equal(first.result.steps,0);assert.equal(early.disposed,1);
+  const quiet=recordToy(TOY_HEADER,[{info:{seed:4},seed:4,steps:120}]).rec.end();
+  assert.equal(D.replay(quiet,toyGame({commands:false})).run().ok,true);
+});
+
+test('E4 advance(97) répété : même résultat, mêmes appels et même état que run()',()=>{
+  for(const [label,bytes] of [['6 000 pas',recordingE().bytes],['deux scènes de 500 et 300 pas',recordToy(TOY_HEADER,TOY_PLAN).rec.end()]]){
+    const whole=[],sliced=[],a=toyGame({trace:whole}),b=toyGame({trace:sliced}),expected=plain(D.replay(bytes,a).run()),rep=D.replay(bytes,b);
+    assert.equal(rep.advance(0),false,label+' : advance(0) ne fait rien');assert.equal(b.opened.length,0);
+    let calls=0,before=0;
+    while(!rep.advance(97)){calls++;assert.equal(rep.result.steps-before,97,label+' : 97 pas par tranche');before=rep.result.steps;}
+    assert.ok(rep.result.steps-before<=97);assert.equal(calls,Math.ceil(expected.steps/97)-1,label+' : nombre de tranches');
+    assert.deepEqual(plain(rep.result),expected,label+' : même résultat');
+    assert.deepEqual(sliced,whole,label+' : mêmes appels, dans le même ordre');
+    assert.deepEqual(b.sims.map(s=>JSON.stringify(s.state)),a.sims.map(s=>JSON.stringify(s.state)),label+' : même état final');
+    assert.equal(rep.advance(97),true);assert.deepEqual(sliced,whole);
+  }
+});
+
+test('E5 trois scènes de graines différentes : open avec le bon info et le bon k, trois dispose',()=>{
+  const plan=[3,7,8].map((seed,index)=>({info:{seed,index,label:'scène '+index},seed,steps:200+50*index}));
+  const {rec,scenes}=recordToy(TOY_HEADER,plan),bytes=rec.end(),game=toyGame(),r=plain(D.replay(bytes,game).run());
+  assert.equal(game.opened.length,3);
+  for(const [k,o] of game.opened.entries()){
+    assert.equal(o.k,k);assert.deepEqual(o.info,plan[k].info);assert.equal(o.header,game.opened[0].header,'le même en-tête lu');
+    assert.equal(JSON.stringify(o.header),JSON.stringify(D.player(bytes).header));
+  }
+  assert.equal(game.disposed,3);assert.equal(r.scenes.length,3);
+  assert.deepEqual(r,{ok:true,steps:750,checked:15,divergence:null,scenes:[{index:0,steps:200,checked:4,divergence:null},{index:1,steps:250,checked:5,divergence:null},{index:2,steps:300,checked:6,divergence:null}]});
+  for(let k=0;k<3;k++)assert.equal(JSON.stringify(game.sims[k].state),JSON.stringify(scenes[k].state),'scène '+k);
+  // Une scène fausse n'arrête pas les suivantes avec stopOnDesync:false ; chaque scène garde sa première divergence.
+  const wrong=toyGame(),open=wrong.open;wrong.open=(info,k,header)=>open({...plain(info),seed:k===1?99:info.seed},k,header);
+  const mixed=plain(D.replay(bytes,wrong,{stopOnDesync:false}).run());
+  assert.equal(mixed.ok,false);assert.deepEqual(mixed.divergence,{scene:1,step:0,expected:scenes[1].sums[0],actual:toySim(D,99).digest()});
+  assert.deepEqual(mixed.scenes.map(s=>s.divergence&&s.divergence.step),[null,0,null]);assert.equal(mixed.steps,750);assert.equal(wrong.disposed,3);
+});
+
+test('E6 expect refusé : FDEMO_MISMATCH avant tout appel à open',()=>{
+  const {bytes}=recordingE(),game=toyGame();
+  const e=refusal(()=>D.replay(bytes,game,{expect:{simHash:'autre'}}),'simHash autre');
+  assert.equal(e.code,'FDEMO_MISMATCH');assert.equal(e.field,'simHash');assert.equal(game.opened.length,0,'aucun appel à open');
+  assert.throws(()=>D.replay(bytes,game,{expect:{game:'jouet',simHash:'sha-jouet',gameVersion:'2.0'}}),code('FDEMO_MISMATCH'));
+  assert.throws(()=>D.replay(bytes.subarray(0,bytes.length-1),game,{expect:{simHash:'sha-jouet'}}),code('FDEMO_FORMAT'));
+  assert.equal(game.opened.length,0);
+  const rep=D.replay(bytes,game,{expect:{simHash:'sha-jouet',game:'jouet'}});
+  assert.equal(game.opened.length,0,'accepté, toujours rien d’ouvert');assert.equal(rep.run().ok,true);assert.equal(game.opened.length,1);
+});
+
+test('E7 entrées brutes : l’empreinte finale diffère, la simulation doit recevoir l’entrée relue',()=>{
+  const {raws,outputs,sums}=recordingE(),commands=E_PLAN[0].commands;
+  const rerun=inputs=>{
+    const sim=toySim(D,11);let first=null;
+    for(let i=0;i<=inputs.length;i++){
+      for(const [type,data] of commands[i]||[])sim.command(type,data);
+      if(i===inputs.length)break;
+      sim.step(1/60,inputs[i]);
+      if(first===null&&sums[i+1]!==undefined&&sim.digest()!==sums[i+1])first=i+1;
+    }
+    return {digest:sim.digest(),first};
+  };
+  assert.equal(raws.length,6000);
+  const quantized=rerun(outputs);
+  assert.equal(quantized.digest,sums[6000],'témoin : les entrées relues redonnent l’empreinte finale');assert.equal(quantized.first,null);
+  const raw=rerun(raws);
+  assert.notEqual(raw.digest,sums[6000],'entrées brutes : empreinte finale différente');
+  assert.equal(raw.first,60,'écart dès la première empreinte comparée');
+});
+
+test('E8 ordre exact des appels ; un seul objet d’entrée ; dt relus ; checksum() seulement si une empreinte est attendue',()=>{
+  const dt=i=>(16.7+4*Math.sin(1.7*i))/1000;
+  const plan=[{info:{seed:2},seed:2,steps:10,dt,commands:{0:[['boost',{v:1}],['mark','a']],5:[['mark','b']],10:[['boost',{v:-1}]]}},
+    {info:{seed:3},seed:3,steps:3,dt},{info:{seed:4},seed:4,steps:0,commands:{0:[['mark','vide']]}}];
+  const {rec,scenes}=recordToy({...TOY_HEADER,dtTicks:48000,checksumEvery:4},plan),bytes=rec.end(),trace=[],inputs=new Set(),seen=[];
+  const game=toyGame({trace,watch:(input,dt)=>{inputs.add(input);seen.push(plain(input));}}),r=plain(D.replay(bytes,game).run());
+  const expected=[];
+  for(const [k,scene] of plan.entries()){
+    expected.push('open '+k,'checksum 0');
+    for(let n=0;;n++){
+      for(const [type] of scene.commands?.[n]||[])expected.push('command '+n+' '+type);
+      if(n===scene.steps)break;
+      expected.push('step '+(n+1)+' '+scenes[k].dts[n]);
+      if((n+1)%4===0)expected.push('checksum '+(n+1));
+    }
+    expected.push('dispose '+scene.steps);
+  }
+  assert.deepEqual(trace,expected,'open, empreinte 0, puis par pas : commandes, step, empreinte ; commandes de fin ; dispose');
+  assert.equal(inputs.size,1,'un seul objet d’entrée pour tout le rejeu');
+  assert.deepEqual(Object.keys([...inputs][0]),METAL_NAMES);
+  assert.deepEqual(seen,scenes.flatMap(s=>s.outputs),'la simulation reçoit exactement les entrées relues à l’enregistrement');
+  assert.equal(trace.filter(t=>t.startsWith('checksum')).length,r.checked);
+  assert.deepEqual(r.scenes,[{index:0,steps:10,checked:3,divergence:null},{index:1,steps:3,checked:1,divergence:null},{index:2,steps:0,checked:1,divergence:null}]);
+  assert.equal(r.ok,true);
+  for(let k=0;k<3;k++)assert.equal(JSON.stringify(game.sims[k].state),JSON.stringify(scenes[k].state));
+});
+
+test('E9 exceptions du jeu : poignée disposée une fois, même exception relancée, rejeu terminé',()=>{
+  const bytes=recordToy(TOY_HEADER,TOY_PLAN).rec.end(),boom=new Error('panne jouet'),other=new Error('dispose en panne');
+  // Le jeu lève boom au (at+1)-ième appel de where ; dispose peut lever other en plus.
+  const faulty=(where,at,disposeFails=false)=>{
+    const calls={open:0,step:0,checksum:0,command:0,dispose:0},fault=name=>{if(name===where&&calls[name]>at)throw boom;};
+    return {calls,open(info){calls.open++;fault('open');const sim=toySim(D,info.seed);
+      return {step(input,dt){calls.step++;fault('step');sim.step(dt,input);},checksum(){calls.checksum++;fault('checksum');return sim.digest();},
+        command(type,data){calls.command++;fault('command');sim.command(type,data);},dispose(){calls.dispose++;fault('dispose');if(disposeFails)throw other;}};}};
+  };
+  for(const [where,at,disposeFails,steps,disposed] of [['open',0,false,0,0],['open',1,false,500,1],['step',49,false,49,1],['checksum',0,false,0,1],['checksum',5,false,300,1],
+    ['command',2,false,250,1],['dispose',0,false,500,1],['step',10,true,10,1]]){
+    const label=where+' '+at+(disposeFails?', dispose en panne':''),game=faulty(where,at,disposeFails),rep=D.replay(bytes,game);
+    assert.equal(refusal(()=>rep.run(),label),boom,label+' : la même exception');
+    assert.equal(rep.done,true,label);assert.equal(rep.result.steps,steps,label+' : pas joués');assert.equal(game.calls.dispose,disposed,label+' : dispose');
+    const calls=JSON.stringify(game.calls);
+    assert.equal(rep.advance(),true,label);assert.equal(JSON.stringify(game.calls),calls,label+' : plus aucun appel');
+  }
+  // Poignée invalide : FDEMO_ARG, et son dispose s'il existe.
+  for(const [label,make] of [['null',()=>null],['nombre',()=>5],['sans checksum',d=>({step(){},dispose:d})],['sans step',d=>({checksum:()=>1,dispose:d})],['checksum non fonction',d=>({step(){},checksum:1,dispose:d})]]){
+    let disposed=0;const rep=D.replay(bytes,{open:()=>make(()=>disposed++)});
+    assert.throws(()=>rep.run(),code('FDEMO_ARG'),label);assert.equal(rep.done,true);assert.equal(disposed,label==='null'||label==='nombre'?0:1,label);
+  }
+  // advance appelé par le jeu pendant le rejeu : FDEMO_STATE.
+  for(const nested of ['advance','run']){
+    let disposed=0,rep=null;
+    rep=D.replay(bytes,{open:info=>{const sim=toySim(D,info.seed);return {step(input,dt){sim.step(dt,input);if(sim.state.t>.5)rep[nested]();},checksum:()=>sim.digest(),command:()=>{},dispose:()=>disposed++};}});
+    assert.throws(()=>rep.run(),code('FDEMO_STATE'),nested);assert.equal(disposed,1);assert.equal(rep.done,true);
+  }
+});
+
+test('E10 arguments, advance(0), enregistrement sans scène, scène vide',()=>{
+  const bytes=recordToy(TOY_HEADER,TOY_PLAN).rec.end(),game=toyGame();
+  for(const g of [undefined,null,{},{open:1},'open',[]])assert.throws(()=>D.replay(bytes,g),code('FDEMO_ARG'),'game '+JSON.stringify(g));
+  for(const options of [{stopOnDesync:'non'},{stopOnDesync:0},{stopOnDesync:null},{stopOnDesync:1}])assert.throws(()=>D.replay(bytes,game,options),code('FDEMO_ARG'),JSON.stringify(options));
+  for(const options of [undefined,null,{},{stopOnDesync:false},{stopOnDesync:true},{expect:null},{expect:undefined}])assert.equal(D.replay(bytes,game,options).done,false);
+  for(const input of ['FDM1',null,[1,2]])assert.throws(()=>D.replay(input,game),code('FDEMO_ARG'));
+  assert.throws(()=>D.replay(bytes,game,{expect:3}),code('FDEMO_ARG'));
+  assert.equal(game.opened.length,0);
+  const rep=D.replay(bytes,game);
+  for(const max of [-1,NaN,1.5,'3',null,true,-Infinity,{}])assert.throws(()=>rep.advance(max),code('FDEMO_ARG'),'maxSteps '+String(max));
+  assert.equal(rep.done,false);assert.equal(game.opened.length,0);
+  assert.equal(rep.advance(0),false);assert.equal(game.opened.length,0,'advance(0) n’ouvre rien');
+  assert.equal(rep.advance(1),false);assert.equal(game.opened.length,1);assert.equal(rep.result.steps,1);
+  assert.equal(rep.advance(0),false);assert.equal(rep.result.steps,1,'advance(0) ne joue aucun pas');
+  assert.equal(rep.advance(499),false);assert.equal(rep.result.steps,500);assert.equal(game.disposed,1,'fin de scène dans la même tranche');
+  assert.equal(game.opened.length,1,'budget épuisé : la scène suivante attend la tranche suivante');
+  assert.equal(rep.advance(Infinity),true);assert.equal(rep.result.steps,800);assert.equal(game.disposed,2);
+  // Aucun enregistrement de scène : fini tout de suite, sans open.
+  const none=toyGame(),empty=D.replay(D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS}).end(),none);
+  assert.equal(empty.advance(0),true);assert.deepEqual(plain(empty.result),{ok:true,steps:0,checked:0,divergence:null,scenes:[]});assert.equal(none.opened.length,0);
+  // Scènes vides : open, empreinte 0, commandes du pas 0, dispose, sans pas.
+  const trace=[],quiet=toyGame({trace}),blank=recordToy(TOY_HEADER,[{info:{seed:1},seed:1,steps:0,commands:{0:[['boost',{v:1}]]}},{info:{seed:2},seed:2,steps:0}]).rec.end();
+  assert.deepEqual(plain(D.replay(blank,quiet).run()),{ok:true,steps:0,checked:2,divergence:null,scenes:[{index:0,steps:0,checked:1,divergence:null},{index:1,steps:0,checked:1,divergence:null}]});
+  assert.deepEqual(trace,['open 0','checksum 0','command 0 boost','dispose 0','open 1','checksum 0','dispose 0']);
+  // Enregistrement sans empreinte : checksum() n'est jamais appelé.
+  const bare=D.recorder({game:'g',simHash:'h',fields:METAL_FIELDS});bare.scene({seed:6});for(let i=0;i<30;i++)bare.step({moveX:i/30});
+  let sums=0;const r=plain(D.replay(bare.end(),{open:()=>({step(){},checksum:()=>{sums++;return 0;}})}).run());
+  assert.equal(sums,0);assert.deepEqual(r,{ok:true,steps:30,checked:0,divergence:null,scenes:[{index:0,steps:30,checked:0,divergence:null}]});
+});
+
+test('E11 boucle du rejeu : aucune allocation par pas (2.2)',async()=>{
+  // Domaine principal, comme D14 : poignée vide, empreinte constante tous les 600 pas, une commande tous les 1 000 pas.
+  // Le rejoueur est ouvert par advance(1) avant la passe mesurée : la préparation d'une scène (select) alloue, une fois.
+  v8.setFlagsFromString('--expose-gc');const gc=vm.runInNewContext('gc');
+  const F=loadRealm({modules:['demo']}).window.FDemo,N=5e5,TRIES=3,settle=()=>new Promise(r=>setImmediate(r)),state={x:0};
+  const inputs=Array.from({length:1024},(_,i)=>{const raw={moveX:null,moveY:null,lookX:null,lookY:null};toyPilot(i*7,state,raw);return raw;});
+  const dts=new Array(1024).fill(null);for(let i=0;i<1024;i++)dts[i]=(16.7+4*Math.sin(1.7*i))/1000;
+  const record=extra=>{const rec=F.recorder({game:'g',simHash:'h',fields:METAL_FIELDS,checksumEvery:600,...extra},{initialSteps:N+2,maxBytes:2**30});rec.scene({});rec.checksum(7);
+    for(let i=0;i<=N;i++){if(i%1000===500)rec.command('repère',i);rec.step(inputs[i&1023],dts[i&1023]);if(rec.checksumDue())rec.checksum(7);}return rec.end();};
+  let commands=0;const handle={step(input,dt){},checksum(){return 7;},command(type,data){commands++;}},game={open:()=>handle};
+  const recordings={fixed:record({}),ticks:record({dtTicks:48000})};
+  const starts=[],observer=new PerformanceObserver(list=>{for(const e of list.getEntries())starts.push(e.startTime);}),heap=()=>v8.getHeapStatistics().used_heap_size;
+  observer.observe({entryTypes:['gc']});
+  const passes={},clean=p=>p.gcs===0&&p.grown<N;
+  try{
+    for(const [name,bytes] of Object.entries(recordings)){
+      F.replay(bytes,game).run();passes[name]=[];
+      for(let k=0;k<TRIES&&!passes[name].some(clean);k++){
+        const rep=F.replay(bytes,game);rep.advance(1);gc();
+        const h0=heap(),t0=performance.now();rep.advance(N);const t1=performance.now(),grown=heap()-h0;
+        for(let j=0;j<4;j++)await settle();
+        assert.equal(rep.result.steps,N+1);assert.equal(rep.done,true);assert.equal(rep.result.ok,true);
+        passes[name].push({gcs:starts.filter(t=>t>=t0&&t<=t1).length,grown});
+      }
+    }
+  }finally{observer.disconnect();}
+  for(const [name,list] of Object.entries(passes))assert.ok(list.some(clean),name+' : '+JSON.stringify(list)+', '+N+' pas par passe');
+  assert.ok(commands>=1000);
 });

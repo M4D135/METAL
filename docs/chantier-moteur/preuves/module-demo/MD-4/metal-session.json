@@ -1,0 +1,138 @@
+{
+ "schema": "fdemo-md4-metal-session-v1",
+ "command": "node docs/chantier-moteur/preuves/module-demo/MD-4/metal-session.mjs --out docs/chantier-moteur/preuves/module-demo/MD-4/metal-session.json",
+ "sourceSha256": {
+  "demo": "6e89f8809753c9e22a17c13b7dbb3dc1cf09e60131054b87c497ff1e228ef266",
+  "pilot": "98b330899ecd39c6bf53d60686dca7d92412aba47084cae10d5eba2d20161ed4"
+ },
+ "simHash": "e731c8f3434d15cf47e70a3be4eb4b61b41f9b55667ab85c2023c80cc81ce3eb",
+ "environment": {
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "cores": 10,
+  "loadavg": [
+   4.92,
+   4.95,
+   4.18
+  ]
+ },
+ "settings": {
+  "seconds": 100,
+  "hz": 60,
+  "checksumEvery": 60,
+  "startWorld": 7,
+  "seed": 96,
+  "campaignVersion": 2,
+  "brain": "cpu",
+  "difficulty": 1,
+  "fields": "METAL, 8 octets"
+ },
+ "record": {
+  "steps": 6000,
+  "stop": null,
+  "worlds": [
+   7
+  ],
+  "scenes": [
+   {
+    "steps": 6000,
+    "checksums": 101,
+    "commandBytes": 157,
+    "truncated": false
+   }
+  ],
+  "snapshotCommands": 7,
+  "assistHp": 0,
+  "firstAssistStepIndex": null
+ },
+ "secondRecordingIdentical": true,
+ "replay": {
+  "ok": true,
+  "steps": 6000,
+  "checked": 101,
+  "divergence": null,
+  "scenes": [
+   {
+    "index": 0,
+    "steps": 6000,
+    "checked": 101,
+    "divergence": null
+   }
+  ],
+  "firstDifferentStep": null,
+  "snapshotsEqual": true
+ },
+ "replayWithoutAssist": {
+  "ok": true,
+  "divergence": null,
+  "steps": 6000,
+  "firstDifferentStep": null,
+  "expectedDetection": null
+ },
+ "replayWithoutSnapshotCommands": {
+  "ok": true,
+  "divergence": null,
+  "checked": 101,
+  "firstDifferentStep": null,
+  "snapshotsEqual": true
+ },
+ "extraSnapshot": {
+  "stepIndex": 2700,
+  "ok": true,
+  "divergence": null,
+  "firstDifferentStep": null
+ },
+ "negative": {
+  "perturbedStepIndex": 1234,
+  "expectedDetection": 1260,
+  "detectedAt": 1260,
+  "steps": 1260
+ },
+ "raw": {
+  "ok": false,
+  "firstDifferentStep": 1,
+  "detectedAt": 60
+ },
+ "sizes": {
+  "headerBytes": 1043,
+  "bodyBytes": 48965,
+  "fileBytes": 50016,
+  "perMinute": {
+   "records": 28800,
+   "body": 29379,
+   "file": 30010
+  }
+ },
+ "timing": {
+  "simNsPerStep": 645433,
+  "replayRunMs": 10826,
+  "replaySimMs": 3531.7,
+  "replayNsPerStep": 317.3,
+  "byHandNsPerStep": 284.9,
+  "replayPasses": [
+   317.3,
+   309.6,
+   309.6,
+   317.7,
+   312.5,
+   334.2,
+   340.4
+  ],
+  "byHandPasses": [
+   310.1,
+   286.4,
+   260.9,
+   270,
+   258.5,
+   299.7,
+   284.9
+  ],
+  "steps": 120000,
+  "passes": 7,
+  "replayOverhead": 0.000492,
+  "method": "temps processeur du fil ; sim.step mesuré pas à pas pendant l’enregistrement et le rejeu ; rejoueur seul (poignée vide) contre boucle à la main sur FDemo.player : 20 tours de l’enregistrement, médiane de 7 passes alternées"
+ },
+ "wallSeconds": 75.1
+}
