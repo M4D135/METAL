@@ -1,0 +1,288 @@
+{
+ "tool": "manette.mjs",
+ "node": "v24.18.0",
+ "arch": "arm64",
+ "platform": "darwin",
+ "avant": {
+  "module": "f36e318",
+  "radial": "undefined",
+  "lacet": [
+   {
+    "deflexion": 0.05,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.12,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.2,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.35,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.5,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.7,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.85,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.95,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 1,
+    "degParS": 0,
+    "surCible": 0
+   }
+  ],
+  "demiTour": {
+   "images120": null,
+   "ms120": null,
+   "images60": null,
+   "ms60": null,
+   "sansSurcroitMs": null
+  },
+  "viseeFine": {
+   "degParImage": 0
+  },
+  "tangage": {
+   "degParS": 0,
+   "inverse": 0
+  },
+  "deplacement": {
+   "moveY55": 0,
+   "course90": false,
+   "course91": false,
+   "moveY100": 0
+  },
+  "gachette": {
+   "tir": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "fronts": []
+  },
+  "branchement": {
+   "connected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "disconnected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "device": "keyboard"
+  },
+  "simulation": {
+   "vitesse55": 0,
+   "vitesse100": 0,
+   "lacetApres2sA40": 0
+  }
+ },
+ "apres": {
+  "module": "f36e318 + arbre de travail",
+  "radial": "object",
+  "lacet": [
+   {
+    "deflexion": 0.05,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.12,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.2,
+    "degParS": 5.4,
+    "surCible": 3
+   },
+   {
+    "deflexion": 0.35,
+    "degParS": 32.5,
+    "surCible": 17.9
+   },
+   {
+    "deflexion": 0.5,
+    "degParS": 76.3,
+    "surCible": 42
+   },
+   {
+    "deflexion": 0.7,
+    "degParS": 156.7,
+    "surCible": 86.2
+   },
+   {
+    "deflexion": 0.85,
+    "degParS": 231.6,
+    "surCible": 127.4
+   },
+   {
+    "deflexion": 0.95,
+    "degParS": 288.1,
+    "surCible": 158.5
+   },
+   {
+    "deflexion": 1,
+    "degParS": 300,
+    "surCible": 165
+   }
+  ],
+  "demiTour": {
+   "images120": 58,
+   "ms120": 483.3,
+   "images60": 29,
+   "ms60": 483.3,
+   "sansSurcroitMs": 600
+  },
+  "viseeFine": {
+   "degParImage": 0.09
+  },
+  "tangage": {
+   "degParS": 190,
+   "inverse": -190
+  },
+  "deplacement": {
+   "moveY55": 0.487805,
+   "course90": false,
+   "course91": true,
+   "moveY100": 1
+  },
+  "gachette": {
+   "tir": [
+    false,
+    true,
+    true,
+    false,
+    false,
+    true
+   ],
+   "fronts": [
+    2,
+    6
+   ]
+  },
+  "branchement": {
+   "connected": [
+    0,
+    1,
+    0,
+    0
+   ],
+   "disconnected": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "device": "keyboard"
+  },
+  "simulation": {
+   "vitesse55": 2.63,
+   "vitesse100": 7.6,
+   "lacetApres2sA40": 90.8
+  }
+ },
+ "prototype": {
+  "lacet": [
+   {
+    "deflexion": 0.05,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.12,
+    "degParS": 0,
+    "surCible": 0
+   },
+   {
+    "deflexion": 0.2,
+    "degParS": 5.4,
+    "surCible": 3
+   },
+   {
+    "deflexion": 0.35,
+    "degParS": 32.5,
+    "surCible": 17.9
+   },
+   {
+    "deflexion": 0.5,
+    "degParS": 76.3,
+    "surCible": 42
+   },
+   {
+    "deflexion": 0.7,
+    "degParS": 156.7,
+    "surCible": 86.2
+   },
+   {
+    "deflexion": 0.85,
+    "degParS": 231.6,
+    "surCible": 127.4
+   },
+   {
+    "deflexion": 0.95,
+    "degParS": 288.1,
+    "surCible": 158.5
+   },
+   {
+    "deflexion": 1,
+    "degParS": 300,
+    "surCible": 165
+   }
+  ],
+  "demiTour": {
+   "images120": 58,
+   "ms120": 483.3
+  },
+  "simulation": {
+   "vitesse55": 2.63,
+   "vitesse100": 7.6,
+   "lacetApres2sA40": 90.8
+  }
+ },
+ "appariementPrototype": {
+  "images": 600,
+  "imagesAvecSurcroit": 247,
+  "champs": [
+   "moveX",
+   "moveY",
+   "lookX",
+   "lookY",
+   "fire",
+   "fireLeft",
+   "sprint"
+  ],
+  "ecartsBooleens": 0,
+  "ecartsNumeriques": 238,
+  "ecartAbsoluMax": 5.551115123125783e-17,
+  "ecartRelatifMax": 3.6967075458621234e-16
+ }
+}

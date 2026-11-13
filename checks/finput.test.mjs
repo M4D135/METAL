@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {METAL_INPUT as M, V1_KEYS, lcg} from './finput-fixture.mjs';
+import {METAL_INPUT as M, V1_KEYS, lcg, fakePad, PAD_IDS} from './finput-fixture.mjs';
 const source = readFileSync(new URL('../src/input.js', import.meta.url), 'utf8');
 function load(){ const pads = {list: []};
   const window = {navigator: {getGamepads: () => pads.list}, Event: class {constructor(type, init){this.type = type; this.bubbles = !!(init && init.bubbles);}}};
@@ -927,6 +927,403 @@ test('E23 — Capture clavier : le prochain appui va à frame().captured, jamais
   const a = inp.assign(got.device, 'interact', got.code); assert.equal(a.ok, true); inp.configure(a.settings);
   inp.keyUp('KeyG', 210); inp.keyDown('KeyG', 220, false); r = one(inp);
   assert.equal(json(r.f.pressed), json(['interact'])); assert.equal(r.s.interact, true); assert.equal(inp.keyDown('KeyF', 230, false), false);
+});
+
+// ——— Step 4: gamepad — reading, fusion, dead zones, curve, boost, triggers, values, run, hot plug, device, capture, swap ———
+const DEG = 180 / Math.PI, RAD = Math.PI / 180;
+// FEEL-10 yaw at a deflection d of the right stick, first frame: ((d − .12) / .85)^1,7 × 300 °/s.
+const yawAt = d => Math.pow(Math.min(1, (d - .12) / .85), 1.7) * 300;
+const withTune = (F, tune) => { const inp = F.create(M), s = inp.settings; Object.assign(s.tune, tune); inp.configure(s); return inp; };
+const noNegZero = (o, where) => { for (const [k, v] of Object.entries(o)) assert.ok(!Object.is(v, -0), where + ' : ' + k); };
+
+test('E24 — radial : zone morte radiale avec remise à l’échelle', () => {
+  const {F} = load();
+  assert.equal(json(F.radial(.1, .1, .15, .97)), json([0, 0, 0]));
+  let [x, y, n] = F.radial(0, -.55, .15, .97);
+  near(n, .487804878, 1e-9, 'n'); assert.equal(x, 0); assert.equal(y, -n);
+  [x, y, n] = F.radial(.7, .7, .12, .97);
+  assert.equal(n, 1); near(x, .70711, 1e-5, 'x'); near(y, .70711, 1e-5, 'y');
+  assert.equal(json(F.radial(3, 4, .12, .97)), json([.6, .8, 1]));
+  // The direction is kept and the norm rescaled: n = (m − inner) / (outer − inner), 1 from the outer radius on.
+  [x, y, n] = F.radial(-.3, .4, .12, .97); near(n, (.5 - .12) / .85, 1e-15, 'n'); near(x, -.6 * n, 1e-15, 'x'); near(y, .8 * n, 1e-15, 'y');
+  assert.equal(F.radial(0, .97, .12, .97)[2], 1); assert.ok(F.radial(0, .96, .12, .97)[2] < 1);
+  // On the inner radius or inside: nothing. No -0, no NaN (0/0, non-finite input).
+  for (const [a, b, inner] of [[.12, 0, .12], [0, -.12, .12], [0, 0, 0], [-0, -0, 0], [NaN, 0, .12], [0, NaN, .12]]) assert.equal(json(F.radial(a, b, inner, .97)), json([0, 0, 0]), a + ', ' + b);
+  for (const r of [F.radial(-0, .5, .12, .97), F.radial(.5, -0, .12, .97), F.radial(-0, -.5, .12, .97)]) noNegZero(r, 'radial');
+});
+
+test('E25 — Déplacement à la manette : zone morte .15, course au bout du stick (n ≥ .92)', () => {
+  const {F, pads} = load();
+  const inp = F.create(M);
+  const at = (x, y) => { pads.list = [fakePad({axes: [x, y, 0, 0]})]; return one(inp); };
+  let {f, s} = at(0, -.55);
+  near(s.moveY, .487805, 1e-6, '(0, -.55)'); assert.equal(s.moveX, 0); assert.equal(s.sprint, false);
+  ({f, s} = at(0, -.90)); assert.equal(s.sprint, false, '(0, -.90) : n = 0,9146'); assert.equal(json(f.pressed), '[]');
+  ({f, s} = at(0, -.91)); assert.equal(s.sprint, true, '(0, -.91) : n = 0,9268'); assert.equal(json(f.pressed), json(['sprint']));
+  ({f, s} = at(0, -1)); assert.equal(s.moveY, 1); assert.equal(s.sprint, true); assert.equal(json(f.pressed), '[]', 'déjà tenue');
+  ({f, s} = at(.1, .1)); assert.ok(idle(s), json(s));
+  // Back, sideways, diagonal: forward positive, a norm of 1 at most; the run needs the norm, not one axis.
+  s = at(0, 1).s; assert.equal(s.moveY, -1); assert.equal(s.moveX, 0);
+  s = at(-1, 0).s; assert.equal(s.moveX, -1); assert.equal(s.moveY, 0);
+  s = at(1, 1).s; near(s.moveX, Math.SQRT1_2, 1e-15, 'diagonale'); near(s.moveY, -Math.SQRT1_2, 1e-15, 'diagonale'); assert.equal(s.sprint, true);
+  // Below the run threshold, Shift still runs; the stick and the keys are OR-ed on the run action.
+  at(0, -.5); inp.keyDown('ShiftLeft', 0, false); assert.equal(at(0, -.5).s.sprint, true); inp.keyUp('ShiftLeft', 0);
+  assert.equal(at(0, -.5).s.sprint, false);
+  // A run seen by one frame only, with no step in it, still reaches the first step (latch, LOOP-06), like a key.
+  inp.frame(DT); pads.list = [fakePad({axes: [0, -1, 0, 0]})]; inp.frame(DT); pads.list = [fakePad()]; inp.frame(DT);
+  assert.equal(inp.step().sprint, true); assert.equal(inp.step().sprint, false);
+  // moveDead is read from the settings.
+  const wide = withTune(F, {moveDead: .4}); pads.list = [fakePad({axes: [0, -.55, 0, 0]})];
+  near(one(wide).s.moveY, (.55 - .4) / (.97 - .4), 1e-15, 'moveDead .4');
+});
+
+test('E26 — Lacet (FEEL-10) : 5,40, 76,34, 156,65 et 300 °/s à 20, 50, 70 et 100 %', () => {
+  const {F, pads} = load();
+  const rate = d => { const inp = F.create(M); pads.list = [fakePad({axes: [0, 0, d, 0]})]; const s = one(inp).s; assert.equal(s.lookY, 0); return s.lookX / DT * DEG; };
+  for (const [d, want, tol] of [[.2, 5.40, .05], [.5, 76.34, .05], [.7, 156.65, .05], [1, 300, 1e-9]]) {
+    const r = rate(d);
+    near(r, want, tol, 'déflexion ' + d); near(r, yawAt(d), 1e-9, 'formule, déflexion ' + d);
+  }
+  // The rest of the table of bancs/feel/gamepad-map.mjs, and the dead zone .12.
+  for (const [d, want] of [[.35, 32.5], [.85, 231.6], [.95, 288.1]]) near(rate(d), want, .05, 'déflexion ' + d);
+  for (const d of [.05, .12]) assert.equal(rate(d), 0, 'zone morte ' + d);
+  near(rate(-.5), -yawAt(.5), 1e-9, 'vers la gauche');
+  // Fine aim: 0,090° per frame at 20 % (FEEL-10).
+  near(rate(.2) / 60, .090, .0005, 'visée fine');
+  // padYaw, padDead and padCurve are read from the settings.
+  const tuned = withTune(F, {padYaw: 420, padDead: .2, padCurve: 2.2}); pads.list = [fakePad({axes: [0, 0, .5, 0]})];
+  near(one(tuned).s.lookX / DT * DEG, Math.pow((.5 - .2) / (.97 - .2), 2.2) * 420, 1e-9, 'réglages');
+});
+
+test('E27 — Tangage : +190 °/s × dt vers le haut, opposé avec padInvertY', () => {
+  const {F, pads} = load();
+  const pitch = (y, tune = {}) => { const inp = withTune(F, tune); pads.list = [fakePad({axes: [0, 0, 0, y]})]; const s = one(inp).s; assert.equal(s.lookX, 0); return s.lookY; };
+  near(pitch(-1), 190 * RAD * DT, 1e-12, 'stick vers le haut');
+  near(pitch(-1, {padInvertY: true}), -190 * RAD * DT, 1e-12, 'padInvertY');
+  near(pitch(1), -190 * RAD * DT, 1e-12, 'stick vers le bas'); near(pitch(1, {padInvertY: true}), 190 * RAD * DT, 1e-12, 'vers le bas, inversé');
+  near(pitch(-.5), Math.pow(.38 / .85, 1.7) * 190 * RAD * DT, 1e-12, 'courbe');
+  near(pitch(-1, {padPitch: 250}), 250 * RAD * DT, 1e-12, 'padPitch');
+  // invertY (mouse and touch) leaves the pad alone; padInvertY leaves the mouse alone.
+  near(pitch(-1, {invertY: true}), 190 * RAD * DT, 1e-12, 'invertY');
+  const inp = withTune(F, {padInvertY: true}); pads.list = []; inp.mouseMove(0, -10, 0); near(one(inp).s.lookY, 10 * .0022, 1e-15, 'souris');
+});
+
+test('E28 — Demi-tour : 58 images de 1/120 s (0,483 s) et 29 de 1/60 s ; 600 ms sans surcroît', () => {
+  const {F, pads} = load();
+  // Per-frame look of a stick held at (x, y), one frame and one step per image.
+  const hold = (dt, frames, tune = {}, axes = [0, 0, 1, 0]) => { const inp = withTune(F, tune); pads.list = [fakePad({axes})]; return Array.from({length: frames}, () => { inp.frame(dt); return inp.step(); }); };
+  const reach = (dt, tune) => { let a = 0; return hold(dt, 200, tune).findIndex(s => (a += s.lookX) >= Math.PI) + 1; };
+  assert.equal(reach(1 / 120), 58); near(58 / 120, .4833, 5e-5, 'durée');
+  assert.equal(reach(1 / 60), 29);
+  // Without the boost: 180° / 300 °/s = 0,6 s, i.e. 72 frames of 1/120 s.
+  near(hold(1 / 120, 72, {padBoost: 0}).reduce((a, s) => a + s.lookX, 0), Math.PI, 1e-12, 'sans surcroît');
+  // Boost: none for 0,18 s (21 frames of 1/120 s), ramp over 0,30 s, +80 % from 0,48 s (frame 58) on.
+  const x = hold(1 / 120, 60).map(s => s.lookX), base = 300 * RAD / 120;
+  for (let k = 0; k < 21; k++) near(x[k], base, 1e-15, 'image ' + (k + 1));
+  near(x[21], base * (1 + .8 * ((22 / 120 - .18) / .3)), 1e-15, 'image 22 : temps compté avant la rampe');
+  for (let k = 21; k < 57; k++) assert.ok(x[k + 1] > x[k], 'rampe, image ' + (k + 2));
+  near(x[57], base * 1.8, 1e-15, 'image 58'); near(x[59], base * 1.8, 1e-15, 'image 60');
+  // The boost applies to the yaw only: on a diagonal, the pitch stays the same at every frame.
+  const diag = hold(1 / 120, 60, {}, [0, 0, 1, -1]), y0 = diag[0].lookY;
+  assert.ok(diag.every(s => s.lookY === y0)); assert.ok(diag[59].lookX > 1.7 * diag[0].lookX);
+  // Below n = .97 (here .9176) the time at full deflection restarts from 0.
+  const inp = F.create(M); pads.list = [fakePad({axes: [0, 0, 1, 0]})];
+  for (let k = 0; k < 60; k++) one(inp);
+  pads.list = [fakePad({axes: [0, 0, .9, 0]})]; near(one(inp).s.lookX, yawAt(.9) * RAD * DT, 1e-15, 'sous .97');
+  pads.list = [fakePad({axes: [0, 0, 1, 0]})]; near(one(inp).s.lookX, 300 * RAD * DT, 1e-15, 'surcroît remis à zéro');
+  // clear() restarts it too.
+  for (let k = 0; k < 60; k++) one(inp);
+  inp.clear(); near(one(inp).s.lookX, 300 * RAD * DT, 1e-15, 'surcroît remis à zéro par clear()');
+  // padBoost is read from the settings.
+  near(hold(1 / 120, 60, {padBoost: 1.5})[59].lookX, base * 2.5, 1e-15, 'padBoost 1,5');
+});
+
+test('E29 — Ralentissement sur cible : lookScale .55, sur la visée à la manette seulement', () => {
+  const {F, pads} = load();
+  pads.list = [fakePad({axes: [0, 0, .5, -.6]})];
+  const a = F.create(M), b = F.create(M);
+  for (let k = 0; k < 3; k++) {
+    a.frame(DT); b.frame(DT, {lookScale: .55});
+    const sa = a.step(), sb = b.step();
+    for (const key of ['lookX', 'lookY']) assert.ok(sa[key] !== 0 && Math.abs(sb[key] - .55 * sa[key]) <= 1e-12 * Math.abs(sa[key]), key + ' : ' + sb[key] + ' / ' + sa[key]);
+  }
+  // Boosted yaw too (stick at full deflection for 0,5 s).
+  pads.list = [fakePad({axes: [0, 0, 1, 0]})];
+  for (let k = 0; k < 30; k++) { a.frame(DT); b.frame(DT, {lookScale: .55}); }
+  const sa = a.step().lookX, sb = b.step().lookX; assert.ok(Math.abs(sb - .55 * sa) <= 1e-12 * sa);
+  // Mouse and keyboard look are left alone; an invalid lookScale counts as 1.
+  pads.list = [];
+  a.mouseMove(10, 0, 0); a.keyDown('ArrowRight', 0, false); a.frame(DT, {lookScale: .55}); near(a.step().lookX, 10 * .0022 + 1.9 * DT, 1e-15, 'souris et clavier');
+  a.keyUp('ArrowRight', 0);
+  pads.list = [fakePad({axes: [0, 0, .5, 0]})];
+  for (const ctx of [undefined, null, {}, {lookScale: NaN}, {lookScale: '0.5'}, {lookScale: Infinity}]) {
+    const c = F.create(M); c.frame(DT, ctx); near(c.step().lookX, yawAt(.5) * RAD * DT, 1e-15, json(ctx));
+  }
+  const still = F.create(M); still.frame(DT, {lookScale: 0}); assert.equal(still.step().lookX, 0, 'lookScale 0');
+});
+
+test('E30 — Gâchettes : hystérésis .30 / .18, fronts aux images 2 et 6', () => {
+  const {F, pads} = load();
+  const run = (button, id, values) => {
+    const inp = F.create(M), held = [], fronts = [];
+    values.forEach((v, i) => { pads.list = [fakePad({press: {[button]: v}})]; const {f, s} = one(inp); held.push(s[id]); if (f.pressed.includes(id)) fronts.push(i + 1); });
+    return {held, fronts};
+  };
+  let r = run('RT', 'fire', [.25, .31, .20, .17, .29, .31]);
+  assert.equal(json(r.held), json([false, true, true, false, false, true])); assert.equal(json(r.fronts), json([2, 6]));
+  r = run('LT', 'fireLeft', [.25, .31, .20, .17, .29, .31]);
+  assert.equal(json(r.held), json([false, true, true, false, false, true])); assert.equal(json(r.fronts), json([2, 6]));
+  // The thresholds are strict: .30 does not press, .18 releases.
+  r = run('RT', 'fire', [.30, .3001, .18, .1801, .19, .18]);
+  assert.equal(json(r.held), json([false, true, false, false, false, false]));
+  // pressed does not count for a trigger: only its value (fixture: pressed when value > .5), across all pads.
+  const inp = F.create(M);
+  pads.list = [fakePad({press: {RT: .2}}), fakePad({index: 1, press: {RT: .35}})]; assert.equal(one(inp).s.fire, true);
+  pads.list = [fakePad({press: {RT: .25}}), fakePad({index: 1, press: {RT: 0}})]; assert.equal(one(inp).s.fire, true, 'la plus forte valeur des manettes');
+  pads.list = [fakePad({press: {RT: .1}}), fakePad({index: 1, press: {RT: .1}})]; assert.equal(one(inp).s.fire, false);
+  const digital = fakePad(); digital.buttons[7] = {pressed: true, touched: true, value: 0}; pads.list = [digital];
+  assert.equal(one(inp).s.fire, false, 'pressed sans valeur');
+  // A short pull, released before the next frame is read, is not seen (the pad is polled); a pull over one frame is latched.
+  pads.list = [fakePad({press: {RT: 1}})]; inp.frame(DT); pads.list = [fakePad()]; inp.frame(DT);
+  assert.equal(inp.step().fire, true); assert.equal(inp.step().fire, false);
+});
+
+test('E31 — Valeur analogique : RT .5 → 0,473684 ; .04 → 0 ; 1 → 1 ; sa touche → 1', () => {
+  const {F, pads} = load();
+  const inp = F.create({actions: [{id: 'throttle', type: 'value', keys: ['KeyT'], pad: ['RT']}, {id: 'brake', type: 'value', pad: ['LT', 'A']}, {id: 'h', type: 'hold', pad: ['RB']}]});
+  const at = press => { pads.list = [fakePad({press})]; return one(inp).s; };
+  near(at({RT: .5}).throttle, .473684, 1e-6, 'RT .5'); near(at({RT: .5}).throttle, .45 / .95, 1e-15, 'RT .5');
+  assert.equal(at({RT: .04}).throttle, 0); assert.equal(at({RT: .05}).throttle, 0); assert.equal(at({RT: 1}).throttle, 1);
+  near(at({RT: .2}).throttle, .15 / .95, 1e-15, 'sous le seuil du bouton, la valeur compte');
+  pads.list = []; inp.keyDown('KeyT', 0, false); assert.equal(one(inp).s.throttle, 1);
+  pads.list = [fakePad({press: {RT: .5}})]; assert.equal(one(inp).s.throttle, 1, 'la touche l’emporte'); inp.keyUp('KeyT', 0);
+  // Its highest button counts; an ordinary button gives 0 or 1; nothing else reads a value.
+  near(at({LT: .6}).brake, .55 / .95, 1e-15, 'LT'); assert.equal(at({LT: .6, A: 1}).brake, 1); assert.equal(at({A: .4}).brake, 0); assert.equal(at({A: .6}).brake, 1);
+  assert.equal(at({RB: 1}).h, true); assert.equal(at({RB: 1, RT: 0}).throttle, 0);
+  const s = at({}); assert.equal(s.throttle, 0); assert.equal(s.brake, 0); assert.equal(s.h, false);
+});
+
+test('E32 — Fusion : déplacement le plus fort, visée sommée avec la souris, plusieurs manettes', () => {
+  const {F, pads} = load();
+  const inp = F.create(M);
+  inp.keyDown('KeyW', 0, false); pads.list = [fakePad({axes: [.55, 0, 0, 0]})];
+  let s = one(inp).s; assert.equal(s.moveX, 0); assert.equal(s.moveY, 1);
+  inp.keyUp('KeyW', 0); pads.list = [fakePad({axes: [1, 0, 0, 0]})];
+  s = one(inp).s; assert.equal(s.moveX, 1); assert.equal(s.moveY, 0); noNegZero(s, 'stick seul');
+  pads.list = [fakePad({axes: [0, 0, .5, 0]})]; inp.mouseMove(100, 0, 0);
+  s = one(inp).s; near(s.lookX, .22 + 76.33809 * RAD / 60, 1e-6, 'souris + stick'); near(s.lookX, .22 + yawAt(.5) * RAD / 60, 1e-9, 'souris + stick');
+  // Keyboard turn and stick add up too; the touch stick (step 7) is a third candidate for the move.
+  inp.keyDown('ArrowLeft', 0, false); s = one(inp).s; near(s.lookX, (yawAt(.5) * RAD - 1.9) / 60, 1e-12, 'clavier + stick'); inp.keyUp('ArrowLeft', 0);
+  // Equal norms: the keyboard keeps the move (a later candidate needs a strictly greater norm).
+  inp.keyDown('KeyD', 0, false); pads.list = [fakePad({axes: [0, -1, 0, 0]})]; s = one(inp).s; assert.equal(s.moveX, 1); assert.equal(s.moveY, 0); inp.keyUp('KeyD', 0);
+  // Two pads: per role, the strongest stick (on the second pad for the move, on the first for the aim); buttons OR-ed.
+  pads.list = [fakePad({axes: [.3, 0, .6, 0], press: {A: 1}}), fakePad({index: 1, id: PAD_IDS.ps, axes: [0, -.8, .2, 0], press: {B: 1}})];
+  let f; ({f, s} = one(inp));
+  near(s.moveY, (.8 - .15) / .82, 1e-15, 'stick le plus fort'); assert.equal(s.moveX, 0); near(s.lookX, yawAt(.6) * RAD * DT, 1e-15, 'visée');
+  assert.equal(json(f.pressed), json(['jump', 'dash'])); assert.equal(s.jump, true); assert.equal(s.dash, true);
+  pads.list = [fakePad({press: {A: 1}}), fakePad({index: 1, id: PAD_IDS.ps, press: {A: 1}})]; ({f, s} = one(inp)); assert.equal(json(f.pressed), '[]');
+  pads.list = [fakePad({index: 1, id: PAD_IDS.ps, press: {A: 1}})]; ({f} = one(inp)); assert.equal(json(f.pressed), '[]', 'A reste tenu sur l’autre manette');
+  // No -0 from the pad (negative zero axes, opposite directions).
+  for (const axes of [[-0, -0, -0, -0], [-1, 0, -1, 0], [0, 1, 0, 1], [-.5, -0, -.5, -0]]) {
+    pads.list = [fakePad({axes})]; const r = one(inp); noNegZero(r.s, json(axes)); noNegZero(inp.pendingLook(), json(axes));
+  }
+});
+
+test('E33 — Branchement à chaud : connected et disconnected une seule fois, null et mapping non standard acceptés', () => {
+  const {F, pads} = load();
+  const inp = F.create(M), card = {index: 0, id: PAD_IDS.xbox, style: 'xbox', standard: true};
+  let f = inp.frame(DT); assert.equal(json([f.connected, f.disconnected, f.pads]), '[[],[],[]]');
+  pads.list = [fakePad({press: {RT: 1}})];
+  let s; ({f, s} = one(inp));
+  assert.equal(json(f.connected), json([card])); assert.equal(json(f.pads), json([card])); assert.equal(json(f.disconnected), '[]'); assert.equal(s.fire, true);
+  ({f, s} = one(inp)); assert.equal(json(f.connected), '[]', 'une seule fois'); assert.equal(json(f.pads), json([card])); assert.equal(s.fire, true);
+  // The cards handed out are copies.
+  f.pads[0].id = 'x'; f.pads[0].index = 9; assert.equal(json(inp.frame(DT).pads), json([card]));
+  pads.list = [];
+  ({f, s} = one(inp)); assert.equal(json(f.disconnected), json([{index: 0, id: PAD_IDS.xbox}])); assert.equal(json(f.pads), '[]'); assert.equal(s.fire, false);
+  ({f, s} = one(inp)); assert.equal(json(f.disconnected), '[]', 'une seule fois'); assert.equal(s.fire, false);
+  // Null entries and disconnected pads are skipped; the index of the pad, else its place in the list.
+  const loose = fakePad({id: PAD_IDS.other, press: {A: 1}}); delete loose.index;
+  pads.list = [null, fakePad({index: 1, id: PAD_IDS.ps}), null, null, loose, {...fakePad({index: 5}), connected: false}, undefined, 'pad', 7];
+  ({f, s} = one(inp));
+  assert.equal(json(f.connected), json([{index: 1, id: PAD_IDS.ps, style: 'ps', standard: true}, {index: 4, id: PAD_IDS.other, style: 'generic', standard: true}]));
+  assert.equal(s.jump, true, 'boutons lus');
+  // A non-standard mapping is read by index anyway.
+  pads.list = [fakePad({id: PAD_IDS.other, mapping: '', press: {B: 1}, axes: [0, -1, 0, 0]})];
+  ({f, s} = one(inp));
+  assert.equal(json(f.connected), json([{index: 0, id: PAD_IDS.other, style: 'generic', standard: false}]));
+  assert.equal(json(f.disconnected), json([{index: 1, id: PAD_IDS.ps}, {index: 4, id: PAD_IDS.other}]));
+  assert.equal(s.dash, true); assert.equal(s.moveY, 1);
+  // Key = index + ':' + id: another index, or another id, is another pad. The index is the pad's, not its place in the list.
+  pads.list = [fakePad({index: 2, id: PAD_IDS.other, mapping: ''})]; f = inp.frame(DT);
+  assert.equal(json([f.connected.map(c => c.index), f.disconnected.map(c => c.index)]), '[[2],[0]]');
+  pads.list = [fakePad({index: 2, id: PAD_IDS.ps})]; f = inp.frame(DT);
+  assert.equal(json([f.connected.map(c => c.id), f.disconnected.map(c => c.id)]), json([[PAD_IDS.ps], [PAD_IDS.other]]));
+  assert.equal(json(f.pads), json([{index: 2, id: PAD_IDS.ps, style: 'ps', standard: true}]));
+  // A list-like object (GamepadList), as well as anything getGamepads may give or throw: no pad, no error.
+  pads.list = {length: 2, 0: null, 1: fakePad({index: 1})}; assert.equal(json(inp.frame(DT).pads.map(c => c.index)), '[1]');
+  for (const bad of [null, undefined, 5, 'ab', {}, true]) { pads.list = bad; assert.equal(json(inp.frame(DT).pads), '[]', String(bad)); }
+  const thrower = F.create({...copyM(), getGamepads: () => { throw new Error('test'); }}); assert.equal(json(thrower.frame(DT).pads), '[]');
+  // Missing or odd fields count for 0.
+  pads.list = [{index: 0, id: 'Bare', connected: true}, {index: 1, id: 'Odd', axes: [NaN, Infinity, '1', null], buttons: [1, null, {value: NaN, pressed: false}, {}]}];
+  ({f, s} = one(inp)); assert.equal(f.pads.length, 2); assert.equal(s.jump, true, 'un bouton en nombre'); assert.equal(s.moveX, 0); assert.equal(s.moveY, 0); assert.equal(s.lookX, 0);
+  // getGamepads of the declaration replaces navigator.getGamepads, and is read again at each frame.
+  let list = [fakePad({press: {B: 1}})];
+  const own = F.create({...copyM(), getGamepads: () => list});
+  f = own.frame(DT); assert.equal(json(f.pressed), json(['dash'])); assert.equal(own.step().dash, true);
+  list = []; assert.equal(own.frame(DT).disconnected.length, 1);
+});
+
+test('E33b — navigator.getGamepads est appelé comme une méthode (sinon « Illegal invocation » dans Chrome)', () => {
+  const nav = {getGamepads() { if (this !== nav) throw new TypeError('Illegal invocation'); return [fakePad({press: {A: 1}})]; }};
+  const window = {navigator: nav}; vm.runInContext(source, vm.createContext({window}));
+  const inp = window.FInput.create(M), f = inp.frame(DT);
+  assert.equal(f.connected.length, 1); assert.equal(json(f.pressed), json(['jump'])); assert.equal(f.device, 'gamepad');
+  // Without navigator, or without getGamepads (old browsers, Node): no pad, no error.
+  for (const w of [{}, {navigator: {}}, {navigator: {getGamepads: 5}}]) {
+    vm.runInContext(source, vm.createContext({window: w})); const g = w.FInput.create(M).frame(DT);
+    assert.equal(json([g.pads, g.connected, g.pressed]), '[[],[],[]]');
+  }
+});
+
+test('E34 — Front de bouton : A tenu 10 images → un seul saut', () => {
+  const {F, pads} = load();
+  const inp = F.create(M);
+  pads.list = [fakePad({press: {A: 1}})];
+  const jumps = [], fronts = [];
+  for (let k = 0; k < 10; k++) { const {f, s} = one(inp); jumps.push(s.jump); fronts.push(...f.pressed); }
+  assert.equal(json(jumps), json([true, ...Array(9).fill(false)])); assert.equal(json(fronts), json(['jump']));
+  // Released, then pressed again: a new jump. Held: pressed, or a value above .5.
+  pads.list = [fakePad()]; assert.equal(one(inp).s.jump, false);
+  pads.list = [fakePad({press: {A: .6}})]; let {f, s} = one(inp); assert.equal(json(f.pressed), json(['jump'])); assert.equal(s.jump, true);
+  pads.list = [fakePad({press: {A: .4}})]; ({f, s} = one(inp)); assert.equal(json(f.pressed), '[]');
+  pads.list = [fakePad({press: {A: .5}})]; ({f, s} = one(inp)); assert.equal(json(f.pressed), '[]', '.5 ne suffit pas'); assert.equal(s.jump, false);
+  const tap = fakePad(); tap.buttons[0] = {pressed: true, touched: true, value: 0}; pads.list = [tap]; ({f} = one(inp)); assert.equal(json(f.pressed), json(['jump']));
+  // Two buttons on one action (settings): one front while either is down.
+  const two = inp.settings; two.pad.weaponNext = []; two.pad.pulse = ['LB', 'Y']; inp.configure(two);
+  pads.list = [fakePad({press: {LB: 1}})]; ({f} = one(inp)); assert.equal(json(f.pressed), json(['pulse']));
+  pads.list = [fakePad({press: {LB: 1, Y: 1}})]; ({f} = one(inp)); assert.equal(json(f.pressed), '[]', 'déjà tenue');
+  pads.list = [fakePad({press: {Y: 1}})]; ({f, s} = one(inp)); assert.equal(json(f.pressed), '[]', 'tenue par Y'); assert.equal(s.pulse, false);
+  pads.list = [fakePad()]; one(inp); pads.list = [fakePad({press: {Y: 1}})]; ({f} = one(inp)); assert.equal(json(f.pressed), json(['pulse']));
+  pads.list = [fakePad()]; one(inp);
+  // Several actions in one frame: their fronts in declaration order, impulses and held actions alike.
+  pads.list = [fakePad({press: {LB: 1, RB: 1, L3: 1, RT: 1}})]; ({f, s} = one(inp));
+  assert.equal(json(f.pressed), json(['fire', 'leftHand', 'sprint', 'pulse'])); assert.equal(s.sprint, true); assert.equal(s.fire, true);
+  // The order of the fronts: keyboard and mouse events as they come, then the pad, read by frame().
+  inp.keyDown('KeyR', 0, false); pads.list = [fakePad({press: {X: 1}})]; inp.button('fireLeft', true, 0, 'mouse');
+  assert.equal(json(inp.frame(DT).pressed), json(['dash', 'fireLeft', 'interact'])); inp.step(); inp.keyUp('KeyR', 0); inp.button('fireLeft', false, 0, 'mouse');
+});
+
+test('E34b — configure à la manette : la table pad des réglages, un bouton tenu qui change d’action la tient sans front', () => {
+  const {F, pads} = load();
+  const inp = F.create(M);
+  pads.list = [fakePad({press: {X: 1}})];
+  let {f, s} = one(inp); assert.equal(json(f.pressed), json(['interact']));
+  const free = inp.unbind('gamepad', 'interact'), moved = F.assign(M, free.settings, 'gamepad', 'fireLeft', 'X');
+  assert.equal(moved.ok, true); inp.configure(moved.settings);
+  ({f, s} = one(inp)); assert.equal(json(f.pressed), '[]'); assert.equal(s.fireLeft, true); assert.equal(s.interact, false);
+  pads.list = [fakePad({press: {LT: 1}})]; ({f, s} = one(inp)); assert.equal(s.fireLeft, false, 'LT n’est plus affectée'); assert.equal(json(f.pressed), '[]');
+  pads.list = [fakePad({press: {X: 1}})]; ({f, s} = one(inp)); assert.equal(json(f.pressed), json(['fireLeft']));
+  // Losing its button releases a held action, without any edge elsewhere.
+  inp.configure(inp.unbind('gamepad', 'fireLeft').settings);
+  ({f, s} = one(inp)); assert.equal(s.fireLeft, false); assert.equal(json(f.pressed), '[]');
+  // Initial settings of the declaration: RB fires, RT does nothing.
+  const c = F.create({...copyM(), settings: {pad: {fire: ['RB']}}});
+  pads.list = [fakePad({press: {RT: 1}})]; assert.equal(one(c).s.fire, false);
+  pads.list = [fakePad({press: {RB: 1}})]; assert.equal(one(c).s.fire, true);
+});
+
+test('E35 — Appareil actif : bouton ou axe au-delà de .3 → manette ; clavier, tactile, souris', () => {
+  const {F, pads} = load();
+  const inp = F.create(M);
+  pads.list = [fakePad({press: {A: 1}})];
+  let f = inp.frame(DT); assert.equal(f.device, 'gamepad'); assert.equal(f.deviceChanged, true); assert.equal(inp.device, 'gamepad');
+  pads.list = [fakePad()]; f = inp.frame(DT); assert.equal(f.device, 'gamepad'); assert.equal(f.deviceChanged, false);
+  inp.keyDown('KeyL', 900, false); assert.equal(inp.device, 'keyboard');
+  pads.list = [fakePad({axes: [.2, 0, 0, 0]})]; f = inp.frame(DT); assert.equal(f.device, 'keyboard', 'axe à .2'); assert.equal(f.deviceChanged, true);
+  // Steps 4 to 6 of the mission call stickDown (step 7); any touch event sets the same device and time: a touch button here.
+  pads.list = [];
+  inp.button('fire', true, 1000, 'touch'); assert.equal(inp.device, 'touch');
+  inp.mouseMove(1, 0, 1100); assert.equal(inp.device, 'touch');
+  inp.mouseMove(1, 0, 1900); assert.equal(inp.device, 'mouse');
+  inp.button('fire', false, 1950, 'touch'); inp.mouseMove(1, 0, 3000);
+  // Above .3: an axis of either stick, a trigger value, a button value, or pressed alone; .3 is not enough.
+  for (const pad of [fakePad({axes: [0, 0, 0, -.31]}), fakePad({axes: [.31, 0, 0, 0]}), fakePad({press: {RT: .31}}), fakePad({press: {Y: .31}}), Object.assign(fakePad(), {buttons: fakePad().buttons.map((b, j) => j === 16 ? {pressed: true, value: 0} : b)})]) {
+    inp.keyDown('KeyL', 0, false); pads.list = [pad]; assert.equal(inp.frame(DT).device, 'gamepad', json(pad.axes) + json(pad.buttons.map(b => b.value)));
+  }
+  for (const pad of [fakePad({axes: [.3, -.3, .3, -.3]}), fakePad({press: {RT: .3, A: .3}}), Object.assign(fakePad(), {axes: [0, 0, 0, 0, .9, -1]})]) {
+    inp.keyDown('KeyL', 0, false); pads.list = [pad]; assert.equal(inp.frame(DT).device, 'keyboard', json(pad.axes));
+  }
+  // A button kept down takes the device back at each frame: the pad is polled, the keyboard comes in between.
+  pads.list = [fakePad({press: {A: 1}})]; inp.frame(DT);
+  inp.keyDown('KeyL', 0, false); assert.equal(inp.device, 'keyboard'); f = inp.frame(DT); assert.equal(f.device, 'gamepad'); assert.equal(f.deviceChanged, false);
+  pads.list = [];
+});
+
+test('E36 — Capture manette et clear() : ni front ni impulsion pour l’appui capturé ; l’image après clear() sans front', () => {
+  const {F, pads} = load();
+  const inp = F.create(M);
+  inp.capture('gamepad');
+  pads.list = [fakePad({press: {X: 1}})];
+  let {f, s} = one(inp);
+  assert.equal(json(f.captured), json({device: 'gamepad', code: 'X'})); assert.equal(json(f.pressed), '[]'); assert.equal(s.interact, false);
+  ({f, s} = one(inp)); assert.equal(f.captured, null, 'une seule fois'); assert.equal(json(f.pressed), '[]', 'X tenu : pas de front'); assert.equal(s.interact, false);
+  pads.list = [fakePad()]; one(inp); pads.list = [fakePad({press: {X: 1}})];
+  ({f, s} = one(inp)); assert.equal(json(f.pressed), json(['interact'])); assert.equal(s.interact, true);
+  // RT held, then clear(): the next frame has no 'fire' front, but fire is held.
+  pads.list = [fakePad({press: {RT: 1}})]; one(inp); inp.clear();
+  ({f, s} = one(inp)); assert.ok(!f.pressed.includes('fire'), json(f.pressed)); assert.equal(s.fire, true);
+  ({f, s} = one(inp)); assert.equal(json(f.pressed), '[]'); assert.equal(s.fire, true);
+  pads.list = [fakePad()]; assert.equal(one(inp).s.fire, false);
+  // clear() releases at once; the frame that follows it gives no pad edge at all, even for a button pressed after clear().
+  pads.list = [fakePad({press: {RT: 1}, axes: [0, -1, 0, 0]})]; one(inp); inp.clear();
+  assert.ok(idle(inp.step()), 'relâché par clear()');
+  pads.list = [fakePad({press: {RT: 1, A: 1}, axes: [0, -1, 0, 0]})]; ({f, s} = one(inp));
+  assert.equal(json(f.pressed), '[]'); assert.equal(s.fire, true); assert.equal(s.jump, false); assert.equal(s.sprint, true); assert.equal(s.moveY, 1);
+  pads.list = [fakePad({press: {RT: 1, B: 1}})]; ({f, s} = one(inp)); assert.equal(json(f.pressed), json(['dash']), 'image suivante : fronts rendus');
+  // Keyboard edges are not touched by the quiet frame.
+  inp.clear(); inp.keyDown('KeyE', 0, false); ({f, s} = one(inp)); assert.equal(json(f.pressed), json(['pulse']));
+  pads.list = []; one(inp); inp.keyUp('KeyE', 0);
+  // A button already down is not captured; Home is never captured; the next new button is (LT by its hysteresis).
+  pads.list = [fakePad({press: {Y: 1}})]; one(inp); inp.capture('gamepad');
+  pads.list = [fakePad({press: {Y: 1, Home: 1}})]; ({f} = one(inp)); assert.equal(f.captured, null); assert.equal(json(f.pressed), '[]');
+  pads.list = [fakePad({press: {Y: 1, Home: 1, LT: .31}, axes: [0, -1, 0, 0]})]; ({f, s} = one(inp));
+  assert.equal(json(f.captured), json({device: 'gamepad', code: 'LT'})); assert.equal(json(f.pressed), '[]', 'ni course ni garde'); assert.equal(s.fireLeft, true);
+  // Several new buttons in one frame: the first of PAD_BUTTONS.
+  pads.list = []; one(inp); inp.capture('gamepad'); pads.list = [fakePad({press: {Start: 1, B: 1, Up: 1}})];
+  assert.equal(json(inp.frame(DT).captured), json({device: 'gamepad', code: 'B'})); inp.step();
+  // The keyboard plays during a pad capture; capture(null), a new capture and clear() drop it.
+  pads.list = []; one(inp); inp.capture('gamepad');
+  inp.keyDown('KeyR', 0, false); ({f, s} = one(inp)); assert.equal(json(f.pressed), json(['dash'])); assert.equal(f.captured, null); inp.keyUp('KeyR', 0);
+  // After capture(null) or capture('keyboard'), X plays again; after clear(), X is held without its front (quiet frame).
+  for (const [name, end, front] of [['capture(null)', () => inp.capture(null), true], ['capture(keyboard)', () => inp.capture('keyboard'), true], ['clear()', () => inp.clear(), false]]) {
+    inp.capture('gamepad'); end(); pads.list = [fakePad({press: {X: 1}})]; ({f} = one(inp));
+    assert.equal(f.captured, null, name); assert.equal(f.pressed.includes('interact'), front, name); pads.list = []; one(inp); inp.capture(null);
+  }
+  // The pad is only read by frame(): a second request before it still gets the button.
+  inp.capture('gamepad'); pads.list = [fakePad({press: {X: 1}})]; inp.capture('gamepad');
+  assert.equal(json(inp.frame(DT).captured), json({device: 'gamepad', code: 'X'}));
+});
+
+test('E37 — Échange des sticks : le stick gauche tourne la vue, le droit déplace', () => {
+  const {F, pads} = load();
+  const inp = withTune(F, {swapSticks: true});
+  pads.list = [fakePad({axes: [1, 0, 0, -1]})];
+  let s = one(inp).s;
+  near(s.lookX, 300 * RAD * DT, 1e-12, 'stick gauche → lacet'); assert.equal(s.lookY, 0); assert.equal(s.moveX, 0); assert.equal(s.moveY, 1); assert.equal(s.sprint, true);
+  pads.list = [fakePad({axes: [0, -1, 1, 0]})]; s = one(inp).s;
+  near(s.lookY, 190 * RAD * DT, 1e-12, 'stick gauche → tangage'); assert.equal(s.moveX, 1); assert.equal(s.moveY, 0);
+  // Each role keeps its dead zone: .14 turns the view (padDead .12) on the left stick, and moves nothing without the swap (moveDead .15).
+  pads.list = [fakePad({axes: [.14, 0, 0, 0]})]; assert.ok(one(inp).s.lookX > 0);
+  const plain = F.create(M); s = one(plain).s; assert.equal(s.moveX, 0); assert.equal(s.lookX, 0);
+  // Back to the default by configure; buttons are not swapped.
+  inp.configure(F.defaults(M)); pads.list = [fakePad({axes: [1, 0, 0, -1], press: {A: 1}})]; let f; ({f, s} = one(inp));
+  assert.equal(s.moveX, 1); near(s.lookY, 190 * RAD * DT, 1e-12, 'défaut'); assert.equal(json(f.pressed), json(['jump', 'sprint']), 'boutons, puis course au bout du stick');
+  // A declaration with its sticks on the other sides, or without a pad on one stick.
+  const other = F.create({...copyM(), sticks: {move: {...M.sticks.move, pad: 'RS'}, look: {...M.sticks.look, pad: 'LS'}}});
+  pads.list = [fakePad({axes: [1, 0, 0, -1]})]; s = one(other).s; assert.ok(s.lookX > 0); assert.equal(s.moveY, 1);
+  const none = F.create({...copyM(), sticks: {move: {...M.sticks.move, pad: undefined}, look: M.sticks.look}});
+  s = one(none).s; assert.equal(s.moveX, 0); assert.equal(s.moveY, 0); assert.equal(s.sprint, false); assert.equal(s.lookX, 0); near(s.lookY, 190 * RAD * DT, 1e-12, 'stick droit seul');
 });
 
 test('E38 — keyName : mêmes noms que FOptions.keyName', () => {

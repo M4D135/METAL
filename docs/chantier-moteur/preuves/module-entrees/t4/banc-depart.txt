@@ -1,0 +1,43 @@
+Module entrées, T4 (étape 4) — banc de départ, relevé le 13/11/2026 sur le Mac (Node v24.18.0, arm64)
+Base 71eca61 ; branche chantier/module-entrees, HEAD f36e318 (étape 3).
+« Avant » = f36e318, extrait dans un worktree à part (git worktree add, retiré après les mesures).
+« Après » = l'arbre de travail livré par ce commit ; manette.json et cout.json le nomment
+« f36e318 + arbre de travail » (src/input.js : 16 681 octets, sha256 85646fff784f734db9b635f39f75fce1db542fd0a4532e1cc4b6d91beefc9fd0).
+
+1. Banc FEEL-10 de l'audit (prototype, docs/chantier-moteur/bancs/feel/gamepad-map.mjs), relancé tel quel :
+   node docs/chantier-moteur/bancs/feel/gamepad-map.mjs <racine>
+   ┌─────────┬───────────────────────┬─────────────┬───────────────────────────────┐
+   │ (index) │ deflexion stick droit │ lacet deg/s │ avec ralentissement sur cible │
+   ├─────────┼───────────────────────┼─────────────┼───────────────────────────────┤
+   │ 0       │ 0.05                  │ 0           │ 0                             │
+   │ 1       │ 0.12                  │ 0           │ 0                             │
+   │ 2       │ 0.2                   │ 5.4         │ 3                             │
+   │ 3       │ 0.35                  │ 32.5        │ 17.9                          │
+   │ 4       │ 0.5                   │ 76.3        │ 42                            │
+   │ 5       │ 0.7                   │ 156.7       │ 86.2                          │
+   │ 6       │ 0.85                  │ 231.6       │ 127.4                         │
+   │ 7       │ 0.95                  │ 288.1       │ 158.5                         │
+   │ 8       │ 1                     │ 300         │ 165                           │
+   └─────────┴───────────────────────┴─────────────┴───────────────────────────────┘
+   demi-tour (180 deg) stick a fond: 483 ms (sans boost: 600 ms)
+   visee fine a 20 %: 5.4 deg/s soit 0.090 deg par image
+   vitesse stick 55 %: 2.63 m/s ; stick a fond (course auto): 7.60 m/s ; lacet apres 2 s a 40 %: 90.8 deg
+   Ce sont les chiffres que E26, E28 et la simulation de manette.mjs doivent retrouver sur FInput.
+
+2. Chiffre de départ : à f36e318, FInput ne lit aucune manette.
+   src/input.js à f36e318 : 13 255 octets (sha256 ebde4c6b47e0a9ce2af49031a1bcc68c4e38b27a1425f320f57e4a07f19c0256).
+   FInput.radial et FInput.padStyle existent mais sont vides : radial(0, -.55, .15, .97) rend undefined.
+   frame() n'appelle jamais getGamepads : lacet, tangage et déplacement à 0 pour toutes les déflexions, demi-tour
+   jamais atteint (400 images), RT sans effet (fire faux aux six images de E30, aucun front), connected et
+   disconnected vides ; dans la vraie simulation, 0 m/s au stick gauche et 0° de lacet au stick droit.
+   Détail : manette.json, colonne « avant ».
+
+3. Tests de l'étape 4 contre le module de f36e318 (copie dans un dossier temporaire : src/input.js et src/options.js
+   du worktree, checks/finput.test.mjs et checks/finput-fixture.mjs de ce commit) :
+   node --test checks/finput.test.mjs : 47 tests, 31 réussis, 16 échecs.
+   Échouent : E24, E25, E26, E27, E28, E29, E30, E31, E32, E33, E33b, E34, E34b, E35, E36, E37 (les 16 tests de l'étape).
+   Passent : les 31 tests des étapes 1 à 3 (E01 à E23 avec E03b, E04b, E14b à E14d, E18b et E21b, puis E38).
+   Après (tests.txt) : 47 tests, 47 réussis.
+
+4. Référence de FOptions, inchangée : src/options.js, checks/options.test.mjs et src/game.js identiques à 71eca61.
+   node --test checks/options.test.mjs : 13 tests, 13 réussis.

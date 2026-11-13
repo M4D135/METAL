@@ -1,0 +1,102 @@
+Module entrées, T4 (étape 4) — suites de mutations des étapes 2 et 3 rejouées telles quelles sur le code de l'étape 4,
+relevé le 13/11/2026 sur le Mac (Node v24.18.0, arm64), src/input.js sha256 85646fff784f734d…
+Commandes : node docs/chantier-moteur/preuves/module-entrees/t3/mutations.mjs <dossier> . puis t3/mutations-etape2.mjs.
+Les ancres introuvables sont celles que l'étape 4 a déplacées ; leurs mutations sont rejouées avec la nouvelle ancre
+dans t4/mutations.mjs (lignes « étape 2 — » et « étape 3 — » de t4/mutations.txt : toutes détectées).
+
+1. t3/mutations.mjs (étape 3, 42 mutations)
+détectée — migrate jamais appelé → E21b, E22
+détectée — migrate appelé quel que soit le format → E22
+détectée — migrate appelé pour la version courante → E22
+détectée — from : v non entier pris tel quel → E22
+détectée — migrate travaille sur la copie elle-même → E22
+détectée — résultat de migrate non recopié → E22
+détectée — résultat de migrate pris s’il n’est pas un objet → E22
+détectée — migrate hors du try → E22
+détectée — table : entrée null lue comme vide → E04b, E19
+détectée — table : clés inconnues gardées → E04b, E19, E22
+détectée — repli alt ignoré → E15, E19, E21, E21b, E22
+détectée — repli alt aussi à la manette → E19
+détectée — repli alt : tous les codes libres → E19, E21, E21b
+détectée — repli alt avant les défauts → E19, E21b, E22
+détectée — repli alt dès qu’un code par défaut est pris → E04b, E21
+détectée — codes attribués non ajoutés aux codes utilisés → E19, E21
+détectée — table pad stockée ignorée → E16, E18, E19, E34, E34b
+détectée — table pad : trois boutons acceptés → E19
+détectée — table pad : Home accepté → E19
+détectée — ordre des contrôles : action avant appareil → E18b
+détectée — ordre des contrôles : code avant action → E18b
+détectée — appareil inconnu traité comme la manette → E18b
+détectée — texte : Home non distingué → E18, E18b
+détectée — conflit ignoré → E15, E16, E18, E21b
+détectée — conflit lu sur les réglages bruts → E15
+détectée — conflit avec l’action elle-même → E16
+détectée — texte : genre de la touche et du bouton confondus → E18
+détectée — assign modifie son argument → E16, E18
+détectée — assign ajoute au lieu de remplacer → E16, E17, E23, E34b
+détectée — unbind sans effet → E18, E34b
+détectée — instance : assign sur les réglages de la déclaration → E16, E18
+détectée — instance : assign applique le résultat → E16
+détectée — instance : unbind sur les réglages de la déclaration → E18
+détectée — capture : la touche va aussi au jeu → E23
+détectée — capture : jamais finie → E23
+détectée — capture : répétition capturée → E23
+détectée — capture : code qui n’est pas une chaîne capturé → E23
+détectée — capture : appareil actif inchangé → E23
+ANCRE INTROUVABLE — capture : résultat jamais rendu
+détectée — capture : résultat rendu à chaque image → E23, E36
+détectée — capture : une nouvelle capture garde le résultat en attente → E23
+ANCRE INTROUVABLE — clear garde la capture
+module intact : tous les tests passent
+40 mutations détectées sur 42
+
+2. t3/mutations-etape2.mjs (étape 2, 38 mutations)
+détectée — regard souris : produit mouseScale×sensibilité précalculé → E06
+détectée — regard souris : y non inversé → E06, E10, E14d, E27
+détectée — regard souris : invertY ignoré → E06, E14d
+détectée — regard clavier : rate ignoré → E06, E10, E11, E14b, E29, E32
+détectée — tenue sans verrou → E09, E25, E30
+détectée — impulsion = tenue → E06, E07, E08, E10, E11, E14, E14b, E34, E36
+détectée — verrous jamais effacés → E05, E06, E07, E09, E10, E11, E12, E14, E14b, E14d, E23, E25, E30, E31, E33, E34, E34b
+détectée — regard non consommé par step → E06, E10, E11, E14b, E23, E28, E29, E32, E37
+détectée — répétition avec front → E08, E12
+détectée — fronts en double → E07, E14b
+détectée — fronts jamais remis à zéro → E06, E07, E14, E14d, E23, E30, E34, E36, E37
+détectée — liste des fronts non vidée (ancre déplacée) → E05, E06, E07, E11, E12, E14, E14b, E14d, E23, E25, E30, E32, E34, E34b, E36, E37
+ANCRE INTROUVABLE — clear garde le regard (ancre déplacée)
+ANCRE INTROUVABLE — clear garde les verrous
+détectée — clear garde les touches → E12
+ANCRE INTROUVABLE — clear garde les doigts
+détectée — filtre souris de 800 ms à <= → E14c
+détectée — filtre souris absent → E14c, E35
+détectée — doigts négatifs → E12, E14
+détectée — deviceChanged contre l’appareil initial (ancre déplacée) → E14c, E35
+détectée — dt non borné → E14b
+détectée — dt non fini accepté → E14b
+détectée — deltas non finis acceptés → E14b, E33
+détectée — configure ne recompte pas les touches → E14d
+détectée — keyUp ne relâche pas → E05, E06, E07, E08, E09, E12, E14, E14b, E14d, E23, E25, E31, E32
+détectée — table : une entrée invalide garde les autres → E04b, E19, E21b
+détectée — table : défauts sans filtre des codes pris (ancre déplacée) → E04b, E15, E19, E21, E21b, E22
+INDÉTERMINÉE (statut 1) — table : propriétés héritées lues
+détectée — tune : booléen pour un nombre → E04b, E20
+INDÉTERMINÉE (statut 1) — tune : non borné
+détectée — tune : chaîne acceptée pour un booléen → E04b, E20
+détectée — settings sans copie → E14d
+détectée — valeur : booléen au lieu de 1 → E14, E31
+détectée — ordre des sorties : actions avant sticks → E14b
+détectée — addLook ignore l’appareil → E14c
+détectée — keyDown sans appareil clavier (ancre déplacée) → E12, E14c, E23, E35
+détectée — bouton souris sans appareil → E14, E14c
+détectée — bouton tactile sans horodatage → E14c, E35
+module intact : tous les tests passent
+33 mutations détectées sur 38
+
+3. Les deux « indéterminées » du point 2 (statut 1 sans nom de test : le lanceur compte tout le fichier comme un seul
+   test échoué, sans sous-test, en 80 ms environ ; voir l'en-tête de t4/mutations.mjs), relancées seules, trois fois
+   chacune, avec la même commande node --test et la même mutation :
+   table : propriétés héritées lues → statut 1 → E04b | statut 1 → E04b | statut 1 → E04b
+   tune : non borné → statut 1 → E04b, E14d, E16, E19, E20, E22 | statut 1 → E04b, E14d, E16, E19, E20, E22 | statut 1 → E04b, E14d, E16, E19, E20, E22
+
+Bilan : avec les cinq ancres déplacées de t4/mutations.mjs, les 42 mutations de l'étape 3 et les 38 de l'étape 2
+sont toutes détectées sur le code de l'étape 4.

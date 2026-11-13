@@ -65,9 +65,11 @@
     need(config.getGamepads===undefined||typeof config.getGamepads==='function','getGamepads doit être une fonction');
     return {actions,index,sticks,version,device,mouseScale,isKey,getGamepads:config.getGamepads||null,migrate:typeof config.migrate==='function'?config.migrate:null,settings:config.settings};
   }
+  // Radial dead zone, rescaled: [x', y', n].
+  function radial(x,y,inner,outer){const m=Math.hypot(x,y),n=Math.min(1,(m-inner)/(outer-inner));return m>inner?[x/m*n||0,y/m*n||0,n]:[0,0,0];}
+  function padStyle(id){return /054c|playstation|dualshock|dualsense|sony/i.test(id)?'ps':/045e|xbox|xinput/i.test(id)?'xbox':'generic';}
   // Filled in by the next steps of docs/chantier-moteur/modules/entrees.md (§2, delivery table).
-  function radial(x,y,inner,outer){/* step 4: radial dead zone → [x', y', n] */}
-  function padStyle(id){/* step 5 */} function glyph(name,style){/* step 5 */}
+  function glyph(name,style){/* step 5 */}
   // Settings (JSON): {v, keys, pad, tune}; tables follow the declaration order.
   function initial(C){const s={v:C.version,keys:{},pad:{},tune:{}};for(const a of C.actions){s.keys[a.id]=a.keys.slice();s.pad[a.id]=a.pad.slice();}for(const k in TUNE)s.tune[k]=TUNE[k][0];return s;}
   // A stored table is kept whole or not at all. A missing action takes its default codes that no entry uses,
@@ -112,16 +114,19 @@
   function guessDevice(win){/* step 5 */} function focusMove(root,cmd,doc){/* step 6 */}
   function create(config){
     const C=compile(config),held=new Set(),pressed=[];
-    // Per action: keys (k), mouse (m), fingers (t), pad button (g), stick ends (gr, tr), pad value (gv).
+    // Per action: keys (k), mouse (m), fingers (t), pad buttons (g, indexes pi), stick ends (gr, tr), pad value (gv).
     const A=C.actions.map(a=>({a,k:0,m:false,t:0,g:false,gr:false,tr:false,gv:0,latch:false,edge:false})),at=id=>A[C.index.get(id)];
-    const sticks=C.sticks.map(s=>({kx:s.name+'X',ky:s.name+'Y',move:s.type==='move',x:s.x.map(at),y:s.y.map(at),rate:s.rate})),look=sticks.find(s=>!s.move);
-    // pm, tm: move vectors of the gamepad and of the touch stick (steps 4 and 7); cap: capture under way, got: its result.
-    let S,codes,dev=C.device,shown=dev,touchT=-Infinity,px=0,py=0,pmx=0,pmy=0,tmx=0,tmy=0,cap=null,got=null;
-    const on=s=>s.k>0||s.m||s.t>0||s.g||s.gr||s.tr,axis=v=>v.length?Number(on(v[1]))-Number(on(v[0])):0;
+    const sticks=C.sticks.map(s=>({kx:s.name+'X',ky:s.name+'Y',move:s.type==='move',x:s.x.map(at),y:s.y.map(at),rate:s.rate,pad:s.pad,run:s.run&&at(s.run)}));
+    const look=sticks.find(s=>!s.move),walk=sticks.find(s=>s.move);
+    // pm, tm: move vectors of the gamepad and of the touch stick (step 7); cap: capture under way, got: its result;
+    // seen, pb: pads and buttons of the last frame; hold: time at full aim; quiet: no pad edge in this frame.
+    let S,codes,dev=C.device,shown=dev,touchT=-Infinity,px=0,py=0,pmx=0,pmy=0,tmx=0,tmy=0,cap=null,got=null,seen=new Map(),pb=[],hold=0,quiet=false;
+    const trig=[false,false],on=s=>s.k>0||s.m||s.t>0||s.g||s.gr||s.tr,axis=v=>v.length?Number(on(v[1]))-Number(on(v[0])):0;
     // Edge: released → held latches the action and lists it once per frame.
-    const rise=(s,was)=>{if(!was&&on(s)){s.latch=true;if(!s.edge){s.edge=true;pressed.push(s.a.id);}}};
+    const rise=(s,was,pad)=>{if(!was&&on(s)&&!(pad&&quiet)){s.latch=true;if(!s.edge){s.edge=true;pressed.push(s.a.id);}}};
     const mouse=t=>{if(!(t-touchT<K.compatMs))dev='mouse';};
-    function configure(raw){S=settle(raw,C);codes=new Map();for(const s of A){s.k=0;for(const c of S.keys[s.a.id]){codes.set(c,s);if(held.has(c))s.k++;}}return copy(S);}
+    // Held keys and buttons hold their new action, without an edge.
+    function configure(raw){S=settle(raw,C);codes=new Map();for(const s of A){s.k=0;for(const c of S.keys[s.a.id]){codes.set(c,s);if(held.has(c))s.k++;}s.pi=S.pad[s.a.id].map(n=>PAD_BUTTONS.indexOf(n));s.g=s.pi.some(j=>pb[j]);}return copy(S);}
     configure(C.settings);
     return {
       // A capture hands the next new press to frame().captured, never to the game; its repeats are swallowed.
@@ -140,17 +145,52 @@
         rise(s,was);return true;
       },
       addLook(x,y,device){px+=fin(x);py+=fin(y);if(DEVICES.includes(device))dev=device;},
-      clear(){held.clear();for(const s of A){s.k=s.t=0;s.m=s.tr=s.latch=s.edge=false;}pressed.length=0;px=py=tmx=tmy=0;cap=got=null;},
+      // The next frame reads the pad without edges: a button still down is held.
+      clear(){held.clear();for(const s of A){s.k=s.t=s.gv=0;s.m=s.g=s.gr=s.tr=s.latch=s.edge=false;}pressed.length=0;px=py=pmx=pmy=tmx=tmy=hold=0;cap=got=null;quiet=true;},
       configure,get settings(){return copy(S);},get device(){return dev;},
       // Nothing is applied: the game calls configure(r.settings) when it accepts the result.
       assign:(device,action,code)=>rebind(C,S,device,action,code),
       unbind:(device,action)=>rebind(C,S,device,action,null,true),
       // A new capture, or null to cancel; either drops a result frame() has not handed out yet.
       capture(device){cap=device==='keyboard'||device==='gamepad'?device:null;got=null;},
-      frame(dt){
+      frame(dt,ctx){
         dt=Number.isFinite(dt)?Math.min(K.dtMax,Math.max(0,dt)):0;
+        const T=S.tune,sc=Number.isFinite(ctx?.lookScale)?ctx.lookScale:1,now=new Map(),con=[],dis=[],b=[],tv=[0,0],card=o=>({...o});
+        // axes 0-1: left stick, 2-3: right stick
+        const side=s=>s&&s.pad?s.pad==='LS'!==T.swapSticks?0:2:-1,ms=side(walk),ls=side(look);
+        let L=[],act=false,mv=[0,0,0],lk=mv;
+        // a method call (detached, it throws in browsers); any mapping read by index
+        try{L=Array.from((C.getGamepads?C.getGamepads():G.navigator.getGamepads())||[]);}catch(e){}
+        L.forEach((p,i)=>{
+          if(!p||typeof p!=='object'||p.connected===false)return;
+          const id=String(p.id??''),index=p.index??i,key=index+':'+id,ax=j=>fin((p.axes||[])[j]),bt=p.buttons||[];
+          if(!now.has(key)){const o=seen.get(key)||{index,id,style:padStyle(id),standard:p.mapping==='standard'};if(!seen.has(key))con.push(card(o));now.set(key,o);}
+          // LT, RT: highest value, then hysteresis
+          for(let j=0;j<17;j++){const q=bt[j]||0,v=fin(q.value??q),d=!!q.pressed;act=act||d||v>K.activeAxis;if(j===6||j===7)tv[j-6]=Math.max(tv[j-6],v);else b[j]=b[j]||d||v>.5;}
+          for(let j=0;j<4;j++)act=act||Math.abs(ax(j))>K.activeAxis;
+          // strongest stick per role
+          const r=(o,dz,w)=>{const v=o<0?w:radial(ax(o),ax(o+1),dz,K.outer);return v[2]>w[2]?v:w;};
+          mv=r(ms,T.moveDead,mv);lk=r(ls,T.padDead,lk);
+        });
+        for(const [key,o] of seen)if(!now.has(key))dis.push({index:o.index,id:o.id});
+        seen=now;
+        for(let j=0;j<2;j++)b[j+6]=trig[j]=trig[j]?tv[j]>K.trigOff:tv[j]>K.trigOn;
+        if(act)dev='gamepad';
+        // capture: the first new button but Home; no pad edge in this frame
+        const code=cap==='gamepad'&&PAD_BUTTONS.find((n,j)=>j<16&&b[j]&&!pb[j]);
+        if(code){got={device:cap,code};cap=null;quiet=true;}
+        const val=j=>j===6||j===7?tv[j-6]>K.valueDead?Math.min(1,(tv[j-6]-K.valueDead)/(1-K.valueDead)):0:+!!b[j];
+        for(const s of A){const was=on(s);s.g=s.pi.some(j=>b[j]);s.gv=s.pi.reduce((m,j)=>Math.max(m,val(j)),0);rise(s,was,1);}
+        // forward positive; run held at the end of the stick
+        pmx=mv[0];pmy=-mv[1];
+        if(walk&&walk.run){const s=walk.run,was=on(s);s.gr=mv[2]>=K.padRun;rise(s,was,1);}
+        // aim: curve, extra yaw after a hold at full deflection (time counted first), slowdown
+        const [x,y,n]=lk,c=n>0?Math.pow(n,T.padCurve)/n:0;hold=n>K.boostAt?hold+dt:0;
+        const e=hold>K.boostAfter?Math.min(1,(hold-K.boostAfter)/K.boostRamp):0;
+        px+=x*c*T.padYaw*(1+T.padBoost*e)*sc*Math.PI/180*dt;py+=-y*c*T.padPitch*sc*(T.padInvertY?-1:1)*Math.PI/180*dt;
         if(look){px+=axis(look.x)*dt*look.rate;py+=axis(look.y)*dt*look.rate;}
-        const r={pressed:pressed.slice(),nav:null,device:dev,deviceChanged:dev!==shown,connected:[],disconnected:[],pads:[],captured:got};
+        pb=b;quiet=false;
+        const r={pressed:pressed.slice(),nav:null,device:dev,deviceChanged:dev!==shown,connected:con,disconnected:dis,pads:[...now.values()].map(card),captured:got};
         shown=dev;got=null;pressed.length=0;for(const s of A)s.edge=false;return r;
       },
       step(){
