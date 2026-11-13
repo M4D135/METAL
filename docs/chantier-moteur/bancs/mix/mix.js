@@ -34,12 +34,15 @@ const synthCache = new Map();
 let RECIPE = 'cur';
 window.__SYNTH = function (name, variant, rate, original) { // 'metal' : la table de recettes de METAL (consultée avant synthesize par FAudio)
   const metal = RECIPE === 'metal' && window.MetalAudio && window.MetalAudio.recipes[name], proto = !metal && RECIPE === 'doom' && DOOMISH.RECIPES[name], key = (metal ? 'metal' : proto ? 'doom' : 'cur') + '|' + name + '|' + variant + '|' + rate;
-  let v = synthCache.get(key); if (!v) { v = metal ? metal.synth(variant | 0, rate || 22050) : proto ? DOOMISH.synth(name, variant | 0, rate || 22050) : original(name, variant, rate); synthCache.set(key, v); }
+  let v = synthCache.get(key); if (!v) { v = metal ? metal.synth(variant | 0, rate || 22050) : proto ? DOOMISH.synth(name, variant | 0, rate || 22050) : (typeof original === 'function' ? original(name, variant, rate) : window.FAudio.synthesize(name, variant, rate)); synthCache.set(key, v); }
   return v;
 };
 function buildAudio(v) {
   let s = SRC.audio; const duck = DUCK[v.duck || 'cur'];
-  s = patchOnce(s, 'function synthesize(name, variant, sampleRate) {', 'function synthesize(name, variant, sampleRate) { return window.__SYNTH(name, variant, sampleRate, synthesize0); }\n  function synthesize0(name, variant, sampleRate) {', 'synth');
+   // Lot 11/T1 (LOAD-13) : le moteur interne est reprenable et warmBank appelle synthJob
+   // directement, plus synthesize. Le crochet du banc porte donc sur synthJob, via une table
+   // __OVERRIDE ; sinon la variante 'doom' construirait silencieusement la banque v0.2.
+   s = patchOnce(s, 'function synthJob(name, variant, sampleRate) {', 'function synthJob(name, variant, sampleRate) { var ov = window.__OVERRIDE && window.__OVERRIDE[name]; if (ov) { var d = ov(variant | 0, sampleRate); return {total: d.length, step: function () { return true; }, seal: function () { return d; }}; } return synthJob0(name, variant, sampleRate); }\n  function synthJob0(name, variant, sampleRate) {', 'synth');
   s = patchOnce(s, 'musicBus = remember(ctx.createGain()); musicBus.gain.value = MUSIC_GAIN; musicBus.connect(master);',
     'musicBus = remember(ctx.createGain()); musicBus.gain.value = MUSIC_GAIN; ' + (duck.mode === 'shelf'
       ? "var duckShelf = remember(ctx.createBiquadFilter()); duckShelf.type = 'lowshelf'; duckShelf.frequency.value = " + (v.shelfHz || 150) + "; duckShelf.gain.value = 0; " + (v.shelfK ? "duckShelf.gain.automationRate = 'k-rate'; " : '') + "musicBus.connect(duckShelf); duckShelf.connect(master); window.__duckShelf = duckShelf;"
@@ -94,6 +97,7 @@ function countParams(ctx, counter) {
 function sceneFrames(scene) { return scene.frames.length; }
 async function render(scene, v, opt = {}) {
   RECIPE = v.recipe || 'cur';
+  window.__OVERRIDE = RECIPE === 'doom' ? Object.fromEntries(Object.keys(DOOMISH.RECIPES).map(n => [n, (variant, rate) => DOOMISH.synth(n, variant | 0, rate || 22050)])) : null;
   const N = sceneFrames(scene), seconds = (K0 + N) / HZ + TAIL, ctx = new OfflineAudioContext(12, Math.ceil(seconds * SR), SR);
   Object.defineProperty(ctx, 'state', {get: () => 'running'});
   const counter = {n: 0}; countParams(ctx, counter); window.__L14 = {sent: 0, skipped: 0};

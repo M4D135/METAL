@@ -1,0 +1,231 @@
+{
+ "schema": "metal-feel06-v1",
+ "node": "v24.18.0",
+ "root": "/home/m4d135/metal-chantier/voies/audio",
+ "rate": 22050,
+ "weapons": {
+  "pistol": {
+   "seconds": 0.34,
+   "cap": 0.36,
+   "shape": [
+    {
+     "seconds": 0.34,
+     "peak": 0.84,
+     "rms": 0.22939,
+     "dc": 0.00017,
+     "tail": 0,
+     "tailEnd": 0.0076,
+     "brightness": 0.3244
+    },
+    {
+     "seconds": 0.34,
+     "peak": 0.84,
+     "rms": 0.24034,
+     "dc": 0.00117,
+     "tail": 0,
+     "tailEnd": 0.0072,
+     "brightness": 0.2749
+    }
+   ],
+   "variantsDiffer": true,
+   "reproducible": true,
+   "band120_500_dB": {
+    "v02": 13.35,
+    "metal": 18.34,
+    "gain": 4.99
+   },
+   "rmsAtEqualPeak_dB": 6.44,
+   "under120Pct": {
+    "v02": 3.18,
+    "metal": 25.56,
+    "ratio": 8.04
+   },
+   "sha256": {
+    "v02": "b3dd2031cbb9365b",
+    "metal": "cb4e646c40c5a52e"
+   },
+   "matchesAuditPrototype": {
+    "v0": true,
+    "v1": true
+   }
+  },
+  "smg": {
+   "seconds": 0.24,
+   "cap": 0.26,
+   "shape": [
+    {
+     "seconds": 0.24,
+     "peak": 0.84,
+     "rms": 0.24251,
+     "dc": 0.00116,
+     "tail": 0,
+     "tailEnd": 0.01,
+     "brightness": 0.3551
+    },
+    {
+     "seconds": 0.24,
+     "peak": 0.84,
+     "rms": 0.23901,
+     "dc": 0.00118,
+     "tail": 0,
+     "tailEnd": 0.0094,
+     "brightness": 0.3742
+    }
+   ],
+   "variantsDiffer": true,
+   "reproducible": true,
+   "band120_500_dB": {
+    "v02": 9.77,
+    "metal": 17.73,
+    "gain": 7.96
+   },
+   "rmsAtEqualPeak_dB": 7.98,
+   "under120Pct": {
+    "v02": 1.94,
+    "metal": 22.38,
+    "ratio": 11.54
+   },
+   "sha256": {
+    "v02": "ae94f4474e2b5b01",
+    "metal": "6ab00f15ade2eee5"
+   },
+   "matchesAuditPrototype": {
+    "v0": true,
+    "v1": true
+   }
+  },
+  "shotgun": {
+   "seconds": 0.92,
+   "cap": 0.95,
+   "shape": [
+    {
+     "seconds": 0.92,
+     "peak": 0.84,
+     "rms": 0.23552,
+     "dc": 0.00043,
+     "tail": 0,
+     "tailEnd": 0.0015,
+     "brightness": 0.2084
+    },
+    {
+     "seconds": 0.92,
+     "peak": 0.84,
+     "rms": 0.23415,
+     "dc": 0.00005,
+     "tail": 0,
+     "tailEnd": 0.0013,
+     "brightness": 0.2074
+    }
+   ],
+   "variantsDiffer": true,
+   "reproducible": true,
+   "band120_500_dB": {
+    "v02": 12.39,
+    "metal": 23.82,
+    "gain": 11.43
+   },
+   "rmsAtEqualPeak_dB": 7.6,
+   "under120Pct": {
+    "v02": 8.49,
+    "metal": 21.49,
+    "ratio": 2.53
+   },
+   "sha256": {
+    "v02": "0bf85a1897f65ee4",
+    "metal": "f8f5525c775849a3"
+   },
+   "matchesAuditPrototype": {
+    "v0": true,
+    "v1": true
+   }
+  },
+  "rocket": {
+   "seconds": 0.8,
+   "cap": 0.82,
+   "shape": [
+    {
+     "seconds": 0.8,
+     "peak": 0.84,
+     "rms": 0.28666,
+     "dc": 0.00021,
+     "tail": 0.0015,
+     "tailEnd": 0.0267,
+     "brightness": 0.0981
+    },
+    {
+     "seconds": 0.8,
+     "peak": 0.84,
+     "rms": 0.28787,
+     "dc": 0,
+     "tail": 0.0014,
+     "tailEnd": 0.0201,
+     "brightness": 0.0996
+    }
+   ],
+   "variantsDiffer": true,
+   "reproducible": true,
+   "band120_500_dB": {
+    "v02": 13.74,
+    "metal": 25.96,
+    "gain": 12.22
+   },
+   "rmsAtEqualPeak_dB": 6.47,
+   "under120Pct": {
+    "v02": 1.49,
+    "metal": 28.91,
+    "ratio": 19.4
+   },
+   "sha256": {
+    "v02": "6f84f62c148877e1",
+    "metal": "3e4d3f6f32fd66ab"
+   },
+   "matchesAuditPrototype": {
+    "v0": false,
+    "v1": false
+   }
+  },
+  "grenade": {
+   "seconds": 0.52,
+   "cap": 0.55,
+   "shape": [
+    {
+     "seconds": 0.52,
+     "peak": 0.84,
+     "rms": 0.31615,
+     "dc": 0.00217,
+     "tail": 0.0023,
+     "tailEnd": 0.0279,
+     "brightness": 0.083
+    },
+    {
+     "seconds": 0.52,
+     "peak": 0.84,
+     "rms": 0.31768,
+     "dc": 0.00044,
+     "tail": 0.0024,
+     "tailEnd": 0.0262,
+     "brightness": 0.0794
+    }
+   ],
+   "variantsDiffer": true,
+   "reproducible": true,
+   "band120_500_dB": {
+    "v02": 12.19,
+    "metal": 24.4,
+    "gain": 12.21
+   },
+   "rmsAtEqualPeak_dB": 9.86,
+   "under120Pct": {
+    "v02": 44.92,
+    "metal": 42.2,
+    "ratio": 0.94
+   },
+   "sha256": {
+    "v02": "cd76d32e505beab2",
+    "metal": "6dd1010214a86443"
+   },
+   "matchesAuditPrototype": "nom absent du prototype d'audit"
+  }
+ },
+ "note": "crête normalisée à .84 par les deux moteurs : rms comparés à crête égale. Énergie de bande absolue, pas en pourcentage."
+}

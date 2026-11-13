@@ -1,0 +1,63 @@
+{
+ "job": "calib",
+ "sr": 48000,
+ "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+ "errors": [],
+ "comp": [
+  {
+   "name": "cur",
+   "threshold": -19,
+   "knee": 18,
+   "ratio": 5,
+   "attack": 0.004,
+   "release": 0.18,
+   "makeupDb": 4.55,
+   "delay": 288,
+   "delayMs": 6
+  },
+  {
+   "name": "feel07",
+   "threshold": -12,
+   "knee": 6,
+   "ratio": 3,
+   "attack": 0.012,
+   "release": 0.12,
+   "makeupDb": 3.73,
+   "delay": 288,
+   "delayMs": 6
+  },
+  {
+   "name": "lim",
+   "threshold": -6,
+   "knee": 4,
+   "ratio": 12,
+   "attack": 0.001,
+   "release": 0.09,
+   "makeupDb": 2.56,
+   "delay": 288,
+   "delayMs": 6
+  },
+  {
+   "name": "lim2",
+   "threshold": -9,
+   "knee": 6,
+   "ratio": 8,
+   "attack": 0.002,
+   "release": 0.1,
+   "makeupDb": 3.53,
+   "delay": 288,
+   "delayMs": 6
+  },
+  {
+   "name": "off",
+   "threshold": 0,
+   "knee": 0,
+   "ratio": 1,
+   "attack": 0.004,
+   "release": 0.18,
+   "makeupDb": 0,
+   "delay": 288,
+   "delayMs": 6
+  }
+ ]
+}
