@@ -428,10 +428,9 @@ Déploiement sur https://fps.estrasse.fr (VPS amiga) : release
 et après la bascule, trois versions gardées (la plus ancienne, `673d6b2`, est
 retirée). La page servie est identique octet à octet au fichier testé.
 
-### Lot 02, première tranche (13/11/2026, branche seulement)
+### Lot 02, première tranche (13/11/2026, 0.9.1)
 
-Sur `chantier/lot-02-simulation`, après reprise de `main` (lot 01 suite), quatre
-groupes de la fiche sont livrés et prouvés : T16 (SIM-10), T6 (SIM-04,
+Quatre groupes de la fiche sont livrés et prouvés : T16 (SIM-10), T6 (SIM-04,
 SIM-09), T7/T10 (SIM-06, RESTE-04) et T11 (RESTE-05). L'état est identique sur
 les neuf scénarios `$SC9` pendant 1 800 pas, pas à pas et au snapshot, et sur
 `legacy-s2` arme 2. Le gain cumulé mesuré est de **−12 %** sur la somme du CPU
@@ -439,10 +438,24 @@ des neuf scénarios (4 598 → 4 042 ms, arme 2, trois passages) et de −14 à 
 sur les pas appariés. **Le but de −40 à −60 % n'est pas atteint** : les tâches
 T5, T8, T9, T12 et T15 ne sont pas commencées.
 
-`npm test` passe **505/505** au Mac et au Spark. Build : **850 859 octets**
-bruts, sha256 `0972ca16a2d8f7eb…`, version toujours 0.9.0. Rien n'est encore
-fusionné dans `main` ni déployé ; la preuve détaillée est dans
+La fusion de `main` (lot 01 suite, `FMath`) avait changé la trajectoire de
+`legacy-s2` avant cette tranche (`54574123` → `afedbbcd`), sans rapport avec
+ces quatre groupes. `npm test` passe **505/505** au Mac et au Spark.
+
+Commit de version dédié `e615fa7` (0.9.0 → **0.9.1**), fusion dans `main` par
+`dc3409b`. HTML final : **850 859 octets**, SHA-256
+`af6264cbc66e25f364ef80f8ff5d6bb8ed6261bebc354b31c73b9cb2f2b8a929`, version
+affichée `V0.9.1`. Déploiement sur https://fps.estrasse.fr : release
+`releases/dc3409b077df94bc08eef981986b822689b4cda1`, empreinte vérifiée avant
+et après la bascule, trois versions gardées (`363473a` retirée). La page servie
+est identique octet à octet, partie lancée sans tête en 60 i/s sans erreur de
+console. Preuve détaillée :
 `docs/chantier-moteur/preuves/lot-02/t6-t16/README.md`.
+
+Depuis cette publication, T5 (génération du monde, LOAD-06) est livré sur la
+branche : 46/46 mondes identiques octet pour octet, **−31,6 %** sur la somme
+des temps de création (2 282 → 1 560 ms pour 46 mondes), soit +2 220 octets de
+distribution. Il attend la prochaine fusion. Restent T8, T9, T12 et T15.
 
 ### Ce qui n'est pas prouvé
 

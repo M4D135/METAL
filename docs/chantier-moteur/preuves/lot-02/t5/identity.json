@@ -1,0 +1,17 @@
+{
+ "schema": "lot02-t5-identity-v1",
+ "cases": 46,
+ "identical": 46,
+ "different": [],
+ "digest": {
+  "a": "f1062c320e5197542eba2503f8446524bbfd8913f1f5a8fbcd188f676f0de285",
+  "b": "f1062c320e5197542eba2503f8446524bbfd8913f1f5a8fbcd188f676f0de285"
+ },
+ "bytesPerWorld": 4192404,
+ "totalOriginalMs": 2384,
+ "totalPatchedMs": 1684,
+ "sourceSha256": {
+  "a": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+  "b": "7469dd86f7e5ac5f529a39c110409edb8faa14d580333bd12f44edf1bcf93167"
+ }
+}
