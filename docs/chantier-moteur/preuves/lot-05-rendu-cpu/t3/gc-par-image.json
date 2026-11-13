@@ -1,0 +1,21 @@
+{
+ "commande": "node --trace-gc .relais/bancs/rcpu/gc-bench.mjs <racine> 1200 camp:17 drawonly",
+ "note": "Pression GC du chemin de rendu : somme des octets repris par les Scavenge entre START et END, rapportee au nombre d images.",
+ "base": {
+  "scavenge": 24,
+  "major": 1,
+  "reprisMo": 0.747,
+  "frames": 1200,
+  "ms": 1089,
+  "koParImage": 0.6
+ },
+ "tete": {
+  "scavenge": 18,
+  "major": 0,
+  "reprisMo": 0.559,
+  "frames": 1200,
+  "ms": 858,
+  "koParImage": 0.5
+ },
+ "ratioKoParImage": 0.833
+}

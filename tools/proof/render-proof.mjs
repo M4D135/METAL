@@ -24,13 +24,13 @@ const cpu = () => { const u = process.cpuUsage(); return () => { const d = proce
 function streamRun(root) {
   const scene = makeScene(root, {world: worldSpec, seed, quality, canvas2d});
   for (let i = 0; i < frames; i++) scene.frame(1 / 60);
-  const result = {root, world: opt('world', 'camp:17'), seed, quality, canvas2d, frames, streamSha256: scene.recorder.digest(), ...scene.recorder.state};
+  const result = {root, world: opt('world', 'camp:17'), seed, quality, canvas2d, frames, streamSha256: scene.recorder.digest(), contentSha256: scene.recorder.contentDigest(), ...scene.recorder.state};
   scene.renderer.dispose?.();
   return result;
 }
 
 function costBlock(root, measure) {
-  const scene = makeScene(root, {world: worldSpec, seed, quality, canvas2d});
+  const scene = makeScene(root, {world: worldSpec, seed, quality, canvas2d, content: false});
   const n = measure ? skip : warmup;
   for (let i = 0; i < n; i++) scene.frame(1 / 60, {time: false});
   const draw = [], models = [], total = [];

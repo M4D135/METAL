@@ -19,7 +19,8 @@ function gpu(){
       if(name==='getShaderParameter'||name==='getProgramParameter')return true;
       if(name==='checkFramebufferStatus')return 36053;
       if(name==='bindBuffer'&&args[0]==='ARRAY_BUFFER')bound=args[1];
-      if(name==='bufferData'&&args[0]==='ARRAY_BUFFER')buffers.set(bound,Array.from(args[1]));
+      if(name==='bufferData'&&args[0]==='ARRAY_BUFFER'&&ArrayBuffer.isView(args[1]))buffers.set(bound,Array.from(args[1]));
+      if(name==='bufferSubData'&&args[0]==='ARRAY_BUFFER'){const target=buffers.get(bound)||[],source=Array.from(args[2]),start=args[1]/4;for(let i=0;i<source.length;i++)target[start+i]=source[i];buffers.set(bound,target);}
       if(name==='useProgram')currentProgram=args[0];
       if(name==='bindFramebuffer')framebuffer=args[1];
       if(name==='viewport')viewport=args.slice(0,4);

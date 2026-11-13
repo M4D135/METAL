@@ -657,10 +657,42 @@
     // A direction can contain negative horizontal coordinates; colours cannot.
     const sun=Array.isArray(value.sunDirection)&&value.sunDirection.length>=3?value.sunDirection.slice(0,3).map((x,i)=>Number.isFinite(x)?x:[.4,.8,.3][i]):[.4,.8,.3];
     sun[1]=Math.max(.12,sun[1]);const sunLength=Math.hypot(...sun)||1;
-    return {...value,skyTop:color(value.skyTop,[.22,.39,.51]),skyBottom:color(value.skyBottom,[.65,.72,.66]),fog:color(value.fog,[.35,.43,.42]),sunDirection:sun.map(x=>x/sunLength),sunColor:color(value.sunColor,[1,.86,.62]),ambient:color(value.ambient,[.24,.29,.27]),wind:Number.isFinite(value.wind)?Math.max(0,Math.min(2,value.wind)):.6,fogDensity:Number.isFinite(value.fogDensity)?Math.max(.001,value.fogDensity):.011,outdoorZones:value.outdoorZones||[]};
+    const zones=value.outdoorZones||[];
+    return {...value,skyTop:color(value.skyTop,[.22,.39,.51]),skyBottom:color(value.skyBottom,[.65,.72,.66]),fog:color(value.fog,[.35,.43,.42]),sunDirection:sun.map(x=>x/sunLength),sunColor:color(value.sunColor,[1,.86,.62]),ambient:color(value.ambient,[.24,.29,.27]),wind:Number.isFinite(value.wind)?Math.max(0,Math.min(2,value.wind)):.6,fogDensity:Number.isFinite(value.fogDensity)?Math.max(.001,value.fogDensity):.011,outdoorZones:zones,outdoorRaster:outdoorRaster(zones)};
+  }
+  const OUTDOOR_CELL=2,OUTDOOR_CELLS_MAX=1<<20;
+  function outdoorRaster(zones) {
+    if(!zones.length)return null;
+    let minX=Infinity,minZ=Infinity,maxX=-Infinity,maxZ=-Infinity;
+    for(const zone of zones){
+      if(!(zone.w>0)||!(zone.d>0))return null;
+      const hw=zone.w*.5+.08,hd=zone.d*.5+.08;
+      if(zone.x-hw<minX)minX=zone.x-hw;if(zone.x+hw>maxX)maxX=zone.x+hw;
+      if(zone.z-hd<minZ)minZ=zone.z-hd;if(zone.z+hd>maxZ)maxZ=zone.z+hd;
+    }
+    if(!Number.isFinite(minX))return null;
+    const x0=Math.floor(minX/OUTDOOR_CELL)*OUTDOOR_CELL-OUTDOOR_CELL,z0=Math.floor(minZ/OUTDOOR_CELL)*OUTDOOR_CELL-OUTDOOR_CELL;
+    const nx=Math.ceil((maxX-x0)/OUTDOOR_CELL)+1,nz=Math.ceil((maxZ-z0)/OUTDOOR_CELL)+1;
+    if(!(nx>0&&nz>0)||nx*nz>OUTDOOR_CELLS_MAX)return null;
+    const grid=new Uint8Array(nx*nz);
+    for(const zone of zones){
+      const hw=zone.w*.5+.08,hd=zone.d*.5+.08;
+      const ax=Math.max(0,Math.floor((zone.x-hw-x0)/OUTDOOR_CELL)),bx=Math.min(nx-1,Math.floor((zone.x+hw-x0)/OUTDOOR_CELL));
+      const az=Math.max(0,Math.floor((zone.z-hd-z0)/OUTDOOR_CELL)),bz=Math.min(nz-1,Math.floor((zone.z+hd-z0)/OUTDOOR_CELL));
+      for(let x=ax;x<=bx;x++)for(let z=az;z<=bz;z++)grid[x*nz+z]=1;
+    }
+    return {grid,nx,nz,x0,z0};
   }
   function outdoorAt(p,environment){
-    return !!environment&&environment.outdoorZones.some(zone=>Math.abs(p[0]-zone.x)<=zone.w*.5+.08&&Math.abs(p[2]-zone.z)<=zone.d*.5+.08);
+    if(!environment)return false;
+    const zones=environment.outdoorZones,raster=environment.outdoorRaster;
+    if(raster){
+      const cx=Math.floor((p[0]-raster.x0)/OUTDOOR_CELL),cz=Math.floor((p[2]-raster.z0)/OUTDOOR_CELL);
+      if(cx<0||cz<0||cx>=raster.nx||cz>=raster.nz)return false;
+      if(!raster.grid[cx*raster.nz+cz])return false;
+    }
+    for(let i=0;i<zones.length;i++){const zone=zones[i];if(Math.abs(p[0]-zone.x)<=zone.w*.5+.08&&Math.abs(p[2]-zone.z)<=zone.d*.5+.08)return true;}
+    return false;
   }
   function transientLights(value,eye,limit){
     if(!Array.isArray(value))return [];
@@ -683,37 +715,45 @@
     const object=mesh.overlay||mesh.surface==='object'||objects&&mesh.surface!=='architecture';
     return (mesh.overlay?1:0)+(outdoorMesh(mesh,environment)?2:0)+(object?4:0);
   }
-  function pack(meshes,environment,objects=false) {
-    const grouped=names.map(()=>[]);
-    for(const mesh of meshes||[]) {
-      const i=names.indexOf(mesh.shape||'box');
-      if(i>=0) grouped[i].push(mesh);
-    }
-    const count=grouped.reduce((n,g)=>n+g.length,0),values=new Float32Array(count*16),groups=[];
-    let offset=0;
-    for(let i=0;i<names.length;i++) {
-      const list=grouped[i];
-      if(list.length) groups.push({name:names[i],offset:offset*4,count:list.length});
-      for(const mesh of list) {
-        const p=mesh.p||[0,0,0],s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
-        values.set([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment,objects),c[0],c[1],c[2],mesh.color?1:0],offset);
-        offset+=16;
-      }
-    }
-    return {values,groups};
+  const SHAPE={box:0,sphere:1,cylinder:2,octa:3,ring:4,bevel:5,foliage:6},ZERO3=[0,0,0],ONE3=[1,1,1],GREY3=[.5,.5,.5];
+  function scratchRows(){return {data:new Float32Array(0),counts:new Int32Array(7),starts:new Int32Array(7),codes:new Int8Array(0)};}
+  function rowsFor(scratch,count) {
+    if(scratch.data.length<count*16){let n=scratch.data.length/16||16;while(n<count)n*=2;scratch.data=new Float32Array(n*16);}
+    if(scratch.codes.length<count){let n=scratch.codes.length||64;while(n<count)n*=2;scratch.codes=new Int8Array(n);}
+    return scratch.data;
   }
-  function packEffects(meshes,environment,eye){
+  function pack(meshes,environment,objects=false,scratch=null) {
+    const list=meshes||[];if(!scratch)scratch=scratchRows();
+    if(scratch.codes.length<list.length)rowsFor(scratch,list.length);
+    const counts=scratch.counts,starts=scratch.starts;counts.fill(0);let count=0;
+    for(let k=0;k<list.length;k++){const code=SHAPE[list[k].shape||'box'],c=code===undefined?-1:code;scratch.codes[k]=c;if(c>=0){counts[c]++;count++;}}
+    const data=rowsFor(scratch,count),groups=[];let offset=0;
+    for(let i=0;i<7;i++){starts[i]=offset;if(counts[i])groups.push({name:names[i],offset:offset*64,count:counts[i]});offset+=counts[i];}
+    for(let k=0;k<list.length;k++){
+      const c=scratch.codes[k];if(c<0)continue;
+      const mesh=list[k],j=(starts[c]++)*16,p=mesh.p||ZERO3,s=mesh.s||ONE3,r=mesh.r||ZERO3,col=mesh.color;
+      data[j]=p[0];data[j+1]=p[1];data[j+2]=p[2];data[j+3]=mesh.mat||0;data[j+4]=s[0];data[j+5]=s[1];data[j+6]=s[2];data[j+7]=mesh.emissive||0;
+      data[j+8]=r[0];data[j+9]=r[1];data[j+10]=r[2];data[j+11]=surfaceFlags(mesh,environment,objects);
+      if(col){data[j+12]=col[0];data[j+13]=col[1];data[j+14]=col[2];data[j+15]=1;}else{data[j+12]=0;data[j+13]=0;data[j+14]=0;data[j+15]=0;}
+    }
+    return {values:data.subarray(0,count*16),groups};
+  }
+  function packEffects(meshes,environment,eye,scratch){
     const distance=m=>(m.p[0]-eye[0])**2+(m.p[1]-eye[1])**2+(m.p[2]-eye[2])**2;
     const list=meshes.filter(m=>names.includes(m.shape||'sphere')&&m.alpha>.003).slice().sort((a,b)=>distance(b)-distance(a));
-    const values=new Float32Array(list.length*16),groups=[];let offset=0;
+    if(!scratch)scratch=scratchRows();
+    const values=rowsFor(scratch,list.length),groups=[];let offset=0;
     for(const mesh of list){
       const name=mesh.shape||'sphere',last=groups[groups.length-1];
       if(last&&last.name===name)last.count++;else groups.push({name,offset:offset*4,count:1});
-      const p=mesh.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[.5,.5,.5];
+      const p=mesh.p,s=mesh.s||ONE3,r=mesh.r||ZERO3,c=mesh.color||GREY3,j=offset;
       const material=mesh.shape==='ring'&&Number.isFinite(mesh.innerRatio)?20+Math.min(.999,Math.max(0,mesh.innerRatio)):mesh.fxPriority==='hazard'?16:mesh.fxFire?14:mesh.fxSmoke?15:mesh.fxSpark?17:7;
-      values.set([p[0],p[1],p[2],material,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment,true),c[0],c[1],c[2],Math.min(1,Math.max(0,mesh.alpha))],offset);offset+=16;
+      values[j]=p[0];values[j+1]=p[1];values[j+2]=p[2];values[j+3]=material;values[j+4]=s[0];values[j+5]=s[1];values[j+6]=s[2];values[j+7]=mesh.emissive||0;
+      values[j+8]=r[0];values[j+9]=r[1];values[j+10]=r[2];values[j+11]=surfaceFlags(mesh,environment,true);
+      values[j+12]=c[0];values[j+13]=c[1];values[j+14]=c[2];values[j+15]=Math.min(1,Math.max(0,mesh.alpha));
+      offset+=16;
     }
-    return {values,groups};
+    return {values:values.subarray(0,offset),groups};
   }
 
   function multiply(a,b,out) {
@@ -784,8 +824,8 @@
         e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment)+(e.detail+1)*8,c[0],c[1],c[2],mesh.color?1:0]);}
       entries.push(e);byMesh.set(mesh,e);
     }
-    function query(eye,ranges){
-      const result=[];
+    function query(eye,ranges,out){
+      const result=out||[];result.length=0;
       for(let level=0;level<3;level++){
         const range=ranges[level];if(!(range>0))continue;
         const radius=range+maxRadius[level];
@@ -803,11 +843,14 @@
     const z=x*f[0]+y*f[1]+d*f[2],r=e.radius;
     return z+r>.04&&z-r<far&&Math.abs(x*right[0]+y*right[1]+d*right[2])<=z*horizontal+r*Math.sqrt(1+horizontal*horizontal)&&Math.abs(x*up[0]+y*up[1]+d*up[2])<=z*vertical+r*Math.sqrt(1+vertical*vertical);
   }
-  function packIndexed(entries){
-    const buckets=names.map(()=>[]);for(const e of entries){const i=names.indexOf(e.mesh.shape||'box');if(i>=0)buckets[i].push(e);}
-    const values=new Float32Array(entries.length*16),groups=[];let offset=0;
-    for(let i=0;i<names.length;i++)if(buckets[i].length){groups.push({name:names[i],offset:offset*4,count:buckets[i].length});for(const e of buckets[i]){values.set(e.row,offset);offset+=16;}}
-    return {values,groups};
+  function packIndexed(entries,scratch){
+    if(!scratch)scratch=scratchRows();
+    const counts=scratch.counts,starts=scratch.starts;counts.fill(0);let count=0;
+    for(const e of entries){if(e.shapeCode===undefined)e.shapeCode=SHAPE[e.mesh.shape||'box']===undefined?-1:SHAPE[e.mesh.shape||'box'];if(e.shapeCode>=0){counts[e.shapeCode]++;count++;}}
+    const data=rowsFor(scratch,count),groups=[];let offset=0;
+    for(let i=0;i<7;i++){starts[i]=offset;if(counts[i])groups.push({name:names[i],offset:offset*64,count:counts[i]});offset+=counts[i];}
+    for(const e of entries)if(e.shapeCode>=0)data.set(e.row,(starts[e.shapeCode]++)*16);
+    return {values:data.subarray(0,count*16),groups};
   }
 
   function skyColor(values,scale=1){return 'rgb('+values.map(v=>Math.round(Math.pow(Math.max(0,v*scale)/(Math.max(0,v*scale)+.76),.4545)*255)).join(',')+')';}
@@ -1292,6 +1335,7 @@
     let world=[],worldIndex=spatialIndex([]),lights=[],environment=null,worldBatch=pack([]),quality='auto',disposed=false,worldRevision=0;
     let staticCaches=[],lampCasters=[],actorLightPlan=null;
     const sunCasterOut=[],SHADOW_RANGES=[32,18,0];
+    const capacity=new Map(),dynamicRows=scratchRows(),overlayRows=scratchRows(),fxRows=scratchRows(),candidateRows=[],sunCandidateRows=[];
     const governor=resolutionGovernor();let autoScale=1;
 
     function compile(type,code) {
@@ -1378,7 +1422,7 @@
       lampCasters=[];for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);}
       governor.reset();autoScale=1;
       if(stats.contextLost||disposed) return;
-      gl.bindBuffer(gl.ARRAY_BUFFER,worldBuffer);gl.bufferData(gl.ARRAY_BUFFER,worldBatch.values,gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER,worldBuffer);capacity.delete(worldBuffer);uploadRows(worldBuffer,worldBatch.values,gl.STATIC_DRAW);
     }
     function updateWorld(meshes,revision,points){
       if(disposed||revision===worldRevision)return false;
@@ -1404,10 +1448,15 @@
       gl.viewport(0,0,width,height);
       return {width,height,ratio};
     }
+    function uploadRows(buffer,values,usage){
+      let cap=capacity.get(buffer)||0;
+      if(values.byteLength>cap){cap=Math.max(65536,values.byteLength,cap*2);gl.bufferData(gl.ARRAY_BUFFER,cap,usage||gl.DYNAMIC_DRAW);capacity.set(buffer,cap);}
+      gl.bufferSubData(gl.ARRAY_BUFFER,0,values);stats.uploadBytes+=values.byteLength;
+    }
     function renderBatch(batch,buffer,upload,shadowPass=false) {
       if(!batch.groups.length) return;
       gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
-      if(upload){gl.bufferData(gl.ARRAY_BUFFER,batch.values,gl.DYNAMIC_DRAW);stats.uploadBytes+=batch.values.byteLength;}
+      if(upload)uploadRows(buffer,batch.values);
       for(const group of batch.groups) {
         for(let i=2;i<6;i++) gl.vertexAttribPointer(i,4,gl.FLOAT,false,64,group.offset+(i-2)*16);
         const shape=source.ranges[group.name];
@@ -1418,11 +1467,11 @@
     function renderStatic(entries,slot,shadow=false,reuse=false){
       const cache=staticCaches[slot];
       const same=cache.entries.length===entries.length&&entries.every((entry,i)=>entry===cache.entries[i]);
-      if(!same){cache.entries=reuse?entries.slice():entries;cache.batch=packIndexed(entries);}
+      if(!same){cache.entries=reuse?entries.slice():entries;cache.batch=packIndexed(entries,cache.rows||(cache.rows=scratchRows()));}
       renderBatch(cache.batch,cache.buffer,!same,shadow);
     }
     function renderEffects(meshes,eye,time){
-      const batch=packEffects(meshes,environment,eye);stats.fxInstances+=batch.values.length/16;if(!batch.groups.length)return;
+      const batch=packEffects(meshes,environment,eye,fxRows);stats.fxInstances+=batch.values.length/16;if(!batch.groups.length)return;
       gl.useProgram(fxProgram);gl.uniformMatrix4fv(fxUniforms.uViewProjection,false,vp);gl.uniform2f(fxUniforms.uWindTime,0,time);
       gl.uniform3fv(fxUniforms.uEye,eye);gl.uniform3fv(fxUniforms.uAmbient,environment?environment.ambient:[.12,.15,.16]);
       gl.uniform3fv(fxUniforms.uFogColor,environment?environment.fog:[.009,.018,.024]);gl.uniform2f(fxUniforms.uEnvironment,environment?1:0,environment?environment.fogDensity:.018);gl.uniform1f(fxUniforms.uTime,time);
@@ -1463,7 +1512,7 @@
       gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2);
       gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);gl.uniform2f(depthWind,environment.wind,time);
       const sunRanges=[extent+24,26,0];
-      const candidates=worldIndex.query(center,sunRanges);
+      const candidates=worldIndex.query(center,sunRanges,sunCandidateRows);
       const px=p[0],py=p[1],pz=p[2],rx=r[0],ry=r[1],rz=r[2],ux=u[0],uy=u[1],uz=u[2],fwx=fw[0],fwy=fw[1],fwz=fw[2];
       sunCasterOut.length=0;
       for(let i=0;i<candidates.length;i++){
@@ -1558,7 +1607,7 @@
       projection.fill(0);projection[0]=f/(canvas.width/canvas.height);projection[5]=f;projection[10]=(far+near)/(near-far);projection[11]=-1;projection[14]=2*far*near/(near-far);
       multiply(projection,view,vp);
       const ranges=detailRanges(quality);ranges[0]=extendedDistance(ranges[0],environment,eye);stats.viewDistance=ranges[0];
-      const candidates=worldIndex.query(eye,ranges);
+      const candidates=worldIndex.query(eye,ranges,candidateRows);
       const shown=candidates.filter(e=>visible(e,eye,axes,canvas.width/canvas.height/f,1/f,ranges[0]));
       stats.staticVisible=shown.length;stats.staticCulled=world.length-shown.length;
       const planned=actorLightPlan&&actorLightPlan.previous===shadowLight&&eye.every((v,k)=>v===actorLightPlan.eye[k])?actorLightPlan.plan:lightPlan(eye);actorLightPlan=null;
@@ -1569,12 +1618,12 @@
       lightPositions.fill(0);lightColors.fill(0);lightRanges.fill(0);
       selected.forEach(({light},i)=>{lightPositions.set(light.p,i*3);lightRanges[i]=light.range||0;const c=light.color||[1,1,1],power=(light.power===undefined?1:light.power)*(blackout?.get(light)??1);lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});
       const ordinary=[],overlay=[],particles=[],overlayParticles=[];for(const mesh of dynamic||[]) (mesh.overlay?(mesh.fx?overlayParticles:overlay):mesh.fx?particles:ordinary).push(mesh);
-      const dynamicBatch=pack(ordinary,environment,true);
+      const dynamicBatch=pack(ordinary,environment,true,dynamicRows);
       const torchPosition=eye.map((v,i)=>v+right[i]*.16-up[i]*.08);
       stats.drawCalls=0;stats.triangles=0;stats.instances=0;stats.bloom=!!post&&fx.bloom!==false;stats.shadows=!!shadowTarget&&fx.shadows!==false;stats.shadowMaps=stats.shadows?shadowLights.length+1+(environment?1:0):0;stats.shadowMode=environment?'sun-atlas':'atlas';
       stats.uploadBytes=0;stats.fxInstances=0;
       // Animated instances are shared unchanged by every depth and colour pass.
-      if(dynamicBatch.values.length){gl.bindBuffer(gl.ARRAY_BUFFER,dynamicBuffer);gl.bufferData(gl.ARRAY_BUFFER,dynamicBatch.values,gl.DYNAMIC_DRAW);stats.uploadBytes+=dynamicBatch.values.byteLength;}
+      if(dynamicBatch.values.length){gl.bindBuffer(gl.ARRAY_BUFFER,dynamicBuffer);uploadRows(dynamicBuffer,dynamicBatch.values);}
       if(stats.shadows){
         gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.clear(gl.DEPTH_BUFFER_BIT);
         shadowLights.forEach((light,i)=>shadowPass(light,dynamicBatch,i,null,t));if(environment)sunShadowPass(eye,axes,dynamicBatch,t);shadowPass({p:torchPosition},dynamicBatch,2,axes,t);
@@ -1595,7 +1644,7 @@
       if(particles.length)renderEffects(particles,eye,t);
       if(overlay.length||overlayParticles.length) {
         if(blackout){selected.forEach(({light},i)=>{const c=light.color||[1,1,1],power=light.power===undefined?1:light.power;lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});gl.uniform3fv(uniforms.uLightColor,lightColors);}
-        gl.clear(gl.DEPTH_BUFFER_BIT);if(overlay.length)renderBatch(pack(overlay,environment,true),overlayBuffer,true);
+        gl.clear(gl.DEPTH_BUFFER_BIT);if(overlay.length)renderBatch(pack(overlay,environment,true,overlayRows),overlayBuffer,true);
         if(overlayParticles.length)renderEffects(overlayParticles,eye,t);
       }
       if(stats.bloom)postPass();

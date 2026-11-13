@@ -51,7 +51,7 @@ export function makeGL(recorder) {
     'uniformMatrix4fv useProgram vertexAttribDivisor vertexAttribPointer viewport').split(' ');
   for (const name of NAMES) {
     gl[name] = (...args) => {
-      recorder.record(name, args);
+      recorder.record(name, args, gl);
       if (name.startsWith('create')) return obj(name);
       if (name === 'getUniformLocation') return {__glid: 'u' + serial + ':' + args[1]};
       if (name === 'getShaderParameter' || name === 'getProgramParameter') return true;
@@ -73,14 +73,20 @@ export function verifyGL(gl, root) {
   if (missing.size) throw new Error('faux WebGL2 incomplet: ' + [...missing].join(', '));
 }
 
-export function makeRecorder() {
+export function makeRecorder({content = true} = {}) {
   const hash = crypto.createHash('sha256');
+  const contentHash = crypto.createHash('sha256');
   const out = [];
+  // Contenu réellement présent dans le tampon d'instances à chaque dessin :
+  // rend la preuve indépendante de la stratégie de téléversement (bufferData / bufferSubData / capacité).
+  const contents = new Map();
+  const attribs = new Map();
+  let boundArray = null;
   let stopped = false;
-  const state = {calls: 0, draws: 0, instances: 0, triangles: 0, bufferData: 0, bufferBytes: 0, subData: 0, subBytes: 0, uniforms: 0, texImage: 0, texSubImage: 0, programs: 0, shaders: 0, buffers: 0, vaos: 0, textures: 0};
+  const state = {calls: 0, draws: 0, instances: 0, triangles: 0, bufferData: 0, bufferBytes: 0, subData: 0, subBytes: 0, uniforms: 0, texImage: 0, texSubImage: 0, programs: 0, shaders: 0, buffers: 0, vaos: 0, textures: 0, contentDraws: 0, contentLen: 0};
   return {
     state,
-    record(name, args) {
+    record(name, args, gl) {
       if (stopped) return;
       state.calls++;
       if (name === 'drawElementsInstanced') { state.draws++; state.instances += args[4] || 0; state.triangles += (args[1] || 0) / 3 * (args[4] || 0); }
@@ -95,12 +101,30 @@ export function makeRecorder() {
       else if (name === 'createBuffer') state.buffers++;
       else if (name === 'createVertexArray') state.vaos++;
       else if (name === 'createTexture') state.textures++;
+      if (name === 'bindBuffer') { if (args[0] === gl.ARRAY_BUFFER) boundArray = args[1]; }
+      else if (content && name === 'bufferData') {
+        if (ArrayBuffer.isView(args[1])) contents.set(boundArray, Array.from(args[1]));
+        else contents.delete(boundArray);
+      } else if (content && name === 'bufferSubData' && ArrayBuffer.isView(args[2])) {
+        const target = contents.get(boundArray) || [];
+        const source = args[2], start = args[0] === gl.ARRAY_BUFFER ? args[1] / 4 : 0;
+        for (let i = 0; i < source.length; i++) target[start + i] = source[i];
+        contents.set(boundArray, target);
+      } else if (name === 'vertexAttribPointer') attribs.set(args[0], args[5]);
+      else if (content && name === 'drawElementsInstanced') {
+        const rows = contents.get(boundArray), base = (attribs.get(2) || 0) / 4, count = (args[4] || 0) * 16;
+        out.length = 0;
+        out.push('D', args[1], args[3], args[4], ':');
+        state.contentDraws++;if(rows&&rows.length)state.contentLen=(state.contentLen||0)+rows.length;out.push(rows?rows.slice(base, base + count).join(","):"!");
+        contentHash.update(out.join(''));
+      }
       out.length = 0;
       out.push(name, '(');
       serialize(args, out);
       hash.update(out.join(','));
     },
     digest() { stopped = true; return hash.digest('hex'); },
+    contentDigest() { stopped = true; return contentHash.digest('hex'); },
   };
 }
 
@@ -142,14 +166,14 @@ function fakeContext2D(recorder) {
   });
 }
 
-export function makeScene(root, {world: spec = ['camp', 6], seed = 96, quality = 'auto', canvas2d = false} = {}) {
+export function makeScene(root, {world: spec = ['camp', 6], seed = 96, quality = 'auto', canvas2d = false, content = true} = {}) {
   const win = loadModules(root);
   const {FWorld, FSimulation, FBrain, FRender, FActors, FEffects, FMotion} = win;
   const world = spec[0] === 'camp' ? FWorld.create(seed, spec[1], {campaign: true, campaignVersion: 2}) : FWorld.create(seed, spec[1]);
   let brain = null; try { brain = FBrain.create({mode: 'cpu'}); } catch {}
   const sim = FSimulation.create(world, {armorSystem: true, ...(brain ? {brain} : {})});
   sim.setDifficulty?.(0);
-  const recorder = makeRecorder();
+  const recorder = makeRecorder({content});
   const gl = canvas2d ? null : makeGL(recorder);
   if (gl) verifyGL(gl, root);
   const ctx2d = canvas2d ? fakeContext2D(recorder) : null;
