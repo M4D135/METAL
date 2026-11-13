@@ -65,21 +65,25 @@
   const RUBBLE_FIELDS=['id','sourceId','shape','material','mat','mass','seed','x','y','z','vx','vy','vz','age','resting','impactWait','settleTime'];
   const rubbleCopy=q=>({...pick(q,RUBBLE_FIELDS),size:q.size.slice(),rotation:q.rotation.slice(),angularVelocity:q.angularVelocity.slice(),...(q.color?{color:q.color.slice()}:{})});
   const debrisExtentCache=new WeakMap();let debrisFoliage;
+  // RESTE-05: same formulas, same addition order, scalars only. Math.hypot is kept
+  // argument by argument: sqrt would differ by up to 3 ulp and change snapshots.
+  function debrisExtent(shape,v0,v1,v2){
+    if(shape==='sphere')return Math.hypot(v0,v1,v2)/2;
+    if(shape==='cylinder')return (Math.hypot(v0,v2)+Math.abs(v1))/2;
+    if(shape==='octa')return Math.max(Math.abs(v0),Math.abs(v1),Math.abs(v2))/2;
+    if(shape==='ring')return Math.hypot(v0,v2)*.435+Math.hypot(v0,v1,v2)*.065;
+    if(shape==='foliage'){
+      if(!debrisFoliage){const seen=new Set();debrisFoliage=(G.FRender?.foliageTriangles?.().flat()||[]).filter(p=>{if(p.length!==3)return true;const k=p.join(',');if(seen.has(k))return false;seen.add(k);return true;});}
+      if(debrisFoliage.length){let m=-Infinity;for(let j=0;j<debrisFoliage.length;j++){const p=debrisFoliage[j],d=Math.abs(0+p[0]*v0+p[1]*v1+p[2]*v2);if(d>m)m=d;}return m;}
+    }
+    return ((0+Math.abs(v0))+Math.abs(v1)+Math.abs(v2))/2;
+  }
   function debrisHalf(q,r=q.rotation||[0,0,0]){
     const cached=debrisExtentCache.get(q);if(cached&&cached.r===r&&cached.size===q.size&&cached.shape===q.shape)return cached.h;
-    const [x,y,z]=r,a=Math.cos(x),c=Math.cos(y),e=Math.cos(z),b=Math.sin(x),d=Math.sin(y),f=Math.sin(z),s=Array.isArray(q.size)?q.size:[q.size,q.size,q.size];
-    const matrix=[e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a],h=[0,1,2].map(i=>{
-      const v=[0,1,2].map(k=>matrix[i*3+k]*s[k]);
-      if(q.shape==='sphere')return Math.hypot(...v)/2;
-      if(q.shape==='cylinder')return (Math.hypot(v[0],v[2])+Math.abs(v[1]))/2;
-      if(q.shape==='octa')return Math.max(...v.map(Math.abs))/2;
-      if(q.shape==='ring')return Math.hypot(v[0],v[2])*.435+Math.hypot(...v)*.065;
-      if(q.shape==='foliage'){
-        if(!debrisFoliage){const seen=new Set();debrisFoliage=(G.FRender?.foliageTriangles?.().flat()||[]).filter(p=>{if(p.length!==3)return true;const k=p.join(',');if(seen.has(k))return false;seen.add(k);return true;});}
-        if(debrisFoliage.length){let m=-Infinity;for(let j=0;j<debrisFoliage.length;j++){const p=debrisFoliage[j],d=Math.abs(0+p[0]*v[0]+p[1]*v[1]+p[2]*v[2]);if(d>m)m=d;}return m;}
-      }
-      return v.reduce((n,x)=>n+Math.abs(x),0)/2;
-    });
+    const rx=r[0],ry=r[1],rz=r[2],a=Math.cos(rx),c=Math.cos(ry),e=Math.cos(rz),b=Math.sin(rx),d=Math.sin(ry),f=Math.sin(rz);
+    const scalar=!Array.isArray(q.size),sx=scalar?q.size:q.size[0],sy=scalar?q.size:q.size[1],sz=scalar?q.size:q.size[2];
+    const m0=e*c,m1=e*d*b-f*a,m2=e*d*a+f*b,m3=f*c,m4=f*d*b+e*a,m5=f*d*a-e*b,m6=-d,m7=c*b,m8=c*a;
+    const h=[debrisExtent(q.shape,m0*sx,m1*sy,m2*sz),debrisExtent(q.shape,m3*sx,m4*sy,m5*sz),debrisExtent(q.shape,m6*sx,m7*sy,m8*sz)];
     debrisExtentCache.set(q,{r,size:q.size,shape:q.shape,h});return h;
   }
   function create(world,options={}) {
