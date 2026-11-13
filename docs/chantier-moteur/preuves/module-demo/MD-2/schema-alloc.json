@@ -1,0 +1,197 @@
+{
+ "schema": "fdemo-md2-schema-alloc-v2",
+ "command": "node docs/chantier-moteur/preuves/module-demo/MD-2/schema-alloc.mjs --out docs/chantier-moteur/preuves/module-demo/MD-2/schema-alloc.json",
+ "before": "66e5577977fa9cfe73925c138c0c1490a9d3feab",
+ "sourceSha256": {
+  "before": "f33889eaddf73e8510e6d31388f1fe1a9a28b4d4ae6734986ab9204ef4b2fbef",
+  "after": "e8a72f7d615a26047ab96dfb8698223ec764f21758dba94432b15855564844ff"
+ },
+ "environment": {
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "cores": 10,
+  "loadavg": [
+   2.21,
+   2.18,
+   2.36
+  ]
+ },
+ "allocation": {
+  "method": "ramassages pendant 10000000 opérations, jeune génération fixée à 16 Mio, un processus par cas ; octets/op ≈ ramassages × 16 Mio / opérations",
+  "cases": [
+   {
+    "inputs": "jeu",
+    "version": "before",
+    "kind": "fill",
+    "ops": 10000000,
+    "gc": 0,
+    "bytesPerOp": 0
+   },
+   {
+    "inputs": "jeu",
+    "version": "before",
+    "kind": "encode",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "inputs": "jeu",
+    "version": "before",
+    "kind": "decode",
+    "ops": 10000000,
+    "gc": 30,
+    "bytesPerOp": 50.3
+   },
+   {
+    "inputs": "jeu",
+    "version": "before",
+    "kind": "step",
+    "ops": 10000000,
+    "gc": 68,
+    "bytesPerOp": 114.1
+   },
+   {
+    "inputs": "jeu",
+    "version": "after",
+    "kind": "fill",
+    "ops": 10000000,
+    "gc": 0,
+    "bytesPerOp": 0
+   },
+   {
+    "inputs": "jeu",
+    "version": "after",
+    "kind": "encode",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "inputs": "jeu",
+    "version": "after",
+    "kind": "decode",
+    "ops": 10000000,
+    "gc": 0,
+    "bytesPerOp": 0
+   },
+   {
+    "inputs": "jeu",
+    "version": "after",
+    "kind": "step",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "inputs": "boite",
+    "version": "before",
+    "kind": "fill",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "inputs": "boite",
+    "version": "before",
+    "kind": "encode",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "inputs": "boite",
+    "version": "before",
+    "kind": "decode",
+    "ops": 10000000,
+    "gc": 30,
+    "bytesPerOp": 50.3
+   },
+   {
+    "inputs": "boite",
+    "version": "before",
+    "kind": "step",
+    "ops": 10000000,
+    "gc": 68,
+    "bytesPerOp": 114.1
+   },
+   {
+    "inputs": "boite",
+    "version": "after",
+    "kind": "fill",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "inputs": "boite",
+    "version": "after",
+    "kind": "encode",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   },
+   {
+    "inputs": "boite",
+    "version": "after",
+    "kind": "decode",
+    "ops": 10000000,
+    "gc": 0,
+    "bytesPerOp": 0
+   },
+   {
+    "inputs": "boite",
+    "version": "after",
+    "kind": "step",
+    "ops": 10000000,
+    "gc": 38,
+    "bytesPerOp": 63.8
+   }
+  ]
+ },
+ "timing": {
+  "method": "temps processeur du fil, 1000000 opérations par passe, 9 passes alternées dans un même processus, entrées « jeu »",
+  "nsPerOp": [
+   {
+    "version": "before",
+    "fill": {
+     "median": 2.7,
+     "min": 2.5
+    },
+    "encode": {
+     "median": 127.9,
+     "min": 118
+    },
+    "decode": {
+     "median": 88.3,
+     "min": 82
+    },
+    "step": {
+     "median": 220.1,
+     "min": 199.2
+    }
+   },
+   {
+    "version": "after",
+    "fill": {
+     "median": 2.7,
+     "min": 2.5
+    },
+    "encode": {
+     "median": 128.6,
+     "min": 117.3
+    },
+    "decode": {
+     "median": 94.8,
+     "min": 86.8
+    },
+    "step": {
+     "median": 224.7,
+     "min": 204.5
+    }
+   }
+  ]
+ }
+}

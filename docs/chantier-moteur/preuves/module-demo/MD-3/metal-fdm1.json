@@ -1,0 +1,77 @@
+{
+ "schema": "fdemo-md3-metal-fdm1-v1",
+ "command": "node docs/chantier-moteur/preuves/module-demo/MD-3/metal-fdm1.mjs --out docs/chantier-moteur/preuves/module-demo/MD-3/metal-fdm1.json",
+ "sourceSha256": {
+  "demo": "24891a93060130125ab924b2966f2077c2275e9511064bd2651d3e5ce6991a11",
+  "pilot": "98b330899ecd39c6bf53d60686dca7d92412aba47084cae10d5eba2d20161ed4"
+ },
+ "simHash": "e731c8f3434d15cf47e70a3be4eb4b61b41f9b55667ab85c2023c80cc81ce3eb",
+ "environment": {
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "cores": 10,
+  "loadavg": [
+   1.74,
+   2.63,
+   2.96
+  ]
+ },
+ "settings": {
+  "seconds": 40,
+  "hz": 60,
+  "checksumEvery": 60,
+  "world": 1,
+  "seed": 96,
+  "campaignVersion": 2,
+  "brain": "cpu",
+  "fields": "METAL, 8 octets"
+ },
+ "record": {
+  "steps": 2400,
+  "stop": null,
+  "checksums": 41,
+  "snapshotCommands": 4,
+  "commandBytes": 88,
+  "truncated": false
+ },
+ "secondRecordingIdentical": true,
+ "replay": {
+  "ok": true,
+  "checked": 41,
+  "firstDifferentStep": null,
+  "snapshotEqual": true
+ },
+ "negative": {
+  "perturbedStep": 1234,
+  "expectedDetection": 1260,
+  "detectedAt": 1260,
+  "firstDifferentStep": 1235
+ },
+ "raw": {
+  "firstDifferentStep": 1,
+  "finalEqual": false
+ },
+ "sizes": {
+  "headerBytes": 690,
+  "bodyBytes": 19616,
+  "fileBytes": 20314,
+  "perMinute": {
+   "records": 28800,
+   "body": 29424,
+   "file": 30471,
+   "bodyDeflateRaw6": 11870
+  }
+ },
+ "timing": {
+  "simNsPerStep": 83666,
+  "recordNsPerStep": 218.7,
+  "playNsPerStep": 116.1,
+  "steps": 120000,
+  "passes": 5,
+  "recordOverhead": 0.00261,
+  "playOverhead": 0.00139,
+  "method": "temps processeur du fil ; sim.step mesuré pas à pas pendant l’enregistrement et le rejeu ; FDemo seul sur 50 tours des entrées brutes, médiane de 5 passes"
+ }
+}

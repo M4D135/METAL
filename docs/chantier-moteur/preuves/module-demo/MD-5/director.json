@@ -1,0 +1,168 @@
+{
+ "schema": "fdemo-md5-director-v1",
+ "command": "node docs/chantier-moteur/preuves/module-demo/MD-5/director.mjs --out docs/chantier-moteur/preuves/module-demo/MD-5/director.json",
+ "before": "054961d7b800acc46b8c7e45e53b819d29ce344f",
+ "sourceSha256": {
+  "before": "6e89f8809753c9e22a17c13b7dbb3dc1cf09e60131054b87c497ff1e228ef266",
+  "after": "6a09719b8d6b28f61e6f2f15145fe1f8ee8133e57631db7a174e54e1984aa25f"
+ },
+ "sourceBytes": {
+  "before": 20421,
+  "after": 23953
+ },
+ "environment": {
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "cores": 10,
+  "loadavg": [
+   3.85,
+   2.79,
+   2.55
+  ]
+ },
+ "directorExported": {
+  "before": "undefined",
+  "after": "function"
+ },
+ "toyTenMinutes": {
+  "seeds": {
+   "1": {
+    "changes": 48,
+    "byShot": {
+     "survol": 1,
+     "yeux": 22,
+     "surveillance": 19,
+     "colosse": 6
+    },
+    "byReason": {
+     "start": 1,
+     "time": 45,
+     "lost": 2
+    },
+    "repeats": 0,
+    "holdsInBounds": true,
+    "colosseWithoutBoss": 0,
+    "flights": 6,
+    "timeEndLateness": {
+     "min": 0.00030171439670390043,
+     "max": 0.016666666666657726,
+     "dt": 0.016666666666666666
+    },
+    "worstFlightStepMetres": 0.8407,
+    "poseDigest": 3997521692,
+    "journalDigest": "ece5a7af9fd52b203984a77fac1a174cbf8bd73e83d2ea9c93aebe9f1ff9daba"
+   },
+   "2": {
+    "changes": 44,
+    "byShot": {
+     "survol": 1,
+     "yeux": 20,
+     "surveillance": 18,
+     "colosse": 5
+    },
+    "byReason": {
+     "start": 1,
+     "time": 43
+    },
+    "repeats": 0,
+    "holdsInBounds": true,
+    "colosseWithoutBoss": 0,
+    "flights": 5,
+    "timeEndLateness": {
+     "min": 0.00003565155590834479,
+     "max": 0.016666666666657726,
+     "dt": 0.016666666666666666
+    },
+    "worstFlightStepMetres": 0.605,
+    "poseDigest": 2473718198,
+    "journalDigest": "6dee9546f319aa0e843b8daff62dc060791fcc5a82b69f2202f3b4339257df53"
+   }
+  },
+  "sameSeedSameJournal": true,
+  "seed2Differs": true
+ },
+ "flightAB": {
+  "d": 50,
+  "flight": 2.2,
+  "expected": "clamp(1.8 + 50/160, 2.2, 5.5) = 2.2",
+  "worstStepMetres": 0.710119,
+  "bound": 0.710227,
+  "arrivedExactly": true
+ },
+ "avoid": [
+  {
+   "avoid": {
+    "count": 1
+   },
+   "choices": 400,
+   "sameTarget": 0.1875
+  },
+  {
+   "avoid": {
+    "count": 1,
+    "factor": 1
+   },
+   "choices": 400,
+   "sameTarget": 0.4925
+  }
+ ],
+ "cost": {
+  "updates": 1000000,
+  "passes": 5,
+  "warmup": 1,
+  "shotChanges": 1302,
+  "points": "7 hors combat, 8 en combat",
+  "nsPerUpdate": {
+   "director": {
+    "median": 77.5,
+    "min": 76
+   },
+   "control": {
+    "median": 33.2,
+    "min": 31.6
+   },
+   "net": 44.3
+  },
+  "gcDuringMeasuredPasses": {
+   "director": 85,
+   "control": 0
+  }
+ },
+ "allocation": {
+  "method": "volume exact : tas grandi pendant la passe + octets rendus par chaque ramassage (v8.GCProfiler) ; boucle témoin de même texte retranchée ; médianes de 5 passes après 3 de chauffe ; module neuf pour chaque cas, sauf steadyAfterOtherPoses",
+  "steadyOnePose": {
+   "updates": 300000,
+   "bytesPerUpdate": -0.596,
+   "shotChangesPerPass": 0,
+   "flying": true,
+   "shot": "orbite",
+   "note": "une seule fonction pose vue par update, que V8 intègre"
+  },
+  "steadyAfterOtherPoses": {
+   "updates": 300000,
+   "bytesPerUpdate": 13.183,
+   "shotChangesPerPass": 0,
+   "flying": true,
+   "shot": "orbite",
+   "note": "même cas, dans le module qui a déjà appelé les poses des autres essais : age mis en boîte à chaque appel"
+  },
+  "gameCatalogue": {
+   "updates": 300000,
+   "bytesPerUpdate": 17.643,
+   "shotChangesPerPass": 1794,
+   "note": "une fonction pose par plan, comme un jeu"
+  },
+  "toyCatalogue": {
+   "updates": 300000,
+   "bytesPerUpdate": 36.205,
+   "shotChangesPerPass": 388,
+   "note": "annexe 1 : lookAt dans les poses"
+  },
+  "lookAtBytesPerCall": {
+   "value": 47.236,
+   "note": "Math.hypot(dx, dz) de la section 3.4 ; Math.sqrt(dx*dx+dz*dz) : 0 octet (essai hors dépôt)"
+  }
+ }
+}
