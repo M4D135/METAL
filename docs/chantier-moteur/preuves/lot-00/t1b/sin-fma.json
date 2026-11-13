@@ -1,0 +1,25 @@
+{
+  "schema": "metal-t1b-sin-fma-v1",
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "arch": "arm64",
+  "platform": "darwin",
+  "inputs": "Math.sin(i/90), i = 1..70",
+  "mathSinEqualsFmaEvaluation": true,
+  "firstIndexWhereEvaluationWithoutFmaDiffers": 42,
+  "firstIndexWhereEvaluationWithFmaDiffers": null,
+  "differences": [
+    {
+      "i": 42,
+      "mathSin": 0.4499118805559997,
+      "withoutFma": 0.4499118805559996,
+      "withFma": 0.4499118805559997
+    },
+    {
+      "i": 66,
+      "mathSin": 0.6693498402504662,
+      "withoutFma": 0.6693498402504661,
+      "withFma": 0.6693498402504662
+    }
+  ]
+}

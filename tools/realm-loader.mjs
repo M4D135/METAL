@@ -7,6 +7,10 @@ import {createHash} from 'node:crypto';
 import {resolve, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {instrumentSimulation} from './proof/instrument.mjs';
+// Node 24.18 materializes some host globals lazily: the first read of the
+// FormData descriptor loads undici, which adds Symbol(undici.globalDispatcher.1)
+// and .2 to globalThis. Read every descriptor once, before any tool captures them.
+Object.getOwnPropertyDescriptors(globalThis);
 
 export const DEFAULT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 export const DEFAULT_MODULES = Object.freeze(['renderer','world','destruction','economy','brain','simulation']);

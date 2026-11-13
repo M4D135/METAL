@@ -1,0 +1,380 @@
+{
+  "schema": "metal-lot00-t1b-v1",
+  "task": "T1b",
+  "constats": [
+    "SIM-11",
+    "IA-06"
+  ],
+  "baseCommit": "501ec26",
+  "proofClass": "état identique (outillage ; src/, dist/index.html et SIZE.json inchangés)",
+  "environment": {
+    "machine": "Mac M5, 10 cœurs, Darwin 27.2.0",
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "undici": "7.28.0",
+    "arch": "arm64"
+  },
+  "cause": {
+    "trigger": "première lecture de Object.getOwnPropertyDescriptor(globalThis, \"FormData\") (propriété de données paresseuse)",
+    "added": [
+      "Symbol(undici.globalDispatcher.2)",
+      "Symbol(undici.globalDispatcher.1)"
+    ],
+    "globalKeysBeforeAndAfterFirstRead": [
+      182,
+      184
+    ],
+    "firstReadMs": {
+      "medianOf7Processes": 11.71,
+      "min": 11.27,
+      "max": 13.39
+    },
+    "activeResourcesAfter": []
+  },
+  "preload": "--import=<module> contenant Object.getOwnPropertyDescriptors(globalThis); (équivalent à --import='data:text/javascript,Object.getOwnPropertyDescriptors(globalThis)')",
+  "before": {
+    "withoutPreload": {
+      "node tools/proof/self-check.mjs": {
+        "code": 1,
+        "error": "AssertionError [ERR_ASSERTION]: host global keys changed",
+        "addedKeys": [
+          "Symbol(undici.globalDispatcher.2)",
+          "Symbol(undici.globalDispatcher.1)"
+        ]
+      },
+      "node tools/realm-loader.mjs": {
+        "code": 1,
+        "error": "AssertionError [ERR_ASSERTION]: host global keys changed",
+        "addedKeys": [
+          "Symbol(undici.globalDispatcher.2)",
+          "Symbol(undici.globalDispatcher.1)"
+        ]
+      },
+      "node tools/ab2.mjs . . --scenario legacy-s0 --steps 120 --reps 1 --warmups 1 --no-counters": {
+        "code": 1,
+        "error": "AssertionError [ERR_ASSERTION]: host global keys changed",
+        "addedKeys": [
+          "Symbol(undici.globalDispatcher.2)",
+          "Symbol(undici.globalDispatcher.1)"
+        ]
+      },
+      "node tools/profile-steps.mjs . --scenario legacy-s0 --steps 60 --reps 1 --warmups 1 --no-counters": {
+        "code": 1,
+        "error": "AssertionError [ERR_ASSERTION]: host global keys changed",
+        "addedKeys": [
+          "Symbol(undici.globalDispatcher.2)",
+          "Symbol(undici.globalDispatcher.1)"
+        ]
+      },
+      "node tools/realm-check.mjs . --scenario legacy-s0 --steps 60 --reps 1 --warmups 1 --probes 1024": {
+        "code": 1,
+        "error": "AssertionError [ERR_ASSERTION]: host global keys changed",
+        "addedKeys": [
+          "Symbol(undici.globalDispatcher.2)",
+          "Symbol(undici.globalDispatcher.1)"
+        ]
+      }
+    },
+    "withPreload": {
+      "node tools/proof/self-check.mjs": {
+        "code": 0,
+        "globalsPreserved": true,
+        "baselineHash": "3d779b7a",
+        "changedHash": "7d6503d4"
+      },
+      "node tools/ab2.mjs . . --scenario legacy-s0 --steps 120 --reps 1 --warmups 1 --no-counters": {
+        "code": 0,
+        "identical": true,
+        "checksum": "2d598f825b5884420eea9cc833ec44b5f8713a971283314c61e99615e88677c6",
+        "chainHashes": {
+          "legacy-s0": "db6e5445"
+        }
+      },
+      "node tools/ab2.mjs . . --scenario all --no-counters": {
+        "code": 0,
+        "identical": true,
+        "checksum": "779c1673393a3d4a4a96724622b62ce4fd1f1b8698395c6663d93ccc723fe36f",
+        "chainHashes": {
+          "legacy-s0": "576ce3b4",
+          "legacy-s2": "54574123",
+          "campaign-w10": "6cd12673",
+          "campaign-w16": "6de7419e"
+        }
+      },
+      "node tools/profile-steps.mjs .": {
+        "code": 0,
+        "identical": true,
+        "checksum": "b657e97be053f3eeafdfae7944ede52a3e4bbb378def90e3405a404c11502479",
+        "chainHashes": {
+          "legacy-s0": "576ce3b4",
+          "legacy-s2": "54574123",
+          "campaign-w10": "6cd12673",
+          "campaign-w16": "6de7419e"
+        }
+      },
+      "node tools/realm-check.mjs .": {
+        "code": 0,
+        "identical": true,
+        "checksum": "181904b304819bfe8f0cc2e1ed85cf3795ff7b99caab16fa8e0911af2a0d1705",
+        "vmOverMain": {
+          "legacy-s0": {
+            "ground": 13.94,
+            "step": 6.94
+          },
+          "campaign-w10": {
+            "ground": 12.92,
+            "step": 7.17
+          }
+        }
+      }
+    }
+  },
+  "after": {
+    "withoutPreload": {
+      "node tools/realm-loader.mjs": {
+        "code": 0,
+        "outputIdenticalToBeforeWithPreload": true
+      },
+      "node tools/proof/self-check.mjs": {
+        "code": 0,
+        "globalsPreserved": true,
+        "baselineHash": "3d779b7a",
+        "changedHash": "7d6503d4",
+        "outputIdenticalToBeforeWithPreload": true
+      },
+      "node tools/ab2.mjs . . --scenario legacy-s0 --steps 120 --reps 1 --warmups 1 --no-counters": {
+        "code": 0,
+        "identical": true,
+        "checksum": "2d598f825b5884420eea9cc833ec44b5f8713a971283314c61e99615e88677c6",
+        "chainHashes": {
+          "legacy-s0": "db6e5445"
+        }
+      },
+      "node tools/ab2.mjs . . --scenario all --no-counters": {
+        "code": 0,
+        "identical": true,
+        "checksum": "779c1673393a3d4a4a96724622b62ce4fd1f1b8698395c6663d93ccc723fe36f",
+        "chainHashes": {
+          "legacy-s0": "576ce3b4",
+          "legacy-s2": "54574123",
+          "campaign-w10": "6cd12673",
+          "campaign-w16": "6de7419e"
+        }
+      },
+      "node tools/profile-steps.mjs . (1)": {
+        "code": 0,
+        "identical": true,
+        "checksum": "b657e97be053f3eeafdfae7944ede52a3e4bbb378def90e3405a404c11502479",
+        "chainHashes": {
+          "legacy-s0": "576ce3b4",
+          "legacy-s2": "54574123",
+          "campaign-w10": "6cd12673",
+          "campaign-w16": "6de7419e"
+        }
+      },
+      "node tools/profile-steps.mjs . (2)": {
+        "code": 0,
+        "identical": true,
+        "checksum": "b657e97be053f3eeafdfae7944ede52a3e4bbb378def90e3405a404c11502479",
+        "chainHashes": {
+          "legacy-s0": "576ce3b4",
+          "legacy-s2": "54574123",
+          "campaign-w10": "6cd12673",
+          "campaign-w16": "6de7419e"
+        }
+      },
+      "node tools/profile-steps.mjs <sources de 63668ac>": {
+        "code": 0,
+        "identical": true,
+        "checksum": "b657e97be053f3eeafdfae7944ede52a3e4bbb378def90e3405a404c11502479",
+        "chainHashes": {
+          "legacy-s0": "576ce3b4",
+          "legacy-s2": "54574123",
+          "campaign-w10": "6cd12673",
+          "campaign-w16": "6de7419e"
+        }
+      },
+      "node tools/realm-check.mjs .": {
+        "code": 0,
+        "identical": true,
+        "checksum": "181904b304819bfe8f0cc2e1ed85cf3795ff7b99caab16fa8e0911af2a0d1705",
+        "vmOverMain": {
+          "legacy-s0": {
+            "ground": 10.25,
+            "step": 6.23
+          },
+          "campaign-w10": {
+            "ground": 11.58,
+            "step": 7.03
+          }
+        }
+      },
+      "node tools/cadence-profile.mjs . . c0 15 2 (deux fois, avant et après)": {
+        "code": 0,
+        "deterministicFieldsIdenticalBeforeAfter": true
+      }
+    },
+    "withPreload": {
+      "node tools/proof/self-check.mjs": {
+        "code": 0,
+        "outputIdenticalWithoutPreload": true
+      },
+      "node tools/realm-loader.mjs": {
+        "code": 0,
+        "outputIdenticalWithoutPreload": true
+      },
+      "node tools/ab2.mjs . . --scenario legacy-s0 --steps 120 --reps 1 --warmups 1 --no-counters": {
+        "code": 0,
+        "identical": true,
+        "checksum": "2d598f825b5884420eea9cc833ec44b5f8713a971283314c61e99615e88677c6",
+        "chainHashes": {
+          "legacy-s0": "db6e5445"
+        }
+      },
+      "node --import='data:text/javascript,…' tools/proof/self-check.mjs et tools/realm-loader.mjs": {
+        "code": 0
+      }
+    }
+  },
+  "referenceCheckArm64": {
+    "note": "reference-63668ac.json : Linux x86-64, Node 24.22.1 (preuves/lot-00/reference-environment.json.gz). Échec natif sur arm64, sans changement de code.",
+    "current": {
+      "legacy-s0": {
+        "firstDivergentStep": 43,
+        "chainHash": "576ce3b4",
+        "referenceChainHash": "4c43a6fb"
+      },
+      "legacy-s2": {
+        "firstDivergentStep": 43,
+        "chainHash": "54574123",
+        "referenceChainHash": "c8706f53"
+      },
+      "campaign-w10": {
+        "firstDivergentStep": 43,
+        "chainHash": "6cd12673",
+        "referenceChainHash": "59e36477"
+      },
+      "campaign-w16": {
+        "firstDivergentStep": 43,
+        "chainHash": "6de7419e",
+        "referenceChainHash": "b4e5f58e"
+      }
+    },
+    "sources63668ac": {
+      "legacy-s0": {
+        "firstDivergentStep": 43,
+        "chainHash": "576ce3b4",
+        "referenceChainHash": "4c43a6fb"
+      },
+      "legacy-s2": {
+        "firstDivergentStep": 43,
+        "chainHash": "54574123",
+        "referenceChainHash": "c8706f53"
+      },
+      "campaign-w10": {
+        "firstDivergentStep": 43,
+        "chainHash": "6cd12673",
+        "referenceChainHash": "59e36477"
+      },
+      "campaign-w16": {
+        "firstDivergentStep": 43,
+        "chainHash": "6de7419e",
+        "referenceChainHash": "b4e5f58e"
+      }
+    },
+    "sinFma": "sin-fma.json"
+  },
+  "linuxArm64Spark": {
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "platform": "linux",
+    "arch": "arm64",
+    "sourcesIdenticalToMac": true,
+    "lazyGlobalKeysBeforeAndAfterFirstRead": [
+      182,
+      184
+    ],
+    "afterFixWithoutPreload": {
+      "node tools/proof/self-check.mjs": {
+        "code": 0,
+        "globalsPreserved": true,
+        "baselineHash": "3d779b7a",
+        "changedHash": "7d6503d4"
+      },
+      "node tools/profile-steps.mjs .": {
+        "code": 0,
+        "identical": true,
+        "checksum": "5d26435642ac4377fd503d1d37eb9f3ef1a27f86e16059c5a0d6c3d5a76fae6a"
+      },
+      "node tools/profile-steps.mjs <sources de 63668ac>": {
+        "code": 0,
+        "identical": true,
+        "checksum": "5d26435642ac4377fd503d1d37eb9f3ef1a27f86e16059c5a0d6c3d5a76fae6a"
+      }
+    },
+    "referenceCheck": {
+      "legacy-s0": {
+        "firstDivergentStep": 37,
+        "chainHash": "fee1bbf7",
+        "referenceChainHash": "4c43a6fb"
+      },
+      "legacy-s2": {
+        "firstDivergentStep": 37,
+        "chainHash": "399f56d4",
+        "referenceChainHash": "c8706f53"
+      },
+      "campaign-w10": {
+        "firstDivergentStep": 37,
+        "chainHash": "fa45f9a6",
+        "referenceChainHash": "59e36477"
+      },
+      "campaign-w16": {
+        "firstDivergentStep": 37,
+        "chainHash": "a3531476",
+        "referenceChainHash": "b4e5f58e"
+      }
+    },
+    "firstDivergentStepMacVsSpark": {
+      "legacy-s0": 37,
+      "legacy-s2": 37,
+      "campaign-w10": 37,
+      "campaign-w16": 37
+    },
+    "sinFma": {
+      "mathSinEqualsFmaEvaluation": true,
+      "firstIndexWhereEvaluationWithoutFmaDiffers": 42,
+      "differences": [
+        42,
+        66
+      ]
+    }
+  },
+  "npmTest": {
+    "where": "Spark (outils/npm-test-spark.sh), copie de ce dossier",
+    "tests": 470,
+    "pass": 462,
+    "fail": 8,
+    "failures": "les 8 empreintes historiques admises de checks/campaign-world.test.mjs (tests 108 à 115), comme sur la base",
+    "buildTest": "node checks/build.test.mjs : PASS (lancé à part : la chaîne npm test s'arrête avant lui)"
+  },
+  "mergeWithLot01SuiteT2": {
+    "simulation": "git merge-file : ce commit contre un DEFAULT_MODULES où 'fmath' est ajouté ; trois variantes : liste seule, commentaire ajouté au-dessus, DEFAULT_ROOT modifiée aussi",
+    "conflicts": [
+      0,
+      0,
+      0
+    ]
+  },
+  "finalLayoutRecheck": {
+    "node tools/realm-loader.mjs": "code 0, sortie identique",
+    "node tools/proof/self-check.mjs": "code 0, sortie identique",
+    "ab2 legacy-s0 120 pas": "2d598f825b5884420eea9cc833ec44b5f8713a971283314c61e99615e88677c6",
+    "realm-check court": "18d48bbc9a308b4f796c2fc99fcebc3d432ee773032c2ba66f971dd3ded4ad58 (égal à l'avant avec précharge)",
+    "profile-steps court": "4653c2ab709f5bde5f294ddfdf3079fb82a57acf9e622da7b6e8d335d2853cd5 (égal à l'avant avec précharge)",
+    "profile-steps .": "b657e97be053f3eeafdfae7944ede52a3e4bbb378def90e3405a404c11502479"
+  },
+  "unchanged": {
+    "dist": "812 696 octets, SHA-256 4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a",
+    "buildTest": "PASS"
+  }
+}
