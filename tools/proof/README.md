@@ -222,6 +222,30 @@ Seul un changement voulu de la génération justifie de régénérer le fichier,
 le commit qui fait ce changement et qui dit pourquoi ; jamais pour faire passer
 un test.
 
+## Node 24.18 et arm64
+
+Sous Node 24.18 (macOS comme Linux), la première lecture du descripteur de
+`FormData` sur `globalThis` charge undici, qui y ajoute
+`Symbol(undici.globalDispatcher.1)` et `Symbol(undici.globalDispatcher.2)`.
+`realm-loader.mjs` lit donc une fois tous les descripteurs de `globalThis` dès
+son import (12 ms sur un Mac M5, sans ressource active), et aucune précharge
+`--import` n'est nécessaire. Sans cette lecture, `self-check.mjs`, `ab2.mjs`,
+`profile-steps.mjs` et `realm-check.mjs` échouent en fin de course sur « host
+global keys changed ». `assertHostGlobalsUnchanged` reste stricte : un module
+chargé avant le chargeur ne doit pas capturer les globales pendant son propre
+chargement.
+
+`reference-63668ac.json` a été enregistrée sous Linux x86-64 (Node 24.22.1) :
+c'est l'oracle x86-64, ne la régénère jamais sur arm64. Sur arm64 (Node 24.18),
+`reference-check.mjs` échoue sans aucun changement de code, sur les sources de
+63668ac comme sur les suivantes : les quatre scénarios quittent la référence au
+pas 43 sous macOS et au pas 37 sous Linux, et ces deux systèmes divergent aussi
+entre eux au pas 37. Le fdlibm de V8 y est compilé avec contraction FMA :
+`Math.sin(42/90)`, calculé par le pilote, diffère d'un ulp de l'évaluation sans
+FMA, et d'autres fonctions trigonométriques de la simulation sont touchées.
+Prouve donc l'identité d'état sur une seule machine : `ab2.mjs` entre la base et
+la variante, ou deux `profile-steps.mjs` aux empreintes égales.
+
 ## Limites de la livraison T1
 
 Aucun rendu WebGL, navigateur, téléphone, écran à fréquence élevée ou matériel

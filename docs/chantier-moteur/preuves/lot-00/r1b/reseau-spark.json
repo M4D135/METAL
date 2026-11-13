@@ -1,0 +1,42 @@
+{
+ "schema": "metal-r1b-reseau-v1",
+ "methode": "spark-lsof.sh : toutes les 0,1 s, processus de Chrome portant un profil metal-render-, membres de leurs groupes de processus (pgrep -g), puis lsof -nP -a -i -p sur tous ; un seul Chrome à la fois",
+ "execution": {
+  "lsof-ss": {
+   "commande": "self-check.mjs",
+   "controles": "55/55",
+   "echantillonsAvecChrome": 15,
+   "processusEchantillonnes": 201,
+   "processusChromeDistincts": 114,
+   "lignesLsofInternet": 0,
+   "lignes": []
+  },
+  "lsof-vk": {
+   "commande": "METAL_RENDER_ANGLE=vulkan self-check.mjs --compare apres-envvk-a.json",
+   "controles": "56/56",
+   "echantillonsAvecChrome": 21,
+   "processusEchantillonnes": 291,
+   "processusChromeDistincts": 118,
+   "lignesLsofInternet": 0,
+   "lignes": []
+  },
+  "lsof-crp-ss": {
+   "commande": "check-run-page.mjs --self-check apres-ss-a.json",
+   "controles": "64/64",
+   "echantillonsAvecChrome": 32,
+   "processusEchantillonnes": 430,
+   "processusChromeDistincts": 300,
+   "lignesLsofInternet": 0,
+   "lignes": []
+  },
+  "lsof-crp-vk": {
+   "commande": "METAL_RENDER_ANGLE=vulkan check-run-page.mjs --self-check apres-envvk-a.json",
+   "controles": "64/64",
+   "echantillonsAvecChrome": 47,
+   "processusEchantillonnes": 634,
+   "processusChromeDistincts": 312,
+   "lignesLsofInternet": 0,
+   "lignes": []
+  }
+ }
+}

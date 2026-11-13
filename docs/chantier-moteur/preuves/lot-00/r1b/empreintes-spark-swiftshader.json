@@ -1,0 +1,110 @@
+{
+ "schema": "metal-r1b-empreintes-v1",
+ "chaine": "Spark — SwiftShader (défaut de Chrome sous Linux, aucun drapeau GPU)",
+ "machine": "Spark (DGX Spark, GB10), Linux 6.17.0-1026-nvidia aarch64",
+ "node": "v24.18.0",
+ "plateformeNode": "linux arm64",
+ "chrome": "Chrome/151.0.7922.137",
+ "chromePath": "/usr/bin/google-chrome",
+ "angle": null,
+ "origineDuMoteur": "platform",
+ "drapeauxGPU": [],
+ "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+ "extensionsWebGL2": 29,
+ "requeteDeTempsGPU": false,
+ "navigateur": {
+  "architecture": "arm",
+  "bitness": "64",
+  "platform": "Linux",
+  "platformVersion": ""
+ },
+ "ligneDeCommande": "/opt/google/chrome/chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=<profil jetable> --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe --noerrdialogs --ozone-platform=headless --ozone-override-screen-size=800,600 --use-angle=swiftshader-webgl about:blank",
+ "empreintes": {
+  "legacy-1.5": {
+   "largeur": 320,
+   "hauteur": 200,
+   "sha256": "20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0"
+  },
+  "legacy-2.5": {
+   "largeur": 320,
+   "hauteur": 200,
+   "sha256": "e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64"
+  },
+  "scene3d": {
+   "largeur": 480,
+   "hauteur": 270,
+   "sha256": "b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393"
+  },
+  "scene3d-wide": {
+   "largeur": 640,
+   "hauteur": 360,
+   "sha256": "c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927"
+  },
+  "canvas2d": {
+   "largeur": 320,
+   "hauteur": 200,
+   "sha256": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+  }
+ },
+ "empreintesIdentiquesDansTousLesRapports": true,
+ "autoControles": [
+  {
+   "rapport": "rapports/spark-apres-ss-a.json.gz",
+   "controles": "55/55",
+   "ok": true,
+   "secondes": 6.884,
+   "compare": null,
+   "socketsInternet": 0,
+   "profilsSupprimes": true
+  },
+  {
+   "rapport": "rapports/spark-apres-ss-b.json.gz",
+   "controles": "56/56",
+   "ok": true,
+   "secondes": 6.834,
+   "compare": {
+    "avec": "apres-ss-a.json",
+    "differences": []
+   },
+   "socketsInternet": 0,
+   "profilsSupprimes": true
+  },
+  {
+   "rapport": "rapports/spark-lsof-ss.json.gz",
+   "controles": "55/55",
+   "ok": true,
+   "secondes": 6.714,
+   "compare": null,
+   "socketsInternet": 0,
+   "profilsSupprimes": true
+  }
+ ],
+ "runPage": {
+  "rapport": "rapports/spark-lsof-crp-ss.json.gz",
+  "controles": "64/64",
+  "ok": true,
+  "empreintesDeLaSonde": {
+   "legacy-1.5": "20fdd26c04ce7815c49acb8cbd49859f0294cd99361d5b64692fef5676547fd0",
+   "legacy-2.5": "e01772033a2d5e571a27ff17f3cf1ebb5831b39827d4a6e6f2b2d88cf4756c64",
+   "scene3d": "b4113c2b354fb510a03d61bc000a676edfbf0b87b9485773d2ccf2ede02d0393",
+   "scene3d-wide": "c7afc56b543917376e35c90711b28509e1ab94963ab2069e1020695046d58927",
+   "canvas2d": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+  },
+  "identiquesAuxAutoControles": true,
+  "dossierDInstanceApresChromeTue": {
+   "supprime": true
+  }
+ },
+ "attenduParLePlan": {
+  "legacy-1.5": "20fdd26c…",
+  "legacy-2.5": "e0177203…",
+  "scene3d": "b4113c2b…",
+  "scene3d-wide": "c7afc56b…",
+  "canvas2d": "251dcba2…"
+ },
+ "conformeAuPlan": true,
+ "referenceDuChef": {
+  "fichier": "spark:~/metal-tests/lot00-chef/sc-swiftshader.json",
+  "identique": true
+ }
+}

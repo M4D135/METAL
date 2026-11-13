@@ -1,0 +1,2949 @@
+{
+ "schema": "metal-r1b-pages-heritees-v1",
+ "date": "2026-11-13T09:02:26.210Z",
+ "node": "v24.18.0",
+ "platform": "darwin arm64",
+ "avantRoot": "/Users/david/claude/metal-chantier/verif/lot-00-outils-R1b-avant",
+ "clock": "réelle (pages de l'audit telles quelles)",
+ "pages": {
+  "t6-run1": {
+   "file": "t6-run1.html",
+   "hash": null,
+   "window": "1440,932",
+   "sha256": "f147962f8c881a810014ebabbf116a4393de331632314491dd83c57aa724a1e7",
+   "loaded": "t6-run1.html",
+   "loadedSha256": "f147962f8c881a810014ebabbf116a4393de331632314491dd83c57aa724a1e7",
+   "chromeArgs": [
+    "--headless=new",
+    "--ignore-gpu-blocklist",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-extensions",
+    "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-sync",
+    "--metrics-recording-only",
+    "--disable-domain-reliability",
+    "--host-resolver-rules=MAP * ~NOTFOUND",
+    "--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows",
+    "--mute-audio",
+    "--user-data-dir=<profil jetable>",
+    "--use-angle=metal",
+    "--window-size=1440,932",
+    "--force-device-scale-factor=1",
+    "--dump-dom",
+    "file://<pages>/t6-run1.html"
+   ],
+   "chromeArgsEqual": true,
+   "urlEqual": true,
+   "extractionSameOnSameDom": true,
+   "runs": [
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-0",
+     "ms": 46343,
+     "textBytes": 5805,
+     "url": "file://<pages>/t6-run1.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1497825
+     },
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4567
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5970
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4567
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4567
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4567
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4567
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5970
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 68.4586,
+        "mad": 0.0033,
+        "gt10": 0.0002
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 68.4586,
+        "mad": 0.0033,
+        "gt10": 0.0002
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-0",
+     "ms": 45631,
+     "textBytes": 5802,
+     "url": "file://<pages>/t6-run1.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5974
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5974
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 67.6417,
+        "mad": 0.0036,
+        "gt10": 0.0002
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 67.6417,
+        "mad": 0.0036,
+        "gt10": 0.0002
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-1",
+     "ms": 46114,
+     "textBytes": 5801,
+     "url": "file://<pages>/t6-run1.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5970
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4568
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5970
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 68.5928,
+        "mad": 0.0033,
+        "gt10": 0.0002
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 68.5928,
+        "mad": 0.0033,
+        "gt10": 0.0002
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-1",
+     "ms": 46118,
+     "textBytes": 5813,
+     "url": "file://<pages>/t6-run1.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1497824
+     },
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4582
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5830
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4582
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4582
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4582
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4582
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5830
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 65.0951,
+        "mad": 0.0049,
+        "gt10": 0.0002
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 65.0951,
+        "mad": 0.0049,
+        "gt10": 0.0002
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-2",
+     "ms": 46663,
+     "textBytes": 5803,
+     "url": "file://<pages>/t6-run1.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1497814
+     },
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4577
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5869
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4577
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4577
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4577
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4577
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5869
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 67.1753,
+        "mad": 0.0039,
+        "gt10": 0.0001
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 67.1753,
+        "mad": 0.0039,
+        "gt10": 0.0001
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-2",
+     "ms": 45616,
+     "textBytes": 5799,
+     "url": "file://<pages>/t6-run1.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 350,
+      "flashFrames": 77,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4578
+       },
+       "cache": {
+        "draws": 58,
+        "instances": 5869
+       },
+       "exact": {
+        "draws": 58,
+        "instances": 4578
+       },
+       "pool": {
+        "draws": 58,
+        "instances": 4578
+       },
+       "grid": {
+        "draws": 58,
+        "instances": 4578
+       },
+       "sun": {
+        "draws": 58,
+        "instances": 4578
+       },
+       "all": {
+        "draws": 58,
+        "instances": 5869
+       }
+      },
+      "diffs": {
+       "cache": {
+        "psnr": 67.5033,
+        "mad": 0.0039,
+        "gt10": 0.0001
+       },
+       "exact": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "pool": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "grid": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "sun": {
+        "psnr": 99,
+        "mad": 0,
+        "gt10": 0
+       },
+       "all": {
+        "psnr": 67.5033,
+        "mad": 0.0039,
+        "gt10": 0.0001
+       }
+      }
+     },
+     "shots": null
+    }
+   ],
+   "fields": {
+    "paths": 286,
+    "equalEverywhere": 215,
+    "launchNoise": 71,
+    "suspects": 0,
+    "families": {
+     "/diffs/*/gt10": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/diffs/*/gt25": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/diffs/*/gt3": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/diffs/*/mad": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/diffs/*/psnr": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/diffs/*/worstGt10": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/scene/dynMax": {
+      "noise": 1,
+      "suspect": 0
+     },
+     "/scene/dynMedian": {
+      "noise": 1,
+      "suspect": 0
+     },
+     "/variants/*/instancesMedian": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/instances": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/staticCulled": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/staticVisible": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/triangles": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/uploadBytes": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/trianglesMedian": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/uploadKBMax": {
+      "noise": 4,
+      "suspect": 0
+     },
+     "/variants/*/uploadKBMedian": {
+      "noise": 4,
+      "suspect": 0
+     }
+    },
+    "launchNoiseExamples": [
+     {
+      "path": "/variants/base/instancesMedian",
+      "dumpRun": [
+       "4567",
+       "4582",
+       "4577"
+      ],
+      "runPage": [
+       "4568",
+       "4568",
+       "4578"
+      ]
+     },
+     {
+      "path": "/variants/base/trianglesMedian",
+      "dumpRun": [
+       "161092",
+       "161424",
+       "162052"
+      ],
+      "runPage": [
+       "159560",
+       "161092",
+       "161856"
+      ]
+     },
+     {
+      "path": "/variants/base/uploadKBMedian",
+      "dumpRun": [
+       "207.813",
+       "209.688",
+       "209.063"
+      ],
+      "runPage": [
+       "207.875",
+       "207.813",
+       "209.125"
+      ]
+     },
+     {
+      "path": "/variants/base/uploadKBMax",
+      "dumpRun": [
+       "263.438",
+       "258.313",
+       "258.875"
+      ],
+      "runPage": [
+       "263.75",
+       "263.438",
+       "258.813"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/triangles",
+      "dumpRun": [
+       "166328",
+       "162984",
+       "164240"
+      ],
+      "runPage": [
+       "164992",
+       "166328",
+       "164156"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/instances",
+      "dumpRun": [
+       "1323",
+       "1308",
+       "1313"
+      ],
+      "runPage": [
+       "1315",
+       "1323",
+       "1315"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/uploadBytes",
+      "dumpRun": [
+       "224064",
+       "224448",
+       "225792"
+      ],
+      "runPage": [
+       "223680",
+       "224064",
+       "225920"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/staticVisible",
+      "dumpRun": [
+       "962",
+       "951",
+       "956"
+      ],
+      "runPage": [
+       "958",
+       "962",
+       "958"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/staticCulled",
+      "dumpRun": [
+       "13027",
+       "13038",
+       "13033"
+      ],
+      "runPage": [
+       "13031",
+       "13027",
+       "13031"
+      ]
+     },
+     {
+      "path": "/variants/cache/instancesMedian",
+      "dumpRun": [
+       "5970",
+       "5830",
+       "5869"
+      ],
+      "runPage": [
+       "5974",
+       "5970",
+       "5869"
+      ]
+     },
+     {
+      "path": "/variants/cache/trianglesMedian",
+      "dumpRun": [
+       "188968",
+       "187048",
+       "187792"
+      ],
+      "runPage": [
+       "187948",
+       "189044",
+       "187708"
+      ]
+     },
+     {
+      "path": "/variants/cache/uploadKBMedian",
+      "dumpRun": [
+       "20.375",
+       "21.875",
+       "22"
+      ],
+      "runPage": [
+       "20.5",
+       "20.375",
+       "22"
+      ]
+     },
+     {
+      "path": "/variants/cache/uploadKBMax",
+      "dumpRun": [
+       "322.938",
+       "318.5",
+       "321.563"
+      ],
+      "runPage": [
+       "323.5",
+       "322.938",
+       "321.688"
+      ]
+     },
+     {
+      "path": "/variants/cache/stats/triangles",
+      "dumpRun": [
+       "191568",
+       "182016",
+       "182328"
+      ],
+      "runPage": [
+       "190336",
+       "191604",
+       "182328"
+      ]
+     },
+     {
+      "path": "/variants/cache/stats/instances",
+      "dumpRun": [
+       "1655",
+       "1580",
+       "1576"
+      ],
+      "runPage": [
+       "1650",
+       "1655",
+       "1577"
+      ]
+     },
+     {
+      "path": "/variants/cache/stats/uploadBytes",
+      "dumpRun": [
+       "23104",
+       "22848",
+       "22848"
+      ],
+      "runPage": [
+       "22848",
+       "23104",
+       "22848"
+      ]
+     },
+     {
+      "path": "/variants/cache/stats/staticVisible",
+      "dumpRun": [
+       "1294",
+       "1223",
+       "1219"
+      ],
+      "runPage": [
+       "1293",
+       "1294",
+       "1220"
+      ]
+     },
+     {
+      "path": "/variants/cache/stats/staticCulled",
+      "dumpRun": [
+       "12695",
+       "12766",
+       "12770"
+      ],
+      "runPage": [
+       "12696",
+       "12695",
+       "12769"
+      ]
+     },
+     {
+      "path": "/variants/exact/instancesMedian",
+      "dumpRun": [
+       "4567",
+       "4582",
+       "4577"
+      ],
+      "runPage": [
+       "4568",
+       "4568",
+       "4578"
+      ]
+     },
+     {
+      "path": "/variants/exact/trianglesMedian",
+      "dumpRun": [
+       "161092",
+       "161424",
+       "162052"
+      ],
+      "runPage": [
+       "159560",
+       "161092",
+       "161856"
+      ]
+     },
+     {
+      "path": "/variants/exact/stats/triangles",
+      "dumpRun": [
+       "166328",
+       "162984",
+       "164240"
+      ],
+      "runPage": [
+       "164992",
+       "166328",
+       "164156"
+      ]
+     },
+     {
+      "path": "/variants/exact/stats/instances",
+      "dumpRun": [
+       "1323",
+       "1308",
+       "1313"
+      ],
+      "runPage": [
+       "1315",
+       "1323",
+       "1315"
+      ]
+     },
+     {
+      "path": "/variants/exact/stats/uploadBytes",
+      "dumpRun": [
+       "224064",
+       "224448",
+       "225792"
+      ],
+      "runPage": [
+       "223680",
+       "224064",
+       "225920"
+      ]
+     },
+     {
+      "path": "/variants/exact/stats/staticVisible",
+      "dumpRun": [
+       "962",
+       "951",
+       "956"
+      ],
+      "runPage": [
+       "958",
+       "962",
+       "958"
+      ]
+     },
+     {
+      "path": "/variants/exact/stats/staticCulled",
+      "dumpRun": [
+       "13027",
+       "13038",
+       "13033"
+      ],
+      "runPage": [
+       "13031",
+       "13027",
+       "13031"
+      ]
+     },
+     {
+      "path": "/variants/pool/instancesMedian",
+      "dumpRun": [
+       "4567",
+       "4582",
+       "4577"
+      ],
+      "runPage": [
+       "4568",
+       "4568",
+       "4578"
+      ]
+     },
+     {
+      "path": "/variants/pool/trianglesMedian",
+      "dumpRun": [
+       "161092",
+       "161424",
+       "162052"
+      ],
+      "runPage": [
+       "159560",
+       "161092",
+       "161856"
+      ]
+     },
+     {
+      "path": "/variants/pool/stats/triangles",
+      "dumpRun": [
+       "166328",
+       "162984",
+       "164240"
+      ],
+      "runPage": [
+       "164992",
+       "166328",
+       "164156"
+      ]
+     },
+     {
+      "path": "/variants/pool/stats/instances",
+      "dumpRun": [
+       "1323",
+       "1308",
+       "1313"
+      ],
+      "runPage": [
+       "1315",
+       "1323",
+       "1315"
+      ]
+     },
+     {
+      "path": "/variants/pool/stats/uploadBytes",
+      "dumpRun": [
+       "224064",
+       "224448",
+       "225792"
+      ],
+      "runPage": [
+       "223680",
+       "224064",
+       "225920"
+      ]
+     }
+    ],
+    "suspectList": [],
+    "suspectsOutsideNoisyFamilies": 0
+   },
+   "fieldsEqual": false,
+   "fieldsVerdict": "bruit de lancement"
+  },
+  "runJ": {
+   "file": "runJ.html",
+   "hash": null,
+   "window": "1440,932",
+   "sha256": "fab74d6b8b7aeb038d6bfc219e850998fffe603303dc0cc5be65190e7aa1f140",
+   "loaded": "runJ.html",
+   "loadedSha256": "fab74d6b8b7aeb038d6bfc219e850998fffe603303dc0cc5be65190e7aa1f140",
+   "chromeArgs": [
+    "--headless=new",
+    "--ignore-gpu-blocklist",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-extensions",
+    "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-sync",
+    "--metrics-recording-only",
+    "--disable-domain-reliability",
+    "--host-resolver-rules=MAP * ~NOTFOUND",
+    "--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows",
+    "--mute-audio",
+    "--user-data-dir=<profil jetable>",
+    "--use-angle=metal",
+    "--window-size=1440,932",
+    "--force-device-scale-factor=1",
+    "--dump-dom",
+    "file://<pages>/runJ.html"
+   ],
+   "chromeArgsEqual": true,
+   "urlEqual": true,
+   "extractionSameOnSameDom": true,
+   "runs": [
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-0",
+     "ms": 46882,
+     "textBytes": 122232,
+     "url": "file://<pages>/runJ.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1496799
+     },
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "100"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4394
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3867
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4394
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5622
+       },
+       "high-combo6": {
+        "draws": 45,
+        "instances": 5114
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5623
+       },
+       "hicap6": {
+        "draws": 45,
+        "instances": 5114
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 51.7341,
+        "mad": 0.1708,
+        "gt10": 0.0004
+       },
+       "spec4": {
+        "psnr": 60.7456,
+        "mad": 0.0424,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-0",
+     "ms": 44251,
+     "textBytes": 122094,
+     "url": "file://<pages>/runJ.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4574
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3949
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4574
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5803
+       },
+       "high-combo6": {
+        "draws": 45,
+        "instances": 5184
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5803
+       },
+       "hicap6": {
+        "draws": 45,
+        "instances": 5184
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 50.9612,
+        "mad": 0.193,
+        "gt10": 0.0006
+       },
+       "spec4": {
+        "psnr": 60.9571,
+        "mad": 0.0429,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-1",
+     "ms": 47136,
+     "textBytes": 122759,
+     "url": "file://<pages>/runJ.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4619
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3863
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4619
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5838
+       },
+       "high-combo6": {
+        "draws": 44,
+        "instances": 5157
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5839
+       },
+       "hicap6": {
+        "draws": 44,
+        "instances": 5157
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 52.1263,
+        "mad": 0.1457,
+        "gt10": 0.0006
+       },
+       "spec4": {
+        "psnr": 61.1099,
+        "mad": 0.0373,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-1",
+     "ms": 44824,
+     "textBytes": 122971,
+     "url": "file://<pages>/runJ.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1497519
+     },
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4619
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3863
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4619
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5838
+       },
+       "high-combo6": {
+        "draws": 44,
+        "instances": 5157
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5839
+       },
+       "hicap6": {
+        "draws": 44,
+        "instances": 5157
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 52.1239,
+        "mad": 0.1457,
+        "gt10": 0.0006
+       },
+       "spec4": {
+        "psnr": 61.1099,
+        "mad": 0.0373,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-2",
+     "ms": 45112,
+     "textBytes": 122199,
+     "url": "file://<pages>/runJ.html",
+     "extraction": {
+      "marker": "rgpu-out",
+      "sameText": true,
+      "htmlBytes": 1496747
+     },
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4619
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3863
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4619
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5838
+       },
+       "high-combo6": {
+        "draws": 44,
+        "instances": 5157
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5839
+       },
+       "hicap6": {
+        "draws": 44,
+        "instances": 5157
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 52.1271,
+        "mad": 0.1457,
+        "gt10": 0.0006
+       },
+       "spec4": {
+        "psnr": 61.1078,
+        "mad": 0.0373,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-2",
+     "ms": 44028,
+     "textBytes": 122190,
+     "url": "file://<pages>/runJ.html",
+     "marker": {
+      "id": "rgpu-out",
+      "closed": true
+     },
+     "envelope": false,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "frames": 190,
+      "flashFrames": 49,
+      "lastSample": {
+       "f": 720,
+       "health": "93",
+       "score": "0"
+      },
+      "variants": {
+       "base": {
+        "draws": 58,
+        "instances": 4573
+       },
+       "combo6": {
+        "draws": 44,
+        "instances": 3944
+       },
+       "spec4": {
+        "draws": 58,
+        "instances": 4573
+       },
+       "high": {
+        "draws": 58,
+        "instances": 5800
+       },
+       "high-combo6": {
+        "draws": 45,
+        "instances": 5178
+       },
+       "hicap": {
+        "draws": 58,
+        "instances": 5800
+       },
+       "hicap6": {
+        "draws": 45,
+        "instances": 5178
+       }
+      },
+      "diffs": {
+       "combo6": {
+        "psnr": 51.036,
+        "mad": 0.1903,
+        "gt10": 0.0006
+       },
+       "spec4": {
+        "psnr": 60.9354,
+        "mad": 0.0429,
+        "gt10": 0
+       }
+      }
+     },
+     "shots": null
+    }
+   ],
+   "fields": {
+    "paths": 2538,
+    "equalEverywhere": 944,
+    "launchNoise": 1474,
+    "suspects": 120,
+    "families": {
+     "/diffs/*/gt10": {
+      "noise": 1,
+      "suspect": 0
+     },
+     "/diffs/*/gt3": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/diffs/*/mad": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/diffs/*/psnr": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/diffs/*/worstGt10": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/perFrame/*/dyn": {
+      "noise": 168,
+      "suspect": 13
+     },
+     "/perFrame/*/fx": {
+      "noise": 4,
+      "suspect": 4
+     },
+     "/perFrame/*/u/base": {
+      "noise": 170,
+      "suspect": 18
+     },
+     "/perFrame/*/u/combo6": {
+      "noise": 181,
+      "suspect": 9
+     },
+     "/perFrame/*/u/hicap": {
+      "noise": 176,
+      "suspect": 14
+     },
+     "/perFrame/*/u/hicap6": {
+      "noise": 174,
+      "suspect": 16
+     },
+     "/perFrame/*/u/high": {
+      "noise": 178,
+      "suspect": 12
+     },
+     "/perFrame/*/u/high-combo6": {
+      "noise": 174,
+      "suspect": 16
+     },
+     "/perFrame/*/u/spec4": {
+      "noise": 170,
+      "suspect": 18
+     },
+     "/samples/*/score": {
+      "noise": 3,
+      "suspect": 0
+     },
+     "/scene/dynMax": {
+      "noise": 1,
+      "suspect": 0
+     },
+     "/scene/dynMedian": {
+      "noise": 1,
+      "suspect": 0
+     },
+     "/variants/*/drawsMedian": {
+      "noise": 2,
+      "suspect": 0
+     },
+     "/variants/*/instancesMedian": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/instances": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/staticCulled": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/staticVisible": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/triangles": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/stats/uploadBytes": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/trianglesMedian": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/uploadKBMax": {
+      "noise": 7,
+      "suspect": 0
+     },
+     "/variants/*/uploadKBMedian": {
+      "noise": 7,
+      "suspect": 0
+     }
+    },
+    "launchNoiseExamples": [
+     {
+      "path": "/variants/base/instancesMedian",
+      "dumpRun": [
+       "4394",
+       "4619",
+       "4619"
+      ],
+      "runPage": [
+       "4574",
+       "4619",
+       "4573"
+      ]
+     },
+     {
+      "path": "/variants/base/trianglesMedian",
+      "dumpRun": [
+       "150180",
+       "163320",
+       "163320"
+      ],
+      "runPage": [
+       "162724",
+       "163320",
+       "161524"
+      ]
+     },
+     {
+      "path": "/variants/base/uploadKBMedian",
+      "dumpRun": [
+       "204.875",
+       "210.063",
+       "210.125"
+      ],
+      "runPage": [
+       "207.5",
+       "210.063",
+       "207.75"
+      ]
+     },
+     {
+      "path": "/variants/base/uploadKBMax",
+      "dumpRun": [
+       "230.375",
+       "234.188",
+       "234.188"
+      ],
+      "runPage": [
+       "233",
+       "234.188",
+       "232.938"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/triangles",
+      "dumpRun": [
+       "161104",
+       "175004",
+       "175004"
+      ],
+      "runPage": [
+       "174988",
+       "175004",
+       "173780"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/instances",
+      "dumpRun": [
+       "1159",
+       "1181",
+       "1181"
+      ],
+      "runPage": [
+       "1201",
+       "1181",
+       "1201"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/uploadBytes",
+      "dumpRun": [
+       "212160",
+       "214656",
+       "214656"
+      ],
+      "runPage": [
+       "215104",
+       "214656",
+       "215040"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/staticVisible",
+      "dumpRun": [
+       "804",
+       "774",
+       "774"
+      ],
+      "runPage": [
+       "800",
+       "774",
+       "801"
+      ]
+     },
+     {
+      "path": "/variants/base/stats/staticCulled",
+      "dumpRun": [
+       "13173",
+       "13203",
+       "13203"
+      ],
+      "runPage": [
+       "13177",
+       "13203",
+       "13176"
+      ]
+     },
+     {
+      "path": "/variants/combo6/instancesMedian",
+      "dumpRun": [
+       "3867",
+       "3863",
+       "3863"
+      ],
+      "runPage": [
+       "3949",
+       "3863",
+       "3944"
+      ]
+     },
+     {
+      "path": "/variants/combo6/trianglesMedian",
+      "dumpRun": [
+       "106936",
+       "110864",
+       "110864"
+      ],
+      "runPage": [
+       "110948",
+       "110864",
+       "110608"
+      ]
+     },
+     {
+      "path": "/variants/combo6/uploadKBMedian",
+      "dumpRun": [
+       "83.813",
+       "90.125",
+       "90.125"
+      ],
+      "runPage": [
+       "86.688",
+       "90.125",
+       "86.5"
+      ]
+     },
+     {
+      "path": "/variants/combo6/uploadKBMax",
+      "dumpRun": [
+       "236.25",
+       "238.75",
+       "238.75"
+      ],
+      "runPage": [
+       "240.688",
+       "238.75",
+       "240.625"
+      ]
+     },
+     {
+      "path": "/variants/combo6/stats/triangles",
+      "dumpRun": [
+       "111948",
+       "114956",
+       "114956"
+      ],
+      "runPage": [
+       "116732",
+       "114956",
+       "116452"
+      ]
+     },
+     {
+      "path": "/variants/combo6/stats/instances",
+      "dumpRun": [
+       "1159",
+       "1181",
+       "1181"
+      ],
+      "runPage": [
+       "1201",
+       "1181",
+       "1201"
+      ]
+     },
+     {
+      "path": "/variants/combo6/stats/uploadBytes",
+      "dumpRun": [
+       "81536",
+       "84160",
+       "84160"
+      ],
+      "runPage": [
+       "85376",
+       "84160",
+       "85376"
+      ]
+     },
+     {
+      "path": "/variants/combo6/stats/staticVisible",
+      "dumpRun": [
+       "804",
+       "774",
+       "774"
+      ],
+      "runPage": [
+       "800",
+       "774",
+       "801"
+      ]
+     },
+     {
+      "path": "/variants/combo6/stats/staticCulled",
+      "dumpRun": [
+       "13173",
+       "13203",
+       "13203"
+      ],
+      "runPage": [
+       "13177",
+       "13203",
+       "13176"
+      ]
+     },
+     {
+      "path": "/variants/spec4/instancesMedian",
+      "dumpRun": [
+       "4394",
+       "4619",
+       "4619"
+      ],
+      "runPage": [
+       "4574",
+       "4619",
+       "4573"
+      ]
+     },
+     {
+      "path": "/variants/spec4/trianglesMedian",
+      "dumpRun": [
+       "150180",
+       "163320",
+       "163320"
+      ],
+      "runPage": [
+       "162724",
+       "163320",
+       "161524"
+      ]
+     },
+     {
+      "path": "/variants/spec4/uploadKBMedian",
+      "dumpRun": [
+       "204.875",
+       "210.063",
+       "210.125"
+      ],
+      "runPage": [
+       "207.5",
+       "210.063",
+       "207.75"
+      ]
+     },
+     {
+      "path": "/variants/spec4/uploadKBMax",
+      "dumpRun": [
+       "230.375",
+       "234.188",
+       "234.188"
+      ],
+      "runPage": [
+       "233",
+       "234.188",
+       "232.938"
+      ]
+     },
+     {
+      "path": "/variants/spec4/stats/triangles",
+      "dumpRun": [
+       "161104",
+       "175004",
+       "175004"
+      ],
+      "runPage": [
+       "174988",
+       "175004",
+       "173780"
+      ]
+     },
+     {
+      "path": "/variants/spec4/stats/instances",
+      "dumpRun": [
+       "1159",
+       "1181",
+       "1181"
+      ],
+      "runPage": [
+       "1201",
+       "1181",
+       "1201"
+      ]
+     },
+     {
+      "path": "/variants/spec4/stats/uploadBytes",
+      "dumpRun": [
+       "212160",
+       "214656",
+       "214656"
+      ],
+      "runPage": [
+       "215104",
+       "214656",
+       "215040"
+      ]
+     },
+     {
+      "path": "/variants/spec4/stats/staticVisible",
+      "dumpRun": [
+       "804",
+       "774",
+       "774"
+      ],
+      "runPage": [
+       "800",
+       "774",
+       "801"
+      ]
+     },
+     {
+      "path": "/variants/spec4/stats/staticCulled",
+      "dumpRun": [
+       "13173",
+       "13203",
+       "13203"
+      ],
+      "runPage": [
+       "13177",
+       "13203",
+       "13176"
+      ]
+     },
+     {
+      "path": "/variants/high/instancesMedian",
+      "dumpRun": [
+       "5622",
+       "5838",
+       "5838"
+      ],
+      "runPage": [
+       "5803",
+       "5838",
+       "5800"
+      ]
+     },
+     {
+      "path": "/variants/high/trianglesMedian",
+      "dumpRun": [
+       "186644",
+       "202656",
+       "202656"
+      ],
+      "runPage": [
+       "200176",
+       "202656",
+       "198756"
+      ]
+     },
+     {
+      "path": "/variants/high/uploadKBMedian",
+      "dumpRun": [
+       "285",
+       "288.063",
+       "288.063"
+      ],
+      "runPage": [
+       "287.938",
+       "288.063",
+       "287.813"
+      ]
+     }
+    ],
+    "suspectList": [
+     {
+      "path": "/perFrame/0/dyn",
+      "dumpRun": [
+       "289",
+       "289",
+       "289"
+      ],
+      "runPage": [
+       "288",
+       "289",
+       "288"
+      ],
+      "family": "/perFrame/*/dyn",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/0/u/base",
+      "dumpRun": [
+       "221",
+       "221",
+       "221"
+      ],
+      "runPage": [
+       "229",
+       "221",
+       "229"
+      ],
+      "family": "/perFrame/*/u/base",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/0/u/combo6",
+      "dumpRun": [
+       "87",
+       "87",
+       "87"
+      ],
+      "runPage": [
+       "92",
+       "87",
+       "92"
+      ],
+      "family": "/perFrame/*/u/combo6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/0/u/spec4",
+      "dumpRun": [
+       "221",
+       "221",
+       "221"
+      ],
+      "runPage": [
+       "229",
+       "221",
+       "229"
+      ],
+      "family": "/perFrame/*/u/spec4",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/1/u/high-combo6",
+      "dumpRun": [
+       "110",
+       "110",
+       "110"
+      ],
+      "runPage": [
+       "114",
+       "110",
+       "114"
+      ],
+      "family": "/perFrame/*/u/high-combo6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/1/u/hicap",
+      "dumpRun": [
+       "266",
+       "266",
+       "266"
+      ],
+      "runPage": [
+       "274",
+       "266",
+       "274"
+      ],
+      "family": "/perFrame/*/u/hicap",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/1/u/hicap6",
+      "dumpRun": [
+       "110",
+       "110",
+       "110"
+      ],
+      "runPage": [
+       "114",
+       "110",
+       "114"
+      ],
+      "family": "/perFrame/*/u/hicap6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/1/u/base",
+      "dumpRun": [
+       "220",
+       "220",
+       "220"
+      ],
+      "runPage": [
+       "228",
+       "220",
+       "228"
+      ],
+      "family": "/perFrame/*/u/base",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/1/u/spec4",
+      "dumpRun": [
+       "220",
+       "220",
+       "220"
+      ],
+      "runPage": [
+       "228",
+       "220",
+       "228"
+      ],
+      "family": "/perFrame/*/u/spec4",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/1/u/high",
+      "dumpRun": [
+       "266",
+       "266",
+       "266"
+      ],
+      "runPage": [
+       "274",
+       "266",
+       "274"
+      ],
+      "family": "/perFrame/*/u/high",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/2/u/hicap6",
+      "dumpRun": [
+       "110",
+       "110",
+       "110"
+      ],
+      "runPage": [
+       "114",
+       "110",
+       "114"
+      ],
+      "family": "/perFrame/*/u/hicap6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/2/u/base",
+      "dumpRun": [
+       "219",
+       "219",
+       "219"
+      ],
+      "runPage": [
+       "226",
+       "219",
+       "226"
+      ],
+      "family": "/perFrame/*/u/base",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/2/u/combo6",
+      "dumpRun": [
+       "86",
+       "86",
+       "86"
+      ],
+      "runPage": [
+       "90",
+       "86",
+       "90"
+      ],
+      "family": "/perFrame/*/u/combo6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/2/u/spec4",
+      "dumpRun": [
+       "219",
+       "219",
+       "219"
+      ],
+      "runPage": [
+       "226",
+       "219",
+       "226"
+      ],
+      "family": "/perFrame/*/u/spec4",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/2/u/high-combo6",
+      "dumpRun": [
+       "110",
+       "110",
+       "110"
+      ],
+      "runPage": [
+       "114",
+       "110",
+       "114"
+      ],
+      "family": "/perFrame/*/u/high-combo6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/3/u/hicap6",
+      "dumpRun": [
+       "110",
+       "110",
+       "110"
+      ],
+      "runPage": [
+       "113",
+       "110",
+       "113"
+      ],
+      "family": "/perFrame/*/u/hicap6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/3/u/base",
+      "dumpRun": [
+       "219",
+       "219",
+       "219"
+      ],
+      "runPage": [
+       "225",
+       "219",
+       "225"
+      ],
+      "family": "/perFrame/*/u/base",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/3/u/combo6",
+      "dumpRun": [
+       "86",
+       "86",
+       "86"
+      ],
+      "runPage": [
+       "90",
+       "86",
+       "90"
+      ],
+      "family": "/perFrame/*/u/combo6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/3/u/spec4",
+      "dumpRun": [
+       "219",
+       "219",
+       "219"
+      ],
+      "runPage": [
+       "225",
+       "219",
+       "225"
+      ],
+      "family": "/perFrame/*/u/spec4",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/3/u/high",
+      "dumpRun": [
+       "265",
+       "265",
+       "265"
+      ],
+      "runPage": [
+       "271",
+       "265",
+       "272"
+      ],
+      "family": "/perFrame/*/u/high",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/3/u/high-combo6",
+      "dumpRun": [
+       "110",
+       "110",
+       "110"
+      ],
+      "runPage": [
+       "113",
+       "110",
+       "113"
+      ],
+      "family": "/perFrame/*/u/high-combo6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/3/u/hicap",
+      "dumpRun": [
+       "265",
+       "265",
+       "265"
+      ],
+      "runPage": [
+       "271",
+       "265",
+       "272"
+      ],
+      "family": "/perFrame/*/u/hicap",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/4/u/base",
+      "dumpRun": [
+       "218",
+       "218",
+       "218"
+      ],
+      "runPage": [
+       "224",
+       "218",
+       "224"
+      ],
+      "family": "/perFrame/*/u/base",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/4/u/combo6",
+      "dumpRun": [
+       "85",
+       "85",
+       "85"
+      ],
+      "runPage": [
+       "89",
+       "85",
+       "89"
+      ],
+      "family": "/perFrame/*/u/combo6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/4/u/spec4",
+      "dumpRun": [
+       "218",
+       "218",
+       "218"
+      ],
+      "runPage": [
+       "224",
+       "218",
+       "224"
+      ],
+      "family": "/perFrame/*/u/spec4",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/4/u/high",
+      "dumpRun": [
+       "265",
+       "265",
+       "265"
+      ],
+      "runPage": [
+       "271",
+       "265",
+       "271"
+      ],
+      "family": "/perFrame/*/u/high",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/4/u/high-combo6",
+      "dumpRun": [
+       "110",
+       "110",
+       "110"
+      ],
+      "runPage": [
+       "112",
+       "110",
+       "112"
+      ],
+      "family": "/perFrame/*/u/high-combo6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/4/u/hicap",
+      "dumpRun": [
+       "265",
+       "265",
+       "265"
+      ],
+      "runPage": [
+       "271",
+       "265",
+       "271"
+      ],
+      "family": "/perFrame/*/u/hicap",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/4/u/hicap6",
+      "dumpRun": [
+       "110",
+       "110",
+       "110"
+      ],
+      "runPage": [
+       "112",
+       "110",
+       "112"
+      ],
+      "family": "/perFrame/*/u/hicap6",
+      "familyVariesUnderPrototype": true
+     },
+     {
+      "path": "/perFrame/5/u/combo6",
+      "dumpRun": [
+       "85",
+       "85",
+       "85"
+      ],
+      "runPage": [
+       "88",
+       "85",
+       "89"
+      ],
+      "family": "/perFrame/*/u/combo6",
+      "familyVariesUnderPrototype": true
+     }
+    ],
+    "suspectsOutsideNoisyFamilies": 0
+   },
+   "fieldsEqual": false,
+   "fieldsVerdict": "bruit de lancement"
+  },
+  "cielv": {
+   "file": "cielv.html",
+   "hash": "#shots",
+   "window": "1600,900",
+   "sha256": "bc9d7e52baf86f676485e4e9b09fa222d2030a996ffa12f4884ac5831027a035",
+   "loaded": "cielv.html",
+   "loadedSha256": "bc9d7e52baf86f676485e4e9b09fa222d2030a996ffa12f4884ac5831027a035",
+   "chromeArgs": [
+    "--headless=new",
+    "--ignore-gpu-blocklist",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-extensions",
+    "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-sync",
+    "--metrics-recording-only",
+    "--disable-domain-reliability",
+    "--host-resolver-rules=MAP * ~NOTFOUND",
+    "--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows",
+    "--mute-audio",
+    "--user-data-dir=<profil jetable>",
+    "--use-angle=metal",
+    "--window-size=1600,900",
+    "--force-device-scale-factor=1",
+    "--dump-dom",
+    "file://<pages>/cielv.html#shots"
+   ],
+   "chromeArgsEqual": true,
+   "urlEqual": true,
+   "extractionSameOnSameDom": true,
+   "runs": [
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-0",
+     "ms": 9692,
+     "textBytes": 45286913,
+     "url": "file://<pages>/cielv.html#shots",
+     "extraction": {
+      "marker": "out",
+      "sameText": true,
+      "htmlBytes": 45363660
+     },
+     "headline": {
+      "errors": [],
+      "info": {
+       "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+       "float": true,
+       "half": true,
+       "dpr": 1,
+       "max3d": 2048
+      },
+      "statsKeys": 14
+     },
+     "shots": {
+      "count": 18,
+      "sha256": {
+       "nouveau-aube": "72fedfa9480834c16ca68e916596f60e229f098e78c0caf1aee35c2a3ed0279f",
+       "nouveau-aube-ton-filmique": "979e22030bc623963838586e1f8fdd6fe99290e924009eb5e4a68ea779b1259c",
+       "nouveau-plein-jour": "46bd1a6f0337611ef62ad6b40741fc573c81f2f34eb2b0539f430abb7dec498a",
+       "nouveau-plein-jour-ton-filmique": "39a4498eb061a1faff800a83ef3ad12633e77933839519305033f5f902bceb3d",
+       "nouveau-crepuscule": "5ab5fea6d4cc340335806f7b27caded0e2af2233d645e23e5b176026f83b1476",
+       "nouveau-crepuscule-ton-filmique": "77ab64bdc2e535c1cd1405add80bfd088ad509cfb12f91c6807be7d8c019b90e",
+       "nouveau-nuit": "ae777b7278f184ef170e61891a979ba98fd20ec90bf2e8cbea335e104ff4cf07",
+       "nouveau-nuit-ton-filmique": "544da2a841e7b1a7c8625d68edde703b578f4aab372c3378adc14bb6ac7c79a0",
+       "nouveau-orage": "c2600ce6c0e220eb67df42a4b8a4071692ed81a9965b409f4f1a3fc6e007ee6e",
+       "nouveau-orage-ton-filmique": "68a4d2da8bcf2ba70d35421fe0516498f036017948e4bd00608ae154710e3ad1",
+       "nouveau-cendres": "44c88139aae80e31feef846d5a7e4e141c39b8e07c2e6dd59c90792dc79df62f",
+       "nouveau-cendres-ton-filmique": "8976fb01379ff637b83d11d07015c9eab55973eeba8d45508af5ff3a83bd032c",
+       "nouveau-brume-industrielle": "5bd29d8e2df5d393dcef4caf87bf606b50ba165ae8fc814f54053780c394b53c",
+       "nouveau-brume-industrielle-ton-filmique": "3c2a7b0932d7e53afee7adf5bdc80bf47df1ff8edda579f7294f58e655e9da29",
+       "nouveau-plein-jour-zenith": "f6d8bfc367dc0c4182c8d3aa62418aa1b26d992d799d59916acd68397451ad76",
+       "nouveau-plein-jour-dos-au-soleil": "887cdd6fb7fb51f82ce7be4cfe6e83ce3159fc54912a115a82a04fe25f934170",
+       "nouveau-plein-jour-calcul-direct": "90f075224f1623ce31d17fb7fa3fcea0517251fe1a61541901b50220c5164f65",
+       "nouveau-plein-jour-dome512": "1f124af6f99ffc8d42a0e433babd334e527cc827e3b8fa54ac8f09d10eb270a0"
+      },
+      "pixelsSha256": {
+       "nouveau-aube": "558ca3d77698bf34bc42535858adac72e2af50a1e23631387adfccc0a4b7cf3b",
+       "nouveau-aube-ton-filmique": "d7c686f77d82ec48a53a033f326642f0704d7aa74ec5ddf2f907a009d728d37a",
+       "nouveau-plein-jour": "d7ac1dfb3359fdc10a6f60eb233fc6c6b9f630718521166b878dc6dfd027055b",
+       "nouveau-plein-jour-ton-filmique": "107854d48133146c21e7fa9b33e968a432799e89242b28765c05c29bc7f636d3",
+       "nouveau-crepuscule": "05c3124907b62158409822768e7b29b2cfe70552fa546fff9c830cff3cf46ea6",
+       "nouveau-crepuscule-ton-filmique": "b3f34c6587a543414563cb338ae2733555ac8440d555f86ecff619daf9222252",
+       "nouveau-nuit": "a23ffb03f29451afc30b2d7768514a58358fca99bacea580d03923c4ec66f2a2",
+       "nouveau-nuit-ton-filmique": "800f40b618ca309580715a5013268c6c6f70b1d66515d59cdaf4cdf43d752f6d",
+       "nouveau-orage": "0e6ae4ddf23398a371c8d3262b48f9f132cd0fb1276b8a078dfacde591fe6a81",
+       "nouveau-orage-ton-filmique": "82bc8700100e74f33a06686a241e4f0d7fd06447848e3093b912cdf2f4612c3b",
+       "nouveau-cendres": "b459c5e97a8eeb66f1f8662621e718f7a0e4693bac3b249993e1db27f747bf60",
+       "nouveau-cendres-ton-filmique": "236dc32d7bac3b743a862c9ecafccdd2934d070f63b5ba2023eb13739394a075",
+       "nouveau-brume-industrielle": "4e0a73cc57731bbe382110bb29761194a8bc764b34662c10640c144d240788bb",
+       "nouveau-brume-industrielle-ton-filmique": "62291f6490e8c6b6601a24b71dbcae354176247d322ebe4a333a83824cb28216",
+       "nouveau-plein-jour-zenith": "d87a2d5625c8d0eca1c62eaf5a2829abff7caaca909de93154acbfc6065d73a8",
+       "nouveau-plein-jour-dos-au-soleil": "4bcf78f0461ee62b8b0c3f82837aa172f632964173b22cf860f6c7e5406986a3",
+       "nouveau-plein-jour-calcul-direct": "413b8cb6852061544f5c7728d4c935fb6b69e8e7289d32f01977d711b60bd9fb",
+       "nouveau-plein-jour-dome512": "a9ea538ed1bb7c9244ec9647598f0ed42d9e10a5bf4870884a0b7f5852017e1f"
+      }
+     }
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-0",
+     "ms": 13672,
+     "textBytes": 1306,
+     "url": "file://<pages>/cielv.html#shots",
+     "marker": {
+      "id": "out",
+      "closed": true
+     },
+     "envelope": true,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "info": {
+       "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+       "float": true,
+       "half": true,
+       "dpr": 1,
+       "max3d": 2048
+      },
+      "statsKeys": 14
+     },
+     "shots": {
+      "count": 18,
+      "sha256": {
+       "nouveau-aube": "72fedfa9480834c16ca68e916596f60e229f098e78c0caf1aee35c2a3ed0279f",
+       "nouveau-aube-ton-filmique": "979e22030bc623963838586e1f8fdd6fe99290e924009eb5e4a68ea779b1259c",
+       "nouveau-plein-jour": "46bd1a6f0337611ef62ad6b40741fc573c81f2f34eb2b0539f430abb7dec498a",
+       "nouveau-plein-jour-ton-filmique": "39a4498eb061a1faff800a83ef3ad12633e77933839519305033f5f902bceb3d",
+       "nouveau-crepuscule": "5ab5fea6d4cc340335806f7b27caded0e2af2233d645e23e5b176026f83b1476",
+       "nouveau-crepuscule-ton-filmique": "77ab64bdc2e535c1cd1405add80bfd088ad509cfb12f91c6807be7d8c019b90e",
+       "nouveau-nuit": "ae777b7278f184ef170e61891a979ba98fd20ec90bf2e8cbea335e104ff4cf07",
+       "nouveau-nuit-ton-filmique": "544da2a841e7b1a7c8625d68edde703b578f4aab372c3378adc14bb6ac7c79a0",
+       "nouveau-orage": "c2600ce6c0e220eb67df42a4b8a4071692ed81a9965b409f4f1a3fc6e007ee6e",
+       "nouveau-orage-ton-filmique": "68a4d2da8bcf2ba70d35421fe0516498f036017948e4bd00608ae154710e3ad1",
+       "nouveau-cendres": "44c88139aae80e31feef846d5a7e4e141c39b8e07c2e6dd59c90792dc79df62f",
+       "nouveau-cendres-ton-filmique": "8976fb01379ff637b83d11d07015c9eab55973eeba8d45508af5ff3a83bd032c",
+       "nouveau-brume-industrielle": "5bd29d8e2df5d393dcef4caf87bf606b50ba165ae8fc814f54053780c394b53c",
+       "nouveau-brume-industrielle-ton-filmique": "3c2a7b0932d7e53afee7adf5bdc80bf47df1ff8edda579f7294f58e655e9da29",
+       "nouveau-plein-jour-zenith": "f6d8bfc367dc0c4182c8d3aa62418aa1b26d992d799d59916acd68397451ad76",
+       "nouveau-plein-jour-dos-au-soleil": "887cdd6fb7fb51f82ce7be4cfe6e83ce3159fc54912a115a82a04fe25f934170",
+       "nouveau-plein-jour-calcul-direct": "90f075224f1623ce31d17fb7fa3fcea0517251fe1a61541901b50220c5164f65",
+       "nouveau-plein-jour-dome512": "1f124af6f99ffc8d42a0e433babd334e527cc827e3b8fa54ac8f09d10eb270a0"
+      },
+      "pixelsSha256": {
+       "nouveau-aube": "558ca3d77698bf34bc42535858adac72e2af50a1e23631387adfccc0a4b7cf3b",
+       "nouveau-aube-ton-filmique": "d7c686f77d82ec48a53a033f326642f0704d7aa74ec5ddf2f907a009d728d37a",
+       "nouveau-plein-jour": "d7ac1dfb3359fdc10a6f60eb233fc6c6b9f630718521166b878dc6dfd027055b",
+       "nouveau-plein-jour-ton-filmique": "107854d48133146c21e7fa9b33e968a432799e89242b28765c05c29bc7f636d3",
+       "nouveau-crepuscule": "05c3124907b62158409822768e7b29b2cfe70552fa546fff9c830cff3cf46ea6",
+       "nouveau-crepuscule-ton-filmique": "b3f34c6587a543414563cb338ae2733555ac8440d555f86ecff619daf9222252",
+       "nouveau-nuit": "a23ffb03f29451afc30b2d7768514a58358fca99bacea580d03923c4ec66f2a2",
+       "nouveau-nuit-ton-filmique": "800f40b618ca309580715a5013268c6c6f70b1d66515d59cdaf4cdf43d752f6d",
+       "nouveau-orage": "0e6ae4ddf23398a371c8d3262b48f9f132cd0fb1276b8a078dfacde591fe6a81",
+       "nouveau-orage-ton-filmique": "82bc8700100e74f33a06686a241e4f0d7fd06447848e3093b912cdf2f4612c3b",
+       "nouveau-cendres": "b459c5e97a8eeb66f1f8662621e718f7a0e4693bac3b249993e1db27f747bf60",
+       "nouveau-cendres-ton-filmique": "236dc32d7bac3b743a862c9ecafccdd2934d070f63b5ba2023eb13739394a075",
+       "nouveau-brume-industrielle": "4e0a73cc57731bbe382110bb29761194a8bc764b34662c10640c144d240788bb",
+       "nouveau-brume-industrielle-ton-filmique": "62291f6490e8c6b6601a24b71dbcae354176247d322ebe4a333a83824cb28216",
+       "nouveau-plein-jour-zenith": "d87a2d5625c8d0eca1c62eaf5a2829abff7caaca909de93154acbfc6065d73a8",
+       "nouveau-plein-jour-dos-au-soleil": "4bcf78f0461ee62b8b0c3f82837aa172f632964173b22cf860f6c7e5406986a3",
+       "nouveau-plein-jour-calcul-direct": "413b8cb6852061544f5c7728d4c935fb6b69e8e7289d32f01977d711b60bd9fb",
+       "nouveau-plein-jour-dome512": "a9ea538ed1bb7c9244ec9647598f0ed42d9e10a5bf4870884a0b7f5852017e1f"
+      }
+     }
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-1",
+     "ms": 34879,
+     "textBytes": 1306,
+     "url": "file://<pages>/cielv.html#shots",
+     "marker": {
+      "id": "out",
+      "closed": true
+     },
+     "envelope": true,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "info": {
+       "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+       "float": true,
+       "half": true,
+       "dpr": 1,
+       "max3d": 2048
+      },
+      "statsKeys": 14
+     },
+     "shots": {
+      "count": 18,
+      "sha256": {
+       "nouveau-aube": "72fedfa9480834c16ca68e916596f60e229f098e78c0caf1aee35c2a3ed0279f",
+       "nouveau-aube-ton-filmique": "979e22030bc623963838586e1f8fdd6fe99290e924009eb5e4a68ea779b1259c",
+       "nouveau-plein-jour": "46bd1a6f0337611ef62ad6b40741fc573c81f2f34eb2b0539f430abb7dec498a",
+       "nouveau-plein-jour-ton-filmique": "39a4498eb061a1faff800a83ef3ad12633e77933839519305033f5f902bceb3d",
+       "nouveau-crepuscule": "5ab5fea6d4cc340335806f7b27caded0e2af2233d645e23e5b176026f83b1476",
+       "nouveau-crepuscule-ton-filmique": "77ab64bdc2e535c1cd1405add80bfd088ad509cfb12f91c6807be7d8c019b90e",
+       "nouveau-nuit": "ae777b7278f184ef170e61891a979ba98fd20ec90bf2e8cbea335e104ff4cf07",
+       "nouveau-nuit-ton-filmique": "544da2a841e7b1a7c8625d68edde703b578f4aab372c3378adc14bb6ac7c79a0",
+       "nouveau-orage": "c2600ce6c0e220eb67df42a4b8a4071692ed81a9965b409f4f1a3fc6e007ee6e",
+       "nouveau-orage-ton-filmique": "68a4d2da8bcf2ba70d35421fe0516498f036017948e4bd00608ae154710e3ad1",
+       "nouveau-cendres": "44c88139aae80e31feef846d5a7e4e141c39b8e07c2e6dd59c90792dc79df62f",
+       "nouveau-cendres-ton-filmique": "8976fb01379ff637b83d11d07015c9eab55973eeba8d45508af5ff3a83bd032c",
+       "nouveau-brume-industrielle": "5bd29d8e2df5d393dcef4caf87bf606b50ba165ae8fc814f54053780c394b53c",
+       "nouveau-brume-industrielle-ton-filmique": "3c2a7b0932d7e53afee7adf5bdc80bf47df1ff8edda579f7294f58e655e9da29",
+       "nouveau-plein-jour-zenith": "f6d8bfc367dc0c4182c8d3aa62418aa1b26d992d799d59916acd68397451ad76",
+       "nouveau-plein-jour-dos-au-soleil": "887cdd6fb7fb51f82ce7be4cfe6e83ce3159fc54912a115a82a04fe25f934170",
+       "nouveau-plein-jour-calcul-direct": "90f075224f1623ce31d17fb7fa3fcea0517251fe1a61541901b50220c5164f65",
+       "nouveau-plein-jour-dome512": "1f124af6f99ffc8d42a0e433babd334e527cc827e3b8fa54ac8f09d10eb270a0"
+      },
+      "pixelsSha256": {
+       "nouveau-aube": "558ca3d77698bf34bc42535858adac72e2af50a1e23631387adfccc0a4b7cf3b",
+       "nouveau-aube-ton-filmique": "d7c686f77d82ec48a53a033f326642f0704d7aa74ec5ddf2f907a009d728d37a",
+       "nouveau-plein-jour": "d7ac1dfb3359fdc10a6f60eb233fc6c6b9f630718521166b878dc6dfd027055b",
+       "nouveau-plein-jour-ton-filmique": "107854d48133146c21e7fa9b33e968a432799e89242b28765c05c29bc7f636d3",
+       "nouveau-crepuscule": "05c3124907b62158409822768e7b29b2cfe70552fa546fff9c830cff3cf46ea6",
+       "nouveau-crepuscule-ton-filmique": "b3f34c6587a543414563cb338ae2733555ac8440d555f86ecff619daf9222252",
+       "nouveau-nuit": "a23ffb03f29451afc30b2d7768514a58358fca99bacea580d03923c4ec66f2a2",
+       "nouveau-nuit-ton-filmique": "800f40b618ca309580715a5013268c6c6f70b1d66515d59cdaf4cdf43d752f6d",
+       "nouveau-orage": "0e6ae4ddf23398a371c8d3262b48f9f132cd0fb1276b8a078dfacde591fe6a81",
+       "nouveau-orage-ton-filmique": "82bc8700100e74f33a06686a241e4f0d7fd06447848e3093b912cdf2f4612c3b",
+       "nouveau-cendres": "b459c5e97a8eeb66f1f8662621e718f7a0e4693bac3b249993e1db27f747bf60",
+       "nouveau-cendres-ton-filmique": "236dc32d7bac3b743a862c9ecafccdd2934d070f63b5ba2023eb13739394a075",
+       "nouveau-brume-industrielle": "4e0a73cc57731bbe382110bb29761194a8bc764b34662c10640c144d240788bb",
+       "nouveau-brume-industrielle-ton-filmique": "62291f6490e8c6b6601a24b71dbcae354176247d322ebe4a333a83824cb28216",
+       "nouveau-plein-jour-zenith": "d87a2d5625c8d0eca1c62eaf5a2829abff7caaca909de93154acbfc6065d73a8",
+       "nouveau-plein-jour-dos-au-soleil": "4bcf78f0461ee62b8b0c3f82837aa172f632964173b22cf860f6c7e5406986a3",
+       "nouveau-plein-jour-calcul-direct": "413b8cb6852061544f5c7728d4c935fb6b69e8e7289d32f01977d711b60bd9fb",
+       "nouveau-plein-jour-dome512": "a9ea538ed1bb7c9244ec9647598f0ed42d9e10a5bf4870884a0b7f5852017e1f"
+      }
+     }
+    },
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-1",
+     "ms": 15464,
+     "textBytes": 45286922,
+     "url": "file://<pages>/cielv.html#shots",
+     "extraction": {
+      "marker": "out",
+      "sameText": true,
+      "htmlBytes": 45363669
+     },
+     "headline": {
+      "errors": [],
+      "info": {
+       "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+       "float": true,
+       "half": true,
+       "dpr": 1,
+       "max3d": 2048
+      },
+      "statsKeys": 14
+     },
+     "shots": {
+      "count": 18,
+      "sha256": {
+       "nouveau-aube": "72fedfa9480834c16ca68e916596f60e229f098e78c0caf1aee35c2a3ed0279f",
+       "nouveau-aube-ton-filmique": "979e22030bc623963838586e1f8fdd6fe99290e924009eb5e4a68ea779b1259c",
+       "nouveau-plein-jour": "46bd1a6f0337611ef62ad6b40741fc573c81f2f34eb2b0539f430abb7dec498a",
+       "nouveau-plein-jour-ton-filmique": "39a4498eb061a1faff800a83ef3ad12633e77933839519305033f5f902bceb3d",
+       "nouveau-crepuscule": "5ab5fea6d4cc340335806f7b27caded0e2af2233d645e23e5b176026f83b1476",
+       "nouveau-crepuscule-ton-filmique": "77ab64bdc2e535c1cd1405add80bfd088ad509cfb12f91c6807be7d8c019b90e",
+       "nouveau-nuit": "ae777b7278f184ef170e61891a979ba98fd20ec90bf2e8cbea335e104ff4cf07",
+       "nouveau-nuit-ton-filmique": "544da2a841e7b1a7c8625d68edde703b578f4aab372c3378adc14bb6ac7c79a0",
+       "nouveau-orage": "c2600ce6c0e220eb67df42a4b8a4071692ed81a9965b409f4f1a3fc6e007ee6e",
+       "nouveau-orage-ton-filmique": "68a4d2da8bcf2ba70d35421fe0516498f036017948e4bd00608ae154710e3ad1",
+       "nouveau-cendres": "44c88139aae80e31feef846d5a7e4e141c39b8e07c2e6dd59c90792dc79df62f",
+       "nouveau-cendres-ton-filmique": "8976fb01379ff637b83d11d07015c9eab55973eeba8d45508af5ff3a83bd032c",
+       "nouveau-brume-industrielle": "5bd29d8e2df5d393dcef4caf87bf606b50ba165ae8fc814f54053780c394b53c",
+       "nouveau-brume-industrielle-ton-filmique": "3c2a7b0932d7e53afee7adf5bdc80bf47df1ff8edda579f7294f58e655e9da29",
+       "nouveau-plein-jour-zenith": "f6d8bfc367dc0c4182c8d3aa62418aa1b26d992d799d59916acd68397451ad76",
+       "nouveau-plein-jour-dos-au-soleil": "887cdd6fb7fb51f82ce7be4cfe6e83ce3159fc54912a115a82a04fe25f934170",
+       "nouveau-plein-jour-calcul-direct": "90f075224f1623ce31d17fb7fa3fcea0517251fe1a61541901b50220c5164f65",
+       "nouveau-plein-jour-dome512": "1f124af6f99ffc8d42a0e433babd334e527cc827e3b8fa54ac8f09d10eb270a0"
+      },
+      "pixelsSha256": {
+       "nouveau-aube": "558ca3d77698bf34bc42535858adac72e2af50a1e23631387adfccc0a4b7cf3b",
+       "nouveau-aube-ton-filmique": "d7c686f77d82ec48a53a033f326642f0704d7aa74ec5ddf2f907a009d728d37a",
+       "nouveau-plein-jour": "d7ac1dfb3359fdc10a6f60eb233fc6c6b9f630718521166b878dc6dfd027055b",
+       "nouveau-plein-jour-ton-filmique": "107854d48133146c21e7fa9b33e968a432799e89242b28765c05c29bc7f636d3",
+       "nouveau-crepuscule": "05c3124907b62158409822768e7b29b2cfe70552fa546fff9c830cff3cf46ea6",
+       "nouveau-crepuscule-ton-filmique": "b3f34c6587a543414563cb338ae2733555ac8440d555f86ecff619daf9222252",
+       "nouveau-nuit": "a23ffb03f29451afc30b2d7768514a58358fca99bacea580d03923c4ec66f2a2",
+       "nouveau-nuit-ton-filmique": "800f40b618ca309580715a5013268c6c6f70b1d66515d59cdaf4cdf43d752f6d",
+       "nouveau-orage": "0e6ae4ddf23398a371c8d3262b48f9f132cd0fb1276b8a078dfacde591fe6a81",
+       "nouveau-orage-ton-filmique": "82bc8700100e74f33a06686a241e4f0d7fd06447848e3093b912cdf2f4612c3b",
+       "nouveau-cendres": "b459c5e97a8eeb66f1f8662621e718f7a0e4693bac3b249993e1db27f747bf60",
+       "nouveau-cendres-ton-filmique": "236dc32d7bac3b743a862c9ecafccdd2934d070f63b5ba2023eb13739394a075",
+       "nouveau-brume-industrielle": "4e0a73cc57731bbe382110bb29761194a8bc764b34662c10640c144d240788bb",
+       "nouveau-brume-industrielle-ton-filmique": "62291f6490e8c6b6601a24b71dbcae354176247d322ebe4a333a83824cb28216",
+       "nouveau-plein-jour-zenith": "d87a2d5625c8d0eca1c62eaf5a2829abff7caaca909de93154acbfc6065d73a8",
+       "nouveau-plein-jour-dos-au-soleil": "4bcf78f0461ee62b8b0c3f82837aa172f632964173b22cf860f6c7e5406986a3",
+       "nouveau-plein-jour-calcul-direct": "413b8cb6852061544f5c7728d4c935fb6b69e8e7289d32f01977d711b60bd9fb",
+       "nouveau-plein-jour-dome512": "a9ea538ed1bb7c9244ec9647598f0ed42d9e10a5bf4870884a0b7f5852017e1f"
+      }
+     }
+    },
+    {
+     "kind": "dump-run",
+     "tag": "dump-run-2",
+     "ms": 16683,
+     "textBytes": 45286917,
+     "url": "file://<pages>/cielv.html#shots",
+     "extraction": {
+      "marker": "out",
+      "sameText": true,
+      "htmlBytes": 45363664
+     },
+     "headline": {
+      "errors": [],
+      "info": {
+       "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+       "float": true,
+       "half": true,
+       "dpr": 1,
+       "max3d": 2048
+      },
+      "statsKeys": 14
+     },
+     "shots": {
+      "count": 18,
+      "sha256": {
+       "nouveau-aube": "72fedfa9480834c16ca68e916596f60e229f098e78c0caf1aee35c2a3ed0279f",
+       "nouveau-aube-ton-filmique": "979e22030bc623963838586e1f8fdd6fe99290e924009eb5e4a68ea779b1259c",
+       "nouveau-plein-jour": "46bd1a6f0337611ef62ad6b40741fc573c81f2f34eb2b0539f430abb7dec498a",
+       "nouveau-plein-jour-ton-filmique": "39a4498eb061a1faff800a83ef3ad12633e77933839519305033f5f902bceb3d",
+       "nouveau-crepuscule": "5ab5fea6d4cc340335806f7b27caded0e2af2233d645e23e5b176026f83b1476",
+       "nouveau-crepuscule-ton-filmique": "77ab64bdc2e535c1cd1405add80bfd088ad509cfb12f91c6807be7d8c019b90e",
+       "nouveau-nuit": "ae777b7278f184ef170e61891a979ba98fd20ec90bf2e8cbea335e104ff4cf07",
+       "nouveau-nuit-ton-filmique": "544da2a841e7b1a7c8625d68edde703b578f4aab372c3378adc14bb6ac7c79a0",
+       "nouveau-orage": "c2600ce6c0e220eb67df42a4b8a4071692ed81a9965b409f4f1a3fc6e007ee6e",
+       "nouveau-orage-ton-filmique": "68a4d2da8bcf2ba70d35421fe0516498f036017948e4bd00608ae154710e3ad1",
+       "nouveau-cendres": "44c88139aae80e31feef846d5a7e4e141c39b8e07c2e6dd59c90792dc79df62f",
+       "nouveau-cendres-ton-filmique": "8976fb01379ff637b83d11d07015c9eab55973eeba8d45508af5ff3a83bd032c",
+       "nouveau-brume-industrielle": "5bd29d8e2df5d393dcef4caf87bf606b50ba165ae8fc814f54053780c394b53c",
+       "nouveau-brume-industrielle-ton-filmique": "3c2a7b0932d7e53afee7adf5bdc80bf47df1ff8edda579f7294f58e655e9da29",
+       "nouveau-plein-jour-zenith": "f6d8bfc367dc0c4182c8d3aa62418aa1b26d992d799d59916acd68397451ad76",
+       "nouveau-plein-jour-dos-au-soleil": "887cdd6fb7fb51f82ce7be4cfe6e83ce3159fc54912a115a82a04fe25f934170",
+       "nouveau-plein-jour-calcul-direct": "90f075224f1623ce31d17fb7fa3fcea0517251fe1a61541901b50220c5164f65",
+       "nouveau-plein-jour-dome512": "1f124af6f99ffc8d42a0e433babd334e527cc827e3b8fa54ac8f09d10eb270a0"
+      },
+      "pixelsSha256": {
+       "nouveau-aube": "558ca3d77698bf34bc42535858adac72e2af50a1e23631387adfccc0a4b7cf3b",
+       "nouveau-aube-ton-filmique": "d7c686f77d82ec48a53a033f326642f0704d7aa74ec5ddf2f907a009d728d37a",
+       "nouveau-plein-jour": "d7ac1dfb3359fdc10a6f60eb233fc6c6b9f630718521166b878dc6dfd027055b",
+       "nouveau-plein-jour-ton-filmique": "107854d48133146c21e7fa9b33e968a432799e89242b28765c05c29bc7f636d3",
+       "nouveau-crepuscule": "05c3124907b62158409822768e7b29b2cfe70552fa546fff9c830cff3cf46ea6",
+       "nouveau-crepuscule-ton-filmique": "b3f34c6587a543414563cb338ae2733555ac8440d555f86ecff619daf9222252",
+       "nouveau-nuit": "a23ffb03f29451afc30b2d7768514a58358fca99bacea580d03923c4ec66f2a2",
+       "nouveau-nuit-ton-filmique": "800f40b618ca309580715a5013268c6c6f70b1d66515d59cdaf4cdf43d752f6d",
+       "nouveau-orage": "0e6ae4ddf23398a371c8d3262b48f9f132cd0fb1276b8a078dfacde591fe6a81",
+       "nouveau-orage-ton-filmique": "82bc8700100e74f33a06686a241e4f0d7fd06447848e3093b912cdf2f4612c3b",
+       "nouveau-cendres": "b459c5e97a8eeb66f1f8662621e718f7a0e4693bac3b249993e1db27f747bf60",
+       "nouveau-cendres-ton-filmique": "236dc32d7bac3b743a862c9ecafccdd2934d070f63b5ba2023eb13739394a075",
+       "nouveau-brume-industrielle": "4e0a73cc57731bbe382110bb29761194a8bc764b34662c10640c144d240788bb",
+       "nouveau-brume-industrielle-ton-filmique": "62291f6490e8c6b6601a24b71dbcae354176247d322ebe4a333a83824cb28216",
+       "nouveau-plein-jour-zenith": "d87a2d5625c8d0eca1c62eaf5a2829abff7caaca909de93154acbfc6065d73a8",
+       "nouveau-plein-jour-dos-au-soleil": "4bcf78f0461ee62b8b0c3f82837aa172f632964173b22cf860f6c7e5406986a3",
+       "nouveau-plein-jour-calcul-direct": "413b8cb6852061544f5c7728d4c935fb6b69e8e7289d32f01977d711b60bd9fb",
+       "nouveau-plein-jour-dome512": "a9ea538ed1bb7c9244ec9647598f0ed42d9e10a5bf4870884a0b7f5852017e1f"
+      }
+     }
+    },
+    {
+     "kind": "run-page",
+     "tag": "run-page-2",
+     "ms": 33147,
+     "textBytes": 1303,
+     "url": "file://<pages>/cielv.html#shots",
+     "marker": {
+      "id": "out",
+      "closed": true
+     },
+     "envelope": true,
+     "cleanup": {
+      "profilesLeft": [],
+      "profileRemoved": true,
+      "singletonDir": null
+     },
+     "gpuFlags": [
+      "--use-angle=metal"
+     ],
+     "chrome": "Google Chrome 157.0.8103.39",
+     "headline": {
+      "errors": [],
+      "info": {
+       "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+       "float": true,
+       "half": true,
+       "dpr": 1,
+       "max3d": 2048
+      },
+      "statsKeys": 14
+     },
+     "shots": {
+      "count": 18,
+      "sha256": {
+       "nouveau-aube": "72fedfa9480834c16ca68e916596f60e229f098e78c0caf1aee35c2a3ed0279f",
+       "nouveau-aube-ton-filmique": "979e22030bc623963838586e1f8fdd6fe99290e924009eb5e4a68ea779b1259c",
+       "nouveau-plein-jour": "46bd1a6f0337611ef62ad6b40741fc573c81f2f34eb2b0539f430abb7dec498a",
+       "nouveau-plein-jour-ton-filmique": "39a4498eb061a1faff800a83ef3ad12633e77933839519305033f5f902bceb3d",
+       "nouveau-crepuscule": "5ab5fea6d4cc340335806f7b27caded0e2af2233d645e23e5b176026f83b1476",
+       "nouveau-crepuscule-ton-filmique": "77ab64bdc2e535c1cd1405add80bfd088ad509cfb12f91c6807be7d8c019b90e",
+       "nouveau-nuit": "ae777b7278f184ef170e61891a979ba98fd20ec90bf2e8cbea335e104ff4cf07",
+       "nouveau-nuit-ton-filmique": "544da2a841e7b1a7c8625d68edde703b578f4aab372c3378adc14bb6ac7c79a0",
+       "nouveau-orage": "c2600ce6c0e220eb67df42a4b8a4071692ed81a9965b409f4f1a3fc6e007ee6e",
+       "nouveau-orage-ton-filmique": "68a4d2da8bcf2ba70d35421fe0516498f036017948e4bd00608ae154710e3ad1",
+       "nouveau-cendres": "44c88139aae80e31feef846d5a7e4e141c39b8e07c2e6dd59c90792dc79df62f",
+       "nouveau-cendres-ton-filmique": "8976fb01379ff637b83d11d07015c9eab55973eeba8d45508af5ff3a83bd032c",
+       "nouveau-brume-industrielle": "5bd29d8e2df5d393dcef4caf87bf606b50ba165ae8fc814f54053780c394b53c",
+       "nouveau-brume-industrielle-ton-filmique": "3c2a7b0932d7e53afee7adf5bdc80bf47df1ff8edda579f7294f58e655e9da29",
+       "nouveau-plein-jour-zenith": "f6d8bfc367dc0c4182c8d3aa62418aa1b26d992d799d59916acd68397451ad76",
+       "nouveau-plein-jour-dos-au-soleil": "887cdd6fb7fb51f82ce7be4cfe6e83ce3159fc54912a115a82a04fe25f934170",
+       "nouveau-plein-jour-calcul-direct": "90f075224f1623ce31d17fb7fa3fcea0517251fe1a61541901b50220c5164f65",
+       "nouveau-plein-jour-dome512": "1f124af6f99ffc8d42a0e433babd334e527cc827e3b8fa54ac8f09d10eb270a0"
+      },
+      "pixelsSha256": {
+       "nouveau-aube": "558ca3d77698bf34bc42535858adac72e2af50a1e23631387adfccc0a4b7cf3b",
+       "nouveau-aube-ton-filmique": "d7c686f77d82ec48a53a033f326642f0704d7aa74ec5ddf2f907a009d728d37a",
+       "nouveau-plein-jour": "d7ac1dfb3359fdc10a6f60eb233fc6c6b9f630718521166b878dc6dfd027055b",
+       "nouveau-plein-jour-ton-filmique": "107854d48133146c21e7fa9b33e968a432799e89242b28765c05c29bc7f636d3",
+       "nouveau-crepuscule": "05c3124907b62158409822768e7b29b2cfe70552fa546fff9c830cff3cf46ea6",
+       "nouveau-crepuscule-ton-filmique": "b3f34c6587a543414563cb338ae2733555ac8440d555f86ecff619daf9222252",
+       "nouveau-nuit": "a23ffb03f29451afc30b2d7768514a58358fca99bacea580d03923c4ec66f2a2",
+       "nouveau-nuit-ton-filmique": "800f40b618ca309580715a5013268c6c6f70b1d66515d59cdaf4cdf43d752f6d",
+       "nouveau-orage": "0e6ae4ddf23398a371c8d3262b48f9f132cd0fb1276b8a078dfacde591fe6a81",
+       "nouveau-orage-ton-filmique": "82bc8700100e74f33a06686a241e4f0d7fd06447848e3093b912cdf2f4612c3b",
+       "nouveau-cendres": "b459c5e97a8eeb66f1f8662621e718f7a0e4693bac3b249993e1db27f747bf60",
+       "nouveau-cendres-ton-filmique": "236dc32d7bac3b743a862c9ecafccdd2934d070f63b5ba2023eb13739394a075",
+       "nouveau-brume-industrielle": "4e0a73cc57731bbe382110bb29761194a8bc764b34662c10640c144d240788bb",
+       "nouveau-brume-industrielle-ton-filmique": "62291f6490e8c6b6601a24b71dbcae354176247d322ebe4a333a83824cb28216",
+       "nouveau-plein-jour-zenith": "d87a2d5625c8d0eca1c62eaf5a2829abff7caaca909de93154acbfc6065d73a8",
+       "nouveau-plein-jour-dos-au-soleil": "4bcf78f0461ee62b8b0c3f82837aa172f632964173b22cf860f6c7e5406986a3",
+       "nouveau-plein-jour-calcul-direct": "413b8cb6852061544f5c7728d4c935fb6b69e8e7289d32f01977d711b60bd9fb",
+       "nouveau-plein-jour-dome512": "a9ea538ed1bb7c9244ec9647598f0ed42d9e10a5bf4870884a0b7f5852017e1f"
+      }
+     }
+    }
+   ],
+   "fields": {
+    "paths": 42,
+    "equalEverywhere": 42,
+    "launchNoise": 0,
+    "suspects": 0,
+    "families": {},
+    "launchNoiseExamples": [],
+    "suspectList": [],
+    "suspectsOutsideNoisyFamilies": 0
+   },
+   "fieldsEqual": true,
+   "shotsEqual": true,
+   "shotsCount": 18,
+   "fieldsVerdict": "égaux"
+  }
+ },
+ "ok": true,
+ "fieldsEqualEverywhere": false
+}

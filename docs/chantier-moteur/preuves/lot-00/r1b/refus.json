@@ -1,0 +1,133 @@
+{
+ "schema": "metal-r1b-refus-v1",
+ "mac": {
+  "date": "2026-11-13T08:25:37.570Z",
+  "node": "v24.18.0",
+  "platform": "darwin arm64",
+  "cases": [
+   {
+    "argv": [
+     "--allow-file-access-from-files",
+     "tools/render/pages/probe.html"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : drapeau refusé : --allow-file-access-from-files (aucun accès aux fichiers pour une page file:// : données par --call et --arg (mode cdp), ou incluses dans la page)"
+   },
+   {
+    "argv": [
+     "tools/render/pages/probe.html",
+     "--chrome-arg=--allow-file-access-from-files"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : drapeau refusé : --allow-file-access-from-files (aucun accès aux fichiers pour une page file:// : données par --call et --arg (mode cdp), ou incluses dans la page)"
+   },
+   {
+    "argv": [
+     "tools/render/pages/probe.html",
+     "--chrome-arg=--remote-debugging-port=9222"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : drapeau refusé : --remote-debugging-port=9222 (aucun port de débogage : le lanceur parle DevTools par --remote-debugging-pipe)"
+   },
+   {
+    "argv": [
+     "tools/render/pages/probe.html",
+     "--chrome-arg",
+     "--remote-debugging-address=0.0.0.0"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : drapeau refusé : --remote-debugging-address=0.0.0.0 (aucun port de débogage : le lanceur parle DevTools par --remote-debugging-pipe)"
+   },
+   {
+    "argv": [
+     "tools/render/pages/probe.html",
+     "--chrome-arg=--use-gl=desktop"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : drapeau refusé : --use-gl=desktop (drapeaux GPU fixés par le lanceur : --angle ou METAL_RENDER_ANGLE)"
+   },
+   {
+    "argv": [
+     "tools/render/pages/probe.html",
+     "--chrome-arg=--user-data-dir=/tmp/x"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : drapeau refusé : --user-data-dir=/tmp/x (drapeau géré par le lanceur (--window, --dpr, --mode dump, profil jetable))"
+   },
+   {
+    "argv": [
+     "https://example.com/"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : seules les pages file:// sont acceptées, sans serveur ni réseau : https://example.com/"
+   },
+   {
+    "argv": [
+     "http://localhost:8000/x.html"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : seules les pages file:// sont acceptées, sans serveur ni réseau : http://localhost:8000/x.html"
+   },
+   {
+    "argv": [
+     "tools/render/pages/absente.html#shots"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : page introuvable : /Users/david/claude/metal-chantier/render/tools/render/pages/absente.html#shots"
+   },
+   {
+    "argv": [
+     "tools/render/pages/probe.html",
+     "--mode",
+     "dump",
+     "--wait",
+     "true"
+    ],
+    "code": 2,
+    "stdoutBytes": 0,
+    "stderr": "run-page : --wait : mode cdp seulement (retirer --mode dump)"
+   }
+  ]
+ },
+ "checkRunPage": {
+  "refuse.fileAccess": {
+   "argv": [
+    "--allow-file-access-from-files",
+    "<tools/render>/pages/dump-fixture.html"
+   ],
+   "code": 2,
+   "message": "run-page : drapeau refusé : --allow-file-access-from-files (aucun accès aux fichiers pour une page file:// : données par --call et --arg (mode cdp), ou incluses dans la page)"
+  },
+  "refuse.port": {
+   "argv": [
+    "<tools/render>/pages/dump-fixture.html",
+    "--chrome-arg=--remote-debugging-port=9222"
+   ],
+   "code": 2,
+   "message": "run-page : drapeau refusé : --remote-debugging-port=9222 (aucun port de débogage : le lanceur parle DevTools par --remote-debugging-pipe)"
+  },
+  "refuse.https": {
+   "argv": [
+    "https://example.com/"
+   ],
+   "code": 2,
+   "message": "run-page : seules les pages file:// sont acceptées, sans serveur ni réseau : https://example.com/"
+  },
+  "refuse.http": {
+   "argv": [
+    "http://localhost:8000/x.html"
+   ],
+   "code": 2,
+   "message": "run-page : seules les pages file:// sont acceptées, sans serveur ni réseau : http://localhost:8000/x.html"
+  }
+ }
+}
