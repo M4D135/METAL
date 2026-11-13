@@ -1,0 +1,36 @@
+{
+  "schema": "boucle-etape-4-domaines-v1",
+  "node": "v24.18.0",
+  "arch": "arm64",
+  "platform": "darwin",
+  "cpu": "Apple M5",
+  "loadavg": [
+    3.16259765625,
+    3.7841796875,
+    3.30029296875
+  ],
+  "patterns": 21,
+  "runs": 10,
+  "identical": true,
+  "ms": {
+    "main": [
+      117.9,
+      147.6,
+      149,
+      159.8,
+      156.2
+    ],
+    "vm": [
+      1342.8,
+      1352,
+      1366.5,
+      1431.2,
+      1408.9
+    ]
+  },
+  "medianMs": {
+    "main": 149,
+    "vm": 1366.5
+  },
+  "vmOverMain": 9.17
+}

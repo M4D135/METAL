@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boucle : essai navigateur</title>
+<style>
+:root{color-scheme:light dark;--fg:#16181d;--bg:#ffffff;--panel:#f2f3f5}
+@media (prefers-color-scheme:dark){:root{--fg:#e7e8ea;--bg:#16181d;--panel:#23262d}}
+body{font:15px/1.5 system-ui,sans-serif;margin:0 auto;padding:16px;max-width:62em;color:var(--fg);background:var(--bg)}
+pre{white-space:pre-wrap;word-break:break-all;background:var(--panel);padding:10px;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>FLoop et FSchedule dans un vrai navigateur</h1>
+<p>Preuve de l'étape 6 de la voie « boucle » (§7.6 de la mission). La page charge <code>src/loop.js</code> et <code>src/schedule.js</code> en scripts classiques, ouverte en <code>file://</code>, sans serveur ni réseau. Elle vérifie leurs comptes de façon synchrone, avant toute image rAF : <code>--dump-dom</code> rend la page avant qu'une boucle rAF ait tourné. Verdict dans l'attribut <code>data-result</code> du corps de page (<code>ok</code> ou <code>echec</code>), détail en JSON ci-dessous.</p>
+<pre id="out">(script de vérification non exécuté)</pre>
+<script src="../../../../src/loop.js"></script>
+<script src="../../../../src/schedule.js"></script>
+<script>
+(function () {
+  'use strict';
+  // Empreinte attendue du contrôle « jit144 » : calculée sous Node v24.18.0 par etape-6-navigateur-node.mjs, qui rejoue ce script.
+  const EXPECTED_JIT144 = '95894bbc';
+  const checks = {}, errors = [];
+  const check = (name, ok, got) => { checks[name] = {ok: ok === true, got}; };
+  const attempt = (name, fn) => {
+    try { fn(); } catch (e) { checks[name] = {ok: false, got: null}; errors.push(name + ' : ' + String(e && e.message || e)); }
+  };
+  // 1. Les deux globaux, posés sur window par les scripts classiques.
+  attempt('globals', () => check('globals',
+    typeof FLoop.create === 'function' && typeof FSchedule.create === 'function' && window.FLoop === FLoop && window.FSchedule === FSchedule,
+    {FLoop: Object.keys(FLoop).join(','), FSchedule: Object.keys(FSchedule).join(',')}));
+  // 2. 144 Hz synthétique, 1 440 images (i·1000/144), rappel compteur : 601 pas, 839 images à 0 pas.
+  attempt('hz144', () => {
+    const L = FLoop.create();
+    let n = 0;
+    const count = () => { n++; };
+    for (let i = 1; i <= 1440; i++) L.advance(i * 1000 / 144, count);
+    const s = L.stats;
+    check('hz144', s.frames === 1440 && n === 601 && s.steps === 601 && s.zeroStepFrames === 839,
+      {frames: s.frames, steps: n, zeroStepFrames: s.zeroStepFrames, multiStepFrames: s.multiStepFrames, locked: L.locked});
+  });
+  // 3. 59,94 Hz synthétique, 600 images : seule l'image 2 fait 2 pas (aucune à 0 pas), et c'est verrouillé à la fin.
+  attempt('hz5994', () => {
+    const L = FLoop.create(), multi = [];
+    let zero = 0;
+    for (let i = 1; i <= 600; i++) {
+      const f = L.advance(i * 1000 / 59.94, () => {});
+      if (f.steps > 1) multi.push(i + ':' + f.steps); else if (!f.steps) zero++;
+    }
+    check('hz5994', multi.join() === '2:2' && zero === 0 && L.locked === true,
+      {steps: L.stats.steps, multiStepFrames: multi, zeroStepFrames: zero, locked: L.locked, periodMs: L.period});
+  });
+  // 4. S11 : une tâche « sim » de 40 000 unités, pumpSim(768) en boucle, sans horloge : 53 tranches, la dernière de 64.
+  attempt('s11', () => {
+    const S = FSchedule.create(), slices = [];
+    let left = 40000;
+    S.add({lane: 'sim', key: 'nav', run: (u, t) => { const used = Math.min(u, left); left -= used; if (!left) t.done = true; return used; }});
+    while (S.count('sim') > 0 && slices.length < 1000) slices.push(S.pumpSim(768));
+    check('s11', slices.length === 53 && slices.slice(0, 52).every(u => u === 768) && slices[52] === 64 && S.stats.simUnits === 40000,
+      {slices: slices.length, first: slices[0], last: slices[slices.length - 1], simUnits: S.stats.simUnits});
+  });
+  // 5. S01 avec une horloge factice : A (prio 5), B (1), C (5), D (1), 1 ms chacune ; pump(10) rend 4, ordre BDAC.
+  attempt('s01', () => {
+    const c = {t: 0}, S = FSchedule.create({now: () => c.t}), order = [];
+    for (const [key, priority] of [['A', 5], ['B', 1], ['C', 5], ['D', 1]]) S.add({key, priority, cost: 1, run: () => { order.push(key); c.t += 1; }});
+    const spent = S.pump(10);
+    check('s01', spent === 4 && order.join('') === 'BDAC' && S.count() === 0 && S.stats.ran === 4,
+      {spent, order: order.join(''), count: S.count(), ran: S.stats.ran});
+  });
+  // 6. Au-delà de la fiche : 10 000 images jit144 en mode plan, empreinte FNV-1a des octets de chaque image (steps,
+  //    alpha, dt, dropped), puis des stats, d'acc, de debt et de la période. Mêmes octets attendus que sous Node.
+  attempt('jit144', () => {
+    const L = FLoop.create(), P144 = 1000 / 144, f64 = new Float64Array(1), u8 = new Uint8Array(f64.buffer);
+    let h = 0x811c9dc5;
+    const mix = x => { f64[0] = x; for (let b = 0; b < 8; b++) h = Math.imul(h ^ u8[b], 0x01000193) >>> 0; };
+    for (let i = 1; i <= 10000; i++) {
+      const f = L.advance(i * P144 + (((i * 7919) % 7) - 3) * .12);
+      mix(f.steps); mix(f.alpha); mix(f.dt); mix(f.dropped);
+    }
+    const s = L.stats;
+    for (const k of ['frames', 'steps', 'zeroStepFrames', 'multiStepFrames', 'realMs', 'droppedMs', 'clampedMs', 'abortedMs', 'dilationMs', 'maxDebtMs', 'lockChanges']) mix(s[k]);
+    mix(L.acc); mix(L.debt); mix(L.period);
+    const digest = h.toString(16).padStart(8, '0');
+    check('jit144', digest === EXPECTED_JIT144, {frames: s.frames, steps: s.steps, zeroStepFrames: s.zeroStepFrames, digest, expected: EXPECTED_JIT144});
+  });
+  const names = ['globals', 'hz144', 'hz5994', 's11', 's01', 'jit144'];
+  const ok = !errors.length && names.every(name => checks[name] && checks[name].ok);
+  document.getElementById('out').textContent = JSON.stringify({ok, engine: navigator.userAgent, checks, errors});
+  document.body.dataset.result = ok ? 'ok' : 'echec';
+})();
+</script>
+</body>
+</html>
