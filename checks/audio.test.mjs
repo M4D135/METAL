@@ -438,28 +438,29 @@ test('campaign pistol has its own short synthesized report and preserves indepen
   assert(r.audio.stats.voices<=48);r.audio.dispose();assert.equal(r.audio.stats.voices,0);
 });
 
-test('shield raise, impact, break and bash use distinct short cues and respect pause and silent effects',async()=>{
-  const r=rig();await r.audio.start();const names=['grenadeLaunch','shieldRaise','shieldBlock','shieldBash'],idle=r.ctx.sources.length;
-  for(const name of names)r.audio[name]({level:1,hit:true,absorbed:8});assert.equal(r.ctx.sources.length,idle,'menu state must not play the new combat cues');
+test('melee, mechanism, ammunition and grenade cues stay short, deduplicated and silent outside play',async()=>{
+  const r=rig();await r.audio.start();
+  const guarded=['rocket','grenade','grenadeLaunch'],all=['grenadeLaunch','melee','mechanism','ammoPickup','empty'],idle=r.ctx.sources.length;
+  for(const name of guarded)r.audio[name]({level:1,hit:true});assert.equal(r.ctx.sources.length,idle,'menu state must not play the guarded combat cues');
   r.audio.setPlaying(true);const shapes=[];
-  for(const [name,data,parts] of [['shieldRaise',{},2],['shieldBlock',{absorbed:8},1],['shieldBlock',{absorbed:8,broken:true},2],['shieldBash',{hit:false},1],['shieldBash',{hit:true,count:2},3]]){
-    const start=r.ctx.sources.length;r.audio[name]({level:.8,pan:-.2,...data});const voices=r.ctx.sources.slice(start);assert.equal(voices.length,parts);
+  for(const [name,data,parts] of [['grenadeLaunch',{hand:'right'},1],['melee',{hit:false},1],['melee',{hit:true},2],['mechanism',{},2],['ammoPickup',{},3],['empty',{},1]]){
+    const start=r.ctx.sources.length;r.audio[name]({level:.8,pan:-.2,...data});const voices=r.ctx.sources.slice(start);assert.equal(voices.length,parts,name+' '+JSON.stringify(data));
     assert(voices.every(n=>n.stopTime-r.ctx.currentTime<.8));shapes.push(voices.map(n=>[n.kind,n.frequency.value,n.stopTime-r.ctx.currentTime]));
     r.audio[name]({level:.8,pan:-.2,...data});assert.equal(r.ctx.sources.length,start+parts,'duplicate impact shares its cue cooldown');r.ctx.advance(1);
   }
-  assert.equal(new Set(shapes.map(JSON.stringify)).size,5);assert(r.audio.stats.duckGain<.56);
-  r.audio.setMix({effects:0});const silent=r.ctx.sources.length;for(const name of names)r.audio[name]({level:1,hit:true,broken:true});assert.equal(r.ctx.sources.length,silent);
-  r.audio.setMix({effects:1});r.audio.setMuted(true);for(const name of names)r.audio[name]({level:1});assert.equal(r.ctx.sources.length,silent);
-  r.audio.setMuted(false);r.audio.setPlaying(false);for(const name of names)r.audio[name]({level:1});assert.equal(r.ctx.sources.length,silent);
+  assert.equal(new Set(shapes.map(JSON.stringify)).size,6);assert(r.audio.stats.duckGain<.56);
+  r.audio.setMix({effects:0});const silent=r.ctx.sources.length;for(const name of all)r.audio[name]({level:1,hit:true});assert.equal(r.ctx.sources.length,silent);
+  r.audio.setMix({effects:1});r.audio.setMuted(true);for(const name of all)r.audio[name]({level:1});assert.equal(r.ctx.sources.length,silent);
+  r.audio.setMuted(false);r.audio.setPlaying(false);for(const name of guarded)r.audio[name]({level:1});assert.equal(r.ctx.sources.length,silent);
   r.audio.dispose();assert.equal(r.audio.stats.voices,0);assert(r.ctx.nodes.filter(n=>n!==r.ctx.destination).every(n=>n.disconnected));
 });
 
-test('a grenade launch and real shield block keep the player reservation during an explosion storm',async()=>{
+test('a grenade launch and a real melee hit keep the player reservation during an explosion storm',async()=>{
   const r=rig();await r.audio.start();r.audio.setPlaying(true);
   for(let i=0;i<55;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}assert.equal(r.audio.stats.voices,40);
-  const before=r.ctx.sources.length;r.audio.grenadeLaunch({level:1,hand:'right',owner:'player'});r.audio.shieldBlock({level:1,absorbed:8,energy:70});
-  assert.equal(r.ctx.sources.length-before,2);assert(r.audio.stats.voices<=48);assert(r.audio.stats.outputCeiling<.97);
-  for(let i=0;i<100;i++){r.ctx.advance(.04);r.audio.shieldBlock({level:1,absorbed:6,broken:i%13===0});r.audio.grenadeLaunch({level:1,hand:i%2?'left':'right'});r.audio.tick();assert(r.audio.stats.voices<=48);assert(r.tracker.stats.activeVoices<=28);}
+  const before=r.ctx.sources.length;r.audio.grenadeLaunch({level:1,hand:'right',owner:'player'});r.audio.melee({level:1,hit:true});
+  assert.equal(r.ctx.sources.length-before,3);assert(r.audio.stats.voices<=48);assert(r.audio.stats.outputCeiling<.97);
+  for(let i=0;i<100;i++){r.ctx.advance(.04);r.audio.melee({level:1,hit:i%13===0});r.audio.grenadeLaunch({level:1,hand:i%2?'left':'right'});r.audio.tick();assert(r.audio.stats.voices<=48);assert(r.tracker.stats.activeVoices<=28);}
   assert(r.tracker.stats.scheduledRows>0);r.audio.dispose();
 });
 
@@ -479,12 +480,12 @@ test('trophy discovery has one bounded metal sting, survives a busy mix and stay
   const shape=voices=>voices.map(n=>[n.kind,n.type,n.frequency.value]);
   assert.notDeepEqual(shape(sting),shape(other),'ordinary drops keep their own cue');
   r.ctx.advance(1.2);r.audio.setMix({effects:0});const silent=r.ctx.sources.length;
-  r.audio.trophy({key:'shield'});assert.equal(r.ctx.sources.length,silent);
-  r.ctx.advance(1.2);r.audio.setMix({effects:1});r.audio.setMuted(true);r.audio.trophy({key:'shield'});assert.equal(r.ctx.sources.length,silent);
-  r.audio.setMuted(false);r.audio.setPlaying(false);r.audio.trophy({key:'shield'});assert.equal(r.ctx.sources.length,silent);
+  r.audio.trophy({key:'smg'});assert.equal(r.ctx.sources.length,silent);
+  r.ctx.advance(1.2);r.audio.setMix({effects:1});r.audio.setMuted(true);r.audio.trophy({key:'smg'});assert.equal(r.ctx.sources.length,silent);
+  r.audio.setMuted(false);r.audio.setPlaying(false);r.audio.trophy({key:'smg'});assert.equal(r.ctx.sources.length,silent);
   r.audio.setPlaying(true);
   for(let i=0;i<55;i++){r.ctx.currentTime+=.1;r.audio.explosion({level:.8,radius:5,power:55});}
-  assert.equal(r.audio.stats.voices,40);const crowded=r.ctx.sources.length;r.audio.trophy({key:'shield'});
+  assert.equal(r.audio.stats.voices,40);const crowded=r.ctx.sources.length;r.audio.trophy({key:'smg'});
   assert.equal(r.ctx.sources.length,crowded+5);assert(r.audio.stats.voices<=48);
   r.audio.dispose();assert.equal(r.audio.stats.voices,0);
 });
@@ -513,4 +514,15 @@ test('actual menu audition survives live volume sliders and stops on explicit mu
   await app.element('test-audio').dispatch('click');assert.equal(app.audio.stats.preview,true);
   app.element('resume').click();assert.equal(app.audio.stats.preview,false);assert.equal(app.mode(),'playing');assert.equal(app.tracker.stats.playing,true);
   app.audio.dispose();
+});
+
+test('no shield cue survives in the audio API, the ducking table or the local source tracker',async()=>{
+  const r=rig();await r.audio.start();
+  for(const name of ['shield','shieldRaise','shieldBlock','shieldBreak','shieldBash','guard'])assert.equal(r.audio[name],undefined,'the '+name+' cue must no longer exist');
+  r.audio.setPlaying(true);const before=r.ctx.sources.length;
+  for(const name of ['shot','fracture','melee','hurt','dash'])r.audio[name]({level:1,hit:true});
+  assert(r.ctx.sources.length>before,'the remaining combat cues still sound after the cleanup');
+  r.audio.dispose();
+  assert.doesNotMatch(source.audio,/shield/i,'the audio module keeps no shield cue, ducking entry or priority entry');
+  assert.doesNotMatch(source.soundscape,/shield/i,'the local source tracker no longer classifies shield sounds as personal');
 });

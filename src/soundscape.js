@@ -3,7 +3,7 @@
   'use strict';
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const ranges={materialImpact:19,materialBreak:30,debrisLand:15,explosion:60,bossImpact:65,bossRoar:100,bossPhase:80,bossDeath:90,pipeLeak:20,steamWarning:17,liftStart:22,liftStop:22,doorOpen:18};
-  const personal=new Set(['shot','fracture','rocket','grenadeLaunch','shield','shieldBash','shieldBlock','melee','dash','pulse','land']);
+  const personal=new Set(['shot','fracture','rocket','grenadeLaunch','melee','dash','pulse','land']);
   function create(){
     const cache=new Map();let frameKey='',probes=0,revision='',currentSim=null;
     function reset(){cache.clear();frameKey=revision='';probes=0;currentSim=null;}
