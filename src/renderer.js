@@ -1283,6 +1283,7 @@
     let post=null,shadowTarget=null,whiteTexture=null,targetKey='',shadowKey='',shadowLight=null;
     let world=[],worldIndex=spatialIndex([]),lights=[],environment=null,worldBatch=pack([]),quality='auto',disposed=false,worldRevision=0;
     let staticCaches=[],lampCasters=[],actorLightPlan=null;
+    const sunCasterOut=[];
     const governor=resolutionGovernor();let autoScale=1;
 
     function compile(type,code) {
@@ -1405,10 +1406,10 @@
         stats.drawCalls++;stats.triangles+=shape.count/3*group.count;if(!shadowPass)stats.instances+=group.count;
       }
     }
-    function renderStatic(entries,slot,shadow=false){
+    function renderStatic(entries,slot,shadow=false,reuse=false){
       const cache=staticCaches[slot];
       const same=cache.entries.length===entries.length&&entries.every((entry,i)=>entry===cache.entries[i]);
-      if(!same){cache.entries=entries;cache.batch=packIndexed(entries);}
+      if(!same){cache.entries=reuse?entries.slice():entries;cache.batch=packIndexed(entries);}
       renderBatch(cache.batch,cache.buffer,!same,shadow);
     }
     function renderEffects(meshes,eye,time){
@@ -1451,11 +1452,14 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.viewport(shadowTarget.size,0,shadowTarget.size,shadowTarget.size);
       gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2);
       gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);gl.uniform2f(depthWind,environment.wind,time);
-      const casters=worldIndex.query(center,[extent+24,26,0]).filter(e=>{
-        const d=e.p.map((v,k)=>v-p[k]),along=a=>d[0]*a[0]+d[1]*a[1]+d[2]*a[2],z=along(fw);
-        return Math.abs(along(r))<extent+e.radius&&Math.abs(along(u))<extent+e.radius&&z+e.radius>near&&z-e.radius<far;
-      });
-      renderStatic(casters,2,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
+      const candidates=worldIndex.query(center,[extent+24,26,0]);
+      const px=p[0],py=p[1],pz=p[2],rx=r[0],ry=r[1],rz=r[2],ux=u[0],uy=u[1],uz=u[2],fwx=fw[0],fwy=fw[1],fwz=fw[2];
+      sunCasterOut.length=0;
+      for(let i=0;i<candidates.length;i++){
+        const e=candidates[i],dx=e.p[0]-px,dy=e.p[1]-py,dz=e.p[2]-pz,radius=e.radius,z=dx*fwx+dy*fwy+dz*fwz;
+        if(Math.abs(dx*rx+dy*ry+dz*rz)<extent+radius&&Math.abs(dx*ux+dy*uy+dz*uz)<extent+radius&&z+radius>near&&z-radius<far)sunCasterOut.push(e);
+      }
+      renderStatic(sunCasterOut,2,true,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
     function skyPass(axes,f,time){
       gl.disable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.bindVertexArray(postVao);gl.useProgram(skyProgram);

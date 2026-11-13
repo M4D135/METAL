@@ -1,0 +1,32 @@
+[
+ {
+  "world": "camp:17",
+  "base": "33a80b27450d10b6617a7dfbac4dcb07ec6888aa98e197a9eb2074244649f138",
+  "apres": "33a80b27450d10b6617a7dfbac4dcb07ec6888aa98e197a9eb2074244649f138",
+  "identique": true,
+  "frames": 200,
+  "appels": 83441,
+  "instances": 910467,
+  "octets": 44346224
+ },
+ {
+  "world": "camp:6",
+  "base": "bb82925e77b8afbf1d01b3ae24961fcd13289973841c704a53a11636ac9713f3",
+  "apres": "bb82925e77b8afbf1d01b3ae24961fcd13289973841c704a53a11636ac9713f3",
+  "identique": true,
+  "frames": 200,
+  "appels": 81463,
+  "instances": 961630,
+  "octets": 46578864
+ },
+ {
+  "world": "legacy:0",
+  "base": "4c740281a259cd9e654203754253da815a7e0a5b576fd7aedd8bfc0bb4682f8f",
+  "apres": "4c740281a259cd9e654203754253da815a7e0a5b576fd7aedd8bfc0bb4682f8f",
+  "identique": true,
+  "frames": 200,
+  "appels": 74200,
+  "instances": 991786,
+  "octets": 47154864
+ }
+]

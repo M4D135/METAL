@@ -1,0 +1,5 @@
+11:C0 sun query only (current)                                   79.21 us/frame
+12:C0b sun query only (dense grid)                               42.43 us/frame
+13:C1 sun filter current (e.p.map + closure)                    583.03 us/frame
+14:C2 sun filter inline scalars                                  76.26 us/frame
+15:   C identical counts true 1850 casters/frame
