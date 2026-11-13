@@ -1,0 +1,5288 @@
+{
+ "schema": "metal-platform-math-census-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64"
+ },
+ "root": "~/claude/metal-chantier/nav",
+ "worldUsesFMath": true,
+ "path": "fmath",
+ "seeds": [
+  1,
+  96,
+  2026
+ ],
+ "legacySeeds": [
+  1,
+  96
+ ],
+ "worlds": 114,
+ "note": "Every Math function called by src/world.js is counted, and FMath too when world.js calls it (path fmath: FMath results; path host: the host results instead). sin, cos, atan and atan2 are compared with FMath, and FMath.hypot2 and hypot3 (T3) with the host Math.hypot; the others are exact by specification (abs, ceil, floor, imul, max, min, round, sign, sqrt). A Math.hypot of an older world.js is only counted: it is the same Torque algorithm on every V8 build.",
+ "largeArgumentCalls": 0,
+ "total": {
+  "floor": {
+   "calls": 13022401
+  },
+  "min": {
+   "calls": 40758846
+  },
+  "max": {
+   "calls": 248461951
+  },
+  "imul": {
+   "calls": 4566681
+  },
+  "ceil": {
+   "calls": 250478
+  },
+  "hypot3": {
+   "calls": 29208587,
+   "divergent": 0,
+   "maxAbsArg": 220.80803381654437,
+   "maxAbsArgBits": "406b99db69bc03d8",
+   "divergentRate": 0
+  },
+  "hypot2": {
+   "calls": 67577290,
+   "divergent": 0,
+   "maxAbsArg": 217.68803381654436,
+   "maxAbsArgBits": "406b36045f7e9334",
+   "divergentRate": 0
+  },
+  "atan2": {
+   "calls": 325622,
+   "divergent": 707,
+   "maxAbsArg": 68.58085638275371,
+   "maxAbsArgBits": "4051252cc03fe667",
+   "divergentRate": 0.002171229216699117
+  },
+  "cos": {
+   "calls": 5809615,
+   "divergent": 8267,
+   "maxAbsArg": 14.215732645871089,
+   "maxAbsArgBits": "402c6e748265644a",
+   "reduction": {
+    "none": 4193303,
+    "pio2": 475294,
+    "medium": 1141018
+   },
+   "divergentRate": 0.001422985860508829
+  },
+  "sin": {
+   "calls": 5808589,
+   "divergent": 13414,
+   "maxAbsArg": 14.215732645871089,
+   "maxAbsArgBits": "402c6e748265644a",
+   "reduction": {
+    "none": 4192277,
+    "pio2": 475294,
+    "medium": 1141018
+   },
+   "divergentRate": 0.0023093388084438407
+  },
+  "sign": {
+   "calls": 5168
+  },
+  "abs": {
+   "calls": 30752670
+  },
+  "atan": {
+   "calls": 1026,
+   "divergent": 4,
+   "maxAbsArg": 0.27044533079421773,
+   "maxAbsArgBits": "3fd14ef9eec77e06",
+   "divergentRate": 0.003898635477582846
+  },
+  "sqrt": {
+   "calls": 342
+  },
+  "round": {
+   "calls": 2337
+  }
+ },
+ "byKind": {
+  "legacy": {
+   "floor": {
+    "calls": 683418
+   },
+   "min": {
+    "calls": 49402
+   },
+   "max": {
+    "calls": 11038484
+   },
+   "imul": {
+    "calls": 240325
+   },
+   "ceil": {
+    "calls": 13194
+   },
+   "hypot3": {
+    "calls": 1565306,
+    "divergent": 0,
+    "maxAbsArg": 220.74337839899118,
+    "maxAbsArgBits": "406b97c9c17f070a",
+    "divergentRate": 0
+   },
+   "hypot2": {
+    "calls": 3485481,
+    "divergent": 0,
+    "maxAbsArg": 217.6233783989912,
+    "maxAbsArgBits": "406b33f2b7419667",
+    "divergentRate": 0
+   },
+   "atan2": {
+    "calls": 16560,
+    "divergent": 35,
+    "maxAbsArg": 37.400000000000006,
+    "maxAbsArgBits": "4042b33333333334",
+    "divergentRate": 0.002113526570048309
+   },
+   "cos": {
+    "calls": 306263,
+    "divergent": 416,
+    "maxAbsArg": 14.215732645871089,
+    "maxAbsArgBits": "402c6e748265644a",
+    "reduction": {
+     "none": 221514,
+     "pio2": 24726,
+     "medium": 60023
+    },
+    "divergentRate": 0.0013583096880785469
+   },
+   "sin": {
+    "calls": 306209,
+    "divergent": 722,
+    "maxAbsArg": 14.215732645871089,
+    "maxAbsArgBits": "402c6e748265644a",
+    "reduction": {
+     "none": 221460,
+     "pio2": 24726,
+     "medium": 60023
+    },
+    "divergentRate": 0.002357866685825694
+   },
+   "sign": {
+    "calls": 272
+   },
+   "abs": {
+    "calls": 1101959
+   },
+   "atan": {
+    "calls": 54,
+    "divergent": 0,
+    "maxAbsArg": 0.2677976774226122,
+    "maxAbsArgBits": "3fd12398de9e6462",
+    "divergentRate": 0
+   },
+   "sqrt": {
+    "calls": 18
+   }
+  },
+  "v1": {
+   "floor": {
+    "calls": 6165887
+   },
+   "min": {
+    "calls": 456628
+   },
+   "max": {
+    "calls": 99485201
+   },
+   "imul": {
+    "calls": 2163178
+   },
+   "ceil": {
+    "calls": 118648
+   },
+   "hypot3": {
+    "calls": 14045328,
+    "divergent": 0,
+    "maxAbsArg": 220.80803381654437,
+    "maxAbsArgBits": "406b99db69bc03d8",
+    "divergentRate": 0
+   },
+   "hypot2": {
+    "calls": 31472374,
+    "divergent": 0,
+    "maxAbsArg": 217.68803381654436,
+    "maxAbsArgBits": "406b36045f7e9334",
+    "divergentRate": 0
+   },
+   "atan2": {
+    "calls": 146337,
+    "divergent": 320,
+    "maxAbsArg": 37.400000000000006,
+    "maxAbsArgBits": "4042b33333333334",
+    "divergentRate": 0.0021867333620342088
+   },
+   "cos": {
+    "calls": 2752140,
+    "divergent": 3902,
+    "maxAbsArg": 14.215732645871089,
+    "maxAbsArgBits": "402c6e748265644a",
+    "reduction": {
+     "none": 1991455,
+     "pio2": 221692,
+     "medium": 538993
+    },
+    "divergentRate": 0.0014178057802292034
+   },
+   "sin": {
+    "calls": 2751654,
+    "divergent": 6297,
+    "maxAbsArg": 14.215732645871089,
+    "maxAbsArgBits": "402c6e748265644a",
+    "reduction": {
+     "none": 1990969,
+     "pio2": 221692,
+     "medium": 538993
+    },
+    "divergentRate": 0.0022884417881027194
+   },
+   "sign": {
+    "calls": 2448
+   },
+   "abs": {
+    "calls": 9928764
+   },
+   "round": {
+    "calls": 888
+   },
+   "atan": {
+    "calls": 486,
+    "divergent": 2,
+    "maxAbsArg": 0.27044533079421773,
+    "maxAbsArgBits": "3fd14ef9eec77e06",
+    "divergentRate": 0.00411522633744856
+   },
+   "sqrt": {
+    "calls": 162
+   }
+  },
+  "v2": {
+   "floor": {
+    "calls": 6173096
+   },
+   "min": {
+    "calls": 40252816
+   },
+   "max": {
+    "calls": 137938266
+   },
+   "imul": {
+    "calls": 2163178
+   },
+   "ceil": {
+    "calls": 118636
+   },
+   "hypot3": {
+    "calls": 13597953,
+    "divergent": 0,
+    "maxAbsArg": 220.80803381654437,
+    "maxAbsArgBits": "406b99db69bc03d8",
+    "divergentRate": 0
+   },
+   "hypot2": {
+    "calls": 32619435,
+    "divergent": 0,
+    "maxAbsArg": 217.68803381654436,
+    "maxAbsArgBits": "406b36045f7e9334",
+    "divergentRate": 0
+   },
+   "atan2": {
+    "calls": 162725,
+    "divergent": 352,
+    "maxAbsArg": 68.58085638275371,
+    "maxAbsArgBits": "4051252cc03fe667",
+    "divergentRate": 0.0021631587033338453
+   },
+   "cos": {
+    "calls": 2751212,
+    "divergent": 3949,
+    "maxAbsArg": 14.215732645871089,
+    "maxAbsArgBits": "402c6e748265644a",
+    "reduction": {
+     "none": 1980334,
+     "pio2": 228876,
+     "medium": 542002
+    },
+    "divergentRate": 0.0014353673944428856
+   },
+   "sin": {
+    "calls": 2750726,
+    "divergent": 6395,
+    "maxAbsArg": 14.215732645871089,
+    "maxAbsArgBits": "402c6e748265644a",
+    "reduction": {
+     "none": 1979848,
+     "pio2": 228876,
+     "medium": 542002
+    },
+    "divergentRate": 0.002324840787486649
+   },
+   "sign": {
+    "calls": 2448
+   },
+   "abs": {
+    "calls": 19721947
+   },
+   "round": {
+    "calls": 1449
+   },
+   "atan": {
+    "calls": 486,
+    "divergent": 2,
+    "maxAbsArg": 0.27044533079421773,
+    "maxAbsArgBits": "3fd14ef9eec77e06",
+    "divergentRate": 0.00411522633744856
+   },
+   "sqrt": {
+    "calls": 162
+   }
+  }
+ },
+ "worldsWithDivergence": {
+  "legacy": {
+   "worlds": 6,
+   "withDivergentCall": 6,
+   "withDivergentSin": 6,
+   "withDivergentCos": 6,
+   "withDivergentAtan2": 6,
+   "withDivergentAtan": 0,
+   "withDivergentHypot": 0
+  },
+  "v1": {
+   "worlds": 54,
+   "withDivergentCall": 54,
+   "withDivergentSin": 54,
+   "withDivergentCos": 54,
+   "withDivergentAtan2": 53,
+   "withDivergentAtan": 1,
+   "withDivergentHypot": 0
+  },
+  "v2": {
+   "worlds": 54,
+   "withDivergentCall": 54,
+   "withDivergentSin": 54,
+   "withDivergentCos": 54,
+   "withDivergentAtan2": 53,
+   "withDivergentAtan": 1,
+   "withDivergentHypot": 0
+  }
+ },
+ "perWorld": [
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 0,
+   "divergent": {
+    "atan2": 10,
+    "cos": 64,
+    "sin": 94
+   }
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 1,
+   "divergent": {
+    "cos": 55,
+    "sin": 59,
+    "atan2": 1
+   }
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 2,
+   "divergent": {
+    "atan2": 5,
+    "cos": 93,
+    "sin": 203
+   }
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 0,
+   "divergent": {
+    "cos": 50,
+    "sin": 96,
+    "atan2": 7
+   }
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 1,
+   "divergent": {
+    "atan2": 1,
+    "cos": 47,
+    "sin": 86
+   }
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 2,
+   "divergent": {
+    "atan2": 11,
+    "cos": 107,
+    "sin": 184
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 0,
+   "divergent": {
+    "atan2": 10,
+    "cos": 64,
+    "sin": 94
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 0,
+   "divergent": {
+    "atan2": 11,
+    "cos": 65,
+    "sin": 95
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 1,
+   "divergent": {
+    "cos": 55,
+    "sin": 59,
+    "atan2": 1
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 1,
+   "divergent": {
+    "cos": 55,
+    "sin": 61,
+    "atan2": 1
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 2,
+   "divergent": {
+    "atan2": 5,
+    "cos": 93,
+    "sin": 203
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 2,
+   "divergent": {
+    "atan2": 7,
+    "cos": 95,
+    "sin": 203
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 3,
+   "divergent": {
+    "sin": 82,
+    "cos": 72,
+    "atan2": 5
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 3,
+   "divergent": {
+    "sin": 87,
+    "cos": 72,
+    "atan2": 6
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 4,
+   "divergent": {
+    "atan2": 3,
+    "sin": 99,
+    "cos": 64
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 4,
+   "divergent": {
+    "atan2": 3,
+    "sin": 101,
+    "cos": 65
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 5,
+   "divergent": {
+    "atan2": 8,
+    "cos": 98,
+    "sin": 155
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 5,
+   "divergent": {
+    "atan2": 12,
+    "cos": 98,
+    "sin": 159
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 6,
+   "divergent": {
+    "atan2": 5,
+    "sin": 92,
+    "cos": 56
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 6,
+   "divergent": {
+    "atan2": 5,
+    "sin": 98,
+    "cos": 58
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 7,
+   "divergent": {
+    "atan2": 2,
+    "sin": 92,
+    "cos": 54
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 7,
+   "divergent": {
+    "atan2": 2,
+    "sin": 93,
+    "cos": 56
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 8,
+   "divergent": {
+    "atan2": 9,
+    "cos": 109,
+    "sin": 203
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 8,
+   "divergent": {
+    "atan2": 9,
+    "cos": 109,
+    "sin": 203
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 9,
+   "divergent": {
+    "atan2": 7,
+    "sin": 101,
+    "cos": 64
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 9,
+   "divergent": {
+    "atan2": 9,
+    "sin": 102,
+    "cos": 64
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 10,
+   "divergent": {
+    "atan2": 2,
+    "sin": 59,
+    "cos": 45
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 10,
+   "divergent": {
+    "atan2": 2,
+    "sin": 60,
+    "cos": 45
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 11,
+   "divergent": {
+    "atan2": 17,
+    "sin": 159,
+    "cos": 105
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 11,
+   "divergent": {
+    "atan2": 18,
+    "sin": 159,
+    "cos": 106
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 12,
+   "divergent": {
+    "atan2": 9,
+    "sin": 99,
+    "cos": 51
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 12,
+   "divergent": {
+    "atan2": 9,
+    "sin": 103,
+    "cos": 51
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 13,
+   "divergent": {
+    "atan2": 3,
+    "cos": 53,
+    "sin": 76
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 13,
+   "divergent": {
+    "atan2": 4,
+    "cos": 53,
+    "sin": 76
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 14,
+   "divergent": {
+    "atan2": 12,
+    "cos": 112,
+    "sin": 165
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 14,
+   "divergent": {
+    "atan2": 12,
+    "cos": 112,
+    "sin": 167
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 15,
+   "divergent": {
+    "atan2": 5,
+    "cos": 57,
+    "sin": 82
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 15,
+   "divergent": {
+    "atan2": 6,
+    "cos": 57,
+    "sin": 82
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 16,
+   "divergent": {
+    "atan2": 4,
+    "cos": 43,
+    "sin": 97
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 16,
+   "divergent": {
+    "atan2": 4,
+    "cos": 44,
+    "sin": 104
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 1,
+   "index": 17,
+   "divergent": {
+    "sin": 172,
+    "cos": 99,
+    "atan2": 8,
+    "atan": 2
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 1,
+   "index": 17,
+   "divergent": {
+    "sin": 172,
+    "cos": 100,
+    "atan2": 9,
+    "atan": 2
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 0,
+   "divergent": {
+    "cos": 50,
+    "sin": 96,
+    "atan2": 7
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 0,
+   "divergent": {
+    "cos": 52,
+    "sin": 101,
+    "atan2": 9
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 1,
+   "divergent": {
+    "atan2": 1,
+    "cos": 47,
+    "sin": 86
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 1,
+   "divergent": {
+    "atan2": 1,
+    "cos": 47,
+    "sin": 86
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 2,
+   "divergent": {
+    "atan2": 11,
+    "cos": 107,
+    "sin": 184
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 2,
+   "divergent": {
+    "atan2": 11,
+    "cos": 108,
+    "sin": 184
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 3,
+   "divergent": {
+    "sin": 77,
+    "atan2": 7,
+    "cos": 56
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 3,
+   "divergent": {
+    "sin": 80,
+    "atan2": 9,
+    "cos": 56
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 4,
+   "divergent": {
+    "atan2": 4,
+    "sin": 66,
+    "cos": 61
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 4,
+   "divergent": {
+    "atan2": 4,
+    "sin": 66,
+    "cos": 61
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 5,
+   "divergent": {
+    "cos": 119,
+    "atan2": 4,
+    "sin": 173
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 5,
+   "divergent": {
+    "cos": 123,
+    "atan2": 5,
+    "sin": 173
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 6,
+   "divergent": {
+    "sin": 75,
+    "atan2": 9,
+    "cos": 75
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 6,
+   "divergent": {
+    "sin": 79,
+    "atan2": 9,
+    "cos": 75
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 7,
+   "divergent": {
+    "cos": 43,
+    "sin": 81
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 7,
+   "divergent": {
+    "cos": 44,
+    "sin": 81
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 8,
+   "divergent": {
+    "atan2": 9,
+    "sin": 176,
+    "cos": 113
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 8,
+   "divergent": {
+    "atan2": 11,
+    "sin": 177,
+    "cos": 113
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 9,
+   "divergent": {
+    "atan2": 9,
+    "sin": 97,
+    "cos": 61
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 9,
+   "divergent": {
+    "atan2": 9,
+    "sin": 98,
+    "cos": 62
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 10,
+   "divergent": {
+    "cos": 40,
+    "sin": 92,
+    "atan2": 1
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 10,
+   "divergent": {
+    "cos": 40,
+    "sin": 92,
+    "atan2": 1
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 11,
+   "divergent": {
+    "cos": 119,
+    "sin": 162,
+    "atan2": 5
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 11,
+   "divergent": {
+    "cos": 119,
+    "sin": 163,
+    "atan2": 5
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 12,
+   "divergent": {
+    "atan2": 10,
+    "sin": 101,
+    "cos": 52
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 12,
+   "divergent": {
+    "atan2": 11,
+    "sin": 102,
+    "cos": 53
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 13,
+   "divergent": {
+    "atan2": 3,
+    "cos": 35,
+    "sin": 101
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 13,
+   "divergent": {
+    "atan2": 4,
+    "cos": 35,
+    "sin": 102
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 14,
+   "divergent": {
+    "atan2": 4,
+    "cos": 124,
+    "sin": 172
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 14,
+   "divergent": {
+    "atan2": 4,
+    "cos": 124,
+    "sin": 173
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 15,
+   "divergent": {
+    "sin": 105,
+    "atan2": 10,
+    "cos": 65
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 15,
+   "divergent": {
+    "sin": 107,
+    "atan2": 10,
+    "cos": 67
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 16,
+   "divergent": {
+    "atan2": 2,
+    "cos": 48,
+    "sin": 95
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 16,
+   "divergent": {
+    "atan2": 2,
+    "cos": 48,
+    "sin": 97
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 17,
+   "divergent": {
+    "sin": 161,
+    "atan2": 13,
+    "cos": 126
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 17,
+   "divergent": {
+    "sin": 164,
+    "atan2": 13,
+    "cos": 126
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 0,
+   "divergent": {
+    "sin": 93,
+    "atan2": 7,
+    "cos": 58
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 0,
+   "divergent": {
+    "sin": 94,
+    "atan2": 7,
+    "cos": 58
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 1,
+   "divergent": {
+    "atan2": 2,
+    "sin": 77,
+    "cos": 61
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 1,
+   "divergent": {
+    "atan2": 2,
+    "sin": 79,
+    "cos": 66
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 2,
+   "divergent": {
+    "atan2": 8,
+    "cos": 116,
+    "sin": 189
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 2,
+   "divergent": {
+    "atan2": 8,
+    "cos": 119,
+    "sin": 190
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 3,
+   "divergent": {
+    "sin": 78,
+    "cos": 40,
+    "atan2": 6
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 3,
+   "divergent": {
+    "sin": 78,
+    "cos": 43,
+    "atan2": 6
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 4,
+   "divergent": {
+    "atan2": 1,
+    "sin": 94,
+    "cos": 35
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 4,
+   "divergent": {
+    "atan2": 1,
+    "sin": 94,
+    "cos": 35
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 5,
+   "divergent": {
+    "sin": 145,
+    "atan2": 6,
+    "cos": 127
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 5,
+   "divergent": {
+    "sin": 148,
+    "atan2": 6,
+    "cos": 127
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 6,
+   "divergent": {
+    "atan2": 8,
+    "sin": 107,
+    "cos": 45
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 6,
+   "divergent": {
+    "atan2": 8,
+    "sin": 112,
+    "cos": 46
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 7,
+   "divergent": {
+    "cos": 47,
+    "sin": 80,
+    "atan2": 1
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 7,
+   "divergent": {
+    "cos": 47,
+    "sin": 82,
+    "atan2": 1
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 8,
+   "divergent": {
+    "sin": 174,
+    "cos": 116,
+    "atan2": 5
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 8,
+   "divergent": {
+    "sin": 176,
+    "cos": 119,
+    "atan2": 5
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 9,
+   "divergent": {
+    "cos": 51,
+    "atan2": 4,
+    "sin": 91
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 9,
+   "divergent": {
+    "cos": 52,
+    "atan2": 5,
+    "sin": 95
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 10,
+   "divergent": {
+    "cos": 39,
+    "atan2": 4,
+    "sin": 95
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 10,
+   "divergent": {
+    "cos": 40,
+    "atan2": 4,
+    "sin": 97
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 11,
+   "divergent": {
+    "atan2": 8,
+    "sin": 173,
+    "cos": 106
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 11,
+   "divergent": {
+    "atan2": 10,
+    "sin": 175,
+    "cos": 107
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 12,
+   "divergent": {
+    "cos": 75,
+    "atan2": 7,
+    "sin": 103
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 12,
+   "divergent": {
+    "cos": 75,
+    "atan2": 8,
+    "sin": 106
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 13,
+   "divergent": {
+    "atan2": 4,
+    "sin": 85,
+    "cos": 33
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 13,
+   "divergent": {
+    "atan2": 5,
+    "sin": 86,
+    "cos": 33
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 14,
+   "divergent": {
+    "atan2": 8,
+    "sin": 165,
+    "cos": 109
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 14,
+   "divergent": {
+    "atan2": 8,
+    "sin": 167,
+    "cos": 109
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 15,
+   "divergent": {
+    "sin": 77,
+    "atan2": 7,
+    "cos": 58
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 15,
+   "divergent": {
+    "sin": 78,
+    "atan2": 7,
+    "cos": 61
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 16,
+   "divergent": {
+    "atan2": 3,
+    "sin": 102,
+    "cos": 34
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 16,
+   "divergent": {
+    "atan2": 3,
+    "sin": 104,
+    "cos": 34
+   }
+  },
+  {
+   "kind": "v1",
+   "seed": 2026,
+   "index": 17,
+   "divergent": {
+    "cos": 117,
+    "atan2": 7,
+    "sin": 180
+   }
+  },
+  {
+   "kind": "v2",
+   "seed": 2026,
+   "index": 17,
+   "divergent": {
+    "cos": 120,
+    "atan2": 11,
+    "sin": 184
+   }
+  }
+ ],
+ "divergentSamples": {
+  "sin": [
+   {
+    "args": [
+     "3fe4c26d5049999a"
+    ],
+    "host": "3fe3556cdfe4ce9d",
+    "fmath": "3fe3556cdfe4ce9c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "402165c2ee94fd18"
+    ],
+    "host": "3fe53eb03de6b837",
+    "fmath": "3fe53eb03de6b836",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4017111897a01230"
+    ],
+    "host": "bfdf9aed407ce912",
+    "fmath": "bfdf9aed407ce913",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400e56edddecc11c"
+    ],
+    "host": "bfe3633fe46ccbff",
+    "fmath": "bfe3633fe46ccc00",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400840b4f278a563"
+    ],
+    "host": "3fbc1a44fb0d2c9f",
+    "fmath": "3fbc1a44fb0d2c9e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401b6cacba2a9e20"
+    ],
+    "host": "3fe158f082e886f4",
+    "fmath": "3fe158f082e886f5",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40222b60e3204f5d"
+    ],
+    "host": "3fd558b154c6d4cc",
+    "fmath": "3fd558b154c6d4cd",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4004f91bea68b6df"
+    ],
+    "host": "3fdfcc4734bfabbe",
+    "fmath": "3fdfcc4734bfabbf",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4005712d049f4808"
+    ],
+    "host": "3fdc7d2e0435a1d1",
+    "fmath": "3fdc7d2e0435a1d2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "402173ac9c51bc10"
+    ],
+    "host": "3fe4963b9cd56c54",
+    "fmath": "3fe4963b9cd56c55",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4004b94d05a947b8"
+    ],
+    "host": "3fe0c1a1114f90ee",
+    "fmath": "3fe0c1a1114f90ef",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400f2bdced2f3f0d"
+    ],
+    "host": "bfe5ecd6ef358f0f",
+    "fmath": "bfe5ecd6ef358f10",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401af0a6bcbdf6dc"
+    ],
+    "host": "3fdbf16604028d31",
+    "fmath": "3fdbf16604028d32",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40169f5a9254147b"
+    ],
+    "host": "bfe2ca2685efe21c",
+    "fmath": "bfe2ca2685efe21b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4016225111273e13"
+    ],
+    "host": "bfe5ce0625208f93",
+    "fmath": "bfe5ce0625208f94",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe8d1d3319f0d9a"
+    ],
+    "host": "3fe667a9b7b072bf",
+    "fmath": "3fe667a9b7b072c0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe8d1d3319f0d9a"
+    ],
+    "host": "bfe667a9b7b072bf",
+    "fmath": "bfe667a9b7b072c0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c0c51fbb5a6c0"
+    ],
+    "host": "3fe54ff2f079020b",
+    "fmath": "3fe54ff2f079020c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfef6fffb36f4829"
+    ],
+    "host": "bfea9e7715ace82c",
+    "fmath": "bfea9e7715ace82d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe0453348cbdca1"
+    ],
+    "host": "3fdf281597011c81",
+    "fmath": "3fdf281597011c80",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfcc41627f33be1e"
+    ],
+    "host": "bfcc06c8486a6317",
+    "fmath": "bfcc06c8486a6316",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe0611ebc910df2"
+    ],
+    "host": "3fdf58d053991bff",
+    "fmath": "3fdf58d053991bfe",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fdb099cee426d42"
+    ],
+    "host": "3fda3d8dfad3230b",
+    "fmath": "3fda3d8dfad3230c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe6a37a20fd11bf"
+    ],
+    "host": "3fe4cbff9da1c9df",
+    "fmath": "3fe4cbff9da1c9de",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ff06a5bc26c4504"
+    ],
+    "host": "3feb5deccd5e13be",
+    "fmath": "3feb5deccd5e13bf",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe49838184541b4"
+    ],
+    "host": "bfe333b9f641a7ff",
+    "fmath": "bfe333b9f641a800",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe7edfcb7090e4f"
+    ],
+    "host": "3fe5c2ca9c254495",
+    "fmath": "3fe5c2ca9c254496",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe0a821b6f3fcc7"
+    ],
+    "host": "bfdfd454f729ba2f",
+    "fmath": "bfdfd454f729ba2e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd0de563edcbce8"
+    ],
+    "host": "3fd0ac82f8e82dab",
+    "fmath": "3fd0ac82f8e82dac",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fde12531aa3f074"
+    ],
+    "host": "3fdcfa2acbc342af",
+    "fmath": "3fdcfa2acbc342b0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe73a9f14ed35af"
+    ],
+    "host": "3fe53df54f325487",
+    "fmath": "3fe53df54f325488",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe27b67620d946a"
+    ],
+    "host": "bfe178b4c9bcdf0d",
+    "fmath": "bfe178b4c9bcdf0c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fec734cf19e9cf5"
+    ],
+    "host": "3fe8d8ff99e86e34",
+    "fmath": "3fe8d8ff99e86e35",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fdc1e33f7a68edb"
+    ],
+    "host": "3fdb38dbb800c73b",
+    "fmath": "3fdb38dbb800c73c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe6584b23c1b3ea"
+    ],
+    "host": "bfe492a25d846c2d",
+    "fmath": "bfe492a25d846c2e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe2be33fa5e9c30"
+    ],
+    "host": "3fe1b0855bed10f1",
+    "fmath": "3fe1b0855bed10f0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe70fb9e1e3b009"
+    ],
+    "host": "3fe51dcd70f60597",
+    "fmath": "3fe51dcd70f60598",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe19c641dd2b793"
+    ],
+    "host": "3fe0bc3ba58fedef",
+    "fmath": "3fe0bc3ba58fedee",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe90f4796420e5a"
+    ],
+    "host": "bfe693611809399f",
+    "fmath": "bfe69361180939a0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd5f199fd4147ae"
+    ],
+    "host": "3fd5842db55b5de3",
+    "fmath": "3fd5842db55b5de2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fce405039828f5c"
+    ],
+    "host": "3fcdf86bb2e4360f",
+    "fmath": "3fcdf86bb2e43610",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400deadecef132f4"
+    ],
+    "host": "bfe204a13b5c58a0",
+    "fmath": "bfe204a13b5c589f",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd74aee75e147ae"
+    ],
+    "host": "3fd6c8291300f9af",
+    "fmath": "3fd6c8291300f9ae",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd63ce7898147ae"
+    ],
+    "host": "3fd5cb0a37409d41",
+    "fmath": "3fd5cb0a37409d42",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfc35f3adac00000"
+    ],
+    "host": "bfc34c51dd51270d",
+    "fmath": "bfc34c51dd51270e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd0a6997a1147ae"
+    ],
+    "host": "3fd076acaa50c71d",
+    "fmath": "3fd076acaa50c71c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd37b1b52a147ae"
+    ],
+    "host": "3fd32e738ad09573",
+    "fmath": "3fd32e738ad09572",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe1a5323b446144"
+    ],
+    "host": "3fe0c3bc4cb33099",
+    "fmath": "3fe0c3bc4cb33098",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400530ef136be02d"
+    ],
+    "host": "3fde45b9ca9f4a9b",
+    "fmath": "3fde45b9ca9f4a9a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400f5307bc095039"
+    ],
+    "host": "bfe65dec29054c54",
+    "fmath": "bfe65dec29054c53",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd5f69cbb2147ae"
+    ],
+    "host": "3fd588e5b8500829",
+    "fmath": "3fd588e5b8500828",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd0b642e3a147ae"
+    ],
+    "host": "3fd085cea76c550f",
+    "fmath": "3fd085cea76c5510",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd14640ccd147ae"
+    ],
+    "host": "3fd110c0ae7190d9",
+    "fmath": "3fd110c0ae7190da",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe539118358ec9f"
+    ],
+    "host": "3fe3b37138f7639f",
+    "fmath": "3fe3b37138f7639e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd47d41f91147ae"
+    ],
+    "host": "3fd4241d8ffc21dd",
+    "fmath": "3fd4241d8ffc21de",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfd2d7f82bd33333"
+    ],
+    "host": "bfd2929292be9129",
+    "fmath": "bfd2929292be912a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcd7217a7628f5c"
+    ],
+    "host": "3fcd2fc8193870b3",
+    "fmath": "3fcd2fc8193870b2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fc4c75859999999"
+    ],
+    "host": "3fc4b0035e93b623",
+    "fmath": "3fc4b0035e93b622",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd56aea701147ae"
+    ],
+    "host": "3fd50525d1b4d349",
+    "fmath": "3fd50525d1b4d34a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd0b4a82b6147ae"
+    ],
+    "host": "3fd08441da3362e3",
+    "fmath": "3fd08441da3362e2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcbdf2ea8a28f5c"
+    ],
+    "host": "3fcba6ee4378fe7d",
+    "fmath": "3fcba6ee4378fe7e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcfc588d3e66666"
+    ],
+    "host": "3fcf7245a82ed477",
+    "fmath": "3fcf7245a82ed478",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40160f0c338a23aa"
+    ],
+    "host": "bfe63ddad3dc9c9a",
+    "fmath": "bfe63ddad3dc9c9b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fce802f61333333"
+    ],
+    "host": "3fce36809543cc71",
+    "fmath": "3fce36809543cc72",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe5ff2475b9a5d1"
+    ],
+    "host": "3fe44e09d4dc52e9",
+    "fmath": "3fe44e09d4dc52e8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fc6593c1dc28f5c"
+    ],
+    "host": "3fc63c35fd807ee9",
+    "fmath": "3fc63c35fd807ee8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd72c02320147ae"
+    ],
+    "host": "3fd6ab40ae44de41",
+    "fmath": "3fd6ab40ae44de40",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfd401321b066666"
+    ],
+    "host": "bfd3ae35de46effb",
+    "fmath": "bfd3ae35de46effa",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd2c61fcaa147ae"
+    ],
+    "host": "3fd2817e10049c13",
+    "fmath": "3fd2817e10049c12",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfd6305147f99999"
+    ],
+    "host": "bfd5bf341b4d5f55",
+    "fmath": "bfd5bf341b4d5f54",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd4ea745ee147ae"
+    ],
+    "host": "3fd48ba613d7ae43",
+    "fmath": "3fd48ba613d7ae44",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcff89636628f5c"
+    ],
+    "host": "3fcfa3bffd21fd07",
+    "fmath": "3fcfa3bffd21fd08",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401727da15bdb644"
+    ],
+    "host": "bfde5c5ada72d305",
+    "fmath": "bfde5c5ada72d306",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40057dacde44699e"
+    ],
+    "host": "3fdc2380a98532f8",
+    "fmath": "3fdc2380a98532f7",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400dd8077cebd0cf"
+    ],
+    "host": "bfe1c6274721d393",
+    "fmath": "bfe1c6274721d392",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401748ce755a933a"
+    ],
+    "host": "bfdc883e3978291c",
+    "fmath": "bfdc883e3978291d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401b21831209cd44"
+    ],
+    "host": "3fdea84fa6d48c9a",
+    "fmath": "3fdea84fa6d48c99",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400d2f9316b4a2d2"
+    ],
+    "host": "bfdf0e2a31e5d0ec",
+    "fmath": "bfdf0e2a31e5d0eb",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4021e9ab06e1727e"
+    ],
+    "host": "3fdce4a26b4a09bf",
+    "fmath": "3fdce4a26b4a09be",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe7fd774705bf89"
+    ],
+    "host": "3fe5ce215b7e138d",
+    "fmath": "3fe5ce215b7e138c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400d077bd2b9cf61"
+    ],
+    "host": "bfddf438c764d32b",
+    "fmath": "bfddf438c764d32c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c8416978678f1"
+    ],
+    "host": "3fe7f3c4134d5c9f",
+    "fmath": "3fe7f3c4134d5c9e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400308547e3065d7"
+    ],
+    "host": "3fe61a9efafeddf0",
+    "fmath": "3fe61a9efafeddf1",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd94a9679026624"
+    ],
+    "host": "3fd8a361927055e7",
+    "fmath": "3fd8a361927055e8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe7abbcd4c2fbc1"
+    ],
+    "host": "bfe592095cdf9eaf",
+    "fmath": "bfe592095cdf9eae",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfec673afd8e9734"
+    ],
+    "host": "bfe8d162c280b93b",
+    "fmath": "bfe8d162c280b93c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe6666da4cd04b4"
+    ],
+    "host": "3fe49d73f3988477",
+    "fmath": "3fe49d73f3988478",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe921fb54442cb1"
+    ],
+    "host": "bfe6a09e667f3b83",
+    "fmath": "bfe6a09e667f3b84",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe921fb54442cb1"
+    ],
+    "host": "3fe6a09e667f3b83",
+    "fmath": "3fe6a09e667f3b84",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fde414ce4c08c22"
+    ],
+    "host": "3fdd2405812514af",
+    "fmath": "3fdd2405812514ae",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd02f04aa0147ae"
+    ],
+    "host": "3fd0030199acf3d7",
+    "fmath": "3fd0030199acf3d8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400cf1b7a6a6451f"
+    ],
+    "host": "bfdd59e916c03634",
+    "fmath": "bfdd59e916c03633",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fce6b085fe28f5c"
+    ],
+    "host": "3fce21f22c6785ed",
+    "fmath": "3fce21f22c6785ec",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcd8c029bc28f5c"
+    ],
+    "host": "3fcd4903aa2feb93",
+    "fmath": "3fcd4903aa2feb94",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400f3916c376c3eb"
+    ],
+    "host": "bfe61341c380a759",
+    "fmath": "bfe61341c380a75a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400b354efaf236a5"
+    ],
+    "host": "bfd06b175dc1a2a1",
+    "fmath": "bfd06b175dc1a2a2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fc85e753e428f5c"
+    ],
+    "host": "3fc838d7153f921d",
+    "fmath": "3fc838d7153f921c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd73a91e9b147ae"
+    ],
+    "host": "3fd6b8de2379527b",
+    "fmath": "3fd6b8de2379527a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd251cab4c147ae"
+    ],
+    "host": "3fd21202cfe7cca1",
+    "fmath": "3fd21202cfe7cca2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcc5091cd628f5c"
+    ],
+    "host": "3fcc1599104608c3",
+    "fmath": "3fcc1599104608c4",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fce958334028f5c"
+    ],
+    "host": "3fce4b39b6726faf",
+    "fmath": "3fce4b39b6726fae",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe5a00c7d0d9469"
+    ],
+    "host": "3fe404311c8b562b",
+    "fmath": "3fe404311c8b562a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40019f79883e3adf"
+    ],
+    "host": "3fe9d1589dbeda43",
+    "fmath": "3fe9d1589dbeda44",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfd362e56b799999"
+    ],
+    "host": "bfd317592f492abf",
+    "fmath": "bfd317592f492abe",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfcf96733bd99999"
+    ],
+    "host": "bfcf449f5aba44e7",
+    "fmath": "bfcf449f5aba44e8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd742f33d6147ae"
+    ],
+    "host": "3fd6c0b382a1ef19",
+    "fmath": "3fd6c0b382a1ef1a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4004a251eaa8bea7"
+    ],
+    "host": "3fe10fabc46e0f7f",
+    "fmath": "3fe10fabc46e0f7e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfd5893e47999999"
+    ],
+    "host": "bfd521c89940d455",
+    "fmath": "bfd521c89940d454",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe7cb69960ec116"
+    ],
+    "host": "3fe5a964678f96ed",
+    "fmath": "3fe5a964678f96ee",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcf8b431ba28f5c"
+    ],
+    "host": "3fcf39c5e13cfbaf",
+    "fmath": "3fcf39c5e13cfbae",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfca33d79a666666"
+    ],
+    "host": "bfca051771a72171",
+    "fmath": "bfca051771a72172",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcfc620afcccccc"
+    ],
+    "host": "3fcf72d8dc8a2a21",
+    "fmath": "3fcf72d8dc8a2a20",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd6da3a5e6147ae"
+    ],
+    "host": "3fd65eb3b935416b",
+    "fmath": "3fd65eb3b935416c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd1db61ba7147ae"
+    ],
+    "host": "3fd1a04c8b47bd5f",
+    "fmath": "3fd1a04c8b47bd5e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcae7f7acd99999"
+    ],
+    "host": "3fcab55abb3830af",
+    "fmath": "3fcab55abb3830ae",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fc3500eb8e28f5c"
+    ],
+    "host": "3fc33d51feabd9b5",
+    "fmath": "3fc33d51feabd9b4",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcb40d2c5e28f5c"
+    ],
+    "host": "3fcb0c3aaa57878f",
+    "fmath": "3fcb0c3aaa57878e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd47a90f17147ae"
+    ],
+    "host": "3fd4218f864d66bf",
+    "fmath": "3fd4218f864d66c0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe8a3b6a4487c13"
+    ],
+    "host": "3fe646a626128e91",
+    "fmath": "3fe646a626128e92",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd790bd945147ae"
+    ],
+    "host": "3fd7095801ae8b6b",
+    "fmath": "3fd7095801ae8b6a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fc1dc189d028f5c"
+    ],
+    "host": "3fc1cd467bdd35db",
+    "fmath": "3fc1cd467bdd35dc",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4004898a2cdaf0e0"
+    ],
+    "host": "3fe16334ef8b2436",
+    "fmath": "3fe16334ef8b2437",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fdfef1edee00000"
+    ],
+    "host": "3fdea0173d6fb133",
+    "fmath": "3fdea0173d6fb134",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400b7b47ec6e6359"
+    ],
+    "host": "bfd285944bec5741",
+    "fmath": "bfd285944bec5740",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400dce42166aed4d"
+    ],
+    "host": "bfe1a599d194f1af",
+    "fmath": "bfe1a599d194f1ae",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4021acbd507fedac"
+    ],
+    "host": "3fe1bbf81ce579c8",
+    "fmath": "3fe1bbf81ce579c9",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4005e9a60f8d2405"
+    ],
+    "host": "3fd9120877bab721",
+    "fmath": "3fd9120877bab722",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40241121f3bdecf4"
+    ],
+    "host": "bfe24c1755807aac",
+    "fmath": "bfe24c1755807aab",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40166e8e1ec06874"
+    ],
+    "host": "bfe40092ee13138c",
+    "fmath": "bfe40092ee13138d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401b54396c74b35a"
+    ],
+    "host": "3fe0b3526bc4542e",
+    "fmath": "3fe0b3526bc4542d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe160e53f21b7b4"
+    ],
+    "host": "3fe08968dbec8e1d",
+    "fmath": "3fe08968dbec8e1e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4017421acb1942f2"
+    ],
+    "host": "bfdce811c089d76c",
+    "fmath": "bfdce811c089d76d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe3ea2634d7789d"
+    ],
+    "host": "3fe2a761323dfa71",
+    "fmath": "3fe2a761323dfa70",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c1a5531f0e2ae"
+    ],
+    "host": "3fe5a30e5b205105",
+    "fmath": "3fe5a30e5b205104",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4024459b6c3df753"
+    ],
+    "host": "bfe4e31bcdd55785",
+    "fmath": "bfe4e31bcdd55786",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40162d78b411d43a"
+    ],
+    "host": "bfe58c61194b5c27",
+    "fmath": "bfe58c61194b5c28",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4021ab7b4eade5b7"
+    ],
+    "host": "3fe1ccb526cbdc9c",
+    "fmath": "3fe1ccb526cbdc9b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4016409b7785bb09"
+    ],
+    "host": "bfe51a3f521b5212",
+    "fmath": "bfe51a3f521b5211",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40035cd75414e313"
+    ],
+    "host": "3fe5216f7aaae4e1",
+    "fmath": "3fe5216f7aaae4e0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40210e3c87a20478"
+    ],
+    "host": "3fe901914466c928",
+    "fmath": "3fe901914466c929",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401bdf2fdc00f7f2"
+    ],
+    "host": "3fe43d67090b56d3",
+    "fmath": "3fe43d67090b56d2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "402147e1a7754fb9"
+    ],
+    "host": "3fe69abe70698373",
+    "fmath": "3fe69abe70698372",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401a11ad740f15ca"
+    ],
+    "host": "3fcdb0696511f140",
+    "fmath": "3fcdb0696511f13f",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401601dd1c6f4972"
+    ],
+    "host": "bfe68935f12f190d",
+    "fmath": "bfe68935f12f190c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4003329ad9a05975"
+    ],
+    "host": "3fe59f2644839ba8",
+    "fmath": "3fe59f2644839ba9",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c154ff9c8233c"
+    ],
+    "host": "3fe58566287d3c1c",
+    "fmath": "3fe58566287d3c1b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4021ce72b92f0e98"
+    ],
+    "host": "3fdfe30a332c341c",
+    "fmath": "3fdfe30a332c341b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4016ae37a71bf922"
+    ],
+    "host": "bfe2696536c5bdd8",
+    "fmath": "bfe2696536c5bdd7",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c389248f35ee8"
+    ],
+    "host": "3fe652d81dec8f37",
+    "fmath": "3fe652d81dec8f38",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40214f7c57ace2a7"
+    ],
+    "host": "3fe643fd49745290",
+    "fmath": "3fe643fd49745291",
+    "kind": "legacy"
+   }
+  ],
+  "cos": [
+   {
+    "args": [
+     "3ff5d1428030f0e0"
+    ],
+    "host": "3fca554b2b6644f2",
+    "fmath": "3fca554b2b6644f3",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fec05d44a966666"
+    ],
+    "host": "3fe47e921ab4be31",
+    "fmath": "3fe47e921ab4be32",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4002946447221582"
+    ],
+    "host": "bfe5d9ee3060bc62",
+    "fmath": "bfe5d9ee3060bc61",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015d5a191dec484"
+    ],
+    "host": "3fe5b960fbb97b6c",
+    "fmath": "3fe5b960fbb97b6d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4014ac87c8420b81"
+    ],
+    "host": "3fdc304d3e7df9ee",
+    "fmath": "3fdc304d3e7df9ef",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40258e39caa8ada5"
+    ],
+    "host": "bfcba83f38f71c87",
+    "fmath": "bfcba83f38f71c86",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4010021fd421b562"
+    ],
+    "host": "bfe4ddc6832e3227",
+    "fmath": "bfe4ddc6832e3228",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401d545d7727372e"
+    ],
+    "host": "3fdfe3891ec0bf76",
+    "fmath": "3fdfe3891ec0bf75",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4024a18b06db0736"
+    ],
+    "host": "bfe41f75283a899d",
+    "fmath": "bfe41f75283a899e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401d53b2d6ecaf0a"
+    ],
+    "host": "3fdfecc7abc66940",
+    "fmath": "3fdfecc7abc6693f",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015e6644a6ff817"
+    ],
+    "host": "3fe61b14d84b100a",
+    "fmath": "3fe61b14d84b100b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401b955ab95eb636"
+    ],
+    "host": "3fea2e0258581b1f",
+    "fmath": "3fea2e0258581b1e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c549dde0269e2"
+    ],
+    "host": "3fe64ea9d6e2f7b3",
+    "fmath": "3fe64ea9d6e2f7b2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4010408f12d818cf"
+    ],
+    "host": "bfe3596712136c33",
+    "fmath": "bfe3596712136c32",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400144da5994342e"
+    ],
+    "host": "bfe1bee1ad7124e9",
+    "fmath": "bfe1bee1ad7124e8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fece32252dde0a1"
+    ],
+    "host": "3fe3d2b70f0c4c5a",
+    "fmath": "3fe3d2b70f0c4c59",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c58d679b30e14"
+    ],
+    "host": "3fe63667505dd1fb",
+    "fmath": "3fe63667505dd1fc",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40211e22cdf95d1b"
+    ],
+    "host": "bfe4bbee04be6e2a",
+    "fmath": "bfe4bbee04be6e2b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40022f2f633e3dca"
+    ],
+    "host": "bfe4ab7933fb64a1",
+    "fmath": "bfe4ab7933fb64a0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c88b7778da47a"
+    ],
+    "host": "3fe51c9198565f18",
+    "fmath": "3fe51c9198565f19",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400fcfa56d65632e"
+    ],
+    "host": "bfe57b850852562f",
+    "fmath": "bfe57b850852562e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ff40a49efbe5ee9"
+    ],
+    "host": "3fd4072b6c4a3036",
+    "fmath": "3fd4072b6c4a3037",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fee666666666666"
+    ],
+    "host": "3fe29d25dabc46a2",
+    "fmath": "3fe29d25dabc46a1",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bff11ef47878ae2a"
+    ],
+    "host": "3fdeb987ea1b7633",
+    "fmath": "3fdeb987ea1b7632",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe9b1640ec5a59f"
+    ],
+    "host": "3fe63a54afc42cc9",
+    "fmath": "3fe63a54afc42cc8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfea4483482cfa8e"
+    ],
+    "host": "3fe5cf953163308c",
+    "fmath": "3fe5cf953163308b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bff04721ec87dcf8"
+    ],
+    "host": "3fe0d1c87eea0fde",
+    "fmath": "3fe0d1c87eea0fdf",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfea4781044a99ff"
+    ],
+    "host": "3fe5cd64c872baa4",
+    "fmath": "3fe5cd64c872baa3",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "c0020c3208ec4750"
+    ],
+    "host": "bfe43fdcd76f606d",
+    "fmath": "bfe43fdcd76f606c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fecdd7cc4db9e12"
+    ],
+    "host": "3fe3d725899e10dc",
+    "fmath": "3fe3d725899e10dd",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe9597e8e6baaa7"
+    ],
+    "host": "3fe6793b9317c45b",
+    "fmath": "3fe6793b9317c45c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bff15a579e4af3c6"
+    ],
+    "host": "3fdde853a2219ebe",
+    "fmath": "3fdde853a2219ebd",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ffea956a92005d2"
+    ],
+    "host": "bfd5ad6ef26d9939",
+    "fmath": "bfd5ad6ef26d993a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fef2652b81d64a6"
+    ],
+    "host": "3fe1ffbdc1132cf2",
+    "fmath": "3fe1ffbdc1132cf3",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40025ed664f938eb"
+    ],
+    "host": "bfe53b89d1cea118",
+    "fmath": "bfe53b89d1cea117",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40156f24806a0c78"
+    ],
+    "host": "3fe34488b486ef25",
+    "fmath": "3fe34488b486ef24",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c6b6ccc46649a"
+    ],
+    "host": "3fe5ca6f338cb5ff",
+    "fmath": "3fe5ca6f338cb600",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4024c27fd5206590"
+    ],
+    "host": "bfe27b140b1d5cfd",
+    "fmath": "bfe27b140b1d5cfe",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4020aeefc1d10a2e"
+    ],
+    "host": "bfddfd56e2590647",
+    "fmath": "bfddfd56e2590646",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4010d50d0cca920e"
+    ],
+    "host": "bfdeed1cb7593a75",
+    "fmath": "bfdeed1cb7593a76",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4010250573ba28c3"
+    ],
+    "host": "bfe4070e47bd56b1",
+    "fmath": "bfe4070e47bd56b2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4014fc298c8ea14f"
+    ],
+    "host": "3fe0489aab268b20",
+    "fmath": "3fe0489aab268b1f",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4004a8274eba0ffe"
+    ],
+    "host": "bfeb1ef29f1c51c7",
+    "fmath": "bfeb1ef29f1c51c8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40004fb06df75b31"
+    ],
+    "host": "bfdce0882f907f60",
+    "fmath": "bfdce0882f907f61",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4014fe2ff1c0b7d0"
+    ],
+    "host": "3fe0568aa78cc2e0",
+    "fmath": "3fe0568aa78cc2e1",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4020c0565c4fa0b6"
+    ],
+    "host": "bfdfe4b86a55bfb7",
+    "fmath": "bfdfe4b86a55bfb6",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015cd251033b954"
+    ],
+    "host": "3fe58756ef998c5d",
+    "fmath": "3fe58756ef998c5c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401d6cefa75c7e94"
+    ],
+    "host": "3fde8c5bc2fe415b",
+    "fmath": "3fde8c5bc2fe415a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401584b5587c1ac1"
+    ],
+    "host": "3fe3cd2d30f80179",
+    "fmath": "3fe3cd2d30f8017a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c4dda152aa288"
+    ],
+    "host": "3fe67556fcd8f790",
+    "fmath": "3fe67556fcd8f791",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401d5ea43ce47fa5"
+    ],
+    "host": "3fdf549151f65679",
+    "fmath": "3fdf549151f6567a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400cf8659fb05a3d"
+    ],
+    "host": "bfec636a870b2ddb",
+    "fmath": "bfec636a870b2ddc",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400fd9e5c13c4517"
+    ],
+    "host": "bfe55d0f3cfe52d1",
+    "fmath": "bfe55d0f3cfe52d2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015ebe2c8523fc1"
+    ],
+    "host": "3fe63ac78e39cdc8",
+    "fmath": "3fe63ac78e39cdc9",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401da26be7bf4405"
+    ],
+    "host": "3fdb920c0acc0e9c",
+    "fmath": "3fdb920c0acc0e9d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe54cc49a90aed9"
+    ],
+    "host": "3fe92b480eacf6d7",
+    "fmath": "3fe92b480eacf6d8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "402145c785d18f44"
+    ],
+    "host": "bfe68eae41d31bb9",
+    "fmath": "bfe68eae41d31bb8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4001f7d74923e1c6"
+    ],
+    "host": "bfe40090710f6101",
+    "fmath": "bfe40090710f6102",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4000ba76f46bb3d2"
+    ],
+    "host": "bfdfd073707e6c81",
+    "fmath": "bfdfd073707e6c82",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4000d8cff268509a"
+    ],
+    "host": "bfe0511aba54d80a",
+    "fmath": "bfe0511aba54d809",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bff01c0d513bc7f9"
+    ],
+    "host": "3fe11ad7d7a4062a",
+    "fmath": "3fe11ad7d7a4062b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ff1d62d79902141"
+    ],
+    "host": "3fdc2ef70ca29b0c",
+    "fmath": "3fdc2ef70ca29b0d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4014fffe5d03155f"
+    ],
+    "host": "3fe062f5d61e2609",
+    "fmath": "3fe062f5d61e260a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401054008cd97ebe"
+    ],
+    "host": "bfe2dca0aac340af",
+    "fmath": "bfe2dca0aac340b0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4000f2b378ca9897"
+    ],
+    "host": "bfe0a9d98edc609c",
+    "fmath": "bfe0a9d98edc609d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401044d2506dfd26"
+    ],
+    "host": "bfe33e32e23fa085",
+    "fmath": "bfe33e32e23fa086",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fea6b92898af474"
+    ],
+    "host": "3fe5b2f02c005b34",
+    "fmath": "3fe5b2f02c005b33",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400f50ff42796950"
+    ],
+    "host": "bfe6e83cb56c5482",
+    "fmath": "bfe6e83cb56c5481",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fead70f143ccccd"
+    ],
+    "host": "3fe56376580fa994",
+    "fmath": "3fe56376580fa993",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4020620f50136368"
+    ],
+    "host": "bfd531dc6738e7b1",
+    "fmath": "bfd531dc6738e7b2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401ca77f6e02dd90"
+    ],
+    "host": "3fe4611997c8440a",
+    "fmath": "3fe4611997c84409",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40212d9c65658885"
+    ],
+    "host": "bfe576122e3d589f",
+    "fmath": "bfe576122e3d58a0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401152e1f708fee0"
+    ],
+    "host": "bfd7d3330f424e09",
+    "fmath": "bfd7d3330f424e08",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4020ddeec08ab9c1"
+    ],
+    "host": "bfe185da1530bd2e",
+    "fmath": "bfe185da1530bd2f",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40100827b85a020e"
+    ],
+    "host": "bfe4b91ac12f9d5b",
+    "fmath": "bfe4b91ac12f9d5a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4012018006a294e1"
+    ],
+    "host": "bfcacc6cbc4ab4c9",
+    "fmath": "bfcacc6cbc4ab4c8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015ea990d75133a"
+    ],
+    "host": "3fe6335cf192e887",
+    "fmath": "3fe6335cf192e886",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4002960e0fd4f419"
+    ],
+    "host": "bfe5dec9f3e32ae0",
+    "fmath": "bfe5dec9f3e32adf",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "402477d159c0bc74"
+    ],
+    "host": "bfe614df468bdfb5",
+    "fmath": "bfe614df468bdfb4",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40247b14daa882ec"
+    ],
+    "host": "bfe5eef6a04b1b50",
+    "fmath": "bfe5eef6a04b1b4f",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4014ad77aef35bd0"
+    ],
+    "host": "3fdc3dc2848f8a96",
+    "fmath": "3fdc3dc2848f8a95",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40104f271fc415bd"
+    ],
+    "host": "bfe2fbe98bd95489",
+    "fmath": "bfe2fbe98bd9548a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ff78fe0618b7fd0"
+    ],
+    "host": "3fb9175af1510db3",
+    "fmath": "3fb9175af1510db4",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe9ce2b204a586b"
+    ],
+    "host": "3fe62598039421a6",
+    "fmath": "3fe62598039421a7",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015a4f1d38534c1"
+    ],
+    "host": "3fe49537a5451b0c",
+    "fmath": "3fe49537a5451b0b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe93831d9d8a91e"
+    ],
+    "host": "3fe690e3f9c47ad0",
+    "fmath": "3fe690e3f9c47acf",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfeb0abac9cb8f31"
+    ],
+    "host": "3fe53ceba08dd94b",
+    "fmath": "3fe53ceba08dd94a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ff08e9a4d210897"
+    ],
+    "host": "3fe05787d8973c80",
+    "fmath": "3fe05787d8973c81",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ff4582fcdd8f581"
+    ],
+    "host": "3fd2de519600c843",
+    "fmath": "3fd2de519600c844",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3febecc078036d8b"
+    ],
+    "host": "3fe491ce3935a406",
+    "fmath": "3fe491ce3935a405",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfedc528a81f7e61"
+    ],
+    "host": "3fe31f5f5a797c31",
+    "fmath": "3fe31f5f5a797c30",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ff7287f370305ec"
+    ],
+    "host": "3fbf833e56f2b89a",
+    "fmath": "3fbf833e56f2b89b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe9947268aabc55"
+    ],
+    "host": "3fe64f1de8dadbd3",
+    "fmath": "3fe64f1de8dadbd2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015dcae294a99f3"
+    ],
+    "host": "3fe5e2a755bc8541",
+    "fmath": "3fe5e2a755bc8542",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4001acb3f8098b48"
+    ],
+    "host": "bfe31291c2556bed",
+    "fmath": "bfe31291c2556bee",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400164f0df1e140d"
+    ],
+    "host": "bfe22920a9ef435d",
+    "fmath": "bfe22920a9ef435e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015660813661bab"
+    ],
+    "host": "3fe30a2516946de7",
+    "fmath": "3fe30a2516946de6",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4002e4a58b33f0de"
+    ],
+    "host": "bfe6c0194a8f8626",
+    "fmath": "bfe6c0194a8f8627",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40102de6d2519d45"
+    ],
+    "host": "bfe3cf747869a0a7",
+    "fmath": "bfe3cf747869a0a6",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40029761a3400827"
+    ],
+    "host": "bfe5e2a9370d2cbd",
+    "fmath": "bfe5e2a9370d2cbe",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3feeb6dfa3065c4d"
+    ],
+    "host": "3fe25b75e662c425",
+    "fmath": "3fe25b75e662c426",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4002af3c77a56928"
+    ],
+    "host": "bfe627e4abcd7cd8",
+    "fmath": "bfe627e4abcd7cd7",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4013d7f60786324c"
+    ],
+    "host": "3fcf7ba2033ba543",
+    "fmath": "3fcf7ba2033ba542",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4004a1b9df58f0e0"
+    ],
+    "host": "bfeb11449bceaf54",
+    "fmath": "bfeb11449bceaf55",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40100f248357b4a8"
+    ],
+    "host": "bfe48e62f785f29b",
+    "fmath": "bfe48e62f785f29a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4001fadc663f3333"
+    ],
+    "host": "bfe409fce44b2d42",
+    "fmath": "bfe409fce44b2d41",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40103ecf7ccbd988"
+    ],
+    "host": "bfe364892c09b8f8",
+    "fmath": "bfe364892c09b8f9",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40013965ce4d290b"
+    ],
+    "host": "bfe198ae45d13996",
+    "fmath": "bfe198ae45d13995",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "402494ce17a379d0"
+    ],
+    "host": "bfe4bc50b13e5639",
+    "fmath": "bfe4bc50b13e563a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c6b98b47e3faa"
+    ],
+    "host": "3fe5c96df2fa1820",
+    "fmath": "3fe5c96df2fa181f",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4001f7e2e38419be"
+    ],
+    "host": "bfe400b4ab517a02",
+    "fmath": "bfe400b4ab517a01",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401ce39d097e7c62"
+    ],
+    "host": "3fe2e589f87e3996",
+    "fmath": "3fe2e589f87e3995",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe994f972c0a399"
+    ],
+    "host": "3fe64ebd182c4999",
+    "fmath": "3fe64ebd182c4998",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400ffed7f649c280"
+    ],
+    "host": "bfe4ee25fa2a6142",
+    "fmath": "bfe4ee25fa2a6143",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4014ac13872a5680"
+    ],
+    "host": "3fdc29c7224c8dd4",
+    "fmath": "3fdc29c7224c8dd5",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4003c542be699db3"
+    ],
+    "host": "bfe913ac5aef206c",
+    "fmath": "bfe913ac5aef206d",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401cc4fc995602ce"
+    ],
+    "host": "3fe3a913e07b33ba",
+    "fmath": "3fe3a913e07b33bb",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015ebc9aa1edbc2"
+    ],
+    "host": "3fe63a37015b63c5",
+    "fmath": "3fe63a37015b63c6",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfebd9da7fbcd8b8"
+    ],
+    "host": "3fe4a044b04d0f77",
+    "fmath": "3fe4a044b04d0f78",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015be4bcfa0ee6e"
+    ],
+    "host": "3fe52ee0841519fd",
+    "fmath": "3fe52ee0841519fc",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "c0009b1bd070cc10"
+    ],
+    "host": "bfdef5d867012680",
+    "fmath": "bfdef5d867012681",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4001583e208097db"
+    ],
+    "host": "bfe1ff37bb6066ce",
+    "fmath": "bfe1ff37bb6066cf",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "c002ae0d269b4dee"
+    ],
+    "host": "bfe62479012c0d2a",
+    "fmath": "bfe62479012c0d2b",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ff2ad0ba34e2af4"
+    ],
+    "host": "3fd921bebdc1a3b5",
+    "fmath": "3fd921bebdc1a3b6",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bff1cdb18bc13c85"
+    ],
+    "host": "3fdc4d6b11ea76dd",
+    "fmath": "3fdc4d6b11ea76dc",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "c001747e9ab8df47"
+    ],
+    "host": "bfe25c37cd442593",
+    "fmath": "bfe25c37cd442594",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfeddb16dcff53c5"
+    ],
+    "host": "3fe30dc557f9c0f2",
+    "fmath": "3fe30dc557f9c0f1",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "c001fadc663f3333"
+    ],
+    "host": "bfe409fce44b2d42",
+    "fmath": "bfe409fce44b2d41",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40107afe2fc34b1b"
+    ],
+    "host": "bfe1dd3580243dd8",
+    "fmath": "bfe1dd3580243dd7",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40113c369e6fe314"
+    ],
+    "host": "bfd922513a605f49",
+    "fmath": "bfd922513a605f48",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fed20f4deac514a"
+    ],
+    "host": "3fe3a20a0c3fbdcf",
+    "fmath": "3fe3a20a0c3fbdd0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fea1b5d1997464b"
+    ],
+    "host": "3fe5ed9f5a5388e5",
+    "fmath": "3fe5ed9f5a5388e6",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ffe6314de45f1c3"
+    ],
+    "host": "bfd4a436a1843e7e",
+    "fmath": "bfd4a436a1843e7f",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c700baa1043b5"
+    ],
+    "host": "3fe5af4ecc4e102e",
+    "fmath": "3fe5af4ecc4e102f",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015c19df5f5e31f"
+    ],
+    "host": "3fe542c2e59a1818",
+    "fmath": "3fe542c2e59a1819",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c68a3a68ffbd8"
+    ],
+    "host": "3fe5dabbecd09af7",
+    "fmath": "3fe5dabbecd09af6",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401fe56230471ad3"
+    ],
+    "host": "bfbea722450cba19",
+    "fmath": "bfbea722450cba1a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400215cf55b91aca"
+    ],
+    "host": "bfe45d95835f95d8",
+    "fmath": "bfe45d95835f95d9",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3ff0e47871a1fbf4"
+    ],
+    "host": "3fdf85f066f0284f",
+    "fmath": "3fdf85f066f02850",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400fe8891f03f59c"
+    ],
+    "host": "bfe53153be49058a",
+    "fmath": "bfe53153be490589",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401ccfd2ad6e7932"
+    ],
+    "host": "3fe3646602aafdc3",
+    "fmath": "3fe3646602aafdc2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400198a1b3ce1136"
+    ],
+    "host": "bfe2d1de75b109f1",
+    "fmath": "bfe2d1de75b109f2",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015f2b46e78117f"
+    ],
+    "host": "3fe661e4abeaaa3f",
+    "fmath": "3fe661e4abeaaa3e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "400fb644728d7f03"
+    ],
+    "host": "bfe5c655a842dbb5",
+    "fmath": "bfe5c655a842dbb6",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fea0f7c3ffdb7ff"
+    ],
+    "host": "3fe5f6447f5addc6",
+    "fmath": "3fe5f6447f5addc7",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401c6ecf948b77f9"
+    ],
+    "host": "3fe5b6914fc22f29",
+    "fmath": "3fe5b6914fc22f2a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "401e2b50acb46a74"
+    ],
+    "host": "3fd3a0502da8cb7a",
+    "fmath": "3fd3a0502da8cb79",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "40210c3de748bb69"
+    ],
+    "host": "bfe3dea7e5dcd292",
+    "fmath": "bfe3dea7e5dcd291",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fec63a8ded771ae"
+    ],
+    "host": "3fe4362a9d3dc09d",
+    "fmath": "3fe4362a9d3dc09c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4015b99a50b2cdad"
+    ],
+    "host": "3fe512ad84c1cf31",
+    "fmath": "3fe512ad84c1cf30",
+    "kind": "legacy"
+   }
+  ],
+  "atan": [
+   {
+    "args": [
+     "3fc14b434945471c"
+    ],
+    "host": "3fc1309d69bf751f",
+    "fmath": "3fc1309d69bf751e",
+    "kind": "v1"
+   }
+  ],
+  "atan2": [
+   {
+    "args": [
+     "3fe4524cf5f049c0",
+     "3fc9c5c4ddc748f9"
+    ],
+    "host": "3ff4385ef17cb9af",
+    "fmath": "3ff4385ef17cb9ae",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fceb6b6633fe300",
+     "3fe3e33cd8a3b97a"
+    ],
+    "host": "3fd794d1837b112f",
+    "fmath": "3fd794d1837b1130",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfc3e0e864314000",
+     "3ff0fa117c1dade0"
+    ],
+    "host": "bfc29a4841c98295",
+    "fmath": "bfc29a4841c98296",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfda9a326f06cbc0",
+     "3fe0a8f61e576388"
+    ],
+    "host": "bfe58f6cb3142db6",
+    "fmath": "bfe58f6cb3142db7",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fc0a2b9f4317600",
+     "3fe4e8aac480c4d2"
+    ],
+    "host": "3fc921cdfb020b29",
+    "fmath": "3fc921cdfb020b28",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfeceed571d56840",
+     "40018e5af45d39ce"
+    ],
+    "host": "bfd9031b9d91d5a3",
+    "fmath": "bfd9031b9d91d5a4",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fb25db910fbf800",
+     "3fcae147ae147ae0"
+    ],
+    "host": "3fd5119d80763773",
+    "fmath": "3fd5119d80763772",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fc460ce7dd2d400",
+     "3fe61404ee30bcbb"
+    ],
+    "host": "3fcd0722f1319079",
+    "fmath": "3fcd0722f131907a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fca57870db99200",
+     "3fe109bee79de9e1"
+    ],
+    "host": "3fd79ae0880d8a3d",
+    "fmath": "3fd79ae0880d8a3e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fb639d0e0ec7000",
+     "3fcae147ae147b00"
+    ],
+    "host": "3fd916fb2274694d",
+    "fmath": "3fd916fb2274694c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd7ac2f98a1df00",
+     "3ff59c483cead8ac"
+    ],
+    "host": "3fd11b79b2fdebe7",
+    "fmath": "3fd11b79b2fdebe8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bff3fd4f3fd288c0",
+     "400853b2db15ec0b"
+    ],
+    "host": "bfd8f2e605dc851d",
+    "fmath": "bfd8f2e605dc851e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfedcc948e46a540",
+     "40023958b6c7d181"
+    ],
+    "host": "bfd8d5fbfb1d52b7",
+    "fmath": "bfd8d5fbfb1d52b8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe4e159eb47ea40",
+     "3ffb661bac797646"
+    ],
+    "host": "3fd74cb9afeb1437",
+    "fmath": "3fd74cb9afeb1438",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfd7bc332dee6858",
+     "40007c1d6de3bf5a"
+    ],
+    "host": "bfc6cb0794dcec4f",
+    "fmath": "bfc6cb0794dcec4e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfd7bf7bec3c2a00",
+     "3ff2fa83225f2eb8"
+    ],
+    "host": "bfd367566b176d05",
+    "fmath": "bfd367566b176d06",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe9008ebec40bc0",
+     "3ffefa5c420a0be5"
+    ],
+    "host": "bfd88c437474b37f",
+    "fmath": "bfd88c437474b380",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd1934200499580",
+     "3fedc9e09b95721d"
+    ],
+    "host": "3fd25bf59b450e81",
+    "fmath": "3fd25bf59b450e80",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe1765b6daef7d0",
+     "bfc7ae147ae147ae"
+    ],
+    "host": "3ffe5cc85b0f5000",
+    "fmath": "3ffe5cc85b0f5001",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd1277d9fcb5300",
+     "3fe61b2e3fedcb1b"
+    ],
+    "host": "3fd7affc909a2397",
+    "fmath": "3fd7affc909a2396",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfcdc21385f48400",
+     "3fe1440f29f9d880"
+    ],
+    "host": "bfda09afe4269201",
+    "fmath": "bfda09afe4269202",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fcb57b1e8432300",
+     "3fe1e34f85dc81ab"
+    ],
+    "host": "3fd75c5f695d1667",
+    "fmath": "3fd75c5f695d1666",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfd1940220270d10",
+     "3ff949ea1da8569d"
+    ],
+    "host": "bfc605f22dcbac4b",
+    "fmath": "bfc605f22dcbac4a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfd07429054dc400",
+     "3fec3de5bce92ccd"
+    ],
+    "host": "bfd2242b2c035d85",
+    "fmath": "bfd2242b2c035d84",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fef25847c517fc0",
+     "4008fba8dc8b3317"
+    ],
+    "host": "3fd3562d4df5942b",
+    "fmath": "3fd3562d4df5942a",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfedfeb73009c370",
+     "40044ebad3a04744"
+    ],
+    "host": "bfd6a37b862f6de1",
+    "fmath": "bfd6a37b862f6de0",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd9970bce42f280",
+     "3ff4711582e19a44"
+    ],
+    "host": "3fd369601068753d",
+    "fmath": "3fd369601068753e",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3feb89bae24dd340",
+     "4000ac69956b705b"
+    ],
+    "host": "3fd90f9eb74bd195",
+    "fmath": "3fd90f9eb74bd194",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd39582b0c4fa80",
+     "3fea46f7b8d3d31d"
+    ],
+    "host": "3fd6d43636489fd7",
+    "fmath": "3fd6d43636489fd8",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe2ffce17f7ac80",
+     "3ff8ce1cffe16228"
+    ],
+    "host": "3fd768474147fe89",
+    "fmath": "3fd768474147fe88",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfe5811161474b80",
+     "3ff90635de947abb"
+    ],
+    "host": "bfd9f8e60227432d",
+    "fmath": "bfd9f8e60227432c",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd07d6f15854c68",
+     "3fe59e8a516a27f8"
+    ],
+    "host": "3fd7516dfbdb9a99",
+    "fmath": "3fd7516dfbdb9a98",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fd60d88aecbd600",
+     "3ff775fb17cdfd00"
+    ],
+    "host": "3fcd8b21eaa39ecf",
+    "fmath": "3fcd8b21eaa39ece",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "bfc442c1ca410200",
+     "3ff0ca72cb78769e"
+    ],
+    "host": "bfc3297e52657743",
+    "fmath": "bfc3297e52657742",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "3fe5729a26c955c0",
+     "3ff943db12dc3cbb"
+    ],
+    "host": "3fd9b0a82a663a91",
+    "fmath": "3fd9b0a82a663a92",
+    "kind": "legacy"
+   },
+   {
+    "args": [
+     "4023afa97df2b334",
+     "4044666666666667"
+    ],
+    "host": "3fce4d1fda9bf867",
+    "fmath": "3fce4d1fda9bf868",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "4023f3f546891998",
+     "4041fbd778845334"
+    ],
+    "host": "3fd151100a9f9641",
+    "fmath": "3fd151100a9f9642",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "c023f3f546891998",
+     "4041fbd778845334"
+    ],
+    "host": "bfd151100a9f9641",
+    "fmath": "bfd151100a9f9642",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "3fd4710ff1e4b280",
+     "3ff109884c59dbf3"
+    ],
+    "host": "3fd2a68f1a9fd5c7",
+    "fmath": "3fd2a68f1a9fd5c8",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfd2bb1eaac88680",
+     "3fe5b80dc073686c"
+    ],
+    "host": "bfda0e41ca908945",
+    "fmath": "bfda0e41ca908946",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc9797f26cb7640",
+     "3fe5c987b8b8580f"
+    ],
+    "host": "3fd23369822a4af3",
+    "fmath": "3fd23369822a4af4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fda09f54d24bb80",
+     "3ff04d60c0a5fbc7"
+    ],
+    "host": "3fd850878c0231a9",
+    "fmath": "3fd850878c0231a8",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe5b24ac11fb1c0",
+     "3ffca287408d24d1"
+    ],
+    "host": "3fd72d482f2bbc99",
+    "fmath": "3fd72d482f2bbc9a",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "c023379ac514999a",
+     "40499f052dbdb99a"
+    ],
+    "host": "bfc7b9e420bf34df",
+    "fmath": "bfc7b9e420bf34e0",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "bfe45212718302e0",
+     "bfc7ae147ae147ae"
+    ],
+    "host": "bffdab21b68c5ea7",
+    "fmath": "bffdab21b68c5ea8",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc65816b2444900",
+     "3ff84a6090c0cc77"
+    ],
+    "host": "3fbd4e9cf43a18c1",
+    "fmath": "3fbd4e9cf43a18c0",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fec9d3422dddac0",
+     "4002a1e2ddd0a144"
+    ],
+    "host": "3fd775fcb39849bb",
+    "fmath": "3fd775fcb39849ba",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc3834ac0fcb900",
+     "3fe4c0b941b4443a"
+    ],
+    "host": "3fcd8d313dee370b",
+    "fmath": "3fcd8d313dee370c",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfef3f90eb144070",
+     "400270897e994060"
+    ],
+    "host": "bfd9a59c69fe2b4d",
+    "fmath": "bfd9a59c69fe2b4e",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe47ad7dd2b1a80",
+     "bfc7ae147ae147ae"
+    ],
+    "host": "bffda292a4a17129",
+    "fmath": "bffda292a4a17128",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc0070d97e29c00",
+     "3fe993dd5a607660"
+    ],
+    "host": "3fc3e3ec8c046e1f",
+    "fmath": "3fc3e3ec8c046e20",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd10375e0808800",
+     "3fe38c34dcacd95c"
+    ],
+    "host": "3fda45001569f201",
+    "fmath": "3fda45001569f202",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe0b85df9c63340",
+     "3ff44cc52530fb90"
+    ],
+    "host": "bfd9009d441575f3",
+    "fmath": "bfd9009d441575f4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd0829b580e3a80",
+     "3feafd420d3048bb"
+    ],
+    "host": "3fd2ff4005da63eb",
+    "fmath": "3fd2ff4005da63ec",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "4031dadc0126cccd",
+     "c046ccccccccccce"
+    ],
+    "host": "400625a8460c41b5",
+    "fmath": "400625a8460c41b6",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "4023ec05a01f4ccc",
+     "404c5768cd01a667"
+    ],
+    "host": "3fc6442ce04bf489",
+    "fmath": "3fc6442ce04bf488",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "c023ec05a01f4ccc",
+     "404c5768cd01a667"
+    ],
+    "host": "bfc6442ce04bf489",
+    "fmath": "bfc6442ce04bf488",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "4031dadc0126cccd",
+     "4046ccccccccccce"
+    ],
+    "host": "3fd7e29871bf5b17",
+    "fmath": "3fd7e29871bf5b16",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "bfd1c124d6141500",
+     "3fe4dc248075c42b"
+    ],
+    "host": "bfd9c0129a5d0849",
+    "fmath": "bfd9c0129a5d084a",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfcce0cfd0714b00",
+     "3fe54d18f5155bf1"
+    ],
+    "host": "bfd4e9e823c87ab5",
+    "fmath": "bfd4e9e823c87ab4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe36c3dd5d1a600",
+     "3ffc22601ef008b8"
+    ],
+    "host": "3fd545a1c2a07277",
+    "fmath": "3fd545a1c2a07276",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe1ed4af1060430",
+     "3fcae147ae147b00"
+    ],
+    "host": "bff364fa2f768c6c",
+    "fmath": "bff364fa2f768c6d",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe4e7f223e78a80",
+     "3ff88738486b3735"
+    ],
+    "host": "bfd9c8629e0699a5",
+    "fmath": "bfd9c8629e0699a6",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfa5156c9660d000",
+     "3fc70a3d70a3d700"
+    ],
+    "host": "bfccc99a0eb02723",
+    "fmath": "bfccc99a0eb02722",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3ff0b58150fe6460",
+     "4005997171711cfe"
+    ],
+    "host": "3fd79ed7348caf71",
+    "fmath": "3fd79ed7348caf72",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe46d0f33962f40",
+     "3fc86a286782ef5c"
+    ],
+    "host": "3ff47c9dbd0ceca0",
+    "fmath": "3ff47c9dbd0cec9f",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd08af63e359120",
+     "3fe3a5ff22a1cc17"
+    ],
+    "host": "3fd98040338dc4bb",
+    "fmath": "3fd98040338dc4bc",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe1f0b9244671c0",
+     "3ff59cdecf4a3308"
+    ],
+    "host": "3fd92d8893c40851",
+    "fmath": "3fd92d8893c40850",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe5f96fa5117cf0",
+     "3ff9c9be20005ef3"
+    ],
+    "host": "3fd9c6e903108bcb",
+    "fmath": "3fd9c6e903108bca",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd0867fb9e98a80",
+     "3fe6e7453d79adbd"
+    ],
+    "host": "3fd628a48d1ba751",
+    "fmath": "3fd628a48d1ba752",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fddf3c940e794a0",
+     "3ff918a493954f79"
+    ],
+    "host": "3fd28ec6dd1ef7ed",
+    "fmath": "3fd28ec6dd1ef7ee",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfdde0eb7e5a9e80",
+     "3fc674c3d4cb8540"
+    ],
+    "host": "bff3619f9292af44",
+    "fmath": "bff3619f9292af45",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe242da6e1f4f40",
+     "3ff72d0bf0bdd21f"
+    ],
+    "host": "3fd804d564147153",
+    "fmath": "3fd804d564147154",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfd39a9235888400",
+     "3fe67ef3be57d813"
+    ],
+    "host": "bfda4c6d263a35f5",
+    "fmath": "bfda4c6d263a35f4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fedcb1485a61570",
+     "40051a529c04c623"
+    ],
+    "host": "3fd5b72741c5ed2d",
+    "fmath": "3fd5b72741c5ed2e",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe6667010082200",
+     "3ffdbe1bd74dc251"
+    ],
+    "host": "bfd70c96e7344233",
+    "fmath": "bfd70c96e7344234",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfcb2d7b49fec700",
+     "3fdf550ccc17a30b"
+    ],
+    "host": "bfda309f601eb9fd",
+    "fmath": "bfda309f601eb9fc",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe1a50ca3178340",
+     "3ff8a1f04d7e54d3"
+    ],
+    "host": "3fd602dafcdee969",
+    "fmath": "3fd602dafcdee96a",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe532c9b1bd4cc0",
+     "3fcae147ae147ae0"
+    ],
+    "host": "3ff438934d4b9763",
+    "fmath": "3ff438934d4b9762",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe90c5025569f80",
+     "3ffd706f69fe794b"
+    ],
+    "host": "3fd9be167d4def7f",
+    "fmath": "3fd9be167d4def7e",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "40230d40fb2c999c",
+     "4049a7b9ef3dd334"
+    ],
+    "host": "3fc77ef90693043d",
+    "fmath": "3fc77ef90693043c",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "c0230d40fb2c999c",
+     "4049a7b9ef3dd334"
+    ],
+    "host": "bfc77ef90693043d",
+    "fmath": "bfc77ef90693043c",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "bfc961b21c557400",
+     "3fe0a3a2fef42177"
+    ],
+    "host": "bfd751287291d17b",
+    "fmath": "bfd751287291d17c",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfdb7c40c07874e0",
+     "3faeb851eb851ec0"
+    ],
+    "host": "bff6e9682bba2293",
+    "fmath": "bff6e9682bba2294",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfec49f77a46a180",
+     "4000767a294c6b14"
+    ],
+    "host": "bfd9f7d27d81aaeb",
+    "fmath": "bfd9f7d27d81aaea",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fbcd70186289600",
+     "3fe0be47668008b4"
+    ],
+    "host": "3fcb252b0de964bd",
+    "fmath": "3fcb252b0de964be",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe294e1a2371100",
+     "bfc7ae147ae147ae"
+    ],
+    "host": "3ffe114dbbabb347",
+    "fmath": "3ffe114dbbabb348",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd2445628341f80",
+     "3ff1591a31d36004"
+    ],
+    "host": "3fd07947562f847d",
+    "fmath": "3fd07947562f847c",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe46754171edd60",
+     "3fc8b65d8927adf5"
+    ],
+    "host": "3ff46daf3325ea16",
+    "fmath": "3ff46daf3325ea15",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe3dcfad3218340",
+     "3fcef73dc58f10f0"
+    ],
+    "host": "3ff32fca5e62cf0d",
+    "fmath": "3ff32fca5e62cf0e",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfea0e43cf91cb80",
+     "40010e4ae55eab06"
+    ],
+    "host": "bfd7593e7e959983",
+    "fmath": "bfd7593e7e959982",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe7100fa108dac0",
+     "3ffaeb274c70fbdc"
+    ],
+    "host": "bfd9e717f0245333",
+    "fmath": "bfd9e717f0245334",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe1f1991f0cda80",
+     "3ff650d24af87a28"
+    ],
+    "host": "3fd8770cbc501f01",
+    "fmath": "3fd8770cbc501f00",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd8ace70511c700",
+     "3ff3abae3ed238bf"
+    ],
+    "host": "3fd372fc932a82c9",
+    "fmath": "3fd372fc932a82ca",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fdc66b34ffff780",
+     "3ff1a0614ce89a16"
+    ],
+    "host": "3fd88200866434b3",
+    "fmath": "3fd88200866434b4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfda590be3f66400",
+     "3ff9968682e349d2"
+    ],
+    "host": "bfd02001bbf781fd",
+    "fmath": "bfd02001bbf781fe",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe123a88b706580",
+     "3ffb81a0beb344cb"
+    ],
+    "host": "bfd3544d9522fdf5",
+    "fmath": "bfd3544d9522fdf4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc5d139ab6aff00",
+     "3fe1f039603ce283"
+    ],
+    "host": "3fd2e42b3caa9ab9",
+    "fmath": "3fd2e42b3caa9aba",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fddbfc27674bb00",
+     "3ffb8b875a7e100e"
+    ],
+    "host": "3fd0e0b6a74d721f",
+    "fmath": "3fd0e0b6a74d7220",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfdd408fdcc01980",
+     "3ff341efc7b1a758"
+    ],
+    "host": "bfd73a366bb2f8d7",
+    "fmath": "bfd73a366bb2f8d8",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fcee6bbaf8cac00",
+     "3fe53ac1f3ecdc52"
+    ],
+    "host": "3fd656031d85016f",
+    "fmath": "3fd656031d85016e",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "402a4e52e5900000",
+     "c046ccccccccccce"
+    ],
+    "host": "4006e2dcb6d5c665",
+    "fmath": "4006e2dcb6d5c666",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "3fec66125b4bf540",
+     "3fd51eb851eb8520"
+    ],
+    "host": "3ff36fc9d9ddfd6d",
+    "fmath": "3ff36fc9d9ddfd6e",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fdf3077bddd4200",
+     "bfc7ae147ae147ae"
+    ],
+    "host": "3ffef00fa1001fe1",
+    "fmath": "3ffef00fa1001fe0",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd42b2a0bfbc830",
+     "3ff0d4e7a285fa2e"
+    ],
+    "host": "3fd2a0aaf461e7a5",
+    "fmath": "3fd2a0aaf461e7a4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfd0bcaae0759880",
+     "3ff055f193db8632"
+    ],
+    "host": "bfd00c497dddde15",
+    "fmath": "bfd00c497dddde16",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfea5da0e13a8700",
+     "4001fa1a9d828dee"
+    ],
+    "host": "bfd67df9642015d5",
+    "fmath": "bfd67df9642015d4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3ff126ef409458e0",
+     "400459df227468f9"
+    ],
+    "host": "3fd9864c6cefa093",
+    "fmath": "3fd9864c6cefa094",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfdf2278d198a900",
+     "3ff39fc200320280"
+    ],
+    "host": "bfd82ab0828fdcb9",
+    "fmath": "bfd82ab0828fdcb8",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd65297bbda6fc0",
+     "3feaa111f4a0d862"
+    ],
+    "host": "3fd966bc0f309359",
+    "fmath": "3fd966bc0f30935a",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bff64d2fbc5b49f4",
+     "3fe02347e58b9d40"
+    ],
+    "host": "bff39406e47fced1",
+    "fmath": "bff39406e47fced0",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc0964966bb4500",
+     "3fd51eb851eb8520"
+    ],
+    "host": "3fd7f2a72bd6f623",
+    "fmath": "3fd7f2a72bd6f624",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfbb290693682300",
+     "3fd71429e95e59d5"
+    ],
+    "host": "bfd25019638d8fbd",
+    "fmath": "bfd25019638d8fbc",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "4046cccccccccccd",
+     "40321fb751167334"
+    ],
+    "host": "3ff3146d29f7563f",
+    "fmath": "3ff3146d29f75640",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "bff2cace725bea60",
+     "4005887cb6acf314"
+    ],
+    "host": "bfda552f570dc6b3",
+    "fmath": "bfda552f570dc6b4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd0fd2318f933e0",
+     "3fe38d94c9c38b79"
+    ],
+    "host": "3fda3aa6780ad2cd",
+    "fmath": "3fda3aa6780ad2ce",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3ff0e8d3f4d44ce8",
+     "400553f8d723f853"
+    ],
+    "host": "3fd827844af6fb23",
+    "fmath": "3fd827844af6fb24",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc4149b0ab1ec00",
+     "3fe4b80d8c71be5d"
+    ],
+    "host": "3fce6d712b53a27b",
+    "fmath": "3fce6d712b53a27c",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fb1c589102fe500",
+     "3fd2ff53471f4468"
+    ],
+    "host": "3fcd68226d930aff",
+    "fmath": "3fcd68226d930b00",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe42ecf05cfb970",
+     "bfc7ae147ae147ae"
+    ],
+    "host": "bffdb2a27b8e03c8",
+    "fmath": "bffdb2a27b8e03c9",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe67311f0589600",
+     "3ff9b3333f614aad"
+    ],
+    "host": "bfda5ac2d22497fd",
+    "fmath": "bfda5ac2d22497fc",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe51a492ac4fc60",
+     "3ffad060d28fe8d5"
+    ],
+    "host": "bfd7fe39a3215293",
+    "fmath": "bfd7fe39a3215292",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd39cc125e51298",
+     "3fe7c7e6da90c840"
+    ],
+    "host": "3fd907f97d251a1d",
+    "fmath": "3fd907f97d251a1e",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe5729277ca9f40",
+     "3fffefe2ad083511"
+    ],
+    "host": "3fd4bb96d430d7a5",
+    "fmath": "3fd4bb96d430d7a6",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fcf77e432643880",
+     "3ff48cea399a07c8"
+    ],
+    "host": "3fc8352213387f7b",
+    "fmath": "3fc8352213387f7c",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfbdcae533e35b80",
+     "3ffc1a1983b23348"
+    ],
+    "host": "bfb0f01388afd499",
+    "fmath": "bfb0f01388afd49a",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfc2cf2a82514300",
+     "3ff02779e6007751"
+    ],
+    "host": "bfc27ff29f1bd8ef",
+    "fmath": "bfc27ff29f1bd8f0",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfd3b01ac09c7d80",
+     "3fe69239f39a4ad2"
+    ],
+    "host": "bfda5211e059647b",
+    "fmath": "bfda5211e059647c",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfd01238a31fcb80",
+     "3fe36883efde9984"
+    ],
+    "host": "bfd91f67619e7781",
+    "fmath": "bfd91f67619e7782",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfc709b7b3dd1a00",
+     "3fdd1322bfebdefa"
+    ],
+    "host": "bfd824432168f0eb",
+    "fmath": "bfd824432168f0ec",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc87af69552cc00",
+     "3fdfed8c0a5c65c1"
+    ],
+    "host": "3fd76df96ba3ebaf",
+    "fmath": "3fd76df96ba3ebae",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "4031a5971ffd4ccd",
+     "4045333333333333"
+    ],
+    "host": "3fd93dba4bcc6d41",
+    "fmath": "3fd93dba4bcc6d42",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "3fbd8ca3ca8f0e00",
+     "3fd51eb851eb8520"
+    ],
+    "host": "3fd588dca9c9775d",
+    "fmath": "3fd588dca9c9775e",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc6e1c824f0cf00",
+     "3fe4fbab30147f3e"
+    ],
+    "host": "3fd108b298cab5d7",
+    "fmath": "3fd108b298cab5d6",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc6d016900e2e00",
+     "3fe35922d7fab584"
+    ],
+    "host": "3fd25875c0d2fd2f",
+    "fmath": "3fd25875c0d2fd30",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe3dfadf82696c0",
+     "3fcedb7a03dec339"
+    ],
+    "host": "3ff335615483956a",
+    "fmath": "3ff335615483956b",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fc6b0041ba10240",
+     "3ff6d368b2d249a8"
+    ],
+    "host": "3fbfa4de9fd0f861",
+    "fmath": "3fbfa4de9fd0f862",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3ff0262081338808",
+     "40089a77b13f5e9b"
+    ],
+    "host": "3fd44b87f4b135e5",
+    "fmath": "3fd44b87f4b135e6",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe9d4931ebbf6a0",
+     "4000b51a812639c9"
+    ],
+    "host": "bfd79acd287dbc55",
+    "fmath": "bfd79acd287dbc54",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd60405ac34b700",
+     "3ff71625d51c05a8"
+    ],
+    "host": "3fcdf4e27572acc9",
+    "fmath": "3fcdf4e27572acc8",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe3b373ceda20cc",
+     "3ffa0a213ab164b1"
+    ],
+    "host": "bfd7254be6dc5519",
+    "fmath": "bfd7254be6dc5518",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fe40e7df752da30",
+     "3ffb05017f93519f"
+    ],
+    "host": "3fd6beb9c9540741",
+    "fmath": "3fd6beb9c9540742",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfe2f188e2f6b100",
+     "3ffc1f9988a1ce0e"
+    ],
+    "host": "bfd4ca81f7735871",
+    "fmath": "bfd4ca81f7735872",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "4031a68d248d3333",
+     "404799999999999a"
+    ],
+    "host": "3fd6e70ea700a779",
+    "fmath": "3fd6e70ea700a77a",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "c0312b18c4c3c000",
+     "4045333333333333"
+    ],
+    "host": "bfd89f809c04b635",
+    "fmath": "bfd89f809c04b636",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "4031777c9e058000",
+     "4044666666666667"
+    ],
+    "host": "3fd9e34f8251f383",
+    "fmath": "3fd9e34f8251f382",
+    "kind": "v2"
+   },
+   {
+    "args": [
+     "3ff08925fa81b040",
+     "4004eec4f8d5dc31"
+    ],
+    "host": "3fd8131acb6c57ad",
+    "fmath": "3fd8131acb6c57ac",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bff072d0bd1444e0",
+     "3fd95339d2887d98"
+    ],
+    "host": "bff340f7e70807c3",
+    "fmath": "bff340f7e70807c4",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "bfd35f488d34ad70",
+     "3fe649faa65a136f"
+    ],
+    "host": "bfda3c953a85c26b",
+    "fmath": "bfda3c953a85c26c",
+    "kind": "v1"
+   },
+   {
+    "args": [
+     "3fd3026a7a960200",
+     "3fefec9480902a4f"
+    ],
+    "host": "3fd2850f480c970f",
+    "fmath": "3fd2850f480c9710",
+    "kind": "v1"
+   }
+  ],
+  "hypot2": [],
+  "hypot3": []
+ }
+}

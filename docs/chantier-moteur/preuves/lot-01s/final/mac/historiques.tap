@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: legacy seed 1, sector 0: exact pre-campaign world fingerprint
+ok 1 - legacy seed 1, sector 0: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 206.307042
+  type: 'test'
+  ...
+# Subtest: legacy seed 1, sector 1: exact pre-campaign world fingerprint
+ok 2 - legacy seed 1, sector 1: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 183.337125
+  type: 'test'
+  ...
+# Subtest: legacy seed 1, sector 2: exact pre-campaign world fingerprint
+ok 3 - legacy seed 1, sector 2: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 238.918583
+  type: 'test'
+  ...
+# Subtest: legacy seed 96, sector 0: exact pre-campaign world fingerprint
+ok 4 - legacy seed 96, sector 0: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 181.145959
+  type: 'test'
+  ...
+# Subtest: legacy seed 96, sector 1: exact pre-campaign world fingerprint
+ok 5 - legacy seed 96, sector 1: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 171.456
+  type: 'test'
+  ...
+# Subtest: legacy seed 96, sector 2: exact pre-campaign world fingerprint
+ok 6 - legacy seed 96, sector 2: exact pre-campaign world fingerprint
+  ---
+  duration_ms: 232.853416
+  type: 'test'
+  ...
+# Subtest: campaign mode is strictly opt-in and keeps historical clamping otherwise
+ok 7 - campaign mode is strictly opt-in and keeps historical clamping otherwise
+  ---
+  duration_ms: 1958.380917
+  type: 'test'
+  ...
+# Subtest: the first three campaign worlds preserve historical geometry outside campaign supplies and loadout
+ok 8 - the first three campaign worlds preserve historical geometry outside campaign supplies and loadout
+  ---
+  duration_ms: 1127.461167
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4340.642792

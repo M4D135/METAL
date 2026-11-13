@@ -1,0 +1,2021 @@
+{
+ "schema": "metal-platform-math-engines-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64"
+ },
+ "root": "~/claude/metal-chantier/nav",
+ "base": "$W/base71",
+ "worldUsesFMath": true,
+ "pages": {
+  "dir": "$W/eng-final",
+  "files": [
+   "trig.html",
+   "fp.html",
+   "jsc-worlds.js"
+  ],
+  "trigCases": 2251,
+  "fpVariants": [
+   "game",
+   "native",
+   "fmath"
+  ],
+  "worldUsesFMath": true,
+  "base": "$W/base71"
+ },
+ "chrome": {
+  "path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+  "fmathVectors": {
+   "cases": 3836,
+   "equal": 3836,
+   "firstDifferences": []
+  },
+  "fmathHypotVectors": {
+   "cases": 3037,
+   "equal": 3037,
+   "firstDifferences": []
+  },
+  "trig": {
+   "driver:sin": {
+    "cases": 1800,
+    "chromeEqNodeHost": 1749,
+    "chromeEqFMath": 1742,
+    "nodeHostEqFMath": 1791,
+    "withReference": 1800,
+    "chromeCorrectlyRounded": 1800,
+    "nodeHostCorrectlyRounded": 1749,
+    "fmathCorrectlyRounded": 1742
+   },
+   "world-divergent:sin": {
+    "cases": 150,
+    "chromeEqNodeHost": 89,
+    "chromeEqFMath": 61,
+    "nodeHostEqFMath": 0,
+    "withReference": 150,
+    "chromeCorrectlyRounded": 150,
+    "nodeHostCorrectlyRounded": 89,
+    "fmathCorrectlyRounded": 61
+   },
+   "world-divergent:cos": {
+    "cases": 150,
+    "chromeEqNodeHost": 86,
+    "chromeEqFMath": 64,
+    "nodeHostEqFMath": 0,
+    "withReference": 150,
+    "chromeCorrectlyRounded": 150,
+    "nodeHostCorrectlyRounded": 86,
+    "fmathCorrectlyRounded": 64
+   },
+   "world-divergent:atan": {
+    "cases": 1,
+    "chromeEqNodeHost": 1,
+    "chromeEqFMath": 0,
+    "nodeHostEqFMath": 0,
+    "withReference": 1,
+    "chromeCorrectlyRounded": 1,
+    "nodeHostCorrectlyRounded": 1
+   },
+   "world-divergent:atan2": {
+    "cases": 150,
+    "chromeEqNodeHost": 81,
+    "chromeEqFMath": 69,
+    "nodeHostEqFMath": 0,
+    "withReference": 150,
+    "chromeCorrectlyRounded": 150,
+    "fmathCorrectlyRounded": 69,
+    "nodeHostCorrectlyRounded": 81
+   }
+  },
+  "checkpoints": {
+   "worlds": 42,
+   "variants": [
+    "game",
+    "native",
+    "fmath"
+   ],
+   "gameFingerprintChromeEqNodeFMath": 42,
+   "gameWorldFnvChromeEqNodeFMath": 42,
+   "fmathFingerprintChromeEqNode": 42,
+   "fmathWorldFnvChromeEqNode": 42,
+   "fingerprintChangedByFMathInChrome": 42,
+   "nativeChromePointRefusedAfterFix": 42,
+   "nativeFingerprintChromeEqNodeHost": 0,
+   "note": "Fingerprint = FSimulation snapshot().fingerprint of the generated world; WorldFnv = FNV-1a of JSON.stringify(world). game: the wired world.js of root; native: a world.js before the fix with the Math of the engine; fmath: the same with FMath for sin, cos, atan and atan2 during generation. nodeFMath: the worlds of root after the fix in Node. nativeChromePointRefusedAfterFix: a point saved in Chrome before the fix whose fingerprint differs from the world after the fix (restore refuses it).",
+   "perWorld": [
+    {
+     "kind": "legacy",
+     "seed": 1,
+     "index": 0,
+     "nodeFMath": "aebz7a",
+     "nodeFMathWorldFnv": "fa09c771",
+     "nodeHost": "aebz7a",
+     "nodeHostWorldFnv": "0a856a16",
+     "chromeGame": "aebz7a",
+     "chromeGameWorldFnv": "fa09c771",
+     "chromeNative": "1ip3pqz",
+     "chromeNativeWorldFnv": "a2113391",
+     "chromeFMath": "aebz7a",
+     "chromeFMathWorldFnv": "fa09c771"
+    },
+    {
+     "kind": "legacy",
+     "seed": 1,
+     "index": 1,
+     "nodeFMath": "1s12rdw",
+     "nodeFMathWorldFnv": "ded4ef23",
+     "nodeHost": "1s12rdw",
+     "nodeHostWorldFnv": "379dd159",
+     "chromeGame": "1s12rdw",
+     "chromeGameWorldFnv": "ded4ef23",
+     "chromeNative": "1u2g4no",
+     "chromeNativeWorldFnv": "527aab07",
+     "chromeFMath": "1s12rdw",
+     "chromeFMathWorldFnv": "ded4ef23"
+    },
+    {
+     "kind": "legacy",
+     "seed": 1,
+     "index": 2,
+     "nodeFMath": "y93oey",
+     "nodeFMathWorldFnv": "364aec5a",
+     "nodeHost": "124o0my",
+     "nodeHostWorldFnv": "9362bc0e",
+     "chromeGame": "y93oey",
+     "chromeGameWorldFnv": "364aec5a",
+     "chromeNative": "1o086x2",
+     "chromeNativeWorldFnv": "27d3e160",
+     "chromeFMath": "y93oey",
+     "chromeFMathWorldFnv": "364aec5a"
+    },
+    {
+     "kind": "legacy",
+     "seed": 96,
+     "index": 0,
+     "nodeFMath": "1o7sffm",
+     "nodeFMathWorldFnv": "63762ab9",
+     "nodeHost": "gtsp0p",
+     "nodeHostWorldFnv": "b5d0b445",
+     "chromeGame": "1o7sffm",
+     "chromeGameWorldFnv": "63762ab9",
+     "chromeNative": "1rvb3u0",
+     "chromeNativeWorldFnv": "ba810be8",
+     "chromeFMath": "1o7sffm",
+     "chromeFMathWorldFnv": "63762ab9"
+    },
+    {
+     "kind": "legacy",
+     "seed": 96,
+     "index": 1,
+     "nodeFMath": "4m0ku9",
+     "nodeFMathWorldFnv": "7982f8e3",
+     "nodeHost": "4m0ku9",
+     "nodeHostWorldFnv": "0a94c027",
+     "chromeGame": "4m0ku9",
+     "chromeGameWorldFnv": "7982f8e3",
+     "chromeNative": "hxrs31",
+     "chromeNativeWorldFnv": "188d8886",
+     "chromeFMath": "4m0ku9",
+     "chromeFMathWorldFnv": "7982f8e3"
+    },
+    {
+     "kind": "legacy",
+     "seed": 96,
+     "index": 2,
+     "nodeFMath": "11342u4",
+     "nodeFMathWorldFnv": "5a9cc7e7",
+     "nodeHost": "qz5q6f",
+     "nodeHostWorldFnv": "e568afe7",
+     "chromeGame": "11342u4",
+     "chromeGameWorldFnv": "5a9cc7e7",
+     "chromeNative": "1alommr",
+     "chromeNativeWorldFnv": "54156ae6",
+     "chromeFMath": "11342u4",
+     "chromeFMathWorldFnv": "5a9cc7e7"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 0,
+     "nodeFMath": "1eug0z8",
+     "nodeFMathWorldFnv": "1d1cc563",
+     "nodeHost": "pyzqa3",
+     "nodeHostWorldFnv": "6f9a31eb",
+     "chromeGame": "1eug0z8",
+     "chromeGameWorldFnv": "1d1cc563",
+     "chromeNative": "rqlvdu",
+     "chromeNativeWorldFnv": "fc05e4c2",
+     "chromeFMath": "1eug0z8",
+     "chromeFMathWorldFnv": "1d1cc563"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 0,
+     "nodeFMath": "rgj8tn",
+     "nodeFMathWorldFnv": "4eb06c78",
+     "nodeHost": "q8r4a0",
+     "nodeHostWorldFnv": "78bf9bca",
+     "chromeGame": "rgj8tn",
+     "chromeGameWorldFnv": "4eb06c78",
+     "chromeNative": "7a53wi",
+     "chromeNativeWorldFnv": "ce86bb30",
+     "chromeFMath": "rgj8tn",
+     "chromeFMathWorldFnv": "4eb06c78"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 1,
+     "nodeFMath": "moazy2",
+     "nodeFMathWorldFnv": "6e6393e7",
+     "nodeHost": "moazy2",
+     "nodeHostWorldFnv": "4c0ebdfb",
+     "chromeGame": "moazy2",
+     "chromeGameWorldFnv": "6e6393e7",
+     "chromeNative": "1xaeqna",
+     "chromeNativeWorldFnv": "9e8aede8",
+     "chromeFMath": "moazy2",
+     "chromeFMathWorldFnv": "6e6393e7"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 1,
+     "nodeFMath": "mvmem1",
+     "nodeFMathWorldFnv": "0375444b",
+     "nodeHost": "mvmem1",
+     "nodeHostWorldFnv": "05bc2d6f",
+     "chromeGame": "mvmem1",
+     "chromeGameWorldFnv": "0375444b",
+     "chromeNative": "1e9xjsz",
+     "chromeNativeWorldFnv": "bc9af23a",
+     "chromeFMath": "mvmem1",
+     "chromeFMathWorldFnv": "0375444b"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 2,
+     "nodeFMath": "pcp3wj",
+     "nodeFMathWorldFnv": "1cf54f06",
+     "nodeHost": "12pfoi6",
+     "nodeHostWorldFnv": "27f37f6e",
+     "chromeGame": "pcp3wj",
+     "chromeGameWorldFnv": "1cf54f06",
+     "chromeNative": "1s4f0we",
+     "chromeNativeWorldFnv": "d38e5bf3",
+     "chromeFMath": "pcp3wj",
+     "chromeFMathWorldFnv": "1cf54f06"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 2,
+     "nodeFMath": "13dro66",
+     "nodeFMathWorldFnv": "2e5e878d",
+     "nodeHost": "11olkp9",
+     "nodeHostWorldFnv": "52abef21",
+     "chromeGame": "13dro66",
+     "chromeGameWorldFnv": "2e5e878d",
+     "chromeNative": "sj4dmq",
+     "chromeNativeWorldFnv": "041ccb73",
+     "chromeFMath": "13dro66",
+     "chromeFMathWorldFnv": "2e5e878d"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 3,
+     "nodeFMath": "cqf8fy",
+     "nodeFMathWorldFnv": "ffca65da",
+     "nodeHost": "cqf8fy",
+     "nodeHostWorldFnv": "176201a6",
+     "chromeGame": "cqf8fy",
+     "chromeGameWorldFnv": "ffca65da",
+     "chromeNative": "xasrtm",
+     "chromeNativeWorldFnv": "695b3520",
+     "chromeFMath": "cqf8fy",
+     "chromeFMathWorldFnv": "ffca65da"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 3,
+     "nodeFMath": "y6w7gz",
+     "nodeFMathWorldFnv": "cff19bce",
+     "nodeHost": "y6w7gz",
+     "nodeHostWorldFnv": "b4277286",
+     "chromeGame": "y6w7gz",
+     "chromeGameWorldFnv": "cff19bce",
+     "chromeNative": "2aikro",
+     "chromeNativeWorldFnv": "3823a08b",
+     "chromeFMath": "y6w7gz",
+     "chromeFMathWorldFnv": "cff19bce"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 4,
+     "nodeFMath": "1r7jead",
+     "nodeFMathWorldFnv": "e7e17148",
+     "nodeHost": "1mijpri",
+     "nodeHostWorldFnv": "7c2446e6",
+     "chromeGame": "1r7jead",
+     "chromeGameWorldFnv": "e7e17148",
+     "chromeNative": "nql291",
+     "chromeNativeWorldFnv": "d619d809",
+     "chromeFMath": "1r7jead",
+     "chromeFMathWorldFnv": "e7e17148"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 4,
+     "nodeFMath": "5b05vc",
+     "nodeFMathWorldFnv": "c93135dd",
+     "nodeHost": "nuui31",
+     "nodeHostWorldFnv": "3e2b4441",
+     "chromeGame": "5b05vc",
+     "chromeGameWorldFnv": "c93135dd",
+     "chromeNative": "1quh33k",
+     "chromeNativeWorldFnv": "7422069c",
+     "chromeFMath": "5b05vc",
+     "chromeFMathWorldFnv": "c93135dd"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 5,
+     "nodeFMath": "1l8a2v7",
+     "nodeFMathWorldFnv": "f5b4a377",
+     "nodeHost": "s0mlis",
+     "nodeHostWorldFnv": "55c4af16",
+     "chromeGame": "1l8a2v7",
+     "chromeGameWorldFnv": "f5b4a377",
+     "chromeNative": "1ln3hoa",
+     "chromeNativeWorldFnv": "cfd3b699",
+     "chromeFMath": "1l8a2v7",
+     "chromeFMathWorldFnv": "f5b4a377"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 5,
+     "nodeFMath": "1axgnk9",
+     "nodeFMathWorldFnv": "e13b43db",
+     "nodeHost": "1vs9c24",
+     "nodeHostWorldFnv": "27414a5a",
+     "chromeGame": "1axgnk9",
+     "chromeGameWorldFnv": "e13b43db",
+     "chromeNative": "3til2c",
+     "chromeNativeWorldFnv": "49cccc95",
+     "chromeFMath": "1axgnk9",
+     "chromeFMathWorldFnv": "e13b43db"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 6,
+     "nodeFMath": "12grqg5",
+     "nodeFMathWorldFnv": "cff4673c",
+     "nodeHost": "12grqg5",
+     "nodeHostWorldFnv": "d7816ff6",
+     "chromeGame": "12grqg5",
+     "chromeGameWorldFnv": "cff4673c",
+     "chromeNative": "w3n4rj",
+     "chromeNativeWorldFnv": "fdb43729",
+     "chromeFMath": "12grqg5",
+     "chromeFMathWorldFnv": "cff4673c"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 6,
+     "nodeFMath": "zi4zd7",
+     "nodeFMathWorldFnv": "e05d0985",
+     "nodeHost": "zi4zd7",
+     "nodeHostWorldFnv": "6efc4a2b",
+     "chromeGame": "zi4zd7",
+     "chromeGameWorldFnv": "e05d0985",
+     "chromeNative": "iyz3i9",
+     "chromeNativeWorldFnv": "0f9fd3f6",
+     "chromeFMath": "zi4zd7",
+     "chromeFMathWorldFnv": "e05d0985"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 7,
+     "nodeFMath": "1ypdv2o",
+     "nodeFMathWorldFnv": "601688c5",
+     "nodeHost": "1c7ntad",
+     "nodeHostWorldFnv": "c16cc33f",
+     "chromeGame": "1ypdv2o",
+     "chromeGameWorldFnv": "601688c5",
+     "chromeNative": "7vkzyv",
+     "chromeNativeWorldFnv": "a97d2bab",
+     "chromeFMath": "1ypdv2o",
+     "chromeFMathWorldFnv": "601688c5"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 7,
+     "nodeFMath": "xwf70a",
+     "nodeFMathWorldFnv": "f0211152",
+     "nodeHost": "13ah0e7",
+     "nodeHostWorldFnv": "e96affa0",
+     "chromeGame": "xwf70a",
+     "chromeGameWorldFnv": "f0211152",
+     "chromeNative": "8wtmsz",
+     "chromeNativeWorldFnv": "4c3d84b0",
+     "chromeFMath": "xwf70a",
+     "chromeFMathWorldFnv": "f0211152"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 8,
+     "nodeFMath": "1dide6l",
+     "nodeFMathWorldFnv": "4ee349ab",
+     "nodeHost": "i915u",
+     "nodeHostWorldFnv": "a964a48c",
+     "chromeGame": "1dide6l",
+     "chromeGameWorldFnv": "4ee349ab",
+     "chromeNative": "q3skg5",
+     "chromeNativeWorldFnv": "70c2fe9a",
+     "chromeFMath": "1dide6l",
+     "chromeFMathWorldFnv": "4ee349ab"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 8,
+     "nodeFMath": "hfdfk0",
+     "nodeFMathWorldFnv": "4c0adc04",
+     "nodeHost": "ri70gd",
+     "nodeHostWorldFnv": "b775af53",
+     "chromeGame": "hfdfk0",
+     "chromeGameWorldFnv": "4c0adc04",
+     "chromeNative": "sadn9v",
+     "chromeNativeWorldFnv": "de9f48ec",
+     "chromeFMath": "hfdfk0",
+     "chromeFMathWorldFnv": "4c0adc04"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 9,
+     "nodeFMath": "u96uuo",
+     "nodeFMathWorldFnv": "af0db305",
+     "nodeHost": "11bcwbj",
+     "nodeHostWorldFnv": "908977b8",
+     "chromeGame": "u96uuo",
+     "chromeGameWorldFnv": "af0db305",
+     "chromeNative": "1hnm1g2",
+     "chromeNativeWorldFnv": "79b3c356",
+     "chromeFMath": "u96uuo",
+     "chromeFMathWorldFnv": "af0db305"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 9,
+     "nodeFMath": "1i9y70j",
+     "nodeFMathWorldFnv": "e9250999",
+     "nodeHost": "1wavtlw",
+     "nodeHostWorldFnv": "fbedf2c0",
+     "chromeGame": "1i9y70j",
+     "chromeGameWorldFnv": "e9250999",
+     "chromeNative": "18876kp",
+     "chromeNativeWorldFnv": "0ae13672",
+     "chromeFMath": "1i9y70j",
+     "chromeFMathWorldFnv": "e9250999"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 10,
+     "nodeFMath": "vqfv7l",
+     "nodeFMathWorldFnv": "22dcbaaa",
+     "nodeHost": "vqfv7l",
+     "nodeHostWorldFnv": "df6b24bd",
+     "chromeGame": "vqfv7l",
+     "chromeGameWorldFnv": "22dcbaaa",
+     "chromeNative": "18hf2t1",
+     "chromeNativeWorldFnv": "93eda4a3",
+     "chromeFMath": "vqfv7l",
+     "chromeFMathWorldFnv": "22dcbaaa"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 10,
+     "nodeFMath": "8ueu68",
+     "nodeFMathWorldFnv": "c9b0f892",
+     "nodeHost": "8ueu68",
+     "nodeHostWorldFnv": "62f79e41",
+     "chromeGame": "8ueu68",
+     "chromeGameWorldFnv": "c9b0f892",
+     "chromeNative": "1x6jb6q",
+     "chromeNativeWorldFnv": "ebfb5a91",
+     "chromeFMath": "8ueu68",
+     "chromeFMathWorldFnv": "c9b0f892"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 11,
+     "nodeFMath": "1yicowc",
+     "nodeFMathWorldFnv": "d9ccb6f7",
+     "nodeHost": "1yicowc",
+     "nodeHostWorldFnv": "4b73886d",
+     "chromeGame": "1yicowc",
+     "chromeGameWorldFnv": "d9ccb6f7",
+     "chromeNative": "1ml7i0z",
+     "chromeNativeWorldFnv": "ab3d5799",
+     "chromeFMath": "1yicowc",
+     "chromeFMathWorldFnv": "d9ccb6f7"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 11,
+     "nodeFMath": "yu92mn",
+     "nodeFMathWorldFnv": "f8cdf2c9",
+     "nodeHost": "yu92mn",
+     "nodeHostWorldFnv": "9abca6ff",
+     "chromeGame": "yu92mn",
+     "chromeGameWorldFnv": "f8cdf2c9",
+     "chromeNative": "tpuusw",
+     "chromeNativeWorldFnv": "8029764f",
+     "chromeFMath": "yu92mn",
+     "chromeFMathWorldFnv": "f8cdf2c9"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 12,
+     "nodeFMath": "eid3aw",
+     "nodeFMathWorldFnv": "dd80c95f",
+     "nodeHost": "eid3aw",
+     "nodeHostWorldFnv": "2c76752d",
+     "chromeGame": "eid3aw",
+     "chromeGameWorldFnv": "dd80c95f",
+     "chromeNative": "11nkzgm",
+     "chromeNativeWorldFnv": "a8447239",
+     "chromeFMath": "eid3aw",
+     "chromeFMathWorldFnv": "dd80c95f"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 12,
+     "nodeFMath": "u4h0k3",
+     "nodeFMathWorldFnv": "fff99fd4",
+     "nodeHost": "u4h0k3",
+     "nodeHostWorldFnv": "ea86a09e",
+     "chromeGame": "u4h0k3",
+     "chromeGameWorldFnv": "fff99fd4",
+     "chromeNative": "i9sg8o",
+     "chromeNativeWorldFnv": "69096dd7",
+     "chromeFMath": "u4h0k3",
+     "chromeFMathWorldFnv": "fff99fd4"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 13,
+     "nodeFMath": "6fe4no",
+     "nodeFMathWorldFnv": "ae5e59e9",
+     "nodeHost": "6fe4no",
+     "nodeHostWorldFnv": "a54b2613",
+     "chromeGame": "6fe4no",
+     "chromeGameWorldFnv": "ae5e59e9",
+     "chromeNative": "hewc77",
+     "chromeNativeWorldFnv": "17fc43ab",
+     "chromeFMath": "6fe4no",
+     "chromeFMathWorldFnv": "ae5e59e9"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 13,
+     "nodeFMath": "thi161",
+     "nodeFMathWorldFnv": "73b95ba2",
+     "nodeHost": "thi161",
+     "nodeHostWorldFnv": "2834e2c4",
+     "chromeGame": "thi161",
+     "chromeGameWorldFnv": "73b95ba2",
+     "chromeNative": "qs954p",
+     "chromeNativeWorldFnv": "e944bef7",
+     "chromeFMath": "thi161",
+     "chromeFMathWorldFnv": "73b95ba2"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 14,
+     "nodeFMath": "17ogweb",
+     "nodeFMathWorldFnv": "b93362cc",
+     "nodeHost": "1mcycss",
+     "nodeHostWorldFnv": "59a5f97b",
+     "chromeGame": "17ogweb",
+     "chromeGameWorldFnv": "b93362cc",
+     "chromeNative": "bis8oo",
+     "chromeNativeWorldFnv": "ddbaed65",
+     "chromeFMath": "17ogweb",
+     "chromeFMathWorldFnv": "b93362cc"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 14,
+     "nodeFMath": "qxenft",
+     "nodeFMathWorldFnv": "5b88c1bc",
+     "nodeHost": "ei6r6w",
+     "nodeHostWorldFnv": "78f85825",
+     "chromeGame": "qxenft",
+     "chromeGameWorldFnv": "5b88c1bc",
+     "chromeNative": "vdabug",
+     "chromeNativeWorldFnv": "6d4b66bb",
+     "chromeFMath": "qxenft",
+     "chromeFMathWorldFnv": "5b88c1bc"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 15,
+     "nodeFMath": "1kpxhzn",
+     "nodeFMathWorldFnv": "60148a2d",
+     "nodeHost": "1kpxhzn",
+     "nodeHostWorldFnv": "3f26e266",
+     "chromeGame": "1kpxhzn",
+     "chromeGameWorldFnv": "60148a2d",
+     "chromeNative": "1digrla",
+     "chromeNativeWorldFnv": "f40aaf0d",
+     "chromeFMath": "1kpxhzn",
+     "chromeFMathWorldFnv": "60148a2d"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 15,
+     "nodeFMath": "15dro5r",
+     "nodeFMathWorldFnv": "087d7b80",
+     "nodeHost": "15dro5r",
+     "nodeHostWorldFnv": "dda4ea6d",
+     "chromeGame": "15dro5r",
+     "chromeGameWorldFnv": "087d7b80",
+     "chromeNative": "1y0unhm",
+     "chromeNativeWorldFnv": "5ff901de",
+     "chromeFMath": "15dro5r",
+     "chromeFMathWorldFnv": "087d7b80"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 16,
+     "nodeFMath": "pqwxjb",
+     "nodeFMathWorldFnv": "5b00f876",
+     "nodeHost": "pqwxjb",
+     "nodeHostWorldFnv": "b0680db3",
+     "chromeGame": "pqwxjb",
+     "chromeGameWorldFnv": "5b00f876",
+     "chromeNative": "16haxmi",
+     "chromeNativeWorldFnv": "3ec7eb12",
+     "chromeFMath": "pqwxjb",
+     "chromeFMathWorldFnv": "5b00f876"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 16,
+     "nodeFMath": "2c6r0q",
+     "nodeFMathWorldFnv": "cf0941fd",
+     "nodeHost": "2c6r0q",
+     "nodeHostWorldFnv": "a6477374",
+     "chromeGame": "2c6r0q",
+     "chromeGameWorldFnv": "cf0941fd",
+     "chromeNative": "1ykmqd6",
+     "chromeNativeWorldFnv": "e4b2b7d0",
+     "chromeFMath": "2c6r0q",
+     "chromeFMathWorldFnv": "cf0941fd"
+    },
+    {
+     "kind": "v1",
+     "seed": 96,
+     "index": 17,
+     "nodeFMath": "1jmxgyx",
+     "nodeFMathWorldFnv": "85aab113",
+     "nodeHost": "1jmxgyx",
+     "nodeHostWorldFnv": "2af47cb7",
+     "chromeGame": "1jmxgyx",
+     "chromeGameWorldFnv": "85aab113",
+     "chromeNative": "144ne7l",
+     "chromeNativeWorldFnv": "06727144",
+     "chromeFMath": "1jmxgyx",
+     "chromeFMathWorldFnv": "85aab113"
+    },
+    {
+     "kind": "v2",
+     "seed": 96,
+     "index": 17,
+     "nodeFMath": "auqyia",
+     "nodeFMathWorldFnv": "a3f9555f",
+     "nodeHost": "auqyia",
+     "nodeHostWorldFnv": "12aec5cf",
+     "chromeGame": "auqyia",
+     "chromeGameWorldFnv": "a3f9555f",
+     "chromeNative": "bimg07",
+     "chromeNativeWorldFnv": "685743ff",
+     "chromeFMath": "auqyia",
+     "chromeFMathWorldFnv": "a3f9555f"
+    }
+   ]
+  }
+ },
+ "jsc": {
+  "path": "/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc",
+  "worldUsesFMath": true,
+  "hypotFromFMath": true,
+  "fmathVectors": {
+   "cases": 3836,
+   "equal": 3836,
+   "firstDifferences": []
+  },
+  "fmathHypotVectors": {
+   "cases": 3037,
+   "equal": 3037,
+   "firstDifferences": []
+  },
+  "worlds": 114,
+  "jscGameEqNode": 114,
+  "jscGameEqNodeByKind": {
+   "legacy": "6/6",
+   "v1": "54/54",
+   "v2": "54/54"
+  },
+  "jscGameEqNodeSeed96": "42/42",
+  "baseWorlds": 42,
+  "jscNativeEqNodeHost": 0,
+  "jscFMathEqNodeFMath": 0,
+  "jscFMathV8HypotEqNodeFMath": 42,
+  "note": "game: the world.js of root in JavaScriptCore (fmath.js first, the Math of jsc otherwise), SHA-256 of JSON.stringify(world), compared with the same worlds in Node. base: a world.js before the fix (--base) on the 42 worlds of seed 96, with the Math of jsc (native), FMath trigonometry (fmath: the state after T2) and FMath trigonometry and hypot (fmathV8Hypot); compared with the Node worlds of root (nodeFMath) or of the base with the Math of Node (nodeHost).",
+  "game": [
+   {
+    "kind": "legacy",
+    "seed": 1,
+    "index": 0,
+    "node": "2a488a2ae7b6b92626cc7d8b099472c2e843dd81f476c268919e8e3be026abb6",
+    "jsc": "2a488a2ae7b6b92626cc7d8b099472c2e843dd81f476c268919e8e3be026abb6",
+    "equal": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 1,
+    "index": 1,
+    "node": "530cc4da44cfbdee311cef3bde99c1835b8772ad9d9804a2d768cefa2f18cd2e",
+    "jsc": "530cc4da44cfbdee311cef3bde99c1835b8772ad9d9804a2d768cefa2f18cd2e",
+    "equal": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 1,
+    "index": 2,
+    "node": "360ff380dafda6b98058cc6ca8869961f6f85e2a63f2b0332f851deea7d55d4f",
+    "jsc": "360ff380dafda6b98058cc6ca8869961f6f85e2a63f2b0332f851deea7d55d4f",
+    "equal": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 96,
+    "index": 0,
+    "node": "173c9d30b0bad0d8a734898ff086353315c8b47c45f4faf0b86c9019674638d7",
+    "jsc": "173c9d30b0bad0d8a734898ff086353315c8b47c45f4faf0b86c9019674638d7",
+    "equal": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 96,
+    "index": 1,
+    "node": "3ddc4fabaa9873c6979324d724f7d8de4ae2e0c8ad22571d10770e3fa1d791ea",
+    "jsc": "3ddc4fabaa9873c6979324d724f7d8de4ae2e0c8ad22571d10770e3fa1d791ea",
+    "equal": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 96,
+    "index": 2,
+    "node": "4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42",
+    "jsc": "4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 0,
+    "node": "7b91a08f375851d71e89e47d5ec78d76902fd50e439ef27f87d19afc6a08a5fa",
+    "jsc": "7b91a08f375851d71e89e47d5ec78d76902fd50e439ef27f87d19afc6a08a5fa",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 0,
+    "node": "c7c8023783069a2f71d529d3fde11f13f9f2d085ba0a56942a7f1c0f20469968",
+    "jsc": "c7c8023783069a2f71d529d3fde11f13f9f2d085ba0a56942a7f1c0f20469968",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 1,
+    "node": "eb9bc98e3ff29777560a9fa12ad836faf68d1466cb5c1fe75786f8604e2b60a9",
+    "jsc": "eb9bc98e3ff29777560a9fa12ad836faf68d1466cb5c1fe75786f8604e2b60a9",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 1,
+    "node": "9a5c20663e0e0cadec4f9662d00baa2033154d5ad52c0e04ba0e011e68696568",
+    "jsc": "9a5c20663e0e0cadec4f9662d00baa2033154d5ad52c0e04ba0e011e68696568",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 2,
+    "node": "fc512679f305bfe68cc7a21440d646f4a76b989e4bf7786f9c0faff3c46fc2c9",
+    "jsc": "fc512679f305bfe68cc7a21440d646f4a76b989e4bf7786f9c0faff3c46fc2c9",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 2,
+    "node": "389b11063533607d4188fc132121762c1db38a306465ec42b37bed77a25e02d2",
+    "jsc": "389b11063533607d4188fc132121762c1db38a306465ec42b37bed77a25e02d2",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 3,
+    "node": "79666144b2c718db20b328085451267b54660d1c537262631fd3a1f15b06dd72",
+    "jsc": "79666144b2c718db20b328085451267b54660d1c537262631fd3a1f15b06dd72",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 3,
+    "node": "c6e4fd7e56239ec55dea8a7cd3aa599172ba23e0b0a11b9baa3624a61b6fd9bf",
+    "jsc": "c6e4fd7e56239ec55dea8a7cd3aa599172ba23e0b0a11b9baa3624a61b6fd9bf",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 4,
+    "node": "3a8c643c631cbb6a0d2efe88193c5ea07bfdb24173aac2378dc93e6effd43b14",
+    "jsc": "3a8c643c631cbb6a0d2efe88193c5ea07bfdb24173aac2378dc93e6effd43b14",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 4,
+    "node": "63da76a691e0b0546990857fc54316a017163f92b475d9f81be30b5c268dac10",
+    "jsc": "63da76a691e0b0546990857fc54316a017163f92b475d9f81be30b5c268dac10",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 5,
+    "node": "a54afd1afa4e2f8e3cad0be5acf7ac5b76837e88621dcfceb48c10f6a89fca11",
+    "jsc": "a54afd1afa4e2f8e3cad0be5acf7ac5b76837e88621dcfceb48c10f6a89fca11",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 5,
+    "node": "e24b4f8e48740d49508afd8a6e49411f187bdf508a63777cc3b9475d629d2691",
+    "jsc": "e24b4f8e48740d49508afd8a6e49411f187bdf508a63777cc3b9475d629d2691",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 6,
+    "node": "75036375b8aa0e6a7e95b4dce60bdd895b53a02d7aa38e06661961fb88dab512",
+    "jsc": "75036375b8aa0e6a7e95b4dce60bdd895b53a02d7aa38e06661961fb88dab512",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 6,
+    "node": "6a565a496a2639472ff3830766e88ca8050aafd0c4a7bfd652564e4230e2f25e",
+    "jsc": "6a565a496a2639472ff3830766e88ca8050aafd0c4a7bfd652564e4230e2f25e",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 7,
+    "node": "bd26c541f70a507764b6ace013a8c4c285c1c6312199b1e7d0befaa85b1d9a06",
+    "jsc": "bd26c541f70a507764b6ace013a8c4c285c1c6312199b1e7d0befaa85b1d9a06",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 7,
+    "node": "13ac129f371ac8eec64730294e99788a6b8d8f216c5e179798741f7efa069662",
+    "jsc": "13ac129f371ac8eec64730294e99788a6b8d8f216c5e179798741f7efa069662",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 8,
+    "node": "78ffcd47f2c1af7938ba6e101aff4bf32ca5b6c2b69337ec65dbfa1d1d024408",
+    "jsc": "78ffcd47f2c1af7938ba6e101aff4bf32ca5b6c2b69337ec65dbfa1d1d024408",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 8,
+    "node": "961e67557cf8bf9ac5119fe1e2b0a3aea17c4ba2c7c2a4ee3801b2aada993514",
+    "jsc": "961e67557cf8bf9ac5119fe1e2b0a3aea17c4ba2c7c2a4ee3801b2aada993514",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 9,
+    "node": "23abd2131b253fa4f9e679db9a89187055dc907a4995c57cf7b7db400c0309fc",
+    "jsc": "23abd2131b253fa4f9e679db9a89187055dc907a4995c57cf7b7db400c0309fc",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 9,
+    "node": "d739c05ac91d9e40b8b4fcf71579283b1461a98422caeb62041f045471847ef8",
+    "jsc": "d739c05ac91d9e40b8b4fcf71579283b1461a98422caeb62041f045471847ef8",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 10,
+    "node": "f4f26ed69ac89e94ae5ec723b7ae39d0af5a2a6b9b45f0cc2547ccb6ac82d45d",
+    "jsc": "f4f26ed69ac89e94ae5ec723b7ae39d0af5a2a6b9b45f0cc2547ccb6ac82d45d",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 10,
+    "node": "5150bccb84cdd502263e08ae55e60ba20f63e77a8558ce7855b5b25539184f1f",
+    "jsc": "5150bccb84cdd502263e08ae55e60ba20f63e77a8558ce7855b5b25539184f1f",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 11,
+    "node": "d43d9e0ac4e412277706dcef514fe300c0841f02e1e414a8c5efb6d7f4620edf",
+    "jsc": "d43d9e0ac4e412277706dcef514fe300c0841f02e1e414a8c5efb6d7f4620edf",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 11,
+    "node": "5fdea7e709e4f730b98d2cfe761572a2be3fc1167ac56d5413b97a5efa1c3443",
+    "jsc": "5fdea7e709e4f730b98d2cfe761572a2be3fc1167ac56d5413b97a5efa1c3443",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 12,
+    "node": "440343f281123d011f8e4aeebfcba899bc26f7355c4b02416e8f0c8a71191979",
+    "jsc": "440343f281123d011f8e4aeebfcba899bc26f7355c4b02416e8f0c8a71191979",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 12,
+    "node": "f31ffdc089bc1d8646bcc7b5965e8b90d53e1fa7b2eddae1c86b0e733f3087e5",
+    "jsc": "f31ffdc089bc1d8646bcc7b5965e8b90d53e1fa7b2eddae1c86b0e733f3087e5",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 13,
+    "node": "8ff87147ff7ddb1a08822f49ba7def06159bd1b472fe3d95739b11b861b81ab9",
+    "jsc": "8ff87147ff7ddb1a08822f49ba7def06159bd1b472fe3d95739b11b861b81ab9",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 13,
+    "node": "4d22bc134ccb50a932157a68426564f3cd020057966a4257ff377c09c74fb7b9",
+    "jsc": "4d22bc134ccb50a932157a68426564f3cd020057966a4257ff377c09c74fb7b9",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 14,
+    "node": "c7c29d1e360738a9c756da3f52e0f38b860af870286b613a8c806c51afd30ea7",
+    "jsc": "c7c29d1e360738a9c756da3f52e0f38b860af870286b613a8c806c51afd30ea7",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 14,
+    "node": "46a41d712129d7df2a2c1a142c84066407835a582357cbc62684b87b985ada56",
+    "jsc": "46a41d712129d7df2a2c1a142c84066407835a582357cbc62684b87b985ada56",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 15,
+    "node": "0c6badda6a4e7635e7563203ed2812edf31939a417f239a324dcd9d96e6aaa1d",
+    "jsc": "0c6badda6a4e7635e7563203ed2812edf31939a417f239a324dcd9d96e6aaa1d",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 15,
+    "node": "979b3ea08f4e2a993348abeb8492d2ac7f19c2962d1851fae9af2407071b1bd2",
+    "jsc": "979b3ea08f4e2a993348abeb8492d2ac7f19c2962d1851fae9af2407071b1bd2",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 16,
+    "node": "4813a11027f054eb81febc81b137065bf2dacc6e468534ec283f6bb8bd42320b",
+    "jsc": "4813a11027f054eb81febc81b137065bf2dacc6e468534ec283f6bb8bd42320b",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 16,
+    "node": "5363ee237adbf9c70e13b6465ca6c2637cce508b3e8dbcb0c1efd86a3867777d",
+    "jsc": "5363ee237adbf9c70e13b6465ca6c2637cce508b3e8dbcb0c1efd86a3867777d",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 1,
+    "index": 17,
+    "node": "35a56b9feec51a829959c8d7c8bc2ca00a58a497257d9bc552f82e271cd61869",
+    "jsc": "35a56b9feec51a829959c8d7c8bc2ca00a58a497257d9bc552f82e271cd61869",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 1,
+    "index": 17,
+    "node": "85e4a90c462cc72a53c7f2fe09a04efaf6b5c6583d8cb611358e1fb173ceb150",
+    "jsc": "85e4a90c462cc72a53c7f2fe09a04efaf6b5c6583d8cb611358e1fb173ceb150",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 0,
+    "node": "c84112dc41fcfdb1fa8de8c44331e5345c2bc7ec329e0bb14a09e28e60023835",
+    "jsc": "c84112dc41fcfdb1fa8de8c44331e5345c2bc7ec329e0bb14a09e28e60023835",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 0,
+    "node": "68c5b1eaf2825f94b3438cadf735e349411e25d908ab19a2842bd47fd7de39a5",
+    "jsc": "68c5b1eaf2825f94b3438cadf735e349411e25d908ab19a2842bd47fd7de39a5",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 1,
+    "node": "ebaf8a169a2a0d295609402b4fe4e380320784bda710cc2a30892487b973daf7",
+    "jsc": "ebaf8a169a2a0d295609402b4fe4e380320784bda710cc2a30892487b973daf7",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 1,
+    "node": "c932078322c32bc9bb32febe44af9ea3821ec11d9dbc25a314e4328380acc608",
+    "jsc": "c932078322c32bc9bb32febe44af9ea3821ec11d9dbc25a314e4328380acc608",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 2,
+    "node": "81e76baf373b4b08fb449dc63b469895083a3a526b987f4472a311cd6cbfa223",
+    "jsc": "81e76baf373b4b08fb449dc63b469895083a3a526b987f4472a311cd6cbfa223",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 2,
+    "node": "271310a08b0af37a6898863918b159f3e4bcfefe22a0575fe6c67f343f7d276b",
+    "jsc": "271310a08b0af37a6898863918b159f3e4bcfefe22a0575fe6c67f343f7d276b",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 3,
+    "node": "c2405de79510df7431623c0b05b4035e75789d0b92df0b4f217c345b49b2d8bc",
+    "jsc": "c2405de79510df7431623c0b05b4035e75789d0b92df0b4f217c345b49b2d8bc",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 3,
+    "node": "bba374412c60d78b18765451650b7dc9b668ea531df87a2fbef8fc8f1d3c312c",
+    "jsc": "bba374412c60d78b18765451650b7dc9b668ea531df87a2fbef8fc8f1d3c312c",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 4,
+    "node": "83b0603c8703eb8ed1fd25b74f2701d5120d0f6ffaf865e9b7e6cfcd61a5fc36",
+    "jsc": "83b0603c8703eb8ed1fd25b74f2701d5120d0f6ffaf865e9b7e6cfcd61a5fc36",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 4,
+    "node": "98258a0131f47032f28b7cb7f187c81c7ff3c7bc614a9c6ffed10803c3e124ad",
+    "jsc": "98258a0131f47032f28b7cb7f187c81c7ff3c7bc614a9c6ffed10803c3e124ad",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 5,
+    "node": "a4bb28e928c6c4f250fedf566649465ded0e66e8fa25d81e6b58df7373f88066",
+    "jsc": "a4bb28e928c6c4f250fedf566649465ded0e66e8fa25d81e6b58df7373f88066",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 5,
+    "node": "009aec9c21da5b06d6a35f7e044d78d7cf7d2e37473a88a9eb929652f48a4a23",
+    "jsc": "009aec9c21da5b06d6a35f7e044d78d7cf7d2e37473a88a9eb929652f48a4a23",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 6,
+    "node": "c7f385c3a3c50f2e1d01c89848a3545f6f830a83ba6665a08f75c205f816a7df",
+    "jsc": "c7f385c3a3c50f2e1d01c89848a3545f6f830a83ba6665a08f75c205f816a7df",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 6,
+    "node": "f90f0cc4d76feaa8a946ca8386eb2f1be5c5a8e3fb07101e3bdc686f5263ea5e",
+    "jsc": "f90f0cc4d76feaa8a946ca8386eb2f1be5c5a8e3fb07101e3bdc686f5263ea5e",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 7,
+    "node": "e7d2f841fa65f1f2ce4ef216119ed3ee8d18af05ac826ec243b24f3a548a7412",
+    "jsc": "e7d2f841fa65f1f2ce4ef216119ed3ee8d18af05ac826ec243b24f3a548a7412",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 7,
+    "node": "30728a6b7338685b69f92a36882de5cb1ceed0a8c466853de8d52ecffd1627ef",
+    "jsc": "30728a6b7338685b69f92a36882de5cb1ceed0a8c466853de8d52ecffd1627ef",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 8,
+    "node": "9fbd1ee5fd08625f19bc25b74e57ea5168a18d389318f1402bba1367953e4926",
+    "jsc": "9fbd1ee5fd08625f19bc25b74e57ea5168a18d389318f1402bba1367953e4926",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 8,
+    "node": "ab4aedfdee85e586be81055bd6c82153cc50269ae74bb94fd378f352dcb8b24b",
+    "jsc": "ab4aedfdee85e586be81055bd6c82153cc50269ae74bb94fd378f352dcb8b24b",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 9,
+    "node": "72eb52dcb5847b13751306cf403ad1cee56ed48aeb07b1433e4cb25e7aa19e19",
+    "jsc": "72eb52dcb5847b13751306cf403ad1cee56ed48aeb07b1433e4cb25e7aa19e19",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 9,
+    "node": "d3393d5559ba63e67babf29953433eca326ed913816cdbf6dd27c83f41ea65f3",
+    "jsc": "d3393d5559ba63e67babf29953433eca326ed913816cdbf6dd27c83f41ea65f3",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 10,
+    "node": "b8c43c2799b9c1fb5c64d36941f52d511a073ac6461463c20260f493a3b54190",
+    "jsc": "b8c43c2799b9c1fb5c64d36941f52d511a073ac6461463c20260f493a3b54190",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 10,
+    "node": "7be99e4c6c4f9b34e114c6d3a41e66003989e859ffd77f385060e590512aae07",
+    "jsc": "7be99e4c6c4f9b34e114c6d3a41e66003989e859ffd77f385060e590512aae07",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 11,
+    "node": "ceda4b259cfc18764040446a41079b5619bfc34587432547b58ad678f30a6748",
+    "jsc": "ceda4b259cfc18764040446a41079b5619bfc34587432547b58ad678f30a6748",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 11,
+    "node": "6552df3977297ccaa47658a0e261f45a5158bb953a29905406b9d234c0ecfc6c",
+    "jsc": "6552df3977297ccaa47658a0e261f45a5158bb953a29905406b9d234c0ecfc6c",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 12,
+    "node": "1967594558dea3b0f903047bdfa50e3a0782a4960269f419e14f735a8c6bc372",
+    "jsc": "1967594558dea3b0f903047bdfa50e3a0782a4960269f419e14f735a8c6bc372",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 12,
+    "node": "160b2d13ec7e35f18097def7cb46001e1d91f8197d370a436e8004588ac668e4",
+    "jsc": "160b2d13ec7e35f18097def7cb46001e1d91f8197d370a436e8004588ac668e4",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 13,
+    "node": "6acf78786afde5d99b9316a28b0ddf43c6a045077486b82c96e346044c310b33",
+    "jsc": "6acf78786afde5d99b9316a28b0ddf43c6a045077486b82c96e346044c310b33",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 13,
+    "node": "e22ce78d05313ded388742ad736612980d7a1499edc287dfc334cb496297d32c",
+    "jsc": "e22ce78d05313ded388742ad736612980d7a1499edc287dfc334cb496297d32c",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 14,
+    "node": "d6513389e052f28fb8ac51167d0b88a72126af5405196cfb8542f598c0eebac5",
+    "jsc": "d6513389e052f28fb8ac51167d0b88a72126af5405196cfb8542f598c0eebac5",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 14,
+    "node": "e7b70fca9ad5a81a3066a72b1c0afbe7ef1f7af1b25de30a2bf4f089a7472218",
+    "jsc": "e7b70fca9ad5a81a3066a72b1c0afbe7ef1f7af1b25de30a2bf4f089a7472218",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 15,
+    "node": "82914f58e187e994a3cf3f3bd3a19c9e7c1ba2c31879b99599a2f099f14409e6",
+    "jsc": "82914f58e187e994a3cf3f3bd3a19c9e7c1ba2c31879b99599a2f099f14409e6",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 15,
+    "node": "dcd2836c3e042db5144a439e3ea53b00b91b881890cd8cf24a0a3830407a429c",
+    "jsc": "dcd2836c3e042db5144a439e3ea53b00b91b881890cd8cf24a0a3830407a429c",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 16,
+    "node": "e017243ac4bb977571edfbca68715a4985e1478a682945425b0c64432ff3958a",
+    "jsc": "e017243ac4bb977571edfbca68715a4985e1478a682945425b0c64432ff3958a",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 16,
+    "node": "c9317cf6a7f24387960b1cdc6824527e34b2f425064fd9b66ff95da13677e579",
+    "jsc": "c9317cf6a7f24387960b1cdc6824527e34b2f425064fd9b66ff95da13677e579",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 17,
+    "node": "acf3dfd8d50f0342a5446e946af985f08e60bc9daa08e0a18991c2bf6cdcc706",
+    "jsc": "acf3dfd8d50f0342a5446e946af985f08e60bc9daa08e0a18991c2bf6cdcc706",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 17,
+    "node": "7d6c872e5666da77619bab04227d7d187d8bc2be60b910a54aff3ffddcc9fbbf",
+    "jsc": "7d6c872e5666da77619bab04227d7d187d8bc2be60b910a54aff3ffddcc9fbbf",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 0,
+    "node": "23ab89f8b1b7a66c49a44badfce8ded08b119a005a2fbedced89c97a7a9e6aaa",
+    "jsc": "23ab89f8b1b7a66c49a44badfce8ded08b119a005a2fbedced89c97a7a9e6aaa",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 0,
+    "node": "6446c357c6dec090d429b7aeefed997e9969a4df27c6270b84a1d9b0e7f1f73a",
+    "jsc": "6446c357c6dec090d429b7aeefed997e9969a4df27c6270b84a1d9b0e7f1f73a",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 1,
+    "node": "856ef0e058e8b0b2ff0ca847b356428aad13169a668cd7e69c3ad9fc4dbc9345",
+    "jsc": "856ef0e058e8b0b2ff0ca847b356428aad13169a668cd7e69c3ad9fc4dbc9345",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 1,
+    "node": "ea2445a183a73e26f1d2d547825d2042bd15ad4b313a292cec5833c0e6add2d1",
+    "jsc": "ea2445a183a73e26f1d2d547825d2042bd15ad4b313a292cec5833c0e6add2d1",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 2,
+    "node": "b6fb0faf356da03cf8e810a8dffc52ea5214cda81de9cb2fa9eaaf8a79d1e913",
+    "jsc": "b6fb0faf356da03cf8e810a8dffc52ea5214cda81de9cb2fa9eaaf8a79d1e913",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 2,
+    "node": "8235df853b97b04837b0ee0cd063b148ba45c65fd6ca8c7f87a2b8e82709574d",
+    "jsc": "8235df853b97b04837b0ee0cd063b148ba45c65fd6ca8c7f87a2b8e82709574d",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 3,
+    "node": "545083b982ceb7b929c152a0c77a0acce32faf17cd19c9be10a0df2ecfc14178",
+    "jsc": "545083b982ceb7b929c152a0c77a0acce32faf17cd19c9be10a0df2ecfc14178",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 3,
+    "node": "47b3530b1c606656d3803e44e228e3b253bec2322d440324d700f288254e122a",
+    "jsc": "47b3530b1c606656d3803e44e228e3b253bec2322d440324d700f288254e122a",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 4,
+    "node": "d204004c9812a31b75f218a21b260962f0e5debdc56fcbb46d01e6d75b0ebb3d",
+    "jsc": "d204004c9812a31b75f218a21b260962f0e5debdc56fcbb46d01e6d75b0ebb3d",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 4,
+    "node": "2a6c607559ce06842c3078ad652eb6c99d450978c644881dabd0a348a3dba903",
+    "jsc": "2a6c607559ce06842c3078ad652eb6c99d450978c644881dabd0a348a3dba903",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 5,
+    "node": "91e6e029b5c66c7c3a2d25f229026fe16a10ed9c5eeace9c8959b9afd6fdb44d",
+    "jsc": "91e6e029b5c66c7c3a2d25f229026fe16a10ed9c5eeace9c8959b9afd6fdb44d",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 5,
+    "node": "c49f5dcc6d101a52a7eb3d77973d8c3e27f5dc4c3756c5d27680dc5b0ee7e7c0",
+    "jsc": "c49f5dcc6d101a52a7eb3d77973d8c3e27f5dc4c3756c5d27680dc5b0ee7e7c0",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 6,
+    "node": "4d6fe224d3fce3b2b7785442bdb63362b0e7493bebbc1127f3e71d6f016d58c4",
+    "jsc": "4d6fe224d3fce3b2b7785442bdb63362b0e7493bebbc1127f3e71d6f016d58c4",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 6,
+    "node": "bee30d8a0b35d1f046fcf3a2fc792d5d65f288525395fc489c05676216da5335",
+    "jsc": "bee30d8a0b35d1f046fcf3a2fc792d5d65f288525395fc489c05676216da5335",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 7,
+    "node": "1126bd3cd469be54719d34aa5ff0fa588ba3142b26d2d6b9973af383951f88ac",
+    "jsc": "1126bd3cd469be54719d34aa5ff0fa588ba3142b26d2d6b9973af383951f88ac",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 7,
+    "node": "bbfa0f1ff53ed52a572638c4130823f85d437aa47eba040dc9b52734875818e9",
+    "jsc": "bbfa0f1ff53ed52a572638c4130823f85d437aa47eba040dc9b52734875818e9",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 8,
+    "node": "1bb51c713558218a7f9d170f34e431c69156866492aae2edc8203f8eb29a739e",
+    "jsc": "1bb51c713558218a7f9d170f34e431c69156866492aae2edc8203f8eb29a739e",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 8,
+    "node": "8d88b90f2932e8169a2c6c9ef458209a020012f5705a9243fe6934cf73b7e7b5",
+    "jsc": "8d88b90f2932e8169a2c6c9ef458209a020012f5705a9243fe6934cf73b7e7b5",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 9,
+    "node": "0823c2595cb8908e578ac0c97b69e060b2521ceee76639de870c427e6cd5bb7a",
+    "jsc": "0823c2595cb8908e578ac0c97b69e060b2521ceee76639de870c427e6cd5bb7a",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 9,
+    "node": "c5f8b879f27987dfe2910873e4207f46c11e4a1c488e63f58b2601b3287ea7a9",
+    "jsc": "c5f8b879f27987dfe2910873e4207f46c11e4a1c488e63f58b2601b3287ea7a9",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 10,
+    "node": "79cc10d3efa9063d3af5714cf4d716b8ff267df9142c9b635efa3fa76289fed6",
+    "jsc": "79cc10d3efa9063d3af5714cf4d716b8ff267df9142c9b635efa3fa76289fed6",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 10,
+    "node": "76dd42bfa10e3da43ab2df1d652b8a3f6dca1d78f9ca1fef46441f2bfb9ce414",
+    "jsc": "76dd42bfa10e3da43ab2df1d652b8a3f6dca1d78f9ca1fef46441f2bfb9ce414",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 11,
+    "node": "a8ca90b0a11de51347d482437d40feb89f10fc65c0379b1f7ff06d168e2ff188",
+    "jsc": "a8ca90b0a11de51347d482437d40feb89f10fc65c0379b1f7ff06d168e2ff188",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 11,
+    "node": "3538244b1430e146c34368ed858b69020c9a313ed4adb5e8bbb1ca4109ced515",
+    "jsc": "3538244b1430e146c34368ed858b69020c9a313ed4adb5e8bbb1ca4109ced515",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 12,
+    "node": "16e70bdcf56ad09cc6e6e74b303bd628b34b3cf05eb3baa143645c09b78bb5a3",
+    "jsc": "16e70bdcf56ad09cc6e6e74b303bd628b34b3cf05eb3baa143645c09b78bb5a3",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 12,
+    "node": "32d3d9f3a6da50456859f2c79ffcedb95c401548503b5891d3c6a9dc6837d8ea",
+    "jsc": "32d3d9f3a6da50456859f2c79ffcedb95c401548503b5891d3c6a9dc6837d8ea",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 13,
+    "node": "e3ee019c6cdc969e7bc36bc5d07e250d897201743e1befffade443944b2d32eb",
+    "jsc": "e3ee019c6cdc969e7bc36bc5d07e250d897201743e1befffade443944b2d32eb",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 13,
+    "node": "3ef98ae863a7813232e578345a0cfd148a05872d22b8770ab3246f3b7c2110a3",
+    "jsc": "3ef98ae863a7813232e578345a0cfd148a05872d22b8770ab3246f3b7c2110a3",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 14,
+    "node": "074733e7206098380a6eeece47ce5451decfe8b9049cb92fd01e32c3c25cbec6",
+    "jsc": "074733e7206098380a6eeece47ce5451decfe8b9049cb92fd01e32c3c25cbec6",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 14,
+    "node": "2c1564a3b79047d241e88fb3fd32a28b97515d92461655fe4fb864f055fbaa56",
+    "jsc": "2c1564a3b79047d241e88fb3fd32a28b97515d92461655fe4fb864f055fbaa56",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 15,
+    "node": "64ecc59ad75d569105d8fa1babc4aa8352321a089f131fe6bb09fd2e3c545108",
+    "jsc": "64ecc59ad75d569105d8fa1babc4aa8352321a089f131fe6bb09fd2e3c545108",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 15,
+    "node": "ce733fae7ca3b339f9fa7d5e6fe2e7ab2cfcd5814b7cec14f430ca9f6484a0a8",
+    "jsc": "ce733fae7ca3b339f9fa7d5e6fe2e7ab2cfcd5814b7cec14f430ca9f6484a0a8",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 16,
+    "node": "6f88213bdb0eed6273ee721cfa19a984c50f411842252225850871f6f3065a71",
+    "jsc": "6f88213bdb0eed6273ee721cfa19a984c50f411842252225850871f6f3065a71",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 16,
+    "node": "e674c9ef4d488af6171e7f8b7ad879bd22014d42a5f8dcd46032effcb649a174",
+    "jsc": "e674c9ef4d488af6171e7f8b7ad879bd22014d42a5f8dcd46032effcb649a174",
+    "equal": true
+   },
+   {
+    "kind": "v1",
+    "seed": 2026,
+    "index": 17,
+    "node": "cd3fe1205a6a2043ad36032b6c0c36731425bf671b35fe2e84af5f08e54210a4",
+    "jsc": "cd3fe1205a6a2043ad36032b6c0c36731425bf671b35fe2e84af5f08e54210a4",
+    "equal": true
+   },
+   {
+    "kind": "v2",
+    "seed": 2026,
+    "index": 17,
+    "node": "a4c54f905ee23207328b25a1f5acb35cd3df6ce23c04dd64d076566f5c72b065",
+    "jsc": "a4c54f905ee23207328b25a1f5acb35cd3df6ce23c04dd64d076566f5c72b065",
+    "equal": true
+   }
+  ],
+  "base": [
+   {
+    "kind": "legacy",
+    "seed": 1,
+    "index": 0,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 1,
+    "index": 1,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 1,
+    "index": 2,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 96,
+    "index": 0,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 96,
+    "index": 1,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "legacy",
+    "seed": 96,
+    "index": 2,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 0,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 1,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 2,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 3,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 4,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 5,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 6,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 7,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 8,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 9,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 10,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 11,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 12,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 13,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 14,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 15,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 16,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v1",
+    "seed": 96,
+    "index": 17,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 0,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 1,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 2,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 3,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 4,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 5,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 6,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 7,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 8,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 9,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 10,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 11,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 12,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 13,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 14,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 15,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 16,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   },
+   {
+    "kind": "v2",
+    "seed": 96,
+    "index": 17,
+    "jscNativeEqNodeHost": false,
+    "jscFMathEqNodeFMath": false,
+    "jscFMathV8HypotEqNodeFMath": true
+   }
+  ]
+ }
+}

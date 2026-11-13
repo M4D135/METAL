@@ -1,0 +1,45 @@
+{
+ "schema": "metal-lot01s-t3-hypot-micro-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "linux",
+  "arch": "arm64",
+  "cpu": "unknown",
+  "loadAverage": [
+   1.43,
+   1.32,
+   1.23
+  ]
+ },
+ "root": "~/metal-tests/lot01s-t3/repo",
+ "recorded": {
+  "calls2": 3688425,
+  "calls3": 1624289,
+  "worlds": "96:s0, 96:s2, V2 96:w1, 96:w10, 96:w18, V1 1:w6"
+ },
+ "reps": 11,
+ "sameSums": {
+  "resident2": true,
+  "resident3": true,
+  "streamed2": true,
+  "streamed3": true
+ },
+ "nsPerCall": {
+  "resident builtin 2": 10.03,
+  "resident hypot2": 1.23,
+  "resident builtin 3": 12.88,
+  "resident hypot3": 2.1,
+  "streamed builtin 2": 10,
+  "streamed hypot2": 1.95,
+  "streamed builtin 3": 12.02,
+  "streamed hypot3": 3.36
+ },
+ "portOverBuiltin": {
+  "resident2": 0.123,
+  "resident3": 0.163,
+  "streamed2": 0.195,
+  "streamed3": 0.28
+ },
+ "method": "process.hrtime per pass, passes alternated (forward, then reverse order), medians; resident: the first 4 096 recorded inputs, 400 passes per timing; streamed: every recorded input once per timing."
+}

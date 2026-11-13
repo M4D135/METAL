@@ -70,7 +70,7 @@ import {loadRealm} from './tools/realm-loader.mjs';
 
 const variant = loadRealm({
   root: '/chemin/vers/METAL',
-  modules: ['renderer', 'world', 'destruction', 'economy', 'brain', 'simulation'],
+  modules: ['fmath', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation'],
   patches: {simulation: [['ancre unique', 'remplacement']]},
   instrument: false,
   realm: 'main',
@@ -183,6 +183,44 @@ méthode. Ils ne sont pas le mode des profils de performance ordinaires.
 Le banc historique `bancs/sim/realm-check.mjs` compare deux contextes VM
 (Math partagé ou non) ; `tools/realm-check.mjs` complète ce diagnostic par une
 vraie comparaison main/VM avec temps CPU et checksums.
+
+## Trigonométrie portable (lot 01 suite)
+
+Depuis le lot 01 suite (T2), `src/world.js` prend `sin`, `cos`, `atan` et
+`atan2` dans `FMath` (`src/fmath.js`), identique bit à bit sur toutes les
+plateformes, et depuis T3 `hypot2` et `hypot3` (le `Math.hypot` de V8, que
+JavaScriptCore calcule autrement). Sans `modules`, `loadRealm` charge donc `fmath` en tête quand la
+racine a `src/fmath.js` (`defaultModules(root)`) ; une racine plus ancienne
+garde la liste historique, et une racine dont `world.js` cite `FMath` sans
+`src/fmath.js` est refusée. Une liste explicite qui contient `world` doit
+placer `fmath` avant lui.
+
+La simulation, la destruction et le pilote gardent le `Math` de la machine : sur
+arm64 (Mac, Linux arm64), un rejeu s'écarte des références x86-64 dès le
+44e pas. La précharge `fmath-global.mjs` remplace ces quatre fonctions dans
+tout le processus, pour comparer un rejeu fait sur arm64 aux références :
+
+```sh
+node --import=./tools/proof/fmath-global.mjs tools/profile-steps.mjs . --reps 1 --warmups 1 --no-counters --out /tmp/p.json
+node tools/proof/reference-check.mjs /tmp/p.json
+```
+
+`tools/gen-ab.mjs` compare le coût de `FWorld.create` entre deux racines (A/A
+intégré) ; `tools/platform-math.mjs` mesure la sensibilité des mondes, des
+points de reprise et des rejeux à la plateforme.
+
+Depuis T4, `checks/campaign-world.test.mjs` compare aussi les 108 mondes de
+campagne (V1 et V2, 18 mondes pour chacune des graines 1, 96 et 2026) à leurs
+empreintes dorées, `checks/campaign-world-digests.json` : SHA-256 de
+`JSON.stringify(monde)`, comme `digest()` du test. Tout nombre changé et tout
+champ ajouté dans un monde de campagne fait échouer sa boucle (MURS-06).
+`node tools/platform-math.mjs worlds . --fixture check` compare les mondes de la
+racine au fichier, et `--fixture write` le réécrit. L'écriture n'est possible
+qu'avec un `world.js` qui prend sa trigonométrie dans `FMath`, et seulement si
+les six mondes classiques du même passage égalent les `legacyHashes` du test.
+Seul un changement voulu de la génération justifie de régénérer le fichier, dans
+le commit qui fait ce changement et qui dit pourquoi ; jamais pour faire passer
+un test.
 
 ## Limites de la livraison T1
 

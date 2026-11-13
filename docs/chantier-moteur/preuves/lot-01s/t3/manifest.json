@@ -1,0 +1,273 @@
+{
+ "schema": "metal-lot01s-t3-manifest-v1",
+ "task": "Lot 01 suite / T3 — FMath.hypot : portage exact de l'hypot de V8 (MURS-V1, SIM-10)",
+ "base": {
+  "commit": "6829b0c",
+  "measurementBase": "git archive 6829b0c ($T2) ; git archive 71eca61 ($BASE)"
+ },
+ "encoding": "JSON en UTF-8 ; journaux en gzip (niveau 9, mtime 0)",
+ "pathNormalization": {
+  "note": "After measurement, machine-specific absolute path prefixes in the JSON outputs were rewritten; no other byte was changed. The npm test logs contained none.",
+  "replaced": {
+   "<Mac home>/claude/metal-chantier/": "~/claude/metal-chantier/",
+   "<Spark home>/metal-tests/": "~/metal-tests/",
+   "<Mac scratch directory>/lot01s-t3": "$W"
+  }
+ },
+ "environments": {
+  "mac": {
+   "machine": "Apple M5",
+   "os": "macOS 27.2.1 (Darwin 27.2.0)",
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "arch": "arm64",
+   "chrome": "157.0.8103.39",
+   "jsc": "system JavaScriptCore"
+  },
+  "spark": {
+   "machine": "NVIDIA GB10",
+   "os": "Linux 6.17.0-1026-nvidia",
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "arch": "arm64",
+   "chrome": "151.0.7922.137",
+   "jsc": null
+  }
+ },
+ "files": [
+  {
+   "file": "PROOF.md",
+   "purpose": "Preuve lisible de la tâche T3",
+   "bytes": 18932,
+   "sha256": "55bac1b49fd0c78d1dbf55412f72d1b028a0501d5a56d509a89ef8c73120c64d"
+  },
+  {
+   "file": "dist-check.mjs",
+   "purpose": "Outil de preuve : sonde des mondes dans dist/index.html ouvert dans Chrome sans tête",
+   "bytes": 4876,
+   "sha256": "5719f5a6fff7a40bc7728df7b4936a86128c27365995b7f54460dd781d97b0cc"
+  },
+  {
+   "file": "hypot-proof.mjs",
+   "purpose": "Outil de preuve : vectors, sweep, worlds et micro contre Math.hypot de V8",
+   "bytes": 18859,
+   "sha256": "bfaa2b499361d41875d8db16d05a4561dd324d31eea85ecafd11c1b75e5c8ff8"
+  },
+  {
+   "file": "mac/census.json",
+   "purpose": "Fonctions de Math et de FMath appelées par world.js sur les 114 mondes ; hypot2 et hypot3 contre Math.hypot",
+   "bytes": 89544,
+   "sha256": "01287ce98d09c851044cd1825d1aa070e6791c5480a96d8f02337c0d6ac9c513"
+  },
+  {
+   "file": "mac/dist-check.json",
+   "purpose": "dist/index.html tel que construit, dans Chrome sans tête : SHA-256 des 42 mondes de la graine 96 contre Node",
+   "bytes": 10619,
+   "sha256": "43fb887cee07d0f5f0b612e095efd3923dd2c000fd3725cd491a92940e62dde4"
+  },
+  {
+   "file": "mac/engines-t2.json",
+   "purpose": "Le même engines appliqué à $T2 : colonne « avant » de jsc",
+   "bytes": 55636,
+   "sha256": "0ea4081612f411556de00f43c990cb4a72184e724affca757690850149217a29"
+  },
+  {
+   "file": "mac/engines.json",
+   "purpose": "Chrome et jsc : vecteurs FMath et hypot, mondes du jeu dans jsc (114) et variantes de $BASE (42)",
+   "bytes": 55673,
+   "sha256": "f229423da5414f994101c686d68b5c9df1ee8818517c499c981b3c6556b5c33c"
+  },
+  {
+   "file": "mac/gen-ab-aa-entree.json",
+   "purpose": "Contrôle A/A pris à l'entrée de la tâche ($T2 contre $T2, 3 mondes)",
+   "bytes": 2183,
+   "sha256": "ac827b6a5dd1decbfb11a4c07e8eaa0a3ee9c51900e8f8821101095bff5ff05f"
+  },
+  {
+   "file": "mac/gen-ab-aa.json",
+   "purpose": "Contrôle A/A du coût de FWorld.create : $T2 contre $T2, 6 mondes, 15 répétitions",
+   "bytes": 3189,
+   "sha256": "a234fb31b9874f02c3cb0eb2b8dfc253bfed93b917f57b0f37e7409a4247d6c2"
+  },
+  {
+   "file": "mac/gen-ab-t2-t3-1.json",
+   "purpose": "Coût, essai 1 : $T2 puis la branche, 3 mondes, 15 répétitions",
+   "bytes": 2185,
+   "sha256": "38d49b6b9de77183682d5e92ed78730f4e75d0a052c0bc39832a8eeb4d714135"
+  },
+  {
+   "file": "mac/gen-ab-t2-t3-2.json",
+   "purpose": "Coût, série complète : $T2 puis la branche, 6 mondes, 15 répétitions",
+   "bytes": 3207,
+   "sha256": "c748d32728e23d6272937ae29833317245da442f8d24d72603901efd019dd04b"
+  },
+  {
+   "file": "mac/gen-ab-t3-t2-1.json",
+   "purpose": "Coût, essai 1 : la branche puis $T2",
+   "bytes": 2180,
+   "sha256": "de32a26b62b5d59e3b0b956f42d4ad37c24480f4da0aa36f89b4db4025ac7cf1"
+  },
+  {
+   "file": "mac/gen-ab-t3-t2-2.json",
+   "purpose": "Coût, série complète : la branche puis $T2",
+   "bytes": 3211,
+   "sha256": "e378bd0b6951ea7141a8580509984e386bcd06fea6d2b67ca2fee55cb12af9b9"
+  },
+  {
+   "file": "mac/golden.json",
+   "purpose": "Les 8 tests historiques à empreintes dorées : $BASE avec le Math de la machine, puis la branche",
+   "bytes": 27981,
+   "sha256": "29287451ecbe55666c458b4798417876b50541478e04bd3aced4052af04ce8ef"
+  },
+  {
+   "file": "mac/hypot-micro.json",
+   "purpose": "ns par appel de Math.hypot et de hypot2/hypot3 sur les entrées relevées dans six mondes",
+   "bytes": 1110,
+   "sha256": "d21dd3d1c38d33f1da820e6a7ba50ffb6abd0bfbcffe25401dc8afa07aad689b"
+  },
+  {
+   "file": "mac/hypot-sweep.json",
+   "purpose": "hypot2, hypot3 et hypot contre Math.hypot de V8 sur 41 012 760 entrées tirées",
+   "bytes": 2395,
+   "sha256": "839524460f324db845460f4e49c657c426b9bf5ac1dc49819a9204b9d96357b1"
+  },
+  {
+   "file": "mac/hypot-worlds.json",
+   "purpose": "Chaque appel hypot2/hypot3 des 114 mondes comparé à Math.hypot ; entrées distinctes",
+   "bytes": 17525,
+   "sha256": "3c76d86d7ac96860bf55695346f1e5a4cc870d280ec55c6f7dce6f6f6b70c06e"
+  },
+  {
+   "file": "mac/mutation-check.json",
+   "purpose": "Résultat des 13 fautes, du témoin et de la forme équivalente",
+   "bytes": 6903,
+   "sha256": "b07acdff334ab431e9045a6d5ddb788653d62f51b68fd814ca869e3a33dad848"
+  },
+  {
+   "file": "mac/npm-test.log.gz",
+   "purpose": "Journal TAP de npm test après T3 (485 sur 485)",
+   "bytes": 27304,
+   "sha256": "b736464d2d7fa61cbea82618f1fd0196461f3ba047ad37c40335861bcb31d2de"
+  },
+  {
+   "file": "mac/replay-fmath.json",
+   "purpose": "Rejeux de preuve, 4 scénarios de 1 800 pas, contre l'oracle x86-64",
+   "bytes": 3251,
+   "sha256": "32dde29cb54e5004b3e588731116c6b24ed90256aa3d4db03b7481ad28463545"
+  },
+  {
+   "file": "mac/replay-v2-fmath.json",
+   "purpose": "Rejeux V2 courts (120 pas) contre l'oracle x86-64",
+   "bytes": 2080,
+   "sha256": "71bed5c33e9a0b8b55e07c177cd908822803e8894dfcab1d04055b5d42485d84"
+  },
+  {
+   "file": "mac/vectors-check.json",
+   "purpose": "La table checks/fmath-hypot-vectors.txt régénérée par ce V8 : identique",
+   "bytes": 245,
+   "sha256": "b6e4ea5c62429749ad5c0bcc99379115a8a6af78348f6791398ebbe915a88b28"
+  },
+  {
+   "file": "mac/worlds.json",
+   "purpose": "SHA-256 des 114 mondes ; égalité avec $T2",
+   "bytes": 28345,
+   "sha256": "32ace4ce66153809f80291bcb7d6dfc569777bf110d209eea570b21faba6bc4a"
+  },
+  {
+   "file": "mutation-check.mjs",
+   "purpose": "Outil de preuve : 13 fautes appliquées à une copie de src/fmath.js, contre checks/fmath.test.mjs",
+   "bytes": 5185,
+   "sha256": "39d1726dbe5cf5de8e526104110557368e48cc1110573575b13519bd9a383c1a"
+  },
+  {
+   "file": "spark/census.json",
+   "purpose": "Fonctions de Math et de FMath appelées par world.js sur les 114 mondes ; hypot2 et hypot3 contre Math.hypot",
+   "bytes": 88997,
+   "sha256": "637860e5857f75502387774f2a1c6907507bc19ce104faa6734202283a59f21f"
+  },
+  {
+   "file": "spark/dist-check.json",
+   "purpose": "dist/index.html tel que construit, dans Chrome sans tête : SHA-256 des 42 mondes de la graine 96 contre Node",
+   "bytes": 10564,
+   "sha256": "c007e6acdb5f0e866120dfad14eac1e2bbb83decbb03945f11350c4041885484"
+  },
+  {
+   "file": "spark/engines.json",
+   "purpose": "Chrome et jsc : vecteurs FMath et hypot, mondes du jeu dans jsc (114) et variantes de $BASE (42)",
+   "bytes": 20135,
+   "sha256": "1014fb765b53b4c89b8abda6f25d3555cb0e5941d6c7822335c5399360d55267"
+  },
+  {
+   "file": "spark/gen-ab-aa.json",
+   "purpose": "Contrôle A/A du coût de FWorld.create : $T2 contre $T2, 6 mondes, 15 répétitions",
+   "bytes": 3202,
+   "sha256": "9b73576e8faa6d71984549952a4c8952bfa5c28845db9b0e89be27a4e3b56204"
+  },
+  {
+   "file": "spark/gen-ab-t2-t3-1.json",
+   "purpose": "Coût : $T2 puis la branche, 6 mondes, 15 répétitions",
+   "bytes": 3202,
+   "sha256": "dfd73559157a06b898b5866df570860549834e8bbce8e0e8afd359042aeb84d2"
+  },
+  {
+   "file": "spark/gen-ab-t3-t2-1.json",
+   "purpose": "Coût : la branche puis $T2",
+   "bytes": 3208,
+   "sha256": "e90d105da163c4e99bbcefecece379329a38827614f5c4f7eaf3a0135c557eb4"
+  },
+  {
+   "file": "spark/golden.json",
+   "purpose": "Les 8 tests historiques à empreintes dorées : $BASE avec le Math de la machine, puis la branche",
+   "bytes": 27928,
+   "sha256": "62f66564a9a7b4b43387bb72fd4cb584170b9da2dfd58f0598a439127a6f7446"
+  },
+  {
+   "file": "spark/hypot-micro.json",
+   "purpose": "ns par appel de Math.hypot et de hypot2/hypot3 sur les entrées relevées dans six mondes",
+   "bytes": 1083,
+   "sha256": "0f54eb899c965015de87ed596102ed65859e20f4a8772a4031774e93e899f362"
+  },
+  {
+   "file": "spark/hypot-sweep.json",
+   "purpose": "hypot2, hypot3 et hypot contre Math.hypot de V8 sur 41 012 760 entrées tirées",
+   "bytes": 2367,
+   "sha256": "549dd527c8e0dc4d09780b933aa02b09a1c93281dd7710ff9e2636ba5ed295ec"
+  },
+  {
+   "file": "spark/hypot-worlds.json",
+   "purpose": "Chaque appel hypot2/hypot3 des 114 mondes comparé à Math.hypot ; entrées distinctes",
+   "bytes": 17502,
+   "sha256": "7a2715e017b777ffe0969171527d7e121d37c0bfa74e9a2dbe80cdbfd1eb9322"
+  },
+  {
+   "file": "spark/npm-test.log.gz",
+   "purpose": "Journal TAP de npm test après T3 (485 sur 485)",
+   "bytes": 27576,
+   "sha256": "c9552fb27c9016acdbd26ad35910b7f8fd8f32c49f16cf02969e3dcbc5865348"
+  },
+  {
+   "file": "spark/replay-fmath.json",
+   "purpose": "Rejeux de preuve, 4 scénarios de 1 800 pas, contre l'oracle x86-64",
+   "bytes": 3251,
+   "sha256": "554738efa9fbd53caeba4142efde28a515e4fc01d4073fc7fdffae8606cff5f9"
+  },
+  {
+   "file": "spark/replay-v2-fmath.json",
+   "purpose": "Rejeux V2 courts (120 pas) contre l'oracle x86-64",
+   "bytes": 2080,
+   "sha256": "fcb7090860d13147b0273d8d674c59a7fecab667f2152e243b879940da90291a"
+  },
+  {
+   "file": "spark/vectors-check.json",
+   "purpose": "La table checks/fmath-hypot-vectors.txt régénérée par ce V8 : identique",
+   "bytes": 246,
+   "sha256": "35ffd715793dc06fd1e983efaecb6d517e5aafaf0b7bc503f14c316ac83bcf6b"
+  },
+  {
+   "file": "spark/worlds.json",
+   "purpose": "SHA-256 des 114 mondes ; égalité avec $T2",
+   "bytes": 28366,
+   "sha256": "af7ffbe4aae80200c69aea89af35147292d4f75956c328e5f566b38a40bf116a"
+  }
+ ]
+}

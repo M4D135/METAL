@@ -1,0 +1,406 @@
+{
+ "schema": "metal-lot01s-shell-checkpoints-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "arch": "arm64"
+ },
+ "root": "~/claude/metal-chantier/nav",
+ "base": "$W/base71",
+ "note": "Writer: world.js and FSimulation of the base root (host Math), 60 steps of 1/60 s, envelope of game.js saveCheckpoint(). Reader: the real shell (game.js) of the root with its FWorld (fmath.js, world.js), harness of checks/checkpoint.test.mjs.",
+ "summary": [
+  {
+   "case": "classique 96/0",
+   "control": "Signal retrouvé. Reprise au dernier point enregistré.",
+   "branch": "Point de reprise illisible. Reprise à l’entrée de ce secteur.",
+   "restores": [
+    false,
+    false
+   ],
+   "refuseSlot": true,
+   "exception": false,
+   "consoleErrors": 0
+  },
+  {
+   "case": "classique 1/0",
+   "control": "Signal retrouvé. Reprise au dernier point enregistré.",
+   "branch": "Signal retrouvé. Reprise au dernier point enregistré.",
+   "restores": [
+    true
+   ],
+   "refuseSlot": false,
+   "exception": false,
+   "consoleErrors": 0
+  },
+  {
+   "case": "V1 96 monde 1",
+   "control": "Signal retrouvé. Reprise au dernier point enregistré.",
+   "branch": "Point de reprise illisible. Reprise à l’entrée de ce secteur.",
+   "restores": [
+    false,
+    false
+   ],
+   "refuseSlot": true,
+   "exception": false,
+   "consoleErrors": 0
+  },
+  {
+   "case": "V1 96 monde 2",
+   "control": "Signal retrouvé. Reprise au dernier point enregistré.",
+   "branch": "Signal retrouvé. Reprise au dernier point enregistré.",
+   "restores": [
+    true
+   ],
+   "refuseSlot": false,
+   "exception": false,
+   "consoleErrors": 0
+  },
+  {
+   "case": "V2 96 monde 1",
+   "control": "Signal retrouvé. Reprise au dernier point enregistré.",
+   "branch": "Point de reprise illisible. Reprise à l’entrée de ce secteur.",
+   "restores": [
+    false,
+    false
+   ],
+   "refuseSlot": true,
+   "exception": false,
+   "consoleErrors": 0
+  },
+  {
+   "case": "V2 96 monde 2",
+   "control": "Signal retrouvé. Reprise au dernier point enregistré.",
+   "branch": "Signal retrouvé. Reprise au dernier point enregistré.",
+   "restores": [
+    true
+   ],
+   "refuseSlot": false,
+   "exception": false,
+   "consoleErrors": 0
+  }
+ ],
+ "rows": [
+  {
+   "case": "classique 96/0",
+   "seed": 96,
+   "index": 0,
+   "options": null,
+   "fingerprint": "gtsp0p",
+   "control": {
+    "state": "playing",
+    "toast": "Signal retrouvé. Reprise au dernier point enregistré.",
+    "restores": [
+     {
+      "ok": true,
+      "withRubble": true
+     }
+    ],
+    "exception": null
+   },
+   "branch": {
+    "state": "playing",
+    "toast": "Point de reprise illisible. Reprise à l’entrée de ce secteur.",
+    "restores": [
+     {
+      "ok": false,
+      "withRubble": true
+     },
+     {
+      "ok": false,
+      "withRubble": false
+     }
+    ],
+    "exception": null,
+    "consoleErrors": [],
+    "refuseSlotHoldsOriginal": true,
+    "refuseSlotWritten": true,
+    "activeIsOriginal": false,
+    "loaded": {
+     "seed": 96,
+     "stage": 0,
+     "index": null,
+     "campaign": false,
+     "campaignVersion": null
+    },
+    "next": {
+     "seed": 96,
+     "stage": 0,
+     "index": null,
+     "version": 2,
+     "relays": 0,
+     "entryLoadoutKept": true,
+     "runStatsKept": true
+    },
+    "loadoutIsEntry": true
+   }
+  },
+  {
+   "case": "classique 1/0",
+   "seed": 1,
+   "index": 0,
+   "options": null,
+   "fingerprint": "aebz7a",
+   "control": {
+    "state": "playing",
+    "toast": "Signal retrouvé. Reprise au dernier point enregistré.",
+    "restores": [
+     {
+      "ok": true,
+      "withRubble": true
+     }
+    ],
+    "exception": null
+   },
+   "branch": {
+    "state": "playing",
+    "toast": "Signal retrouvé. Reprise au dernier point enregistré.",
+    "restores": [
+     {
+      "ok": true,
+      "withRubble": true
+     }
+    ],
+    "exception": null,
+    "consoleErrors": [],
+    "refuseSlotHoldsOriginal": false,
+    "refuseSlotWritten": false,
+    "activeIsOriginal": true,
+    "loaded": {
+     "seed": 1,
+     "stage": 0,
+     "index": null,
+     "campaign": false,
+     "campaignVersion": null
+    },
+    "next": {
+     "seed": 1,
+     "stage": 0,
+     "index": null,
+     "version": 2,
+     "relays": 0,
+     "entryLoadoutKept": true,
+     "runStatsKept": true
+    },
+    "loadoutIsEntry": true
+   }
+  },
+  {
+   "case": "V1 96 monde 1",
+   "seed": 96,
+   "index": 0,
+   "options": {
+    "campaign": true
+   },
+   "fingerprint": "pyzqa3",
+   "control": {
+    "state": "playing",
+    "toast": "Signal retrouvé. Reprise au dernier point enregistré.",
+    "restores": [
+     {
+      "ok": true,
+      "withRubble": true
+     }
+    ],
+    "exception": null
+   },
+   "branch": {
+    "state": "playing",
+    "toast": "Point de reprise illisible. Reprise à l’entrée de ce secteur.",
+    "restores": [
+     {
+      "ok": false,
+      "withRubble": true
+     },
+     {
+      "ok": false,
+      "withRubble": false
+     }
+    ],
+    "exception": null,
+    "consoleErrors": [],
+    "refuseSlotHoldsOriginal": true,
+    "refuseSlotWritten": true,
+    "activeIsOriginal": false,
+    "loaded": {
+     "seed": 96,
+     "stage": 0,
+     "index": 0,
+     "campaign": true,
+     "campaignVersion": null
+    },
+    "next": {
+     "seed": 96,
+     "stage": 0,
+     "index": 0,
+     "version": 3,
+     "relays": 0,
+     "entryLoadoutKept": true,
+     "runStatsKept": true
+    },
+    "loadoutIsEntry": true
+   }
+  },
+  {
+   "case": "V1 96 monde 2",
+   "seed": 96,
+   "index": 1,
+   "options": {
+    "campaign": true
+   },
+   "fingerprint": "moazy2",
+   "control": {
+    "state": "playing",
+    "toast": "Signal retrouvé. Reprise au dernier point enregistré.",
+    "restores": [
+     {
+      "ok": true,
+      "withRubble": true
+     }
+    ],
+    "exception": null
+   },
+   "branch": {
+    "state": "playing",
+    "toast": "Signal retrouvé. Reprise au dernier point enregistré.",
+    "restores": [
+     {
+      "ok": true,
+      "withRubble": true
+     }
+    ],
+    "exception": null,
+    "consoleErrors": [],
+    "refuseSlotHoldsOriginal": false,
+    "refuseSlotWritten": false,
+    "activeIsOriginal": true,
+    "loaded": {
+     "seed": 96,
+     "stage": 1,
+     "index": 1,
+     "campaign": true,
+     "campaignVersion": null
+    },
+    "next": {
+     "seed": 96,
+     "stage": 1,
+     "index": 1,
+     "version": 3,
+     "relays": 0,
+     "entryLoadoutKept": true,
+     "runStatsKept": true
+    },
+    "loadoutIsEntry": true
+   }
+  },
+  {
+   "case": "V2 96 monde 1",
+   "seed": 96,
+   "index": 0,
+   "options": {
+    "campaign": true,
+    "campaignVersion": 2
+   },
+   "fingerprint": "q8r4a0",
+   "control": {
+    "state": "playing",
+    "toast": "Signal retrouvé. Reprise au dernier point enregistré.",
+    "restores": [
+     {
+      "ok": true,
+      "withRubble": true
+     }
+    ],
+    "exception": null
+   },
+   "branch": {
+    "state": "playing",
+    "toast": "Point de reprise illisible. Reprise à l’entrée de ce secteur.",
+    "restores": [
+     {
+      "ok": false,
+      "withRubble": true
+     },
+     {
+      "ok": false,
+      "withRubble": false
+     }
+    ],
+    "exception": null,
+    "consoleErrors": [],
+    "refuseSlotHoldsOriginal": true,
+    "refuseSlotWritten": true,
+    "activeIsOriginal": false,
+    "loaded": {
+     "seed": 96,
+     "stage": 0,
+     "index": 0,
+     "campaign": true,
+     "campaignVersion": 2
+    },
+    "next": {
+     "seed": 96,
+     "stage": 0,
+     "index": 0,
+     "version": 3,
+     "relays": 0,
+     "entryLoadoutKept": true,
+     "runStatsKept": true
+    },
+    "loadoutIsEntry": true
+   }
+  },
+  {
+   "case": "V2 96 monde 2",
+   "seed": 96,
+   "index": 1,
+   "options": {
+    "campaign": true,
+    "campaignVersion": 2
+   },
+   "fingerprint": "mvmem1",
+   "control": {
+    "state": "playing",
+    "toast": "Signal retrouvé. Reprise au dernier point enregistré.",
+    "restores": [
+     {
+      "ok": true,
+      "withRubble": true
+     }
+    ],
+    "exception": null
+   },
+   "branch": {
+    "state": "playing",
+    "toast": "Signal retrouvé. Reprise au dernier point enregistré.",
+    "restores": [
+     {
+      "ok": true,
+      "withRubble": true
+     }
+    ],
+    "exception": null,
+    "consoleErrors": [],
+    "refuseSlotHoldsOriginal": false,
+    "refuseSlotWritten": false,
+    "activeIsOriginal": true,
+    "loaded": {
+     "seed": 96,
+     "stage": 1,
+     "index": 1,
+     "campaign": true,
+     "campaignVersion": 2
+    },
+    "next": {
+     "seed": 96,
+     "stage": 1,
+     "index": 1,
+     "version": 3,
+     "relays": 0,
+     "entryLoadoutKept": true,
+     "runStatsKept": true
+    },
+    "loadoutIsEntry": true
+   }
+  }
+ ]
+}

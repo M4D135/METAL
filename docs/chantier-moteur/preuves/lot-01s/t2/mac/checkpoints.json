@@ -1,0 +1,834 @@
+{
+ "schema": "metal-platform-math-checkpoints-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64"
+ },
+ "root": "~/claude/metal-chantier/nav",
+ "base": "$W/base71",
+ "note": "Fingerprint = FSimulation snapshot().fingerprint (src/simulation.js, identity of the world: colliders, destructibles, enemies...; meshes excluded). Simulation modules use the host Math; only world generation differs.",
+ "summary": {
+  "legacy": {
+   "worlds": 6,
+   "worldJsonChanged": 6,
+   "checkpointFingerprintChanged": 3,
+   "changedWorlds": [
+    "1:s2",
+    "96:s0",
+    "96:s2"
+   ]
+  },
+  "v1": {
+   "worlds": 18,
+   "worldJsonChanged": 18,
+   "checkpointFingerprintChanged": 8,
+   "changedWorlds": [
+    "96:w1",
+    "96:w3",
+    "96:w5",
+    "96:w6",
+    "96:w8",
+    "96:w9",
+    "96:w10",
+    "96:w15"
+   ]
+  },
+  "v2": {
+   "worlds": 18,
+   "worldJsonChanged": 18,
+   "checkpointFingerprintChanged": 8,
+   "changedWorlds": [
+    "96:w1",
+    "96:w3",
+    "96:w5",
+    "96:w6",
+    "96:w8",
+    "96:w9",
+    "96:w10",
+    "96:w15"
+   ]
+  }
+ },
+ "differingTopLevelFields": {
+  "meshes": 42,
+  "destructibles": 19
+ },
+ "differencesByField": {
+  "meshes.r": {
+   "count": 778,
+   "maxAbs": 2.3203661214665772e-14
+  },
+  "meshes.p": {
+   "count": 186,
+   "maxAbs": 7.105427357601002e-15
+  },
+  "meshes.s": {
+   "count": 318,
+   "maxAbs": 6.439293542825908e-15
+  },
+  "destructibles.bounds.minZ": {
+   "count": 3,
+   "maxAbs": 3.552713678800501e-15
+  },
+  "destructibles.bounds.maxZ": {
+   "count": 1,
+   "maxAbs": 1.7763568394002505e-15
+  },
+  "destructibles.bounds.maxY": {
+   "count": 7,
+   "maxAbs": 1.7763568394002505e-15
+  },
+  "destructibles.bounds.minY": {
+   "count": 12,
+   "maxAbs": 5.551115123125783e-17
+  },
+  "destructibles.bounds.minX": {
+   "count": 3,
+   "maxAbs": 8.881784197001252e-16
+  }
+ },
+ "maxAbsDifference": 2.3203661214665772e-14,
+ "maxRelDifference": 2.973739614291729e-13,
+ "numericDifferencesPerChangedWorld": {
+  "min": 1,
+  "max": 72
+ },
+ "structuralDifferences": 0,
+ "rows": [
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 0,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "aebz7a",
+   "checkpointFingerprintFMath": "aebz7a",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 23,
+   "maxAbsDifference": 1.7763568394002505e-15,
+   "maxRelDifference": 1.1770531478054391e-15,
+   "maxAbsPath": "$.meshes.601.p.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 1,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "1s12rdw",
+   "checkpointFingerprintFMath": "1s12rdw",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 1,
+   "maxAbsDifference": 5.551115123125783e-17,
+   "maxRelDifference": 2.0767206601488085e-16,
+   "maxAbsPath": "$.meshes.133.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "legacy",
+   "seed": 1,
+   "index": 2,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "124o0my",
+   "checkpointFingerprintFMath": "y93oey",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 65,
+   "maxAbsDifference": 7.105427357601002e-15,
+   "maxRelDifference": 2.5402394536940493e-14,
+   "maxAbsPath": "$.meshes.123.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 0,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "gtsp0p",
+   "checkpointFingerprintFMath": "1o7sffm",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 26,
+   "maxAbsDifference": 5.495603971894525e-15,
+   "maxRelDifference": 1.7543377116902738e-14,
+   "maxAbsPath": "$.meshes.1602.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 1,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "4m0ku9",
+   "checkpointFingerprintFMath": "4m0ku9",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 1,
+   "maxAbsDifference": 4.440892098500626e-16,
+   "maxRelDifference": 1.3392960423539108e-16,
+   "maxAbsPath": "$.meshes.10177.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "legacy",
+   "seed": 96,
+   "index": 2,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "qz5q6f",
+   "checkpointFingerprintFMath": "11342u4",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 72,
+   "maxAbsDifference": 7.105427357601002e-15,
+   "maxRelDifference": 1.4306117619161166e-14,
+   "maxAbsPath": "$.meshes.257.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 0,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "pyzqa3",
+   "checkpointFingerprintFMath": "1eug0z8",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 26,
+   "maxAbsDifference": 5.495603971894525e-15,
+   "maxRelDifference": 1.7543377116902738e-14,
+   "maxAbsPath": "$.meshes.1602.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 1,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "moazy2",
+   "checkpointFingerprintFMath": "moazy2",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 1,
+   "maxAbsDifference": 4.440892098500626e-16,
+   "maxRelDifference": 1.3392960423539108e-16,
+   "maxAbsPath": "$.meshes.10177.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 2,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "12pfoi6",
+   "checkpointFingerprintFMath": "pcp3wj",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 72,
+   "maxAbsDifference": 7.105427357601002e-15,
+   "maxRelDifference": 1.4306117619161166e-14,
+   "maxAbsPath": "$.meshes.257.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 3,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "cqf8fy",
+   "checkpointFingerprintFMath": "cqf8fy",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 28,
+   "maxAbsDifference": 7.105427357601002e-15,
+   "maxRelDifference": 8.715146054541566e-15,
+   "maxAbsPath": "$.meshes.1005.p.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 4,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "1mijpri",
+   "checkpointFingerprintFMath": "1r7jead",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 3,
+   "maxAbsDifference": 5.551115123125783e-17,
+   "maxRelDifference": 4.794148235460645e-16,
+   "maxAbsPath": "$.meshes.1300.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 5,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "s0mlis",
+   "checkpointFingerprintFMath": "1l8a2v7",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 59,
+   "maxAbsDifference": 1.7763568394002505e-15,
+   "maxRelDifference": 1.9182535146694003e-15,
+   "maxAbsPath": "$.meshes.542.s.1",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 6,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "12grqg5",
+   "checkpointFingerprintFMath": "12grqg5",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 26,
+   "maxAbsDifference": 3.497202527569243e-15,
+   "maxRelDifference": 1.2235747091463161e-14,
+   "maxAbsPath": "$.meshes.295.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 7,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "1c7ntad",
+   "checkpointFingerprintFMath": "1ypdv2o",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 2,
+   "maxAbsDifference": 3.552713678800501e-15,
+   "maxRelDifference": 1.9306698073975032e-16,
+   "maxAbsPath": "$.destructibles.91.bounds.minZ",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 8,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "i915u",
+   "checkpointFingerprintFMath": "1dide6l",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 69,
+   "maxAbsDifference": 1.341982081015658e-14,
+   "maxRelDifference": 1.4369127006616882e-13,
+   "maxAbsPath": "$.meshes.1930.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 9,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "11bcwbj",
+   "checkpointFingerprintFMath": "u96uuo",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 27,
+   "maxAbsDifference": 1.9984014443252818e-15,
+   "maxRelDifference": 2.8320039681419402e-15,
+   "maxAbsPath": "$.meshes.600.s.1",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 10,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "vqfv7l",
+   "checkpointFingerprintFMath": "vqfv7l",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 2,
+   "maxAbsDifference": 8.881784197001252e-16,
+   "maxRelDifference": 1.8123635682658196e-16,
+   "maxAbsPath": "$.meshes.10640.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 11,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "1yicowc",
+   "checkpointFingerprintFMath": "1yicowc",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 54,
+   "maxAbsDifference": 1.7763568394002505e-15,
+   "maxRelDifference": 2.3020540449555446e-15,
+   "maxAbsPath": "$.meshes.652.r.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 12,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "eid3aw",
+   "checkpointFingerprintFMath": "eid3aw",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 33,
+   "maxAbsDifference": 2.3203661214665772e-14,
+   "maxRelDifference": 2.973739614291729e-13,
+   "maxAbsPath": "$.meshes.1632.r.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 13,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "6fe4no",
+   "checkpointFingerprintFMath": "6fe4no",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 4,
+   "maxAbsDifference": 4.440892098500626e-16,
+   "maxRelDifference": 1.9177805689404558e-16,
+   "maxAbsPath": "$.meshes.11054.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 14,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "1mcycss",
+   "checkpointFingerprintFMath": "17ogweb",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 55,
+   "maxAbsDifference": 7.105427357601002e-15,
+   "maxRelDifference": 2.9375573272055912e-15,
+   "maxAbsPath": "$.meshes.7945.p.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 15,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "1kpxhzn",
+   "checkpointFingerprintFMath": "1kpxhzn",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 22,
+   "maxAbsDifference": 1.7763568394002505e-15,
+   "maxRelDifference": 1.1089433758197505e-15,
+   "maxAbsPath": "$.meshes.601.p.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 16,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "pqwxjb",
+   "checkpointFingerprintFMath": "pqwxjb",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 12,
+   "maxAbsDifference": 4.440892098500626e-15,
+   "maxRelDifference": 4.957368067287451e-15,
+   "maxAbsPath": "$.meshes.342.r.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v1",
+   "seed": 96,
+   "index": 17,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "1jmxgyx",
+   "checkpointFingerprintFMath": "1jmxgyx",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 65,
+   "maxAbsDifference": 3.9968028886505635e-15,
+   "maxRelDifference": 1.4533669225855e-14,
+   "maxAbsPath": "$.meshes.221.s.1",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 0,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "q8r4a0",
+   "checkpointFingerprintFMath": "rgj8tn",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 26,
+   "maxAbsDifference": 5.495603971894525e-15,
+   "maxRelDifference": 1.7543377116902738e-14,
+   "maxAbsPath": "$.meshes.1602.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 1,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "mvmem1",
+   "checkpointFingerprintFMath": "mvmem1",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 1,
+   "maxAbsDifference": 4.440892098500626e-16,
+   "maxRelDifference": 1.3392960423539108e-16,
+   "maxAbsPath": "$.meshes.10177.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 2,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "11olkp9",
+   "checkpointFingerprintFMath": "13dro66",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 72,
+   "maxAbsDifference": 7.105427357601002e-15,
+   "maxRelDifference": 1.4306117619161166e-14,
+   "maxAbsPath": "$.meshes.257.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 3,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "y6w7gz",
+   "checkpointFingerprintFMath": "y6w7gz",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 28,
+   "maxAbsDifference": 7.105427357601002e-15,
+   "maxRelDifference": 8.715146054541566e-15,
+   "maxAbsPath": "$.meshes.1005.p.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 4,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "nuui31",
+   "checkpointFingerprintFMath": "5b05vc",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 3,
+   "maxAbsDifference": 5.551115123125783e-17,
+   "maxRelDifference": 4.794148235460645e-16,
+   "maxAbsPath": "$.meshes.1300.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 5,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "1vs9c24",
+   "checkpointFingerprintFMath": "1axgnk9",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 59,
+   "maxAbsDifference": 1.7763568394002505e-15,
+   "maxRelDifference": 1.9182535146694003e-15,
+   "maxAbsPath": "$.meshes.542.s.1",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 6,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "zi4zd7",
+   "checkpointFingerprintFMath": "zi4zd7",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 26,
+   "maxAbsDifference": 3.497202527569243e-15,
+   "maxRelDifference": 1.2235747091463161e-14,
+   "maxAbsPath": "$.meshes.295.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 7,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "13ah0e7",
+   "checkpointFingerprintFMath": "xwf70a",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 2,
+   "maxAbsDifference": 3.552713678800501e-15,
+   "maxRelDifference": 1.9306698073975032e-16,
+   "maxAbsPath": "$.destructibles.91.bounds.minZ",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 8,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "ri70gd",
+   "checkpointFingerprintFMath": "hfdfk0",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 69,
+   "maxAbsDifference": 1.341982081015658e-14,
+   "maxRelDifference": 1.4369127006616882e-13,
+   "maxAbsPath": "$.meshes.1930.r.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 9,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "1wavtlw",
+   "checkpointFingerprintFMath": "1i9y70j",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 27,
+   "maxAbsDifference": 1.9984014443252818e-15,
+   "maxRelDifference": 2.8320039681419402e-15,
+   "maxAbsPath": "$.meshes.600.s.1",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 10,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "8ueu68",
+   "checkpointFingerprintFMath": "8ueu68",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 2,
+   "maxAbsDifference": 8.881784197001252e-16,
+   "maxRelDifference": 1.8123635682658196e-16,
+   "maxAbsPath": "$.meshes.10640.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 11,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "yu92mn",
+   "checkpointFingerprintFMath": "yu92mn",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 54,
+   "maxAbsDifference": 1.7763568394002505e-15,
+   "maxRelDifference": 2.3020540449555446e-15,
+   "maxAbsPath": "$.meshes.652.r.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 12,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "u4h0k3",
+   "checkpointFingerprintFMath": "u4h0k3",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 33,
+   "maxAbsDifference": 2.3203661214665772e-14,
+   "maxRelDifference": 2.973739614291729e-13,
+   "maxAbsPath": "$.meshes.1632.r.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 13,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "thi161",
+   "checkpointFingerprintFMath": "thi161",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 4,
+   "maxAbsDifference": 4.440892098500626e-16,
+   "maxRelDifference": 1.9177805689404558e-16,
+   "maxAbsPath": "$.meshes.11054.p.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 14,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "ei6r6w",
+   "checkpointFingerprintFMath": "qxenft",
+   "checkpointFingerprintChanged": true,
+   "differingTopLevelFields": [
+    "meshes",
+    "destructibles"
+   ],
+   "numericDifferences": 55,
+   "maxAbsDifference": 7.105427357601002e-15,
+   "maxRelDifference": 2.9375573272055912e-15,
+   "maxAbsPath": "$.meshes.7945.p.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 15,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "15dro5r",
+   "checkpointFingerprintFMath": "15dro5r",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 22,
+   "maxAbsDifference": 1.7763568394002505e-15,
+   "maxRelDifference": 1.1089433758197505e-15,
+   "maxAbsPath": "$.meshes.601.p.0",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 16,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "2c6r0q",
+   "checkpointFingerprintFMath": "2c6r0q",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 12,
+   "maxAbsDifference": 4.440892098500626e-15,
+   "maxRelDifference": 4.957368067287451e-15,
+   "maxAbsPath": "$.meshes.342.r.2",
+   "structuralDifferences": 0
+  },
+  {
+   "kind": "v2",
+   "seed": 96,
+   "index": 17,
+   "worldJsonChanged": true,
+   "checkpointFingerprintHost": "auqyia",
+   "checkpointFingerprintFMath": "auqyia",
+   "checkpointFingerprintChanged": false,
+   "differingTopLevelFields": [
+    "meshes"
+   ],
+   "numericDifferences": 65,
+   "maxAbsDifference": 3.9968028886505635e-15,
+   "maxRelDifference": 1.4533669225855e-14,
+   "maxAbsPath": "$.meshes.221.s.1",
+   "structuralDifferences": 0
+  }
+ ]
+}

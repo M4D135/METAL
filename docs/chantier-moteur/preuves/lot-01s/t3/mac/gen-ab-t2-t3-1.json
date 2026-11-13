@@ -1,0 +1,126 @@
+{
+ "schema": "metal-gen-ab-v1",
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "loadAverage": [
+   3.4541015625,
+   4.13232421875,
+   3.72802734375
+  ]
+ },
+ "roots": {
+  "a": "$W/t2",
+  "b": "~/claude/metal-chantier/nav"
+ },
+ "modules": {
+  "a": [
+   "fmath",
+   "world"
+  ],
+  "b": [
+   "fmath",
+   "world"
+  ]
+ },
+ "sourceSha256": {
+  "a": {
+   "fmath": "f63b2370100ba81379e902c44c2026813a033b3d278b37f55dd6f8c6db485e93",
+   "world": "d0ec60c433945edf3fd74e6c4ed192eb0ae21d357759e2518b8762d19f92182a"
+  },
+  "b": {
+   "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+   "world": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed"
+  }
+ },
+ "method": {
+  "seed": 96,
+  "reps": 15,
+  "warm": 3,
+  "realm": "main",
+  "clock": "process.threadCpuUsage (main thread), ms",
+  "order": "per repetition, one of the six permutations of A, B and A' (a second independent load of root A), in turn",
+  "reduction": "medians of the per-repetition ratios B/A and A'/A; A'/A is the noise of this run"
+ },
+ "rows": [
+  {
+   "spec": "l:0",
+   "meshesA": 14077,
+   "meshesB": 14077,
+   "cpuMs": {
+    "a": 73.95,
+    "b": 66.89,
+    "aa": 67.8
+   },
+   "wallMs": {
+    "a": 75.04,
+    "b": 67.37,
+    "aa": 69.04
+   },
+   "ratioBA": 0.881,
+   "ratioAA": 0.98,
+   "ratioBARange": [
+    0.785,
+    1.057
+   ],
+   "ratioAARange": [
+    0.843,
+    1.09
+   ]
+  },
+  {
+   "spec": "c:9",
+   "meshesA": 13838,
+   "meshesB": 13838,
+   "cpuMs": {
+    "a": 69.67,
+    "b": 59.7,
+    "aa": 66.06
+   },
+   "wallMs": {
+    "a": 70.6,
+    "b": 60.01,
+    "aa": 66.38
+   },
+   "ratioBA": 0.875,
+   "ratioAA": 0.992,
+   "ratioBARange": [
+    0.701,
+    1.391
+   ],
+   "ratioAARange": [
+    0.887,
+    1.192
+   ]
+  },
+  {
+   "spec": "c:17",
+   "meshesA": 17390,
+   "meshesB": 17390,
+   "cpuMs": {
+    "a": 84.43,
+    "b": 77.59,
+    "aa": 83.51
+   },
+   "wallMs": {
+    "a": 85.04,
+    "b": 77.99,
+    "aa": 84.64
+   },
+   "ratioBA": 0.913,
+   "ratioAA": 1.011,
+   "ratioBARange": [
+    0.779,
+    1.356
+   ],
+   "ratioAARange": [
+    0.739,
+    1.066
+   ]
+  }
+ ]
+}

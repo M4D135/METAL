@@ -1,0 +1,121 @@
+{
+ "schema": "metal-fmath-exhaustive-v1",
+ "node": "v24.18.0",
+ "v8": "13.6.233.17-node.50",
+ "platform": "linux",
+ "arch": "arm64",
+ "compiler": {
+  "cc": "gcc",
+  "version": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "flags": {
+   "off": "gcc -O2 -ffp-contract=off",
+   "fast": "gcc -O2 -ffp-contract=fast",
+   "on": "gcc -O2 -ffp-contract=on"
+  },
+  "off": "-ffp-contract=off",
+  "contracted": "-ffp-contract=fast"
+ },
+ "path": "fmath",
+ "note": "Every distinct input (IEEE-754 bit pattern, so -0 and 0 differ) of sin, cos, atan and atan2 during the generation of the worlds below, with src/world.js using FMath (path fmath) or the host Math (path host). NaN results are compared as one NaN. Counts only; the inputs are never written.",
+ "worlds": {
+  "count": 114,
+  "legacySeeds": [
+   1,
+   96
+  ],
+  "campaignSeeds": [
+   1,
+   96,
+   2026
+  ],
+  "kinds": {
+   "legacy": 6,
+   "v1": 54,
+   "v2": 54
+  }
+ },
+ "distinctInputs": 1761019,
+ "ms": {
+  "generation": 9873,
+  "witness": 1529
+ },
+ "res": {
+  "sin": {
+   "distinct": 818722,
+   "fmathEqOff": 818722,
+   "hostEqContracted": 818722,
+   "hostEqOff": 814251,
+   "offEqContracted": 814251,
+   "hostEqFMath": 814251,
+   "onEqOff": 818722
+  },
+  "cos": {
+   "distinct": 818794,
+   "fmathEqOff": 818794,
+   "hostEqContracted": 818794,
+   "hostEqOff": 816798,
+   "offEqContracted": 816798,
+   "hostEqFMath": 816798,
+   "onEqOff": 818794
+  },
+  "atan": {
+   "distinct": 216,
+   "fmathEqOff": 216,
+   "hostEqContracted": 216,
+   "hostEqOff": 216,
+   "offEqContracted": 216,
+   "hostEqFMath": 216,
+   "onEqOff": 216
+  },
+  "atan2": {
+   "distinct": 123287,
+   "fmathEqOff": 123287,
+   "hostEqContracted": 123287,
+   "hostEqOff": 123108,
+   "offEqContracted": 123108,
+   "hostEqFMath": 123108,
+   "onEqOff": 123287
+  }
+ },
+ "total": {
+  "distinct": 1761019,
+  "fmathEqOff": 1761019,
+  "hostEqContracted": 1761019,
+  "hostEqOff": 1754373,
+  "offEqContracted": 1754373,
+  "hostEqFMath": 1754373,
+  "onEqOff": 1761019
+ },
+ "digests": {
+  "atan": {
+   "inputs": "5a8f2d70c07161aec57287b27f3146a4ebd260df45e8dcdc06b339bf1c9fcd9b",
+   "fmath": "20d87b93ab1464a858ab9c56e35c14ccc84777af37638231785d005eda54954f",
+   "host": "20d87b93ab1464a858ab9c56e35c14ccc84777af37638231785d005eda54954f",
+   "off": "20d87b93ab1464a858ab9c56e35c14ccc84777af37638231785d005eda54954f",
+   "contracted": "20d87b93ab1464a858ab9c56e35c14ccc84777af37638231785d005eda54954f"
+  },
+  "atan2": {
+   "inputs": "9e63617e6cc12335d421007f9c301751e5cf92addf7dba44a328fb2ac76e31ad",
+   "fmath": "009b1dff81c376b434c2fc6fe4bb2c785d864758c826d7d390bf16b004be3fd9",
+   "host": "a57232471a71cd416f5c4758a3409a7e404f16d1c0cacea2561e16ddb3f7a309",
+   "off": "009b1dff81c376b434c2fc6fe4bb2c785d864758c826d7d390bf16b004be3fd9",
+   "contracted": "a57232471a71cd416f5c4758a3409a7e404f16d1c0cacea2561e16ddb3f7a309"
+  },
+  "cos": {
+   "inputs": "ec9266379e0fe5e8d21c4f95a5a53b8d91e8c27eb0044992f2b21287f167b53e",
+   "fmath": "e476ffefd73c6aeca40c8d3afcac042b517c5e33ea636f5f0bdbbcecccd79a68",
+   "host": "a87e3d0f1717c86624020c99cbf3f5b6cc4fce30dd3e51828c04312b76b412fb",
+   "off": "e476ffefd73c6aeca40c8d3afcac042b517c5e33ea636f5f0bdbbcecccd79a68",
+   "contracted": "a87e3d0f1717c86624020c99cbf3f5b6cc4fce30dd3e51828c04312b76b412fb"
+  },
+  "sin": {
+   "inputs": "05b59a482a92a44c66b35b4310c630b0e38dade61a3afe1cf08b9a20c6b51901",
+   "fmath": "006f00ae765e8930a2025926513206efa0baa92816f387747898e195361f325d",
+   "host": "61ab440fbb7d0f7c35bf3e0867a1d7ff0b4ed4d972d3fd9ee36c990fc2d96463",
+   "off": "006f00ae765e8930a2025926513206efa0baa92816f387747898e195361f325d",
+   "contracted": "61ab440fbb7d0f7c35bf3e0867a1d7ff0b4ed4d972d3fd9ee36c990fc2d96463"
+  }
+ },
+ "firstFMathMismatches": [],
+ "firstHostMismatches": []
+}

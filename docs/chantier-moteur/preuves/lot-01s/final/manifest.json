@@ -1,0 +1,383 @@
+{
+ "schema": "metal-lot01s-final-manifest-v1",
+ "task": "Lot 01 suite / T5 — clôture : preuves finales et rapport du lot ; la référence de tests devient 470/470 au Mac et au Spark",
+ "branch": "chantier/lot-01s-determinisme-plateformes",
+ "date": "2026-11-13",
+ "proofClass": "État identique : T5 ne modifie aucun fichier de src/, checks/, tools/ ni dist/ ; il ajoute seulement ce dossier. Les mesures finales portent sur l'arbre du commit de T4.",
+ "commits": {
+  "base": "71eca61c0b8f3bbaa05b0692d9fa4fd192b9f2db",
+  "wip": "9f35223190ea9f915701e5627381eae32a77c002",
+  "T1": "5e86238514b9609423ab100d4de403d43aa2ec89",
+  "T2": "6829b0c1400e9550dd4b04e58acacb30cd81e226",
+  "T3": "0d529acfacbef2e21f0a95922d739686f852405d",
+  "T4": "32cb7eccfd2aff8fc8972a4bbcfd6933ed1a5ecc"
+ },
+ "measuredTree": {
+  "commit": "32cb7eccfd2aff8fc8972a4bbcfd6933ed1a5ecc",
+  "trees": {
+   "src": "0bbeda84ec8e32274098892b9b9f354343967ec7",
+   "checks": "eeaf547fd09bea2ec819da5609f7b2253639eed7",
+   "tools": "4c913d16a4126292b754421b9c5ae77e86742d27",
+   "dist": "c6008e34de102e8bfaea14187a94b21913d927bd"
+  },
+  "workingTreeEqualsCommit": true
+ },
+ "version": "0.8.1",
+ "tests": {
+  "statement": "Sur ce Mac et sur le Spark, la référence de tests devient 470/470 : les 470 tests existants passent, dont les 8 historiques.",
+  "base71eca61Spark": {
+   "tests": 470,
+   "pass": 462,
+   "fail": 8,
+   "failing": [
+    "legacy seed 1, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 1, sector 2: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 0: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 1: exact pre-campaign world fingerprint",
+    "legacy seed 96, sector 2: exact pre-campaign world fingerprint",
+    "campaign mode is strictly opt-in and keeps historical clamping otherwise",
+    "the first three campaign worlds preserve historical geometry outside campaign supplies and loadout"
+   ],
+   "buildTest": "non atteint"
+  },
+  "mac": {
+   "tests": 485,
+   "pass": 485,
+   "fail": 0,
+   "skipped": 0,
+   "todo": 0,
+   "cancelled": 0,
+   "baseTestsPassing": "470/470",
+   "historicPassing": "8/8",
+   "added": 15,
+   "addedIn": "checks/fmath.test.mjs",
+   "worldSeparateCases": 18,
+   "buildTest": "PASS"
+  },
+  "spark": {
+   "tests": 485,
+   "pass": 485,
+   "fail": 0,
+   "skipped": 0,
+   "todo": 0,
+   "cancelled": 0,
+   "baseTestsPassing": "470/470",
+   "historicPassing": "8/8",
+   "added": 15,
+   "addedIn": "checks/fmath.test.mjs",
+   "worldSeparateCases": 18,
+   "buildTest": "PASS"
+  },
+  "measuredTotals": "(470 + 15)/(470 + 15) = 485/485 sur chaque machine"
+ },
+ "build": {
+  "before71eca61": {
+   "version": "0.8.1",
+   "html_bytes": 812696,
+   "gzip_bytes": 245325,
+   "sha256": "4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a",
+   "external_assets": 0
+  },
+  "final": {
+   "version": "0.8.1",
+   "html_bytes": 833373,
+   "gzip_bytes": 253760,
+   "sha256": "f4efa37800fdda0e68c66496c6e198b89f805827999bca330002abae8b486787",
+   "external_assets": 0
+  },
+  "rebuiltIdentical": true,
+  "note": "python3 tools/build.py puis git diff --exit-code dist/index.html SIZE.json : aucune différence."
+ },
+ "environments": {
+  "mac": {
+   "machine": "Apple M5",
+   "os": "macOS 27.2.1 (Darwin 27.2.0)",
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "arch": "arm64",
+   "logicalCpus": 10,
+   "chrome": "157.0.8103.39 (--headless=new, page file://, --dump-dom)",
+   "chromeUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+   "jsc": "JavaScriptCore du système, shell jsc"
+  },
+  "spark": {
+   "machine": "NVIDIA GB10",
+   "os": "Linux 6.17.0-1026-nvidia",
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "arch": "arm64",
+   "logicalCpus": 20,
+   "chrome": "151.0.7922.137 (--headless=new, page file://, --dump-dom)",
+   "chromeUserAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+   "jsc": null,
+   "note": "Le userAgent de Chrome est réduit : sous Linux, il annonce toujours x86_64. Le Spark est un arm64 (process.arch de Node)."
+  }
+ },
+ "encoding": "JSON en UTF-8 ; TAP en texte ; journaux npm test en gzip (niveau 9, sans nom ni date).",
+ "pathNormalization": {
+  "note": "Après la mesure, trois préfixes propres aux machines ont été réécrits : dans les racines des sorties gen-ab-*.json, dans les piles d'appel des deux historiques-avant-71eca61.tap et de npm-test-spark-avant-71eca61.log.gz. Aucun autre octet n'a changé. ecarts-moteurs.mjs écrit lui-même $W pour son dossier de travail ; les journaux finaux, les sorties ecarts-moteurs.json et les historiques.tap ne contenaient aucun chemin de machine.",
+  "replaced": {
+   "<dossier de travail du Mac>": "$W",
+   "<Mac home>/": "~/",
+   "<Spark home>/": "~/"
+  },
+  "files": [
+   "mac/gen-ab-*.json",
+   "spark/gen-ab-*.json",
+   "mac/historiques-avant-71eca61.tap",
+   "spark/historiques-avant-71eca61.tap",
+   "npm-test-spark-avant-71eca61.log.gz"
+  ]
+ },
+ "lotProofs": {
+  "t1": {
+   "commit": "5e86238514b9609423ab100d4de403d43aa2ec89",
+   "PROOF.md": {
+    "bytes": 18270,
+    "sha256": "689eadc472812da807c152b463e5e472d9e5ce0137cf71b3b706aedb66caeb49"
+   },
+   "manifest.json": {
+    "bytes": 17652,
+    "sha256": "528a2044e65c69c59aafccf87670da01eaa21407714b7191de4532cfeaa370dd"
+   }
+  },
+  "t2": {
+   "commit": "6829b0c1400e9550dd4b04e58acacb30cd81e226",
+   "PROOF.md": {
+    "bytes": 17134,
+    "sha256": "2bc6f6b3adc89f13ddf9b4c867eed9ff63e33f23936f50a03c7558961129e82c"
+   },
+   "manifest.json": {
+    "bytes": 11084,
+    "sha256": "fc15c01a476eddfb9701f3e0d0f6a612fb7e09aa069eceec58a870b66d37b631"
+   }
+  },
+  "t3": {
+   "commit": "0d529acfacbef2e21f0a95922d739686f852405d",
+   "PROOF.md": {
+    "bytes": 18932,
+    "sha256": "55bac1b49fd0c78d1dbf55412f72d1b028a0501d5a56d509a89ef8c73120c64d"
+   },
+   "manifest.json": {
+    "bytes": 10267,
+    "sha256": "b9d2ae34fdf82dd06d09c24a08996f9729ad254a250aa0aeae27eeb2c5942292"
+   }
+  },
+  "t4": {
+   "commit": "32cb7eccfd2aff8fc8972a4bbcfd6933ed1a5ecc",
+   "PROOF.md": {
+    "bytes": 12392,
+    "sha256": "cd67a91d814a1b0aae80b175a123f01d434c04d6c90fca712dc3a49199b4f308"
+   },
+   "manifest.json": {
+    "bytes": 6066,
+    "sha256": "e3aa3c313a061d4a9fc308dd20bfe93ecf880c91bb4053267633849c75842217"
+   }
+  }
+ },
+ "sourceSha256": {
+  "package.json": "ca0f504092efcd9ad21d6849f6c2253b5e3f156808f413eb43327752f53ebe26",
+  "SIZE.json": "d3fc2aaf347ae63a3cf32681625a3d8fd70b6c0c9911d8252c235376d31e78d0",
+  "dist/index.html": "f4efa37800fdda0e68c66496c6e198b89f805827999bca330002abae8b486787",
+  "src/actors.js": "e1bb0d61ec0002b4f1c74a10a7365a25db6db036399a22d6854e052595335844",
+  "src/audio.js": "4b36fde20d003c7a785c05f1315cd568d309dd08dd6bdc30ec2283bdbe452b6d",
+  "src/brain.js": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+  "src/destruction.js": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+  "src/economy.js": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+  "src/effects.js": "9407c066b0543086cba6539eb8c2ab46c397d0ee240c2c44a718bafc3b699ef5",
+  "src/fmath.js": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+  "src/game.js": "2b5a50aee125fc7acd8fefad782a97ea94d9556b0268b906b26fdcd49f16de3c",
+  "src/index.html": "334453660082853d2b6775550ccc8fee1ef25bd9623da62eb9190b4d67b68135",
+  "src/motion.js": "c20b6e38fdafecc96fc340851f842c504e159b1cc0192d7b506b789159ed9087",
+  "src/music.js": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74",
+  "src/options.js": "46a02bba9a6e83942a0ea37abf2eda8024dc20b70665cbc1c48c84cdd0a4a3fd",
+  "src/renderer.js": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+  "src/simulation.js": "96544ee94904791cc223e19c510065407e8f9ac7b333ff5771a0de73485c9ca4",
+  "src/soundscape.js": "e89dbf204d9891fea96e93f98e8a9d0d80c258655e5fcf25be38ad67ead037b3",
+  "src/style.css": "5fac4844ea19cd8ab0eae39c88626b1fd8c585ca9851de6dc51ca0093bdf31be",
+  "src/world.js": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+  "checks/actor-visibility.test.mjs": "eba2baa8bfd2ae79d830f3dfc6785d88f3ef871444f5672c58ce14d7e716fbd7",
+  "checks/actors.test.mjs": "9839824eaea0c615fc163b014c0a6f034e25dea62d4e35887145b53fed950dd9",
+  "checks/armor.test.mjs": "36a7ba6be87d12edd835d3b35832d9206240a023434aea88d8dcd818eec08839",
+  "checks/audio.test.mjs": "c9bc180b5e551fb714e1c2d94dec365b7abd7668bd0a47b19036c9db0e0c32e9",
+  "checks/boss-progression.test.mjs": "3b77cec654b0771594dd1747a2d91f424d70827696445f690fcc7face8ba0694",
+  "checks/brain.test.mjs": "f768cb5e6efe4621897c4c5e9fa24fa8c7c0162a7bffaede9f79af95c15824eb",
+  "checks/build.test.mjs": "065e18391a818ffe23b5d178a66a71d4d6bebc1ef1f81f3fb85d660d9208e958",
+  "checks/cadence.test.mjs": "11226397fecf89afa49f03d5cb19ba11dce58900c848463cd910ffbc9274960a",
+  "checks/campaign-simulation.test.mjs": "a75b95ff553191df1c887ce404fd957a7a8a8e22cec574cd2c4782ae5fd04fd5",
+  "checks/campaign-world-digests.json": "9618b8e289e7cb39d508aa89e52696537a4e8e0f85b8117bed8fdd0f6d2ef92d",
+  "checks/campaign-world.test.mjs": "99339d35c1cc6fe289d4337e47173ecd518175d6b8bf178693f8f808c8ca282c",
+  "checks/checkpoint.test.mjs": "cb28e96f7e9390b558292100032de5ea5adbc1239b3511f118c1926383a55e78",
+  "checks/destruction.test.mjs": "06d8b64f1ef84c6829a4578740768666abdebfdc70c2c0e98f0ba5a206389d1d",
+  "checks/economy.test.mjs": "40889eb5e861e43e24be849c521c4087451e0d97aff51f2997f1371d72fbb766",
+  "checks/effects.test.mjs": "c1edde293596f3dce54e45a4e08743073a189a49b1bd89f49262d39498b8baba",
+  "checks/first-person-fixture.mjs": "16c8dc4eb150f28be9983bb923a850288cf0cd90c26c54dea6efc87c9ab28da8",
+  "checks/first-person.test.mjs": "88b7ad6f6942639ea1d85f2e35f94bf5aae7acc58c3f50fd9215cf44e17a4da9",
+  "checks/fmath-hypot-vectors.txt": "c9f1de23137e9e456dc47d22648149648ff802a91da89c4a952696b24ee24e91",
+  "checks/fmath-vectors.txt": "5e776abe3ed62032a5f5a032123b7bf43bf4c6b092f99c88dba6cf1a8da9ed61",
+  "checks/fmath.test.mjs": "a734740554b1029666a6aa811529f76763b2ef669ee78600eac08185e0cbf920",
+  "checks/input.test.mjs": "e37236f93d8bb0d569c78b6082f483ea7a77e2cb9a51a4659af0fc3f7cbda9c7",
+  "checks/motion.test.mjs": "0f66218419d6ba07bc12d4250af5f16ffe7844ec19b7586638a1bdbd9159a906",
+  "checks/music.test.mjs": "9f3a12c7ab49331f2f34bf2c1aeaec1996c1732fa2720f8935601d61d52a29b8",
+  "checks/natural-spawn.test.mjs": "90bc4dacd28eae220943ba6f2f361e4eb6d85b5fd6494f94513276bee5483077",
+  "checks/options.test.mjs": "4ecc7298a4b4e8185a937bc5a0c2f926bb66947e77e91837903276134b2df25e",
+  "checks/progression.test.mjs": "d8cb265ea3678a23c0ef2d7474159596e1ebbad688ef36d3db8acb9ef37e2c74",
+  "checks/renderer-destruction.test.mjs": "d8b20c91faf893b2dead6182a32e0e34ea47175f0a6ffb16c0b320b045f41c22",
+  "checks/simulation.test.mjs": "0263450e03867416e68d4ce86898b5aae613f2235f6d91b1c82d05fe89079e47",
+  "checks/soundscape.test.mjs": "3c36e2873c6618f3d2c5048815cfe0e8219530255af17669f39f65404ab70e5b",
+  "checks/world.test.mjs": "df568dd38fb8f2191cf337ee9d3ed14cede363532f985ad70afdbf62719fd595",
+  "tools/build.py": "9b421541f4e96b3823f9dc3ab0f6d14c4be3f0cc0148629d64b296ef6995c0d0",
+  "tools/gen-ab.mjs": "7c7552f7f8228744239e5ba4f410146b95beb014c4a63aca9ece4b062c0d9fe0",
+  "tools/platform-math.mjs": "0d315a5ea87516a832a1edf19b93d728fe463b67016a2b61bf8a9a0ff9e056aa",
+  "tools/realm-check.mjs": "8b3fe2e2f2ca6f51793acac176c4d460ef7594a37841c0302490f97af7a785a3",
+  "tools/realm-loader.mjs": "fbbba1d6928da2d7f10af362642511749206621d3ef1a88390a763e9deabd890"
+ },
+ "files": [
+  {
+   "file": "README.md",
+   "purpose": "Rapport du lot 01 suite : cause, choix de FMath, chiffres avant et après, décisions D1 à D9, limites ; le § 12 et le § 13 sont prêts à reporter dans docs/chantier-moteur/RAPPORT.md et VALIDATION.md",
+   "bytes": 29475,
+   "sha256": "68ab69294bef49cae0f43ec79ddd90f716158217b38153fd40cca2e69906bd83"
+  },
+  {
+   "file": "ecarts-moteurs.mjs",
+   "purpose": "Outil de T5 : compare, moteur par moteur (Node en royaume principal, Chrome sans tête sur une page file://, jsc), les 114 mondes de la base 71eca61 et de l'arbre final, et leurs empreintes de point de reprise",
+   "bytes": 12675,
+   "sha256": "ecfc2dd788af8efc685bd56a9b6629e2e04ebe53f625d5898133bbfc53e5afc6"
+  },
+  {
+   "file": "mac/ecarts-moteurs.json",
+   "purpose": "Sortie de ecarts-moteurs.mjs au Mac : Node 24.18, Chrome 157, jsc ; 114 mondes, graines 1, 96 et 2026",
+   "bytes": 107984,
+   "sha256": "4e02c9a1d908ad051099bc3a75f22b27b79d2a892ff5f882907ceefe66eec0a3"
+  },
+  {
+   "file": "mac/gen-ab-aa.json",
+   "purpose": "Coût de FWorld.create (Mac), contrôle A/A : la base contre elle-même, 15 répétitions après 3 de chauffe, 6 mondes (l:0 l:2 v1:9 c:0 c:9 c:17)",
+   "bytes": 3017,
+   "sha256": "6cdba8bf71664bdc63d6d387807bed1ae7af6ef599bed0347a5b738b54900c1e"
+  },
+  {
+   "file": "mac/gen-ab-base-final-2.json",
+   "purpose": "Coût de FWorld.create (Mac), série 2 : base 71eca61 puis arbre final",
+   "bytes": 3123,
+   "sha256": "de00964204369de780ec654b4e3ec02751cbc75ba237af835a21123bf38e298b"
+  },
+  {
+   "file": "mac/gen-ab-base-final.json",
+   "purpose": "Coût de FWorld.create (Mac), série 1 : base 71eca61 puis arbre final",
+   "bytes": 3128,
+   "sha256": "60c6fed3ddf3e29e5e5d62b8cf1c0aaa02f8c0f0947af1d26d4f95370dac1dd3"
+  },
+  {
+   "file": "mac/gen-ab-final-base-2.json",
+   "purpose": "Coût de FWorld.create (Mac), série 2 : arbre final puis base 71eca61",
+   "bytes": 3123,
+   "sha256": "d03ce33d91a67a26d7d0bd2abf4abda8761b89e0fd6dd4dfc72a3751a60b845d"
+  },
+  {
+   "file": "mac/gen-ab-final-base.json",
+   "purpose": "Coût de FWorld.create (Mac), série 1 : arbre final puis base 71eca61",
+   "bytes": 3121,
+   "sha256": "70aef2e73fb9bdc139b08181350d0dab878a9cf1c0ab00a111c15b61e938c150"
+  },
+  {
+   "file": "mac/historiques-avant-71eca61.tap",
+   "purpose": "Les mêmes 8 tests au Mac, sur la base 71eca61 : 0/8",
+   "bytes": 9867,
+   "sha256": "5a7e4db9ffc8afd1247494bb9fd417d3f9f896a03a9fcae53edc562a2cf10bde"
+  },
+  {
+   "file": "mac/historiques.tap",
+   "purpose": "Les 8 tests historiques de checks/campaign-world.test.mjs au Mac, arbre final : 8/8",
+   "bytes": 1781,
+   "sha256": "3750b395e9668bae5b96e4721551437c596f17d94b0c6d6d88d1586bf9e19d29"
+  },
+  {
+   "file": "npm-test-mac.log.gz",
+   "purpose": "npm test complet au Mac, arbre final (32cb7ec) : 485/485, zéro échec ni test ignoré ; world.test 18 cas PASS ; build.test PASS",
+   "rawBytes": 138181,
+   "rawSha256": "e421d1ee359945629fd60044ccd583ed82c08840db176b29f2d76cbeb2e55442",
+   "gzipBytes": 27185,
+   "gzipSha256": "2ca1c178d3c2a67685edb7d454035eaddac2caf1e6a6c9fc0cabc4a302450a1f"
+  },
+  {
+   "file": "npm-test-spark-avant-71eca61.log.gz",
+   "purpose": "npm test complet au Spark sur la base du lot (71eca61) : 462/470, les 8 échecs historiques ; build.test non atteint",
+   "rawBytes": 143382,
+   "rawSha256": "cf5221f756c8fd5d95b8faf1917078a1a833d56706899042d0ba0d7f3107deb6",
+   "gzipBytes": 28183,
+   "gzipSha256": "3b1bc8ac3d388e55ad2202f567b717334f44572ad0f5d9dab53e7953b9f4427c"
+  },
+  {
+   "file": "npm-test-spark.log.gz",
+   "purpose": "npm test complet au Spark, arbre final (32cb7ec), sur une copie sous ~/metal-tests/ : 485/485 ; world.test 18 cas PASS ; build.test PASS",
+   "rawBytes": 138309,
+   "rawSha256": "f31dc822872bc3c853a423fc4be40d5d42b9b9b4558d7867f017c19727acdc79",
+   "gzipBytes": 27599,
+   "gzipSha256": "69360dd62beb23280856a86cb9c46109b9fb81e9071763e572f46205a8d0fa6e"
+  },
+  {
+   "file": "resume.json",
+   "purpose": "Synthèse calculée par resume.mjs : tests nom par nom contre la base, 8 tests historiques, coût de FWorld.create, écarts par moteur, Mac contre Spark",
+   "bytes": 19412,
+   "sha256": "7060e4c980b7c37fb964ff4898e3511433d5c68b5ae8d5a8f45f4d7560c78cc5"
+  },
+  {
+   "file": "resume.mjs",
+   "purpose": "Outil de T5 : calcule resume.json à partir des seuls fichiers de ce dossier (et des noms de checks/fmath.test.mjs)",
+   "bytes": 8421,
+   "sha256": "db1b7c4f686ec9219bc6e81ba633c4f98252d055e4b7587105a3ac20e82d7315"
+  },
+  {
+   "file": "spark/ecarts-moteurs.json",
+   "purpose": "Sortie de ecarts-moteurs.mjs au Spark : Node 24.18, Chrome 151 ; jsc absent (--jsc none) ; 114 mondes",
+   "bytes": 70498,
+   "sha256": "4808a7056dbabf1415bcf22a76f201cc79f152484650e38806e6154f569c7dad"
+  },
+  {
+   "file": "spark/gen-ab-aa.json",
+   "purpose": "Coût de FWorld.create (Spark), contrôle A/A : la base contre elle-même, 15 répétitions après 3 de chauffe, 6 mondes (l:0 l:2 v1:9 c:0 c:9 c:17)",
+   "bytes": 3025,
+   "sha256": "528467a792a07e26d91f754d26e86870a1258cb93d0d1b0524a322c97decccf6"
+  },
+  {
+   "file": "spark/gen-ab-base-final-2.json",
+   "purpose": "Coût de FWorld.create (Spark), série 2 : base 71eca61 puis arbre final",
+   "bytes": 3119,
+   "sha256": "2c569738af2876ea1de59beb8814d815cf330fd2d16a63053a35495974ee0f7d"
+  },
+  {
+   "file": "spark/gen-ab-base-final.json",
+   "purpose": "Coût de FWorld.create (Spark), série 1 : base 71eca61 puis arbre final",
+   "bytes": 3118,
+   "sha256": "53e68ec94c369f051c132b2af9d149d02e006ec05a3c105d12466ba6108b7424"
+  },
+  {
+   "file": "spark/gen-ab-final-base-2.json",
+   "purpose": "Coût de FWorld.create (Spark), série 2 : arbre final puis base 71eca61",
+   "bytes": 3117,
+   "sha256": "6468b21dc0adb96be6d725677a679a80de99c128e8b71dfb546dd167b0a26a2b"
+  },
+  {
+   "file": "spark/gen-ab-final-base.json",
+   "purpose": "Coût de FWorld.create (Spark), série 1 : arbre final puis base 71eca61",
+   "bytes": 3118,
+   "sha256": "fe75a4d1a9b7787f754959c4b478c12968afc708b47ad46c0036cb8d6e8f12a0"
+  },
+  {
+   "file": "spark/historiques-avant-71eca61.tap",
+   "purpose": "Les mêmes 8 tests au Spark, sur la base 71eca61 : 0/8",
+   "bytes": 10201,
+   "sha256": "a4a0bdc006b7a1efcec7f5c9dfc69b35ff6dda96cbde1baf872b672d0c811e23"
+  },
+  {
+   "file": "spark/historiques.tap",
+   "purpose": "Les 8 tests historiques de checks/campaign-world.test.mjs au Spark, arbre final : 8/8",
+   "bytes": 1783,
+   "sha256": "dfbc8e0f2ff8a10b58bda3c0524f1b1dd95ebbb9a71004b7a8c29de9a098a0b6"
+  }
+ ],
+ "folderBytesWithoutManifest": 386073
+}

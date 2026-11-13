@@ -1,0 +1,214 @@
+{
+ "schema": "metal-fmath-sweep-v1",
+ "node": "v24.18.0",
+ "v8": "13.6.233.17-node.50",
+ "platform": "linux",
+ "arch": "arm64",
+ "compiler": {
+  "cc": "gcc",
+  "version": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "flags": {
+   "off": "gcc -O2 -ffp-contract=off",
+   "fast": "gcc -O2 -ffp-contract=fast",
+   "on": "gcc -O2 -ffp-contract=on"
+  },
+  "off": "-ffp-contract=off",
+  "contracted": "-ffp-contract=fast"
+ },
+ "seed": 6221059,
+ "countPerFunction": 500000,
+ "note": "Seeded random inputs (mulberry32) by argument class; cos uses the classes of sin. NaN results are compared as one NaN. Counts only; the inputs are regenerated from the seed, never written.",
+ "ms": {
+  "witness": 1859
+ },
+ "res": {
+  "sin": {
+   "cases": 500000,
+   "fmathEqOff": 500000,
+   "hostEqContracted": 500000,
+   "hostEqOff": 498513,
+   "offEqContracted": 498513
+  },
+  "cos": {
+   "cases": 500000,
+   "fmathEqOff": 500000,
+   "hostEqContracted": 500000,
+   "hostEqOff": 498698,
+   "offEqContracted": 498698
+  },
+  "atan": {
+   "cases": 500000,
+   "fmathEqOff": 500000,
+   "hostEqContracted": 500000,
+   "hostEqOff": 499952,
+   "offEqContracted": 499952
+  },
+  "atan2": {
+   "cases": 500000,
+   "fmathEqOff": 500000,
+   "hostEqContracted": 500000,
+   "hostEqOff": 499981,
+   "offEqContracted": 499981
+  }
+ },
+ "byClass": {
+  "sin:medium": {
+   "cases": 200000,
+   "fmathEqOff": 200000,
+   "hostEqContracted": 200000,
+   "hostEqOff": 199443,
+   "offEqContracted": 199443
+  },
+  "sin:large": {
+   "cases": 150000,
+   "fmathEqOff": 150000,
+   "hostEqContracted": 150000,
+   "hostEqOff": 149206,
+   "offEqContracted": 149206
+  },
+  "sin:near-pio2": {
+   "cases": 50000,
+   "fmathEqOff": 50000,
+   "hostEqContracted": 50000,
+   "hostEqOff": 50000,
+   "offEqContracted": 50000
+  },
+  "sin:tiny": {
+   "cases": 50000,
+   "fmathEqOff": 50000,
+   "hostEqContracted": 50000,
+   "hostEqOff": 50000,
+   "offEqContracted": 50000
+  },
+  "sin:any-bits": {
+   "cases": 50000,
+   "fmathEqOff": 50000,
+   "hostEqContracted": 50000,
+   "hostEqOff": 49864,
+   "offEqContracted": 49864
+  },
+  "cos:medium": {
+   "cases": 200000,
+   "fmathEqOff": 200000,
+   "hostEqContracted": 200000,
+   "hostEqOff": 199614,
+   "offEqContracted": 199614
+  },
+  "cos:large": {
+   "cases": 150000,
+   "fmathEqOff": 150000,
+   "hostEqContracted": 150000,
+   "hostEqOff": 149210,
+   "offEqContracted": 149210
+  },
+  "cos:near-pio2": {
+   "cases": 50000,
+   "fmathEqOff": 50000,
+   "hostEqContracted": 50000,
+   "hostEqOff": 50000,
+   "offEqContracted": 50000
+  },
+  "cos:tiny": {
+   "cases": 50000,
+   "fmathEqOff": 50000,
+   "hostEqContracted": 50000,
+   "hostEqOff": 50000,
+   "offEqContracted": 50000
+  },
+  "cos:any-bits": {
+   "cases": 50000,
+   "fmathEqOff": 50000,
+   "hostEqContracted": 50000,
+   "hostEqOff": 49874,
+   "offEqContracted": 49874
+  },
+  "atan:moderate": {
+   "cases": 350000,
+   "fmathEqOff": 350000,
+   "hostEqContracted": 350000,
+   "hostEqOff": 349952,
+   "offEqContracted": 349952
+  },
+  "atan:tiny-or-huge": {
+   "cases": 50000,
+   "fmathEqOff": 50000,
+   "hostEqContracted": 50000,
+   "hostEqOff": 50000,
+   "offEqContracted": 50000
+  },
+  "atan:any-bits": {
+   "cases": 100000,
+   "fmathEqOff": 100000,
+   "hostEqContracted": 100000,
+   "hostEqOff": 100000,
+   "offEqContracted": 100000
+  },
+  "atan2:moderate": {
+   "cases": 300000,
+   "fmathEqOff": 300000,
+   "hostEqContracted": 300000,
+   "hostEqOff": 299981,
+   "offEqContracted": 299981
+  },
+  "atan2:near-diagonal": {
+   "cases": 50000,
+   "fmathEqOff": 50000,
+   "hostEqContracted": 50000,
+   "hostEqOff": 50000,
+   "offEqContracted": 50000
+  },
+  "atan2:wide": {
+   "cases": 50000,
+   "fmathEqOff": 50000,
+   "hostEqContracted": 50000,
+   "hostEqOff": 50000,
+   "offEqContracted": 50000
+  },
+  "atan2:any-bits": {
+   "cases": 100000,
+   "fmathEqOff": 100000,
+   "hostEqContracted": 100000,
+   "hostEqOff": 100000,
+   "offEqContracted": 100000
+  }
+ },
+ "total": {
+  "cases": 2000000,
+  "fmathEqOff": 2000000,
+  "hostEqContracted": 2000000,
+  "hostEqOff": 1997144,
+  "offEqContracted": 1997144
+ },
+ "digests": {
+  "atan": {
+   "inputs": "1684b5c758eb436f32facb2aa90eb6d218eebb26376f80276d9472be95114a2d",
+   "fmath": "1a83db61d02c692144963c430c6815057fe930b4b65bd482595f56dc3da7d7e7",
+   "host": "8be01630ed168aaea02dd0498db23da94cda2cfb5455e07691907faf8703ba01",
+   "off": "1a83db61d02c692144963c430c6815057fe930b4b65bd482595f56dc3da7d7e7",
+   "contracted": "8be01630ed168aaea02dd0498db23da94cda2cfb5455e07691907faf8703ba01"
+  },
+  "atan2": {
+   "inputs": "cda16c698022cefe80462548d7d6e705d26a838c40fd3632676ba37e734611a6",
+   "fmath": "e7b4494b449f54576058db7a47f38d7aab30b637837b5629446d588dbcdde42b",
+   "host": "1f68a5f6c9b121b4e6fc02833be4430e3d89b423f67d95f7a6169685614a522d",
+   "off": "e7b4494b449f54576058db7a47f38d7aab30b637837b5629446d588dbcdde42b",
+   "contracted": "1f68a5f6c9b121b4e6fc02833be4430e3d89b423f67d95f7a6169685614a522d"
+  },
+  "cos": {
+   "inputs": "db68ed341cdaa8ca92a81fc79e2e21142a7c863ad23768018d1c3802f9b2919c",
+   "fmath": "c073b9a336f51c3c3c3560b67d4def0e08eee83da9078a94328161033112aa39",
+   "host": "a73ee7cf1327aac88b76989b632803b7a685262d37998f3e2378d243e8e25027",
+   "off": "c073b9a336f51c3c3c3560b67d4def0e08eee83da9078a94328161033112aa39",
+   "contracted": "a73ee7cf1327aac88b76989b632803b7a685262d37998f3e2378d243e8e25027"
+  },
+  "sin": {
+   "inputs": "d39648ff145941b233ae240871288bf4e519cb4f4fee8d701ea34817eaec5bfb",
+   "fmath": "68a93911dbc314ecb6c904b15f0e4b7f1717319c5d15d08d608dd98232583d4f",
+   "host": "a55b95ad8601db04dfa938ac5691eabb9533acb222bb7a5613647dec76291156",
+   "off": "68a93911dbc314ecb6c904b15f0e4b7f1717319c5d15d08d608dd98232583d4f",
+   "contracted": "a55b95ad8601db04dfa938ac5691eabb9533acb222bb7a5613647dec76291156"
+  }
+ },
+ "firstFMathMismatches": [],
+ "firstHostMismatches": []
+}

@@ -1,0 +1,309 @@
+{
+ "schema": "metal-lot01s-t2-manifest-v1",
+ "task": "Lot 01 suite / T2 — FMath dans la génération du monde (MURS-V1, MURS-06, LOAD-06, IA-12)",
+ "base": {
+  "commit": "5e86238",
+  "measurementBase": "git archive 71eca61 ($BASE)"
+ },
+ "encoding": "JSON en UTF-8 ; journaux en gzip (niveau 9, mtime 0)",
+ "pathNormalization": {
+  "note": "After measurement, machine-specific absolute path prefixes in the JSON outputs and in the stack traces of the npm test logs were rewritten; no other byte was changed.",
+  "replaced": {
+   "<Mac home>/claude/metal-chantier/": "~/claude/metal-chantier/",
+   "<Spark home>/metal-tests/": "~/metal-tests/",
+   "<Mac scratch directory>/lot01s-t2-dev": "$W"
+  }
+ },
+ "environments": {
+  "mac": {
+   "machine": "Apple M5",
+   "os": "macOS 27.2.1 (Darwin 27.2.0)",
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "arch": "arm64",
+   "chrome": "157.0.8103.39",
+   "jsc": "system JavaScriptCore"
+  },
+  "spark": {
+   "machine": "NVIDIA GB10",
+   "os": "Linux 6.17.0-1026-nvidia",
+   "node": "v24.18.0",
+   "v8": "13.6.233.17-node.50",
+   "arch": "arm64",
+   "chrome": "151.0.7922.137",
+   "jsc": null
+  }
+ },
+ "files": [
+  {
+   "file": "PROOF.md",
+   "purpose": "Preuve lisible de la tâche T2",
+   "bytes": 17134,
+   "sha256": "2bc6f6b3adc89f13ddf9b4c867eed9ff63e33f23936f50a03c7558961129e82c"
+  },
+  {
+   "file": "loader-check.mjs",
+   "purpose": "Listes de modules de tools/realm-loader.mjs, racine par racine",
+   "bytes": 2802,
+   "sha256": "f0c54c8773676672f848c30480579fd6ce633645412382099592546dc88e4845"
+  },
+  {
+   "file": "mac/checkpoints-from-base.json",
+   "purpose": "Points écrits par $BASE (30 pas), relus par la branche",
+   "bytes": 10807,
+   "sha256": "a060ab20c420fbec658ed8b8aca938bf4dfede21f31c72d3d0832e95af9bc812"
+  },
+  {
+   "file": "mac/checkpoints.json",
+   "purpose": "Identité des mondes et empreintes de reprise, $BASE contre branche",
+   "bytes": 21536,
+   "sha256": "e7205f996e9198cd1463ce6c1a72724cce231256461f2b99ba03119cd91f5182"
+  },
+  {
+   "file": "mac/engines.json",
+   "purpose": "Chrome sans tête et jsc : vecteurs FMath, 42 empreintes de reprise",
+   "bytes": 22735,
+   "sha256": "97265a7acb0e9927d8eac509de0b4a97578f433547d2f492035cc6e4cf7381da"
+  },
+  {
+   "file": "mac/gen-ab-aa.json",
+   "purpose": "Coût de FWorld.create : contrôle A/A ($BASE contre $BASE)",
+   "bytes": 3016,
+   "sha256": "435a384b6c1887677eaaf490951692aa04d9fcc8960bee6ba6214f6c28a2e499"
+  },
+  {
+   "file": "mac/gen-ab-base-branch-1.json",
+   "purpose": "Coût de FWorld.create, $BASE puis branche, essai 1",
+   "bytes": 3113,
+   "sha256": "f203c618004235f9ddf2f1601b30b3e342151269521d72e4d01d764f0db1ff94"
+  },
+  {
+   "file": "mac/gen-ab-base-branch-2.json",
+   "purpose": "Coût de FWorld.create, $BASE puis branche, essai 2",
+   "bytes": 2091,
+   "sha256": "87fd5bb9ae9fff597555b2286fca922cc70234b79ec7f32fe49f36dfb8a9f644"
+  },
+  {
+   "file": "mac/gen-ab-base-branch-3.json",
+   "purpose": "Coût de FWorld.create, $BASE puis branche, essai 3",
+   "bytes": 2097,
+   "sha256": "2bb4440aceda6e731d2d1c41cfc621445ac446e90f9a9b007b1aab5133b3a774"
+  },
+  {
+   "file": "mac/gen-ab-branch-base-1.json",
+   "purpose": "Coût de FWorld.create, orientation inversée (branche puis $BASE), essai 1",
+   "bytes": 3112,
+   "sha256": "527e0615e5a3645f5d88c8794bd34207bbfb5f27dd694727a2318d64a19c5348"
+  },
+  {
+   "file": "mac/gen-ab-branch-base-2.json",
+   "purpose": "Coût de FWorld.create, orientation inversée (branche puis $BASE), essai 2",
+   "bytes": 2097,
+   "sha256": "9c7e30146f712a99266f3f1683d85d39ee3af1df00eacb0a8d3252257aaf42cc"
+  },
+  {
+   "file": "mac/gen-ab-branch-base-3.json",
+   "purpose": "Coût de FWorld.create, orientation inversée (branche puis $BASE), essai 3",
+   "bytes": 2101,
+   "sha256": "a0429b1acb2391f38f87df7a03d5554c77c70bb70de48c832ad2d27f9da8f1ab"
+  },
+  {
+   "file": "mac/golden.json",
+   "purpose": "Les 8 tests historiques : $BASE (Math de la machine) et branche",
+   "bytes": 27981,
+   "sha256": "29287451ecbe55666c458b4798417876b50541478e04bd3aced4052af04ce8ef"
+  },
+  {
+   "file": "mac/loader-check.json",
+   "purpose": "Sortie de loader-check.mjs",
+   "bytes": 1742,
+   "sha256": "055f0318c59edfd18675847735657ed6334992f1defacaa89b54c158bfffa3f8"
+  },
+  {
+   "file": "mac/npm-test.log.gz",
+   "purpose": "Journal complet de npm test sur la branche",
+   "bytes": 27107,
+   "sha256": "2cd7e2c8ed78ce2518ea0ace2b1bb9ed0615ac85bd87ef579b65e0787282b066"
+  },
+  {
+   "file": "mac/profiles.json",
+   "purpose": "t1/profiles-check.mjs : profils publiés contre les archives x86-64 du lot 00",
+   "bytes": 1738,
+   "sha256": "6ea37d139c64dce9267688167a88d7c9b3cd992772e7eca03244cd800b84501c"
+  },
+  {
+   "file": "mac/reference-check-fmath-global.json",
+   "purpose": "reference-check du profil fait avec la précharge fmath-global.mjs",
+   "bytes": 233,
+   "sha256": "43d677e3a191cbaa1da1678d8f80b5b026c9997fc05ad76883d7fba629e73366"
+  },
+  {
+   "file": "mac/replay-fmath.json",
+   "purpose": "Rejeu des 4 scénarios, FMath dans tout le processus",
+   "bytes": 3251,
+   "sha256": "32dde29cb54e5004b3e588731116c6b24ed90256aa3d4db03b7481ad28463545"
+  },
+  {
+   "file": "mac/replay-native.json",
+   "purpose": "Rejeu des 4 scénarios, Math de la machine hors génération",
+   "bytes": 3246,
+   "sha256": "824c622e5990054460a828022eeaec8216e61dc561a1c239a42c20d3f4a376d0"
+  },
+  {
+   "file": "mac/replay-v2-fmath.json",
+   "purpose": "V2 courts (120 pas), FMath dans tout le processus",
+   "bytes": 2080,
+   "sha256": "71bed5c33e9a0b8b55e07c177cd908822803e8894dfcab1d04055b5d42485d84"
+  },
+  {
+   "file": "mac/replay-v2-native.json",
+   "purpose": "V2 courts (120 pas), Math de la machine hors génération",
+   "bytes": 2077,
+   "sha256": "c8e709f357a20b29267b310e02f2355951804e7206539610b853f2a650143f8d"
+  },
+  {
+   "file": "mac/shell-checkpoints.json",
+   "purpose": "Sortie de shell-checkpoints.mjs",
+   "bytes": 8619,
+   "sha256": "27676e59d817e439cf9f0038c8b41b0fc5500dfb55a8f0a4041fd7c48f88124b"
+  },
+  {
+   "file": "mac/sim-risk-fmath.json",
+   "purpose": "Idem, FMath dans tous les modules",
+   "bytes": 7109,
+   "sha256": "1cdc53574bf1bba746d852d02e0c27d3ce8cbaf9fce044da54696292233dc8d4"
+  },
+  {
+   "file": "mac/sim-risk.json",
+   "purpose": "Risque du lot 13 : simulation avec le Math de la machine",
+   "bytes": 7109,
+   "sha256": "0be6effdbf7842436ce874d65590dd817b096a7a60d8114b5d1e1d15894714af"
+  },
+  {
+   "file": "mac/worlds.json",
+   "purpose": "SHA-256 des 114 mondes ; égalité avec $BASE et FMath injecté",
+   "bytes": 28350,
+   "sha256": "9754f139bfcfaa3ffac0297493a8dfe51e3ea20c1f607300d9eea1c5c9dea247"
+  },
+  {
+   "file": "shell-checkpoints.mjs",
+   "purpose": "Points de reprise de $BASE repris par le shell réel (src/game.js) de la branche",
+   "bytes": 7436,
+   "sha256": "6cebcddd7f55aedba7c330a9d75654d4ce058f065011064ea2168a1ed93edf90"
+  },
+  {
+   "file": "spark/checkpoints-from-base.json",
+   "purpose": "Points écrits par $BASE (30 pas), relus par la branche",
+   "bytes": 10792,
+   "sha256": "bf8d13ddbf426fb4827da42e40b0f950ad3928c29ce2508889266ab07e9b8d44"
+  },
+  {
+   "file": "spark/checkpoints.json",
+   "purpose": "Identité des mondes et empreintes de reprise, $BASE contre branche",
+   "bytes": 21491,
+   "sha256": "4c1da562ab85ecc10d7e0a74669a5ea43dc09b8e9712da2407da6f69a9c8dae5"
+  },
+  {
+   "file": "spark/engines.json",
+   "purpose": "Chrome sans tête et jsc : vecteurs FMath, 42 empreintes de reprise",
+   "bytes": 20038,
+   "sha256": "486407e475c42462c60bc39adc903fc5217d8f0b7bacd11b50d447ba992957d0"
+  },
+  {
+   "file": "spark/gen-ab-aa.json",
+   "purpose": "Coût de FWorld.create : contrôle A/A ($BASE contre $BASE)",
+   "bytes": 3022,
+   "sha256": "3d5cd3389a6f19d9a31f786e5581ba997cfce372a931bcd0f5135f3b11faa7c5"
+  },
+  {
+   "file": "spark/gen-ab-base-branch-1.json",
+   "purpose": "Coût de FWorld.create, $BASE puis branche, essai 1",
+   "bytes": 3113,
+   "sha256": "5281c5537b5e2c0c53a064e6e4263d2ba7b6b4b4670317ded236911a75c06a5c"
+  },
+  {
+   "file": "spark/gen-ab-branch-base-1.json",
+   "purpose": "Coût de FWorld.create, orientation inversée (branche puis $BASE), essai 1",
+   "bytes": 3115,
+   "sha256": "117e83d6c0bfa2bb93c9aca93652d678366f2a805e886888073a43ea983c6b76"
+  },
+  {
+   "file": "spark/golden.json",
+   "purpose": "Les 8 tests historiques : $BASE (Math de la machine) et branche",
+   "bytes": 27927,
+   "sha256": "6ac8066e18641ed471c3467ba5edbc8ea207a6d42ac415cb7110a15f2d6b5352"
+  },
+  {
+   "file": "spark/npm-test-avant-5e86238.log.gz",
+   "purpose": "Journal complet de npm test sur 5e86238 (avant T2)",
+   "bytes": 28355,
+   "sha256": "b153fc53a7746cd46b2672c77242e0fef289d4ce4c36a969f91a9238f2558a90"
+  },
+  {
+   "file": "spark/npm-test.log.gz",
+   "purpose": "Journal complet de npm test sur la branche",
+   "bytes": 27261,
+   "sha256": "a260e313df2e74d4b878ee15b522b56cc7c45bed93f1e362ef44621a270f4e8d"
+  },
+  {
+   "file": "spark/profiles.json",
+   "purpose": "t1/profiles-check.mjs : profils publiés contre les archives x86-64 du lot 00",
+   "bytes": 1737,
+   "sha256": "3043535982b7915527c209ea8b7673cafc24eb22fad1461c8d626b437a880a66"
+  },
+  {
+   "file": "spark/reference-check-fmath-global.json",
+   "purpose": "reference-check du profil fait avec la précharge fmath-global.mjs",
+   "bytes": 258,
+   "sha256": "97ffa64bc72d5a7d16312ec8823d1308be23b8573594a8aba9627963595dcd13"
+  },
+  {
+   "file": "spark/replay-fmath.json",
+   "purpose": "Rejeu des 4 scénarios, FMath dans tout le processus",
+   "bytes": 3250,
+   "sha256": "b536815cc497256ea605e8deaf9acb9594a998efd085740385f9aff6fddb88a3"
+  },
+  {
+   "file": "spark/replay-native.json",
+   "purpose": "Rejeu des 4 scénarios, Math de la machine hors génération",
+   "bytes": 3245,
+   "sha256": "d73e208ba342f6eb77a6ea620c028e0dce12db0a706c9e2248a13851e55b2b57"
+  },
+  {
+   "file": "spark/replay-v2-fmath.json",
+   "purpose": "V2 courts (120 pas), FMath dans tout le processus",
+   "bytes": 2079,
+   "sha256": "4ef38759f54046b953b6be0831d69441cc262ec683af3b0015649c16bb2b0df2"
+  },
+  {
+   "file": "spark/replay-v2-native.json",
+   "purpose": "V2 courts (120 pas), Math de la machine hors génération",
+   "bytes": 2076,
+   "sha256": "05df1cedab927c7ffdaa4d8f45721f176231d34a35cc5e3d65e3aa8bba3e9b61"
+  },
+  {
+   "file": "spark/shell-checkpoints.json",
+   "purpose": "Sortie de shell-checkpoints.mjs",
+   "bytes": 8639,
+   "sha256": "18c65c08f5aeba0bb707bcff5c1404dc424909461f9da8280b6ef08610f665b0"
+  },
+  {
+   "file": "spark/sim-risk-fmath.json",
+   "purpose": "Idem, FMath dans tous les modules",
+   "bytes": 7107,
+   "sha256": "4f3e43a58457d47c6696fb2a595fa933e00933c77fe65e0e5c8d3cc85ea4f49b"
+  },
+  {
+   "file": "spark/sim-risk.json",
+   "purpose": "Risque du lot 13 : simulation avec le Math de la machine",
+   "bytes": 7108,
+   "sha256": "ad1ec4ff188e69fbac08da199cba5e066cd10cb01defaa5ba6f1c2cca90a948c"
+  },
+  {
+   "file": "spark/worlds.json",
+   "purpose": "SHA-256 des 114 mondes ; égalité avec $BASE et FMath injecté",
+   "bytes": 28370,
+   "sha256": "c9bc873b49d7939b2e165d059b53357d91b1c681cc896790a70ed1cfbbafdfdb"
+  }
+ ]
+}

@@ -193,6 +193,7 @@ node tools/campaign-profiles.mjs docs/campaign-world-profiles.json
 
 | Source | Responsabilité |
 | --- | --- |
+| `fmath.js` | `sin`, `cos`, `atan`, `atan2` (fdlibm de V8 sans FMA) et `hypot` (algorithme de V8) identiques sur toutes les plateformes, chargé avant `world.js` |
 | `world.js` | Terrain, architecture, population, arènes, systèmes et dangers |
 | `destruction.js` | Découpes, supports, collisions et état persistant de démolition |
 | `economy.js` | Profils, stats, plafonds, catalogue et transactions atomiques |
