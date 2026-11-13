@@ -1,0 +1,16 @@
+# 2026-11-13 11:36, Mac, v24.18.0, charge 3.14 4.30 3.43
+$ node --expose-gc --max-semi-space-size=64 docs/chantier-moteur/preuves/module-physique/E3/allocations.mjs   (trois fois)
+Node v24.18.0 ; octets alloués dans le tas jeune, médiane de 5 mesures de 120 itérations
+- 60 sphères, capsules et boîtes dans la cour, NOSLEEP, après 3 000 sous-pas (60 éveillés, 180 points) : 26 octets par sous-pas
+- ascenseur cinématique en mouvement, une sphère et une boîte dessus (2 éveillés, 4 points) : 24 octets par setKinematic + step
+- le même, ascenseur arrêté, les deux passagers posés dessus (2 éveillés, 5 points) : 24 octets par sous-pas
+- témoin, une fonction vide appelée par la même boucle : 24 octets par appel
+- 60 sphères, capsules et boîtes dans la cour, NOSLEEP, après 3 000 sous-pas (60 éveillés, 180 points) : 26 octets par sous-pas
+- ascenseur cinématique en mouvement, une sphère et une boîte dessus (2 éveillés, 4 points) : 24 octets par setKinematic + step
+- le même, ascenseur arrêté, les deux passagers posés dessus (2 éveillés, 5 points) : 24 octets par sous-pas
+- témoin, une fonction vide appelée par la même boucle : 24 octets par appel
+- 60 sphères, capsules et boîtes dans la cour, NOSLEEP, après 3 000 sous-pas (60 éveillés, 180 points) : 26 octets par sous-pas
+- ascenseur cinématique en mouvement, une sphère et une boîte dessus (2 éveillés, 4 points) : 24 octets par setKinematic + step
+- le même, ascenseur arrêté, les deux passagers posés dessus (2 éveillés, 5 points) : 24 octets par sous-pas
+- témoin, une fonction vide appelée par la même boucle : 24 octets par appel
+Lecture : le pas n'alloue rien de mesurable sur les nouveaux chemins (formes rondes contre boîtes, décor et entre elles, amortissement de roulement, cinématique en mouvement et arrêté) : 24 à 26 octets, le coût de la boucle de mesure, comme aux étapes 2a et 2b. Un monde mesuré après seulement 300 itérations, derrière d'autres mondes, donnait de 56 à 1 512 octets : du code pas encore réoptimisé pour ses fermetures, voir l'en-tête du script.

@@ -1,0 +1,11 @@
+# 2026-11-13 10:17, Mac, v24.18.0, charge 3.93 4.89 4.31
+$ node --expose-gc --max-semi-space-size=64 docs/chantier-moteur/preuves/module-physique/E2b/allocations.mjs
+Node v24.18.0 ; octets alloués dans le tas jeune, médiane de 5 mesures
+- rubble300 NOSLEEP après 300 sous-pas (300 éveillés, 1624 points) : 24 octets par sous-pas
+- blast200 juste après le souffle (198 éveillés, 792 points) : 25 octets par sous-pas
+- arguments constants (littéraux, sans nouveau nombre à mettre en boîte) :
+  impulse 2, setVelocity 1, blast sur les 200 corps de blast200 1 octets par appel
+- arguments calculés à chaque appel (point lu dans un tableau, impulsion multipliée) :
+  impulse 65, setVelocity 13 octets par appel
+- témoin, une fonction vide à 7 arguments, constants puis calculés : 1 et 1 octets par appel
+Lecture : le pas n'alloue rien de mesurable (24 octets, le coût de la boucle de mesure, comme à l'étape 2a). Les actions non plus avec des arguments constants. Avec des arguments calculés, ce qu'on paie est la mise en boîte des nombres neufs passés à une fonction que l'optimiseur ne met pas en ligne (PHYS-05) : le témoin vide, mis en ligne, n'en paie aucun. Hors du pas, c'est permis (§4.7).

@@ -1,0 +1,136 @@
+# 2026-11-13 11:13, Mac, v24.18.0, charge 1.79 2.13 2.58
+# REF = dossier temporaire hors du dépôt, src/physics.js = git show df1b779:src/physics.js (E2b, 63989 octets) ; module = étape 3 (passes 1 et 2 : 77980 octets ; passe 3 : 77957 octets, code commité)
+# passe 1
+$ node tools/physics-bench.mjs --compare REF --reps 5
+FPhysics, banc du module (contre REF/src/physics.js) ; 5 répétitions alternées, minimum par sous-pas
+Node v24.18.0, Apple M5, 10 cœurs ; charge au départ 1.79 2.13 2.58
+
+stack10 (1200 sous-pas)
+  module     : 103 sous-pas actifs | µs/sous-pas médiane 11.7 moyenne 11.7 p95 12.3 max 12.5 | total 1.5 ms | 1.19 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  référence  : 103 sous-pas actifs | µs/sous-pas médiane 11.4 moyenne 11.5 p95 11.9 max 12.1 | total 1.5 ms | 1.16 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  module/référence : moyenne ×1.02, médiane ×1.02, total ×1.03 (médiane des 5 rapports appariés ×1.05) ; hachages identiques
+
+pyramid55 (1200 sous-pas)
+  module     : 67 sous-pas actifs | µs/sous-pas médiane 134.0 moyenne 134.7 p95 142.5 max 150.7 | total 12.3 ms | 2.49 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  référence  : 67 sous-pas actifs | µs/sous-pas médiane 133.2 moyenne 133.7 p95 142.3 max 151.3 | total 12.1 ms | 2.47 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  module/référence : moyenne ×1.01, médiane ×1.01, total ×1.01 (médiane des 5 rapports appariés ×1.14) ; hachages identiques
+
+rubble300 (1800 sous-pas)
+  module     : 567 sous-pas actifs | µs/sous-pas médiane 483.4 moyenne 436.0 p95 545.8 max 568.4 | total 250.3 ms | 1.52 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  référence  : 567 sous-pas actifs | µs/sous-pas médiane 471.2 moyenne 428.9 p95 546.1 max 572.2 | total 245.6 ms | 1.49 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  module/référence : moyenne ×1.02, médiane ×1.03, total ×1.02 (médiane des 5 rapports appariés ×0.97) ; hachages identiques
+
+blast200 (1500 sous-pas, souffle avant le sous-pas 240)
+  module     : 593 sous-pas actifs | µs/sous-pas médiane 175.8 moyenne 148.3 p95 259.1 max 266.5 | total 92.8 ms | 1.19 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  référence  : 593 sous-pas actifs | µs/sous-pas médiane 172.4 moyenne 145.8 p95 255.3 max 264.8 | total 91.0 ms | 1.17 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  module/référence : moyenne ×1.02, médiane ×1.02, total ×1.02 (médiane des 5 rapports appariés ×1.02) ; hachages identiques
+
+charge à la fin 1.81 2.13 2.58
+
+# passe 2
+$ node tools/physics-bench.mjs --compare REF --reps 7
+FPhysics, banc du module (contre REF/src/physics.js) ; 7 répétitions alternées, minimum par sous-pas
+Node v24.18.0, Apple M5, 10 cœurs ; charge au départ 1.81 2.13 2.58
+
+stack10 (1200 sous-pas)
+  module     : 103 sous-pas actifs | µs/sous-pas médiane 11.5 moyenne 11.6 p95 12.0 max 12.5 | total 1.5 ms | 1.17 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  référence  : 103 sous-pas actifs | µs/sous-pas médiane 11.5 moyenne 11.5 p95 12.0 max 12.4 | total 1.5 ms | 1.17 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  module/référence : moyenne ×1.00, médiane ×1.00, total ×1.01 (médiane des 7 rapports appariés ×1.01) ; hachages identiques
+
+pyramid55 (1200 sous-pas)
+  module     : 67 sous-pas actifs | µs/sous-pas médiane 133.7 moyenne 134.2 p95 141.9 max 149.0 | total 12.2 ms | 2.48 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  référence  : 67 sous-pas actifs | µs/sous-pas médiane 133.4 moyenne 133.8 p95 140.5 max 149.5 | total 12.1 ms | 2.47 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  module/référence : moyenne ×1.00, médiane ×1.00, total ×1.01 (médiane des 7 rapports appariés ×1.01) ; hachages identiques
+
+rubble300 (1800 sous-pas)
+  module     : 567 sous-pas actifs | µs/sous-pas médiane 480.8 moyenne 433.8 p95 544.9 max 576.9 | total 249.0 ms | 1.51 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  référence  : 567 sous-pas actifs | µs/sous-pas médiane 479.1 moyenne 434.0 p95 550.5 max 566.9 | total 248.6 ms | 1.51 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  module/référence : moyenne ×1.00, médiane ×1.00, total ×1.00 (médiane des 7 rapports appariés ×0.98) ; hachages identiques
+
+blast200 (1500 sous-pas, souffle avant le sous-pas 240)
+  module     : 593 sous-pas actifs | µs/sous-pas médiane 175.3 moyenne 147.4 p95 258.5 max 267.1 | total 92.3 ms | 1.18 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  référence  : 593 sous-pas actifs | µs/sous-pas médiane 173.4 moyenne 146.5 p95 256.8 max 265.0 | total 91.4 ms | 1.17 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  module/référence : moyenne ×1.01, médiane ×1.01, total ×1.01 (médiane des 7 rapports appariés ×1.01) ; hachages identiques
+
+charge à la fin 1.74 2.11 2.57
+
+# passe 3, code commité (77957 octets : passes 1 et 2 plus un commentaire et SCR ramené de 39 à 37 cases, les deux dernières ne servant pas ; mêmes hachages)
+$ node tools/physics-bench.mjs --compare REF --reps 7
+FPhysics, banc du module (contre REF/src/physics.js) ; 7 répétitions alternées, minimum par sous-pas
+Node v24.18.0, Apple M5, 10 cœurs ; charge au départ 2.40 2.29 2.45
+
+stack10 (1200 sous-pas)
+  module     : 103 sous-pas actifs | µs/sous-pas médiane 12.6 moyenne 12.6 p95 13.1 max 13.7 | total 1.6 ms | 1.28 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  référence  : 103 sous-pas actifs | µs/sous-pas médiane 12.5 moyenne 12.5 p95 13.0 max 13.4 | total 1.6 ms | 1.26 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  module/référence : moyenne ×1.01, médiane ×1.01, total ×1.02 (médiane des 7 rapports appariés ×1.01) ; hachages identiques
+
+pyramid55 (1200 sous-pas)
+  module     : 67 sous-pas actifs | µs/sous-pas médiane 145.5 moyenne 144.8 p95 155.8 max 164.1 | total 13.2 ms | 2.67 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  référence  : 67 sous-pas actifs | µs/sous-pas médiane 138.0 moyenne 138.7 p95 147.0 max 154.3 | total 12.6 ms | 2.56 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  module/référence : moyenne ×1.04, médiane ×1.05, total ×1.05 (médiane des 7 rapports appariés ×1.01) ; hachages identiques
+
+rubble300 (1800 sous-pas)
+  module     : 567 sous-pas actifs | µs/sous-pas médiane 521.5 moyenne 469.3 p95 588.2 max 805.7 | total 269.2 ms | 1.63 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  référence  : 567 sous-pas actifs | µs/sous-pas médiane 485.5 moyenne 446.2 p95 580.5 max 618.4 | total 255.6 ms | 1.55 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  module/référence : moyenne ×1.05, médiane ×1.07, total ×1.05 (médiane des 7 rapports appariés ×1.04) ; hachages identiques
+
+blast200 (1500 sous-pas, souffle avant le sous-pas 240)
+  module     : 593 sous-pas actifs | µs/sous-pas médiane 190.5 moyenne 160.5 p95 286.9 max 338.0 | total 100.3 ms | 1.29 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  référence  : 593 sous-pas actifs | µs/sous-pas médiane 180.8 moyenne 155.6 p95 282.8 max 338.3 | total 97.1 ms | 1.25 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  module/référence : moyenne ×1.03, médiane ×1.05, total ×1.03 (médiane des 7 rapports appariés ×1.21) ; hachages identiques
+
+charge à la fin 2.60 2.34 2.46
+
+# passe 4, code commité (77957 octets)
+$ node tools/physics-bench.mjs --compare REF --reps 9
+FPhysics, banc du module (contre REF/src/physics.js) ; 9 répétitions alternées, minimum par sous-pas
+Node v24.18.0, Apple M5, 10 cœurs ; charge au départ 3.13 2.46 2.50
+
+stack10 (1200 sous-pas)
+  module     : 103 sous-pas actifs | µs/sous-pas médiane 11.7 moyenne 11.7 p95 12.3 max 12.6 | total 1.5 ms | 1.18 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  référence  : 103 sous-pas actifs | µs/sous-pas médiane 11.5 moyenne 11.6 p95 12.1 max 12.3 | total 1.5 ms | 1.17 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  module/référence : moyenne ×1.01, médiane ×1.01, total ×1.02 (médiane des 9 rapports appariés ×1.03) ; hachages identiques
+
+pyramid55 (1200 sous-pas)
+  module     : 67 sous-pas actifs | µs/sous-pas médiane 133.7 moyenne 134.3 p95 141.3 max 151.2 | total 12.2 ms | 2.48 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  référence  : 67 sous-pas actifs | µs/sous-pas médiane 132.7 moyenne 133.5 p95 143.4 max 148.2 | total 12.1 ms | 2.46 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  module/référence : moyenne ×1.01, médiane ×1.01, total ×1.01 (médiane des 9 rapports appariés ×1.01) ; hachages identiques
+
+rubble300 (1800 sous-pas)
+  module     : 567 sous-pas actifs | µs/sous-pas médiane 485.3 moyenne 438.4 p95 551.9 max 573.3 | total 251.6 ms | 1.53 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  référence  : 567 sous-pas actifs | µs/sous-pas médiane 484.1 moyenne 436.3 p95 546.6 max 569.0 | total 250.0 ms | 1.52 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  module/référence : moyenne ×1.00, médiane ×1.00, total ×1.01 (médiane des 9 rapports appariés ×1.00) ; hachages identiques
+
+blast200 (1500 sous-pas, souffle avant le sous-pas 240)
+  module     : 593 sous-pas actifs | µs/sous-pas médiane 174.8 moyenne 147.6 p95 259.3 max 267.4 | total 92.4 ms | 1.18 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  référence  : 593 sous-pas actifs | µs/sous-pas médiane 173.5 moyenne 146.8 p95 257.4 max 265.3 | total 91.6 ms | 1.18 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  module/référence : moyenne ×1.01, médiane ×1.01, total ×1.01 (médiane des 9 rapports appariés ×1.01) ; hachages identiques
+
+charge à la fin 2.95 2.44 2.50
+
+# passe 5, code commité (77957 octets)
+$ node tools/physics-bench.mjs --compare REF --reps 9
+FPhysics, banc du module (contre REF/src/physics.js) ; 9 répétitions alternées, minimum par sous-pas
+Node v24.18.0, Apple M5, 10 cœurs ; charge au départ 2.95 2.44 2.50
+
+stack10 (1200 sous-pas)
+  module     : 103 sous-pas actifs | µs/sous-pas médiane 11.6 moyenne 11.6 p95 12.1 max 12.3 | total 1.5 ms | 1.17 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  référence  : 103 sous-pas actifs | µs/sous-pas médiane 11.5 moyenne 11.6 p95 12.1 max 12.2 | total 1.5 ms | 1.17 µs par corps éveillé | pics 10 éveillés, 40 points, 10 paires, 10 tests | tout dort à la fin du sous-pas 123 (1.02 s) | hachage 283b179e
+  module/référence : moyenne ×1.00, médiane ×1.00, total ×1.01 (médiane des 9 rapports appariés ×1.02) ; hachages identiques
+
+pyramid55 (1200 sous-pas)
+  module     : 67 sous-pas actifs | µs/sous-pas médiane 134.2 moyenne 134.4 p95 142.4 max 149.9 | total 12.2 ms | 2.48 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  référence  : 67 sous-pas actifs | µs/sous-pas médiane 133.1 moyenne 133.5 p95 140.7 max 149.2 | total 12.1 ms | 2.46 µs par corps éveillé | pics 55 éveillés, 580 points, 145 paires, 145 tests | tout dort à la fin du sous-pas 87 (0.72 s) | hachage 6a47467f
+  module/référence : moyenne ×1.01, médiane ×1.01, total ×1.01 (médiane des 9 rapports appariés ×1.01) ; hachages identiques
+
+rubble300 (1800 sous-pas)
+  module     : 567 sous-pas actifs | µs/sous-pas médiane 482.1 moyenne 433.3 p95 544.3 max 572.7 | total 248.7 ms | 1.51 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  référence  : 567 sous-pas actifs | µs/sous-pas médiane 479.6 moyenne 433.8 p95 545.4 max 575.8 | total 248.4 ms | 1.51 µs par corps éveillé | pics 300 éveillés, 1574 points, 703 paires, 1342 tests | tout dort à la fin du sous-pas 587 (4.89 s) | hachage 5d011c56
+  module/référence : moyenne ×1.00, médiane ×1.01, total ×1.00 (médiane des 9 rapports appariés ×1.07) ; hachages identiques
+
+blast200 (1500 sous-pas, souffle avant le sous-pas 240)
+  module     : 593 sous-pas actifs | µs/sous-pas médiane 173.8 moyenne 146.8 p95 257.5 max 268.1 | total 91.8 ms | 1.18 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  référence  : 593 sous-pas actifs | µs/sous-pas médiane 174.5 moyenne 146.8 p95 257.6 max 274.5 | total 91.7 ms | 1.18 µs par corps éveillé | pics 200 éveillés, 878 points, 335 paires, 446 tests | tout dort à la fin du sous-pas 766 (6.38 s) | hachage 8ec40b00
+  module/référence : moyenne ×1.00, médiane ×1.00, total ×1.00 (médiane des 9 rapports appariés ×1.01) ; hachages identiques
+
+charge à la fin 2.80 2.42 2.49

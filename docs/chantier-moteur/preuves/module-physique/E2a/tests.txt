@@ -1,0 +1,53 @@
+# 2026-11-13 09:36, Mac, v24.18.0, charge 4.32 3.66 3.34
+$ node --test checks/fphysics.test.mjs
+✔ P01 Chargement : un seul global FPhysics, matières gelées, chargement vm (5.559416ms)
+✔ P02 Source : taille, motifs interdits, membres de Math, blocs TRIG (11.951667ms)
+ℹ src/physics.js : 59932 octets
+ℹ 1 bloc(s) TRIG, 77 appels à Math vérifiés
+✔ P03 Angles : quaternions unitaires, matrice du jeu, aller-retour, blocage de cardan (1.5435ms)
+ℹ 1 000 triplets : |q| - 1 ≤ 3.33e-16, matrice ≤ 8.88e-16, aller-retour ≤ 4.22e-15
+ℹ blocage de cardan ry = 1.5708 : matrice 1.66e-16, aller-retour 1.49e-8
+ℹ blocage de cardan ry = -1.5708 : matrice 1.66e-16, aller-retour 1.11e-16
+✔ P04 Création : validation, réglages par défaut, empreinte (7.592125ms)
+ℹ 58 jeux d'options invalides refusés par TypeError
+ℹ empreinte par défaut sur B64 : 04031f9d ; 49 réglages, chacun change l'empreinte
+✔ P05 Chute libre exacte (1.952125ms)
+ℹ après 120 sous-pas : y = 3.950000000000008, vy = -11.999999999999973 (attendu 3,95 et -12, Euler semi-implicite)
+✔ P06 Repos (2.409375ms)
+ℹ au bout de 2 s : y = 0.394672 (enfoncement 5.33 mm), endormie au sous-pas 63
+✔ P11 Pile de 10 (stack10) (36.75225ms)
+ℹ NOSLEEP : dérive 30.69 mm à 1 s, 16.83 mm à 5 s, 23.39 mm à 10 s (seuil 30 mm ; prototype sur dalle 30,7 / 16,8 / 23,4)
+ℹ tassement du sommet à 10 s : 86.06 mm (attendu ≈ 85 mm)
+ℹ plus bas sommet : -9.24 mm de 1 s à 10 s (sous-pas 1113) ; -23.56 mm sur tout l'essai (sous-pas 21, chute initiale)
+ℹ réglages par défaut : toute la pile dort au sous-pas 123 (1.025 s)
+✔ P12 Pyramide de 55 (pyramid55) (244.961708ms)
+ℹ NOSLEEP : dérive 9.63 mm à 1 s, 16.39 mm à 5 s, 19.39 mm à 10 s (seuil 20 mm ; prototype sur dalle 9,6 / 16,4 / 19,4)
+ℹ plus bas sommet : -11.73 mm de 1 s à 10 s (sous-pas 195) ; -13.71 mm sur tout l'essai (sous-pas 16, chute initiale)
+ℹ réglages par défaut : tout dort au sous-pas 87 (0.725 s)
+✔ P45 Aller-retour JSON (41.093458ms)
+ℹ stack10 à 100 sous-pas : b219608d, puis 283b179e des deux côtés 300 sous-pas plus tard ; instantané de 7022 caractères, cache de 40 entrées
+ℹ pyramid55 à 1200 sous-pas : 6a47467f, puis 6a47467f des deux côtés 300 sous-pas plus tard ; instantané de 44043 caractères, cache de 492 entrées
+✔ P46 snapshot ne modifie rien (63.685916ms)
+ℹ stack10 : 283b179e après 300 sous-pas, avec ou sans instantanés ; chaîne b4d9490c/283b179e
+ℹ pyramid55 : 6a47467f après 300 sous-pas, avec ou sans instantanés ; chaîne 0d00077d/6a47467f
+✔ Étape 2a — corps : description, poignées, body() (1.051334ms)
+✔ Étape 2a — attente, création endormie, réveil différé (4.662042ms)
+ℹ le dormeur est réveillé au sous-pas 30 par la caisse qui tombe ; réveils : 1
+✔ Étape 2a — setStatics : boîtes, dalle, empreinte, réveil (2.428917ms)
+ℹ caisse posée sur la boîte statique : y = 1.39466 ; sans le bit 1 du masque : y = -22.78
+✔ Étape 2a — pas de temps : erreurs, accumulateur, découpage (34.347167ms)
+ℹ step(0.2) : 8 sous-pas, 16 sous-pas jetés
+ℹ stack10, 300 sous-pas par 1/60, 1/120 et 1/30 : 283b179e, 283b179e, 283b179e
+✔ Étape 2a — restore refusé sans rien changer, zéros négatifs (10.53575ms)
+ℹ 13 instantanés corrompus refusés, hachage inchangé (b219608d)
+✔ Étape 2a — pose, matrix, chronométrage (8.467791ms)
+ℹ phaseMs avec une horloge factice : 15, 15, 15, 30
+ℹ stack10 à 60 sous-pas : 40 points, 10 paires, 10 tests, 10 éveillés
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 525.388167

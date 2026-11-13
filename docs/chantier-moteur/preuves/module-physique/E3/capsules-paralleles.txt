@@ -1,0 +1,6 @@
+# node docs/chantier-moteur/preuves/module-physique/E3/capsules-paralleles.mjs (v24.18.0, 2026-11-13 11:37)
+module    longue créée en premier (A = longue) : courte à y = 0.4387, longue à y = 0.1441 ; endormies
+module    courte créée en premier (A = courte) : courte à y = 0.4387, longue à y = 0.1441 ; endormies
+littéral  longue créée en premier (A = longue) : courte à y = 0.1447, longue à y = 0.1446 ; endormies
+littéral  courte créée en premier (A = courte) : courte à y = 0.4387, longue à y = 0.1441 ; endormies
+# posée sur la longue, la courte est attendue à y ≈ 0,145 + 0,3 - 0,005 ≈ 0,44 ; à y ≈ 0,145, elle a traversé la longue et repose au sol

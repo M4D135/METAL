@@ -1,0 +1,12 @@
+# 2026-11-13 11:23, Mac, v24.18.0, charge 2.15 2.24 2.43
+# chaînes cccccccc/hhhhhhhh de checks/fphysics-scenes.mjs (blast200 : souffle au sous-pas 60) ; à comparer à E2b/hashes.txt (étape 2b, commit df1b779)
+$ node tools/physics-bench.mjs --hashes
+{"stack10":"5af686dc/283b179e","pyramid55":"f1a824a1/6a47467f","rubble300":"74483875/5d011c56","blast200":"a17a182e/953773b5"}
+$ node tools/physics-bench.mjs --hashes --pas 300
+{"stack10":"b4d9490c/283b179e","pyramid55":"0d00077d/6a47467f","rubble300":"e9d0d0c3/3975d516","blast200":"01b0c057/70fd66db"}
+$ node tools/physics-bench.mjs --hashes --pas 150
+{"stack10":"b9e3eeb5/283b179e","pyramid55":"abdbdc6e/6a47467f","rubble300":"96d1663f/660ba690","blast200":"285c0ce7/d7023a11"}
+# même commande relancée (deux processus) :
+$ node tools/physics-bench.mjs --hashes
+{"stack10":"5af686dc/283b179e","pyramid55":"f1a824a1/6a47467f","rubble300":"74483875/5d011c56","blast200":"a17a182e/953773b5"}
+# les quatre lignes JSON sont identiques à celles d'E2b/hashes.txt (diff vide)

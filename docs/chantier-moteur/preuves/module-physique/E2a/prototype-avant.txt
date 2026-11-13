@@ -1,0 +1,28 @@
+# Référence « avant » : le prototype, commandes de la tâche E2a (2026-11-13 09:35, v24.18.0, charge 3.26 3.45 3.27)
+
+$ node docs/chantier-moteur/bancs/phys/drift.mjs
+stack10    120 Hz x1 (2+1 it.)      | t=1s horiz 23.96 mm vert 84.76 mm tilt 0.164 deg speed 28.799 mm/s | t=5s horiz 21.02 mm vert 83.69 mm tilt 0.129 deg speed 3.645 mm/s | t=10s horiz 12.57 mm vert 83.67 mm tilt 0.050 deg speed 0.530 mm/s | awake at end 10
+stack10    60 Hz x2 substeps        | t=1s horiz 13.46 mm vert 88.58 mm tilt 0.231 deg speed 73.393 mm/s | t=5s horiz 25.39 mm vert 83.62 mm tilt 0.132 deg speed 84.791 mm/s | t=10s horiz 26.64 mm vert 83.69 mm tilt 0.121 deg speed 18.510 mm/s | awake at end 10
+stack10    120 Hz x1, slop 2 mm     | t=1s horiz 96.77 mm vert 73.00 mm tilt 1.372 deg speed 237.664 mm/s | t=5s horiz 42.10 mm vert 53.73 mm tilt 0.421 deg speed 15.733 mm/s | t=10s horiz 22.36 mm vert 54.08 mm tilt 0.214 deg speed 76.672 mm/s | awake at end 10
+stack10    60 Hz x1 (2+1 it.)       | t=1s horiz 196.64 mm vert 210.54 mm tilt 2.645 deg speed 333.107 mm/s | t=5s horiz 5810.77 mm vert 7205.79 mm tilt 89.981 deg speed 1408.841 mm/s | t=10s horiz 5810.83 mm vert 7206.35 mm tilt 90.000 deg speed 6.047 mm/s | awake at end 10
+stack10    120 Hz x1, 4+2 it.       | t=1s horiz 38.60 mm vert 88.28 mm tilt 0.547 deg speed 59.853 mm/s | t=5s horiz 13.54 mm vert 83.70 mm tilt 0.046 deg speed 10.051 mm/s | t=10s horiz 23.09 mm vert 83.72 mm tilt 0.113 deg speed 0.499 mm/s | awake at end 10
+stack10    120 Hz x1, sleeping ON   | t=1s horiz 23.96 mm vert 84.76 mm tilt 0.164 deg speed 28.799 mm/s | t=5s horiz 24.33 mm vert 84.87 mm tilt 0.156 deg speed 0.000 mm/s | t=10s horiz 24.33 mm vert 84.87 mm tilt 0.156 deg speed 0.000 mm/s | awake at end 0
+pyramid55  120 Hz x1 (2+1 it.)      | t=1s horiz 11.39 mm vert 64.54 mm tilt 0.447 deg speed 21.280 mm/s | t=5s horiz 14.71 mm vert 64.53 mm tilt 0.442 deg speed 2.319 mm/s | t=10s horiz 14.70 mm vert 64.52 mm tilt 0.442 deg speed 0.046 mm/s | awake at end 55
+pyramid55  60 Hz x2 substeps        | t=1s horiz 11.67 mm vert 64.10 mm tilt 0.330 deg speed 7.769 mm/s | t=5s horiz 14.52 mm vert 63.83 mm tilt 0.374 deg speed 0.544 mm/s | t=10s horiz 14.52 mm vert 63.83 mm tilt 0.375 deg speed 0.020 mm/s | awake at end 55
+pyramid55  120 Hz x1, slop 2 mm     | t=1s horiz 6.70 mm vert 33.92 mm tilt 0.288 deg speed 18.635 mm/s | t=5s horiz 8.02 mm vert 33.36 mm tilt 0.287 deg speed 0.279 mm/s | t=10s horiz 8.02 mm vert 33.36 mm tilt 0.286 deg speed 0.010 mm/s | awake at end 55
+pyramid55  60 Hz x1 (2+1 it.)       | t=1s horiz 26.40 mm vert 114.47 mm tilt 1.312 deg speed 39.282 mm/s | t=5s horiz 44.44 mm vert 102.47 mm tilt 1.153 deg speed 17.379 mm/s | t=10s horiz 49.45 mm vert 102.86 mm tilt 1.182 deg speed 8.829 mm/s | awake at end 55
+pyramid55  120 Hz x1, 4+2 it.       | t=1s horiz 3.63 mm vert 62.21 mm tilt 0.171 deg speed 2.648 mm/s | t=5s horiz 6.38 mm vert 62.78 mm tilt 0.270 deg speed 0.260 mm/s | t=10s horiz 6.38 mm vert 62.78 mm tilt 0.270 deg speed 0.000 mm/s | awake at end 55
+pyramid55  120 Hz x1, sleeping ON   | t=1s horiz 10.62 mm vert 65.26 mm tilt 0.400 deg speed 0.000 mm/s | t=5s horiz 10.62 mm vert 65.26 mm tilt 0.400 deg speed 0.000 mm/s | t=10s horiz 10.62 mm vert 65.26 mm tilt 0.400 deg speed 0.000 mm/s | awake at end 0
+
+$ node docs/chantier-moteur/bancs/phys/restore.mjs
+rubble300: snapshot at step 300: 194420 chars with impulse cache (1578 contact points, 84271 chars), 110153 without | continued to 1100: with cache IDENTICAL hash 17089485 | without cache different, max position gap 182.49 mm
+blast200: snapshot at step 300: 85957 chars with impulse cache (468 contact points, 17903 chars), 68058 without | continued to 900: with cache IDENTICAL hash 3fa55997 | without cache different, max position gap 3301.30 mm
+pyramid55: snapshot at step 10: 44304 chars with impulse cache (580 contact points, 27247 chars), 17061 without | continued to 300: with cache IDENTICAL hash 6d172292 | without cache different, max position gap 5.58 mm
+
+$ node docs/chantier-moteur/bancs/phys/restore2.mjs
+rubble300 negative zeros in snapshot 0 | JSON restore: first numeric difference at step -1 final max gap 0 | in-memory restore into a fresh world: first hash difference at step -1
+blast200 negative zeros in snapshot 0 | JSON restore: first numeric difference at step -1 final max gap 0 | in-memory restore into a fresh world: first hash difference at step -1
+
+$ node run08.mjs   (variante du chef : create({ground:false}) + addStatic(-64,-0.5,-64,64,0,64,0.8,0.05), prototype sur la dalle)
+orig     stack10   slab drift 1s 30.7mm | 5s 16.8mm | 10s 23.4mm | end lowest -8.5 mm | asleep at 1.03 s
+orig     pyramid55 slab drift 1s 9.6mm | 5s 16.4mm | 10s 19.4mm | end lowest -10.1 mm | asleep at 0.73 s
