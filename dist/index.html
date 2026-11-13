@@ -6015,7 +6015,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       lifts:(world.lifts||[]).map(l=>({...l,y:l.minY,target:l.minY,powered:l.requires===undefined,moving:false,carrying:false})),
       aiStats:{awake:0,dormant:0,reserve:0,combat:0,combatCap:maxCombat,alive:world.enemies.length,pathSearches:0,pathDeferred:0}};
     const encounterMap=new Map(s.encounters.map(q=>[q.id,q])),enemyEncounter=new Map();
-    for(const q of s.encounters)for(let wave=0;wave<q.waves.length;wave++)for(const id of q.waves[wave].enemyIds){enemyEncounter.set(id,q);const e=s.enemies[id];e.encounterId=q.id;e.encounterWave=wave;e.encounterReleased=false;e.combatEnabled=false;}
+    // SIM-06: encounter index per enemy, same last-wins order as the map above.
+    const enemyEncounterIndex=new Int32Array(s.enemies.length).fill(-1);
+    for(let qi=0;qi<s.encounters.length;qi++){const q=s.encounters[qi];for(let wave=0;wave<q.waves.length;wave++)for(const id of q.waves[wave].enemyIds){enemyEncounter.set(id,q);enemyEncounterIndex[id]=qi;const e=s.enemies[id];e.encounterId=q.id;e.encounterWave=wave;e.encounterReleased=false;e.combatEnabled=false;}}
+    // T10: reusable selection buffers (indices, precomputed keys, chosen flags, per-encounter counters).
+    let selectOrder=new Int32Array(s.enemies.length),selectKeys=new Float64Array(s.enemies.length),selectChosen=new Uint8Array(s.enemies.length);
+    const selectLocals=new Int32Array(s.encounters.length);
     for(const e of s.enemies)if(!present(e))e.sleeping=true;
     s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);trapStates=s.traps;let giants=s.enemies.filter(giant);
     // Public locomotion values describe displacement after collision, never held keys.
@@ -6551,9 +6556,16 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       }
       return true;
     }
+    // SIM-06: counts in one pass per encounter, no flatMap/filter arrays.
     function encounterCounts(){
-      for(const q of s.encounters){const ids=q.waves.flatMap(w=>w.enemyIds);q.total=ids.length;q.remaining=ids.filter(id=>s.enemies[id].hp>0).length;q.active=ids.filter(id=>alive(s.enemies[id])&&s.enemies[id].combatEnabled).length;}
-      Object.assign(s.aiStats,{reserve:s.enemies.filter(e=>e.hp>0&&!present(e)).length,combat:s.enemies.filter(e=>alive(e)&&!giant(e)&&e.combatEnabled&&(!e.bossWave||e.bossReleased)).length,combatCap:maxCombat});
+      for(const q of s.encounters){
+        let total=0,remaining=0,activeCount=0;
+        for(const w of q.waves)for(const id of w.enemyIds){const e=s.enemies[id];total++;if(e.hp>0)remaining++;if(alive(e)&&e.combatEnabled)activeCount++;}
+        q.total=total;q.remaining=remaining;q.active=activeCount;
+      }
+      let reserveCount=0,combatCount=0;
+      for(const e of s.enemies){if(e.hp>0&&!present(e))reserveCount++;if(alive(e)&&!giant(e)&&e.combatEnabled&&(!e.bossWave||e.bossReleased))combatCount++;}
+      s.aiStats.reserve=reserveCount;s.aiStats.combat=combatCount;s.aiStats.combatCap=maxCombat;
     }
     function updateEncounters(dt){
       if(!progression)return;
@@ -6563,20 +6575,21 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         encounterWait=.2;let probes=8;
         for(const q of s.encounters){
           if(campaign&&q.requiresTrophy&&trophyState(q.requiresTrophy)?.phase!=='trial')continue;
-          const ids=q.waves.flatMap(w=>w.enemyIds),remaining=ids.filter(id=>s.enemies[id].hp>0);
-          if(!remaining.length){if(q.status!=='cleared'){q.status='cleared';q.pendingWave=-1;q.timer=0;emit('encounterClear',{id:q.id,label:q.label||'Zone sécurisée'});}continue;}
+          let remainingCount=0;for(const w of q.waves)for(const id of w.enemyIds)if(s.enemies[id].hp>0)remainingCount++;
+          if(!remainingCount){if(q.status!=='cleared'){q.status='cleared';q.pendingWave=-1;q.timer=0;emit('encounterClear',{id:q.id,label:q.label||'Zone sécurisée'});}continue;}
           if(q.status==='dormant'&&inEncounter(q))announceWave(q,0);
           if(q.status==='active'&&q.wave>=0&&q.waves[q.wave].enemyIds.every(id=>s.enemies[id].hp<=0)&&q.wave+1<q.waves.length&&inEncounter(q,8))announceWave(q,q.wave+1);
           if(q.pendingWave<0||q.timer>0||!inEncounter(q,8))continue;
           q.status='waiting';
           const wave=q.waves[q.pendingWave].enemyIds.map(id=>s.enemies[id]).filter(e=>e.hp>0),need=wave.filter(e=>!e.encounterReleased);
-          const engaged=s.enemies.filter(e=>alive(e)&&!giant(e)&&e.encounterReleased&&!e.returning&&(!e.bossWave||e.bossReleased)&&(Math.hypot(e.x-p.x,e.z-p.z)<48||bossProgression&&e.entryGrace>0));
-          const local=engaged.filter(e=>enemyEncounter.get(e.id)===q).length;
-          let slots=campaign?Math.min(maxCombat-engaged.length,(q.maxActive||6)-local):Infinity;
-          if(campaign?slots<=0:engaged.length+need.length>maxCombat||local+need.length>(q.maxActive||6))continue;
+          let engagedCount=0,local=0;
+          for(const e of s.enemies)if(alive(e)&&!giant(e)&&e.encounterReleased&&!e.returning&&(!e.bossWave||e.bossReleased)&&(Math.hypot(e.x-p.x,e.z-p.z)<48||bossProgression&&e.entryGrace>0)){engagedCount++;if(enemyEncounter.get(e.id)===q)local++;}
+          let slots=campaign?Math.min(maxCombat-engagedCount,(q.maxActive||6)-local):Infinity;
+          if(campaign?slots<=0:engagedCount+need.length>maxCombat||local+need.length>(q.maxActive||6))continue;
           // A crowded front cannot accumulate new waves while the player rushes
           // through adjacent triggers. Existing bodies always remain physical.
-          const nearbyCount=s.enemies.filter(e=>alive(e)&&!giant(e)&&(!e.bossWave||e.bossReleased)&&Math.hypot(e.x-p.x,e.z-p.z)<24&&!wave.includes(e)).length;
+          let nearbyCount=0;
+          for(const e of s.enemies)if(alive(e)&&!giant(e)&&(!e.bossWave||e.bossReleased)&&Math.hypot(e.x-p.x,e.z-p.z)<24&&!wave.includes(e))nearbyCount++;
           if(campaign)slots=Math.min(slots,maxCombat-nearbyCount-wave.filter(e=>present(e)&&e.encounterReleased).length);
           else if(nearbyCount+need.filter(e=>!present(e)).length>maxCombat)continue;
           for(const e of wave){
@@ -6600,16 +6613,34 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           if(wave.every(e=>e.encounterReleased)){q.wave=q.pendingWave;q.pendingWave=-1;q.status='active';}
         }
       }
-      const candidates=s.enemies.filter(e=>{
-        if(!alive(e)||giant(e)||!e.encounterReleased||e.bossWave&&!e.bossReleased)return false;
-        const q=enemyEncounter.get(e.id);if(!q)return true;
-        if(e.returning){if(Math.hypot(e.x-p.x,e.z-p.z)<12&&sight(e.x,e.z,p.x,p.z,eyeHeight(e),p.y+1.45)){e.returning=false;e.quietTime=0;remember(e,p.x,p.z,'engage',8,p.y+1.45);}else return false;}
-        return e.hasMemory||inEncounter(q,8)||e.combatEnabled&&e.quietTime<5;
-      }).sort((a,c)=>(Math.hypot(a.x-p.x,a.z-p.z)-(a.combatEnabled?8:0))-(Math.hypot(c.x-p.x,c.z-p.z)-(c.combatEnabled?8:0))||a.id-c.id);
-      const selected=new Set(),locals=new Map();
-      for(const e of candidates){if(selected.size>=maxCombat)break;const q=enemyEncounter.get(e.id),n=locals.get(q)||0;if(q&&n>=(q.maxActive||6))continue;selected.add(e.id);locals.set(q,n+1);}
+      // T10: same order as the former stable sort on (distance minus early bonus, id),
+      // obtained by insertion on precomputed keys; no array, Set or Map per pass.
+      const count=s.enemies.length;
+      if(selectOrder.length<count){selectOrder=new Int32Array(count);selectKeys=new Float64Array(count);selectChosen=new Uint8Array(count);}
+      selectChosen.fill(0);
+      let candidateCount=0;
+      for(const e of s.enemies){
+        if(!alive(e)||giant(e)||!e.encounterReleased||e.bossWave&&!e.bossReleased)continue;
+        const q=enemyEncounter.get(e.id);
+        if(q){
+          if(e.returning){if(Math.hypot(e.x-p.x,e.z-p.z)<12&&sight(e.x,e.z,p.x,p.z,eyeHeight(e),p.y+1.45)){e.returning=false;e.quietTime=0;remember(e,p.x,p.z,'engage',8,p.y+1.45);}else continue;}
+          else if(!(e.hasMemory||inEncounter(q,8)||e.combatEnabled&&e.quietTime<5))continue;
+        }
+        const key=Math.hypot(e.x-p.x,e.z-p.z)-(e.combatEnabled?8:0);
+        let j=candidateCount-1;
+        while(j>=0&&(selectKeys[j]>key||selectKeys[j]===key&&selectOrder[j]>e.id)){selectKeys[j+1]=selectKeys[j];selectOrder[j+1]=selectOrder[j];j--;}
+        selectKeys[j+1]=key;selectOrder[j+1]=e.id;candidateCount++;
+      }
+      selectLocals.fill(0);
+      let selectedCount=0;
+      for(let i=0;i<candidateCount;i++){
+        if(selectedCount>=maxCombat)break;
+        const e=s.enemies[selectOrder[i]],ei=enemyEncounterIndex[e.id];
+        if(ei>=0){const limit=s.encounters[ei].maxActive||6;if(selectLocals[ei]>=limit)continue;selectLocals[ei]++;}
+        selectChosen[e.id]=1;selectedCount++;
+      }
       for(const e of s.enemies)if(!giant(e)){
-        const enabled=selected.has(e.id);if(e.combatEnabled&&!enabled&&alive(e)&&enemyEncounter.has(e.id)){e.returning=true;clearEvidence(e);}
+        const enabled=selectChosen[e.id]===1;if(e.combatEnabled&&!enabled&&alive(e)&&enemyEncounter.has(e.id)){e.returning=true;clearEvidence(e);}
         e.combatEnabled=enabled;
       }
       encounterCounts();
@@ -7187,16 +7218,18 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     // or a nearby observer can supply a position; neither grants vision through walls.
     // A fixed spatial index serves local sound, squad alerts and body separation.
     // Membership contains every living actor; sleeping actors are never despawned.
+    // SIM-06: numeric bucket keys ((ix+32768)*65536+(iz+32768)); valid for |x|,|z| < 262 km,
+    // which the world bounds guarantee. Lists are emptied and reused, never reallocated.
     const neighbors=new Map();
     function rebuildNeighbors(){
-      neighbors.clear();
-      for(const e of s.enemies)if(alive(e)){const key=Math.floor(e.x/8)+','+Math.floor(e.z/8);let list=neighbors.get(key);if(!list)neighbors.set(key,list=[]);list.push(e);}
+      for(const list of neighbors.values())list.length=0;
+      for(const e of s.enemies)if(alive(e)){const key=(Math.floor(e.x/8)+32768)*65536+(Math.floor(e.z/8)+32768);let list=neighbors.get(key);if(!list)neighbors.set(key,list=[]);list.push(e);}
     }
     function nearby(x,z,r){
       if(!advanced)return progression?s.enemies.filter(present):s.enemies;
       const result=[];
       for(let iz=Math.floor((z-r)/8);iz<=Math.floor((z+r)/8);iz++)for(let ix=Math.floor((x-r)/8);ix<=Math.floor((x+r)/8);ix++){
-        const list=neighbors.get(ix+','+iz);if(list)for(const e of list)result.push(e);
+        const list=neighbors.get((ix+32768)*65536+(iz+32768));if(list)for(const e of list)result.push(e);
       }
       return result;
     }
@@ -7707,7 +7740,8 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         e.sleeping=advanced&&!e.airborne&&!(bossProgression&&e.entryGrace>0)&&d>68&&(!e.hasMemory||d>88)&&e.windup<=0&&e.rushTime<=0&&e.burstLeft<=0;
         if(e.sleeping)dormant++;else awake++;
         e.hurt=Math.max(0,e.hurt-dt);e.cooldown=Math.max(0,e.cooldown-dt);e.burstWait=Math.max(0,e.burstWait-dt);e.dodgeWait=Math.max(0,e.dodgeWait-dt);e.dodgeDelay=Math.max(0,e.dodgeDelay-dt);bossPhase(e);
-        for(const key of ['senseWait','thinkWait','shareWait','alertWait','coverWait','planWait'])e[key]=Math.max(-.05,e[key]-dt);
+        e.senseWait=Math.max(-.05,e.senseWait-dt);e.thinkWait=Math.max(-.05,e.thinkWait-dt);e.shareWait=Math.max(-.05,e.shareWait-dt);
+        e.alertWait=Math.max(-.05,e.alertWait-dt);e.coverWait=Math.max(-.05,e.coverWait-dt);e.planWait=Math.max(-.05,e.planWait-dt);
         if(e.hasMemory){e.memory=Math.max(0,e.memory-dt);e.alert=e.seen?1:clamp(e.memory/8,.1,.85);}
         if(!e.sleeping&&e.senseWait<=0){e.senseWait+=.15;perceive(e);sensed=true;}
         if(e.hasMemory&&e.memory<=0){e.hasMemory=false;e.active=false;e.awareness='patrol';e.alert=0;e.seen=false;e.planWait=0;e.tactic='hold';e.path=[];e.pathAt=0;e.goalX=e.x;e.goalZ=e.z;e.thinkWait=0;}
@@ -7746,10 +7780,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         }
         e.attackState=e.cooldown>0?'recover':'idle';navigate(e,dt);
       }
-      for(const e of s.enemies)if(alive(e))checkPad(e);
+      if(s.jumpPads.length)for(const e of s.enemies)if(alive(e))checkPad(e);
       rebuildNeighbors();separate(dt);
       if(dt>0)for(let i=0;i<count;i++){const e=s.enemies[i],dx=e.x-enemyStarts[i*2],dz=e.z-enemyStarts[i*2+1];e.moveSpeed=dx===0&&dz===0?0:Math.hypot(dx,dz)/dt;}
-      Object.assign(s.aiStats,{awake,dormant,reserve,alive:s.enemies.filter(e=>e.hp>0).length,pathSearches:routeSearches,pathDeferred:routeDeferred});if(progression)encounterCounts();
+      let aliveCount=0;for(const e of s.enemies)if(e.hp>0)aliveCount++;
+      s.aiStats.awake=awake;s.aiStats.dormant=dormant;s.aiStats.reserve=reserve;s.aiStats.alive=aliveCount;s.aiStats.pathSearches=routeSearches;s.aiStats.pathDeferred=routeDeferred;if(progression)encounterCounts();
       s.threat=Math.min(1,threat/4);
       updateBrain(dt);
     }
