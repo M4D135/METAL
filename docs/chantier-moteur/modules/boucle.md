@@ -436,8 +436,128 @@ mesuré, risque de perdre le dernier point), à décider après une mesure dans 
 
 ## 4. Mesures
 
-(à compléter aux étapes 4 à 6 ; l'émulation de l'étape 2, `aim` et `track` sur la vraie simulation, est
-résumée en 2.5 et 2.6)
+Les bancs chargent les modules dans le domaine principal de Node (`loadRealm({root, modules, realm: 'main'})`),
+jamais sous `node:vm`, qui ralentit le code de 4,5 à 9 fois (MASTER-PROMPT §4). Chaque JSON de
+`preuves/module-boucle/` commence par `schema`, `node`, `arch`, `platform`, `cpu` et `loadavg` : la machine et sa
+charge au moment de la mesure. La simulation réelle, les coûts, l'assemblage et le navigateur viennent aux étapes 5
+et 6 ; l'émulation de l'étape 2 (`aim` et `track` sur la vraie simulation) est résumée en 2.5 et 2.6.
+
+### 4.1 Horloge : `banc-horloge.json` (étape 4)
+
+Constats : STAB-06 (réserve 2 de sa contre-vérification), STAB-V3 (horodatages réalistes et déclarés), LOOP-05
+(absorbé par STAB-06).
+
+- **Commande** : `node tools/boucle-banc-horloge.mjs`, depuis la racine. Pour chacun des 21 motifs,
+  `runPattern(FLoop, nom)` puis `compare(résultat, REFERENCE[nom])` (§7.2 de la mission). Une ligne par motif
+  (`nom : ok`), puis un bilan ; code 0, ou 1 si un motif s'écarte ou si un critère tombe. Durée : 0,15 à 0,17 s
+  sur 6 lancements, démarrage de Node compris (T-F28 fait le même calcul sous `node:vm` en 2,2 s).
+- **Sortie** : seulement `docs/chantier-moteur/preuves/module-boucle/banc-horloge.json` (16,6 Ko) : `stepMs`, un
+  résultat par motif avec ses écarts à la référence (`differences`, vide pour les 21), et le bilan `checks`. Aucun
+  tableau par image : seuls `long60` (3 images) et `switch` (2 valeurs) gardent des `marks`.
+- **Machine et charge** : Apple M5, 10 cœurs, macOS 27.2.1 (`darwin`, `arm64`), Node v24.18.0 ; `loadavg`
+  3,94 / 3,71 / 3,12 (Mac partagé par plusieurs agents). Les comptes ne dépendent ni de la charge ni de la machine :
+  les horodatages sont synthétiques et le banc ne lit aucune horloge. Cinq lancements donnent le même JSON, hors
+  `loadavg`. `runPattern` rend les mêmes résultats au bit près dans le domaine principal et sous `node:vm`
+  (`preuves/module-boucle/etape-4-domaines.mjs`, 10 exécutions alternées) : le banc et T-F28 mesurent la même chose.
+
+**Motifs d'horodatage, déclarés.** Ils sont figés dans `tools/boucle-motifs.mjs` (annexe A de la mission). Image
+i = 1, 2, 3… ; P60 = 1000/60 ms, P144 = 1000/144 ms ; chaque motif couvre environ 10 minutes d'affichage.
+
+| Motif | Horodatage de l'image i (ms) | Cas représenté | Temps réel |
+|---|---|---|---|
+| `30`, `50`, `59.94`, `60`, `75`, `90`, `120`, `144`, `165`, `240` | i × 1000/hz | écran à cette fréquence, horloge exacte | 600 s |
+| `60@1e6` | 10⁶ + i × P60 | horloge partie d'une constante, le défaut relevé par STAB-V3 (2²⁰ ms franchi vers 48,6 s) | 600 s |
+| `q60`, `q144` | i × P arrondi à 0,1 ms | horodatages de Chrome hors isolation d'origine (STAB-06) | 600 s |
+| `ms60`, `ms144` | i × P arrondi à 1 ms | horodatages à la milliseconde | 600 s |
+| `jit60` | i × P60 + gigue de −2 à +2 ms (générateur congruentiel, graine 0) | forte gigue à 60 Hz | 600 s |
+| `jit144` | i × P144 + gigue de −0,36 à +0,36 ms, par pas de 0,12 ms | gigue à 144 Hz | 600 s |
+| `drop60` | 60 Hz ; une image sur 20 dure 2 périodes | images perdues | 630 s |
+| `long60` | 60 Hz ; une image sur 300 dure 3 périodes, une sur 1 000 en dure 7, l'image 5 000 en dure 30 | images longues : rattrapage, plafond de 5 pas, borne de 250 ms | 607,3 s |
+| `bimodal` | une image sur 5 dure 10 ms, les autres 18,33 ms | cadence irrégulière, sans période nette | 599,9 s |
+| `switch` | 300 images à 60 Hz, puis 144 Hz | changement d'écran | 602,9 s |
+
+Le temps réel est la somme des intervalles retenus par FLoop (`stats.realMs`, après la borne de 250 ms), déduite du
+JSON : 100 × `dilationMs` / `dilationPct`.
+
+**Résultats** (valeurs du JSON). « Verrou » est l'image du premier verrouillage (0 = jamais) ; « Fin verr. », l'état
+à la dernière image ; « Dette max », le maximum de |dette| ; « CV », la variation de la vitesse affichée d'un corps
+qui avance d'une unité par pas (après les 40 premières images, hors images à abandon).
+
+| Motif | Images | Pas | Histogramme des pas | Verrou | Fin verr. | Changements | Dilatation % | Dette max ms | CV % |
+|---|---|---|---|---|---|---|---|---|---|
+| 30 | 18 000 | 35 999 | 1:1, 2:17 999 | 9 | oui | 1 | 0,0028 | 0 | 0 |
+| 50 | 30 000 | 36 000 | 1:24 000, 2:6 000 | 0 | non | 0 | 0,0028 | 0 | 0 |
+| 59.94 | 35 964 | 35 965 | 1:35 963, 2:1 | 9 | oui | 1 | −0,0944 | 0 | 0 |
+| 60 | 36 000 | 36 000 | 1:36 000 | 9 | oui | 1 | 0,0028 | 0 | 0 |
+| 60@1e6 | 36 000 | 36 000 | 1:36 000 | 9 | oui | 1 | 0,0028 | 0 | 0 |
+| q60 | 36 000 | 36 000 | 1:36 000 | 9 | oui | 1 | 0,0028 | 0 | 0 |
+| ms60 | 36 000 | 36 000 | 1:36 000 | 9 | oui | 1 | 0,0028 | 0 | 0 |
+| 75 | 45 000 | 36 001 | 0:8 999, 1:36 001 | 0 | non | 0 | 0,0028 | 0 | 0 |
+| 90 | 54 000 | 36 001 | 0:17 999, 1:36 001 | 0 | non | 0 | 0,0028 | 0 | 0 |
+| 120 | 72 000 | 36 001 | 0:35 999, 1:36 001 | 0 | non | 0 | 0,0028 | 0 | 0 |
+| 144 | 86 400 | 36 001 | 0:50 399, 1:36 001 | 0 | non | 0 | 0,0028 | 0 | 0 |
+| 165 | 99 000 | 36 001 | 0:62 999, 1:36 001 | 0 | non | 0 | 0,0028 | 0 | 0 |
+| 240 | 144 000 | 36 001 | 0:107 999, 1:36 001 | 0 | non | 0 | 0,0028 | 0 | 0 |
+| jit60 | 36 000 | 36 001 | 1:35 999, 2:1 | 10 | oui | 1 | 0,0050 | 0,727 | 0 |
+| drop60 | 36 000 | 37 800 | 1:34 200, 2:1 800 | 9 | oui | 1 | 0,0026 | 0 | 0 |
+| long60 | 36 000 | 36 360 | 1:35 856, 3:108, 5:36 | 9 | oui | 1 | 0,0027 | 0 | 0 |
+| bimodal | 36 000 | 35 995 | 0:2 870, 1:30 265, 2:2 865 | 0 | non | 0 | 0,0028 | 6,260 | 0,035 |
+| jit144 | 86 400 | 36 001 | 0:50 399, 1:36 001 | 0 | non | 0 | 0,0028 | 0,383 | 0,535 |
+| q144 | 86 400 | 36 001 | 0:50 399, 1:36 001 | 0 | non | 0 | 0,0028 | 0,080 | 0,062 |
+| ms144 | 86 400 | 36 001 | 0:50 399, 1:36 001 | 0 | non | 0 | 0,0028 | 0,800 | 0,606 |
+| switch | 86 400 | 36 173 | 0:50 227, 1:36 173 | 9 | non | 2 | −0,0053 | 0 | 0,900 |
+
+Les 21 lignes sont celles du §8 de la mission (qui regroupe `60`, `60@1e6`, `q60` et `ms60` en une ligne) : comptes
+exacts, flottants dans les tolérances de `TOLERANCE`. Les « 0 » de la dette et du CV sont des zéros flottants
+(moins de 4e-10).
+
+**Bilan `checks`.**
+
+| Critère | Mesuré | Attendu |
+|---|---|---|
+| `allMatchReference` | vrai : 21 motifs sur 21 conformes à `REFERENCE` | vrai |
+| `allInvariant` (`maxInvariantErr < 1e-6`) | vrai : 3,49e-10 ms au pire (`59.94`) | vrai (mission : moins de 4e-10) |
+| `allEcartBelowStep` (`maxEcartMs ≤ stepMs`) | vrai : 6,26 ms au pire (`bimodal`) | vrai, ≤ 16,667 ms |
+| `allDilationBound` (\|dilatation\| ≤ 1 pas + 1 % du temps réel) | vrai : 566,65 ms au pire (`59.94`), pour une borne de 6 016 ms | vrai |
+| `maxStepsPerFrame` | 5 (`long60`) ; 2 au plus ailleurs | ≤ 5 |
+| `loopBytes`, `loopSha256` | 6 042 octets, `2002052f…46214c5` | code normatif du §4.5 |
+
+**Autres valeurs.**
+- `long60` : 1 333,333 ms abandonnés par le plafond de 5 pas (`droppedMs`) et 250 ms coupés par la borne
+  (`clampedMs`). Image 300 : 50 ms, 3 pas, rien d'abandonné ; image 1 000 : 116,67 ms, 5 pas, 33,33 ms
+  abandonnés ; image 5 000 : 500 ms coupés à 250 ms, 5 pas, 166,67 ms abandonnés.
+- `switch` : déverrouillage à l'image 308, au huitième intervalle à 144 Hz (8 échantillons aberrants d'affilée
+  vident l'anneau) ; période de 6,9444 ms à l'image 330 ; pas de nouveau verrouillage, 144 Hz n'étant pas un multiple
+  de 60. Les images 301 à 307, encore verrouillées, font 0 pas (arrondi de 6,94/16,67) : ce sont les 7 images à 0 pas
+  d'affilée du motif, soit 48,6 ms de simulation retirés et comptés en dilatation (−31,944 ms au total avec le
+  premier pas).
+- `59.94` et `jit60` : la seule image à 2 pas est la deuxième, avant le calibrage de la période.
+
+**Ce que montre le banc.**
+1. **Écart temps simulé / temps réel, sur 10 minutes (STAB-06, réserve 2).** L'écart mesuré est le temps simulé (pas
+   faits × durée du pas, plus la part de l'accumulateur au-delà de 0,999 pas) moins le temps réel retenu, hors
+   abandons voulus (`droppedMs`, `abortedMs`) et hors dilatation (`dilationMs` : premier pas, arrondis du
+   verrouillage, remises en phase) ; par l'invariant 1, il vaut −dette. Il reste sous un pas pour chacun des 21
+   motifs : 0 quand la boucle est verrouillée, 0,08 à 0,8 ms sous gigue ou horodatages arrondis à 144 Hz, 0,73 ms
+   pour `jit60`, 6,26 ms au pire (`bimodal`). La réserve visait la variante « médiane glissante sans dette » du
+   prototype, qui faisait courir l'horloge de 2 à 3,5 % ; ici, hors verrouillage, la seule dilatation est celle du
+   premier pas (16,667 ms sur 600 s, 0,0028 %), et le reste de l'écart est la dette, bornée : l'horloge ne court pas.
+2. **La dilatation est voulue, bornée et comptée.** Verrouillée, la simulation suit l'écran : à 59,94 Hz, elle prend
+   0,0944 % de retard, soit −566,65 ms sur 600 s. Le critère des 10 minutes s'applique donc hors verrouillage
+   (\|dette\| < 1 pas) ; en verrouillage, c'est la dilatation qui est bornée (invariant 3). C'est la question
+   ouverte n° 3 de la mission, à confirmer (section 7).
+3. **Horodatages réalistes et déclarés (STAB-V3).** Les motifs couvrent ceux que demande STAB-V3 (arrondi à 0,1 ms,
+   59,94, 120 et 144 Hz) et son cas fautif : avec l'horloge partie de 10⁶ ms, `60@1e6` donne les mêmes comptes que
+   `60` (1 pas par image sur 36 000 images, verrouillé à l'image 9), sans changement de régime après 48,6 s.
+4. **Le nombre de pas ne dépend plus de l'écran (LOOP-05).** Avec des horodatages arrondis à 0,1 ms ou à 1 ms, FLoop
+   fait 1 pas par image ; à 59,94 Hz aussi, sauf la deuxième image (2 pas). De 75 à 240 Hz, jamais plus d'un pas par
+   image, et 36 001 pas en 10 minutes quelle que soit la cadence. Par comparaison, la formule actuelle de `game.js`
+   (`Math.max(1,Math.ceil(dt*60-.06))`) fait à 144 Hz un pas de 6,94 ms par image, soit 86 400 pas en 10 minutes
+   (calcul, non mesuré ici). Le coût et l'empreinte sur la vraie simulation sont mesurés à l'étape 5
+   (`banc-simulation.json`).
+
+Ce banc ne mesure que l'horloge, sur des horodatages synthétiques. Un vrai écran à 59,94 Hz, le VRR et les
+horodatages de Safari et de Firefox restent à essayer.
 
 ## 5. Plan de raccord, non appliqué
 
