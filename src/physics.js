@@ -128,9 +128,9 @@
     // PP and PQ pose at the start of the last step() call (render interpolation).
     const R=new Float64Array(NB*9),IL=new Float64Array(NB*3),IW=new Float64Array(NB*6),BB=new Float64Array(NB*6),FB=new Float64Array(NB*6);
     const SL=new Float64Array(NB),PP=new Float64Array(NB*3),PQ=new Float64Array(NB*4);
-    // Sub-step scratch: AL active list (increasing index), ACT active mark, WK deferred wake mark, UF union-find,
-    // IMIN smallest ST of an island (at its root).
-    const AL=new Int32Array(NB),ACT=new Uint8Array(NB),WK=new Uint8Array(NB),UF=new Int32Array(NB),IMIN=new Int32Array(NB);
+    // Sub-step scratch: AL active list (increasing index), ACT active mark (1 awake dynamic body, 2 moving kinematic body),
+    // WK deferred wake mark, UF union-find, IMIN smallest ST of an island (at its root), TOUCH contact in this sub-step (or woken at its end).
+    const AL=new Int32Array(NB),ACT=new Uint8Array(NB),WK=new Uint8Array(NB),UF=new Int32Array(NB),IMIN=new Int32Array(NB),TOUCH=new Uint8Array(NB);
     Q[3]=1;R[0]=R[4]=R[8]=1;SL[0]=C.slop;
     // Saved arrays in snapshot and hash order: [name, array, width, integer low, integer high].
     const FIELDS=[['SH',SH,1,0,2],['FL',FL,1,0,127],['GEN',GEN,1,0,GENS-1],['GRP',GRP,1,0,65535],['MSK',MSK,1,0,65535],['MAT',MAT,1,-1,MATERIALS.length-1],
@@ -159,9 +159,9 @@
     let TS=1;while(TS<2*MC)TS*=2;
     const pK=new Int32Array(MC),pI=new Int32Array(MC),pJn=new Float64Array(MC),pJ1=new Float64Array(MC),pJ2=new Float64Array(MC);
     const TB=new Int32Array(TS),TC=new Int32Array(TS),TU=new Int32Array(MC),CU=[pJn,pJ1,pJ2].map(a=>new Uint32Array(a.buffer));
-    // ---- Narrow-phase scratch (prototype): box-box axes tt cc qq; manifold normal mN, points mP, separations mS,
-    // ids mI; face clipping polygons clipA clipB with ids idA idB; kept points pick.
-    const tt=new Float64Array(3),cc=new Float64Array(9),qq=new Float64Array(9),mN=new Float64Array(3),mP=new Float64Array(24),mS=new Float64Array(8),mI=new Int32Array(8);
+    // ---- Narrow-phase scratch (prototype): box-box axes tt cc qq; point k: normal mN[3k..] (A to B), point mP[3k..],
+    // separation mS[k], id mI[k]; face clipping polygons clipA clipB with ids idA idB; kept points pick.
+    const tt=new Float64Array(3),cc=new Float64Array(9),qq=new Float64Array(9),mN=new Float64Array(24),mP=new Float64Array(24),mS=new Float64Array(8),mI=new Int32Array(8);
     const clipA=new Float64Array(48),clipB=new Float64Array(48),idA=new Int32Array(16),idB=new Int32Array(16),pick=new Int32Array(4);
     // Float scratch: [0] narrow-phase margin of the pair; [1] [2] clip limits; [3] [4] friction and restitution
     // of the pair; [5] 1/h; [6] bias rate; [7] mass scale; [8] impulse scale (soft contact); [9] h = tick;
@@ -170,8 +170,9 @@
     // value, and a boxed input can make the optimiser box the floats it meets): [14] margin; [15] maxLinear;
     // [16] maxAngular; [17] pushout; [18] restitutionThreshold; [19] sleepLinear^2; [20] sleepAngular^2;
     // [21] sleepSteps (a float: NOSLEEP gives 1.2e11 sub-steps). Actions (outside the step): [22] [23] [24] world point
-    // and [25] [26] [27] impulse of push().
-    const SCR=new Float64Array(28),ITER=C.iterations,RELAX=C.relaxIterations,MAXSUB=C.maxSubsteps;
+    // and [25] [26] [27] impulse of push(). [28] rolling damping factor. Round shapes: [29..31] centre and [32] radius of
+    // ball A, [33..35] and [36] of ball B.
+    const SCR=new Float64Array(37),ITER=C.iterations,RELAX=C.relaxIterations,MAXSUB=C.maxSubsteps;
     // Integer scratch: [0] [1] [2] [3] cells x0, x1, z0, z1 of the last cellRange; [4] [5] used cells and
     // [6] [7] entries of the body grids 0 and 1.
     const ISCR=new Int32Array(8);
@@ -181,7 +182,7 @@
       const h=C.tick,hz=Math.min(C.contactHertz,.25*(1/h)),om=6.283185307179586*hz,a1=2*C.dampingRatio+h*om,a2=h*om*a1,a3=1/(1+a2);
       SCR[5]=1/h;SCR[6]=om/a1;SCR[7]=a2*a3;SCR[8]=a3;SCR[9]=h;SCR[10]=1/(1+h*C.linearDamping);SCR[11]=1/(1+h*C.angularDamping);SCR[12]=C.gravity*h;
       SCR[14]=C.margin;SCR[15]=C.maxLinear;SCR[16]=C.maxAngular;SCR[17]=C.pushout;SCR[18]=C.restitutionThreshold;
-      SCR[19]=C.sleepLinear*C.sleepLinear;SCR[20]=C.sleepAngular*C.sleepAngular;SCR[21]=C.sleepSteps;
+      SCR[19]=C.sleepLinear*C.sleepLinear;SCR[20]=C.sleepAngular*C.sleepAngular;SCR[21]=C.sleepSteps;SCR[28]=1/(1+h*C.rollingDamping);
     }
     // ---- Body grids, one linked list per cell: 0 = active bodies with FB, rebuilt each sub-step; 1 = resting bodies
     // (sleepers) with FB = BB, rebuilt when restDirty. GH head per cell (-1 empty), GN next and GI item per entry,
@@ -195,21 +196,28 @@
       substeps:0,events:0,refused:0,dropContacts:0,forcedSleep:0,fallbackSleep:0,wakes:0,droppedSteps:0,broken:0};
     const PH=new Float64Array(4);
 
-    // ---- Canonical derived values.
-    // Box inertia from the saved inverse mass and collision half-sizes.
+    // ---- Canonical derived values. Sizes: a box has H = max(size/2, minHalf) and HR = size/2; a sphere H = (rc, rc, rc)
+    // and HR = (r, r, r); a capsule (axis = local Y) H = (rc, hh + rc, rc) and HR = (r, height/2, r), with the collision
+    // radius rc = max(r, minHalf) and the half-segment hh = height/2 - r = HR_y - HR_x (0 for a sphere).
+    // Inertia from the saved inverse mass and collision sizes: box; sphere 2.5 im/r^2; capsule as a cylinder of radius r
+    // and length L = 2 H_y on Y: ILy = 2 im/r^2, ILx = ILz = 12 im/(3 r^2 + L^2).
     function inertia(i){
       const p=i*3,im=IM[i],hx=H[p],hy=H[p+1],hz=H[p+2];
-      IL[p]=3*im/(hy*hy+hz*hz);IL[p+1]=3*im/(hx*hx+hz*hz);IL[p+2]=3*im/(hx*hx+hy*hy);
+      if(SH[i]===0){IL[p]=3*im/(hy*hy+hz*hz);IL[p+1]=3*im/(hx*hx+hz*hz);IL[p+2]=3*im/(hx*hx+hy*hy);}
+      else if(SH[i]===1)IL[p]=IL[p+1]=IL[p+2]=2.5*im/(hx*hx);
+      else{const L=2*hy;IL[p]=IL[p+2]=12*im/(3*hx*hx+L*L);IL[p+1]=2*im/(hx*hx);}
     }
-    // Contact tolerance SL = min(slop, slopRatio * smallest collision half-size).
-    function tolerance(i){const p=i*3;SL[i]=Math.min(C.slop,C.slopRatio*Math.min(H[p],H[p+1],H[p+2]));}
-    // Rotation, bounds and world inverse inertia from Q, P, H and IL (prototype derive).
+    // Contact tolerance SL = min(slop, slopRatio * m): m = smallest collision half-size of a box, radius of a round body.
+    function tolerance(i){const p=i*3;SL[i]=Math.min(C.slop,C.slopRatio*(SH[i]?H[p]:Math.min(H[p],H[p+1],H[p+2])));}
+    // Rotation, bounds and world inverse inertia from Q, P, H and IL (prototype derive); tight bounds for a round body.
     function derive(i){
       const q=i*4,x=Q[q],y=Q[q+1],z=Q[q+2],w=Q[q+3],xx=x*x,yy=y*y,zz=z*z,xy=x*y,xz=x*z,yz=y*z,wx=w*x,wy=w*y,wz=w*z,r=i*9;
       const r0=1-2*(yy+zz),r1=2*(xy-wz),r2=2*(xz+wy),r3=2*(xy+wz),r4=1-2*(xx+zz),r5=2*(yz-wx),r6=2*(xz-wy),r7=2*(yz+wx),r8=1-2*(xx+yy);
       R[r]=r0;R[r+1]=r1;R[r+2]=r2;R[r+3]=r3;R[r+4]=r4;R[r+5]=r5;R[r+6]=r6;R[r+7]=r7;R[r+8]=r8;
       const h=i*3,hx=H[h],hy=H[h+1],hz=H[h+2],b=i*6;
-      const ex=Math.abs(r0)*hx+Math.abs(r1)*hy+Math.abs(r2)*hz,ey=Math.abs(r3)*hx+Math.abs(r4)*hy+Math.abs(r5)*hz,ez=Math.abs(r6)*hx+Math.abs(r7)*hy+Math.abs(r8)*hz;
+      let ex,ey,ez;
+      if(SH[i]===0){ex=Math.abs(r0)*hx+Math.abs(r1)*hy+Math.abs(r2)*hz;ey=Math.abs(r3)*hx+Math.abs(r4)*hy+Math.abs(r5)*hz;ez=Math.abs(r6)*hx+Math.abs(r7)*hy+Math.abs(r8)*hz;}
+      else{const s=HR[h+1]-HR[h];ex=Math.abs(r1)*s+hx;ey=Math.abs(r4)*s+hx;ez=Math.abs(r7)*s+hx;}
       BB[b]=P[h]-ex;BB[b+1]=P[h+1]-ey;BB[b+2]=P[h+2]-ez;BB[b+3]=P[h]+ex;BB[b+4]=P[h+1]+ey;BB[b+5]=P[h+2]+ez;
       const ix=IL[h],iy=IL[h+1],iz=IL[h+2];
       IW[b]=r0*r0*ix+r1*r1*iy+r2*r2*iz;IW[b+1]=r0*r3*ix+r1*r4*iy+r2*r5*iz;IW[b+2]=r0*r6*ix+r1*r7*iy+r2*r8*iz;
@@ -241,23 +249,34 @@
       for(let c=0;c<pn;){const key=pK[c];let e=c+1;while(e<pn&&pK[e]===key)e++;let h=(Math.imul(key,0x9E3779B1)>>>0)&(TS-1);while(TB[h]!==0)h=(h+1)&(TS-1);TB[h]=c+1;TC[h]=e-c;TU[tu++]=h;c=e;}
     }
 
-    // ---- Static decor. Outside the step, may allocate. Boxes {minX, maxX, minY, maxY, minZ, maxZ, material?, friction?,
-    // restitution?}; the ground slab first (index 0). Module step 2a: boxes only, no merging, no face masks; a changed
-    // decor wakes every sleeper and drops the body-static cache entries (the exact difference comes with step 10).
+    // ---- Static decor. Outside the step, may allocate. Boxes {minX, maxX, minY, maxY, minZ, maxZ} and floors {x, z, w, d,
+    // y?, slopeX?, slopeZ?} ((x, z) the centre, height y + (px - x) slopeX + (pz - z) slopeZ, one slope axis at most), each
+    // with material?, friction?, restitution?. Order: the ground slab (index 0), the boxes, the flat floors as boxes
+    // [x - w/2, y - T, z - d/2]-[x + w/2, y, z + d/2] (T = floorThickness), then the sloped floors as oriented boxes of
+    // thickness T under their surface (axes from the slope, no trigonometry). No merging nor face masks yet (module
+    // step 4); a changed decor wakes every sleeper and drops the body-static cache entries (exact difference: step 10).
     function setStatics(boxes,floors){
       const where='setStatics';
       if(boxes===undefined||boxes===null)boxes=[];
       if(floors===undefined||floors===null)floors=[];
       if(!Array.isArray(boxes))wrong(where,'boxes must be an array');
       if(!Array.isArray(floors))wrong(where,'floors must be an array');
-      if(floors.length)wrong(where,'floors are not available yet (module step 3)');
-      const n=(C.ground===null?0:1)+boxes.length;
+      const n=(C.ground===null?0:1)+boxes.length+floors.length;
       if(n>MS)wrong(where,n+' statics exceed maxStatics ('+MS+')');
       const nP=new Float64Array(n*3),nH=new Float64Array(n*3),nR=new Float64Array(n*9),nA=new Float64Array(n*6),nF=new Float64Array(n),nE=new Float64Array(n),nO=new Uint8Array(n),nM=new Int32Array(n);
       const put=(s,x0,y0,z0,x1,y1,z1,f,e,m)=>{
         const p=s*3,b=s*6;nP[p]=(x0+x1)/2;nP[p+1]=(y0+y1)/2;nP[p+2]=(z0+z1)/2;nH[p]=(x1-x0)/2;nH[p+1]=(y1-y0)/2;nH[p+2]=(z1-z0)/2;
         nR[s*9]=nR[s*9+4]=nR[s*9+8]=1;for(let k=0;k<3;k++){nA[b+k]=nP[p+k]-nH[p+k];nA[b+3+k]=nP[p+k]+nH[p+k];}nF[s]=f;nE[s]=e;nM[s]=m;
       };
+      // Oriented box: centre, half-sizes, rotation r (row-major, columns = local axes), bounds from |r| times the half-sizes.
+      const obb=(s,c,hs,r,f,e,m)=>{
+        const p=s*3,b=s*6;nO[s]=1;nF[s]=f;nE[s]=e;nM[s]=m;
+        for(let k=0;k<9;k++)nR[s*9+k]=r[k]+0;
+        for(let k=0;k<3;k++){nP[p+k]=c[k]+0;nH[p+k]=hs[k];const x=Math.abs(r[3*k])*hs[0]+Math.abs(r[3*k+1])*hs[1]+Math.abs(r[3*k+2])*hs[2];nA[b+k]=c[k]-x;nA[b+3+k]=c[k]+x;}
+      };
+      // Friction, restitution and material of a box or a floor: explicit values, then the material, then 0.7 and 0.05.
+      const surface=(o,name)=>{const m=materialOf(where,o.material);return [inRange(where,name+'.friction',o.friction,m<0?.7:MATERIALS[m].friction,0,2),
+        inRange(where,name+'.restitution',o.restitution,m<0?.05:MATERIALS[m].restitution,0,1),m];};
       let s=0;
       if(C.ground!==null)put(s++,minX,C.ground-C.floorThickness,minZ,maxX,C.ground,maxZ,.8,.05,-1);
       for(let k=0;k<boxes.length;k++){
@@ -267,9 +286,25 @@
           if(!finite(b['min'+a])||!finite(b['max'+a]))wrong(where,name+'.min'+a+' and max'+a+' must be finite numbers');
           if(!(b['min'+a]<=b['max'+a]))wrong(where,name+' needs min'+a+' <= max'+a);
         }
-        const m=materialOf(where,b.material);
-        put(s++,b.minX+0,b.minY+0,b.minZ+0,b.maxX+0,b.maxY+0,b.maxZ+0,inRange(where,name+'.friction',b.friction,m<0?.7:MATERIALS[m].friction,0,2),
-          inRange(where,name+'.restitution',b.restitution,m<0?.05:MATERIALS[m].restitution,0,1),m);
+        put(s++,b.minX+0,b.minY+0,b.minZ+0,b.maxX+0,b.maxY+0,b.maxZ+0,...surface(b,name));
+      }
+      const slopes=[],T=C.floorThickness;
+      for(let k=0;k<floors.length;k++){
+        const f=floors[k],name='floors['+k+']',opt=v=>v===undefined?0:v;
+        if(!f||typeof f!=='object')wrong(where,name+' must be an object');
+        const v=[f.x,f.z,f.w,f.d,opt(f.y),opt(f.slopeX),opt(f.slopeZ)];
+        if(!v.every(finite))wrong(where,name+': x, z, w, d, y, slopeX and slopeZ must be finite numbers');
+        if(!(v[2]>0&&v[3]>0))wrong(where,name+' needs w > 0 and d > 0');
+        if(v[5]!==0&&v[6]!==0)wrong(where,name+' slopes on two axes (one at most)');
+        const [x,z,fw,fd,y]=v.map(u=>u+0),sf=surface(f,name);
+        if(v[5]===0&&v[6]===0)put(s++,x-fw/2,y-T,z-fd/2,x+fw/2,y,z+fd/2,...sf);else slopes.push([x,z,fw,fd,y,v[5]+0,v[6]+0,sf]);
+      }
+      // Slope a on X, L = sqrt(1 + a^2): axes X = (1, a, 0)/L, Y = (-a, 1, 0)/L, Z = (0, 0, 1), half-sizes (w L/2, T/2, d/2);
+      // slope c on Z: X = (1, 0, 0), Y = (0, 1, -c)/L, Z = (0, c, 1)/L, half-sizes (w/2, T/2, d L/2); centre (x, y, z) - Y T/2.
+      for(const [x,z,fw,fd,y,a,c,sf] of slopes){
+        const t=a||c,L=Math.sqrt(1+t*t),u=1/L,g=T/2*u;
+        if(a)obb(s++,[x+a*g,y-g,z],[fw/2*L,T/2,fd/2],[u,-a*u,0,a*u,u,0,0,0,1],...sf);
+        else obb(s++,[x,y-g,z+c*g],[fw/2,T/2,fd/2*L],[1,0,0,0,u,c*u,0,-c*u,u],...sf);
       }
       const same=(a,b)=>{for(let k=0;k<a.length;k++)if(!Object.is(a[k],b[k]))return false;return true;};
       if(decor&&n===NS&&same(nP,sP)&&same(nH,sH)&&same(nR,sR)&&same(nO,sO)&&same(nF,sF)&&same(nE,sE)&&same(nM,sM))return {statics:NS,merged:0,masked:0,woken:0};
@@ -292,14 +327,25 @@
       return {statics:n,merged:0,masked:0,woken};
     }
 
-    // ---- Bodies (outside the step; may allocate). Module step 2a: boxes, dynamic, awake or asleep.
+    // ---- Bodies (outside the step; may allocate): boxes, spheres and capsules, dynamic (awake, asleep or pending) or
+    // kinematic (infinite mass, moved by setKinematic only, never pending nor asleep; vel and ang are not used).
     function addBody(d){
       const where='addBody';
       if(!d||typeof d!=='object')wrong(where,'description object required');
-      const shape=d.shape===undefined?'box':d.shape;
-      if(shape!=='box')wrong(where,SHAPES.includes(shape)?'shape '+shape+' is not available yet (module step 3)':'shape must be box, sphere or capsule');
-      const size=vec(where,'size',d.size,3);
-      if(!(size[0]>0&&size[1]>0&&size[2]>0))wrong(where,'size must be > 0 on each axis');
+      const shape=d.shape===undefined?'box':d.shape,sh=SHAPES.indexOf(shape);
+      if(sh<0)wrong(where,'shape must be box, sphere or capsule');
+      // Real half-sizes and, for a round shape, its volume (capsule: pi r^2 (height - 2r) + 4/3 pi r^3).
+      let size=null,hr,vol=0;
+      if(sh===0){
+        size=vec(where,'size',d.size,3);
+        if(!(size[0]>0&&size[1]>0&&size[2]>0))wrong(where,'size must be > 0 on each axis');
+        hr=[size[0]/2,size[1]/2,size[2]/2];
+      }else{
+        const r=d.radius,ht=sh===2?d.height:2*r;
+        if(!finite(r)||!(r>0))wrong(where,'radius must be a number > 0');
+        if(!finite(ht)||!(ht>=2*r))wrong(where,'height must be a number >= 2 radius');
+        hr=[r+0,ht/2,r+0];vol=Math.PI*r*r*(ht-2*r)+4/3*Math.PI*r*r*r;
+      }
       const pos=vec(where,'pos',d.pos,3);
       if(d.quat!==undefined&&d.rot!==undefined)wrong(where,'give quat or rot, not both');
       const q=d.rot!==undefined?(r=>eulerToQuat(r[0],r[1],r[2]))(vec(where,'rot',d.rot,3)):d.quat!==undefined?vec(where,'quat',d.quat,4):[0,0,0,1];
@@ -307,28 +353,30 @@
       if(!(ql>=1e-9))wrong(where,'quat must not be null');
       const vel=d.vel===undefined?[0,0,0]:vec(where,'vel',d.vel,3),ang=d.ang===undefined?[0,0,0]:vec(where,'ang',d.ang,3);
       const mat=materialOf(where,d.material);
+      if(d.kinematic!==undefined&&typeof d.kinematic!=='boolean')wrong(where,'kinematic must be a boolean');
+      const kin=d.kinematic===true;
       let mass=d.mass;
-      if(mass===undefined){if(mat<0)wrong(where,'mass or material required');mass=MATERIALS[mat].density*size[0]*size[1]*size[2];}
+      if(mass===undefined){if(mat>=0){const D=MATERIALS[mat].density;mass=sh?D*vol:D*size[0]*size[1]*size[2];}else if(kin)mass=0;else wrong(where,'mass or material required');}
       else if(!finite(mass)||!(mass>0))wrong(where,'mass must be a number > 0');
       const fr=inRange(where,'friction',d.friction,mat<0?.6:MATERIALS[mat].friction,0,2),re=inRange(where,'restitution',d.restitution,mat<0?.1:MATERIALS[mat].restitution,0,1);
       const bits=(name,v,def)=>{if(v===undefined)return def;if(!Number.isInteger(v)||v<0||v>65535)wrong(where,name+' must be an integer from 0 to 65535');return v;};
       const grp=bits('group',d.group,2),msk=bits('mask',d.mask,65535);
-      if(d.kinematic!==undefined&&d.kinematic!==false)wrong(where,d.kinematic===true?'kinematic bodies are not available yet (module step 3)':'kinematic must be a boolean');
       if(d.asleep!==undefined&&typeof d.asleep!=='boolean')wrong(where,'asleep must be a boolean');
       let i=1;while(i<NB&&(FL[i]&ALIVE))i++;
       if(i>=NB){stats.refused++;return -1;}
-      const p=i*3,v=i*6,qi=i*4;
-      SH[i]=0;GRP[i]=grp;MSK[i]=msk;MAT[i]=mat;MO[i]=mass+0;IM[i]=1/Math.min(Math.max(mass,C.massMin),C.massMax);FR[i]=fr;RE[i]=re;
-      for(let k=0;k<3;k++){P[p+k]=pos[k];RP[p+k]=pos[k];HR[p+k]=size[k]/2;H[p+k]=Math.max(size[k]/2,C.minHalf);}
+      const p=i*3,v=i*6,qi=i*4,rc=Math.max(hr[0],C.minHalf);
+      SH[i]=sh;GRP[i]=grp;MSK[i]=msk;MAT[i]=mat;MO[i]=mass+0;IM[i]=kin?0:1/Math.min(Math.max(mass,C.massMin),C.massMax);FR[i]=fr;RE[i]=re;
+      for(let k=0;k<3;k++){P[p+k]=pos[k];RP[p+k]=pos[k];HR[p+k]=hr[k];H[p+k]=sh?k===1?hr[1]-hr[0]+rc:rc:Math.max(hr[k],C.minHalf);}
       for(let k=0;k<4;k++){Q[qi+k]=q[k]/ql+0;PQ[qi+k]=Q[qi+k];}
       PP[p]=P[p];PP[p+1]=P[p+1];PP[p+2]=P[p+2];
       const l=Math.sqrt(vel[0]*vel[0]+vel[1]*vel[1]+vel[2]*vel[2]),a=Math.sqrt(ang[0]*ang[0]+ang[1]*ang[1]+ang[2]*ang[2]);
-      const kl=l>C.maxLinear?C.maxLinear/l:1,ka=a>C.maxAngular?C.maxAngular/a:1;
+      const kl=kin?0:l>C.maxLinear?C.maxLinear/l:1,ka=kin?0:a>C.maxAngular?C.maxAngular/a:1;
       for(let k=0;k<3;k++){V[v+k]=vel[k]*kl+0;V[v+3+k]=ang[k]*ka+0;}
       ST[i]=0;AT[i]=0;FN[i]=0;KN[i]=0;for(let k=0;k<7;k++)KT[i*7+k]=0;
       inertia(i);tolerance(i);derive(i);
       need+=cellsOf(i);if(need>GE)entries(Math.max(need,2*GE));
-      if(d.asleep){FL[i]=ALIVE|ASLEEP;stats.sleeping++;restDirty=true;}else{FL[i]=ALIVE|PENDING;stats.pending++;}
+      if(kin){FL[i]=ALIVE|KINEMATIC;stats.kinematic++;restDirty=true;}
+      else if(d.asleep){FL[i]=ALIVE|ASLEEP;stats.sleeping++;restDirty=true;}else{FL[i]=ALIVE|PENDING;stats.pending++;}
       stats.bodies++;if(i+1>top)top=i+1;
       return GEN[i]*4096+i;
     }
@@ -341,11 +389,12 @@
     const valid=h=>slot(h)>0;
     const isAsleep=h=>{const i=slot(h);return i>0&&(FL[i]&ASLEEP)!==0;};
     const isLost=h=>{const i=slot(h);return i>0&&(FL[i]&LOST)!==0;};
-    // Plain description of a body (tests, debugging; allocates). size = collision size, realSize = given size.
+    // Plain description of a body (tests, debugging; allocates). size = collision size (bounding box of a round body in
+    // its frame), realSize = given size; radius and height as given (null for a box, height null for a sphere).
     function body(h){
       const i=slot(h);if(!i)return null;
       const p=i*3,v=i*6,f=FL[i],part=(A,k,n)=>Array.from(A.subarray(k,k+n));
-      return {handle:h,shape:SHAPES[SH[i]],size:[2*H[p],2*H[p+1],2*H[p+2]],radius:null,height:null,realSize:[2*HR[p],2*HR[p+1],2*HR[p+2]],
+      return {handle:h,shape:SHAPES[SH[i]],size:[2*H[p],2*H[p+1],2*H[p+2]],radius:SH[i]?HR[p]:null,height:SH[i]===2?2*HR[p+1]:null,realSize:[2*HR[p],2*HR[p+1],2*HR[p+2]],
         pos:part(P,p,3),quat:part(Q,i*4,4),vel:part(V,v,3),ang:part(V,v+3,3),mass:f&KINEMATIC?Infinity:Math.min(Math.max(MO[i],C.massMin),C.massMax),originalMass:MO[i],material:MAT[i],
         friction:FR[i],restitution:RE[i],group:GRP[i],mask:MSK[i],kinematic:(f&KINEMATIC)!==0,asleep:(f&ASLEEP)!==0,pending:(f&PENDING)!==0,
         lost:(f&LOST)!==0,hard:(f&HARD)!==0};
@@ -414,6 +463,16 @@
       const i=target('setVelocity',h,vx,vy,vz,wx,wy,wz);if(!i)return false;
       const v=i*6;V[v]=vx+0;V[v+1]=vy+0;V[v+2]=vz+0;V[v+3]=wx+0;V[v+4]=wy+0;V[v+5]=wz+0;cap(i);rouse(i);return true;
     }
+    // Target pose of a kinematic body (position, quaternion normalised) for the next step() call that runs sub-steps.
+    // false: invalid handle or dynamic body; non-finite numbers or a null quaternion throw.
+    function setKinematic(h,x,y,z,qx,qy,qz,qw){
+      if(!finite6(x,y,z,qx,qy,qz)||!finite(qw))wrong('setKinematic','the seven numbers after the handle must be finite');
+      const l=Math.sqrt(qx*qx+qy*qy+qz*qz+qw*qw);
+      if(!(l>=1e-9))wrong('setKinematic','quaternion must not be null');
+      const i=slot(h);if(!i||!(FL[i]&KINEMATIC))return false;
+      const k=i*7;KT[k]=x+0;KT[k+1]=y+0;KT[k+2]=z+0;KT[k+3]=qx/l+0;KT[k+4]=qy/l+0;KT[k+5]=qz/l+0;KT[k+6]=qw/l+0;KN[i]=1;
+      return true;
+    }
     // Radial blast (prototype explode), for each live, active, dynamic body that is not lost, by increasing index: at the
     // body point nearest to the centre (distance d < radius), the impulse strength*(1 - d/radius), capped at maxDv times
     // the physical mass, along (body centre - centre + (0, 0.35, 0)) normalised; the body wakes alone. Returns the bodies
@@ -425,10 +484,18 @@
       for(let i=1;i<top;i++){
         if((FL[i]&(ALIVE|PENDING|KINEMATIC|LOST))!==ALIVE)continue;
         const p=i*3,r=i*9,hx=H[p],hy=H[p+1],hz=H[p+2],dx=x-P[p],dy=y-P[p+1],dz=z-P[p+2];
-        // Nearest point of the box: the centre in the local frame, clamped to the collision half-sizes.
-        let lx=dx*R[r]+dy*R[r+3]+dz*R[r+6],ly=dx*R[r+1]+dy*R[r+4]+dz*R[r+7],lz=dx*R[r+2]+dy*R[r+5]+dz*R[r+8];
-        lx=lx>hx?hx:lx<-hx?-hx:lx;ly=ly>hy?hy:ly<-hy?-hy:ly;lz=lz>hz?hz:lz<-hz?-hz:lz;
-        const ax=P[p]+R[r]*lx+R[r+1]*ly+R[r+2]*lz,ay=P[p+1]+R[r+3]*lx+R[r+4]*ly+R[r+5]*lz,az=P[p+2]+R[r+6]*lx+R[r+7]*ly+R[r+8]*lz;
+        let ax,ay,az;
+        if(SH[i]===0){
+          // Nearest point of the box: the centre in the local frame, clamped to the collision half-sizes.
+          let lx=dx*R[r]+dy*R[r+3]+dz*R[r+6],ly=dx*R[r+1]+dy*R[r+4]+dz*R[r+7],lz=dx*R[r+2]+dy*R[r+5]+dz*R[r+8];
+          lx=lx>hx?hx:lx<-hx?-hx:lx;ly=ly>hy?hy:ly<-hy?-hy:ly;lz=lz>hz?hz:lz<-hz?-hz:lz;
+          ax=P[p]+R[r]*lx+R[r+1]*ly+R[r+2]*lz;ay=P[p+1]+R[r+3]*lx+R[r+4]*ly+R[r+5]*lz;az=P[p+2]+R[r+6]*lx+R[r+7]*ly+R[r+8]*lz;
+        }else{
+          // Round body: the segment point nearest to the centre, moved by the radius towards it (not when inside).
+          const e=HR[p+1]-HR[p],t0=dx*R[r+1]+dy*R[r+4]+dz*R[r+7],t=t0>e?e:t0<-e?-e:t0,sx=P[p]+R[r+1]*t,sy=P[p+1]+R[r+4]*t,sz=P[p+2]+R[r+7]*t;
+          const ux=x-sx,uy=y-sy,uz=z-sz,l=Math.sqrt(ux*ux+uy*uy+uz*uz),f=l>hx?hx/l:0;
+          ax=sx+ux*f;ay=sy+uy*f;az=sz+uz*f;
+        }
         const d=Math.sqrt((ax-x)*(ax-x)+(ay-y)*(ay-y)+(az-z)*(az-z));if(d>=radius)continue;
         let ex=P[p]-x,ey=P[p+1]-y+.35,ez=P[p+2]-z;const l=Math.sqrt(ex*ex+ey*ey+ez*ez);
         if(l<1e-6){ex=0;ey=1;ez=0;}else{ex/=l;ey/=l;ez/=l;}
@@ -447,37 +514,61 @@
       if(a>=t-e){const k=Math.floor(a/t+1e-9);stats.droppedSteps+=k;a-=k*t;}
       if(a<e)a=0;
       WS[0]=a;stats.substeps=n;
-      for(let s=0;s<n;s++)substep();
+      if(n>0&&stats.kinematic>0)for(let i=1;i<top;i++)if((FL[i]&(ALIVE|KINEMATIC))===(ALIVE|KINEMATIC))steer(i,n);
+      for(let s=0;s<n;s++)substep(s===n-1);
       return n;
+    }
+    // Kinematic body i for a call of n sub-steps (T = n tick): towards its pending target, v = (target - P)/T and
+    // w = 2 dq.xyz/T with dq = target (x) conj(Q) on the short arc, both capped; without a target it stops (V = 0) and
+    // joins the resting grid.
+    function steer(i,n){
+      const v=i*6,moving=FL[i]&MOVING;
+      if(!KN[i]){if(moving){FL[i]&=~MOVING;V.fill(0,v,v+6);restDirty=true;}return;}
+      KN[i]=0;if(!moving){FL[i]|=MOVING;restDirty=true;}
+      const p=i*3,q=i*4,k=i*7,T=n*SCR[9],tx=KT[k+3],ty=KT[k+4],tz=KT[k+5],tw=KT[k+6],qx=Q[q],qy=Q[q+1],qz=Q[q+2],qw=Q[q+3];
+      V[v]=(KT[k]-P[p])/T;V[v+1]=(KT[k+1]-P[p+1])/T;V[v+2]=(KT[k+2]-P[p+2])/T;
+      const g=(tw*qw+tx*qx+ty*qy+tz*qz<0?-2:2)/T;
+      V[v+3]=(tx*qw-tw*qx-ty*qz+tz*qy)*g;V[v+4]=(ty*qw-tw*qy+tx*qz-tz*qx)*g;V[v+5]=(tz*qw-tw*qz-tx*qy+ty*qx)*g;
+      cap(i);
     }
     // Adds the time since the last clock mark to phase k (bench only, never read by the simulation).
     function phase(k){const t=clock();PH[k]+=t-SCR[13];SCR[13]=t;}
-    function substep(){
+    function substep(last){
       if(clock)SCR[13]=clock();
       // 1. Activation of the pending bodies (module step 2a: all of them), by increasing index.
       if(stats.pending>0)for(let i=1;i<top;i++)if(FL[i]&PENDING){
         FL[i]&=~PENDING;ST[i]=0;AT[i]=0;FN[i]=0;const p=i*3;RP[p]=P[p];RP[p+1]=P[p+1];RP[p+2]=P[p+2];stats.pending--;if(FL[i]&ASLEEP)restDirty=true;
       }
-      // 2. Active list: awake dynamic bodies, by increasing index; nothing active: leave (the cache is kept).
-      let na=0;
-      for(let i=1;i<top;i++)if((FL[i]&(ALIVE|ASLEEP|PENDING|KINEMATIC|LOST))===ALIVE){AL[na++]=i;ACT[i]=1;}
+      // 2. Active list: awake dynamic bodies (ACT 1) and moving kinematic bodies (ACT 2), by increasing index; nothing
+      // active: leave (the cache is kept).
+      let na=0,nk=0;
+      for(let i=1;i<top;i++){
+        const f=FL[i];
+        if((f&(ALIVE|ASLEEP|PENDING|KINEMATIC|LOST))===ALIVE){AL[na++]=i;ACT[i]=1;}
+        else if((f&(ALIVE|KINEMATIC|MOVING|LOST))===(ALIVE|KINEMATIC|MOVING)){AL[na++]=i;ACT[i]=2;nk++;}
+      }
       if(na===0){stats.awake=0;stats.contacts=0;stats.manifolds=0;stats.tests=0;if(clock)phase(3);return;}
       if(clock)phase(3);
       collide(na);                                        // 3. broad and narrow phases
       if(clock)phase(0);
       prepare();                                          // 4.
-      const ld=SCR[10],ad=SCR[11],gh=SCR[12];             // 5. velocities: gravity and damping
-      for(let n=0;n<na;n++){const v=AL[n]*6;V[v]*=ld;V[v+1]=(V[v+1]+gh)*ld;V[v+2]*=ld;V[v+3]*=ad;V[v+4]*=ad;V[v+5]*=ad;}
+      // 5. Velocities of the dynamic bodies: gravity and damping, plus rolling damping for a round body in contact.
+      const ld=SCR[10],ad=SCR[11],gh=SCR[12],rd=SCR[28];
+      for(let n=0;n<na;n++){
+        const i=AL[n],v=i*6;if(ACT[i]!==1)continue;
+        V[v]*=ld;V[v+1]=(V[v+1]+gh)*ld;V[v+2]*=ld;V[v+3]*=ad;V[v+4]*=ad;V[v+5]*=ad;
+        if(SH[i]&&TOUCH[i]){V[v+3]*=rd;V[v+4]*=rd;V[v+5]*=rd;}
+      }
       warm();                                             // 6.
       for(let it=0;it<ITER;it++)solve(true);      // 7.
-      integrate(na);                                      // 8.
+      integrate(na,last);                                 // 8.
       relaxSeparation();
       for(let it=0;it<RELAX;it++)solve(false);// 9.
       restitution();                                      // 10.
       clamp(na);
       if(clock)phase(1);
       cacheStore();                                       // 14.
-      if(nwake>0){for(let i=1;i<top;i++)if(WK[i]){WK[i]=0;if(FL[i]&ASLEEP)wake(i);}nwake=0;}   // 15. deferred wakes
+      if(nwake>0){for(let i=1;i<top;i++)if(WK[i]){WK[i]=0;if(FL[i]&ASLEEP){wake(i);TOUCH[i]=1;}}nwake=0;}   // 15. deferred wakes
       const slept=islands(na);                            // 17.
       if(clock)phase(2);
       for(let n=0;n<na;n++){                              // 20. -0 normalised, derived values
@@ -485,16 +576,18 @@
         P[p]+=0;P[p+1]+=0;P[p+2]+=0;Q[q]+=0;Q[q+1]+=0;Q[q+2]+=0;Q[q+3]+=0;V[v]+=0;V[v+1]+=0;V[v+2]+=0;V[v+3]+=0;V[v+4]+=0;V[v+5]+=0;
         derive(i);ACT[i]=0;
       }
-      stats.awake=na-slept;stats.contacts=nc;stats.manifolds=nm;
+      stats.awake=na-nk-slept;stats.contacts=nc;stats.manifolds=nm;
       if(clock)phase(3);
     }
 
-    // ---- Broad phase: for each active body a, by increasing index, the cells of FB_a, z then x: statics (stamped),
-    // active bodies b > a, resting bodies (immovable for the contact, woken at the end of the sub-step). A pair seen
-    // in several cells is tested in the cell of the low corner of the overlap only (prototype).
+    // ---- Broad phase: for each active body a, by increasing index, the cells of FB_a, z then x: statics (stamped; a
+    // dynamic a only), active bodies b > a (never two kinematic ones), resting bodies (sleepers and stopped kinematic
+    // bodies: immovable for the contact, a sleeper woken at the end of the sub-step; a moving kinematic a only marks the
+    // sleepers it touches). A pair seen in several cells is tested in the cell of the low corner of the overlap only.
     function collide(na){
       nc=0;nm=0;let tests=0;
       const h=SCR[9],mg=SCR[14],lim=SCR[15];
+      TOUCH.fill(0,0,top);
       for(let n=0;n<na;n++){
         const b=AL[n]*6,vx=Math.abs(V[b]),vy=Math.abs(V[b+1]),vz=Math.abs(V[b+2]);
         const ex=(vx<lim?vx:lim)*h+mg,ey=(vy<lim?vy:lim)*h+mg,ez=(vz<lim?vz:lim)*h+mg;
@@ -502,21 +595,25 @@
       }
       if(restDirty){
         gridClear(1);
-        for(let i=top-1;i>=1;i--)if((FL[i]&(ALIVE|ASLEEP|PENDING|LOST))===(ALIVE|ASLEEP)){const b=i*6;for(let k=0;k<6;k++)FB[b+k]=BB[b+k];gridAdd(1,i);}
+        for(let i=top-1;i>=1;i--){
+          const f=FL[i];
+          if((f&(ALIVE|ASLEEP|PENDING|LOST))===(ALIVE|ASLEEP)||(f&(ALIVE|KINEMATIC|MOVING|LOST))===(ALIVE|KINEMATIC)){const b=i*6;for(let k=0;k<6;k++)FB[b+k]=BB[b+k];gridAdd(1,i);}
+        }
         restDirty=false;
       }
       gridClear(0);for(let n=na-1;n>=0;n--)gridAdd(0,AL[n]);
       for(let n=0;n<na;n++){
-        const a=AL[n],a6=a*6,a3=a*3,a9=a*9,speedA=Math.sqrt(V[a6]*V[a6]+V[a6+1]*V[a6+1]+V[a6+2]*V[a6+2]),marginA=mg+speedA*h;
+        const a=AL[n],a6=a*6,a3=a*3,a9=a*9,kin=ACT[a]===2,speedA=Math.sqrt(V[a6]*V[a6]+V[a6+1]*V[a6+1]+V[a6+2]*V[a6+2]),marginA=mg+speedA*h;
         cellRange(FB,a6);const x0=ISCR[0],x1=ISCR[1],z0=ISCR[2],z1=ISCR[3];
-        if(MSK[a]&1){
+        if(!kin&&MSK[a]&1){
           if(++stamp>1073741823){sT.fill(0);stamp=1;}
           for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){
             const c=z*GW+x;
             for(let q=sStart[c],e=sStart[c+1];q<e;q++){
               const s=sItems[q];if(sT[s]===stamp)continue;sT[s]=stamp;const s6=s*6;
               if(FB[a6]>sA[s6+3]||FB[a6+3]<sA[s6]||FB[a6+1]>sA[s6+4]||FB[a6+4]<sA[s6+1]||FB[a6+2]>sA[s6+5]||FB[a6+5]<sA[s6+2])continue;
-              tests++;SCR[0]=marginA;const k=boxBox(P,H,a3,R,a9,sP,sH,s*3,sR,s*9);
+              // A round body against a static: the static is the box A, then the normals are turned (body to static).
+              tests++;SCR[0]=marginA;const k=SH[a]?turn(boxRound(sP,sH,s*3,sR,s*9,a)):boxBox(P,H,a3,R,a9,sP,sH,s*3,sR,s*9);
               if(k){SCR[3]=Math.sqrt(FR[a]*sF[s]);SCR[4]=RE[a]>sE[s]?RE[a]:sE[s];emit(a,0,a*KM+NB+s,k);}
             }
           }
@@ -528,17 +625,19 @@
             if(FB[a6]>FB[b6+3]||FB[a6+3]<FB[b6]||FB[a6+1]>FB[b6+4]||FB[a6+4]<FB[b6+1]||FB[a6+2]>FB[b6+5]||FB[a6+5]<FB[b6+2])continue;
             if(cx(FB,FB[a6]>FB[b6]?a6:b6)!==x||cz(FB,FB[a6+2]>FB[b6+2]?a6+2:b6+2)!==z)continue;
             if(!(GRP[a]&MSK[b])||!(GRP[b]&MSK[a]))continue;
+            if(kin&&(g||FL[b]&KINEMATIC)){if(g&&!(FL[b]&KINEMATIC)&&!WK[b]){WK[b]=1;nwake++;}continue;}
             tests++;const lo=a<b?a:b,hi=a<b?b:a,sb=Math.sqrt(V[b6]*V[b6]+V[b6+1]*V[b6+1]+V[b6+2]*V[b6+2]);
-            SCR[0]=marginA+sb*h;const k=boxBox(P,H,lo*3,R,lo*9,P,H,hi*3,R,hi*9);
-            if(k){SCR[3]=Math.sqrt(FR[a]*FR[b]);SCR[4]=RE[a]>RE[b]?RE[a]:RE[b];emit(lo,hi,lo*KM+hi,k);if(g===1&&!WK[b]){WK[b]=1;nwake++;}}
+            SCR[0]=marginA+sb*h;const k=SH[lo]|SH[hi]?bodies(lo,hi):boxBox(P,H,lo*3,R,lo*9,P,H,hi*3,R,hi*9);
+            if(k){SCR[3]=Math.sqrt(FR[a]*FR[b]);SCR[4]=RE[a]>RE[b]?RE[a]:RE[b];emit(lo,hi,lo*KM+hi,k);if(g===1&&!WK[b]&&!(FL[b]&KINEMATIC)){WK[b]=1;nwake++;}}
           }
         }
       }
       stats.tests=tests;
     }
 
-    // ---- Narrow phase (prototype boxBox, face and clip, unchanged): writes mN (A to B), mP (midpoint between the
-    // surfaces), mS (separation), mI (stable point id); returns the point count. Statics pass their own rotation.
+    // ---- Narrow phase (prototype boxBox, face and clip, unchanged but for one normal per point): writes, for point k,
+    // mN[3k..] (A to B), mP[3k..] (midpoint between the surfaces), mS[k] (separation), mI[k] (stable id); returns the
+    // point count. Statics pass their own rotation.
     function clip(src,sid,n,dst,did,co,sg,li,plane){
       if(n===0)return 0;const lim=SCR[li];let m=0,pi=n-1,pd=sg*src[pi*3+co]-lim;
       for(let i=0;i<n;i++){
@@ -574,9 +673,8 @@
         for(let i=0;i<m;i++){if(i===a||i===b)continue;const ar=eu*(clipB[i*3+1]-clipB[a*3+1])-ew*(clipB[i*3]-clipB[a*3]);if(ar>cd){cd=ar;c=i;}if(ar<dd){dd=ar;d2=i;}}
         pick[0]=a;pick[1]=b;outCount=2;if(c>=0)pick[outCount++]=c;if(d2>=0)pick[outCount++]=d2;
       }else for(let i=0;i<m;i++)pick[i]=i;
-      const code=((flip?6:0)+axis*2+(sgn>0?1:0))*256,px=PR[r3],py=PR[r3+1],pz=PR[r3+2];
-      for(let k=0;k<outCount;k++){const i=pick[k],u=clipB[i*3],w=clipB[i*3+1],d=clipB[i*3+2],hgt=hn+d/2;mP[k*3]=px+u*t1x+w*t2x+hgt*nx;mP[k*3+1]=py+u*t1y+w*t2y+hgt*ny;mP[k*3+2]=pz+u*t1z+w*t2z+hgt*nz;mS[k]=d;mI[k]=code+idB[i];}
-      if(flip){mN[0]=-nx;mN[1]=-ny;mN[2]=-nz;}else{mN[0]=nx;mN[1]=ny;mN[2]=nz;}
+      const code=((flip?6:0)+axis*2+(sgn>0?1:0))*256,px=PR[r3],py=PR[r3+1],pz=PR[r3+2],gx=flip?-nx:nx,gy=flip?-ny:ny,gz=flip?-nz:nz;
+      for(let k=0;k<outCount;k++){const i=pick[k],u=clipB[i*3],w=clipB[i*3+1],d=clipB[i*3+2],hgt=hn+d/2;mP[k*3]=px+u*t1x+w*t2x+hgt*nx;mP[k*3+1]=py+u*t1y+w*t2y+hgt*ny;mP[k*3+2]=pz+u*t1z+w*t2z+hgt*nz;mN[k*3]=gx;mN[k*3+1]=gy;mN[k*3+2]=gz;mS[k]=d;mI[k]=code+idB[i];}
       return outCount;
     }
     // Separating axes (3 + 3 faces, 9 edges): early out beyond the margin, faces preferred (0.95 x + 0.002 for B,
@@ -612,16 +710,98 @@
       }
       return useB?face(PB,HB,b3,RB,b9,PA,HA,a3,RA,a9,axisB,true):face(PA,HA,a3,RA,a9,PB,HB,b3,RB,b9,axisA,false);
     }
-    // Contacts of a pair (n points in mN, mP, mS, mI), warm-started from the cache by point id. Friction SCR[3] and
-    // restitution SCR[4]; a side that does not take part (world, sleeper) gets a zero inverse mass.
+    // Round shapes: a segment (local Y, half-length e = HR_y - HR_x, 0 for a sphere) swept by the collision radius H_x.
+    // Ball SCR[33..35] of radius SCR[36] against box A: l = R^T (c - P), q = l clamped to [-H, H]; a centre inside leaves
+    // by the face of least penetration H_k - |l_k| (x, then y, then z on ties). Point k (id) when s <= margin; returns 1
+    // or 0. mP = midpoint between the box point P + R q and c - n r.
+    function ball(PA,HA,a3,RA,a9,k,id){
+      const r=SCR[36],cx=SCR[33],cy=SCR[34],cz=SCR[35],dx=cx-PA[a3],dy=cy-PA[a3+1],dz=cz-PA[a3+2],hx=HA[a3],hy=HA[a3+1],hz=HA[a3+2];
+      const lx=dx*RA[a9]+dy*RA[a9+3]+dz*RA[a9+6],ly=dx*RA[a9+1]+dy*RA[a9+4]+dz*RA[a9+7],lz=dx*RA[a9+2]+dy*RA[a9+5]+dz*RA[a9+8];
+      let qx=lx>hx?hx:lx<-hx?-hx:lx,qy=ly>hy?hy:ly<-hy?-hy:ly,qz=lz>hz?hz:lz<-hz?-hz:lz,nx=lx-qx,ny=ly-qy,nz=lz-qz,s;
+      if(nx!==0||ny!==0||nz!==0){const d=Math.sqrt(nx*nx+ny*ny+nz*nz);nx/=d;ny/=d;nz/=d;s=d-r;}
+      else{
+        const ex=hx-Math.abs(lx),ey=hy-Math.abs(ly),ez=hz-Math.abs(lz);
+        if(ex<=ey&&ex<=ez){nx=lx<0?-1:1;qx=nx*hx;s=-ex-r;}else if(ey<=ez){ny=ly<0?-1:1;qy=ny*hy;s=-ey-r;}else{nz=lz<0?-1:1;qz=nz*hz;s=-ez-r;}
+      }
+      if(s>SCR[0])return 0;
+      const wx=RA[a9]*nx+RA[a9+1]*ny+RA[a9+2]*nz,wy=RA[a9+3]*nx+RA[a9+4]*ny+RA[a9+5]*nz,wz=RA[a9+6]*nx+RA[a9+7]*ny+RA[a9+8]*nz,m=k*3;
+      mN[m]=wx;mN[m+1]=wy;mN[m+2]=wz;mS[k]=s;mI[k]=id;
+      mP[m]=(PA[a3]+RA[a9]*qx+RA[a9+1]*qy+RA[a9+2]*qz+cx-wx*r)/2;
+      mP[m+1]=(PA[a3+1]+RA[a9+3]*qx+RA[a9+4]*qy+RA[a9+5]*qz+cy-wy*r)/2;
+      mP[m+2]=(PA[a3+2]+RA[a9+6]*qx+RA[a9+7]*qy+RA[a9+8]*qz+cz-wz*r)/2;
+      return 1;
+    }
+    // Box A against the round body b: a sphere is one ball (id 1); a capsule tests its ends c + u e (id 1) and c - u e
+    // (id 2), then, when fewer than two touch, the segment point nearest to the box (id 3; from the middle, three times:
+    // clamp to the box, project on the segment; skipped when it is an end).
+    function boxRound(PA,HA,a3,RA,a9,b){
+      const p=b*3,r9=b*9,e=HR[p+1]-HR[p],ux=R[r9+1],uy=R[r9+4],uz=R[r9+7];SCR[36]=H[p];
+      let n=0;
+      for(let j=0;j<2;j++){
+        const t=j?-e:e;SCR[33]=P[p]+ux*t;SCR[34]=P[p+1]+uy*t;SCR[35]=P[p+2]+uz*t;n+=ball(PA,HA,a3,RA,a9,n,j+1);
+        if(e===0)return n;
+      }
+      if(n===2)return 2;
+      const dx=P[p]-PA[a3],dy=P[p+1]-PA[a3+1],dz=P[p+2]-PA[a3+2],hx=HA[a3],hy=HA[a3+1],hz=HA[a3+2];
+      const cx=dx*RA[a9]+dy*RA[a9+3]+dz*RA[a9+6],cy=dx*RA[a9+1]+dy*RA[a9+4]+dz*RA[a9+7],cz=dx*RA[a9+2]+dy*RA[a9+5]+dz*RA[a9+8];
+      const vx=ux*RA[a9]+uy*RA[a9+3]+uz*RA[a9+6],vy=ux*RA[a9+1]+uy*RA[a9+4]+uz*RA[a9+7],vz=ux*RA[a9+2]+uy*RA[a9+5]+uz*RA[a9+8];
+      let t=0;
+      for(let it=0;it<3;it++){
+        let x=cx+vx*t,y=cy+vy*t,z=cz+vz*t;x=x>hx?hx:x<-hx?-hx:x;y=y>hy?hy:y<-hy?-hy:y;z=z>hz?hz:z<-hz?-hz:z;
+        t=(x-cx)*vx+(y-cy)*vy+(z-cz)*vz;t=t>e?e:t<-e?-e:t;
+      }
+      if(t===e||t===-e)return n;
+      SCR[33]=P[p]+ux*t;SCR[34]=P[p+1]+uy*t;SCR[35]=P[p+2]+uz*t;return n+ball(PA,HA,a3,RA,a9,n,3);
+    }
+    // Ball SCR[29..31] (radius SCR[32]) against ball SCR[33..35] (radius SCR[36]): n = (cB - cA)/d, or (0, 1, 0) when
+    // d < 1e-9; s = d - rA - rB; point cA + n (rA + s/2). Point k (id) when s <= margin; returns 1 or 0.
+    function ballBall(k,id){
+      const ax=SCR[29],ay=SCR[30],az=SCR[31],ra=SCR[32];let nx=SCR[33]-ax,ny=SCR[34]-ay,nz=SCR[35]-az;
+      const d=Math.sqrt(nx*nx+ny*ny+nz*nz),s=d-ra-SCR[36];if(s>SCR[0])return 0;
+      if(d<1e-9){nx=0;ny=1;nz=0;}else{nx/=d;ny/=d;nz/=d;}
+      const m=k*3,g=ra+s/2;mN[m]=nx;mN[m+1]=ny;mN[m+2]=nz;mP[m]=ax+nx*g;mP[m+1]=ay+ny*g;mP[m+2]=az+nz*g;mS[k]=s;mI[k]=id;return 1;
+    }
+    // Round a against round b, shapes in order (a sphere is a segment of length 0): parameter s on A by the classical
+    // clamped formula, B's point nearest to A(s), then ballBall (id 1). Nearly parallel segments (1 - (u.v)^2 < 1e-3):
+    // the two ends of the part of A facing B (the ends of A when B covers them), each against its nearest point on B
+    // (ids 1 and 2; one point when that part is a single end).
+    function roundRound(a,b){
+      const p=a*3,q=b*3,ea=HR[p+1]-HR[p],eb=HR[q+1]-HR[q],ux=R[a*9+1],uy=R[a*9+4],uz=R[a*9+7],vx=R[b*9+1],vy=R[b*9+4],vz=R[b*9+7];
+      const wx=P[p]-P[q],wy=P[p+1]-P[q+1],wz=P[p+2]-P[q+2],k=ux*vx+uy*vy+uz*vz,c=ux*wx+uy*wy+uz*wz,f=vx*wx+vy*wy+vz*wz,den=1-k*k;
+      SCR[32]=H[p];SCR[36]=H[q];
+      let s0,s1;
+      if(den<1e-3){const g=Math.abs(k)*eb;s0=-c-g;s1=-c+g;s0=s0>ea?ea:s0<-ea?-ea:s0;s1=s1>ea?ea:s1<-ea?-ea:s1;}
+      else{s0=(k*f-c)/den;s0=s0>ea?ea:s0<-ea?-ea:s0;const t=k*s0+f;if(t>eb||t<-eb){s0=k*(t>eb?eb:-eb)-c;s0=s0>ea?ea:s0<-ea?-ea:s0;}s1=s0;}
+      let n=0;
+      for(let j=0;j<2;j++){
+        const s=j?s1:s0;if(j&&s1===s0)break;
+        let t=k*s+f;t=t>eb?eb:t<-eb?-eb:t;
+        SCR[29]=P[p]+ux*s;SCR[30]=P[p+1]+uy*s;SCR[31]=P[p+2]+uz*s;SCR[33]=P[q]+vx*t;SCR[34]=P[q+1]+vy*t;SCR[35]=P[q+2]+vz*t;
+        n+=ballBall(n,j+1);
+      }
+      return n;
+    }
+    // Body pair (lo, hi) with a round side, in shape order (box < sphere < capsule): a reversed pair is called as (hi, lo)
+    // and its normals turned.
+    function bodies(lo,hi){
+      const a=SH[lo],b=SH[hi];
+      if(a===0)return boxRound(P,H,lo*3,R,lo*9,hi);
+      if(b===0)return turn(boxRound(P,H,hi*3,R,hi*9,lo));
+      return a<=b?roundRound(lo,hi):turn(roundRound(hi,lo));
+    }
+    function turn(n){for(let k=0;k<3*n;k++)mN[k]=-mN[k];return n;}
+    // Contacts of a pair (n points in mN, mP, mS, mI), warm-started from the cache by point id; TOUCH marks both sides.
+    // Friction SCR[3] and restitution SCR[4]; a side that does not take part (world, sleeper, kinematic body) gets a zero
+    // inverse mass.
     function emit(a,b,key,n){
+      TOUCH[a]=1;TOUCH[b]=1;
       if(nc+n>MC){stats.dropContacts+=n;return;}
       prF[nm]=nc;prN[nm]=n;nm++;
       const friction=SCR[3],restitution=SCR[4],hit=pn?lookup(key):-1,from=hit>=0?TB[hit]-1:0,old=hit>=0?TC[hit]:0,a3=a*3,b3=b*3;
       const ima=ACT[a]?IM[a]:0,imb=ACT[b]?IM[b]:0,tol=SL[a]<SL[b]?SL[a]:SL[b];
       for(let k=0;k<n;k++){
-        const c=nc++,c3=c*3,id=mI[k];cA[c]=a;cB[c]=b;cK[c]=key;cI[c]=id;cN[c3]=mN[0];cN[c3+1]=mN[1];cN[c3+2]=mN[2];
-        cRA[c3]=mP[k*3]-P[a3];cRA[c3+1]=mP[k*3+1]-P[a3+1];cRA[c3+2]=mP[k*3+2]-P[a3+2];cRB[c3]=mP[k*3]-P[b3];cRB[c3+1]=mP[k*3+1]-P[b3+1];cRB[c3+2]=mP[k*3+2]-P[b3+2];
+        const c=nc++,c3=c*3,k3=k*3,id=mI[k];cA[c]=a;cB[c]=b;cK[c]=key;cI[c]=id;cN[c3]=mN[k3];cN[c3+1]=mN[k3+1];cN[c3+2]=mN[k3+2];
+        cRA[c3]=mP[k3]-P[a3];cRA[c3+1]=mP[k3+1]-P[a3+1];cRA[c3+2]=mP[k3+2]-P[a3+2];cRB[c3]=mP[k3]-P[b3];cRB[c3+1]=mP[k3+1]-P[b3+1];cRB[c3+2]=mP[k3+2]-P[b3+2];
         cS[c]=mS[k];cFr[c]=friction;cRe[c]=restitution;cIa[c]=ima;cIb[c]=imb;cSl[c]=tol;cJn[c]=cJ1[c]=cJ2[c]=0;
         for(let m=0;m<old;m++)if(pI[from+m]===id){cJn[c]=pJn[from+m];cJ1[c]=pJ1[from+m];cJ2[c]=pJ2[from+m];break;}
       }
@@ -681,11 +861,13 @@
         V[b6]=vbx+nx*j*imb;V[b6+1]=vby+ny*j*imb;V[b6+2]=vbz+nz*j*imb;V[b6+3]=wbx+cAN[c6+3]*j;V[b6+4]=wby+cAN[c6+4]*j;V[b6+5]=wbz+cAN[c6+5]*j;
       }
     }
-    // Velocities capped (maxLinear, maxAngular), then positions and quaternions integrated (prototype).
-    function integrate(na){
+    // Velocities capped (maxLinear, maxAngular), then positions and quaternions integrated (prototype); a moving
+    // kinematic body ends the last sub-step of the call exactly on its target.
+    function integrate(na,last){
       const h=SCR[9],ml=SCR[15],ma=SCR[16],ml2=ml*ml,ma2=ma*ma;
       for(let n=0;n<na;n++){
         const i=AL[n],v=i*6,p=i*3,q=i*4;
+        if(last&&ACT[i]===2){const k=i*7;for(let j=0;j<3;j++)P[p+j]=KT[k+j];for(let j=0;j<4;j++)Q[q+j]=KT[k+3+j];continue;}
         let vx=V[v],vy=V[v+1],vz=V[v+2],wx=V[v+3],wy=V[v+4],wz=V[v+5];
         const l2=vx*vx+vy*vy+vz*vz;if(l2>ml2){const k=ml/Math.sqrt(l2);vx*=k;vy*=k;vz*=k;V[v]=vx;V[v+1]=vy;V[v+2]=vz;}
         const w2=wx*wx+wy*wy+wz*wz;if(w2>ma2){const k=ma/Math.sqrt(w2);wx*=k;wy*=k;wz*=k;V[v+3]=wx;V[v+4]=wy;V[v+5]=wz;}
@@ -727,21 +909,22 @@
       for(let c=0;c<nc;c++){pK[c]=cK[c];pI[c]=cI[c];pJn[c]=cJn[c]+0;pJ1[c]=cJ1[c]+0;pJ2[c]=cJ2[c]+0;}
       tableBuild();
     }
-    // Islands (union-find over the pairs whose two sides take part; larger root under the smaller), timers in
-    // whole sub-steps, and sleep of the islands whose smallest ST reached sleepSteps. Returns the bodies put to sleep.
+    // Islands of the dynamic participants (union-find over the pairs whose two sides take part; larger root under the
+    // smaller), timers in whole sub-steps, and sleep of the islands whose smallest ST reached sleepSteps. Returns the
+    // bodies put to sleep. Kinematic bodies (ACT 2) have neither island nor timers.
     function find(i){while(UF[i]!==i){UF[i]=UF[UF[i]];i=UF[i];}return i;}
     function islands(na){
       for(let n=0;n<na;n++){const i=AL[n];UF[i]=i;}
-      for(let m=0;m<nm;m++){const c=prF[m],a=cA[c],b=cB[c];if(!ACT[a]||!ACT[b])continue;const ra=find(a),rb=find(b);if(ra!==rb){if(ra<rb)UF[rb]=ra;else UF[ra]=rb;}}
+      for(let m=0;m<nm;m++){const c=prF[m],a=cA[c],b=cB[c];if(ACT[a]!==1||ACT[b]!==1)continue;const ra=find(a),rb=find(b);if(ra!==rb){if(ra<rb)UF[rb]=ra;else UF[ra]=rb;}}
       const l2=SCR[19],a2=SCR[20];
       for(let n=0;n<na;n++){
-        const i=AL[n],v=i*6;
+        const i=AL[n],v=i*6;if(ACT[i]!==1)continue;
         if(V[v]*V[v]+V[v+1]*V[v+1]+V[v+2]*V[v+2]<l2&&V[v+3]*V[v+3]+V[v+4]*V[v+4]+V[v+5]*V[v+5]<a2){if(ST[i]<I32)ST[i]++;}else ST[i]=0;
         if(AT[i]<I32)AT[i]++;IMIN[i]=I32;
       }
-      for(let n=0;n<na;n++){const i=AL[n],r=find(i);if(ST[i]<IMIN[r])IMIN[r]=ST[i];}
+      for(let n=0;n<na;n++){const i=AL[n];if(ACT[i]!==1)continue;const r=find(i);if(ST[i]<IMIN[r])IMIN[r]=ST[i];}
       let slept=0;
-      for(let n=0;n<na;n++){const i=AL[n];if(IMIN[find(i)]>=SCR[21]){FL[i]|=ASLEEP;const v=i*6;V[v]=V[v+1]=V[v+2]=V[v+3]=V[v+4]=V[v+5]=0;slept++;}}
+      for(let n=0;n<na;n++){const i=AL[n];if(ACT[i]===1&&IMIN[find(i)]>=SCR[21]){FL[i]|=ASLEEP;const v=i*6;V[v]=V[v+1]=V[v+2]=V[v+3]=V[v+4]=V[v+5]=0;slept++;}}
       if(slept>0){stats.sleeping+=slept;restDirty=true;}
       return slept;
     }
@@ -778,13 +961,17 @@
       for(let i=1;i<n;i++){
         const fl=b.FL[i],p=i*3,q=i*4,v=i*6;
         if(!(fl&ALIVE)){if(fl!==0)no('free row '+i+' has flags '+fl);continue;}
-        if(fl&(KINEMATIC|LOST|HARD|MOVING))no('body '+i+' flags '+fl+' are not available yet');
-        if(b.SH[i]!==0)no('body '+i+' shape '+b.SH[i]+' is not available yet');
-        for(let k=0;k<3;k++)if(!(b.H[p+k]>0&&b.H[p+k]>=C.minHalf-1e-12&&b.HR[p+k]>0))no('body '+i+' half-sizes out of range');
-        if(!(b.IM[i]>=1/C.massMax-1e-12&&b.IM[i]<=1/C.massMin+1e-12))no('body '+i+' inverse mass out of range');
-        if(!(b.MO[i]>0&&b.FR[i]>=0&&b.FR[i]<=2&&b.RE[i]>=0&&b.RE[i]<=1))no('body '+i+' mass, friction or restitution out of range');
-        const qq=b.Q[q]*b.Q[q]+b.Q[q+1]*b.Q[q+1]+b.Q[q+2]*b.Q[q+2]+b.Q[q+3]*b.Q[q+3];
+        const kin=(fl&KINEMATIC)!==0,hr=b.HR,t=b.KT,k7=i*7;
+        if(fl&(LOST|HARD))no('body '+i+' flags '+fl+' are not available yet');
+        if(kin?fl&(ASLEEP|PENDING):fl&MOVING||b.KN[i])no('body '+i+' flags '+fl+' or target do not fit a '+(kin?'kinematic':'dynamic')+' body');
+        for(let k=0;k<3;k++)if(!(b.H[p+k]>0&&b.H[p+k]>=C.minHalf-1e-12&&hr[p+k]>0))no('body '+i+' half-sizes out of range');
+        // Round body: HR = (r, height/2, r), H = (rc, ., rc), a sphere with height/2 = r.
+        if(b.SH[i]&&!(hr[p]===hr[p+2]&&hr[p+1]>=hr[p]&&b.H[p]===b.H[p+2]&&(b.SH[i]===2||hr[p+1]===hr[p])))no('body '+i+' sizes do not fit its shape');
+        if(kin?b.IM[i]!==0:!(b.IM[i]>=1/C.massMax-1e-12&&b.IM[i]<=1/C.massMin+1e-12))no('body '+i+' inverse mass out of range');
+        if(!((kin?b.MO[i]>=0:b.MO[i]>0)&&b.FR[i]>=0&&b.FR[i]<=2&&b.RE[i]>=0&&b.RE[i]<=1))no('body '+i+' mass, friction or restitution out of range');
+        const qq=b.Q[q]*b.Q[q]+b.Q[q+1]*b.Q[q+1]+b.Q[q+2]*b.Q[q+2]+b.Q[q+3]*b.Q[q+3],tq=t[k7+3]*t[k7+3]+t[k7+4]*t[k7+4]+t[k7+5]*t[k7+5]+t[k7+6]*t[k7+6];
         if(!(qq>=1-2e-6&&qq<=1+2e-6))no('body '+i+' quaternion is not unit');
+        if(b.KN[i]&&!(tq>=1-2e-6&&tq<=1+2e-6))no('body '+i+' target quaternion is not unit');
         const x=b.P[p],y=b.P[p+1],z=b.P[p+2];
         if(!(x>=minX-80&&x<=maxX+80&&z>=minZ-80&&z<=maxZ+80&&y>=C.minY-80&&y<=10000))no('body '+i+' position out of range');
         const l2=b.V[v]*b.V[v]+b.V[v+1]*b.V[v+1]+b.V[v+2]*b.V[v+2],w2=b.V[v+3]*b.V[v+3]+b.V[v+4]*b.V[v+4]+b.V[v+5]*b.V[v+5],ml=C.maxLinear*(1+1e-6),ma=C.maxAngular*(1+1e-6);
@@ -814,10 +1001,10 @@
       for(let f=0;f<FIELDS.length;f++){const a=FIELDS[f][1],src=b[FIELDS[f][0]];a.fill(a===MAT?-1:0);for(let k=0;k<src.length;k++)a[k]=src[k]+0;}
       for(const a of [R,IL,IW,BB,FB,SL,PP,PQ])a.fill(0);
       R[0]=R[4]=R[8]=1;SL[0]=C.slop;PQ[3]=1;
-      top=n;need=0;stats.bodies=0;stats.sleeping=0;stats.pending=0;
+      top=n;need=0;stats.bodies=0;stats.sleeping=0;stats.pending=0;stats.kinematic=0;
       for(let i=1;i<n;i++)if(FL[i]&ALIVE){
         inertia(i);tolerance(i);derive(i);need+=cellsOf(i);stats.bodies++;
-        if(FL[i]&PENDING)stats.pending++;else if(FL[i]&ASLEEP)stats.sleeping++;
+        if(FL[i]&KINEMATIC)stats.kinematic++;else if(FL[i]&PENDING)stats.pending++;else if(FL[i]&ASLEEP)stats.sleeping++;
         const p=i*3,q=i*4;PP[p]=P[p];PP[p+1]=P[p+1];PP[p+2]=P[p+2];PQ[q]=Q[q];PQ[q+1]=Q[q+1];PQ[q+2]=Q[q+2];PQ[q+3]=Q[q+3];
       }
       if(need>GE)entries(Math.max(need,2*GE));
@@ -841,7 +1028,7 @@
     }
 
     const w={config:C,fingerprint:fp,staticsHash:'',stats,phaseMs:PH,setStatics,updateStatics:setStatics,addBody,valid,isAsleep,isLost,body,
-      impulse,setVelocity,blast,pose,matrix,step,snapshot,restore,hash};
+      impulse,setVelocity,setKinematic,blast,pose,matrix,step,snapshot,restore,hash};
     setStatics([],[]);
     return w;
   }

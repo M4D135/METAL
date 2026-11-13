@@ -1,0 +1,29 @@
+# 2026-11-13 11:27 — npm test complet sur le Spark (outils/npm-test-spark.sh : copie de travail de la branche chantier/module-physique, commit df1b779 + étape 3 non commitée), Node 24, 131 s
+$ npm-test-spark.sh <dépôt>
+# tests 470
+# suites 0
+# pass 462
+# fail 8
+# cancelled 0
+# skipped 0
+# todo 0
+not ok 108 - legacy seed 1, sector 0: exact pre-campaign world fingerprint
+not ok 109 - legacy seed 1, sector 1: exact pre-campaign world fingerprint
+not ok 110 - legacy seed 1, sector 2: exact pre-campaign world fingerprint
+not ok 111 - legacy seed 96, sector 0: exact pre-campaign world fingerprint
+not ok 112 - legacy seed 96, sector 1: exact pre-campaign world fingerprint
+not ok 113 - legacy seed 96, sector 2: exact pre-campaign world fingerprint
+not ok 114 - campaign mode is strictly opt-in and keeps historical clamping otherwise
+not ok 115 - the first three campaign worlds preserve historical geometry outside campaign supplies and loadout
+code=1 (les 8 échecs connus de checks/campaign-world.test.mjs, n° 108 à 115 : référence de l'étape 0, etat-initial.md)
+
+# checks/build.test.mjs, que la chaîne && n'atteint pas, lancé seul sur le Mac après python3 tools/build.py
+$ node --test checks/build.test.mjs
+ℹ tests 1
+ℹ pass 1
+ℹ fail 0
+
+# python3 tools/build.py : dist/index.html et SIZE.json identiques avant et après (sha256), le module n'est pas branché
+4587dc49da8299ab771cee377dbefde927338be8d2754badbf7d98674a5c485a  dist/index.html
+4221722ac3099aa28dd1972d61b157f84aa99748939cc21cf3ae08673062c972  SIZE.json
+dist/index.html : 812696 octets (limite 1 400 000)

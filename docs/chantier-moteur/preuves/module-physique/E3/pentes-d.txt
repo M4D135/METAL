@@ -1,0 +1,23 @@
+# node docs/chantier-moteur/preuves/module-physique/E3/pentes-d.mjs (v24.18.0, 2026-11-13 11:37)
+# cube lâché sur la pente de P08 (a) ; déplacements depuis le premier sous-pas avec un contact
+jeu 0.5 m                          contact  34 | arête 1.3885 m | centre 1.5585 m | v max vers le bas 2.055 m/s | endormi 2.14 s | axe Y 9.9e-4
+jeu 0.35 m                         contact  28 | arête 1.3247 m | centre 1.4953 m | v max vers le bas 1.984 m/s | endormi 2.08 s | axe Y 6.0e-4
+jeu 0.2 m                          contact  21 | arête 0.8968 m | centre 1.0689 m | v max vers le bas 1.750 m/s | endormi 1.80 s | axe Y 5.4e-4
+jeu 0.1 m                          contact  14 | arête 0.7424 m | centre 0.9160 m | v max vers le bas 1.592 m/s | endormi 1.68 s | axe Y 5.6e-4
+jeu 0.05 m                         contact   8 | arête 0.5775 m | centre 0.7537 m | v max vers le bas 1.413 m/s | endormi 1.54 s | axe Y 9.2e-4
+jeu 0.01 m                         contact   1 | arête 0.5449 m | centre 0.7202 m | v max vers le bas 1.360 m/s | endormi 1.51 s | axe Y 5.0e-4
+jeu 0.001 m                        contact   1 | arête 0.5811 m | centre 0.7549 m | v max vers le bas 1.403 m/s | endormi 1.53 s | axe Y 7.8e-4
+# réglages (jeu 0,5 m, puis 0,01 m)
+jeu 0.5, rebond 0                  contact  34 | arête 1.1029 m | centre 1.2735 m | v max vers le bas 1.960 m/s | endormi 2.00 s | axe Y 6.9e-4
+jeu 0.5, iterations 4              contact  34 | arête 1.4906 m | centre 1.6585 m | v max vers le bas 2.116 m/s | endormi 2.19 s | axe Y 8.0e-4
+jeu 0.5, iterations 8, relax 4     contact  34 | arête 0.6237 m | centre 0.7900 m | v max vers le bas 1.864 m/s | endormi 1.69 s | axe Y 5.3e-4
+jeu 0.5, frottement 1 et 1         contact  34 | arête 0.6422 m | centre 0.8151 m | v max vers le bas 2.005 m/s | endormi 1.45 s | axe Y 6.9e-4
+jeu 0.5, tick 1/240                contact  34 | arête 1.8566 m | centre 2.0259 m | v max vers le bas 2.326 m/s | endormi 2.36 s | axe Y 7.1e-4
+jeu 0.01, rebond 0                 contact   1 | arête 0.5230 m | centre 0.6985 m | v max vers le bas 1.348 m/s | endormi 1.49 s | axe Y 5.0e-4
+jeu 0.01, iterations 4             contact   1 | arête 0.5208 m | centre 0.6963 m | v max vers le bas 1.302 m/s | endormi 1.49 s | axe Y 5.0e-4
+jeu 0.01, iterations 8, relax 4    contact   1 | arête 0.1828 m | centre 0.3671 m | v max vers le bas 1.256 m/s | endormi 1.16 s | axe Y 5.0e-4
+jeu 0.01, frottement 1 et 1        contact   1 | arête 0.2639 m | centre 0.4449 m | v max vers le bas 1.339 m/s | endormi 1.10 s | axe Y 5.0e-4
+jeu 0.01, tick 1/240               contact   1 | arête 0.6266 m | centre 0.8009 m | v max vers le bas 1.412 m/s | endormi 1.57 s | axe Y 5.6e-4
+# même basculement sur un sol plat (cube posé sur son arête, incliné de -atan(0,5))
+sol plat                           arête 0.0674 m | endormi true
+# basculement rigide sans glissement : le centre se déplace de 0.1950 m
