@@ -1,0 +1,32 @@
+{
+ "commentaire": "Base = commit T6 (b3d9f66), tete = T7 (FMotion sans allocation). Liste dynamique identique : le flux GL et le contenu des tampons ne bougent pas sur 200 images pilotees x 3 mondes.",
+ "mondes": [
+  {
+   "monde": "camp:6",
+   "fluxIdentique": true,
+   "contenuIdentique": true,
+   "appels": 83075,
+   "appelsTete": 83075,
+   "instances": 937982,
+   "instancesTete": 937982
+  },
+  {
+   "monde": "camp:17",
+   "fluxIdentique": true,
+   "contenuIdentique": true,
+   "appels": 85052,
+   "appelsTete": 85052,
+   "instances": 899943,
+   "instancesTete": 899943
+  },
+  {
+   "monde": "legacy:0",
+   "fluxIdentique": true,
+   "contenuIdentique": true,
+   "appels": 75811,
+   "appelsTete": 75811,
+   "instances": 957914,
+   "instancesTete": 957914
+  }
+ ]
+}

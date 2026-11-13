@@ -12,17 +12,27 @@
     const cx=Math.cos(x),sx=Math.sin(x),cy=Math.cos(y),sy=Math.sin(y),cz=Math.cos(z),sz=Math.sin(z);
     return [[cz*cy,sz*cy,-sy],[cz*sy*sx-sz*cx,sz*sy*sx+cz*cx,cy*sx],[cz*sy*cx+sz*sx,sz*sy*cx-cz*sx,cy*cx]];
   }
-  const vector=(axes,v)=>[0,1,2].map(k=>axes[0][k]*v[0]+axes[1][k]*v[1]+axes[2][k]*v[2]);
+  // Trois sommes scalaires en littéral : même arithmétique et même ordre que le map d'origine,
+  // sans allouer de tableau intermédiaire.
+  const vector=(axes,v)=>[axes[0][0]*v[0]+axes[1][0]*v[1]+axes[2][0]*v[2],axes[0][1]*v[0]+axes[1][1]*v[1]+axes[2][1]*v[2],axes[0][2]*v[0]+axes[1][2]*v[1]+axes[2][2]*v[2]];
   function mount(camera,offset=[0,0,0],angles=[0,0,0]){
-    const axes=basis(camera.yaw||0,camera.pitch||0,camera.roll||0),shift=vector(axes,offset);
-    return {pos:camera.pos.map((v,k)=>v+shift[k]),axes:rotation(...angles).map(v=>vector(axes,v))};
+    const axes=basis(camera.yaw||0,camera.pitch||0,camera.roll||0),shift=vector(axes,offset),p=camera.pos,m=rotation(angles[0],angles[1],angles[2]);
+    // Les cinq champs de mémo sont préalloués pour que place() n'ajoute pas de forme cachée.
+    return {pos:[p[0]+shift[0],p[1]+shift[1],p[2]+shift[2]],axes:[vector(axes,m[0]),vector(axes,m[1]),vector(axes,m[2])],ry:NaN,rz:0,regular:false,rx:NaN,r0:0};
   }
   function place(frame,offset,rx=0){
-    const shift=vector(frame.axes,offset),c=Math.cos(rx),s=Math.sin(rx);
-    const axes=[frame.axes[0],frame.axes[1].map((v,k)=>v*c+frame.axes[2][k]*s),frame.axes[2].map((v,k)=>v*c-frame.axes[1][k]*s)];
-    const ry=Math.asin(clamp(-axes[0][2],-1,1)),regular=Math.abs(Math.cos(ry))>1e-6;
-    const r=regular?[Math.atan2(axes[1][2],axes[2][2]),ry,Math.atan2(axes[0][1],axes[0][0])]:[Math.atan2(-axes[2][1],axes[1][1]),ry,0];
-    return {p:frame.pos.map((v,k)=>v+shift[k]),r};
+    const a=frame.axes,shift=vector(a,offset),c=Math.cos(rx),s=Math.sin(rx);
+    const a1x=a[1][0]*c+a[2][0]*s,a1y=a[1][1]*c+a[2][1]*s,a1z=a[1][2]*c+a[2][2]*s;
+    const a2x=a[2][0]*c-a[1][0]*s,a2y=a[2][1]*c-a[1][1]*s,a2z=a[2][2]*c-a[1][2]*s;
+    // Décomposition en angles identique, mémorisée par repère : elle ne dépend que de frame.axes et rx.
+    if(frame.rx!==rx){
+      const ry=Math.asin(clamp(-a[0][2],-1,1)),regular=Math.abs(Math.cos(ry))>1e-6;
+      frame.rx=rx;frame.ry=ry;frame.regular=regular;
+      frame.r0=regular?Math.atan2(a1z,a2z):Math.atan2(-a2y,a1y);
+      frame.rz=regular?Math.atan2(a[0][1],a[0][0]):0;
+    }
+    const p=frame.pos;
+    return {p:[p[0]+shift[0],p[1]+shift[1],p[2]+shift[2]],r:[frame.r0,frame.ry,frame.rz]};
   }
   function create(){
     const springs={};
