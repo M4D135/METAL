@@ -14,7 +14,16 @@
     shotgun: {dur:.92, crack:[.70,2.2], thump:{f0:120,f1:42,tp:.032,ta:.130,g:1.0}, body:{cut:1500,tb:.085,g:.95,drive:4.0}, mech:[[.47,.30,2200],[.56,.34,1700]], room:{tr:.160,g:.24}},
     rocket: {dur:.80, fade:.04, crack:[.45,2.5], thump:{f0:95,f1:38,tp:.060,ta:.200,g:.95}, body:{cut:1100,tb:.180,g:.90,drive:2.6}, mech:[[.020,.20,1900]], room:{tr:.220,g:.22}},
     grenade: {dur:.52, fade:.08, crack:[.45,2.5], thump:{f0:110,f1:45,tp:.060,ta:.200,g:.95}, body:{cut:1100,tb:.120,g:.90,drive:2.6}, mech:[[.020,.20,1900]], room:{tr:.160,g:.22}}
-  }, recipes = {};
+  }, confirmations = {
+    // FEEL-07 confirmations. These names are METAL's, not engine effect names:
+    // FAudio prepares them with the bank, and without them hit and kill keep
+    // the v0.2 cues. Touch: two tonal ticks at 2.8 and 4.1 kHz, the generator's
+    // 11 ms tonal decay standing for the 12 ms of the brief. Kill: a 90 to
+    // 50 Hz thunk over a 70 ms decay plus one 3.2 kHz tick, both in one buffer.
+    touchConfirm: {dur:.055, mech:[[0,.34,2800],[.002,.28,4100]], room:{tr:.030,g:.10}},
+    killConfirm: {dur:.20, thump:{f0:90,f1:50,tp:.030,ta:.070,g:.95}, body:{cut:600,tb:.050,g:.55,drive:2.2}, mech:[[.004,.45,3200]], room:{tr:.060,g:.12}}
+  }, recipes = {}, extras = {};
   Object.keys(weapons).forEach(function (name) { recipes[name] = FAudio.recipe(name, weapons[name]); });
-  window.MetalAudio = {recipes: recipes, options: function () { return {recipes: recipes}; }};
+  Object.keys(confirmations).forEach(function (name) { extras[name] = FAudio.recipe(name, confirmations[name]); });
+  window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras}; }};
 }());

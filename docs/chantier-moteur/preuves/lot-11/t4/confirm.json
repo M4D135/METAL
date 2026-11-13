@@ -1,0 +1,135 @@
+{
+ "schema": "metal-feel07-confirm-v1",
+ "node": "v24.18.0",
+ "root": "/home/m4d135/metal-chantier/voies/audio",
+ "rate": 22050,
+ "note": "bandes = % de l'énergie [<120, 120-500, 500-4000, >4000] Hz, comme bancs/feel/audio-analyze.mjs. Crête normalisée .84 par le générateur ; le niveau de jeu (.30 et .45) est appliqué par pcm().",
+ "sounds": {
+  "hit v0.2 (click)": {
+   "ms": 70,
+   "peak": 0.84,
+   "rms": 0.1203,
+   "dc": -0.00047,
+   "tail": 0,
+   "t20dB": 20,
+   "t40dB": 39.9,
+   "crestDb": 16.9,
+   "bandsPct": [
+    0,
+    1.3,
+    53.4,
+    45.4
+   ],
+   "centroidHz": 4401,
+   "sha256": "85d893550287a069"
+  },
+  "kill v0.2 (body)": {
+   "ms": 160,
+   "peak": 0.84,
+   "rms": 0.0954,
+   "dc": -0.0006,
+   "tail": 0,
+   "t20dB": 69.8,
+   "t40dB": 125.7,
+   "crestDb": 18.9,
+   "bandsPct": [
+    6.2,
+    48.5,
+    36.7,
+    8.6
+   ],
+   "centroidHz": 1261,
+   "sha256": "5551c46e3dc3fcee"
+  },
+  "kill v0.2 (impact:dirt)": {
+   "ms": 150,
+   "peak": 0.84,
+   "rms": 0.1256,
+   "dc": -0.00028,
+   "tail": 0.0002,
+   "t20dB": 79.8,
+   "t40dB": 143.7,
+   "crestDb": 16.5,
+   "bandsPct": [
+    2.7,
+    15.2,
+    63.9,
+    18.2
+   ],
+   "centroidHz": 2312,
+   "sha256": "138b11a627ca58c7"
+  },
+  "touche METAL (touchConfirm) variante 0": {
+   "ms": 55,
+   "peak": 0.84,
+   "rms": 0.1252,
+   "dc": -0.00073,
+   "tail": 0.0004,
+   "t20dB": 25.9,
+   "t40dB": 51.9,
+   "crestDb": 16.5,
+   "bandsPct": [
+    0.2,
+    1.5,
+    35.9,
+    62.3
+   ],
+   "centroidHz": 5333,
+   "sha256": "be9283813dbe7de6"
+  },
+  "touche METAL (touchConfirm) variante 1": {
+   "ms": 55,
+   "peak": 0.84,
+   "rms": 0.1094,
+   "dc": 0.00002,
+   "tail": 0.0002,
+   "t20dB": 23.9,
+   "t40dB": 49.9,
+   "crestDb": 17.7,
+   "bandsPct": [
+    0.1,
+    0.7,
+    35.1,
+    64.1
+   ],
+   "centroidHz": 5034,
+   "sha256": "84cc235e1a140a69"
+  },
+  "kill METAL (killConfirm) variante 0": {
+   "ms": 200,
+   "peak": 0.84,
+   "rms": 0.266,
+   "dc": 0.00112,
+   "tail": 0.0042,
+   "t20dB": 171.6,
+   "t40dB": 197.6,
+   "crestDb": 10,
+   "bandsPct": [
+    80.2,
+    13.6,
+    5.4,
+    0.8
+   ],
+   "centroidHz": 205,
+   "sha256": "fbb73fbaf40b406e"
+  },
+  "kill METAL (killConfirm) variante 1": {
+   "ms": 200,
+   "peak": 0.84,
+   "rms": 0.2666,
+   "dc": 0.00291,
+   "tail": 0.0038,
+   "t20dB": 171.6,
+   "t40dB": 195.6,
+   "crestDb": 10,
+   "bandsPct": [
+    78.6,
+    14.1,
+    6.5,
+    0.8
+   ],
+   "centroidHz": 220,
+   "sha256": "db9b0ed45864705b"
+  }
+ }
+}
