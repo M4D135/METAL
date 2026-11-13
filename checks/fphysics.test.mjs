@@ -2,7 +2,7 @@
 // Not in npm test until the module is wired into the game (see docs/chantier-moteur/modules/physique.md, §6).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {source, load, loadVm, lcg, B64, NOSLEEP} from './fphysics-scenes.mjs';
+import {source, load, loadVm, lcg, B64, NOSLEEP, SCENES, runChain, crate, drift, lowest} from './fphysics-scenes.mjs';
 
 const SMALL = Object.freeze({capacity: 8, maxContacts: 256, maxStatics: 16, maxJoints: 4});
 
@@ -232,4 +232,309 @@ test('P04 Création : validation, réglages par défaut, empreinte', t => {
   const z = F.create({bounds: {...B64, minZ: -0}, ...SMALL, ground: -0, gravity: -0}).config;
   assert.ok(Object.is(z.ground, 0) && Object.is(z.gravity, 0) && Object.is(z.bounds.minZ, 0));
   t.diagnostic(`empreinte par défaut sur B64 : ${w.fingerprint} ; ${variants.length} réglages, chacun change l'empreinte`);
+});
+
+// ---- One body (module step 2a) ----
+
+test('P05 Chute libre exacte', t => {
+  const F = load(), w = F.create({bounds: B64, ...SMALL, linearDamping: 0, angularDamping: 0});
+  const h = w.addBody({size: [1, 1, 1], pos: [0, 10, 0], mass: 10});
+  for (let i = 0; i < 120; i++) w.step(1 / 120);
+  const b = w.body(h);
+  t.diagnostic(`après 120 sous-pas : y = ${b.pos[1]}, vy = ${b.vel[1]} (attendu 3,95 et -12, Euler semi-implicite)`);
+  assert.ok(Math.abs(b.pos[1] - 3.95) <= 1e-9, 'y = 3.95');
+  assert.ok(Math.abs(b.vel[1] + 12) <= 1e-9, 'vy = -12');
+  assert.deepEqual([b.pos[0], b.pos[2], ...b.ang, b.vel[0], b.vel[2]], [0, 0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(b.quat, [0, 0, 0, 1]);
+  const w2 = F.create({bounds: B64, ...SMALL});
+  w2.addBody({size: [1, 1, 1], pos: [0, 10, 0], mass: 10});
+  assert.equal(w2.step(1 / 240), 0, 'half a tick: no sub-step');
+  assert.equal(w2.step(1 / 240), 1, 'second half: one sub-step');
+});
+
+test('P06 Repos', t => {
+  const F = load(), w = F.create({bounds: B64, ...SMALL, ground: 0}), h = crate(w, 0, 0.401, 0);
+  let asleepAt = -1;
+  for (let i = 1; i <= 240; i++) { w.step(1 / 120); if (asleepAt < 0 && w.isAsleep(h)) asleepAt = i; }
+  const b = w.body(h), y = b.pos[1], sl = Math.min(w.config.slop, w.config.slopRatio * 0.4);
+  t.diagnostic(`au bout de 2 s : y = ${y.toFixed(6)} (enfoncement ${((0.4 - y) * 1000).toFixed(2)} mm), endormie au sous-pas ${asleepAt}`);
+  assert.ok(y >= 0.393 && y <= 0.401, `y = ${y}`);
+  assert.ok(w.isAsleep(h) && b.asleep, 'asleep');
+  assert.deepEqual([...b.vel, ...b.ang], [0, 0, 0, 0, 0, 0], 'zero velocities');
+  assert.ok(Math.abs(w.pose(h, 1)[1] - (y + sl / 2)) <= 1e-12, 'pose raised by SL/2');
+});
+
+// ---- Stacks (module step 2a: no internal faces yet) ----
+
+// Runs a scene for `steps` sub-steps: drift at the given sub-steps, lowest vertex over the whole run and from `from` on.
+function settleRun(scene, steps, marks, from) {
+  const {w, ids, ideal} = scene, out = {drift: {}, low: Infinity, lowAt: 0, lowLate: Infinity, lowLateAt: 0};
+  for (let i = 1; i <= steps; i++) {
+    w.step(1 / 120);
+    const y = lowest(w, ids);
+    if (y < out.low) { out.low = y; out.lowAt = i; }
+    if (i >= from && y < out.lowLate) { out.lowLate = y; out.lowLateAt = i; }
+    if (marks.includes(i)) out.drift[i] = drift(w, ids, ideal);
+  }
+  return out;
+}
+// Sub-step at which every body of the scene is asleep, or -1 within `steps`.
+function sleepRun(scene, steps) {
+  const {w, ids} = scene;
+  for (let i = 1; i <= steps; i++) { w.step(1 / 120); if (ids.every(h => w.isAsleep(h))) return i; }
+  return -1;
+}
+const mm = v => (v * 1000).toFixed(2) + ' mm';
+
+test('P11 Pile de 10 (stack10)', t => {
+  const F = load(), scene = SCENES.stack10(F, NOSLEEP), r = settleRun(scene, 1200, [120, 600, 1200], 120);
+  const settle = scene.ideal[9][1] - scene.w.body(scene.ids[9]).pos[1];
+  t.diagnostic(`NOSLEEP : dérive ${mm(r.drift[120])} à 1 s, ${mm(r.drift[600])} à 5 s, ${mm(r.drift[1200])} à 10 s (seuil 30 mm ; prototype sur dalle 30,7 / 16,8 / 23,4)`);
+  t.diagnostic(`tassement du sommet à 10 s : ${mm(settle)} (attendu ≈ 85 mm)`);
+  t.diagnostic(`plus bas sommet : ${mm(r.lowLate)} de 1 s à 10 s (sous-pas ${r.lowLateAt}) ; ${mm(r.low)} sur tout l'essai (sous-pas ${r.lowAt}, chute initiale)`);
+  assert.ok(r.drift[1200] < 0.030, `drift ${r.drift[1200]}`);
+  assert.ok(r.lowLate >= -0.012, `lowest vertex ${r.lowLate} from 1 s`);
+  const at = sleepRun(SCENES.stack10(F), 480);
+  t.diagnostic(`réglages par défaut : toute la pile dort au sous-pas ${at} (${(at / 120).toFixed(3)} s)`);
+  assert.ok(at > 0 && at < 480, 'asleep before 4 s');
+});
+
+test('P12 Pyramide de 55 (pyramid55)', t => {
+  const F = load(), scene = SCENES.pyramid55(F, NOSLEEP), r = settleRun(scene, 1200, [120, 600, 1200], 120);
+  t.diagnostic(`NOSLEEP : dérive ${mm(r.drift[120])} à 1 s, ${mm(r.drift[600])} à 5 s, ${mm(r.drift[1200])} à 10 s (seuil 20 mm ; prototype sur dalle 9,6 / 16,4 / 19,4)`);
+  t.diagnostic(`plus bas sommet : ${mm(r.lowLate)} de 1 s à 10 s (sous-pas ${r.lowLateAt}) ; ${mm(r.low)} sur tout l'essai (sous-pas ${r.lowAt}, chute initiale)`);
+  assert.ok(r.drift[1200] < 0.020, `drift ${r.drift[1200]}`);
+  assert.ok(r.lowLate >= -0.012, `lowest vertex ${r.lowLate} from 1 s`);
+  const at = sleepRun(SCENES.pyramid55(F), 1200);
+  t.diagnostic(`réglages par défaut : tout dort au sous-pas ${at} (${(at / 120).toFixed(3)} s)`);
+  assert.ok(at > 0 && at < 1200, 'asleep before 10 s');
+});
+
+// ---- Determinism and saving (module step 2a: bodies and cache) ----
+
+test('P45 Aller-retour JSON', t => {
+  const F = load();
+  for (const [name, steps] of [['stack10', 100], ['pyramid55', 1200]]) {
+    const {w, ids} = SCENES[name](F);
+    for (let i = 0; i < steps; i++) w.step(1 / 120);
+    if (name === 'pyramid55') {
+      assert.ok(ids.every(h => w.isAsleep(h)), 'pyramid55 is asleep at 1 200');
+      assert.ok(w.snapshot().c.n > 0, 'the impulse cache is kept while everything sleeps');
+    }
+    const text = JSON.stringify(w.snapshot()), snap = JSON.parse(text);
+    const w2 = F.create(w.config);
+    assert.equal(w2.staticsHash, w.staticsHash, 'same statics');
+    assert.notEqual(w2.hash(), w.hash());
+    w2.restore(snap);
+    assert.equal(w2.hash(), w.hash(), name + ': same hash after restore');
+    assert.deepStrictEqual(w2.snapshot(), snap, name + ': same snapshot after restore');
+    const before = w.hash();
+    for (let i = 0; i < 300; i++) { w.step(1 / 120); w2.step(1 / 120); }
+    assert.equal(w2.hash(), w.hash(), name + ': same hash 300 sub-steps later');
+    if (name === 'pyramid55') assert.equal(w.hash(), before, 'a sleeping pyramid does not change');
+    t.diagnostic(`${name} à ${steps} sous-pas : ${before}, puis ${w.hash()} des deux côtés 300 sous-pas plus tard ; instantané de ${text.length} caractères, cache de ${snap.c.n} entrées`);
+  }
+});
+
+test('P46 snapshot ne modifie rien', t => {
+  const F = load();
+  for (const name of ['stack10', 'pyramid55']) {
+    const a = SCENES[name](F).w, b = SCENES[name](F).w;
+    for (let i = 1; i <= 300; i++) {
+      a.step(1 / 120); b.step(1 / 120);
+      if (i % 10 === 0) { const h = b.hash(); b.snapshot(); assert.equal(b.hash(), h, 'snapshot() leaves the hash'); }
+    }
+    assert.equal(b.hash(), a.hash(), name + ': a snapshot every 10 sub-steps changes nothing');
+    t.diagnostic(`${name} : ${a.hash()} après 300 sous-pas, avec ou sans instantanés ; chaîne ${runChain(F, name, 300)}`);
+  }
+});
+
+// ---- Module step 2a: guards of the box core ----
+
+test('Étape 2a — corps : description, poignées, body()', t => {
+  const F = load(), w = F.create({bounds: B64, ...SMALL, capacity: 4, ground: 0});
+  const base = {size: [0.8, 0.8, 0.8], pos: [0, 1, 0], mass: 30};
+  const bad = [undefined, null, 5, {}, {...base, size: [1, 1]}, {...base, size: [0, 1, 1]}, {...base, pos: undefined},
+    {...base, pos: [0, NaN, 0]}, {...base, quat: [0, 0, 0, 0]}, {...base, quat: [0, 0, 0, 1], rot: [0, 0, 0]},
+    {...base, mass: 0}, {...base, mass: -1}, {...base, mass: '30'}, {...base, mass: undefined}, {...base, material: 'gold'},
+    {...base, material: 5}, {...base, friction: 3}, {...base, restitution: -0.1}, {...base, group: 70000}, {...base, mask: 1.5},
+    {...base, kinematic: true}, {...base, kinematic: 'yes'}, {...base, asleep: 1}, {...base, shape: 'sphere'},
+    {...base, shape: 'cylinder'}, {...base, vel: [0, 0]}];
+  for (const d of bad) assert.throws(() => w.addBody(d), {name: 'TypeError', message: /^FPhysics\.addBody: /}, JSON.stringify(d));
+  assert.equal(w.stats.bodies, 0, 'nothing added by an invalid description');
+  const h1 = w.addBody({...base, quat: [0, 0, 0, 2], vel: [100, 0, 0], mass: 1});
+  const h2 = w.addBody({size: [0.5, 0.4, 0.2], pos: [2, 1, 0], material: 'wood', rot: [0, Math.PI / 2, 0], group: 6, mask: 3});
+  const h3 = w.addBody({size: [0.8, 0.01, 0.8], pos: [-2, 1, 0], mass: 500, asleep: true});
+  const h4 = w.addBody(base);
+  assert.deepEqual([h1, h2, h3, h4], [1, 2, 3, 4], 'handles gen*4096 + index, lowest free index');
+  assert.equal(w.addBody(base), -1, 'full: -1');
+  assert.equal(w.stats.refused, 1);
+  assert.deepEqual([w.stats.bodies, w.stats.pending, w.stats.sleeping], [4, 3, 1]);
+  for (const h of [0, -1, 5, 4096 + 1, 1.5, '1', null]) {
+    assert.equal(w.valid(h), false, String(h));
+    assert.equal(w.body(h), null);
+    assert.equal(w.pose(h, 1), null);
+    assert.equal(w.matrix(h), null);
+    assert.equal(w.isAsleep(h), false);
+    assert.equal(w.isLost(h), false);
+  }
+  const b1 = w.body(h1);
+  assert.deepEqual(Object.keys(b1), ['handle', 'shape', 'size', 'radius', 'height', 'realSize', 'pos', 'quat', 'vel', 'ang', 'mass',
+    'originalMass', 'material', 'friction', 'restitution', 'group', 'mask', 'kinematic', 'asleep', 'pending', 'lost', 'hard']);
+  assert.deepEqual(b1.quat, [0, 0, 0, 1], 'quat normalised');
+  assert.deepEqual(b1.vel, [40, 0, 0], 'speed capped at maxLinear');
+  assert.deepEqual([b1.mass, b1.originalMass, b1.friction, b1.restitution, b1.material, b1.group, b1.mask], [3, 1, 0.6, 0.1, -1, 2, 65535]);
+  assert.deepEqual([b1.pending, b1.asleep, b1.kinematic, b1.lost, b1.hard, b1.shape], [true, false, false, false, false, 'box']);
+  const b2 = w.body(h2), wood = F.MATERIALS[2];
+  assert.deepEqual([b2.material, b2.friction, b2.restitution, b2.group, b2.mask], [2, wood.friction, wood.restitution, 6, 3]);
+  assert.equal(b2.originalMass, wood.density * 0.5 * 0.4 * 0.2, 'mass = density x volume');
+  assert.equal(b2.mass, 3, 'physical mass at least massMin');
+  assert.deepEqual(b2.quat, F.eulerToQuat(0, Math.PI / 2, 0), 'rot goes through eulerToQuat');
+  const b3 = w.body(h3);
+  assert.deepEqual([b3.mass, b3.originalMass, b3.asleep, b3.pending], [120, 500, true, false]);
+  assert.deepEqual([b3.size[1], b3.realSize[1]], [2 * w.config.minHalf, 0.01], 'collision size at least 2 minHalf');
+});
+
+test('Étape 2a — attente, création endormie, réveil différé', t => {
+  const F = load(), w = F.create({bounds: B64, ...SMALL, ground: 0});
+  const sleeper = w.addBody({size: [0.8, 0.8, 0.8], pos: [0, 0.4, 0], mass: 30, asleep: true});
+  const falling = crate(w, 0.2, 1.6, 0);
+  assert.equal(w.step(0), 0);
+  assert.ok(w.body(falling).pending, 'still pending without a sub-step');
+  w.step(1 / 120);
+  assert.ok(!w.body(falling).pending && w.body(falling).pos[1] < 1.6, 'activated by the next sub-step, then falls');
+  assert.deepEqual(w.body(sleeper).pos, [0, 0.4, 0], 'a body created asleep does not move');
+  let wokenAt = -1;
+  for (let i = 2; i <= 600; i++) { w.step(1 / 120); if (wokenAt < 0 && !w.isAsleep(sleeper)) wokenAt = i; }
+  t.diagnostic(`le dormeur est réveillé au sous-pas ${wokenAt} par la caisse qui tombe ; réveils : ${w.stats.wakes}`);
+  assert.ok(wokenAt > 1 && w.stats.wakes >= 1, 'woken by the contact, at the end of the sub-step');
+  assert.ok(w.isAsleep(sleeper) && w.isAsleep(falling), 'both asleep again within 5 s');
+  const y = w.body(sleeper).pos[1];
+  assert.ok(y > 0.39 && y < 0.4, `resting again on the ground: y = ${y}`);
+});
+
+test('Étape 2a — setStatics : boîtes, dalle, empreinte, réveil', t => {
+  const F = load(), w = F.create({bounds: B64, ...SMALL, ground: 0});
+  assert.equal(w.stats.statics, 1, 'the ground slab');
+  assert.match(w.staticsHash, /^[0-9a-f]{8}$/);
+  const bare = F.create({bounds: B64, ...SMALL});
+  assert.equal(bare.stats.statics, 0);
+  assert.notEqual(bare.staticsHash, w.staticsHash);
+  const table = [{minX: -1, maxX: 1, minY: 0, maxY: 1, minZ: -1, maxZ: 1}, {minX: 4, maxX: 5, minY: 0, maxY: 2, minZ: 4, maxZ: 5, material: 'stone'}];
+  const first = w.staticsHash, r = w.setStatics(table, []);
+  assert.deepEqual(r, {statics: 3, merged: 0, masked: 0, woken: 0});
+  assert.notEqual(w.staticsHash, first);
+  const again = w.staticsHash;
+  assert.deepEqual(w.updateStatics(table.map(b => ({...b}))), {statics: 3, merged: 0, masked: 0, woken: 0}, 'same decor');
+  assert.equal(w.staticsHash, again, 'same decor, same hash');
+  const bad = [[5], [{minX: 1, maxX: 0, minY: 0, maxY: 1, minZ: 0, maxZ: 1}], [{minX: 0, maxX: 1, minY: NaN, maxY: 1, minZ: 0, maxZ: 1}],
+    [{minX: 0, maxX: 1, minY: 0, maxY: 1, minZ: 0, maxZ: 1, friction: 3}], [{minX: 0, maxX: 1, minY: 0, maxY: 1, minZ: 0, maxZ: 1, material: 'x'}]];
+  for (const boxes of bad) assert.throws(() => w.setStatics(boxes, []), {name: 'TypeError', message: /^FPhysics\.setStatics: /});
+  assert.throws(() => w.setStatics([], [{x: 0, z: 0, w: 1, d: 1, y: 0}]), /floors are not available yet/);
+  assert.throws(() => w.setStatics(new Array(16).fill(table[0]), []), /exceed maxStatics/);
+  assert.throws(() => w.setStatics('x', []), TypeError);
+  assert.equal(w.staticsHash, again, 'a refused decor changes nothing');
+  // A crate lands on the static box (top at y = 1), another one with mask 0xfffe falls through the decor.
+  const on = crate(w, 0, 1.45, 0), through = w.addBody({size: [0.8, 0.8, 0.8], pos: [-4, 1, -4], mass: 30, mask: 0xfffe});
+  for (let i = 0; i < 240; i++) w.step(1 / 120);
+  const y = w.body(on).pos[1];
+  t.diagnostic(`caisse posée sur la boîte statique : y = ${y.toFixed(5)} ; sans le bit 1 du masque : y = ${w.body(through).pos[1].toFixed(2)}`);
+  assert.ok(y > 1.39 && y < 1.4 && w.isAsleep(on), 'rests on the static box');
+  assert.ok(w.body(through).pos[1] < -10, 'mask without bit 1 ignores the decor');
+  // A changed decor wakes the sleepers (module step 2a: all of them; the exact difference comes with step 10).
+  const w2 = F.create({bounds: B64, ...SMALL, ground: 0}), h = w2.addBody({size: [0.8, 0.8, 0.8], pos: [0, 0.4, 0], mass: 30, asleep: true});
+  assert.equal(w2.setStatics([], []).woken, 0, 'same decor: nobody woken');
+  assert.equal(w2.setStatics(table, []).woken, 1);
+  assert.ok(!w2.isAsleep(h));
+});
+
+test('Étape 2a — pas de temps : erreurs, accumulateur, découpage', t => {
+  const F = load(), w = F.create({bounds: B64, ...SMALL});
+  for (const dt of [NaN, -1, Infinity, '1', undefined, null]) assert.throws(() => w.step(dt), {name: 'TypeError', message: /^FPhysics\.step: /});
+  assert.equal(w.step(1 / 30), 4, 'tolerance: 1/30 gives 4 sub-steps');
+  assert.equal(w.stats.substeps, 4);
+  assert.equal(w.step(0.2), 8, 'at most maxSubsteps');
+  t.diagnostic(`step(0.2) : 8 sous-pas, ${w.stats.droppedSteps} sous-pas jetés`);
+  assert.ok(w.stats.droppedSteps >= 15);
+  assert.equal(w.snapshot().acc, 0, 'whole sub-steps leave no residue');
+  // stack10: the same sub-steps give the same bits whatever the slicing of the time.
+  const hashes = [[1 / 60, 150], [1 / 120, 300], [1 / 30, 75]].map(([dt, n]) => { const s = SCENES.stack10(F); for (let i = 0; i < n; i++) s.w.step(dt); return s.w.hash(); });
+  t.diagnostic(`stack10, 300 sous-pas par 1/60, 1/120 et 1/30 : ${hashes.join(', ')}`);
+  assert.equal(new Set(hashes).size, 1);
+  assert.equal(runChain(loadVm(), 'stack10', 300), runChain(F, 'stack10', 300), 'same chain in a vm realm');
+  assert.throws(() => F.create({bounds: {minX: -1e4, maxX: 1e4, minZ: -1e4, maxZ: 1e4}, ...SMALL}), /grid cells/);
+});
+
+test('Étape 2a — restore refusé sans rien changer, zéros négatifs', t => {
+  const F = load(), {w} = SCENES.stack10(F);
+  for (let i = 0; i < 100; i++) w.step(1 / 120);
+  const good = JSON.stringify(w.snapshot()), hash = w.hash(), KM = w.config.capacity + 1 + w.config.maxStatics + 1;
+  const cases = [
+    ['v = 1', s => { s.v = 1; }], ['fp', s => { s.fp = '00000000'; }], ['statics', s => { s.statics = 'ffffffff'; }],
+    ['NaN dans P', s => { s.b.P[4] = NaN; }], ['quaternion x 2', s => { for (let k = 4; k < 8; k++) s.b.Q[k] *= 2; }],
+    ['vitesse de 100 m/s', s => { s.b.V[6] = 100; }], ['clé vers un index mort', s => { s.c.K[0] = 1 * KM + 20; }],
+    ['tableau raccourci', s => { s.b.V.pop(); }], ['FL = 255', s => { s.b.FL[1] = 255; }],
+    ['monde modifié', s => { s.b.IM[0] = 1; }], ['ligne libre non vide', s => { s.n = 12; for (const [k, a] of Object.entries(s.b)) { const wd = a.length / 11; for (let j = 0; j < wd; j++) a.push(a[wd + j]); } s.b.FL[11] = 8; }],
+    ['acc hors de [0, tick)', s => { s.acc = 1; }], ['impulsion négative', s => { s.c.Jn[0] = -1; }],
+  ];
+  for (const [name, spoil] of cases) {
+    const s = JSON.parse(good); spoil(s);
+    assert.throws(() => w.restore(s), e => e instanceof Error && /^FPhysics\.restore: /.test(e.message), name);
+    assert.equal(w.hash(), hash, name + ': nothing changed');
+  }
+  const s3 = JSON.parse(good); s3.statics = 'ffffffff';
+  w.restore(s3, {ignoreStatics: true});
+  assert.equal(w.hash(), hash, 'ignoreStatics accepts another decor hash');
+  w.restore(JSON.parse(good));
+  assert.equal(w.hash(), hash);
+  t.diagnostic(`${cases.length} instantanés corrompus refusés, hachage inchangé (${hash})`);
+  // -0: never in a snapshot; a hand-made -0 restores like +0.
+  const z = F.create({bounds: B64, ...SMALL, ground: 0});
+  z.addBody({size: [0.8, 0.8, 0.8], pos: [-0, 1, -0], vel: [-0, 0, -0], ang: [-0, -0, -0], quat: [-0, -0, -0, 1], mass: 30});
+  z.step(1 / 120);
+  const snap = z.snapshot(), all = [];
+  JSON.stringify(snap, (k, v) => { if (typeof v === 'number') all.push(v); return v; });
+  for (const a of [...Object.values(snap.b), ...Object.values(snap.c).filter(Array.isArray)]) all.push(...a);
+  assert.ok(all.length > 100 && all.every(v => !Object.is(v, -0)), 'no -0 in a snapshot');
+  const minus = JSON.parse(JSON.stringify(snap)), plus = JSON.parse(JSON.stringify(snap));
+  minus.b.P[3] = -0; minus.b.V[8] = -0;
+  const z2 = F.create(z.config), z3 = F.create(z.config);
+  z2.restore(minus); z3.restore(plus);
+  assert.equal(z2.hash(), z3.hash(), '-0 restores like +0');
+});
+
+test('Étape 2a — pose, matrix, chronométrage', t => {
+  const F = load(), w = F.create({bounds: B64, ...SMALL, ground: 0});
+  const h = w.addBody({size: [0.8, 0.8, 0.8], pos: [1, 3, 2], rot: [0.3, -0.5, 1.1], mass: 30});
+  const sl = Math.min(w.config.slop, w.config.slopRatio * 0.4), start = w.pose(h, 0.5);
+  assert.deepEqual(start.slice(0, 3), [1, 3 + sl / 2, 2], 'before any step, previous pose = pose');
+  w.step(1 / 120); w.step(1 / 120);
+  const b = w.body(h), p0 = w.pose(h, 0), p1 = w.pose(h, 1), half = w.pose(h, 0.5);
+  assert.deepEqual(p1.slice(0, 3), [b.pos[0], b.pos[1] + sl / 2, b.pos[2]]);
+  assert.deepEqual(p1.slice(3), b.quat);
+  assert.ok(p0[1] > half[1] && half[1] > p1[1], 'falling: interpolated between the two poses');
+  assert.deepEqual(w.pose(h, 2), p1, 'alpha capped at 1');
+  assert.deepEqual(w.pose(h, -1), p0, 'alpha floored at 0');
+  assert.deepEqual(w.pose(h, NaN), p0, 'NaN alpha reads as 0');
+  const out = [0, 0, 0, 0, 0, 0, 0], m = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+  assert.equal(w.pose(h, 1, out), out);
+  assert.equal(w.matrix(h, m), m);
+  assert.ok(gap(m, quatMatrix(...b.quat)) <= 1e-12, 'matrix of the current quaternion');
+  // Thin plate: the real plate sits on the bottom of its collision box, upright or upside down.
+  for (const rot of [[0, 0, 0], [Math.PI, 0, 0]]) {
+    const plate = w.addBody({size: [0.8, 0.01, 0.8], pos: [5, 2, 5], rot, mass: 10}), y = w.pose(plate, 1)[1];
+    const H = w.config.minHalf, slp = Math.min(w.config.slop, w.config.slopRatio * H);
+    assert.ok(Math.abs(y - (2 + slp / 2 - (H - 0.005))) <= 1e-12, `plate rot ${rot}: y = ${y}`);
+  }
+  // clock: phases timed only when given, and never part of the state.
+  let tick = 0;
+  const run = clock => { const s = SCENES.stack10(F, clock ? {clock: () => (tick += 0.25)} : {}); for (let i = 0; i < 60; i++) s.w.step(1 / 120); return s.w; };
+  const timed = run(true), plain = run(false);
+  assert.equal(timed.hash(), plain.hash(), 'the clock does not change the simulation');
+  assert.ok(timed.phaseMs.every(v => v > 0) && plain.phaseMs.every(v => v === 0));
+  t.diagnostic(`phaseMs avec une horloge factice : ${Array.from(timed.phaseMs).join(', ')}`);
+  const st = plain.stats;
+  t.diagnostic(`stack10 à 60 sous-pas : ${st.contacts} points, ${st.manifolds} paires, ${st.tests} tests, ${st.awake} éveillés`);
+  assert.ok(st.contacts >= 4 * 10 && st.manifolds === 10 && st.awake === 10 && st.bodies === 10);
+  for (const [k, v] of Object.entries(st)) assert.ok(Number.isInteger(v), k);
 });

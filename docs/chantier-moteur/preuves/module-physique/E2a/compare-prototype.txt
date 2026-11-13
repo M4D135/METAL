@@ -1,0 +1,21 @@
+# 2026-11-13 09:36, Mac, charge 4.32 3.66 3.34
+$ node docs/chantier-moteur/preuves/module-physique/E2a/compare-prototype.mjs
+FPhysics 2, src/physics.js 59932 octets ; Node v24.18.0 ; 1200 sous-pas de 1/120 s par essai.
+
+1. Identité bit à bit avec le prototype sur la dalle (P, Q et V de chaque caisse, après chaque sous-pas, comparés par ===).
+- stack10   NOSLEEP    : identique sur 1200 sous-pas (156000 valeurs) ; hachage du module 07edc580
+  module     dérive 30.69 mm / 16.83 mm / 23.39 mm (1 / 5 / 10 s) ; plus bas sommet -9.24 mm de 1 à 10 s (sous-pas 1113), -23.56 mm sur tout l'essai (sous-pas 21)
+  prototype  dérive 30.69 mm / 16.83 mm / 23.39 mm (1 / 5 / 10 s) ; plus bas sommet -9.24 mm de 1 à 10 s (sous-pas 1113), -23.56 mm sur tout l'essai (sous-pas 21)
+  tassement du sommet à 10 s : module 86.06 mm, prototype 86.06 mm (attendu ≈ 85 mm)
+- stack10   par défaut : identique sur 1200 sous-pas (156000 valeurs) ; hachage du module 283b179e
+  sommeil : toutes les caisses dorment à la fin du sous-pas 123 (1.025 s) dans le module, 123 dans le prototype ; le prototype lit stats.awake = 0 au début de l'appel suivant, d'où 124 (1.033 s) dans run08.
+- pyramid55 NOSLEEP    : identique sur 1200 sous-pas (858000 valeurs) ; hachage du module 1481a5ba
+  module     dérive 9.63 mm / 16.39 mm / 19.39 mm (1 / 5 / 10 s) ; plus bas sommet -11.73 mm de 1 à 10 s (sous-pas 195), -13.71 mm sur tout l'essai (sous-pas 16)
+  prototype  dérive 9.63 mm / 16.39 mm / 19.39 mm (1 / 5 / 10 s) ; plus bas sommet -11.73 mm de 1 à 10 s (sous-pas 195), -13.71 mm sur tout l'essai (sous-pas 16)
+- pyramid55 par défaut : identique sur 1200 sous-pas (858000 valeurs) ; hachage du module 6a47467f
+  sommeil : toutes les caisses dorment à la fin du sous-pas 87 (0.725 s) dans le module, 87 dans le prototype ; le prototype lit stats.awake = 0 au début de l'appel suivant, d'où 88 (0.733 s) dans run08.
+
+2. Variante « sans D » (lecture littérale du §5.2 et du §5.6 : séparation cS + cSl aussi pendant la relaxation), même module, ligne remplacée au chargement :
+- stack10   sans D     dérive 58.40 mm / 66.18 mm / 52.07 mm (1 / 5 / 10 s) ; plus bas sommet -18.72 mm de 1 à 10 s (sous-pas 560), -23.26 mm sur tout l'essai (sous-pas 28) ; endormie au sous-pas 139 (1.158 s)
+- pyramid55 sans D     dérive 11.01 mm / 11.36 mm / 11.45 mm (1 / 5 / 10 s) ; plus bas sommet -9.49 mm de 1 à 10 s (sous-pas 451), -18.86 mm sur tout l'essai (sous-pas 16) ; endormie au sous-pas 88 (0.733 s)
+  Seuils de P11 et P12 : dérive < 30 mm (pile) et < 20 mm (pyramide) à 10 s, plus bas sommet ≥ -12 mm.

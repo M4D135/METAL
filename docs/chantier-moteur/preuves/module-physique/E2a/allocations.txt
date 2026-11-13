@@ -1,0 +1,8 @@
+# 2026-11-13 09:36, Mac, charge 4.32 3.66 3.34
+$ node --expose-gc --max-semi-space-size=64 docs/chantier-moteur/preuves/module-physique/E2a/allocations.mjs
+Node v24.18.0 ; octets alloués par sous-pas (médiane de 5 mesures de 120 sous-pas, après 3 000 sous-pas)
+- monde vide module :    24 ; lecture de config dans collide() :    24
+- stack10    module :    24 ; lecture de config dans collide() :   504
+- pyramid55  module :    24 ; lecture de config dans collide() :  2656
+
+Témoin : une boucle qui appelle 120 fois une fonction vide step(1/120) alloue 24 octets par appel ; le pas de FPhysics n'alloue donc rien de mesurable ici.

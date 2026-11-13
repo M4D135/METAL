@@ -2,13 +2,14 @@
 
 `src/physics.js` expose le global `FPhysics` : des corps rigides déterministes (boîtes orientées, sphères, capsules) contre un décor statique fait de boîtes. C'est le module moteur générique de FERRO : il ne sait rien du contenu de METAL, et c'est le jeu qui décrit ses objets. Les constats et la fiche du lot 17 l'appellent « FPhys » : c'est le même module.
 
-État : **étapes 0 et 1 faites** (état des lieux, squelette et garde-fous). Le module n'est branché nulle part : aucun fichier existant n'est modifié, le raccord est seulement décrit au §6. Base du module : `71eca61` (branche `chantier/module-physique`).
+État : **étapes 0, 1 et 2a faites** (état des lieux, squelette et garde-fous, noyau de boîtes porté du prototype). Le module n'est branché nulle part : aucun fichier du jeu n'est modifié, le raccord est seulement décrit au §6. Base du module : `71eca61` (branche `chantier/module-physique`).
 
 | Étape | Contenu | État |
 |---|---|---|
 | 0 | État des lieux, référence `npm test` et sorties du prototype | fait ([etat-initial.md](../preuves/module-physique/etat-initial.md), [prototype-reference.txt](../preuves/module-physique/prototype-reference.txt)) |
 | 1 | Forme du module, `MATERIALS`, conversions d'angles, `create` validé, `config`, `fingerprint` ; tests P01 à P04 | fait |
-| 2 | Noyau de boîtes porté du prototype ; scènes, banc | à faire |
+| 2a | Noyau de boîtes porté du prototype : stockage, `setStatics` sans fusion, grilles chaînées, SAT et découpage, solveur, sommeil d'île, attente simple, `pose`/`matrix`/`body`, `hash`, `snapshot`/`restore` de base ; scènes `stack10` et `pyramid55`, `runChain` ; tests P05, P06, P11, P12, P45, P46 | fait ([preuves E2a](../preuves/module-physique/E2a/)) |
+| 2b | Scènes `rubble300` et `blast200`, `hashes`, premier `tools/physics-bench.mjs` ; tests P19 (boîtes), P41, P45 sur ces scènes | à faire |
 | 3 | Sphères, capsules, sols, matières, couches, cinématiques | à faire |
 | 4 | Faces internes (PHYS-V1) | à faire |
 | 5 | Objets minces et masses (PHYS-V4, PHYS-V3) | à faire |
@@ -33,7 +34,7 @@
 
 ## 2. API
 
-### Livrée (étape 1)
+### Livrée (étapes 1 et 2a)
 
 ```js
 FPhysics.VERSION                     // 2 : format de l'instantané (physicsVersion 2 au lot 12)
@@ -67,9 +68,28 @@ Au contact (étapes 2 et 3) : frottement √(fA·fB), rebond max(rA, rB). Sans m
 - `w.config` : la copie gelée des valeurs effectives, `bounds` compris (gelé aussi), sans `clock`, −0 ramené à +0. Elle contient en plus les quatre durées converties en sous-pas entiers par `Math.floor(durée/tick + 0.5)` : `sleepSteps`, `splitSteps`, `fallbackSteps` et `windowSteps` (la fenêtre d'une seconde du repli). Aux réglages par défaut : 60, 120, 720 et 120 ;
 - `w.fingerprint` : 8 chiffres hexadécimaux, le FNV-1a 32 bits des codes de caractères de `'FPhysics2|' + valeurs.join('|')`, les valeurs prises dans l'ordre du tableau du §3, `bounds` mis à plat (minX, maxX, minZ, maxZ), `ground` écrit `none` s'il est nul, sans `clock`. Deux mondes aux réglages égaux ont la même empreinte ; un seul réglage différent la change (test P04, sur les 49 valeurs). Aux réglages par défaut sur `B64` (±64 m) : `04031f9d`.
 
-### Prévue (étapes 2 à 10, signatures de la mission)
+**Le monde (étape 2a).** Tout ce qui suit s'appelle hors du pas, sauf `step`, et peut allouer, sauf `step`.
 
-`w.setStatics(boxes, floors)` et `w.updateStatics` ; `w.addBody(desc)`, `w.removeBody(h)`, `w.valid`, `w.isAsleep`, `w.isLost`, `w.body(h)` ; `w.impulse`, `w.setVelocity`, `w.wakeBox`, `w.blast`, `w.setKinematic` ; `w.step(dt)` ; `w.ray`, `w.queryBox` ; `w.pose(h, alpha, out)`, `w.matrix(h, out)` ; événements (`w.eventCount`, `w.evA`, `w.evB`, `w.evData`, `w.evMat`, `w.readEvents()`) ; `w.addJoint(desc)`, `w.removeJoint(j)`, `w.broken`, `w.brokenCount` ; `w.snapshot()`, `w.restore(snap, opts)`, `w.hash()` ; `w.stats`, `w.phaseMs`, `w.rayHit`, `w.staticsHash`. Invariants à tenir : déterminisme (§4), restauration atomique, handles à génération (`gen*4096 + index`), aucune allocation par pas.
+```js
+w.setStatics(boxes, floors) → {statics, merged: 0, masked: 0, woken}   // w.updateStatics : alias
+w.staticsHash                        // 8 chiffres hexadécimaux, recalculé par setStatics
+w.addBody(desc) → handle | -1        // boîtes dynamiques ; -1 et stats.refused++ si plein
+w.valid(h), w.isAsleep(h), w.isLost(h) → booléen
+w.body(h) → objet simple | null      // {handle, shape, size, radius, height, realSize, pos, quat, vel, ang, mass,
+                                     //  originalMass, material, friction, restitution, group, mask, kinematic,
+                                     //  asleep, pending, lost, hard}
+w.step(dt) → sous-pas exécutés       // TypeError si dt n'est pas un nombre fini ≥ 0
+w.pose(h, alpha, out) → out          // [x, y, z, qx, qy, qz, qw], alpha borné à [0, 1]
+w.matrix(h, out) → out               // les 9 nombres de R
+w.snapshot() → objet JSON ; w.restore(snap, opts) ; w.hash() → 8 chiffres hexadécimaux
+w.stats (entiers), w.phaseMs (Float64Array(4), rempli seulement avec clock)
+```
+
+- **`setStatics`** : la dalle de `ground` (indice 0, frottement 0,8, rebond 0,05), puis les `boxes` `{minX, maxX, minY, maxY, minZ, maxZ, material?, friction?, restitution?}` en AABB, dans l'ordre donné (min ≤ max sur chaque axe ; frottement dans [0, 2], rebond dans [0, 1] ; priorité : valeurs explicites, puis matière, puis 0,7 et 0,05). Pas de fusion ni de voisines à l'étape 2a ; un `floors` non vide lève `TypeError` jusqu'à l'étape 3, comme un nombre de statiques au-delà de `maxStatics`. Le même décor redonné ne change rien (`woken` = 0, même `staticsHash`) ; un autre décor réveille tous les dormeurs et retire du cache les entrées corps-statique (la différence exacte du §4.5 de la mission vient à l'étape 10).
+- **`addBody`** : `shape` `'box'` seulement (`'sphere'` et `'capsule'` lèvent `TypeError` jusqu'à l'étape 3, comme `kinematic: true`) ; `size` > 0, `pos` obligatoire, `quat` normalisé (norme < 1e-9 refusée) ou `rot` converti par `eulerToQuat`, jamais les deux ; `vel` et `ang` bornées à `maxLinear` et `maxAngular` ; `mass` > 0, ou densité de la matière × volume réel ; `material` par nom ou indice ; `group` 2 et `mask` 65535 par défaut ; `asleep: true` crée un dormeur, actif tout de suite. Masse physique = min(max(masse, massMin), massMax), demi-tailles de collision max(demi-taille, minHalf). Handle `gen*4096 + index`, plus petit index libre.
+- **`body(h).mass`** est la masse physique, recalculée depuis la masse d'origine (pas 1/IM) ; `size` est la taille de collision, `realSize` la taille donnée.
+
+**Prévue (étapes 2b à 10, signatures de la mission).** `w.removeBody(h)` ; sphères, capsules, sols, `kinematic`, `w.setKinematic` (étape 3) ; `w.impulse`, `w.setVelocity`, `w.wakeBox`, `w.blast`, `w.ray`, `w.queryBox`, `w.rayHit`, événements (`w.eventCount`, `w.evA`, `w.evB`, `w.evData`, `w.evMat`, `w.readEvents()`) (étapes 2b et 7) ; `w.addJoint(desc)`, `w.removeJoint(j)`, `w.broken`, `w.brokenCount` (étape 9). Invariants tenus depuis l'étape 2a : déterminisme (§4), restauration atomique, handles à génération, aucune allocation par sous-pas (§5).
 
 ## 3. Réglages
 
@@ -125,7 +145,7 @@ Toutes les options de `create`, dans l'ordre de l'empreinte. Contrôles : *fini*
 | `maxEvents` | 16 | entier 0 à 2³¹−1 | événements gardés par appel de `step` | T16, PHYS-12 |
 | `clock` | null | null ou fonction | millisecondes pour `w.phaseMs`, banc seulement ; hors `config`, hors empreinte, sans effet sur la simulation | mission |
 
-Les bornes hautes de `capacity`, `maxStatics` et `maxJoints` viennent des encodages : handle `gen*4096 + index`, clé de paire `lo·(capacity + maxStatics + 2) + hi` qui doit rester un entier 32 bits. Celle de `maxContacts` (2²⁰) évite des tables d'adressage ouvert démesurées. Les autres contrôles écartent ce qui ne peut pas avoir de sens (division par zéro, durée ou vitesse négative).
+Les bornes hautes de `capacity`, `maxStatics` et `maxJoints` viennent des encodages : handle `gen*4096 + index`, clé de paire `lo·(capacity + maxStatics + 2) + hi` qui doit rester un entier 32 bits. Celle de `maxContacts` (2²⁰) évite des tables d'adressage ouvert démesurées. Les autres contrôles écartent ce qui ne peut pas avoir de sens (division par zéro, durée ou vitesse négative). Depuis l'étape 2a, `create` refuse aussi des `bounds` et une `cell` qui donneraient plus de 1 048 576 cellules par grille (`(floor((maxX − minX)/cell) + 1) × (floor((maxZ − minZ)/cell) + 1)`, soit 4 Mo de têtes de liste par grille) : sur `B64`, 65 × 65 = 4 225.
 
 ## 4. Algorithmes
 
@@ -138,7 +158,25 @@ Les bornes hautes de `capacity`, `maxStatics` et `maxJoints` viennent des encoda
 
 Le temps n'arrive que par `dt` ; les durées sont converties une fois en sous-pas entiers (§2), et les minuteries comptent des sous-pas.
 
-Le reste (ordre du sous-pas, phases large et étroite, faces internes, solveur, réveil, masses, objets minces, budgets, zéro allocation) sera résumé ici à mesure des étapes 2 à 11.
+**Stockage (étape 2a).** Colonnes de tableaux typés de NB = capacity + 1 lignes ; la ligne 0 est le monde (masse inverse, inertie et vitesse nulles, Q = [0, 0, 0, 1], `MAT` = −1) et `restore` exige qu'elle le reste. Sauvegardés, dans l'ordre de l'instantané : SH, FL (bits 1 vivant, 2 endormi, 4 cinématique, 8 en attente, 16 perdu, 32 renforcé, 64 en mouvement), GEN, GRP, MSK, MAT, P, Q, V, H, HR, IM, MO, FR, RE, ST, AT, FN (Int32, minuteries en sous-pas entiers, saturées à 2³¹ − 1), RP, KT, KN. Dérivés, recalculés par `inertia(i)`, `tolerance(i)` (SL = min(slop, slopRatio × plus petite demi-taille)) et `derive(i)` (R, BB, IW, formules du prototype) à la création, en fin de sous-pas et à la restauration : R, IL, IW, BB, FB, SL, PP, PQ. Le plus haut index utilisé + 1 est le `n` de l'instantané. Statiques : centre, demi-tailles, rotation × 9 (identité pour une AABB), drapeau OBB, AABB, frottement, rebond, matière, estampille, grille en lignes compressées (`GW = floor((maxX − minX)/cell) + 1`). Contacts : les colonnes du prototype, plus cIa et cIb (masses inverses participantes), cSl (tolérance), cSR (séparation de relaxation, voir le solveur), et par paire le premier point et le nombre de points.
+
+**Ordre d'un sous-pas (étape 2a)** : (1) activation de tous les corps en attente, par indice croissant (ST = AT = FN = 0, RP = P) ; (2) liste des actifs, les éveillés dynamiques par indice croissant, et sortie immédiate si elle est vide, **sans vider le cache** ; (3) phases large et étroite ; (4) préparation ; (5) gravité et amortissement ; (6) démarrage à chaud ; (7) `iterations` passes avec biais ; (8) bornage des vitesses, intégration des positions et des quaternions ; séparation de relaxation ; (9) `relaxIterations` passes sans biais ; (10) restitution, puis nouveau bornage ; (14) reconstruction du cache ; (15) réveils différés ; (17) îles et sommeil ; (20) −0 ramené à +0 sur P, Q et V des participants, puis `derive`. Les numéros sont ceux du §5.2 de la mission ; les étapes 11, 12, 13, 16, 18 et 19 (événements, ruptures, règles de réveil, plan de perte, repli, gouverneur) viennent avec leurs étapes du module. Le temps passe par un accumulateur à tolérance e = tick·1e-9, au plus `maxSubsteps` sous-pas par appel, le reste jeté et compté (`droppedSteps`).
+
+**Phase large.** Deux grilles de corps en listes chaînées (tête par cellule, suivant et élément par entrée) : la grille active, refaite à chaque sous-pas avec FB = BB élargie de min(|V_axe|, maxLinear)·h + margin, et la grille dormante, refaite quand l'ensemble des dormeurs change, avec FB = BB. On insère par indice décroissant en tête de liste, si bien qu'une cellule se lit par indice croissant, comme les lignes compressées du prototype ; on ne remet à −1 que les cellules utilisées. Les entrées sont dimensionnées dans `addBody` et `restore` (borne des cellules qu'un corps peut couvrir, vitesse bornée comprise) : un sous-pas ne déborde ni n'alloue. Pour chaque actif a, cellules z puis x : statiques si `mask & 1` (estampille, AABB, `boxBox` avec la matrice de la statique, clé a·KM + NB + s), puis grille active (b > a) et grille dormante, dédoublonnage par la cellule du coin bas du recouvrement, filtre de groupes, marge margin + (|v_a| + |v_b|)·h, `boxBox(lo, hi)`, clé lo·KM + hi, KM = NB + maxStatics + 1.
+
+**Phase étroite.** `boxBox`, `face` et `clip` du prototype, tels quels (15 axes, préférence aux faces 0,95·x + 0,002 pour B et 0,95·x + 0,01 pour les arêtes, découpage à 4 points au plus) ; la dalle de `ground` est une statique comme les autres, côté B, et n'a plus de chemin à part (`boxGround` du prototype disparaît).
+
+**Solveur.** Celui du prototype, en contrainte souple (constantes en SCR[5..8]). Un côté qui ne participe pas (le monde, un dormeur) a une masse inverse nulle (cIa, cIb) et des termes angulaires nuls (ligne 0 de IW) ; on lit sa vitesse, et ce qu'on lui écrit ajoute des zéros exacts. Séparation : cS + cSl dans les passes avec biais ; **dans la relaxation, cSR = cS + (d_B − d_A)·n + cSl, avec d = v·h + (ω·h) × r pour un corps qui vient de bouger** (0 sinon), calculé une fois par point après l'intégration. C'est exactement le terme D du prototype, sans tableau D : voir le §7, point 1.
+
+**Sommeil (étape 2a).** Minuteries entières : ST + 1 sous les seuils, sinon 0 ; AT + 1. Union-find sur les paires dont les deux côtés participent (la plus grande racine sous la plus petite) ; une île dont le plus petit ST atteint `sleepSteps` s'endort, vitesses à 0. Réveil provisoire (§7, point 2) : un dormeur touché par un actif est marqué, puis réveillé seul à la fin du sous-pas (bit effacé, ST = AT = FN = 0, RP = P, `stats.wakes` + 1). Le cache n'est jamais vidé quand rien n'est actif : une pyramide endormie garde ses 492 entrées.
+
+**Cache d'impulsions.** Reconstruit à chaque sous-pas depuis les points frais (clé, identifiant, impulsions, −0 ramené à +0), entrées d'une même clé contiguës ; table d'adressage ouvert de TS cases (plus petite puissance de 2 ≥ 2·maxContacts, par une boucle) dont on ne vide que les cases utilisées. Démarrage à chaud par identifiant de point, comme dans le prototype. Un seul jeu de tableaux à l'étape 2a : les deux jeux alternés du §5.1 viennent avec la règle c du réveil (étape 6).
+
+**Instantané, restauration, hachage.** Format du §4.13 de la mission (sans `j` jusqu'à l'étape 9). `restore` valide tout avant d'écrire (en-tête, longueurs, nombres finis, champs entiers, ligne du monde, lignes libres à FL = 0, chaque corps vivant, cache) et lève `Error('FPhysics.restore: …')` sans rien changer ; puis copie avec −0 → +0, remet à neuf les lignes au-delà de n, recalcule les dérivées, fait PP = P et PQ = Q, reconstruit la table du cache et marque les grilles. `hash` : FNV-1a de n, acc, des tableaux de corps des lignes 0 à n − 1 (flottants par mots de 32 bits, vues créées une fois), puis du cache.
+
+**Rendu.** `pose` interpole PP → P et PQ → Q (court chemin, normalisé), relève de SL/2, et pose la boîte réelle sur le bas de sa boîte de collision sur chaque axe où H > HR ; `addBody` fait PP = P, PQ = Q, si bien que `pose` est juste avant le premier pas.
+
+**Zéro allocation.** Pas de `new`, de littéral, de fermeture ni de chaîne dans `step()` ; les flottants passent par SCR, les entiers par ISCR. Les réglages lus pendant le pas sont recopiés une fois dans SCR[14..21] : `w.config` est un objet ordinaire, un nombre qu'on y lit arrive emballé, et la première forme de `collide()`, qui lisait `margin` et `maxLinear` dans `config`, faisait emballer par V8 les trois vitesses de chaque corps (2 656 octets par sous-pas sur `pyramid55`, 504 sur `stack10` ; 24 après correction, le coût de la boucle de mesure elle-même). Mesure indicative au §5 ; le banc du §8.2 de la mission la refera.
 
 ## 5. Mesures et preuves
 
@@ -160,11 +198,33 @@ Le reste (ordre du sous-pas, phases large et étroite, faces internes, solveur, 
 | Test | Contenu | Étape | Résultat |
 |---|---|---|---|
 | P01 | un seul global `FPhysics`, `MATERIALS` gelé, chargement par `new Function` et par `node:vm` | 1 | vert |
-| P02 | taille ≤ 80 000 octets, motifs interdits, membres de `Math`, blocs TRIG appariés, en-tête ; le contrôle est lui-même vérifié sur 24 altérations du vrai source, qui doivent toutes être détectées | 1 | vert (6 518 octets, 2 920 en gzip -9) |
+| P02 | taille ≤ 80 000 octets, motifs interdits, membres de `Math`, blocs TRIG appariés, en-tête ; le contrôle est lui-même vérifié sur 24 altérations du vrai source, qui doivent toutes être détectées | 1 | vert (étape 1 : 6 518 octets ; étape 2a : 59 932 octets, 21 799 en gzip -9, cible de 60 000) |
 | P03 | 1 000 triplets d'angles : norme de q à 1e-12 de 1 (mesuré 3,3e-16), matrice égale à celle du jeu à 1e-12 (8,9e-16), aller-retour à 1e-9 (4,2e-15), blocage de cardan à 1e-6 (1,5e-8) | 1 | vert |
 | P04 | 58 jeux d'options invalides refusés, valeurs par défaut, durées en sous-pas, empreinte recalculée selon la mission, chacun des 49 réglages la change | 1 | vert |
 
-Les mesures du §8.2 de la mission (banc, courbe, allocations, instantanés, statiques, assemblage, navigateur) viendront aux étapes 2, 11 et 12.
+| P05 | chute libre exacte : y = 3,95 et vy = −12 à 1e-9 après 120 sous-pas (mesuré 3,950000000000008 et −11,999999999999973) ; `step(1/240)` renvoie 0 puis 1 | 2a | vert |
+| P06 | caisse posée à 1 mm : y = 0,394672 à 2 s (enfoncement 5,33 mm), endormie au sous-pas 63, vitesses nulles, `pose` relevée de SL/2 à 1e-12 | 2a | vert |
+| P11 | `stack10` NOSLEEP : dérive 30,69 / 16,83 / 23,39 mm à 1 / 5 / 10 s (seuil 30 mm à 10 s) ; plus bas sommet −9,24 mm de 1 à 10 s (seuil −12 mm), −23,56 mm au sous-pas 21 ; tassement du sommet 86,06 mm ; par défaut, endormie au sous-pas 123 (1,025 s, seuil 4 s) | 2a | vert |
+| P12 | `pyramid55` NOSLEEP : dérive 9,63 / 16,39 / 19,39 mm (seuil 20 mm) ; plus bas sommet −11,73 mm de 1 à 10 s, −13,71 mm au sous-pas 16 ; par défaut, endormie au sous-pas 87 (0,725 s, seuil 10 s) | 2a | vert |
+| P45 | aller-retour JSON dans un monde neuf (`create(w.config)`, sans corps) : `stack10` à 100 sous-pas (instantané de 7 022 caractères, 40 entrées de cache) et `pyramid55` endormie à 1 200 (44 043 caractères, 492 entrées) ; même hachage, même instantané, puis même hachage 300 sous-pas plus tard | 2a | vert |
+| P46 | `snapshot()` ne change pas le hachage ; un instantané tous les 10 sous-pas ne change rien en 300 sous-pas (`stack10`, `pyramid55`) | 2a | vert |
+| Étape 2a (6 tests) | descriptions refusées (26 cas), handles, `body()`, masses bornées, `minHalf` ; attente, création endormie, réveil différé ; `setStatics` (résultat, empreinte, refus atomiques, `mask & 1`, réveil) ; `step` (erreurs, 1/30 → 4, 0,2 → 8 et 16 sous-pas jetés, découpage 1/60, 1/120, 1/30 identique, même chaîne dans un domaine `vm`), grille trop grande refusée ; 13 instantanés corrompus refusés sans rien changer, `ignoreStatics`, zéros négatifs ; `pose`, `matrix`, tôle réelle, horloge sans effet sur la simulation | 2a | verts |
+
+**Étape 2a, module contre prototype** (13 novembre, Mac M5, Node 24.18, charge 3,3 à 4,3 ; [compare-prototype.txt](../preuves/module-physique/E2a/compare-prototype.txt), script [compare-prototype.mjs](../preuves/module-physique/E2a/compare-prototype.mjs)). Le prototype tourne avec `ground: false` et la boîte statique (−64, −0,5, −64)–(64, 0, 64), frottement 0,8, rebond 0,05 : la dalle que FPhysics construit pour `ground: 0`. Sur 1 200 sous-pas, P, Q et V de chaque caisse sont **identiques bit à bit** après chaque sous-pas, avec et sans sommeil, pour `stack10` et `pyramid55` (156 000 et 858 000 valeurs). Les diagnostics sont donc ceux du prototype sur la dalle ([prototype-avant.txt](../preuves/module-physique/E2a/prototype-avant.txt), variante run08 du chef) :
+
+| Mesure | `stack10` | `pyramid55` | Prototype sur le plan (`drift.mjs`) |
+|---|---|---|---|
+| dérive à 1 / 5 / 10 s, NOSLEEP | 30,69 / 16,83 / 23,39 mm | 9,63 / 16,39 / 19,39 mm | 23,96 / 21,02 / 12,57 mm et 11,39 / 14,71 / 14,70 mm |
+| tassement du sommet à 10 s | 86,06 mm (attendu ≈ 85) | — | 83,67 mm |
+| plus bas sommet, régime (1 à 10 s) | −9,24 mm (sous-pas 1 113) ; −8,5 mm à la fin | −11,73 mm (sous-pas 195) ; −10,1 mm à la fin | — |
+| plus bas sommet, transitoire | −23,56 mm (sous-pas 21) | −13,71 mm (sous-pas 16) | — |
+| sommeil complet, réglages par défaut | fin du sous-pas 123 (1,025 s) | fin du sous-pas 87 (0,725 s) | run08 lit 1,03 s et 0,73 s : `stats.awake` y est compté au début de l'appel suivant, même sous-pas |
+
+Le prototype garde aussi ses valeurs de référence : `drift.mjs` 12,57 / 14,70 mm ; `restore.mjs` IDENTICAL avec le cache (17089485, 3fa55997, 6d172292) ; `restore2.mjs` sans écart. Chaînes du module à 300 sous-pas (`runChain`) : `stack10` b4d9490c/283b179e, `pyramid55` 0d00077d/6a47467f.
+
+**Allocations, indicatives** ([allocations.txt](../preuves/module-physique/E2a/allocations.txt)) : après 3 000 sous-pas de mise en route, 24 octets par sous-pas pour `stack10`, `pyramid55` et un monde vide, autant qu'une boucle qui appelle une fonction vide : rien de mesurable dans le pas. La première forme (réglages lus dans `config`) allouait 504 et 2 656 octets par sous-pas (§4, zéro allocation).
+
+Les autres mesures du §8.2 de la mission (banc, courbe, instantanés de `rubble300`, statiques, assemblage, navigateur) viendront aux étapes 2b, 11 et 12.
 
 ## 6. Plan de raccord, non appliqué
 
@@ -180,4 +240,11 @@ Rien de ce qui suit n'est fait : le lot qui intègre FPhysics l'appliquera. Num�
 - **En-tête du fichier.** L'en-tête proposé par la mission (§4.1) contient le texte « no Math.random », que le test P02 de la même mission interdit, commentaires compris. Il est écrit « no random source » : même sens, P02 vert.
 - **Validation.** La mission nomme les cas d'erreur (valeur non finie, négative là où ce n'est pas permis, `capacity` hors de 1 à 4095, `bounds` absent ou min ≥ max). Le module y ajoute : des contrôles d'entier pour les nombres et les budgets ; les bornes hautes qui découlent des encodages (§3) ; un minimum de 1 pour `maxSubsteps`, `iterations` et `spawnBudget`, sans lequel le monde ne peut pas avancer ; `massMin` ≤ `massMax`. Tout est testé par P04. À confirmer si une autre règle est préférée ; aucun réglage par défaut n'en dépend.
 - **Durées converties.** `w.config` porte en plus `sleepSteps`, `splitSteps`, `fallbackSteps` et `windowSteps`, que la mission ne nomme pas : ce sont les seuils effectifs des minuteries, utiles aux tests ; elles sont hors empreinte, car dérivées de réglages qui y sont.
+- **1. Séparation de relaxation (écart à confirmer par David).** La mission dit qu'il n'y a pas de tableau D, car « avec un sous-pas par détection, il vaut toujours 0 pendant la résolution » (§5.2), et que la séparation courante vaut cS + cSl (§5.6). C'est vrai des passes avec biais, pas de la relaxation : elle vient après l'intégration des positions, et le prototype y lit D = v·h et ω·h du sous-pas. La lecture littérale (cS + cSl partout) fait échouer P11 : dérive 52,07 mm à 10 s (seuil 30), plus bas sommet −18,72 mm (seuil −12) ; la pyramide passe (11,45 mm, −9,49 mm) (variante 2 de compare-prototype.txt). Le module garde donc le terme exact du prototype, calculé une fois par point dans cSR, sans tableau D ni cumul : c'est ce qui donne l'identité bit à bit. À confirmer, ou à remplacer par une autre règle de relaxation qui tienne P11.
+- **2. Réveil provisoire.** Jusqu'à l'étape 6, tout contact entre un actif et un dormeur réveille ce dormeur, seul, à la fin du sous-pas (le prototype réveillait toute l'île, tout de suite). Les règles a à e du §5.7, la scission et le repli remplaceront cette règle ; aucune scène de l'étape 2a ne réveille d'île (`stack10` et `pyramid55` s'endorment d'un bloc).
+- **3. Attente simple.** Tous les corps en attente sont activés au sous-pas suivant ; `spawnBudget` (étape 8) les étalera. La scène « attente » de P45 (48 caisses d'un coup) viendra avec lui.
+- **4. Décor.** Pas de fusion ni de voisines (étape 4), pas de sols ni d'OBB (étape 3, `floors` non vide refusé) ; un décor changé réveille tous les dormeurs et retire les entrées corps-statique du cache, en attendant la différence exacte de l'étape 10.
+- **5. Plus bas sommet de P11 et P12.** La mission demande « aucun plus bas sommet sous −0,012 ». La chute initiale de la pile (les caisses sont posées sans enfoncement, et le contact est souple) descend un instant à −23,56 mm au sous-pas 21 (pyramide : −13,71 mm au sous-pas 16), exactement comme le prototype. Les tests vérifient donc le seuil à chaque sous-pas de 1 s à 10 s (régime : −9,24 et −11,73 mm, −8,5 mm à la fin comme l'attend la mission), et donnent le minimum de tout l'essai en diagnostic. À confirmer.
+- **6. Marge de P12.** La dérive de la pyramide vaut 19,39 mm pour un seuil de 20 mm : 0,61 mm de marge. Le prototype sur la dalle donne la même valeur ; sur le plan, il donnait 14,70 mm. Toute étape qui change l'ordre des paires ou le solveur (faces internes, réveil) doit la remesurer.
+- **7. Compléments de validation.** `restore` refuse aussi un `acc` hors de [0, tick), une ligne 0 qui n'est plus le monde, une ligne libre avec des drapeaux, et les drapeaux ou formes qui n'existent pas encore (cinématique, perdu, renforcé, en mouvement, sphère, capsule) ; `create` refuse une grille de plus de 1 048 576 cellules (§3). `stats.awake` compte les participants encore éveillés en fin de sous-pas (les réveillés de la fin du sous-pas n'y sont pas).
 - Les autres limites et les questions ouvertes de la mission (cadence 120 Hz × 1 ou 60 Hz × 2, simulation sans FPhysics, barils, taille des instantanés, épaisseur des dalles, limites de charnière, seuils de réveil, pièces d'épave, enfoncement souple, écarts volontaires avec la fiche) seront tranchées ou reprises ici à mesure des étapes.
