@@ -13,7 +13,7 @@
 //
 //   node tools/platform-math.mjs census      [root] [--base B] [--seeds 1,96,2026] [--path fmath|host] [--samples 150] [--out F]
 //   node tools/platform-math.mjs golden      [root] [--base B] [--seeds 1,96,2026] [--out F]
-//   node tools/platform-math.mjs worlds      [root] [--base B] [--seeds 1,96,2026] [--out F]
+//   node tools/platform-math.mjs worlds      [root] [--base B] [--seeds 1,96,2026] [--fixture check|write] [--out F]
 //   node tools/platform-math.mjs checkpoints [root] [--base B | --from W] [--seed 96] [--out F]
 //   node tools/platform-math.mjs replay      [root] [--fmath] [--scenario all] [--steps 1800] [--profile-out F] [--out F]
 //   node tools/platform-math.mjs sim-risk    [root] [--sim-fmath] [--steps 1800] [--out F]
@@ -21,8 +21,14 @@
 //   node tools/platform-math.mjs engines     [root] [--base B] --dir D [--census F] [--chrome PATH] [--jsc PATH]
 //
 // "worlds": SHA-256 of the 114 worlds; with --base, also those of the world.js of
-// B with FMath injected. "checkpoints --from W": points written by root W (world
-// and simulation, as a player before the fix) and read back by root. "engines"
+// B with FMath injected. "worlds --fixture" (T4): "check" compares the 108
+// campaign worlds with checks/campaign-world-digests.json of root, the golden
+// digests that checks/campaign-world.test.mjs asserts (exit code 1 on any
+// difference); "write" rewrites that file, only for the seeds of the test, from a
+// world.js that takes its trigonometry from FMath and whose six classic worlds
+// equal the golden legacyHashes of the test (the x86-64 oracle).
+// "checkpoints --from W": points written by root W (world and simulation, as a
+// player before the fix) and read back by root. "engines"
 // runs Google Chrome headless on file:// pages (--dump-dom, private
 // --user-data-dir under D, no port, no server) and JavaScriptCore's jsc shell; in
 // jsc, the 114 worlds of root are hashed with SHA-256 and compared with Node.
@@ -197,7 +203,9 @@ export function golden(root,{seeds=[1,96,2026],base}={}){
 // V1 and V2 of the seeds), as the game generates them after the fix. With --base,
 // the same worlds from the world.js of B with FMath injected (the path checked in
 // T1): equal digests show that the wiring changes nothing but the trigonometry.
-export function worlds(root,{seeds=[1,96,2026],base}={}){
+export function worlds(root,{seeds=[1,96,2026],base,fixture}={}){
+  if(fixture!==undefined&&!['check','write'].includes(fixture))throw new Error('--fixture must be check or write');
+  if(fixture)fixtureSeeds(root,seeds,fixture); // refuse before generating anything
   const F=loadFMath(root),W=fmathWorld(root,F),B=base?fmathWorld(base,F):null,rows=[];
   for(const w of worldList(seeds)){
     const row={kind:w.kind,seed:w.seed,index:w.index,sha256:digest(make(W,w))};
@@ -206,7 +214,68 @@ export function worlds(root,{seeds=[1,96,2026],base}={}){
   }
   return {schema:'metal-platform-math-worlds-v1',environment:env(),root,base:base??null,worldUsesFMath:worldUsesFMath(root),baseWorldUsesFMath:base?worldUsesFMath(base):null,
     worlds:rows.length,...(B?{equalToBaseWithFMath:rows.filter(r=>r.equal).length}:{}),
-    digestOfDigests:createHash('sha256').update(rows.map(r=>r.sha256).join('\n')).digest('hex'),rows};
+    digestOfDigests:createHash('sha256').update(rows.map(r=>r.sha256).join('\n')).digest('hex'),
+    ...(fixture?{fixture:fixture==='write'?writeFixture(root,rows,seeds):checkFixture(root,rows,seeds)}:{}),rows};
+}
+
+// ---------------------------------------------------------------- fixture (T4)
+// checks/campaign-world-digests.json holds the golden digests of the 108 campaign
+// worlds (V1 and V2, 18 worlds for each seed of the test): SHA-256 of
+// JSON.stringify(world), as digest() of checks/campaign-world.test.mjs, which
+// asserts them in its two loops. A world from the native Math of an arm64 host
+// (or of any engine) must never enter it: "write" needs a world.js that takes its
+// trigonometry from FMath, and the six classic worlds of the same run must equal
+// the golden legacyHashes of the test, checked on Linux x86-64.
+export const FIXTURE='checks/campaign-world-digests.json';
+export const FIXTURE_COMMAND='node tools/platform-math.mjs worlds . --fixture write';
+const FIXTURE_KINDS=Object.freeze({v1:{campaign:true},v2:{campaign:true,campaignVersion:2}});
+// The seeds of the campaign loops, read from the test so the fixture can never drift from it.
+export function testSeeds(root){
+  const m=/\nconst seeds = \[([\d, ]+)\]/.exec(readFileSync(join(root,'checks/campaign-world.test.mjs'),'utf8'));
+  if(!m)throw new Error('const seeds not found in checks/campaign-world.test.mjs');
+  return m[1].split(',').map(Number);
+}
+function fixtureSeeds(root,seeds,mode){
+  const wanted=testSeeds(root);
+  if(seeds.join()!==wanted.join())throw new Error(`--fixture covers the seeds of the test (${wanted.join(',')}), not ${seeds.join(',')}`);
+  if(mode==='write'&&!worldUsesFMath(root))throw new Error('--fixture write: src/world.js of root must take its trigonometry from FMath (lot 01 suite T2)');
+  return wanted;
+}
+const rowOf=(rows,kind,seed,index)=>rows.find(r=>r.kind===kind&&r.seed===seed&&r.index===index);
+function legacyAgreement(root,rows){
+  const hashes=legacyHashes(root),differing=hashes.filter(([seed,stage,want])=>rowOf(rows,'legacy',seed,stage)?.sha256!==want).map(([seed,stage])=>seed+':s'+stage);
+  return {equal:hashes.length-differing.length,of:hashes.length,differing};
+}
+export function fixtureOf(rows,seeds){
+  const out={schema:'metal-campaign-world-digests-v1',command:FIXTURE_COMMAND,
+    digest:'SHA-256 (hex) of JSON.stringify(FWorld.create(seed, index, options)) for index 0 to 17, as digest() in checks/campaign-world.test.mjs',
+    note:'Golden campaign worlds (MURS-V1, MURS-06). src/world.js takes sin, cos, atan, atan2 and hypot from FMath (src/fmath.js), so these worlds are the same on x86-64, arm64, Chrome and JavaScriptCore; the command checks that the six classic worlds of the same run equal the golden legacyHashes of the test. Any number changed or field added in a campaign world changes its digest. Regenerate only with an intended change of the generation, in the commit that makes it and says why; never to make a test pass.',
+    seeds,options:FIXTURE_KINDS};
+  for(const kind of Object.keys(FIXTURE_KINDS)){
+    const block=out[kind]={};
+    for(const seed of seeds)block[seed]=Array.from({length:18},(_,index)=>{const r=rowOf(rows,kind,seed,index);if(!r)throw new Error(`no ${kind} world ${index+1} for seed ${seed}`);return r.sha256;});
+  }
+  return out;
+}
+function compareFixture(golden,rows,seeds){
+  const differing=[];let equal=0;
+  for(const kind of Object.keys(FIXTURE_KINDS))for(const seed of seeds)for(let index=0;index<18;index++){
+    const want=golden?.[kind]?.[seed]?.[index]??null,got=rowOf(rows,kind,seed,index)?.sha256??null;
+    if(got!==null&&got===want)equal++;else differing.push({kind,seed,world:index+1,expected:want,actual:got});
+  }
+  return {equal,of:Object.keys(FIXTURE_KINDS).length*seeds.length*18,differing};
+}
+export function checkFixture(root,rows,seeds=[1,96,2026]){
+  const wanted=fixtureSeeds(root,seeds),text=readFileSync(join(root,FIXTURE),'utf8');
+  return {mode:'check',file:FIXTURE,fileSha256:createHash('sha256').update(text).digest('hex'),...compareFixture(JSON.parse(text),rows,wanted),legacyHashes:legacyAgreement(root,rows)};
+}
+export function writeFixture(root,rows,seeds=[1,96,2026]){
+  const wanted=fixtureSeeds(root,seeds,'write'),legacy=legacyAgreement(root,rows);
+  if(legacy.differing.length)throw new Error(`--fixture write refused: classic worlds ${legacy.differing.join(', ')} differ from the golden legacyHashes of checks/campaign-world.test.mjs, so this generation is not the portable one`);
+  const file=join(root,FIXTURE),previous=existsSync(file)?JSON.parse(readFileSync(file,'utf8')):null,text=JSON.stringify(fixtureOf(rows,wanted),null,1)+'\n';
+  writeFileSync(file,text);
+  return {mode:'write',file:FIXTURE,fileSha256:createHash('sha256').update(text).digest('hex'),bytes:Buffer.byteLength(text),worlds:Object.keys(FIXTURE_KINDS).length*wanted.length*18,
+    changedFromPrevious:previous?compareFixture(previous,rows,wanted).differing:null,legacyHashes:legacy};
 }
 
 // ---------------------------------------------------------------- checkpoints
@@ -599,14 +668,15 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const base=flags.base?resolve(flags.base):undefined,from=flags.from?resolve(flags.from):undefined;
   if(command==='census')result=census(root,{seeds,path:flags.path,samples:flags.samples?Number(flags.samples):undefined});
   else if(command==='golden')result=golden(root,{seeds,base});
-  else if(command==='worlds')result=worlds(root,{seeds,base});
+  else if(command==='worlds')result=worlds(root,{seeds,base,fixture:flags.fixture});
   else if(command==='checkpoints')result=checkpoints(root,{seed:flags.seed?Number(flags.seed):undefined,base,from});
   else if(command==='replay')result=await replayCheck(root,{fmath:!!flags.fmath,scenario:flags.scenario||'all',steps:flags.steps?Number(flags.steps):1800,profileOut:flags['profile-out']});
   else if(command==='sim-risk')result=await simRisk(root,{steps:flags.steps?Number(flags.steps):1800,simFMath:!!flags['sim-fmath']});
   else if(command==='pages')result=pages(root,{dir:flags.dir&&resolve(flags.dir),census:flags.census,base});
   else if(command==='engines')result=engines(root,{dir:flags.dir&&resolve(flags.dir),census:flags.census,base,...(flags.chrome?{chrome:flags.chrome}:{}),...(flags.jsc?{jsc:flags.jsc}:{})});
   else{const lines=readFileSync(fileURLToPath(import.meta.url),'utf8').split('\n');console.log(lines.slice(0,lines.findIndex(line=>!line.startsWith('//'))).join('\n'));process.exit(command?2:0);}
-  const text=JSON.stringify(result,null,1)+'\n';
-  if(flags.out){mkdirSync(resolve(flags.out,'..'),{recursive:true});writeFileSync(flags.out,text);console.log(JSON.stringify({output:resolve(flags.out)}));}
+  const text=JSON.stringify(result,null,1)+'\n',fixture=result.fixture&&{mode:result.fixture.mode,file:result.fixture.file,...(result.fixture.mode==='check'?{equal:result.fixture.equal,of:result.fixture.of}:{worlds:result.fixture.worlds,changedFromPrevious:result.fixture.changedFromPrevious?.length??null}),legacyHashes:result.fixture.legacyHashes.equal+'/'+result.fixture.legacyHashes.of};
+  if(flags.out){mkdirSync(resolve(flags.out,'..'),{recursive:true});writeFileSync(flags.out,text);console.log(JSON.stringify({output:resolve(flags.out),...(fixture?{fixture}:{})}));}
   else process.stdout.write(text);
+  if(result.fixture?.mode==='check'&&result.fixture.differing.length){console.error(`${result.fixture.file}: ${result.fixture.differing.length} of ${result.fixture.of} campaign worlds differ`);process.exitCode=1;}
 }

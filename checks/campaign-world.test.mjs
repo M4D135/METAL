@@ -23,6 +23,11 @@ const legacyHashes = [
   [96, 1, '3ddc4fabaa9873c6979324d724f7d8de4ae2e0c8ad22571d10770e3fa1d791ea'],
   [96, 2, '4b26155e9721e2d4bbcd9c7235eab2f153391caa2add2f0d1606d8f70f78cc42'],
 ];
+// Golden digests of the 108 campaign worlds (V1 and V2, 18 per seed), written by
+// `node tools/platform-math.mjs worlds . --fixture write`. world.js takes its
+// trigonometry from FMath, so they hold on every platform: a number changed or a
+// field added in any campaign world fails its loop below (MURS-V1, MURS-06).
+const goldenWorlds = JSON.parse(readFileSync(new URL('./campaign-world-digests.json', import.meta.url), 'utf8'));
 
 function finite(value, label) {
   if (typeof value === 'number') assert(Number.isFinite(value), `${label}: non-finite generated number`);
@@ -255,6 +260,7 @@ for (let index = 0; index < 18; index++) test(`campaign world ${String(index + 1
       art.nature.add(digest(world.meshes.filter(m => m.outdoor && ['boulder', 'grass', 'fern', 'mineral'].includes(m.category))));
       art.botanical.add(digest(world.trees.map(t => world.meshes.slice(t.mesh, t.mesh + t.meshCount))));
     }
+    assert.equal(digest(world), goldenWorlds.v1[seed]?.[index], `${label}: world differs from its golden digest in checks/campaign-world-digests.json`);
   }
 });
 
@@ -286,6 +292,7 @@ for(let index=0;index<18;index++)test(`boss campaign world ${String(index+1).pad
     // reserve entry. These are the entries the simulation actually receives.
     const reached=assertReachable(world,label);v2Targets+=reached.targets;
     assert.equal(digest(world),digest(create(seed,index,{campaign:true,campaignVersion:2})),label+': nondeterministic boss campaign');
+    assert.equal(digest(world),goldenWorlds.v2[seed]?.[index],label+': world differs from its golden digest in checks/campaign-world-digests.json');
   }
 });
 test('boss campaign route coverage',t=>{t.diagnostic(JSON.stringify({worlds:54,seeds,reachableTargets:v2Targets,firstBossHp:600,lastBossHp:12000}));});

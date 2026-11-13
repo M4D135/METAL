@@ -1,0 +1,233 @@
+TAP version 13
+# Subtest: campaign world 01: deterministic and physically reachable on three seeds
+ok 1 - campaign world 01: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1502.547459
+  type: 'test'
+  ...
+# Subtest: campaign world 02: deterministic and physically reachable on three seeds
+ok 2 - campaign world 02: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1475.916708
+  type: 'test'
+  ...
+# Subtest: campaign world 03: deterministic and physically reachable on three seeds
+ok 3 - campaign world 03: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 2037.335917
+  type: 'test'
+  ...
+# Subtest: campaign world 04: deterministic and physically reachable on three seeds
+ok 4 - campaign world 04: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1528.229917
+  type: 'test'
+  ...
+# Subtest: campaign world 05: deterministic and physically reachable on three seeds
+ok 5 - campaign world 05: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1442.066708
+  type: 'test'
+  ...
+# Subtest: campaign world 06: deterministic and physically reachable on three seeds
+ok 6 - campaign world 06: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1920.297584
+  type: 'test'
+  ...
+# Subtest: campaign world 07: deterministic and physically reachable on three seeds
+ok 7 - campaign world 07: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1461.152083
+  type: 'test'
+  ...
+# Subtest: campaign world 08: deterministic and physically reachable on three seeds
+ok 8 - campaign world 08: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1408.222875
+  type: 'test'
+  ...
+# Subtest: campaign world 09: deterministic and physically reachable on three seeds
+ok 9 - campaign world 09: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1942.044458
+  type: 'test'
+  ...
+# Subtest: campaign world 10: deterministic and physically reachable on three seeds
+ok 10 - campaign world 10: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1431.897167
+  type: 'test'
+  ...
+# Subtest: campaign world 11: deterministic and physically reachable on three seeds
+ok 11 - campaign world 11: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1401.551125
+  type: 'test'
+  ...
+# Subtest: campaign world 12: deterministic and physically reachable on three seeds
+ok 12 - campaign world 12: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1953.734625
+  type: 'test'
+  ...
+# Subtest: campaign world 13: deterministic and physically reachable on three seeds
+ok 13 - campaign world 13: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1424.392083
+  type: 'test'
+  ...
+# Subtest: campaign world 14: deterministic and physically reachable on three seeds
+ok 14 - campaign world 14: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1424.733416
+  type: 'test'
+  ...
+# Subtest: campaign world 15: deterministic and physically reachable on three seeds
+ok 15 - campaign world 15: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1914.686916
+  type: 'test'
+  ...
+# Subtest: campaign world 16: deterministic and physically reachable on three seeds
+ok 16 - campaign world 16: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1457.087917
+  type: 'test'
+  ...
+# Subtest: campaign world 17: deterministic and physically reachable on three seeds
+ok 17 - campaign world 17: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1395.346958
+  type: 'test'
+  ...
+# Subtest: campaign world 18: deterministic and physically reachable on three seeds
+ok 18 - campaign world 18: deterministic and physically reachable on three seeds
+  ---
+  duration_ms: 1941.618958
+  type: 'test'
+  ...
+# Subtest: boss campaign world 01: open routes and natural reserve entries on three seeds
+ok 19 - boss campaign world 01: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 2012.93125
+  type: 'test'
+  ...
+# Subtest: boss campaign world 02: open routes and natural reserve entries on three seeds
+ok 20 - boss campaign world 02: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 1914.962084
+  type: 'test'
+  ...
+# Subtest: boss campaign world 03: open routes and natural reserve entries on three seeds
+ok 21 - boss campaign world 03: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 2775.772292
+  type: 'test'
+  ...
+# Subtest: boss campaign world 04: open routes and natural reserve entries on three seeds
+ok 22 - boss campaign world 04: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 1989.078667
+  type: 'test'
+  ...
+# Subtest: boss campaign world 05: open routes and natural reserve entries on three seeds
+ok 23 - boss campaign world 05: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 1862.721584
+  type: 'test'
+  ...
+# Subtest: boss campaign world 06: open routes and natural reserve entries on three seeds
+ok 24 - boss campaign world 06: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 2814.703208
+  type: 'test'
+  ...
+# Subtest: boss campaign world 07: open routes and natural reserve entries on three seeds
+ok 25 - boss campaign world 07: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 2012.044125
+  type: 'test'
+  ...
+# Subtest: boss campaign world 08: open routes and natural reserve entries on three seeds
+ok 26 - boss campaign world 08: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 1870.953375
+  type: 'test'
+  ...
+# Subtest: boss campaign world 09: open routes and natural reserve entries on three seeds
+ok 27 - boss campaign world 09: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 2789.490709
+  type: 'test'
+  ...
+# Subtest: boss campaign world 10: open routes and natural reserve entries on three seeds
+ok 28 - boss campaign world 10: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 1991.643875
+  type: 'test'
+  ...
+# Subtest: boss campaign world 11: open routes and natural reserve entries on three seeds
+ok 29 - boss campaign world 11: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 1867.858625
+  type: 'test'
+  ...
+# Subtest: boss campaign world 12: open routes and natural reserve entries on three seeds
+ok 30 - boss campaign world 12: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 2812.743167
+  type: 'test'
+  ...
+# Subtest: boss campaign world 13: open routes and natural reserve entries on three seeds
+ok 31 - boss campaign world 13: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 1997.056916
+  type: 'test'
+  ...
+# Subtest: boss campaign world 14: open routes and natural reserve entries on three seeds
+ok 32 - boss campaign world 14: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 1857.997292
+  type: 'test'
+  ...
+# Subtest: boss campaign world 15: open routes and natural reserve entries on three seeds
+ok 33 - boss campaign world 15: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 2787.193791
+  type: 'test'
+  ...
+# Subtest: boss campaign world 16: open routes and natural reserve entries on three seeds
+ok 34 - boss campaign world 16: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 2010.283042
+  type: 'test'
+  ...
+# Subtest: boss campaign world 17: open routes and natural reserve entries on three seeds
+ok 35 - boss campaign world 17: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 1906.695875
+  type: 'test'
+  ...
+# Subtest: boss campaign world 18: open routes and natural reserve entries on three seeds
+ok 36 - boss campaign world 18: open routes and natural reserve entries on three seeds
+  ---
+  duration_ms: 2785.209416
+  type: 'test'
+  ...
+# Subtest: boss campaign route coverage
+ok 37 - boss campaign route coverage
+  ---
+  duration_ms: 0.091083
+  type: 'test'
+  ...
+# {"worlds":54,"seeds":[1,96,2026],"reachableTargets":13740,"firstBossHp":600,"lastBossHp":12000}
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 69170.012

@@ -209,6 +209,19 @@ node tools/proof/reference-check.mjs /tmp/p.json
 intégré) ; `tools/platform-math.mjs` mesure la sensibilité des mondes, des
 points de reprise et des rejeux à la plateforme.
 
+Depuis T4, `checks/campaign-world.test.mjs` compare aussi les 108 mondes de
+campagne (V1 et V2, 18 mondes pour chacune des graines 1, 96 et 2026) à leurs
+empreintes dorées, `checks/campaign-world-digests.json` : SHA-256 de
+`JSON.stringify(monde)`, comme `digest()` du test. Tout nombre changé et tout
+champ ajouté dans un monde de campagne fait échouer sa boucle (MURS-06).
+`node tools/platform-math.mjs worlds . --fixture check` compare les mondes de la
+racine au fichier, et `--fixture write` le réécrit. L'écriture n'est possible
+qu'avec un `world.js` qui prend sa trigonométrie dans `FMath`, et seulement si
+les six mondes classiques du même passage égalent les `legacyHashes` du test.
+Seul un changement voulu de la génération justifie de régénérer le fichier, dans
+le commit qui fait ce changement et qui dit pourquoi ; jamais pour faire passer
+un test.
+
 ## Limites de la livraison T1
 
 Aucun rendu WebGL, navigateur, téléphone, écran à fréquence élevée ou matériel

@@ -56,7 +56,7 @@ Le titre public et le dépôt GitHub sont **METAL** (`M4D135/METAL`). Les API `F
 
 Le shell lance les nouvelles parties en campagne. L’ancienne enveloppe version 2 sélectionne explicitement le mode classique. Le cache de deux mondes inclut mode/graine/index dans sa clé ; audio, ambiance et MOD utilisent `world.stage`. La fin de campagne appartient à l’index 17. Les trois anciens biomes sont réutilisés, sans introduire dix-huit décors différents.
 
-`world.campaignProfile` fixe garnison, plafond nominal, quotas d’explosifs et facteur de PV boss. Les pourcentages de garnison sont35/45/55/70/85/100, appliqués aux anciens120/140/170 et arrondis avec des entiers. Ces totaux incluent boss, six renforts et éventuels trois gardes de trophée. Les nouveaux contrôles comparent aussi six empreintes complètes du mode classique.
+`world.campaignProfile` fixe garnison, plafond nominal, quotas d’explosifs et facteur de PV boss. Les pourcentages de garnison sont35/45/55/70/85/100, appliqués aux anciens120/140/170 et arrondis avec des entiers. Ces totaux incluent boss, six renforts et éventuels trois gardes de trophée. Les nouveaux contrôles comparent aussi six empreintes complètes du mode classique et, depuis le lot 01 suite (T4), celles des 108 mondes de campagne V1 et V2 des graines 1, 96 et 2026 (`checks/campaign-world-digests.json`).
 
 ## Monde et circulation
 
