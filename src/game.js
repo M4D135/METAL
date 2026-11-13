@@ -14,7 +14,7 @@
   const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
   let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'],ammoNames=['balles','cartouches','roquettes','grenades','balles'];
-  const worldCache=new Map();let preparationSerial=0,shieldLift=0;
+  const worldCache=new Map();let preparationSerial=0;
   let titleGesture=false,titleReady=false,titlePending=null,titleSerial=0,titleWaiting=false,titleBlocked=false,windowFocused=document.hasFocus?.()!==false;
   const actorMotion=new Map(),systemMotion=new Map();
   const keys=new Set(),input={moveX:0,moveY:0,lookX:0,lookY:0,fire:false,fireLeft:false,dash:false,pulse:false,melee:false,interact:false,weapon:0,sprint:false,assist:touch};
@@ -25,7 +25,7 @@
   function clearFireIntents(){firePressed=fireLeftPressed=false;}
   function pressFire(left=false){
     const weapon=left?sim?.state.equipment?.left:selectedWeapon;
-    // The shield remains a held guard; only firearms keep a pending press.
+    // Only firearms keep a pending press; a held left hand simply keeps firing.
     if(!Number.isInteger(weapon))return;
     if(left){fireLeftPressed=true;fireLeftPressAt=performance.now();fireLeftWeapon=weapon;}
     else{firePressed=true;firePressAt=performance.now();fireWeapon=weapon;}
@@ -39,11 +39,10 @@
     if(value.economy&&!economy)return null;const five=inventory?.weapons?.length===5,caps=economy?FEconomy.ammoCaps(economy,{campaign:five}):[180,36,12,16,1];
     if(!inventory||!Array.isArray(inventory.weapons)||![3,4,5].includes(inventory.weapons.length)||(five?!inventory.weapons.some(Boolean):!inventory.weapons[0])||!Array.isArray(inventory.ammo)||inventory.ammo.length!==inventory.weapons.length)return null;
     for(let i=0;i<inventory.weapons.length;i++)if(typeof inventory.weapons[i]!=='boolean'||!Number.isInteger(inventory.ammo[i])||inventory.ammo[i]<0||inventory.ammo[i]>(caps[i]??16))return null;
-    if((inventory.weapons.length>=4||inventory.shield!==undefined)&&typeof inventory.shield!=='boolean')return null;
     const campaign=value.campaign===undefined?null:FSimulation.copyCampaign?.(value.campaign,inventory);if(value.campaign!==undefined&&!campaign)return null;
-    let equipment;if(value.equipment){const q=value.equipment,left=q.left??null;if(!Number.isInteger(q.right)||!inventory.weapons[q.right]||left!==null&&left!=='shield'&&(!Number.isInteger(left)||!inventory.weapons[left]||left===q.right)||left==='shield'&&!inventory.shield||q.shieldEnergy!==undefined&&(!Number.isFinite(q.shieldEnergy)||q.shieldEnergy<0||q.shieldEnergy>100))return null;equipment={right:q.right,left,shieldEnergy:q.shieldEnergy??100};}
-    const armor=value.armor===undefined?null:FSimulation.copyArmor?.(value.armor,inventory.shield&&equipment?.left==='shield'?200:100);if(value.armor!==undefined&&!armor)return null;
-    return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice(),...(inventory.shield!==undefined?{shield:inventory.shield}:{})},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
+    let equipment;if(value.equipment){const q=value.equipment,left=q.left==='shield'?null:q.left??null;if(!Number.isInteger(q.right)||!inventory.weapons[q.right]||left!==null&&(!Number.isInteger(left)||!inventory.weapons[left]||left===q.right))return null;equipment={right:q.right,left};}
+    const armor=value.armor===undefined?null:FSimulation.copyArmor?.(value.armor,100);if(value.armor!==undefined&&!armor)return null;
+    return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
   }
   function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision){const key=(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;if(!worldCache.has(key)){worldCache.set(key,FWorld.create(worldSeed,n,campaign?{campaign:true,campaignVersion:revision}:undefined));while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);}return worldCache.get(key);}
   const titleScreen=()=>mode==='menu'||mode==='options';
@@ -133,7 +132,7 @@
     $('music-title').textContent=trackLabel();
     const software=renderer?.stats.backend==='canvas2d';
     $('bloom-toggle').disabled=software;$('graphics-hint').textContent=software?'Rendu CPU de secours : WebGL 2 est indisponible dans ce navigateur. Auto adapte la résolution ; les ombres restent réglables.':'Rendu GPU · WebGL 2. Auto adapte la résolution à la fluidité. Haute augmente la portée et la précision. Les réglages sont appliqués immédiatement.';
-    if(!touch)$('help-text').innerHTML=bindingLabel('forward')+' / '+bindingLabel('left')+' / '+bindingLabel('back')+' / '+bindingLabel('right')+' : déplacer · Souris : viser<br>Clic / '+bindingLabel('fire')+' : tirer · '+bindingLabel('weapon1')+' / '+bindingLabel('weapon2')+' / '+bindingLabel('weapon3')+' / '+bindingLabel('weapon4')+' / '+bindingLabel('weapon5')+' : armes trouvées<br>Clic droit / '+bindingLabel('fireLeft')+' : main gauche · '+bindingLabel('leftHand')+' : équipement gauche<br>'+bindingLabel('interact')+' : commandes et ascenseurs · '+bindingLabel('pulse')+' : onde défensive<br>'+bindingLabel('melee')+' : coup de crosse · '+bindingLabel('dash')+' : esquive / coup de bouclier<br>'+bindingLabel('sprint')+' : courir · '+bindingLabel('map')+' : carte · Échap : pause';
+    if(!touch)$('help-text').innerHTML=bindingLabel('forward')+' / '+bindingLabel('left')+' / '+bindingLabel('back')+' / '+bindingLabel('right')+' : déplacer · Souris : viser<br>Clic / '+bindingLabel('fire')+' : tirer · '+bindingLabel('weapon1')+' / '+bindingLabel('weapon2')+' / '+bindingLabel('weapon3')+' / '+bindingLabel('weapon4')+' / '+bindingLabel('weapon5')+' : armes trouvées<br>Clic droit / '+bindingLabel('fireLeft')+' · '+bindingLabel('leftHand')+' : changer d’arme gauche<br>'+bindingLabel('interact')+' : commandes et ascenseurs · '+bindingLabel('pulse')+' : onde défensive<br>'+bindingLabel('melee')+' : coup de crosse · '+bindingLabel('dash')+' : esquive<br>'+bindingLabel('sprint')+' : courir · '+bindingLabel('map')+' : carte · Échap : pause';
     const silent=[['musicVolume','Musique coupée'],['effectsVolume','Effets coupés'],['ambienceVolume','Ambiances coupées']].filter(([key])=>prefs[key]===0).map(([,label])=>label);
     $('audio-status').textContent=muted||prefs.masterVolume===0?'Son coupé. Activez le son et le volume général pour écouter.':silent.length?silent.join(' · ')+'. Réglez les curseurs pour les entendre.':'Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.';
     document.body.classList.toggle('low-motion',!softMotion);audio.setMix?.({master:prefs.masterVolume,music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});audioGate();syncTitle();saveSettings();renderBindings();
@@ -241,7 +240,7 @@
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;
-    motion.reset();leftMotion.reset();shieldLift=0;lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
+    motion.reset();leftMotion.reset();lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
     soundscape.reset();audio.setStage?.(world.stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
     $('music-title').textContent=trackLabel();
     $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaignVersion===2?(stage<6?'Équipement '+(stage+1)+' / 6':'Assaut '+(stage-5)+' / 12')+' · ':world.campaign?world.chapterTitle+' · ':'')+world.title;
@@ -274,7 +273,7 @@
   }
   function start(message){
     titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode(document.hidden||!windowFocused?'paused':'playing');if(mode==='playing'){lock();canvas.focus({preventScroll:true});}
-    toast(message||(world.campaignVersion===2&&stage===0?'Pistolet + bouclier · clic droit : garde. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 4.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
+    toast(message||(world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
   function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode){
@@ -313,11 +312,10 @@
       }
       const handMotion=e.hand==='left'?leftMotion:motion;
       if(e.name==='rocket'||e.name==='grenadeLaunch'){if(e.owner==='player')handMotion.impulse('rocket');}
-      else if(e.name==='shieldBash')leftMotion.impulse('melee');
       else if(e.name==='explosion'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.y??p.y)-p.y,(e.z??p.z)-p.z);motion.impulse('blast',clamp(1-d/14,0,1));leftMotion.impulse('blast',clamp(1-d/14,0,1));}
       else handMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
       const sound=e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
-      if(e.name!=='win'&&typeof audio[sound]==='function'&&!((e.name==='weaponPickup'||e.name==='shieldPickup'||e.name==='lootPickup')&&trophyIds.has(e.id))){
+      if(e.name!=='win'&&typeof audio[sound]==='function'&&!((e.name==='weaponPickup'||e.name==='lootPickup')&&trophyIds.has(e.id))){
         const mix=soundscape.event(sim,e);if(mix.level>.0001)audio[sound](mix);
       }
       if(e.name==='core'){
@@ -338,8 +336,7 @@
       if(e.name==='shopOpen'){currentShopId=e.id;setMode('shop');renderShop();}
       if(e.name==='ammoPickup')toast('+'+e.amount+' '+ammoNames[e.weapon]+' · '+weaponNames[e.weapon],1.8);
       if(e.name==='weaponPickup'){if(selectedWeapon!==sim.state.weapon)clearFireIntents();selectedWeapon=sim.state.weapon;motion.impulse('switch');if(!trophyIds.has(e.id))toast(weaponNames[e.weapon].toUpperCase()+' RÉCUPÉRÉE'+(e.amount?' · +'+e.amount+' '+ammoNames[e.weapon]:''),3);checkpointDue=true;}
-      if(e.name==='shieldPickup'){if(!trophyIds.has(e.id))toast(touch?'BOUCLIER EN MAIN GAUCHE · GARDE : protéger · flèche : frapper':'BOUCLIER EN MAIN GAUCHE · clic droit : garde · Espace : frappe',4);checkpointDue=true;}
-      if(e.name==='trophy'){encounter(e.label|| (e.shield?'Bouclier':weaponNames[e.weapon]),e.usage||'NOUVEL ÉQUIPEMENT · PRÉPAREZ-VOUS À L’ÉPREUVE');encounterTime=Math.max(3,e.grace||3);checkpointDue=true;}
+      if(e.name==='trophy'){encounter(e.label||weaponNames[e.weapon],e.usage||'NOUVEL ÉQUIPEMENT · PRÉPAREZ-VOUS À L’ÉPREUVE');encounterTime=Math.max(3,e.grace||3);checkpointDue=true;}
       if(e.name==='trophyComplete'){toast('ÉPREUVE RÉUSSIE · équipement maîtrisé · point de reprise',3);checkpointDue=true;}
       if(e.name==='empty')toast('MUNITIONS ÉPUISÉES · cherchez des réserves'+(touch?' · bouton Crosse':(' · '+bindingLabel('melee')+' : crosse')),2.1);
       if(e.name==='waveStart'){const c=sim.state.encounters?.find(c=>c.id===e.id),wave=c?Math.max(c.wave,c.pendingWave)+1:e.wave;toast((e.label||'RENFORTS')+' · VAGUE '+wave+' / '+(c?.waves?.length||e.total),2.7);}
@@ -361,7 +358,7 @@
     $('shop-title').textContent=shop?.name||'Atelier';$('shop-credits').textContent=String(profile?.credits||0);$('shop-cores').textContent=String(profile?.cores||0);
     $('shop-health').textContent=Math.ceil(sim.state.player.hp)+' / '+stats.maxHp;$('shop-build').textContent='Blindage '+Math.round((1-(stats.incomingMultiplier??1))*100)+' % · Puissance +'+Math.round(((stats.damageMultiplier??1)-1)*100)+' % · Capacité '+(sim.ammoCaps||[180,36,12]).join(' / ');
     $('shop-status').textContent=message||(!offers?'Approchez-vous d’un atelier pour acheter.':'Les crédits et noyaux se récupèrent sur les machines. Les achats sont définitifs dans ce point de reprise.');
-    $('shop-offers').innerHTML=(offers||[]).map(q=>{const item=q.item||q,label=item.label||item.id,cost=q.cost||{credits:0,cores:0},price=!q.ok&&!cost.credits&&!cost.cores?'—':cost.credits+' CR'+(cost.cores?' + '+cost.cores+' NOYAU'+(cost.cores>1?'X':''):''),rank=item.kind==='upgrade'?'RANG '+(q.rank||0)+' / '+(item.maxRank||3):item.kind==='repair'?'RÉPARATION':(item.kind==='weapon'||item.kind==='shield')?'ÉQUIPEMENT':'RAVITAILLEMENT';return '<article class="shop-card '+(!q.ok?'unavailable':'')+'"><span class="shop-category">'+rank+'</span><h3>'+label+'</h3><p>'+item.description+'</p><div class="shop-purchase"><strong>'+price+'</strong><button id="buy-'+item.id+'" '+(!q.ok?'disabled':'')+' aria-label="Acheter '+label+'">'+(q.ok?'ACHETER':q.message||'INDISPONIBLE')+'</button></div></article>';}).join('');
+    $('shop-offers').innerHTML=(offers||[]).map(q=>{const item=q.item||q,label=item.label||item.id,cost=q.cost||{credits:0,cores:0},price=!q.ok&&!cost.credits&&!cost.cores?'—':cost.credits+' CR'+(cost.cores?' + '+cost.cores+' NOYAU'+(cost.cores>1?'X':''):''),rank=item.kind==='upgrade'?'RANG '+(q.rank||0)+' / '+(item.maxRank||3):item.kind==='repair'?'RÉPARATION':item.kind==='weapon'?'ÉQUIPEMENT':'RAVITAILLEMENT';return '<article class="shop-card '+(!q.ok?'unavailable':'')+'"><span class="shop-category">'+rank+'</span><h3>'+label+'</h3><p>'+item.description+'</p><div class="shop-purchase"><strong>'+price+'</strong><button id="buy-'+item.id+'" '+(!q.ok?'disabled':'')+' aria-label="Acheter '+label+'">'+(q.ok?'ACHETER':q.message||'INDISPONIBLE')+'</button></div></article>';}).join('');
     for(const q of offers||[]){const id=(q.item||q).id;$('buy-'+id).addEventListener('click',()=>{const result=sim.buy?.(currentShopId,id);if(result?.ok){events();saveCheckpoint();renderHUD();renderShop((q.item||q).label+' · achat enregistré.');}else renderShop(result?.message||result?.reason||'Achat indisponible.');});}
   }
   function systemsReady(){return (sim.state.mechanisms||[]).every(a=>!a.required||a.active);}
@@ -511,9 +508,6 @@
       part('bevel',[0,.035,0],[.38,.38,.14],1);part('bevel',[0,-.18,.012],[.25,.12,.13],0);
       for(const side of [-1,1]){part('bevel',[side*.23,.17,0],[.16,.11,.18],1);part('box',[side*.13,.04,-.077],[.026,.25,.016],4,0,.65);}
       part('octa',[0,.06,-.085],[.075,.09,.035],4,0,.85);return;
-    }
-    if(kind==='shield'){
-      part('bevel',[0,.05,0],[.43,.6,.06],4,0,.5);for(const side of [-1,1])part('bevel',[side*.215,.05,.02],[.04,.47,.06],0);part('ring',[0,.05,.05],[.18,.035,.18],1,Math.PI/2);part('box',[0,-.1,.09],[.08,.21,.06]);return;
     }
     if(kind==='weapon'){
       if(weapon===2){
@@ -687,18 +681,6 @@
       }
       drawGun(s.weapon,1);
       if(Number.isInteger(left))drawGun(left,-1);
-      else if(left==='shield'){
-        const guard=shieldLift,energy=clamp((s.shield?.energy??100)/100,0,1),bash=clamp((s.shield?.bashVisual||0)/.35,0,1),pose=leftMotion.view.weapon;
-        // Keep the guard beside the right-hand assembly. Its former tall frame
-        // crossed both the sight line and the firearm when raised.
-        const narrow=clamp((innerWidth/innerHeight)/1.2,.45,1),thrust=Math.sin(bash*Math.PI),right=motion.view.weapon;
-        const clearance=Math.max(0,-right.offset[0])+.6*Math.abs(right.rotation[1])+.3*Math.abs(right.rotation[2]);
-        const mount=FMotion.mount(camera,[-.48+guard*.09-(1-narrow)*.11-thrust*.08-clearance+pose.offset[0]*.18,-.43+guard*.45+pose.offset[1]*.35,-.82-guard*.16-thrust*.24],[pose.rotation[0]*.2,-.26*(1-guard),.10*(1-guard)]),color=energy<.25?[1,.42,.12]:[.12,.7,.85];
-        function shieldPart(shape,point,size,mat,alpha,rotation=0){const q=FMotion.place(mount,point,rotation),part=m(shape,q.p,size,mat,q.r,alpha!==undefined?.22:.04);part.overlay=true;part.surface='object';if(alpha!==undefined){part.fx=true;part.alpha=alpha;part.color=color;}out.push(part);}
-        shieldPart('bevel',[0,0,0],[.52,.66,.035],7,.08+energy*.07+guard*.035);
-        for(const side of [-1,1]){shieldPart('bevel',[side*.25,0,.019],[.026,.64,.035],0);shieldPart('box',[side*.25,0,-.006],[.008,.45,.008],4,.4+energy*.3);shieldPart('bevel',[0,side*.315,.019],[.52,.026,.035],0);}
-        shieldPart('ring',[0,-.09,.026],[.13,.018,.13],4,.2+energy*.2,Math.PI/2);shieldPart('bevel',[-.025,-.20,.11],[.14,.10,.18],7);shieldPart('bevel',[-.10,-.32,.16],[.13,.22,.16],0);
-      }
     }
     return out;
   }
@@ -709,7 +691,7 @@
     $('health-state').textContent=healthRatio<.25?'INTÉGRITÉ CRITIQUE':healthRatio<.55?'STRUCTURE ENDOMMAGÉE':'SYSTÈMES OPÉRATIONNELS';$('health-panel').classList.toggle('critical',healthRatio<.25);$('armor-rating').textContent='BLINDAGE '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';
     const armor=s.armor;
     $('armor-pool').hidden=!armor;$('health-state').hidden=!!armor;$('armor-rating').hidden=!!armor;
-    if(armor){$('armor-points').textContent=String(Math.ceil(armor.points));$('armor-cap').textContent='/ '+armor.capacity;$('armor-bar').style.width=clamp(armor.points/armor.capacity*100,0,100)+'%';$('armor-pool').title='Plaques à ramasser · absorbe un tiers des dégâts après la garde · blindage passif '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';$('armor-pool').setAttribute('aria-label','Armure : '+Math.ceil(armor.points)+' sur '+armor.capacity);document.body.dataset.armor=String(Math.ceil(armor.points));}
+    if(armor){$('armor-points').textContent=String(Math.ceil(armor.points));$('armor-cap').textContent='/ '+armor.capacity;$('armor-bar').style.width=clamp(armor.points/armor.capacity*100,0,100)+'%';$('armor-pool').title='Plaques à ramasser · absorbe un tiers des dégâts · blindage passif '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';$('armor-pool').setAttribute('aria-label','Armure : '+Math.ceil(armor.points)+' sur '+armor.capacity);document.body.dataset.armor=String(Math.ceil(armor.points));}
     $('wallet-credits').textContent=String(s.economy?.credits||0);$('wallet-cores').textContent=String(s.economy?.cores||0);
     $('heat-bar').style.width=p.heat*100+'%';$('heat-bar').style.background=p.overheated?'#ff795e':s.weapon===2?'#ee8d5d':s.weapon===1?'#e8ad66':'#6ce5d2';
     const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0;$('weapon-label').textContent=weaponNames[s.weapon].toUpperCase()+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
@@ -717,7 +699,7 @@
     $('ammo-count').textContent=infinite?'∞':limited?String(ammo??0).padStart(2,'0'):'—';$('ammo-unit').textContent=ammoNames[s.weapon].toUpperCase();$('ammo-cap').textContent=infinite?'ILLIMITÉES':limited?'/ '+sim.ammoCaps[s.weapon]:'RÉSERVE';
     $('weapon-readout').classList.toggle('empty',!infinite&&limited&&ammo===0);$('heat-status').textContent=p.overheated?'REFROIDISSEMENT':!infinite&&limited&&ammo===0?'RÉSERVE ÉPUISÉE':'CHALEUR';
     $('arsenal-count').textContent=owned.filter(Boolean).length+' / '+owned.length;
-    const left=s.equipment?.left??null,shield=left==='shield';
+    const left=s.equipment?.left??null;
     $('weapon-slots').style.gridTemplateColumns='repeat('+(world.campaign?Math.max(1,owned.filter(Boolean).length):4)+',minmax(0,1fr))';
     for(let i=0;i<5;i++){
       const slot=$('weapon-slot-'+i),unlimited=world.campaign&&i===4;slot.hidden=i>=owned.length||!!world.campaign&&!owned[i];slot.disabled=!owned[i];slot.classList.toggle('locked',!owned[i]);slot.classList.toggle('selected',i===s.weapon);slot.setAttribute('aria-pressed',String(i===s.weapon));
@@ -726,13 +708,13 @@
       $('slot-ammo-'+i).textContent=owned[i]?(unlimited?'∞':limited?String(inventory.ammo[i]):'PRÊTE'):'À TROUVER';$('slot-key-'+i).textContent=FOptions.keyName(prefs.bindings['weapon'+(i+1)]?.[0]||'Digit'+(i+1));
       $('left-option-'+i).disabled=!owned[i]||i===s.weapon;$('left-option-'+i).hidden=slot.hidden;
     }
-    $('left-option-shield').disabled=!inventory?.shield;$('left-hand-setting').disabled=!sim.selectLeftWeapon;$('left-hand-setting').value=left===null?'none':String(left);
-    $('left-hand-key').textContent=FOptions.keyName(prefs.bindings.leftHand[0]);$('left-hand-stock').textContent=shield?'GARDE '+Math.ceil(s.shield?.energy??100)+' %':world.campaign&&left===4?'∞ BALLES':Number.isInteger(left)?String(inventory.ammo[left])+' '+ammoNames[left]:'LIBRE';
-    $('left-hand-status').textContent=shield?(s.shield?.raised?'GARDE LEVÉE':(s.shield?.energy??100)<1?'BOUCLIER ÉPUISÉ':(touch?'GARDE · MAINTENIR':'CLIC DROIT · GARDE')):left!==null?(touch?'TIR G · MAINTENIR':'CLIC DROIT · TIR'):(touch?'CHOISISSEZ UN ÉQUIPEMENT':'X · CHANGER');
-    $('shield-meter').hidden=!shield;$('shield-energy').style.width=(s.shield?.energy??100)+'%';$('left-fire-button').disabled=left===null;$('left-fire-button').setAttribute('aria-label',shield?'Maintenir le bouclier':'Tirer avec la main gauche');$('left-fire-label').textContent=shield?'GARDE':'TIR G';
-    $('dash-button').setAttribute('aria-label',shield?'Coup de bouclier':'Esquiver');
+    $('left-hand-setting').disabled=!sim.selectLeftWeapon;$('left-hand-setting').value=left===null?'none':String(left);
+    $('left-hand-key').textContent=FOptions.keyName(prefs.bindings.leftHand[0]);$('left-hand-stock').textContent=world.campaign&&left===4?'∞ BALLES':Number.isInteger(left)?String(inventory.ammo[left])+' '+ammoNames[left]:'LIBRE';
+    $('left-hand-status').textContent=left!==null?(touch?'TIR G · MAINTENIR':'CLIC DROIT · TIR'):(touch?'CHOISISSEZ UN ÉQUIPEMENT':'X · CHANGER');
+    $('left-fire-button').disabled=left===null;$('left-fire-button').setAttribute('aria-label','Tirer avec la main gauche');$('left-fire-label').textContent='TIR G';
+    $('dash-button').setAttribute('aria-label','Esquiver');
     $('melee-label').textContent=FOptions.keyName(prefs.bindings.melee[0]).toUpperCase()+' · CROSSE';
-    const bashWait=s.shield?.bashCooldown||0;$('dash-label').textContent=shield?(bashWait>0?'BOUCLIER · '+bashWait.toFixed(1)+' s':FOptions.keyName(prefs.bindings.dash[0]).toUpperCase()+' · COUP DE BOUCLIER'):p.dash>0?'ESQUIVE · '+p.dash.toFixed(1)+' s':FOptions.keyName(prefs.bindings.dash[0]).toUpperCase()+' · ESQUIVE PRÊTE';$('dash-button').style.opacity=(shield?bashWait>0:p.dash>0)?'.35':'1';
+    $('dash-label').textContent=p.dash>0?'ESQUIVE · '+p.dash.toFixed(1)+' s':FOptions.keyName(prefs.bindings.dash[0]).toUpperCase()+' · ESQUIVE PRÊTE';$('dash-button').style.opacity=p.dash>0?'.35':'1';
     const pulse=p.pulseCooldown||0;$('pulse-label').textContent=pulse>0?'ONDE · '+pulse.toFixed(1)+' s':FOptions.keyName(prefs.bindings.pulse[0]).toUpperCase()+' · ONDE PRÊTE';$('pulse-button').style.opacity=pulse>0?'.35':'1';
     $('relay-count').textContent=s.relays+' / 3';$('relays').querySelectorAll('i').forEach((el,i)=>el.classList.toggle('on',i<s.relays));
     const required=(s.mechanisms||[]).filter(a=>a.required),activated=required.filter(a=>a.active).length,operational=activated===required.length;
@@ -757,7 +739,7 @@
     document.body.dataset.ammo=String(ammo??0);
     const supply=[...s.pickups,...(s.loot||[])].filter(c=>supplyVisible(c)&&Math.abs((c.y||0)-p.y)<1.1&&Math.hypot(c.x-p.x,c.z-p.z)<3.7).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z)).find(c=>{const a=[p.x,p.y+1.3,p.z],b=[c.x,(c.y||0)+.4,c.z],d=b.map((v,i)=>v-a[i]),length=Math.hypot(...d)||1;return sim.ray(a,d.map(v=>v/length),length)>=length-.2;});
     $('supply-hint').hidden=!supply;
-    if(supply){const kind=supply.kind||supply.type||'health',weapon=supply.weapon||0,salvage=kind==='salvage'||kind==='boss',full=kind==='shield'?!!inventory?.shield:kind==='health'?p.hp>=maxHp:kind==='armor'?!s.armor||s.armor.points>=s.armor.capacity:salvage?supply.rewardTaken!==false&&!supply.credits&&!supply.cores&&(!supply.armor||!s.armor||s.armor.points>=s.armor.capacity)&&supply.ammo.every((n,i)=>!n||(inventory?.ammo[i]??0)>=sim.ammoCaps[i]):kind==='weapon'&&!owned[weapon]?false:inventory?.ammo[weapon]>=sim.ammoCaps?.[weapon];$('supply-name').textContent=kind==='armor'?'PLAQUES D’ARMURE':kind==='shield'?'BOUCLIER':kind==='weapon'?weaponNames[weapon].toUpperCase():kind==='ammo'?ammoNames[weapon].toUpperCase():kind==='boss'?'BUTIN DU COLOSSE':salvage?'FERRAILLE & RÉSERVES':'INTÉGRITÉ';$('supply-detail').textContent=supply.rewardTaken===false?[Number.isInteger(supply.weapon)?weaponNames[supply.weapon]:'',supply.weaponUpgradeLabel,supply.personalUpgradeLabel].filter(Boolean).join(' · '):full?'RÉSERVE AU MAXIMUM':kind==='weapon'&&!owned[weapon]?'ARME À RÉCUPÉRER':'AVANCEZ POUR RAMASSER';}
+    if(supply){const kind=supply.kind||supply.type||'health',weapon=supply.weapon||0,salvage=kind==='salvage'||kind==='boss',full=kind==='health'?p.hp>=maxHp:kind==='armor'?!s.armor||s.armor.points>=s.armor.capacity:salvage?supply.rewardTaken!==false&&!supply.credits&&!supply.cores&&(!supply.armor||!s.armor||s.armor.points>=s.armor.capacity)&&supply.ammo.every((n,i)=>!n||(inventory?.ammo[i]??0)>=sim.ammoCaps[i]):kind==='weapon'&&!owned[weapon]?false:inventory?.ammo[weapon]>=sim.ammoCaps?.[weapon];$('supply-name').textContent=kind==='armor'?'PLAQUES D’ARMURE':kind==='weapon'?weaponNames[weapon].toUpperCase():kind==='ammo'?ammoNames[weapon].toUpperCase():kind==='boss'?'BUTIN DU COLOSSE':salvage?'FERRAILLE & RÉSERVES':'INTÉGRITÉ';$('supply-detail').textContent=supply.rewardTaken===false?[Number.isInteger(supply.weapon)?weaponNames[supply.weapon]:'',supply.weaponUpgradeLabel,supply.personalUpgradeLabel].filter(Boolean).join(' · '):full?'RÉSERVE AU MAXIMUM':kind==='weapon'&&!owned[weapon]?'ARME À RÉCUPÉRER':'AVANCEZ POUR RAMASSER';}
     const bossTarget=s.relays===3&&operational&&boss;
     const targets=s.relays===3&&operational?[bossReward||bossTarget||world.exit]:[...required.filter(a=>!a.active),...s.cores.filter(c=>!c.taken)],target=targets.reduce((a,c)=>!a||Math.hypot(c.x-p.x,c.z-p.z)<Math.hypot(a.x-p.x,a.z-p.z)?c:a,null);
     if(target){
@@ -846,7 +828,6 @@
     syncDestruction();
     const p=sim.state.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
     signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);leftMotion.update(mode==='playing'?dt:0,sim.state.locomotion||{},{...signals,firing:input.fireLeft},softMotion);
-    if(mode==='playing')shieldLift+=(Number(!!sim.state.shield?.raised)-shieldLift)*(1-Math.exp(-dt*18));
     const camera={pos:[p.x,(p.y||0)+1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch,roll:isPlay?view.roll:0,fov:prefs.fov+(isPlay?view.fov:0)};
     if(mode==='menu'||mode==='options'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=(world.spawn.y||0)+1.72;}
     renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,shadows:prefs.shadows,bloom:prefs.bloom,horror:sim.state.director,adaptive:mode==='playing'&&(!prefs.fpsLimit||prefs.fpsLimit>=60)&&document.hasFocus()});
@@ -870,7 +851,7 @@
   }
   function switchLeft(value){
     if(mode!=='playing'||!sim.selectLeftWeapon)return;
-    const inventory=sim.state.inventory,current=sim.state.equipment?.left??null,choices=[null,...inventory.weapons.flatMap((owned,i)=>owned&&i!==sim.state.weapon?[i]:[]),...(inventory.shield?['shield']:[])];
+    const inventory=sim.state.inventory,current=sim.state.equipment?.left??null,choices=[null,...inventory.weapons.flatMap((owned,i)=>owned&&i!==sim.state.weapon?[i]:[])];
     const next=value===undefined?choices[(choices.indexOf(current)+1)%choices.length]:value;
     if(!sim.selectLeftWeapon(next)){toast('Équipement indisponible pour la main gauche',1.8);renderHUD();return;}
     selectedWeapon=sim.state.weapon;clearFireIntents();leftMotion.impulse('switch');audio.switchWeapon?.();renderHUD();
@@ -923,7 +904,7 @@
   $('map-button').addEventListener('click',()=>{$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();});
   $('weapon-switch').addEventListener('click',()=>switchWeapon());
   for(let i=0;i<5;i++)$('weapon-slot-'+i).addEventListener('click',()=>switchWeapon(i));
-  $('left-hand-setting').addEventListener('change',()=>{const value=$('left-hand-setting').value;switchLeft(value==='none'?null:value==='shield'?'shield':Number(value));canvas.focus({preventScroll:true});});
+  $('left-hand-setting').addEventListener('change',()=>{const value=$('left-hand-setting').value;switchLeft(value==='none'?null:Number(value));canvas.focus({preventScroll:true});});
   $('shop-close').addEventListener('click',()=>{if(mode==='shop')togglePause();});
   $('reload').addEventListener('click',()=>location.reload());
   addEventListener('keydown',e=>{
@@ -998,7 +979,7 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
   addEventListener('resize',()=>renderer?.resize(quality));
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
-  if(touch){$('intro-controls').textContent='Déplacez-vous à gauche · Visez à droite';$('help-text').innerHTML='Joystick gauche : déplacer · Glisser à droite : viser<br>Grand cercle : main droite · TIR G / GARDE : main gauche<br>Flèche : esquive ou coup de bouclier<br>Anneaux : onde · Crosse : attaque au contact<br>Emplacement : main droite · Menu main gauche : arme ou bouclier<br>Bouton contextuel : commande ou ascenseur<br>Ramassez armes et munitions. Les réserves sont limitées.';}
+  if(touch){$('intro-controls').textContent='Déplacez-vous à gauche · Visez à droite';$('help-text').innerHTML='Joystick gauche : déplacer · Glisser à droite : viser<br>Grand cercle : main droite · TIR G : main gauche<br>Flèche : esquive<br>Anneaux : onde · Crosse : attaque au contact<br>Emplacement : main droite · Menu main gauche : arme de la main gauche<br>Bouton contextuel : commande ou ascenseur<br>Ramassez armes et munitions. Les réserves sont limitées.';}
   try{
     renderer=FRender.create(canvas);renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
     savedRun=readSave();refreshContinue();load(0);settings();requestAnimationFrame(frame);

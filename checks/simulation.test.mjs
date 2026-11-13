@@ -1798,16 +1798,16 @@ test('The actual three generated arenas cannot strand the player after a blast-s
   }
 });
 
-test('An already invalid player below terrain dies despite recovery, dash and a raised shield', () => {
-  const world = fallFixture({ progression: { version: 1, weaponSlots: 4, startShield: true } });
+test('An already invalid player below terrain dies despite recovery and dash', () => {
+  const world = fallFixture({ progression: { version: 1, weaponSlots: 4 } });
   for (const y of [-.25, -15]) {
     const sim = FSimulation.create(world), checkpoint = sim.snapshot();
     assert.equal(sim.restore(checkpoint, { recover: true }), true);
     const p = sim.state.player;
-    p.y = y; p.dashing = .2; sim.state.equipment.left = 'shield'; sim.state.shield.raised = true;
+    p.y = y; p.dashing = .2;
     sim.step(0, { fire: true, interact: true });
     assert.equal(p.hp, 0); assert.equal(sim.state.dead, true);
-    assert.equal(p.dashing, 0); assert.equal(sim.state.shield.raised, false);
+    assert.equal(p.dashing, 0);
     assert.equal(events(sim, 'dead').length, 1); assert.equal(events(sim, 'dead')[0].reason, 'fall');
     assert.equal(sim.state.shots, 0, 'The invalid position must be caught before shooting');
     assert.equal(sim.restore(checkpoint, { recover: true }), true); advance(sim, .5);

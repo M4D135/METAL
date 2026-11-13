@@ -90,14 +90,14 @@ function survivalWorld(seed,stage){
 const plain=value=>JSON.parse(JSON.stringify(value));
 
 function arsenalWorld(seed,stage){
-  const w=survivalWorld(seed,stage);return {...w,progression:{...w.progression,weaponSlots:4,startWeapons:[true,false,false,false],startAmmo:[48,0,0,0],ammoCaps:[180,36,12,16],startShield:false},
-    pickups:[...w.pickups,{id:'grenade-launcher',kind:'weapon',weapon:3,amount:5,x:9,y:0,z:0},{id:'shield',kind:'shield',amount:1,x:12,y:0,z:0}]};
+  const w=survivalWorld(seed,stage);return {...w,progression:{...w.progression,weaponSlots:4,startWeapons:[true,false,false,false],startAmmo:[48,0,0,0],ammoCaps:[180,36,12,16]},
+    pickups:[...w.pickups,{id:'grenade-launcher',kind:'weapon',weapon:3,amount:5,x:9,y:0,z:0}]};
 }
 function collectArsenal(app){const sim=app.simulations.at(-1);for(const x of [3,6,8,9,10,12]){sim.move(sim.state.player,x-sim.state.player.x,0);app.frame(100);}return sim;}
 
 function campaignShellWorld(seed, index, options) {
   const value = arsenalWorld(seed, options?.campaign ? index % 3 : index);
-  const gear = [{index:3,key:'shield',kind:'shield',amount:1},{index:6,key:'smg',kind:'weapon',weapon:0,amount:48},{index:9,key:'shotgun',kind:'weapon',weapon:1,amount:12},{index:12,key:'grenade',kind:'weapon',weapon:3,amount:6},{index:15,key:'rocket',kind:'weapon',weapon:2,amount:4}].find(q => q.index === index);
+  const gear = [{index:6,key:'smg',kind:'weapon',weapon:0,amount:48},{index:9,key:'shotgun',kind:'weapon',weapon:1,amount:12},{index:12,key:'grenade',kind:'weapon',weapon:3,amount:6},{index:15,key:'rocket',kind:'weapon',weapon:2,amount:4}].find(q => q.index === index);
   return options?.campaign ? { ...value, campaign: true, index, chapter: Math.floor(index / 3), chapterTitle: 'Chapitre ' + (Math.floor(index / 3) + 1),
     progression: { ...value.progression, weaponSlots: 5, startWeapons: [false, false, false, false, true], startAmmo: [0, 0, 0, 0, 1], ammoCaps: [180, 36, 12, 16, 1] },
     pickups: gear ? [{ ...gear, id: 'trophy-' + gear.key, trophyId: 'trophy-' + gear.key, x: 3, y: 0, z: 0 }] : [],
@@ -112,14 +112,14 @@ function advanceShellTo(app, index) { while (app.simulations.at(-1).state.world.
 function bossShellWorld(seed,index,options){
   const value=campaignShellWorld(seed,index,options);if(options?.campaignVersion!==2)return value;
   return {...value,campaignVersion:2,trophies:[],pickups:[],shops:[],
-    progression:{...value.progression,startShield:true},
+    progression:{...value.progression},
     enemies:[{x:0,y:0,z:-10,type:3,boss:true,bossScale:2,bossKind:'colossus',bossName:'Gardien de contrôle',maxHp:600,arena:{x:0,y:0,z:-10,r:28}}]};
 }
 
-test('V2 shell starts pistol and shield, shows physical boss rewards and resumes claimed upgrades exactly once',()=>{
+test('V2 shell starts a free left hand, shows physical boss rewards and resumes claimed upgrades exactly once',()=>{
   const app=harness(null,{},bossShellWorld);app.element('start').click();const sim=app.simulations.at(-1),s=sim.state;
-  assert.equal(s.world.campaignVersion,2);assert.equal(s.weapon,4);assert.equal(s.equipment.left,'shield');assert.equal(s.inventory.shield,true);
-  assert.equal(JSON.parse(app.memory.get(key)).campaignRevision,2);assert.match(app.element('toast').textContent,/Pistolet \+ bouclier/);
+  assert.equal(s.world.campaignVersion,2);assert.equal(s.weapon,4);assert.equal(s.equipment.left,null);assert.equal(s.inventory.shield,undefined);assert.equal(s.shield,undefined);
+  assert.equal(JSON.parse(app.memory.get(key)).campaignRevision,2);assert.match(app.element('toast').textContent,/Pistolet en main droite/);
   // A wounded-boss fixture isolates the real final shot, drop and shell flow.
   const boss=s.enemies[0];boss.hp=.2;s.player.pitch=Math.atan2(boss.y-(s.player.y+1.62),10);sim.fire();assert.equal(boss.hp,0);
   app.frame(100);const crate=s.loot.find(q=>q.kind==='boss');assert(crate&&crate.rewardTaken===false);assert.equal(s.inventory.weapons[1],false);
@@ -135,9 +135,9 @@ test('V2 shell starts pistol and shield, shows physical boss rewards and resumes
 
 test('V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world',()=>{
   const legacy=harness(null,{},campaignShellWorld);legacy.element('start').click();const saved=JSON.parse(legacy.memory.get(key));assert.equal(saved.campaignRevision,undefined);
-  const app=harness(saved,{},bossShellWorld);app.element('resume-expedition').click();assert.equal(app.simulations.at(-1).state.world.campaignVersion,undefined);assert.equal(app.simulations.at(-1).state.inventory.shield,false);
+  const app=harness(saved,{},bossShellWorld);app.element('resume-expedition').click();assert.equal(app.simulations.at(-1).state.world.campaignVersion,undefined);assert.equal(app.simulations.at(-1).state.inventory.shield,undefined);
   app.element('pause-main').click();app.element('start').click();const s=app.simulations.at(-1).state;
-  assert.equal(s.world.campaignVersion,2);assert.equal(s.inventory.shield,true);assert.equal(s.equipment.left,'shield');assert.equal(s.weapon,4);assert.equal(s.campaign.claimedBossRewards.length,0);
+  assert.equal(s.world.campaignVersion,2);assert.equal(s.inventory.shield,undefined);assert.equal(s.equipment.left,null);assert.equal(s.weapon,4);assert.equal(s.campaign.claimedBossRewards.length,0);
 });
 
 test('Victory fanfare begins after the result screen has stopped active gameplay voices',()=>{
@@ -150,7 +150,7 @@ function trophyShellWorld(seed,index,options) {
   const w=campaignShellWorld(seed,index,options),gift=w.pickups.find(q=>q.trophyId);if(!gift)return w;
   const encounterId='trial-'+gift.key,points=[-2,0,2].map(z=>({x:-13,y:0,z}));
   return {...w,shops:[],colliders:[{minX:-8,maxX:-7.5,minY:0,maxY:3,minZ:-5,maxZ:5}],
-    trophies:[{id:gift.id,key:gift.key,name:gift.kind==='shield'?'Bouclier':'Mitraillette',usage:'Enchaînez les rafales et surveillez la chauffe.',pickupId:gift.id,encounterId,grace:3,x:gift.x,y:0,z:0,...(gift.kind==='shield'?{shield:true}:{weapon:gift.weapon})}],
+    trophies:[{id:gift.id,key:gift.key,name:'Mitraillette',usage:'Enchaînez les rafales et surveillez la chauffe.',pickupId:gift.id,encounterId,grace:3,x:gift.x,y:0,z:0,weapon:gift.weapon}],
     enemies:points.map((q,id)=>({...q,type:0,id,encounterId,wave:0,deployed:false,role:'assault'})),
     encounters:[{id:encounterId,label:'Épreuve — équipement',trigger:{x:3,y:0,z:0,w:8,d:8},maxActive:3,leashRadius:40,spawnEntries:points,waves:[{enemyIds:[0,1,2]}],requiresTrophy:gift.id}],
   };
@@ -293,7 +293,7 @@ test('A real trophy discovery announces once, checkpoints grace, restores quietl
 test('Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together',()=>{
   const app=harness(null,{},arsenalWorld);app.element('start').click();app.frame(100);
   assert.equal(app.element('arsenal-count').textContent,'1 / 4');assert.equal(app.element('weapon-slot-3').disabled,true);
-  const sim=collectArsenal(app);assert.equal(app.element('arsenal-count').textContent,'4 / 4');assert.equal(sim.state.inventory.shield,true);
+  const sim=collectArsenal(app);assert.equal(app.element('arsenal-count').textContent,'4 / 4');assert.equal(sim.state.inventory.shield,undefined);
   app.element('weapon-slot-0').click();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
   assert.deepEqual(plain(sim.state.equipment),{right:0,left:1});assert.equal(app.element('slot-hand-1').textContent,'G');
   const before=sim.state.inventory.ammo.slice();
@@ -307,68 +307,76 @@ test('Four real weapon pickups feed the HUD and both mouse buttons fire independ
   const overlays=app.frames.at(-1).meshes.filter(m=>m.overlay);assert(overlays.length>50);for(const mesh of overlays)assert(mesh.p.concat(mesh.s,mesh.r).every(Number.isFinite));
 });
 
-test('Mouse and touch guard inputs raise the real translucent shield and Space bashes instead of dashing',()=>{
+test('Mouse and touch left inputs fire the paired weapon and Space always dashes',()=>{
   const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app);
-  assert.equal(sim.state.equipment.left,'shield');app.element('world').emit('mousedown',{button:2});app.frame(100);
-  assert.equal(sim.state.shield.raised,true);assert.equal(app.element('left-hand-status').textContent,'GARDE LEVÉE');
-  const shield=app.frames.at(-1).meshes.filter(m=>m.overlay&&m.fx&&m.alpha<.4);assert(shield.length>=1,'Shield panel must enter the translucent overlay renderer');
-  const charge=sim.state.shield.energy,ammo=sim.state.inventory.ammo.slice();app.key('Space');app.frame(100);app.key('Space',false);
-  assert.equal(sim.state.shield.energy,charge-24);assert(sim.state.shield.bashCooldown>0);assert.equal(sim.state.player.dash,0);assert.deepEqual(sim.state.inventory.ammo,ammo);
-  assert(app.sounds.some(q=>q.name==='shieldBash'));app.emit('mouseup',{button:2});app.frame(100);assert.equal(sim.state.shield.raised,false);
-  app.element('left-fire-button').emit('pointerdown',{pointerId:8});app.frame(100);assert.equal(sim.state.shield.raised,true);
-  app.element('left-fire-button').emit('lostpointercapture');app.frame(100);assert.equal(sim.state.shield.raised,false);
-  app.element('left-hand-setting').value='none';app.element('left-hand-setting').emit('change');app.key('Space');app.frame(100);app.key('Space',false);assert(sim.state.player.dash>0);
+  app.element('weapon-slot-0').click();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
+  assert.equal(sim.state.equipment.left,1);assert.equal(app.element('left-hand-status').textContent,'CLIC DROIT · TIR');
+  const loaded=sim.state.inventory.ammo[1];app.element('world').emit('mousedown',{button:2});app.frame(100);
+  assert(sim.state.inventory.ammo[1]<loaded,'the right mouse fires the paired left weapon');
+  const overlays=app.frames.at(-1).meshes.filter(m=>m.overlay);assert(overlays.length>50);for(const mesh of overlays)assert(mesh.p.concat(mesh.s,mesh.r).every(Number.isFinite));
+  app.emit('mouseup',{button:2});const afterMouse=sim.state.inventory.ammo[1];for(let i=0;i<8;i++)app.frame(100);
+  assert.equal(sim.state.inventory.ammo[1],afterMouse,'a released mouse never keeps firing');
+  app.key('Space');app.frame(100);app.key('Space',false);assert(sim.state.player.dash>0,'Space always dashes, whatever the left hand holds');
+  assert.equal(app.sounds.some(q=>q.name==='shieldBash'),false);
+  app.element('left-fire-button').emit('pointerdown',{pointerId:8});app.frame(100);
+  assert(sim.state.inventory.ammo[1]<afterMouse,'the touch left button fires the paired weapon');
+  app.element('left-fire-button').emit('lostpointercapture');const afterTouch=sim.state.inventory.ammo[1];for(let i=0;i<8;i++)app.frame(100);
+  assert.equal(sim.state.inventory.ammo[1],afterTouch,'a released touch button never keeps firing');
 });
 
-test('Shield charge, both hands and fourth-calibre ammunition survive sector Continue and entry restart',()=>{
+test('Both hands and fourth-calibre ammunition survive sector Continue and entry restart',()=>{
   const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app);
-  app.element('weapon-slot-3').click();app.key('Space');app.frame(100);app.key('Space',false);assert.equal(sim.state.shield.energy,76);
-  const carried=plain(sim.exportLoadout());assert.deepEqual(carried.equipment,{right:3,left:'shield',shieldEnergy:76});
+  app.element('weapon-slot-3').click();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
+  const carried=plain(sim.exportLoadout());assert.deepEqual(carried.equipment,{right:3,left:1});assert.equal(carried.inventory.shield,undefined);
   sim.move(sim.state.player,15-sim.state.player.x,0);app.frame(100);assert.equal(app.element('body').dataset.state,'cleared');
-  app.element('continue').click();const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('left-hand-stock').textContent,'GARDE 76 %');
+  app.element('continue').click();const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('left-hand-stock').textContent,carried.inventory.ammo[1]+' cartouches','the HUD keeps showing the paired weapon reserve');
   next.state.inventory.ammo[3]--;app.key('KeyP');app.key('KeyP',false);app.element('restart').click();assert.deepEqual(plain(app.simulations.at(-1).exportLoadout()),carried);
 });
 
 test('Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint',()=>{
   const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app),expected=plain(sim.exportLoadout()),saved=JSON.parse(app.memory.get(key));
-  for(const corrupt of [entry=>delete entry.inventory.shield,entry=>{entry.inventory.ammo[2]=null;},entry=>{entry.armor={version:1,points:201};}]){
+  for(const corrupt of [entry=>entry.equipment={right:0,left:'shield',shieldEnergy:100},entry=>{entry.inventory.shield=true;},entry=>{entry.inventory.ammo[2]=null;},entry=>{entry.armor={version:1,points:201,capacity:200};}]){
     const value=plain(saved);corrupt(value.entryLoadout);const resumed=harness(value,{},arsenalWorld);resumed.element('resume-expedition').click();
     assert.equal(resumed.element('body').dataset.state,'playing');assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),expected);
   }
 });
 
-test('Physical armor pickups update the HUD, retain excess and gain capacity only from the equipped shield',()=>{
-  const make=(seed,stage)=>{const w=arsenalWorld(seed,stage);return {...w,pickups:[...w.pickups,{id:'plates',kind:'armor',amount:150,x:0,y:0,z:3}]};};
+test('Physical armor pickups update the HUD, retain excess and keep one flat hundred-point capacity',()=>{
+  const make=(seed,stage)=>{const w=arsenalWorld(seed,stage);return {...w,pickups:[...w.pickups,{id:'plates',kind:'armor',amount:150,x:0,y:0,z:3},{id:'more-plates',kind:'armor',amount:60,x:12,y:0,z:0}]};};
   const app=harness(null,{},make);app.element('start').click();app.frame(100);const sim=app.simulations.at(-1);
   assert.equal(app.simulationOptions.at(-1).armorSystem,true,'The real shell enables consumable armor for classic saves too');
   assert.equal(app.element('armor-pool').hidden,false);assert.equal(app.element('armor-points').textContent,'0');assert.equal(app.element('armor-cap').textContent,'/ 100');
   sim.move(sim.state.player,0,3);app.frame(100);
-  assert.deepEqual(plain(sim.state.armor),{points:100,capacity:100});assert.equal(sim.state.pickups.at(-1).remaining,50);
+  assert.deepEqual(plain(sim.state.armor),{points:100,capacity:100});assert.equal(sim.state.pickups.at(-2).remaining,50);
   assert.equal(app.element('supply-name').textContent,'PLAQUES D’ARMURE');
   assert.equal(app.element('armor-points').textContent,'100');assert.equal(app.element('armor-bar').style.width,'100%');assert.equal(app.element('supply-detail').textContent,'RÉSERVE AU MAXIMUM');
   assert.match(app.element('toast').textContent,/100 ARMURE/);assert.equal(app.sounds.filter(s=>s.name==='ammoPickup').length,1);
   const saved=JSON.parse(app.memory.get(key)),resumed=harness(saved,{},make);resumed.element('resume-expedition').click();resumed.frame(100);
-  assert.deepEqual(plain(resumed.simulations.at(-1).state.armor),{points:100,capacity:100});assert.equal(resumed.simulations.at(-1).state.pickups.at(-1).remaining,50);
+  assert.deepEqual(plain(resumed.simulations.at(-1).state.armor),{points:100,capacity:100});assert.equal(resumed.simulations.at(-1).state.pickups.at(-2).remaining,50);
   assert.equal(resumed.sounds.filter(s=>s.name==='ammoPickup').length,0,'A restored partial pickup must not replay or refill');
   sim.move(sim.state.player,12,-3);app.frame(100);
-  assert.equal(sim.state.equipment.left,'shield');assert.deepEqual(plain(sim.state.armor),{points:100,capacity:200});assert.equal(app.element('armor-cap').textContent,'/ 200');
-  sim.move(sim.state.player,-12,3);app.frame(100);
-  assert.equal(sim.state.armor.points,150);assert.equal(sim.state.pickups.at(-1).taken,true);assert.equal(app.element('armor-bar').style.width,'75%');
-  app.element('left-hand-setting').value='none';app.element('left-hand-setting').emit('change');assert.deepEqual(plain(sim.state.armor),{points:100,capacity:100});
-  app.element('left-hand-setting').value='shield';app.element('left-hand-setting').emit('change');assert.deepEqual(plain(sim.state.armor),{points:100,capacity:200});
-  app.key('Space');app.frame(100);app.key('Space',false);assert.equal(sim.state.shield.energy,76);assert.equal(sim.state.armor.points,100);assert.equal(app.element('left-hand-stock').textContent,'GARDE 76 %');
+  assert.deepEqual(plain(sim.state.armor),{points:100,capacity:100},'a full suit never gains capacity from any equipment');
+  assert.equal(sim.state.pickups.at(-1).remaining,60,'and the surplus simply stays on the ground');
+  assert.equal(app.element('armor-cap').textContent,'/ 100');
+  sim.move(sim.state.player,-6,-3);app.frame(100);
+  sim.state.armor.points=40;app.frame(100);assert.equal(app.element('armor-bar').style.width,'40%');
+  sim.move(sim.state.player,-6,6);app.frame(100);
+  assert.equal(sim.state.armor.points,90);assert.equal(sim.state.pickups.at(-2).taken,true);assert.equal(app.element('armor-bar').style.width,'90%');
+  app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');assert.deepEqual(plain(sim.state.armor),{points:90,capacity:100},'a paired weapon changes nothing in the armor pool');
+  app.key('Space');app.frame(100);app.key('Space',false);assert(sim.state.player.dash>0);assert.equal(sim.state.armor.points,90);
 });
 
 test('The browser shell carries fractional armor through Continue, resume and entry restart without refilling',()=>{
-  const make=(seed,stage)=>{const w=arsenalWorld(seed,stage);return {...w,pickups:[...w.pickups,{id:'plates',kind:'armor',amount:150,x:12,y:0,z:0}]};};
+  const make=(seed,stage)=>{const w=arsenalWorld(seed,stage);return {...w,pickups:[...w.pickups,{id:'plates',kind:'armor',amount:100,x:12,y:0,z:0}]};};
   const app=harness(null,{},make);app.element('start').click();const sim=collectArsenal(app);
-  assert.deepEqual(plain(sim.state.armor),{points:150,capacity:200});sim.hurt(7.5);app.frame(100);
-  assert.equal(sim.state.armor.points,147.5);const carried=plain(sim.exportLoadout());
+  assert.deepEqual(plain(sim.state.armor),{points:100,capacity:100},'one flat hundred-point reserve, whatever is equipped');
+  assert.equal(sim.state.pickups.at(-1).taken,true);sim.hurt(7.5);app.frame(100);
+  assert.equal(sim.state.armor.points,97.5);const carried=plain(sim.exportLoadout());
   sim.move(sim.state.player,15-sim.state.player.x,0);app.frame(100);assert.equal(app.element('body').dataset.state,'cleared');app.element('continue').click();
-  const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('armor-points').textContent,'148');assert.equal(app.element('armor-cap').textContent,'/ 200');
-  const saved=JSON.parse(app.memory.get(key));assert.deepEqual(saved.entryLoadout.armor,{version:1,points:147.5});
+  const next=app.simulations.at(-1);assert.deepEqual(plain(next.exportLoadout()),carried);assert.equal(app.element('armor-points').textContent,'98');assert.equal(app.element('armor-cap').textContent,'/ 100');
+  const saved=JSON.parse(app.memory.get(key));assert.deepEqual(saved.entryLoadout.armor,{version:1,points:97.5});
   const resumed=harness(saved,{},make);resumed.element('resume-expedition').click();assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),carried);
-  next.hurt(15);assert.equal(next.state.armor.points,142.5);app.key('KeyP');app.key('KeyP',false);app.element('restart').click();
+  next.hurt(15);assert.equal(next.state.armor.points,92.5);app.key('KeyP');app.key('KeyP',false);app.element('restart').click();
   assert.deepEqual(plain(app.simulations.at(-1).exportLoadout()),carried,'Restart restores the original entry points, not a full reserve');
 });
 
@@ -532,10 +540,10 @@ test('An invalid snapshot restarts its sector and preserves the first migration 
 
 function saveWithEntry(campaign = false, legacy = false, revision = 1) {
   const factory = campaign ? revision === 2 ? bossShellWorld : campaignShellWorld : arsenalWorld, base = harness(null, {}, factory), index = campaign ? 9 : 2;
-  const w = factory(96, index, campaign ? { campaign: true, campaignVersion: revision } : undefined), equipment = { right: 1, left: 'shield', shieldEnergy: 100 };
-  const inventory = { weapons: campaign ? [true,true,true,true,true] : [true,true,true,true], ammo: campaign ? [77,9,3,4,1] : [77,9,3,4], shield: true };
+  const w = factory(96, index, campaign ? { campaign: true, campaignVersion: revision } : undefined), equipment = { right: 1, left: null };
+  const inventory = { weapons: campaign ? [true,true,true,true,true] : [true,true,true,true], ammo: campaign ? [77,9,3,4,1] : [77,9,3,4] };
   const entry = { inventory, equipment, armor: { version: 1, points: 127.5 }, economy: { ...base.context.FEconomy.fresh(), credits: 237, cores: 3 },
-    ...(campaign ? { campaign: { version: revision, discovered: ['pistol','shield','smg','shotgun','grenade','rocket'], ...(revision === 2 ? { claimedBossRewards: [0,1] } : {}) } } : {}) };
+    ...(campaign ? { campaign: { version: revision, discovered: ['pistol','smg','shotgun','grenade','rocket'], ...(revision === 2 ? { claimedBossRewards: [0,1] } : {}) } } : {}) };
   if (revision === 2) for (const reward of entry.campaign.claimedBossRewards) entry.economy = base.context.FEconomy.grantBossReward(entry.economy, reward);
   if (legacy) { entry.inventory = { weapons: [true,true,true], ammo: [77,9,3] }; delete entry.equipment; delete entry.armor; delete entry.economy; }
   const sim = base.context.FSimulation.create(w, { ...entry, armorSystem: true }), expected = plain(sim.exportLoadout());
@@ -597,8 +605,8 @@ function generatedModules() {
 for (const campaign of [false,true]) test(`LOAD-01: generated ${campaign ? 'c:9' : 'l:0'} rubble restores exactly after three real rocket breaches`, () => {
   const G = generatedModules(), w = G.FWorld.create(96, campaign ? 9 : 0, campaign ? { campaign: true, campaignVersion: 2 } : undefined);
   const options = () => ({ brain: G.FBrain.create({ mode: 'cpu' }), armorSystem: true,
-    inventory: { weapons: campaign ? [true,true,true,true,true] : [true,true,true,true], ammo: campaign ? [180,36,12,16,1] : [180,36,12,16], shield: false },
-    ...(campaign ? { campaign: { version: 2, discovered: ['pistol','smg','shotgun','grenade','rocket'], claimedBossRewards: [] }, equipment: { right: 2, left: null, shieldEnergy: 100 } } : {}) });
+    inventory: { weapons: campaign ? [true,true,true,true,true] : [true,true,true,true], ammo: campaign ? [180,36,12,16,1] : [180,36,12,16] },
+    ...(campaign ? { campaign: { version: 2, discovered: ['pistol','smg','shotgun','grenade','rocket'], claimedBossRewards: [] }, equipment: { right: 2, left: null } } : {}) });
   const create = () => G.FSimulation.create(w, options()), probe = create(), walls = [];
   for (const group of w.destructibles.filter(q => q.kind === 'wall' && q.colliders.length)) {
     const b = group.bounds, cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2, thinX = b.maxX - b.minX < b.maxZ - b.minZ;
@@ -749,7 +757,7 @@ test('audit: an older four-slot entry cannot block a healthy five-slot campaign 
   const sim=original.simulations.at(-1);sim.move(sim.state.player,3,0);original.frame(100);
   sim.state.player.hp=63;sim.state.inventory.ammo[0]=19;
   const expected=plain(sim.exportLoadout()),saved=JSON.parse(original.memory.get(key));saved.checkpoint=sim.snapshot();
-  saved.entryLoadout={inventory:{weapons:[true,false,false,false],ammo:[48,0,0,0],shield:false},equipment:{right:0,left:null,shieldEnergy:100}};
+  saved.entryLoadout={inventory:{weapons:[true,false,false,false],ammo:[48,0,0,0]},equipment:{right:0,left:null}};
   const value=JSON.stringify(saved),resumed=harness(saved,{},campaignShellWorld);
   assert.equal(resumed.element('resume-expedition').hidden,false);
   await assert.doesNotReject(resumed.element('resume-expedition').click());
@@ -765,7 +773,7 @@ test('audit: a campaign entry cannot block a healthy classic checkpoint or repla
   const original=harness(null,{},arsenalWorld);original.element('start').click();
   const sim=original.simulations.at(-1);sim.state.player.hp=58;sim.state.inventory.ammo[0]=17;
   const expected=plain(sim.exportLoadout()),saved=JSON.parse(original.memory.get(key));saved.checkpoint=sim.snapshot();
-  saved.entryLoadout={inventory:{weapons:[false,false,false,false,true],ammo:[0,0,0,0,1],shield:false},equipment:{right:4,left:null,shieldEnergy:100},campaign:{version:1,discovered:['pistol']}};
+  saved.entryLoadout={inventory:{weapons:[false,false,false,false,true],ammo:[0,0,0,0,1]},equipment:{right:4,left:null},campaign:{version:1,discovered:['pistol']}};
   const value=JSON.stringify(saved),resumed=harness(saved,{},arsenalWorld);
   assert.equal(resumed.element('resume-expedition').hidden,false);
   await assert.doesNotReject(resumed.element('resume-expedition').click());
@@ -788,14 +796,14 @@ test('audit: a classic three-slot entry migrates without gifts and remains the e
   assert.deepEqual(plain(resumed.simulations.at(-1).exportLoadout()),expected);
   assert.equal(resumed.memory.get(key),value);
   resumed.key('KeyP');resumed.key('KeyP',false);await resumed.element('restart').click();
-  assert.deepEqual(plain(resumed.simulations.at(-1).exportInventory()),{weapons:[true,true,false,false],ammo:[9,2,0,0],shield:false});
+  assert.deepEqual(plain(resumed.simulations.at(-1).exportInventory()),{weapons:[true,true,false,false],ammo:[9,2,0,0]});
 });
 
 test('audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage',()=>{
   for(const campaign of [false,true]){
     const factory=campaign?campaignShellWorld:arsenalWorld,original=harness(null,{},factory);original.element('start').click();
     const saved=JSON.parse(original.memory.get(key));
-    saved.checkpoint.state.inventory=campaign?{weapons:[true,false,false,false],ammo:[48,0,0,0],shield:false}:{weapons:[false,false,false,false,true],ammo:[0,0,0,0,1],shield:false};
+    saved.checkpoint.state.inventory=campaign?{weapons:[true,false,false,false],ammo:[48,0,0,0]}:{weapons:[false,false,false,false,true],ammo:[0,0,0,0,1]};
     const value=JSON.stringify(saved),resumed=harness(saved,{},factory);
     assert.equal(resumed.element('resume-expedition').hidden,true);
     assert.equal(resumed.memory.get(key),value);assert.equal(resumed.simulations.length,1,'the invalid checkpoint never reaches load');
@@ -805,7 +813,9 @@ test('audit: checkpoint inventory slots inconsistent with its campaign envelope 
 test('audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule',async()=>{
   const app=harness(null,{},campaignShellWorld);app.element('start').click();
   assert.equal(app.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 / 5 ou molette');
-  assert.match(app.element('toast').textContent,/premier trophée au monde 4/);
+  assert.match(app.element('toast').textContent,/premier trophée au monde 7/);
+  assert.equal(campaignShellWorld(96,3,{campaign:true}).pickups.length,0,'the world that used to hand out the shield now holds no trophy');
+  assert.equal(campaignShellWorld(96,6,{campaign:true}).pickups.length,1,'the first real trophy now arrives at world 7');
   const preferences=app.context.FOptions.defaults(false);preferences.bindings.weapon5=['KeyB'];
   const custom=harness(null,{'ferro-settings':JSON.stringify(preferences)},campaignShellWorld);
   assert.equal(custom.element('weapon-switch').title,'Armes : 1 / 2 / 3 / 4 / B ou molette');

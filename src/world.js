@@ -1512,8 +1512,8 @@
   }
   function suppliesWorld(w){
     const depths=roomDepths(w),initial=new Set(w.connections.flatMap(c=>c.from===0?[c.to]:c.to===0?[c.from]:[]));
-    w.progression={version:1,weaponSlots:4,startWeapons:w.stage===0?[true,false,false,false]:[true,true,true,false],startAmmo:[[48,0,0,0],[72,12,4,0],[84,16,5,0]][w.stage],startShield:false,ammoCaps:[180,36,12,16],maxActive:[8,10,12][w.stage]};
-    if(w.campaign)Object.assign(w.progression,{weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],startShield:w.campaignVersion===2,ammoCaps:[180,36,12,16,1],maxActive:w.campaignProfile.maxActive});
+    w.progression={version:1,weaponSlots:4,startWeapons:w.stage===0?[true,false,false,false]:[true,true,true,false],startAmmo:[[48,0,0,0],[72,12,4,0],[84,16,5,0]][w.stage],ammoCaps:[180,36,12,16],maxActive:[8,10,12][w.stage]};
+    if(w.campaign)Object.assign(w.progression,{weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],ammoCaps:[180,36,12,16,1],maxActive:w.campaignProfile.maxActive});
     w.pickups=w.pickups.filter(p=>{const r=w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);return r&&(r.id===0||r.bossArena||FMath.hypot2(p.x-r.x-2.5,p.z-r.z-1.5)<.1);}).map((p,i)=>({...p,id:'health-'+i,kind:'health',amount:28,zoneId:w.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2).id}));
     const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target])];
     // Service-bay cover follows the real incoming corridor. A small health case
@@ -1562,13 +1562,13 @@
   function armoryWorld(w){
     const depths=roomDepths(w),opening=w.rooms.filter(r=>depths.get(r.id)===1).sort((a,b)=>a.id-b.id)[0],middle=w.rooms[w.shops[1].zoneId],late=w.rooms.filter(r=>r.id&&!r.bossArena).sort((a,b)=>depths.get(b.id)-depths.get(a.id)||b.id-a.id)[0],arena=w.rooms.find(r=>r.bossArena);
     const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target]),...w.encounters.flatMap(e=>e.spawnEntries),...w.enemies.filter(e=>e.deployed)];
-    const add=(room,kind,amount,label,preferred=[])=>{
+    const add=(room,kind,amount,label,preferred=[],weapon=3)=>{
       const candidates=preferred.slice();for(const z of [-1.8,1.8,-3.6,3.6,0,-5.4,5.4])for(const x of [-1.8,1.8,-3.6,3.6,0,-5.4,5.4])candidates.push({x:room.x+x,z:room.z+z});
       const point=candidates.find(p=>Math.abs(p.x-room.x)<room.w/2-1&&Math.abs(p.z-room.z)<room.d/2-1&&Math.abs(floorHeight(w,p.x,p.z)-room.y)<.01&&safeSupply(w,p.x,p.z,.75)&&reserved.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>1.65)&&w.pickups.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>1.35));
       if(!point)throw new Error('No equipment position '+w.seed+'/'+w.stage+'/'+label);
-      w.pickups.push({id:'arsenal-'+label,kind,...(kind==='shield'?{}:{weapon:3}),amount,x:point.x,y:room.y,z:point.z,zoneId:room.id});
+      w.pickups.push({id:'arsenal-'+label,kind,weapon,amount,x:point.x,y:room.y,z:point.z,zoneId:room.id});
     };
-    add(opening,'shield',1,'shield');
+    add(opening,'ammo',24,'smg-cells',[],0);
     const shop=w.shops[1];add(middle,'weapon',4,'grenade-launcher',[{x:shop.x+2.1,z:shop.z},{x:shop.x-2.1,z:shop.z},{x:shop.x,z:shop.z+2.1}]);
     add(late,'ammo',4,'grenades-late');
     const outer=[];for(const x of [-22,-20.5,-23.5])for(const z of [-17.2,-15.8,17.2,15.8])outer.push({x:arena.x+x,z:arena.z+z});
@@ -1580,7 +1580,7 @@
       return {version:2,garrison:Math.round([120,140,170][w.stage]*garrisonScale),garrisonScale,maxActive:[6,8,10,12,14,16][chapter],grenadiers:[1,3,5,7,9,11][chapter],rocketeers:[0,1,3,5,7,9][chapter],bossHp:[600,850,1200,1550,1900,2400,2900,3400,4000,4650,5300,6050,6850,7700,8600,9600,10800,12000][w.index],trialEnemies:0};
     }
     const chapter=w.chapter,percent=[35,45,55,70,85,100][chapter],garrisonScale=percent/100;
-    return {version:1,garrison:Math.round([120,140,170][w.stage]*percent/100),garrisonScale,maxActive:[4,5,6,8,10,12][chapter],grenadiers:[0,2,3,5,6,8][chapter],rocketeers:[0,0,0,2,4,6][chapter],bossHpScale:[.25,.32,.45,.62,.8,1][chapter],trialEnemies:[3,6,9,12,15].includes(w.index)?3:0};
+    return {version:1,garrison:Math.round([120,140,170][w.stage]*percent/100),garrisonScale,maxActive:[4,5,6,8,10,12][chapter],grenadiers:[0,2,3,5,6,8][chapter],rocketeers:[0,0,0,2,4,6][chapter],bossHpScale:[.25,.32,.45,.62,.8,1][chapter],trialEnemies:[6,9,12,15].includes(w.index)?3:0};
   }
   function campaignCounts(weights,budget){
     const sum=weights.reduce((a,b)=>a+b,0),shares=weights.map(n=>n*budget/sum),counts=shares.map(n=>Math.max(2,Math.floor(n)));
@@ -1602,12 +1602,11 @@
       return;
     }
     const unlock=[6,9,15,12,0],schedule=[
-      {index:3,key:'shield',kind:'shield',amount:1},
       {index:6,key:'smg',kind:'weapon',weapon:0,amount:60},
       {index:9,key:'shotgun',kind:'weapon',weapon:1,amount:12},
       {index:12,key:'grenade',kind:'weapon',weapon:3,amount:6},
       {index:15,key:'rocket',kind:'weapon',weapon:2,amount:4}
-    ],discovery=schedule.find(q=>q.index===w.index),reserved=w.pickups.find(q=>q.id==='arsenal-shield');
+    ],discovery=schedule.find(q=>q.index===w.index),reserved=w.pickups.find(q=>q.id==='arsenal-grenade-launcher');
     w.pickups=w.pickups.filter(q=>q.kind==='health'||q.kind==='ammo'&&q.weapon<4&&unlock[q.weapon]<=w.index).map(q=>q.kind==='ammo'?{...q,amount:Math.max(q.weapon===0?8:q.weapon===1?2:1,Math.round(q.amount*w.campaignProfile.garrisonScale)),requiresWeapon:q.weapon}:q);
     for(const e of w.enemies)if(e.drop&&(e.drop.weapon>=4||unlock[e.drop.weapon]>w.index))e.drop=false;
     if(discovery){
@@ -1621,7 +1620,7 @@
   function campaignTrophies(w,theme){
     w.trophies=[];
     const gift=w.pickups.find(q=>q.trophyId);if(!gift)return;
-    const key=gift.trophyId.slice(7),names={shield:'Bouclier',smg:'Mitraillette',shotgun:'Double pompe',grenade:'Lance-grenades',rocket:'Lance-roquettes'},usage={shield:'Protégez-vous, puis frappez au contact.',smg:'Enchaînez les rafales et surveillez la chauffe.',shotgun:'Approchez, frappez fort, reprenez votre distance.',grenade:'Faites rebondir les grenades derrière les couverts.',rocket:'Visez les groupes et gardez vos distances.'},depths=roomDepths(w);
+    const key=gift.trophyId.slice(7),names={smg:'Mitraillette',shotgun:'Double pompe',grenade:'Lance-grenades',rocket:'Lance-roquettes'},usage={smg:'Enchaînez les rafales et surveillez la chauffe.',shotgun:'Approchez, frappez fort, reprenez votre distance.',grenade:'Faites rebondir les grenades derrière les couverts.',rocket:'Visez les groupes et gardez vos distances.'},depths=roomDepths(w);
     const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(p=>[p,p.target]),...w.pickups.filter(q=>q!==gift),...w.enemies.filter(e=>e.deployed)];
     const segmentHit=(a,b,c)=>{let low=0,high=1;for(const [i,min,max] of [[0,c.minX,c.maxX],[1,c.minY,c.maxY],[2,c.minZ,c.maxZ]]){const d=b[i]-a[i];if(Math.abs(d)<1e-9){if(a[i]<min||a[i]>max)return false;}else{const x=(min-a[i])/d,y=(max-a[i])/d;low=Math.max(low,Math.min(x,y));high=Math.min(high,Math.max(x,y));if(low>high)return false;}}return high>0&&low<.999;};
     const safe=(p,r,rad)=>Math.abs(p.x-r.x)<r.w/2-rad-.3&&Math.abs(p.z-r.z)<r.d/2-rad-.3&&Math.abs(floorHeight(w,p.x,p.z)-r.y)<.01&&safeSupply(w,p.x,p.z,rad)&&reserved.every(q=>FMath.hypot2(p.x-q.x,p.z-q.z)>rad+.7)&&w.jumpPads.every(q=>pointSegment(p.x,p.z,q,q.target)>rad+1.6);
@@ -1664,12 +1663,12 @@
     add('ring',[p.x,p.y+2.72,p.z],[1.2,.055,1.2],1,'trophy_lamp');
     add('cylinder',[p.x,p.y+2.69,p.z],[.64,.035,.64],4,'trophy_lens',{color:theme.alt,emissive:.7});
     const lightIndex=w.lights.length;w.lights.push({p:[p.x,p.y+2.45,p.z],color:theme.alt.slice(),power:5.5,region,trophyId:id});
-    w.pickups.push({id:'trial-cache-'+key,kind:key==='shield'?'health':'ammo',...(key==='shield'?{}:{weapon:gift.weapon,requiresWeapon:gift.weapon}),amount:key==='shield'?24:Math.max(2,Math.ceil(gift.amount/2)),...cache,zoneId:r.id,trophyCache:id});
+    w.pickups.push({id:'trial-cache-'+key,kind:'ammo',weapon:gift.weapon,requiresWeapon:gift.weapon,amount:Math.max(2,Math.ceil(gift.amount/2)),...cache,zoneId:r.id,trophyCache:id});
     const boss=w.enemies.pop(),ids=[];
-    for(let i=0;i<3;i++){const point=bay.spawnEntries[i],type=key==='shotgun'||key==='rocket'?1:0;ids.push(w.enemies.length);w.enemies.push({...point,type,zoneId:r.id,squadId:1000+w.index,encounterId,wave:0,deployed:false,role:'assault',yaw:FMath.atan2(p.x-point.x,point.z-p.z),drop:key==='shield'?false:{weapon:gift.weapon,amount:gift.weapon===0?4:gift.weapon===1?2:1},trophyGuard:id});}
+    for(let i=0;i<3;i++){const point=bay.spawnEntries[i],type=key==='shotgun'||key==='rocket'?1:0;ids.push(w.enemies.length);w.enemies.push({...point,type,zoneId:r.id,squadId:1000+w.index,encounterId,wave:0,deployed:false,role:'assault',yaw:FMath.atan2(p.x-point.x,point.z-p.z),drop:{weapon:gift.weapon,amount:gift.weapon===0?4:gift.weapon===1?2:1},trophyGuard:id});}
     const bossId=w.enemies.length;w.enemies.push(boss);for(const e of w.enemies)if(e.bossWave)e.bossId=bossId;
     w.encounters.push({id:encounterId,label:'Épreuve — '+name,zoneId:r.id,trigger:{x:r.x,y:r.y,z:r.z,w:r.w+4,d:r.d+4},leashRadius:38,maxActive:3,waveGap:4,spawnEntries:bay.spawnEntries.map(q=>({...q})),waves:[{enemyIds:ids}],requiresTrophy:id});
-    w.trophies.push({id,key,name,usage:usage[key],pickupId:gift.id,encounterId,grace:3,...p,zoneId:r.id,...(key==='shield'?{shield:true}:{weapon:gift.weapon}),meshStart,meshCount:w.meshes.length-meshStart,lightIndex,cacheId:'trial-cache-'+key,coverMesh:bay.coverMesh});
+    w.trophies.push({id,key,name,usage:usage[key],pickupId:gift.id,encounterId,grace:3,...p,zoneId:r.id,weapon:gift.weapon,meshStart,meshCount:w.meshes.length-meshStart,lightIndex,cacheId:'trial-cache-'+key,coverMesh:bay.coverMesh});
   }
   // Armor reserves are real nonblocking pickups. The shell draws their cases
   // and markers; placing them last preserves all existing supplies and trials.
