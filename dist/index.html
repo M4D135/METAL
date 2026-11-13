@@ -4637,6 +4637,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   function create(ctx,output){
     let stage=0,threat=0,volume=.4,playing=false,disposed=false,module=null,order=0,row=0,nextTime=null,bpm=125,speed=6;
     const voices=new Set(),buffers=new Map(),nodes=[],tracks=[],stats={activeVoices:0,peakVoices:0,scheduledRows:0,scheduledNotes:0,resyncs:0,playing:false,stage:0,order:0,row:0,tempo:100};
+    const events=Array.from({length:4},()=>({sample:0,pitch:0,effect:0,param:0}));
     const ready=!!(ctx&&output&&ctx.createBuffer&&ctx.createBufferSource&&ctx.createGain),remember=n=>(nodes.push(n),n);
     const master=ready?remember(ctx.createGain()):null;
     if(master){master.gain.value=0;master.connect(output);for(let i=0;i<4;i++){
@@ -4647,7 +4648,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     function cleanup(v){if(!voices.delete(v))return;for(const n of [v.source,v.gain])try{n.disconnect();}catch(_){}if(tracks[v.track]?.voice===v)tracks[v.track].voice=null;stats.activeVoices=voices.size;}
     function stopAll(immediate=false){
       if(!ready)return;const now=ctx.currentTime;
-      for(const v of Array.from(voices)){
+      for(const v of voices){
         try{v.gain.gain.cancelScheduledValues(now);v.gain.gain.setTargetAtTime(.0001,now,.003);v.source.stop(now+(immediate?0:.015));}catch(_){}
         v.end=now+(immediate?0:.015);if(immediate)cleanup(v);
       }
@@ -4672,11 +4673,13 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       stats.scheduledNotes++;stats.activeVoices=voices.size;stats.peakVoices=max(stats.peakVoices,voices.size);
     }
     function schedule(time){
-      const bytes=module.bytes,base=1084+(module.order[order]*64+row)*16,events=[];
+      const bytes=module.bytes,base=1084+(module.order[order]*64+row)*16;
+      // RESTE-09: the four channel records of a row are allocated once per
+      // instance and refilled, so a scheduled row allocates nothing.
       for(let channel=0;channel<4;channel++){
-        const at=base+channel*4,a=bytes[at],b=bytes[at+1],c=bytes[at+2],param=bytes[at+3],sample=(a&240)|(c>>4),pitch=((a&15)<<8)|b,effect=c&15;
-        if(effect===15&&param){if(param<32)speed=param;else bpm=param;}
-        events.push({sample,pitch,effect,param});
+        const at=base+channel*4,a=bytes[at],b=bytes[at+1],c=bytes[at+2],param=bytes[at+3],e=events[channel];
+        e.sample=(a&240)|(c>>4);e.pitch=((a&15)<<8)|b;e.effect=c&15;e.param=param;
+        if(e.effect===15&&param){if(param<32)speed=param;else bpm=param;}
       }
       for(let i=0;i<4;i++){
         const e=events[i],t=tracks[i];if(e.sample){t.sample=e.sample;t.volume=module.samples[e.sample-1].volume;}
@@ -4691,7 +4694,10 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     function tick(){
       if(!ready||disposed||!playing||volume<=0||ctx.state!=='running')return;
       load();const now=ctx.currentTime;
-      for(const v of Array.from(voices))if(v.end<now-.02)cleanup(v);
+      // RESTE-09: deleting the current entry of a Set during for…of is defined
+      // and keeps insertion order, so the same voices are cleaned in the same
+      // order with no per-frame array allocation.
+      for(const v of voices)if(v.end<now-.02)cleanup(v);
       if(nextTime===null||nextTime<now-.20){if(nextTime!==null){stopAll();row=floor(row/16)*16;stats.resyncs++;}nextTime=now+.035;}
       let count=0;while(nextTime<now+.28&&count++<6){const at=max(now+.002,nextTime);nextTime+=schedule(at);}
     }
