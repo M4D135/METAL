@@ -1,0 +1,44 @@
+{
+ "monde": "camp:17",
+ "frames": 400,
+ "repetitionsParExecution": 5,
+ "note": "Comparaison appariée alternée base (T5, f69a532) contre tête (T6). Machine partagée (charge 6 à 8 sur 20 cœurs) : cinq exécutions indépendantes, ratio retenu = médiane. T6 vise le taux de reconstruction, pas le coût brut du draw().",
+ "executions": [
+  {
+   "execution": 0,
+   "charge": 8.51,
+   "base": 3.027,
+   "tete": 3.02,
+   "ratio": 0.9977
+  },
+  {
+   "execution": 1,
+   "charge": 9.34,
+   "base": 2.798,
+   "tete": 2.697,
+   "ratio": 0.9639
+  },
+  {
+   "execution": 2,
+   "charge": 9.22,
+   "base": 2.537,
+   "tete": 2.693,
+   "ratio": 1.0615
+  },
+  {
+   "execution": 3,
+   "charge": 9.3,
+   "base": 2.9,
+   "tete": 3.073,
+   "ratio": 1.0597
+  },
+  {
+   "execution": 4,
+   "charge": 8.95,
+   "base": 2.667,
+   "tete": 2.923,
+   "ratio": 1.096
+  }
+ ],
+ "ratioRetenu": 1.0597
+}

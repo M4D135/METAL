@@ -1323,9 +1323,31 @@
     return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter};
   }
 
-  function create(canvas) {
+  function create(canvas,options={}) {
     const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
     if(!gl) return createSoftware(canvas);
+    // Marges du cache de vue : 'auto' (défaut) suit la vitesse, un objet {distance,angle}
+    // les fixe (en mètres et en radians), 0 force un culling exact reconstruit à chaque image.
+    const marginOption=options.cullMargin===undefined?'auto':options.cullMargin;
+    const exactMargin=marginOption===0,fixedMargin=marginOption&&typeof marginOption==='object'?marginOption:null;
+    const motion={time:null,x:0,y:0,z:0,fx:0,fy:0,fz:0,speed:0,turn:0};
+    function trackMotion(eye,forward,time){
+      const dt=motion.time===null?0:Math.max(0,Math.min(.1,time-motion.time));
+      motion.time=time;
+      if(dt>0){
+        const speed=Math.hypot(eye[0]-motion.x,eye[1]-motion.y,eye[2]-motion.z)/dt;
+        const cosine=Math.max(-1,Math.min(1,forward[0]*motion.fx+forward[1]*motion.fy+forward[2]*motion.fz));
+        const turn=Math.acos(cosine)/dt,blend=1-Math.exp(-dt/.25);
+        motion.speed+=(speed-motion.speed)*blend;motion.turn+=(turn-motion.turn)*blend;
+      }
+      motion.x=eye[0];motion.y=eye[1];motion.z=eye[2];motion.fx=forward[0];motion.fy=forward[1];motion.fz=forward[2];
+    }
+    function margins(demiDiag){
+      if(exactMargin)return {distance:0,tilt:0};
+      if(fixedMargin)return {distance:Number.isFinite(fixedMargin.distance)?fixedMargin.distance:VIEW_MARGIN,tilt:Number.isFinite(fixedMargin.angle)?fixedMargin.angle:VIEW_TILT};
+      const distance=Math.max(1,Math.min(16,motion.speed*.15)),tilt=Math.min(demiDiag*.5,Math.max(4*Math.PI/180,Math.min(12*Math.PI/180,motion.turn*.1)));
+      return {distance,tilt};
+    }
     const source=geometry(),view=new Float32Array(16),projection=new Float32Array(16),vp=new Float32Array(16);
     const shadowView=new Float32Array(16),shadowProjection=new Float32Array(16),shadowMatrix=new Float32Array(16),shadowMatrices=new Float32Array(48);
     const lightPositions=new Float32Array(36),lightColors=new Float32Array(36),lightRanges=new Float32Array(12);
@@ -1334,7 +1356,8 @@
     let post=null,shadowTarget=null,whiteTexture=null,targetKey='',shadowKey='',shadowLight=null;
     let world=[],worldIndex=spatialIndex([]),lights=[],environment=null,worldBatch=pack([]),quality='auto',disposed=false,worldRevision=0;
     let staticCaches=[],lampCasters=[],actorLightPlan=null,viewCache=null,torchCache=null,sunCache=null,indexRevision=0,selectionGen=0;
-    const cacheStats={viewFrames:0,viewRebuilds:0,torchRebuilds:0,sunRebuilds:0};
+    const cacheStats={viewFrames:0,viewRebuilds:0,torchRebuilds:0,sunRebuilds:0,marginDistance:1,marginAngle:8};
+    let guardMargin={distance:1,tilt:8*Math.PI/180};
     const sunCasterOut=[],SHADOW_RANGES=[32,18,0],VIEW_MARGIN=1,VIEW_TILT=8*Math.PI/180,SUN_GRID=4,SUN_PAD=1.74*SUN_GRID;
     const capacity=new Map(),dynamicRows=scratchRows(),overlayRows=scratchRows(),fxRows=scratchRows();
     const governor=resolutionGovernor();let autoScale=1;
@@ -1474,22 +1497,23 @@
     }
     // Sélection de garde : un sur-ensemble reconstruit seulement quand la caméra sort de la
     // marge (D mètres, θ radians) ou quand le monde, le cadrage ou la portée changent.
-    function selectionCache(previous,revision,origin,axes,horizontal,vertical,far,ranges,near){
+    function selectionCache(previous,revision,origin,axes,horizontal,vertical,far,ranges,near,margin,tilt){
       if(previous&&previous.revision===revision&&previous.horizontal===horizontal&&previous.vertical===vertical&&previous.far>=far
         &&previous.ranges[0]>=ranges[0]&&previous.ranges[1]>=ranges[1]&&previous.ranges[2]>=ranges[2]
         &&Math.hypot(origin[0]-previous.origin[0],origin[1]-previous.origin[1],origin[2]-previous.origin[2])<=previous.margin
         &&axes.forward[0]*previous.forward[0]+axes.forward[1]*previous.forward[1]+axes.forward[2]*previous.forward[2]>=Math.cos(previous.tilt))return previous;
-      cacheStats.viewRebuilds++;
       const demiDiag=Math.atan(Math.hypot(horizontal,vertical)),k=Math.hypot(1,horizontal,vertical);
       // Un niveau à portée nulle doit rester exclu : ajouter la marge le ferait revenir dans la requête.
-      const query0=[ranges[0]>0?ranges[0]+VIEW_MARGIN:0,ranges[1]>0?ranges[1]+VIEW_MARGIN:0,ranges[2]>0?ranges[2]+VIEW_MARGIN:0],candidates=worldIndex.query(origin,query0),entries=[];
-      for(let i=0;i<candidates.length;i++){const e=candidates[i];if(cached(e,origin,axes.forward,demiDiag,k,VIEW_MARGIN,VIEW_TILT,near,far))entries.push(e);}
+      // Pas de plafond sur la taille du sur-ensemble : le réduire ferait disparaître des objets
+      // visibles. Le sur-ensemble reste côté processeur, le GPU ne reçoit que la sélection exacte.
+      const query0=[ranges[0]>0?ranges[0]+margin:0,ranges[1]>0?ranges[1]+margin:0,ranges[2]>0?ranges[2]+margin:0],candidates=worldIndex.query(origin,query0),entries=[];
+      for(let i=0;i<candidates.length;i++){const e=candidates[i];if(cached(e,origin,axes.forward,demiDiag,k,margin,tilt,near,far))entries.push(e);}
       // Pas de tri par index ici : le balayage de l'index spatial est deja deterministe et
       // stable tant que le cache est valide. Trier les casters d'ombre changerait l'ordre
       // d'emission et quelques pixels sur les faces coplanaires (preuve Chrome : ecart
       // 16/255 sur 30 pixels des scenarios camp17-a, camp17-b, camp6-a, legacy0-b).
       entries.gen=++selectionGen;
-      return {revision,origin:[origin[0],origin[1],origin[2]],forward:[axes.forward[0],axes.forward[1],axes.forward[2]],horizontal,vertical,far,ranges:query0,margin:VIEW_MARGIN,tilt:VIEW_TILT,entries};
+      return {revision,origin:[origin[0],origin[1],origin[2]],forward:[axes.forward[0],axes.forward[1],axes.forward[2]],horizontal,vertical,far,ranges:query0,margin,tilt,entries};
     }
     function renderStatic(entries,slot,shadow=false,reuse=false){
       const cache=staticCaches[slot];
@@ -1523,7 +1547,7 @@
       let casters;
       if(stable)casters=previous.entries;
       else if(torchAxes){
-        const before=torchCache,guard=torchCache=selectionCache(torchCache,indexRevision,p,shadowAxes,tangent,tangent,32,SHADOW_RANGES,.08);
+        const before=torchCache,guard=torchCache=selectionCache(torchCache,indexRevision,p,shadowAxes,tangent,tangent,32,SHADOW_RANGES,.08,guardMargin.distance,guardMargin.tilt);
         if(guard!==before)cacheStats.torchRebuilds++;
         casters=[];let hash=0;
         for(let i=0;i<guard.entries.length;i++){
@@ -1551,9 +1575,9 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.viewport(shadowTarget.size,0,shadowTarget.size,shadowTarget.size);
       gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2);
       gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);gl.uniform2f(depthWind,environment.wind,time);
-      const sunRanges=[extent+24,26,0],grid=[Math.round(center[0]/SUN_GRID),Math.round(center[1]/SUN_GRID),Math.round(center[2]/SUN_GRID)];
+      const sunRanges=[extent+24,26,0],sunGrid=Math.max(SUN_GRID,Math.min(16,guardMargin.distance*2)),grid=[Math.round(center[0]/sunGrid),Math.round(center[1]/sunGrid),Math.round(center[2]/sunGrid)];
       if(!sunCache||sunCache.revision!==indexRevision||sunCache.extent!==extent||sunCache.grid[0]!==grid[0]||sunCache.grid[1]!==grid[1]||sunCache.grid[2]!==grid[2])
-        {sunCache={revision:indexRevision,extent,grid,candidates:worldIndex.query(center,[sunRanges[0]+SUN_PAD,sunRanges[1]+SUN_PAD,0])};cacheStats.sunRebuilds++;}
+        {const pad=1.74*sunGrid;sunCache={revision:indexRevision,extent,grid,candidates:worldIndex.query(center,[sunRanges[0]+pad,sunRanges[1]+pad,0])};cacheStats.sunRebuilds++;}
       const candidates=sunCache.candidates;
       const px=p[0],py=p[1],pz=p[2],rx=r[0],ry=r[1],rz=r[2],ux=u[0],uy=u[1],uz=u[2],fwx=fw[0],fwy=fw[1],fwz=fw[2];
       sunCasterOut.length=0;
@@ -1654,7 +1678,11 @@
       const ranges=detailRanges(quality);ranges[0]=extendedDistance(ranges[0],environment,eye);stats.viewDistance=ranges[0];
       const horizontal=canvas.width/canvas.height/f,vertical=1/f;
       cacheStats.viewFrames++;
-      const guard=viewCache=selectionCache(viewCache,indexRevision,eye,axes,horizontal,vertical,ranges[0],ranges,near);
+      trackMotion(eye,axes.forward,t);
+      guardMargin=margins(Math.atan(Math.hypot(horizontal,vertical)));
+      cacheStats.marginDistance=+guardMargin.distance.toFixed(2);cacheStats.marginAngle=+(guardMargin.tilt*180/Math.PI).toFixed(2);
+      const previousView=viewCache,guard=viewCache=selectionCache(viewCache,indexRevision,eye,axes,horizontal,vertical,ranges[0],ranges,near,guardMargin.distance,guardMargin.tilt);
+      if(guard!==previousView)cacheStats.viewRebuilds++;
       const shown=[];let viewHash=0;
       for(let i=0;i<guard.entries.length;i++){
         const e=guard.entries[i],limit=ranges[e.detail]+e.radius,dx=e.p[0]-eye[0],dy=e.p[1]-eye[1],dz=e.p[2]-eye[2];

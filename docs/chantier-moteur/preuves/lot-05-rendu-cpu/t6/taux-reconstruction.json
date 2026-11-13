@@ -1,0 +1,55 @@
+{
+ "commentaire": "Caméra synthétique sur 600 images, rendu GPU simulé (mêmes matrices de passe que le navigateur). Critère de la fiche : taux de reconstruction sous 15 % à 80 m/s avec marges automatiques.",
+ "regimes": [
+  {
+   "regime": "auto 80 m/s",
+   "vitesse": "80 m/s",
+   "lacet": "23 degres/s",
+   "images": 600,
+   "reconstructions": 75,
+   "taux": 0.125,
+   "margeDistance": 12.07,
+   "margeAngleDegres": 4
+  },
+  {
+   "regime": "D=1 fixe 80 m/s",
+   "vitesse": "80 m/s",
+   "lacet": "23 degres/s",
+   "images": 600,
+   "reconstructions": 600,
+   "taux": 1,
+   "margeDistance": 1,
+   "margeAngleDegres": 8
+  },
+  {
+   "regime": "auto 5 m/s",
+   "vitesse": "5 m/s",
+   "lacet": "6 degres/s",
+   "images": 600,
+   "reconstructions": 65,
+   "taux": 0.108,
+   "margeDistance": 1.5,
+   "margeAngleDegres": 4
+  },
+  {
+   "regime": "auto rotation rapide",
+   "vitesse": "8 m/s",
+   "lacet": "344 degres/s",
+   "images": 600,
+   "reconstructions": 266,
+   "taux": 0.443,
+   "margeDistance": 1.77,
+   "margeAngleDegres": 12
+  },
+  {
+   "regime": "auto immobile",
+   "vitesse": "0 m/s",
+   "lacet": "0 degres/s",
+   "images": 600,
+   "reconstructions": 49,
+   "taux": 0.082,
+   "margeDistance": 1.29,
+   "margeAngleDegres": 4
+  }
+ ]
+}
