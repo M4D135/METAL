@@ -16,7 +16,6 @@ const {FWorld,FSimulation} = loaded.window;
 const plain = value => JSON.parse(JSON.stringify(value));
 const acquisitions = [
   { index: 0, key: 'pistol', weapon: 4, name: 'Pistolet (départ)' },
-  { index: 3, key: 'shield', name: 'Bouclier' },
   { index: 6, key: 'smg', weapon: 0, name: 'Mitraillette' },
   { index: 9, key: 'shotgun', weapon: 1, name: 'Double pompe' },
   { index: 12, key: 'grenade', weapon: 3, name: 'Lance-grenades' },
@@ -24,10 +23,9 @@ const acquisitions = [
 ];
 
 function entryInventory(index, caps) {
-  const inventory = { weapons: [false, false, false, false, true], ammo: [0, 0, 0, 0, 1], shield: false };
+  const inventory = { weapons: [false, false, false, false, true], ammo: [0, 0, 0, 0, 1] };
   for (const gear of acquisitions.slice(1)) if (gear.index < index) {
-    if (gear.key === 'shield') inventory.shield = true;
-    else { inventory.weapons[gear.weapon] = true; inventory.ammo[gear.weapon] = caps[gear.weapon]; }
+    inventory.weapons[gear.weapon] = true; inventory.ammo[gear.weapon] = caps[gear.weapon];
   }
   return inventory;
 }
@@ -130,7 +128,7 @@ const report = {
     discovery: 'FSimulation.create on the full generated world with a local valid spawn at the trophy, then step(.025). The real pickup code grants the gift; this is not a traversal benchmark.',
     multipliers: 'The reported damage/cadence values are the campaign adaptation multipliers. Selected difficulty, biome stage, director progress, attack-specific cooldowns and player upgrades compose separately.',
     boss: 'entryMaxHp is the actual runtime value, frozen when entering the world. baseMaxHp is the chapter-scaled generated value before the missing-arsenal adjustment.',
-    heavyCounts: 'grenadeRosterCount and rocketRosterCount count finite predefined identities. Their explosive attacks are gated at runtime by owned shield and, for rockets, at least one heavy weapon.',
+    heavyCounts: 'grenadeRosterCount and rocketRosterCount count finite predefined identities. Their explosive attacks are gated at runtime by owning at least one heavy weapon.',
     enemies: 'enemyCount includes the boss, its six reinforcements and any three conditional trophy guards; it is not a simultaneous-combat count.',
   },
   checks: { worlds: rows.length, discoveryPickups: rows.filter(r => r.afterDiscovery).length, exactCheckpointRoundTrips: restoredCheckpoints, finiteSerializedValues: true, unchangedSourcesDuringRun: true },
