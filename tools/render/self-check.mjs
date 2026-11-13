@@ -5,7 +5,9 @@
 //   --png-dir DIR     write the probe renders and the one-pixel difference map as PNG
 //   --compare FILE    report of an earlier run: every pixel fingerprint must be identical
 //   --chrome-path P   Chrome executable (default: CHROME_PATH, then the platform's Chrome)
-//   --angle A         ANGLE back end (default metal on macOS, d3d11 on Windows; none = flag omitted)
+//   --angle A         ANGLE back end (default: METAL_RENDER_ANGLE, then metal on macOS, d3d11 on
+//                     Windows, Chrome's own default elsewhere; none = flag omitted). Under Linux
+//                     --use-gl=angle goes with --use-angle.
 //   --no-chrome       PNG and comparison checks only
 //   --hold MODE       internal: child process of the signal and crash checks
 // Exit code 0 when every check passes, 1 otherwise. A short summary goes to stderr.
@@ -15,7 +17,7 @@ import {tmpdir} from 'node:os';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import zlib from 'node:zlib';
-import {launch, withChrome, dumpDom, processTree, processAlive, internetSockets, commandLine, defaultChromePath, defaultAngle, PROFILE_PREFIX} from './chrome.mjs';
+import {launch, withChrome, dumpDom, processTree, processAlive, internetSockets, commandLine, defaultChromePath, normalizeOptions, gpuFlags, PROFILE_PREFIX} from './chrome.mjs';
 import {encodePNG, decodePNG, writePNG, flipRows, imageSha256, cloneImage, crc32} from './png.mjs';
 import {diffImages, diffImage} from './image-diff.mjs';
 
@@ -182,6 +184,8 @@ async function chromeRun(index, args, pngDir) {
       && run.commandLine.includes(`--user-data-dir=${browser.profileDir}`)), run.commandLine);
     if (index === 1) {
       run.system = await browser.systemInfo();
+      // The reduced user agent says x86_64 on any Linux (arm64 Spark included): ask userAgentData.
+      run.userAgentData = await page.evaluate(`navigator.userAgentData ? navigator.userAgentData.getHighEntropyValues(['architecture', 'bitness', 'platform', 'platformVersion']).then(v => ({architecture: v.architecture, bitness: v.bitness, platform: v.platform, platformVersion: v.platformVersion})) : null`).catch(error => ({error: error.message}));
       const failure = await page.evaluate('undefined.x').then(() => null, error => error);
       check('page.exceptionReported', failure?.code === 'PAGE_EXCEPTION' && /TypeError/.test(failure.message) && (await page.evaluate('1 + 1')) === 2, failure?.message);
       const remote = await browser.openPage('https://example.com/').then(() => null, error => error.message);
@@ -311,9 +315,11 @@ async function cleanupChecks(args) {
 }
 
 function summaryLines(report) {
-  const g = report.gpu || {};
+  const g = report.gpu || {}, t = report.tool, ua = report.environment?.userAgentData;
+  const source = {option: '--angle', METAL_RENDER_ANGLE: 'METAL_RENDER_ANGLE', platform: 'défaut de la plateforme'}[t.angleSource] || t.angleSource;
   return [
-    `Chrome : ${report.chrome?.product || 'non lancé'} (${report.tool.chromePath}, ANGLE ${report.tool.angle || 'par défaut'})`,
+    `Chrome : ${report.chrome?.product || 'non lancé'} (${t.chromePath}, ANGLE ${t.angle ? `${t.angle}, ${source}` : `par défaut de Chrome, ${source}`})`,
+    `Drapeaux GPU : ${t.gpuFlags?.length ? t.gpuFlags.join(' ') : 'aucun'} ; machine ${t.platform} (Node)${ua && ua.architecture ? ` ; navigateur ${ua.architecture} ${ua.bitness} bits (userAgentData)` : ''}`,
     `GPU : ${g.unmaskedRenderer || g.renderer || 'n/d'}`,
     `Extensions WebGL2 : ${report.extensions ? report.extensions.length : 'n/d'}${report.features ? ' ; ' + Object.entries(report.features).map(([k, v]) => `${k}=${v ? 'oui' : 'non'}`).join(', ') : ''}`,
     `performance.now : pas min ${report.performanceNow?.minStepMs ?? 'n/d'} ms, médian ${report.performanceNow?.medianStepMs ?? 'n/d'} ms ; crossOriginIsolated=${report.environment?.crossOriginIsolated}`,
@@ -326,8 +332,10 @@ function summaryLines(report) {
 async function main(args) {
   const started = performance.now(), pngDir = args.pngDir ? resolve(args.pngDir) : null;
   if (pngDir) mkdirSync(pngDir, {recursive: true});
+  const resolved = normalizeOptions(chromeOptions(args));
   const report = {schema: 'metal-render-self-check-v1', date: new Date().toISOString(),
-    tool: {node: process.version, platform: `${process.platform} ${process.arch}`, chromePath: args.chromePath || defaultChromePath(), angle: args.angle ?? defaultAngle(), probe: PROBE}};
+    tool: {node: process.version, platform: `${process.platform} ${process.arch}`, chromePath: args.chromePath || defaultChromePath(), angle: resolved.angle,
+      angleSource: resolved.angleSource, gpuFlags: gpuFlags(resolved.angle), probe: PROBE}};
   await guarded('png', () => pngChecks());
   await guarded('diff.synthetic', () => { report.diffSynthetic = diffChecks(gradient(256, 33), 'synthetic'); });
   if (args.chrome) {
@@ -342,7 +350,7 @@ async function main(args) {
       report.features = env.webgl2.features;
       report.limits = env.webgl2.limits;
       report.performanceNow = env.performanceNow;
-      report.environment = {userAgent: env.userAgent, page: env.page, secureContext: env.secureContext, crossOriginIsolated: env.crossOriginIsolated,
+      report.environment = {userAgent: env.userAgent, userAgentData: run.userAgentData, page: env.page, secureContext: env.secureContext, crossOriginIsolated: env.crossOriginIsolated,
         offlineAudioContext: env.offlineAudioContext, offlineAudioSampleRate: env.offlineAudioSampleRate, sharedArrayBuffer: env.sharedArrayBuffer,
         webgpu: env.webgpu, hardwareConcurrency: env.hardwareConcurrency};
       report.fingerprints = Object.fromEntries(Object.entries(images).map(([id, {first: image}]) => [id, {width: image.width, height: image.height, sha256: image.sha256, sourceSha256: image.sourceSha256}]));

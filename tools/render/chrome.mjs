@@ -1,17 +1,19 @@
 // Headless Chrome driven over the DevTools protocol on --remote-debugging-pipe
 // (descriptors 3 and 4, NUL-separated JSON): no TCP port, no server, a throw-away
 // profile removed on close, on error, on timeout and on SIGINT/SIGTERM/SIGHUP.
-// Lot 00 / R1 (RCPU-V3, RGPU-11, PARA-13 point 5). Outside npm test and outside the
-// game's size budget. API and limits: tools/render/README.md.
+// Lot 00 / R1 (RCPU-V3, RGPU-11, PARA-13 point 5); R1b: Linux (Spark) portability,
+// METAL_RENDER_ANGLE, page paths followed by ?query/#fragment. Outside npm test and
+// outside the game's size budget. API and limits: tools/render/README.md.
 import {spawn, execFileSync} from 'node:child_process';
-import {existsSync, mkdtempSync, readdirSync, rmSync} from 'node:fs';
+import {existsSync, mkdtempSync, readdirSync, readlinkSync, rmSync, statSync} from 'node:fs';
 import {tmpdir, constants as osConstants} from 'node:os';
-import {join, resolve} from 'node:path';
+import {basename, dirname, join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {flipRows, imageSha256} from './png.mjs';
 
 export const PROFILE_PREFIX = 'metal-render-';
+export const ANGLE_ENV = 'METAL_RENDER_ANGLE';
 const PROFILE_NAME = /^metal-render-(\d+)-[A-Za-z0-9]{6}$/;
 const GROUP_KILL = process.platform !== 'win32';
 const SLOTS = "globalThis[Symbol.for('metal-render-slots')]";
@@ -27,7 +29,24 @@ export const COMMON_FLAGS = Object.freeze([
   '--mute-audio',
 ]);
 // Never accepted in extraArgs: ports, file-access or security relaxations, and flags the launcher owns.
-const FORBIDDEN_FLAG = /^--(remote-debugging-port|remote-debugging-address|remote-debugging-pipe|remote-allow-origins|allow-file-access-from-files|allow-file-access|disable-web-security|user-data-dir|headless|dump-dom|proxy-server|proxy-pac-url|host-resolver-rules|use-angle|window-size|force-device-scale-factor)(=|$)/;
+const FORBIDDEN_FLAG = /^--(remote-debugging-port|remote-debugging-address|remote-debugging-pipe|remote-allow-origins|allow-file-access-from-files|allow-file-access|disable-web-security|user-data-dir|headless|dump-dom|proxy-server|proxy-pac-url|host-resolver-rules|use-angle|use-gl|window-size|force-device-scale-factor)(=|$)/;
+const REFUSALS = [
+  {code: 'port', pattern: /^--remote-(debugging|allow)/, reason: 'no debugging port: the launcher talks DevTools over --remote-debugging-pipe'},
+  {code: 'file-access', pattern: /^--(allow-file-access|disable-web-security)/, reason: 'file:// pages get no file access: pass data with page.call() (run-page --call/--arg)'},
+  {code: 'gpu', pattern: /^--(use-angle|use-gl)(=|$)/, reason: `the launcher owns the GPU flags: use the angle option or ${ANGLE_ENV}`},
+  {code: 'network', pattern: /^--(proxy-|host-resolver-rules)/, reason: 'the network stays closed (host-resolver-rules MAP * ~NOTFOUND)'},
+];
+
+// {code, reason} when an extra Chrome argument is refused, null when it is accepted.
+export function chromeArgRefusal(arg) {
+  if (typeof arg !== 'string' || !arg.startsWith('--')) return {code: 'syntax', reason: 'not a --flag'};
+  if (!FORBIDDEN_FLAG.test(arg)) return null;
+  return REFUSALS.find(r => r.pattern.test(arg)) || {code: 'owned', reason: 'the launcher owns this flag'};
+}
+
+export function refusedChromeArg(arg) {
+  return chromeArgRefusal(arg)?.reason ?? null;
+}
 
 export function defaultChromePath(env = process.env, platform = process.platform) {
   if (env.CHROME_PATH) return env.CHROME_PATH;
@@ -37,9 +56,20 @@ export function defaultChromePath(env = process.env, platform = process.platform
   return candidates.find(file => existsSync(file)) || candidates[0];
 }
 
-// ANGLE back end: Metal on macOS, Direct3D 11 on Windows (david-pc), Chrome's default elsewhere.
-export function defaultAngle(platform = process.platform) {
+// ANGLE back end: METAL_RENDER_ANGLE when set (metal, vulkan, d3d11, swiftshader, gl...;
+// none omits the flag), otherwise Metal on macOS, Direct3D 11 on Windows (david-pc) and
+// Chrome's own default elsewhere (SwiftShader on a headless Linux, deterministic).
+export function defaultAngle(platform = process.platform, env = process.env) {
+  const chosen = env[ANGLE_ENV];
+  if (chosen !== undefined && chosen !== '') return chosen === 'none' ? null : chosen;
   return platform === 'darwin' ? 'metal' : platform === 'win32' ? 'd3d11' : null;
+}
+
+// GPU flags for an ANGLE back end. Under Linux, --use-gl=angle goes with --use-angle (the
+// documented pair for NVIDIA under Vulkan); macOS and Windows already use ANGLE: unchanged.
+export function gpuFlags(angle, platform = process.platform) {
+  if (!angle) return [];
+  return platform === 'linux' ? ['--use-gl=angle', `--use-angle=${angle}`] : [`--use-angle=${angle}`];
 }
 
 function parseWindow(value) {
@@ -55,16 +85,23 @@ function positive(value, fallback, name) {
   return n;
 }
 
+// platform and env are for the checks (default process.platform and process.env).
 export function normalizeOptions(options = {}) {
+  const platform = options.platform || process.platform, env = options.env || process.env;
   const [width, height] = parseWindow(options.window ?? [800, 600]);
   const dpr = positive(options.dpr, 1, 'dpr');
   if (dpr > 8) throw new RangeError(`Invalid dpr: ${dpr}`);
-  const angle = options.angle === undefined ? defaultAngle() : options.angle && options.angle !== 'none' ? options.angle : null;
-  if (angle !== null && !/^[a-z0-9-]+$/.test(angle)) throw new RangeError(`Invalid ANGLE back end: ${angle}`);
+  const fromEnv = options.angle === undefined && env[ANGLE_ENV] !== undefined && env[ANGLE_ENV] !== '';
+  const angle = options.angle === undefined ? defaultAngle(platform, env) : options.angle && options.angle !== 'none' ? options.angle : null;
+  if (angle !== null && !/^[a-z0-9-]+$/.test(angle)) throw new RangeError(`Invalid ANGLE back end: ${angle}${fromEnv ? ` (from ${ANGLE_ENV})` : ''}`);
   const extraArgs = [...(options.extraArgs || [])];
-  for (const arg of extraArgs) if (typeof arg !== 'string' || !arg.startsWith('--') || FORBIDDEN_FLAG.test(arg)) throw new Error(`Refused Chrome argument: ${arg}`);
+  for (const arg of extraArgs) {
+    const refusal = chromeArgRefusal(arg);
+    if (refusal) throw Object.assign(new Error(`Refused Chrome argument: ${arg} (${refusal.reason})`), {code: 'REFUSED_ARGUMENT', refusal: refusal.code});
+  }
   return {
-    chromePath: options.chromePath || defaultChromePath(), angle, width, height, dpr, extraArgs,
+    chromePath: options.chromePath || defaultChromePath(env, platform), angle, width, height, dpr, extraArgs, platform,
+    angleSource: options.angle !== undefined ? 'option' : fromEnv ? ANGLE_ENV : 'platform',
     timeoutMs: positive(options.timeoutMs, 60000, 'timeoutMs'),
     launchTimeoutMs: positive(options.launchTimeoutMs, 30000, 'launchTimeoutMs'),
     closeTimeoutMs: positive(options.closeTimeoutMs, 5000, 'closeTimeoutMs'),
@@ -74,22 +111,38 @@ export function normalizeOptions(options = {}) {
 }
 
 export function chromeArgs(o, profileDir) {
-  return [...COMMON_FLAGS, `--user-data-dir=${profileDir}`, ...(o.angle ? [`--use-angle=${o.angle}`] : []),
+  return [...COMMON_FLAGS, `--user-data-dir=${profileDir}`, ...gpuFlags(o.angle, o.platform || process.platform),
     `--window-size=${o.width},${o.height}`, `--force-device-scale-factor=${o.dpr}`, ...o.extraArgs];
 }
 
-// file:// pages only: a path, a file: URL or about:blank. Query parameters are added to the URL.
-export function pageUrl(target, query) {
+const isFile = file => { try { return statSync(file).isFile(); } catch { return false; } };
+
+// file:// pages only: a path, a file: URL or about:blank. A path may be followed by ?query
+// and/or #fragment ('cielv.html#shots', as the audit's run2.sh pages take their mode) when
+// the part before is an existing file. Query parameters are added to the URL; hash (with or
+// without '#') replaces the fragment.
+export function pageUrl(target, query, hash) {
   let url;
   if (target instanceof URL) url = new URL(target.href);
   else if (typeof target === 'string' && /^(file|about):/i.test(target)) url = new URL(target);
   else if (typeof target === 'string' && !/^[a-z][a-z0-9+.-]*:\/\//i.test(target)) {
-    const file = resolve(target);
-    if (!existsSync(file)) throw new Error(`Page not found: ${file}`);
+    let file = resolve(target), rest = '';
+    if (!existsSync(file)) {
+      const cut = [...target.matchAll(/[?#]/g)].map(m => m.index).find(at => at > 0 && isFile(resolve(target.slice(0, at))));
+      if (cut === undefined) throw Object.assign(new Error(`Page not found: ${file}`), {code: 'PAGE_NOT_FOUND'});
+      file = resolve(target.slice(0, cut));
+      rest = target.slice(cut);
+    }
     url = pathToFileURL(file);
-  } else throw new Error(`Only file:// pages are allowed: ${target}`);
-  if (url.protocol !== 'file:' && url.href !== 'about:blank') throw new Error(`Only file:// pages are allowed: ${url.href}`);
+    if (rest) {
+      const tail = new URL(`file:///page${rest}`);
+      url.search = tail.search;
+      url.hash = tail.hash;
+    }
+  } else throw Object.assign(new Error(`Only file:// pages are allowed: ${target}`), {code: 'NOT_FILE_URL'});
+  if (url.protocol !== 'file:' && url.href !== 'about:blank') throw Object.assign(new Error(`Only file:// pages are allowed: ${url.href}`), {code: 'NOT_FILE_URL'});
   if (query) for (const [key, value] of Object.entries(query)) url.searchParams.set(key, String(value));
+  if (hash !== undefined && hash !== null) url.hash = String(hash);
   return url.href;
 }
 
@@ -105,8 +158,45 @@ function processAlive(pid) {
   try { process.kill(pid, 0); return true; } catch (error) { return error.code === 'EPERM'; }
 }
 
+// Under Linux and macOS, Chrome keeps its single-instance socket in a temporary folder of its
+// own (com.google.Chrome.XXXXXX, outside the profile), linked from the profile as
+// SingletonSocket. A Chrome that quits removes it; a Chrome that is killed (timeout, signal,
+// crash) leaves it behind, in /tmp on the Spark. Found through the link, removed with the
+// profile, and only when it holds nothing but Singleton* entries.
+export function singletonDir(profileDir) {
+  let target;
+  try { target = readlinkSync(join(profileDir, 'SingletonSocket')); } catch { return null; }
+  const dir = dirname(resolve(profileDir, target));
+  return basename(target) === 'SingletonSocket' && /^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*\.[A-Za-z0-9]{6}$/.test(basename(dir)) ? dir : null;
+}
+
+// Under Linux that folder is created in TMPDIR (default /tmp), and Chrome aborts at start
+// (FATAL process_singleton_posix.cc, « Socket path too long ») when
+// TMPDIR/<prefix>.XXXXXX/SingletonSocket does not fit in sun_path (107 characters):
+// TMPDIR of 67 characters or more for Google Chrome, 63 for Chromium. macOS keeps it in the
+// system's temporary folder whatever TMPDIR says. A message, or null when Chrome can start.
+export const SOCKET_PATH_MAX = 107;
+export function singletonSocketProblem(chromePath, env = process.env, platform = process.platform) {
+  if (platform !== 'linux') return null;
+  const tmp = (env.TMPDIR || '/tmp').replace(/\/+$/, '') || '/';
+  const prefix = /chromium/i.test(basename(String(chromePath || ''))) ? 'org.chromium.Chromium' : 'com.google.Chrome';
+  const length = `${tmp}/${prefix}.XXXXXX/SingletonSocket`.length;
+  return length > SOCKET_PATH_MAX ? `TMPDIR too long for Chrome under Linux: ${tmp} (${tmp.length} characters) gives a ${length}-character `
+    + `single-instance socket path, ${SOCKET_PATH_MAX} at most; choose a shorter TMPDIR` : null;
+}
+
+export function removeSingletonDir(dir) {
+  if (!dir) return true;
+  let names;
+  try { names = readdirSync(dir); } catch (error) { return error.code === 'ENOENT'; }
+  if (!names.every(name => /^Singleton(Socket|Cookie|Lock)$/.test(name))) return false;
+  try { rmSync(dir, {recursive: true, force: true, maxRetries: 3, retryDelay: 20}); } catch {}
+  return !existsSync(dir);
+}
+
 // Profiles left by a Node process that was killed with SIGKILL (nothing can run then).
-// Only metal-render-<pid>-XXXXXX folders of the temporary root whose owner process is gone.
+// Only metal-render-<pid>-XXXXXX folders of the temporary root whose owner process is gone,
+// with the single-instance folder they link to.
 export function sweepStaleProfiles(root = tmpdir()) {
   const removed = [];
   let names;
@@ -114,8 +204,9 @@ export function sweepStaleProfiles(root = tmpdir()) {
   for (const name of names) {
     const match = PROFILE_NAME.exec(name);
     if (!match || Number(match[1]) === process.pid || processAlive(Number(match[1]))) continue;
-    const dir = join(root, name);
+    const dir = join(root, name), singleton = singletonDir(dir);
     try { rmSync(dir, {recursive: true, force: true, maxRetries: 3, retryDelay: 20}); } catch {}
+    removeSingletonDir(singleton);
     if (!existsSync(dir)) removed.push(dir);
   }
   return removed;
@@ -155,6 +246,8 @@ async function onSignal(signal) {
 
 class ChromeProcess {
   constructor(o) {
+    const problem = singletonSocketProblem(o.chromePath); // the real system, whatever o.platform says
+    if (problem) throw Object.assign(new Error(problem), {code: 'TMPDIR_TOO_LONG'});
     this.o = o;
     this.profileDir = mkdtempSync(join(o.tmpRoot, `${PROFILE_PREFIX}${process.pid}-`));
     this.stderrTail = '';
@@ -195,8 +288,10 @@ class ChromeProcess {
   }
 
   removeProfileSync() {
+    this.singleton ??= singletonDir(this.profileDir);
     try { rmSync(this.profileDir, {recursive: true, force: true, maxRetries: 10, retryDelay: 20}); } catch {}
     this.profileRemoved = !existsSync(this.profileDir);
+    if (this.singleton) this.singletonRemoved = removeSingletonDir(this.singleton);
     return this.profileRemoved;
   }
 
@@ -218,7 +313,9 @@ class ChromeProcess {
       if (!this.removeProfileSync()) { await delay(250); this.removeProfileSync(); }
       live.delete(this);
       unhook();
-      return {reason: this.reason, exit: this.exitInfo, profileRemoved: this.profileRemoved};
+      const result = {reason: this.reason, exit: this.exitInfo, profileRemoved: this.profileRemoved};
+      if (this.singleton) result.singletonDir = {path: this.singleton, removed: !!this.singletonRemoved};
+      return result;
     })();
   }
 
@@ -487,9 +584,9 @@ class Browser {
   }
 
   // Opens a file:// page in a new target with a viewport of window (CSS pixels) and dpr,
-  // and waits for its load event.
-  async openPage(target, {query, window: size, dpr = this.options.dpr, timeoutMs = this.options.timeoutMs} = {}) {
-    const url = pageUrl(target, query);
+  // and waits for its load event. query and hash as in pageUrl().
+  async openPage(target, {query, hash, window: size, dpr = this.options.dpr, timeoutMs = this.options.timeoutMs} = {}) {
+    const url = pageUrl(target, query, hash);
     const [width, height] = size ? parseWindow(size) : [this.options.width, this.options.height];
     const {targetId} = await this.send('Target.createTarget', {url: 'about:blank'});
     const {sessionId} = await this.send('Target.attachToTarget', {targetId, flatten: true});
@@ -563,21 +660,40 @@ export async function withChrome(options, fn) {
 
 // For legacy pages that print their result in the DOM: chrome --dump-dom, same flags,
 // same throw-away profile and cleanup. Returns the serialised DOM after the load event
-// (or after the virtual time budget).
+// (or after the virtual time budget). query and hash as in pageUrl().
 export async function dumpDom(target, options = {}) {
-  const o = normalizeOptions(options), url = pageUrl(target, options.query), budget = options.virtualTimeBudgetMs;
-  const proc = new ChromeProcess(o), out = [];
+  return (await dumpDomDetails(target, options)).html;
+}
+
+// dumpDom() with the run's details: {html, url, args, profileDir, close: {reason, exit,
+// profileRemoved, singletonDir}, ms}. An error carries the same details in error.details.
+export async function dumpDomDetails(target, options = {}) {
+  const o = normalizeOptions(options), url = pageUrl(target, options.query, options.hash), budget = options.virtualTimeBudgetMs;
+  const proc = new ChromeProcess(o), out = [], t0 = performance.now();
+  const details = {url, args: null, profileDir: proc.profileDir, close: null, ms: null};
+  let failure = null;
   try {
     proc.spawn([...chromeArgs(o, proc.profileDir), ...(budget ? [`--virtual-time-budget=${Math.round(budget)}`] : []), '--dump-dom', url], ['ignore', 'pipe', 'pipe']);
+    details.args = [...proc.args];
     proc.child.stdout.on('data', chunk => out.push(chunk));
     if (!(await settle(proc.streamsClosed, o.timeoutMs))) throw Object.assign(new Error(`dumpDom timeout after ${o.timeoutMs} ms: ${url}`), {code: 'TIMEOUT'});
     if (proc.spawnError?.code === 'ENOENT') throw Object.assign(new Error(`Chrome not found: ${o.chromePath} (set CHROME_PATH or chromePath)`), {code: 'CHROME_NOT_FOUND'});
     await settle(proc.exited, 2000);
-    if (proc.exitInfo?.code !== 0) throw new Error(`Chrome exited with code ${proc.exitInfo?.code}: ${proc.stderrTail.trim().split('\n').slice(-12).join('\n')}`);
-    return Buffer.concat(out).toString('utf8');
+    if (proc.exitInfo?.code !== 0) throw Object.assign(new Error(`Chrome exited with code ${proc.exitInfo?.code}: ${proc.stderrTail.trim().split('\n').slice(-12).join('\n')}`), {code: 'CHROME_EXITED'});
+    details.html = Buffer.concat(out).toString('utf8');
+  } catch (error) {
+    failure = error;
   } finally {
-    await proc.destroy('dump finished');
+    details.close = await proc.destroy('dump finished');
+    details.ms = performance.now() - t0;
   }
+  if (failure) throw Object.assign(failure, {details});
+  return details;
+}
+
+// "Google Chrome 157.0.8103.39" from chrome --version, or null (Windows prints nothing).
+export function chromeVersion(chromePath = defaultChromePath()) {
+  try { return execFileSync(chromePath, ['--version'], {encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'pipe', 'ignore']}).trim() || null; } catch { return null; }
 }
 
 // ---- Process diagnostics (Unix): process tree and Internet sockets ----

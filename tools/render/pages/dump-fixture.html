@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<title>METAL run-page fixture</title>
+<!-- Fixture of tools/render/check-run-page.mjs (lot 00 / R1b). Self-contained, no fetch, no
+     network. It behaves like the audit's bench pages: mode and arguments in the fragment
+     (#mode,arg1,arg2 like bancs/ciel-verif/cielv.html), options in the query, result in a
+     <pre> marker, optionally wrapped in @@JSON@@...@@END@@, captures as data:image/png;base64
+     under a "shots" key (what bancs/ciel/extract.py writes out).
+       ?marker=out|vout|rgpu-out   marker id (default out); with vout or rgpu-out, a decoy
+                                   <pre id="out"> holds {"decoy":true}
+       ?envelope=1                 wrap the JSON in @@JSON@@...@@END@@
+       #sync,ARGS                  result written by the page script, before the load event (default)
+       #late,MS                    result written MS ms after the load event
+       #never                      no result
+       #text                       a result that is not JSON
+       #throw                      an uncaught exception, reported in errors (window.onerror)
+     window.fixture: configure(...args) (stored in result.configured), result(), ready. -->
+<style>html,body{margin:0;background:#000;color:#ccc}canvas{display:block}</style>
+<canvas id="c" width="64" height="48"></canvas>
+<pre id="other">decoy &amp; not a marker</pre>
+<script>
+'use strict';
+(function () {
+  const params = new URLSearchParams(location.search);
+  const parts = (location.hash || '#sync').slice(1).split(',');
+  const mode = parts[0], args = parts.slice(1);
+  const marker = params.get('marker') || 'out';
+  const errors = [];
+  let configured = null, written = false;
+  const pre = document.createElement('pre');
+  pre.id = marker;
+  document.body.appendChild(pre);
+  if (marker !== 'out') {
+    const decoy = document.createElement('pre');
+    decoy.id = 'out';
+    decoy.textContent = '{"decoy":true}';
+    document.body.appendChild(decoy);
+  }
+
+  // Integer-aligned flat rectangles, software rasterised: the same bytes on every run.
+  function shot(seed) {
+    const canvas = document.getElementById('c'), ctx = canvas.getContext('2d', {willReadFrequently: true});
+    ctx.fillStyle = 'rgb(' + (10 * seed) + ',20,30)';
+    ctx.fillRect(0, 0, 64, 48);
+    for (let i = 0; i < 6; i++) {
+      ctx.fillStyle = 'rgb(' + ((seed * 53 + i * 37) % 256) + ',' + ((seed * 91 + i * 71) % 256) + ',' + ((i * 113) % 256) + ')';
+      ctx.fillRect((i * 9 + seed) % 50, (i * 7) % 40, 8 + i, 6 + (seed % 3));
+    }
+    return canvas.toDataURL('image/png');
+  }
+
+  function result() {
+    return {
+      fixture: 'metal-run-page-fixture-v1', mode, args, query: Object.fromEntries(params), hash: location.hash, configured,
+      // What Chrome's serialiser escapes in a text node (& < > U+00A0), and an entity typed as text.
+      text: 'a < b && c > d "quoted" \'single\' é nbsp ✓ &amp;',
+      errors: errors.slice(),
+      shots: {'shot-a': shot(1), 'shot b/../x': shot(2), 'not-an-image': 'data:text/plain;base64,aGk='},
+    };
+  }
+
+  function write() {
+    let text;
+    if (mode === 'text') text = 'texte brut <&> sans JSON';
+    else {
+      text = JSON.stringify(result());
+      if (params.get('envelope') === '1') text = '@@JSON@@' + text + '@@END@@';
+    }
+    pre.textContent = text;
+    written = true;
+  }
+
+  window.onerror = (message, source, line) => { errors.push(String(message) + ' @' + line); if (mode === 'throw') write(); };
+  window.fixture = Object.freeze({
+    configure(...values) { configured = values; return values.length; },
+    result,
+    get ready() { return written; },
+  });
+
+  if (mode === 'sync' || mode === 'text') write();
+  else if (mode === 'late') window.addEventListener('load', () => setTimeout(write, Number(args[0]) || 300));
+  else if (mode === 'throw') {
+    // A script of its own throws during parsing: reported to window.onerror, before the load event.
+    const failing = document.createElement('script');
+    failing.textContent = "throw new Error('exception volontaire')";
+    document.body.appendChild(failing);
+  }
+  else if (mode !== 'never') errors.push('unknown mode ' + mode);
+})();
+</script>
