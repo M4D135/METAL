@@ -633,6 +633,8 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   layout(location=5) in vec4 iColor;
   uniform mat4 uViewProjection;
   uniform vec2 uWindTime;
+  uniform vec3 uCullCentre;
+  uniform vec3 uCullRange;
   out vec3 vWorld;
   out vec3 vNormal;
   out vec3 vSurface;
@@ -661,12 +663,18 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     vEmission=iScale.w;
     vOverlay=mod(iRotation.w,2.);
     vOutdoor=mod(floor(iRotation.w*.5),2.);
-    vObject=floor(iRotation.w*.25);
+    vObject=mod(floor(iRotation.w*.25),2.);
     vSurface=vObject>.5?aPosition*iScale.xyz:vWorld;
     vLocal=aPosition;
     vSurfaceNormal=vObject>.5?normalize(aNormal/max(abs(iScale.xyz),vec3(.0001))):vNormal;
     vColor=iColor;
-    gl_Position=uViewProjection*vec4(vWorld,1.);
+    vec4 clip=uViewProjection*vec4(vWorld,1.);
+    int niveau=int(floor(iRotation.w*.125));
+    if(niveau>=1){
+      float range=niveau==1?uCullRange.x:(niveau==2?uCullRange.y:uCullRange.z);
+      if(distance(uCullCentre,iPosition.xyz)>range+.5*length(iScale.xyz))clip=vec4(2.,2.,2.,1.);
+    }
+    gl_Position=clip;
   }`;
 
   const FRAG = `#version 300 es
@@ -1394,7 +1402,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       const retained=previous&&previous.byMesh.get(mesh),e=retained||metadata(mesh),key=Math.floor(e.p[0]/8)+','+Math.floor(e.p[2]/8),map=levels[e.detail];
       if(!map.has(key))map.set(key,[]);map.get(key).push(e);maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
       if(!retained){const p=e.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
-        e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment),c[0],c[1],c[2],mesh.color?1:0]);}
+        e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment)+(e.detail+1)*8,c[0],c[1],c[2],mesh.color?1:0]);}
       entries.push(e);byMesh.set(mesh,e);
     }
     function query(eye,ranges){
@@ -1900,11 +1908,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const shadowView=new Float32Array(16),shadowProjection=new Float32Array(16),shadowMatrix=new Float32Array(16),shadowMatrices=new Float32Array(48);
     const lightPositions=new Float32Array(36),lightColors=new Float32Array(36),lightRanges=new Float32Array(12);
     const stats={drawCalls:0,triangles:0,instances:0,contextLost:false,webglVersion:2,backend:'webgl2',bloom:false,shadows:false};
-    let program,depthProgram,postProgram,skyProgram,fxProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer,uniforms,postUniforms,skyUniforms,fxUniforms,depthMatrix,depthWind;
+    let program,depthProgram,postProgram,skyProgram,fxProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer,uniforms,postUniforms,skyUniforms,fxUniforms,depthMatrix,depthWind,depthCullCentre,depthCullRange;
     let post=null,shadowTarget=null,whiteTexture=null,targetKey='',shadowKey='',shadowLight=null;
     let world=[],worldIndex=spatialIndex([]),lights=[],environment=null,worldBatch=pack([]),quality='auto',disposed=false,worldRevision=0;
     let staticCaches=[],lampCasters=[],actorLightPlan=null;
-    const sunCasterOut=[];
+    const sunCasterOut=[],SHADOW_RANGES=[32,18,0];
     const governor=resolutionGovernor();let autoScale=1;
 
     function compile(type,code) {
@@ -1958,11 +1966,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     }
     function initialize() {
       program=link(VERT,FRAG);depthProgram=link(VERT,DEPTH_FRAG);postProgram=link(POST_VERT,POST_FRAG);skyProgram=link(POST_VERT,SKY_FRAG);fxProgram=link(FX_VERT,FX_FRAG);
-      uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightRange','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uSkyTop','uSkyBottom','uEnvironment']) uniforms[name]=gl.getUniformLocation(program,name);
+      uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightRange','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uSkyTop','uSkyBottom','uEnvironment','uCullCentre','uCullRange']) uniforms[name]=gl.getUniformLocation(program,name);
       postUniforms={};for(const name of ['uScene','uBloom','uTexel','uPass'])postUniforms[name]=gl.getUniformLocation(postProgram,name);
       skyUniforms={};for(const name of ['uSkyRight','uSkyUp','uSkyForward','uSkyTop','uSkyBottom','uSkyFog','uSunDirection','uSunColor','uSkyFov','uSkyMotion'])skyUniforms[name]=gl.getUniformLocation(skyProgram,name);
       fxUniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uAmbient','uFogColor','uEnvironment','uTime'])fxUniforms[name]=gl.getUniformLocation(fxProgram,name);
       depthMatrix=gl.getUniformLocation(depthProgram,'uViewProjection');depthWind=gl.getUniformLocation(depthProgram,'uWindTime');
+      depthCullCentre=gl.getUniformLocation(depthProgram,'uCullCentre');depthCullRange=gl.getUniformLocation(depthProgram,'uCullRange');
       vao=gl.createVertexArray();gl.bindVertexArray(vao);
       vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,source.vertices,gl.STATIC_DRAW);
       gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);
@@ -2055,8 +2064,9 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       const tangent=1/f;
       const previous=lampCasters[slot];
       const stable=!torchAxes&&previous&&previous.light===light&&previous.p.every((v,k)=>v===p[k]);
-      const casters=stable?previous.entries:worldIndex.query(p,[32,18,0]).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));
+      const casters=stable?previous.entries:worldIndex.query(p,SHADOW_RANGES).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));
       if(!torchAxes&&!stable)lampCasters[slot]={light,p:p.slice(),entries:casters};
+      gl.uniform3fv(depthCullCentre,p);gl.uniform3fv(depthCullRange,SHADOW_RANGES);
       renderStatic(casters,slot+1,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
     function sunShadowPass(eye,axes,dynamicBatch,time){
@@ -2073,13 +2083,15 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.viewport(shadowTarget.size,0,shadowTarget.size,shadowTarget.size);
       gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2);
       gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);gl.uniform2f(depthWind,environment.wind,time);
-      const candidates=worldIndex.query(center,[extent+24,26,0]);
+      const sunRanges=[extent+24,26,0];
+      const candidates=worldIndex.query(center,sunRanges);
       const px=p[0],py=p[1],pz=p[2],rx=r[0],ry=r[1],rz=r[2],ux=u[0],uy=u[1],uz=u[2],fwx=fw[0],fwy=fw[1],fwz=fw[2];
       sunCasterOut.length=0;
       for(let i=0;i<candidates.length;i++){
         const e=candidates[i],dx=e.p[0]-px,dy=e.p[1]-py,dz=e.p[2]-pz,radius=e.radius,z=dx*fwx+dy*fwy+dz*fwz;
         if(Math.abs(dx*rx+dy*ry+dz*rz)<extent+radius&&Math.abs(dx*ux+dy*uy+dz*uz)<extent+radius&&z+radius>near&&z-radius<far)sunCasterOut.push(e);
       }
+      gl.uniform3fv(depthCullCentre,center);gl.uniform3fv(depthCullRange,sunRanges);
       renderStatic(sunCasterOut,2,true,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
     function skyPass(axes,f,time){
@@ -2198,6 +2210,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       gl.uniform2f(uniforms.uResolution,canvas.width,canvas.height);gl.uniform4f(uniforms.uEffects,t,fx.flash||0,fx.damage||0,Math.max(0,Math.min(1,fx.pulse||0)));
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,stats.shadows?shadowTarget.texture:whiteTexture);gl.uniform1i(uniforms.uShadowMap,2);
       gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrices);gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,stats.shadows&&environment?1:0);gl.uniform3fv(uniforms.uTorchPosition,torchPosition);
+      gl.uniform3fv(uniforms.uCullCentre,eye);gl.uniform3fv(uniforms.uCullRange,ranges);
       renderStatic(shown,0);
       renderBatch(dynamicBatch,dynamicBuffer,false);
       if(particles.length)renderEffects(particles,eye,t);
