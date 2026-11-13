@@ -75,8 +75,8 @@
       if(q.shape==='octa')return Math.max(...v.map(Math.abs))/2;
       if(q.shape==='ring')return Math.hypot(v[0],v[2])*.435+Math.hypot(...v)*.065;
       if(q.shape==='foliage'){
-        if(!debrisFoliage)debrisFoliage=G.FRender?.foliageTriangles?.().flat()||[];
-        if(debrisFoliage.length)return Math.max(...debrisFoliage.map(p=>Math.abs(p.reduce((n,x,k)=>n+x*v[k],0))));
+        if(!debrisFoliage){const seen=new Set();debrisFoliage=(G.FRender?.foliageTriangles?.().flat()||[]).filter(p=>{if(p.length!==3)return true;const k=p.join(',');if(seen.has(k))return false;seen.add(k);return true;});}
+        if(debrisFoliage.length){let m=-Infinity;for(let j=0;j<debrisFoliage.length;j++){const p=debrisFoliage[j],d=Math.abs(0+p[0]*v[0]+p[1]*v[1]+p[2]*v[2]);if(d>m)m=d;}return m;}
       }
       return v.reduce((n,x)=>n+Math.abs(x),0)/2;
     });
@@ -273,9 +273,9 @@
     // the Custodian. A single bucket lookup replaces a full level scan per footstep.
     const bucketSize=8,bucketRadius=1.05,bucketX=Math.floor(b.minX/bucketSize),bucketZ=Math.floor(b.minZ/bucketSize);
     const bucketWidth=Math.floor(b.maxX/bucketSize)-bucketX+1,bucketDepth=Math.floor(b.maxZ/bucketSize)-bucketZ+1;
-    const collisionBuckets=Array.from({length:bucketWidth*bucketDepth},()=>[]);
+    const collisionBuckets=Array.from({length:bucketWidth*bucketDepth},()=>[]);let collisionBuilds=0;
     function rebuildCollision(){
-      for(const list of collisionBuckets)list.length=0;
+      collisionBuilds++;for(const list of collisionBuckets)list.length=0;
     for(const q of solids){
       const x0=Math.max(0,Math.floor((q.minX-bucketRadius-1e-7)/bucketSize)-bucketX),x1=Math.min(bucketWidth-1,Math.floor((q.maxX+bucketRadius+1e-7)/bucketSize)-bucketX);
       const z0=Math.max(0,Math.floor((q.minZ-bucketRadius-1e-7)/bucketSize)-bucketZ),z1=Math.min(bucketDepth-1,Math.floor((q.maxZ+bucketRadius+1e-7)/bucketSize)-bucketZ);
@@ -283,6 +283,21 @@
     }
     }
     rebuildCollision();
+    // CSR mirror of collisionBuckets, shared by the debris, blocked() and ray lookups:
+    // mirrorStart[cell]..mirrorStart[cell+1] index mirrorIdx (position in solids) and
+    // mirrorBox (minX,maxX,minY,maxY,minZ,maxZ per entry), in bucket order. It is rebuilt
+    // on first use once solids is replaced or rebuildCollision runs again (syncDestruction,
+    // restore), so a revision that keeps the box objects still refreshes it. solidStamp marks
+    // the boxes already seen by one query.
+    let mirrorFor=null,mirrorBuild=-1,mirrorStart=new Int32Array(0),mirrorIdx=new Int32Array(0),mirrorBox=new Float64Array(0),solidStamp=new Uint32Array(0),solidSerial=0;
+    function ensureMirror(){
+      if(mirrorFor===solids&&mirrorBuild===collisionBuilds)return;mirrorFor=solids;mirrorBuild=collisionBuilds;
+      const cells=collisionBuckets.length,at=new Map();for(let n=0;n<solids.length;n++)at.set(solids[n],n);
+      let total=0;mirrorStart=new Int32Array(cells+1);for(let k=0;k<cells;k++){mirrorStart[k]=total;total+=collisionBuckets[k].length;}mirrorStart[cells]=total;
+      mirrorIdx=new Int32Array(total);mirrorBox=new Float64Array(total*6);
+      for(let k=0;k<cells;k++){const list=collisionBuckets[k];for(let j=0,o=mirrorStart[k];j<list.length;j++,o++){const q=list[j];mirrorIdx[o]=at.get(q);mirrorBox[o*6]=q.minX;mirrorBox[o*6+1]=q.maxX;mirrorBox[o*6+2]=q.minY;mirrorBox[o*6+3]=q.maxY;mirrorBox[o*6+4]=q.minZ;mirrorBox[o*6+5]=q.maxZ;}}
+      solidStamp=new Uint32Array(solids.length);solidSerial=0;
+    }
     function syncDestruction(){
       if(!destruction||seenDestructionRevision===destruction.revision)return;
       navDiff(solids,destruction.colliders);solids=destruction.colliders;seenDestructionRevision=destruction.revision;s.destructionRevision++;rebuildCollision();navDirty=terrainDirty=true;unsupportedBodies();
@@ -1065,19 +1080,47 @@
       const q={id:++projectileSerial,kind,owner,x:source[0],y:source[1],z:source[2],vx:velocity[0],vy:velocity[1],vz:velocity[2],age:0,life:kind==='rocket'?5:4,fuse:kind==='grenade'?1.8:0,radius:kind==='rocket'?.24:.17,blastRadius:kind==='rocket'?3.4:3.2,damage:kind==='rocket'?28:24,terrainPower:kind==='rocket'?38:28,travel:0,bounces:0,resting:false,...settings};
       s.projectiles.push(q);emit(kind==='grenade'&&owner==='player'&&settings.hand?'grenadeLaunch':kind,{x:q.x,y:q.y,z:q.z,owner,id:q.id,...(settings.hand?{hand:settings.hand,weapon:kind==='grenade'?3:2}:{})});return q;
     }
+    // Two-entry memo: ground() cannot change during one updateDebris call, which resets it.
+    let dfX0=NaN,dfZ0=NaN,dfA0=NaN,dfC0=NaN,dfV0=0,dfX1=NaN,dfZ1=NaN,dfA1=NaN,dfC1=NaN,dfV1=0,dfTurn=0;
     function debrisFloor(x,z,h){
-      return Math.max(ground(x,z),ground(x-h[0],z-h[2]),ground(x+h[0],z-h[2]),ground(x-h[0],z+h[2]),ground(x+h[0],z+h[2]));
+      const a=h[0],c=h[2];
+      if(x===dfX0&&z===dfZ0&&a===dfA0&&c===dfC0)return dfV0;
+      if(x===dfX1&&z===dfZ1&&a===dfA1&&c===dfC1)return dfV1;
+      const v=Math.max(ground(x,z),ground(x-a,z-c),ground(x+a,z-c),ground(x-a,z+c),ground(x+a,z+c));
+      if(dfTurn){dfX1=x;dfZ1=z;dfA1=a;dfC1=c;dfV1=v;}else{dfX0=x;dfZ0=z;dfA0=a;dfC0=c;dfV0=v;}dfTurn^=1;return v;
     }
+    // The boxes near a piece, in the order of the former Set: the dynamic list first, then
+    // the static boxes bucket by bucket, each once (boxes.find and debrisSweep ties rely on
+    // it). The array is reused: it lives until the next call, inside one piece's update.
+    const debrisNear=[];let debrisStaticFrom=0;
     function debrisBoxes(q,h,reach,dynamic){
-      const x0=Math.max(0,Math.floor((q.x-h[0]-reach)/bucketSize)-bucketX),x1=Math.min(bucketWidth-1,Math.floor((q.x+h[0]+reach)/bucketSize)-bucketX),z0=Math.max(0,Math.floor((q.z-h[2]-reach)/bucketSize)-bucketZ),z1=Math.min(bucketDepth-1,Math.floor((q.z+h[2]+reach)/bucketSize)-bucketZ),found=new Set(dynamic);
-      for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)for(const box of collisionBuckets[z*bucketWidth+x])found.add(box);
-      return Array.from(found).filter(box=>box.minX<q.x+h[0]+reach+.02&&box.maxX>q.x-h[0]-reach-.02&&box.minZ<q.z+h[2]+reach+.02&&box.maxZ>q.z-h[2]-reach-.02);
+      const x0=Math.max(0,Math.floor((q.x-h[0]-reach)/bucketSize)-bucketX),x1=Math.min(bucketWidth-1,Math.floor((q.x+h[0]+reach)/bucketSize)-bucketX),z0=Math.max(0,Math.floor((q.z-h[2]-reach)/bucketSize)-bucketZ),z1=Math.min(bucketDepth-1,Math.floor((q.z+h[2]+reach)/bucketSize)-bucketZ),out=debrisNear;
+      const ax=q.x+h[0]+reach+.02,bx=q.x-h[0]-reach-.02,az=q.z+h[2]+reach+.02,bz=q.z-h[2]-reach-.02;out.length=0;
+      for(let k=0;k<dynamic.length;k++){const box=dynamic[k];if(box.minX<ax&&box.maxX>bx&&box.minZ<az&&box.maxZ>bz)out.push(box);}
+      debrisStaticFrom=out.length;
+      ensureMirror();if(++solidSerial>=4294967295){solidStamp.fill(0);solidSerial=1;}const stamp=solidSerial;
+      for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){const cell=z*bucketWidth+x;for(let o=mirrorStart[cell],end=mirrorStart[cell+1];o<end;o++){const n=mirrorIdx[o];if(solidStamp[n]===stamp)continue;solidStamp[n]=stamp;const box=solids[n];if(box.minX<ax&&box.maxX>bx&&box.minZ<az&&box.maxZ>bz)out.push(box);}}
+      return out;
     }
     const debrisOverlaps=(q,h,box)=>q.x+h[0]>box.minX+.0002&&q.x-h[0]<box.maxX-.0002&&q.y+h[1]>box.minY+.0002&&q.y-h[1]<box.maxY-.0002&&q.z+h[2]>box.minZ+.0002&&q.z-h[2]<box.maxZ-.0002;
     function debrisSupport(q,h,boxes){
       const bottom=q.y-h[1],floor=debrisFloor(q.x,q.z,h);let height=Math.abs(bottom-floor)<.018?floor:-Infinity;
       for(const box of boxes)if(Math.abs(bottom-box.maxY)<.018&&q.x+h[0]>box.minX+.002&&q.x-h[0]<box.maxX-.002&&q.z+h[2]>box.minZ+.002&&q.z-h[2]<box.maxZ-.002)height=Math.max(height,box.maxY);
       return height;
+    }
+    // Sleep (SIM-03): a resting piece whose own support is the floor or a static collider is
+    // skipped while seenDestructionRevision stays the same. Exact: that support only changes
+    // with a revision (the floors are fixed, solids is replaced by syncDestruction), a resting
+    // piece does not move, and doors, traps and lifts can only add support. A floor trap moves
+    // ground() itself, so nothing sleeps while one is listed. Any future moving support able
+    // to withdraw from under a piece (lot 17: carried bodies, platforms) must wake the pieces
+    // it held with debrisSleep.delete. Never saved: restore starts with an empty map.
+    let debrisSleep=new WeakMap();
+    function debrisStaticSupport(q,h,boxes){
+      // Same predicates as debrisSupport, on the floor and the static colliders of boxes only.
+      const bottom=q.y-h[1];if(Math.abs(bottom-debrisFloor(q.x,q.z,h))<.018)return true;
+      for(let k=debrisStaticFrom;k<boxes.length;k++){const box=boxes[k];if(Math.abs(bottom-box.maxY)<.018&&q.x+h[0]>box.minX+.002&&q.x-h[0]<box.maxX-.002&&q.z+h[2]>box.minZ+.002&&q.z-h[2]<box.maxZ-.002)return true;}
+      return false;
     }
     function debrisSweep(q,h,delta,boxes){
       const pos=[q.x,q.y,q.z];let nearest=1,normal=null;
@@ -1103,11 +1146,14 @@
     }
     function updateDebris(dt){
       const dynamic=[...doorBoxes,...trapBoxes,...s.lifts.map(l=>({minX:l.x-l.w/2,maxX:l.x+l.w/2,minY:l.y-.22,maxY:l.y,minZ:l.z-l.d/2,maxZ:l.z+l.d/2}))],skin=.001;
+      let sleepy=true;for(let k=0;k<trapStates.length;k++)if(trapStates[k].kind==='floor'){sleepy=false;break;}
+      dfX0=dfX1=NaN;
       for(const q of s.debris){
         q.age=Math.min(1e7,q.age+dt);q.impactWait=Math.max(0,(q.impactWait||0)-dt);if(!q.structural&&q.age>=q.life||dt<=0)continue;
+        if(q.resting&&sleepy&&debrisSleep.get(q)===seenDestructionRevision)continue;
         q.rotation=q.rotation||[0,0,0];q.angularVelocity=q.angularVelocity||[0,0,0];q.settleTime=q.settleTime||0;
         let h=debrisHalf(q),boxes=debrisBoxes(q,h,Math.hypot(q.vx,q.vz)*dt+.1,dynamic);
-        if(q.resting){if(Number.isFinite(debrisSupport(q,h,boxes)))continue;q.resting=false;q.settleTime=0;}
+        if(q.resting){if(Number.isFinite(debrisSupport(q,h,boxes))){if(sleepy&&debrisStaticSupport(q,h,boxes))debrisSleep.set(q,seenDestructionRevision);continue;}q.resting=false;q.settleTime=0;debrisSleep.delete(q);}
         const count=Math.max(1,Math.ceil(dt/.0125)),step=dt/count;
         for(let i=0;i<count&&!q.resting;i++){
           h=debrisHalf(q);
@@ -1133,7 +1179,7 @@
           }
           const below=debrisFloor(q.x,q.z,h);if(q.y-h[1]<below){q.y=below+h[1]+skin;if(q.vy<0)debrisContact(q,[0,1,0]);}
           const supported=Number.isFinite(debrisSupport(q,h,boxes)),flatEnough=!q.structural||rotationBlocked||target.every((v,k)=>Math.abs(wrap(v-q.rotation[k]))<.025);
-          if(supported&&Math.hypot(q.vx,q.vy,q.vz)<.25&&flatEnough){q.settleTime+=step;if(q.settleTime>=.18){q.resting=true;q.vx=q.vy=q.vz=0;q.angularVelocity=[0,0,0];q.settleTime=.18;}}
+          if(supported&&Math.hypot(q.vx,q.vy,q.vz)<.25&&flatEnough){q.settleTime+=step;if(q.settleTime>=.18){q.resting=true;q.vx=q.vy=q.vz=0;q.angularVelocity=[0,0,0];q.settleTime=.18;debrisSleep.delete(q);}}
           else q.settleTime=0;
         }
       }
@@ -2307,7 +2353,7 @@
         invalidateBrain();
         s.cores=world.cores.map((c,i)=>({...c,taken:a.cores[i]}));s.pickups=world.pickups.map((c,i)=>({...c,taken:a.pickups[i],remaining:pickupRemaining?pickupRemaining[i]:armorRemaining?armorRemaining[i]:Math.max(0,Math.floor(c.amount||0))}));if(encounters)for(let i=0;i<encounters.length;i++)Object.assign(s.encounters[i],encounters[i]);
         giants=s.enemies.filter(giant);destruction=candidate;solids=savedSolids;seenDestructionRevision=destruction?.revision||0;s.destructionRevision++;trapStates=s.traps;trapBoxes.length=0;trapBoxes.push(...savedTrapBoxes);rebuildCollision();
-        bossAttackSerial=t.bossAttackSerial||0;explosionSerial=t.explosionSerial||0;projectileSerial=t.projectileSerial||0;rubbleSerial=t.rubbleSerial||0;s.explosions=[];s.debris=rubble;
+        bossAttackSerial=t.bossAttackSerial||0;explosionSerial=t.explosionSerial||0;projectileSerial=t.projectileSerial||0;rubbleSerial=t.rubbleSerial||0;s.explosions=[];s.debris=rubble;debrisSleep=new WeakMap();
         s.events=[];s.particles=[];for(const j of s.jumpPads)j.flash=0;s.pulseVisual=0;s.flash=0;s.damage=0;s.hitMarker=0;s.moving=0;s.threat=0;
         fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;encounterWait=t.encounterWait||0;emptyWait=t.emptyWait||0;recovery=0;interactHeld=false;stopMotion(true);
         Object.assign(s.aiStats,{awake:enemies.filter(e=>alive(e)&&!e.sleeping).length,dormant:enemies.filter(e=>alive(e)&&e.sleeping).length,alive:enemies.filter(e=>e.hp>0).length,pathSearches:0,pathDeferred:0});if(progression)encounterCounts();

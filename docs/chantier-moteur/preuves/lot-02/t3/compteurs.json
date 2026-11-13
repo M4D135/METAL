@@ -1,0 +1,302 @@
+{
+ "schema": "lot02-t3-compteurs-v1",
+ "rows": [
+  {
+   "id": "legacy-s0",
+   "weapon": null,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "576ce3b4",
+    "576ce3b4"
+   ],
+   "a": {
+    "ground": 716971,
+    "blocked": 42887,
+    "segmentFree": 6376,
+    "astarPops": 81453,
+    "astarNodes": 81121,
+    "revisions": 8
+   },
+   "b": {
+    "ground": 207096,
+    "blocked": 42887,
+    "segmentFree": 6376,
+    "astarPops": 81453,
+    "astarNodes": 81121,
+    "revisions": 8
+   },
+   "groundRatio": 0.2888
+  },
+  {
+   "id": "legacy-s2",
+   "weapon": null,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "54574123",
+    "54574123"
+   ],
+   "a": {
+    "ground": 1705517,
+    "blocked": 30301,
+    "segmentFree": 4665,
+    "astarPops": 19200,
+    "astarNodes": 18960,
+    "revisions": 15
+   },
+   "b": {
+    "ground": 468437,
+    "blocked": 30301,
+    "segmentFree": 4665,
+    "astarPops": 19200,
+    "astarNodes": 18960,
+    "revisions": 15
+   },
+   "groundRatio": 0.2747
+  },
+  {
+   "id": "campaign-w10",
+   "weapon": null,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "6cd12673",
+    "6cd12673"
+   ],
+   "a": {
+    "ground": 839745,
+    "blocked": 43871,
+    "segmentFree": 6440,
+    "astarPops": 58810,
+    "astarNodes": 58507,
+    "revisions": 13
+   },
+   "b": {
+    "ground": 266875,
+    "blocked": 43871,
+    "segmentFree": 6440,
+    "astarPops": 58810,
+    "astarNodes": 58507,
+    "revisions": 13
+   },
+   "groundRatio": 0.3178
+  },
+  {
+   "id": "campaign-w16",
+   "weapon": null,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "6de7419e",
+    "6de7419e"
+   ],
+   "a": {
+    "ground": 891341,
+    "blocked": 71952,
+    "segmentFree": 12986,
+    "astarPops": 61759,
+    "astarNodes": 60811,
+    "revisions": 13
+   },
+   "b": {
+    "ground": 308746,
+    "blocked": 71952,
+    "segmentFree": 12986,
+    "astarPops": 61759,
+    "astarNodes": 60811,
+    "revisions": 13
+   },
+   "groundRatio": 0.3464
+  },
+  {
+   "id": "campaign2-w1",
+   "weapon": null,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "36b0dc6a",
+    "36b0dc6a"
+   ],
+   "a": {
+    "ground": 713832,
+    "blocked": 64954,
+    "segmentFree": 10875,
+    "astarPops": 50055,
+    "astarNodes": 49309,
+    "revisions": 11
+   },
+   "b": {
+    "ground": 262807,
+    "blocked": 64954,
+    "segmentFree": 10875,
+    "astarPops": 50055,
+    "astarNodes": 49309,
+    "revisions": 11
+   },
+   "groundRatio": 0.3682
+  },
+  {
+   "id": "campaign2-w7",
+   "weapon": null,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "357d17e8",
+    "357d17e8"
+   ],
+   "a": {
+    "ground": 537430,
+    "blocked": 67155,
+    "segmentFree": 11197,
+    "astarPops": 89625,
+    "astarNodes": 88701,
+    "revisions": 9
+   },
+   "b": {
+    "ground": 227185,
+    "blocked": 67155,
+    "segmentFree": 11197,
+    "astarPops": 89625,
+    "astarNodes": 88701,
+    "revisions": 9
+   },
+   "groundRatio": 0.4227
+  },
+  {
+   "id": "campaign2-w10",
+   "weapon": null,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "8f6aafe7",
+    "8f6aafe7"
+   ],
+   "a": {
+    "ground": 516074,
+    "blocked": 65156,
+    "segmentFree": 10880,
+    "astarPops": 43100,
+    "astarNodes": 42471,
+    "revisions": 7
+   },
+   "b": {
+    "ground": 222549,
+    "blocked": 65156,
+    "segmentFree": 10880,
+    "astarPops": 43100,
+    "astarNodes": 42471,
+    "revisions": 7
+   },
+   "groundRatio": 0.4312
+  },
+  {
+   "id": "campaign2-w13",
+   "weapon": null,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "7e60456d",
+    "7e60456d"
+   ],
+   "a": {
+    "ground": 621636,
+    "blocked": 66607,
+    "segmentFree": 11066,
+    "astarPops": 87573,
+    "astarNodes": 86715,
+    "revisions": 13
+   },
+   "b": {
+    "ground": 245866,
+    "blocked": 66607,
+    "segmentFree": 11066,
+    "astarPops": 87573,
+    "astarNodes": 86715,
+    "revisions": 13
+   },
+   "groundRatio": 0.3955
+  },
+  {
+   "id": "campaign2-w18",
+   "weapon": null,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "89ab7825",
+    "89ab7825"
+   ],
+   "a": {
+    "ground": 1365859,
+    "blocked": 7233,
+    "segmentFree": 0,
+    "astarPops": 0,
+    "astarNodes": 0,
+    "revisions": 14
+   },
+   "b": {
+    "ground": 339859,
+    "blocked": 7233,
+    "segmentFree": 0,
+    "astarPops": 0,
+    "astarNodes": 0,
+    "revisions": 14
+   },
+   "groundRatio": 0.2488
+  },
+  {
+   "id": "legacy-s2",
+   "weapon": 2,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "4cb96028",
+    "4cb96028"
+   ],
+   "a": {
+    "ground": 2709144,
+    "blocked": 27515,
+    "segmentFree": 3309,
+    "astarPops": 4590,
+    "astarNodes": 4539,
+    "revisions": 6
+   },
+   "b": {
+    "ground": 512314,
+    "blocked": 27515,
+    "segmentFree": 3309,
+    "astarPops": 4590,
+    "astarNodes": 4539,
+    "revisions": 6
+   },
+   "groundRatio": 0.1891
+  },
+  {
+   "id": "campaign-w10",
+   "weapon": 2,
+   "steps": 1800,
+   "identical": true,
+   "chain": [
+    "6cd12673",
+    "6cd12673"
+   ],
+   "a": {
+    "ground": 839745,
+    "blocked": 43871,
+    "segmentFree": 6440,
+    "astarPops": 58810,
+    "astarNodes": 58507,
+    "revisions": 13
+   },
+   "b": {
+    "ground": 266875,
+    "blocked": 43871,
+    "segmentFree": 6440,
+    "astarPops": 58810,
+    "astarNodes": 58507,
+    "revisions": 13
+   },
+   "groundRatio": 0.3178
+  }
+ ]
+}

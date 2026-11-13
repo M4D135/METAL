@@ -2205,3 +2205,63 @@ test('a demolition storm has a finite rubble budget and cannot retire settled wr
   assert(sim.state.debris.filter(q => q.structural).length > 80); assert(sim.state.debris.every(q => [q.x, q.y, q.z, ...q.rotation].every(Number.isFinite)));
   const copy = FSimulation.create(sim.state.world); assert(copy.restore(sim.snapshot()), 'a saturated valid rubble state could not be restored');
 });
+
+// SIM-03: resting rubble sleeps while its floor or static support cannot change.
+function rubblePiece(id, x, y, z, size = [.5, .2, .5]) {
+  return { x, y, z, vx: 0, vy: 0, vz: 0, size, age: 0, life: 1e7, mat: 3, seed: id, structural: true, id, sourceId: 'test', shape: 'box', material: 'stone',
+    mass: 2, rotation: [0, 0, 0], angularVelocity: [0, 0, 0], resting: false, impactWait: 0, settleTime: 0 };
+}
+const restingPose = q => [q.resting, q.x, q.y, q.z, ...q.rotation];
+const restsOn = (q, top) => q.resting && q.y - .1 > top && q.y - .1 < top + .004; // half height .1
+
+test('Rubble sleep: a sleeping piece wakes when a revision removes its own support, while other resting pieces keep their exact pose', () => {
+  const crate = x => ({ shape: 'box', p: [x, .7, -4], s: [1.4, 1.4, 1.4], mat: 3 });
+  const world = demolitionFixture({ meshes: [crate(-4), crate(4)], colliders: [{ minX: -4.7, maxX: -3.3, minY: 0, maxY: 1.4, minZ: -4.7, maxZ: -3.3, mesh: 0 }, { minX: 3.3, maxX: 4.7, minY: 0, maxY: 1.4, minZ: -4.7, maxZ: -3.3, mesh: 1 }],
+    destructibles: [{ id: 'left', kind: 'support', strength: 18, meshes: [0], colliders: [0] }, { id: 'right', kind: 'support', strength: 18, meshes: [1], colliders: [1] }] });
+  const sim = FSimulation.create(world), left = rubblePiece(1, -4, 2, -4), right = rubblePiece(2, 4, 2, -4), floor = rubblePiece(3, 0, .6, 3);
+  sim.state.debris.push(left, right, floor); advance(sim, 4);
+  for (const q of [left, right]) assert(restsOn(q, 1.4), 'rubble did not settle on its crate');
+  assert(restsOn(floor, 0));
+  const still = restingPose(right), ground = restingPose(floor), revision = sim.state.destructionRevision;
+  sim.destruction.blast([-4, .7, -4], 2.2, 55); sim.step(.025);
+  assert(sim.state.destructionRevision > revision && !sim.destruction.isAlive('left') && sim.destruction.isAlive('right'));
+  assert(!left.resting, 'a sleeping piece floated after its support vanished');
+  assert.deepEqual(restingPose(right), still); assert.deepEqual(restingPose(floor), ground);
+  advance(sim, 4); assert(restsOn(left, 0), 'the woken piece did not land on the floor');
+  assert.deepEqual(restingPose(right), still, 'a revision elsewhere moved a piece on an intact support'); assert.deepEqual(restingPose(floor), ground);
+  sim.destruction.blast([4, .7, -4], 2.2, 55); sim.step(.025); assert(!right.resting, 'a piece put back to sleep under the new revision floated at the next one');
+  advance(sim, 4); assert(restsOn(right, 0)); assert.deepEqual(restingPose(floor), ground);
+});
+
+test('Rubble sleep: a piece resting on a lift deck is re-checked every step and follows the deck down', () => {
+  const world = fixture({ generation: 5, walkable: [{ x: 0, y: 0, z: 0, w: 60, d: 60 }], lifts: [{ id: 'deck', x: 0, z: -6, w: 3, d: 3, minY: 0, maxY: 3, speed: 1.6 }] });
+  const sim = FSimulation.create(world), deck = sim.state.lifts[0];
+  deck.target = 3; deck.moving = true; advance(sim, 2.2); assert.equal(deck.y, 3);
+  const q = rubblePiece(1, .4, 3.6, -6); sim.state.debris.push(q); advance(sim, 3);
+  assert(restsOn(q, 3), 'rubble did not settle on the raised deck');
+  deck.target = 0; deck.moving = true; let highest = 0;
+  for (let i = 0; i < 100; i++) { sim.step(.025); highest = Math.max(highest, q.y - deck.y); }
+  assert.equal(deck.y, 0); assert(highest < .5, 'rubble hovered above a descending deck');
+  advance(sim, 1); assert(sim.state.debris.includes(q) && restsOn(q, 0));
+});
+
+test('Rubble sleep: a sinking floor trap drops the rubble resting on it, as nothing sleeps while a floor trap exists', () => {
+  const world = fixture({ generation: 5, walkable: [{ x: 0, y: 0, z: 0, w: 60, d: 60 }], traps: [{ id: 'pit', kind: 'floor', x: 0, y: 0, z: -6, w: 3, d: 3, travel: .85, warning: .8, active: 2.4 }] });
+  const sim = FSimulation.create(world), p = sim.state.player, q = rubblePiece(1, .6, .5, -6);
+  sim.state.debris.push(q); advance(sim, 3); assert(restsOn(q, 0));
+  Object.assign(p, { x: -.8, z: -6 }); let lowest = q.y;
+  for (let i = 0; i < 120; i++) { sim.step(.025); lowest = Math.min(lowest, q.y); }
+  assert(sim.state.traps[0].triggered, 'the player never triggered the floor trap'); assert(lowest < -.6, 'rubble hovered over a sunken floor trap');
+});
+
+test('Rubble sleep: restored resting rubble is revalidated at its first step, as sleep is never saved', () => {
+  const world = fenceDemolitionFixture(), sim = FSimulation.create(world); assert(sim.fire()); advance(sim, 10);
+  const rail = sim.state.debris.find(q => q.structural); assert(rail?.resting);
+  const lifted = JSON.parse(JSON.stringify(sim.snapshot())), saved = lifted.state.rubble.find(q => q.id === rail.id);
+  saved.y += .02; // within the .03 tolerance of restore, beyond the .018 of a resting contact
+  for (const target of [FSimulation.create(world), sim]) {
+    assert(target.restore(lifted)); const copy = target.state.debris.find(q => q.id === rail.id);
+    assert(copy.resting && copy !== rail); target.step(.025); assert(!copy.resting, 'a restored piece was trusted asleep');
+    advance(target, 3); assert(copy.resting && copy.y < saved.y - .015 && Math.abs(copy.y - rail.y) < .005, 'the revalidated piece did not settle back');
+  }
+});

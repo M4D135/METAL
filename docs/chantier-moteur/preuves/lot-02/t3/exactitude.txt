@@ -1,0 +1,76 @@
+legacy-s0 arme d’origine       repos    50773 | endormies    50628 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 102064/181544, écarts 0 | boîtes 56739, écarts 0 | feuillage 0, écarts 0
+legacy-s0 roquettes            repos   140773 | endormies   140666 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 192082/361576, écarts 0 | boîtes 146741, écarts 0 | feuillage 0, écarts 0
+legacy-s0 grenades             repos    50773 | endormies    50628 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 102064/181544, écarts 0 | boîtes 56739, écarts 0 | feuillage 0, écarts 0
+legacy-s2 arme d’origine       repos    92697 | endormies    91729 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 247090/422204, écarts 0 | boîtes 110668, écarts 0 | feuillage 0, écarts 0
+legacy-s2 roquettes            repos   409720 | endormies   409197 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 739323/1249680, écarts 0 | boîtes 442337, écarts 0 | feuillage 18567, écarts 0
+legacy-s2 grenades             repos    92697 | endormies    91729 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 247090/422204, écarts 0 | boîtes 110668, écarts 0 | feuillage 0, écarts 0
+campaign-w10 arme d’origine    repos    45117 | endormies    44833 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 114707/200036, écarts 0 | boîtes 53711, écarts 0 | feuillage 0, écarts 0
+campaign-w10 roquettes         repos   141206 | endormies   140826 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 238307/437856, écarts 0 | boîtes 153391, écarts 0 | feuillage 0, écarts 0
+campaign-w10 grenades          repos    45117 | endormies    44833 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 114707/200036, écarts 0 | boîtes 53711, écarts 0 | feuillage 0, écarts 0
+campaign-w16 arme d’origine    repos    44654 | endormies    44350 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 116760/201798, écarts 0 | boîtes 53331, écarts 0 | feuillage 0, écarts 0
+campaign-w16 roquettes         repos   146539 | endormies   146071 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 237965/438084, écarts 0 | boîtes 157812, écarts 0 | feuillage 0, écarts 0
+campaign-w16 grenades          repos    44654 | endormies    44350 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 116760/201798, écarts 0 | boîtes 53331, écarts 0 | feuillage 0, écarts 0
+campaign2-w1 arme d’origine    repos    31255 | endormies    31053 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 90370/155178, écarts 0 | boîtes 38538, écarts 0 | feuillage 0, écarts 0
+campaign2-w1 roquettes         repos   105383 | endormies   105021 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 210125/373456, écarts 0 | boîtes 118322, écarts 0 | feuillage 0, écarts 0
+campaign2-w1 grenades          repos    31255 | endormies    31053 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 90370/155178, écarts 0 | boîtes 38538, écarts 0 | feuillage 0, écarts 0
+campaign2-w2 arme d’origine    repos   115576 | endormies   114113 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 421558/648185, écarts 0 | boîtes 147417, écarts 0 | feuillage 0, écarts 0
+campaign2-w2 roquettes         repos   319913 | endormies   317776 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 965606/1470504, écarts 0 | boîtes 381552, écarts 0 | feuillage 0, écarts 0
+campaign2-w2 grenades          repos   115576 | endormies   114113 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 421558/648185, écarts 0 | boîtes 147417, écarts 0 | feuillage 0, écarts 0
+campaign2-w3 arme d’origine    repos    95323 | endormies    94520 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 252358/428274, écarts 0 | boîtes 113475, écarts 0 | feuillage 0, écarts 0
+campaign2-w3 roquettes         repos   316729 | endormies   314839 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 611880/1079176, écarts 0 | boîtes 350755, écarts 0 | feuillage 0, écarts 0
+campaign2-w3 grenades          repos    95323 | endormies    94520 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 252358/428274, écarts 0 | boîtes 113475, écarts 0 | feuillage 0, écarts 0
+campaign2-w4 arme d’origine    repos    20108 | endormies    19982 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 67030/116094, écarts 0 | boîtes 26152, écarts 0 | feuillage 0, écarts 0
+campaign2-w4 roquettes         repos    79105 | endormies    78871 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 179718/315444, écarts 0 | boîtes 91584, écarts 0 | feuillage 0, écarts 0
+campaign2-w4 grenades          repos    20108 | endormies    19982 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 67030/116094, écarts 0 | boîtes 26152, écarts 0 | feuillage 0, écarts 0
+campaign2-w5 arme d’origine    repos   106708 | endormies   105376 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 391760/620450, écarts 0 | boîtes 138459, écarts 0 | feuillage 0, écarts 0
+campaign2-w5 roquettes         repos   310327 | endormies   308147 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 907786/1434199, écarts 0 | boîtes 372922, écarts 0 | feuillage 0, écarts 0
+campaign2-w5 grenades          repos   106708 | endormies   105376 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 391760/620450, écarts 0 | boîtes 138459, écarts 0 | feuillage 0, écarts 0
+campaign2-w6 arme d’origine    repos    79324 | endormies    78711 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 197292/343516, écarts 0 | boîtes 93516, écarts 0 | feuillage 0, écarts 0
+campaign2-w6 roquettes         repos   293820 | endormies   292220 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 554223/969872, écarts 0 | boîtes 323032, écarts 0 | feuillage 0, écarts 0
+campaign2-w6 grenades          repos    79324 | endormies    78711 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 197292/343516, écarts 0 | boîtes 93516, écarts 0 | feuillage 0, écarts 0
+campaign2-w7 arme d’origine    repos    21913 | endormies    21794 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 62113/109968, écarts 0 | boîtes 27120, écarts 0 | feuillage 0, écarts 0
+campaign2-w7 roquettes         repos    81668 | endormies    81367 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 177888/315108, écarts 0 | boîtes 93572, écarts 0 | feuillage 0, écarts 0
+campaign2-w7 grenades          repos    21913 | endormies    21794 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 62113/109968, écarts 0 | boîtes 27120, écarts 0 | feuillage 0, écarts 0
+campaign2-w8 arme d’origine    repos   106864 | endormies   105524 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 370547/588015, écarts 0 | boîtes 136169, écarts 0 | feuillage 0, écarts 0
+campaign2-w8 roquettes         repos   309847 | endormies   307853 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 911697/1408710, écarts 0 | boîtes 370282, écarts 0 | feuillage 0, écarts 0
+campaign2-w8 grenades          repos   106864 | endormies   105524 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 370547/588015, écarts 0 | boîtes 136169, écarts 0 | feuillage 0, écarts 0
+campaign2-w9 arme d’origine    repos    80964 | endormies    80145 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 195809/340054, écarts 0 | boîtes 94755, écarts 0 | feuillage 0, écarts 0
+campaign2-w9 roquettes         repos   284956 | endormies   283195 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 518987/930050, écarts 0 | boîtes 312378, écarts 0 | feuillage 0, écarts 0
+campaign2-w9 grenades          repos    80964 | endormies    80145 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 195809/340054, écarts 0 | boîtes 94755, écarts 0 | feuillage 0, écarts 0
+campaign2-w10 arme d’origine   repos    19014 | endormies    18894 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 58516/102870, écarts 0 | boîtes 24109, écarts 0 | feuillage 0, écarts 0
+campaign2-w10 roquettes        repos    76392 | endormies    76091 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 170564/302994, écarts 0 | boîtes 88304, écarts 0 | feuillage 0, écarts 0
+campaign2-w10 grenades         repos    19014 | endormies    18894 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 58516/102870, écarts 0 | boîtes 24109, écarts 0 | feuillage 0, écarts 0
+campaign2-w11 arme d’origine   repos   119854 | endormies   118316 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 428294/657082, écarts 0 | boîtes 151561, écarts 0 | feuillage 0, écarts 0
+campaign2-w11 roquettes        repos   325785 | endormies   323475 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 949436/1454512, écarts 0 | boîtes 385656, écarts 0 | feuillage 0, écarts 0
+campaign2-w11 grenades         repos   119854 | endormies   118316 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 428294/657082, écarts 0 | boîtes 151561, écarts 0 | feuillage 0, écarts 0
+campaign2-w12 arme d’origine   repos    73721 | endormies    73043 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 203523/345348, écarts 0 | boîtes 88608, écarts 0 | feuillage 0, écarts 0
+campaign2-w12 roquettes        repos   287915 | endormies   286476 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 540273/962032, écarts 0 | boîtes 317169, écarts 0 | feuillage 0, écarts 0
+campaign2-w12 grenades         repos    73721 | endormies    73043 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 203523/345348, écarts 0 | boîtes 88608, écarts 0 | feuillage 0, écarts 0
+campaign2-w13 arme d’origine   repos    21483 | endormies    21328 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 75186/126398, écarts 0 | boîtes 28172, écarts 0 | feuillage 0, écarts 0
+campaign2-w13 roquettes        repos    63485 | endormies    63274 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 172314/293228, écarts 0 | boîtes 76900, écarts 0 | feuillage 0, écarts 0
+campaign2-w13 grenades         repos    21483 | endormies    21328 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 75186/126398, écarts 0 | boîtes 28172, écarts 0 | feuillage 0, écarts 0
+campaign2-w14 arme d’origine   repos   109368 | endormies   107986 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 370577/588917, écarts 0 | boîtes 138077, écarts 0 | feuillage 0, écarts 0
+campaign2-w14 roquettes        repos   310361 | endormies   308256 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 936831/1436801, écarts 0 | boîtes 372288, écarts 0 | feuillage 0, écarts 0
+campaign2-w14 grenades         repos   109368 | endormies   107986 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 370577/588917, écarts 0 | boîtes 138077, écarts 0 | feuillage 0, écarts 0
+campaign2-w15 arme d’origine   repos    62488 | endormies    62068 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 174275/297696, écarts 0 | boîtes 75502, écarts 0 | feuillage 0, écarts 0
+campaign2-w15 roquettes        repos   249532 | endormies   247769 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 533435/924646, écarts 0 | boîtes 281851, écarts 0 | feuillage 0, écarts 0
+campaign2-w15 grenades         repos    62488 | endormies    62068 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 174275/297696, écarts 0 | boîtes 75502, écarts 0 | feuillage 0, écarts 0
+campaign2-w16 arme d’origine   repos    23488 | endormies    23353 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 78759/133210, écarts 0 | boîtes 30246, écarts 0 | feuillage 0, écarts 0
+campaign2-w16 roquettes        repos    89118 | endormies    88838 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 187440/329656, écarts 0 | boîtes 101129, écarts 0 | feuillage 0, écarts 0
+campaign2-w16 grenades         repos    23488 | endormies    23353 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 78759/133210, écarts 0 | boîtes 30246, écarts 0 | feuillage 0, écarts 0
+campaign2-w17 arme d’origine   repos   110192 | endormies   108617 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 437397/673305, écarts 0 | boîtes 145303, écarts 0 | feuillage 0, écarts 0
+campaign2-w17 roquettes        repos   312826 | endormies   310032 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 983180/1520964, écarts 0 | boîtes 381677, écarts 0 | feuillage 0, écarts 0
+campaign2-w17 grenades         repos   110192 | endormies   108617 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 437397/673305, écarts 0 | boîtes 145303, écarts 0 | feuillage 0, écarts 0
+campaign2-w18 arme d’origine   repos    78010 | endormies    77533 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 193580/334720, écarts 0 | boîtes 91799, écarts 0 | feuillage 0, écarts 0
+campaign2-w18 roquettes        repos   283572 | endormies   281461 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 613338/1044774, écarts 0 | boîtes 320338, écarts 0 | feuillage 0, écarts 0
+campaign2-w18 grenades         repos    78010 | endormies    77533 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 193580/334720, écarts 0 | boîtes 91799, écarts 0 | feuillage 0, écarts 0
+démolition l:0                 repos   537923 | endormies   529243 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 1705699/2629363, écarts 0 | boîtes 655256, écarts 0 | feuillage 32604, écarts 0
+démolition l:1                 repos   566850 | endormies   564655 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 1209731/2037422, écarts 0 | boîtes 634041, écarts 0 | feuillage 0, écarts 0
+démolition l:2                 repos   565776 | endormies   563697 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 1360158/2265235, écarts 0 | boîtes 652883, écarts 0 | feuillage 66270, écarts 0
+démolition c:0                 repos   549604 | endormies   533908 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 1613376/2476328, écarts 0 | boîtes 652117, écarts 0 | feuillage 0, écarts 0
+démolition c:9                 repos   541112 | endormies   526211 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 1718520/2563050, écarts 0 | boîtes 651593, écarts 0 | feuillage 0, écarts 0
+démolition c:12                repos   562985 | endormies   541046 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 1475696/2330941, écarts 0 | boîtes 652464, écarts 0 | feuillage 0, écarts 0
+démolition c:17                repos   569751 | endormies   568041 | faux 0 | touchées 0 | appui statique perdu 0 | mémo 1311907/2200424, écarts 0 | boîtes 651547, écarts 0 | feuillage 78777, écarts 0
+debrisHalf direct : 280000 tirages sur 7 formes, écarts 0
+feuillage : 216 points, 38 uniques
+TOTAL repos 11850761 | endormies 11726314 (98.9 %) | faux 0 | touchées 0 | appui statique perdu 0 | mémo 31226615/50785809, écarts 0 | boîtes 13916747, écarts 0 | feuillage 196218, écarts 0 | debrisHalf écarts 0 → aucun écart
