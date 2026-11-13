@@ -310,6 +310,109 @@ test('T11 encode',()=>{
  for(const[rgb,v,attendu]of cas)assert.deepEqual(Array.from(F.encode(rgb,v)),attendu,'encode('+JSON.stringify(Array.from(rgb))+','+v+')');
 });
 
+// Étape 3. Annexe D de la mission ciel, recopiée telle quelle et jamais recalculée depuis le module :
+// signatures de référence des 18 mondes (graine 0), dans l'ordre de campagne.
+const SIG_D={
+  'lisiere-aube': [50,64,83,185,164,124,234,224,197,150,154,136,76,91,111,25,0,0,0,0,8,0],
+  'carriere-aube-poussiere': [59,69,84,190,162,120,242,230,198,152,151,132,93,100,113,15,0,0,0,0,10,0],
+  'jardins-matin': [51,71,95,165,165,152,190,192,182,149,165,163,85,104,127,32,0,0,0,0,22,0],
+  'lisiere-plein-jour': [68,92,119,150,159,156,147,166,167,140,160,162,127,140,154,40,0,0,0,0,55,0],
+  'carriere-midi-voile': [70,90,114,151,154,150,157,167,166,144,159,159,168,167,167,10,60,0,0,0,50,0],
+  'jardins-ciel-pur': [70,95,127,148,156,155,141,159,163,136,155,160,93,115,144,0,0,0,0,0,62,0],
+  'lisiere-orage-sec': [45,59,79,128,128,123,153,156,150,118,132,133,107,112,122,86,0,0,0,0,32,0],
+  'carriere-vent-de-sable': [63,76,96,137,130,124,177,168,154,132,141,140,162,150,142,35,0,0,0,0,36,0],
+  'jardins-apres-midi': [55,75,101,158,161,155,176,182,178,147,163,165,109,121,140,45,25,0,0,0,30,0],
+  'lisiere-couvert': [51,70,92,129,136,133,145,157,154,123,141,143,148,152,155,92,0,0,0,0,40,0],
+  'carriere-cendres': [58,69,86,154,133,116,205,184,155,140,140,133,118,112,118,72,0,0,0,8,24,0],
+  'jardins-brume': [54,69,91,158,150,136,223,216,199,133,145,144,99,109,126,20,50,0,0,0,18,0],
+  'lisiere-couchant': [75,75,83,205,137,43,246,222,130,178,143,80,106,102,109,35,0,0,0,0,2,0],
+  'carriere-fournaise': [93,85,94,184,98,39,245,204,102,184,129,70,126,114,122,40,0,0,0,15,1,0],
+  'jardins-crepuscule-mauve': [49,34,81,143,51,11,199,129,129,96,48,50,72,51,114,12,0,40,0,0,-4,0],
+  'lisiere-nuit-de-lune': [30,41,52,70,78,76,78,91,90,63,79,83,44,55,67,25,0,70,30,0,-30,16],
+  'carriere-nuit-de-braises': [39,28,23,152,109,65,133,93,55,133,93,55,40,29,24,45,0,35,0,35,-25,0],
+  'jardins-dernier-signal': [24,33,42,63,124,128,56,111,115,56,111,115,25,37,45,8,0,100,80,22,-35,0]
+};
+const L1=(a,b,n)=>{let s=0;for(let k=0;k<n;k++)s+=Math.abs(a[k]-b[k]);return s;};
+
+test('T12 signature et distinction',t=>{
+ const ids=Object.keys(SIG_D),S=F.presets.map(p=>F.signature(F.resolve(p))),fautes=[];
+ assert.deepEqual(A(F.presets.map(p=>p.id)),ids,'les 18 mondes de l’annexe D, dans l’ordre de campagne');
+ let ecart=0;
+ S.forEach((s,i)=>{const r=SIG_D[ids[i]];
+  assert.ok(Array.isArray(s)&&s.length===22&&s.every(Number.isInteger),'signature de '+ids[i]+' : 22 entiers attendus ('+montre(s)+')');
+  for(let k=0;k<22;k++){const e=Math.abs(s[k]-r[k]);if(k<15)ecart=Math.max(ecart,e);
+   if(k<15?e>2:e!==0)fautes.push(ids[i]+'['+k+'] : '+s[k]+' au lieu de '+r[k]+(k<15?' (±2)':' (exact)'));}});
+ // Les 153 paires : L1 ≥ 60 sur les 22 valeurs et ≥ 30 sur les 15 premières (les couleurs). Un seul constat pour
+ // les deux contrôles, pour qu'un écart à l'annexe D ne masque pas la paire trop proche qu'il crée.
+ let n=0,m22=[Infinity],m15=[Infinity];
+ for(let i=0;i<S.length;i++)for(let j=i+1;j<S.length;j++){const a=L1(S[i],S[j],22),b=L1(S[i],S[j],15),paire=ids[i]+' / '+ids[j];n++;
+  if(a<60)fautes.push(paire+' : distance '+a+' < 60 sur les 22 valeurs');
+  if(b<30)fautes.push(paire+' : distance '+b+' < 30 sur les 15 premières');
+  if(a<m22[0])m22=[a,paire];if(b<m15[0])m15=[b,paire];}
+ assert.equal(n,153,'153 paires');
+ assert.deepEqual(fautes,[],'annexe D (±2 sur les 15 premières valeurs, égalité sur les 7 dernières) et distinction des 18 ciels');
+ t.diagnostic('écart maximal '+ecart+' ; distances minimales '+m22[0]+' ('+m22[1]+') et '+m15[0]+' ('+m15[1]+')');
+ // Cas ajoutés (hors fiche) : les 7 entiers du préréglage hors des 18 mondes, valeurs calculées à la main ;
+ // Math.round arrondit −4,5 à −4 et 12,5 à 13 ; la lune ne compte qu'au-dessus de −2° strictement.
+ assert.deepEqual(A(F.signature(F.resolve({clouds:{cover:.123,veil:.456},stars:.789,milky:.016,glow:{strength:.994},sun:{el:-4.5},moon:{el:5,size:1.25}}))).slice(15),
+  [12,46,79,2,99,-4,13],'7 entiers du préréglage');
+ assert.equal(F.signature(F.resolve({moon:{el:-2,size:3}}))[21],0,'lune à −2° : 0');
+ assert.equal(F.signature(F.resolve({moon:{el:-1.99,size:3}}))[21],30,'lune au-dessus de −2° : 10·size');
+});
+
+// Annexe E de la mission ciel, recopiée telle quelle et jamais recalculée depuis le module :
+// [id, source principale, classes permises du zénith, classes permises du brouillard], dans l'ordre de campagne.
+const INTENTIONS=[
+ ['lisiere-aube','sun',['bleu'],['orange','jaune']], // 0
+ ['carriere-aube-poussiere','sun',['bleu'],['orange','jaune']], // 1
+ ['jardins-matin','sun',['bleu'],['gris']], // 2
+ ['lisiere-plein-jour','sun',['bleu'],['gris']], // 3
+ ['carriere-midi-voile','sun',['bleu'],['gris']], // 4
+ ['jardins-ciel-pur','sun',['bleu'],['gris']], // 5
+ ['lisiere-orage-sec','sun',['bleu'],['gris']], // 6
+ ['carriere-vent-de-sable','sun',['bleu'],['gris','orange']], // 7
+ ['jardins-apres-midi','sun',['bleu'],['gris']], // 8
+ ['lisiere-couvert','sun',['bleu'],['gris']], // 9
+ ['carriere-cendres','sun',['bleu'],['orange']], // 10
+ ['jardins-brume','sun',['bleu'],['gris','orange']], // 11
+ ['lisiere-couchant','sun',['gris','bleu','violet'],['orange']], // 12
+ ['carriere-fournaise','sun',['gris','violet'],['orange','rouge']], // 13
+ ['jardins-crepuscule-mauve','sun',['violet'],['rouge','orange']], // 14
+ ['lisiere-nuit-de-lune','moon',['bleu'],['gris','cyan']], // 15
+ ['carriere-nuit-de-braises','none',['rouge','orange'],['orange']], // 16
+ ['jardins-dernier-signal','none',['bleu'],['cyan']] // 17
+];
+// Règles de clarté par groupe (annexe E), bornes incluses : [premier monde, dernier monde, groupe, règles].
+const CLARTE=[
+ [0,11,'jour',(z,f)=>[z.V>=.28||'V(zen) < 0,28',f.V>=.45||'V(fog) < 0,45',f.S<=.45||'S(fog) > 0,45']],
+ [12,14,'crépuscule',(z,f)=>[z.V>=.2&&z.V<=.45||'V(zen) hors de [0,20 ; 0,45]',f.S>=.5||'S(fog) < 0,50']],
+ [15,17,'nuit',z=>[z.V<=.22||'V(zen) > 0,22']]
+];
+// Fonction de classe de l'annexe E, sur une couleur encodée (entiers de 0 à 255) : gris si S < 0,15,
+// sinon secteur de la teinte TSV H en degrés, dans [0, 360).
+const classe=([r,g,b])=>{const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,V=mx/255,S=mx>0?d/mx:0;
+ if(S<.15)return{k:'gris',V,S};
+ let H=mx===r?60*((g-b)/d%6):mx===g?60*((b-r)/d+2):60*((r-g)/d+4);if(H<0)H+=360;
+ return{k:H<20||H>=330?'rouge':H<45?'orange':H<70?'jaune':H<160?'vert':H<200?'cyan':H<250?'bleu':'violet',V,S,H};};
+
+test('T13 intentions',()=>{
+ // Auto-contrôle de la fonction de classe : centres de secteur, bornes exactes en flottant (20°, 45°, 330°, S = 0,15), gris.
+ for(const[c,k]of[[[255,0,0],'rouge'],[[255,84,0],'rouge'],[[255,85,0],'orange'],[[240,179,0],'orange'],[[240,180,0],'jaune'],[[255,255,0],'jaune'],
+  [[0,255,0],'vert'],[[0,255,255],'cyan'],[[0,0,255],'bleu'],[[255,0,255],'violet'],[[240,0,121],'violet'],[[240,0,120],'rouge'],
+  [[100,90,85],'orange'],[[100,90,86],'gris'],[[128,128,128],'gris'],[[0,0,0],'gris']])
+  assert.equal(classe(c).k,k,'classe(['+c+'])');
+ assert.equal(F.presets.length,INTENTIONS.length,'un préréglage par ligne de l’annexe E');
+ const fautes=[];
+ INTENTIONS.forEach(([id,principal,zk,fk],i)=>{
+  const p=F.presets[i],s=F.resolve(p),zen=A(F.encode(F.radianceAt(s,[0,1,0]))),fog=A(F.encode(s.fog)),z=classe(zen),f=classe(fog),
+   [,,groupe,regles]=CLARTE.find(g=>i>=g[0]&&i<=g[1]);
+  const e=[p.id===id||'id '+p.id,s.principal===principal||'source '+s.principal,zk.includes(z.k)||'zénith '+z.k,fk.includes(f.k)||'brouillard '+f.k,
+   ...regles(z,f)].filter(x=>x!==true);
+  if(e.length)fautes.push(i+' '+id+' ('+groupe+') : '+e.join(', ')+' ; zénith ['+zen+'] V '+z.V.toFixed(3)+', brouillard ['+fog+'] V '+f.V.toFixed(3)+' S '+f.S.toFixed(3));
+ });
+ assert.deepEqual(fautes,[],'intentions de l’annexe E');
+});
+
 test('T14 frameUniforms',()=>{
  const cam=camera({fov:[1.6,1],height:540,time:3,vignette:.76,dither:0,mask:1,layers:[1,0,1,0]}),out={};
  assert.equal(F.frameUniforms(cam,out),out,'frameUniforms renvoie out');
