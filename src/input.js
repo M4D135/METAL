@@ -14,6 +14,7 @@
   const isObj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
   const need=(ok,what)=>{if(!ok)throw new Error('FInput : '+what+'.');};
   const padOk=name=>name!=='Home'&&PAD_BUTTONS.includes(name);
+  const fin=v=>Number.isFinite(v)?v:0,copy=o=>JSON.parse(JSON.stringify(o));
   function keyName(code){return own(NAMES,code)?NAMES[code]:String(code).replace(/^(Key|Digit)/,'');}
   // Checks a game declaration and returns a private copy; the config itself is never modified.
   function compile(config){
@@ -67,12 +68,75 @@
   // Filled in by the next steps of docs/chantier-moteur/modules/entrees.md (§2, delivery table).
   function radial(x,y,inner,outer){/* step 4: radial dead zone → [x', y', n] */}
   function padStyle(id){/* step 5 */} function glyph(name,style){/* step 5 */}
-  function defaults(config){/* step 3 */} function normalize(raw,config){/* step 3 */}
+  // Settings (JSON): {v, keys, pad, tune}; tables follow the declaration order.
+  function initial(C){const s={v:C.version,keys:{},pad:{},tune:{}};for(const a of C.actions){s.keys[a.id]=a.keys.slice();s.pad[a.id]=a.pad.slice();}for(const k in TUNE)s.tune[k]=TUNE[k][0];return s;}
+  // A stored table is kept whole or not at all; a missing action gets its free default codes.
+  function table(t,C,f,max,ok){
+    if(!isObj(t))return null;
+    const used=new Set(),out={};
+    for(const a of C.actions)if(own(t,a.id)){const v=t[a.id];if(!Array.isArray(v)||v.length>max||!v.every(c=>ok(c)&&!used.has(c)&&used.add(c)))return null;}
+    for(const a of C.actions)out[a.id]=own(t,a.id)?t[a.id]:a[f].filter(c=>!used.has(c));
+    return out;
+  }
+  // Lenient and idempotent; step 3 adds migrate, alt codes and the stored pad table.
+  function settle(raw,C){
+    let r={};if(isObj(raw))try{r=copy(raw);}catch(e){}if(!isObj(r))r={};
+    const s=initial(C),t=isObj(r.tune)?r.tune:{};
+    s.keys=table(r.keys,C,'keys',3,C.isKey)||s.keys;
+    for(const k in TUNE){const [d,lo,hi]=TUNE[k],v=own(t,k)?t[k]:d;s.tune[k]=lo===undefined?typeof v==='boolean'?v:d:Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d;}
+    return s;
+  }
+  function defaults(config){return initial(compile(config));}
+  function normalize(raw,config){return settle(raw,compile(config));}
   function assign(config,settings,device,action,code){/* step 3 */} function unbind(config,settings,device,action){/* step 3 */}
   function guessDevice(win){/* step 5 */} function focusMove(root,cmd,doc){/* step 6 */}
   function create(config){
-    compile(config);
-    return {}; // instance: steps 2 to 7
+    const C=compile(config),held=new Set(),pressed=[];
+    // Per action: keys (k), mouse (m), fingers (t), pad button (g), stick ends (gr, tr), pad value (gv).
+    const A=C.actions.map(a=>({a,k:0,m:false,t:0,g:false,gr:false,tr:false,gv:0,latch:false,edge:false})),at=id=>A[C.index.get(id)];
+    const sticks=C.sticks.map(s=>({kx:s.name+'X',ky:s.name+'Y',move:s.type==='move',x:s.x.map(at),y:s.y.map(at),rate:s.rate})),look=sticks.find(s=>!s.move);
+    // pm, tm: move vectors of the gamepad and of the touch stick (steps 4 and 7).
+    let S,codes,dev=C.device,shown=dev,touchT=-Infinity,px=0,py=0,pmx=0,pmy=0,tmx=0,tmy=0;
+    const on=s=>s.k>0||s.m||s.t>0||s.g||s.gr||s.tr,axis=v=>v.length?Number(on(v[1]))-Number(on(v[0])):0;
+    // Edge: released → held latches the action and lists it once per frame.
+    const rise=(s,was)=>{if(!was&&on(s)){s.latch=true;if(!s.edge){s.edge=true;pressed.push(s.a.id);}}};
+    const mouse=t=>{if(!(t-touchT<K.compatMs))dev='mouse';};
+    function configure(raw){S=settle(raw,C);codes=new Map();for(const s of A){s.k=0;for(const c of S.keys[s.a.id]){codes.set(c,s);if(held.has(c))s.k++;}}return copy(S);}
+    configure(C.settings);
+    return {
+      // a repeat restores a key held across clear(), without an edge
+      keyDown(code,t,repeat){dev='keyboard';const s=codes.get(code);if(typeof code==='string'&&!held.has(code)){held.add(code);if(s){const was=on(s);s.k++;if(!repeat)rise(s,was);}}return !!s;},
+      keyUp(code){const s=codes.get(code);if(held.delete(code)&&s)s.k--;return !!s;},
+      // game.js order of operations: bit-identical angles
+      mouseMove(dx,dy,t){const T=S.tune;px+=fin(dx)*C.mouseScale*T.sensitivity;py-=fin(dy)*C.mouseScale*T.sensitivity*(T.invertY?-1:1);mouse(t);},
+      button(id,down,t,device){
+        const s=at(id);if(!s||device!=='mouse'&&device!=='touch')return false;
+        const was=on(s);if(device==='mouse'){s.m=!!down;mouse(t);}else{s.t=down?s.t+1:Math.max(0,s.t-1);dev='touch';touchT=t;}
+        rise(s,was);return true;
+      },
+      addLook(x,y,device){px+=fin(x);py+=fin(y);if(DEVICES.includes(device))dev=device;},
+      clear(){held.clear();for(const s of A){s.k=s.t=0;s.m=s.tr=s.latch=s.edge=false;}pressed.length=0;px=py=tmx=tmy=0;},
+      configure,get settings(){return copy(S);},get device(){return dev;},
+      frame(dt){
+        dt=Number.isFinite(dt)?Math.min(K.dtMax,Math.max(0,dt)):0;
+        if(look){px+=axis(look.x)*dt*look.rate;py+=axis(look.y)*dt*look.rate;}
+        const r={pressed:pressed.slice(),nav:null,device:dev,deviceChanged:dev!==shown,connected:[],disconnected:[],pads:[],captured:null};
+        shown=dev;pressed.length=0;for(const s of A)s.edge=false;return r;
+      },
+      step(){
+        const o={};
+        for(const s of sticks){
+          let x=px,y=py;
+          // strongest move source; a later one (pad, touch) needs a strictly greater norm
+          if(s.move){x=axis(s.x);y=axis(s.y);if(pmx*pmx+pmy*pmy>x*x+y*y){x=pmx;y=pmy;}if(tmx*tmx+tmy*tmy>x*x+y*y){x=tmx;y=tmy;}}
+          o[s.kx]=x||0;o[s.ky]=y||0;
+        }
+        px=py=0;
+        for(const s of A){const k=s.a.type;o[s.a.id]=k==='press'?s.latch:k==='hold'?on(s)||s.latch:Math.max(s.gv,s.k>0||s.m||s.t>0?1:0);s.latch=false;}
+        return o;
+      },
+      pendingLook(){return {x:px||0,y:py||0};}
+    };
   }
   G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,keyName,radial,padStyle,glyph,guessDevice,focusMove};
 })(typeof window!=='undefined'?window:globalThis);

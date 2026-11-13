@@ -1,0 +1,25 @@
+Module entrées, T2 (étape 2) — banc de départ, relevé le 13/11/2026 sur le Mac (Node v24.18.0, arm64)
+Base 71eca61 ; branche chantier/module-entrees, HEAD 68ee857 (étape 1).
+
+1. Chiffre de départ : l'instance de l'étape 1 n'a aucune sortie.
+   src/input.js à 68ee857 : 6 427 octets ; FInput.create(METAL_INPUT) rend {} (aucun membre) ;
+   FInput.defaults(METAL_INPUT) rend undefined.
+
+2. Référence de parité : src/game.js, inchangé depuis 71eca61
+   (sha256 2b5a50aee125fc7acd8fefad782a97ea94d9556b0268b906b26fdcd49f16de3c).
+   Lignes 793 à 799 : moveX = right − left + stick.x ; moveY = forward − back − stick.y ;
+   lookX = lookDX + (turnRight − turnLeft)·dt·1,9 ; lookY = lookDY ; tir = souris ou doigt ou touche,
+   OU l'intention de 150 ms ; impulsions par keydown non répété ; sprint tenu.
+   Ligne 956 : lookDX += movementX·.0022·sensitivity, puis lookDY −= movementY·.0022·sensitivity·(invertY ? −1 : 1).
+   C'est la formule de l'annexe B (manche tactile au repos : + 0 et − 0), recopiée dans
+   checks/finput.test.mjs (reference) pour E06, avec la table de l'instance (inp.settings.keys).
+
+3. Banc TACT de l'audit, relancé tel quel :
+   node docs/chantier-moteur/bancs/tact/equiv.mjs <racine>   (7,98 s)
+   - structure de `input` identique au clavier et au tactile (16 champs, dt compris, mêmes types) ;
+   - clavier contre tactile : 211 pas, seul `assist` diffère (211 pas), et le dt ;
+     avec le dt du clavier, le flux tactile donne l'empreinte du clavier (b75bec5a) ;
+   - rejeux directs : empreinte de session = empreinte de rejeu (tactile d08bb6e4, clavier b75bec5a) ;
+   - manette (prototype) contre clavier + Maj : 211 pas, dt égaux, aucun champ différent, empreinte égale (5b087a06).
+   Les empreintes changent d'un processus à l'autre ; elles se comparent dans un même processus.
+   C'est la classe « état identique » de TACT-09 que FInput doit tenir : même structure, champ par champ.

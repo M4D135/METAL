@@ -1,0 +1,28 @@
+✔ E01 — Chargement : API statique complète, seul FInput s’ajoute au global (1.672083ms)
+✔ E02 — Source propre : ni hasard, ni horloge, ni réseau, aucun nom propre au jeu, 18 000 octets au plus (0.42625ms)
+✔ E03 — Config invalide : create lève « FInput : … » (1.699792ms)
+✔ E03b — Toutes les règles de la déclaration, sans toucher à la config (2.0445ms)
+✔ E04 — Défauts METAL : Espace saute, R esquive, V frappe, aucun code en double (0.646625ms)
+✔ E04b — normalize à l’étape 2 : table des touches gardée entière ou par défaut, réglages bornés (2.984833ms)
+✔ E05 — AZERTY et QWERTY : chaque touche seule, puis frame et step (0.715125ms)
+✔ E06 — Parité avec game.js (annexe B) : 600 images, graine 7, égalité au bit près (8.326458ms)
+✔ E07 — Appui court (LOOP-06) : R appuyée et relâchée avant frame (0.582959ms)
+✔ E08 — Répétition : la touche ajoutée par repeat est tenue, sans front ni impulsion (0.586334ms)
+✔ E09 — Action tenue avec verrou : Entrée appuyée et relâchée dans l’image (LOOP-06) (0.509333ms)
+✔ E10 — Deux pas dans une image : impulsion et regard au premier pas seulement (0.43925ms)
+✔ E11 — Image sans pas : le regard attend dans pendingLook (STAB-06) (0.403792ms)
+✔ E12 — clear() : touches relâchées, verrous effacés, regard en attente à 0 (0.565959ms)
+✔ E13 — Pas de -0 : aucune sortie numérique ne vaut -0 (sorties de E06 ; E50 à l’étape 7) (9.739458ms)
+✔ E14 — Sources virtuelles : boutons de souris et boutons tactiles (0.708791ms)
+✔ E14b — frame() et step() : objets neufs, ordre fixe des clés, fronts dans l’ordre d’arrivée, dt borné (0.779542ms)
+✔ E14c — Appareil actif sans manette : clavier, souris, tactile, filtre de 800 ms (0.8125ms)
+✔ E14d — configure et settings : réglages appliqués, touches tenues recomptées sans front (0.911ms)
+✔ E38 — keyName : mêmes noms que FOptions.keyName (0.59325ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 72.781667
