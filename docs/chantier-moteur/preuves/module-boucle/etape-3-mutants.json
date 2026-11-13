@@ -1,0 +1,338 @@
+{
+ "schema": "boucle-etape-3-mutants-v1",
+ "node": "v24.18.0",
+ "arch": "arm64",
+ "platform": "darwin",
+ "cpu": "Apple M5",
+ "loadavg": [
+  2.716796875,
+  2.4345703125,
+  2.17138671875
+ ],
+ "scheduleSha256": "48a8b7cf0bba9a54ef6cff896110a654195b05606392c2d74ef3a3691edf9d12",
+ "relayCommit": "4b75580",
+ "relayTestSha256": "b405b6faf380c8033273db0af21ea9908110e63e636f6408d1bb077b64d4d406",
+ "mb3TestSha256": "9a45630c1b34b4f37ef2d9933d55e02faad33e3499aa7e519bb601c6dcb762e4",
+ "summary": {
+  "mutants": 19,
+  "relaySurvivors": [
+   "M01",
+   "M02",
+   "M03",
+   "M04",
+   "M05",
+   "M06",
+   "M07",
+   "M08",
+   "M09",
+   "M10",
+   "M11",
+   "M12"
+  ],
+  "mb3Survivors": [],
+  "controlPasses": true
+ },
+ "rows": [
+  {
+   "id": "M00",
+   "label": "témoin, sans mutation",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": false,
+    "by": []
+   }
+  },
+  {
+   "id": "M01",
+   "label": "pump passe une copie de l'enregistrement à run",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S10"
+    ]
+   }
+  },
+  {
+   "id": "M02",
+   "label": "flush « sim » : premier appel avec Infinity",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S18"
+    ]
+   }
+  },
+  {
+   "id": "M03",
+   "label": "agingFrames par défaut à 10",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S04"
+    ]
+   }
+  },
+  {
+   "id": "M04",
+   "label": "échéance = début + budget entier",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S10"
+    ]
+   }
+  },
+  {
+   "id": "M05",
+   "label": "simUnits compté avant la validation",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S15"
+    ]
+   }
+  },
+  {
+   "id": "M06",
+   "label": "argument refusé de pumpSim compté comme erreur",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S15"
+    ]
+   }
+  },
+  {
+   "id": "M07",
+   "label": "une exception « sim » vide la file",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S16"
+    ]
+   }
+  },
+  {
+   "id": "M08",
+   "label": "enregistrement sans lastPump initial",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S20"
+    ]
+   }
+  },
+  {
+   "id": "M09",
+   "label": "maxSliceMs initial à -Infinity",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S20"
+    ]
+   }
+  },
+  {
+   "id": "M10",
+   "label": "count('frame') compte les deux files",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S06"
+    ]
+   }
+  },
+  {
+   "id": "M11",
+   "label": "flush « image » lit l'horloge (durée)",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S08",
+     "S18"
+    ]
+   }
+  },
+  {
+   "id": "M12",
+   "label": "pump à budget nul fait vieillir la file",
+   "relay": {
+    "killed": false,
+    "by": []
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S09"
+    ]
+   }
+  },
+  {
+   "id": "M13",
+   "label": "les tâches sautées ne vieillissent pas",
+   "relay": {
+    "killed": true,
+    "by": [
+     "S04",
+     "S21"
+    ]
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S04",
+     "S21"
+    ]
+   }
+  },
+  {
+   "id": "M14",
+   "label": "pumpSim lit l'horloge",
+   "relay": {
+    "killed": true,
+    "by": [
+     "S11"
+    ]
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S11"
+    ]
+   }
+  },
+  {
+   "id": "M15",
+   "label": "remplacement de clé dans les deux files",
+   "relay": {
+    "killed": true,
+    "by": [
+     "S06"
+    ]
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S06"
+    ]
+   }
+  },
+  {
+   "id": "M16",
+   "label": "has ne regarde que la file « image »",
+   "relay": {
+    "killed": true,
+    "by": [
+     "S13"
+    ]
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S13",
+     "S15",
+     "S16"
+    ]
+   }
+  },
+  {
+   "id": "M17",
+   "label": "pumpSim offre le total à chaque tâche",
+   "relay": {
+    "killed": true,
+    "by": [
+     "S12",
+     "S14"
+    ]
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S12",
+     "S14"
+    ]
+   }
+  },
+  {
+   "id": "M18",
+   "label": "tâche plus longue que le budget lancée après une autre",
+   "relay": {
+    "killed": true,
+    "by": [
+     "S04",
+     "S21"
+    ]
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S04",
+     "S21"
+    ]
+   }
+  },
+  {
+   "id": "M19",
+   "label": "garde de flush à 1e5 appels",
+   "relay": {
+    "killed": true,
+    "by": [
+     "S18"
+    ]
+   },
+   "mb3": {
+    "killed": true,
+    "by": [
+     "S18"
+    ]
+   }
+  }
+ ]
+}

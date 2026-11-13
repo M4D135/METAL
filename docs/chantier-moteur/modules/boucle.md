@@ -264,7 +264,171 @@ T.pose(e.id,e.x,e.y,e.z,e.yaw,f.alpha,q);   // q, objet réutilisé : pose de re
 - Contrôle par mutants de `src/loop.js` (copies jetables, détail dans `preuves/module-boucle/etape-2-aim-track.md`) :
   sur 14 erreurs plausibles d'`aim` et de `track`, les T-F26 et T-F27 du §6.2 en laissent passer 10, ceux-ci aucune.
 
-*(FSchedule vient à l'étape 3.)*
+### 2.8 FSchedule : forme, chargement, signatures
+
+`src/schedule.js` (4 221 octets, sha256 `48a8b7cf0bba9a54ef6cff896110a654195b05606392c2d74ef3a3691edf9d12`) est
+le code normatif du §4.10 de la mission, recopié octet pour octet. Même forme que `src/motion.js` :
+`(function(G){'use strict';…G.FSchedule={create,budget};})(typeof window!=='undefined'?window:globalThis);`,
+sans `import` ni `export` ; `tools/realm-loader.mjs` le repère par `G.FSchedule=`. Le module ne lit aucune horloge
+à lui (le temps de la file « image » vient de la fonction `now` injectée), ne tire aucun hasard et ne sait rien du
+jeu (S22 le vérifie). Il ne dépend pas de FLoop : `FSchedule.budget` reçoit la période en paramètre.
+
+```
+FSchedule.create({now, agingFrames = 30} = {})        → ordonnanceur
+sched.add({lane = 'frame', priority = 5, cost = 1, key, run})   → enregistrement de la tâche
+sched.cancel(key)                 → true si au moins une tâche a été retirée
+sched.has(key)                    → booléen
+sched.count(lane)                 → nombre de tâches de 'frame', de 'sim', ou des deux sans argument
+sched.pump(budget)                → ms passées (file « image », mesurées par now)
+sched.pumpSim(units)              → unités consommées (file « sim », sans horloge)
+sched.flush(key)                  → true ; false si la clé est inconnue
+sched.stats                       7 compteurs cumulés
+FSchedule.budget(periodMs, workMs, capMs = 4)         → ms
+run(deadline, task)               file « image » : false = « rappelle-moi », toute autre valeur = fini
+run(left, task)                   file « sim » : rend un entier de 0 à left, pose task.done = true à la fin
+```
+
+**Unités et repères** (§4.2 de la mission) :
+
+| Grandeur | Unité, repère | Remarque |
+|---|---|---|
+| budget de `pump`, `cost`, `spentMs`, `deadline`, `stats.overrunMs`, `stats.maxSliceMs` | ms, horloge `now` injectée | au raccord : `performance.now()` |
+| unités de `pumpSim`, `stats.simUnits` | entiers (cellules, nœuds…) | jamais des ms |
+| `priority` | nombre, 0 = le plus urgent | 5 par défaut |
+
+Taille : STAB-07 estimait l'ordonnanceur à « environ 1,5 Ko » ; le code normatif fait 4,2 Ko, parce qu'il valide
+ses entrées, tient deux files, garde `flush` contre une tâche sans fin et compte 7 statistiques. C'est sous la
+limite de 6 000 octets et sous la cible de 4 300. Le prototype de l'audit (`bancs/stab/sched.mjs`, pré-synthèse
+audio sur la 0.8.0) a seulement été lu : rien n'en est repris.
+
+### 2.9 `FSchedule.create({now, agingFrames = 30})` — ordonnanceur à deux files
+
+Deux files : **`'frame'`** (présentation, caches, sérialisation), budgétée en **millisecondes** par la fonction
+`now` injectée ; **`'sim'`** (déterministe), budgétée en **unités de travail** entières.
+
+**Création.** `now` est facultatif ; s'il est donné, c'est une fonction qui rend des ms, sinon `TypeError`. Sans
+`now`, la file « sim » et `flush` marchent, mais `pump` lève `TypeError` (quel que soit le budget) : un
+ordonnanceur purement « sim » n'a pas besoin d'horloge. `agingFrames` est un entier ≥ 1, sinon `TypeError`.
+
+**`add(task)`** rend l'enregistrement de la tâche, `{lane, key, priority, cost, run, seq, age, runs, spentMs, done,
+removed, lastPump}`. `task = {lane = 'frame', priority = 5, cost = 1, key, run}` :
+- `run` est obligatoire, une fonction, sinon `TypeError` ; `lane` vaut `'frame'` ou `'sim'`, sinon `TypeError` ;
+- `priority` non fini devient 5 (0 = le plus urgent) ; `cost` non fini ou négatif devient 1 (ms estimées) ;
+- une tâche de même `key` dans la **même** file est remplacée : l'ancienne est retirée (`removed` vrai), la
+  nouvelle prend un nouveau numéro d'ordre (`seq`). Une même `key` peut exister dans les deux files.
+
+**Autres méthodes.** `cancel(key)` retire toutes les tâches de cette clé, dans les deux files, et rend `true` si
+au moins une a été retirée ; `has(key)` dit si une tâche de cette clé existe ; `count(lane)`. `stats` contient
+exactement 7 clés, toutes à 0 au départ :
+
+| Clé de `stats` | Sens |
+|---|---|
+| `ran` | exécutions dans `pump` (file « image ») |
+| `skipped` | tâches sautées par `pump`, faute de budget |
+| `flushes` | appels de `flush` sur une clé connue |
+| `overrunMs` | dépassements cumulés du budget de `pump` |
+| `maxSliceMs` | plus longue exécution mesurée dans `pump` |
+| `simUnits` | unités consommées par la file « sim » (`pumpSim` et `flush`) |
+| `errors` | exceptions des tâches et retours « sim » invalides |
+
+**`pump(budget)`, la file « image »**, une fois par image, après le dessin.
+- Si `budget` n'est pas strictement positif (0, négatif, NaN) ou si la file est vide : rend 0 et n'exécute rien.
+- Ordre : priorité effective `priority − floor(age/agingFrames)`, puis `seq`, sur un instantané de la file.
+- `run(deadline, task)` reçoit l'échéance `now() + budget restant`, et l'enregistrement lui-même.
+- Une tâche dont `cost` dépasse le budget restant est sautée (`stats.skipped`), **sauf si rien n'a encore tourné**
+  dans ce `pump` : une tâche longue part toujours seule.
+- Après chaque exécution : `cost = cost × 0,5 + durée mesurée × 0,5`.
+- `run` qui rend `false` signifie « rappelle-moi » ; toute autre valeur signifie « fini ».
+- Les tâches de l'instantané qui n'ont pas tourné prennent `age + 1` (vieillissement, contre la famine) ; une
+  tâche ajoutée pendant le `pump` ne tourne pas et ne vieillit pas dans ce `pump`. Avec `agingFrames` 30, une
+  tâche de priorité 5 sautée à chaque `pump` passe devant une tâche de priorité 0 plus ancienne qu'elle au bout de
+  180 pompes (3 s à 60 Hz si chaque image pompe, S04) ; un `pump` à budget nul ne fait vieillir personne (S09).
+- Rend le temps passé (ms, mesuré par `now`), et ajoute le dépassement éventuel à `stats.overrunMs`.
+
+**`pumpSim(units)`, la file « sim »**, déterministe, à un point fixe du pas de simulation.
+- `units` est un entier ≥ 0, sinon `TypeError`. `pumpSim` ne lit **jamais** l'horloge.
+- Ordre : priorité, puis `seq` (pas de vieillissement dans cette file).
+- `run(left, task)` rend le nombre entier d'unités utilisées, de 0 à `left`, et pose `task.done = true` quand il a
+  fini. Un retour invalide lève `TypeError`, retire la tâche et compte une erreur.
+- Rend le nombre d'unités consommées.
+
+**`flush(key)`** force la tâche tout de suite : file « image », `run(Infinity)` jusqu'à un retour autre que `false` ;
+file « sim », `run(Number.MAX_SAFE_INTEGER)` jusqu'à `done`. Elle rend `false` si la clé est inconnue, et ne lit
+pas l'horloge. Après 1e6 appels sans fin, elle lève `Error('FSchedule.flush: task never finished')`, et la tâche
+reste dans la file.
+
+**Exceptions** : une exception d'une tâche la retire, ajoute 1 à `stats.errors`, puis est relancée ; les autres
+tâches restent en file et tournent au `pump` ou au `pumpSim` suivant.
+
+**À savoir pour le raccord.** Une tâche sans `key` a la clé `undefined` : `cancel()`, `has()` et `flush()` appelés
+sans clé (ou avec une variable `undefined`) visent alors les tâches sans clé ; `cancel()` les retire toutes. Le
+code normatif est gardé tel quel : donner une clé à toute tâche qu'on voudra annuler ou forcer, et ne jamais
+appeler ces méthodes avec une clé indéfinie.
+
+Usage type : `sched.pump(FSchedule.budget(loop.period || 1000/60, performance.now() - débutDeLImage))` après le
+dessin ; `sched.pumpSim(n)` à un point fixe du pas, avec un `n` fixe ; `sched.flush('save')` sur `pagehide`. Pour
+la pré-synthèse audio (LOAD-13), une tâche « image » par tampon (priorité 6, coût 2) : la plus longue tranche est
+alors celle du tampon le plus lourd, indivisible tant que la synthèse n'est pas découpée. Réserve de la
+contre-vérification de STAB-07 : cette pré-synthèse tourne derrière l'écran de chargement, donc le découpage rend
+la barre de chargement plus fluide, pas la partie ; en partie, le gain attendu se limite à 1,0 à 2,9 ms sur l'image
+d'un point de reprise. Le détail du branchement (points de reprise, pré-synthèse audio) est au plan de raccord
+(section 5).
+
+### 2.10 `FSchedule.budget(periodMs, workMs, capMs = 4)`
+
+`max(0, min(cap, 0,85 × P − work))`, où `P = periodMs` si c'est un nombre fini strictement positif, sinon `1000/60`.
+Le résultat vaut 0 si `workMs` n'est pas fini. Le jeu appelle
+`pump(FSchedule.budget(loop.period || 1000/60, tempsDéjàPasséDansLImage))` : le budget vaut 0 dans une image déjà
+en retard, et l'on ne pompe jamais dans une image en retard. Exemples (S17) : 4 ms à 60 Hz après 5 ms de travail,
+1,17 ms après 13 ms, 0 après 15 ms ; 2,90 ms à 144 Hz après 3 ms. `capMs` n'est pas validé : un `capMs` NaN
+donne un budget NaN, que `pump` traite comme nul.
+
+### 2.11 Règles de déterminisme de FSchedule
+
+1. Tout ce que la simulation relit passe par la file « sim », budgétée en unités, jamais en ms.
+2. `pumpSim` est appelé à un point fixe du pas, avec un nombre fixe d'unités.
+3. La simulation n'appelle jamais `pump`.
+4. Le `flush` d'une tâche « sim » ne se fait qu'à un point déterministe, dans un pas.
+5. La file « image » ne contient que de la présentation, des caches et de la sérialisation.
+
+Le point de reprise suit l'arbitrage « LOOP-03, LOAD-03, SIM-01 » : l'instantané (`snapshot()`) reste pris de
+façon synchrone, dans l'image, et n'est jamais différé ; seuls `JSON.stringify` et `setItem` peuvent devenir une
+tâche « image » (clé `'save'`), forcée par `flush('save')` sur `pagehide` et quand la page devient cachée. Deux
+conditions des contre-vérifications, pour le raccord : différer `stringify` exige que `snapshot()` rende une copie
+sans aucune référence vers l'état vivant, à garantir par un test (instantané, 60 pas, puis JSON identique à celui
+pris tout de suite, STAB-07) ; et LOAD-03 classe ce report en P2 (1,0 à 1,2 ms de `stringify`, `setItem` non
+mesuré, risque de perdre le dernier point), à décider après une mesure dans Chrome.
+
+### 2.12 Tests de FSchedule
+
+- `checks/fschedule.test.mjs` : S01 à S22 (22 tests), `node --test checks/fschedule.test.mjs`, environ 0,1 s sur
+  le Mac M5 (S18 en prend 70 ms sous `node:vm`, pour les 1e6 appels de sa garde ; 6 ms dans le domaine principal).
+  Chargement par `node:vm`, comme pour FLoop. Horloge factice
+  (une tâche « dure » d ms si elle avance l'horloge de d) et horloge interdite, qui lève si on la lit. Ce fichier
+  n'entre dans `npm test` qu'au raccord (`package.json` n'est pas modifié).
+- Renforcements par rapport au §6.3 de la mission, sans changer aucune valeur attendue :
+  - S10 vérifie que la tâche reçue par `run` est l'enregistrement rendu par `add` (identité, pas seulement la clé),
+    et que l'échéance est bien `now() + budget restant` : après une tâche de 1 ms, la seconde reçoit 101 + 3 = 104 ;
+  - S18 vérifie que **chacun** des 40 appels du `flush` « sim » reçoit `Number.MAX_SAFE_INTEGER` (pas seulement le
+    dernier), que `runs` vaut 40, que la tâche sans fin n'est pas marquée retirée, et que le retour −2 compte une
+    erreur ;
+  - S04 vérifie aussi la valeur par défaut d'`agingFrames` (sans option : pompe 181), s'arrête dès que L a tourné
+    (puis vérifie `done` et `removed`), et que S a tourné à chacune des pompes d'avant ;
+  - S14 note aussi les unités offertes dans la trace, et vérifie que l'horloge irrégulière a bien changé la file
+    « image » (`maxSliceMs` 0 contre 4,8 ms) sans rien changer à la file « sim » (59 entrées identiques) ;
+  - S15 vérifie qu'un retour invalide ne compte aucune unité, qu'un argument refusé de `pumpSim` (y compris
+    `pumpSim()` sans argument) n'appelle aucune tâche et ne compte pas d'erreur ;
+  - S16 fait « la même chose » dans la file « sim » : la tâche qui suit reste et tourne au `pumpSim` suivant ;
+    l'erreur relancée est l'objet levé par la tâche ;
+  - S20 vérifie les 12 champs de l'enregistrement, les 7 statistiques à 0 d'un ordonnanceur neuf, et que `pump(0)`
+    lève aussi sans horloge ;
+  - S08 et la garde de S18 tournent avec l'horloge interdite : `flush` ne la lit pas ; S11 vérifie que l'horloge
+    interdite donne le même découpage (53 appels) ; S09, qu'un `pump` sans budget ne fait pas vieillir la tâche ;
+    S02, S03, S06, S07, S09, S12, S13, S19 et S21 vérifient en plus l'ordre des tâches, les comptes par file,
+    `removed`, `runs`, `ran` et `skipped`.
+- Contrôle par mutants de `src/schedule.js` (copies jetables, `preuves/module-boucle/etape-3-mutants.mjs`, détail
+  dans `preuves/module-boucle/etape-3-fschedule.md`) : sur 19 erreurs plausibles, les tests du relais (conformes au
+  §6.3, sauf S10 et S18, plus faibles que la lettre) en laissent passer 12, ceux-ci aucune.
 
 ## 3. Algorithme
 
