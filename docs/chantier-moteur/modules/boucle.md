@@ -439,8 +439,8 @@ mesuré, risque de perdre le dernier point), à décider après une mesure dans 
 Les bancs chargent les modules dans le domaine principal de Node (`loadRealm({root, modules, realm: 'main'})`),
 jamais sous `node:vm`, qui ralentit le code de 4,5 à 9 fois (MASTER-PROMPT §4). Chaque JSON de
 `preuves/module-boucle/` commence par `schema`, `node`, `arch`, `platform`, `cpu` et `loadavg` : la machine et sa
-charge au moment de la mesure. La simulation réelle, les coûts, l'assemblage et le navigateur viennent aux étapes 5
-et 6 ; l'émulation de l'étape 2 (`aim` et `track` sur la vraie simulation) est résumée en 2.5 et 2.6.
+charge au moment de la mesure. Les coûts, l'assemblage et le navigateur viennent à l'étape 6 ; l'émulation de
+l'étape 2 (`aim` et `track` sur la vraie simulation) est résumée en 2.5 et 2.6.
 
 ### 4.1 Horloge : `banc-horloge.json` (étape 4)
 
@@ -553,11 +553,137 @@ exacts, flottants dans les tolérances de `TOLERANCE`. Les « 0 » de la dette e
    fait 1 pas par image ; à 59,94 Hz aussi, sauf la deuxième image (2 pas). De 75 à 240 Hz, jamais plus d'un pas par
    image, et 36 001 pas en 10 minutes quelle que soit la cadence. Par comparaison, la formule actuelle de `game.js`
    (`Math.max(1,Math.ceil(dt*60-.06))`) fait à 144 Hz un pas de 6,94 ms par image, soit 86 400 pas en 10 minutes
-   (calcul, non mesuré ici). Le coût et l'empreinte sur la vraie simulation sont mesurés à l'étape 5
-   (`banc-simulation.json`).
+   (calcul, non mesuré ici). La section 4.2 le mesure sur la vraie simulation (4 320 pas en 30 s à 144 Hz, contre
+   1 800 avec FLoop) et compare aussi les empreintes.
 
 Ce banc ne mesure que l'horloge, sur des horodatages synthétiques. Un vrai écran à 59,94 Hz, le VRR et les
 horodatages de Safari et de Firefox restent à essayer.
+
+### 4.2 Simulation réelle : `banc-simulation.json` (étape 5)
+
+Constats : STAB-06 (une seule empreinte d'état quel que soit l'écran ; son « Vérifier par » demande la même empreinte
+à 60, 75, 120 et 144 Hz et avec des horodatages arrondis), LOOP-05 (absorbé par STAB-06), STAB-V1 (la formule
+actuelle, déjà dans main), PARA-V1 (la simulation reste sur le fil principal).
+
+- **Commande** : `node tools/boucle-banc-simulation.mjs`, depuis la racine (délai de 20 minutes). Une ligne par motif,
+  puis un bilan ; code 0, ou 1 si `distinctChainHashes` ≠ 1, si `allSameAsReplay` est faux, ou si une exécution FLoop
+  ne fait pas ses 1 800 pas (critère 6 du §9 de la mission, ajouté au §7.3). Durée : 127 à 179 s sur trois passes.
+- **Ce qui est comparé.** Le code du §7.3 de la mission est recopié tel quel (lignes 8 à 52 de l'outil, identiques
+  au bloc de la mission, `cmp`). Il s'appuie sur les outils de preuve du lot 00, en lecture seule : scénario
+  `legacy-s0`, graine 96, pilote `drive()`, empreinte d'état chaînée à chaque pas (`observeRun`), instantané final
+  (`finishRun`).
+  - **Référence** : `replay()`, 1 800 pas de 1/60 s, sans chronométrage.
+  - **FLoop** (`withLoop`) : les mêmes 1 800 pas, rythmés par FLoop. L'image i appelle
+    `advance(horodatage de l'image i, rappel)` ; le rappel fait `drive`, `sim.step(h)` avec h = 1/60 s, puis
+    `observeRun`, et rend `false` au 1 800e pas (arrêt anticipé).
+  - **Actuel** (`current`) : la formule de `frame()` dans `src/game.js` (lignes 787 et 802 : dt borné à 0,12 s,
+    puis `Math.max(1,Math.ceil(dt*60-.06))` sous-pas de dt/steps), pendant 30 s d'affichage.
+  - Motifs : `60`, `q60`, `59.94`, `75`, `120`, `144`, `165`, `jit144` et `long60`, déclarés en 4.1.
+- **Déroulé** : une chauffe (un `withLoop('60')` et un `current('60')`, non comptés), puis, pour chaque motif, trois
+  paires alternées : (FLoop, actuel), (actuel, FLoop), (FLoop, actuel). Avec le rejeu, cela fait 57 exécutions, en
+  série (la machine est partagée). Rapport de CPU : `cpuMsPerSimSecond` de FLoop sur celui de l'actuel, par paire,
+  puis la médiane des trois.
+- **Sortie** : seulement `preuves/module-boucle/banc-simulation.json` (11,3 Ko), sans `rows` ni tableau par pas :
+  `reference` réduit à `{steps, chainHash, snapshotSha256}` ; `floop[]` et `current[]`, la première exécution de
+  chaque motif ; `distinctChainHashes`, `allSameAsReplay` et `distinctSnapshotsCurrent` ; les rapports de CPU.
+  - Écart avec le §7.3 : sa liste `cpu[]` s'appelle ici `cpuRatios`. La clé `cpu` est déjà le modèle du processeur,
+    dans l'en-tête de chaque JSON (§7 de la mission), et un objet JSON ne peut pas porter les deux.
+  - Ajouts, pour information : `loadavgEnd`, `seconds`, `scenario`, `seed`, `steps`, `patterns`, `floopRuns`,
+    `allStepsDone` et `currentRepeatable` ; par motif, le CPU des trois exécutions de chaque sorte ;
+    `floopCpuSpread`.
+- **Machine et charge** : Apple M5, 10 cœurs, macOS 27.2.1 (`darwin`, `arm64`), Node v24.18.0 ; `loadavg`
+  4,74 / 4,15 / 3,50 au départ et 3,94 / 4,50 / 3,81 à la fin, 178,6 s (Mac partagé par plusieurs agents). Trois
+  passes donnent le même JSON, hors champs de CPU, de charge et de durée. Le JSON rangé est celui de la troisième.
+
+**Référence** : `replay()` fait ses 1 800 pas, sans mort ni victoire ; `chainHash` `576ce3b4`, instantané
+`966c41e5710dbe3e…`. Ces valeurs peuvent dépendre de la base et de l'architecture (les 8 empreintes historiques de
+`checks/campaign-world.test.mjs` échouent sur arm64 et passent sous x64) : seule compte l'égalité avec `replay()` dans
+le même processus.
+
+**Résultats** (valeurs du JSON). « À 0 pas » et « à plusieurs pas » comptent les images FLoop (`zeroStepFrames`,
+`multiStepFrames`) ; « Verr. » est l'état du verrouillage à la fin.
+
+| Motif | FLoop : images pour 1 800 pas | À 0 pas | À plusieurs pas | Verr. | FLoop : empreinte | Actuel : images (30 s) | Actuel : pas | Actuel : pas par seconde simulée | Actuel : instantané |
+|---|---|---|---|---|---|---|---|---|---|
+| 60 | 1 800 | 0 | 0 | oui | `576ce3b4`, celle du rejeu | 1 800 | 1 800 | 60 | `ac685f99` |
+| q60 | 1 800 | 0 | 0 | oui | `576ce3b4`, celle du rejeu | 1 800 | 1 800 | 60 | `fa0276aa` |
+| 59.94 | 1 799 | 0 | 1 | oui | `576ce3b4`, celle du rejeu | 1 798 | 1 798 | 59,94 | `083c6174` |
+| 75 | 2 249 | 449 | 0 | non | `576ce3b4`, celle du rejeu | 2 250 | 2 250 | 74,99 | `23032362` |
+| 120 | 3 598 | 1 798 | 0 | non | `576ce3b4`, celle du rejeu | 3 600 | 3 600 | 119,97 | `fc1cc16f` |
+| 144 | 4 317 | 2 517 | 0 | non | `576ce3b4`, celle du rejeu | 4 320 | 4 320 | 143,95 | `468aa42e` |
+| 165 | 4 946 | 3 146 | 0 | non | `576ce3b4`, celle du rejeu | 4 950 | 4 950 | 164,94 | `5a54e825` |
+| jit144 | 4 317 | 2 517 | 0 | non | `576ce3b4`, celle du rejeu | 4 320 | 4 320 | 143,95 | `80d53a86` |
+| long60 | 1 786 | 0 | 6 | oui | `576ce3b4`, celle du rejeu | 1 800 | 1 818 | 60 | `4e292bf1` |
+
+Les colonnes du §8 de la mission (images FLoop, empreinte, pas en 30 s, pas par seconde simulée) sont conformes sur
+les 9 lignes. Le temps simulé vaut 30 s pour chaque exécution FLoop (1 800 × 1/60, à 5e-13 près) ; de 29,997 à
+30,011 s pour la formule actuelle, et 30,3 s pour `long60`, dont les images longues ajoutent 18 pas.
+
+**Bilan.**
+
+| Critère | Mesuré | Attendu |
+|---|---|---|
+| `distinctChainHashes` | 1, sur les 27 exécutions FLoop comptées (3 par motif) | 1 |
+| `allSameAsReplay` | vrai : chaque exécution FLoop a les 1 800 pas, le `chainHash`, l'instantané et l'empreinte de chacun des 1 800 pas du rejeu (`sameState`) | vrai |
+| `allStepsDone` | vrai : 1 800 pas pour chaque exécution FLoop | vrai (critère 6 du §9) |
+| `distinctSnapshotsCurrent` | 9 instantanés distincts sur 9 | 9 sur 9 (mesuré par la mission sur le Mac) |
+| `currentRepeatable` | vrai : pour chaque motif, les trois exécutions de la formule actuelle donnent le même instantané | (information) |
+
+**Rapport de CPU, FLoop sur actuel** (information, sans seuil). Les colonnes 2 et 3 viennent de la passe rangée dans
+le JSON ; la colonne 4 réunit les 9 rapports des trois passes (médiane, puis minimum et maximum).
+
+| Motif | 3 rapports (JSON) | Médiane (JSON) | 9 rapports, 3 passes | Actuel : pas par seconde simulée |
+|---|---|---|---|---|
+| 60 | 1,06 ; 1,09 ; 0,93 | 1,06 | 1,00 (0,92 à 1,09) | 60 |
+| q60 | 1,37 ; 0,99 ; 1,01 | 1,01 | 1,01 (0,99 à 1,88) | 60 |
+| 59.94 | 0,88 ; 1,01 ; 0,83 | 0,88 | 1,01 (0,83 à 1,64) | 59,94 |
+| 75 | 1,03 ; 0,94 ; 0,90 | 0,94 | 0,94 (0,85 à 1,29) | 74,99 |
+| 120 | 0,54 ; 0,54 ; 0,60 | 0,54 | 0,56 (0,53 à 0,60) | 119,97 |
+| 144 | 0,40 ; 0,57 ; 0,42 | 0,42 | 0,46 (0,40 à 0,63) | 143,95 |
+| 165 | 0,66 ; 0,39 ; 0,41 | 0,41 | 0,40 (0,39 à 0,66) | 164,94 |
+| jit144 | 0,48 ; 0,33 ; 0,43 | 0,43 | 0,48 (0,33 à 0,51) | 143,95 |
+| long60 | 0,70 ; 0,94 ; 1,00 | 0,94 | 0,97 (0,70 à 1,26) | 60 |
+
+Bruit de la machine : les 27 exécutions FLoop d'une passe font le même travail (même trajectoire, même empreinte). Dans
+la passe rangée, elles coûtent pourtant de 44,2 à 142,7 ms de CPU par seconde simulée (de 42,7 à 127,1 dans la
+deuxième) : un facteur 3, dû à la seule machine. Le Mac est partagé, et le type de cœur (performance ou efficacité)
+sur lequel tourne le processus n'est pas maîtrisé. Les paires alternées comparent des exécutions voisines dans le
+temps ; un rapport isolé peut quand même s'écarter de 88 % (`q60`, première passe).
+
+**Ce que montre le banc.**
+1. **Une seule empreinte, quel que soit l'écran (STAB-06, LOOP-05).** Avec FLoop, les 9 motifs jouent la même partie
+   que `replay()`, pas par pas : 60 Hz exact, horodatages arrondis à 0,1 ms, 59,94, 75, 120, 144 et 165 Hz, gigue à
+   144 Hz, images longues à 60 Hz. L'écran ne change que le nombre d'images (1 786 à 4 946) qui portent les 1 800 pas,
+   jamais l'état. C'est le test que demande le « Vérifier par » de STAB-06, fait sur la vraie simulation.
+   - Avec la formule actuelle, les 9 motifs donnent 9 états finaux différents, et aucun n'est celui du rejeu, pas même
+     à 60 Hz exact : 1 pas par image, mais d'une durée prise sur l'intervalle mesuré, bruit flottant compris, et non
+     de 1/60 s. `60` et `q60`, qui ne diffèrent que par l'arrondi des horodatages, divergent déjà.
+   - Avant : 9 empreintes pour 9 écrans (formule actuelle). Après : 1 (FLoop).
+2. **Le nombre de pas ne dépend plus de l'écran.** FLoop fait 1 800 pas pour 30 s simulées partout.
+   - En verrouillage, un pas par image : `60` et `q60` ; `59.94`, sauf l'image 2, qui en fait 2 ; `long60`, sauf ses
+     6 images longues.
+   - Au-dessus de 60 Hz, 0 ou 1 pas par image. Images sans pas : 20 % à 75 Hz, 50 % à 120 Hz, 58 % à 144 Hz, 64 % à
+     165 Hz.
+   - La formule actuelle fait autant de pas que l'écran a d'images : de 2 250 à 4 950 pas pour les mêmes 30 s
+     au-dessus de 60 Hz.
+3. **CPU : une information, aucun gain annoncé.**
+   - Classe 60 Hz (`60`, `q60`, `59.94`, `long60`) : rapport d'environ 1 (0,97 à 1,01 en médiane des 9 rapports), à
+     nombre de pas égal. STAB-V1 (lot 01, déjà dans main) a supprimé les pas doublés à 60 Hz : le gain CPU de STAB-06
+     à 60 Hz est déjà pris, il n'y a rien à annoncer ici.
+   - Au-dessus de 60 Hz : 0,94 à 75 Hz, 0,56 à 120, 0,46 à 144, 0,40 à 165, 0,48 avec la gigue à 144 Hz. Mais les deux
+     exécutions d'une paire ne jouent pas la même partie : la formule actuelle fait 75 à 165 pas par seconde simulée,
+     et le pilote `drive()` est indexé par pas (lacet + 0,01 rad à chaque pas ; tir, esquive et déplacement latéral
+     selon le numéro du pas). Le joueur y tourne 1,25 à 2,75 fois plus vite et son entrée suit le nombre de pas, pas
+     le temps : ce n'est pas le même travail. Le rapport montre le poids du coût fixe d'un pas, pas un gain.
+   - Les chiffres corrigés de l'audit (−19 % à 120 Hz, −26 % à 144 Hz, −49 % à 240 Hz, sur son scénario `c0`) ne
+     sont ni reproduits ni comparables.
+4. **La simulation reste sur le fil principal (PARA-V1).** Le rappel de pas appelle `sim.step` de façon synchrone,
+   comme le fera `frame()` dans le rappel rAF, avant le dessin : la boucle à pas fixe n'ajoute pas d'image de latence.
+
+Ce banc ne joue qu'un scénario (`legacy-s0`, 30 s, pilote scripté du lot 00), dans Node, avec des horodatages
+synthétiques. « Même partie sur tous les écrans » vaut pour des entrées scriptées (démo, banc), pas pour un joueur
+(STAB-06, réserve 4). L'interpolation du rendu (`track`) et les angles (`aim`) ne sont pas mesurés ici : voir
+l'émulation de l'étape 2 (sections 2.5 et 2.6).
 
 ## 5. Plan de raccord, non appliqué
 
