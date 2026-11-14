@@ -225,10 +225,16 @@ ligne. Le `Set` est gardé plutôt qu'un tableau à retrait par échange : `dele
   Chrome avant clôture », écoute impossible ici.
   **Le compteur exigé par la fiche est publié quand même** : `preuves/lot-11/t5/noeuds.md`,
   rejoué au tour 1 — **29,9 nœuds/s des deux côtés** (base `35c654a` et tête), soit
-  `{"gain":898,"source":898}` pour 898 notes en 60 s, **2 nœuds par note**. Le critère
-  « ≤ 15 nœuds/s » n'est donc pas atteint, volontairement et chiffres à l'appui. Un test
-  (`checks/music.test.mjs`, « sixty seconds of music create exactly two nodes per note »)
-  bloque ce compte à deux nœuds par note, dans les deux sens.
+   `{"gain":898,"source":898}` pour 898 notes en 60 s, **2 nœuds par note**. Le critère
+   « ≤ 15 nœuds/s » n'est donc pas atteint, volontairement et chiffres à l'appui. Le test
+   qui le verrouillait (`checks/music.test.mjs`, « … create exactly two nodes per note »)
+   **comptait les nœuds et bloquait l'état contraire de la fiche** : un agent voulant
+   implémenter le point (1) l'aurait trouvé rouge. **Corrigé au tour 2 (problème 7)** : le test
+   s'appelle maintenant « sixty seconds of music fade every note cut before its natural end to
+   silence (no click) » — il garde les invariants neutres (une source par note, pas de
+   panoramisation par note) et vérifie la propriété de qualité réelle qui justifiait l'écart :
+   les 303 notes coupées sur 60 s fondent bien au silence (le fondu ~8 ms de `music.js:380`),
+   donc ne cliquent pas. Il ne verrouille plus le nombre de `GainNode`.
 - Notes et lignes sur 60 s inchangées (1 071/1 202 en monde 0, 2 726/2 043 en monde 1).
 - Identité : journal des automatisations **identique** sur a, b, c, d, t (0 écart,
   0 événement retiré, `stats` égaux) ; sha256 des trois modules et du module du titre
@@ -387,7 +393,7 @@ avant d'être corrigés** ; aucun n'a été écarté sans mesure.
 
 | # | problème | reproduit ? | ce qui a été fait | commit |
 |---|---|---|---|---|
-| 1 | T5 : le point (1) de RESTE-09 (2 `GainNode` persistants par piste) n'est pas implémenté, et le critère « −21 % » cité n'existe nulle part | oui — `audio-root.mjs` : **29,9 nœuds/s des deux côtés**, `{"gain":898,"source":898}` | point (1) **écarté** en citant la contre-vérification du constat lui-même ; faux critère retiré du rapport et du README ; compteur publié dans `preuves/lot-11/t5/noeuds.md` ; test bloquant 2 nœuds par note | `583530a` |
+| 1 | T5 : le point (1) de RESTE-09 (2 `GainNode` persistants par piste) n'est pas implémenté, et le critère « −21 % » cité n'existe nulle part | oui — `audio-root.mjs` : **29,9 nœuds/s des deux côtés**, `{"gain":898,"source":898}` | point (1) **écarté** en citant la contre-vérification du constat lui-même ; faux critère retiré du rapport et du README ; compteur publié dans `preuves/lot-11/t5/noeuds.md` ; test de compteur de nœuds (remplacé au tour 2 par un test de non-clic, problème 7) | `583530a` |
 | 2 | T4 : les quatre réglages de mixage (compresseur, duck, ennemis, écho) ne sont pas appliqués alors que la fiche en fixe une décision par défaut | oui — le README T4 le disait explicitement | banc MIX lancé, condition « pic ≤ .85 et pas de saturation .875 » **remplie** (crête max 0,669, 0 échantillon au coude), les quatre réglages **appliqués** et mesurés | `00b3cd2` |
 | 3 | T1 : le budget de 8 ms par tranche n'est pas atteint, et le banc cité ne peut pas le mesurer | oui — `medianMaxSliceMs` 21,43 ms, `medianOver8` 13 → 16 | trois causes corrigées (recettes reprenables, coût enregistré à la fin, ouverture à `BLOCK_MIN`) + découpage du `kit()` ; **24,44 → 14,41 ms**, **22 → 4** ; résidu écrit | `e9de02c` |
 | 4 | T3 : le critère « RMS +8 dB à pic égal » n'est pas dans les écarts assumés | oui — `feel06.mjs` rejoué : 6,44 / 7,98 / 7,60 / 6,47 / 9,86 | ligne d'écart ajoutée au README T3, au rapport et à la table des décisions | `7a63961` |

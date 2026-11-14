@@ -37,7 +37,7 @@ class Param {
 }
 class Context {
   constructor(){this.currentTime=0;this.state='running';this.nodes=[];this.sources=[];this.buffers=[];this.closed=false;}
-  node(kind){const n={kind,connections:[],disconnected:false,connect(target){this.connections.push(target);return target;},disconnect(){this.connections=[];this.disconnected=true;}};this.nodes.push(n);return n;}
+  node(kind){const n={kind,connections:[],targets:[],disconnected:false,connect(target){this.connections.push(target);this.targets.push(target);return target;},disconnect(){this.connections=[];this.disconnected=true;}};this.nodes.push(n);return n;}
   createGain(){const n=this.node('gain');n.gain=new Param(1);return n;}
   createStereoPanner(){const n=this.node('pan');n.pan=new Param();return n;}
   createBuffer(channels,length,rate){assert.equal(channels,1);assert(rate>=8000);const data=new Float32Array(length),buffer={duration:length/rate,sampleRate:rate,length,getChannelData:()=>data};this.buffers.push(buffer);return buffer;}
@@ -202,16 +202,33 @@ test('title warmup is shared, yields its instrument work and needs no audio devi
   const before=yields;await cold.FMusic.warmup('title');assert.equal(yields,before);await cold.FMusic.warmup(0);assert.equal(yields,before+20,'LOAD-13: world preparation reuses the shared instruments and yields once per module phase plus its closing pause — seven kit drums, eight kit bars, kit extras, compose, serialize, decode = 19 phases');
  assert.equal(bytesHash(cold.FMusic.getModule('title')),bytesHash(Music.getModule('title')));assert.equal(contexts,0);
 });
-// RESTE-09 (lot 11, tour 1) : le compteur de nœuds est une preuve, pas une intention.
-test('sixty seconds of music create exactly two nodes per note: the persistent-gain variant of RESTE-09 (1) stays excluded',async()=>{
+// RESTE-09 (lot 11) : la variante « deux GainNode persistants par piste » du point (1) reste
+// écartée sur avis du constat lui-même (« à écarter : 30 nœuds par seconde sont insignifiants…
+// réutiliser un gain qui porte encore des automations planifiées peut produire des clics »).
+// Le test ne compte plus les nœuds — ce comptage verrouillait l'état contraire de la fiche et
+// aurait bloqué quiconque voudrait implémenter le point (1) (tour 2, problème 7). Il garde les
+// invariants neutres (une source par note, pas de panoramisation par note) et vérifie la
+// propriété de qualité réelle qui justifiait l'écart : toute note coupée avant sa fin naturelle
+// fond au silence (le fondu ~8 ms de music.js:380), donc ne clique pas.
+test('sixty seconds of music fade every note cut before its natural end to silence (no click)',async()=>{
   await Music.warmup(0);
   const r=rig();r.music.setStage(0);r.music.setPlaying(true);
   const graph=r.ctx.nodes.slice();
   run(r,60);
   const notes=r.music.stats.scheduledNotes,created=r.ctx.nodes.filter(n=>graph.indexOf(n)<0);
   assert(notes>200,'soixante secondes de musique programment des notes, eu '+notes);
-  assert.equal(created.filter(n=>n.kind==='source').length,notes,'une AudioBufferSourceNode par note');
-  assert.equal(created.filter(n=>n.kind==='gain').length,notes,'un GainNode par note : la variante a GainNode persistants alternes est ecartee par la contre-verif de RESTE-09 (« a ecarter : 30 nœuds par seconde sont insignifiants… peut produire des clics »), donc le compteur reste a 2 par note et non 1');
+  const sources=created.filter(n=>n.kind==='source');
+  assert.equal(sources.length,notes,'une AudioBufferSourceNode par note');
   assert.equal(created.filter(n=>n.kind==='pan').length,0,'aucun nœud de panoramisation par note');
-  assert.equal(created.length,2*notes,'deux nœuds par note, ni plus ni moins');
+  let cut=0;
+  for(const s of sources){
+    const natural=s.startTime+(s.buffer?s.buffer.duration/s.playbackRate.value:0);
+    if(s.stopTime<natural-1e-4){
+      cut++;
+      const gain=s.targets[0];
+      assert(gain&&gain.gain&&gain.gain.events.some(e=>e[0]==='target'&&e[1]<=.001),
+        'une note coupée avant sa fin naturelle doit fondre au silence (fondu 8 ms), sinon clic');
+    }
+  }
+  assert(cut>0,'des notes sont réellement coupées par la suivante, sinon le test est vide, eu '+cut);
 });
