@@ -568,8 +568,16 @@
   function foliageTriangles(){return FOLIAGE.triangles;}
   const names = ['box','sphere','cylinder','octa','ring','bevel','foliage'];
   function geometry(low) {
-    const data=[], indices=[], ranges={};
-    function vertex(p,n) {const i=data.length/6;data.push(...p,...n);return i;}
+    const data=[], indices=[], ranges={}, seen=new Map();
+    // DRAW-11 : un sommet (position + normale) n'est écrit qu'une fois. La clé est la
+    // représentation exacte des six flottants, donc deux triangles voisins partagent le même
+    // indice au bit près ; les coutures de sphère et d'anneau gardent leurs doublons (sin(2π)
+    // n'est pas exactement 0), sans conséquence sur l'image.
+    function vertex(p,n) {
+      const key=p[0]+','+p[1]+','+p[2]+'|'+n[0]+','+n[1]+','+n[2];
+      const found=seen.get(key);if(found!==undefined)return found;
+      const i=data.length/6;data.push(...p,...n);seen.set(key,i);return i;
+    }
     function triangle(p0,p1,p2,n0,n1,n2) {
       const a=[p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]],b=[p2[0]-p0[0],p2[1]-p0[1],p2[2]-p0[2]];
       const cross=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
