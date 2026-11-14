@@ -1,3 +1,4 @@
+import {gunzipSync} from "node:zlib";
 // Exercise the real browser shell's Continue action and storage writes without
 // a renderer. Simulation validation remains real; only browser/audio APIs are stubbed.
 import test from 'node:test';
@@ -54,7 +55,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
     document: { body: element('body'), getElementById: element, addEventListener: (name, callback) => documentListeners.set(name, [...(documentListeners.get(name) || []), callback]), hasFocus: () => true, exitPointerLock() { this.pointerLockElement = null; } },
     localStorage: { getItem: name => memory.get(name) ?? null, setItem: (name, value) => { const write = { name, value: String(value), mode: idleMode ?? (element('body').dataset.state || 'menu') }; runtime.beforeWrite?.(write); memory.set(name, write.value); writes.push(write); }, removeItem: name => memory.delete(name) },
     FWorld: { create: createWorld }, FAudio: { create: () => new Proxy({}, { get: (_, name) => (...args) => { runtime.audioCall?.(name,args); sounds.push({ name, args }); } }) },
-    FRender: { create: () => ({ stats: { backend: 'test' }, resize: noop, setWorld: (meshes, lights) => worlds.push({ meshes, lights, initial:true }), updateWorld: (meshes, revision, lights) => worlds.push({meshes,revision,lights}), draw: (camera, meshes, effects) => frames.push({ camera, meshes, effects }) }) },
+    FRender: { ...runtime.geometry, create: () => ({ stats: { backend: 'test' }, resize: noop, setWorld: (meshes, lights) => worlds.push({ meshes, lights, initial:true }), updateWorld: (meshes, revision, lights) => worlds.push({meshes,revision,lights}), draw: (camera, meshes, effects) => frames.push({ camera, meshes, effects }) }) },
   };
   if (runtime.idle !== false) context.requestIdleCallback = (callback, options) => idle.push({ callback, options, mode: element('body').dataset.state || 'menu' });
   context.window = context; vm.createContext(context);
@@ -959,4 +960,34 @@ test('LOAD-03: a deferred point keeps the state of its snapshot frame while trap
   for (let i = 0; i < 5; i++) app.frame(100);
   assert.notDeepEqual(plain(sim.state.traps[0].box), taken, 'the live blade has moved on');
   app.runIdle(); assert.equal(storedPoint(app.writes.at(-1)), shots[0].text);
+});
+
+// Real pre-massive-traps snapshots: Continue must select the matching world
+// without replacing the save with the loadout from the sector entrance.
+const preMassivePoints=new URL('./fixtures/pre-massive-traps/',import.meta.url);
+const preMassiveManifest=JSON.parse(readFileSync(new URL('manifest.json',preMassivePoints),'utf8'));
+for(const entry of preMassiveManifest.cases)test('pre-massive browser Continue, save and Continue again: '+entry.id,async()=>{
+  const {envelope}=JSON.parse(gunzipSync(readFileSync(new URL(entry.id+'.json.gz',preMassivePoints))));
+  const G=generatedModules(),factory=(seed,index,options)=>G.FWorld.create(seed,index,options);
+  const original=JSON.stringify(envelope),app=harness(envelope,{},factory,{geometry:G.FRender,brain:true});
+  await app.element('resume-expedition').click();
+  assert.equal(app.element('body').dataset.state,'playing');
+  const sim=app.simulations.at(-1),loaded=plain(sim.snapshot()),old=envelope.checkpoint;
+  assert.equal(loaded.fingerprint,old.fingerprint);
+  for(const field of ['player','inventory','enemies','cores','pickups','traps','pipes','campaign'])assert.deepEqual(loaded.state[field],old.state[field],field);
+  assert.deepEqual(loaded.destruction,old.destruction);
+  assert.equal(app.memory.get(key),original,'successful Continue does not replace or rewrite the stored point');
+  assert.equal(app.memory.has(key+'-refuse'),false);
+  const core=sim.state.cores.find(c=>!c.taken);assert.ok(core,'fixture has an available real relay');
+  Object.assign(sim.state.player,{x:core.x,z:core.z,y:sim.ground(core.x,core.z)});
+  app.frame(100);
+  const stored=JSON.parse(app.memory.get(key));
+  assert.equal(stored.checkpoint.fingerprint,old.fingerprint,'the real autosave preserves the old world identity');
+  assert.ok(stored.checkpoint.state.relays>old.state.relays,'a real relay event wrote the new point');
+  const again=harness(stored,{},factory,{geometry:G.FRender,brain:true});await again.element('resume-expedition').click();
+  assert.equal(again.element('body').dataset.state,'playing');
+  const restored=plain(again.simulations.at(-1).snapshot());
+  for(const field of ['player','inventory','enemies','cores','pickups','traps','pipes','campaign'])assert.deepEqual(restored.state[field],stored.checkpoint.state[field],field+' after resave');
+  assert.equal(again.memory.get(key),JSON.stringify(stored));assert.equal(again.memory.has(key+'-refuse'),false);
+  for(const s of app.simulations)s.dispose();for(const s of again.simulations)s.dispose();
 });

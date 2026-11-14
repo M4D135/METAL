@@ -305,3 +305,39 @@ Les correctifs Codex du même contrôle chargent `FPassages` dans le recensement
 et couvrent les 54 mondes de campagne V2 dans le banc des pièges obligatoires.
 La suite complète est passée à 690 tests réussis, zéro échec. Le test de chargement
 vérifie aussi le refus explicite si `FPassages` manque (15 tests FMath réussis).
+
+
+## Compatibilité rétablie — Codex, 14 novembre 2026
+
+Le blocage constaté plus haut sur `11d361a` est corrigé. « Continuer » essaie le
+monde actuel, puis, pour un checkpoint de génération 6 dont l'empreinte diffère,
+recrée exactement le monde antérieur aux pièges massifs (base `1814b81`). Le
+validateur `restore` vérifie toujours l'empreinte et tous les champs avant toute
+acceptation. Aucun fingerprint, format ou champ du checkpoint source n'est
+réécrit. Les sauvegardes invalides restent refusées et préservées.
+
+Une partie reprise conserve son monde et peut être sauvegardée puis rechargée.
+Les nouvelles parties, nouveaux secteurs et redémarrages gardent les pièges
+actuels. Le cache distingue les deux variantes. La révision globale de format
+réservée au lot 12/profils n'est pas consommée. Ce correctif couvre la rupture
+du lot des pièges ; il ne restaure pas les formats antérieurs au retrait du bouclier.
+
+Preuves : dix vraies sauvegardes historiques, dont deux avec 40 débris structurels
+chacune. Monde historique intégral identique ; checkpoint intégral identique en
+simulation ; vrais parcours du code de Continuer, relais/autosave, seconde reprise.
+Avant correctif : 20 échecs sur 40 nouveaux contrôles ; après : 40/40. Le contrôle
+croisé classique/V1/V2 rend maintenant 0 et distingue explicitement le refus du
+monde actuel de la reprise réussie dans le monde historique.
+
+Suite complète : 730/730, zéro échec. Le premier essai avait détecté l'option
+`null` historiquement acceptée par le générateur ; le garde correspondant est
+corrigé et le test existant reste inchangé. Deux reprises dans Chrome sans
+interface/SwiftShader passent sur la page construite, avec débris, stockage source
+intact et zéro exception JS. Ce n'est pas une mesure de FPS ni un test sur téléphone.
+Page : 861495 octets bruts (navigateur exclu), zéro actif externe,
+SHA-256 `014190878d0adc2683ff69df2ba9543df261d8fa8ef9b847afa2cedef2b8fbb8`. Aucun déploiement effectué par cette correction.
+
+Fixtures et provenance : `checks/fixtures/pre-massive-traps/README.md`.
+Journaux et contrôles avant/après : `/home/m4d135/work/codex-blocages-20261114/`,
+notamment `metal-compat-full-fixed.log`, `metal-cross-compat.json` et
+`metal-chrome-compat.json`.
