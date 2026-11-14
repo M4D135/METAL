@@ -185,3 +185,39 @@ test('démonter les machines ne coupe aucun chemin : elles ne portent aucun coll
     }
   }
 });
+
+// Le raccourci qui évite de recalculer la boîte au repos ne doit jamais figer une
+// pièce arrêtée par un corps avant son repos. Le corps est tenu hors de la bande
+// pendant l'aller de la course, puis entre dans la bande au retour : la lame est
+// stoppée sur le corps, avec progress 0. Retiré, le corps doit laisser la lame
+// revenir à sa position de repos — sinon sa boîte bloquée continue d'entrer dans
+// la collision jusqu'à la course suivante, soit une période entière.
+test('un corps dans la bande d arrêt d une lame ne la fige pas hors de son repos', () => {
+  const world = FWorld.create(1, 2, { campaign: true, campaignVersion: 2 });
+  const { ids } = firstCoupe(world);
+  const sim = simWindow.FSimulation.create(world, simOptions());
+  const t = sim.state.traps.find(q => ids.includes(q.id) && q.kind === 'blade');
+  assert.ok(t, 'la coupe ne pose aucune lame');
+  const axis = t.axis, travel = t.travel, key = axis === 'z' ? 'minZ' : 'minX';
+  const repos = (axis === 'z' ? t.z - travel : t.x - travel) - (axis === 'z' ? t.d : t.w) / 2;
+  const ideal = pr => (axis === 'z' ? t.z - travel * Math.cos(pr * Math.PI * 2) : t.x - travel * Math.cos(pr * Math.PI * 2)) - (axis === 'z' ? t.d : t.w) / 2;
+  const retire = () => Object.assign(sim.state.player, { x: world.spawn.x, z: world.spawn.z, y: sim.ground(world.spawn.x, world.spawn.z), hp: 1000, armor: 100 });
+  let stoppee = false;
+  for (let i = 0; i < 1200; i++) {
+    const dansBande = (t.hot && t.progress > .5) || (!t.hot && t.progress > 0);
+    const q = axis === 'z' ? { x: t.x + (dansBande ? 0 : 1.2), z: t.z } : { x: t.x, z: t.z + (dansBande ? 0 : 1.2) };
+    Object.assign(sim.state.player, { x: q.x, z: q.z, y: sim.ground(q.x, q.z), hp: 1000, armor: 100 });
+    for (const e of sim.state.enemies) e.hp = 0;
+    sim.step(.025, {});
+    if (t.hot && t.box && Math.abs(t.box[key] - ideal(t.progress)) > 1e-6) stoppee = true;
+  }
+  assert.ok(stoppee, 'le banc ne stoppe aucune lame : il ne prouverait rien');
+  let figee = null;
+  for (let i = 0; i < 900 && figee === null; i++) {
+    retire();
+    for (const e of sim.state.enemies) e.hp = 0;
+    sim.step(.025, {});
+    if (!t.hot && !t.warning && !t.destroyed && t.box && Math.abs(t.box[key] - repos) > 1e-6) figee = t.box[key];
+  }
+  assert.equal(figee, null, `lame figée à ${figee} au lieu de son repos ${repos} après le départ du corps`);
+});
