@@ -59,7 +59,10 @@ export function worldUsesFMath(root){return /\bFMath\b/.test(readFileSync(join(r
 // FWorld of a root: fmath loads first when world.js needs it. M replaces Math;
 // FM replaces FMath (window.FMath), for instrumentation.
 export function worldFactory(root,M,FM){
-  const modules=worldUsesFMath(root)&&!FM?['fmath','world']:['world'],globals={...(M?{Math:M}:{}),...(FM?{FMath:FM}:{})};
+  // FPassages (lot « jeu-pieges-massifs ») est optionnel : une racine antérieure
+  // n'a pas ce fichier et doit rester mesurable et comparée telle quelle.
+  const optional=existsSync(join(root,'src/passages.js'))?['passages']:[];
+  const modules=worldUsesFMath(root)&&!FM?['fmath',...optional,'world']:['world'],globals={...(M?{Math:M}:{}),...(FM?{FMath:FM}:{})};
   return loadRealm({root,modules,globals}).window.FWorld;
 }
 // Host variant: the native trigonometry of this machine, from a world.js before the fix.
@@ -548,7 +551,7 @@ export function pages(root,{dir,census:censusFile,base}={}){
   // (fmath first). "native" and "fmath": a world.js before the fix (--base, or
   // root itself before T2) with the Math of the engine, then with FMath swapped
   // in for the generation only. Each variant's scripts replace the previous ones.
-  const modules=['renderer','world','destruction','economy','brain','simulation'],scripts=(r,list)=>list.map(m=>`<script src="${src(r,m)}"></script>`).join('');
+  const modules=['renderer','world','destruction','economy','brain','simulation'],scripts=(r,list)=>{const out=[];for(const m of list){if(m==='world'&&existsSync(join(r,'src','passages.js')))out.push('passages');out.push(m);}return out.map(m=>`<script src="${src(r,m)}"></script>`).join('');};
   const wired=worldUsesFMath(root),old=wired?base:root;
   let body=`<script src="${src(fmRoot,'fmath')}"></script><script>`+
     'const N={sin:Math.sin,cos:Math.cos,atan:Math.atan,atan2:Math.atan2},use=t=>{for(const k in N)Math[k]=t==="fmath"?FMath[k]:N[k];};'+

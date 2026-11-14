@@ -14,7 +14,7 @@ const plain=value=>JSON.parse(JSON.stringify(value));
 
 function modulesGeneres(){
   const previous=globalThis.window,modules={};globalThis.window=modules;
-  try{for(const name of ['fmath','renderer','world','destruction','economy','brain','simulation'])vm.runInThisContext(readFileSync(new URL(`src/${name}.js`,root),'utf8'),{filename:name+'.js'});}
+  try{for(const name of ['fmath','passages','renderer','world','destruction','economy','brain','simulation'])vm.runInThisContext(readFileSync(new URL(`src/${name}.js`,root),'utf8'),{filename:name+'.js'});}
   finally{if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
   return modules;
 }

@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 const {root:rootPath,output} = parseToolArgs(process.argv.slice(2));
 const root = pathToFileURL(rootPath + '/');
 // fmath loads before world when the root has it (lot 01 suite T2); an older root keeps its list.
-const modules = [...defaultModules(rootPath).filter(name=>name==='fmath'),'renderer','world','destruction','economy','simulation'];
+const modules = [...defaultModules(rootPath).filter(name=>name==='fmath'||name==='passages'),'renderer','world','destruction','economy','simulation'];
 const sources = Object.fromEntries(modules.map(name=>[name,'src/'+name+'.js']));
 const loaded = loadRealm({root:rootPath,modules});
 const hashes = loaded.sourceSha256;

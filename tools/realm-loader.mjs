@@ -14,6 +14,9 @@ Object.getOwnPropertyDescriptors(globalThis);
 
 export const DEFAULT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 export const DEFAULT_MODULES = Object.freeze(['renderer','world','destruction','economy','brain','simulation']);
+// FPassages (src/passages.js) est optionnel : une racine antérieure au lot
+// « jeu-pieges-massifs » n'a pas ce fichier et doit rester mesurable telle quelle.
+const OPTIONAL_BEFORE_WORLD = ['passages'];
 const hash = text => createHash('sha256').update(text).digest('hex');
 
 // Default module list of one root. Since lot 01 suite (MURS-V1), world.js takes
@@ -22,10 +25,13 @@ const hash = text => createHash('sha256').update(text).digest('hex');
 // optional: any other missing module still fails when it is read.
 export function defaultModules(root=DEFAULT_ROOT) {
   root = resolve(root);
-  if (existsSync(join(root,'src/fmath.js'))) return Object.freeze(['fmath',...DEFAULT_MODULES]);
+  const optional = OPTIONAL_BEFORE_WORLD.filter(name=>existsSync(join(root,'src',name+'.js')));
+  const before = ['renderer',...optional,'world'];
+  const list = [...before,...DEFAULT_MODULES.filter(name=>!before.includes(name))];
+  if (existsSync(join(root,'src/fmath.js'))) return Object.freeze(['fmath',...list]);
   const world = join(root,'src/world.js');
   if (existsSync(world) && /\bFMath\b/.test(readFileSync(world,'utf8'))) throw new Error(`${world} uses FMath but ${join(root,'src/fmath.js')} is missing`);
-  return DEFAULT_MODULES;
+  return Object.freeze(list);
 }
 
 export function applyPatches(name, source, patches = {}) {

@@ -6,9 +6,11 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const fmathSource = fileURLToPath(new URL('../src/fmath.js', import.meta.url));
+const passagesSource = fileURLToPath(new URL('../src/passages.js', import.meta.url));
 const source = fileURLToPath(new URL('../src/world.js', import.meta.url));
 const sandbox = { window: {} };
 vm.runInNewContext(readFileSync(fmathSource, 'utf8'), sandbox, { filename: fmathSource });
+vm.runInNewContext(readFileSync(passagesSource, 'utf8'), sandbox, { filename: passagesSource });
 vm.runInNewContext(readFileSync(source, 'utf8'), sandbox, { filename: source });
 const { create } = sandbox.window.FWorld;
 const seeds = [1, 7, 42, 96, 2026, 65535];
@@ -468,7 +470,20 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   const substrate=world.walkable.filter(f=>f.substrate);assert.equal(substrate.length,1);assert(substrate[0].fallback&&substrate[0].y===-.25);
   for(const f of world.walkable.filter(f=>f.slopeX||f.slopeZ))assert(Math.abs(heightAt(world,f.x,f.z)-f.y)<.001,`${label}: substrate flattened a ramp`);
   assert(world.meshes.some(m=>m.category==='substrate'&&m.ground&&m.terrain));
-  assert.equal(world.traps.length,3);assert.deepEqual(Array.from(world.traps,t=>t.kind),['blade','press','spikes']);assert.equal(world.pipes.length,4);
+  // Décision de David du 13/11 : les pièges ne sont plus trois machines décoratives
+  // posées dans une cour, mais des barrières massives sur le chemin obligatoire.
+  // Une barrière (« coupe ») est un lot solidaire : deux lames au moins, une presse
+  // pleine largeur et des pics. Le banc checks/traps-mandatory.test.mjs prouve qu'il
+  // barre bien le passage ; ici on vérifie seulement la consistance de la batterie.
+  const trapBarriers=new Map();
+  for(const t of world.traps){if(!trapBarriers.has(t.barrier))trapBarriers.set(t.barrier,[]);trapBarriers.get(t.barrier).push(t);}
+  assert(world.traps.length>=4,`${label}: le secteur ne pose pas une batterie de pièges à la hauteur du danger demandé`);
+  for(const [id,list] of trapBarriers){
+    assert(list.filter(t=>t.kind==='blade').length>=2,`${label}: la barrière ${id} n'a pas assez de lames pour barrer le couloir`);
+    assert(list.some(t=>t.kind==='press')&&list.some(t=>t.kind==='spikes'),`${label}: la barrière ${id} n'est pas une machine complète`);
+    assert(new Set(list.map(t=>t.period)).size===1&&new Set(list.map(t=>t.phase)).size===1,`${label}: la barrière ${id} ne se lève pas d'un seul bloc`);
+  }
+  assert.equal(world.pipes.length,4);
   const ids=new Set(world.destructibles.map(d=>d.id)),owned=new Set();
   for(const d of world.destructibles){assert(d.meshes.length>0&&d.strength>0);for(const i of d.meshes){assert(!owned.has(i),`${label}: decoration belongs to two destructible bodies`);owned.add(i);assert.equal(world.meshes[i].destructibleId,d.id);}}
   for(const [i,m] of world.meshes.entries())if(!m.terrain&&!m.ground&&!m.indestructible)assert(owned.has(i),`${label}: undestroyable loose object`);
@@ -485,7 +500,9 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
     const projection=Math.max(0,Math.min(2.92,(q.x-nozzle.x)*periodic.dx+(q.z-nozzle.z)*periodic.dz));
     assert(Math.hypot(q.x-nozzle.x-periodic.dx*projection,q.z-nozzle.z-periodic.dz*projection)>1.8,`${label}: periodic hot jet covers objective`);
   }
-  assert.equal(world.horrorSites.length,7);
+  // Les ancres du directeur sont les conduites de pression et les machines de piège
+  // assez loin du départ. Leur nombre suit désormais la densité des barrières.
+  assert.equal(world.horrorSites.length,world.pipes.length+world.traps.filter(t=>Math.hypot(t.x-world.spawn.x,t.z-world.spawn.z)>16).length);
   for(const h of world.horrorSites){assert(ids.has(h.destructibleId)&&['alarm','steam','collapse'].includes(h.kind)&&h.radius===3);assert(Math.hypot(h.x-world.spawn.x,h.z-world.spawn.z)>16);}
 
   const entry = reachability(world, label);

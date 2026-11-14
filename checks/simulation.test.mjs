@@ -7,7 +7,7 @@ import vm from 'node:vm';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const context = { window: {} };
 vm.createContext(context);
-for (const name of ['fmath', 'renderer', 'world', 'destruction', 'economy', 'simulation']) {
+for (const name of ['fmath', 'passages', 'renderer', 'world', 'destruction', 'economy', 'simulation']) {
   vm.runInContext(readFileSync(`${root}src/${name}.js`, 'utf8'), context, { filename: `${name}.js` });
 }
 const { FSimulation, FWorld } = context.window;

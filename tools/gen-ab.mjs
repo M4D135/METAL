@@ -31,7 +31,7 @@ export function parseSpec(spec){
 }
 
 export function worldOf(root){
-  const modules=defaultModules(root).filter(name=>name==='fmath'||name==='world'),loaded=loadRealm({root,modules});
+  const modules=defaultModules(root).filter(name=>name==='fmath'||name==='passages'||name==='world'),loaded=loadRealm({root,modules});
   return {FWorld:loaded.window.FWorld,modules,sourceSha256:loaded.sourceSha256};
 }
 

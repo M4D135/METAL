@@ -8,6 +8,11 @@
   // Math keeps only exact functions.
   const FMath = window.FMath;
   if (!FMath) throw new Error('FWorld: charger src/fmath.js avant src/world.js');
+  // FPassages est lu au chargement, comme FMath : un banc qui installe `window`
+  // le temps d'exécuter les modules puis le retire doit quand même pouvoir créer
+  // un monde (checks/checkpoint.test.mjs, LOAD-01).
+  const FPassages = window.FPassages;
+  if (!FPassages) throw new Error('FWorld: charger src/passages.js avant src/world.js');
   const TAU = Math.PI * 2;
   const themes = [
     { title: 'La lisière rouillée', main: [0.12, 0.82, 0.78], alt: [1, 0.64, 0.24], wall: [0.33, 0.39, 0.36] },
@@ -1303,22 +1308,73 @@
     }
     w.traps=[];w.pipes=[];
     const yards=w.rooms.filter(r=>r.outdoor&&r.id!==0&&!r.bossArena);
-    for(const [i,kind] of ['blade','press','spikes'].entries()){
-      let room,point;
-      for(const r of yards.slice(i).concat(yards.slice(0,i))){const q=spot(r,kind==='blade'?2.2:1.4);if(q){room=r;point=q;break;}}
-      if(!point)throw new Error('No safe trap position '+w.stage+'/'+kind);
-      const {x,z}=point,y=room.y,id='trap-'+i,region='room-'+room.id,assembly='trap-frame-'+i;
-      const trap={id,kind,x,y:kind==='blade'?y+.84:y,baseY:y,z,w:kind==='blade'?.3:1.6,d:kind==='blade'?1.35:1.6,h:kind==='blade'?.32:kind==='press'?.65:1.1,axis:'x',travel:kind==='blade'?1.65:kind==='press'?2.6:0,period:7.8+i*.8,active:1.6+i*.15,warning:1.3,phase:2.1+i*1.7,damage:kind==='press'?24:18};
-      w.traps.push(trap);chosen.push({...point,r:2.4});
-      box([x,y+.015,z],[kind==='blade'?4.3:2.1,.03,2.1],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
-      for(const q of [-1,1])for(let k=0;k<8;k++)box([x+(k-3.5)*.22,y+.037,z+q*1],[.12,.018,.17],5,'trap_warning',{region,assembly,color:theme.alt});
-      if(kind!=='spikes'){
-        const span=kind==='blade'?2.22:1.25;
-        for(const q of [-1,1])box([x+q*span,y+1.8,z],[.16,3.6,.24],1,'trap_support',{region,assembly},true);
-        box([x,y+3.54,z],[span*2+.25,.22,.42],0,'trap_beam',{region,assembly});
-        add('cylinder',[x,y+3.36,z],[.48,.24,.48],1,'trap_motor',{region,assembly,r:[Math.PI/2,0,0]});
+    // Décision de David du 13/11 : plus aucun piège décoratif. Une machine est
+    // posée en travers d'un passage obligatoire, calculé sur le graphe des salles
+    // (lien dont le retrait déconnecte un objectif) puis complété par la tournée
+    // que le joueur est bien obligé de faire. Le banc checks/traps-mandatory.mjs
+    // prouve sur la grille de navigation que la barrière coupe le couloir.
+    const roomOf=(x,z)=>w.rooms.find(r=>Math.abs(x-r.x)<=r.w/2+.3&&Math.abs(z-r.z)<=r.d/2+.3)?.id;
+    const passageLinks=w.connections.map(c=>({from:c.from,to:c.to,x1:c.x1,z1:c.z1,x2:c.x2,z2:c.z2}));
+    const passageStart=roomOf(w.spawn.x,w.spawn.z);
+    const passageTargets=[...new Set([w.bossArena?w.bossArena.room:roomOf(w.exit.x,w.exit.z),roomOf(w.exit.x,w.exit.z),...w.cores.map(c=>roomOf(c.x,c.z))])].filter(id=>id!==undefined&&id!==passageStart);
+    const forced=FPassages.mandatoryLinks({links:passageLinks,start:passageStart,objectives:passageTargets});
+    const tour=FPassages.tourLinks({links:passageLinks,start:passageStart,objectives:passageTargets});
+    const arenaPath=w.corridors.findIndex(c=>c.arenaPath);
+    const passages=[...new Set([arenaPath,...forced])].filter(k=>k>=0).sort((a,b)=>a-b);
+    const nearPassage=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(j=>[j,j.target])];
+    let coupe=-1;
+    for(const k of passages){
+      if(w.traps.length>=28)break;
+      const c=w.corridors[k];
+      if(!c||c.liftId)continue;
+      const alongX=c.w>=c.d,cross=alongX?c.d:c.w,length=alongX?c.w:c.d;
+      if(cross>9||length<6.5)continue;
+      if(nearPassage.some(q=>FMath.hypot2(c.x-q.x,c.z-q.z)<6.5))continue;
+      const baseY=floorHeight(w,c.x,c.z)??c.y??0;
+      // Un couloir n'est un passage que si l'on ne peut pas le longer à côté : on
+      // mesure la largeur réellement praticable au niveau de son sol, au ras du
+      // garde-corps. Trop large, ce n'est plus un défilé : on n'y pose rien.
+      const halfScan=sign=>{let u=0,prev=baseY;for(;u<7;u+=.4){const nu=u+.4,x=alongX?c.x:c.x+sign*nu,z=alongX?c.z+sign*nu:c.z,y=floorHeight(w,x,z);if(y===null||!isWalkable(w,x,z,.38)||Math.abs(y-prev)>.42)break;prev=y;}return u;};
+      const half=Math.max(1.2,halfScan(-1),halfScan(1));
+      if(half>5.4)continue;
+      const span=2*(half+.6);
+      const n=Math.max(2,Math.min(8,Math.ceil(span/1.8))),piece=span/n;
+      const travel=Math.min(1.65,(length-3.4)/2),period=6.4+(coupe+1)*1.1,active=1.7,warningTime=1.5,phase=(coupe+1)*2.3;
+      coupe++;
+      const assembly='trap-frame-'+coupe,region='corridor-'+k,barrier='coupe-'+coupe,destructibleId='trap-frame-'+coupe;
+      for(let j=0;j<n;j++){
+        const u=-span/2+(j+.5)*piece,x=alongX?c.x:c.x+u,z=alongX?c.z+u:c.z;
+        w.traps.push({id:'trap-'+coupe+'-'+j,barrier,kind:'blade',x,y:(floorHeight(w,x,z)??baseY)+.05,baseY,z,
+          w:alongX?.3:piece,d:alongX?piece:.3,h:1.8,axis:alongX?'x':'z',travel,period,active,warning:warningTime,phase,damage:18,destructibleId});
+        box([x,baseY+.015,z],alongX?[travel*2+.8,.03,piece]:[piece,.03,travel*2+.8],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
       }
+      // La presse barre le couloir de plein fouet, les pics punissent celui qui
+      // s'arrête derrière : la machine entière devient le danger du secteur.
+      const offset=Math.min(travel+1.15,length/2-.9);
+      for(const [kind,sign,damage,depth] of [['press',-1,24,1.4],['spikes',1,18,1.2]]){
+        const x=alongX?c.x+sign*offset:c.x,z=alongX?c.z:c.z+sign*offset;
+        w.traps.push({id:'trap-'+coupe+'-'+kind,barrier,kind,x,y:baseY,baseY,z,
+          w:alongX?depth:span,d:alongX?span:depth,h:kind==='press'?.65:1.1,axis:alongX?'x':'z',
+          travel:kind==='press'?2.6:0,period,active,warning:warningTime,phase,damage,destructibleId});
+        box([x,baseY+.015,z],alongX?[depth+.5,.03,span]:[span,.03,depth+.5],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
+      }
+      // Cadre massif : montants, rails de roulement et moteurs se voient de loin.
+      // Montants hors de la zone praticable, rails et moteurs écartés du centre :
+      // un couloir de plein air doit garder son ciel ouvert au point de circulation.
+      const anchor=half+.45;
+      for(const q of [-1,1]){
+        const px=alongX?c.x:c.x+q*anchor,pz=alongX?c.z+q*anchor:c.z;
+        box([px,baseY+1.9,pz],alongX?[travel*2+.9,3.8,.26]:[.26,3.8,travel*2+.9],1,'trap_frame',{region,assembly});
+        box([px,baseY+3.62,pz],alongX?[travel*2+1.1,.22,.4]:[.4,.22,travel*2+1.1],1,'trap_beam',{region,assembly});
+      }
+      for(const s of [-1,1])add('cylinder',[alongX?c.x+s*(travel+.75):c.x,baseY+3.3,alongX?c.z:c.z+s*(travel+.75)],[.5,.28,.5],1,'trap_motor',{region,assembly,r:alongX?[0,0,Math.PI/2]:[Math.PI/2,0,0]});
+      for(let j=0;j<4;j++){
+        const u=-span/2+(j+.5)*span/4;
+        box([alongX?c.x-offset-1.1:c.x+u,baseY+.037,alongX?c.z+u:c.z-offset-1.1],alongX?[.55,.022,.2]:[.2,.022,.55],5,'trap_warning',{region,assembly,color:theme.alt});
+      }
+      chosen.push({x:c.x,z:c.z,r:span/2+2});
     }
+    if(!w.traps.length)throw new Error('No mandatory trap position '+w.stage+'/'+w.seed);
     // Clearly marked pressure conduits. Ordinary dry service tubing can also
     // break, while these valves identify the hot, damaging gas system.
     for(let i=0;i<4;i++){
@@ -1391,7 +1447,7 @@
     for(const a of (w.machinery||[]).concat(w.ambience||[])){const g=nearest(a.x,a.y,a.z,a.room===undefined?undefined:'room-'+a.room);if(g)a.destructibleId=g.id;}
     for(const light of w.lights){if(light.trophyId)continue;const g=nearest(...light.p,light.region);if(g)light.destructibleId=g.id;}
     for(const p of w.pipes)p.destructibleId='pressure-'+p.id.slice(5);
-    for(const t of w.traps)t.destructibleId='trap-frame-'+t.id.slice(5);
+    for(const t of w.traps)t.destructibleId=t.destructibleId||'trap-frame-'+t.id.slice(5);
     for(const m of w.mechanisms){const g=nearest(m.x,m.y+.6,m.z);if(g)m.destructibleId=g.id;}
     // Anchors are existing pressure systems and trap machinery, never invisible
     // colliders or freshly spawned props. The director may only play real cues.
