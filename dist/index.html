@@ -3573,10 +3573,15 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const boxes=out.map(bbox),keys=['minX','maxX','minY','maxY','minZ','maxZ'];
     const union=list=>Object.fromEntries(keys.map(k=>[k,Math[k.startsWith('min')?'min':'max'](...list.map(b=>b[k]))]));
     const distance=(p,b)=>FMath.hypot3(Math.max(b.minX-p[0],0,p[0]-b.maxX),Math.max(b.minY-p[1],0,p[1]-b.maxY),Math.max(b.minZ-p[2],0,p[2]-b.maxZ));
+    // Index des colliers par maillage : même contenu et même ordre croissant que le
+    // balayage complet précédent, sans parcourir tous les colliers à chaque groupe.
+    const collidersByMesh=new Map();
+    for(let i=0;i<w.colliders.length;i++){const mesh=w.colliders[i].mesh,known=collidersByMesh.get(mesh);if(known)known.push(i);else collidersByMesh.set(mesh,[i]);}
+    const collidersOf=members=>{const found=[];for(const i of members)for(const ci of collidersByMesh.get(i)||[])found.push(ci);return found.sort((a,b)=>a-b);};
     function group(id,kind,members,colliders=[],strength=6){const g={id,kind,meshes:members,colliders,strength,region:out[members[0]].region,bounds:union(members.map(i=>boxes[i]))};groups.push(g);for(const i of members)owners.set(i,g);return g;}
-    for(const t of w.trees){const members=Array.from({length:t.meshCount},(_,j)=>t.mesh+j),indices=w.colliders.flatMap((c,i)=>members.includes(c.mesh)?[i]:[]);const g=group('tree-'+t.mesh,'tree',members,indices,7);t.destructibleId=g.id;}
+    for(const t of w.trees){const members=Array.from({length:t.meshCount},(_,j)=>t.mesh+j),indices=collidersOf(members);const g=group('tree-'+t.mesh,'tree',members,indices,7);t.destructibleId=g.id;}
     out.forEach((m,i)=>{if(m.assembly){if(!explicit.has(m.assembly))explicit.set(m.assembly,[]);explicit.get(m.assembly).push(i);}});
-    for(const [id,members] of explicit){const colliders=w.colliders.flatMap((c,i)=>members.includes(c.mesh)?[i]:[]);group(id,id.startsWith('pressure')?'pipe':'prop',members,colliders,id.startsWith('pressure')?3:12);}
+    for(const [id,members] of explicit){group(id,id.startsWith('pressure')?'pipe':'prop',members,collidersOf(members),id.startsWith('pressure')?3:12);}
     for(const [ci,c] of w.colliders.entries()){
       const m=out[c.mesh];if(m.terrain||m.ground||m.indestructible||owners.has(c.mesh))continue;
       const [x,h,z]=m.s,kind=m.category==='ceiling'?'roof':m.category==='arena_pier'?'support':Math.min(x,z)<1.2&&Math.max(x,z)>2.5&&h>1.8?'wall':h>2.5&&x<1.5&&z<1.5?'support':'prop';
@@ -3589,7 +3594,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const loose=new Map();
     for(const [i,m] of out.entries()){
       if(owners.has(i)||m.terrain||m.ground||m.indestructible)continue;
-      const candidates=(byRegion.get(m.region)||[]).map(g=>({g,d:distance(m.p,g.bounds)})).sort((a,b)=>a.d-b.d),near=candidates[0];
+      let near=null;for(const g of byRegion.get(m.region)||[]){const d=distance(m.p,g.bounds);if(near===null||d<near.d)near={g,d};}
       if(near&&near.d<(m.detail?1.45:.85)){near.g.meshes.push(i);owners.set(i,near.g);continue;}
       const key=(m.region||'free')+':'+Math.floor(m.p[0]/2)+','+Math.floor(m.p[1]/2)+','+Math.floor(m.p[2]/2)+':'+(m.mat===11?'plant':'dressing');
       if(!loose.has(key))loose.set(key,[]);loose.get(key).push(i);
