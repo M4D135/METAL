@@ -1,0 +1,23 @@
+{
+ "tache": "T15 [RCPU-09] repli Canvas 2D : boucles indexées et mémoïsation",
+ "base": ".relais/avant-t15 = commit T12 (068b8c8)",
+ "banc": "node .relais/bancs/lot05/canvas-cost.mjs <base>,<tete> <images> <monde> <qualite> — renderer.draw seul (drawMs de tools/proof/render-scene.mjs), ctx silencieux pendant les temps, paires alternées base/tête, 5 reps, 90 images de chauffe",
+ "flux": "node tools/proof/render-scene.mjs makeScene({canvas2d:true}) puis recorder.digest() sur 300 images — les appels ctx (nom + arguments sérialisés) sont hachés sha256",
+ "resultats": {
+  "camp6_auto": {"images": 300, "baseP50Ms": 33.4431, "teteP50Ms": 31.3798, "ratioP50": 0.9383, "ratioParPaire": 0.9537, "appels": 2866, "triangles": 4969, "instances": 606, "digest": "9bc7701460dc7abfde4f6e676a0cead8187abf185d5c250b83f9529aa87b92ce", "identique": true},
+  "camp6_low": {"images": 300, "baseP50Ms": 6.7993, "teteP50Ms": 7.4002, "ratioP50": 1.0884, "ratioParPaire": 1.0197, "identique": true, "note": "à 7 ms/image, la part du JS mesurable est sous le bruit de l'harnais : neutre"},
+  "legacy0_auto": {"images": 300, "baseP50Ms": 30.3345, "teteP50Ms": 30.3931, "ratioP50": 1.0019, "ratioParPaire": 0.991, "identique": true}
+ },
+ "annonceFiche": "aucun pourcentage annoncé pour RCPU-09 ; preuve exigée = bench avant/après et flux d'appels ctx identique sur 300 images",
+ "mesure": "-6,2 % de p50 sur camp:6 auto (ratio par paire 0,954), neutre sur legacy:0 et camp:6 low. Le poste dominant reste l'appel ctx lui-même, pas le JS : le gain est donc borné et n'est annoncé nulle part comme acquis.",
+ "changements": [
+  "polygonPath et line sans spread : moveTo(points[0][0],points[0][1])",
+  "shade : trois scalaires red/green/blue au lieu de lit.map + join, chaîne 'rgb(r,g,b)' mémoïsée dans une Map clé (r<<16|g<<8|b), vidée au-delà de 8 192 entrées",
+  "collect : boucles indexées et tampons de sommets réutilisés (vertexScratch, projectScratch, faceScratch) avec toCameraInto écriture scalaire ; clip() accepte un nombre d'entrées réel à utiliser",
+  "maskGround : min et max des hauteurs de plan en une boucle indexée au lieu de Math.min(...distances)",
+  "comparateur de paint() sur clés précalculées (ground, plane, n0, n1, n2) avec exactement la même relation binaire que dot(a.face.n,b.face.n)"
+ ],
+ "gardeFou": "la relation du comparateur est binaire (elle dépend des deux items), donc aucune clé triable n'aurait pu la reproduire : les champs précalculés remplacent seulement les accès en chaîne. Les tableaux écran conservés viennent de project(), jamais des tampons réutilisés.",
+ "tests": "checks/renderer-destruction (dont le test Canvas comparant les commandes après révision de monde), effects, actors : 47/47 ; npm test 519/519",
+ "taille": "dist/index.html 867 197 -> 869 538 octets (+2 341, la fiche prévoyait +1 Ko)"
+}

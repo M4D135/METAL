@@ -1,0 +1,19 @@
+{
+ "tache": "T14 [RESTE-01] écrivain d'instances et migration des producteurs",
+ "verdict": "abandonné pour ce lot — rien de commité",
+ "annonceFiche": "alloc.mjs r1 400 camp:6 sous 50 Ko/image et sous 0,1 scavenge/s ; suppression des 644 Ko/image de models() et de pack",
+ "contreVerification": "confirmé, priorité P1, mais gain corrigé : « la cible de 50 Ko/image reste à prouver ; viser d'abord moins de 350 Ko/image (reste = simulation), puis traiter la simulation séparément »",
+ "regleAppliquee": "la cible intermédiaire corrigée est déjà atteinte sans l'écrivain, et la cible de 50 Ko/image est mathématiquement hors de portée tant que la simulation alloue : abandon chiffré, la tâche est renvoyée vers un lot qui traite les deux côtés",
+ "mesures": {
+  "outils": "node .relais/bancs/lot05/alloc-image.mjs <racine> 400 <monde> (image complète : simulation + modèles + draw, heapUsed entre deux GC complets) et node .relais/bancs/lot05/alloc-models.mjs <racine> 400 <monde> (models() seul)",
+  "camp6": {"koParImageImageComplete": 92.2, "koParImageModeles": 70.5, "maillagesParImage": 292, "msParImage": 3.438},
+  "camp17": {"koParImageImageComplete": 199.6, "koParImageModeles": 47.9, "maillagesParImage": 260, "msParImage": 4.487},
+  "lecture": "après T3 (pools et upload par capacité), T8 (constructeur unique) et T11 (actors en scalaires), l'image complète est déjà à 92,2 Ko (camp:6) et 199,6 Ko (camp:17), sous le premier palier corrigé de la fiche (350 Ko/image). Les producteurs ne pèsent plus que 70,5 et 47,9 Ko/image : même réduits à zéro, il resterait 21,7 et 151,7 Ko/image du côté simulation et draw. La cible « sous 50 Ko/image » n'est donc pas atteignable par la seule migration des producteurs."
+ },
+ "obstaclesContrat": [
+  "le tampon d'instances ne peut pas remplacer les objets lus par le moteur : tri des translucides (renderer.js:742 packEffects), drapeaux de surface et outdoor (renderer.js:711-716 surfaceFlags, outdoorMesh), filtre des projeteurs d'ombre (renderer.js:1134), collecte de vue (renderer.js:1119 inView), et surtout tout le repli Canvas 2D (renderer.js:952-1002 cache()) qui reconstruit faces, lignes et lumières à partir des champs de l'objet",
+  "AGENTS.md impose le repli Canvas 2D sur la même scène : migrer les producteurs sans objet, c'est écrire un second chemin complet pour le repli",
+  "douze fichiers de tests inspectent les maillages produits (checks/actors.test.mjs m.actorPart/m.p/m.s/m.r, checks/actor-visibility.test.mjs coins projetés, checks/effects.test.mjs m.effectPart/m.structural/m.s, checks/first-person.test.mjs m.overlay, checks/armor, checks/destruction…)"
+ ],
+ "consequence": "le chemin liste -> pack -> bufferSubData de RCPU-04 (T3) reste la référence, avec ses chiffres mesurés (44,3 Mo -> 60 Ko téléversés à l'installation du monde, upload par capacité). RESTE-01 est à reprendre dans un lot traitant ensemble les producteurs et l'allocation de la simulation (le reste mesuré ici), avec une API additive et une comparaison d'octets à chaque producteur, comme l'exige la fiche."
+}

@@ -906,6 +906,11 @@
     if(!ctx) throw new Error('Le rendu graphique est indisponible dans ce navigateur.');
     const base={},coarseBase={},palette=[[.105,.135,.15],[.36,.18,.065],[.13,.16,.17],[.57,.58,.54],[.025,.74,.77],[1,.42,.06],[.68,.055,.025],[.065,.075,.085],[.16,.21,.075],[.32,.31,.27],[.18,.10,.04],[.105,.255,.055],[.035,.12,.15]];
     const stats={backend:'canvas2d',webglVersion:0,drawCalls:0,triangles:0,instances:0,contextLost:false,bloom:false,shadows:false};
+    // Couleurs de nuance mémoïsées : 'rgb(r,g,b)' ne dépend que de (r,g,b).
+    const shadeCache=new Map();
+    // Tampons de sommets réutilisés d'une face à l'autre (rien n'est retenu ici :
+    // les écrans conservés viennent de project(), jamais de ces tampons).
+    const vertexScratch=[],projectScratch=[],faceScratch=[];
     let world=spatialIndex([]),lights=[],environment=null,quality='auto',disposed=false,vignette=null,shadowGeometry=new WeakMap(),explicitGround=false,staticCasterPlan=null,worldRevision=0;
     const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
     const subtract=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
@@ -1045,9 +1050,10 @@
       stats.renderScale=1;stats.pixelRatio=ratio;stats.width=width;stats.height=height;
       return {width,height,ratio};
     }
-    function clip(points,depth,greater){
-      const result=[];let previous=points[points.length-1],prevInside=greater?previous[2]>=depth:previous[2]<=depth;
-      for(const p of points){
+    function clip(points,depth,greater,limit){
+      const end=limit===undefined?points.length:limit,result=[];let previous=points[end-1],prevInside=greater?previous[2]>=depth:previous[2]<=depth;
+      for(let index=0;index<end;index++){
+        const p=points[index];
         const inside=greater?p[2]>=depth:p[2]<=depth;
         if(inside!==prevInside){const t=(depth-previous[2])/(p[2]-previous[2]);result.push([previous[0]+(p[0]-previous[0])*t,previous[1]+(p[1]-previous[1])*t,depth]);}
         if(inside)result.push(p);previous=p;prevInside=inside;
@@ -1071,6 +1077,7 @@
       const fov=Math.max(40,Math.min(110,camera.fov||75))*Math.PI/180,tan=Math.tan(fov*.5),focal=height/(2*tan),horizontal=tan*width/height;
       const near=.065,far=softwareDistance(quality,environment,eye);stats.viewDistance=far;
       const toCamera=v=>{const x=v[0]-eye[0],y=v[1]-eye[1],z=v[2]-eye[2];return [x*right[0]+y*right[1]+z*right[2],x*up[0]+y*up[1]+z*up[2],x*forward[0]+y*forward[1]+z*forward[2]];};
+      const toCameraInto=(x,y,z,out)=>{const dx=x-eye[0],dy=y-eye[1],dz=z-eye[2];out[0]=dx*right[0]+dy*right[1]+dz*right[2];out[1]=dx*up[0]+dy*up[1]+dz*up[2];out[2]=dx*forward[0]+dy*forward[1]+dz*forward[2];};
       const project=v=>[width*.5+v[0]*focal/v[2],height*.5-v[1]*focal/v[2]];
       function projectPolygon(points){
         let transformed=points.map(toCamera);if(transformed.length<3||transformed.every(v=>v[2]<near)||transformed.every(v=>v[2]>far))return [];
@@ -1091,20 +1098,34 @@
         if(!inView(object.p,object.radius))return;
         stats.instances++;
         const phase=t*.85+object.p[0]*.37+object.p[2]*.21,bend=object.sway&&environment?environment.wind*.055:0;
-        const vertices=object.vertices.map(v=>{if(!bend)return toCamera(v);const weight=Math.max(0,Math.min(1,(v[1]-object.p[1])/Math.max(.01,object.s[1])+.5));return toCamera([v[0]+Math.sin(phase)*bend*weight,v[1],v[2]+Math.cos(phase*.73)*bend*.6*weight]);});
-        const projected=vertices.map(v=>v[2]>=near&&v[2]<=far?project(v):null);
+        const source=object.vertices,vertexCount=source.length,originY=object.p[1],objectHeight=Math.max(.01,object.s[1]);
+        while(vertexScratch.length<vertexCount)vertexScratch.push([0,0,0]);
+        while(projectScratch.length<vertexCount)projectScratch.push(null);
+        const bendX=Math.sin(phase)*bend,bendZ=Math.cos(phase*.73)*bend*.6;
+        for(let i=0;i<vertexCount;i++){
+          const v=source[i],slot=vertexScratch[i];
+          if(bend){const weight=Math.max(0,Math.min(1,(v[1]-originY)/objectHeight+.5));toCameraInto(v[0]+bendX*weight,v[1],v[2]+bendZ*weight,slot);}
+          else toCameraInto(v[0],v[1],v[2],slot);
+          const depth=vertexScratch[i][2];projectScratch[i]=depth>=near&&depth<=far?project(vertexScratch[i]):null;
+        }
         for(const face of object.faces){
           if(dot(face.n,subtract(eye,face.center))<=.00001)continue;
-          let points=face.indices.map(i=>vertices[i]),clipped=false;
-          if(points.every(v=>v[2]<near)||points.every(v=>v[2]>far))continue;
-          if(points.some(v=>v[2]<near)){points=clip(points,near,true);clipped=true;}
-          if(points.length<3)continue;
-          if(points.some(v=>v[2]>far)){points=clip(points,far,false);clipped=true;}
-          if(points.length<3)continue;
-          const screen=clipped?points.map(project):face.indices.map(i=>projected[i]);
-          if(screen.every(v=>v[0]<-2)||screen.every(v=>v[0]>width+2)||screen.every(v=>v[1]<-2)||screen.every(v=>v[1]>height+2))continue;
-          const depth=points.reduce((sum,v)=>sum+v[2],0)/points.length;
-          (face.overlay?overlays:face.ground?grounds:faces).push({face,screen,depth,bounds:screenBounds(screen)});
+          const indices=face.indices,indexCount=indices.length;
+          let allNear=true,allFar=true;
+          for(let i=0;i<indexCount;i++){const depth=vertexScratch[indices[i]][2];if(depth>=near)allNear=false;if(depth<=far)allFar=false;}
+          if(allNear||allFar)continue;
+          let points=faceScratch,count=indexCount,clipped=false,anyNear=false,anyFar=false;
+          for(let i=0;i<indexCount;i++){const v=vertexScratch[indices[i]];faceScratch[i]=v;if(v[2]<near)anyNear=true;if(v[2]>far)anyFar=true;}
+          if(anyNear){points=clip(points,near,true,count);count=points.length;clipped=true;if(count<3)continue;}
+          if(anyFar){points=clip(points,far,false,count);count=points.length;clipped=true;if(count<3)continue;}
+          const screen=[];
+          if(clipped)for(let i=0;i<count;i++)screen.push(project(points[i]));
+          else for(let i=0;i<indexCount;i++)screen.push(projectScratch[indices[i]]);
+          let offLeft=true,offRight=true,offTop=true,offBottom=true;
+          for(let i=0;i<screen.length;i++){const v=screen[i];if(v[0]>=-2)offLeft=false;if(v[0]<=width+2)offRight=false;if(v[1]>=-2)offTop=false;if(v[1]<=height+2)offBottom=false;}
+          if(offLeft||offRight||offTop||offBottom)continue;
+          let sum=0;for(let i=0;i<count;i++)sum+=points[i][2];
+          (face.overlay?overlays:face.ground?grounds:faces).push({face,screen,depth:sum/count,bounds:screenBounds(screen),ground:face.ground===true,plane:face.plane,n0:face.n[0],n1:face.n[1],n2:face.n[2]});
         }
       }
       const ranges=detailRanges(quality,true),tiers=[[],[],[]];if(environment)ranges[0]=far;let staticVisible=0;
@@ -1217,14 +1238,20 @@
           });
         }
         const fog=face.overlay?0:Math.min(.9,1-Math.exp(-distance*(face.outdoor?environment.fogDensity:.027))),fogColor=face.outdoor?environment.fog:[.009,.018,.024];
-        const rgb=lit.map((value,k)=>{
-          let color=face.color[k]*(value*face.grain+face.emission*1.55*(.94+.06*Math.sin(t*2.2+face.center[1]*3)));
+        const flicker=.94+.06*Math.sin(t*2.2+face.center[1]*3),flickerFire=.72+.28*Math.sin(face.center[0]*5.3+face.center[1]*7.1-face.center[2]*3.7-t*11.),keep=1-fog;
+        let red=0,green=0,blue=0;
+        for(let k=0;k<3;k++){
+          let color=face.color[k]*(lit[k]*face.grain+face.emission*1.55*flicker);
           if(reflection)color+=reflection[k];
-          if(face.fxFire)color*=.72+.28*Math.sin(face.center[0]*5.3+face.center[1]*7.1-face.center[2]*3.7-t*11.);
-          color=color*(1-fog)+fogColor[k]*fog;
-          return Math.round(Math.pow(Math.max(0,color)/(Math.max(0,color)+.76),.4545)*255);
-        });
-        return 'rgb('+rgb.join(',')+')';
+          if(face.fxFire)color*=flickerFire;
+          color=color*keep+fogColor[k]*fog;
+          const value=Math.round(Math.pow(Math.max(0,color)/(Math.max(0,color)+.76),.4545)*255);
+          if(k===0)red=value;else if(k===1)green=value;else blue=value;
+        }
+        const shadeKey=(red<<16)|(green<<8)|blue,memoized=shadeCache.get(shadeKey);
+        if(memoized!==undefined)return memoized;
+        if(shadeCache.size>8192)shadeCache.clear();
+        const shadeText='rgb('+red+','+green+','+blue+')';shadeCache.set(shadeKey,shadeText);return shadeText;
       }
       function line(a,b){
         let va=toCamera(a),vb=toCamera(b);
@@ -1233,9 +1260,9 @@
           const aInside=depth===near?va[2]>=depth:va[2]<=depth,bInside=depth===near?vb[2]>=depth:vb[2]<=depth;
           if(aInside!==bInside){const fraction=(depth-va[2])/(vb[2]-va[2]),hit=va.map((x,k)=>x+(vb[k]-x)*fraction);if(!aInside)va=hit;else vb=hit;}
         }
-        const a2=project(va),b2=project(vb);ctx.moveTo(...a2);ctx.lineTo(...b2);
+        const a2=project(va),b2=project(vb);ctx.moveTo(a2[0],a2[1]);ctx.lineTo(b2[0],b2[1]);
       }
-      function polygonPath(points){ctx.moveTo(...points[0]);for(let i=1;i<points.length;i++)ctx.lineTo(...points[i]);ctx.closePath();}
+      function polygonPath(points){ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.closePath();}
       function maskGround(item){
         let saved=false;
         // Large ground polygons must still be painted first (their mean depth
@@ -1248,9 +1275,10 @@
           // hundreds of clips for embedded roots/stone and thin trail inlays.
           // Multi-level regions (lift shafts) keep full plane occlusion.
           if(item.face.fixedLight&&item.face.region&&regionPlanes.get(item.face.region)?.size===1&&receiver.regions.has(item.face.region))continue;
-          const distances=item.face.points.map(p=>dot(receiver.n,p)-receiver.plane);
-          if(Math.min(...distances)>=-.002)continue;
-          const crossing=Math.max(...distances)>-.002,eyeFloor=dot(receiver.n,eye)-receiver.plane,eyeFace=dot(item.face.n,eye)-item.face.plane;
+          const points=item.face.points,pointCount=points.length;let lowest=Infinity,highest=-Infinity;
+          for(let i=0;i<pointCount;i++){const height=dot(receiver.n,points[i])-receiver.plane;if(height<lowest)lowest=height;if(height>highest)highest=height;}
+          if(lowest>=-.002)continue;
+          const crossing=highest>-.002,eyeFloor=dot(receiver.n,eye)-receiver.plane,eyeFace=dot(item.face.n,eye)-item.face.plane;
           // On this face, the intersection of the two 3D planes is a screen
           // line. Extend that line across the receiver instead of clipping at
           // actor edges, where antialiased clip boundaries would leave a halo.
@@ -1266,7 +1294,7 @@
         return saved;
       }
       function paint(list){
-        list.sort((a,b)=>a.face.ground&&b.face.ground&&dot(a.face.n,b.face.n)>.99999&&Math.abs(a.face.plane-b.face.plane)<.05?a.face.plane-b.face.plane:b.depth-a.depth);
+        list.sort((a,b)=>a.ground&&b.ground&&a.n0*b.n0+a.n1*b.n1+a.n2*b.n2>.99999&&Math.abs(a.plane-b.plane)<.05?a.plane-b.plane:b.depth-a.depth);
         for(const item of list){
           const {face,screen,depth}=item,masked=!face.overlay&&maskGround(item);ctx.beginPath();polygonPath(screen);
           if(face.fx){const v=subtract(eye,face.center);ctx.globalAlpha=face.alpha*(face.fxHazard?1:Math.pow(Math.max(0,dot(face.n,v)/(Math.hypot(...v)||1)),.65));}
