@@ -30,7 +30,24 @@ function advance(sim, seconds, input = {}) {
 }
 function events(sim, name) { return sim.state.events.filter(event => event.name === name); }
 
+// Le bot du banc se déplace comme un joueur ordinaire face à une machine : une
+// pièce qui occupe la case visée est un solide, on n'y entre pas, on attend
+// qu'elle dégage ; une pièce qui passe sur le corps, on la fuit. Les lames
+// glissent perpendiculairement au couloir avec des phases décalées : la case se
+// libère à chaque cycle, le passage reste possible, jamais gratuit. Le banc ne
+// diminue aucun piège — il modélise seulement l'attente.
+function trapSolidAt(sim, x, z) {
+  const y = sim.ground(x, z);
+  if (!Number.isFinite(y)) return false;
+  return sim.state.traps.some(t => {
+    if (t.destroyed || !t.box) return false;
+    const q = t.box, pad = .28;
+    return x > q.minX - pad && x < q.maxX + pad && z > q.minZ - pad && z < q.maxZ + pad && q.maxY > y + .06 && q.minY < y + 1.8;
+  });
+}
+
 function walkTo(sim, target, onStep = () => {}) {
+  let lastX = null, lastZ = null, stuck = 0, side = 1;
   for (let frame = 0; frame < 1600; frame++) {
     const p = sim.state.player, dx = target.x - p.x, dz = target.z - p.z;
     const distance = Math.hypot(dx, dz);
@@ -38,9 +55,19 @@ function walkTo(sim, target, onStep = () => {}) {
     assert.equal(sim.state.dead, false, 'Player died during navigation');
     if (sim.state.won) return;
     const gain = Math.min(1, distance / .105);
-    sim.step(.025, {
-      moveX: (Math.cos(p.yaw) * dx + Math.sin(p.yaw) * dz) / distance * gain,
-      moveY: (Math.sin(p.yaw) * dx - Math.cos(p.yaw) * dz) / distance * gain,
+    const ux = dx / distance, uz = dz / distance;
+    const engaged = trapSolidAt(sim, p.x, p.z);
+    const ahead = trapSolidAt(sim, p.x + ux * Math.min(.9, distance), p.z + uz * Math.min(.9, distance));
+    // Une lame rangée est un solide : la grille de navigation, qui ignore les
+    // poses mobiles, mène droit dedans. On cherche le jour le long de la coupe.
+    if (lastX !== null && Math.hypot(p.x - lastX, p.z - lastZ) < .01) stuck++; else stuck = 0;
+    lastX = p.x; lastZ = p.z;
+    let gx = ux, gz = uz;
+    if (stuck > 8) { gx = -uz * side; gz = ux * side; if (stuck % 16 === 9) side = -side; }
+    const drive = engaged ? -1 : gain;
+    sim.step(.025, !engaged && ahead ? {} : {
+      moveX: (Math.cos(p.yaw) * gx + Math.sin(p.yaw) * gz) * drive,
+      moveY: (Math.sin(p.yaw) * gx - Math.cos(p.yaw) * gz) * drive,
     });
     onStep();
   }

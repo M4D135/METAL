@@ -1320,11 +1320,15 @@
     const forced=FPassages.mandatoryLinks({links:passageLinks,start:passageStart,objectives:passageTargets});
     const tour=FPassages.tourLinks({links:passageLinks,start:passageStart,objectives:passageTargets});
     const arenaPath=w.corridors.findIndex(c=>c.arenaPath);
-    const passages=[...new Set([arenaPath,...forced])].filter(k=>k>=0).sort((a,b)=>a-b);
+    // Ordre d'implantation : d'abord les liens vraiment obligatoires (les retirer
+    // déconnecte un objectif), ensuite la tournée. Le plafond de machines ne doit
+    // jamais évincer un couloir sans alternative au profit d'un couloir de
+    // confort : c'est le premier qui fait le danger obligatoire du secteur.
+    const passages=[...new Set([...[arenaPath,...forced].filter(k=>k>=0),...tour.filter(k=>k>=0)])];
     const nearPassage=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(j=>[j,j.target])];
     let coupe=-1;
     for(const k of passages){
-      if(w.traps.length>=28)break;
+      if(w.traps.length>=40)break;
       const c=w.corridors[k];
       if(!c||c.liftId)continue;
       const alongX=c.w>=c.d,cross=alongX?c.d:c.w,length=alongX?c.w:c.d;
@@ -1339,19 +1343,25 @@
       if(half>5.4)continue;
       const span=2*(half+.6);
       const n=Math.max(2,Math.min(8,Math.ceil(span/1.8))),piece=span/n;
-      const travel=Math.min(1.65,(length-3.4)/2),period=6.4+(coupe+1)*1.1,active=1.7,warningTime=1.5,phase=(coupe+1)*2.3;
+      // Les lames glissent PERPENDICULAIREMENT au couloir, chacune dans son
+      // intervalle, avec une phase décalée : l'union des courses couvre toute la
+      // largeur (rien ne se traverse sans risque — le banc le prouve), mais à un
+      // instant donné il y a un jour entre deux lames. Une muraille continue et
+      // synchrone boucherait le couloir comme un mur, ce qui n'est pas un piège.
+      const bladeTravel=Math.min(piece*.9,1.6),gantry=Math.max(3.2,Math.min(length-3,5.4));
+      const period=6.4+(coupe+1)*1.1,active=1.7,warningTime=1.5,phase=(coupe+1)*2.3;
       coupe++;
       const assembly='trap-frame-'+coupe,region='corridor-'+k,barrier='coupe-'+coupe,destructibleId='trap-frame-'+coupe;
       for(let j=0;j<n;j++){
         const u=-span/2+(j+.5)*piece,x=alongX?c.x:c.x+u,z=alongX?c.z+u:c.z;
         w.traps.push({id:'trap-'+coupe+'-'+j,barrier,kind:'blade',x,y:(floorHeight(w,x,z)??baseY)+.05,baseY,z,
-          w:alongX?.3:piece,d:alongX?piece:.3,h:1.8,axis:alongX?'x':'z',travel,period,active,warning:warningTime,phase,damage:18,destructibleId});
-        box([x,baseY+.015,z],alongX?[travel*2+.8,.03,piece]:[piece,.03,travel*2+.8],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
+          w:alongX?.3:piece,d:alongX?piece:.3,h:1.8,axis:alongX?'z':'x',travel:bladeTravel,period,active,warning:warningTime,phase:phase+j*period/n,damage:26,destructibleId});
+        box([x,baseY+.015,z],alongX?[piece,.03,bladeTravel*2+.8]:[bladeTravel*2+.8,.03,piece],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
       }
       // La presse barre le couloir de plein fouet, les pics punissent celui qui
       // s'arrête derrière : la machine entière devient le danger du secteur.
-      const offset=Math.min(travel+1.15,length/2-.9);
-      for(const [kind,sign,damage,depth] of [['press',-1,24,1.4],['spikes',1,18,1.2]]){
+      const offset=Math.min(gantry/2+1.15,length/2-.9);
+      for(const [kind,sign,damage,depth] of [['press',-1,34,1.4],['spikes',1,24,1.2]]){
         const x=alongX?c.x+sign*offset:c.x,z=alongX?c.z:c.z+sign*offset;
         w.traps.push({id:'trap-'+coupe+'-'+kind,barrier,kind,x,y:baseY,baseY,z,
           w:alongX?depth:span,d:alongX?span:depth,h:kind==='press'?.65:1.1,axis:alongX?'x':'z',
@@ -1364,10 +1374,20 @@
       const anchor=half+.45;
       for(const q of [-1,1]){
         const px=alongX?c.x:c.x+q*anchor,pz=alongX?c.z+q*anchor:c.z;
-        box([px,baseY+1.9,pz],alongX?[travel*2+.9,3.8,.26]:[.26,3.8,travel*2+.9],1,'trap_frame',{region,assembly});
-        box([px,baseY+3.62,pz],alongX?[travel*2+1.1,.22,.4]:[.4,.22,travel*2+1.1],1,'trap_beam',{region,assembly});
+        box([px,baseY+1.9,pz],alongX?[gantry,3.8,.26]:[.26,3.8,gantry],1,'trap_frame',{region,assembly});
+        box([px,baseY+3.62,pz],alongX?[gantry+.2,.22,.4]:[.4,.22,gantry+.2],1,'trap_beam',{region,assembly});
+        // Lampe d'annonce : une machine qu'on ne voit pas à trente mètres n'annonce
+        // rien du tout. Elle est émissive, donc lit sa couleur même à contre-jour.
+        add('cylinder',[px,baseY+3.94,pz],[.17,.17,.17],4,'trap_lamp',{region,assembly,r:alongX?[0,0,Math.PI/2]:[Math.PI/2,0,0],emissive:.62,color:[1,.52,.07]});
       }
-      for(const s of [-1,1])add('cylinder',[alongX?c.x+s*(travel+.75):c.x,baseY+3.3,alongX?c.z:c.z+s*(travel+.75)],[.5,.28,.5],1,'trap_motor',{region,assembly,r:alongX?[0,0,Math.PI/2]:[Math.PI/2,0,0]});
+      // Barres d'alerte de part et d'autre du couloir, au-dessus des montants : la
+      // coupe se lit comme une seule machine de loin, et le ciel du couloir reste
+      // ouvert au point de circulation (checks/world.test.mjs l'exige).
+      for(const q of [-1,1]){
+        const hx=alongX?c.x:c.x+q*half*.55,hz=alongX?c.z+q*half*.55:c.z;
+        box([hx,baseY+3.78,hz],alongX?[span*.42,.1,.16]:[.16,.1,span*.42],4,'trap_hazard',{region,assembly,emissive:.3,color:[.95,.5,.06]});
+      }
+      for(const s of [-1,1])add('cylinder',[alongX?c.x+s*(gantry/2+.55):c.x,baseY+3.3,alongX?c.z:c.z+s*(gantry/2+.55)],[.5,.28,.5],1,'trap_motor',{region,assembly,r:alongX?[0,0,Math.PI/2]:[Math.PI/2,0,0]});
       for(let j=0;j<4;j++){
         const u=-span/2+(j+.5)*span/4;
         box([alongX?c.x-offset-1.1:c.x+u,baseY+.037,alongX?c.z+u:c.z-offset-1.1],alongX?[.55,.022,.2]:[.2,.022,.55],5,'trap_warning',{region,assembly,color:theme.alt});
@@ -1419,7 +1439,7 @@
     function group(id,kind,members,colliders=[],strength=6){const g={id,kind,meshes:members,colliders,strength,region:out[members[0]].region,bounds:unionOf(members)};groups.push(g);for(const i of members)owners.set(i,g);return g;}
     for(const t of w.trees){const members=Array.from({length:t.meshCount},(_,j)=>t.mesh+j),indices=collidersOf(members);const g=group('tree-'+t.mesh,'tree',members,indices,7);t.destructibleId=g.id;}
     out.forEach((m,i)=>{if(m.assembly){if(!explicit.has(m.assembly))explicit.set(m.assembly,[]);explicit.get(m.assembly).push(i);}});
-    for(const [id,members] of explicit){group(id,id.startsWith('pressure')?'pipe':'prop',members,collidersOf(members),id.startsWith('pressure')?3:12);}
+    for(const [id,members] of explicit){const machine=id.startsWith('trap-frame');group(id,id.startsWith('pressure')?'pipe':'prop',members,collidersOf(members),id.startsWith('pressure')?3:machine?40:12);}
     for(const [ci,c] of w.colliders.entries()){
       const m=out[c.mesh];if(m.terrain||m.ground||m.indestructible||owners.has(c.mesh))continue;
       const [x,h,z]=m.s,kind=m.category==='ceiling'?'roof':m.category==='arena_pier'?'support':Math.min(x,z)<1.2&&Math.max(x,z)>2.5&&h>1.8?'wall':h>2.5&&x<1.5&&z<1.5?'support':'prop';

@@ -23,12 +23,12 @@ const digest = value => createHash('sha256').update(JSON.stringify(value)).diges
 // supplies and garrison — only `traps` and the trap meshes of each sector changed, so
 // every fingerprint below moved. Never regenerate to make a test pass.
 const legacyHashes = [
-  [1, 0, '08c87eec3d088a7c6aabe9439d42838ba9df4fbd25c94a8015aceaaad214e407'],
-  [1, 1, '8c5ec652037b4b38caf9b868ee263bbb9c8e6d1c5598e3d0c3b5386d1bbd4a17'],
-  [1, 2, '48b0682daae0c3f7e2e1fbac6c02d4cd322f8d2af81053bcd6692ed33a695d5d'],
-  [96, 0, 'ee681cabdab58e2143af10a93e9c5b79c110c8022359757e240f77481a131dbc'],
-  [96, 1, '849b5f5d57f1a0d43d730b74af6c3745c6bdb0b990f18984407090543c95e4b5'],
-  [96, 2, '9f1763e205c6c35ebe834af91e0c23bc49114a863c0d41a0d48615c1cc6f6c9d'],
+  [1, 0, '74ffb6d34ddfa26dd7d10fbb3edc363fc56c83e7bc95af6c0f8614ec6de5cf00'],
+  [1, 1, '4659dabb6fc12489da304e34640fb9b76116175cf81d5ac293055482b333d053'],
+  [1, 2, '7d5560e3d8d9e38144bfe45a1485aab79faecebd52d16ee02518d7caebe7d54f'],
+  [96, 0, 'aa824da08176c2c75a0b628d03b7a6efae36f866de5f2fbc1b9078f27bf306db'],
+  [96, 1, 'db625572f0b472950fcb02968e1e1dde6cfbb56eaad580d486141451dc4f7e27'],
+  [96, 2, '1f9eea3528650f9452b6cd69bad013959fa5760e8c9c69722fa85f2aa5eeb331'],
 ];
 // Golden digests of the 108 campaign worlds (V1 and V2, 18 per seed), written by
 // `node tools/platform-math.mjs worlds . --fixture write`. world.js takes its

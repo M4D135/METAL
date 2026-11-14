@@ -481,7 +481,12 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   for(const [id,list] of trapBarriers){
     assert(list.filter(t=>t.kind==='blade').length>=2,`${label}: la barrière ${id} n'a pas assez de lames pour barrer le couloir`);
     assert(list.some(t=>t.kind==='press')&&list.some(t=>t.kind==='spikes'),`${label}: la barrière ${id} n'est pas une machine complète`);
-    assert(new Set(list.map(t=>t.period)).size===1&&new Set(list.map(t=>t.phase)).size===1,`${label}: la barrière ${id} ne se lève pas d'un seul bloc`);
+    assert(new Set(list.map(t=>t.period)).size===1,`${label}: la barrière ${id} ne tourne pas sur un seul rythme`);
+    // Les lames partagent le rythme de la machine mais pas l'instant du départ :
+    // parties ensemble, elles boucheraient le couloir comme un mur au lieu d'y
+    // faire passer un danger. Une phase distincte par lame, vérifiée ici.
+    const bladesOf=list.filter(t=>t.kind==='blade');
+    assert(new Set(bladesOf.map(t=>t.phase)).size===bladesOf.length,`${label}: les lames de la barrière ${id} partent d'un même bloc et mureraient le couloir`);
   }
   assert.equal(world.pipes.length,4);
   const ids=new Set(world.destructibles.map(d=>d.id)),owned=new Set();
