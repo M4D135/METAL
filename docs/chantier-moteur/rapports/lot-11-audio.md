@@ -92,6 +92,13 @@ Le filtre DC `exp(-2π·25/rate)` est appliqué au taux réel.
 
 - Bande 120–500 Hz au-dessus du bruit de base : pistolet **+4,99 dB**, SMG +7,96, pompe
   +11,43, roquette +12,22, grenade +12,21.
+- **RMS à crête égale (correction du tour 1, problème 4)** : le critère d'acceptation de la
+  fiche est « RMS **+8 dB** à pic égal ». Il n'est atteint que pour la grenade. Mesuré
+  (`preuves/lot-11/t3/feel06.json`, rejoué au tour 1) : pistolet +6,44, SMG +7,98, pompe
+  +7,60, roquette +6,47, grenade +9,86. Ce qui est tenu, c'est la **règle de décision par
+  défaut** de la fiche (« intégrer si bande 120–500 Hz ≥ +5 dB et **RMS ≥ +6 dB** à pic
+  égal »), satisfaite par les cinq armes. La ligne « Écarts assumés » du README T3 le dit
+  depuis le tour 1 ; cette version du rapport l'omettait.
 - Chrome sans interface, `OfflineAudioContext` 48 kHz : aucun échantillon au-dessus de
   0,875, aucun écrêtage, aucune voix volée ; SMG +5,80 → **+11,98 dB** au-dessus de la
   musique (MIX-06).
@@ -213,6 +220,7 @@ interdit.
 | Décision | Défaut appliqué | Effet si David dit autre chose |
 | --- | --- | --- |
 | Pistolet : la fiche écrit « au moins +4,9 dB », la décision David « ≥ +5 dB » ; mesuré **+4,99 dB**. | Recette appliquée telle quelle. | Baisser le gain de la bande du pistolet, ou accepter 4,99. Un demi-décième, mais c'est une limite basse franchie de justesse : à trancher, pas à arrondir. |
+| Critère d'acceptation FEEL-06 « RMS +8 dB à pic égal » (fiche, preuve exigée de T3). | **Non atteint** sauf grenade : +6,44 / +7,98 / +7,60 / +6,47 / +9,86. La règle de décision par défaut de la fiche (RMS ≥ +6 dB) est en revanche tenue par les cinq armes. | Si David exige +8 dB, il faut reprendre les recettes (thump plus grave et plus long, corps plus saturé) et re-mesurer ; ce n'est pas réglable par un simple gain, qui écraserait le facteur de crête. |
 | Seuils de dédoublonnage proposés par la fiche (avec seuil et renvoi périodique). | **Égalité stricte**, sans seuil. | Les seuils font échouer le test de nullité MIX-08 ; les reprendre coûterait le critère. |
 | `setMachinery` / `setSteam` : la fiche les voulait différés. | Mise à jour **immédiate** conservée. | Deux tests existants (`audio.test.mjs:90-92`, `:188`) posent une pause sans tick. |
 | Confirmations de touche et de kill. | **Activées** avec la table METAL ; éteintes sans options. | Un `FAudio.create()` nu retrouve exactement la v0.2. |

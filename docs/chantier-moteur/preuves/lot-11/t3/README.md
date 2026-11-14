@@ -24,6 +24,16 @@ Forme, sur les deux variantes de chaque arme (`feel06.json`, `shape`) : crête 0
 
 Écarts assumés avec la fiche :
 
+- **RMS à crête égale : le critère d'acceptation de la fiche « RMS +8 dB à pic égal »
+  n'est atteint pour aucune arme sauf la grenade.** Mesuré au tour 1 des correctifs
+  (`feel06.json`, `rmsAtEqualPeak_dB`, identique au fichier commité) : pistolet **+6,44**,
+  SMG **+7,98**, pompe **+7,60**, roquette **+6,47**, grenade **+9,86**. La colonne
+  « RMS à crête égale » du tableau ci-dessus est bien ce chiffre. Ce qui est appliqué, en
+  revanche, c'est la **règle de décision par défaut** de la fiche (§ « Décisions à
+  confirmer par David », décision 1) : « intégrer si bande 120–500 Hz ≥ +5 dB **et RMS
+  ≥ +6 dB** à pic égal » — satisfaite par les cinq armes (minimum 6,44). Le +8 dB de la
+  ligne « Preuve exigée » est donc **hors d'atteinte** avec ces recettes : écart assumé,
+  au même titre que les deux ratios sous 120 Hz ci-dessous, et non un critère tenu.
 - **pistolet +4,99 dB** : la fiche annonce une plage « +4,9 à +12,2 dB » (donc +4,9
   accepté) alors que la décision par défaut de David dit « ≥ +5 dB ». Mesure rendue à
   +4,99 : intégrée, **à confirmer par David** (rapport, décisions).
