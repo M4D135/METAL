@@ -94,8 +94,23 @@ serialize, decode). La banque reste bit à bit la synchrone.
 - Tests ajoutés au tour 1 : PCM d'une recette identique à `synth()` pour toutes les tailles de
   bloc (1, 16, 64, 256, 4096) ; aucune tranche au-dessus de 8 ms sur l'horloge que le
   planificateur consulte réellement ; banque préparée identique à la synthèse directe, noms de
-  recettes et extras compris. Deux assertions LOAD-13 relevées (19 phases par étape au lieu
-  de 4), changement voulu et chiffré.
+   recettes et extras compris. Deux assertions LOAD-13 relevées (19 phases par étape au lieu
+   de 4), changement voulu et chiffré.
+- **Tour 2 (problème 3 du contre-vérificateur) : le sous-item « appeler `music.prepare()`
+  pour les 3 étapes pendant l'écran de chargement, par tranches de 8 ms » est reporté, et
+  c'est écrit ici.** Il n'était ni fait, ni déclaré. `src/game.js` ne prépare que l'étape
+  jouée (`preparePlay`, l. 286 : `FMusic.warmup(nextStage%3)`) et le titre (l. 1005) ; les
+  trois étapes ne sont pas toutes préparées à l'écran de chargement. Le but de la fiche (« qu'aucun
+  `createBuffer` ne survienne en jeu ») n'est donc **pas atteint**. Mesuré au tour 2,
+  `node docs/chantier-moteur/preuves/lot-11/t2/audio-root.mjs .` : **5 tampons créés en jeu**
+  et, au changement `stage -> 2`, **7 tampons créés / 84 170 échantillons convertis** — chiffres
+  identiques à la base `35c654a`, donc **non régressifs**, mais non nuls. Préparer les trois
+  étapes d'un coup à l'écran de chargement triplerait le temps de chargement sans supprimer ces
+  `createBuffer` : les tampons d'échantillons par note (`buffer(sample)`, `music.js` l. 373-376)
+  sont créés à la première note jouée, une fois le contexte audio ouvert, et `warmup` ne prépare
+  que le PCM/la portée, pas les `AudioBuffer`. Le sous-item est donc **reporté avec son chiffre
+  résiduel**, et non « fait ».
+
 
 ## T2 — dédoublonnage des automatisations d'ambiance (`d7e7bed`, fait — LOOP-14, MIX-08, RESTE-09 point 5)
 
