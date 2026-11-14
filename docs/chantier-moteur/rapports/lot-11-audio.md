@@ -272,23 +272,30 @@ fois par échantillon, état de filtres persistant, `seal()` une seule fois à l
 - Preuves : `preuves/lot-11/au1/` (`prep.json`, `prep-replay-1.json`, `prep-replay-2.json`,
   `README.md`).
 
-### Deux pistes non réalisées, et pourquoi
+### Les deux pistes « au-delà » restantes, en fait réalisées au tour 1 (tour 2, problème 2)
 
-Le brief autorise jusqu'à trois optimisations ; une seule a été faite, les deux suivantes
-sont notées plutôt que bricolées en fin de course.
+Une première version de ce rapport inscrivait ici deux optimisations « non réalisées » : les
+recettes du jeu laissées opaques (`rocket#1` à 21,4 ms d'un seul tenant) et le `kit()` de
+`src/music.js` laissé en un seul bloc. **Ces deux affirmations étaient fausses et
+contredisaient le § T1 du présent rapport** : elles dataient d'avant le correctif `e9de02c`.
 
-1. **Recettes du jeu reprenables.** Une recette fournie par le jeu est une fonction opaque
-   que le moteur ne peut pas couper : c'est une propriété voulue de l'API. Elle borne
-   aujourd'hui la tranche maximale — `rocket#1` reste à 21,4 ms d'un seul tenant, et c'est
-   désormais lui, et non plus les effets intégrés, qui fixe le pire cas. Y toucher
-   demanderait une forme de recette reprenable dans l'API des recettes, donc une décision
-   d'API, pas une optimisation de ce lot.
-2. **Découper `kit()` de `src/music.js`.** La tranche maximale du titre reste à 19,3 ms :
-   `moduleSteps` ne cède qu'entre kit, compose, serialize et decode, alors que `kit()`
-   construit sept coups de batterie, huit mesures et le grattement en un seul bloc. Le
-   découpage est mécanique, mais il change le nombre de pauses attendu par le test LOAD-13
-   de `checks/music.test.mjs` (`before+10`) : il demande une réécriture chiffrée de
-   l'assertion, à faire sciemment, pas en passant sur un lot déjà long.
+1. **Recettes du jeu reprenables — fait.** `FAudio.recipe` (`src/audio.js` l. 170) attache à
+   toute recette du jeu un rendu reprenable (`job:` → `layeredJob`), et `src/audio-recipes.js`
+   construit ses neuf entrées par `FAudio.recipe`. Le test « a game recipe renders bit for bit
+   the same PCM whether the engine cuts it into blocks or not » l'exige. Une recette n'est
+   marquée `opaque` (`src/audio.js` l. 440) que si elle n'a pas de `job` — aucune recette METAL
+   n'est dans ce cas. `rocket#1` n'est plus « d'un seul tenant » : il ne figure plus dans les
+   `heaviestJobs` après `e9de02c` (pire cas rendu mesuré 11,2 ms, contre `rocket#1 21,4 ms` sur
+   l'arbre d'avant).
+2. **Découpage du `kit()` — fait.** `moduleSteps` (`src/music.js` l. 309-340) cède le kit par
+   mesure : sept phases `kitDrum`, huit phases `kitBar`, une phase `kitExtras`, plus compose,
+   serialize, decode. Le test LOAD-13 de `checks/music.test.mjs` a été relevé en conséquence
+   (19 phases par étape au lieu de 4), changement voulu et chiffré écrit au § T1.
+
+Le seul résidu qui tienne encore est que `instrument()`, `strings()` et `drumHit()` de
+`src/music.js` rendent chacun leur PCM en un seul passage : c'est le budget résiduel chiffré
+de la section « Décisions à confirmer par David » et du point 4 de la contre-vérification
+(tour 2), plus le vrai travail qui reste.
 
 ## Écartés ou absorbés — puis repris au tour 1 (problème 2 du contre-vérificateur)
 
