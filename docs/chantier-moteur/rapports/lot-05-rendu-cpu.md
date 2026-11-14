@@ -1,15 +1,24 @@
 # Rapport — Lot 05 : rendu, coût processeur
 
 Branche `chantier/lot-05-rendu-cpu`, base du lot `35c654a`.
-État à la remise : **T1 à T7 faites, T8 à T19 non commencées** (budget de
-conversation épuisé, pas un blocage technique). Journal détaillé :
-`.relais/journal.md`.
+État à la remise : **14 tâches commitées** (T1 à T9, T11, T12, T15, T18, T19),
+**5 abandonnées sur mesures** (T10, T13, T14, T16, et T17 annulée par `55449a7`
+après coup), **aucune optimisation « au-delà » commitée** — les trois pistes
+évaluées sont écartées chiffres à l'appui (section « Au-delà de la fiche »).
+L'en-tête de la version du 13 novembre annonçait « T1 à T7 faites, T8 à T19 non
+commencées » : faux depuis la reprise, le corps de ce rapport décrit bien T8 à
+T19. Journal détaillé : `.relais/journal.md`.
 
 Mesures : comparaisons appariées alternées sur le même processus
 (`tools/proof/render-proof.mjs`), même graine, même scénario. Les ratios
 sont des médianes de plusieurs exécutions : la machine est partagée avec un
 autre hébergement (charge relevée 4,5 à 9,3 sur 20 cœurs), un relevé isolé
-peut s'inverser.
+peut s'inverser. Depuis la contre-vérification, le banc fait avancer les deux
+scènes en lockstep image par image, inverse l'ordre à chaque image, et publie
+une exécution de contrôle (même racine en A et en B) avec un `ratioCorrige` :
+les ratios publiés avant ce correctif étaient affectés d'un biais de position
+de 6 à 12 % en faveur de la seconde racine. Bande d'incertitude résiduelle du
+banc corrigé : ±5 à 7 % sur `drawP50`.
 
 ## Tâches faites
 
@@ -47,6 +56,8 @@ par `setWorld`, tableaux de résultat de `query` réutilisés.
   téléversement) ; digest rendu discriminant par mutation volontaire.
 - pixels Chrome : **14/14 identiques**.
 - draw() camp:17 : 3,502 → 3,075 ms (**ratio 0,878**), moyenne 4,247 → 3,787 ms.
+  Rejoué sur le banc corrigé (`controle/t2-t3-camp17.json`) : brut 0,8936,
+  contrôle 1,0123, **corrigé 0,8827** — gain établi.
 - octets téléversés par 200 images : 44,3 Mo en `bufferData` → 60 Ko
   d'allocation + 44,3 Mo en `bufferSubData` sans réallocation.
 - pression GC drawonly 1200 images : 0,6 → 0,5 Ko/image repris, un
@@ -67,7 +78,17 @@ n'est plus couvert ; centre du soleil quantifié sur grille de 4 m, requête
   200 images pilotées × 3 mondes.
 - pixels Chrome : **14/14 identiques**.
 - draw() camp:17 : **ratio médian 0,8914** sur six exécutions indépendantes,
-  tête plus rapide 6 fois sur 6.
+  tête plus rapide 6 fois sur 6. Rejoué sur le banc corrigé et contrôlé :
+  camp:17 brut 0,8023 / 0,8439 selon les exécutions, contrôles 1,0155 et 1,0048,
+  **corrigé 0,7901 et 0,8399** ; camp:6 corrigé **0,8879** ; en inversant les
+  rôles (T4 en A, T3 en B) corrigé 1,1770, soit **0,850** remis à l'endroit
+  (`controle/t3-t4-*.json`, `controle/t4-t3-camp17-sens-inverse.json`).
+  La contre-vérification lisait 0,9212 puis « 0,98 après correction », donc un
+  gain effacé par le biais de position : ce n'est pas ce que donne le banc
+  débarrassé de ce biais (images entrelacées, ordre inversé à chaque image,
+  contrôle à 1,00). Le gain du cache temporel est réel et même plus grand
+  qu'annoncé ; le « tête plus rapide 6 fois sur 6 » restait un argument faible,
+  et ne sert plus de preuve ici.
 - taux de reconstruction (600 images, caméra de visite) : vue 12,2 %,
   soleil 6,3 %, torche 12,2 % (compteur `stats.cache`).
 - test ajouté : `checks/renderer-view-cache.test.mjs` (4 tests, comparaison
@@ -87,7 +108,10 @@ n'est plus couvert ; centre du soleil quantifié sur grille de 4 m, requête
 
 - banc pickups camp:6, 3000 images : **38,8 modélisés → 19,2 gardés (−50 %)**
   (la fiche attendait 32,8 → 17,8, soit −46 %).
-- models() camp:6 : ratio médian 0,936.
+- models() camp:6 : ratio médian 0,936. Rejoué sur le banc corrigé
+  (`controle/t4-t5-camp6.json`) : brut 0,9515, contrôle 0,9908, **corrigé
+  0,9603** — soit −4 % mesuré pour −6,4 % annoncé, au-dessus de la moitié du
+  gain annoncé (0,968) : la tâche est gardée, le chiffre est corrigé.
 - pixels Chrome : **14/14 identiques** ; 200 images pilotées × 3 mondes :
   −118 instances/image à camp:6 sans changement d'image.
 - garde-fou ajouté dans `checks/actor-visibility.test.mjs` : ramassage
@@ -102,16 +126,22 @@ D = clamp(vitesse lissée × 0,15, 1, 16), θ = clamp(vitesse angulaire lissée
 soleil M = clamp(2D, 4, 16), lissage exponentiel sur 0,25 s. API
 `FRender.create(canvas,{cullMargin:'auto'|{distance,angle}|0})`.
 
-- taux de reconstruction 600 images : **11,5 % à 80 m/s** (critère < 15 %),
-  **100 % avec D = 1 m fixe** ; 8,2 % à l'arrêt ; 33,8 % en rotation très
-  rapide (plafond θ = 12° atteint).
+- taux de reconstruction 600 images (`t6/taux-reconstruction.json`) :
+  **12,5 % à 80 m/s** (75/600, critère < 15 %), **100 % avec D = 1 m fixe**
+  (600/600) ; **10,8 % à 5 m/s** (65/600) ; **8,2 % à l'arrêt** (49/600) ;
+  **44,3 % en rotation très rapide** (266/600, lacet 344°/s, plafond θ = 12°
+  atteint). Le texte de la version du 13 novembre annonçait 11,5 % et 33,8 % :
+  ces deux chiffres ne correspondaient pas à la preuve commitée, ils sont
+  alignés sur le JSON.
 - flux GL et contenu **byte-identiques** à la base : le sur-ensemble reste
   côté processeur, le GPU ne reçoit que la sélection exacte (le garde-fou
   « plafonner les instances GPU hors champ » est donc satisfait).
 - pixels Chrome : **14/14 identiques**.
-- draw() camp:17 : **ratio médian 1,060** sur cinq exécutions, soit ~6 % de
-  plus à caméra lente (mesures sous charge 8,5 à 9,3). T6 vise le taux de
-  reconstruction, pas le coût brut.
+- draw() camp:17 : la version du 13 novembre annonçait **ratio médian 1,060**
+  (~6 % de plus à caméra lente, sous charge 8,5 à 9,3). Rejoué sur le banc
+  corrigé et contrôlé (`controle/t5-t6-camp17.json`) : brut 1,0215, contrôle
+  1,0168, **corrigé 1,0046** — le surcoût annoncé n'est pas reproduit, T6 est
+  neutre sur `draw()`. T6 vise le taux de reconstruction, pas le coût brut.
 - test ajouté : `checks/renderer-cull-margin.test.mjs` (4 tests).
 - écart à la fiche : un plafond de sur-ensemble à 2,2 × la sélection exacte
   a été implémenté **puis retiré** — il faisait disparaître des objets
@@ -271,6 +301,9 @@ rz, r0 recalculés seulement si rx change).
 - `renderer.draw` seul, ctx silencieux, paires alternées, 300 images :
   camp:6 auto p50 **33,443 → 31,380 ms** (ratio 0,938, par paire 0,954) ;
   legacy:0 neutre (0,991) ; camp:6 low sous le bruit (1,020 à 7 ms/image).
+  Rejoué sur le banc corrigé (`controle/t12-t15-camp6-canvas2d.json`,
+  `--canvas2d`, camp:6, 300 images, 5 reps) : brut 0,9012, contrôle 1,0074,
+  **corrigé 0,8946** — gain établi, un peu meilleur qu'annoncé.
 - **Flux d'appels ctx identique** sur 300 images dans les trois configurations.
 - `clip()` accepte désormais le nombre d'entrées réellement valides, seul
   changement d'API interne nécessaire aux tampons réutilisés.
@@ -291,20 +324,42 @@ rz, r0 recalculés seulement si rx change).
 - Rien de commité. Chiffres dans
   `docs/chantier-moteur/preuves/lot-05-rendu-cpu/t16/abandon.json`.
 
-### T17 — Réservoir de maillages d'acteurs par ennemi [RCPU-11] — commit `2f311a3`
+### T17 — Réservoir de maillages d'acteurs par ennemi [RCPU-11] — **annulée** (commit `2f311a3` reverté par `55449a7`)
 
-- `mesh()` devient `meshInto(o,...)` + `mesh(...) = meshInto({},...)` ;
-  `FActors.build` accepte `options.pool` (un tableau par ennemi), recycle le
-  maillage de son rang et réécrit la position dans son tableau `p` ;
-  `game.js` tient `actorMeshes`, vidé au reset et à l'écart d'un ennemi.
-- `FActors.build` apparié : p50 **0,01720 → 0,01365 ms** (ratio 0,794), p95
-  0,773, par paire 0,892 — en plus des 0,779 de T11.
-- Allocations **21,45 → 2,39 Ko/build** (ratio 0,111). `models()` seul :
-  **70,7 → 2,5 Ko/image** à camp:6, 49,3 → 35,8 à camp:17.
-- Sorties identiques 72/72 ; flux GL et contenu identiques sur trois mondes ;
-  pixels 14/14 à écart nul ; `npm test` 519/519.
-- Le réservoir est optionnel : les tests appellent `build` sans pool.
-- Preuves : `docs/chantier-moteur/preuves/lot-05-rendu-cpu/t17/`.
+- Ce qui avait été fait : `mesh()` devenait `meshInto(o,...)` + `mesh(...) =
+  meshInto({},...)` ; `FActors.build` acceptait `options.pool` (un tableau par
+  ennemi), recyclait le maillage de son rang et réécrivait la position dans son
+  tableau `p` ; `game.js` tenait `actorMeshes`, vidé au reset et à l'écart d'un
+  ennemi.
+- Gain annoncé : `FActors.build` p50 **0,01720 → 0,01365 ms** (ratio 0,794),
+  par paire 0,892, la fiche en promettant 30 à 40 %. **Non reproduit.**
+- Mesure de contre-vérification, banc apparié avec contrôle
+  (`tools/proof/actors-paired.mjs`, 5 reps, 0 chauffe, 360 paires) : ratio p50
+  **1,3266**, ratio par paire **1,1559**, la tête est **plus lente dans 68,9 %**
+  des paires. Contrôle « même racine contre elle-même » : 0,9792 (le harnais
+  n'est pas en cause).
+- Au niveau du jeu, banc entrelacé et contrôlé (`controle/`, camp:17, 300
+  images, 5 reps) : `models()` **1,1434**, corrigé **1,1283** ; total 1,0488,
+  corrigé 1,032. Le chemin sans réservoir, celui des tests, est à **1,37**.
+- Amélioration tentée avant d'annuler : `mesh()` rendu à son littéral d'origine,
+  `meshInto()` réservé au seul chemin réservé. Banc isolé 1,1109 (deux tampons
+  alternés : 1,0097) ; au niveau jeu `modelsP50` corrigé **1,0215**,
+  `totalP50` corrigé 0,9493. Aucun montage n'atteint la moitié du gain annoncé
+  (ratio ≤ 0,897) : le gain est nul, la tâche est annulée.
+- Cause : le réservoir fait vivre les maillages d'une image à l'autre, ils sont
+  promus en vieille génération et chaque champ écrit coûte une barrière
+  d'écriture, alors qu'un objet jeune naît par simple avancement du pointeur de
+  tas. Et `mesh() = meshInto({}, ...)` remplaçait un littéral de 28 propriétés
+  (une seule classe cachée) par 28 ajouts séquentiels sur un objet vide, ce qui
+  ralentissait **tous** les maillages dynamiques du moteur, acteurs compris.
+- Garde-fou ajouté : `checks/actors-no-mesh-pool.test.mjs` (3 tests — `meshInto`
+  absent, aucun maillage ni aucune position recyclés entre deux builds, rien de
+  retenu du tableau de l'appelant). Vérifié qu'ils échouent bien sur `2f311a3` :
+  `meshInto` défini, réservoir rempli de 59 entrées, 59 maillages partagés.
+- Taille : `dist/index.html` 872 395 → **870 819 octets** après le revert.
+- Preuves : `docs/chantier-moteur/preuves/lot-05-rendu-cpu/t17/`
+  (`cout.json` et `pixels.json` conservés comme sortie brute de la tâche
+  annulée, `revert.json` pour l'annulation).
 
 ### T18 — Mesure des appels GL et correction de l'estimation [DRAW-04] — commit `b4cc615`
 
@@ -391,6 +446,86 @@ d'appel ne sont pas celles de la cible. Elle appartient au lot rendu/GPU, pas à
 celui-ci, et y est donc notée plutôt qu'exécutée.
 
 
+## Contre-vérification et correctifs (tour 1)
+
+Le contre-vérificateur a relevé 9 problèmes. Chacun a été reproduit avec la
+commande citée en preuve, puis corrigé ou discuté. Commits `2569d4d`, `55449a7`,
+`2c94a1d`, `3cea9a8`, `8ac1c95`, plus le présent commit de rapport.
+
+| # | problème | verdict | commit |
+|---|---|---|---|
+| 1 | T17, réservoir de maillages en régression | **réel — corrigé par l'annulation de la tâche** | `55449a7` |
+| 2 | biais de position de `tools/proof/render-proof.mjs`, aucun contrôle publié | **réel — corrigé** | `2c94a1d` |
+| 3 | bancs hors dépôt, aucune preuve commitée pour l'« au-delà » | **réel — corrigé** | `3cea9a8` |
+| 4 | `checks/mesh-constructor.test.mjs` absent du script `test` | **réel — corrigé** | `2569d4d` |
+| 5 | ratio `pack` de T8 non reproduit | **partiellement réel — chiffres corrigés, banc commité, preuve structurelle ajoutée** | `8ac1c95` |
+| 6 | en-tête du rapport faux depuis la reprise | **réel — corrigé** | ce commit |
+| 7 | décision 5 « Taille » périmée | **réel — corrigé depuis `SIZE.json`** | ce commit |
+| 8 | deux chiffres de T6 hors de leur preuve | **réel — alignés sur le JSON** | ce commit |
+| 9 | page de validation ne couvrant que 4 des 7 formes réelles | **réel — corrigé** | ce commit |
+
+Détail des points qui ne sont pas des corrections simples :
+
+1. **T17** — le gain annoncé ne se reproduit pas (ratio 1,33 en isolé au
+   protocole de contre-vérification, 1,13 corrigé au niveau du jeu). Une
+   amélioration a d'abord été tentée (littéral rendu à `mesh()`, réservoir
+   gardé) : elle ramène l'isolé à 1,11 et le jeu à 1,02 corrigé, donc toujours
+   sans gain. La cause est comprise (objets promus en vieille génération +
+   28 ajouts de propriétés séquentiels sur un objet vide) mais ne donne pas de
+   version rentable : la tâche est annulée, `git revert 2f311a3`, avec un test
+   qui l'aurait attrapée (`checks/actors-no-mesh-pool.test.mjs`, vérifié en
+   échec sur le commit d'origine).
+
+2. **Biais du banc** — le contrôle « même racine en A et en B » passait de
+   0,9312 à 0,9717 selon les métriques. Le banc entrelace désormais les deux
+   scènes image par image et inverse l'ordre à chaque image ; le même contrôle
+   donne 0,9737 à 1,0168. Les cinq ratios contestés ont été rejoués avec leur
+   contrôle et leur `ratioCorrige` (tableau dans
+   `preuves/lot-05-rendu-cpu/controle/resume.json`). Deux conclusions
+   contredisent la contre-vérification : le gain de **T4** est réel et plus
+   grand qu'annoncé (0,79 à 0,89 corrigé, et 0,850 en inversant les rôles),
+   alors qu'elle lisait 0,98 après correction ; et le surcoût annoncé de **T6**
+   (+6 %) n'est pas reproduit (1,0046 corrigé, donc neutre). **T5** est gardée
+   mais son gain mesuré est −4 % pour −6,4 % annoncés, au-dessus du seuil
+   d'abandon (0,968).
+
+5. **Ratio `pack` de T8** — le banc d'origine est maintenant commité et le
+   ratio se reproduit à camp:17 (0,4174 et 0,5144 bruts, 0,374 corrigé pour un
+   0,485 annoncé), beaucoup moins à camp:6 (0,666 corrigé pour 0,523 annoncé,
+   mais au-dessus de la moitié du gain). Le micro-bench reste contaminé : la
+   même racine y varie du simple au triple selon le voisin de la paire, ce qui
+   explique que le banc du contre-vérificateur (1,0063) et celui du lot soient
+   inconciliables sur ce seul test. La preuve de T8 n'est donc plus un temps
+   mais une vérification structurelle aux natives (`%HasFastProperties`,
+   `%HaveSameMap`) : 30 classes cachées et 29 150 maillages à clé ajoutée après
+   création avant T8, **1 classe, 0 clé ajoutée, 100 % en représentation
+   rapide** après.
+
+9. **Page de validation** — `tools/render/pages/lot05-scene.html` posait ses 90
+   maillages dynamiques sur sept noms de forme, dont quatre (`cone`, `torus`,
+   `pyramid`, `prism`) ne sont pas des formes du moteur (`src/renderer.js` :
+   `box, sphere, cylinder, octa, ring, bevel, foliage`) : `pack` les écartait et
+   38 des 90 maillages n'étaient jamais dessinés. Les noms ont été remplacés par
+   les formes réelles et les 14 scénarios relancés : toujours 14/14 identiques à
+   écart nul, avec **+51 instances** sur chacun des douze scénarios WebGL
+   (90 × 4/7 = 51,4) et les appels de dessin du repli Canvas 2D qui montent de
+   2 153 → 2 224 et 700 → 735. Sortie brute :
+   `preuves/lot-05-rendu-cpu/pages/pixels-base-head.json`.
+
+3. **Bancs** — les quinze fichiers cités par les preuves et le rapport étaient
+   hors dépôt. Douze bancs sont commités sous `tools/proof/lot05/`, les trois
+   variantes instrumentées du moteur sont remplacées par un générateur à ancres
+   (`tools/render/lot05-instrument.mjs`) vérifié identique octet pour octet aux
+   fichiers d'origine, et la sortie brute du profil « au-delà » est commitée
+   sous `preuves/lot-05-rendu-cpu/au-dela/`.
+
+Autres écarts relevés au passage et corrigés sans qu'ils soient dans la liste :
+
+- l'étape « au-delà » annonçait une marge de sélection de « 0,029 m » : la
+  valeur mesurée est 1,03 m (0,029 est le coût de l'étape `post` en ms/image) ;
+- la table du profil « au-delà » a été rejouée sur la tête après le revert de
+  T17 (ombres 2,376 / 1,758 ms par image, ≈ 55 % du dessin).
+
 ## Décisions à confirmer par David
 
 1. **T4, ordre de la sélection** — défaut appliqué : ordre de balayage de
@@ -402,9 +537,14 @@ celui-ci, et y est donc notée plutôt qu'exécutée.
    actives (`cullMargin:'auto'`). Revenir en arrière possible par
    `{cullMargin:{distance:1,angle:8°}}` sans toucher au code.
 4. **T2, surcoût de +5 %** — défaut appliqué : conservé, nécessaire à T3/T4.
-5. **Taille** — renderer.js +10 694 octets cumulés (107 954 → 118 648) et
-   motion.js +718, contre ~5 Ko annoncés par les fiches. dist :
-   **852 012 → 863 602 octets bruts**, gzip **260 779 → 264 901 octets**.
+5. **Taille** — renderer.js **+16 941 octets** cumulés (106 801 → 123 742),
+   actors.js +1 283 (27 015 → 28 298), game.js +188 (104 907 → 105 095),
+   contre ~5 Ko annoncés par les fiches. dist : **850 859 → 870 819 octets
+   bruts** (+19 960), gzip **260 358 → 267 694 octets** (+7 336). Chiffres
+   repris de `SIZE.json` aux deux bouts de la branche (base `35c654a`, tête
+   après le revert de T17). La version du 13 novembre annonçait « +10 694
+   octets cumulés (107 954 → 118 648) » et « 852 012 → 863 602 octets bruts » :
+   périmés, relevés avant la reprise et avant l'annulation de T17.
    Ces chiffres sont bruts ; la taille compressée n'est pas la taille brute,
    et le navigateur est exclu de la comparaison avec un exécutable natif
    (`SIZE.json` reste l'autorité de mesure).
@@ -450,12 +590,18 @@ celui-ci, et y est donc notée plutôt qu'exécutée.
 
 ## Tests
 
-`npm test` : **519 tests, 519 réussis, 0 échec** (référence de départ :
-505/505). Nouveaux fichiers : `checks/renderer-sun-filter.test.mjs`,
+`npm test` : **525 tests, 525 réussis, 0 échec** (référence de départ sur la
+base du lot : 505/505 ; à la remise du lot avant contre-vérification : 519/519).
+Nouveaux fichiers : `checks/renderer-sun-filter.test.mjs`,
 `checks/renderer-detail-flags.test.mjs`, `checks/renderer-view-cache.test.mjs`,
 `checks/renderer-cull-margin.test.mjs`, `checks/motion-place.test.mjs`,
-`checks/mesh-constructor.test.mjs`, plus un test ajouté dans
+`checks/mesh-constructor.test.mjs`, `checks/actors-no-mesh-pool.test.mjs`
+(garde-fou de l'annulation de T17), plus un test ajouté dans
 `checks/actor-visibility.test.mjs`.
+
+`checks/mesh-constructor.test.mjs` (3 tests) n'était pas dans le script `test`
+de `package.json` et n'était donc jamais lancé par `npm test` ; c'est corrigé
+(`2569d4d`), d'où le passage de 519 à 522, puis 525 avec le garde-fou de T17.
 
 Preuves navigateur pour chaque tâche touchant l'image :
 `node tools/render/lot05-pixels.mjs --base <avant> --head . --out <preuve>
