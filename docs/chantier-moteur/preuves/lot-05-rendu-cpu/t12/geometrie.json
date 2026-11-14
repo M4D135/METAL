@@ -1,6 +1,6 @@
 {
  "tache": "T12 [DRAW-11] géométrie : sommets partagés par Map",
- "banc": "node .relais/bancs/lot05/geometry-sonde.mjs <racine> — FRender.geometry(low) chargé dans le processus principal, trois qualités",
+ "banc": "node tools/proof/lot05/geometry-sonde.mjs <racine> — FRender.geometry(low) chargé dans le processus principal, trois qualités",
  "base": ".relais/avant-t12 = commit T11 (b3bfcb2)",
  "sommets": {
   "high": {"avant": 2328, "apres": 596, "tamponAvantOctets": 55872, "tamponApresOctets": 14304, "ratio": 0.2561},

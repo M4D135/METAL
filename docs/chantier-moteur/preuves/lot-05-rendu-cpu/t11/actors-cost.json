@@ -1,6 +1,6 @@
 {
  "tache": "T11 [RESTE-08] FActors.build : calcul scalaire sans map ni spread",
- "banc": "node .relais/bancs/lot05/actors-cost.mjs <base>,<tete> 300 — FActors.build apparié, 72 cas (4 types x 3 distances x 6 poses), ordre alterné, 40 passages de chauffe exclus ; Node 24.18, Spark",
+ "banc": "node tools/proof/lot05/actors-cost.mjs <base>,<tete> 300 — FActors.build apparié, 72 cas (4 types x 3 distances x 6 poses), ordre alterné, 40 passages de chauffe exclus ; Node 24.18, Spark",
  "base": ".relais/avant-t11 = commit T9 (5d1f74d)",
  "identite": {
   "sorties": "72 / 72 identiques (isDeepStrictEqual)",

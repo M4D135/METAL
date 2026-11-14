@@ -1,7 +1,7 @@
 {
  "tache": "T18 [DRAW-04] mesure des appels GL et correction de l'estimation",
  "base": ".relais/avant-t16 = commit T15 (39dc8c0), code inchangé : tâche de mesure et de documentation",
- "outils": "node .relais/bancs/lot05/glcalls.mjs <racine> 600 <monde> auto — comptage par nom via le faux contexte de tools/proof/render-scene.mjs ; un appel d'état est redondant quand il répète le dernier appel de même nom avec les mêmes arguments (téléversements et dessins exclus)",
+ "outils": "node tools/proof/lot05/glcalls.mjs <racine> 600 <monde> auto — comptage par nom via le faux contexte de tools/proof/render-scene.mjs ; un appel d'état est redondant quand il répète le dernier appel de même nom avec les mêmes arguments (téléversements et dessins exclus)",
  "resultats": {
   "camp17": {"appelsParImage": 446.8, "drawsParImage": 67.69, "appelsParDraw": 6.6, "redondantsParImage": 20.7, "partRedondante": 0.0464,
    "haut": [{"nom": "vertexAttribPointer", "parImage": 253.18}, {"nom": "drawElementsInstanced", "parImage": 63.3}, {"nom": "uniform3fv", "parImage": 34.65}, {"nom": "enable", "parImage": 15.95}, {"nom": "uniform2f", "parImage": 14.3}, {"nom": "bindBuffer", "parImage": 12.65}, {"nom": "useProgram", "parImage": 9.9}]},

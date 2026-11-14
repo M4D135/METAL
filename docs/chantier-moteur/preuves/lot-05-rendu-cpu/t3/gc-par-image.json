@@ -1,5 +1,5 @@
 {
- "commande": "node --trace-gc .relais/bancs/rcpu/gc-bench.mjs <racine> 1200 camp:17 drawonly",
+ "commande": "node --trace-gc tools/proof/lot05/gc-bench.mjs <racine> 1200 camp:17 drawonly",
  "note": "Pression GC du chemin de rendu : somme des octets repris par les Scavenge entre START et END, rapportee au nombre d images.",
  "base": {
   "scavenge": 24,

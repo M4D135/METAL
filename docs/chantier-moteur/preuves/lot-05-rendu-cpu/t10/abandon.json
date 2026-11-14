@@ -3,7 +3,7 @@
  "verdict": "abandonné — rien de commité",
  "annonceFiche": "gain de -50 à -70 % de FEffects.build EN PLUS de RCPU-06 (T9)",
  "regleAppliquee": "un gain annoncé qui se reproduit à moins de la moitié (ici moins de -25 %) : abandon, raison chiffrée",
- "banc": "node .relais/bancs/lot05/effects-ab2.mjs <base>,<tete> <images> <monde> — FEffects.build apparié, même état et même caméra, ordre alterné, 120 images de chauffe exclues ; Node 24.18, Spark",
+ "banc": "node tools/proof/lot05/effects-ab2.mjs <base>,<tete> <images> <monde> — FEffects.build apparié, même état et même caméra, ordre alterné, 120 images de chauffe exclues ; Node 24.18, Spark",
  "base": ".relais/avant-t10 = commit T9 (5d1f74d)",
  "populationDebris": {"camp:17": {"maxTotal": 150, "maxAuRepos": 122, "moyenneTotal": 114.6, "moyenneAuRepos": 90.8}, "camp:6": {"maxTotal": 159, "maxAuRepos": 129, "moyenneTotal": 104.5, "moyenneAuRepos": 85.9}},
  "mesures": [

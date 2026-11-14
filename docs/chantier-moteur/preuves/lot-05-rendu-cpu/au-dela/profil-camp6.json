@@ -1,0 +1,19 @@
+{
+ "banc": "node tools/proof/lot05/phase-cost.mjs <racine> <images> <monde> <qualite>",
+ "racine": "/home/m4d135/metal-chantier/voies/render",
+ "monde": "camp:6",
+ "qualite": "auto",
+ "images": 300,
+ "node": "v24.18.0",
+ "msParImage": {
+  "vue": 0.344,
+  "dynamique": 0.074,
+  "lumieres": 0.101,
+  "ombres": 1.758,
+  "statique": 0.725,
+  "effets": 0.119,
+  "post": 0.029,
+  "total": 3.181,
+  "sommeEtapes": 6.331
+ }
+}

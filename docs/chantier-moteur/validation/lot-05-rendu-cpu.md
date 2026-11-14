@@ -50,7 +50,7 @@ complet : `docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
   coût (il pénalisait injustement le code à `bufferData`).
 - Bancs de l'audit réutilisés : `pickups.mjs` (T5), `alt.mjs` (T1),
   `gc-bench.mjs` (T3).
-- Bancs écrits pour la reprise (dans `.relais/bancs/lot05/`, comparaisons
+- Bancs écrits pour la reprise (dans `tools/proof/lot05/`, comparaisons
   appariées base/tête sur deux worktrees) : `pack-cost.mjs` (T8),
   `effects-ab2.mjs` (T9, T10), `actors-cost.mjs` (T11, T17),
   `geometry-sonde.mjs` (T12), `row-churn.mjs` (T13), `alloc-image.mjs` et

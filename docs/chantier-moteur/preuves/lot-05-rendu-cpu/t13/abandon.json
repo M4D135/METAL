@@ -5,7 +5,7 @@
  "contreVerification": "plausible, priorité P3 : « l'essentiel du gain CPU étant déjà pris par RCPU-01 et RCPU-04 »",
  "regleAppliquee": "un gain annoncé qui se reproduit à moins de la moitié : abandon, raison chiffrée",
  "mesures": {
-  "outils": "node .relais/bancs/lot05/row-churn.mjs <racine> <images> <monde> — lignes d'instances dynamiques reconstituées par FRender.pack sur la liste réelle de chaque image, comparées à l'image précédente (16 flottants par ligne) ; tools/proof/render-proof.mjs --mode stream pour les octets téléversés",
+  "outils": "node tools/proof/lot05/row-churn.mjs <racine> <images> <monde> — lignes d'instances dynamiques reconstituées par FRender.pack sur la liste réelle de chaque image, comparées à l'image précédente (16 flottants par ligne) ; tools/proof/render-proof.mjs --mode stream pour les octets téléversés",
   "statique": {
    "constate": "60 528 octets téléversés en 10 appels bufferData sur 200 images (camp:17), puis 0 octet par image hors révision de monde : le téléversement statique est déjà amorti par T3 (RCPU-04, upload par capacité) et T4 (RCPU-01, cache temporel)",
    "conclusion": "la cible « octets statiques sous 10 Ko/image » est déjà à 0 Ko/image en régime établi : la face statique de DRAW-03 n'a plus rien à gagner"

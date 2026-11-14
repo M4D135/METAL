@@ -9,7 +9,7 @@
  ],
  "non_fait_justifie": "la requête du chemin WebGL (selectionCache, src/renderer.js:1545) construit un SUR-ENSEMBLE temporel validé par marge d'angle et de translation : y appliquer visible() à la construction permettrait de rejeter une entrée que le filtre exact d'une image ultérieure, dans la marge autorisée, aurait gardée — apparition tardive d'un objet. Elle n'est donc pas filtrée à la cellule, et la grille dense de RCPU-05 reste à coupler plus tard.",
  "sonde": {
-  "outils": "node .relais/bancs/lot05/cell-sonde.mjs <racine> 300 <monde> auto, avec la variante instrumentée .relais/renderer-t19-sonde.js (compteurs de cellules et d'entrées)",
+  "outils": "node tools/proof/lot05/cell-sonde.mjs <racine> 300 <monde> auto, avec la variante instrumentée tools/render/lot05-instrument.mjs (variante 't19-sonde') (compteurs de cellules et d'entrées)",
   "camp6": {"cellulesTesteesParImage": 164.4, "cellulesRejeteesParImage": 62.7, "partCellulesRejetees": 0.3811, "entreesToucheesParImage": 4140.9, "entreesEviteesParImage": 1547.3, "partEntreesEvitees": 0.3737},
   "camp17": {"partCellulesRejetees": 0.3744, "partEntreesEvitees": 0.3924},
   "legacy0": {"partCellulesRejetees": 0.3806, "partEntreesEvitees": 0.3804}

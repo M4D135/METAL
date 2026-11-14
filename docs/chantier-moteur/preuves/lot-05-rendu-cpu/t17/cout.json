@@ -2,13 +2,13 @@
  "tache": "T17 [RCPU-11] FActors.build : matrices scratch et pool de maillages",
  "base": ".relais/avant-t16 = commit T15 (39dc8c0)",
  "rapportAT11": "les matrices scratch (Float64Array du module, produits écrits en place) étaient déjà en place depuis T11 ; T17 ajoute le réservoir de maillages par ennemi",
- "banc": "node .relais/bancs/lot05/actors-cost.mjs <base>,<tete> 40 — FActors.build apparié (4 types x 3 distances x 6 poses), un réservoir par cas comme en jeu, 40 passages de chauffe exclus, FRender chargé depuis la racine de chaque côté",
+ "banc": "node tools/proof/lot05/actors-cost.mjs <base>,<tete> 40 — FActors.build apparié (4 types x 3 distances x 6 poses), un réservoir par cas comme en jeu, 40 passages de chauffe exclus, FRender chargé depuis la racine de chaque côté",
  "resultats": {
   "temps": {"baseP50Ms": 0.0172, "teteP50Ms": 0.01365, "baseP95Ms": 0.12774, "teteP95Ms": 0.09875, "ratioP50": 0.7935, "ratioP95": 0.773, "ratioParPaire": 0.8919},
   "octets": {"baseKoParBuild": 21.45, "teteKoParBuild": 2.39, "ratio": 0.1114, "maillagesParBuild": 40.5},
   "identite": "sorties identiques 72/72 (isDeepStrictEqual)",
   "imageComplete": {
-   "outils": "node .relais/bancs/lot05/alloc-models.mjs <racine> 400 <monde> (models() seul, tas vidé, 150 images de chauffe)",
+   "outils": "node tools/proof/lot05/alloc-models.mjs <racine> 400 <monde> (models() seul, tas vidé, 150 images de chauffe)",
    "camp6": {"baseKoParImage": 70.7, "teteKoParImage": 2.5, "maillagesParImage": 292},
    "camp17": {"baseKoParImage": 49.3, "teteKoParImage": 35.8, "maillagesParImage": 260},
    "reserve": "la sonde d'image complète (alloc-image.mjs) est trop instable pour être citée : 72,5 -> 83,7 Ko (camp:6) et 97,8 -> 73,1 Ko (camp:17) entre deux exécutions, le tas vivant de la dernière image dominant la mesure"

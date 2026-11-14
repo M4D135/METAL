@@ -129,10 +129,10 @@ export function makeRecorder({content = true} = {}) {
   };
 }
 
-export function loadModules(root, names = ['fmath', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'actors', 'effects', 'motion']) {
+export function loadModules(root, names = ['fmath', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'actors', 'effects', 'motion'], sources = {}) {
   const win = {innerWidth: 1280, innerHeight: 720, devicePixelRatio: 2};
   for (const n of names) {
-    const src = readFileSync(root + '/src/' + n + '.js', 'utf8');
+    const src = sources[n] ?? readFileSync(root + '/src/' + n + '.js', 'utf8');
     vm.runInThisContext('(function(window){' + src + '\n})', {filename: n + '.js'})(win);
   }
   return win;
@@ -167,8 +167,8 @@ function fakeContext2D(recorder) {
   });
 }
 
-export function makeScene(root, {world: spec = ['camp', 6], seed = 96, quality = 'auto', canvas2d = false, content = true} = {}) {
-  const win = loadModules(root);
+export function makeScene(root, {world: spec = ['camp', 6], seed = 96, quality = 'auto', canvas2d = false, content = true, sources = {}} = {}) {
+  const win = loadModules(root, undefined, sources);
   const {FWorld, FSimulation, FBrain, FRender, FActors, FEffects, FMotion} = win;
   const world = spec[0] === 'camp' ? FWorld.create(seed, spec[1], {campaign: true, campaignVersion: 2}) : FWorld.create(seed, spec[1]);
   let brain = null; try { brain = FBrain.create({mode: 'cpu'}); } catch {}

@@ -1,7 +1,7 @@
 {
  "tache": "T15 [RCPU-09] repli Canvas 2D : boucles indexées et mémoïsation",
  "base": ".relais/avant-t15 = commit T12 (068b8c8)",
- "banc": "node .relais/bancs/lot05/canvas-cost.mjs <base>,<tete> <images> <monde> <qualite> — renderer.draw seul (drawMs de tools/proof/render-scene.mjs), ctx silencieux pendant les temps, paires alternées base/tête, 5 reps, 90 images de chauffe",
+ "banc": "node tools/proof/lot05/canvas-cost.mjs <base>,<tete> <images> <monde> <qualite> — renderer.draw seul (drawMs de tools/proof/render-scene.mjs), ctx silencieux pendant les temps, paires alternées base/tête, 5 reps, 90 images de chauffe",
  "flux": "node tools/proof/render-scene.mjs makeScene({canvas2d:true}) puis recorder.digest() sur 300 images — les appels ctx (nom + arguments sérialisés) sont hachés sha256",
  "resultats": {
   "camp6_auto": {"images": 300, "baseP50Ms": 33.4431, "teteP50Ms": 31.3798, "ratioP50": 0.9383, "ratioParPaire": 0.9537, "appels": 2866, "triangles": 4969, "instances": 606, "digest": "9bc7701460dc7abfde4f6e676a0cead8187abf185d5c250b83f9529aa87b92ce", "identique": true},

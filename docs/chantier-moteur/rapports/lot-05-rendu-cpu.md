@@ -319,28 +319,38 @@ rz, r0 recalculés seulement si rx change).
 
 ## Au-delà de la fiche
 
-Profil de la tête de branche (`node .relais/bancs/lot05/phase-cost.mjs . 300
-<monde> auto`, variante instrumentée `.relais/renderer-phases.js`, 300 images) :
+Profil de la tête de branche (`node tools/proof/lot05/phase-cost.mjs . 300
+<monde> auto`, compteurs insérés dans `src/renderer.js` par
+`tools/render/lot05-instrument.mjs`, variante `phases`, 300 images ; rejoué
+après le revert de T17, sortie brute dans
+`docs/chantier-moteur/preuves/lot-05-rendu-cpu/au-dela/`) :
 
 | étape de `draw()` | camp:17 (ms/image) | camp:6 (ms/image) |
 |---|---|---|
-| ombres (3 passes) | 2,135 | 2,219 |
-| statique (`renderStatic`+`renderBatch`) | 0,745 | 0,718 |
-| vue (cache + boucle `shown`) | 0,565 | 0,435 |
-| effets | 0,200 | 0,125 |
-| dynamique (`pack` + upload) | 0,106 | 0,134 |
-| lumières | 0,104 | 0,121 |
-| post | 0,029 | 0,027 |
-| **`draw()` complet** | **3,921** | **3,819** |
-| `models()` | 0,98 | 1,07 |
+| ombres (3 passes) | 2,376 | 1,758 |
+| statique (`renderStatic`+`renderBatch`) | 0,795 | 0,725 |
+| vue (cache + boucle `shown`) | 0,639 | 0,344 |
+| effets | 0,202 | 0,119 |
+| lumières | 0,154 | 0,101 |
+| dynamique (`pack` + upload) | 0,083 | 0,074 |
+| post | 0,029 | 0,029 |
+| **`draw()` complet** | **4,315** | **3,181** |
+| `models()` | 0,800 | 0,557 |
+
+Les microsecondes dépendent de la charge de la machine (relevée 4,5 à 9,3 sur
+20 cœurs) : ce qui est stable et ce qui compte ici est la **répartition**,
+avec le bloc d'ombres à ≈ 55 % du dessin dans les deux mondes.
 
 Le poste dominant est le **bloc d'ombres** (≈ 55 % du dessin), devant la
 statique et la vue. Trois pistes ont été évaluées et écartées sur mesures ou
 sur garde-fou, aucune n'est commitée :
 
 1. **Pré-filtre par cellule dans `selectionCache` (vue et torche)** — le sur-
-   ensemble est réutilisé tant que la caméra reste dans la marge (0,029 m de
-   distance et 7,41° d'angle mesurés ; reconstructions 44/300 images = 14,7 %).
+   ensemble est réutilisé tant que la caméra reste dans la marge (1,03 m de
+   distance et 7,41° d'angle mesurés à camp:17 ; reconstructions 44/300 images
+   = 14,7 %). Le texte de ce rapport annonçait « 0,029 m de distance » : c'est
+   le coût de l'étape « post » en ms/image, recopié au mauvais endroit ; la
+   marge mesurée est 1,03 m, son plancher adaptatif est 1 m.
    Filtrer à la construction avec le frustum de cette image reviendrait à faire
    disparaître un objet que le filtre exact d'une image suivante, dans la marge,
    aurait gardé : même risque que l'étape 3 de DRAW-08, coupée par la fiche. Le
