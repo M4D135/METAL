@@ -407,7 +407,30 @@ problèmes (1, 2, 3, 7) sont des **chiffres publiés qui ne se reproduisaient pa
 du brief sur les médianes appariées et les 5 paires sur 7 n'était pas appliquée partout, et un
 outil de mesure contenait un bug qui naturalisait un écart (`prepareMatchesDirect.bank`).
 Ensuite, le problème 2 n'était pas un oubli de réglage mais une **décision par défaut de la
-fiche qui n'avait pas été exécutée** : ne pas lancer le harnais, c'était reporter sans l'écrire.
+ fiche qui n'avait pas été exécutée** : ne pas lancer le harnais, c'était reporter sans l'écrire.
+
+## Contre-vérification et correctifs (tour 2)
+
+Un second contre-vérificateur a relu le travail après le tour 1 et relevé sept problèmes (un
+majeur, six mineurs). Chacun a été **reproduit avec la commande citée en preuve** avant d'être
+traité. Aucun n'a nécessité de `git revert` : le seul « gain qui ne se reproduit pas » (au-delà 1)
+l'avait déjà été au tour 1 (`1eab8bf`).
+
+| # | problème | reproduit ? | ce qui a été fait | commit |
+|---|---|---|---|---|
+| 1 | **[majeur]** la page de validation, livrable obligatoire, n'avait été touchée par aucun des six commits du tour 1 et contredisait le code, le rapport et les preuves | oui — `git log 7fa34d0..f983413 -- …/validation/lot-11-audio.md` **vide** ; elle écrivait encore 516/516, 865 940 octets, `prepareMatchesDirect.bank:false`, « ce qui n'a volontairement pas été fait » pour les quatre réglages appliqués | page **réécrite à l'état de la tête** : final **521/521**, `dist` **872 451**/gzip **267 891**, `prepareMatchesDirect` vrai des deux côtés, gain « au-delà 1 » retiré et remplacé par les deux rejouées sans gain, section des réglages retirée (les quatre sont appliqués : `limiter.threshold=-12`, `DUCK_HOLD`, passe-bas ennemis 1,1 kHz taux 0,85, `send.gain=.09`) ; ajout provenance + budget résiduel + report T1 | `8d04b6b` |
+| 2 | rapport « Deux pistes non réalisées » contredit le code **et** le § T1 | oui — `FAudio.recipe` (`audio.js:170`) attache `job:layeredJob`, `moduleSteps` (`music.js:309-340`) découpe le kit | section **réécrite** : les deux pistes sont faites, `rocket#1` hors `heaviestJobs` (pire cas 11,2 ms) ; seul résidu `instrument()`/`strings()`/`drumHit()` | `d0225e1` |
+| 3 | sous-item T1 « préparer les 3 étapes au chargement » non fait **et** non déclaré | oui — `game.js` ne prépare que `nextStage%3` (l. 286) + titre (l. 1005) ; `audio-root.mjs` : **5 tampons créés en jeu**, **84 170 échantillons** convertis `stage->2` | **déclaré reporté** avec le chiffre résiduel (identique à la base, non régressif) ; préparer les trois d'un coup triplerait le chargement sans supprimer ces `createBuffer` | `1d414c8` |
+| 4 | critère chiffré de la fiche (tranche ≤ 8 ms) non atteint à la tête | oui — `audio-prep-profile --game` base→tête **51,36 → 14,34 ms**, over8 **15 → 6** ; `bancs/load/music.mjs` `warmup0` **16,4 ms**/28 tranches, `maxBatchMs` 65,3 hors `warmBank` | **budget résiduel chiffré ≈ 16 ms** posé comme décision à confirmer (fiche en lecture seule) ; le ramener à 8 ms demande de rendre `instrument()`/`strings()`/`drumHit()` reprenables | `66a4e70` |
+| 5 | provenance Chrome : quatre preuves Mac 157 annoncées « Linux arm64 … Chrome 151 » | oui — `grep ua` sur `t0/{ab-aa,calib,null}`, `t2/ab-t2` = `HeadlessChrome/157 … Macintosh` | provenance **écrite preuve par preuve** (rapport, `t2/README`, validation) ; `t2/ab-t2` **rejoué sous Chrome 151** (`t2/ab-t2-linux151.json`) : c et a au centième, t au plancher de bruit, MIX-08 tenu | `6deb7d4` |
+| 6 | MISSION-DU-LOT.md affirme les trois objets existants ; `1336bdb` = `fatal: bad object` sur le clone du contre-vérificateur | oui **sur le clone du contre-vérificateur** ; sur le clone du Spark les trois existent (`1336bdb` fils de `4296a73`) | nuance écrite : deux des trois partout, `1336bdb` absent du clone du contre-vérificateur, **aucun des trois sur la branche** | hors dépôt (`.relais/`, non suivi) |
+| 7 | `checks/music.test.mjs` verrouille 2 nœuds par note, soit l'état contraire de la fiche (T5 pt 1) | oui — `assert(gain===notes)` et `assert(created===2*notes)` | test **remplacé** par un test de **non-clic** (les 303 notes coupées sur 60 s fondent au silence, fondu 8 ms) ; invariants neutres gardés ; `node --test checks/music.test.mjs` **15/15** | `1af736e` |
+
+Le fil rouge du tour 2 est le même que celui du tour 1 : des **livrables écrits qui n'avaient pas
+été remis à l'état du code** (page de validation, section « deux pistes », provenance, sous-item
+non déclaré). Rien de neuf n'a été ajouté au moteur ; les deux seuls points où le code n'était pas
+conforme à la fiche (préparation au chargement, tranche ≤ 8 ms) sont des **reports chiffrés**, pas
+des silences.
 
 ## Chiffres finaux
 
@@ -458,4 +481,7 @@ David — le levier évident est `src/audio-recipes.js` (la table de recettes), 
 
 - Commits du lot : `1461e24` T0, `d7e7bed` T2, `4296a73` wip Claude repris en T3,
   `93e67e8` T1, `246cbeb` T3, `f70b785` T4, `982418a` T5, `ff20e35` au-delà 1, puis tour 1 :
-  `7165001`, `7a63961`, `e9de02c`, `583530a`, `00b3cd2`, `1eab8bf`.
+  `7165001`, `7a63961`, `e9de02c`, `583530a`, `00b3cd2`, `1eab8bf`, `7fa34d0` (rapport),
+  `f983413` (rapport taille) ; puis tour 2 : `6deb7d4` (P5 provenance + rejouée Chrome 151),
+  `8d04b6b` (P1 page de validation), `d0225e1` (P2 deux pistes), `1d414c8` (P3 report T1),
+  `66a4e70` (P4 budget résiduel), `1af736e` (P7 test de non-clic).
