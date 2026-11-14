@@ -1,0 +1,18 @@
+{
+ "objet": "rejeu des ratios de preuve avec le banc corrigé (appariement entrelacé image par image + exécution de contrôle)",
+ "banc": "tools/proof/render-proof.mjs, --mode cost --frames 300 --reps 5, même graine (96), qualité auto",
+ "correction_du_biais": "avant : chaque racine déroulait ses 300 images dans son propre bloc, l'une après l'autre, avec un ordre inversé seulement d'une répétition sur l'autre ; le contrôle « même racine en A et en B » donnait drawP50 0,9312 à 0,9717 (6 à 12 % en faveur de la seconde racine). Après : les deux scènes vivent en même temps, avancent image par image et l'ordre de mesure est inversé à chaque image ; le même contrôle donne 0,9737 à 1,0168.",
+ "incertitude": "le contrôle lui-même varie de ±5 à 7 % d'une exécution à l'autre sur drawP50 : un ratio corrigé n'est distinguable de 1 qu'au-delà de cette bande.",
+ "resultats": [
+  {"paire": "T2 -> T3", "monde": "camp:17", "mesure": "drawP50", "annonce_dans_le_rapport": 0.878, "ratio_brut": 0.8936, "controle": 1.0123, "ratio_corrige": 0.8827, "fichier": "t2-t3-camp17.json", "verdict": "gain établi"},
+  {"paire": "T3 -> T4", "monde": "camp:17", "mesure": "drawP50", "annonce_dans_le_rapport": 0.8914, "ratio_brut": 0.8023, "controle": 1.0155, "ratio_corrige": 0.7901, "fichier": "t3-t4-camp17-r1.json", "verdict": "gain établi"},
+  {"paire": "T3 -> T4", "monde": "camp:17", "mesure": "drawP50", "annonce_dans_le_rapport": 0.8914, "ratio_brut": 0.8439, "controle": 1.0048, "ratio_corrige": 0.8399, "fichier": "t3-t4-camp17-r2.json", "verdict": "gain établi, deuxième exécution"},
+  {"paire": "T3 -> T4", "monde": "camp:6", "mesure": "drawP50", "annonce_dans_le_rapport": 0.8914, "ratio_brut": 0.8842, "controle": 0.9958, "ratio_corrige": 0.8879, "fichier": "t3-t4-camp6.json", "verdict": "gain établi"},
+  {"paire": "T4 -> T3 (sens inverse)", "monde": "camp:17", "mesure": "drawP50", "annonce_dans_le_rapport": null, "ratio_brut": 1.146, "controle": 0.9737, "ratio_corrige": 1.177, "fichier": "t4-t3-camp17-sens-inverse.json", "verdict": "controle croise : 1/1,177 = 0,850 dans le sens T3 -> T4, coherent avec les deux executions precedentes"},
+  {"paire": "T4 -> T5", "monde": "camp:6", "mesure": "modelsP50", "annonce_dans_le_rapport": 0.936, "ratio_brut": 0.9515, "controle": 0.9908, "ratio_corrige": 0.9603, "fichier": "t4-t5-camp6.json", "verdict": "gain réel mais réduit : -4 % mesuré pour -6,4 % annoncé, au-dessus de la moitié du gain annoncé (0,968)"},
+  {"paire": "T5 -> T6", "monde": "camp:17", "mesure": "drawP50", "annonce_dans_le_rapport": 1.06, "ratio_brut": 1.0215, "controle": 1.0168, "ratio_corrige": 1.0046, "fichier": "t5-t6-camp17.json", "verdict": "le surcout annoncé de 6 % n'est pas reproduit : T6 est neutre sur draw() ; son critère reste le taux de reconstruction"},
+  {"paire": "T12 -> T15", "monde": "camp:6, repli Canvas 2D", "mesure": "drawP50", "annonce_dans_le_rapport": 0.938, "ratio_brut": 0.9012, "controle": 1.0074, "ratio_corrige": 0.8946, "fichier": "t12-t15-camp6-canvas2d.json", "verdict": "gain établi, un peu meilleur qu'annoncé"},
+  {"paire": "T15 vs T15 (contrôle)", "monde": "camp:17", "mesure": "drawP50", "annonce_dans_le_rapport": null, "ratio_brut": 1.0506, "controle": 0.9802, "ratio_corrige": 1.0718, "fichier": "controle-t15-t15-camp17.json", "verdict": "résidu de bruit du banc corrigé, à lire comme la bande d'incertitude"}
+ ],
+ "relais": "OpenCode, modèle local du Spark"
+}

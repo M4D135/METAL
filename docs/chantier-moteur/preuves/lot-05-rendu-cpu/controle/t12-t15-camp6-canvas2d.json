@@ -1,0 +1,74 @@
+{
+ "mode": "cost",
+ "world": "camp:6",
+ "seed": 96,
+ "quality": "auto",
+ "canvas2d": true,
+ "frames": 300,
+ "reps": 5,
+ "warmup": 120,
+ "skip": 60,
+ "node": "v24.18.0",
+ "appariement": "images alternées, ordre inversé à chaque image",
+ "cost": [
+  {
+   "root": ".relais/t12",
+   "drawP50": 46.511,
+   "drawP95": 87.108,
+   "drawP99": 133.406,
+   "drawMean": 51.2761,
+   "modelsP50": 1.748,
+   "modelsMean": 1.9897,
+   "totalP50": 48.737
+  },
+  {
+   "root": ".relais/t15",
+   "drawP50": 41.914,
+   "drawP95": 83.007,
+   "drawP99": 151.578,
+   "drawMean": 47.5115,
+   "modelsP50": 1.693,
+   "modelsMean": 1.8675,
+   "totalP50": 43.683
+  }
+ ],
+ "ratio": {
+  "drawP50": 0.9012,
+  "drawMean": 0.9266,
+  "modelsP50": 0.9685,
+  "totalP50": 0.8963
+ },
+ "controle": {
+  "racine": ".relais/t12",
+  "A": {
+   "drawP50": 47.38,
+   "drawP95": 79.734,
+   "drawP99": 209.293,
+   "drawMean": 52.433,
+   "modelsP50": 1.783,
+   "modelsMean": 1.9751,
+   "totalP50": 49.45
+  },
+  "B": {
+   "drawP50": 47.731,
+   "drawP95": 85.612,
+   "drawP99": 121.132,
+   "drawMean": 51.5136,
+   "modelsP50": 1.802,
+   "modelsMean": 1.9866,
+   "totalP50": 49.685
+  },
+  "ratio": {
+   "drawP50": 1.0074,
+   "drawMean": 0.9825,
+   "modelsP50": 1.0107,
+   "totalP50": 1.0048
+  }
+ },
+ "ratioCorrige": {
+  "drawP50": 0.8946,
+  "drawMean": 0.9431,
+  "modelsP50": 0.9582,
+  "totalP50": 0.892
+ }
+}
