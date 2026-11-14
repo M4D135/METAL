@@ -201,16 +201,39 @@ Sans horloge (rigs de test, royaumes froids) le bloc reste à 256 : rien ne dép
 mural quand l'horloge manque. La taille de bloc ne touche pas au son (`rand()` appelé une
 fois par échantillon, état de filtres persistant, `seal()` une seule fois à la fin).
 
-- Écart apparié médian sur la tranche maximale : **−19,1 %** (5 paires sur 7 en faveur
-  d'après ; les deux contraires, +14,0 % et +15,2 %, restent dans le bruit) ; médianes
-  20,49 → 18,91 ms (−7,7 %).
-- Tranches au-dessus de 8 ms : **22 → 16 (−27 %)**, médiane appariée −5 tranches.
-- Effets les plus lourds : `break:glass#1` 32,5 → 12,9 ms, `break:glass#0` 29,8 → 13,4 ms.
-- Total de préparation 347,7 → 336,6 ms (−3,2 %) : le découpage ajoute des reprises, le
-  gain est sur la régularité, pas sur la durée totale.
-- Identité : `bankSha256 acfb0222190905ab…` identique des deux côtés, 0 tampon différent
-  sur 64, modules inchangés.
-- Preuves : `preuves/lot-11/au1/` (`prep.json`, `README.md`).
+- **Chiffres repris au tour 1 (problème 7 du contre-vérificateur).** La première version de
+  ce rapport publiait, pour ce seul commit comparé à son parent : écart apparié médian
+  **−19,1 % (5 paires sur 7)**, médianes 20,49 → 18,91 ms, **tranches au-dessus de 8 ms
+  22 → 16 (−27 %)**, total 347,7 → 336,6 ms (−3,2 %). **Ces chiffres ne se reproduisent
+  pas.** Deux rejouées indépendantes de 7 passages
+  (`preuves/lot-11/au1/prep-replay-1.json`, `prep-replay-2.json`, mêmes arbres
+  `982418a` contre `ff20e35`, même outil, même machine) donnent :
+
+  | mesure | publié | rejouée 1 | rejouée 2 |
+  |---|---|---|---|
+  | tranche max médiane A → B | 20,49 → 18,91 | 27,04 → 28,50 | 26,45 → 25,46 |
+  | médiane des écarts appariés | −19,1 % (5/7) | **−4,7 % (4/7)** | **−4,6 % (4/7)** |
+  | tranches > 8 ms A → B | 22 → 16 (−27 %) | 19 → 20 (**+2**, 2/7) | 18 → 23 (**+2**, 2/7) |
+  | total de préparation | −3,2 % | 0,0 % | +2,3 % |
+
+  Le « −27 % de tranches hors budget » est **faux** : dans les deux rejouées l'arbre au-delà 1
+  a *plus* de tranches au-dessus de 8 ms que son parent. Le gain réel sur la tranche max
+  (−4,7 %) ne passe pas le seuil des 5 paires sur 7 que le brief impose pour retenir un gain.
+  Cause de la divergence : l'outil a été corrigé depuis — il ignorait les noms portés par
+  `options.extras`, donc la file mesurée n'était pas la même — et la variance d'un passage à
+  l'autre sur cette machine partagée est énorme (16,97 à 42,10 ms pour le même arbre).
+- Ce qui tient : le **mécanisme** (taille de bloc calculée à l'ouverture, bornée 16–256,
+  rétrécie si le bloc dépasse) et son innocuité bit à bit (`step(64)` quatre fois =
+  `step(256)`, `bankSha256` identique). Ce qui est publié à la place des chiffres retirés,
+  c'est celui du correctif `e9de02c` : tranche max médiane **24,44 → 14,41 ms**, tranches
+  au-dessus de 8 ms **22 → 4**, banque `54d3df3c8b3a…` identique des deux côtés.
+- Identité : `bankSha256 54d3df3c8b3a…` identique des deux côtés, 0 tampon différent sur 68,
+  modules inchangés, `prepareMatchesDirect` `true` sur `bank`, `module` et `titleModule`.
+  (La première version annonçait `acfb0222190905ab…` sur 64 tampons et
+  `prepareMatchesDirect.bank: false` « de façon identique sur A et B » : c'était un bug de
+  l'outil, pas un comportement des arbres — corrigé au tour 1.)
+- Preuves : `preuves/lot-11/au1/` (`prep.json`, `prep-replay-1.json`, `prep-replay-2.json`,
+  `README.md`).
 
 ### Deux pistes non réalisées, et pourquoi
 
