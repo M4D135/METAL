@@ -75,8 +75,9 @@ function analyse(w) {
 }
 
 const worlds = [];
-for (const seed of seeds) for (const mode of [['classique', {}], ['campagne', { campaign: true }]]) {
-  for (const index of mode[0] === 'classique' ? [0, 1, 2] : [0, 3, 6, 9, 12, 17]) {
+for (const seed of seeds) for (const mode of [['classique', {}], ['campagne', { campaign: true }], ['campagne V2', { campaign: true, campaignVersion: 2 }]]) {
+  const indices = mode[0] === 'classique' ? [0, 1, 2] : mode[0] === 'campagne V2' ? Array.from({ length: 18 }, (_, i) => i) : [0, 3, 6, 9, 12, 17];
+  for (const index of indices) {
     worlds.push({ label: `seed ${seed}, ${mode[0]} ${index + 1}`, world: FWorld.create(seed, index, mode[1]) });
   }
 }
