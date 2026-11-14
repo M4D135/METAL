@@ -1448,24 +1448,39 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       // Destruction replaces changed meshes; retained immutable meshes keep
       // their instance rows and expensive Canvas face/lighting caches.
       const retained=previous&&previous.byMesh.get(mesh),e=retained||metadata(mesh),key=Math.floor(e.p[0]/8)+','+Math.floor(e.p[2]/8),map=levels[e.detail];
-      if(!map.has(key))map.set(key,[]);map.get(key).push(e);maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
+      let cell=map.get(key);
+      if(!cell){cell={list:[],sumY:0,minY:Infinity,maxY:-Infinity};map.set(key,cell);}
+      cell.list.push(e);cell.sumY+=e.p[1];if(e.p[1]<cell.minY)cell.minY=e.p[1];if(e.p[1]>cell.maxY)cell.maxY=e.p[1];
+      maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
       if(!retained){const p=e.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
         e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment)+(e.detail+1)*8,c[0],c[1],c[2],mesh.color?1:0]);}
       e.order=entries.length;entries.push(e);byMesh.set(mesh,e);
     }
-    function query(eye,ranges,out){
+    function query(eye,ranges,out,frustum){
       const result=out||[];result.length=0;
       for(let level=0;level<3;level++){
         const range=ranges[level];if(!(range>0))continue;
         const radius=range+maxRadius[level];
         for(let x=Math.floor((eye[0]-radius)/8);x<=Math.floor((eye[0]+radius)/8);x++)for(let z=Math.floor((eye[2]-radius)/8);z<=Math.floor((eye[2]+radius)/8);z++){
-          const bucket=levels[level].get(x+','+z);if(!bucket)continue;
-          for(const e of bucket){const d=(e.p[0]-eye[0])**2+(e.p[1]-eye[1])**2+(e.p[2]-eye[2])**2;if(d<=(range+e.radius)**2)result.push(e);}
+          const cell=levels[level].get(x+','+z);if(!cell)continue;
+          // DRAW-08 : une cellule de 8 m est englobée par une sphère centrée sur la hauteur
+          // moyenne de ses entrées. Le test est exactement celui de visible(), donc une cellule
+          // rejetée ne peut contenir aucune entrée que le test par entrée aurait gardée.
+          if(frustum){
+            const count=cell.list.length,cy=cell.sumY/count,half=Math.max(cy-cell.minY,cell.maxY-cy);
+            if(!visibleSphere(x*8+4,cy,z*8+4,5.656854249492381+half+maxRadius[level],eye,frustum.axes,frustum.horizontal,frustum.vertical,frustum.far))continue;
+          }
+          for(const e of cell.list){const d=(e.p[0]-eye[0])**2+(e.p[1]-eye[1])**2+(e.p[2]-eye[2])**2;if(d<=(range+e.radius)**2)result.push(e);}
         }
       }
       return result;
     }
     return {entries,query,byMesh};
+  }
+  function visibleSphere(cx,cy,cz,r,eye,axes,horizontal,vertical,far){
+    const x=cx-eye[0],y=cy-eye[1],d=cz-eye[2],f=axes.forward,right=axes.right,up=axes.up;
+    const z=x*f[0]+y*f[1]+d*f[2];
+    return z+r>.04&&z-r<far&&Math.abs(x*right[0]+y*right[1]+d*right[2])<=z*horizontal+r*Math.sqrt(1+horizontal*horizontal)&&Math.abs(x*up[0]+y*up[1]+d*up[2])<=z*vertical+r*Math.sqrt(1+vertical*vertical);
   }
   function visible(e,eye,axes,horizontal,vertical,far){
     const x=e.p[0]-eye[0],y=e.p[1]-eye[1],d=e.p[2]-eye[2],f=axes.forward,right=axes.right,up=axes.up;
@@ -1750,7 +1765,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         }
       }
       const ranges=detailRanges(quality,true),tiers=[[],[],[]];if(environment)ranges[0]=far;let staticVisible=0;
-      for(const e of world.query(eye,ranges))if(visible(e,eye,axes,horizontal,tan,far)){
+      for(const e of world.query(eye,ranges,null,{axes,horizontal,vertical:tan,far}))if(visible(e,eye,axes,horizontal,tan,far)){
         const delta=subtract(e.p,eye),distance=Math.hypot(...delta),pixelRadius=e.radius*focal/Math.max(.2,dot(delta,forward));
         if(e.detail>0&&pixelRadius<(e.detail===2?2.1:1.0))continue;
         tiers[e.detail].push({e,pixelRadius,score:distance/(1+Math.min(e.radius,3)*.32)});
@@ -2214,7 +2229,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         }
         casters.gen=hash;casters.count=casters.length;
       }
-      else{casters=worldIndex.query(p,SHADOW_RANGES).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));lampCasters[slot]={light,p:p.slice(),entries:casters};}
+      else{casters=worldIndex.query(p,SHADOW_RANGES,null,{axes:shadowAxes,horizontal:tangent,vertical:tangent,far:32}).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));lampCasters[slot]={light,p:p.slice(),entries:casters};}
       gl.uniform3fv(depthCullCentre,p);gl.uniform3fv(depthCullRange,SHADOW_RANGES);
       renderStatic(casters,slot+1,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
