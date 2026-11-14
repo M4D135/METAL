@@ -118,3 +118,17 @@ node tools/ab2.mjs .relais/avant-t5 . --scenario all --steps 1800 --reps 7 --war
 Les profils `--cpu-prof` sont résumés par
 `../../jeu-bouclier-supprime/au-dela-1-generation/resumer-profil.mjs` ; les
 `.cpuprofile` sont ignorés par Git, les résumés texte sont dans ce dossier.
+
+## Rectification des bancs de génération — 14 novembre, Codex
+
+Les chiffres historiques ci-dessus sont conservés, mais les options `variant`, `width`
+et `height` utilisées par les deux scripts étaient ignorées : leurs « campagnes »
+étaient des mondes classiques. Ces chiffres ne prouvaient donc pas le coût en campagne.
+Les scripts appellent désormais le mode `campaign` avec le bon indice en deuxième
+argument, pour 54 mondes V1, 54 V2 et 12 classiques par passe ; ils vérifient le mode,
+la version et l’indice effectivement produits. `part-passages` mesure les deux entrées
+publiques réellement appelées, sans additionner des temps internes imbriqués.
+
+Une passe corrigée sur le Spark partagé : 120 mondes, 9 654 ms de génération,
+`tourLinks` 56 ms et `mandatoryLinks` 3 ms, soit 0,61 % ensemble. C’est un contrôle
+fonctionnel et une mesure indicative unique, pas une nouvelle preuve de gain apparié.

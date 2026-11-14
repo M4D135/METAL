@@ -289,3 +289,19 @@ Chacune avec la **valeur par défaut appliquée** dans le code livré.
 au lecteur est le chiffre **brut** ; le compressé n'est jamais présenté comme la taille du
 fichier. Le navigateur n'est pas compté dans cette taille — un comparatif avec un
 exécutable natif doit le rappeler. Plafond du projet : 1 400 000 octets, largement tenu.
+
+## Contrôle de compatibilité du 14 novembre — Codex
+
+Le format sérialisé reste le même, mais cela ne garantit pas la reprise des anciennes parties.
+`node tools/checkpoint-compat.mjs RACINE_AVANT .` compare trois scénarios (classique,
+campagne V1 et campagne V2) avec des contrôles de reprise à version identique.
+Contre la base du lot `1814b81`, les trois reprises base → base et tête → tête passent ;
+les trois reprises base → tête échouent parce que l’empreinte du monde a changé.
+La commande rend donc un code de sortie 1. **La compatibilité demandée reste bloquée** ;
+ce constat ne vaut ni migration des sauvegardes ni autorisation de les abandonner.
+Les sources `snapshot`/`restore` n’ont pas été modifiées par ce contrôle.
+
+Les correctifs Codex du même contrôle chargent `FPassages` dans le recensement instrumenté
+et couvrent les 54 mondes de campagne V2 dans le banc des pièges obligatoires.
+La suite complète est passée à 690 tests réussis, zéro échec. Le test de chargement
+vérifie aussi le refus explicite si `FPassages` manque (15 tests FMath réussis).

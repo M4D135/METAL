@@ -318,6 +318,9 @@ test('world.js takes sin, cos, atan, atan2 and hypot from FMath only and refuses
   // With the host trigonometry and hypot poisoned, a world is still generated: nothing reaches it.
   const context = { window: {} };
   vm.runInNewContext(source, context, { filename: sourcePath });
+  // FMath seule ne suffit pas : le chargeur doit nommer FPassages manquant.
+  assert.throws(() => vm.runInNewContext(world, context, { filename: worldPath }), /charger src\/passages\.js avant src\/world\.js/);
+  assert.equal(context.window.FWorld, undefined);
   // FPassages (lot « jeu-pieges-massifs ») est une dépendance de world.js au même
   // titre que FMath : il doit être chargé avant, y compris dans ce banc.
   const passagesPath = fileURLToPath(new URL('../src/passages.js', import.meta.url));

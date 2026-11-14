@@ -94,3 +94,19 @@ aucun CDN ni dépendance d'exécution cachée (`external_assets: 0`).
 Ni la taille du monde, ni la caméra, ni les entrées, ni l'économie, ni l'audio, ni
 les points de reprise. Aucun actif importé. Le principe central du projet est intact
 : tout est généré par le code.
+
+## Contrôle de compatibilité du 14 novembre — Codex
+
+Le format sérialisé reste le même, mais cela ne garantit pas la reprise des anciennes parties.
+`node tools/checkpoint-compat.mjs RACINE_AVANT .` compare trois scénarios (classique,
+campagne V1 et campagne V2) avec des contrôles de reprise à version identique.
+Contre la base du lot `1814b81`, les trois reprises base → base et tête → tête passent ;
+les trois reprises base → tête échouent parce que l’empreinte du monde a changé.
+La commande rend donc un code de sortie 1. **La compatibilité demandée reste bloquée** ;
+ce constat ne vaut ni migration des sauvegardes ni autorisation de les abandonner.
+Les sources `snapshot`/`restore` n’ont pas été modifiées par ce contrôle.
+
+Les correctifs Codex du même contrôle chargent `FPassages` dans le recensement instrumenté
+et couvrent les 54 mondes de campagne V2 dans le banc des pièges obligatoires.
+La suite complète est passée à 690 tests réussis, zéro échec. Le test de chargement
+vérifie aussi le refus explicite si `FPassages` manque (15 tests FMath réussis).
