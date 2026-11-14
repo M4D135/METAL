@@ -352,6 +352,11 @@
     const voices=new Set(),buffers=new Map(),nodes=[],tracks=[],stats={activeVoices:0,peakVoices:0,scheduledRows:0,scheduledNotes:0,resyncs:0,playing:false,stage:0,order:0,row:0,tempo:100};
     const events=Array.from({length:4},()=>({sample:0,pitch:0,effect:0,param:0}));
     const ready=!!(ctx&&output&&ctx.createBuffer&&ctx.createBufferSource&&ctx.createGain),remember=n=>(nodes.push(n),n);
+    // MIX-11: un contexte hors ligne (OfflineAudioContext) na jamais dhorloge ni
+    // de peripherique a attendre : il est « en cours » des la creation, ce qui
+    // laisse le banc rendre le meme morceau que le jeu. Un AudioContext normal
+    // na pas de startRendering et garde donc la meme regle quavant.
+    const offline=!!(ctx&&typeof ctx.startRendering==='function');
     const master=ready?remember(ctx.createGain()):null;
     if(master){master.gain.value=0;master.connect(output);for(let i=0;i<4;i++){
       const gain=remember(ctx.createGain()),pan=remember(ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain());
@@ -405,7 +410,7 @@
       return 2.5*speed/bpm;
     }
     function tick(){
-      if(!ready||disposed||!playing||volume<=0||ctx.state!=='running')return;
+      if(!ready||disposed||!playing||volume<=0||(!offline&&ctx.state!=='running'))return;
       load();const now=ctx.currentTime;
       // RESTE-09: deleting the current entry of a Set during for…of is defined
       // and keeps insertion order, so the same voices are cleaned in the same

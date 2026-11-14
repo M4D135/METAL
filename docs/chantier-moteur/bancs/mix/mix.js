@@ -101,7 +101,7 @@ async function render(scene, v, opt = {}) {
   RECIPE = v.recipe || 'cur';
   window.__OVERRIDE = RECIPE === 'doom' ? Object.fromEntries(Object.keys(DOOMISH.RECIPES).map(n => [n, (variant, rate) => DOOMISH.synth(n, variant | 0, rate || 22050)])) : null;
   const N = sceneFrames(scene), seconds = (K0 + N) / HZ + TAIL, ctx = new OfflineAudioContext(12, Math.ceil(seconds * SR), SR);
-  Object.defineProperty(ctx, 'state', {get: () => 'running'});
+  if (!v.inject) Object.defineProperty(ctx, 'state', {get: () => 'running'}); // MIX-11 : avec v.inject, le contexte garde son etat reel ('suspended')
   const counter = {n: 0}; countParams(ctx, counter); window.__L14 = {sent: 0, skipped: 0};
   const saved = window.AudioContext; window.AudioContext = function () { return ctx; };
   const raw = !!v.source, sharedMusic = window.FMusic; window.__NODES = null; window.__duckShelf = null; delete window.MetalAudio;
@@ -114,7 +114,7 @@ async function render(scene, v, opt = {}) {
   }
   // Création comme game.js : FAudio.create(window.MetalAudio?.options?.()).
   // Écran titre : le jeu ouvre le contexte coupé (audioGate) puis rétablit le son après setTitlePlaying(true).
-  const audio = FAudio.create(window.MetalAudio && typeof window.MetalAudio.options === 'function' ? window.MetalAudio.options() : undefined); if (scene.title) audio.setMuted(true); audio.start(); window.AudioContext = saved;
+  const opts = window.MetalAudio && typeof window.MetalAudio.options === 'function' ? window.MetalAudio.options() : {}; if (v.inject) opts.context = ctx; const audio = FAudio.create(opts); if (scene.title) audio.setMuted(true); audio.start(); window.AudioContext = saved;
   const nodes = raw ? null : window.__NODES, comp = COMP[v.comp || 'cur'], taps = !raw && !v.noTaps;
   if (nodes) for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) nodes.limiter[k].value = comp[k];
 
@@ -158,11 +158,11 @@ async function render(scene, v, opt = {}) {
     });
   }
   const t0 = performance.now(), buffer = await ctx.startRendering(), ms = performance.now() - t0;
-  const stats = Object.assign({}, audio.stats), l14 = Object.assign({}, window.__L14);
+  const stats = Object.assign({}, audio.stats), l14 = Object.assign({}, window.__L14), g = v.graph && typeof audio.graph === 'function' ? audio.graph() : null, graphKeys = g ? Object.keys(g).sort().join(',') : null, graphOk = g ? Object.keys(g).every(k => g[k] && typeof g[k].connect === 'function') : null;
   try { audio.dispose(); } catch (_) {}
   if (raw) window.FMusic = sharedMusic;
   const table = !!(window.MetalAudio && window.MetalAudio.recipes); delete window.MetalAudio;
-  return {buffer, ms, replayMs, stats, red, voices, seconds, params: counter.n, l14, titlePrepared, table};
+  return {buffer, ms, replayMs, stats, red, voices, seconds, params: counter.n, l14, titlePrepared, table, graphKeys, graphOk};
 }
 // différence échantillon par échantillon de la sortie (canaux 0 et 1), en dBFS ; premier écart non nul et au-delà de −90 dBFS
 function diffOut(x, y) {
@@ -229,6 +229,17 @@ function analyse(R, scene, calib) {
       if (!seg.length || !late.length) continue; const base = pre.length ? quant(pre, .5) : 0; drops.push(base - Math.min(...seg)); ripples.push(Math.max(...late) - Math.min(...late));
       let sm = 0; for (let i = Math.round((K0 + a) / HZ * sr); i < Math.round((K0 + z) / HZ * sr); i += 16) sm = Math.min(sm, -SH[i] * 60); shelfDrops.push(-sm); }
     out.pump = {perBurst: drops.map((d, i) => [r2(d), r2(ripples[i])]), bursts: drops.length, dropDb: {p50: r2(quant(drops, .5)), max: r2(Math.max(...drops))}, rippleDb: {p50: r2(quant(ripples, .5)), max: r2(Math.max(...ripples))}, shelfDropDb: r2(Math.max(...shelfDrops))};
+    // MIX-11 : le duck se lit aussi par bande. Pour chaque rafale, energie de la
+    // musique apres duck pendant la rafale contre la meme duree juste avant, en
+    // energies cumulees sous chaque frequence : le grave peut pomper sans que la
+    // moyenne large bande bouge (ce que mesurent MIX-03 et MIX-V1).
+    const edges = [120, 250, 500, 1000, 2000, 4000], mLp = edges.map(hz => lowpass(mum, hz, sr));
+    const bandEnergy = (i0, i1) => { let prev = 0; return edges.map((hz, k) => { const c = rmsRange(mLp[k], i0, i1) ** 2, v = Math.max(0, c - prev); prev = Math.max(prev, c); return Math.sqrt(v); }); };
+    const bandDrops = edges.map(() => []);
+    for (const [a2, z2] of scene.bursts) { if (z2 === undefined) continue; const s0 = Math.max(from, Math.floor((K0 + a2) / HZ * sr)), e0 = Math.floor((K0 + z2) / HZ * sr), L = e0 - s0; if (L < Math.round(.5 * sr)) continue;
+      const pre = bandEnergy(Math.max(from, s0 - L), s0), seg = bandEnergy(s0, e0);
+      edges.forEach((hz, k) => { if (pre[k] > 1e-5) bandDrops[k].push(dB(seg[k] / pre[k])); }); }
+    out.duckBands = {}; edges.forEach((hz, k) => { out.duckBands['<' + hz] = bandDrops[k].length ? r2(quant(bandDrops[k], .5)) : null; });
   }
   let vmax = 0, vsum = 0; for (let k = K0; k < R.voices.length; k++) { vmax = Math.max(vmax, R.voices[k]); vsum += R.voices[k]; }
   out.voices = {peakVoices: R.stats.peakVoices, stolenVoices: R.stats.stolenVoices, fxSkipped: R.stats.fxSkipped, meanPerFrame: r2(vsum / (R.voices.length - K0)), maxAtFrame: vmax};

@@ -10,10 +10,11 @@
     if (job === 'calib') { out.comp = []; for (const k of Object.keys(M.COMP)) out.comp.push(await M.calib(k)); }
     if (job === 'matrix') {
       const list = (Q.get('scenes') || 'a,b,c,d').split(','), recipes = (Q.get('recipes') || 'cur,doom').split(','), comps = (Q.get('comps') || 'cur,feel07').split(','), ducks = (Q.get('ducks') || 'cur,feel07,shelf').split(',');
+      const passes = Math.max(1, Math.min(16, +Q.get('passes') || 1)); // MIX-11 : au moins 8 passes par scene, la crete variant avec la phase de la musique
       out.rows = [];
-      for (const sc of list) for (const recipe of recipes) for (const comp of comps) for (const duck of ducks) {
+      for (const sc of list) for (const recipe of recipes) for (const comp of comps) for (const duck of ducks) for (let pass = 0; pass < passes; pass++) {
         const v = {recipe, comp, duck}; if (Q.get('tell')) v.tell = Q.get('tell'); if (Q.get('musicGain')) v.musicGain = +Q.get('musicGain'); if (Q.get('weaponGain')) v.weaponGain = +Q.get('weaponGain'); if (Q.get('duckTau')) v.duckTau = +Q.get('duckTau');
-        const R = await M.render(scenes[sc], v), a = M.analyse(R, scenes[sc], await cal(v)); out.rows.push({scene: sc, ...v, ...a});
+        const R = await M.render(scenes[sc], v), a = M.analyse(R, scenes[sc], await cal(v)); out.rows.push({scene: sc, pass, ...v, ...a});
       }
     }
     if (job === 'iso') { // tirs isolés : facteur de crête en sortie contre tampon isolé, réduction de gain
@@ -108,6 +109,16 @@
         out.rows.push({scene: sc, label: scenes[sc].label, diffPeakDbFS: d.peakDbFS, diffRmsDbFS: d.rmsDbFS, identical: d.identical, firstDiffSec: d.firstDiffSec, firstOver90Sec: d.firstOver90Sec,
           nullTestPass: d.identical || d.rmsDbFS <= -110 && d.peakDbFS <= -80, noise: nNoise ? {renders: nNoise, peakDbFS: worst(noise, 'peakDbFS'), rmsDbFS: worst(noise, 'rmsDbFS'), identical: noise.every(x => x.identical)} : null,
           audioParamCalls: {A: A.params, B: B.params}, A: pick(A), B: pick(B)});
+      }
+    }
+    if (job === 'inject') { // MIX-11 : FAudio.create({context}) rend le meme mixage que l'ouverture par AudioContext, et api.graph() rend les six noeuds
+      out.rows = [];
+      for (const sc of (Q.get('scenes') || 'c,a,t').split(',')) {
+        const A = await M.render(scenes[sc], {graph: 1}), B = await M.render(scenes[sc], {graph: 1, inject: 1}), d = M.diffOut(A.buffer, B.buffer);
+        out.rows.push({scene: sc, label: scenes[sc].label, diffPeakDbFS: d.peakDbFS, diffRmsDbFS: d.rmsDbFS, identical: d.identical, firstDiffSec: d.firstDiffSec,
+          nullTestPass: d.identical || d.rmsDbFS <= -110 && d.peakDbFS <= -80, graphKeys: A.graphKeys, graphOk: A.graphOk, graphKeysInjected: B.graphKeys, graphOkInjected: B.graphOk,
+          audioParamCalls: {ouvert: A.params, injecte: B.params}, sortie: {ouvert: M.outLevels(A.buffer), injecte: M.outLevels(B.buffer)},
+          voix: {ouvert: A.stats.peakVoices, injecte: B.stats.peakVoices}, volees: {ouvert: A.stats.stolenVoices, injecte: B.stats.stolenVoices}});
       }
     }
     if (job === 'perf') { // temps de rendu hors ligne par seconde d'audio, variantes alternées dans le même processus

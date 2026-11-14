@@ -178,7 +178,13 @@
       var extras = Object.create(null), extraTable = options && options.extras;
       if (extraTable) Object.keys(extraTable).sort().forEach(function (name) { var r = extraTable[name]; if (r && typeof r.synth === 'function' && name && effectNames.indexOf(name) < 0 && name.indexOf('motor:') !== 0 && name.indexOf(':') < 0) extras[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
       var extraNames = Object.keys(extras);
-      var ctx = null, master, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
+      // MIX-11: a bench may hand the engine an OfflineAudioContext so the whole
+      // mix renders offline, deterministically, with no device and no clock. An
+      // injected context is never opened, resumed nor closed by the engine; it
+      // reports 'suspended' while rendering, so it counts as live on its own.
+      var injected = options && options.context && typeof options.context.createGain === 'function' ? options.context : null;
+      var offline = !!(injected && typeof injected.startRendering === 'function');
+      var ctx = null, master, limiter, guard, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
       var lastStep = -1, stepSide = 1, lastAlert = -1, lastTouch = -1, touchRun = 0;
       var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false, titlePlaying = false;
@@ -209,8 +215,13 @@
         stats.voices = voices.size; stats.peakVoices = Math.max(stats.peakVoices, voices.size);
         source.onended = function () { clean(entry); };
       }
+      function live() {
+        // An offline context stays 'suspended' until startRendering() and has no
+        // clock to wait for: for the engine it is live from the first call.
+        return !!ctx && (offline || ctx.state === 'running');
+      }
       function available() {
-        return ctx && !disposed && (!muted || preview) && ctx.state === 'running';
+        return ctx && !disposed && (!muted || preview) && live();
       }
       function reserve(level, bus) {
         if (!available() || titlePlaying && !preview || level <= .0001 || (bus === ambience ? mix.ambience : mix.effects) <= 0) return false;
@@ -528,13 +539,15 @@
       }
       function initialize() {
         if (ctx || disposed || failed) return;
-        var Audio = window.AudioContext || window.webkitAudioContext;
-        if (!Audio) { failed = true; return; }
+        if (!injected) {
+          var Audio = window.AudioContext || window.webkitAudioContext;
+          if (!Audio) { failed = true; return; }
+        }
         try {
-          ctx = new Audio();
+          ctx = injected || new Audio();
           master = remember(ctx.createGain());
           master.gain.value = muted ? 0 : .65 * mix.master;
-          var limiter = remember(ctx.createDynamicsCompressor());
+          limiter = remember(ctx.createDynamicsCompressor());
           // FEEL-07 (MIX-02): -12 dB, knee 6, ratio 3:1, 12 ms in, 120 ms out.
           // The MIX bench decided these values on the four recorded scenes and a
           // 24-round SMG burst: peak stays <= .68 and no sample reaches the .875
@@ -544,7 +557,7 @@
           // The existing compressor/mix stays intact. This final soft ceiling
           // is exactly linear below .875 and mathematically bounded above it,
           // including coincident rockets, debris and the MOD soundtrack.
-          var guard = remember(ctx.createWaveShaper()), curve = new Float32Array(2049);
+          guard = remember(ctx.createWaveShaper()); var curve = new Float32Array(2049);
           for (var ci = 0; ci < curve.length; ci++) {
             var input = ci / 1024 - 1, magnitude = Math.abs(input);
             curve[ci] = Math.sign(input) * (magnitude <= .875 ? magnitude : .875 + .095 * (1 - Math.exp(-(magnitude - .875) / .095)));
@@ -592,13 +605,13 @@
           if(playing)warmBank(false);
         } catch (_) {
           failed = true;
-          if (ctx) { try { ctx.close().catch(function () {}); } catch (_) {} }
+          if (ctx && !injected) { try { ctx.close().catch(function () {}); } catch (_) {} }
           ctx = null;
         }
       }
       function resume() {
         initialize();
-        if (!ctx || disposed) return Promise.resolve();
+        if (!ctx || disposed || offline) return Promise.resolve();
         if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
           try { return ctx.resume().catch(function () {}); } catch (_) {}
         }
@@ -642,7 +655,7 @@
         var serial = ++previewSerial;
         if (disposed || options && options.muted || mix.master <= 0 || typeof setTimeout !== 'function') return Promise.resolve(false);
         return resume().then(function () {
-          if (!ctx || disposed || serial !== previewSerial || ctx.state !== 'running') return false;
+          if (!ctx || disposed || serial !== previewSerial || !live()) return false;
           warmBank(false);
           var start = ctx.currentTime, audition = {id:serial,end:start+2,timer:null,index:0};
           preview = audition; stats.preview = true; updateMaster();
@@ -658,7 +671,7 @@
           ];
           function pump() {
             if (preview !== audition || disposed) return;
-            if (ctx.currentTime >= audition.end || ctx.state !== 'running') { cancelTestMix(); return; }
+            if (ctx.currentTime >= audition.end || !live()) { cancelTestMix(); return; }
             while (audition.index < events.length && ctx.currentTime-start >= events[audition.index].at) events[audition.index++].run();
             tick(); audition.timer = setTimeout(pump,40);
           }
@@ -682,7 +695,7 @@
           // to start/resume in a user gesture; no world effects are synthesized.
           if (disposed || !window.FMusic) return Promise.resolve(false);
           return FMusic.warmup('title').then(function () {
-            return !!(ctx && ctx.state === 'running' && !disposed && music && music.prepare('title'));
+            return !!(ctx && live() && !disposed && music && music.prepare('title'));
           });
         },
         setTitlePlaying: function (value) {
@@ -728,6 +741,11 @@
         setMachinery: function (value, pan, kind, occluded) { machinery = Math.max(0,Math.min(1,Number(value)||0));machineSide=Math.max(-1,Math.min(1,Number(pan)||0));machineKind=['fan','piston','reactor','lift'].indexOf(kind)>=0?kind:'lift';machineOccluded=Math.max(0,Math.min(1,Number(occluded)||0));updateMachinery(); },
         setSteam: function (value, pan, occluded) { steam = Math.max(0,Math.min(1,Number(value)||0)); steamSide = Math.max(-1,Math.min(1,Number(pan)||0));steamOccluded=Math.max(0,Math.min(1,Number(occluded)||0)); updateSteam(); },
         stats: stats,
+        // MIX-11: the nodes of the real chain, for the offline bench and the
+        // tests only. A game never reads them; nothing here is a public API.
+        graph: function () {
+          return ctx ? {master: master, limiter: limiter, guard: guard, effects: effects, ambience: ambience, musicBus: musicBus} : null;
+        },
         tick: tick,
         testMix: testMix,
         cancelTestMix: cancelTestMix,
@@ -952,14 +970,14 @@
             try { node.disconnect(); } catch (_) {}
           });
           persistent.length = 0;
-          if (ctx) { try { ctx.close().catch(function () {}); } catch (_) {} }
+          if (ctx && !injected) { try { ctx.close().catch(function () {}); } catch (_) {} }
           ctx = null; noiseBuffer = null;bank=Object.create(null);motors.length=0;
         }
       };
       // Priority belongs to a cue, not its waveform. A rocket's click, body
       // and exhaust keep the same reservation and cause one short music dip.
       var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
-      var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose)/;
+      var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose|graph)/;
       Object.keys(api).forEach(function (name) {
         if (typeof api[name] !== 'function' || helpers.test(name)) return;
         var method = api[name];

@@ -816,3 +816,35 @@ test('FEEL-07 fige les quatre réglages décidés : compresseur maître, maintie
   assert.equal(plain.ctx.sources.length,n+1,'sans la table METAL, lenemi garde le tampon v0.2 plutot que le silence');
   assert.equal(plain.ctx.sources.at(-1).connections[0].frequency.value,1100,'le passe-bas sapplique aussi a la voix de secours');
   r.audio.dispose();plain.audio.dispose();});
+
+// MIX-11 (lot 11b T2) : injecter un contexte hors ligne, et lire le vrai graphe.
+class OfflineContext extends Context{
+  constructor(){super();this.renders=0;this.state='suspended';}
+  startRendering(){this.renders++;return Promise.resolve({sampleRate:this.sampleRate,length:0,numberOfChannels:2,getChannelData:()=>new Float32Array(0)});}
+}
+test('un contexte hors ligne injecte tient pour disponible, nest jamais ouvert, relance ni ferme, et api.graph() rend les six noeuds (MIX-11)',async()=>{
+  const ctx=new OfflineContext();
+  const r=rig({options:{context:ctx}});
+  assert.equal(r.audio.graph(),null,'avant toute ouverture, le graphe nest pas rendu');
+  await r.audio.start();
+  assert.equal(ctx.resumes,0,'le moteur ne relance jamais un contexte qui lui est confié');
+  assert.equal(ctx.closes,0,'le moteur ne ferme jamais un contexte qui lui est confié');
+  const g=r.audio.graph();
+  assert(g,'le graphe est rendu des que le contexte est adopte');
+  assert.deepEqual(Object.keys(g).sort(),['ambience','effects','guard','limiter','master','musicBus'],'api.graph() rend maitre, ecreteur, garde, effets, ambiance et bus de musique');
+  for(const k of Object.keys(g))assert.equal(typeof g[k].connect,'function',k+' est bien un noeud');
+  assert.equal(g.limiter.kind,'limiter','le limiteur expose est le vrai compresseur de la chaine');
+  assert.equal(g.guard.kind,'guard','le garde expose est le vrai ecreteur');
+  assert(g.musicBus.connections.includes(g.master),'le bus de musique rendu est bien celui qui monte au maitre');
+  r.audio.setStage(1);r.audio.setPlaying(true);r.audio.tick();
+  const before=ctx.sources.length;r.audio.shot({level:1});
+  assert.equal(ctx.sources.length,before+1,'un tir est bien programme sur un contexte hors ligne, malgre son etat « suspended »');
+  assert(r.tracker.stats.scheduledRows>0,'le mod joue aussi sur un contexte hors ligne');
+  r.audio.dispose();
+  assert.equal(ctx.closes,0,'la liberation ne ferme pas le contexte du banc');
+  const plain=rig();await plain.audio.start();plain.audio.setStage(1);plain.audio.setPlaying(true);plain.audio.tick();
+  const n=plain.ctx.sources.length;plain.audio.shot({level:1});
+  assert.equal(plain.ctx.sources.length,n+1,'sans contexte injecte, le jeu normal joue toujours');
+  plain.audio.dispose();
+  assert.equal(plain.ctx.closes,1,'en revanche le contexte que le moteur a ouvert est bien ferme');
+});
