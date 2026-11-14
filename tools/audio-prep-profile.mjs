@@ -38,7 +38,7 @@ function realm(root, game = opt.game) {
   class Context extends FakeContext { constructor() { super(); contexts.push(this); } }
   const modules = ['music', 'audio'].concat(game && existsSync(join(root, 'src/audio-recipes.js')) ? ['audio-recipes'] : []);
   const v = loadRealm({root, modules, globals: {setTimeout: fn => { queue.push(fn); return queue.length; }, clearTimeout: () => {}, AudioContext: Context, performance}});
-  return {W: v.window, queue, contexts, sourceSha256: v.sourceSha256, table: game ? v.window.MetalAudio?.recipes : undefined, options: game ? v.window.MetalAudio?.options?.() : undefined};
+  return {W: v.window, queue, contexts, sourceSha256: v.sourceSha256, table: game ? v.window.MetalAudio?.recipes : undefined, extras: game ? v.window.MetalAudio?.extras : undefined, options: game ? v.window.MetalAudio?.options?.() : undefined};
 }
 async function pump(R, first) {
   const slices = []; let t = now(); const p = first(); await idle(); slices.push(now() - t);
@@ -56,13 +56,17 @@ async function prepareRun(root, stage) {
   return {ok: run.value === true, slices: run.slices.length, maxSliceMs: Math.max(...run.slices), totalMs: total, over8: run.slices.filter(s => s > 8).length,
     titleSlices: title.slices.length, titleMaxSliceMs: Math.max(...title.slices), titleTotalMs: titleTotal, sliceList: run.slices.map(s => +s.toFixed(2)), prepared};
 }
-function jobs(W, table) { const out = []; for (const n of W.FAudio.effectNames) for (let k = 0; k < (table?.[n]?.variants ?? (n.startsWith('motor:') ? 1 : 2)); k++) out.push([n, k]); return out; }
+function jobs(W, table, extras) { const out = []; for (const n of W.FAudio.effectNames) for (let k = 0; k < (table?.[n]?.variants ?? (n.startsWith('motor:') ? 1 : 2)); k++) out.push([n, k]); for (const n of Object.keys(extras || {}).sort()) for (let k = 0; k < (extras[n].variants === 1 ? 1 : 2); k++) out.push([n, k]); return out; }
 function fingerprints(root) {
   // MIX-09 : deux constructions dans le même processus, ordre direct puis inverse (une variante par tâche).
-  const RA = realm(root), RB = realm(root), A = RA.W, B = RB.W, list = jobs(A, RA.table), fwd = new Map(), perJob = [];
-  for (const [n, k] of list) { const t = now(), pcm = A.FAudio.synthesize(n, k, BANK_RATE, RA.table); perJob.push({name: n, variant: k, ms: now() - t}); fwd.set(n + '#' + k, sha(pcm)); }
-  let different = 0; for (const [n, k] of list.slice().reverse()) if (fwd.get(n + '#' + k) !== sha(B.FAudio.synthesize(n, k, BANK_RATE, RB.table))) different++;
-  const D = realm(root, false).W, changedVsDefault = RA.table ? list.filter(([n, k]) => fwd.get(n + '#' + k) !== sha(D.FAudio.synthesize(n, k, BANK_RATE))).map(([n, k]) => n + '#' + k) : [];
+  const RA = realm(root), RB = realm(root), A = RA.W, B = RB.W, list = jobs(A, RA.table, RA.extras), engineList = jobs(A, RA.table, null), fwd = new Map(), perJob = [];
+  // Les noms ajoutés par le jeu (confirmations) ne sont pas dans la table de recettes :
+  // FAudio.synthesize ne les connaît pas, c'est le générateur fourni par le jeu qui les
+  // rend. C'est bien ce que prépare FAudio, donc c'est bien la référence directe.
+  const direct = (R, n, k) => R.extras && R.extras[n] ? R.extras[n].synth(k, BANK_RATE) : R.W.FAudio.synthesize(n, k, BANK_RATE, R.table);
+  for (const [n, k] of list) { const t = now(), pcm = direct(RA, n, k); perJob.push({name: n, variant: k, ms: now() - t}); fwd.set(n + '#' + k, sha(pcm)); }
+  let different = 0; for (const [n, k] of list.slice().reverse()) if (fwd.get(n + '#' + k) !== sha(direct(RB, n, k))) different++;
+  const D = realm(root, false).W, changedVsDefault = RA.table ? engineList.filter(([n, k]) => fwd.get(n + '#' + k) !== sha(D.FAudio.synthesize(n, k, BANK_RATE))).map(([n, k]) => n + '#' + k) : [];
   const stages = [0, 1, 2, 'title'], modA = stages.map(s => sha(A.FMusic.getModule(s))), modB = stages.slice().reverse().map(s => [s, sha(B.FMusic.getModule(s))]).reverse().map(x => x[1]);
   return {buffers: list.length, buffersDifferent: different, recipeTable: !!RA.table, changedVsDefault, modulesIdentical: modA.every((h, i) => h === modB[i]), bankSha256: shaText([...fwd.values()].join('')), bankMultisetSha256: multiset(fwd.values()), moduleSha256: Object.fromEntries(stages.map((s, i) => [s, modA[i]])), perJob};
 }

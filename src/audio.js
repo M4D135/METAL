@@ -110,19 +110,29 @@
   // then a rate-aware 25 Hz DC blocker and gentle density saturation. Every
   // number comes from the game; this knows no weapon. Seeded by name+variant.
   var ROOM_TAPS=[[.011,.34],[.017,.27],[.023,.21],[.031,.15],[.043,.10]];
-  function layered(name,spec,variant,sampleRate){
+  // Resumable form of the layered report, same interface as synthJob: {total,
+  // step(count), seal()}. A game recipe built by FAudio.recipe is therefore
+  // cuttable like an engine effect, so LOAD-13 can bound it inside the slice.
+  // The sample loop, the LCG and the normalization are byte for byte those of
+  // the one-shot layered() below: step(64) four times seals the same
+  // Float32Array as step(0).
+  function layeredJob(name,spec,variant,sampleRate){
     var exp=Math.exp,sin=Math.sin,tanh=Math.tanh,min=Math.min,PI=Math.PI,s=spec||{},key=String(name);
     var rate=Math.max(8000,min(48000,Number(sampleRate)||22050)),seed=(0x5eed^Math.imul((variant|0)+1,0x9e3779b9))>>>0;
     for(var h=0;h<key.length;h++)seed=(Math.imul(seed,33)^key.charCodeAt(h))>>>0;
     function rnd(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296*2-1;}
     function one(f){return 1-exp(-2*PI*f/rate);}
     var n=Math.max(0,Math.ceil(Number(s.dur)*rate))||0,out=new Float32Array(n),tune=1+(rnd()*.03);
-    var c=s.crack,th=s.thump,b=s.body,room=s.room,mech=[],taps=[],hist=room?new Float32Array(n):null,i,k,m,u;
+    var c=s.crack,th=s.thump,b=s.body,room=s.room,mech=[],taps=[],hist=room?new Float32Array(n):null,i=0,k,m,u,sealed=false;
     (s.mech||[]).forEach(function(q){mech.push([q[0],q[1],q[2],one(q[2]*1.4),one(q[2]*.7)]);});
     if(room)ROOM_TAPS.forEach(function(q){taps.push([Math.round(q[0]*rate),q[1]]);});
     var crackPole=one(2500),crackTau=c?c[1]/1000:1,bodyPole=b?one(b.cut):0,bodyNorm=b?tanh(b.drive):1,roomPole=one(900),dcR=exp(-2*PI*25/rate),density=tanh(1.25);
     var hp=0,phase=0,lp1=0,lp2=0,bandA=0,bandB=0,roomLp=0,dcx=0,dcy=0;
-    for(i=0;i<n;i++){
+    return {
+      total: n,
+      step: function (count) {
+        var end=min(n,i+(count>0?count:n));
+        for(;i<end;i++){
       var t=i/rate,w=rnd(),x=0,clicks=0;
       if(c){hp+=crackPole*(w-hp);x=(w-hp)*c[0]*exp(-t/crackTau);}
       if(th){phase+=2*PI*((th.f1+(th.f0-th.f1)*exp(-t/th.tp))*tune)/rate;x+=sin(phase)*th.g*min(1,t/.0006)*exp(-t/th.ta);}
@@ -131,13 +141,20 @@
       x+=clicks;
       if(room){hist[i]=x;for(k=0;k<taps.length;k++)if(i>=taps[k][0])x+=hist[i-taps[k][0]]*taps[k][1]*room.g*2.2;roomLp+=roomPole*(w-roomLp);x+=roomLp*room.g*1.6*exp(-t/room.tr)*min(1,t/.012);}
       dcy=x-dcx+dcR*dcy;dcx=x;out[i]=tanh(dcy*1.25)/density;
-    }
-    var fade=Math.round((Number.isFinite(s.fade)?s.fade:.012)*rate),peak=0;
-    for(i=0;i<fade&&i<n;i++)out[n-1-i]*=i/fade;
-    for(i=0;i<n;i++)peak=Math.max(peak,Math.abs(out[i]));
-    var gain=peak>0?.84/peak:0;for(i=0;i<n;i++)out[i]*=gain;
-    if(n){out[0]=0;out[n-1]=0;}return out;
+        }
+        return i>=n;
+      },
+      seal: function () {
+        if(sealed)return out; sealed=true;
+        var fade=Math.round((Number.isFinite(s.fade)?s.fade:.012)*rate),peak=0,j;
+        for(j=0;j<fade&&j<n;j++)out[n-1-j]*=j/fade;
+        for(j=0;j<n;j++)peak=Math.max(peak,Math.abs(out[j]));
+        var gain=peak>0?.84/peak:0;for(j=0;j<n;j++)out[j]*=gain;
+        if(n){out[0]=0;out[n-1]=0;}return out;
+      }
+    };
   }
+  function layered(name,spec,variant,sampleRate){var job=layeredJob(name,spec,variant,sampleRate);job.step(0);return job.seal();}
   // A recipe table only replaces built-in names. Output that throws, is empty
   // or not finite falls back to the v0.2 recipe: without a table, PCM is v0.2.
   function tablePCM(recipes,name,variant,sampleRate){
@@ -150,16 +167,16 @@
   }
   window.FAudio = {
     synthesize: function (name, variant, sampleRate, recipes) { return tablePCM(recipes,name,variant,sampleRate)||synthesize(name,variant,sampleRate); },
-    recipe: function (name, spec) { return {variants:spec&&spec.variants===1?1:2,synth:function(variant,rate){return layered(name,spec,variant,rate);}}; },
+    recipe: function (name, spec) { return {variants:spec&&spec.variants===1?1:2,synth:function(variant,rate){return layered(name,spec,variant,rate);},job:function(variant,rate){return layeredJob(name,spec,variant,rate);}}; },
     effectNames: effectNames.slice(),
     create: function (options) {
       var recipes = Object.create(null), table = options && options.recipes;
-      if (table) Object.keys(table).forEach(function (name) { var r = table[name]; if (r && typeof r.synth === 'function' && effectNames.indexOf(name) >= 0) recipes[name] = {synth: r.synth, variants: r.variants === 1 ? 1 : 2}; });
+      if (table) Object.keys(table).forEach(function (name) { var r = table[name]; if (r && typeof r.synth === 'function' && effectNames.indexOf(name) >= 0) recipes[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
       // A game may add its own one-shot names (confirmations, stings). They are
       // prepared with the bank, never during play, and never touch an engine
       // effect name: without them the bank is the built-in one, bit for bit.
       var extras = Object.create(null), extraTable = options && options.extras;
-      if (extraTable) Object.keys(extraTable).sort().forEach(function (name) { var r = extraTable[name]; if (r && typeof r.synth === 'function' && name && effectNames.indexOf(name) < 0 && name.indexOf('motor:') !== 0 && name.indexOf(':') < 0) extras[name] = {synth: r.synth, variants: r.variants === 1 ? 1 : 2}; });
+      if (extraTable) Object.keys(extraTable).sort().forEach(function (name) { var r = extraTable[name]; if (r && typeof r.synth === 'function' && name && effectNames.indexOf(name) < 0 && name.indexOf('motor:') !== 0 && name.indexOf(':') < 0) extras[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
       var extraNames = Object.keys(extras);
       var ctx = null, master, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
@@ -408,45 +425,72 @@
         // (test rigs, cold realms) the same queue advances one variant per
         // slice, deterministically: no slice count depends on time there.
         // The bank stays bit for bit the synchronous one.
-        var SLICE_MS=8,BLOCK=256,BLOCK_TARGET_MS=2,BLOCK_MIN=16,jobs=[],index=0,cost=Object.create(null),worst=0;
-        for(var ni=0;ni<bankNames.length;ni++){var jobName=bankNames[ni];for(var jobVariant=0;jobVariant<variantsOf(jobName);jobVariant++)jobs.push({name:jobName,variant:jobVariant,opaque:!!(recipes[jobName]||extras[jobName]),renderer:null,total:0,opened:false,blockMs:0,ms:0,block:BLOCK});}
+        var SLICE_MS=8,BLOCK=256,BLOCK_TARGET_MS=1.5,BLOCK_MIN=16,SLICE_MARGIN_MS=.6,jobs=[],index=0,cost=Object.create(null),peakCost=Object.create(null),worst=0;
+        for(var ni=0;ni<bankNames.length;ni++){var jobName=bankNames[ni];var jobRecipe=recipes[jobName]||extras[jobName]||null;for(var jobVariant=0;jobVariant<variantsOf(jobName);jobVariant++)jobs.push({name:jobName,variant:jobVariant,recipe:jobRecipe,opaque:!!(jobRecipe&&typeof jobRecipe.job!=='function'),renderer:null,total:0,opened:false,blockMs:0,ms:0,block:BLOCK,per:0,done:0});}
         var clock=typeof performance==='object'&&performance&&typeof performance.now==='function'?function(){return performance.now();}:null;
-        function open(job){job.opened=true;if(job.opaque)return;job.renderer=synthJob(job.name,job.variant,22050);job.total=job.renderer.total;
+        function open(job){job.opened=true;if(job.opaque)return;
+          // A recipe built by FAudio.recipe carries its own resumable renderer,
+          // so a game's weapon is cuttable exactly like an engine effect.
+          job.renderer=job.recipe?job.recipe.job(job.variant,22050):synthJob(job.name,job.variant,22050);
+          job.total=job.renderer.total;
           // The first block of a job used to run unconditionally at 256 samples, which
           // cost up to 19 ms on the heaviest break. Size it from a measured cost instead:
           // the variant already rendered for this name, else the worst rate seen so far.
-          var seen=cost[job.name],per=seen!==undefined&&job.total>0?seen/job.total:worst;
-          if(clock&&per>0)job.block=Math.max(BLOCK_MIN,Math.min(BLOCK,Math.floor(BLOCK_TARGET_MS/per)));
+          // Nothing is known yet (first job of the bank) → BLOCK_MIN, never BLOCK: the one
+          // block no prediction can cover stays at most BLOCK_MIN samples long.
+          var seen=cost[job.name],avg=seen!==undefined&&job.total>0?seen/job.total:0;
+          // The average rate of the variant already rendered underestimates the peak:
+          // a break gets more expensive as its staggered impacts come in. Size from the
+          // worst rate ever seen for this name. When nothing is known about the name,
+          // nothing is guessed either: the job opens at BLOCK_MIN samples, which is
+          // bounded even for the heaviest effect, and the next blocks are sized from
+          // this job's own measured rate. Guessing from the global worst is what let
+          // rocket#0 and break:metal#0 open a 256-sample block worth 13 to 18 ms.
+          var per=Math.max(avg,peakCost[job.name]||0);
+          job.block=clock&&per>0?Math.max(BLOCK_MIN,Math.min(BLOCK,Math.floor(BLOCK_TARGET_MS/per))):BLOCK_MIN;
         }
-        function predict(job){var seen=cost[job.name];return seen!==undefined?seen:worst*job.total;}
+        function predict(job){var seen=cost[job.name];return Math.max(seen!==undefined?seen:0,worst*job.total);}
+        function finite(data){if(!data||!(data.length>0))return false;for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i]))return false;return true;}
         function run(job,deadline){
           if(bank[job.name]&&bank[job.name].length>job.variant)return true;
           if(!bank[job.name])bank[job.name]=[];
           var t0=clock?clock():0;
           if(job.opaque){
             bufferFor(job.name,recipeData(job.name,job.variant));
-            if(clock){var ms=clock()-t0;if(job.variant===0&&cost[job.name]===undefined)cost[job.name]=ms;}
+            if(clock){var ms=clock()-t0;if(cost[job.name]===undefined)cost[job.name]=ms;}
             return true;
           }
           for(;;){
-            if(clock&&job.blockMs>0&&clock()+job.blockMs>deadline)return false;
-            var b0=clock?clock():0;
+            // Predict with the worse of the last block and the job's own worst rate at
+            // this block size: a cheap stretch of the envelope must not buy an expensive
+            // one, which is what let a single block run 15 ms past the budget.
+            if(clock&&job.blockMs>0&&clock()+Math.max(job.blockMs,job.per*job.block)>deadline)return false;
+            var b0=clock?clock():0,from=job.done;
             var done=job.renderer.step(job.block);
-            if(clock){job.blockMs=clock()-b0;
-              // A block that overshot its target shrinks for the rest of the job, so the
-              // sample loop resumes inside the slice instead of at the next 256 samples.
-              if(job.blockMs>BLOCK_TARGET_MS&&job.block>BLOCK_MIN)job.block=Math.max(BLOCK_MIN,Math.floor(job.block*BLOCK_TARGET_MS/job.blockMs));
+            job.done=done?job.total:Math.min(job.total,from+job.block);
+            if(clock){
+              var spent=clock()-b0,did=job.done-from;
+              job.ms+=spent;job.blockMs=spent;
+              if(did>0){
+                var per=spent/did;
+                // Running maximum, never an average: the cheap tail of an effect must
+                // not re-open a block of 256 samples just before its expensive middle.
+                if(per>job.per)job.per=per;
+                if(job.per>peakCost[job.name])peakCost[job.name]=job.per;
+                job.block=Math.max(BLOCK_MIN,Math.min(BLOCK,Math.floor(BLOCK_TARGET_MS/job.per)));
+                if(job.per>worst)worst=job.per;
+              }
             }
             if(done)break;
           }
-          if(clock){
-            job.ms+=clock()-t0;
-            if(job.variant===0&&cost[job.name]===undefined)cost[job.name]=job.ms;
-            var per=job.total>0?job.ms/job.total:0;
-            if(per>worst)worst=per;
-          }
-          bufferFor(job.name,job.renderer.seal());
+          // The cost of a name is its complete sample time, recorded once, when the job
+          // is finished: recorded earlier it came from a partial run and sized the next
+          // variant's first block far too large.
+          if(clock&&cost[job.name]===undefined)cost[job.name]=job.ms;
+          var sealed=job.renderer.seal();
           job.renderer=null;
+          // Same fallback as recipeData for a game recipe: bad output falls back to v0.2.
+          bufferFor(job.name,job.recipe&&!finite(sealed)?synthesize(job.name,job.variant,22050):sealed);
           return true;
         }
         warming=new Promise(function(resolve){warmResolve=resolve;function pump(){
@@ -459,10 +503,13 @@
             if(!job.opened)open(job);
             if(clock){
               var left=SLICE_MS-(clock()-sliceT0);
-              if(left<=.2)break;
+              // The slice is bounded by what the browser actually runs: the timer
+              // callback, its microtasks, seal() and createBuffer. Keep a margin
+              // instead of spending the whole 8 ms on the sample loop.
+              if(left<=SLICE_MARGIN_MS)break;
               if(work&&job.opaque&&predict(job)>left)break;
             }else if(work)break;
-            if(!run(job,sliceT0+SLICE_MS))break;
+            if(!run(job,sliceT0+SLICE_MS-SLICE_MARGIN_MS))break;
             index++;work=true;
           }
           if(index<jobs.length)warmTimer=setTimeout(pump,0);else{warmResolve=null;resolve(finish());}

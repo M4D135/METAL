@@ -300,30 +300,43 @@
       if(stage==='title')for(let i=0;i<5;i++)if(!titleBank?.[i]){await pause();titleInstrument(i);}
       if(!tensionSample){await pause();tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};}
       const steps=moduleSteps(stage);
-      if(steps){await pause();steps.kit();await pause();steps.compose();await pause();steps.serialize();await pause();steps.decode();}
+      if(steps)for(const phase of steps.phases){await pause();phase();}
       await pause();return info();
     });
     preparing.set(stage,task);preparation=task.catch(()=>{});
     task.then(()=>preparing.delete(stage),()=>preparing.delete(stage));return task;
   }
   function moduleSteps(stage){
-    // LOAD-13: the four expensive phases of a module — drum kit, compose,
-    // serialize, decode — are separate resumable sub-tasks, so warmup can
-    // yield between them and a loading screen paints inside the budget.
+    // LOAD-13: the expensive phases of a module — drum kit, compose, serialize,
+    // decode — are separate resumable sub-tasks, so warmup can yield between them
+    // and a loading screen paints inside the budget. The kit is itself cut per
+    // bar: eight bars and a crash sample in one block were the last slice that
+    // no audio budget could cover (19 to 22 ms on the title). `phases` is the
+    // fine-grained list warmup walks; kit/compose/serialize/decode stay the
+    // coarse API moduleFor uses, and run exactly the same calls in order.
     // Running them back to back is exactly what moduleFor always did.
     stage=stageOf(stage);if(modules.has(stage))return null;
     const title=stage==='title',song=songOf(stage),built={title,samples:Array.from({length:6},(_,i)=>title&&i<3?titleInstrument(i):instrument(i)),score:null,bytes:null};
+    const kitPhases=[];
+    for(const [i,kind] of ['kick','snare','hat','open','crash','tom','ride'].entries())kitPhases.push(function kitDrum(){
+      if(!percussionBank)percussionBank={};
+      if(!percussionBank[kind])percussionBank[kind]=drumHit(kind,907+i*113);
+    });
+    for(let i=0;i<8;i++){const bar=i;kitPhases.push(function kitBar(){built.samples.push({name:'MTL KIT '+song.bpm+' '+String.fromCharCode(65+bar),volume:60,pcm:title?titleDrumBar(bar,percussionBank):drumBar(stage,bar,percussionBank)});});}
+    kitPhases.push(function kitExtras(){
+      if(!tensionSample)tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};
+      built.samples.push(tensionSample);
+      if(title)built.samples.push(titleInstrument(3),titleInstrument(4));
+    });
+    const composePhase=function(){built.score=title?composeTitle(built.samples):compose(stage,built.samples);};
+    const serializePhase=function(){built.bytes=serialize(built.score);};
+    const decodePhase=function(){if(!modules.has(stage))modules.set(stage,decode(built.bytes));};
     return {
-      kit(){
-        if(!percussionBank){percussionBank={};for(const [i,kind] of ['kick','snare','hat','open','crash','tom','ride'].entries())percussionBank[kind]=drumHit(kind,907+i*113);}
-        for(let i=0;i<8;i++)built.samples.push({name:'MTL KIT '+song.bpm+' '+String.fromCharCode(65+i),volume:60,pcm:title?titleDrumBar(i,percussionBank):drumBar(stage,i,percussionBank)});
-        if(!tensionSample)tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};
-        built.samples.push(tensionSample);
-        if(title)built.samples.push(titleInstrument(3),titleInstrument(4));
-      },
-      compose(){built.score=title?composeTitle(built.samples):compose(stage,built.samples);},
-      serialize(){built.bytes=serialize(built.score);},
-      decode(){if(!modules.has(stage))modules.set(stage,decode(built.bytes));}
+      kit(){for(const phase of kitPhases)phase();},
+      compose(){composePhase();},
+      serialize(){serializePhase();},
+      decode(){decodePhase();},
+      phases:kitPhases.concat([composePhase,serializePhase,decodePhase])
     };
   }
   function moduleFor(stage){

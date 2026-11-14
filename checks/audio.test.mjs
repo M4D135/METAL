@@ -717,3 +717,61 @@ test('the game creates FAudio with the METAL recipe table and its own audition p
   assert(!lengths.includes(Math.ceil(.105*22050))&&!lengths.includes(Math.ceil(.165*22050)),'no v0.2 weapon buffer is played');
   app.element('resume').click();app.element('start').click();await app.ready();assert.equal(app.mode(),'playing');assert.equal(app.contexts.length,1);app.audio.dispose();
 });
+
+// LOAD-13 (lot 11, tour 1) : la préparation découpe vraiment, et le découpage ne change pas le son.
+test('a game recipe renders bit for bit the same PCM whether the engine cuts it into blocks or not',()=>{
+  const r=rig({recipes:true});
+  const names=[...Object.keys(r.scope.MetalAudio.recipes),...Object.keys(r.scope.MetalAudio.extras)];
+  assert(names.length>=7,'the METAL table and its confirmations are loaded');
+  for(const name of names){
+    const recipe=r.scope.MetalAudio.recipes[name]||r.scope.MetalAudio.extras[name];
+    assert.equal(typeof recipe.job,'function',name+' exposes a resumable renderer');
+    for(const variant of [0,1])for(const block of [1,16,64,256,4096]){
+      const one=recipe.synth(variant,22050),job=recipe.job(variant,22050);
+      assert.equal(job.total,one.length,name+' reports its length before rendering');
+      let guard=0;while(!job.step(block)&&guard++<200000){}
+      assert.deepEqual(job.seal(),one,name+' variant '+variant+' cut at '+block+' samples');
+    }
+  }
+  r.audio.dispose();
+});
+
+test('the preparation scheduler never runs past its 8 ms slice on the clock it reads',async()=>{
+  const scope={timers:[]},contexts=[];scope.window=scope;
+  let clockT=0;scope.performance={now:()=>(clockT+=.05)};
+  scope.setTimeout=fn=>{scope.timers.push(fn);return scope.timers.length;};scope.clearTimeout=()=>{};
+  scope.AudioContext=class extends Context{constructor(){super();contexts.push(this);}};
+  vm.createContext(scope);
+  vm.runInContext(source.music,scope,{filename:'music.js'});
+  vm.runInContext(source.audio,scope,{filename:'audio.js'});
+  vm.runInContext(source['audio-recipes'],scope,{filename:'audio-recipes.js'});
+  const audio=scope.FAudio.create(scope.MetalAudio.options());
+  await audio.start();
+  const pending=audio.prepare(0),slices=[];
+  const idle=()=>new Promise(resolve=>setImmediate(resolve));
+  await idle();
+  while(scope.timers.length){const fn=scope.timers.shift();const t0=scope.performance.now();fn();slices.push(scope.performance.now()-t0);await idle();}
+  assert.equal(await pending,true,'the bank is ready');
+  assert(slices.length>20,'the work really is cut into slices, got '+slices.length);
+  for(const ms of slices)assert(ms<=8.000001,'une tranche dépasse son budget : '+ms.toFixed(2)+' ms');
+  audio.dispose();
+});
+
+test('the prepared bank equals the direct synthesis for every name, recipe-backed names included',async()=>{
+  const r=rig({recipes:true});await r.audio.start();
+  const idle=()=>new Promise(resolve=>setImmediate(resolve));
+  const pending=r.audio.prepare(0);
+  await idle();
+  while(r.timers.size){const [id,timer]=[...r.timers][0];r.timers.delete(id);timer.fn();await idle();}
+  assert.equal(await pending,true);
+  const sha=b=>Buffer.from(b.getChannelData(0).buffer).toString('base64');
+  const prepared=r.contexts.flatMap(c=>c.buffers).filter(b=>b.sampleRate===22050);
+  const table=r.scope.MetalAudio.recipes,extras=r.scope.MetalAudio.extras;
+  const expected=[];
+  for(const name of r.scope.FAudio.effectNames)for(let k=0;k<(table[name]?.variants??(name.startsWith('motor:')?1:2));k++)expected.push(sha({getChannelData:()=>r.scope.FAudio.synthesize(name,k,22050,table)}));
+  for(const name of Object.keys(extras).sort())for(let k=0;k<2;k++)expected.push(sha({getChannelData:()=>extras[name].synth(k,22050)}));
+  assert.equal(prepared.length,expected.length,'the bank holds every prepared buffer');
+  const got=prepared.map(sha).sort(),want=expected.slice().sort();
+  for(let i=0;i<want.length;i++)assert.equal(got[i],want[i],'buffer '+i+' diffère de la synthèse directe');
+  r.audio.dispose();
+});
