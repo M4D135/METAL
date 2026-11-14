@@ -1,18 +1,29 @@
 # Lot 11 — Audio, armes puissantes et mixage
 
 Branche `chantier/lot-11-audio`. Agent : OpenCode, modèle local du Spark.
-Base du brief : `1336bdb` (`wip(spark-audio)`). Base intégrée du dépôt : `35c654a`
-(rapport lot 02, version 0.9.1). Preuves : `docs/chantier-moteur/preuves/lot-11/`.
+Base du brief : `1336bdb` — **attention** : cet objet existe dans le clone mais n'est **pas**
+sur la branche ; c'est un fils du wip `4296a73` (« wip(spark-audio): état laissé par le relais
+OpenCode à son arrêt »), pas le point de départ du lot. Base réelle du lot : `35c654a`
+(rapport lot 02, version 0.9.1), parent de `1461e24` (T0). Preuves :
+`docs/chantier-moteur/preuves/lot-11/`.
 
 ## Référence de départ
 
 `npm test` lancé sur une arbre de travail détachée propre de `d7e7bed` (l'état **sans** le
-wip Spark) : **506 réussis, 0 échec** (journal `.relais/npm-test-ref.log`). Le choix de
-`d7e7bed` plutôt que de l'arbre de départ est dit ici sans détour : l'arbre de départ est
-**rouge**, le test `checks/audio.test.mjs:203` laissé par le wip Spark attend
-`await prepare(0)` avant d'avoir amorcé les `setTimeout` et pendouille. Cet état rouge
-n'est donc pas la référence ; la référence est le dernier état vert, et le test pendouillant
-a été réécrit en T1.
+wip Spark) : **506 réussis, 0 échec** (journal `.relais/npm-test-ref.log`). C'est cette
+référence qui a été retenue, et le test de préparation réécrit en T1.
+
+**Correction apportée au tour 1 des correctifs.** Ce paragraphe écrivait que « l'arbre de
+départ est **rouge**, le test `checks/audio.test.mjs:203` laissé par le wip Spark attend
+`await prepare(0)` avant d'avoir amorcé les `setTimeout` et pendouille », et que le
+`console.log('DEBUG slices'…)` avait été retiré en T1. **Aucun état commité n'est rouge.**
+Reproduit au tour 1 : `git worktree add --detach .relais/wip 4296a73` puis `npm test` →
+**510 réussis, 0 échec** (journal `.relais/npm-test-wip.log`), et `grep -n DEBUG` sur
+`checks/audio.test.mjs`, `src/audio.js`, `src/music.js` de ce commit ne renvoie rien.
+La phrase exacte est donc : **l'arbre non commité que j'ai reçu était rouge** — un état de
+travail, non contrôlable par personne, qui n'existe dans aucun commit. La référence retenue
+reste le commit vert `d7e7bed` (**506/506**, chiffre reproduit à l'unité près), et le test
+réécrit en T1 l'a été sur un arbre déjà vert.
 
 À la fin du lot : **516 réussis, 0 échec**. Aucun test qui passait n'a échoué. Deux tests
 ont été modifiés, chacun dans le commit du changement voulu qu'il acte (dit dans la tâche
