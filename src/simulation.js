@@ -1021,9 +1021,13 @@
         m.shellHp=Math.max(0,(m.shellHp??12)-power*(r?Math.max(.2,1-d/r):1));if(!m.shellHp)activateMechanism(m,true);
       }
       for(const q of s.pipes)if(Math.hypot(q.x-point[0],q.y-point[1],q.z-point[2])<(r||.9))leakPipe(q);
+      // Règle du lot 14 appliquée aux machines du chemin obligatoire : une
+      // explosion les démonte (r > 0), une arme légère les abîme sans jamais les
+      // finir (plancher à 1 point de structure). Le danger obligatoire d'un
+      // secteur ne se démonte pas au pistolet en traversant.
       for(const t of s.traps){
         if(t.destroyed)continue;const q=t.box||{minX:t.x-t.w/2,maxX:t.x+t.w/2,minY:t.y,maxY:t.y+.3,minZ:t.z-t.d/2,maxZ:t.z+t.d/2};
-        const d=distanceBox(point,q);if(d>(r||.18))continue;t.hp=Math.max(0,(t.hp??18)-power*(r?Math.max(.2,1-d/r):1));
+        const d=distanceBox(point,q);if(d>(r||.18))continue;t.hp=Math.max(r?0:1,(t.hp??18)-power*(r?Math.max(.2,1-d/r):1));
         if(!t.hp){t.destroyed=true;t.hot=t.warning=false;t.box=null;emit('trap',{id:t.id,kind:t.kind,destroyed:true,x:t.x,y:t.y,z:t.z});}
       }
     }

@@ -131,3 +131,57 @@ test('FPassages distingue un couloir obligatoire d un couloir de contournement',
   const line = [{ from: 0, to: 1, x1: 0, z1: 0, x2: 10, z2: 0 }, { from: 1, to: 2, x1: 10, z1: 0, x2: 20, z2: 0 }];
   assert.deepEqual(FPassages.tourLinks({ links: line, start: 0, objectives: [2] }), [0, 1]);
 });
+
+// --- T4 : la destruction des machines suit la règle du lot 14 --------------------
+// « Aux explosifs, tout casse sauf le sol ; les armes légères sont limitées. »
+// Appliquée au danger obligatoire du secteur : une explosion démonte la coupe, une
+// arme légère l'abîme sans jamais la finir. Et démonter une machine ne doit jamais
+// couper un chemin : les pièges ne posent aucun collier solide permanent.
+const simWindow = loadRealm({ modules: ['fmath', 'passages', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation'] }).window;
+const simOptions = () => ({ brain: simWindow.FBrain.create({ mode: 'cpu' }), armorSystem: true });
+const firstCoupe = w => { const barrier = [...new Set(w.traps.map(t => t.barrier))][0]; return { barrier, ids: w.traps.filter(t => t.barrier === barrier).map(t => t.id) }; };
+const piecesOf = (sim, ids) => sim.state.traps.filter(t => ids.includes(t.id));
+
+test('une explosion démonte la machine qui barre le chemin obligatoire', () => {
+  const world = FWorld.create(1, 2, { campaign: true, campaignVersion: 2 });
+  const { ids } = firstCoupe(world), sim = simWindow.FSimulation.create(world, simOptions()), pieces = piecesOf(sim, ids);
+  assert.ok(pieces.some(t => t.kind === 'blade'), 'le secteur ne pose aucune lame à démonter');
+  // Explosifs réels (mêmes paramètres que la roquette : rayon 4,2, puissance de
+  // terrain 55) posés au centre des pièces encore debout. Le banc pose la charge,
+  // il ne rejoue pas la balistique du lance-roquettes — couverte par
+  // checks/simulation.test.mjs. Une machine de 5 m de fond ne tient pas dans un
+  // seul cratère : on remet une charge jusqu'à ce que la coupe soit démontée.
+  for (let shots = 0; shots < 6 && pieces.some(t => !t.destroyed); shots++) {
+    const live = pieces.filter(t => !t.destroyed);
+    const centre = ['x', 'y', 'z'].map(k => live.reduce((n, t) => n + t[k], 0) / live.length);
+    sim.state.projectiles.push({ id: 100 + shots, kind: 'grenade', owner: 'player', x: centre[0], y: centre[1] + .6, z: centre[2],
+      vx: 0, vy: 0, vz: 0, age: 0, life: 1, fuse: 0, radius: .12, blastRadius: 4.2, damage: 32, terrainPower: 55, travel: 0, bounces: 0, resting: true });
+    sim.step(.025, {});
+  }
+  assert.ok(pieces.every(t => t.destroyed), 'une explosion doit démonter toute la coupe : ' + pieces.map(t => `${t.kind}:${t.hp}`).join(' '));
+  assert.ok(pieces.every(t => t.box === null), 'une machine démontée ne bloque plus le couloir');
+});
+
+test('une arme légère abîme la machine sans jamais la démonter', () => {
+  const world = FWorld.create(1, 2, { campaign: true, campaignVersion: 2 });
+  const { barrier, ids } = firstCoupe(world), sim = simWindow.FSimulation.create(world, simOptions()), pieces = piecesOf(sim, ids);
+  const spikes = world.traps.find(t => t.barrier === barrier && t.kind === 'spikes');
+  const press = world.traps.find(t => t.barrier === barrier && t.kind === 'press');
+  const axis = spikes.x !== press.x ? 'x' : 'z', sign = Math.sign(spikes[axis] - press[axis]);
+  const x = spikes.x + sign * 6, z = spikes.z + (axis === 'x' ? 0 : sign * 6), y = sim.ground(x, z);
+  Object.assign(sim.state.player, { x, z, y, yaw: Math.atan2(press.x - x, press.z - z), pitch: 0 });
+  for (let i = 0; i < 1200 && !pieces.some(t => t.hp <= 1); i++) sim.step(.025, { weapon: 0, fire: i % 3 === 0 });
+  assert.ok(pieces.every(t => !t.destroyed && t.hp >= 1), 'une arme légère a démonné la machine du chemin obligatoire');
+  assert.ok(pieces.some(t => t.hp < 18), 'les tirs doivent quand même marquer la machine');
+});
+
+test('démonter les machines ne coupe aucun chemin : elles ne portent aucun collier solide', () => {
+  for (const { label, world: w } of worlds) {
+    const groups = new Map(w.destructibles.map(g => [g.id, g]));
+    for (const id of new Set(w.traps.map(t => t.destructibleId))) {
+      const g = groups.get(id);
+      assert.ok(g, `${label}: le groupe destructible ${id} des machines est absent du monde`);
+      assert.equal(g.colliders.length, 0, `${label}: la machine ${id} porte ${g.colliders.length} colliers solides, sa destruction couperait le couloir`);
+    }
+  }
+});
