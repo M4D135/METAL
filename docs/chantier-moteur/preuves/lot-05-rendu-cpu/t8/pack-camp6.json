@@ -2,33 +2,34 @@
  "banc": "pack() seul, image par image, ordre alterné (2 passages de chauffe exclus)",
  "world": "camp:6",
  "seed": 96,
- "frames": 240,
+ "frames": 300,
  "reps": 5,
  "warmup": 120,
  "skip": 60,
  "node": "v24.18.0",
  "maillagesParImage": [
-  370.43,
-  370.43
+  380.35,
+  380.35
  ],
  "runs": [
   {
    "racine": "base",
-   "medianeMs": 0.09066,
-   "moyenneMs": 0.13911,
-   "p05": 0.0319,
-   "p95": 0.34915,
-   "n": 1200
+   "medianeMs": 0.10901,
+   "moyenneMs": 0.15106,
+   "p05": 0.03118,
+   "p95": 0.36669,
+   "n": 1500
   },
   {
    "racine": "tete",
-   "medianeMs": 0.04738,
-   "moyenneMs": 0.08989,
-   "p05": 0.0191,
-   "p95": 0.2397,
-   "n": 1200
+   "medianeMs": 0.07062,
+   "moyenneMs": 0.10539,
+   "p05": 0.0257,
+   "p95": 0.27534,
+   "n": 1500
   }
  ],
- "ratioMediane": 0.5226,
- "ratioParPaire": 0.6751
+ "ratioMediane": 0.6479,
+ "ratioParPaire": 0.7902
 }
+

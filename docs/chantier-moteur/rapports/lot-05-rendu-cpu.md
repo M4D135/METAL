@@ -141,9 +141,30 @@ rz, r0 recalculés seulement si rx change).
   maillages dynamiques : un seul littéral de 28 champs, dans le même ordre,
   affecté par tous les producteurs. Les classes cachées du chemin modèles
   tombent de **9 à 1**, les champs dynamiques de 28 à 1.
-- `pack()` camp:6 **0,0907 → 0,0474 ms** (ratio 0,523) ; camp:17
-  **0,1036 → 0,0502 ms** (ratio 0,485). `draw()+models()` totalP50 ratio 0,964
+- `pack()` camp:17 **0,1036 → 0,0502 ms** (ratio 0,485) ; camp:6
+  **0,0907 → 0,0474 ms** (ratio 0,523). `draw()+models()` totalP50 ratio 0,964
   (camp:6) et 0,928 (camp:17).
+- Rejeu du ratio `pack` avec le banc commité (`tools/proof/lot05/pack-cost.mjs`,
+  300 images, 5 reps, graine 96), chacun avec son propre contrôle « même racine
+  contre elle-même » : camp:17 brut **0,4174** puis **0,5144** sur deux exécutions,
+  contrôle 1,1167 → corrigé **0,374** ; camp:6 brut **0,6479**, contrôle 0,9728 →
+  corrigé **0,666**. Le chiffre de camp:17 se reproduit ; celui de camp:6 est
+  nettement moins bon qu'annoncé (0,666 contre 0,523) mais reste au-dessus de la
+  moitié du gain annoncé (0,762), seuil d'abandon.
+- **Réserve sur ce micro-bench** : la même racine y est mesurée 0,064 ms dans une
+  exécution et 0,182 ms dans une autre (facteur 3), selon que l'autre côté de la
+  paire vient d'un autre moteur ou du même — la comparaison croisée de deux moteurs
+  dans le même isolate contamine la mesure. Un ratio de ce banc ne vaut qu'à
+  l'intérieur de son exécution, appariée et alternée, et corrigé de son contrôle.
+  Le contre-vérificateur obtient 1,0063 sur ce même test avec un banc contaminé à
+  4× : aucun des deux bancs n'est capable d'invalider l'autre sur ce point.
+- Vérification robuste, indépendante du temps :
+  `node --allow-natives-syntax tools/proof/lot05/mesh-shape.mjs <racine> 120 camp:17`.
+  Avant T8 (`.relais/t7`) : 30 classes cachées distinctes, 29 150 maillages sur 29 150
+  avec une clé ajoutée après création, seulement 28,4 % de la classe de référence.
+  Après T8 (tête) : **1 seule classe cachée, 0 clé ajoutée, 100 % en représentation
+  rapide** (`%HasFastProperties`). Preuves `t8/classes-cachees-natives-avant-t8.json`
+  et `t8/classes-cachees-natives-tete.json`.
 - Pixels Chrome/SwiftShader 14/14 identiques à écart nul ; `npm test` 519/519.
 - Preuves : `docs/chantier-moteur/preuves/lot-05-rendu-cpu/t8/`.
 - Garde-fou tenu : le constructeur est exporté sur une ligne séparée
