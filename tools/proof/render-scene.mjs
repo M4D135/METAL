@@ -145,7 +145,7 @@ export function loadModels(root, env) {
   const start = find('function systemsReady()', mLine);
   const end = find('function renderHUD', start);
   const body = [lines[mLine], ...lines.slice(start, end)].join('\n');
-  const factory = vm.runInThisContext('(function(env){let {sim,world,quality,renderer,actorMotion,systemMotion,motion,leftMotion,prefs,clamp,FMotion,FActors,FEffects,window,innerWidth,innerHeight}=env;let shieldLift=0;\n' + body + '\nreturn {models};})', {filename: 'game-models.js'});
+  const factory = vm.runInThisContext('(function(env){let {sim,world,quality,renderer,actorMotion,systemMotion,motion,leftMotion,prefs,clamp,FMotion,FActors,FEffects,FRender,window,innerWidth,innerHeight}=env;let shieldLift=0;\n' + body + '\nreturn {models};})', {filename: 'game-models.js'});
   return factory(env);
 }
 
@@ -188,7 +188,7 @@ export function makeScene(root, {world: spec = ['camp', 6], seed = 96, quality =
   const prefs = {shadows: true, bloom: true, fov: 74};
   const s = sim.state;
   const game = loadModels(root, {sim, world, quality, renderer, actorMotion, systemMotion, motion, leftMotion, prefs,
-    clamp: FSimulation.clamp, FMotion, FActors, FEffects, window: {FEffects}, innerWidth: 1280, innerHeight: 720});
+    clamp: FSimulation.clamp, FMotion, FActors, FEffects, FRender: win.FRender, window: {FEffects}, innerWidth: 1280, innerHeight: 720});
   if (s.inventory?.weapons) { s.inventory.weapons.fill(true); if (s.inventory.ammo) s.inventory.ammo = s.inventory.ammo.map((v, i) => [180, 36, 12, 16, 200][i] ?? v); }
   const input = {moveX: 0, moveY: 1, lookX: 0, lookY: 0, fire: false, fireLeft: false, dash: false, pulse: false, melee: false, interact: false, weapon: 0, sprint: true, assist: false};
   const stops = [...(world.enemies || []).map(e => [e.x, e.z]), ...(world.cores || []).map(c => [c.x, c.z]), [world.exit.x, world.exit.z]];

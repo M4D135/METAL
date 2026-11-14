@@ -7,7 +7,7 @@
   const orient=d=>[Math.acos(clamp(d[1],-1,1)),Math.atan2(d[0],d[2]),0];
   const debrisShapes=['box','bevel','cylinder','sphere','octa','ring','foliage'];
   function rotate(p,r){let [x,y,z]=p;const c=r.map(Math.cos),s=r.map(Math.sin);[y,z]=[c[0]*y-s[0]*z,s[0]*y+c[0]*z];[x,z]=[c[1]*x+s[1]*z,-s[1]*x+c[1]*z];return [c[2]*x-s[2]*y,s[2]*x+c[2]*y,z];}
-  const mesh=(shape,p,s,mat=7,color,r=[0,0,0],part='')=>({shape,p,s,r,mat,...(color?{color}:{}),surface:'object',effectPart:part});
+  const mesh=(shape,p,s,mat=7,color,r=[0,0,0],part='')=>{const m=G.FRender.mesh(shape,p,s,mat,r,0);m.color=color;m.surface='object';m.effectPart=part;return m;};
   function build(state,world,camera,options={}){
     if(!state)return [];
     if(typeof options==='string')options={quality:options};

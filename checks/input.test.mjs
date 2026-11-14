@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root=new URL('../',import.meta.url);
 const modules=['destruction','economy','simulation','motion','actors','effects','soundscape','options','game'];
@@ -46,7 +47,7 @@ function shell({touch=false,settings={},bufferMs,requestLock,pointerLockAvailabl
       pointerLockElement:null,exitPointerLock(){this.pointerLockElement=null;emit(documentListeners,'pointerlockchange');}},
     localStorage:{getItem:name=>memory.get(name)??null,setItem:(name,value)=>memory.set(name,String(value)),removeItem:name=>memory.delete(name)},
     FWorld:{create:inputWorld},FAudio:{create:()=>new Proxy({},{get:(_,name)=>(...args)=>sounds.push({name,args})})},
-    FRender:{create:()=>({stats:{backend:'test'},resize:noop,setWorld:noop,updateWorld:noop,draw:noop})}};
+    FRender:{create:()=>({stats:{backend:'test'},resize:noop,setWorld:noop,updateWorld:noop,draw:noop}),mesh:FRenderMesh}};
   context.window=context;vm.createContext(context);
   for(const name of modules.slice(0,-1))vm.runInContext(sources[name],context,{filename:`${name}.js`});
   if(bufferMs!==undefined)context.FOptions.fireBufferMs=bufferMs;

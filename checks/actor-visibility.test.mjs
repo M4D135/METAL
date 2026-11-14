@@ -7,7 +7,8 @@ import {test} from 'node:test';
 
 const rendererSource=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
 const actorSource=readFileSync(new URL('../src/actors.js',import.meta.url),'utf8');
-const actorContext={window:{}};vm.runInNewContext(actorSource,actorContext);
+import {FRenderMesh} from './mesh-fixture.mjs';
+const actorContext={window:{FRender:{mesh:FRenderMesh}}};vm.runInNewContext(actorSource,actorContext);
 const build=actorContext.window.FActors.build,HEIGHT=[1.35,1.05,1.6,1.8];
 const environment={biome:'woodland',sunDirection:[-.48,.78,.36],wind:0,outdoorZones:[{x:0,z:0,w:200,d:200}]};
 const lights=[{p:[-6,7,0],color:[.4,.8,1],power:12},{p:[15,8,-9],color:[1,.5,.2],power:10},{p:[3,4,20],color:[.4,1,.7],power:8}];

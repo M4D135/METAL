@@ -1,0 +1,40 @@
+{
+ "mode": "cost",
+ "world": "camp:17",
+ "seed": 96,
+ "quality": "auto",
+ "canvas2d": false,
+ "frames": 400,
+ "reps": 7,
+ "warmup": 120,
+ "skip": 60,
+ "node": "v24.18.0",
+ "cost": [
+  {
+   "root": ".relais/avant-t8",
+   "drawP50": 2.817,
+   "drawP95": 8.1,
+   "drawP99": 24.186,
+   "drawMean": 3.7221,
+   "modelsP50": 0.418,
+   "modelsMean": 0.6818,
+   "totalP50": 3.429
+  },
+  {
+   "root": ".",
+   "drawP50": 2.605,
+   "drawP95": 7.47,
+   "drawP99": 20.906,
+   "drawMean": 3.4504,
+   "modelsP50": 0.408,
+   "modelsMean": 0.6664,
+   "totalP50": 3.183
+  }
+ ],
+ "ratio": {
+  "drawP50": 0.9247,
+  "drawMean": 0.927,
+  "modelsP50": 0.9761,
+  "totalP50": 0.9283
+ }
+}

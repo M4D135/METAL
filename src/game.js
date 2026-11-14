@@ -355,7 +355,7 @@
     selectedWeapon=sim.state.weapon;
     if(checkpointDue||checkpointPending&&!sim.state.player.airborne)saveCheckpoint();
   }
-  const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>({shape,p,s,mat,r,emissive});
+  const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>FRender.mesh(shape,p,s,mat,r,emissive);
   function renderShop(message){
     const shop=(world.shops||[]).find(q=>q.id===currentShopId),offers=sim.shopOffers?.(currentShopId),profile=sim.state.economy,stats=sim.stats||{maxHp:100};
     $('shop-title').textContent=shop?.name||'Atelier';$('shop-credits').textContent=String(profile?.credits||0);$('shop-cores').textContent=String(profile?.cores||0);

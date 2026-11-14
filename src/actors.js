@@ -38,7 +38,7 @@
     const emission=stun?.20+.08*Math.sin(time*9):.28+charge*.45,signalMat=stun||peaceful?4:charge||scanning?5:6;
     function piece(name,shape,p,s,skin='shell',f=root,r=null,mat=0,emissive=0){
       const color=Array.isArray(skin)?skin:palette[skin],rot=r?angles(product(f.b,rotation(...r))):f.r;
-      const m={shape,p:point(f,p),s,r:rot,mat,color,emissive,surface:'object',actorPart:name,actorLod:lod};out.push(m);return m;
+      const m=G.FRender.mesh(shape,point(f,p),s,mat,rot,emissive);m.color=color;m.surface='object';m.actorPart=name;m.actorLod=lod;out.push(m);return m;
     }
     const box=(n,p,s,skin='shell',f=root,r=null)=>piece(n,'box',p,s,skin,f,r,skin==='rubber'?7:0);
     const armor=(n,p,s,skin='shell',f=root,r=null)=>piece(n,lod===0?'bevel':'box',p,s,skin,f,r);

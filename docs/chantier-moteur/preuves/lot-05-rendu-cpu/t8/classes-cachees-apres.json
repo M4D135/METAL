@@ -1,0 +1,38 @@
+{
+ "commentaire": "Apres T8 : une seule classe par liste dynamique, 28 champs, tous producteurs confondus (240 images x 3 mondes).",
+ "mondes": [
+  {
+   "monde": "camp:17",
+   "maillages": 58062,
+   "classes": 1,
+   "signatures": [
+    {
+     "champs": 28,
+     "maillages": 58062
+    }
+   ]
+  },
+  {
+   "monde": "camp:6",
+   "maillages": 67875,
+   "classes": 1,
+   "signatures": [
+    {
+     "champs": 28,
+     "maillages": 67875
+    }
+   ]
+  },
+  {
+   "monde": "legacy:0",
+   "maillages": 69162,
+   "classes": 1,
+   "signatures": [
+    {
+     "champs": 28,
+     "maillages": 69162
+    }
+   ]
+  }
+ ]
+}

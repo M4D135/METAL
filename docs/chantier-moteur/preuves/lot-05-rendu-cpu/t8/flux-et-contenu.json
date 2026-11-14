@@ -1,0 +1,36 @@
+{
+ "commentaire": "Base = commit T7 (4c2ce9a), tete = T8 (constructeur de maillage unique). Liste dynamique identique : le flux GL et le contenu des tampons ne bougent pas sur 200 images pilotees x 3 mondes (tools/proof/render-proof.mjs --mode stream).",
+ "outils": "node tools/proof/render-proof.mjs .relais/avant-t8,. --mode stream --frames 200 --world <monde>",
+ "mondes": [
+  {
+   "monde": "camp:17",
+   "fluxIdentique": true,
+   "contenuIdentique": true,
+   "streamSha256": "a9b77162b60c9f7fa6ba25e07ae286d36728ab4cd3d28b0b526e4a8d1c33ace4",
+   "contentSha256": "1c588799f803ee72ff76e94a35701b3062f7bc9f1dedb098da3cc840539cda57",
+   "appels": 85052,
+   "draws": 11807,
+   "instances": 899943
+  },
+  {
+   "monde": "camp:6",
+   "fluxIdentique": true,
+   "contenuIdentique": true,
+   "streamSha256": "f01f2069aa1f4d083485d1f48b337b68fe0a3178d6fa2dc4d1ab5e8ebb07e201",
+   "contentSha256": "bea6d518f0d120378bd9a14f949fc0485cbee72771c1232ca240ce850272cd56",
+   "appels": 83075,
+   "draws": 11410,
+   "instances": 937982
+  },
+  {
+   "monde": "legacy:0",
+   "fluxIdentique": true,
+   "contenuIdentique": true,
+   "streamSha256": "4ffd2ae75084f49fca07de51a679ca58574e0cdf30a050bc2684e6213e0739c6",
+   "contentSha256": "6df41c853cc52ab6aaaff14c724bd47835d70e5501adcfc02bb558345cc6c9b5",
+   "appels": 75811,
+   "draws": 10597,
+   "instances": 957914
+  }
+ ]
+}

@@ -2364,7 +2364,20 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     }
     return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter};
   }
+  // Constructeur unique de maillage dynamique (RESTE-03) : même littéral, même ordre,
+  // tous les champs lus par le moteur sont présents dès la création. Les producteurs
+  // affectent ensuite des valeurs, ils n'ajoutent jamais de clé, pour que toutes les
+  // listes dynamiques partagent une seule classe cachée. Les valeurs par défaut sont
+  // neutres : elles reproduisent exactement la lecture d'un champ absent.
+  function mesh(shape,p,s,mat,r=[0,0,0],emissive=0){
+    return {shape,p,s,mat,r,emissive,color:undefined,surface:undefined,overlay:false,fx:false,
+      alpha:undefined,additive:undefined,outdoor:undefined,actorPart:undefined,actorLod:0,
+      actorScale:undefined,structural:false,debrisId:undefined,sourceId:undefined,material:undefined,
+      effectPart:'',fxFire:false,fxSmoke:false,fxSpark:false,fxPriority:undefined,ground:undefined,
+      innerRatio:undefined,region:undefined};
+  }
   window.FRender={create,foliageTriangles};
+  window.FRender.mesh=mesh;
 })();
 
 ;
@@ -8494,7 +8507,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const emission=stun?.20+.08*Math.sin(time*9):.28+charge*.45,signalMat=stun||peaceful?4:charge||scanning?5:6;
     function piece(name,shape,p,s,skin='shell',f=root,r=null,mat=0,emissive=0){
       const color=Array.isArray(skin)?skin:palette[skin],rot=r?angles(product(f.b,rotation(...r))):f.r;
-      const m={shape,p:point(f,p),s,r:rot,mat,color,emissive,surface:'object',actorPart:name,actorLod:lod};out.push(m);return m;
+      const m=G.FRender.mesh(shape,point(f,p),s,mat,rot,emissive);m.color=color;m.surface='object';m.actorPart=name;m.actorLod=lod;out.push(m);return m;
     }
     const box=(n,p,s,skin='shell',f=root,r=null)=>piece(n,'box',p,s,skin,f,r,skin==='rubber'?7:0);
     const armor=(n,p,s,skin='shell',f=root,r=null)=>piece(n,lod===0?'bevel':'box',p,s,skin,f,r);
@@ -8832,7 +8845,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   const orient=d=>[Math.acos(clamp(d[1],-1,1)),Math.atan2(d[0],d[2]),0];
   const debrisShapes=['box','bevel','cylinder','sphere','octa','ring','foliage'];
   function rotate(p,r){let [x,y,z]=p;const c=r.map(Math.cos),s=r.map(Math.sin);[y,z]=[c[0]*y-s[0]*z,s[0]*y+c[0]*z];[x,z]=[c[1]*x+s[1]*z,-s[1]*x+c[1]*z];return [c[2]*x-s[2]*y,s[2]*x+c[2]*y,z];}
-  const mesh=(shape,p,s,mat=7,color,r=[0,0,0],part='')=>({shape,p,s,r,mat,...(color?{color}:{}),surface:'object',effectPart:part});
+  const mesh=(shape,p,s,mat=7,color,r=[0,0,0],part='')=>{const m=G.FRender.mesh(shape,p,s,mat,r,0);m.color=color;m.surface='object';m.effectPart=part;return m;};
   function build(state,world,camera,options={}){
     if(!state)return [];
     if(typeof options==='string')options={quality:options};
@@ -9501,7 +9514,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     selectedWeapon=sim.state.weapon;
     if(checkpointDue||checkpointPending&&!sim.state.player.airborne)saveCheckpoint();
   }
-  const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>({shape,p,s,mat,r,emissive});
+  const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>FRender.mesh(shape,p,s,mat,r,emissive);
   function renderShop(message){
     const shop=(world.shops||[]).find(q=>q.id===currentShopId),offers=sim.shopOffers?.(currentShopId),profile=sim.state.economy,stats=sim.stats||{maxHp:100};
     $('shop-title').textContent=shop?.name||'Atelier';$('shop-credits').textContent=String(profile?.credits||0);$('shop-cores').textContent=String(profile?.cores||0);

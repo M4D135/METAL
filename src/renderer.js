@@ -1743,5 +1743,18 @@
     }
     return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter};
   }
+  // Constructeur unique de maillage dynamique (RESTE-03) : même littéral, même ordre,
+  // tous les champs lus par le moteur sont présents dès la création. Les producteurs
+  // affectent ensuite des valeurs, ils n'ajoutent jamais de clé, pour que toutes les
+  // listes dynamiques partagent une seule classe cachée. Les valeurs par défaut sont
+  // neutres : elles reproduisent exactement la lecture d'un champ absent.
+  function mesh(shape,p,s,mat,r=[0,0,0],emissive=0){
+    return {shape,p,s,mat,r,emissive,color:undefined,surface:undefined,overlay:false,fx:false,
+      alpha:undefined,additive:undefined,outdoor:undefined,actorPart:undefined,actorLod:0,
+      actorScale:undefined,structural:false,debrisId:undefined,sourceId:undefined,material:undefined,
+      effectPart:'',fxFire:false,fxSmoke:false,fxSpark:false,fxPriority:undefined,ground:undefined,
+      innerRatio:undefined,region:undefined};
+  }
   window.FRender={create,foliageTriangles};
+  window.FRender.mesh=mesh;
 })();

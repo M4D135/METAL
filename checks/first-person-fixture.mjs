@@ -3,13 +3,14 @@
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
+import {FRenderMesh} from './mesh-fixture.mjs';
 
 export function viewModels(root=new URL('../src/',import.meta.url)) {
   const source=readFileSync(new URL('game.js',root),'utf8');
   const model=source.slice(source.indexOf('  function models('),source.indexOf('  function renderHUD('));
   assert(model.startsWith('  function models('));
-  const mesh=source.match(/  const m=\(shape,p,s,mat,r=\[0,0,0\],emissive=0\)=>\([^\n]+/)[0];
-  const noop=()=>{},context={window:{},quality:'auto',innerWidth:1280,innerHeight:800,
+  const mesh=source.match(/  const m=\(shape,p,s,mat,r=\[0,0,0\],emissive=0\)=>[^\n]+/)[0];
+  const noop=()=>{},context={window:{},quality:'auto',innerWidth:1280,innerHeight:800,FRender:{mesh:FRenderMesh},
     clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),machinery:noop,ambience:noop,systems:noop,
     exitReady:()=>false,actorMotion:new Map(),prefs:{shadows:true},
     renderer:{stats:{backend:'webgl2'}},shieldLift:0,
