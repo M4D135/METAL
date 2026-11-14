@@ -20,6 +20,17 @@ complet : `docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
   (ANGLE Vulkan), 14 scénarios — camp:17 et camp:6 sous trois angles de
   caméra, qualité basse et haute, ombres coupées, deux formats téléphone,
   deux scénarios Canvas2D. Comparaison pixel à pixel base contre tête.
+- **Couverture du chemin dynamique** : la page `tools/render/pages/lot05-scene.html`
+  posait 90 maillages sur sept noms de forme, dont quatre (`cone`, `torus`,
+  `pyramid`, `prism`) n'existent pas dans le moteur (`src/renderer.js`,
+  `const names = ['box','sphere','cylinder','octa','ring','bevel','foliage']`)
+  et étaient donc écartés par `pack` : seules 3 des 90 maillages étaient
+  réellement dessinées. Les noms ont été remplacés par les formes réelles.
+  Après correction, 14/14 identiques à écart nul, et le nombre d'instances
+  dessinées augmente de **+51 exactement** sur chacun des douze scénarios WebGL
+  (90 × 4/7 = 51,4), ainsi que les appels de dessin du repli Canvas 2D
+  (2 153 → 2 224 et 700 → 735). Sortie brute :
+  `docs/chantier-moteur/preuves/lot-05-rendu-cpu/pages/pixels-base-head.json`.
 - Résultat : **14/14 identiques, écart de canal maximal 0**, pour T2, T3, T4,
   T5, T6, puis **T8, T9, T12, T17, T19**. T7 n'a pas eu de passage pixels
   séparé : son flux GL est byte-identique à la base, ce qui absorbe la preuve

@@ -22,7 +22,7 @@
   }
   function pseudo(seed) { let s = (seed >>> 0) || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
   function dynamicMeshes(world, camera, seed) {
-    const rnd = pseudo(seed), shapes = ['box', 'sphere', 'cylinder', 'cone', 'torus', 'pyramid', 'prism'], out = [];
+    const rnd = pseudo(seed), shapes = ['box', 'sphere', 'cylinder', 'octa', 'ring', 'bevel', 'foliage'], out = [];
     for (let i = 0; i < 90; i++) {
       const a = rnd() * Math.PI * 2, d = 2 + rnd() * 26;
       out.push({shape: shapes[i % shapes.length], p: [camera.pos[0] + Math.cos(a) * d, 0.4 + rnd() * 3, camera.pos[2] + Math.sin(a) * d],
