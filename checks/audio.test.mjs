@@ -881,3 +881,29 @@ test('FAudio.makeupDb rend le rattrapage automatique du compresseur aux quatre c
   assert.deepEqual([m.audio.graph().limiter.threshold.value,m.audio.graph().limiter.knee.value,m.audio.graph().limiter.ratio.value],[-12,6,3],'sans compressor dans chain, les reglages en place restent');
   m.audio.dispose();
 });
+
+// MIX-V2 (lot 11b T8) : le duck suit le volume des effets, et ne bouge pas à 1.
+test('le duck de la musique est proportionnel au volume des effets et reste identique bit à bit à effets = 1 (MIX-V2)',async()=>{
+  const r=rig();r.audio.setStage(1);r.audio.setPlaying(true);await r.audio.start();r.audio.tick();
+  const bus=r.music[0].output,base=bus.gain.value;
+  r.audio.setMix({master:1,music:.45,effects:1,ambience:1});
+  r.audio.shot({level:1});
+  assert(Math.abs(r.audio.stats.duckGain-base*.35)<1e-6,'à effets = 1 (le défaut), le caniveau reste à 0,35 du niveau de la musique, pas plus');
+  const aEffetsUn=r.audio.stats.duckGain;
+  r.ctx.advance(1.5);r.audio.tick();
+  for(const [effets,attendu] of [[.5,1-.65*.5],[.2,1-.65*.2],[.05,1-.65*.05]]){
+    r.audio.setMix({master:1,music:.45,effects:effets,ambience:1});
+    r.audio.shot({level:1});
+    const voulu=base*attendu;
+    assert(Math.abs(r.audio.stats.duckGain-voulu)<1e-6,'à '+effets*100+' % d\'effets le caniveau vaut '+r.audio.stats.duckGain.toFixed(4)+', attendu '+voulu.toFixed(4));
+    r.ctx.advance(1.5);r.audio.tick();
+  }
+  r.audio.setMix({master:1,music:.45,effects:1,ambience:1});
+  r.audio.shot({level:1});
+  assert.equal(r.audio.stats.duckGain,aEffetsUn,'revenu à effets = 1, le duck est exactement le même nombre');
+  r.ctx.advance(1.5);r.audio.tick();
+  r.audio.setMix({master:1,music:.45,effects:0,ambience:1});
+  r.audio.shot({level:1});
+  assert.equal(r.audio.stats.duckGain,base,'à effets = 0 la musique ne plonge pas pour des tirs inaudibles');
+  r.audio.dispose();
+});

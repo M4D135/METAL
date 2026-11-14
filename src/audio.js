@@ -277,7 +277,10 @@
         if (cueDucked || !musicBus || !cue || mix.effects <= 0) return;
         var weapon = /^(shot|fracture|rocket|grenade|grenadeLaunch|melee|hurt)$/.test(cue);
         var strength = weapon ? .35 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism)$/.test(cue) ? .68 : 1;        if (strength === 1) return;
-        strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
+        // MIX-V2 : un duck de 6,9 dB pour des tirs a 20 % de volume est une perte
+        // sèche. La profondeur suit le volume des effets, et a 1 (le defaut) le
+        // facteur vaut exactement 1 : le rendu reste identique bit a bit.
+        strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25) * Math.min(1,mix.effects);
         cueDucked = true;
         var now = ctx.currentTime, hold = DUCK_HOLD[cue] || (weapon ? .14 : strength < .4 ? .28 : .14);
         ambientDuckUntil = Math.max(ambientDuckUntil,now+.20);
