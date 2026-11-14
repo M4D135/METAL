@@ -28,8 +28,14 @@ A = `.relais/avant-t5` (arbre de travail sur `f70b785`, avant T5), B = l'arbre.
 | monde 1 | 2,450 | 2,017 | **−17,7 %** |
 | écran titre | 3,121 | 2,579 | **−17,4 %** |
 
-Le critère de la fiche était de retrouver au moins la moitié du −21 % attendu : atteint
-sur les trois scènes, la tâche n'est pas abandonnée.
+**Correction du tour 1.** Cette phrase écrivait « Le critère de la fiche était de retrouver
+au moins la moitié du −21 % attendu ». **Ce critère n'existe ni dans la fiche, ni dans le
+constat RESTE-09** : c'est un chiffre inventé ici. La règle réellement applicable est celle du
+brief (« un gain annoncé qui se reproduit à moins de la moitié : abandonner ») appliquée au
+gain que la fiche annonce pour les points (2) et (3) — le travail par image — et mesuré
+ci-dessus : −22,3 %, −17,7 %, −17,4 %, donc la tâche n'est pas abandonnée. Le point (1) du
+constat (deux `GainNode` persistants par piste, « 15 nœuds/s au lieu de 30 ») est **écarté**
+par la contre-vérification de RESTE-09 ; son compteur est publié dans **`noeuds.md`**.
 
 Notes et lignes programmées sur 60 s, identiques entre A et B : 1 071 notes et
 1 202 lignes en monde 0, 2 726 notes et 2 043 lignes en monde 1.

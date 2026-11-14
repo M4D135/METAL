@@ -149,8 +149,26 @@ ligne. Le `Set` est gardé plutôt qu'un tableau à retrait par échange : `dele
 - Allocations de `FMusic.tick` (médianes de 7 allers-retours, outil ajouté
   `tools/music-alloc.mjs`, domaine principal, instance chauffée) : monde 0
   **1,321 → 1,027 Mo/min (−22,3 %)**, monde 1 **2,450 → 2,017 (−17,7 %)**, titre
-  **3,121 → 2,579 (−17,4 %)**. La fiche attendait −21 % et demandait d'abandonner sous
-  −10,5 % : atteint sur les trois scènes.
+  **3,121 → 2,579 (−17,4 %)**.
+- **Correction du tour 1 (problème 1).** Cette phrase écrivait « La fiche attendait −21 % et
+  demandait d'abandonner sous −10,5 % ». **Ce critère n'existe ni dans la fiche, ni dans le
+  constat RESTE-09** : c'est un chiffre inventé par ce rapport (et repris dans le message du
+  commit `982418a`, que je ne peux pas réécrire). Ce qui est réellement mesuré, ce sont les
+  trois chiffres ci-dessus, en comparaison appariée.
+- **Le point (1) de RESTE-09 (deux `GainNode` persistants par piste, « 15 nœuds/s au lieu de
+  30 ») n'est pas implémenté, et ne le sera pas.** La contre-vérification du constat le classe
+  « **à écarter** » : « 30 nœuds par seconde sont insignifiants pour Web Audio, et réutiliser
+  un gain qui porte encore des automations planifiées (…) peut produire des clics, ce qui est
+  une perte de qualité possible. Garder (2), (3), (4) et LOOP-14. » La règle du chantier
+  interdit toute perte de qualité, et le constat dit lui-même « Aucun gain JS mesurable »
+  pour ce point. La fiche le marque d'ailleurs « NON contre-vérifié : valider par écoute
+  Chrome avant clôture », écoute impossible ici.
+  **Le compteur exigé par la fiche est publié quand même** : `preuves/lot-11/t5/noeuds.md`,
+  rejoué au tour 1 — **29,9 nœuds/s des deux côtés** (base `35c654a` et tête), soit
+  `{"gain":898,"source":898}` pour 898 notes en 60 s, **2 nœuds par note**. Le critère
+  « ≤ 15 nœuds/s » n'est donc pas atteint, volontairement et chiffres à l'appui. Un test
+  (`checks/music.test.mjs`, « sixty seconds of music create exactly two nodes per note »)
+  bloque ce compte à deux nœuds par note, dans les deux sens.
 - Notes et lignes sur 60 s inchangées (1 071/1 202 en monde 0, 2 726/2 043 en monde 1).
 - Identité : journal des automatisations **identique** sur a, b, c, d, t (0 écart,
   0 événement retiré, `stats` égaux) ; sha256 des trois modules et du module du titre

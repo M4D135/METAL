@@ -202,3 +202,16 @@ test('title warmup is shared, yields its instrument work and needs no audio devi
   const before=yields;await cold.FMusic.warmup('title');assert.equal(yields,before);await cold.FMusic.warmup(0);assert.equal(yields,before+20,'LOAD-13: world preparation reuses the shared instruments and yields once per module phase plus its closing pause — seven kit drums, eight kit bars, kit extras, compose, serialize, decode = 19 phases');
  assert.equal(bytesHash(cold.FMusic.getModule('title')),bytesHash(Music.getModule('title')));assert.equal(contexts,0);
 });
+// RESTE-09 (lot 11, tour 1) : le compteur de nœuds est une preuve, pas une intention.
+test('sixty seconds of music create exactly two nodes per note: the persistent-gain variant of RESTE-09 (1) stays excluded',async()=>{
+  await Music.warmup(0);
+  const r=rig();r.music.setStage(0);r.music.setPlaying(true);
+  const graph=r.ctx.nodes.slice();
+  run(r,60);
+  const notes=r.music.stats.scheduledNotes,created=r.ctx.nodes.filter(n=>graph.indexOf(n)<0);
+  assert(notes>200,'soixante secondes de musique programment des notes, eu '+notes);
+  assert.equal(created.filter(n=>n.kind==='source').length,notes,'une AudioBufferSourceNode par note');
+  assert.equal(created.filter(n=>n.kind==='gain').length,notes,'un GainNode par note : la variante a GainNode persistants alternes est ecartee par la contre-verif de RESTE-09 (« a ecarter : 30 nœuds par seconde sont insignifiants… peut produire des clics »), donc le compteur reste a 2 par note et non 1');
+  assert.equal(created.filter(n=>n.kind==='pan').length,0,'aucun nœud de panoramisation par note');
+  assert.equal(created.length,2*notes,'deux nœuds par note, ni plus ni moins');
+});
