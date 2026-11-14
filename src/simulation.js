@@ -1021,9 +1021,13 @@
         m.shellHp=Math.max(0,(m.shellHp??12)-power*(r?Math.max(.2,1-d/r):1));if(!m.shellHp)activateMechanism(m,true);
       }
       for(const q of s.pipes)if(Math.hypot(q.x-point[0],q.y-point[1],q.z-point[2])<(r||.9))leakPipe(q);
+      // Règle du lot 14 appliquée aux machines du chemin obligatoire : une
+      // explosion les démonte (r > 0), une arme légère les abîme sans jamais les
+      // finir (plancher à 1 point de structure). Le danger obligatoire d'un
+      // secteur ne se démonte pas au pistolet en traversant.
       for(const t of s.traps){
         if(t.destroyed)continue;const q=t.box||{minX:t.x-t.w/2,maxX:t.x+t.w/2,minY:t.y,maxY:t.y+.3,minZ:t.z-t.d/2,maxZ:t.z+t.d/2};
-        const d=distanceBox(point,q);if(d>(r||.18))continue;t.hp=Math.max(0,(t.hp??18)-power*(r?Math.max(.2,1-d/r):1));
+        const d=distanceBox(point,q);if(d>(r||.18))continue;t.hp=Math.max(r?0:1,(t.hp??18)-power*(r?Math.max(.2,1-d/r):1));
         if(!t.hp){t.destroyed=true;t.hot=t.warning=false;t.box=null;emit('trap',{id:t.id,kind:t.kind,destroyed:true,x:t.x,y:t.y,z:t.z});}
       }
     }
@@ -2015,12 +2019,14 @@
     }
     function updateEnvironment(dt,damage=true){
       trapBoxes.length=0;
+      const trapActors=t=>[p,...nearby(t.x,t.z,Math.max(t.w,t.d)+(t.travel||2)+3).filter(e=>e.hp>0)];
       for(const t of s.traps){
         t.damageWait=Math.max(0,(t.damageWait||0)-dt);
         if(t.destroyed){t.box=null;t.warning=t.hot=false;continue;}
-        const actors=[p,...nearby(t.x,t.z,Math.max(t.w,t.d)+(t.travel||2)+3).filter(e=>e.hp>0)];
-        let progress=0,warning=false,hot=false;
+        let progress=0,warning=false,hot=false,actors;
         if(t.kind==='spikes'||t.kind==='floor'){
+          // Les pics se déclenchent à l'approche : la requête spatiale est due à chaque pas.
+          actors=trapActors(t);
           if(!t.triggered&&actors.some(e=>Math.abs(e.x-t.x)<t.w/2+.2&&Math.abs(e.z-t.z)<t.d/2+.2&&Math.abs(feet(e)-t.y)<.35)){t.triggered=true;t.triggerAge=0;if(damage)emit('trap',{id:t.id,kind:t.kind,warning:true,x:t.x,y:t.y,z:t.z});}
           if(t.triggered){
             t.triggerAge+=dt;const delay=Math.max(.65,t.warningTime||t.warningDuration||t.warningTime||1.2),active=t.active||2;
@@ -2034,8 +2040,20 @@
           progress=hot?(t.kind==='blade'?phase/active:Math.sin(Math.PI*phase/active)):0;
           const cycle=Math.floor((s.time+(t.phase||0))/period);
           if(warning&&t.cycle!==cycle){t.cycle=cycle;if(damage)emit('trap',{id:t.id,kind:t.kind,warning:true,x:t.x,y:t.y,z:t.z});}
+          // Une lame ou une presse ne peut rencontrer un corps que pendant sa course :
+          // arrêtée, sa pose est fixe, trapPose ne pousse aucun contact et personne ne
+          // lit la liste. La requête spatiale, la plus chère du pas, n'est donc due que
+          // quand la pièce est en mouvement ou s'annonce. Et tant que la pièce reste au
+          // repos SANS CONTACT sa boîte ne change pas : on ne la recalcule ni ne la
+          // reallocue. Le drapeau tombe dès qu'un contact a modifié la pose : une pièce
+          // arrêtée par un corps avant d'atteindre son repos n'est pas au repos, et sa
+          // boîte doit être recalculée au moins une fois après le départ du corps.
+          actors=hot||warning?trapActors(t):[p];
         }
-        const pose=trapPose(t,progress,actors);t.progress=pose.progress;t.box=pose.box;t.angle=progress*Math.PI*2;t.warning=warning;t.hot=hot;
+        const auRepos=!hot&&progress===0;
+        const pose=(auRepos&&t.boxAtRest&&t.box)?{progress:0,box:t.box,contacts:[]}:trapPose(t,progress,actors);
+        t.boxAtRest=auRepos&&pose.box!==null&&pose.contacts.length===0&&pose.progress===progress;
+        t.progress=pose.progress;t.box=pose.box;t.angle=progress*Math.PI*2;t.warning=warning;t.hot=hot;
         if(t.box&&(t.kind==='blade'||t.kind==='press'))trapBoxes.push(t.box);
         if(damage&&hot&&t.damageWait<=0){
           const contact=new Set(pose.contacts);if(t.kind==='spikes')for(const e of actors)if(bodyTouches(e,t.box,.02))contact.add(e);
@@ -2226,7 +2244,7 @@
           mechanisms.forEach((m,i)=>{const q=a.mechanismDamage[i];require(q&&number(q.hp,0,12)&&bool(q.destroyed)&&q.destroyed===(q.hp===0)&&(!q.destroyed||m.active));if(candidate&&m.destructibleId&&!candidate.isAlive(m.destructibleId))require(q.destroyed&&m.active);m.shellHp=q.hp;m.destroyed=q.destroyed;});
           require(Array.isArray(a.pipes)&&a.pipes.length===pipes.length&&Array.isArray(a.traps)&&a.traps.length===traps.length);
           pipes=pipes.map((q,i)=>{const v=a.pipes[i],delay=Math.max(.65,Number(q.delay)||1),duration=Math.max(.5,Number(q.duration)||7);require(v&&bool(v.broken)&&bool(v.active)&&bool(v.warning)&&bool(v.hot)&&number(v.age,0,delay+duration+1)&&number(v.remaining,0,delay+duration)&&number(v.damageWait,0,.55)&&integer(v.cycle,-1,1e7));if(candidate&&q.destructibleId)require(v.broken===!pipeAnchored(q,candidate));require(!v.broken||!v.active&&!v.hot&&!v.warning&&v.remaining===0);require(!v.hot||v.active&&v.age>=delay&&v.age<delay+duration);require(!v.warning||v.active&&v.age<delay);return {...q,...pick(v,PIPE)};});
-          traps=traps.map((q,i)=>{const v=a.traps[i];require(v&&number(v.progress,0,1)&&number(v.angle,0,Math.PI*2+1e-6)&&number(v.damageWait,0,.55)&&bool(v.hot)&&bool(v.warning)&&bool(v.triggered)&&number(v.triggerAge,0,20)&&integer(v.cycle,-1,1e7)&&number(v.hp,0,18)&&bool(v.destroyed)&&v.destroyed===(v.hp===0));const result={...q,...pick(v,TRAP)};if(candidate&&q.destructibleId&&!candidate.isAlive(q.destructibleId))require(v.destroyed);
+          traps=traps.map((q,i)=>{const v=a.traps[i];require(v&&number(v.progress,0,1)&&number(v.angle,0,Math.PI*2+1e-6)&&number(v.damageWait,0,.55)&&bool(v.hot)&&bool(v.warning)&&bool(v.triggered)&&number(v.triggerAge,0,20)&&integer(v.cycle,-1,1e7)&&number(v.hp,0,18)&&bool(v.destroyed)&&v.destroyed===(v.hp===0));const result={...q,...pick(v,TRAP),boxAtRest:false};if(candidate&&q.destructibleId&&!candidate.isAlive(q.destructibleId))require(v.destroyed);
             if(v.box!==null){require(v.box&&['minX','maxX','minY','maxY','minZ','maxZ'].every(k=>number(v.box[k],-1000,1000)));const expected=trapShape(result,v.progress);require(expected&&!v.destroyed);for(const axis of ['X','Y','Z'])require(Math.abs(v.box['max'+axis]-v.box['min'+axis]-(expected['max'+axis]-expected['min'+axis]))<1e-6);if(q.kind==='blade'){const axis=q.axis==='z'?'Z':'X',other=axis==='X'?'Z':'X',center=(v.box['min'+axis]+v.box['max'+axis])/2;require(Math.abs(center-(axis==='X'?q.x:q.z))<=(q.travel||1.65)+1e-6&&Math.abs(v.box.minY-expected.minY)<1e-6&&Math.abs(v.box['min'+other]-expected['min'+other])<1e-6);}else for(const k of ['minX','minY','minZ'])require(Math.abs(v.box[k]-expected[k])<1e-6);if(q.kind==='blade'||q.kind==='press')savedTrapBoxes.push(v.box);}
             else require(v.destroyed||q.kind==='spikes'&&v.progress<.02/(q.h||.3)||q.kind==='floor');return result;});
           require(Array.isArray(a.projectiles)&&a.projectiles.length<=48&&integer(t.explosionSerial,0,1e9)&&integer(t.projectileSerial,0,1e9));const ids=new Set();

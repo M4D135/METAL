@@ -44,7 +44,16 @@
     const armor=value.armor===undefined?null:FSimulation.copyArmor?.(value.armor,100);if(value.armor!==undefined&&!armor)return null;
     return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
   }
-  function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision){const key=(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;if(!worldCache.has(key)){worldCache.set(key,FWorld.create(worldSeed,n,campaign?{campaign:true,campaignVersion:revision}:undefined));while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);}return worldCache.get(key);}
+  function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false){
+    const key=(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
+    if(!worldCache.has(key)){
+      let options=campaign?{campaign:true,campaignVersion:revision}:undefined;
+      if(legacyTraps)options={...options,legacyTraps:true};
+      worldCache.set(key,FWorld.create(worldSeed,n,options));
+      while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);
+    }
+    return worldCache.get(key);
+  }
   const titleScreen=()=>mode==='menu'||mode==='options';
   const currentTrack=()=>titleScreen()?'title':world?.stage??stage%3;
   function trackLabel(){const t=window.FMusic?.getTrack?.(currentTrack());return t?t.title+' · '+t.bpm+' BPM':'METAL · MOD PROCÉDURAL';}
@@ -195,8 +204,17 @@
   function restoreRun(v){
     if(!validSave(v))return false;
     load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1);
-    if((v.generation||3)!==(world.generation||3)||!sim.restore(v.checkpoint,{recover:true}))return false;
-    return acceptRestoredRun(v);
+    if((v.generation||3)!==(world.generation||3))return false;
+    if(sim.restore(v.checkpoint,{recover:true}))return acceptRestoredRun(v);
+    // La génération 6 a eu deux implantations de machines. Essayer l'ancienne
+    // seulement si l'identité diffère, puis laisser restore vérifier tout le point.
+    // Aucun champ ni empreinte du point source n'est réécrit. Un point repris et
+    // enregistré à nouveau garde son identité et suit le même chemin au prochain lancement.
+    if(world.generation===6&&typeof v.checkpoint.fingerprint==='string'&&v.checkpoint.fingerprint!==sim.snapshot().fingerprint){
+      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,true);
+      if(sim.restore(v.checkpoint,{recover:true}))return acceptRestoredRun(v);
+    }
+    return false;
   }
   function resumeSaved(v){
     writeSave();
@@ -229,9 +247,9 @@
     if(value==='paused'||value==='options'){$('pause-kicker').textContent=value==='options'?'CONSOLE DE RÉGLAGE':'SIGNAL EN ATTENTE';$('resume').innerHTML=(value==='options'?'Retour':'Reprendre')+' <span class="arrow-icon" aria-hidden="true"></span>';$('restart').hidden=$('pause-main').hidden=value==='options';selectTab(value==='options'?'image':optionsTab);}
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
-  function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision){
+  function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false){
     checkpointPending=false;
-    campaignMode=asCampaign;campaignRevision=revision;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode);
+    campaignMode=asCampaign;campaignRevision=revision;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale
     // 3/4/5-slot entry cannot block restoration of a healthy checkpoint.

@@ -8,6 +8,11 @@
   // Math keeps only exact functions.
   const FMath = window.FMath;
   if (!FMath) throw new Error('FWorld: charger src/fmath.js avant src/world.js');
+  // FPassages est lu au chargement, comme FMath : un banc qui installe `window`
+  // le temps d'exécuter les modules puis le retire doit quand même pouvoir créer
+  // un monde (checks/checkpoint.test.mjs, LOAD-01).
+  const FPassages = window.FPassages;
+  if (!FPassages) throw new Error('FWorld: charger src/passages.js avant src/world.js');
   const TAU = Math.PI * 2;
   const themes = [
     { title: 'La lisière rouillée', main: [0.12, 0.82, 0.78], alt: [1, 0.64, 0.24], wall: [0.33, 0.39, 0.36] },
@@ -664,7 +669,7 @@
     naturalDetails(world,theme);
     elevateWorld(world);
     arenaWorld(world,theme,aperture);
-    demolitionWorld(world,theme);
+    demolitionWorld(world,theme,options?.legacyTraps===true);
     shopsWorld(world,theme);
     reinforcementBays(world,theme);
     suppliesWorld(world);
@@ -672,7 +677,7 @@
     armoryWorld(world);
     if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);}
     polishTrees(world);
-    demolitionMetadata(world);
+    demolitionMetadata(world,options?.legacyTraps===true);
     world.detailStats.added=world.meshes.length-world.detailStats.base;
     world.detailStats.tiers=[0,1,2].map(level=>world.meshes.filter(m=>(m.detail||0)===level).length);
     return world;
@@ -1278,7 +1283,7 @@
   }
   // A continuous, visible terrain bed makes a demolished boundary a usable
   // opening. Tiles keep the render spatial index local; no map-sized mesh.
-  function demolitionWorld(w,theme){
+  function demolitionWorld(w,theme,legacyTraps=false){
     const old=w.bounds,widen=7;
     w.bounds={minX:old.minX-widen,maxX:old.maxX+widen,minZ:old.minZ-widen,maxZ:old.maxZ+widen};
     const b=w.bounds,add=(shape,p,s,mat,category,extra={})=>{const m={shape,p,s,mat,category,outdoor:true,region:'terrain',structural:true,...extra};w.meshes.push(m);return m;};
@@ -1303,21 +1308,113 @@
     }
     w.traps=[];w.pipes=[];
     const yards=w.rooms.filter(r=>r.outdoor&&r.id!==0&&!r.bossArena);
-    for(const [i,kind] of ['blade','press','spikes'].entries()){
-      let room,point;
-      for(const r of yards.slice(i).concat(yards.slice(0,i))){const q=spot(r,kind==='blade'?2.2:1.4);if(q){room=r;point=q;break;}}
-      if(!point)throw new Error('No safe trap position '+w.stage+'/'+kind);
-      const {x,z}=point,y=room.y,id='trap-'+i,region='room-'+room.id,assembly='trap-frame-'+i;
-      const trap={id,kind,x,y:kind==='blade'?y+.84:y,baseY:y,z,w:kind==='blade'?.3:1.6,d:kind==='blade'?1.35:1.6,h:kind==='blade'?.32:kind==='press'?.65:1.1,axis:'x',travel:kind==='blade'?1.65:kind==='press'?2.6:0,period:7.8+i*.8,active:1.6+i*.15,warning:1.3,phase:2.1+i*1.7,damage:kind==='press'?24:18};
-      w.traps.push(trap);chosen.push({...point,r:2.4});
-      box([x,y+.015,z],[kind==='blade'?4.3:2.1,.03,2.1],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
-      for(const q of [-1,1])for(let k=0;k<8;k++)box([x+(k-3.5)*.22,y+.037,z+q*1],[.12,.018,.17],5,'trap_warning',{region,assembly,color:theme.alt});
-      if(kind!=='spikes'){
-        const span=kind==='blade'?2.22:1.25;
-        for(const q of [-1,1])box([x+q*span,y+1.8,z],[.16,3.6,.24],1,'trap_support',{region,assembly},true);
-        box([x,y+3.54,z],[span*2+.25,.22,.42],0,'trap_beam',{region,assembly});
-        add('cylinder',[x,y+3.36,z],[.48,.24,.48],1,'trap_motor',{region,assembly,r:[Math.PI/2,0,0]});
+    // Reprise exacte des mondes écrits avant les pièges massifs (base 1814b81).
+    // Le mode courant reste le défaut ; aucune donnée du checkpoint ne contourne restore.
+    if(legacyTraps){
+      for(const [i,kind] of ['blade','press','spikes'].entries()){
+        let room,point;
+        for(const r of yards.slice(i).concat(yards.slice(0,i))){const q=spot(r,kind==='blade'?2.2:1.4);if(q){room=r;point=q;break;}}
+        if(!point)throw new Error('No safe trap position '+w.stage+'/'+kind);
+        const {x,z}=point,y=room.y,id='trap-'+i,region='room-'+room.id,assembly='trap-frame-'+i;
+        const trap={id,kind,x,y:kind==='blade'?y+.84:y,baseY:y,z,w:kind==='blade'?.3:1.6,d:kind==='blade'?1.35:1.6,h:kind==='blade'?.32:kind==='press'?.65:1.1,axis:'x',travel:kind==='blade'?1.65:kind==='press'?2.6:0,period:7.8+i*.8,active:1.6+i*.15,warning:1.3,phase:2.1+i*1.7,damage:kind==='press'?24:18};
+        w.traps.push(trap);chosen.push({...point,r:2.4});
+        box([x,y+.015,z],[kind==='blade'?4.3:2.1,.03,2.1],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
+        for(const q of [-1,1])for(let k=0;k<8;k++)box([x+(k-3.5)*.22,y+.037,z+q*1],[.12,.018,.17],5,'trap_warning',{region,assembly,color:theme.alt});
+        if(kind!=='spikes'){
+          const span=kind==='blade'?2.22:1.25;
+          for(const q of [-1,1])box([x+q*span,y+1.8,z],[.16,3.6,.24],1,'trap_support',{region,assembly},true);
+          box([x,y+3.54,z],[span*2+.25,.22,.42],0,'trap_beam',{region,assembly});
+          add('cylinder',[x,y+3.36,z],[.48,.24,.48],1,'trap_motor',{region,assembly,r:[Math.PI/2,0,0]});
+        }
       }
+    }else{
+      // Décision de David du 13/11 : plus aucun piège décoratif. Une machine est
+      // posée en travers d'un passage obligatoire, calculé sur le graphe des salles
+      // (lien dont le retrait déconnecte un objectif) puis complété par la tournée
+      // que le joueur est bien obligé de faire. Le banc checks/traps-mandatory.mjs
+      // prouve sur la grille de navigation que la barrière coupe le couloir.
+      const roomOf=(x,z)=>w.rooms.find(r=>Math.abs(x-r.x)<=r.w/2+.3&&Math.abs(z-r.z)<=r.d/2+.3)?.id;
+      const passageLinks=w.connections.map(c=>({from:c.from,to:c.to,x1:c.x1,z1:c.z1,x2:c.x2,z2:c.z2}));
+      const passageStart=roomOf(w.spawn.x,w.spawn.z);
+      const passageTargets=[...new Set([w.bossArena?w.bossArena.room:roomOf(w.exit.x,w.exit.z),roomOf(w.exit.x,w.exit.z),...w.cores.map(c=>roomOf(c.x,c.z))])].filter(id=>id!==undefined&&id!==passageStart);
+      const forced=FPassages.mandatoryLinks({links:passageLinks,start:passageStart,objectives:passageTargets});
+      const tour=FPassages.tourLinks({links:passageLinks,start:passageStart,objectives:passageTargets});
+      const arenaPath=w.corridors.findIndex(c=>c.arenaPath);
+      // Ordre d'implantation : d'abord les liens vraiment obligatoires (les retirer
+      // déconnecte un objectif), ensuite la tournée. Le plafond de machines ne doit
+      // jamais évincer un couloir sans alternative au profit d'un couloir de
+      // confort : c'est le premier qui fait le danger obligatoire du secteur.
+      const passages=[...new Set([...[arenaPath,...forced].filter(k=>k>=0),...tour.filter(k=>k>=0)])];
+      const nearPassage=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.lifts.flatMap(l=>[l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(j=>[j,j.target])];
+      let coupe=-1;
+      for(const k of passages){
+        if(w.traps.length>=40)break;
+        const c=w.corridors[k];
+        if(!c||c.liftId)continue;
+        const alongX=c.w>=c.d,cross=alongX?c.d:c.w,length=alongX?c.w:c.d;
+        if(cross>9||length<6.5)continue;
+        if(nearPassage.some(q=>FMath.hypot2(c.x-q.x,c.z-q.z)<6.5))continue;
+        const baseY=floorHeight(w,c.x,c.z)??c.y??0;
+        // Un couloir n'est un passage que si l'on ne peut pas le longer à côté : on
+        // mesure la largeur réellement praticable au niveau de son sol, au ras du
+        // garde-corps. Trop large, ce n'est plus un défilé : on n'y pose rien.
+        const halfScan=sign=>{let u=0,prev=baseY;for(;u<7;u+=.4){const nu=u+.4,x=alongX?c.x:c.x+sign*nu,z=alongX?c.z+sign*nu:c.z,y=floorHeight(w,x,z);if(y===null||!isWalkable(w,x,z,.38)||Math.abs(y-prev)>.42)break;prev=y;}return u;};
+        const half=Math.max(1.2,halfScan(-1),halfScan(1));
+        if(half>5.4)continue;
+        const span=2*(half+.6);
+        const n=Math.max(2,Math.min(8,Math.ceil(span/1.8))),piece=span/n;
+        // Les lames glissent PERPENDICULAIREMENT au couloir, chacune dans son
+        // intervalle, avec une phase décalée : l'union des courses couvre toute la
+        // largeur (rien ne se traverse sans risque — le banc le prouve), mais à un
+        // instant donné il y a un jour entre deux lames. Une muraille continue et
+        // synchrone boucherait le couloir comme un mur, ce qui n'est pas un piège.
+        const bladeTravel=Math.min(piece*.9,1.6),gantry=Math.max(3.2,Math.min(length-3,5.4));
+        const period=6.4+(coupe+1)*1.1,active=1.7,warningTime=1.5,phase=(coupe+1)*2.3;
+        coupe++;
+        const assembly='trap-frame-'+coupe,region='corridor-'+k,barrier='coupe-'+coupe,destructibleId='trap-frame-'+coupe;
+        for(let j=0;j<n;j++){
+          const u=-span/2+(j+.5)*piece,x=alongX?c.x:c.x+u,z=alongX?c.z+u:c.z;
+          w.traps.push({id:'trap-'+coupe+'-'+j,barrier,kind:'blade',x,y:(floorHeight(w,x,z)??baseY)+.05,baseY,z,
+            w:alongX?.3:piece,d:alongX?piece:.3,h:1.8,axis:alongX?'z':'x',travel:bladeTravel,period,active,warning:warningTime,phase:phase+j*period/n,damage:26,destructibleId});
+          box([x,baseY+.015,z],alongX?[piece,.03,bladeTravel*2+.8]:[bladeTravel*2+.8,.03,piece],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
+        }
+        // La presse barre le couloir de plein fouet, les pics punissent celui qui
+        // s'arrête derrière : la machine entière devient le danger du secteur.
+        const offset=Math.min(gantry/2+1.15,length/2-.9);
+        for(const [kind,sign,damage,depth] of [['press',-1,34,1.4],['spikes',1,24,1.2]]){
+          const x=alongX?c.x+sign*offset:c.x,z=alongX?c.z:c.z+sign*offset;
+          w.traps.push({id:'trap-'+coupe+'-'+kind,barrier,kind,x,y:baseY,baseY,z,
+            w:alongX?depth:span,d:alongX?span:depth,h:kind==='press'?.65:1.1,axis:alongX?'x':'z',
+            travel:kind==='press'?2.6:0,period,active,warning:warningTime,phase,damage,destructibleId});
+          box([x,baseY+.015,z],alongX?[depth+.5,.03,span]:[span,.03,depth+.5],0,'trap_plate',{region,assembly,color:[.17,.19,.20]});
+        }
+        // Cadre massif : montants, rails de roulement et moteurs se voient de loin.
+        // Montants hors de la zone praticable, rails et moteurs écartés du centre :
+        // un couloir de plein air doit garder son ciel ouvert au point de circulation.
+        const anchor=half+.45;
+        for(const q of [-1,1]){
+          const px=alongX?c.x:c.x+q*anchor,pz=alongX?c.z+q*anchor:c.z;
+          box([px,baseY+1.9,pz],alongX?[gantry,3.8,.26]:[.26,3.8,gantry],1,'trap_frame',{region,assembly});
+          box([px,baseY+3.62,pz],alongX?[gantry+.2,.22,.4]:[.4,.22,gantry+.2],1,'trap_beam',{region,assembly});
+          // Lampe d'annonce : une machine qu'on ne voit pas à trente mètres n'annonce
+          // rien du tout. Elle est émissive, donc lit sa couleur même à contre-jour.
+          add('cylinder',[px,baseY+3.94,pz],[.17,.17,.17],4,'trap_lamp',{region,assembly,r:alongX?[0,0,Math.PI/2]:[Math.PI/2,0,0],emissive:.62,color:[1,.52,.07]});
+        }
+        // Barres d'alerte de part et d'autre du couloir, au-dessus des montants : la
+        // coupe se lit comme une seule machine de loin, et le ciel du couloir reste
+        // ouvert au point de circulation (checks/world.test.mjs l'exige).
+        for(const q of [-1,1]){
+          const hx=alongX?c.x:c.x+q*half*.55,hz=alongX?c.z+q*half*.55:c.z;
+          box([hx,baseY+3.78,hz],alongX?[span*.42,.1,.16]:[.16,.1,span*.42],4,'trap_hazard',{region,assembly,emissive:.3,color:[.95,.5,.06]});
+        }
+        for(const s of [-1,1])add('cylinder',[alongX?c.x+s*(gantry/2+.55):c.x,baseY+3.3,alongX?c.z:c.z+s*(gantry/2+.55)],[.5,.28,.5],1,'trap_motor',{region,assembly,r:alongX?[0,0,Math.PI/2]:[Math.PI/2,0,0]});
+        for(let j=0;j<4;j++){
+          const u=-span/2+(j+.5)*span/4;
+          box([alongX?c.x-offset-1.1:c.x+u,baseY+.037,alongX?c.z+u:c.z-offset-1.1],alongX?[.55,.022,.2]:[.2,.022,.55],5,'trap_warning',{region,assembly,color:theme.alt});
+        }
+        chosen.push({x:c.x,z:c.z,r:span/2+2});
+      }
+      if(!w.traps.length)throw new Error('No mandatory trap position '+w.stage+'/'+w.seed);
     }
     // Clearly marked pressure conduits. Ordinary dry service tubing can also
     // break, while these valves identify the hot, damaging gas system.
@@ -1344,7 +1441,7 @@
     }
     const stats=w.detailStats;stats.added=w.meshes.length-stats.base;stats.tiers=[w.meshes.filter(m=>!m.detail).length,w.meshes.filter(m=>m.detail===1).length,w.meshes.filter(m=>m.detail===2).length];
   }
-  function demolitionMetadata(w){
+  function demolitionMetadata(w,legacyTraps=false){
     const out=w.meshes,groups=[],owners=new Map(),byRegion=new Map(),explicit=new Map();
     const bbox=m=>{const [rx,ry,rz]=m.r||[0,0,0],a=FMath.cos(rx),b=FMath.sin(rx),c=FMath.cos(ry),d=FMath.sin(ry),e=FMath.cos(rz),f=FMath.sin(rz),r=[e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a],h0=(Math.abs(r[0]*m.s[0])+Math.abs(r[1]*m.s[1])+Math.abs(r[2]*m.s[2]))/2,h1=(Math.abs(r[3]*m.s[0])+Math.abs(r[4]*m.s[1])+Math.abs(r[5]*m.s[2]))/2,h2=(Math.abs(r[6]*m.s[0])+Math.abs(r[7]*m.s[1])+Math.abs(r[8]*m.s[2]))/2;return {minX:m.p[0]-h0,maxX:m.p[0]+h0,minY:m.p[1]-h1,maxY:m.p[1]+h1,minZ:m.p[2]-h2,maxZ:m.p[2]+h2};};
     const boxes=out.map(bbox);
@@ -1363,7 +1460,7 @@
     function group(id,kind,members,colliders=[],strength=6){const g={id,kind,meshes:members,colliders,strength,region:out[members[0]].region,bounds:unionOf(members)};groups.push(g);for(const i of members)owners.set(i,g);return g;}
     for(const t of w.trees){const members=Array.from({length:t.meshCount},(_,j)=>t.mesh+j),indices=collidersOf(members);const g=group('tree-'+t.mesh,'tree',members,indices,7);t.destructibleId=g.id;}
     out.forEach((m,i)=>{if(m.assembly){if(!explicit.has(m.assembly))explicit.set(m.assembly,[]);explicit.get(m.assembly).push(i);}});
-    for(const [id,members] of explicit){group(id,id.startsWith('pressure')?'pipe':'prop',members,collidersOf(members),id.startsWith('pressure')?3:12);}
+    for(const [id,members] of explicit){const machine=id.startsWith('trap-frame');group(id,id.startsWith('pressure')?'pipe':'prop',members,collidersOf(members),id.startsWith('pressure')?3:machine&&!legacyTraps?40:12);}
     for(const [ci,c] of w.colliders.entries()){
       const m=out[c.mesh];if(m.terrain||m.ground||m.indestructible||owners.has(c.mesh))continue;
       const [x,h,z]=m.s,kind=m.category==='ceiling'?'roof':m.category==='arena_pier'?'support':Math.min(x,z)<1.2&&Math.max(x,z)>2.5&&h>1.8?'wall':h>2.5&&x<1.5&&z<1.5?'support':'prop';
@@ -1391,7 +1488,7 @@
     for(const a of (w.machinery||[]).concat(w.ambience||[])){const g=nearest(a.x,a.y,a.z,a.room===undefined?undefined:'room-'+a.room);if(g)a.destructibleId=g.id;}
     for(const light of w.lights){if(light.trophyId)continue;const g=nearest(...light.p,light.region);if(g)light.destructibleId=g.id;}
     for(const p of w.pipes)p.destructibleId='pressure-'+p.id.slice(5);
-    for(const t of w.traps)t.destructibleId='trap-frame-'+t.id.slice(5);
+    for(const t of w.traps)t.destructibleId=t.destructibleId||'trap-frame-'+t.id.slice(5);
     for(const m of w.mechanisms){const g=nearest(m.x,m.y+.6,m.z);if(g)m.destructibleId=g.id;}
     // Anchors are existing pressure systems and trap machinery, never invisible
     // colliders or freshly spawned props. The director may only play real cues.

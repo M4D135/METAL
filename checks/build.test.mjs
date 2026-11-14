@@ -11,7 +11,7 @@ assert.ok(data.length<1_400_000,'Uncompressed executable web document must meet 
 assert.ok(!/<(?:script|img|audio|video|link)\b[^>]*(?:src|href)\s*=\s*["'](?:https?:|\/\/)/i.test(html),'No external runtime assets');
 assert.ok(!/\b(?:fetch\s*\(|XMLHttpRequest|WebSocket\s*\(|import\s*\(|@import)/.test(html),'No network-loaded code or assets');
 assert.ok(!html.includes('/*__CODE__*/')&&!html.includes('/*__STYLE__*/'),'No unresolved build placeholders');
-assert.ok(html.includes('FMath')&&html.includes('FSoundscape')&&html.includes('FSimulation')&&html.includes('FRender')&&html.includes('FAudio')&&html.includes('FMotion')&&html.includes('FActors')&&html.includes('FMusic')&&html.includes('FOptions')&&html.includes('FDestruction')&&html.includes('FEffects')&&html.includes('FEconomy')&&html.includes('FBrain'),'Bundled modules must be present');
+assert.ok(html.includes('FMath')&&html.includes('FPassages')&&html.includes('FSoundscape')&&html.includes('FSimulation')&&html.includes('FRender')&&html.includes('FAudio')&&html.includes('FMotion')&&html.includes('FActors')&&html.includes('FMusic')&&html.includes('FOptions')&&html.includes('FDestruction')&&html.includes('FEffects')&&html.includes('FEconomy')&&html.includes('FBrain'),'Bundled modules must be present');
 const fmathAt=html.indexOf('G.FMath=Object.freeze('),worldReadsAt=html.indexOf('const FMath = window.FMath;');
 assert.ok(fmathAt>=0&&worldReadsAt>fmathAt,'FMath must be defined before world.js reads it');
 console.log(JSON.stringify({status:'PASS',html_bytes:data.length,external_assets:0,sha256:report.sha256},null,2));

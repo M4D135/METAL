@@ -1,0 +1,13 @@
+profil CPU.20261114.071511.807817.0.001.cpuprofile — temps CPU total 6.4 s
+   364 ms   5.7 % (garbage collector):0
+   344 ms   5.4 % updateEnemies:6566
+   328 ms   5.1 % updateEnvironment:6669
+   328 ms   5.1 % create:4738
+   264 ms   4.1 % rebuild:4263
+   241 ms   3.8 % updateDebris:5814
+   199 ms   3.1 % trapPose:6651
+   188 ms   2.9 % demolitionMetadata:3661
+   186 ms   2.9 % step:6731
+   183 ms   2.9 % create:2286
+   183 ms   2.9 % create:4223
+   175 ms   2.7 % encounterCounts:5433

@@ -4,7 +4,7 @@ import {loadRealm,defaultModules} from './realm-loader.mjs';
 import {parseToolArgs} from './proof/common.mjs';
 const {root,output:outputPath}=parseToolArgs(process.argv.slice(2));
 // fmath loads before world when the root has it (lot 01 suite T2); an older root keeps its list.
-const {FWorld:W,FEconomy:E,FSimulation:S}=loadRealm({root,modules:[...defaultModules(root).filter(name=>name==='fmath'),'world','economy','simulation']}).window,weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'];
+const {FWorld:W,FEconomy:E,FSimulation:S}=loadRealm({root,modules:[...defaultModules(root).filter(name=>name==='fmath'||name==='passages'),'world','economy','simulation']}).window,weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'];
 let profile=E.fresh({campaignVersion:2});const weapons=[false,false,false,false,true],rows=[];
 for(let index=0;index<18;index++){
   const world=W.create(96,index,{campaign:true,campaignVersion:2}),boss=world.enemies.at(-1),arena=world.rooms.find(r=>r.bossArena),reward=E.bossReward(index),inventory={weapons},policy=S.campaignPolicy(index,inventory,world.progression.maxActive,2);

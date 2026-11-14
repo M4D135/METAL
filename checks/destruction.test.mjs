@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {test} from 'node:test';
 const context={window:{}};
-for(const name of ['fmath','renderer','world','destruction'])vm.runInNewContext(readFileSync(new URL('../src/'+name+'.js',import.meta.url),'utf8'),context);
+for(const name of ['fmath','passages','renderer','world','destruction'])vm.runInNewContext(readFileSync(new URL('../src/'+name+'.js',import.meta.url),'utf8'),context);
 const {FRender,FWorld,FDestruction}=context.window;
 const box=(p,s,extra={})=>({shape:'box',p,s,mat:3,...extra});
 const bounds=m=>({minX:m.p[0]-m.s[0]/2,maxX:m.p[0]+m.s[0]/2,minY:m.p[1]-m.s[1]/2,maxY:m.p[1]+m.s[1]/2,minZ:m.p[2]-m.s[2]/2,maxZ:m.p[2]+m.s[2]/2});

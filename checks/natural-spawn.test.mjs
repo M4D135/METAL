@@ -6,7 +6,7 @@ import vm from 'node:vm';
 // The QA-only exports call the real runtime eligibility check. Production's
 // public API and the generated scene are unchanged by this harness.
 const context={window:{}};vm.createContext(context);
-for(const name of ['fmath','renderer','world','destruction','economy','simulation']){
+for(const name of ['fmath','passages','renderer','world','destruction','economy','simulation']){
   let source=readFileSync(new URL('../src/'+name+'.js',import.meta.url),'utf8');
   if(name==='simulation'){
     assert(source.includes('return {state:s,get destruction()'));

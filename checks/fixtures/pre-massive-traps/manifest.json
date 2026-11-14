@@ -1,0 +1,165 @@
+{
+  "base": "1814b81558d7e3e6a80cbb8fcbbe3ccdee81cef4",
+  "cases": [
+    {
+      "id": "classic-0",
+      "scenario": {
+        "id": "classic-0",
+        "index": 0,
+        "options": null
+      },
+      "seed": 96,
+      "steps": 180,
+      "sha256": "bf61de68ebe3560fa68006c33f612b75ea93196b69d56e14af638476ac6a482b",
+      "fingerprint": "1e90ffc",
+      "world_sha256": "cfeb8d50161c2730ccb9a24d3717ac256f5da03347e9d1197b4fdcbcacd9ecbd",
+      "dead": false
+    },
+    {
+      "id": "classic-2",
+      "scenario": {
+        "id": "classic-2",
+        "index": 2,
+        "options": null
+      },
+      "seed": 96,
+      "steps": 180,
+      "sha256": "aeaefb791abbb37f888ad800a8fa5f4a0d4f9d8c51fbc7f71ff36b305492bc53",
+      "fingerprint": "1c27bn8",
+      "world_sha256": "052693f1da565d010057ff19b94a480c6997fe453bf2e4b9cdad2fa6d31025b3",
+      "dead": false
+    },
+    {
+      "id": "campaign1-0",
+      "scenario": {
+        "id": "campaign1-0",
+        "index": 0,
+        "options": {
+          "campaign": true
+        }
+      },
+      "seed": 96,
+      "steps": 180,
+      "sha256": "070ea24b84c832aafac2bc5798b2014c132988c40c56f5a864c5068920de6330",
+      "fingerprint": "11idhqy",
+      "world_sha256": "9e63d11c4a2d69d3e9322db9ecf5e2f8d9172c66982a157afe06e1d95cd71aea",
+      "dead": false
+    },
+    {
+      "id": "campaign1-9",
+      "scenario": {
+        "id": "campaign1-9",
+        "index": 9,
+        "options": {
+          "campaign": true
+        }
+      },
+      "seed": 96,
+      "steps": 180,
+      "sha256": "2fa8d07f8d2f75ca5d38f9f662bfaebdf33aa68a2aaa2c3ebf0f3ef14b489c67",
+      "fingerprint": "arf5r1",
+      "world_sha256": "7d684083c4f379dd1337720c593c16d32f526d0064373bb9095e6e1cccbd1305",
+      "dead": false
+    },
+    {
+      "id": "campaign1-17",
+      "scenario": {
+        "id": "campaign1-17",
+        "index": 17,
+        "options": {
+          "campaign": true
+        }
+      },
+      "seed": 96,
+      "steps": 180,
+      "sha256": "a6810aecb0512e2131c14c71002c5e97c13299a0948b7a46170285e7580cf75f",
+      "fingerprint": "9vjied",
+      "world_sha256": "8f11a456cd9f6aa39a8ad6cdca8577b7ae44286d9402e8822d6c5abe47284cd4",
+      "dead": false
+    },
+    {
+      "id": "campaign2-0",
+      "scenario": {
+        "id": "campaign2-0",
+        "index": 0,
+        "options": {
+          "campaign": true,
+          "campaignVersion": 2
+        }
+      },
+      "seed": 96,
+      "steps": 180,
+      "sha256": "3845c69acc63f12e88656919c0d7e8a70eba01fd405c3ef623527ca82a591b29",
+      "fingerprint": "1g31lua",
+      "world_sha256": "13efd280a624d4e7168902b369c4ad108f66c89f740f40212188d8448ea290d6",
+      "dead": false
+    },
+    {
+      "id": "campaign2-9",
+      "scenario": {
+        "id": "campaign2-9",
+        "index": 9,
+        "options": {
+          "campaign": true,
+          "campaignVersion": 2
+        }
+      },
+      "seed": 96,
+      "steps": 180,
+      "sha256": "80d5537dd88af004bc2c580e7b132da96bddc66d3227cb888737091292ed6124",
+      "fingerprint": "1bjevpj",
+      "world_sha256": "54e16922cf5da10d023477c6592412d7047b85849452fe1cfdf5afe9e2d7daef",
+      "dead": false
+    },
+    {
+      "id": "campaign2-17",
+      "scenario": {
+        "id": "campaign2-17",
+        "index": 17,
+        "options": {
+          "campaign": true,
+          "campaignVersion": 2
+        }
+      },
+      "seed": 96,
+      "steps": 180,
+      "sha256": "af46e4b6c4c29d3292cb969df8199d5975936e26108617490acefe5e117689e7",
+      "fingerprint": "11dgjcj",
+      "world_sha256": "e0133a8b1c44416b78ec6292b6d7d45db237f1d71bd606096d2c7dd940252739",
+      "dead": false
+    },
+    {
+      "id": "classic-rubble",
+      "scenario": {
+        "id": "classic-rubble",
+        "index": 0,
+        "options": null
+      },
+      "seed": 96,
+      "steps": 300,
+      "sha256": "624fc2c460976620333b0e026df92838654e915686cb30a53ec20e23fbf9d307",
+      "fingerprint": "1e90ffc",
+      "world_sha256": "cfeb8d50161c2730ccb9a24d3717ac256f5da03347e9d1197b4fdcbcacd9ecbd",
+      "dead": false,
+      "structuralDebris": 40
+    },
+    {
+      "id": "campaign2-rubble",
+      "scenario": {
+        "id": "campaign2-rubble",
+        "index": 9,
+        "options": {
+          "campaign": true,
+          "campaignVersion": 2
+        }
+      },
+      "seed": 96,
+      "steps": 300,
+      "sha256": "7e368aaa25afff5c27f86d255cb553f54b3ca35c4d790a01678cacd81384ea90",
+      "fingerprint": "1bjevpj",
+      "world_sha256": "54e16922cf5da10d023477c6592412d7047b85849452fe1cfdf5afe9e2d7daef",
+      "dead": false,
+      "structuralDebris": 40
+    }
+  ]
+}
