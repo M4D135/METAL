@@ -477,7 +477,12 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
   // barre bien le passage ; ici on vérifie seulement la consistance de la batterie.
   const trapBarriers=new Map();
   for(const t of world.traps){if(!trapBarriers.has(t.barrier))trapBarriers.set(t.barrier,[]);trapBarriers.get(t.barrier).push(t);}
-  assert(world.traps.length>=4,`${label}: le secteur ne pose pas une batterie de pièges à la hauteur du danger demandé`);
+  // Plancher mesuré, pas une valeur au ras du sol : ces 18 mondes posent 30 à 42
+  // machines en 6 à 7 coupes (.relais/densite.mjs). 24, c'est quatre coupes complètes
+  // (deux lames, une presse, des pics) : la base du lot était à 3 machines et
+  // l'ancienne assertion à 4 laissait retomber la densité sans rien dire.
+  assert(world.traps.length>=24,`${label}: le secteur ne pose pas une batterie de pièges à la hauteur du danger demandé (mesuré 30 à 42 machines)`);
+  assert(trapBarriers.size>=4,`${label}: le secteur ne reçoit pas quatre coupes complètes sur son chemin obligatoire (mesuré 6 à 7)`);
   for(const [id,list] of trapBarriers){
     assert(list.filter(t=>t.kind==='blade').length>=2,`${label}: la barrière ${id} n'a pas assez de lames pour barrer le couloir`);
     assert(list.some(t=>t.kind==='press')&&list.some(t=>t.kind==='spikes'),`${label}: la barrière ${id} n'est pas une machine complète`);
@@ -506,8 +511,19 @@ for (const seed of seeds) for (let stage = 0; stage < 3; stage++) {
     assert(Math.hypot(q.x-nozzle.x-periodic.dx*projection,q.z-nozzle.z-periodic.dz*projection)>1.8,`${label}: periodic hot jet covers objective`);
   }
   // Les ancres du directeur sont les conduites de pression et les machines de piège
-  // assez loin du départ. Leur nombre suit désormais la densité des barrières.
-  assert.equal(world.horrorSites.length,world.pipes.length+world.traps.filter(t=>Math.hypot(t.x-world.spawn.x,t.z-world.spawn.z)>16).length);
+  // assez loin du départ. Vérifié indépendamment de la formule de construction
+  // (src/world.js) : les pièces sont comptées par kind, hors du périmètre, puis on
+  // ajoute un plancher mesuré (34 à 46 sur ces 18 mondes, .relais/densite.mjs).
+  // L'ancienne assertion reproduisait exactement la formule de world.js : une ancre
+  // qui s'effondrait ne faisait plus tomber le test.
+  const horsPerimetre=(x,z)=>Math.hypot(x-world.spawn.x,z-world.spawn.z)>16;
+  const lamesLoin=world.traps.filter(t=>t.kind==='blade'&&horsPerimetre(t.x,t.z)).length;
+  const pressesLoin=world.traps.filter(t=>t.kind==='press'&&horsPerimetre(t.x,t.z)).length;
+  const picsLoin=world.traps.filter(t=>t.kind==='spikes'&&horsPerimetre(t.x,t.z)).length;
+  assert.equal(lamesLoin+pressesLoin+picsLoin,world.traps.filter(t=>horsPerimetre(t.x,t.z)).length,`${label}: une machine n'est ni lame, ni presse, ni pics`);
+  const conduitesLoin=world.pipes.filter(p=>horsPerimetre(p.x,p.z)).length;
+  assert.equal(world.horrorSites.length,conduitesLoin+lamesLoin+pressesLoin+picsLoin,`${label}: le directeur n'ancre plus autant de machines qu'il y en a hors du périmètre du départ`);
+  assert(world.horrorSites.length>=24,`${label}: le nombre d'ancres du directeur est effondré (${world.horrorSites.length}, mesuré 34 à 46)`);
   for(const h of world.horrorSites){assert(ids.has(h.destructibleId)&&['alarm','steam','collapse'].includes(h.kind)&&h.radius===3);assert(Math.hypot(h.x-world.spawn.x,h.z-world.spawn.z)>16);}
 
   const entry = reachability(world, label);
