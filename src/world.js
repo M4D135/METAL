@@ -1346,16 +1346,21 @@
   }
   function demolitionMetadata(w){
     const out=w.meshes,groups=[],owners=new Map(),byRegion=new Map(),explicit=new Map();
-    const bbox=m=>{const [rx,ry,rz]=m.r||[0,0,0],a=FMath.cos(rx),b=FMath.sin(rx),c=FMath.cos(ry),d=FMath.sin(ry),e=FMath.cos(rz),f=FMath.sin(rz),r=[e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a],h=[0,1,2].map(k=>(Math.abs(r[k*3]*m.s[0])+Math.abs(r[k*3+1]*m.s[1])+Math.abs(r[k*3+2]*m.s[2]))/2);return {minX:m.p[0]-h[0],maxX:m.p[0]+h[0],minY:m.p[1]-h[1],maxY:m.p[1]+h[1],minZ:m.p[2]-h[2],maxZ:m.p[2]+h[2]};};
-    const boxes=out.map(bbox),keys=['minX','maxX','minY','maxY','minZ','maxZ'];
-    const union=list=>Object.fromEntries(keys.map(k=>[k,Math[k.startsWith('min')?'min':'max'](...list.map(b=>b[k]))]));
+    const bbox=m=>{const [rx,ry,rz]=m.r||[0,0,0],a=FMath.cos(rx),b=FMath.sin(rx),c=FMath.cos(ry),d=FMath.sin(ry),e=FMath.cos(rz),f=FMath.sin(rz),r=[e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a],h0=(Math.abs(r[0]*m.s[0])+Math.abs(r[1]*m.s[1])+Math.abs(r[2]*m.s[2]))/2,h1=(Math.abs(r[3]*m.s[0])+Math.abs(r[4]*m.s[1])+Math.abs(r[5]*m.s[2]))/2,h2=(Math.abs(r[6]*m.s[0])+Math.abs(r[7]*m.s[1])+Math.abs(r[8]*m.s[2]))/2;return {minX:m.p[0]-h0,maxX:m.p[0]+h0,minY:m.p[1]-h1,maxY:m.p[1]+h1,minZ:m.p[2]-h2,maxZ:m.p[2]+h2};};
+    const boxes=out.map(bbox);
+    // Enveloppe d'une liste d'indices de maillages : mêmes bornes et mêmes clés dans
+    // le même ordre que l'ancienne union, sans tableau intermédiaire ni propagation
+    // de valeurs non finies différente (Math.min/Math.max gardent leur sémantique).
+    const unionOf=indices=>{let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity,minZ=Infinity,maxZ=-Infinity;
+      for(const i of indices){const b=boxes[i];minX=Math.min(minX,b.minX);maxX=Math.max(maxX,b.maxX);minY=Math.min(minY,b.minY);maxY=Math.max(maxY,b.maxY);minZ=Math.min(minZ,b.minZ);maxZ=Math.max(maxZ,b.maxZ);}
+      return {minX,maxX,minY,maxY,minZ,maxZ};};
     const distance=(p,b)=>FMath.hypot3(Math.max(b.minX-p[0],0,p[0]-b.maxX),Math.max(b.minY-p[1],0,p[1]-b.maxY),Math.max(b.minZ-p[2],0,p[2]-b.maxZ));
     // Index des colliers par maillage : même contenu et même ordre croissant que le
     // balayage complet précédent, sans parcourir tous les colliers à chaque groupe.
     const collidersByMesh=new Map();
     for(let i=0;i<w.colliders.length;i++){const mesh=w.colliders[i].mesh,known=collidersByMesh.get(mesh);if(known)known.push(i);else collidersByMesh.set(mesh,[i]);}
     const collidersOf=members=>{const found=[];for(const i of members)for(const ci of collidersByMesh.get(i)||[])found.push(ci);return found.sort((a,b)=>a-b);};
-    function group(id,kind,members,colliders=[],strength=6){const g={id,kind,meshes:members,colliders,strength,region:out[members[0]].region,bounds:union(members.map(i=>boxes[i]))};groups.push(g);for(const i of members)owners.set(i,g);return g;}
+    function group(id,kind,members,colliders=[],strength=6){const g={id,kind,meshes:members,colliders,strength,region:out[members[0]].region,bounds:unionOf(members)};groups.push(g);for(const i of members)owners.set(i,g);return g;}
     for(const t of w.trees){const members=Array.from({length:t.meshCount},(_,j)=>t.mesh+j),indices=collidersOf(members);const g=group('tree-'+t.mesh,'tree',members,indices,7);t.destructibleId=g.id;}
     out.forEach((m,i)=>{if(m.assembly){if(!explicit.has(m.assembly))explicit.set(m.assembly,[]);explicit.get(m.assembly).push(i);}});
     for(const [id,members] of explicit){group(id,id.startsWith('pressure')?'pipe':'prop',members,collidersOf(members),id.startsWith('pressure')?3:12);}
@@ -1377,7 +1382,7 @@
       if(!loose.has(key))loose.set(key,[]);loose.get(key).push(i);
     }
     for(const [key,members] of loose)group('decor-'+key,'decor',members,[],1);
-    for(const g of groups){g.meshes.sort((a,b)=>a-b);g.bounds=union(g.meshes.map(i=>boxes[i]));for(const i of g.meshes)out[i].destructibleId=g.id;}
+    for(const g of groups){g.meshes.sort((a,b)=>a-b);g.bounds=unionOf(g.meshes);for(const i of g.meshes)out[i].destructibleId=g.id;}
     for(const roof of groups.filter(g=>g.kind==='roof')){
       const room=w.rooms.find(r=>'room-'+r.id===roof.region),base=room?.y??Math.min(...(byRegion.get(roof.region)||[]).map(g=>g.bounds.minY));
       roof.supports=groups.filter(g=>g.region===roof.region&&!g.freestanding&&['wall','support'].includes(g.kind)&&g.bounds.minY<base+.5).map(g=>g.id);roof.supportRatio=.38;roof.dependents=groups.filter(g=>g!==roof&&g.region===roof.region&&!['wall','support'].includes(g.kind)&&g.bounds.minY>base+2.7).map(g=>g.id);

@@ -1,0 +1,38 @@
+{
+ "schema": "metal-banc-generation-v1",
+ "seed": 96,
+ "worlds": 18,
+ "reps": 15,
+ "avant": {
+  "medianeUs": 3043317,
+  "medianeMs": 3043.3,
+  "minUs": 2666216,
+  "maxUs": 3434694
+ },
+ "apres": {
+  "medianeUs": 2788600,
+  "medianeMs": 2788.6,
+  "minUs": 2509754,
+  "maxUs": 3254930
+ },
+ "gainPourcent": 8.37,
+ "ratios": [
+  0.9561,
+  0.8956,
+  0.8704,
+  0.9822,
+  1.042,
+  0.7577,
+  1.0206,
+  0.964,
+  1.0138,
+  0.8179,
+  0.9391,
+  0.9437,
+  0.8717,
+  1.0206,
+  0.9073
+ ],
+ "quantitesIdentiques": true,
+ "digeste": "262787/8098/19926 | 262787/8098/19926"
+}
