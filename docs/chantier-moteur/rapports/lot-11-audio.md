@@ -137,6 +137,14 @@ le jeu. Les noms restent du contenu METAL (`MetalAudio.extras`). Sans options, `
   forme relâchée. Les 4 tests FEEL-07 ont été écrits avant l'implémentation, rouges.
 - Preuves : `preuves/lot-11/t4/` (`confirm.mjs`, `confirm.json`, `matrix-t4.json`,
   `README.md`).
+- **Tour 1 (problème 2)** : les quatre réglages de mixage de FEEL-07 que ce commit laissait
+  de côté sont appliqués, après exécution de la décision par défaut de la fiche sur le banc
+  MIX (crête max 0,669 ≤ .85, zéro échantillon au coude .875). Compresseur maître
+  −12/6/3/12 ms/120 ms, duck 0,35 tenu 0,22 s (pompe, roquette, grenade) et 0,18 s (SMG),
+  tirs ennemis à taux 0,85 avec passe-bas 1,1 kHz sans clic mécanique au niveau 0,24, envoi
+  d'écho 0,09. La banque METAL passe de 68 à **72** tampons (deux voix ennemies de plus, en
+  deux variantes). Chiffres, commandes et test dans `preuves/lot-11/t4/README.md` et la
+  section « Écartés ou absorbés — puis repris au tour 1 ».
 
 ## T5 — la musique n'alloue plus par image (`982418a`, fait — RESTE-09 points 2 et 3)
 
@@ -222,16 +230,40 @@ sont notées plutôt que bricolées en fin de course.
    de `checks/music.test.mjs` (`before+10`) : il demande une réécriture chiffrée de
    l'assertion, à faire sciemment, pas en passant sur un lot déjà long.
 
-## Écartés ou absorbés (rien de fait ici, délibérément)
+## Écartés ou absorbés — puis repris au tour 1 (problème 2 du contre-vérificateur)
+
+La première version de ce rapport inscrivait ces quatre réglages parmi les « écartés,
+délibérément », reportés sur le lot 11b :
 
 - **MIX-02 compresseur (−12 / 3 / 6 / 12 / 120)** → lot 11b T3.
 - **MIX-03 / MIX-V1 ducking (0,35 / 0,22 / 0,18)** → lot 11b T4.
 - **MIX-06 tirs ennemis filtrés (1,1 kHz, taux 0,85)** → lot 11b T11.
 - **Écho 0,09** : non mesuré, donc non appliqué.
 
-Ces quatre-là ne sont pas des oublis : ils sont hors du périmètre des tâches de la fiche,
-et les appliquer sans la mesure qui les justifie aurait été exactement ce que le brief
-interdit.
+Le contre-vérificateur a vu juste sur le fait, et la fiche tranche : la ligne « Décisions à
+confirmer par David » de FEEL-07 porte une **valeur par défaut** — « lancer le harnais
+OfflineAudioContext SMG (ancien vs nouveau compresseur) et valider les valeurs
+−12/3/6/12/120 — valeur par défaut : accepter si pic ≤ .85 et pas de saturation du waveshaper
+.875 ». Le harnais n'avait pas été lancé : la décision par défaut n'avait pas été exécutée, et
+le report n'était donc pas ratifiable. Il est exécuté au tour 1, la condition est remplie, les
+quatre réglages sont **appliqués** (`preuves/lot-11/t4/README.md`, `matrix-feel07.json`,
+`pump-feel07.json`, `calib-feel07.json`, `ab-ennemis.json`) :
+
+| réglage | avant | après | mesure qui valide |
+|---|---|---|---|
+| compresseur maître | −19 / 18 / 5 / 4 ms / 180 ms | **−12 / 6 / 3 / 12 ms / 120 ms** | crête max 0,669 ≤ .85, zéro échantillon au coude .875 sur 16 rendus |
+| duck musique | 0,45, tenue 0,14/0,28 s | **0,35, tenu 0,22 s (pompe, roquette, grenade), 0,18 s (SMG)** | rafale SMG : musique −9,14 dB sous la rafale contre −8,15, marge du transitoire +2,2 dB |
+| tirs ennemis | tampon joueur, taux 1 / 1,13, niveau 0,24 / 0,28 | **même recette sans clic mécanique, taux 0,85, passe-bas 1,1 kHz, niveau 0,24** | scène b (65 tirs) : mix modifié (Δcrête −9,28 dBFS), 2 630 automatisations des deux côtés, 0 voix volée |
+| envoi d'écho des armes | 0,065 | **0,09** | crête et RMS des quatre scènes sous les mêmes bornes, plafond souple intact |
+
+La compensation automatique du `DynamicsCompressorNode`, que la fiche demandait de quantifier,
+vaut **4,55 dB avant, 3,73 dB après**, avec le même délai de 288 échantillons (6 ms) des deux
+côtés ; le RMS de sortie baisse de 0,32 à 0,73 dB selon la scène, ce qui est le décalage
+annoncé par le garde-fou, mesuré avant de figer et non supposé.
+
+Ce qui reste reporté sur le lot 11b, et pour une raison qui tient : la **proposition MIX**
+(limiteur de sécurité −6/4/12/1/90 et l'étagère basse 150 Hz à −12 dB) n'est pas dans la fiche,
+et le banc `mix.js` la garde mesurable (`COMP.lim`, `DUCK.shelf`) pour ce lot-là.
 
 ## Décisions à confirmer par David, avec le défaut appliqué
 

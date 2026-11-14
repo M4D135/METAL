@@ -15,14 +15,16 @@ const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000
 
 // ---------- variantes ----------
 const COMP = {
-  cur: {threshold: -19, knee: 18, ratio: 5, attack: .004, release: .18},        // src/audio.js:314-315
-  feel07: {threshold: -12, knee: 6, ratio: 3, attack: .012, release: .12},      // FEEL-07
-  lim: {threshold: -6, knee: 4, ratio: 12, attack: .001, release: .09},         // proposition MIX : limiteur de sécurité
+  cur: {threshold: -12, knee: 6, ratio: 3, attack: .012, release: .12},          // FEEL-07, src/audio.js depuis le tour 1
+  v02: {threshold: -19, knee: 18, ratio: 5, attack: .004, release: .18},         // limiteur v0.2 d'avant FEEL-07
+  feel07: {threshold: -12, knee: 6, ratio: 3, attack: .012, release: .12},       // FEEL-07
+  lim: {threshold: -6, knee: 4, ratio: 12, attack: .001, release: .09},          // proposition MIX : limiteur de sécurité
   lim2: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10},
   off: {threshold: 0, knee: 0, ratio: 1, attack: .004, release: .18}
 };
 const DUCK = {
-  cur: {weapon: .45, hold: null, mode: 'gain'},                                  // src/audio.js:137-149
+  cur: {weapon: .35, hold: null, mode: 'gain'},                                   // FEEL-07, src/audio.js (DUCK_HOLD 0,22 / 0,18)
+  v02: {weapon: .45, hold: {}, mode: 'gain'},                                    // duck v0.2 d'avant FEEL-07 (pas de table de maintien)
   feel07: {weapon: .35, hold: {fracture: .22, rocket: .22, grenade: .22, grenadeLaunch: .22, shot: .18}, mode: 'gain'},
   shelf: {weapon: .25, hold: null, mode: 'shelf', fullband: 0},                  // étagère basse 150 Hz, −12 dB, pas de duck large bande
   shelfmix: {weapon: .25, hold: null, mode: 'shelf', fullband: .3},              // étagère −12 dB + duck large bande léger (×0,775)
@@ -50,8 +52,8 @@ function buildAudio(v) {
     ' window.__NODES = {master: master, limiter: limiter, guard: guard, effects: effects, ambience: ambience, musicBus: musicBus, musicOut: window.__duckShelf || musicBus};', 'nodes');
   s = patchOnce(s, 'damping.connect(master); damping.connect(feedback); feedback.connect(delay);', 'damping.connect(master); damping.connect(feedback); feedback.connect(delay); window.__NODES.damping = damping;', 'damping');
   if (v.musicGain && v.musicGain !== 1) s = patchOnce(s, 'var MUSIC_GAIN = .56,', 'var MUSIC_GAIN = ' + (.56 * v.musicGain) + ',', 'musicGain');
-  if (duck.weapon !== .45) s = patchOnce(s, "(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? .45 :", "(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? " + duck.weapon + " :", 'duckWeapon');
-  if (duck.hold) s = patchOnce(s, 'hold = strength < .4 ? .28 : .14;', 'hold = ' + JSON.stringify(duck.hold) + '[cue] || (strength < .4 ? .28 : .14);', 'duckHold');
+  if (duck.weapon !== .35) s = patchOnce(s, 'var strength = weapon ? .35 :', 'var strength = weapon ? ' + duck.weapon + ' :', 'duckWeapon');
+  if (duck.hold) s = patchOnce(s, 'hold = DUCK_HOLD[cue] || (weapon ? .14 : strength < .4 ? .28 : .14);', 'hold = ' + JSON.stringify(duck.hold) + '[cue] || (weapon ? .14 : strength < .4 ? .28 : .14);', 'duckHold');
   if (duck.mode === 'shelf') s = patchOnce(s, 'musicBus.gain.cancelScheduledValues(now);\n        musicBus.gain.setTargetAtTime(MUSIC_GAIN * duckDepth, now, .006);\n        musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18);',
     'duckShelf_apply(now);', 'duckApply').replace('function duckMusic() {', 'function duckShelf_apply(now) { var f = window.__duckShelf, fb = ' + (duck.fullband || 0) + '; f.gain.cancelScheduledValues(now); f.gain.setTargetAtTime(20 * Math.log10(duckDepth), now, .006); f.gain.setTargetAtTime(0, duckUntil, .18);' +
       ' if (fb > 0) { musicBus.gain.cancelScheduledValues(now); musicBus.gain.setTargetAtTime(MUSIC_GAIN * (1 - fb * (1 - duckDepth)), now, .006); musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18); } }\n      function duckMusic() {');

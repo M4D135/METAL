@@ -23,7 +23,19 @@
     touchConfirm: {dur:.055, mech:[[0,.34,2800],[.002,.28,4100]], room:{tr:.030,g:.10}},
     killConfirm: {dur:.20, thump:{f0:90,f1:50,tp:.030,ta:.070,g:.95}, body:{cut:600,tb:.050,g:.55,drive:2.2}, mech:[[.004,.45,3200]], room:{tr:.060,g:.12}}
   }, recipes = {}, extras = {};
+  // FEEL-07 enemy reports: the same recipe as the player's weapon, minus the
+  // mechanical click. The rate (.85), the 1.1 kHz ceiling and the level (.24)
+  // belong to the voice in FAudio, not to the waveform, so the enemy shares the
+  // player's buffers byte for byte whenever the engine asks for these names.
+  function noMech (recipe) {
+    var copy = {}, key;
+    for (key in recipe) if (Object.prototype.hasOwnProperty.call(recipe, key)) copy[key] = recipe[key];
+    copy.mech = [];
+    return copy;
+  }
   Object.keys(weapons).forEach(function (name) { recipes[name] = FAudio.recipe(name, weapons[name]); });
   Object.keys(confirmations).forEach(function (name) { extras[name] = FAudio.recipe(name, confirmations[name]); });
+  extras.enemySmg = FAudio.recipe('enemySmg', noMech(weapons.smg));
+  extras.enemyGrenade = FAudio.recipe('enemyGrenade', noMech(weapons.grenade));
   window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras}; }};
 }());

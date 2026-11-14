@@ -4924,6 +4924,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null), targets = new WeakMap();
       var priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
       var MUSIC_GAIN = .56, EFFECTS_GAIN = .9, AMBIENCE_GAIN = .7;
+      // FEEL-07: how long each weapon cue holds the soundtrack down before the
+      // 180 ms release. The heavy reports (pump shell, rocket, grenade) hold
+      // 220 ms, the SMG burst only 180 ms, so automatic fire lets the music
+      // back between rounds instead of burying it for a whole magazine.
+      var DUCK_HOLD = {fracture: .22, rocket: .22, grenade: .22, grenadeLaunch: .22, shot: .18};
       var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
       function remember(node) { persistent.push(node); return node; }
       function random() {
@@ -4961,11 +4966,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       }
       function duckMusic() {
         if (cueDucked || !musicBus || !cue || mix.effects <= 0) return;
-        var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism|shieldRaise)$/.test(cue) ? .68 : 1;
+        var weapon = /^(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue);
+        var strength = weapon ? .35 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism|shieldRaise)$/.test(cue) ? .68 : 1;
         if (strength === 1) return;
         strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
         cueDucked = true;
-        var now = ctx.currentTime, hold = strength < .4 ? .28 : .14;
+        var now = ctx.currentTime, hold = DUCK_HOLD[cue] || (weapon ? .14 : strength < .4 ? .28 : .14);
         ambientDuckUntil = Math.max(ambientDuckUntil,now+.20);
         duckDepth = now < duckUntil ? Math.min(duckDepth, strength) : strength;
         duckUntil = Math.max(duckUntil, now + hold);
@@ -5100,7 +5106,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         track(s, [s, f, g, p], level);
         s.start(t, random() * .7); s.stop(t + duration + .02);
       }
-      function pcm(name,level,pan,event,rate,bus) {
+      function pcm(name,level,pan,event,rate,bus,cutoff) {
         if(!reserve(level,bus))return;
         var choices=bank[name];if(!choices)return;
         duckMusic();event=event||{};
@@ -5109,7 +5115,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         var source=ctx.createBufferSource(),gain=ctx.createGain(),panorama=panNode(pan),nodes=[source,gain,panorama],t=ctx.currentTime;
         source.buffer=buffer;source.playbackRate.value=pitch;
         var occluded=Math.max(0,Math.min(1,Number(event.occluded)||0)),distance=Math.max(0,Math.min(1,Number.isFinite(event.level)?event.level:1));
-        if(occluded>0||distance<.7){var filter=ctx.createBiquadFilter();filter.type='lowpass';filter.Q.value=.55;filter.frequency.value=Math.max(650,(4200+distance*9000)*(1-occluded*.88));source.connect(filter);filter.connect(gain);nodes.push(filter);}else source.connect(gain);
+        // FEEL-07: an optional ceiling on top of the distance muffle. Enemy fire
+        // is asked for at 1.1 kHz so a salvo reads as "over there" and never
+        // competes with the player's own report for the same 2-4 kHz space.
+        var cut=(occluded>0||distance<.7)?Math.max(650,(4200+distance*9000)*(1-occluded*.88)):Infinity;
+        if(Number.isFinite(cutoff))cut=Math.min(cut,cutoff);
+        if(Number.isFinite(cut)){var filter=ctx.createBiquadFilter();filter.type='lowpass';filter.Q.value=.55;filter.frequency.value=cut;source.connect(filter);filter.connect(gain);nodes.push(filter);}else source.connect(gain);
         gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(level,t+.0006);
         gain.gain.setValueAtTime(level,t+buffer.duration/pitch-.006);gain.gain.linearRampToValueAtTime(0,t+buffer.duration/pitch);
         gain.connect(panorama);panorama.connect(bus||effects);track(source,nodes,level);
@@ -5262,8 +5273,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           master = remember(ctx.createGain());
           master.gain.value = muted ? 0 : .65 * mix.master;
           var limiter = remember(ctx.createDynamicsCompressor());
-          limiter.threshold.value = -19; limiter.knee.value = 18;
-          limiter.ratio.value = 5; limiter.attack.value = .004; limiter.release.value = .18;
+          // FEEL-07 (MIX-02): -12 dB, knee 6, ratio 3:1, 12 ms in, 120 ms out.
+          // The MIX bench decided these values on the four recorded scenes and a
+          // 24-round SMG burst: peak stays <= .68 and no sample reaches the .875
+          // guard, so nothing saturates. Chrome runs the attack about 6 ms early.
+          limiter.threshold.value = -12; limiter.knee.value = 6;
+          limiter.ratio.value = 3; limiter.attack.value = .012; limiter.release.value = .12;
           // The existing compressor/mix stays intact. This final soft ceiling
           // is exactly linear below .875 and mathematically bounded above it,
           // including coincident rockets, debris and the MOD soundtrack.
@@ -5283,7 +5298,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           var send = remember(ctx.createGain()), delay = remember(ctx.createDelay(.5));
           echoSend = send;
           var damping = remember(ctx.createBiquadFilter()), feedback = remember(ctx.createGain());
-          send.gain.value = .065; delay.delayTime.value = .117;
+          send.gain.value = .09; delay.delayTime.value = .117;
           damping.type = 'lowpass'; damping.frequency.value = 1450; feedback.gain.value = .14;
           effects.connect(send); send.connect(delay); delay.connect(damping);
           damping.connect(master); damping.connect(feedback); feedback.connect(delay);
@@ -5344,7 +5359,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         approach(airFilter.frequency,780+stage*180+(environment.biome==='woodland'?-100:0),now,.4);
         stats.windGain=active&&mix.ambience>0?outside*wind*gust*.020*mask:0;
         approach(airVolume.gain,stats.windGain,now,stats.windGain?.22:.045);
-        approach(echoSend.gain,.065-outside*.055,now,.45);
+        approach(echoSend.gain,.09-outside*.08,now,.45);
 
       }
       function cancelTestMix() {
@@ -5565,7 +5580,13 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           event = event || {};
           var pan = Math.max(-1,Math.min(1,Number(event.pan)||0)), e = effectEvent('enemyShot:'+Math.round(pan*4),event,.06);
           if (!e || e.level < .055) return;
-          pcm(event.kind===3?'grenade':'smg',e.level*(event.kind===3?.28:.24),pan,event,event.kind===3?1.13:1);
+          // FEEL-07: the enemy fires the player's own report, slowed to .85, closed
+          // at 1.1 kHz, without the mechanical click and at level .24, so a salvo
+          // reads as "over there" instead of a thinner copy of the player's shot.
+          // The mech-free copies come from METAL's extras; without them the v0.2
+          // cues keep their own rate and click rather than falling silent.
+          var heavy = event.kind === 3, alt = heavy ? 'enemyGrenade' : 'enemySmg';
+          pcm(bank[alt] ? alt : (heavy ? 'grenade' : 'smg'), e.level * .24, pan, event, .85, null, 1100);
         },
         bossPhase: function () {
           [0, .18, .36].forEach(function (offset) {
@@ -5743,8 +5764,20 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     touchConfirm: {dur:.055, mech:[[0,.34,2800],[.002,.28,4100]], room:{tr:.030,g:.10}},
     killConfirm: {dur:.20, thump:{f0:90,f1:50,tp:.030,ta:.070,g:.95}, body:{cut:600,tb:.050,g:.55,drive:2.2}, mech:[[.004,.45,3200]], room:{tr:.060,g:.12}}
   }, recipes = {}, extras = {};
+  // FEEL-07 enemy reports: the same recipe as the player's weapon, minus the
+  // mechanical click. The rate (.85), the 1.1 kHz ceiling and the level (.24)
+  // belong to the voice in FAudio, not to the waveform, so the enemy shares the
+  // player's buffers byte for byte whenever the engine asks for these names.
+  function noMech (recipe) {
+    var copy = {}, key;
+    for (key in recipe) if (Object.prototype.hasOwnProperty.call(recipe, key)) copy[key] = recipe[key];
+    copy.mech = [];
+    return copy;
+  }
   Object.keys(weapons).forEach(function (name) { recipes[name] = FAudio.recipe(name, weapons[name]); });
   Object.keys(confirmations).forEach(function (name) { extras[name] = FAudio.recipe(name, confirmations[name]); });
+  extras.enemySmg = FAudio.recipe('enemySmg', noMech(weapons.smg));
+  extras.enemyGrenade = FAudio.recipe('enemyGrenade', noMech(weapons.grenade));
   window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras}; }};
 }());
 

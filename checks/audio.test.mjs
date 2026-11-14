@@ -102,7 +102,7 @@ test('METAL weapon recipes are seeded, denser reports under their own caps and p
 test('a recipe table replaces only its own buffers, falls back on bad output, and no table keeps the v0.2 bank bit for bit (MIX-01)',async()=>{
   const bank=async r=>{await r.audio.start();r.audio.setPlaying(true);return r.ctx.buffers.filter(b=>b.sampleRate===22050).map(b=>pcmKey(b.getChannelData(0)));};
   const plain=rig(),metal=rig({recipes:true}),{FAudio}=plain.scope,table=metal.scope.MetalAudio.recipes,jobs=[...FAudio.effectNames].flatMap(n=>n.startsWith('motor:')?[[n,0]]:[[n,0],[n,1]]);
-  const a=await bank(plain),b=await bank(metal);assert.equal(a.length,64);assert.equal(b.length,68,'les quatre tampons de confirmation s\'ajoutent à la banque, préparés avant le jeu');
+  const a=await bank(plain),b=await bank(metal);assert.equal(a.length,64);assert.equal(b.length,72,'les huit tampons METAL — quatre confirmations et deux rapports ennemis, deux variantes chacun — s\'ajoutent à la banque, préparés avant le jeu');
   jobs.forEach(([n,v],i)=>assert.equal(a[i],pcmKey(FAudio.synthesize(n,v,22050)),'without a table the bank is the v0.2 PCM'));
   assert.deepEqual(jobs.filter((_,i)=>a[i]!==b[i]).map(([n,v])=>n+'#'+v),['pistol#0','pistol#1','smg#0','smg#1','shotgun#0','shotgun#1','rocket#0','rocket#1','grenade#0','grenade#1']);
   jobs.forEach(([n,v],i)=>{if(table[n])assert.equal(b[i],pcmKey(table[n].synth(v,22050)),'the bank holds the recipe output');});
@@ -167,7 +167,7 @@ test('a kill confirms with the METAL 90 to 50 Hz thunk and a 3.2 kHz tick at lev
 
 test('METAL confirmation recipes obey every waveform rule on both variants and stay out of the effect bank (FEEL-07)',()=>{
   const r=rig({recipes:true}),{MetalAudio}=r.scope;
-  assert.deepEqual(Object.keys(MetalAudio.extras).sort(),['killConfirm','touchConfirm']);
+  assert.deepEqual(Object.keys(MetalAudio.extras).sort(),['enemyGrenade','enemySmg','killConfirm','touchConfirm']);
   for(const [name,spec] of Object.entries(MetalAudio.extras))for(const variant of [0,1]){
     const pcm=spec.synth(variant,22050),m=waveform(pcm);
     assert(pcm.length>0&&Number.isFinite(pcm.length));
@@ -179,7 +179,7 @@ test('METAL confirmation recipes obey every waveform rule on both variants and s
     assert.equal(pcmKey(spec.synth(variant,22050)),pcmKey(pcm),name+' is reproducible');
   }
   assert(pcmKey(MetalAudio.extras.touchConfirm.synth(0,22050))!==pcmKey(MetalAudio.extras.touchConfirm.synth(1,22050)),'seeded variants differ');
-  assert(!r.scope.FAudio.effectNames.includes('touchConfirm')&&!r.scope.FAudio.effectNames.includes('killConfirm'),'confirmations are not engine effect names');
+  assert(!r.scope.FAudio.effectNames.includes('touchConfirm')&&!r.scope.FAudio.effectNames.includes('killConfirm'),'confirmations are not engine effect names');assert(!r.scope.FAudio.effectNames.includes('enemySmg')&&!r.scope.FAudio.effectNames.includes('enemyGrenade'),'the mech-free enemy reports are METAL content, not engine effect names');
   r.audio.dispose();
 });
 
@@ -192,7 +192,7 @@ test('without the METAL extras, hit and kill keep the v0.2 cues and the bank sta
   assert.equal(banked.length,64,'no confirmation buffer enters the default bank');
   const metal=rig({recipes:true});metal.audio.setStage(1);metal.audio.setPlaying(true);await metal.audio.start();metal.audio.tick();
   const metalBanked=metal.ctx.buffers.filter(b=>b.sampleRate===22050);
-  assert.equal(metalBanked.length,68,'the four confirmation buffers are prepared before play, never during');
+  assert.equal(metalBanked.length,72,'the eight METAL buffers — four confirmations and two mech-free enemy reports, two variants each — are prepared before play, never during');
   assert.deepEqual(metal.ctx.buffers.filter(b=>b.sampleRate===22050&&b.length===Math.ceil(.055*22050)).length,2);
   assert.deepEqual(metal.ctx.buffers.filter(b=>b.sampleRate===22050&&b.length===Math.ceil(.2*22050)).length,2);
   plain.audio.dispose();metal.audio.dispose();
@@ -774,4 +774,34 @@ test('the prepared bank equals the direct synthesis for every name, recipe-backe
   const got=prepared.map(sha).sort(),want=expected.slice().sort();
   for(let i=0;i<want.length;i++)assert.equal(got[i],want[i],'buffer '+i+' diffère de la synthèse directe');
   r.audio.dispose();
+});
+test('FEEL-07 fige les quatre réglages décidés : compresseur maître, maintien du duck, voix ennemie, envoi écho',async()=>{
+  const r=rig({recipes:true});r.audio.setStage(1);r.audio.setPlaying(true);await r.audio.start();r.audio.tick();
+  const ctx=r.ctx,limiter=ctx.nodes.find(n=>n.kind==='limiter'),guard=ctx.nodes.find(n=>n.kind==='guard');
+  assert.deepEqual([limiter.threshold.value,limiter.knee.value,limiter.ratio.value,limiter.attack.value,limiter.release.value],[-12,6,3,.012,.12],'le compresseur maitre est a -12 dB, genou 6, ratio 3:1, attaque 12 ms, relachement 120 ms');
+  assert(guard.curve&&guard.curve.length>1,'le plafond souple .875 reste sous le nouveau compresseur');assert.equal(guard.oversample,'none');
+  const delay=ctx.nodes.find(n=>n.kind==='delay'),send=ctx.nodes.find(n=>n.kind==='gain'&&n.connections.includes(delay));
+  assert(send,'le bus des effets a bien un envoi vers le delai');assert.equal(send.gain.value,.09,'lenvoi decho des armes est a 0,09');
+  const bus=r.music[0].output,base=bus.gain.value;
+  r.audio.fracture();
+  assert(Math.abs(r.audio.stats.duckGain-base*.35)<1e-6,'la pompe abat la musique a 0,35 de son niveau, pas 0,45');
+  let hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.22)<1e-9,'la pompe tient le caniveau 0,22 s, '+hold);
+  r.ctx.advance(1.5);r.audio.tick();bus.gain.events.length=0;
+  r.audio.shot({level:1});
+  assert(Math.abs(r.audio.stats.duckGain-base*.35)<1e-6,'la rafale de SMG abat la musique a 0,35');
+  hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.18)<1e-9,'le SMG ne tient le caniveau que 0,18 s, '+hold);
+  r.ctx.advance(1.5);r.audio.tick();
+  const before=ctx.sources.length;r.audio.enemyShot({kind:0,level:1,pan:0});
+  assert.equal(ctx.sources.length,before+1,'une salve ennemie joue un seul tampon');
+  const shot=ctx.sources.at(-1),metal=r.scope.MetalAudio.extras.enemySmg;
+  assert.equal(pcmKey(shot.buffer.getChannelData(0)),pcmKey(metal.synth(0,22050)),'lenemi joue la recette du joueur sans son clic mecanique');
+  assert(Math.abs(shot.playbackRate.value-.85)<=.85*.015,'la voix ennemie est ralentie a 0,85 a la variation de 1,5 % pres, '+shot.playbackRate.value);
+  const filter=shot.connections[0];assert.equal(filter.kind,'filter','la voix ennemie passe par un filtre');
+  assert.equal(filter.type,'lowpass');assert.equal(filter.frequency.value,1100,'et par un passe-bas a 1,1 kHz');
+  assert(effectPeak(shot)<=.24*1.001&&effectPeak(shot)>0,'le niveau demande est 0,24, mesure '+effectPeak(shot));
+  const plain=rig();await plain.audio.start();plain.audio.setPlaying(true);plain.audio.tick();
+  const n=plain.ctx.sources.length;plain.audio.enemyShot({kind:0,level:1,pan:0});
+  assert.equal(plain.ctx.sources.length,n+1,'sans la table METAL, lenemi garde le tampon v0.2 plutot que le silence');
+  assert.equal(plain.ctx.sources.at(-1).connections[0].frequency.value,1100,'le passe-bas sapplique aussi a la voix de secours');
+  r.audio.dispose();plain.audio.dispose();
 });
