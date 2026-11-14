@@ -1784,13 +1784,17 @@
   // affectent ensuite des valeurs, ils n'ajoutent jamais de clé, pour que toutes les
   // listes dynamiques partagent une seule classe cachée. Les valeurs par défaut sont
   // neutres : elles reproduisent exactement la lecture d'un champ absent.
+  function meshInto(o,shape,p,s,mat,r,emissive){
+    o.shape=shape;o.p=p;o.s=s;o.mat=mat;o.r=r;o.emissive=emissive;o.color=undefined;o.surface=undefined;
+    o.overlay=false;o.fx=false;o.alpha=undefined;o.additive=undefined;o.outdoor=undefined;
+    o.actorPart=undefined;o.actorLod=0;o.actorScale=undefined;o.structural=false;o.debrisId=undefined;
+    o.sourceId=undefined;o.material=undefined;o.effectPart='';o.fxFire=false;o.fxSmoke=false;o.fxSpark=false;
+    o.fxPriority=undefined;o.ground=undefined;o.innerRatio=undefined;o.region=undefined;return o;
+  }
   function mesh(shape,p,s,mat,r=[0,0,0],emissive=0){
-    return {shape,p,s,mat,r,emissive,color:undefined,surface:undefined,overlay:false,fx:false,
-      alpha:undefined,additive:undefined,outdoor:undefined,actorPart:undefined,actorLod:0,
-      actorScale:undefined,structural:false,debrisId:undefined,sourceId:undefined,material:undefined,
-      effectPart:'',fxFire:false,fxSmoke:false,fxSpark:false,fxPriority:undefined,ground:undefined,
-      innerRatio:undefined,region:undefined};
+    return meshInto({},shape,p,s,mat,r,emissive);
   }
   window.FRender={create,foliageTriangles};
   window.FRender.mesh=mesh;
+  window.FRender.meshInto=meshInto;
 })();

@@ -241,7 +241,7 @@
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;
-    motion.reset();leftMotion.reset();shieldLift=0;lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
+    motion.reset();leftMotion.reset();shieldLift=0;lastFootstep=0;actorMotion.clear();actorMeshes.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
     soundscape.reset();audio.setStage?.(world.stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
     $('music-title').textContent=trackLabel();
     $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaignVersion===2?(stage<6?'Équipement '+(stage+1)+' / 6':'Assaut '+(stage-5)+' / 12')+' · ':world.campaign?world.chapterTitle+' · ':'')+world.title;
@@ -365,6 +365,8 @@
     for(const q of offers||[]){const id=(q.item||q).id;$('buy-'+id).addEventListener('click',()=>{const result=sim.buy?.(currentShopId,id);if(result?.ok){events();saveCheckpoint();renderHUD();renderShop((q.item||q).label+' · achat enregistré.');}else renderShop(result?.message||result?.reason||'Achat indisponible.');});}
   }
   function systemsReady(){return (sim.state.mechanisms||[]).every(a=>!a.required||a.active);}
+  // RCPU-11 : réservoir de maillages d'acteurs, un tableau par ennemi, réutilisé d'une image à l'autre.
+  const actorMeshes=new Map();
   function pendingBossReward(){return world.campaignVersion===2?(sim.state.loot||[]).find(q=>q.kind==='boss'&&q.rewardTaken===false):null;}
   function exitReady(){return sim.state.relays===3&&systemsReady()&&!sim.state.bossAlive&&!pendingBossReward();}
   function isOutdoors(x,z){return (world?.environment?.outdoorZones||[]).some(a=>Math.abs(x-a.x)<=a.w/2&&Math.abs(z-a.z)<=a.d/2);}
@@ -553,7 +555,8 @@
       if(e.deployed===false||e.hp<=0||!nearby(e.x,e.z,e.type===3?4.5*scale:2))continue;
       if(!actorVisible(e.x,(e.baseY||0)+1.6*scale,e.z,e.type===3?4.5*scale:3.5))continue;
       const pose=actorMotion.get(e.id),distance=Math.hypot(e.x-p.x,e.z-p.z),base=e.baseY||0;
-      out.push(...FActors.build(e,{time:t,phase:pose?.phase,blend:pose?.blend,distance,quality,backend:renderer.stats.backend}));
+      let pool=actorMeshes.get(e.id);if(!pool){pool=[];actorMeshes.set(e.id,pool);}
+      out.push(...FActors.build(e,{time:t,phase:pose?.phase,blend:pose?.blend,distance,quality,backend:renderer.stats.backend,pool}));
       if(e.windup>0&&!giant){
         const charge=1-e.windup/(e.windupMax||1),heading=Number.isFinite(e.yaw)?e.yaw:0,r=(e.type===3?2.2:.8)*(1.3-charge*.3);
         out.push(m('ring',[e.x,base+.07,e.z],[r*2,.08,r*2],5,[0,0,0],.5+charge));
@@ -838,7 +841,7 @@
       lastFootstep=footstep;
       for(const e of sim.state.enemies){
         const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1;
-        if(e.deployed===false||e.hp<=0||(e.type!==1&&e.type!==2&&e.type!==3)||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);continue;}
+        if(e.deployed===false||e.hp<=0||(e.type!==1&&e.type!==2&&e.type!==3)||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);actorMeshes.delete(e.id);continue;}
         const pose=actorMotion.get(e.id)||{phase:e.id*.7,blend:0};pose.phase=(pose.phase+(e.moveSpeed||0)*dt*4.8/scale)%(Math.PI*2);pose.blend+=(Math.min(1,(e.moveSpeed||0)/.9)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);
       }
       for(const a of sim.state.mechanisms||[]){const value=systemMotion.get(a.id)??0;systemMotion.set(a.id,value+(Number(a.active)-value)*(1-Math.exp(-dt*4)));}

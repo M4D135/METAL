@@ -32,6 +32,9 @@
   }
   function angles(m){anglesTo(EUL,m);return [EUL[0],EUL[1],EUL[2]];}
   function point(f,p){const a=f.b;return [f.p[0]+a[0]*p[0]+a[1]*p[1]+a[2]*p[2],f.p[1]+a[3]*p[0]+a[4]*p[1]+a[5]*p[2],f.p[2]+a[6]*p[0]+a[7]*p[1]+a[8]*p[2]];}
+  // RCPU-11 : avec un réservoir de maillages, la position est réécrite dans le tableau
+  // déjà possédé par le maillage recyclé (tableau toujours frais à la création).
+  function pointInto(f,p,o){const a=f.b;o[0]=f.p[0]+a[0]*p[0]+a[1]*p[1]+a[2]*p[2];o[1]=f.p[1]+a[3]*p[0]+a[4]*p[1]+a[5]*p[2];o[2]=f.p[2]+a[6]*p[0]+a[7]*p[1]+a[8]*p[2];return o;}
   function frame(parent,p,r=[0,0,0]){productTo(MAT2,parent.b,rotationTo(MAT,r[0],r[1],r[2]));const b=[MAT2[0],MAT2[1],MAT2[2],MAT2[3],MAT2[4],MAT2[5],MAT2[6],MAT2[7],MAT2[8]];return {p:point(parent,p),b,r:angles(b)};}
   function build(e,options={}) {
     if(e.hp!==undefined&&e.hp<=0)return [];
@@ -56,9 +59,21 @@
     const peaceful=e.awareness==='patrol',scanning=e.awareness==='search'||e.awareness==='investigate';
     const signal=stun||peaceful?[.20,.67,.70]:charge||scanning?[.86,.49,.14]:[.80,.20,.075];
     const emission=stun?.20+.08*Math.sin(time*9):.28+charge*.45,signalMat=stun||peaceful?4:charge||scanning?5:6;
+    // RCPU-11 : réservoir de maillages fourni par le producteur (un tableau par ennemi).
+    // Les maillages sont recyclés d'une image à l'autre ; pack() en fait une copie, rien
+    // n'est retenu par le rendu, et le cache d'ombres du repli ne mémorise jamais un
+    // maillage dynamique (src/renderer.js, commentaire « reused dynamic meshes may have moved »).
+    const pool=Array.isArray(options.pool)?options.pool:null;let pooled=0;
     function piece(name,shape,p,s,skin='shell',f=root,r=null,mat=0,emissive=0){
       const color=Array.isArray(skin)?skin:palette[skin],rot=r?angles(productTo(MAT2,f.b,rotationTo(MAT,r[0],r[1],r[2]))):f.r;
-      const m=G.FRender.mesh(shape,point(f,p),s,mat,rot,emissive);m.color=color;m.surface='object';m.actorPart=name;m.actorLod=lod;out.push(m);return m;
+      let m;
+      if(pool){
+        m=pool[pooled];
+        if(m)G.FRender.meshInto(m,shape,pointInto(f,p,m.p),s,mat,rot,emissive);
+        else{m=G.FRender.mesh(shape,point(f,p),s,mat,rot,emissive);pool[pooled]=m;}
+        pooled++;
+      }else m=G.FRender.mesh(shape,point(f,p),s,mat,rot,emissive);
+      m.color=color;m.surface='object';m.actorPart=name;m.actorLod=lod;out.push(m);return m;
     }
     const box=(n,p,s,skin='shell',f=root,r=null)=>piece(n,'box',p,s,skin,f,r,skin==='rubber'?7:0);
     const armor=(n,p,s,skin='shell',f=root,r=null)=>piece(n,lod===0?'bevel':'box',p,s,skin,f,r);
@@ -378,11 +393,12 @@
         }
       }
       for(const mesh of out){
-        mesh.p=[root.p[0]+(mesh.p[0]-root.p[0])*scale,base+(mesh.p[1]-base)*scale,root.p[2]+(mesh.p[2]-root.p[2])*scale];
+        const mp=mesh.p;mp[0]=root.p[0]+(mp[0]-root.p[0])*scale;mp[1]=base+(mp[1]-base)*scale;mp[2]=root.p[2]+(mp[2]-root.p[2])*scale;
         mesh.s=mesh.s.map(v=>v*scale);mesh.actorScale=scale;
         if(!awake&&mesh.actorPart!=='titan-heart'&&mesh.emissive)mesh.emissive*=.16;
       }
     }
+    if(pool)pool.length=pooled;
     return out;
   }
   G.FActors={build};
