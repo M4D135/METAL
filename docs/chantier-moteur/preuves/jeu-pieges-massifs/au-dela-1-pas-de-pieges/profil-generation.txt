@@ -1,0 +1,13 @@
+profil CPU.20261114.073755.864830.0.001.cpuprofile — temps CPU total 23.9 s
+  4659 ms  19.5 % demolitionMetadata:2057
+  3010 ms  12.6 % create:682
+  2072 ms   8.7 % (garbage collector):0
+  1811 ms   7.6 % bbox:2059
+  1450 ms   6.1 % choose:2149
+  1017 ms   4.2 % naturalDetails:1607
+   701 ms   2.9 % elevateWorld:1744
+   580 ms   2.4 % (anon):1316
+   493 ms   2.1 % distance:2067
+   443 ms   1.8 % unionOf:2064
+   437 ms   1.8 % polishTrees:1800
+   430 ms   1.8 % nearest:2100

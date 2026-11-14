@@ -2019,12 +2019,14 @@
     }
     function updateEnvironment(dt,damage=true){
       trapBoxes.length=0;
+      const trapActors=t=>[p,...nearby(t.x,t.z,Math.max(t.w,t.d)+(t.travel||2)+3).filter(e=>e.hp>0)];
       for(const t of s.traps){
         t.damageWait=Math.max(0,(t.damageWait||0)-dt);
         if(t.destroyed){t.box=null;t.warning=t.hot=false;continue;}
-        const actors=[p,...nearby(t.x,t.z,Math.max(t.w,t.d)+(t.travel||2)+3).filter(e=>e.hp>0)];
-        let progress=0,warning=false,hot=false;
+        let progress=0,warning=false,hot=false,actors;
         if(t.kind==='spikes'||t.kind==='floor'){
+          // Les pics se déclenchent à l'approche : la requête spatiale est due à chaque pas.
+          actors=trapActors(t);
           if(!t.triggered&&actors.some(e=>Math.abs(e.x-t.x)<t.w/2+.2&&Math.abs(e.z-t.z)<t.d/2+.2&&Math.abs(feet(e)-t.y)<.35)){t.triggered=true;t.triggerAge=0;if(damage)emit('trap',{id:t.id,kind:t.kind,warning:true,x:t.x,y:t.y,z:t.z});}
           if(t.triggered){
             t.triggerAge+=dt;const delay=Math.max(.65,t.warningTime||t.warningDuration||t.warningTime||1.2),active=t.active||2;
@@ -2038,8 +2040,14 @@
           progress=hot?(t.kind==='blade'?phase/active:Math.sin(Math.PI*phase/active)):0;
           const cycle=Math.floor((s.time+(t.phase||0))/period);
           if(warning&&t.cycle!==cycle){t.cycle=cycle;if(damage)emit('trap',{id:t.id,kind:t.kind,warning:true,x:t.x,y:t.y,z:t.z});}
+          // Une lame ou une presse ne peut rencontrer un corps que pendant sa course :
+          // arrêtée, sa pose est fixe, trapPose ne pousse aucun contact et personne ne
+          // lit la liste. La requête spatiale, la plus chère du pas, n'est donc due que
+          // quand la pièce est en mouvement ou s'annonce. Et tant que la pièce reste au
+          // repos sa boîte ne change pas : on ne la recalcule ni ne la reallocue.
+          actors=hot||warning?trapActors(t):[p];
         }
-        const pose=trapPose(t,progress,actors);t.progress=pose.progress;t.box=pose.box;t.angle=progress*Math.PI*2;t.warning=warning;t.hot=hot;
+        const pose=(!hot&&t.progress===0&&t.box)?{progress:0,box:t.box,contacts:[]}:trapPose(t,progress,actors);t.progress=pose.progress;t.box=pose.box;t.angle=progress*Math.PI*2;t.warning=warning;t.hot=hot;
         if(t.box&&(t.kind==='blade'||t.kind==='press'))trapBoxes.push(t.box);
         if(damage&&hot&&t.damageWait<=0){
           const contact=new Set(pose.contacts);if(t.kind==='spikes')for(const e of actors)if(bodyTouches(e,t.box,.02))contact.add(e);
