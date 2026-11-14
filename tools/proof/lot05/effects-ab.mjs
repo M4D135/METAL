@@ -8,7 +8,7 @@ import {makeScene} from '../render-scene.mjs';
 import {quantile} from '../common.mjs';
 function stats(values){const round=x=>+x.toFixed(3);return {mean:round(values.reduce((a,b)=>a+b,0)/values.length),p50:round(quantile(values,.5)),p95:round(quantile(values,.95)),p99:round(quantile(values,.99)),max:round(Math.max(...values))};}
 const root=process.argv[2],frames=+(process.argv[3]||3000),[kind,idx]=(process.argv[4]||'camp:17').split(':');
-const S=makeScene(root,{world:[kind,+idx],content:false});
+const S=makeScene(root,{world:[kind,+idx],content:false,record:false});
 const src=readFileSync(root+'/src/effects.js','utf8');
 let start=src.indexOf('    const wreckage=[],yaw=num(camera?.yaw)');
 if(start<0)start=src.indexOf('    const yaw=num(camera?.yaw),pitch=num(camera?.pitch),heading=');

@@ -1,21 +1,22 @@
 {
- "commande": "node --trace-gc tools/proof/lot05/gc-bench.mjs <racine> 1200 camp:17 drawonly",
- "note": "Pression GC du chemin de rendu : somme des octets repris par les Scavenge entre START et END, rapportee au nombre d images.",
- "base": {
-  "scavenge": 24,
-  "major": 1,
-  "reprisMo": 0.747,
-  "frames": 1200,
-  "ms": 1089,
-  "koParImage": 0.6
+ "commande": "node --trace-gc tools/proof/lot05/gc-bench.mjs <racine> 1200 camp:17 <mode> | resume GC (gc-parse.py)",
+ "resume": "Pression GC du chemin de rendu : somme des octets repris par les Scavenge et Mark-Compact entre ### START et ### END, rapportee au nombre d'images.",
+ "base": ".relais/t2 = 4a91ea9 (avant T3)",
+ "tete": ". = 372e348, code T3 (pools de tampons typés, upload par capacité)",
+ "node": "v24.18.0",
+ "modes": {
+  "drawonly": {"note": "frame() complet, simulation figee et models() memoisee : draw() + lumieres + ressorts de presentation + synchronisation de destruction.",
+   "base": {"scavenge": 25, "major": 0, "reprisMo": 797.1, "frames": 1200, "ms": 1081, "koParImage": 680.2},
+   "tete": {"scavenge": 12, "major": 0, "reprisMo": 381.1, "frames": 1200, "ms": 536, "koParImage": 325.2}},
+  "drawcall": {"note": "draw() seul : en plus de drawonly, FEffects.lights et les ressorts FMotion sont figes.",
+   "base": {"scavenge": 24, "major": 0, "reprisMo": 765.5, "frames": 1200, "ms": 1050, "koParImage": 653.4},
+   "tete": {"scavenge": 12, "major": 0, "reprisMo": 381.6, "frames": 1200, "ms": 556, "koParImage": 325.6}},
+  "drawnone": {"note": "plancher du banc : meme scene, renderer.draw() remplace par une fonction vide.",
+   "tete": {"scavenge": 0, "major": 0, "reprisMo": 0, "frames": 1200, "ms": 11, "koParImage": 0}}
  },
- "tete": {
-  "scavenge": 18,
-  "major": 0,
-  "reprisMo": 0.559,
-  "frames": 1200,
-  "ms": 858,
-  "koParImage": 0.5
- },
- "ratioKoParImage": 0.833
+ "ratioKoParImage": 0.498,
+ "stabilite": "deux executions par mode, a moins de 0,1 % sur les octets repris (tete drawcall 381,6 puis 381,7 Mo ; base 765,5 puis 765,7 Mo)",
+ "gain": "allocation par draw() divisee par deux : 0,64 -> 0,32 Mo par image (camp:17, 1200 images)",
+ "criteres": "La fiche exigeait « moins de 0,2 MB alloues par draw() ». Le gain de T3 se reproduit (ratio 0,50) mais le seuil absolu n'est PAS atteint a la tete : 0,32 Mo par image restent dans draw(). L'ecart est reporte au rapport (reste a faire, lie a l'abandon de T14).",
+ "note": "Publie a la place des chiffres du tour 1 (base 0,6 koParImage, tete 0,5), qui etaient faux d'un facteur ~1000 et sortaient d'un harnais qui ne tourne plus : docs/chantier-moteur/bancs/rcpu/harness.mjs ne charge pas src/fmath.js et lève « FWorld: charger src/fmath.js avant src/world.js » sur les sources actuelles. Le banc commité importait de plus ./harness.mjs (jamais committé) et, une fois branché sur tools/proof/render-scene.mjs, mesurait l'allocation du traceur GL (serialisation hex de chaque tampon) et non celle du moteur : d'ou l'ajout de l'option record:false (enregistreur muet) et du mode drawnone."
 }

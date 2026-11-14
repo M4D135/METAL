@@ -34,11 +34,13 @@ function serialize(value, out) {
   out.push('?' + (value && value.name ? value.name : Object.prototype.toString.call(value)));
 }
 
-export function makeGL(recorder) {
+export function makeGL(recorder, {reuse = false} = {}) {
   const gl = {}; let serial = 100, constant = 1000;
   for (const k of CONSTS) gl[k] = ++constant;
   gl.FRAMEBUFFER_COMPLETE = 36053; gl.COLOR_BUFFER_BIT = 16384; gl.DEPTH_BUFFER_BIT = 256;
   const obj = kind => ({__glid: ++serial, kind});
+  const pool = new Map(), locations = new Map();
+  const reused = (kind, key) => { let o = pool.get(key); if (!o) { o = obj(kind); pool.set(key, o); } return o; };
   const NAMES = ('activeTexture attachShader bindBuffer bindFramebuffer bindRenderbuffer bindTexture ' +
     'bindVertexArray blendFunc bufferData bufferSubData checkFramebufferStatus clear clearColor compileShader ' +
     'createBuffer createFramebuffer createProgram createRenderbuffer createShader createTexture ' +
@@ -53,7 +55,9 @@ export function makeGL(recorder) {
     gl[name] = (...args) => {
       recorder.record(name, args, gl);
       if (name.startsWith('create')) return obj(name);
-      if (name === 'getUniformLocation') return {__glid: 'u' + serial + ':' + args[1]};
+      // Un vrai pilote ne cree pas un objet JavaScript par emplacement d'uniforme : sans
+      // reutilisation, le faux pilote allouait plus que le moteur et faussait le banc GC.
+      if (name === 'getUniformLocation') return reuse ? reused('uniformLocation', (args[0] && args[0].__glid) + ':' + args[1]) : {__glid: 'u' + serial + ':' + args[1]};
       if (name === 'getShaderParameter' || name === 'getProgramParameter') return true;
       if (name === 'checkFramebufferStatus') return 36053;
       if (name === 'getExtension') return null;
@@ -73,6 +77,33 @@ export function verifyGL(gl, root) {
   if (missing.size) throw new Error('faux WebGL2 incomplet: ' + [...missing].join(', '));
 }
 
+function compte(state, name, args, gl) {
+  state.calls++;
+  if (name === 'drawElementsInstanced') { state.draws++; state.instances += args[4] || 0; state.triangles += (args[1] || 0) / 3 * (args[4] || 0); }
+  else if (name === 'drawArrays') state.draws++;
+  else if (name === 'bufferData') { state.bufferData++; state.bufferBytes += args[1] && args[1].byteLength || 0; }
+  else if (name === 'bufferSubData') { state.subData++; state.subBytes += args[2] && args[2].byteLength || 0; }
+  else if (name.startsWith('uniform')) state.uniforms++;
+  else if (name === 'texImage2D') state.texImage++;
+  else if (name === 'texSubImage2D') state.texSubImage++;
+  else if (name === 'createProgram') state.programs++;
+  else if (name === 'createShader') state.shaders++;
+  else if (name === 'createBuffer') state.buffers++;
+  else if (name === 'createVertexArray') state.vaos++;
+  else if (name === 'createTexture') state.textures++;
+  if (name === 'bindBuffer') { if (args[0] === gl.ARRAY_BUFFER) state.boundArray = args[1]; }
+}
+
+// Enregistreur muet : ne compte que les appels, sans sérialiser les arguments ni hasher.
+// Pour les bancs qui mesurent l'allocation du chemin de rendu : la sérialisation du
+// traceur (Buffer.from(...).toString('hex') sur chaque tampon) noierait la mesure sous
+// des mégaoctets par image qui n'appartiennent pas au moteur.
+export function makeCountingRecorder() {
+  const state = {calls: 0, draws: 0, instances: 0, triangles: 0, bufferData: 0, bufferBytes: 0, subData: 0, subBytes: 0, uniforms: 0, texImage: 0, texSubImage: 0, programs: 0, shaders: 0, buffers: 0, vaos: 0, textures: 0, contentDraws: 0, contentLen: 0, boundArray: null};
+  return {state, frames: [], record(name, args, gl) { compte(state, name, args, gl); },
+    digest() { return 'muet'; }, contentDigest() { return 'muet'; }};
+}
+
 export function makeRecorder({content = true} = {}) {
   const hash = crypto.createHash('sha256');
   const contentHash = crypto.createHash('sha256');
@@ -83,26 +114,14 @@ export function makeRecorder({content = true} = {}) {
   const attribs = new Map();
   let boundArray = null;
   let stopped = false;
-  const state = {calls: 0, draws: 0, instances: 0, triangles: 0, bufferData: 0, bufferBytes: 0, subData: 0, subBytes: 0, uniforms: 0, texImage: 0, texSubImage: 0, programs: 0, shaders: 0, buffers: 0, vaos: 0, textures: 0, contentDraws: 0, contentLen: 0};
+  const state = {calls: 0, draws: 0, instances: 0, triangles: 0, bufferData: 0, bufferBytes: 0, subData: 0, subBytes: 0, uniforms: 0, texImage: 0, texSubImage: 0, programs: 0, shaders: 0, buffers: 0, vaos: 0, textures: 0, contentDraws: 0, contentLen: 0, boundArray: null};
   return {
     state,
     record(name, args, gl) {
       if (stopped) return;
-      state.calls++;
-      if (name === 'drawElementsInstanced') { state.draws++; state.instances += args[4] || 0; state.triangles += (args[1] || 0) / 3 * (args[4] || 0); }
-      else if (name === 'drawArrays') state.draws++;
-      else if (name === 'bufferData') { state.bufferData++; state.bufferBytes += args[1] && args[1].byteLength || 0; }
-      else if (name === 'bufferSubData') { state.subData++; state.subBytes += args[2] && args[2].byteLength || 0; }
-      else if (name.startsWith('uniform')) state.uniforms++;
-      else if (name === 'texImage2D') state.texImage++;
-      else if (name === 'texSubImage2D') state.texSubImage++;
-      else if (name === 'createProgram') state.programs++;
-      else if (name === 'createShader') state.shaders++;
-      else if (name === 'createBuffer') state.buffers++;
-      else if (name === 'createVertexArray') state.vaos++;
-      else if (name === 'createTexture') state.textures++;
-      if (name === 'bindBuffer') { if (args[0] === gl.ARRAY_BUFFER) boundArray = args[1]; }
-      else if (content && name === 'bufferData') {
+      compte(state, name, args, gl);
+      const boundArray = state.boundArray;
+      if (content && name === 'bufferData') {
         if (ArrayBuffer.isView(args[1])) contents.set(boundArray, Array.from(args[1]));
         else contents.delete(boundArray);
       } else if (content && name === 'bufferSubData' && ArrayBuffer.isView(args[2])) {
@@ -167,15 +186,15 @@ function fakeContext2D(recorder) {
   });
 }
 
-export function makeScene(root, {world: spec = ['camp', 6], seed = 96, quality = 'auto', canvas2d = false, content = true, sources = {}} = {}) {
+export function makeScene(root, {world: spec = ['camp', 6], seed = 96, quality = 'auto', canvas2d = false, content = true, record = true, sources = {}} = {}) {
   const win = loadModules(root, undefined, sources);
   const {FWorld, FSimulation, FBrain, FRender, FActors, FEffects, FMotion} = win;
   const world = spec[0] === 'camp' ? FWorld.create(seed, spec[1], {campaign: true, campaignVersion: 2}) : FWorld.create(seed, spec[1]);
   let brain = null; try { brain = FBrain.create({mode: 'cpu'}); } catch {}
   const sim = FSimulation.create(world, {armorSystem: true, ...(brain ? {brain} : {})});
   sim.setDifficulty?.(0);
-  const recorder = makeRecorder({content});
-  const gl = canvas2d ? null : makeGL(recorder);
+  const recorder = record ? makeRecorder({content}) : makeCountingRecorder();
+  const gl = canvas2d ? null : makeGL(recorder, {reuse: !record});
   if (gl) verifyGL(gl, root);
   const ctx2d = canvas2d ? fakeContext2D(recorder) : null;
   const canvas = fakeCanvas(gl, ctx2d);

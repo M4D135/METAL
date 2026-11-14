@@ -1,8 +1,7 @@
 // Banc lot 05 : FEffects.build apparié entre deux racines, même état, même caméra, ordre alterné.
 // usage: node tools/proof/lot05/effects-ab2.mjs <racineA>,<racineB> [frames=3000] [world=camp:17]
-import {readFileSync} from 'node:fs';
+import {readFileSync, writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
-import {pathToFileURL} from 'node:url';
 import vm from 'node:vm';
 import {isDeepStrictEqual} from 'node:util';
 
@@ -10,8 +9,8 @@ const argv = process.argv.slice(2);
 const roots = (argv[0] || '.').split(',').map(r => resolve(r));
 const frames = +(argv[1] || 3000), [kind, idx] = (argv[2] || 'camp:17').split(':');
 const out = argv.includes('--out') ? argv[argv.indexOf('--out') + 1] : null;
-const {makeScene} = await import(pathToFileURL(roots[0] + '/tools/proof/render-scene.mjs').href);
-const S = makeScene(roots[0], {world: [kind, +idx], seed: 96, quality: 'auto', content: false});
+const {makeScene} = await import(new URL('../render-scene.mjs', import.meta.url).href);
+const S = makeScene(roots[0], {world: [kind, +idx], seed: 96, quality: 'auto', content: false, record: false});
 const mods = ['fmath', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'actors', 'motion'];
 const win = {innerWidth: 1280, innerHeight: 720, devicePixelRatio: 2};
 for (const n of mods) vm.runInThisContext('(function(window){' + readFileSync(roots[0] + '/src/' + n + '.js', 'utf8') + '\n})', {filename: n + '.js'})(win);
