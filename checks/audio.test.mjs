@@ -848,3 +848,36 @@ test('un contexte hors ligne injecte tient pour disponible, nest jamais ouvert, 
   plain.audio.dispose();
   assert.equal(plain.ctx.closes,1,'en revanche le contexte que le moteur a ouvert est bien ferme');
 });
+
+// MIX-02 (lot 11b T3) : le rattrapage caché du compresseur, annoncé et compensé.
+test('FAudio.makeupDb rend le rattrapage automatique du compresseur aux quatre couples mesurés, et chain level:"fixe" le compense après le compresseur (MIX-02)',async()=>{
+  const MESURES=[[-12,6,3,3.73],[-19,18,5,4.55],[-6,4,12,2.56],[-9,6,8,3.53]];
+  const r=rig();await r.audio.start();
+  for(const [seuil,genou,ratio,mesure] of MESURES){
+    const annonce=r.scope.FAudio.makeupDb(seuil,genou,ratio);
+    assert(Math.abs(annonce-mesure)<=0.05,'rattrapage ('+seuil+' dB, genou '+genou+', '+ratio+':1) annoncé '+annonce.toFixed(3)+', rendu '+mesure+' par le banc');
+  }
+  assert.equal(r.audio.stats.makeupDb,r.scope.FAudio.makeupDb(-12,6,3),'stats.makeupDb rend bien le rattrapage du compresseur en place');
+  const g0=r.audio.graph();
+  assert(g0.limiter.connections.includes(g0.guard),'sans option chain, le limiteur monte toujours directement a l ecreteur');
+  assert.equal(r.ctx.nodes.filter(n=>n.kind==='gain'&&g0.limiter.connections.includes(n)).length,0,'aucun gain de rattrapage n est ajoute par defaut');
+  assert.equal(g0.master.gain.value,.65,'le maitre reste a 0,65 sans option chain');
+  r.audio.dispose();
+  const f=rig({options:{chain:{masterGain:.65,compressor:{threshold:-9,knee:6,ratio:8,attack:.002,release:.1},level:'fixe'}}});
+  await f.audio.start();
+  const g=f.audio.graph();
+  assert.deepEqual([g.limiter.threshold.value,g.limiter.knee.value,g.limiter.ratio.value,g.limiter.attack.value,g.limiter.release.value],[-9,6,8,.002,.1],'chain.compressor regle le vrai compresseur');
+  assert.equal(g.limiter.connections.length,1,'le limiteur ne sort plus que vers le gain de rattrapage');
+  const compensation=g.limiter.connections[0];
+  assert.equal(compensation.kind,'gain','level fixe ajoute un GainNode');
+  assert(compensation.connections.includes(g.guard),'entre le compresseur et l ecreteur, jamais avant le compresseur');
+  const attendu=Math.pow(10,(r.scope.FAudio.makeupDb(-19,18,5)-r.scope.FAudio.makeupDb(-9,6,8))/20);
+  assert(Math.abs(compensation.gain.value-attendu)<1e-12,'le gain vaut 10^((4,547 - 3,531)/20) = '+attendu.toFixed(4)+', mesure '+compensation.gain.value);
+  assert.equal(g.master.gain.value,.65,'master.gain n est pas touche : le point de travail du compresseur ne bouge pas');
+  assert.equal(f.audio.stats.makeupDb,r.scope.FAudio.makeupDb(-9,6,8),'stats rend le rattrapage du nouveau compresseur');
+  f.audio.dispose();
+  const m=rig({options:{chain:{masterGain:.5}}});await m.audio.start();
+  assert.equal(m.audio.graph().master.gain.value,.5,'chain.masterGain regle bien le maitre');
+  assert.deepEqual([m.audio.graph().limiter.threshold.value,m.audio.graph().limiter.knee.value,m.audio.graph().limiter.ratio.value],[-12,6,3],'sans compressor dans chain, les reglages en place restent');
+  m.audio.dispose();
+});

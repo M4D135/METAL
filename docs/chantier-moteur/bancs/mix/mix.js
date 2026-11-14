@@ -256,7 +256,9 @@ async function calibrate(name) {
   const comp2 = ctx.createDynamicsCompressor(); for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) comp2[k].value = c[k]; is.connect(comp2); comp2.connect(m, 0, 1); m.connect(ctx.destination);
   osc.start(); is.start(); const b = await ctx.startRendering(), d0 = b.getChannelData(0), d1 = b.getChannelData(1);
   const makeup = rmsRange(d0, SR, SR * 1.4) / (.001 / Math.SQRT2); let at = 0, pk = 0; for (let i = SR; i < d1.length; i++) if (Math.abs(d1[i]) > pk) { pk = Math.abs(d1[i]); at = i; }
-  return {name, ...c, makeupDb: r2(dB(makeup)), delay: at - SR * 1.5, delayMs: r2((at - SR * 1.5) / SR * 1000)};
+  // MIX-02 : le rattrapage que FAudio annonce (FAudio.makeupDb) contre celui que Chrome rend.
+  const annonce = window.FAudio && typeof window.FAudio.makeupDb === 'function' ? r2(window.FAudio.makeupDb(c.threshold, c.knee, c.ratio)) : null;
+  return {name, ...c, makeupDb: r2(dB(makeup)), annonceDb: annonce, delay: at - SR * 1.5, delayMs: r2((at - SR * 1.5) / SR * 1000)};
 }
 const CAL = {};
 async function calib(name) { return CAL[name] || (CAL[name] = await calibrate(name)); }

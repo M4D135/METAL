@@ -165,10 +165,34 @@
     for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i]))return null;
     return data;
   }
+  // MIX-02 : le rattrapage automatique du DynamicsCompressor de Chromium. Le
+  // nœud remonte tout de (1/courbe(0 dBFS))^0,6, un gain que le code ne nomme
+  // jamais et qui change dès qu'on touche au seuil, au genou ou au ratio. La
+  // courbe de genou est T + (1 - e^(-k(x-T)))/k, k trouvé par 15 bissections
+  // géométriques entre 0,1 et 10 000 pour que la pente en dB prise entre x et
+  // 1,001x à l'entrée du genou vaille 1/ratio. Reproduit au centième les quatre
+  // couples rendus par le banc (job=calib) : 3,731 / 4,547 / 2,557 / 3,531 dB.
+  function makeupDb(threshold, knee, ratio) {
+    var t = Number(threshold); if (!Number.isFinite(t)) t = 0;
+    var g = Math.max(0, Number(knee) || 0), r = Math.max(1, Number(ratio) || 1);
+    var T = Math.pow(10, t / 20), xk = Math.pow(10, (t + g) / 20), LOG1001 = Math.log(1.001);
+    function curve(x, k) { return x < T ? x : T + (1 - Math.exp(-k * (x - T))) / k; }
+    function slope(k) { return Math.log(curve(1.001 * xk, k) / curve(xk, k)) / LOG1001; }
+    var target = 1 / r, lo = 0.1, hi = 10000, i, k;
+    for (i = 0; i < 15; i++) { k = Math.sqrt(lo * hi); if (slope(k) > target) lo = k; else hi = k; }
+    k = Math.sqrt(lo * hi);
+    var y1 = t + g > 0 ? curve(1, k) : Math.pow(10, (20 * Math.log10(curve(xk, k)) - (t + g) / r) / 20);
+    return -0.6 * 20 * Math.log10(y1);
+  }
+  // Le rattrapage de référence : celui de la chaîne v0.2 (-19 / genou 18 / 5:1),
+  // seul repère fixe commun aux trois jeux. level:'fixe' ramène le niveau des
+  // sons faibles à ce qu'il était avec cette chaîne-là.
+  var MAKEUP_REFERENCE = makeupDb(-19, 18, 5);
   window.FAudio = {
     synthesize: function (name, variant, sampleRate, recipes) { return tablePCM(recipes,name,variant,sampleRate)||synthesize(name,variant,sampleRate); },
     recipe: function (name, spec) { return {variants:spec&&spec.variants===1?1:2,synth:function(variant,rate){return layered(name,spec,variant,rate);},job:function(variant,rate){return layeredJob(name,spec,variant,rate);}}; },
     effectNames: effectNames.slice(),
+    makeupDb: makeupDb,
     create: function (options) {
       var recipes = Object.create(null), table = options && options.recipes;
       if (table) Object.keys(table).forEach(function (name) { var r = table[name]; if (r && typeof r.synth === 'function' && effectNames.indexOf(name) >= 0) recipes[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
@@ -184,7 +208,18 @@
       // reports 'suspended' while rendering, so it counts as live on its own.
       var injected = options && options.context && typeof options.context.createGain === 'function' ? options.context : null;
       var offline = !!(injected && typeof injected.startRendering === 'function');
-      var ctx = null, master, limiter, guard, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
+      // MIX-02 : la chaîne maître peut être réglée par le jeu. Sans option, les
+      // valeurs et le comportement d'aujourd'hui, au bit près. Avec
+      // chain:{masterGain, compressor:{threshold,knee,ratio,attack,release},
+      // level:'auto'|'fixe'}, level:'fixe' ajoute un GainNode APRÈS le
+      // compresseur et AVANT l'écrêteur — jamais sur master.gain, qui est avant
+      // le compresseur et déplacerait son point de travail.
+      var chain = options && options.chain ? options.chain : null;
+      var chainComp = chain && chain.compressor ? chain.compressor : null;
+      var chainFixed = !!(chain && chain.level === 'fixe');
+      var MASTER_GAIN = chain && Number.isFinite(chain.masterGain) ? chain.masterGain : .65;
+      function chainValue(key, fallback) { return chainComp && Number.isFinite(chainComp[key]) ? chainComp[key] : fallback; }
+      var ctx = null, master, limiter, guard, chainMakeup, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
       var lastStep = -1, stepSide = 1, lastAlert = -1, lastTouch = -1, touchRun = 0;
       var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false, titlePlaying = false;
@@ -198,7 +233,7 @@
       // 220 ms, the SMG burst only 180 ms, so automatic fire lets the music
       // back between rounds instead of burying it for a whole magazine.
       var DUCK_HOLD = {fracture: .22, rocket: .22, grenade: .22, grenadeLaunch: .22, shot: .18};
-      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
+      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,makeupDb:0,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
       function remember(node) { persistent.push(node); return node; }
       function random() {
         noiseSeed = (Math.imul(noiseSeed, 1664525) + 1013904223) | 0;
@@ -257,11 +292,11 @@
         if (!ctx || !master || disposed) return;
         var now = ctx.currentTime;
         master.gain.cancelScheduledValues(now);
-        master.gain.setTargetAtTime(muted && !preview ? 0 : .65 * mix.master, now, .025);
+        master.gain.setTargetAtTime(muted && !preview ? 0 : MASTER_GAIN * mix.master, now, .025);
         // An audio-clock cutoff guarantees a two-second menu audition even if
         // the UI thread/timers are throttled. Its JS pump is also cancelled.
         if (preview && muted) {
-          master.gain.setValueAtTime(.65 * mix.master, Math.max(now,preview.end-.018));
+          master.gain.setValueAtTime(MASTER_GAIN * mix.master, Math.max(now,preview.end-.018));
           master.gain.linearRampToValueAtTime(0, preview.end);
         }
       }
@@ -546,14 +581,16 @@
         try {
           ctx = injected || new Audio();
           master = remember(ctx.createGain());
-          master.gain.value = muted ? 0 : .65 * mix.master;
+          master.gain.value = muted ? 0 : MASTER_GAIN * mix.master;
           limiter = remember(ctx.createDynamicsCompressor());
           // FEEL-07 (MIX-02): -12 dB, knee 6, ratio 3:1, 12 ms in, 120 ms out.
           // The MIX bench decided these values on the four recorded scenes and a
           // 24-round SMG burst: peak stays <= .68 and no sample reaches the .875
           // guard, so nothing saturates. Chrome runs the attack about 6 ms early.
-          limiter.threshold.value = -12; limiter.knee.value = 6;
-          limiter.ratio.value = 3; limiter.attack.value = .012; limiter.release.value = .12;
+          limiter.threshold.value = chainValue('threshold', -12); limiter.knee.value = chainValue('knee', 6);
+          limiter.ratio.value = chainValue('ratio', 3); limiter.attack.value = chainValue('attack', .012); limiter.release.value = chainValue('release', .12);
+          stats.makeupDb = makeupDb(limiter.threshold.value, limiter.knee.value, limiter.ratio.value);
+          if (chainFixed) { chainMakeup = remember(ctx.createGain()); chainMakeup.gain.value = Math.pow(10, (MAKEUP_REFERENCE - stats.makeupDb) / 20); }
           // The existing compressor/mix stays intact. This final soft ceiling
           // is exactly linear below .875 and mathematically bounded above it,
           // including coincident rockets, debris and the MOD soundtrack.
@@ -564,6 +601,8 @@
           }
           guard.curve = curve; guard.oversample = 'none'; stats.outputCeiling = curve[curve.length-1];
           master.connect(limiter); limiter.connect(guard); guard.connect(ctx.destination);
+          // level:'fixe' : après le compresseur, avant l'écrêteur (voir plus haut).
+          if (chainMakeup) { limiter.disconnect(); limiter.connect(chainMakeup); chainMakeup.connect(guard); }
           effects = remember(ctx.createGain()); effects.gain.value = EFFECTS_GAIN * mix.effects; effects.connect(master);
           ambience = remember(ctx.createGain()); ambience.gain.value = AMBIENCE_GAIN * mix.ambience; ambience.connect(master);
           musicBus = remember(ctx.createGain()); musicBus.gain.value = MUSIC_GAIN; musicBus.connect(master);

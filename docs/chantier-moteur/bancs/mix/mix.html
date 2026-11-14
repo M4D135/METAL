@@ -7,7 +7,7 @@
     (0, eval)(SRC.music);
     const cal = async v => ({...(await M.calib(v.comp || 'cur')), musicGain: .56 * (v.musicGain || 1)});
     const scenes = {...SCENES, iso: M.isoScene(), p: M.pumpScene(), t: M.titleScene()};
-    if (job === 'calib') { out.comp = []; for (const k of Object.keys(M.COMP)) out.comp.push(await M.calib(k)); }
+    if (job === 'calib') { if (!window.FAudio) (0, eval)(SRC.audio); out.comp = []; for (const k of Object.keys(M.COMP)) out.comp.push(await M.calib(k)); }
     if (job === 'matrix') {
       const list = (Q.get('scenes') || 'a,b,c,d').split(','), recipes = (Q.get('recipes') || 'cur,doom').split(','), comps = (Q.get('comps') || 'cur,feel07').split(','), ducks = (Q.get('ducks') || 'cur,feel07,shelf').split(',');
       const passes = Math.max(1, Math.min(16, +Q.get('passes') || 1)); // MIX-11 : au moins 8 passes par scene, la crete variant avec la phase de la musique
