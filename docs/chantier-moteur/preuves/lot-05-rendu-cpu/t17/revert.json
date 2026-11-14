@@ -1,0 +1,25 @@
+{
+ "tache": "T17 — réservoir de maillages d'acteurs par ennemi [RCPU-11]",
+ "issue": "regression mesuree, tache annulee par revert du commit 2f311a3",
+ "annonce": {"gainFActorsBuild": "-20,6 % (ratio 0,794)", "attenduParLaFiche": "-30 a -40 %"},
+ "harnais": "tools/proof/actors-paired.mjs (FActors.build apparie, reservoirs durables par cas, ordre alterne, processus principal, pas de node:vm)",
+ "protocole_contre_verificateur": {"reps": 5, "chauffe": 0, "cas": 72, "paires": 360},
+ "mesures": {
+  "t15_vs_t17": {"ratioP50": 1.3266, "ratioParPaire": 1.1559, "tetePlusLentePct": 68.9, "A_p50Ms": 0.01371, "B_p50Ms": 0.01819},
+  "controle_t15_vs_t15": {"ratioP50": 0.9792, "ratioParPaire": 0.9873, "tetePlusLentePct": 44.7, "conclusion": "pas de biais du harnais"},
+  "t15_vs_t17_200reps_40chauffe": {"ratioP50": 0.8414, "ratioParPaire": 0.9003, "tetePlusLentePct": 32.4, "remarque": "reservoir chaud : le premier remplissage du reservoir dominate a 5 reps n'est plus paye"},
+  "jeu_camp17_300images_5reps_entrelacees": {"modelesP50": 1.1434, "controle_modelesP50": 1.0134, "modelesP50_corrige": 1.1283, "totalP50": 1.0488, "totalP50_corrige": 1.032}
+ },
+ "variante_amelioree_testee": {
+  "description": "mesh() rendu a son litteral d'origine (meshInto() n'est plus utilise que par le chemin reserve), reservoir conserve",
+  "harnais": "tools/proof/actors-paired.mjs",
+  "isolé_5reps_0chauffe": {"ratioP50": 1.1109, "ratioParPaire": 1.118, "tetePlusLentePct": 68.6},
+  "isolé_5reps_0chauffe_deux_tampons_alternes": {"ratioP50": 1.0097, "ratioParPaire": 1.1147, "tetePlusLentePct": 61.4},
+  "jeu_camp17_300images_5reps_entrelacees": {"modelesP50": 0.9332, "controle_modelesP50": 0.9136, "modelesP50_corrige": 1.0215, "totalP50": 0.9274, "totalP50_corrige": 0.9493},
+  "conclusion": "aucun des deux montages n'atteint la moitie du gain annonce (ratio <= 0,897) ; le gain est nul au niveau jeu"
+ },
+ "cause": "le reservoir fait vivre les maillages d'une image a l'autre : promus en vieille generation, chaque champ ecrit coute une barriere d'ecriture, alors qu'un objet jeune nait par simple avancement du pointeur de tas. De plus mesh() = meshInto({}, ...) remplace un litteral a 28 proprietes (une seule classe cachee) par 22 a 28 ajouts de proprietes sequentiels sur un objet vide, ce qui ralentit tous les maillages dynamiques du moteur, y compris hors acteurs.",
+ "decision": "git revert 2f311a3 ; la tache est abandonnee, rien n'est garde du reservoir",
+ "taille": {"dist_avant_revert": 872395, "dist_apres_revert": 870819},
+ "relais": "OpenCode, modele local du Spark"
+}
