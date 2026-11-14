@@ -20,7 +20,7 @@ let drawMs = 0;
 for (let i = 0; i < frames; i++) drawMs += S.frame(1 / 60, {time: true}).drawMs;
 const ph = globalThis.__ph, out = {};
 for (const k of Object.keys(ph)) out[k] = +(ph[k] / frames).toFixed(3);
-out.total = +(drawMs / frames).toFixed(3);
 out.sommeEtapes = +Object.values(out).reduce((a, b) => a + b, 0).toFixed(3);
+out.total = +(drawMs / frames).toFixed(3);
 console.log(JSON.stringify({banc: 'node tools/proof/lot05/phase-cost.mjs <racine> <images> <monde> <qualite>',
   racine: root, monde: spec, qualite: quality, images: frames, node: process.version, msParImage: out}, null, 1));

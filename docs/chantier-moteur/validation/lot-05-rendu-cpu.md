@@ -127,3 +127,26 @@ T13 (table d'instances en texture), T14 (écrivain d'instances — à reprendre
 avec l'allocation de la simulation), T16 (VAO — à reprendre après une mesure
 sur Metal ou D3D11). L'étape « au-delà » est documentée par un profil
 d'étapes de `draw()` et trois pistes écartées, sans commit supplémentaire.
+
+
+## Complément de contre-vérification Codex — 14 novembre 2026
+
+La contre-vérification tour 2 porte sur `bdd3f2d`. Deux commandes de preuve
+(`effects-ab.mjs`, `gc-bench.mjs`) importaient un `harness.mjs` absent. Elles
+utilisent désormais la scène maintenue `tools/proof/render-scene.mjs` ; le banc
+GC conserve ses modes full, simonly, drawonly, renderonly et son prototype
+optionnel. Le banc des effets sort en échec si les contenus divergent.
+
+Contrôles du correctif : 30/30 contenus identiques pour les effets, quatre modes
+GC exécutés avec succès, et somme des phases calculée sans additionner une
+deuxième fois le total. Les temps de ces contrôles courts ne prouvent aucun gain.
+Les anciens JSON restent des traces historiques ; pour un A/B entre révisions,
+utiliser `effects-ab2.mjs` avec deux racines explicites et le banc lockstep.
+
+Deux précisions du rapport tour 2 restent applicables : T8 comporte six classes
+cachées, et le recyclage T17 est annulé. Les formulations antérieures « une seule
+classe » ou « recyclage activé en jeu » ne décrivent donc pas cette tête. Aucun
+code du jeu ni artefact dist n'est modifié par ce correctif d'outillage.
+
+Journaux : `/home/m4d135/work/codex-blocages-20261114/render-tools-smoke.json`,
+`render-effects-smoke.log` et `render-phases.json`.

@@ -4,9 +4,11 @@
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {isDeepStrictEqual} from 'node:util';
-import {scene,stats} from './harness.mjs';
+import {makeScene} from '../render-scene.mjs';
+import {quantile} from '../common.mjs';
+function stats(values){const round=x=>+x.toFixed(3);return {mean:round(values.reduce((a,b)=>a+b,0)/values.length),p50:round(quantile(values,.5)),p95:round(quantile(values,.95)),p99:round(quantile(values,.99)),max:round(Math.max(...values))};}
 const root=process.argv[2],frames=+(process.argv[3]||3000),[kind,idx]=(process.argv[4]||'camp:17').split(':');
-const S=scene(root,{world:[kind,+idx],wrap:false});
+const S=makeScene(root,{world:[kind,+idx],content:false});
 const src=readFileSync(root+'/src/effects.js','utf8');
 let start=src.indexOf('    const wreckage=[],yaw=num(camera?.yaw)');
 if(start<0)start=src.indexOf('    const yaw=num(camera?.yaw),pitch=num(camera?.pitch),heading=');
@@ -61,3 +63,6 @@ for(let i=0;i<frames+120;i++){
 console.log('world',kind+':'+idx,'frames',checked,'identical outputs:',checked-mismatches,'/',checked);
 console.log('effects.build original',JSON.stringify(stats(A)));
 console.log('effects.build rewrite ',JSON.stringify(stats(B)));
+
+S.sim.dispose();S.renderer.dispose();
+if(mismatches)process.exitCode=1;
