@@ -62,7 +62,7 @@ export function worldFactory(root,M,FM){
   // FPassages (lot « jeu-pieges-massifs ») est optionnel : une racine antérieure
   // n'a pas ce fichier et doit rester mesurable et comparée telle quelle.
   const optional=existsSync(join(root,'src/passages.js'))?['passages']:[];
-  const modules=worldUsesFMath(root)&&!FM?['fmath',...optional,'world']:['world'],globals={...(M?{Math:M}:{}),...(FM?{FMath:FM}:{})};
+  const modules=worldUsesFMath(root)&&!FM?['fmath',...optional,'world']:[...optional,'world'],globals={...(M?{Math:M}:{}),...(FM?{FMath:FM}:{})};
   return loadRealm({root,modules,globals}).window.FWorld;
 }
 // Host variant: the native trigonometry of this machine, from a world.js before the fix.
