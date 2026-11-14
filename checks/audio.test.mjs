@@ -797,11 +797,11 @@ test('FEEL-07 fige les quatre réglages décidés : compresseur maître, maintie
   const bus=r.music[0].output,base=bus.gain.value;
   r.audio.fracture();
   assert(Math.abs(r.audio.stats.duckGain-base*.35)<1e-6,'la pompe abat la musique a 0,35 de son niveau, pas 0,45');
-  let hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.22)<1e-9,'la pompe tient le caniveau 0,22 s, '+hold);
+  let hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.30)<1e-9,'la pompe tient le caniveau 0,30 s depuis les tenues MIX-V1, '+hold);
   r.ctx.advance(1.5);r.audio.tick();bus.gain.events.length=0;
   r.audio.shot({level:1});
   assert(Math.abs(r.audio.stats.duckGain-base*.35)<1e-6,'la rafale de SMG abat la musique a 0,35');
-  hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.18)<1e-9,'le SMG ne tient le caniveau que 0,18 s, '+hold);
+  hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.36)<1e-9,'le SMG tient le caniveau 0,36 s depuis les tenues MIX-V1, '+hold);
   r.ctx.advance(1.5);r.audio.tick();
   const before=ctx.sources.length;r.audio.enemyShot({kind:0,level:1,pan:0});
   assert.equal(ctx.sources.length,before+1,'une salve ennemie joue un seul tampon');
@@ -906,4 +906,43 @@ test('le duck de la musique est proportionnel au volume des effets et reste iden
   r.audio.shot({level:1});
   assert.equal(r.audio.stats.duckGain,base,'à effets = 0 la musique ne plonge pas pour des tirs inaudibles');
   r.audio.dispose();
+});
+
+// MIX-V1 (lot 11b T4) : les tenues du duck deviennent une option du moteur.
+test('duck.classes remplace profondeur et tenue cue par cue, et sans l\'option le duck est exactement celui d\'aujourd\'hui (MIX-V1)',async()=>{
+  function caniveau(audio,ctx,bus,name,arg){
+    audio[name](arg);
+    const g=bus.gain.events.at(-1).time-ctx.currentTime;
+    return {gain:audio.stats.duckGain,hold:g};
+  }
+  const nu=rig();nu.audio.setStage(1);nu.audio.setPlaying(true);await nu.audio.start();nu.audio.tick();
+  const busN=nu.music[0].output,baseN=busN.gain.value;
+  let r=caniveau(nu.audio,nu.ctx,busN,'shot',{level:1,weapon:0,seed:1});
+  assert(Math.abs(r.gain-baseN*.35)<1e-6,'sans option, le SMG abat toujours la musique a 0,35');
+  assert(Math.abs(r.hold-.18)<1e-9,'sans option, le SMG tient toujours 0,18 s, mesure '+r.hold);
+  nu.audio.dispose();
+  const m=rig({options:{duck:{classes:[{cues:['shot'],hold:.36},{cues:['fracture','rocket','grenade','grenadeLaunch'],hold:.30}]}}});
+  m.audio.setStage(1);m.audio.setPlaying(true);await m.audio.start();m.audio.tick();
+  const busM=m.music[0].output,baseM=busM.gain.value;
+  r=caniveau(m.audio,m.ctx,busM,'shot',{level:1,weapon:0,seed:1});
+  assert(Math.abs(r.hold-.36)<1e-9,'la classe allonge la tenue du tir a 0,36 s, mesure '+r.hold);
+  assert(Math.abs(r.gain-baseM*.35)<1e-6,'la tenue ne change pas la profondeur : toujours 0,35');
+  m.ctx.advance(1.5);m.audio.tick();busM.gain.events.length=0;
+  r=caniveau(m.audio,m.ctx,busM,'fracture',{level:1,seed:1});
+  assert(Math.abs(r.hold-.30)<1e-9,'la pompe est tenue 0,30 s, mesure '+r.hold);
+  m.audio.dispose();
+  const d=rig({options:{duck:{classes:[{cues:['shot'],depth:.5,hold:.2},{cues:['switchWeapon'],depth:.6,fixed:true}]}}});
+  d.audio.setStage(1);d.audio.setPlaying(true);await d.audio.start();d.audio.tick();
+  const busD=d.music[0].output,baseD=busD.gain.value;
+  r=caniveau(d.audio,d.ctx,busD,'shot',{level:1,weapon:0,seed:1});
+  assert(Math.abs(r.gain-baseD*.5)<1e-6,'la classe peut aussi imposer sa profondeur');
+  assert(Math.abs(r.hold-.2)<1e-9,'et son maintien, mesure '+r.hold);
+  d.ctx.advance(1.5);d.audio.tick();busD.gain.events.length=0;
+  d.audio.switchWeapon();
+  assert(Math.abs(d.audio.stats.duckGain-baseD*.6)<1e-6,'fixed:true fait duck un cue que le moteur ne duckait pas, a profondeur fixe');
+  d.ctx.advance(1.5);d.audio.tick();busD.gain.events.length=0;
+  d.audio.shot({level:.2,weapon:0,seed:1});
+  const demi=baseD*(1-.5*Math.min(1,.2*1.25));
+  assert(Math.abs(d.audio.stats.duckGain-demi)<1e-6,'hors fixed, le niveau du son pondere toujours la profondeur');
+  d.audio.dispose();
 });

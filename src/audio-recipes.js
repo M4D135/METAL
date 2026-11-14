@@ -37,5 +37,14 @@
   Object.keys(confirmations).forEach(function (name) { extras[name] = FAudio.recipe(name, confirmations[name]); });
   extras.enemySmg = FAudio.recipe('enemySmg', noMech(weapons.smg));
   extras.enemyGrenade = FAudio.recipe('enemyGrenade', noMech(weapons.grenade));
-  window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras}; }};
+  // MIX-V1 : le pistolet tire tous les 0,32 s. Une tenue de 0,18 s laisse la
+  // musique remonter puis replonger trois fois par seconde (ondulation mesurée
+  // 5,8 dB à la scène « Fer noir »). Tenir 0,36 s au tir et 0,30 s aux armes
+  // lourdes supprime l'ondulation, sans toucher à la profondeur du duck ni au
+  // timbre de la musique : le retour reste à tau 0,18 s.
+  var duckClasses = [
+    {cues: ['shot'], hold: .36},
+    {cues: ['fracture', 'rocket', 'grenade', 'grenadeLaunch'], hold: .30}
+  ];
+  window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras, duck: {classes: duckClasses}}; }};
 }());

@@ -214,6 +214,24 @@
       // level:'auto'|'fixe'}, level:'fixe' ajoute un GainNode APRÈS le
       // compresseur et AVANT l'écrêteur — jamais sur master.gain, qui est avant
       // le compresseur et déplacerait son point de travail.
+      // MIX-V1 : les tenues du duck deviennent une classe par famille de cues,
+      // avec sa profondeur et son maintien. Sans l'option, rien ne change : les
+      // trois expressions régulières et la table de maintien d'aujourd'hui. Un
+      // jeu qui la donne remplace, pour les cues qu'elle nomme, la profondeur
+      // et/ou le maintien ; fixed:true ignore le niveau du son (cueLevel).
+      var duckClasses = null;
+      if (options && options.duck && Array.isArray(options.duck.classes)) {
+        duckClasses = [];
+        options.duck.classes.forEach(function (c) {
+          if (!c) return;
+          var re = c.cues instanceof RegExp ? c.cues : c.cues && c.cues.length
+            ? new RegExp('^(?:' + [].concat(c.cues).join('|') + ')$') : null;
+          if (!re) return;
+          duckClasses.push({re: re, depth: Number.isFinite(c.depth) ? c.depth : null,
+            hold: Number.isFinite(c.hold) ? c.hold : null, fixed: !!c.fixed});
+        });
+        if (!duckClasses.length) duckClasses = null;
+      }
       var chain = options && options.chain ? options.chain : null;
       var chainComp = chain && chain.compressor ? chain.compressor : null;
       var chainFixed = !!(chain && chain.level === 'fixe');
@@ -276,13 +294,20 @@
       function duckMusic() {
         if (cueDucked || !musicBus || !cue || mix.effects <= 0) return;
         var weapon = /^(shot|fracture|rocket|grenade|grenadeLaunch|melee|hurt)$/.test(cue);
-        var strength = weapon ? .35 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism)$/.test(cue) ? .68 : 1;        if (strength === 1) return;
+        var strength = weapon ? .35 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism)$/.test(cue) ? .68 : 1, duckClass = null;
+        // MIX-V1 : une classe qui nomme ce cue prend la main sur la profondeur et
+        // sur le maintien. Sans l'option duck.classes, duckClass reste nul et le
+        // calcul ci-dessous est exactement celui d'aujourd'hui.
+        if (duckClasses) for (var di = 0; di < duckClasses.length; di++) if (duckClasses[di].re.test(cue)) { duckClass = duckClasses[di]; break; }
+        if (duckClass && duckClass.depth !== null) strength = duckClass.depth;
+        if (strength === 1) return;
         // MIX-V2 : un duck de 6,9 dB pour des tirs a 20 % de volume est une perte
         // sèche. La profondeur suit le volume des effets, et a 1 (le defaut) le
         // facteur vaut exactement 1 : le rendu reste identique bit a bit.
-        strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25) * Math.min(1,mix.effects);
+        strength = 1 - (1-strength) * (duckClass && duckClass.fixed ? 1 : Math.min(1,Math.max(0,cueLevel)*1.25)) * Math.min(1,mix.effects);
         cueDucked = true;
         var now = ctx.currentTime, hold = DUCK_HOLD[cue] || (weapon ? .14 : strength < .4 ? .28 : .14);
+        if (duckClass && duckClass.hold !== null) hold = duckClass.hold;
         ambientDuckUntil = Math.max(ambientDuckUntil,now+.20);
         duckDepth = now < duckUntil ? Math.min(duckDepth, strength) : strength;
         duckUntil = Math.max(duckUntil, now + hold);
