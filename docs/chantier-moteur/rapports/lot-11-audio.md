@@ -25,9 +25,10 @@ travail, non contrôlable par personne, qui n'existe dans aucun commit. La réf�
 reste le commit vert `d7e7bed` (**506/506**, chiffre reproduit à l'unité près), et le test
 réécrit en T1 l'a été sur un arbre déjà vert.
 
-À la fin du lot : **516 réussis, 0 échec**. Aucun test qui passait n'a échoué. Deux tests
-ont été modifiés, chacun dans le commit du changement voulu qu'il acte (dit dans la tâche
-concernée). Aucun test affaibli.
+À la fin du lot : **521 réussis, 0 échec** (516 à la fin du premier passage, 506 à la
+référence de départ). Aucun test qui passait n'a échoué. Cinq tests ont été modifiés ou
+relevés, chacun dans le commit du changement voulu qu'il acte (dit dans la tâche concernée).
+Aucun test affaibli.
 
 Machine : Linux arm64, Node 24.18, Chrome 151 sans interface. Toutes les mesures CPU dans
 le domaine principal de Node (`tools/realm-loader.mjs`, jamais `node:vm`), comparaisons
@@ -59,6 +60,35 @@ serialize, decode). La banque reste bit à bit la synchrone.
 - Tests : le test pendouillant du wip réécrit, `console.log('DEBUG slices'…)` retiré, test
   MIX-09 (ordre direct contre inverse) ajouté.
 - Preuves : `preuves/lot-11/t1/prep-ab.json`.
+- **Tour 1 (problème 3 du contre-vérificateur) : le critère « tranche ≤ 8 ms » de la fiche
+  n'était pas atteint, et ne l'est toujours pas totalement.** Le contre-vérificateur a mesuré
+  sur la tête du lot `medianMaxSliceMs` **46,22 → 21,43 ms** et `medianOver8` **13 → 16** : le
+  nombre de tranches hors budget *augmentait*, et le banc cité par la fiche
+  (`bancs/load/music.mjs`) ne peut pas mesurer ce critère — il synthétise les noms en direct et
+  ne passe jamais par `warmBank` (il donne 80,8 → 76,7 ms des deux côtés, quel que soit le
+  réglage du budget). Trois causes, chacune mesurée avec une sonde de tranche par tranche :
+  les recettes fournies par le jeu étaient des fonctions opaques (`rocket#1` : 21 à 30 ms d'un
+  seul tenant) ; le coût d'un nom était enregistré depuis une tranche partielle, donc le nom
+  suivant ouvrait un bloc trop gros ; et un nom inconnu se dimensionnait sur le pire débit
+  **global**, ce qui sous-estime un effet jamais vu (`break:metal#0` ouvrait à 13–18 ms).
+  Corrigées par `layeredJob` reprenable exposé par `FAudio.recipe`, coût enregistré à la fin du
+  travail et bloc dimensionné sur le pire débit observé **pour ce nom** (`peakCost`), ouverture
+  à `BLOCK_MIN` pour un nom inconnu, plus une marge de 0,6 ms dans la tranche et le découpage
+  du `kit()` de `src/music.js` (7 frappes, 8 mesures, ajouts).
+  Mesure appariée 7 passages (`--game`) : tranche max médiane **24,44 → 14,41 ms**, tranches
+  au-dessus de 8 ms **22 → 4**, total 354,4 → 314,7 ms, banque `54d3df3c8b3a…` identique,
+  `sameBankAB` vrai, `prepareMatchesDirect` vrai des deux côtés. Contre la base du lot :
+  55,91 → 14,75 ms et 15 → 4.
+  **Résidu écrit noir sur blanc : il reste 4 tranches au-dessus de 8 ms et une tranche max
+  médiane de 14,41 ms.** Le solde n'est plus dans les effets mais dans `src/music.js` :
+  `instrument()`, `strings()` et `drumHit()` produisent chacun leur PCM en un seul passage, et
+  les deux premiers rendus réchauffent le JIT. Les rendre reprenables est le travail qui reste,
+  et il n'est pas fait ici.
+- Tests ajoutés au tour 1 : PCM d'une recette identique à `synth()` pour toutes les tailles de
+  bloc (1, 16, 64, 256, 4096) ; aucune tranche au-dessus de 8 ms sur l'horloge que le
+  planificateur consulte réellement ; banque préparée identique à la synthèse directe, noms de
+  recettes et extras compris. Deux assertions LOAD-13 relevées (19 phases par étape au lieu
+  de 4), changement voulu et chiffré.
 
 ## T2 — dédoublonnage des automatisations d'ambiance (`d7e7bed`, fait — LOOP-14, MIX-08, RESTE-09 point 5)
 
@@ -294,6 +324,7 @@ et le banc `mix.js` la garde mesurable (`COMP.lim`, `DUCK.shelf`) pour ce lot-l�
 | --- | --- | --- |
 | Pistolet : la fiche écrit « au moins +4,9 dB », la décision David « ≥ +5 dB » ; mesuré **+4,99 dB**. | Recette appliquée telle quelle. | Baisser le gain de la bande du pistolet, ou accepter 4,99. Un demi-décième, mais c'est une limite basse franchie de justesse : à trancher, pas à arrondir. |
 | Critère d'acceptation FEEL-06 « RMS +8 dB à pic égal » (fiche, preuve exigée de T3). | **Non atteint** sauf grenade : +6,44 / +7,98 / +7,60 / +6,47 / +9,86. La règle de décision par défaut de la fiche (RMS ≥ +6 dB) est en revanche tenue par les cinq armes. | Si David exige +8 dB, il faut reprendre les recettes (thump plus grave et plus long, corps plus saturé) et re-mesurer ; ce n'est pas réglable par un simple gain, qui écraserait le facteur de crête. |
+| FEEL-07 conditionné aux mesures de la lacune MIX (fiche, « valeur par défaut : accepter si pic ≤ .85 et pas de saturation du waveshaper .875 »). | **Décision exécutée au tour 1 et acceptée** : crête de sortie maximale 0,669 sur 16 rendus, zéro échantillon au coude .875, compensation du compresseur mesurée (4,55 → 3,73 dB). Les quatre réglages sont en dur dans `src/audio.js`. | Un refus se débranche en quatre endroits (`limiter.*`, `DUCK_HOLD`, `enemyShot`, `send.gain`) et le banc garde les valeurs d'avant sous `COMP.v02` / `DUCK.v02` pour re-mesurer l'aller-retour. Le point (1) de RESTE-09 reste écarté, lui, sur avis du constat. |
 | Seuils de dédoublonnage proposés par la fiche (avec seuil et renvoi périodique). | **Égalité stricte**, sans seuil. | Les seuils font échouer le test de nullité MIX-08 ; les reprendre coûterait le critère. |
 | `setMachinery` / `setSteam` : la fiche les voulait différés. | Mise à jour **immédiate** conservée. | Deux tests existants (`audio.test.mjs:90-92`, `:188`) posent une pause sans tick. |
 | Confirmations de touche et de kill. | **Activées** avec la table METAL ; éteintes sans options. | Un `FAudio.create()` nu retrouve exactement la v0.2. |
@@ -318,12 +349,77 @@ et le banc `mix.js` la garde mesurable (`COMP.lim`, `DUCK.shelf`) pour ce lot-l�
 - Les WAV A/B produits par les bancs sont **hors dépôt** (seuls leurs sha256 sont
   committés) : ils ne peuvent donc pas être rejoués depuis le dépôt seul.
 
+## Contre-vérification et correctifs (tour 1)
+
+Un contre-vérificateur a repris le lot et relevé huit problèmes. Chacun est traité ci-dessous,
+avec la commande qui le reproduit et le commit qui le corrige. Les huit ont été **reproduits
+avant d'être corrigés** ; aucun n'a été écarté sans mesure.
+
+| # | problème | reproduit ? | ce qui a été fait | commit |
+|---|---|---|---|---|
+| 1 | T5 : le point (1) de RESTE-09 (2 `GainNode` persistants par piste) n'est pas implémenté, et le critère « −21 % » cité n'existe nulle part | oui — `audio-root.mjs` : **29,9 nœuds/s des deux côtés**, `{"gain":898,"source":898}` | point (1) **écarté** en citant la contre-vérification du constat lui-même ; faux critère retiré du rapport et du README ; compteur publié dans `preuves/lot-11/t5/noeuds.md` ; test bloquant 2 nœuds par note | `583530a` |
+| 2 | T4 : les quatre réglages de mixage (compresseur, duck, ennemis, écho) ne sont pas appliqués alors que la fiche en fixe une décision par défaut | oui — le README T4 le disait explicitement | banc MIX lancé, condition « pic ≤ .85 et pas de saturation .875 » **remplie** (crête max 0,669, 0 échantillon au coude), les quatre réglages **appliqués** et mesurés | `00b3cd2` |
+| 3 | T1 : le budget de 8 ms par tranche n'est pas atteint, et le banc cité ne peut pas le mesurer | oui — `medianMaxSliceMs` 21,43 ms, `medianOver8` 13 → 16 | trois causes corrigées (recettes reprenables, coût enregistré à la fin, ouverture à `BLOCK_MIN`) + découpage du `kit()` ; **24,44 → 14,41 ms**, **22 → 4** ; résidu écrit | `e9de02c` |
+| 4 | T3 : le critère « RMS +8 dB à pic égal » n'est pas dans les écarts assumés | oui — `feel06.mjs` rejoué : 6,44 / 7,98 / 7,60 / 6,47 / 9,86 | ligne d'écart ajoutée au README T3, au rapport et à la table des décisions | `7a63961` |
+| 5 | Le rapport accuse l'arbre de départ d'être rouge avec un `console.log` qui n'existe pas | oui — `4296a73` est **510/510**, `grep -n DEBUG` ne renvoie rien | paragraphe réécrit : c'est l'arbre **non commité** reçu qui était rouge, aucun commit n'est rouge | `7165001` |
+| 6 | Taille : « +2,5 Ko » annoncé contre +15 081 octets mesurés | oui — `SIZE.json` | chiffres publiés par fichier : **+21 592 octets bruts** (872 451 contre 850 859), gzip +7 533 ; dépassement du budget dit comme tel | ce commit |
+| 7 | README au1 : « 22 → 16 tranches > 8 ms » ne se reproduit pas | oui — deux rejouées de 7 passages donnent **+2** tranches, 2 paires sur 7 seulement | chiffre retiré du README et du rapport, tables des deux rejouées publiées, bug de l'outil expliqué ; `prepareMatchesDirect` et l'empreint de banque corrigés | `1eab8bf` |
+| 8 | BRIEF/MISSION citent des identifiants de commit inexistants | **partiellement** — les trois objets existent dans le clone, mais **aucun n'est sur la branche** | mission corrigée avec les identifiants réels et la nuance « objet existant mais hors branche » ; `.relais/` n'est pas suivi par git, donc non commitable | hors dépôt |
+
+Deux remarques qui engagent le lot, pas seulement le rapport. D'abord, quatre des huit
+problèmes (1, 2, 3, 7) sont des **chiffres publiés qui ne se reproduisaient pas** : la règle
+du brief sur les médianes appariées et les 5 paires sur 7 n'était pas appliquée partout, et un
+outil de mesure contenait un bug qui naturalisait un écart (`prepareMatchesDirect.bank`).
+Ensuite, le problème 2 n'était pas un oubli de réglage mais une **décision par défaut de la
+fiche qui n'avait pas été exécutée** : ne pas lancer le harnais, c'était reporter sans l'écrire.
+
 ## Chiffres finaux
 
-- `npm test` : **516 réussis, 0 échec** (référence 506/506).
-- `python3 tools/build.py` : `dist/index.html` **865 940 octets**, gzip 265 636 octets,
+- `npm test` : **521 réussis, 0 échec** (516 à la fin du premier passage, 506 à la référence
+  de départ).
+- `python3 tools/build.py` : `dist/index.html` **872 451 octets bruts**, gzip **267 891 octets**,
   `sha256` de `SIZE.json` vérifié, **0 actif externe**, aucun CDN ni dépendance d'exécution.
-  Sous la limite de 1 400 000 octets. Le navigateur n'est pas compté dans cette taille :
-  à rappeler dans toute comparaison avec un exécutable natif.
+  Sous la limite de 1 400 000 octets. **Le navigateur n'est pas compté dans cette taille** : à
+  rappeler dans toute comparaison avec un exécutable natif. `SIZE.json` est l'autorité de
+  mesure ; le chiffre gzip n'est jamais la taille brute.
+
+### Taille — ce que le lot a vraiment coûté (problème 6 du contre-vérificateur)
+
+La fiche annonçait « Taille totale **+2,5 Ko** » pour le lot. Le contre-vérificateur a mesuré
+**+15 081 octets** entre la base et le commit de rapport, soit six fois le budget annoncé, et
+le rapport ne le chiffrait pas. Le voici, en octets bruts `SIZE.json`, du premier passage et
+du tour 1 :
+
+| arbre | `html_bytes` | gzip | écart brut sur la base |
+|---|---|---|---|
+| base `35c654a` | 850 859 | 260 358 | — |
+| premier passage clos (`ff20e35` / `7fa34d0`) | 865 940 | 265 636 | **+15 081** |
+| tête après le tour 1 | **872 451** | 267 891 | **+21 592** |
+
+Le budget de la fiche est dépassé d'un facteur **8,4** (+21 592 pour +2 560 attendus), et non
+de « +2,5 Ko ». Répartition par source (`source_bytes` de `SIZE.json`, base → tête) :
+
+| fichier | base | tête | écart |
+|---|---|---|---|
+| `src/audio.js` | 47 822 | 64 113 | **+16 291** |
+| `src/audio-recipes.js` (nouveau) | 0 | 3 255 | **+3 255** |
+| `src/music.js` | 26 522 | 28 535 | **+2 013** |
+| `src/game.js` | 104 907 | 104 937 | +30 |
+| total source | 768 940 | 790 529 | **+21 589** (les 3 octets restants sont la soudure du build) |
+
+Lecture honnête : le budget de la fiche était écrit pour des tâches de réglage (changer des
+constantes de mixage, dédoublonner des automations). Ce qui a coûté cher n'est pas ce réglage
+mais ce que les tâches sont devenues : la table de recettes METAL entière (3 255 octets de
+contenu paramétrique, sans tampon importé), le découpage reprenable des recettes et le
+dimensionnement de blocs de T1, les deux confirmations et les deux voix ennemies de T4, et le
+découpage du `kit()` de T5. Le gzip, lui, n'augmente que de 7 533 octets (2,9 %), parce qu'une
+partie du surplus est du code de planification très répétitif.
+
+Ce qui est **retiré** du rapport sur ce point : aucune formule du type « +2,5 Ko » ou
+« taille maîtrisée » n'est conservée. La taille est donnée mesurée, par fichier, et le dépassement
+est écrit comme un dépassement. Si le budget doit être tenu, c'est une décision à prendre par
+David — le levier évident est `src/audio-recipes.js` (la table de recettes), pas le moteur.
+
 - Commits du lot : `1461e24` T0, `d7e7bed` T2, `4296a73` wip Claude repris en T3,
-  `93e67e8` T1, `246cbeb` T3, `f70b785` T4, `982418a` T5, `ff20e35` au-delà 1.
+  `93e67e8` T1, `246cbeb` T3, `f70b785` T4, `982418a` T5, `ff20e35` au-delà 1, puis tour 1 :
+  `7165001`, `7a63961`, `e9de02c`, `583530a`, `00b3cd2`, `1eab8bf`.
