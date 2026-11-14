@@ -176,10 +176,30 @@ node --test checks/audio.test.mjs
 
 `job=null` ne s'applique plus : ses remplacements visent les anciens `setTargetAtTime` et s'arrêtent à l'ancre `l14c`.
 
+## Provenance du rendu Chrome (correction du tour 2, problème 5)
+
+Le fichier committé `ab-t2.json` porte `"ua": … HeadlessChrome/157 … Macintosh; Intel Mac OS X` : il a été produit
+sur le Mac d'audit, pas sur ce Spark. Il n'est donc **pas rejouable à l'identique** sous le Chrome 151 de cette machine.
+Il a été **rejoué sous Chrome 151 (Linux arm64)** dans `ab-t2-linux151.json` (mêmes sources A = `1461e24`
+`audio.js 4b36fde2…452b6d`, B = `d7e7bed` `audio.js fd03c584…b2d6fd`, même banc, `noise=3`) :
+
+| Scène | `ab-t2.json` (Mac 157) | `ab-t2-linux151.json` (Spark 151) | Critère MIX-08 |
+|---|---|---|---|
+| c | −88,67 / −124,15 | −88,67 / −124,15 | vrai |
+| a | −107,47 / −130,84 | −107,47 / −130,84 | vrai |
+| t | −128,93 / −154,88 | −96,75 / −143,84 | vrai |
+
+Les scènes (c) et (a) se reproduisent **au centième** d'un moteur à l'autre. La scène (t), écran titre, tombe au
+**plancher de bruit du banc** (`noise` de la scène t ≈ −96 dBFS de crête) : sa différence y est instable d'un moteur et
+d'un passage à l'autre (−128,93 sur Mac 157, −138,47 à une relance Spark 151, −96,75 à celle-ci), `identical:false` —
+le banc `ab` n'est pas bit à bit, seul le journal (`journal.json`) tranche. Les trois scènes passent MIX-08 partout.
+C'est donc un **écart de provenance**, pas un défaut de résultat.
+
 ## Limites
 
-- Chrome 157 sous macOS seulement ; Firefox et Safari ne sont pas mesurés. Ils suivent la même spécification de
-  `setTargetAtTime`, mais leur arrondi peut différer de celui de Chrome.
+- Le rendu committé vient de Chrome 157 sous macOS ; la rejouée `ab-t2-linux151.json` vient de Chrome 151 sous Linux
+  arm64. Firefox et Safari ne sont pas mesurés. Ils suivent la même spécification de `setTargetAtTime`, mais leur
+  arrondi peut différer de celui de Chrome.
 - Aucune écoute : rien d'audible n'est attendu (différence RMS ≤ −124 dB), à confirmer sur vrai matériel.
 - Le bénéfice visé (moins de messages vers le fil audio) concerne surtout les téléphones ; il n'est pas mesurable ici.
 
@@ -187,7 +207,8 @@ node --test checks/audio.test.mjs
 
 | Fichier | Contenu |
 |---|---|
-| `ab-t2.json` | `job=ab&scenes=c,a,t&noise=3`, A = `fda6445`, B = l'arbre |
+| `ab-t2.json` | `job=ab&scenes=c,a,t&noise=3`, A = T0 (`audio.js 4b36fde2…452b6d`), B = l'arbre — **Mac Chrome 157** |
+| `ab-t2-linux151.json` | même banc rejoué sous **Linux Chrome 151** (provenance, tour 2) |
 | `journal.mjs`, `journal.json` | Preuve par journal des automatisations, 5 scènes |
 | `perfab.html`, `perfab.json` | Chrome : temps des rappels d'image et du rendu, A et B alternés, scènes (c) et (a) |
 | `pair.mjs`, `pair.json` | Node : coût JavaScript par image, A contre B, rondes alternées |

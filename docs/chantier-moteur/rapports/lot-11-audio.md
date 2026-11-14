@@ -30,10 +30,17 @@ référence de départ). Aucun test qui passait n'a échoué. Cinq tests ont ét
 relevés, chacun dans le commit du changement voulu qu'il acte (dit dans la tâche concernée).
 Aucun test affaibli.
 
-Machine : Linux arm64, Node 24.18, Chrome 151 sans interface. Toutes les mesures CPU dans
-le domaine principal de Node (`tools/realm-loader.mjs`, jamais `node:vm`), comparaisons
-appariées et alternées, médianes. Pas de réseau, machine partagée : le bruit est réel et
-les passages contraires sont conservés dans les fichiers de preuve.
+Machine : Linux arm64 (DGX Spark), Node 24.18, Chrome **151** sans interface pour tout ce qui est mesuré ici.
+**Provenance des preuves Chrome, par preuve (correction du tour 2, problème 5)** : quatre preuves committées viennent
+en réalité du Mac d'audit sous Chrome **157** — `t0/ab-aa.json`, `t0/calib.json`, `t0/null.json` et `t2/ab-t2.json`
+(leur champ `ua` porte `Macintosh; Intel Mac OS X … HeadlessChrome/157`). Les preuves `t3`, `t4`, `t5` sont bien de ce
+Spark sous Chrome 151. `t2/ab-t2.json` a été **rejoué sous Chrome 151** dans `t2/ab-t2-linux151.json` : les scènes (c)
+et (a) s'y reproduisent au centième, la scène (t) tombe au plancher de bruit du banc et varie d'un moteur à l'autre
+(−128,93 Mac 157, −138,47 à une relance Spark, −96,75 à la rejouée committée), les trois passant MIX-08. C'est un
+écart de provenance (preuve non rejouable à l'identique), pas un défaut de résultat. Toutes les mesures CPU dans
+le domaine principal de Node (`tools/realm-loader.mjs`, jamais `node:vm`), comparaisons appariées et alternées,
+médianes. Pas de réseau, machine partagée : le bruit est réel et les passages contraires sont conservés dans les
+fichiers de preuve.
 
 ## T0 — outillage de preuve (`1461e24`, fait)
 
