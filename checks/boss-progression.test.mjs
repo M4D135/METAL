@@ -13,7 +13,7 @@ function world(index=0,extra={}){
     spawn:{x:0,y:0,z:-24,yaw:Math.PI},bounds:{minX:-60,maxX:60,minZ:-60,maxZ:60},walkable:[{x:0,y:0,z:0,w:120,d:120}],meshes:[],lights:[],colliders:[],pickups:[],trophies:[],
     cores:[{x:45,y:0,z:45},{x:48,y:0,z:45},{x:51,y:0,z:45}],exit:{x:54,y:0,z:45},
     enemies:[{x:0,y:0,z:0,type:3,boss:true,bossScale:[5.4,7.2,9][stage],bossKind:['colossus','siegebreaker','custodian'][stage],maxHp:HP[index],arena,deployed:true}],
-    progression:{version:1,weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],startShield:true,ammoCaps:[180,36,12,16,1],maxActive:[6,8,10,12,14,16][Math.floor(index/3)]},...extra};
+    progression:{version:1,weaponSlots:5,startWeapons:[false,false,false,false,true],startAmmo:[0,0,0,0,1],ammoCaps:[180,36,12,16,1],maxActive:[6,8,10,12,14,16][Math.floor(index/3)]},...extra};
 }
 function aimCore(sim){const e=sim.state.enemies[0],p=sim.state.player,size=e.bossScale,dx=e.x+Math.sin(e.yaw)*.9*size-p.x,dz=e.z-Math.cos(e.yaw)*.9*size-p.z;p.yaw=Math.atan2(dx,-dz);p.pitch=Math.atan2(e.baseY+1.93*size-p.y-1.62,Math.hypot(dx,dz));}
 function finishBoss(sim){
@@ -22,11 +22,11 @@ function finishBoss(sim){
 }
 function collect(sim,q){Object.assign(sim.state.player,{x:q.x,y:q.y,z:q.z});sim.step(.025);}
 
-test('v2 starts pistol plus left shield, migrates legacy carry and preserves distinct historical checkpoints',()=>{
+test('v2 starts a free left hand, migrates legacy carry and preserves distinct historical checkpoints',()=>{
   const w=world(),sim=S.create(w),save=sim.snapshot();
-  assert.deepEqual(plain(sim.state.equipment),{right:4,left:'shield'});assert.equal(sim.state.inventory.shield,true);assert.equal(sim.state.economy.version,2);assert.equal(sim.state.enemies[0].maxHp,600);
-  assert.deepEqual(plain(sim.exportLoadout().campaign),{version:2,discovered:['pistol','shield'],claimedBossRewards:[]});assert.equal(save.campaignVersion,2);assert.equal(save.economyVersion,2);
-  const legacyWorld={...w};delete legacyWorld.campaignVersion;legacyWorld.progression={...w.progression,startShield:false};
+  assert.deepEqual(plain(sim.state.equipment),{right:4,left:null});assert.equal(sim.state.inventory.shield,undefined);assert.equal(sim.state.shield,undefined);assert.equal(sim.state.economy.version,2);assert.equal(sim.state.enemies[0].maxHp,600);
+  assert.deepEqual(plain(sim.exportLoadout().campaign),{version:2,discovered:['pistol'],claimedBossRewards:[]});assert.equal(save.campaignVersion,2);assert.equal(save.economyVersion,2);
+  const legacyWorld={...w};delete legacyWorld.campaignVersion;legacyWorld.progression={...w.progression};
   const old=S.create(legacyWorld),oldSave=old.snapshot();assert.equal(oldSave.campaignVersion,1);assert.equal(oldSave.economyVersion,1);assert.notEqual(save.fingerprint,oldSave.fingerprint);
   const promoted=S.create(w,old.exportLoadout());assert.equal(promoted.state.campaign.version,2);assert.equal(promoted.state.economy.version,2);assert.deepEqual(plain(promoted.state.campaign.claimedBossRewards),[]);
   assert.equal(sim.restore(oldSave),false);assert.equal(old.restore(save),false);assert.equal(S.create(w).restore(save),true);assert.equal(S.create(legacyWorld).restore(oldSave),true);
@@ -51,7 +51,7 @@ test('all eighteen bosses grant physical once-only upgrades and finish the exact
 });
 
 test('partially collected boss loot saves remaining ammo without replaying upgrades or permitting revisit farming',()=>{
-  const w=world(),inventory={weapons:[false,true,false,false,true],ammo:[0,36,0,0,1],shield:true},sim=S.create(w,{inventory}),q=finishBoss(sim);
+  const w=world(),inventory={weapons:[false,true,false,false,true],ammo:[0,36,0,0,1]},sim=S.create(w,{inventory}),q=finishBoss(sim);
   const unclaimed=sim.snapshot(),fresh=S.create(w);assert(fresh.restore(unclaimed));assert.equal(fresh.state.loot[0].rewardTaken,false);assert.equal(fresh.state.economy.weaponUpgrades[1],0);
   collect(sim,q);assert.equal(q.rewardTaken,true);assert.equal(q.taken,false);assert.equal(q.ammo[1],16);assert.equal(sim.state.economy.weaponUpgrades[1],1);
   const partial=sim.snapshot(),restored=S.create(w);assert(restored.restore(partial));assert.equal(restored.state.loot[0].ammo[1],16);
@@ -65,14 +65,14 @@ test('partially collected boss loot saves remaining ammo without replaying upgra
 });
 
 test('the exit requires collecting the physical boss reward, while spare ammo can stay behind',()=>{
-  const sim=S.create(world(),{inventory:{weapons:[false,true,false,false,true],ammo:[0,36,0,0,1],shield:true}}),q=finishBoss(sim);
+  const sim=S.create(world(),{inventory:{weapons:[false,true,false,false,true],ammo:[0,36,0,0,1]}}),q=finishBoss(sim);
   for(const c of sim.state.cores){c.taken=true;}sim.state.relays=3;Object.assign(sim.state.player,sim.state.world.exit);sim.step(.025);assert.equal(sim.state.won,false);
   collect(sim,q);assert(q.rewardTaken&&!q.taken&&q.ammo[1]>0);Object.assign(sim.state.player,sim.state.world.exit);sim.step(.025);assert.equal(sim.state.won,true);
   assert(S.create(world()).restore(sim.snapshot()),'a completed world retains its exact collected reward history');
 });
 
 test('weapon calibration changes actual hit damage, projectile payload and heat independently by weapon',()=>{
-  const inventory={weapons:[true,true,true,true,true],ammo:[180,36,12,16,1],shield:true};
+  const inventory={weapons:[true,true,true,true,true],ammo:[180,36,12,16,1]};
   for(const weapon of [0,1,2,3,4]){
     const profile=E.fresh({campaignVersion:2});profile.weaponUpgrades[weapon]=3;
     const make=economy=>S.create(world(0,{enemies:[{x:0,y:0,z:-12,type:3,bossScale:1,maxHp:30}]}),{inventory,economy});
@@ -86,7 +86,7 @@ test('weapon calibration changes actual hit damage, projectile payload and heat 
 });
 
 test('calibrated live ordnance restores and its actual explosion damages exposed cores using the saved payload',()=>{
-  const inventory={weapons:[true,true,true,true,true],ammo:[180,36,12,16,1],shield:true};
+  const inventory={weapons:[true,true,true,true,true],ammo:[180,36,12,16,1]};
   for(const weapon of [2,3]){
     const damage=[];
     for(const rank of [0,8]){

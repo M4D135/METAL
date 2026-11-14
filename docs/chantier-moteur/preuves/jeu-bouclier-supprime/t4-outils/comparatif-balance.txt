@@ -1,0 +1,12 @@
+monde 4 — nominal
+  avant : ["cleared",5.225,4,4,0,17,17,[0,0,0,0,0],15.409,4]
+  après : ["cleared",4.575,4,4,0,15,15,[0,0,0,0,0],13.81,4]
+monde 4 — pistol-only
+  avant : ["cleared",5.225,4,4,0,17,17,[0,0,0,0,0],15.409,4]
+  après : ["cleared",4.575,4,4,0,15,15,[0,0,0,0,0],13.81,4]
+
+combats comparés : 36 — identiques 34 — différents 2
+avant / nominal : tués 18, morts 0, expirés 0, dégât moyen 0.00
+avant / pistol-only : tués 18, morts 0, expirés 0, dégât moyen 0.00
+après / nominal : tués 18, morts 0, expirés 0, dégât moyen 0.00
+après / pistol-only : tués 18, morts 0, expirés 0, dégât moyen 0.00

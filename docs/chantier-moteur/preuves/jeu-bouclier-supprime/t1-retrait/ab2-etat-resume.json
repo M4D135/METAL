@@ -1,0 +1,391 @@
+{
+ "schema": "metal-ab2-v1",
+ "generatedAt": null,
+ "environment": {
+  "node": "v24.18.0",
+  "v8": "13.6.233.17-node.50",
+  "platform": "linux",
+  "arch": "arm64",
+  "release": "6.17.0-1026-nvidia",
+  "cpu": "unknown",
+  "logicalCpus": 20,
+  "loadAverage": [
+   5.04,
+   4.79,
+   4.64
+  ]
+ },
+ "scenarioVersion": "audit-sim-driver-v1",
+ "digestVersion": "fnv1a32-float64le-state-v1",
+ "variants": {
+  "a": {
+   "root": "/tmp/opencode/base-35c654a",
+   "sourceSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+    "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "simulation": "91174f7300991105eb5854576e325502838e3d04ac2d190ace287719a284845c"
+   },
+   "loadedSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "fd8d8f875318afe83d6de49c77bd5d9f019494f4401818c23fb0ff8e4d7bc0ed",
+    "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "economy": "d4606326afbf27f1d6cad4dc64b3f142634a1669bd8f75ed90bbb943e3e5a2f3",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "simulation": "91174f7300991105eb5854576e325502838e3d04ac2d190ace287719a284845c"
+   }
+  },
+  "b": {
+   "root": "/home/m4d135/metal-chantier/voies/sim",
+   "sourceSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "c308da081541b6618bf00133a20816e9664958e8c728d9e77406fb82b0f7018e",
+    "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "simulation": "ae09ac158ff5ef15d3bbd14c5cf72254d5013dcc7933f014dbbdd76116448b63"
+   },
+   "loadedSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "world": "c308da081541b6618bf00133a20816e9664958e8c728d9e77406fb82b0f7018e",
+    "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+    "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "simulation": "ae09ac158ff5ef15d3bbd14c5cf72254d5013dcc7933f014dbbdd76116448b63"
+   }
+  }
+ },
+ "method": {
+  "realm": "main",
+  "clock": "process.cpuUsage per sim.step; user + system microseconds",
+  "dt": 0.016666666666666666,
+  "seed": 96,
+  "weapon": null,
+  "requestedSteps": 1800,
+  "warmupPasses": 1,
+  "measuredPasses": 5,
+  "pairing": "AB then BA at each step; first order also reverses with the pass number. Each side has independent module closures, window, world, brain and simulation.",
+  "warmup": "Full first scenario passes are retained as raw evidence and excluded from every timing aggregate.",
+  "ratio": "B/A median of paired per-step CPU values where both sides meet minCpuUs; total ratio is reported separately.",
+  "minCpuUs": 5,
+  "counters": "Separate untimed instrumented A/B replay, verified against the matching uninstrumented variant.",
+  "limits": "Node process CPU includes GC/JIT; does not prove browser frame time, GPU speed or device FPS. FNV32 is a regression signal, not a collision-free proof; final snapshots also use SHA-256."
+ },
+ "identical": false,
+ "scenarios": [
+  {
+   "id": "legacy-s0",
+   "index": 0,
+   "options": null,
+   "identical": false,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "proofA": {
+    "steps": 1800,
+    "chainHash": "fee1bbf7",
+    "snapshot": {
+     "sha256": "a22ac96592c9466c2f9822bd0296bb4c6acbc6bdebf30d80e3819b8b895db19d",
+     "fnv1a32": "01625e5f",
+     "bytes": 166624
+    }
+   },
+   "proofB": {
+    "steps": 1800,
+    "chainHash": "fee1bbf7",
+    "snapshot": {
+     "sha256": "0726af329e7ad7d4f054fff3cc1da887b09a62fb8d0bf2f0269aee6f40444082",
+     "fnv1a32": "9409c329",
+     "bytes": 166521
+    }
+   },
+   "stateHashesMatch": true,
+   "stateHashSample": [
+    "c2723111",
+    "c99a2ac6",
+    "9ba01666",
+    "5b8917bd"
+   ],
+   "timing": {
+    "medianPairedRatio": 1.0285714285714285,
+    "totalRatio": 1.041917538614063,
+    "pairedSamples": 9000,
+    "excludedQuantizedPairs": 0,
+    "a": {
+     "samples": 9000,
+     "totalUs": 952179,
+     "meanUs": 105.79766666666667,
+     "medianUs": 55,
+     "p95Us": 205
+    },
+    "b": {
+     "samples": 9000,
+     "totalUs": 992092,
+     "meanUs": 110.23244444444444,
+     "medianUs": 57,
+     "p95Us": 198
+    }
+   },
+   "counters": {
+    "a": {
+     "counters": {
+      "ground": 207091,
+      "blocked": 42887,
+      "segmentFree": 6376,
+      "astarPops": 81453,
+      "astarNodes": 81121,
+      "revisions": 8
+     }
+    },
+    "b": {
+     "counters": {
+      "ground": 207091,
+      "blocked": 42887,
+      "segmentFree": 6376,
+      "astarPops": 81453,
+      "astarNodes": 81121,
+      "revisions": 8
+     }
+    }
+   }
+  },
+  {
+   "id": "legacy-s2",
+   "index": 2,
+   "options": null,
+   "identical": false,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "proofA": {
+    "steps": 1800,
+    "chainHash": "7e982843",
+    "snapshot": {
+     "sha256": "8614b6f5acaba0219e3c7a90989804863fe28fd550e91e2251a4daf7fbd06c19",
+     "fnv1a32": "db74f274",
+     "bytes": 266845
+    }
+   },
+   "proofB": {
+    "steps": 1800,
+    "chainHash": "7e982843",
+    "snapshot": {
+     "sha256": "01f50b59d8b0640dbbed7ca8f40e55cfc7cbc40cf5f54f89231a39c8ecb43032",
+     "fnv1a32": "41da47dd",
+     "bytes": 266740
+    }
+   },
+   "stateHashesMatch": true,
+   "stateHashSample": [
+    "3b08d6bb",
+    "f7ebc980",
+    "38218a0f",
+    "043d9531"
+   ],
+   "timing": {
+    "medianPairedRatio": 1.0151515151515151,
+    "totalRatio": 1.0857167651809354,
+    "pairedSamples": 9000,
+    "excludedQuantizedPairs": 0,
+    "a": {
+     "samples": 9000,
+     "totalUs": 1336693,
+     "meanUs": 148.52144444444446,
+     "medianUs": 68,
+     "p95Us": 341
+    },
+    "b": {
+     "samples": 9000,
+     "totalUs": 1451270,
+     "meanUs": 161.25222222222223,
+     "medianUs": 71,
+     "p95Us": 370
+    }
+   },
+   "counters": {
+    "a": {
+     "counters": {
+      "ground": 468427,
+      "blocked": 30301,
+      "segmentFree": 4665,
+      "astarPops": 19200,
+      "astarNodes": 18960,
+      "revisions": 15
+     }
+    },
+    "b": {
+     "counters": {
+      "ground": 468427,
+      "blocked": 30301,
+      "segmentFree": 4665,
+      "astarPops": 19200,
+      "astarNodes": 18960,
+      "revisions": 15
+     }
+    }
+   }
+  },
+  {
+   "id": "campaign-w10",
+   "index": 9,
+   "options": {
+    "campaign": true
+   },
+   "identical": false,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "proofA": {
+    "steps": 1800,
+    "chainHash": "fa45f9a6",
+    "snapshot": {
+     "sha256": "a5e416ae8ec7150ed84addeaab6320d3e019ae9cdfe5100d1241651613708382",
+     "fnv1a32": "edf8f1c8",
+     "bytes": 124913
+    }
+   },
+   "proofB": {
+    "steps": 1800,
+    "chainHash": "fa45f9a6",
+    "snapshot": {
+     "sha256": "2f447b6dc648f394bcada3171a811f51bec2155c67cb1c31cdb1e8ec89427b16",
+     "fnv1a32": "a2dbd50d",
+     "bytes": 124818
+    }
+   },
+   "stateHashesMatch": true,
+   "stateHashSample": [
+    "b38387af",
+    "907ba1f9",
+    "89c5b82b",
+    "6af7892c"
+   ],
+   "timing": {
+    "medianPairedRatio": 1,
+    "totalRatio": 0.9945482332259573,
+    "pairedSamples": 9000,
+    "excludedQuantizedPairs": 0,
+    "a": {
+     "samples": 9000,
+     "totalUs": 1663314,
+     "meanUs": 184.81266666666667,
+     "medianUs": 76,
+     "p95Us": 424
+    },
+    "b": {
+     "samples": 9000,
+     "totalUs": 1654246,
+     "meanUs": 183.8051111111111,
+     "medianUs": 76,
+     "p95Us": 438
+    }
+   },
+   "counters": {
+    "a": {
+     "counters": {
+      "ground": 266875,
+      "blocked": 43871,
+      "segmentFree": 6440,
+      "astarPops": 58810,
+      "astarNodes": 58507,
+      "revisions": 13
+     }
+    },
+    "b": {
+     "counters": {
+      "ground": 266875,
+      "blocked": 43871,
+      "segmentFree": 6440,
+      "astarPops": 58810,
+      "astarNodes": 58507,
+      "revisions": 13
+     }
+    }
+   }
+  },
+  {
+   "id": "campaign-w16",
+   "index": 15,
+   "options": {
+    "campaign": true
+   },
+   "identical": false,
+   "stableA": true,
+   "stableB": true,
+   "firstDifference": null,
+   "proofA": {
+    "steps": 1800,
+    "chainHash": "a3531476",
+    "snapshot": {
+     "sha256": "d37b4df0af5b87af1ab0e1730c8924779c6502cc289d556848d160be66bc53b3",
+     "fnv1a32": "9e88ace6",
+     "bytes": 168196
+    }
+   },
+   "proofB": {
+    "steps": 1800,
+    "chainHash": "a3531476",
+    "snapshot": {
+     "sha256": "83f2be768be8c6112464f65182df01ba8ae92a09bea655ff17307ddab913f182",
+     "fnv1a32": "b9f38690",
+     "bytes": 168100
+    }
+   },
+   "stateHashesMatch": true,
+   "stateHashSample": [
+    "b1c638e0",
+    "6357257a",
+    "8ac5610a",
+    "690d8c79"
+   ],
+   "timing": {
+    "medianPairedRatio": 1.0053191489361701,
+    "totalRatio": 0.9915617948991649,
+    "pairedSamples": 9000,
+    "excludedQuantizedPairs": 0,
+    "a": {
+     "samples": 9000,
+     "totalUs": 2716810,
+     "meanUs": 301.8677777777778,
+     "medianUs": 152,
+     "p95Us": 755
+    },
+    "b": {
+     "samples": 9000,
+     "totalUs": 2693885,
+     "meanUs": 299.32055555555553,
+     "medianUs": 152,
+     "p95Us": 783
+    }
+   },
+   "counters": {
+    "a": {
+     "counters": {
+      "ground": 308751,
+      "blocked": 71952,
+      "segmentFree": 12986,
+      "astarPops": 61759,
+      "astarNodes": 60811,
+      "revisions": 13
+     }
+    },
+    "b": {
+     "counters": {
+      "ground": 308751,
+      "blocked": 71952,
+      "segmentFree": 12986,
+      "astarPops": 61759,
+      "astarNodes": 60811,
+      "revisions": 13
+     }
+    }
+   }
+  }
+ ]
+}

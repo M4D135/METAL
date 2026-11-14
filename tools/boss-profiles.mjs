@@ -7,7 +7,7 @@ const {root,output:outputPath}=parseToolArgs(process.argv.slice(2));
 const {FWorld:W,FEconomy:E,FSimulation:S}=loadRealm({root,modules:[...defaultModules(root).filter(name=>name==='fmath'),'world','economy','simulation']}).window,weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'];
 let profile=E.fresh({campaignVersion:2});const weapons=[false,false,false,false,true],rows=[];
 for(let index=0;index<18;index++){
-  const world=W.create(96,index,{campaign:true,campaignVersion:2}),boss=world.enemies.at(-1),arena=world.rooms.find(r=>r.bossArena),reward=E.bossReward(index),inventory={weapons,shield:true},policy=S.campaignPolicy(index,inventory,world.progression.maxActive,2);
+  const world=W.create(96,index,{campaign:true,campaignVersion:2}),boss=world.enemies.at(-1),arena=world.rooms.find(r=>r.bossArena),reward=E.bossReward(index),inventory={weapons},policy=S.campaignPolicy(index,inventory,world.progression.maxActive,2);
   const arenaAmmo=[0,0,0,0,0],enemyAmmo=[0,0,0,0,0];
   for(const q of world.pickups)if(q.kind==='ammo'&&q.zoneId===arena.id)arenaAmmo[q.weapon]+=q.amount;
   for(const e of world.enemies)if(e.drop)enemyAmmo[e.drop.weapon]+=e.drop.amount;

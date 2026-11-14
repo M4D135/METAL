@@ -17,7 +17,7 @@ function inputWorld(seed,index,options){
     rooms:[{x:0,z:0,w:40,d:40,name:'Essai',outdoor:true}],corridors:[],
     environment:{biome:'woodland',outdoorZones:[{x:0,z:0,w:40,d:40}]},
     cores:[{id:0,x:16,z:0},{id:1,x:17,z:0},{id:2,x:18,z:0}],exit:{x:19,z:0},
-    progression:{version:1,weaponSlots:5,startWeapons:[true,true,true,true,true],startAmmo:[180,36,12,16,1],ammoCaps:[180,36,12,16,1],startShield:true,maxActive:8}};
+    progression:{version:1,weaponSlots:5,startWeapons:[true,true,true,true,true],startAmmo:[180,36,12,16,1],ammoCaps:[180,36,12,16,1],maxActive:8}};
 }
 
 function shell({touch=false,settings={},bufferMs,requestLock,pointerLockAvailable=true}={}){
@@ -158,9 +158,12 @@ test('Pointer cancellation clears pending fire while normal touch release preser
   const mouse=shell();mouse.mouse();mouse.emit('pointercancel',{pointerId:2,pointerType:'mouse'});mouse.frame(20);assert.equal(mouse.sim.state.shots,0);
 });
 
-test('Shield guard remains a held action and is not latched as a firearm',()=>{
-  const app=shell();app.element('left-hand-setting').value='shield';app.element('left-hand-setting').emit('change');tap(app,'key',true);app.frame(20);
-  assert.equal(app.sim.state.shield.raised,false);app.key('KeyC');app.frame(20);assert.equal(app.sim.state.shield.raised,true);app.key('KeyC',false);app.frame(20);assert.equal(app.sim.state.shield.raised,false);
+test('The left-hand trigger stays a held action and is never latched as a firearm',()=>{
+  const app=shell();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
+  assert.equal(app.sim.state.equipment.left,1);assert.equal(app.sim.state.shield,undefined,'the left hand no longer holds a guard');
+  tap(app,'key',true);app.frame(20);assert.equal(app.sim.state.shots,1,'one tap fires exactly once');assert.equal(app.sim.state.inventory.ammo[1],34,'the shotgun spends its two shells');
+  app.key('KeyC');for(let i=0;i<90;i++)app.frame(20);assert(app.sim.state.shots>1,'a held trigger keeps firing');
+  app.key('KeyC',false);const held=app.sim.state.shots;for(let i=0;i<90;i++)app.frame(20);assert.equal(app.sim.state.shots,held,'a released trigger never keeps firing');
 });
 
 test('Thirty small wheel events cross the threshold only once and respect the 150 ms cooldown',()=>{

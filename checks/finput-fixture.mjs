@@ -10,7 +10,7 @@ export const METAL_INPUT = {
     {id:'turnLeft',label:'Tourner à gauche',type:'hold',keys:['ArrowLeft'],pad:[]},
     {id:'turnRight',label:'Tourner à droite',type:'hold',keys:['ArrowRight'],pad:[]},
     {id:'fire',label:'Tirer · main droite',type:'hold',keys:['Enter'],pad:['RT'],mouse:'Clic',touch:'TIR'},
-    {id:'fireLeft',label:'Tirer / bouclier · main gauche',type:'hold',keys:['KeyC'],pad:['LT'],mouse:'Clic droit',touch:'TIR G / GARDE',alt:['KeyG','KeyT','KeyY']},
+    {id:'fireLeft',label:'Tirer · main gauche',type:'hold',keys:['KeyC'],pad:['LT'],mouse:'Clic droit',touch:'TIR G',alt:['KeyG','KeyT','KeyY']},
     {id:'leftHand',label:'Changer la main gauche',type:'press',keys:['KeyX'],pad:['RB'],alt:['KeyG','KeyT','KeyY']},
     {id:'sprint',label:'Courir',type:'hold',keys:['ShiftLeft','ShiftRight'],pad:['L3']},
     {id:'jump',label:'Sauter',type:'press',keys:['Space'],pad:['A'],touch:'SAUT',alt:['KeyJ']},

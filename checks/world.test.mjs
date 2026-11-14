@@ -263,7 +263,7 @@ function encountersAndSupplies(world,label){
   const depth=new Map([[0,0]]);for(let pass=0;pass<world.rooms.length;pass++)for(const edge of world.connections)for(const [a,b] of [[edge.from,edge.to],[edge.to,edge.from]])if(depth.has(a)&&(!depth.has(b)||depth.get(b)>depth.get(a)+1))depth.set(b,depth.get(a)+1);
   const initial=new Set([...depth].filter(([id,n])=>id&&n===1).map(([id])=>id)),ordinary=world.enemies.filter(e=>!e.boss&&!e.bossWave),ids=new Set(),budget=[];
   assert.equal(world.progression.version,1);assert.equal(world.progression.maxActive,[8,10,12][world.stage]);
-  assert.equal(world.progression.weaponSlots,4);assert.equal(world.progression.startShield,false);
+  assert.equal(world.progression.weaponSlots,4);
   assert.deepEqual(Array.from(world.progression.ammoCaps),[180,36,12,16]);
   if(world.stage===0){assert.deepEqual(Array.from(world.progression.startWeapons),[true,false,false,false]);assert.deepEqual(Array.from(world.progression.startAmmo),[48,0,0,0]);}
   assert.equal(world.encounters.length,world.rooms.length-2);assert.equal(world.encounterBays.length,world.encounters.length);
@@ -309,7 +309,7 @@ function encountersAndSupplies(world,label){
     // Expected usable damage assumes 45% missed cells, only 2.4 damage from a
     // 5.74-pellet shell and 5.5 from an 8.5 blast. No future loot, incoming ammo,
     // store purchase, upgrade or free melee damage is needed for this reserve.
-    // Grenades and the shield are extra choices; no perfect rebound or dual
+    // Grenades are extra choices; no perfect rebound or dual
     // firing is required to make the original per-portion budget sufficient.
     const expected=ammo[0]*.55+ammo[1]*2.4+ammo[2]*5.5;
     assert(expected>=hp*1.10,`${label}: ${q.id} ammo budget assumes perfect aim or future kills (${expected}/${hp})`);
@@ -319,11 +319,11 @@ function encountersAndSupplies(world,label){
   }
   assert.equal(ids.size,ordinary.length);for(const [i,e] of world.enemies.entries())if(!e.boss&&!e.bossWave)assert(ids.has(i));
   for(const [i,e] of ordinary.filter(e=>e.deployed).entries())for(const other of ordinary.filter(e=>e.deployed).slice(i+1))assert(Math.hypot(e.x-other.x,e.z-other.z)>1.8,`${label}: opening patrol bodies are packed`);
-  const pickupIds=new Set();for(const p of world.pickups){assert(!pickupIds.has(p.id)&&typeof p.id==='string');pickupIds.add(p.id);assert(['health','ammo','weapon','shield'].includes(p.kind));assert(Number.isInteger(p.amount)&&p.amount>0&&p.amount<=180);if(['ammo','weapon'].includes(p.kind))assert([0,1,2,3].includes(p.weapon));if(p.kind==='shield')assert(!Object.hasOwn(p,'weapon')&&p.amount===1);assert(Math.abs(heightAt(world,p.x,p.z)-p.y)<.01,`${label}: supply floats above its actual floor`);}
+  const pickupIds=new Set();for(const p of world.pickups){assert(!pickupIds.has(p.id)&&typeof p.id==='string');pickupIds.add(p.id);assert(['health','ammo','weapon'].includes(p.kind));assert(Number.isInteger(p.amount)&&p.amount>0&&p.amount<=180);if(['ammo','weapon'].includes(p.kind))assert([0,1,2,3].includes(p.weapon));assert(Math.abs(heightAt(world,p.x,p.z)-p.y)<.01,`${label}: supply floats above its actual floor`);}
   const weapons=world.pickups.filter(p=>p.kind==='weapon');assert.equal(weapons.filter(p=>p.weapon===1).length,2);for(const zone of initial)assert(weapons.some(p=>p.weapon===1&&p.zoneId===zone));
   for(const [zone,n] of depth)if(n===2&&!world.rooms[zone].bossArena)assert(weapons.some(p=>p.weapon===2&&p.zoneId===zone),`${label}: branch has explosive threats before a reachable Rupture rack`);
   for(const p of weapons)assert(p.weapon===1?depth.get(p.zoneId)===1:p.weapon===2?depth.get(p.zoneId)===2:depth.get(p.zoneId)>=2&&p.zoneId===world.shops[1].zoneId);
-  const shield=world.pickups.filter(p=>p.kind==='shield'),grenades=world.pickups.filter(p=>p.weapon===3);assert.equal(shield.length,1);assert.equal(depth.get(shield[0].zoneId),1);
+  const cells=world.pickups.filter(p=>p.id==='arsenal-smg-cells'),grenades=world.pickups.filter(p=>p.weapon===3);assert.equal(cells.length,1);assert.equal(depth.get(cells[0].zoneId),1);assert.equal(cells[0].kind,'ammo');assert.equal(cells[0].weapon,0);assert.equal(cells[0].amount,24);
   assert.equal(grenades.length,3);assert.equal(grenades.filter(p=>p.kind==='weapon').length,1);assert.equal(grenades.filter(p=>p.kind==='ammo').length,2);assert.equal(grenades.reduce((n,p)=>n+p.amount,0),12);
   assert(world.enemies.filter(e=>e.weapon==='grenade').every(e=>e.drop.weapon===3&&e.drop.amount===1));
   const newSupplies=world.pickups.filter(p=>p.id.startsWith('arsenal-'));assert.equal(newSupplies.length,4);
@@ -340,7 +340,7 @@ function encountersAndSupplies(world,label){
     for(let j=0;j<3;j++)assert(Math.abs(m.p[j]+axis[j]*m.s[1]/2-pipe.nozzle[j])<1e-7,`${label}: hot jet starts in empty air`);
     const base=[m.p[0]-axis[0]*m.s[1]/2,m.p[1]-axis[1]*m.s[1]/2,m.p[2]-axis[2]*m.s[1]/2];assert(Math.abs(base[0]-pipe.x)<.275&&Math.abs(base[2]-pipe.z)<.275,`${label}: nozzle is disconnected from its pressure manifold`);
   }
-  return {budget,bossAmmo,arsenal:{slots:4,shield:shield[0].zoneId,grenadeRack:grenades.find(p=>p.kind==='weapon').zoneId,grenadeCaches:grenades.filter(p=>p.kind==='ammo').map(p=>p.zoneId),floorGrenades:12,finiteGrenadierDrops:8}};
+  return {budget,bossAmmo,arsenal:{slots:4,openingCache:cells[0].zoneId,grenadeRack:grenades.find(p=>p.kind==='weapon').zoneId,grenadeCaches:grenades.filter(p=>p.kind==='ammo').map(p=>p.zoneId),floorGrenades:12,finiteGrenadierDrops:8}};
 }
 
 const summary = [], signatures = new Set(), topologyIds = new Set(), topologyGraphs = new Map(), footprints = new Map(), biomes = new Set();
@@ -508,7 +508,7 @@ console.log(JSON.stringify({
     'collision geometry visible', 'solid trunks at eye height', 'real open sky at spawn',
     'three distinct outdoor biomes', 'sealed visible outdoor boundaries',
     'continuous 3D ramps and terraces', 'tenfold individually simulated garrisons', 'progressive mechanism unlock reachability', 'two unobstructed elevator shafts with ramp alternatives', 'ballistic launch discs and 3m landing zones', 'real ceilings stop airborne bodies', 'industrial and natural detail systems',
-    'wall-attached rigid details', 'ambient surface orientation', 'monumental arena silhouettes outside giant envelope', 'ambient explosions preserve mission controls', 'seven real horror cue anchors', 'small sequenced encounters and four physically hidden entries', 'finite per-encounter ammo budgets with missed-shot margin', 'progressive weapon racks on both opening branches', 'three reachable persistent workshops', 'real connected steam nozzles', 'branched trees with shared irregular crown geometry', 'four firearms, an early shield and two finite grenade caches'],
+    'wall-attached rigid details', 'ambient surface orientation', 'monumental arena silhouettes outside giant envelope', 'ambient explosions preserve mission controls', 'seven real horror cue anchors', 'small sequenced encounters and four physically hidden entries', 'finite per-encounter ammo budgets with missed-shot margin', 'progressive weapon racks on both opening branches', 'three reachable persistent workshops', 'real connected steam nozzles', 'branched trees with shared irregular crown geometry', 'four firearms, an early ammunition cache and two finite grenade caches'],
   meshes:{min:Math.min(...summary.map(s=>s.meshes)),max:Math.max(...summary.map(s=>s.meshes))},
   representativeStages:summary.filter(s=>s.seed===96).map(s=>({stage:s.stage,meshes:s.meshes,colliders:s.colliders,trees:s.trees,outdoorRooms:s.outdoorRooms,tiers:s.tiers,ambientSources:s.ambientSources,economy:s.economy})),
   accessibleCells: { min: Math.min(...summary.map(s => s.accessibleCells)),

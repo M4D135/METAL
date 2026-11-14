@@ -1,0 +1,21 @@
+{
+ "mondes": 270,
+ "seeds": [
+  96,
+  7,
+  1234,
+  20260514,
+  314159
+ ],
+ "count": 18,
+ "empreintes": {
+  "destructibles": "sha256",
+  "maillages": "sha256",
+  "colliers": "sha256",
+  "ramassages": "sha256",
+  "ennemis": "sha256",
+  "arbres": "sha256"
+ },
+ "ecarts": [],
+ "identique": true
+}

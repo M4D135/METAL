@@ -175,23 +175,23 @@ test('only explicit flames use the animated fire material, leaving smoke and dan
   assert.deepEqual(materials,new Set([14,7,16]));assert.equal(r.stats.fxInstances,3);r.dispose();
 });
 
-test('a translucent first-person shield blends after the opaque hand depth and never enters world shadows',()=>{
+test('a translucent first-person overlay blends after the opaque hand depth and never enters world shadows',()=>{
   const g=gpu(),r=g.renderer,weapon=box([.35,1.65,3.3],[.25,.3,.6],{overlay:true,surface:'object'});
-  const shield=box([-.28,1.8,3.35],[.5,.65,.03],{overlay:true,fx:true,alpha:.22,color:[.15,.75,.8],emissive:.3,surface:'object'});
+  const panel=box([-.28,1.8,3.35],[.5,.65,.03],{overlay:true,fx:true,alpha:.22,color:[.15,.75,.8],emissive:.3,surface:'object'});
   const smoke={shape:'sphere',p:[0,2,-1],s:[2,2,2],mat:7,fx:true,alpha:.35,color:[.4,.4,.4],surface:'object'};
-  r.setWorld(original,lights);g.calls.length=0;r.draw(camera,[shield,smoke,weapon],fx);
-  const shieldDraws=g.draws.filter(d=>d.values.some((v,i)=>i%16===15&&Math.abs(v-.22)<1e-6));assert.equal(shieldDraws.length,1);
-  const shieldDraw=shieldDraws[0],smokeDraw=g.draws.find(d=>d.values.some((v,i)=>i%16===15&&Math.abs(v-.35)<1e-6));
-  const weaponDraw=g.draws.find(d=>d.values.some((v,i)=>i%16===11&&v%2===1)&&d!==shieldDraw);
-  assert.equal(shieldDraw.program,smokeDraw.program);assert.notEqual(shieldDraw.program,weaponDraw.program);
-  assert(smokeDraw.callIndex<weaponDraw.callIndex&&weaponDraw.callIndex<shieldDraw.callIndex);
+  r.setWorld(original,lights);g.calls.length=0;r.draw(camera,[panel,smoke,weapon],fx);
+  const panelDraws=g.draws.filter(d=>d.values.some((v,i)=>i%16===15&&Math.abs(v-.22)<1e-6));assert.equal(panelDraws.length,1);
+  const panelDraw=panelDraws[0],smokeDraw=g.draws.find(d=>d.values.some((v,i)=>i%16===15&&Math.abs(v-.35)<1e-6));
+  const weaponDraw=g.draws.find(d=>d.values.some((v,i)=>i%16===11&&v%2===1)&&d!==panelDraw);
+  assert.equal(panelDraw.program,smokeDraw.program);assert.notEqual(panelDraw.program,weaponDraw.program);
+  assert(smokeDraw.callIndex<weaponDraw.callIndex&&weaponDraw.callIndex<panelDraw.callIndex);
   const clears=g.calls.flatMap((c,i)=>c.name==='clear'&&c.args[0]===256?[i]:[]),handsClear=clears.at(-1);
   assert(smokeDraw.callIndex<handsClear&&handsClear<weaponDraw.callIndex,'world depth is cleared once, before both hand passes');
-  const shieldCalls=g.calls.slice(weaponDraw.callIndex+1,shieldDraw.callIndex+1);
-  assert(shieldCalls.some(c=>c.name==='enable'&&c.args[0]==='BLEND'));assert(shieldCalls.some(c=>c.name==='depthMask'&&c.args[0]===false));
+  const panelCalls=g.calls.slice(weaponDraw.callIndex+1,panelDraw.callIndex+1);
+  assert(panelCalls.some(c=>c.name==='enable'&&c.args[0]==='BLEND'));assert(panelCalls.some(c=>c.name==='depthMask'&&c.args[0]===false));
   assert.equal(r.stats.fxInstances,2,'world FX and hand FX both count toward diagnostics');
-  const a=software();a.renderer.setWorld(original,lights);a.renderer.draw(camera,[shield,weapon],fx);
-  assert(a.calls.some(c=>c[0]==='set'&&c[1]==='globalAlpha'&&c[2]>.05&&c[2]<=.22),'Canvas preserves the shield alpha in the overlay pass');r.dispose();a.renderer.dispose();
+  const a=software();a.renderer.setWorld(original,lights);a.renderer.draw(camera,[panel,weapon],fx);
+  assert(a.calls.some(c=>c[0]==='set'&&c[1]==='globalAlpha'&&c[2]>.05&&c[2]<=.22),'Canvas preserves the overlay alpha in the hand pass');r.dispose();a.renderer.dispose();
 });
 
 test('smoke and spark finish stays in one depth-safe FX pass while hazard and ring contracts keep precedence',()=>{

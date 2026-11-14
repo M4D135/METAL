@@ -1288,7 +1288,7 @@ test('E36 — Capture manette et clear() : ni front ni impulsion pour l’appui 
   pads.list = [fakePad({press: {Y: 1}})]; one(inp); inp.capture('gamepad');
   pads.list = [fakePad({press: {Y: 1, Home: 1}})]; ({f} = one(inp)); assert.equal(f.captured, null); assert.equal(json(f.pressed), '[]');
   pads.list = [fakePad({press: {Y: 1, Home: 1, LT: .31}, axes: [0, -1, 0, 0]})]; ({f, s} = one(inp));
-  assert.equal(json(f.captured), json({device: 'gamepad', code: 'LT'})); assert.equal(json(f.pressed), '[]', 'ni course ni garde'); assert.equal(s.fireLeft, true);
+  assert.equal(json(f.captured), json({device: 'gamepad', code: 'LT'})); assert.equal(json(f.pressed), '[]', 'ni course ni tir tenu'); assert.equal(s.fireLeft, true);
   // Several new buttons in one frame: the first of PAD_BUTTONS.
   pads.list = []; one(inp); inp.capture('gamepad'); pads.list = [fakePad({press: {Start: 1, B: 1, Up: 1}})];
   assert.equal(json(inp.frame(DT).captured), json({device: 'gamepad', code: 'B'})); inp.step();
@@ -1438,7 +1438,7 @@ test('E40b — glyph et dernière manette active : tables complètes, nom ou sty
   assert.equal(inp.label('pulse', 'gamepad'), 'LB / Y'); assert.equal(inp.label('weaponNext', 'gamepad'), '—');
   pads.list = [ps({A: 1})]; one(inp); assert.equal(inp.label('pulse', 'gamepad'), 'L1 / △'); assert.equal(inp.label('sprint', 'gamepad'), 'L3'); assert.equal(inp.label('melee', 'gamepad'), 'R3');
   // Touch: its own label, else the action label. Mouse: its own label, else the keyboard prompt.
-  assert.equal(inp.label('interact', 'touch'), 'Interagir'); assert.equal(inp.label('jump', 'touch'), 'SAUT'); assert.equal(inp.label('fireLeft', 'touch'), 'TIR G / GARDE');
+  assert.equal(inp.label('interact', 'touch'), 'Interagir'); assert.equal(inp.label('jump', 'touch'), 'SAUT'); assert.equal(inp.label('fireLeft', 'touch'), 'TIR G');
   assert.equal(inp.label('weaponNext', 'mouse'), 'Molette'); assert.equal(inp.label('fireLeft', 'mouse'), 'Clic droit'); assert.equal(inp.label('jump', 'mouse'), 'Espace');
   // Default device: the active one (TACT-08).
   const d = F.create(M); pads.list = [];

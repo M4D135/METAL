@@ -12,11 +12,11 @@ export function viewModels(root=new URL('../src/',import.meta.url)) {
   const noop=()=>{},context={window:{},quality:'auto',innerWidth:1280,innerHeight:800,
     clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),machinery:noop,ambience:noop,systems:noop,
     exitReady:()=>false,actorMotion:new Map(),prefs:{shadows:true},
-    renderer:{stats:{backend:'webgl2'}},shieldLift:0,
+    renderer:{stats:{backend:'webgl2'}},
     world:{environment:{},trophies:[],exit:{x:1000,y:0,z:1000}},
   };
   const state={player:{x:0,y:0,z:0,yaw:0,pitch:0,heat:0},weapon:0,
-    equipment:{left:'shield',right:0},shield:{energy:100,bashVisual:0},flash:0,leftFlash:0,
+    equipment:{left:null,right:0},flash:0,leftFlash:0,
     cores:[],enemies:[],pickups:[],loot:[],bullets:[],particles:[],pulseVisual:0};
   context.sim={state};vm.createContext(context);
   vm.runInContext(readFileSync(new URL('motion.js',root),'utf8'),context,{filename:'motion.js'});

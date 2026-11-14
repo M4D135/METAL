@@ -4,7 +4,7 @@
 
 **Version 0.8.1 — Furie d’acier.** L’accueil reçoit une composition thrash metal originale à **212 BPM** : guitares saturées, basse, double grosse caisse, breaks et relances sur une boucle de **54 secondes**. Le premier clic, toucher ou geste clavier sur l’accueil déverrouille le son ; sa commande permet aussi de l’écouter ou de le couper sans lancer une expédition. La piste suit les volumes enregistrés, s’arrête au départ de l’assaut ou lorsque la page perd le focus, puis retrouve l’accueil au retour. Les trois musiques des mondes restent inchangées. Les instruments et le morceau sont entièrement synthétisés par le code, sans enregistrement importé ni reprise d’une composition existante. **V0.8.1** est affiché sur le titre depuis `package.json`. Voir les [vérifications de cette mise à jour](docs/qa-title-v081.md).
 
-**Campagne Arsenal.** Départ au pistolet et au bouclier, armes et améliorations laissées par les boss, premier tiers consacré à l’équipement, douze mondes supplémentaires avec l’arsenal complet. Les grands panneaux-obstacles ajoutés devant les renforts sont supprimés de la nouvelle campagne. Les débris conservent leur forme, tombent et restent au sol. Les bruitages et les ambiances sont reconstruits avec des sons procéduraux distincts et des sources locales. Les clés de sauvegarde historiques `ferro-*` sont conservées.
+**Campagne Arsenal.** Départ au pistolet, armes et améliorations laissées par les boss, premier tiers consacré à l’équipement, douze mondes supplémentaires avec l’arsenal complet. Les grands panneaux-obstacles ajoutés devant les renforts sont supprimés de la nouvelle campagne. Les débris conservent leur forme, tombent et restent au sol. Les bruitages et les ambiances sont reconstruits avec des sons procéduraux distincts et des sources locales. Les clés de sauvegarde historiques `ferro-*` sont conservées.
 
 ## Jouer
 
@@ -15,11 +15,11 @@ WebGL 2 est recommandé ; le rendu Canvas 2D sert de secours. Aucun CDN, paquet 
 
 ## Dix-huit mondes : six pour s’équiper, douze pour l’assaut
 
-Une nouvelle expédition démarre avec le **pistolet à droite et le bouclier à gauche**. Le pistolet a des munitions illimitées. Les autres armes sont récupérées dans les caisses des boss, pas dans les anciennes salles-trophées. Les trois environnements procéduraux alternent à travers les dix-huit mondes.
+Une nouvelle expédition démarre avec le **pistolet à droite et la main gauche libre**. Le pistolet a des munitions illimitées. Les autres armes sont récupérées dans les caisses des boss, pas dans les anciennes salles-trophées. Les trois environnements procéduraux alternent à travers les dix-huit mondes.
 
 | Étape | Arme / amélioration principale |
 | --- | --- |
-| Départ | Pistolet + bouclier |
+| Départ | Pistolet |
 | Boss 1 | Double pompe |
 | Boss 2 | Mitraillette |
 | Boss 3 | Lance-grenades |
@@ -75,15 +75,14 @@ Lames latérales, presses verticales et dalles à piques ont de vrais volumes mo
 | **Double pompe — 2** | Récompense du boss 1. Deux cartouches et quatorze rayons par tir ; une cartouche restante utilise un seul canon. |
 | **Lance-roquettes — 3** | Récompense du boss 6. Roquette et souffle contre groupes, murs et supports ; reculez avant le tir. |
 | **Lance-grenades — 4** | Récompense du boss 3. Trajectoire en cloche, rebonds et fusée de 1,8 s. |
-| **Bouclier — main gauche** | Équipé dès le départ. Garde translucide directionnelle et énergie à gérer. |
 | **Onde — E** | Repousse, étourdit, dissipe les projectiles et refroidit l’arme ; recharge de sept secondes. |
 | **Coup de crosse — V** | Attaque courte, sans munition ni chaleur. Un tir à vide utilise aussi ce secours. |
 
 Les munitions des quatre armes trouvées sont **finies** : une balle, une ou deux cartouches, une roquette ou une grenade selon le tir. Les plafonds de base sont **180 / 36 / 12 / 16**. Seul le pistolet est illimité ; ses sauvegardes contiennent une sentinelle entière finie, jamais Infinity. Les surplus de réserves restent au sol. Les récupérations exigent proximité, bon palier et passage dégagé.
 
-Vous pouvez équiper **deux armes différentes**, une dans chaque main, ou garder le bouclier à gauche. Chaque arme conserve sa cadence, et les armes partagent la chaleur : changer d’emplacement ne contourne pas une surchauffe ou un délai de tir. Les réserves appartiennent au type de munition, sans duplication au changement de main. Les deux montages possèdent leur propre recul amorti, leurs pièces, prises, viseurs et canons.
+Vous pouvez équiper **deux armes différentes**, une dans chaque main, ou laisser la main gauche libre. Chaque arme conserve sa cadence, et les armes partagent la chaleur : changer d’emplacement ne contourne pas une surchauffe ou un délai de tir. Les réserves appartiennent au type de munition, sans duplication au changement de main. Les deux montages possèdent leur propre recul amorti, leurs pièces, prises, viseurs et canons.
 
-Le bouclier est équipé dès le départ dans la nouvelle campagne. Les anciennes campagnes conservent leur mode d’acquisition. Il réduit les impacts venant de face, dans la limite de son énergie ; il ne protège pas des attaques arrière ni des dangers sans direction bloquable. Avec assez d’énergie, la garde absorbe 80 % d’un impact direct ou 55 % d’un souffle frontal. **Espace remplace l’esquive par un coup de bouclier lorsque celui-ci est équipé** : coût de 24 énergie, recharge de frappe de 1,1 s, repoussement et bref étourdissement des machines ordinaires proches. La garde consomme aussi lentement de l’énergie ; relâchée, elle se recharge après le délai éventuel d’un impact ou d’une frappe. Changer d’équipement ne recharge pas son énergie.
+Le bouclier est sorti du jeu : plus d’énergie, plus de garde qui bloque les tirs, plus de coup de bouclier, plus de ramassage, plus de jauge ni de son. Un dégât qui était bloqué fait maintenant mal normalement. Ce qui reste défensif : **Espace esquive** et donne une courte invulnérabilité, **V frappe à la crosse**, **E déclenche l’onde** sans rien équiper. Le ramassage qui ouvrait chaque monde est devenu un rack de munitions de mitraillette au même endroit.
 
 L’onde reste défensive : ses dégâts sont faibles contre les machines ordinaires et n’entament pas le colosse en mode Survie. Le coup de crosse permet de récupérer des ressources sur une machine proche même à zéro munition. Les projectiles et le souffle respectent les couverts, y compris le trajet entre le regard et la bouche de chaque arme.
 
@@ -92,10 +91,10 @@ L’onde reste défensive : ses dégâts sont faibles contre les machines ordina
 | Déplacement | ZQSD / WASD | Joystick gauche |
 | Visée | Souris ; glisser si capture indisponible ; flèches pour tourner | Glisser à droite |
 | Tir main droite | Clic gauche / Entrée | Grand cercle |
-| Tir main gauche / garde | Clic droit / C, maintenir pour la garde | Bouton TIR G / GARDE |
+| Tir main gauche | Clic droit / C | Bouton TIR G |
 | Équipement main gauche | X, ou choix explicite dans le HUD | Bouton main gauche / choix du HUD |
 | Course | Maj | — |
-| Esquive / coup de bouclier équipé | Espace | Bouton contextuel d’esquive / bouclier |
+| Esquive | Espace | Bouton esquive |
 | Onde de choc | E | Bouton anneaux |
 | Coup de crosse | V | Bouton Crosse |
 | Commande / ascenseur / atelier | F | Bouton contextuel |
@@ -103,15 +102,15 @@ L’onde reste défensive : ses dégâts sont faibles contre les machines ordina
 | Carte | M | Bouton carte |
 | Pause | Échap / P | Bouton pause |
 
-Les touches sont personnalisables. La marche, la course, l’esquive et le contrôle aérien sont plus rapides qu’en 0.5, avec accélération et freinage amortis ; il n’existe toujours pas de saut libre sur une touche. **Les FPS restent visibles par défaut**, en haut à droite. Le HUD adapte ses emplacements aux seules armes trouvées en campagne, avec ∞ pour le pistolet ; il montre l’équipement gauche, l’énergie du bouclier, les réserves et plafonds, la vague locale, la chaleur, la santé maximale, le blindage, les crédits et les noyaux, en plus des objectifs, de l’altitude et du boss.
+Les touches sont personnalisables. La marche, la course, l’esquive et le contrôle aérien sont plus rapides qu’en 0.5, avec accélération et freinage amortis ; il n’existe toujours pas de saut libre sur une touche. **Les FPS restent visibles par défaut**, en haut à droite. Le HUD adapte ses emplacements aux seules armes trouvées en campagne, avec ∞ pour le pistolet ; il montre l’équipement gauche, les réserves et plafonds, la vague locale, la chaleur, la santé maximale, le blindage, les crédits et les noyaux, en plus des objectifs, de l’altitude et du boss.
 
-## Armure à ramasser et bouclier
+## Armure à ramasser
 
-Le HUD sépare les **PV**, les **points d’armure** et l’**énergie de garde**. La réserve d’armure commence à zéro, avec une capacité de **100** ; équiper le bouclier possédé à gauche porte ce plafond à **200**. Le changement de main ne remplit rien. Retirer le bouclier ramène la réserve à 100 au maximum, et le rééquiper ne restitue pas le surplus perdu.
+Le HUD sépare les **PV** et les **points d’armure**. La réserve d’armure commence à zéro, avec une capacité de **100**. Le changement de main ne remplit rien.
 
-Chaque monde de campagne possède trois réserves de plaques : **25 au départ, 25 près de l’atelier intermédiaire et 50 dans l’arène**. Leur collecte est physique, sur le bon palier et sans traverser un mur. Le surplus reste au sol. Les plaques absorbent un tiers des dégâts résiduels après le blindage passif et la garde, dans la limite des points disponibles. Les chutes fatales restent fatales. L’armure ne se régénère pas avec le temps ; seule l’énergie de garde retrouve sa charge quand le bouclier est abaissé.
+Chaque monde de campagne possède trois réserves de plaques : **25 au départ, 25 près de l’atelier intermédiaire et 50 dans l’arène**. Leur collecte est physique, sur le bon palier et sans traverser un mur. Le surplus reste au sol. Les plaques absorbent un tiers des dégâts résiduels après le blindage passif, dans la limite des points disponibles. Les chutes fatales restent fatales. L’armure ne se régénère pas avec le temps.
 
-La pose du bouclier libère le centre et l’arme droite : panneau plus compact, cadre affiné, montage sur la gauche, abaissement au repos et avancée pendant la frappe. Le mouvement des mains est pris en compte pour éviter leurs intersections ; les canons et les trajectoires de tir conservent leurs positions.
+Les mains restent lisibles : l’arme droite garde sa monture, ses pièces, sa prise et son canon quel que soit le contenu de la main gauche, et le mouvement des deux mains est pris en compte pour éviter leurs intersections ; les trajectoires de tir conservent leurs positions.
 
 ## Butin, ateliers et améliorations
 
@@ -166,13 +165,13 @@ Les voix restent bornées et priorisées pour que les débris éloignés ne coup
 
 Le moteur conserve la vraie 3D : il n’a pas été remplacé par un raycaster. Les descriptions du monde sont générées au chargement ; la construction des modèles et la préparation des géométries se concentrent sur ce qui peut contribuer à la vue ou aux ombres. Une exclusion incertaine conserve l’objet. Les instances inchangées réutilisent leurs buffers. Les géants et les volumes essentiels de leurs arènes bénéficient d’une portée adaptée, sans étendre tous les petits détails.
 
-Les quatre essences d’arbres conservent troncs articulés, fourches et couronnes irrégulières. Le métal combine rugosité, Fresnel et reflet procédural du ciel/soleil, filtré à la taille du pixel. L’usure suit les arêtes locales des objets ; les armes et machines ne reçoivent pas la grille des bâtiments. Les étincelles ont une pointe chaude et une traînée balistique ; la fumée possède une opacité structurée. Les quantités de particules restent bornées. Les explosions éclairent leur emplacement réel ; le bouclier reste translucide et les trois cartes d’ombres sont conservées. Il ne s’agit pas de miroirs exacts de la scène.
+Les quatre essences d’arbres conservent troncs articulés, fourches et couronnes irrégulières. Le métal combine rugosité, Fresnel et reflet procédural du ciel/soleil, filtré à la taille du pixel. L’usure suit les arêtes locales des objets ; les armes et machines ne reçoivent pas la grille des bâtiments. Les étincelles ont une pointe chaude et une traînée balistique ; la fumée possède une opacité structurée. Les quantités de particules restent bornées. Les explosions éclairent leur emplacement réel et les trois cartes d’ombres sont conservées. Il ne s’agit pas de miroirs exacts de la scène.
 
 Auto adapte progressivement la résolution WebGL à la cadence. Les retours arrière après destruction invalident les caches concernés ; ils restaurent aussi les collisions et la navigation. Le champ de distance global inutilisé par l’IA avancée n’est plus recalculé à chaque porte ou brèche.
 
 Les instruments MOD sont préparés par étapes au menu ou sur l’écran de chargement. Après le geste qui déverrouille le son, les AudioBuffers du secteur sont chargés avant l’entrée en combat. Les banques préparées sont réutilisées ; la préparation d’un secteur futur ne change pas la musique active. Un cache borné garde aussi les descriptions de deux mondes, et l’écran de fin de secteur peut anticiper le suivant. Cette préparation réduit les travaux de première utilisation ; elle ne garantit pas une cadence matérielle.
 
-Les points de reprise comprennent gravats persistants, récompenses de boss déjà acquises, terrain détruit, systèmes, physique aérienne, projectiles, boss, directeur de tension, vagues, réservistes, inventaire, équipement des mains, bouclier, butin restant et profil d’améliorations. Les relais, commandes, arrivées d’ascenseur avec le joueur, armes et bouclier découverts, zones sécurisées, boss abattus, butins de boss ramassés et achats enregistrent la progression.
+Les points de reprise comprennent gravats persistants, récompenses de boss déjà acquises, terrain détruit, systèmes, physique aérienne, projectiles, boss, directeur de tension, vagues, réservistes, inventaire, équipement des mains, butin restant et profil d’améliorations. Les relais, commandes, arrivées d’ascenseur avec le joueur, armes découvertes, zones sécurisées, boss abattus, butins de boss ramassés et achats enregistrent la progression.
 
 Les enveloppes de campagne sont en **version 3**, avec index 0–17 ; les anciennes enveloppes version 2 continuent explicitement leurs trois secteurs. Les points compatibles conservent les ressources, les découvertes et la phase de chaque épreuve. Une métadonnée d’inventaire d’entrée à 3, 4 ou 5 emplacements incompatible avec le monde ne bloque pas la reprise d’un checkpoint sain. Un checkpoint incompatible est refusé ou reprend proprement à l’entrée selon le cas, sans conversion silencieuse ; une copie précédente est conservée lorsque le stockage le permet. Les clés internes restent `ferro-settings` et `ferro-expedition-v2`.
 

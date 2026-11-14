@@ -14,7 +14,7 @@ const angle = value => Math.atan2(Math.sin(value), Math.cos(value));
 function inventory(index, scenario) {
   const weapons = [false, false, false, false, true];
   if (scenario === 'nominal')for (const [at, weapon] of [[6, 0], [9, 1], [12, 3], [15, 2]])if (index >= at)weapons[weapon] = true;
-  return { weapons, ammo: weapons.map((owned, id) => owned ? [80, 16, 6, 8, 1][id] : 0), shield: scenario === 'nominal' && index >= 3 };
+  return { weapons, ammo: weapons.map((owned, id) => owned ? [80, 16, 6, 8, 1][id] : 0) };
 }
 
 function arena(generated) {
@@ -37,7 +37,7 @@ function arena(generated) {
 
 function fight(generated, scenario) {
   const loadout = inventory(generated.index, scenario), world = arena(generated), brain = FBrain.create({ mode: 'cpu' });
-  const sim = FSimulation.create(world, { inventory: loadout, equipment: { right: loadout.weapons[0] ? 0 : 4, left: loadout.shield ? 'shield' : null, shieldEnergy: 100 }, brain });
+  const sim = FSimulation.create(world, { inventory: loadout, equipment: { right: loadout.weapons[0] ? 0 : 4, left: null }, brain });
   sim.setDifficulty(0);
   // The experiment starts in combat, so its initial condition has no spawn grace.
   sim.state.director.grace = 0;
@@ -60,7 +60,7 @@ function fight(generated, scenario) {
     sim.step(dt, { lookX: angle(yaw - p.yaw), lookY: pitch - p.pitch, weapon,
       moveX: (Math.cos(yaw) * gx + Math.sin(yaw) * gz) / length,
       moveY: (Math.sin(yaw) * gx - Math.cos(yaw) * gz) / length,
-      fire: visible.length > 0, fireLeft: inv.shield && sim.state.shield.energy > 8 });
+      fire: visible.length > 0, fireLeft: false });
     for (let i = 0; i < spent.length; i++)spent[i] += Math.max(0, before[i] - sim.state.inventory.ammo[i]);
     peakCombat = Math.max(peakCombat, sim.state.aiStats.combat); elapsed += dt;
     if (!Number.isFinite(p.hp) || sim.state.aiStats.combat > sim.state.adaptation.maxActive)throw new Error('Invalid combat budget or health');
@@ -82,7 +82,7 @@ for (let index = 0; index < 18; index++) {
     garrison: generated.enemies.length, profile: clone(generated.campaignProfile), combats: ['nominal', 'pistol-only'].map(scenario => fight(generated, scenario)) });
 }
 const output = { version: 1, seed: 96, simulationHz: 40, difficulty: 0, limitSeconds: 90,
-  methodology: 'Four infantry definitions sampled deterministically from each generated world. Identical small 3D arena with two physical covers. A bot moves, aims, selects owned weapons, fires and raises its owned shield through normal step inputs. CPU tactical network; no imported assets. No health or enemy-state mutation during combat. Initial spawn grace is disabled. Nominal assumes scheduled trophies have been found; pistol-only omits every optional discovery. These are controlled simulations, not complete campaign runs, human playtests, FPS measurements or real-device validation.',
+  methodology: 'Four infantry definitions sampled deterministically from each generated world. Identical small 3D arena with two physical covers. A bot moves, aims, selects owned weapons and fires through normal step inputs; the left hand stays empty. CPU tactical network; no imported assets. No health or enemy-state mutation during combat. Initial spawn grace is disabled. Nominal assumes scheduled trophies have been found; pistol-only omits every optional discovery. These are controlled simulations, not complete campaign runs, human playtests, FPS measurements or real-device validation.',
   weaponOrder: ['smg', 'shotgun', 'rocket', 'grenade', 'pistol'], rows };
 const json = JSON.stringify(output, null, 2) + '\n';
 if (outputPath)writeFileSync(outputPath, json); else process.stdout.write(json);

@@ -216,73 +216,81 @@ test('Boss salvage awards its physical credits and core once, keeps ammo overflo
   const hp=sim.state.player.hp;advance(sim,1.3);assert(sim.state.explosions.some(q=>q.id===firstLobe),'The cosmetic smoke must outlive the brief flash');assert.equal(sim.state.player.hp,hp);advance(sim,3);assert.equal(sim.state.explosions.length,0);
 });
 
-function arsenalWorld(extra={}){return world({progression:{version:1,weaponSlots:4,startWeapons:[true,false,false,false],startAmmo:[48,0,0,0],startShield:false,ammoCaps:[180,36,12,16],maxActive:8},...extra});}
-const fullArsenal=()=>({weapons:[true,true,true,true],ammo:[40,8,5,6],shield:true});
-function armed(extra={},equipment={right:0,left:1,shieldEnergy:100}){return FSimulation.create(arsenalWorld(extra),{inventory:fullArsenal(),equipment});}
+function arsenalWorld(extra={}){return world({progression:{version:1,weaponSlots:4,startWeapons:[true,false,false,false],startAmmo:[48,0,0,0],ammoCaps:[180,36,12,16],maxActive:8},...extra});}
+const fullArsenal=()=>({weapons:[true,true,true,true],ammo:[40,8,5,6]});
+function armed(extra={},equipment={right:0,left:1}){return FSimulation.create(arsenalWorld(extra),{inventory:fullArsenal(),equipment});}
 
 test('Four-slot loadouts migrate old inventories without gifts and enforce distinct owned weapons in each hand',()=>{
-  const fresh=FSimulation.create(arsenalWorld());assert.deepEqual(json(fresh.exportInventory()),{weapons:[true,false,false,false],ammo:[48,0,0,0],shield:false});assert.equal(fresh.selectLeftWeapon(0),false);assert.equal(fresh.selectLeftWeapon(3),false);assert.equal(fresh.selectLeftWeapon('shield'),false);
-  const migrated=FSimulation.create(arsenalWorld(),{inventory:{weapons:[true,true,false],ammo:[7,2,0]}});assert.deepEqual(json(migrated.exportInventory()),{weapons:[true,true,false,false],ammo:[7,2,0,0],shield:false});
-  const sim=armed({}, {right:0,left:1,shieldEnergy:37.5});assert.equal(sim.selectWeapon(1),true);assert.deepEqual(json(sim.state.equipment),{right:1,left:0});assert.equal(sim.selectLeftWeapon(1),true);assert.deepEqual(json(sim.state.equipment),{right:0,left:1});
-  assert.equal(sim.selectLeftWeapon('shield'),true);assert.equal(sim.state.shield.energy,37.5);assert.equal(sim.selectLeftWeapon(0),false,'One owned gun cannot be copied into two hands');
-  const carried=sim.exportLoadout(),next=FSimulation.create(arsenalWorld({stage:1}),carried);assert.deepEqual(json(next.exportLoadout()),json(carried));assert.equal(next.state.shield.energy,37.5);
-  for(const equipment of [{right:0,left:0,shieldEnergy:20},{right:4,left:null,shieldEnergy:20},{right:0,left:1,shieldEnergy:101}])assert.throws(()=>FSimulation.create(arsenalWorld(),{inventory:fullArsenal(),equipment}));
+  const fresh=FSimulation.create(arsenalWorld());assert.deepEqual(json(fresh.exportInventory()),{weapons:[true,false,false,false],ammo:[48,0,0,0]});assert.equal(fresh.selectLeftWeapon(0),false);assert.equal(fresh.selectLeftWeapon(3),false);assert.equal(fresh.selectLeftWeapon('shield'),false);assert.equal(fresh.state.shield,undefined);
+  const migrated=FSimulation.create(arsenalWorld(),{inventory:{weapons:[true,true,false],ammo:[7,2,0]}});assert.deepEqual(json(migrated.exportInventory()),{weapons:[true,true,false,false],ammo:[7,2,0,0]});
+  const sim=armed({}, {right:0,left:1});assert.equal(sim.selectWeapon(1),true);assert.deepEqual(json(sim.state.equipment),{right:1,left:0});assert.equal(sim.selectLeftWeapon(1),true);assert.deepEqual(json(sim.state.equipment),{right:0,left:1});
+  assert.equal(sim.selectLeftWeapon('shield'),false,'the shield is gone from the left hand');assert.equal(sim.selectLeftWeapon(0),true,'selecting the right-hand gun in the left hand swaps the two hands');assert.deepEqual(json(sim.state.equipment),{right:1,left:0});
+  const carried=sim.exportLoadout(),next=FSimulation.create(arsenalWorld({stage:1}),carried);assert.deepEqual(json(next.exportLoadout()),json(carried));assert.equal(next.state.equipment.left,0);assert.equal(next.state.shield,undefined);
+  for(const equipment of [{right:0,left:0},{right:4,left:null},{right:0,left:'smg'},{right:0,left:true}])assert.throws(()=>FSimulation.create(arsenalWorld(),{inventory:fullArsenal(),equipment}));
+  const legacy=FSimulation.create(arsenalWorld(),{inventory:fullArsenal(),equipment:{right:0,left:'shield',shieldEnergy:100}});assert.deepEqual(json(legacy.state.equipment),{right:0,left:null},'An old loadout that held the shield simply frees the left hand');
 });
 
 test('Two hands discharge independently while swapping preserves each weapon cooldown and shared finite ammunition',()=>{
   const sim=armed();sim.step(.025,{fire:true,fireLeft:true});assert.deepEqual(json(sim.state.inventory.ammo),[39,6,5,6]);assert.equal(sim.state.shots,2);assert.equal(sim.state.flash,1);assert.equal(sim.state.leftFlash,1);
   assert.equal(events(sim,'shot')[0].hand,'right');assert.equal(events(sim,'fracture')[0].hand,'left');assert.equal(events(sim,'fracture')[0].shells,2);
   sim.selectWeapon(1);assert.equal(sim.fire(),false);assert.equal(sim.fireLeft(),false);advance(sim,.15);assert.equal(sim.fire(),false);assert.equal(sim.fireLeft(),true);assert.deepEqual(json(sim.state.inventory.ammo),[38,6,5,6]);
-  const one=FSimulation.create(arsenalWorld(),{inventory:{weapons:[true,true,false,false],ammo:[0,1,0,0],shield:false},equipment:{right:1,left:null,shieldEnergy:100}});assert.equal(one.fire(),true);assert.equal(one.state.inventory.ammo[1],0);assert.equal(events(one,'fracture')[0].shells,1);advance(one,.8);const heat=one.state.player.heat;one.fire();assert.equal(one.state.shots,1);assert.equal(one.state.player.heat,heat);assert.equal(events(one,'empty').length,1);
+  const one=FSimulation.create(arsenalWorld(),{inventory:{weapons:[true,true,false,false],ammo:[0,1,0,0]},equipment:{right:1,left:null}});assert.equal(one.fire(),true);assert.equal(one.state.inventory.ammo[1],0);assert.equal(events(one,'fracture')[0].shells,1);advance(one,.8);const heat=one.state.player.heat;one.fire();assert.equal(one.state.shots,1);assert.equal(one.state.player.heat,heat);assert.equal(events(one,'empty').length,1);
 });
 
 test('Hand-specific muzzle paths prevent shooting through an adjacent corner while the unobstructed hand can hit',()=>{
   const wall={minX:.08,maxX:.5,minY:.5,maxY:3,minZ:-1.4,maxZ:-.5},sim=armed({colliders:[wall],enemies:[{x:0,y:0,z:-6,type:0}]});
   assert(sim.sight(0,0,0,-6,1.62,1.35),'The eye itself must see around this corner');const enemy=sim.state.enemies[0];
   assert.equal(sim.fire(),true);assert.equal(enemy.hp,3,'A blocked right barrel cannot borrow the eye ray');assert.equal(sim.fireLeft(),true);assert.equal(enemy.hp,0,'The physically clear left barrel should hit the target');
-  const leftWall={minX:-.5,maxX:-.08,minY:.5,maxY:3,minZ:-1.4,maxZ:-.5},rocket=armed({colliders:[leftWall],enemies:[{x:0,y:0,z:-6,type:0}]},{right:0,left:2,shieldEnergy:100});
+  const leftWall={minX:-.5,maxX:-.08,minY:.5,maxY:3,minZ:-1.4,maxZ:-.5},rocket=armed({colliders:[leftWall],enemies:[{x:0,y:0,z:-6,type:0}]},{right:0,left:2});
   rocket.fireLeft();assert.equal(rocket.state.projectiles.length,0);assert.equal(events(rocket,'rocketDud').length,1);assert.equal(events(rocket,'rocket')[0].hand,'left');assert.equal(rocket.state.inventory.ammo[2],4);assert.equal(rocket.state.enemies[0].hp,3);
 });
 
 test('A finite player grenade launches from the selected hand, follows gravity, bounces safely and restores mid-flight',()=>{
-  const sim=armed({}, {right:0,left:3,shieldEnergy:100});sim.fireLeft();assert.equal(sim.state.inventory.ammo[3],5);const q=sim.state.projectiles[0],initialY=q.y;
+  const sim=armed({}, {right:0,left:3});sim.fireLeft();assert.equal(sim.state.inventory.ammo[3],5);const q=sim.state.projectiles[0],initialY=q.y;
   assert.equal(q.kind,'grenade');assert.equal(q.hand,'left');assert(q.x<-.2);assert.equal(events(sim,'grenadeLaunch')[0].owner,'player');assert.equal(events(sim,'grenadeLaunch')[0].hand,'left');
   advance(sim,.2);assert(q.y>initialY+.3);assert(q.vy<1.5);const saved=sim.snapshot(),restored=FSimulation.create(sim.state.world);assert.equal(restored.restore(saved),true);assert.deepEqual(json(restored.state.projectiles),json(sim.state.projectiles));
   advance(sim,1.7);advance(restored,1.7);assert.equal(events(sim,'explosion').length,1);assert.equal(events(restored,'explosion').length,1);assert.equal(sim.state.projectiles.length,0);assert.equal(events(sim,'explosion')[0].kind,'grenade');assert.equal(sim.state.inventory.ammo[3],5);
-  const stopped=armed({colliders:[{minX:-4,maxX:4,minY:0,maxY:4,minZ:-3.1,maxZ:-3},{minX:-5,maxX:5,minY:1.95,maxY:2.2,minZ:-4,maxZ:2}]},{right:3,left:null,shieldEnergy:100});stopped.fire();
+  const stopped=armed({colliders:[{minX:-4,maxX:4,minY:0,maxY:4,minZ:-3.1,maxZ:-3},{minX:-5,maxX:5,minY:1.95,maxY:2.2,minZ:-4,maxZ:2}]},{right:3,left:null});stopped.fire();
   for(let i=0;i<60;i++){stopped.step(.025);for(const g of stopped.state.projectiles){assert(g.z>=-2.831,'A swept grenade crossed the wall');assert(g.y<=1.781,'A swept grenade crossed the low ceiling');}}
 });
 
-test('A raised shield attenuates real frontal bullets at an energy cost but cannot protect the back, sides or floor hazards',()=>{
-  const sim=armed({}, {right:0,left:'shield',shieldEnergy:100});
-  const bolt=(x,z,dx,dz)=>{sim.state.bullets.push({x,y:1.25,z,dx,dy:0,dz,life:1,damage:20});sim.step(.05,{fireLeft:true});};
-  bolt(0,-1,0,20);assert(Math.abs(sim.state.player.hp-96)<1e-8);assert(sim.state.shield.energy<77);assert.equal(events(sim,'shieldBlock').length,1);assert.equal(events(sim,'shieldRaise').length,1);
-  const energy=sim.state.shield.energy;bolt(0,1,0,-20);assert.equal(sim.state.player.hp,76);assert(sim.state.shield.energy>energy-1);bolt(1,0,-20,0);assert.equal(sim.state.player.hp,56);assert.equal(events(sim,'shieldBlock').length,1);
-  sim.hurt(8);assert.equal(sim.state.player.hp,48,'An unlocated environmental hazard is not a frontal projectile');
-  sim.state.shield.energy=1;sim.state.shield.raised=true;bolt(0,-1,0,20);assert.equal(sim.state.shield.energy,0);assert.equal(sim.state.shield.raised,false);assert(sim.state.player.hp<30);assert(events(sim,'shieldBlock').at(-1).broken);
+test('A frontal bullet now lands at full strength because nothing absorbs it any more',()=>{
+  const sim=armed({}, {right:0,left:1});
+  const bolt=(x,z,dx,dz)=>{sim.state.bullets.push({x,y:1.25,z,dx,dy:0,dz,life:1,damage:20});sim.step(.05);};
+  bolt(0,-1,0,20);assert.equal(sim.state.player.hp,80,'A frontal hit is no longer absorbed');
+  bolt(0,1,0,-20);assert.equal(sim.state.player.hp,60);bolt(1,0,-20,0);assert.equal(sim.state.player.hp,40);
+  sim.hurt(8);assert.equal(sim.state.player.hp,32,'An unlocated environmental hazard is not a frontal projectile');
+  assert.equal(events(sim,'shieldBlock').length,0);assert.equal(events(sim,'shieldRaise').length,0);assert.equal(sim.state.shield,undefined);
 });
 
-test('Shield bash uses energy and time, stops enemies at real walls and replaces dash only when equipped',()=>{
-  const sim=armed({colliders:[{minX:-5,maxX:5,minY:0,maxY:3,minZ:-2.8,maxZ:-2.6}],enemies:[{x:0,y:0,z:-1.65,type:1}]},{right:0,left:'shield',shieldEnergy:100}),enemy=sim.state.enemies[0];enemy.cooldown=30;
-  sim.step(.025,{dash:true});assert.equal(sim.state.player.dash,0);assert.equal(sim.state.shield.energy,76);assert.equal(events(sim,'shieldBash').length,1);assert.equal(enemy.hp,4.35);assert(enemy.stun>.5);assert(enemy.z>=-2.22-1e-7);assert.equal(sim.blocked(enemy.x,enemy.z,.38,enemy.baseY),false);
-  advance(sim,.2,{dash:true});assert.equal(events(sim,'shieldBash').length,1);assert.equal(sim.shieldBash(),false);sim.selectLeftWeapon(null);sim.step(.025,{dash:true});assert(sim.state.player.dash>1);assert(sim.state.player.dashing>0);
+test('The dodge always dashes and keeps its short invulnerability without striking',()=>{
+  const sim=armed({colliders:[{minX:-5,maxX:5,minY:0,maxY:3,minZ:-2.8,maxZ:-2.6}],enemies:[{x:0,y:0,z:-1.65,type:1}]}),enemy=sim.state.enemies[0];enemy.cooldown=30;
+  const hp=sim.state.player.hp;
+  sim.step(.025,{dash:true});assert(sim.state.player.dash>1,'the dodge is never replaced by another action');assert(sim.state.player.dashing>0);
+  sim.hurt(30);assert.equal(sim.state.player.hp,hp,'the dash window still blocks damage');
+  advance(sim,.25);sim.hurt(30);assert.equal(sim.state.player.hp,hp-30,'and that window stays short');
+  assert.equal(enemy.hp,5,'the dodge no longer hits anybody');assert.equal(events(sim,'shieldBash').length,0);
+  assert.equal(sim.shieldBash,undefined,'the simulation no longer exposes a shield bash');
 });
 
-test('Shield charge, both weapon cooldowns and hand ownership save atomically without free ammunition or energy',()=>{
-  const sim=armed({}, {right:3,left:2,shieldEnergy:36.5});sim.step(.025,{fire:true,fireLeft:true});sim.selectLeftWeapon('shield');sim.step(.025,{fireLeft:true});
-  sim.state.bullets.push({x:0,y:1.25,z:-1,dx:0,dy:0,dz:20,life:1,damage:10});sim.step(.05,{fireLeft:true});
-  const saved=sim.snapshot(),resumed=FSimulation.create(sim.state.world);assert.equal(resumed.restore(saved),true);assert.deepEqual(json(resumed.snapshot()),json(saved));assert.equal(resumed.state.shield.energy,sim.state.shield.energy);assert.equal(resumed.fire(),false);
-  const carried=sim.exportLoadout(),next=FSimulation.create(arsenalWorld({stage:1}),carried);assert.equal(next.state.shield.energy,carried.equipment.shieldEnergy);assert.deepEqual(json(next.exportInventory()),json(sim.exportInventory()));
-  for(const mutate of [q=>q.state.equipment.left=q.state.weapon,q=>q.state.shield.energy=101,q=>q.state.inventory.shield=false,q=>q.state.inventory.ammo[3]=17,q=>q.timers.weaponWait[3]=9,q=>q.state.projectiles[0].hand='middle',q=>q.state.inventory.weapons.splice(3,1)]){
+test('Both weapon cooldowns and hand ownership save atomically without free ammunition',()=>{
+  const sim=armed({}, {right:3,left:2});sim.step(.025,{fire:true,fireLeft:true});sim.selectLeftWeapon(1);sim.step(.025,{fireLeft:true});
+  sim.state.bullets.push({x:0,y:1.25,z:-1,dx:0,dy:0,dz:20,life:1,damage:10});sim.step(.05);
+  const saved=sim.snapshot(),resumed=FSimulation.create(sim.state.world);assert.equal(resumed.restore(saved),true);assert.deepEqual(json(resumed.snapshot()),json(saved));assert.equal(resumed.fire(),false);
+  const carried=sim.exportLoadout(),next=FSimulation.create(arsenalWorld({stage:1}),carried);assert.equal(next.state.equipment.left,carried.equipment.left);assert.deepEqual(json(next.exportInventory()),json(sim.exportInventory()));
+  for(const mutate of [q=>q.state.equipment.left=q.state.weapon,q=>q.state.equipment.left=9,q=>q.state.inventory.ammo[3]=17,q=>q.timers.weaponWait[3]=9,q=>q.state.projectiles[0].hand='middle',q=>q.state.inventory.weapons.splice(3,1)]){
     const bad=json(saved);mutate(bad);const unchanged=JSON.stringify(resumed.snapshot());assert.equal(resumed.restore(bad),false);assert.equal(JSON.stringify(resumed.snapshot()),unchanged);
   }
 });
 
-test('Grenade racks and shield pickups are physical; duplicate shields and workshop upgrades never refill charge',()=>{
-  const w=arsenalWorld({pickups:[{id:'shield',kind:'shield',amount:1,x:.5,y:0,z:0},{id:'grenade',kind:'weapon',weapon:3,amount:4,x:3,y:0,z:0},{id:'spares',kind:'ammo',weapon:3,amount:4,x:6,y:0,z:0},{id:'extra-shield',kind:'shield',amount:1,x:9,y:0,z:0}],shops:[{id:'shop',x:9,y:0,z:0}]}),profile={...FEconomy.fresh(),credits:1000},sim=FSimulation.create(w,{economy:profile});
-  sim.step(.025);assert.equal(sim.state.inventory.shield,true);assert.equal(sim.state.equipment.left,'shield');assert.equal(events(sim,'shieldPickup').length,1);sim.move(sim.state.player,3,0);sim.step(.025);assert.equal(sim.state.weapon,3);assert.equal(sim.state.inventory.ammo[3],4);
+test('Grenade racks are physical, an old shield pickup stays inert and the workshop never sells one',()=>{
+  const w=arsenalWorld({pickups:[{id:'legacy-shield',kind:'shield',amount:1,x:.5,y:0,z:0},{id:'grenade',kind:'weapon',weapon:3,amount:4,x:3,y:0,z:0},{id:'spares',kind:'ammo',weapon:3,amount:4,x:6,y:0,z:0}],shops:[{id:'shop',x:9,y:0,z:0}]}),profile={...FEconomy.fresh(),credits:1000},sim=FSimulation.create(w,{economy:profile});
+  sim.step(.025);
+  assert.equal(sim.state.inventory.shield,undefined);assert.equal(sim.state.pickups[0].taken,false,'a shield left in an old world is never collected');assert.equal(events(sim,'shieldPickup').length,0);assert.equal(sim.state.equipment.left,null);
+  sim.move(sim.state.player,3,0);sim.step(.025);assert.equal(sim.state.weapon,3);assert.equal(sim.state.inventory.ammo[3],4);
   sim.state.inventory.ammo[3]=15;sim.move(sim.state.player,3,0);sim.step(.025);assert.equal(sim.state.inventory.ammo[3],16);assert.equal(sim.state.pickups[2].remaining,3);
-  sim.state.shield.energy=35;sim.state.shield.rechargeDelay=2;sim.move(sim.state.player,3,0);sim.step(.025);assert.equal(sim.state.shield.energy,35);assert.equal(events(sim,'shieldPickup').length,1);assert.equal(sim.shopOffers('shop').length,14);
-  assert.equal(sim.buy('shop','shield').ok,false);assert.equal(sim.buy('shop','capacity').ok,true);assert.equal(sim.ammoCaps[3],20);assert.equal(sim.state.inventory.ammo[3],16);assert.equal(sim.state.shield.energy,35);
-  const saved=sim.snapshot(),restored=FSimulation.create(w);assert.equal(restored.restore(saved),true);assert.equal(restored.state.inventory.shield,true);assert.equal(restored.state.pickups[2].remaining,3);
+  sim.move(sim.state.player,3,0);sim.step(.025);
+  assert.equal(sim.shopOffers('shop').length,13);assert.equal(sim.shopOffers('shop').some(q=>q.item?.id==='shield'||q.id==='shield'),false);
+  assert.equal(sim.buy('shop','shield').ok,false);assert.equal(sim.buy('shop','capacity').ok,true);assert.equal(sim.ammoCaps[3],20);assert.equal(sim.state.inventory.ammo[3],16);
+  const saved=sim.snapshot(),restored=FSimulation.create(w);assert.equal(restored.restore(saved),true);assert.equal(restored.state.pickups[2].remaining,3);
 });

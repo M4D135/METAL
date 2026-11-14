@@ -13,7 +13,6 @@
     {id:'weapon1',kind:'weapon',weapon:1,label:'Double pompe · Fracture',description:'Débloque le double pompe avec 6 cartouches, dans la limite des réserves. Achat unique.',quantity:6,basePrice:150},
     {id:'weapon2',kind:'weapon',weapon:2,label:'Lance-roquettes · Rupture',description:'Débloque le lance-roquettes avec 2 roquettes, dans la limite des réserves. Achat unique.',quantity:2,basePrice:260},
     {id:'weapon3',kind:'weapon',weapon:3,label:'Lance-grenades',description:'Débloque le lance-grenades avec 4 grenades, dans la limite des réserves. Achat unique.',quantity:4,basePrice:220},
-    {id:'shield',kind:'shield',label:'Bouclier',description:'Débloque le bouclier pour la main gauche. Achat unique, sans recharge d’énergie offerte.',quantity:1,basePrice:180},
     {id:'vitality',kind:'upgrade',upgrade:'vitality',label:'Vitalité',description:'+20 intégrité maximale par rang. Les dégâts déjà subis restent à réparer.',quantity:1,basePrice:90,maxRank:3},
     {id:'armor',kind:'upgrade',upgrade:'armor',label:'Blindage',description:'Réduit de 8 % supplémentaires les dégâts reçus par rang, jusqu’à 24 %.',quantity:1,basePrice:120,maxRank:3},
     {id:'capacity',kind:'upgrade',upgrade:'capacity',label:'Réserves',description:'+25 % de capacité de base par rang. N’ajoute aucune munition.',quantity:1,basePrice:100,maxRank:3},
@@ -69,10 +68,10 @@
     const profile=copy(state.profile);if(!profile)return null;
     const campaign=options.campaign===true,caps=ammoCaps(profile,options),inventory=state.inventory;
     if(!inventory||!Array.isArray(inventory.weapons)||!Array.isArray(inventory.ammo))return null;
-    const slots=inventory.weapons.length,hasShield=own(inventory,'shield');
-    if(!(campaign?[5]:[3,4]).includes(slots)||!shape(inventory,hasShield?['weapons','ammo','shield']:['weapons','ammo'])||slots>=4&&!hasShield||hasShield&&typeof inventory.shield!=='boolean'||Object.keys(inventory.weapons).length!==slots||(campaign?!inventory.weapons.some(Boolean):inventory.weapons[0]!==true)||inventory.ammo.length!==slots||Object.keys(inventory.ammo).length!==slots||!Array.from({length:slots},(_,i)=>i).every(i=>own(inventory.weapons,i)&&typeof inventory.weapons[i]==='boolean'&&own(inventory.ammo,i)&&integer(inventory.ammo[i],caps[i])))return null;
+    const slots=inventory.weapons.length;
+    if(!(campaign?[5]:[3,4]).includes(slots)||!shape(inventory,['weapons','ammo'])||Object.keys(inventory.weapons).length!==slots||(campaign?!inventory.weapons.some(Boolean):inventory.weapons[0]!==true)||inventory.ammo.length!==slots||Object.keys(inventory.ammo).length!==slots||!Array.from({length:slots},(_,i)=>i).every(i=>own(inventory.weapons,i)&&typeof inventory.weapons[i]==='boolean'&&own(inventory.ammo,i)&&integer(inventory.ammo[i],caps[i])))return null;
     if(!Number.isFinite(state.hp)||state.hp<0||state.hp>stats(profile).maxHp)return null;
-    return {profile,inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice(),...(hasShield?{shield:inventory.shield}:{})},hp:state.hp};
+    return {profile,inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},hp:state.hp};
   }
   function quote(state,itemId,options={}){
     const item=ITEMS.find(item=>item.id===itemId),valid=copyState(state,options);
@@ -83,8 +82,8 @@
     if(valid.hp<=0)return deny('defeated');
     const profile=valid.profile,inventory=valid.inventory,maxRank=profile.version===2?PERSONAL_RANKS:3;
     if(item.kind==='upgrade'&&profile.version===2){result.item.maxRank=maxRank;if(item.id==='armor')result.item.description='Réduction des dégâts : 8 % par rang jusqu’au rang 3, puis 2,6 % par rang. Le blindage laisse toujours passer au moins la moitié des dégâts.';else result.item.description=item.description.replace('jusqu’à +30 %','jusqu’à +120 %').replace('jusqu’à +60 %','jusqu’à +240 %');}
-    if(inventory.weapons.length<4&&(item.weapon===3||item.kind==='shield'))return deny('unsupported-item');
-    if(options.campaign===true&&(item.kind==='weapon'&&!inventory.weapons[item.weapon]||item.kind==='shield'&&!inventory.shield))return deny('trophy-required');
+    if(inventory.weapons.length<4&&item.weapon===3)return deny('unsupported-item');
+    if(options.campaign===true&&item.kind==='weapon'&&!inventory.weapons[item.weapon])return deny('trophy-required');
     if(item.kind==='repair'){
       result.amount=Math.min(item.quantity,stats(profile).maxHp-valid.hp);
       if(result.amount<=0)return deny('full');
@@ -98,9 +97,6 @@
       if(inventory.weapons[item.weapon])return deny('owned');
       result.amount=Math.min(item.quantity,ammoCaps(profile,options)[item.weapon]-inventory.ammo[item.weapon]);
       result.cost.credits=item.basePrice;
-    }else if(item.kind==='shield'){
-      if(inventory.shield)return deny('owned');
-      result.amount=1;result.cost.credits=item.basePrice;
     }else{
       result.rank=profile.upgrades[item.upgrade];result.nextRank=Math.min(maxRank,result.rank+1);
       if(result.rank>=maxRank)return deny('max-rank');
@@ -120,7 +116,6 @@
     if(item.kind==='repair')next.hp=Math.min(stats(next.profile).maxHp,next.hp+offer.amount);
     else if(item.kind==='ammo')next.inventory.ammo[item.weapon]+=offer.amount;
     else if(item.kind==='weapon'){next.inventory.weapons[item.weapon]=true;next.inventory.ammo[item.weapon]+=offer.amount;}
-    else if(item.kind==='shield')next.inventory.shield=true;
     else next.profile.upgrades[item.upgrade]=offer.nextRank;
     return result;
   }

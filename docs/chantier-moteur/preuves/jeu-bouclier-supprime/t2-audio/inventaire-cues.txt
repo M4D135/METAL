@@ -1,0 +1,32 @@
+
+=== src/audio.js ===
+cues avant  : 61 — prepare, prepareTitle, setTitlePlaying, setMuted, setThreat, setPressure, setStage, setPlaying, setMix, setEnvironment, setMachinery, setSteam, materialImpact, materialBreak, debrisLand, horror, metallicSlam, horrorSting, powerCut, alarm, rocket, grenade, grenadeLaunch, shieldRaise, shieldBlock, shieldBash, explosion, pipeLeak, creak, trap, bossTell, bossRoar, bossImpact, bossDeath, shot, fracture, pulse, switchWeapon, dash, alerted, enemyShot, bossPhase, hit, hurt, kill, pickup, ammoPickup, weaponPickup, trophy, empty, melee, wave, core, mechanism, jumpPad, land, liftStart, liftStop, win, step, dispose
+cues après  : 58 — prepare, prepareTitle, setTitlePlaying, setMuted, setThreat, setPressure, setStage, setPlaying, setMix, setEnvironment, setMachinery, setSteam, materialImpact, materialBreak, debrisLand, horror, metallicSlam, horrorSting, powerCut, alarm, rocket, grenade, grenadeLaunch, explosion, pipeLeak, creak, trap, bossTell, bossRoar, bossImpact, bossDeath, shot, fracture, pulse, switchWeapon, dash, alerted, enemyShot, bossPhase, hit, hurt, kill, pickup, ammoPickup, weaponPickup, trophy, empty, melee, wave, core, mechanism, jumpPad, land, liftStart, liftStop, win, step, dispose
+retirés     : shieldRaise, shieldBlock, shieldBash
+ajoutés     : aucun
+mentions « shield » : 8 → 0
+  avant : var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
+  avant : var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism|shieldRaise)$/.test(cue) ? .68 : 1;
+  avant : if (strength === 1) return;
+  avant : strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
+  avant : stats.duckGain = MUSIC_GAIN * duckDepth;
+  avant : if (now >= duckUntil + 1) stats.duckGain = MUSIC_GAIN;
+  avant : duckUntil = 0; duckDepth = 1; stats.duckGain = MUSIC_GAIN;
+  avant : duckUntil = 0; duckDepth = 1; ambientDuckUntil = 0; stats.duckGain = MUSIC_GAIN;
+  avant : var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
+  après : var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
+  après : var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism)$/.test(cue) ? .68 : 1;
+  après : if (strength === 1) return;
+  après : strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
+  après : stats.duckGain = MUSIC_GAIN * duckDepth;
+  après : if (now >= duckUntil + 1) stats.duckGain = MUSIC_GAIN;
+  après : duckUntil = 0; duckDepth = 1; stats.duckGain = MUSIC_GAIN;
+  après : duckUntil = 0; duckDepth = 1; ambientDuckUntil = 0; stats.duckGain = MUSIC_GAIN;
+  après : var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
+
+=== src/soundscape.js ===
+cues avant  : 11 — shot, fracture, rocket, grenadeLaunch, shield, shieldBash, shieldBlock, melee, dash, pulse, land
+cues après  : 8 — shot, fracture, rocket, grenadeLaunch, melee, dash, pulse, land
+retirés     : shield, shieldBash, shieldBlock
+ajoutés     : aucun
+mentions « shield » : 1 → 0

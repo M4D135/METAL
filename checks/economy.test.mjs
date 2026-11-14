@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const scope={};vm.runInNewContext(fs.readFileSync(new URL('../src/economy.js',import.meta.url),'utf8'),scope);const E=scope.FEconomy;
 const plain=value=>JSON.parse(JSON.stringify(value));
-const make=(credits=1000,cores=3)=>({profile:{...plain(E.fresh()),credits,cores},inventory:{weapons:[true,false,false,false],ammo:[48,0,0,0],shield:false},hp:80});
+const make=(credits=1000,cores=3)=>({profile:{...plain(E.fresh()),credits,cores},inventory:{weapons:[true,false,false,false],ammo:[48,0,0,0]},hp:80});
 function freeze(value){if(value&&typeof value==='object'){Object.freeze(value);Object.values(value).forEach(freeze);}return value;}
 
 test('boss campaign profiles extend finite ranks without changing historical profile shape or armor bounds',()=>{
@@ -12,7 +12,7 @@ test('boss campaign profiles extend finite ranks without changing historical pro
  for(let rank=0;rank<=12;rank++){
   const profile=E.fresh({campaignVersion:2});for(const key of Object.keys(profile.upgrades))profile.upgrades[key]=rank;profile.weaponUpgrades.fill(Math.min(8,rank));
   assert(E.validate(profile));const stats=E.stats(profile),caps=E.ammoCaps(profile,{campaign:true});assert(stats.incomingMultiplier>=.5&&stats.incomingMultiplier<=1);assert(stats.maxHp<=340);assert(caps.every(Number.isInteger));assert.deepEqual(plain(caps),[180+45*rank,36+9*rank,12+3*rank,16+4*rank,1]);
-  const state={profile:{...profile,credits:100000,cores:99},inventory:{weapons:[true,true,true,true,true],ammo:[0,0,0,0,1],shield:true},hp:100},offer=E.quote(state,'power',{campaign:true});
+  const state={profile:{...profile,credits:100000,cores:99},inventory:{weapons:[true,true,true,true,true],ammo:[0,0,0,0,1]},hp:100},offer=E.quote(state,'power',{campaign:true});
   assert.equal(offer.item.maxRank,12);assert.equal(offer.ok,rank<12);if(rank<12){assert(offer.cost.credits>0&&Number.isInteger(offer.cost.credits));assert.equal(E.transact(state,'power',{campaign:true}).state.profile.upgrades.power,rank+1);}
  }
  for(const change of [p=>p.weaponUpgrades[0]=9,p=>p.weaponUpgrades[0]=-1,p=>p.weaponUpgrades.pop(),p=>p.weaponUpgrades[1]=NaN,p=>p.upgrades.vitality=13,p=>p.version=3,p=>p.extra=true]){const invalid=E.fresh({campaignVersion:2});change(invalid);assert.equal(E.validate(invalid),false);}
@@ -48,11 +48,12 @@ test('every rank gives bounded explicit stats and integer ammunition capacities'
  }
 });
 
-test('the fourteen catalog offers describe all four firearms and the shield without mutable prices',()=>{
- const items=E.catalog();assert.equal(items.length,14);assert.equal(new Set(items.map(i=>i.id)).size,14);
+test('the thirteen catalog offers describe all four firearms and no shield without mutable prices',()=>{
+ const items=E.catalog();assert.equal(items.length,13);assert.equal(new Set(items.map(i=>i.id)).size,13);
  for(const item of items){assert(item.label.length>3&&item.description.length>20);assert(item.basePrice>0&&Number.isInteger(item.basePrice));assert(item.quantity>0);}
  items[0].basePrice=0;items[0].label='changed';assert.equal(E.catalog()[0].basePrice,24);assert.notEqual(E.catalog()[0].label,'changed');
- assert(items.some(i=>i.label.includes('mitraillette')));assert(items.some(i=>i.label.includes('Double pompe')));assert(items.some(i=>i.label.includes('Lance-roquettes')));assert(items.some(i=>i.label==='Lance-grenades'));assert(items.some(i=>i.id==='shield'&&i.kind==='shield'));
+ assert(items.some(i=>i.label.includes('mitraillette')));assert(items.some(i=>i.label.includes('Double pompe')));assert(items.some(i=>i.label.includes('Lance-roquettes')));assert(items.some(i=>i.label==='Lance-grenades'));
+ assert(!items.some(i=>i.kind==='shield'||i.id==='shield'),'the shield left the game and cannot return through the catalog');
 });
 
 test('repairs charge proportional positive prices, cap health and never revive a defeated player',()=>{
@@ -80,12 +81,13 @@ test('emergency weapon purchase has a one-time bounded starter pack and no repea
  }
 });
 
-test('shield purchase grants ownership once, without selecting equipment or refilling health and ammo',()=>{
- const state=freeze(make()),before=plain(state),result=E.transact(state,'shield');assert(result.ok);assert.equal(result.cost.credits,180);assert.equal(result.amount,1);
- assert.equal(result.state.inventory.shield,true);assert.equal(result.state.hp,state.hp);assert.deepEqual(plain(result.state.inventory.ammo),before.inventory.ammo);assert.deepEqual(plain(result.state.inventory.weapons),before.inventory.weapons);assert.deepEqual(plain(state),before);
- assert(!Object.hasOwn(result.state,'equipment'));assert(!Object.hasOwn(result.state.inventory,'shieldEnergy'));
- const again=E.transact(result.state,'shield');assert.equal(again.reason,'owned');assert.deepEqual(plain(again.state),plain(result.state));
- const poor=make(179),denied=E.transact(poor,'shield');assert.equal(denied.reason,'insufficient-credits');assert.deepEqual(plain(denied.state),poor);
+test('the shield cannot be bought, quoted or carried, in classic and campaign states',()=>{
+ const state=freeze(make()),result=E.transact(state,'shield');
+ assert.equal(result.ok,false);assert.equal(result.reason,'unknown-item');assert.deepEqual(plain(result.state),plain(state));
+ assert.equal(E.quote(state,'shield').reason,'unknown-item');
+ const campaign={profile:E.campaign(E.fresh()),inventory:{weapons:[true,false,false,false,true],ammo:[0,0,0,0,1]},hp:100};
+ assert.equal(E.transact(campaign,'shield',{campaign:true}).reason,'unknown-item');
+ assert.equal(E.quote(campaign,'shield',{campaign:true}).reason,'unknown-item');
 });
 
 test('legacy three-slot fixtures keep their exact inventory size without granting the new arsenal',()=>{
@@ -93,7 +95,7 @@ test('legacy three-slot fixtures keep their exact inventory size without grantin
  for(const id of ['repair','ammo0','weapon1','weapon2','capacity']){
   const result=E.transact(legacy,id);assert(result.ok);assert.equal(result.state.inventory.weapons.length,3);assert.equal(result.state.inventory.ammo.length,3);assert.deepEqual(Object.keys(result.state.inventory).sort(),['ammo','weapons']);
  }
- for(const id of ['weapon3','ammo3','shield']){const result=E.transact(legacy,id);assert.equal(result.reason,'unsupported-item');assert.deepEqual(plain(result.state),legacy);}
+ for(const id of ['weapon3','ammo3']){const result=E.transact(legacy,id);assert.equal(result.reason,'unsupported-item');assert.deepEqual(plain(result.state),legacy);}
 });
 
 test('upgrades spend scarce cores on ranks two and three without repairing or refilling',()=>{
@@ -115,7 +117,7 @@ test('insufficient credits or cores are atomic failures and stale quote objects 
 });
 
 test('malformed state, sparse arrays and out-of-cap inventory are rejected before any debit',()=>{
- const changes=[s=>s.hp=NaN,s=>s.hp=Infinity,s=>s.hp=-1,s=>s.hp=101,s=>s.inventory.weapons[0]=false,s=>s.inventory.weapons[1]=1,s=>delete s.inventory.weapons[1],s=>delete s.inventory.ammo[1],s=>s.inventory.ammo[0]=181,s=>s.inventory.ammo[0]=-1,s=>s.inventory.ammo[0]=1.5,s=>s.inventory.ammo=[1,2],s=>s.inventory.extra=true,s=>s.extra=true,s=>s.inventory.ammo[3]=17,s=>s.inventory.shield=1,s=>delete s.inventory.shield,s=>s.inventory.weapons.push(true),s=>s.inventory.ammo.shield=1];
+ const changes=[s=>s.hp=NaN,s=>s.hp=Infinity,s=>s.hp=-1,s=>s.hp=101,s=>s.inventory.weapons[0]=false,s=>s.inventory.weapons[1]=1,s=>delete s.inventory.weapons[1],s=>delete s.inventory.ammo[1],s=>s.inventory.ammo[0]=181,s=>s.inventory.ammo[0]=-1,s=>s.inventory.ammo[0]=1.5,s=>s.inventory.ammo=[1,2],s=>s.inventory.extra=true,s=>s.extra=true,s=>s.inventory.ammo[3]=17,s=>s.inventory.shield=1,s=>s.inventory.weapons.push(true),s=>s.inventory.ammo.shield=1];
  for(const change of changes){const state=make();change(state);const result=E.transact(state,'repair');assert.equal(result.ok,false);assert.equal(result.reason,'invalid-state');assert.equal(result.state,null);}
  assert.equal(E.quote(make(),'__proto__').reason,'unknown-item');assert.equal(E.quote(make(),{}).reason,'unknown-item');
 });

@@ -1,0 +1,90 @@
+[
+ {
+  "nom": "classique-s0",
+  "seed": 96,
+  "index": 0,
+  "options": null,
+  "pas": 10.000000000000076,
+  "empreinte": "1o7sffm",
+  "versionPoint": null,
+  "economie": 1,
+  "bouclierDansLePoint": {
+   "energy": 19.300000000000026,
+   "raised": false,
+   "rechargeDelay": 1.9166666666666679,
+   "bashCooldown": 0.8166666666666665,
+   "bashVisual": 0
+  },
+  "inventaireBouclier": true,
+  "mainGauche": "shield",
+  "armure": {
+   "points": 150,
+   "capacity": 200
+  },
+  "decouvertes": null
+ },
+ {
+  "nom": "campagne-v1-w7",
+  "seed": 96,
+  "index": 6,
+  "options": {
+   "campaign": true
+  },
+  "pas": 10.000000000000076,
+  "empreinte": "12grqg5",
+  "versionPoint": 1,
+  "economie": 1,
+  "bouclierDansLePoint": {
+   "energy": 17.366666666666582,
+   "raised": false,
+   "rechargeDelay": 1.9166666666666679,
+   "bashCooldown": 0.8166666666666665,
+   "bashVisual": 0
+  },
+  "inventaireBouclier": true,
+  "mainGauche": "shield",
+  "armure": {
+   "points": 0,
+   "capacity": 200
+  },
+  "decouvertes": [
+   "pistol",
+   "shield",
+   "smg"
+  ]
+ },
+ {
+  "nom": "campagne-v2-w16",
+  "seed": 96,
+  "index": 15,
+  "options": {
+   "campaign": true,
+   "campaignVersion": 2
+  },
+  "pas": 10.000000000000076,
+  "empreinte": "15dro5r",
+  "versionPoint": 2,
+  "economie": 2,
+  "bouclierDansLePoint": {
+   "energy": 20.408333333333253,
+   "raised": false,
+   "rechargeDelay": 0.30000000000000293,
+   "bashCooldown": 0,
+   "bashVisual": 0
+  },
+  "inventaireBouclier": true,
+  "mainGauche": "shield",
+  "armure": {
+   "points": 0,
+   "capacity": 200
+  },
+  "decouvertes": [
+   "pistol",
+   "shield",
+   "smg",
+   "shotgun",
+   "grenade",
+   "rocket"
+  ]
+ }
+]

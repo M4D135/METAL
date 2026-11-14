@@ -295,7 +295,7 @@ test('world.js takes sin, cos, atan, atan2 and hypot from FMath only and refuses
     else if (!code.startsWith(union, m.index)) misuses.push(code.slice(m.index, m.index + 40));
   }
   assert.deepEqual(misuses, [], 'inexact or indirect use of Math in world.js');
-  assert.equal(code.split(union).length, 2, 'the bounds union is the only computed Math access');
+  assert.equal(code.split(union).length, 1, 'no computed Math access survives in world.js: the bounds union now names Math.min and Math.max directly');
   assert.ok(!code.includes('**'), 'no exponentiation operator in world.js');
   // FMath is read once from window, never reassigned, and only these functions are called.
   assert.equal(code.split('const FMath = window.FMath;').length, 2, 'one alias, read at load');

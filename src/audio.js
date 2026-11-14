@@ -136,7 +136,7 @@
       }
       function duckMusic() {
         if (cueDucked || !musicBus || !cue || mix.effects <= 0) return;
-        var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism|shieldRaise)$/.test(cue) ? .68 : 1;
+        var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism)$/.test(cue) ? .68 : 1;
         if (strength === 1) return;
         strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
         cueDucked = true;
@@ -532,25 +532,6 @@
           if(!playing&&!preview)return;
           var e=handEvent('grenadeLaunch',value,.075);if(e)pcm('grenade',.66*e.level,e.pan,e.event);
         },
-        shieldRaise: function(value){
-          if(!playing&&!preview)return;
-          var e=effectEvent('shieldRaise',value,.15);if(!e)return;var g=e.level;
-          pcm('click',.19*g,e.pan,e.event,.8);pcm('impact:metal',.105*g,e.pan,e.event,1.2);
-        },
-        shieldBlock: function(value){
-          if(!playing&&!preview)return;
-          var broken=!!(value&&value.broken),e=effectEvent(broken?'shieldBreak':'shieldBlock',value,.035);if(!e)return;
-          var absorbed=Number(e.event.absorbed),force=Number.isFinite(absorbed)?Math.max(0,absorbed):4;
-          var g=e.level*(.65+.35*Math.min(1,Math.sqrt(force/8)));
-          pcm('impact:metal',.40*g,e.pan,e.event,1.12);
-          if(broken)pcm('break:glass',.23*g,e.pan,e.event,1.15);
-        },
-        shieldBash: function(value){
-          if(!playing&&!preview)return;
-          var e=effectEvent('shieldBash',value,.25);if(!e)return;var g=e.level;
-          pcm('swish',.17*g,e.pan,e.event);
-          if(e.event.hit||e.event.count>0){pcm('body',.42*g,e.pan,e.event,.83);pcm('impact:metal',.16*g,e.pan,e.event,.87);}
-        },
         explosion: function (value) {
           var e = effectEvent('explosion',value,.095); if (!e) return;
           var kind=e.event.kind,steamBlast=kind==='steam',boss=kind==='boss';
@@ -741,7 +722,7 @@
       };
       // Priority belongs to a cue, not its waveform. A rocket's click, body
       // and exhaust keep the same reservation and cause one short music dip.
-      var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
+      var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
       var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose)/;
       Object.keys(api).forEach(function (name) {
         if (typeof api[name] !== 'function' || helpers.test(name)) return;
