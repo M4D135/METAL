@@ -1,10 +1,10 @@
 {
   "version": "0.9.1",
-  "html_bytes": 865414,
-  "html_decimal_kb": 865.41,
-  "html_kib": 845.13,
-  "gzip_bytes": 265630,
-  "sha256": "265ed0e4ae9b1e1315ba8378dd00955280c8b01f1c8198ed2c0f666d935a6a62",
+  "html_bytes": 866673,
+  "html_decimal_kb": 866.67,
+  "html_kib": 846.36,
+  "gzip_bytes": 266158,
+  "sha256": "1cb1e4757c8984a4031689536e6b40230da7a9e115551f4abef7895edcfac5b9",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
@@ -19,7 +19,7 @@
     "brain.js": 8923,
     "simulation.js": 219053,
     "motion.js": 5998,
-    "actors.js": 27039,
+    "actors.js": 28298,
     "effects.js": 19555,
     "options.js": 7108,
     "game.js": 105095

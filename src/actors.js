@@ -10,9 +10,29 @@
     return [e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a];
   }
   function product(a,b){const c=new Array(9);for(let r=0;r<3;r++)for(let k=0;k<3;k++)c[r*3+k]=a[r*3]*b[k]+a[r*3+1]*b[k+3]+a[r*3+2]*b[k+6];return c;}
-  function angles(a){const y=Math.asin(clamp(-a[6],-1,1));return Math.abs(Math.cos(y))>.000001?[Math.atan2(a[7],a[8]),y,Math.atan2(a[3],a[0])]:[Math.atan2(-a[5],a[4]),y,0];}
+  // RESTE-08 : les calculs intermédiaires (rotation d'une articulation, produit de deux cadres,
+  // décomposition d'un axe) écrivent dans des tampons flottants du module. Seules les valeurs
+  // réellement stockées dans un maillage — p, s, r — sont des tableaux frais.
+  const MAT=new Float64Array(9),MAT2=new Float64Array(9),MAT3=new Float64Array(9),EUL=new Float64Array(3);
+  const LIMB_INSET=/(?:thigh|shin|upper-arm|forearm)/;
+  function rotationTo(o,x,y,z){
+    const a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);
+    o[0]=e*c;o[1]=e*d*b-f*a;o[2]=e*d*a+f*b;o[3]=f*c;o[4]=f*d*b+e*a;o[5]=f*d*a-e*b;o[6]=-d;o[7]=c*b;o[8]=c*a;return o;
+  }
+  function productTo(o,a,b){
+    for(let r=0;r<3;r++){const a0=a[r*3],a1=a[r*3+1],a2=a[r*3+2];
+      o[r*3]=a0*b[0]+a1*b[3]+a2*b[6];o[r*3+1]=a0*b[1]+a1*b[4]+a2*b[7];o[r*3+2]=a0*b[2]+a1*b[5]+a2*b[8];}
+    return o;
+  }
+  function anglesTo(o,m){
+    const y=Math.asin(clamp(-m[6],-1,1)),c=Math.cos(y);
+    if(Math.abs(c)>.000001){o[0]=Math.atan2(m[7],m[8]);o[1]=y;o[2]=Math.atan2(m[3],m[0]);}
+    else{o[0]=Math.atan2(-m[5],m[4]);o[1]=y;o[2]=0;}
+    return o;
+  }
+  function angles(m){anglesTo(EUL,m);return [EUL[0],EUL[1],EUL[2]];}
   function point(f,p){const a=f.b;return [f.p[0]+a[0]*p[0]+a[1]*p[1]+a[2]*p[2],f.p[1]+a[3]*p[0]+a[4]*p[1]+a[5]*p[2],f.p[2]+a[6]*p[0]+a[7]*p[1]+a[8]*p[2]];}
-  function frame(parent,p,r=[0,0,0]){const b=product(parent.b,rotation(...r));return {p:point(parent,p),b,r:angles(b)};}
+  function frame(parent,p,r=[0,0,0]){productTo(MAT2,parent.b,rotationTo(MAT,r[0],r[1],r[2]));const b=[MAT2[0],MAT2[1],MAT2[2],MAT2[3],MAT2[4],MAT2[5],MAT2[6],MAT2[7],MAT2[8]];return {p:point(parent,p),b,r:angles(b)};}
   function build(e,options={}) {
     if(e.hp!==undefined&&e.hp<=0)return [];
     const time=Number.isFinite(options.time)?options.time:0,type=clamp(Math.floor(e.type||0),0,3),distance=Math.max(0,Number(options.distance)||0);
@@ -37,7 +57,7 @@
     const signal=stun||peaceful?[.20,.67,.70]:charge||scanning?[.86,.49,.14]:[.80,.20,.075];
     const emission=stun?.20+.08*Math.sin(time*9):.28+charge*.45,signalMat=stun||peaceful?4:charge||scanning?5:6;
     function piece(name,shape,p,s,skin='shell',f=root,r=null,mat=0,emissive=0){
-      const color=Array.isArray(skin)?skin:palette[skin],rot=r?angles(product(f.b,rotation(...r))):f.r;
+      const color=Array.isArray(skin)?skin:palette[skin],rot=r?angles(productTo(MAT2,f.b,rotationTo(MAT,r[0],r[1],r[2]))):f.r;
       const m=G.FRender.mesh(shape,point(f,p),s,mat,rot,emissive);m.color=color;m.surface='object';m.actorPart=name;m.actorLod=lod;out.push(m);return m;
     }
     const box=(n,p,s,skin='shell',f=root,r=null)=>piece(n,'box',p,s,skin,f,r,skin==='rubber'?7:0);
@@ -46,14 +66,16 @@
     const ring=(n,p,s,skin='edge',f=root,r=null)=>piece(n,'ring',p,s,skin,f,r);
     const eye=(n,p,s,f=root,r=null,shape='box')=>piece(n,shape,p,s,signal,f,r,signalMat,emission);
     function limb(name,a,c,width,depth,skin='edge',shape='box',reference=root.b){
-      const dy=c.map((v,i)=>v-a[i]),length=Math.hypot(...dy);
+      const ddx=c[0]-a[0],ddy=c[1]-a[1],ddz=c[2]-a[2],length=Math.hypot(ddx,ddy,ddz);
       if(length<.0001)return;
-      const y=dy.map(v=>v/length),axis=Math.abs(reference[0]*y[0]+reference[3]*y[1]+reference[6]*y[2])>.95?2:0;
-      const ref=[reference[axis],reference[axis+3],reference[axis+6]],dot=ref[0]*y[0]+ref[1]*y[1]+ref[2]*y[2];
-      const side=ref.map((v,i)=>v-dot*y[i]),n=Math.hypot(...side),x=side.map(v=>v/n),z=[x[1]*y[2]-x[2]*y[1],x[2]*y[0]-x[0]*y[2],x[0]*y[1]-x[1]*y[0]];
-      const b=[x[0],y[0],z[0],x[1],y[1],z[1],x[2],y[2],z[2]],f={p:a.map((v,i)=>(v+c[i])/2),b,r:angles(b)};
-      const inset=/(?:thigh|shin|upper-arm|forearm)/.test(name)?Math.min(length*.24,width*.42):0;
-      return piece(name,shape,[0,0,0],[width,length-inset,depth],skin,f);
+      const yx=ddx/length,yy=ddy/length,yz=ddz/length;
+      const axis=Math.abs(reference[0]*yx+reference[3]*yy+reference[6]*yz)>.95?2:0;
+      const rx=reference[axis],ry=reference[axis+3],rz=reference[axis+6],dot=rx*yx+ry*yy+rz*yz;
+      const sx=rx-dot*yx,sy=ry-dot*yy,sz=rz-dot*yz,n=Math.hypot(sx,sy,sz),xx=sx/n,xy=sy/n,xz=sz/n;
+      MAT3[0]=xx;MAT3[1]=yx;MAT3[2]=xy*yz-xz*yy;MAT3[3]=xy;MAT3[4]=yy;MAT3[5]=xz*yx-xx*yz;MAT3[6]=xz;MAT3[7]=yz;MAT3[8]=xx*yy-xy*yx;
+      anglesTo(EUL,MAT3);
+      const inset=LIMB_INSET.test(name)?Math.min(length*.24,width*.42):0;
+      return piece(name,shape,[0,0,0],[width,length-inset,depth],skin,{p:[(a[0]+c[0])/2,(a[1]+c[1])/2,(a[2]+c[2])/2],b:MAT3,r:[EUL[0],EUL[1],EUL[2]]});
     }
     function joint(name,p,size,skin='dark',f=root){return cyl(name,p,[size,size*.62,size],skin,f,[0,0,PI/2]);}
     function pitch(height){return Number.isFinite(e.aimY)&&Number.isFinite(e.aimX)&&Number.isFinite(e.aimZ)?clamp(Math.atan2(e.aimY-base-height*scale,Math.hypot(e.aimX-(e.x||0),e.aimZ-(e.z||0))),-.9,.9):0;}
