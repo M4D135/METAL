@@ -19,7 +19,7 @@ const COMP = {
   v02: {threshold: -19, knee: 18, ratio: 5, attack: .004, release: .18},         // limiteur v0.2 d'avant FEEL-07
   feel07: {threshold: -12, knee: 6, ratio: 3, attack: .012, release: .12},       // FEEL-07
   lim: {threshold: -6, knee: 4, ratio: 12, attack: .001, release: .09},          // proposition MIX : limiteur de sécurité
-  lim2: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10},
+  lim2: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10},  metal: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10},              // préréglage MIX-04 que METAL règle lui-même
   off: {threshold: 0, knee: 0, ratio: 1, attack: .004, release: .18}
 };
 const DUCK = {
@@ -57,10 +57,8 @@ function buildAudio(v) {
   if (duck.mode === 'shelf') s = patchOnce(s, 'musicBus.gain.cancelScheduledValues(now);\n        musicBus.gain.setTargetAtTime(MUSIC_GAIN * duckDepth, now, .006);\n        musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18);',
     'duckShelf_apply(now);', 'duckApply').replace('function duckMusic() {', 'function duckShelf_apply(now) { var f = window.__duckShelf, fb = ' + (duck.fullband || 0) + '; f.gain.cancelScheduledValues(now); f.gain.setTargetAtTime(20 * Math.log10(duckDepth), now, .006); f.gain.setTargetAtTime(0, duckUntil, .18);' +
       ' if (fb > 0) { musicBus.gain.cancelScheduledValues(now); musicBus.gain.setTargetAtTime(MUSIC_GAIN * (1 - fb * (1 - duckDepth)), now, .006); musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18); } }\n      function duckMusic() {');
-  if (v.weaponGain && v.weaponGain !== 1) { const k = v.weaponGain;
-    s = patchOnce(s, "pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g,e.pan,e.event);", "pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g*" + k + ",e.pan,e.event);", 'wg1');
-    s = patchOnce(s, "if(e)pcm('shotgun',.77*e.level,e.pan,e.event);", "if(e)pcm('shotgun',.77*e.level*" + k + ",e.pan,e.event);", 'wg2');
-    s = patchOnce(s, "if (e)pcm('rocket',.57*e.level,e.pan,e.event);", "if (e)pcm('rocket',.57*e.level*" + k + ",e.pan,e.event);", 'wg3'); }
+  // MIX-04 : les gains d'armes sont devenus une option du moteur (weaponGain),
+  // plus un remplacement de texte. La variante du banc passe donc par l'option.
   if (v.duckTau) s = patchOnce(s, 'f.gain.setTargetAtTime(0, duckUntil, .18);', 'f.gain.setTargetAtTime(0, duckUntil, ' + v.duckTau + ');', 'tau1').replace('musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18); } }', 'musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, ' + v.duckTau + '); } }');
   if (v.noLoops) { // attribution : boucles d'ambiance (vapeur, vent, 4 moteurs) non démarrées
     s = patchOnce(s, 'steamPan.connect(ambience); hiss.start();', 'steamPan.connect(ambience);', 'nl1');
@@ -114,9 +112,11 @@ async function render(scene, v, opt = {}) {
   }
   // Création comme game.js : FAudio.create(window.MetalAudio?.options?.()).
   // Écran titre : le jeu ouvre le contexte coupé (audioGate) puis rétablit le son après setTitlePlaying(true).
-  const opts = window.MetalAudio && typeof window.MetalAudio.options === 'function' ? window.MetalAudio.options() : {}; if (v.inject) opts.context = ctx; const audio = FAudio.create(opts); if (scene.title) audio.setMuted(true); audio.start(); window.AudioContext = saved;
-  const nodes = raw ? null : window.__NODES, comp = COMP[v.comp || 'cur'], taps = !raw && !v.noTaps;
-  if (nodes) for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) nodes.limiter[k].value = comp[k];
+  const opts = window.MetalAudio && typeof window.MetalAudio.options === 'function' ? window.MetalAudio.options() : {};
+  if (v.weaponGain && v.weaponGain !== 1) opts.weaponGain = {pistol: v.weaponGain, smg: v.weaponGain, shotgun: v.weaponGain, rocket: v.weaponGain};
+  if (v.inject) opts.context = ctx; const audio = FAudio.create(opts); if (scene.title) audio.setMuted(true); audio.start(); window.AudioContext = saved;
+  const nodes = raw ? null : window.__NODES, comp = v.comp === 'metal' ? null : COMP[v.comp || 'cur'], taps = !raw && !v.noTaps;
+  if (nodes && comp) for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) nodes.limiter[k].value = comp[k];
 
   if (nodes && v.oversample) nodes.guard.oversample = v.oversample;
   // prises : 2,3 sortie limiteur ; 4,5 entrée limiteur ; 6,7 musique après duck ; 8,9 effets + écho + ambiances ; 10 duck ; 11 étagère

@@ -232,6 +232,12 @@
         });
         if (!duckClasses.length) duckClasses = null;
       }
+      // MIX-04 : un jeu releve le niveau de ses propres rapports d'armes (option
+      // weaponGain), jamais ceux des ennemis ni les autres effets : la table n'est
+      // lue que dans les cues du joueur. Sans option, le multiplicateur vaut
+      // exactement 1 et le rendu reste identique bit a bit.
+      var voiceGain = options && options.weaponGain ? options.weaponGain : null;
+      function wg(name) { return voiceGain && Number.isFinite(voiceGain[name]) ? voiceGain[name] : 1; }
       var chain = options && options.chain ? options.chain : null;
       var chainComp = chain && chain.compressor ? chain.compressor : null;
       var chainFixed = !!(chain && chain.level === 'fixe');
@@ -826,7 +832,7 @@
         alarm: function (event) { horrorCue('alarm',event); },
         rocket: function (value) {
           if(!playing&&!preview)return;
-          var e = handEvent('rocket',value,.055); if (e)pcm('rocket',.57*e.level,e.pan,e.event);
+          var e = handEvent('rocket',value,.055); if (e)pcm('rocket',.57*e.level*wg('rocket'),e.pan,e.event);
         },
         grenade: function (value) {
           if(!playing&&!preview)return;
@@ -877,11 +883,11 @@
           var pistol=!!value&&value.weapon===4;
           if(!playing&&!preview)return;
           var e=handEvent(pistol?'pistol':'shot',value,pistol?.08:.045);if(!e)return;var g=e.level;
-          pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g,e.pan,e.event);
+          pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g*wg(pistol?'pistol':'smg'),e.pan,e.event);
         },
         fracture: function (value) {
           if(!playing&&!preview)return;
-          var e=handEvent('fracture',value,.075);if(e)pcm('shotgun',.77*e.level,e.pan,e.event);
+          var e=handEvent('fracture',value,.075);if(e)pcm('shotgun',.77*e.level*wg('shotgun'),e.pan,e.event);
         },
         pulse: function () {
           if (!available()) return;

@@ -46,5 +46,14 @@
     {cues: ['shot'], hold: .36},
     {cues: ['fracture', 'rocket', 'grenade', 'grenadeLaunch'], hold: .30}
   ];
-  window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras, duck: {classes: duckClasses}}; }};
+  // MIX-04 : le préréglage « Doom » mesuré par le banc. Les rapports du joueur
+  // montent de 3 dB (×1,41 : pistolet 0,89, SMG 0,69, pompe 1,09, roquette 0,80
+  // sur les gains internes 0,63 / 0,49 / 0,77 / 0,57), et le limiteur passe à
+  // −9 dB, genou 6, ratio 8:1, attaque 2 ms, relâchement 100 ms. level:'auto' :
+  // pas de compensation du rattrapage, la crête de la scène (c) passerait de
+  // 0,77 à 0,87, au ras du genou de l'écrêteur. Les tirs ennemis ne sont pas
+  // concernés : la table n'est lue que dans les cues du joueur.
+  var weaponGain = {pistol: 1.41, smg: 1.41, shotgun: 1.41, rocket: 1.41};
+  var chain = {compressor: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10}, level: 'auto'};
+  window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras, duck: {classes: duckClasses}, weaponGain: weaponGain, chain: chain}; }};
 }());

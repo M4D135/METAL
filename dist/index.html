@@ -4983,6 +4983,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         });
         if (!duckClasses.length) duckClasses = null;
       }
+      // MIX-04 : un jeu releve le niveau de ses propres rapports d'armes (option
+      // weaponGain), jamais ceux des ennemis ni les autres effets : la table n'est
+      // lue que dans les cues du joueur. Sans option, le multiplicateur vaut
+      // exactement 1 et le rendu reste identique bit a bit.
+      var voiceGain = options && options.weaponGain ? options.weaponGain : null;
+      function wg(name) { return voiceGain && Number.isFinite(voiceGain[name]) ? voiceGain[name] : 1; }
       var chain = options && options.chain ? options.chain : null;
       var chainComp = chain && chain.compressor ? chain.compressor : null;
       var chainFixed = !!(chain && chain.level === 'fixe');
@@ -5577,7 +5583,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         alarm: function (event) { horrorCue('alarm',event); },
         rocket: function (value) {
           if(!playing&&!preview)return;
-          var e = handEvent('rocket',value,.055); if (e)pcm('rocket',.57*e.level,e.pan,e.event);
+          var e = handEvent('rocket',value,.055); if (e)pcm('rocket',.57*e.level*wg('rocket'),e.pan,e.event);
         },
         grenade: function (value) {
           if(!playing&&!preview)return;
@@ -5628,11 +5634,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           var pistol=!!value&&value.weapon===4;
           if(!playing&&!preview)return;
           var e=handEvent(pistol?'pistol':'shot',value,pistol?.08:.045);if(!e)return;var g=e.level;
-          pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g,e.pan,e.event);
+          pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g*wg(pistol?'pistol':'smg'),e.pan,e.event);
         },
         fracture: function (value) {
           if(!playing&&!preview)return;
-          var e=handEvent('fracture',value,.075);if(e)pcm('shotgun',.77*e.level,e.pan,e.event);
+          var e=handEvent('fracture',value,.075);if(e)pcm('shotgun',.77*e.level*wg('shotgun'),e.pan,e.event);
         },
         pulse: function () {
           if (!available()) return;
@@ -5866,7 +5872,16 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     {cues: ['shot'], hold: .36},
     {cues: ['fracture', 'rocket', 'grenade', 'grenadeLaunch'], hold: .30}
   ];
-  window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras, duck: {classes: duckClasses}}; }};
+  // MIX-04 : le préréglage « Doom » mesuré par le banc. Les rapports du joueur
+  // montent de 3 dB (×1,41 : pistolet 0,89, SMG 0,69, pompe 1,09, roquette 0,80
+  // sur les gains internes 0,63 / 0,49 / 0,77 / 0,57), et le limiteur passe à
+  // −9 dB, genou 6, ratio 8:1, attaque 2 ms, relâchement 100 ms. level:'auto' :
+  // pas de compensation du rattrapage, la crête de la scène (c) passerait de
+  // 0,77 à 0,87, au ras du genou de l'écrêteur. Les tirs ennemis ne sont pas
+  // concernés : la table n'est lue que dans les cues du joueur.
+  var weaponGain = {pistol: 1.41, smg: 1.41, shotgun: 1.41, rocket: 1.41};
+  var chain = {compressor: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10}, level: 'auto'};
+  window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras, duck: {classes: duckClasses}, weaponGain: weaponGain, chain: chain}; }};
 }());
 
 ;

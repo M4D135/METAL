@@ -790,7 +790,7 @@ test('the prepared bank equals the direct synthesis for every name, recipe-backe
 test('FEEL-07 fige les quatre réglages décidés : compresseur maître, maintien du duck, voix ennemie, envoi écho',async()=>{
   const r=rig({recipes:true});r.audio.setStage(1);r.audio.setPlaying(true);await r.audio.start();r.audio.tick();
   const ctx=r.ctx,limiter=ctx.nodes.find(n=>n.kind==='limiter'),guard=ctx.nodes.find(n=>n.kind==='guard');
-  assert.deepEqual([limiter.threshold.value,limiter.knee.value,limiter.ratio.value,limiter.attack.value,limiter.release.value],[-12,6,3,.012,.12],'le compresseur maitre est a -12 dB, genou 6, ratio 3:1, attaque 12 ms, relachement 120 ms');
+  assert.deepEqual([limiter.threshold.value,limiter.knee.value,limiter.ratio.value,limiter.attack.value,limiter.release.value],[-9,6,8,.002,.1],'le compresseur maitre est le préréglage MIX-04 : −9 dB, genou 6, ratio 8:1, attaque 2 ms, relâchement 100 ms');
   assert(guard.curve&&guard.curve.length>1,'le plafond souple .875 reste sous le nouveau compresseur');assert.equal(guard.oversample,'none');
   const delay=ctx.nodes.find(n=>n.kind==='delay'),send=ctx.nodes.find(n=>n.kind==='gain'&&n.connections.includes(delay));
   assert(send,'le bus des effets a bien un envoi vers le delai');assert.equal(send.gain.value,.09,'lenvoi decho des armes est a 0,09');
@@ -945,4 +945,31 @@ test('duck.classes remplace profondeur et tenue cue par cue, et sans l\'option l
   const demi=baseD*(1-.5*Math.min(1,.2*1.25));
   assert(Math.abs(d.audio.stats.duckGain-demi)<1e-6,'hors fixed, le niveau du son pondere toujours la profondeur');
   d.audio.dispose();
+});
+
+// MIX-04 (lot 11b T5) : le préréglage Doom est une option du moteur, pas son défaut.
+test('le préréglage Doom de METAL passe par chain et weaponGain : limiteur −9/6/8 sans compensation, rapports du joueur ×1,41, ennemis inchangés (MIX-04)',async()=>{
+  const metal=rig({recipes:true});metal.audio.setStage(1);metal.audio.setPlaying(true);await metal.audio.start();metal.audio.tick();
+  const g=metal.audio.graph();
+  assert.deepEqual([g.limiter.threshold.value,g.limiter.knee.value,g.limiter.ratio.value,g.limiter.attack.value,g.limiter.release.value],[-9,6,8,.002,.1],'le préréglage regle le limiteur a −9 dB, genou 6, ratio 8:1, attaque 2 ms, relâchement 100 ms');
+  assert(g.limiter.connections.includes(g.guard),'level:auto : aucun gain de rattrapage ne sépare le compresseur de l\'écrêteur');
+  assert.equal(metal.audio.stats.makeupDb,metal.scope.FAudio.makeupDb(-9,6,8),'le rattrapage annoncé est bien celui du nouveau compresseur');
+  metal.audio.shot({level:1,weapon:0,seed:1});
+  const rapportJoueur=effectPeak(metal.ctx.sources.at(-1));
+  metal.ctx.advance(1.5);metal.audio.tick();
+  metal.audio.enemyShot({kind:0,level:1,pan:0});
+  const rapportEnnemi=effectPeak(metal.ctx.sources.at(-1));
+  metal.audio.dispose();
+  const nu=rig({options:{recipes:metal.scope.MetalAudio.recipes,extras:metal.scope.MetalAudio.extras}});
+  nu.audio.setStage(1);nu.audio.setPlaying(true);await nu.audio.start();nu.audio.tick();
+  const gn=nu.audio.graph();
+  assert.deepEqual([gn.limiter.threshold.value,gn.limiter.knee.value,gn.limiter.ratio.value],[-12,6,3],'sans chain, le moteur garde son compresseur à lui');
+  nu.audio.shot({level:1,weapon:0,seed:1});
+  const sansRapport=effectPeak(nu.ctx.sources.at(-1));
+  nu.ctx.advance(1.5);nu.audio.tick();
+  nu.audio.enemyShot({kind:0,level:1,pan:0});
+  const sansEnnemi=effectPeak(nu.ctx.sources.at(-1));
+  assert(Math.abs(rapportJoueur/sansRapport-1.41)<1e-9,'le rapport du joueur est multiplié par 1,41 : '+sansRapport.toFixed(4)+' → '+rapportJoueur.toFixed(4));
+  assert.equal(rapportEnnemi,sansEnnemi,'les tirs ennemis ne montent pas : la table n\'est lue que dans les cues du joueur');
+  nu.audio.dispose();
 });
