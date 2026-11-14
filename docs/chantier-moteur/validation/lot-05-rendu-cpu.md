@@ -1,8 +1,8 @@
 # Validation — Lot 05 : rendu, coût processeur
 
-Branche `chantier/lot-05-rendu-cpu`, base `35c654a`, tête `4c2ce9a`
-(T1 à T7). Rapport complet :
-`docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
+Branche `chantier/lot-05-rendu-cpu`, base `35c654a`, tête `b4cc615`
+(T1 à T19, dont quatre abandons sur mesures : T10, T13, T14, T16). Rapport
+complet : `docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
 
 ## Ce qui a été testé, et comment
 
@@ -21,9 +21,11 @@ Branche `chantier/lot-05-rendu-cpu`, base `35c654a`, tête `4c2ce9a`
   caméra, qualité basse et haute, ombres coupées, deux formats téléphone,
   deux scénarios Canvas2D. Comparaison pixel à pixel base contre tête.
 - Résultat : **14/14 identiques, écart de canal maximal 0**, pour T2, T3, T4,
-  T5 et T6. T7 n'a pas eu de passage pixels séparé : son flux GL est
-  byte-identique à la base, ce qui absorbe la preuve pixels.
-- Journaux : `.relais/t2-pixels.json` à `.relais/t6-pixels.json`.
+  T5, T6, puis **T8, T9, T12, T17, T19**. T7 n'a pas eu de passage pixels
+  séparé : son flux GL est byte-identique à la base, ce qui absorbe la preuve
+  pixels.
+- Journaux : `.relais/t2-pixels.json` à `.relais/t6-pixels.json`, puis
+  `docs/chantier-moteur/preuves/lot-05-rendu-cpu/t{8,9,12,17,19}/pixels.json`.
 
 ### Identité de la scène rendue (hors navigateur)
 
@@ -48,9 +50,19 @@ Branche `chantier/lot-05-rendu-cpu`, base `35c654a`, tête `4c2ce9a`
   coût (il pénalisait injustement le code à `bufferData`).
 - Bancs de l'audit réutilisés : `pickups.mjs` (T5), `alt.mjs` (T1),
   `gc-bench.mjs` (T3).
+- Bancs écrits pour la reprise (dans `.relais/bancs/lot05/`, comparaisons
+  appariées base/tête sur deux worktrees) : `pack-cost.mjs` (T8),
+  `effects-ab2.mjs` (T9, T10), `actors-cost.mjs` (T11, T17),
+  `geometry-sonde.mjs` (T12), `row-churn.mjs` (T13), `alloc-image.mjs` et
+  `alloc-models.mjs` (T14), `canvas-cost.mjs` (T15, T19), `glcalls.mjs`
+  (T16, T18), `cell-sonde.mjs` (T19), `phase-cost.mjs` (étape « au-delà »).
 - Limite honnête : `bench-models.mjs` et les bancs qui instrumentent le
   renderer **par numéros de ligne** ne fonctionnent plus après T2 (les lignes
   ont bougé) ; ils ne font pas partie des preuves ci-dessus.
+- Limite de mesure : les microsecondes par appel GL et le coût réel du bloc
+  d'ombres supposent un GPU cible. Ici Chrome tourne en SwiftShader, sans
+  Metal ni D3D11 et sans réseau : les **compteurs** d'appels sont exacts, les
+  **µs/appel** restent ceux du profil M5 de l'audit.
 
 ### Tests de non-régression ajoutés
 
@@ -69,6 +81,9 @@ Branche `chantier/lot-05-rendu-cpu`, base `35c654a`, tête `4c2ce9a`
 - `checks/actor-visibility.test.mjs` — ramassage derrière la caméra non
   modélisé, rayon de garde couvrant les pires branches, aucune branche
   rejetée dans une matrice de passe réelle.
+- `checks/mesh-constructor.test.mjs` (T8) — le constructeur unique produit les
+  28 champs dans l'ordre, `ground` reste `undefined`, et les producteurs ne
+  créent plus qu'une seule classe cachée.
 
 ## Ce qui attend un vrai appareil
 
@@ -80,15 +95,24 @@ Branche `chantier/lot-05-rendu-cpu`, base `35c654a`, tête `4c2ce9a`
   shader modifié (T2) et l'upload par capacité (T3) ; surveiller
   `bufferSubData` sur un tampon encore utilisé (risque de blocage pilote
   signalé par la fiche, orphelinage à capacité constante sans anneau).
-- **Safari** : mêmes passes WebGL2, plus le repli Canvas2D (tâche T15 non
-  réalisée, donc le repli est encore celui d'avant le lot).
-- **Firefox** : idem, à valider sur les 14 scénarios en GPU réel.
+- **Metal (M5) et ANGLE D3D11 (david-pc)** : relancer `out/glcost.html` avant
+  toute décision VAO (T16 abandonnée sur ce critère) et avant de rouvrir T13 ;
+  les µs par appel n'ont pas pu être redémontrés ici.
+- **GPU mobiles** : coût des 4 `texelFetch` par sommet (T13) et intérêt d'une
+  table d'instances en texture, mesurables seulement sur cible.
+- **Safari et Firefox** : mêmes passes WebGL2, plus le repli Canvas 2D
+  désormais optimisé (T15) et filtré par cellule (T19) — la parité visuelle
+  est prouvée en SwiftShader sur 14 scénarios, pas dans ces navigateurs.
 - **Écoute réelle** : aucune modification audio dans ce lot ; à revalider au
   passage avec les réglages de son existants.
 - **Rapport qualité/autonomie** : le gouverneur adaptatif (`governor`) n'a
   pas été mesuré sur appareil réel avec le cache de T4/T6.
 
-## Ce qui n'est pas encore fait
+## Ce qui reste ouvert
 
-T8 à T19 de la fiche (voir le rapport). La reprise est décrite dans
-`.relais/journal.md`.
+Quatre tâches abandonnées sur mesures, chacune avec ses chiffres dans
+`docs/chantier-moteur/preuves/lot-05-rendu-cpu/` : T10 (cache des gravats),
+T13 (table d'instances en texture), T14 (écrivain d'instances — à reprendre
+avec l'allocation de la simulation), T16 (VAO — à reprendre après une mesure
+sur Metal ou D3D11). L'étape « au-delà » est documentée par un profil
+d'étapes de `draw()` et trois pistes écartées, sans commit supplémentaire.
