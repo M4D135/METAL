@@ -1,0 +1,22 @@
+{
+ "banc": "node .relais/bancs/rcpu/effects-ab.mjs <racine> 3000 camp:17 (audit RCPU-06, harnais réel : monde réel, simulation réelle, pilotes de tournée)",
+ "attendu": "« identical outputs 3000/3000 » (isDeepStrictEqual image par image) ; p50 0,272 -> 0,186 ms annonce par la fiche",
+ "base": {
+  "racine": ".relais/avant-t9 (d494fd4, code a deux tris)",
+  "identical": "3000 / 3000",
+  "original": {"mean": 0.276, "p50": 0.284, "p95": 0.506, "p99": 0.691, "max": 3.144},
+  "reecriture_prototype_audit": {"mean": 0.171, "p50": 0.162, "p95": 0.371, "p99": 0.558, "max": 2.898}
+ },
+ "tete": {
+  "racine": "T9 (tri unique + partition stable par groupe)",
+  "identical": "3000 / 3000",
+  "original": {"mean": 0.176, "p50": 0.144, "p95": 0.388, "p99": 0.57, "max": 10.311},
+  "reecriture_prototype_audit": {"mean": 0.165, "p50": 0.133, "p95": 0.359, "p99": 0.507, "max": 11.561}
+ },
+ "gain": {
+  "p50": "0,284 -> 0,144 ms (ratio 0,507)",
+  "p95": "0,506 -> 0,388 ms (ratio 0,767)",
+  "moyenne": "0,276 -> 0,176 ms (ratio 0,638)"
+ },
+ "note": "La colonne « original » de la base est le code d'avant T9 (deux tris + Set de clés en chaînes). La colonne « original » de la tete est le code T9. Les deux exécutions comparent chacune le bloc de la racine au prototype de l'audit : les sorties sont identiques a 3000/3000 dans les deux sens, donc le bloc T9, le prototype de l'audit et le code d'avant sont trois écritures du meme resultat."
+}
