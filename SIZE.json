@@ -1,10 +1,10 @@
 {
-  "version": "0.9.1",
+  "version": "0.9.2",
   "html_bytes": 841206,
   "html_decimal_kb": 841.21,
   "html_kib": 821.49,
   "gzip_bytes": 257835,
-  "sha256": "5c118a3007970be6cfd73643c8ce40f1b74ef9e6a9ecf45ec246619295f4c7d6",
+  "sha256": "2191c77acd71e37b15a432a28c20edf3f4b82c3fdd83dc20b21e948f7ff2bf63",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
