@@ -1,0 +1,271 @@
+{
+ "schema": "metal-music-alloc-v1",
+ "node": "v24.18.0",
+ "frameMs": 40,
+ "seconds": 60,
+ "reps": 7,
+ "runs": {
+  "/home/m4d135/metal-chantier/voies/audio/.relais/avant-t5": [
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 0.87
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.255
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.793
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.327
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.45
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 3.122
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.319
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.45
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 3.121
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.319
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.45
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 3.11
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.325
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.45
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 3.122
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.321
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.45
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 3.109
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.325
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.45
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 3.127
+    }
+   }
+  ],
+  "/home/m4d135/metal-chantier/voies/audio": [
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.025
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.02
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.682
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.024
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.017
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.575
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.026
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.017
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.589
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.031
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.017
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.579
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.031
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.017
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.573
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.027
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.015
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.57
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.034
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.017
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.594
+    }
+   }
+  ]
+ },
+ "summary": {
+  "/home/m4d135/metal-chantier/voies/audio/.relais/avant-t5": {
+   "moPerMinuteStage0": 1.321,
+   "moPerMinuteStage1": 2.45,
+   "moPerMinuteTitle": 3.121,
+   "notesStage0": 1071,
+   "notesStage1": 2726,
+   "rowsStage0": 1202,
+   "rowsStage1": 2043
+  },
+  "/home/m4d135/metal-chantier/voies/audio": {
+   "moPerMinuteStage0": 1.027,
+   "moPerMinuteStage1": 2.017,
+   "moPerMinuteTitle": 2.579,
+   "notesStage0": 1071,
+   "notesStage1": 2726,
+   "rowsStage0": 1202,
+   "rowsStage1": 2043
+  }
+ }
+}

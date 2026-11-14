@@ -1,0 +1,261 @@
+{
+ "pattern": "60",
+ "seconds": 30,
+ "frames": 1800,
+ "world": "campaign 0",
+ "frame": {
+  "n": 1800,
+  "avg": 1.42,
+  "p50": 0.935,
+  "p95": 4.106,
+  "p99": 6.029,
+  "max": 11.59
+ },
+ "steps": {
+  "total": 1800,
+  "perFrame": 1,
+  "hist": {
+   "1": 1800
+  }
+ },
+ "step": {
+  "n": 1800,
+  "avg": 0.965,
+  "p50": 0.504,
+  "p95": 3.426,
+  "p99": 4.947,
+  "max": 10.08
+ },
+ "shots": 78,
+ "kills": 0,
+ "hp": 100,
+ "meshesLastFrame": 178,
+ "draws": 1800,
+ "storage": {
+  "set": 1,
+  "lastBytes": 91277,
+  "maxBytes": 91277,
+  "ms": 0.004707999999936874
+ },
+ "hudTicks": 300,
+ "domPerHudTick": {
+  "text": 0.9,
+  "textSame": 50.3,
+  "style": 2.4,
+  "styleSame": 8.6,
+  "cls": 0,
+  "clsSame": 20.6,
+  "attr": 0,
+  "attrSame": 15,
+  "data": 0,
+  "dataSame": 13,
+  "html": 0,
+  "htmlBytes": 0,
+  "hidden": 0.1,
+  "hiddenSame": 18,
+  "prop": 0,
+  "propSame": 14
+ },
+ "canvasCallsPerHud": 104,
+ "audioParamPerFrame": 5.4,
+ "audioNodesPerFrame": 0.64,
+ "topParams": [
+  [
+   "panner.pan",
+   5848
+  ],
+  [
+   "gain.gain",
+   3684
+  ],
+  [
+   "source.playbackRate",
+   178
+  ],
+  [
+   "filter.frequency",
+   17
+  ],
+  [
+   "osc.frequency",
+   4
+  ]
+ ],
+ "probes": {
+  "frame": {
+   "totalMs": 2554.1,
+   "n": 1800,
+   "avgMs": 1.419,
+   "maxMs": 11.51,
+   "perFrameMs": 1.419
+  },
+  "sim.step": {
+   "totalMs": 1737.4,
+   "n": 1800,
+   "avgMs": 0.965,
+   "maxMs": 10.08,
+   "perFrameMs": 0.965
+  },
+  "models": {
+   "totalMs": 577.9,
+   "n": 1800,
+   "avgMs": 0.321,
+   "maxMs": 4.64,
+   "perFrameMs": 0.321
+  },
+  "FEffects.build": {
+   "totalMs": 204.8,
+   "n": 1800,
+   "avgMs": 0.114,
+   "maxMs": 2.27,
+   "perFrameMs": 0.114
+  },
+  "soundscape.sample": {
+   "totalMs": 72.9,
+   "n": 1800,
+   "avgMs": 0.04,
+   "maxMs": 1.76,
+   "perFrameMs": 0.04
+  },
+  "renderHUD": {
+   "totalMs": 54.4,
+   "n": 300,
+   "avgMs": 0.181,
+   "maxMs": 2.36,
+   "perFrameMs": 0.03
+  },
+  "FActors.build": {
+   "totalMs": 44.3,
+   "n": 3771,
+   "avgMs": 0.012,
+   "maxMs": 1.04,
+   "perFrameMs": 0.025
+  },
+  "machinery": {
+   "totalMs": 21.7,
+   "n": 1800,
+   "avgMs": 0.012,
+   "maxMs": 0.32,
+   "perFrameMs": 0.012
+  },
+  "events": {
+   "totalMs": 19.6,
+   "n": 1800,
+   "avgMs": 0.011,
+   "maxMs": 2.02,
+   "perFrameMs": 0.011
+  },
+  "systems": {
+   "totalMs": 18.4,
+   "n": 1800,
+   "avgMs": 0.01,
+   "maxMs": 0.37,
+   "perFrameMs": 0.01
+  },
+  "soundscape.event": {
+   "totalMs": 10.3,
+   "n": 171,
+   "avgMs": 0.06,
+   "maxMs": 0.31,
+   "perFrameMs": 0.006
+  },
+  "ambience": {
+   "totalMs": 8.5,
+   "n": 1800,
+   "avgMs": 0.005,
+   "maxMs": 0.27,
+   "perFrameMs": 0.005
+  },
+  "audio.tick": {
+   "totalMs": 8.4,
+   "n": 1800,
+   "avgMs": 0.005,
+   "maxMs": 0.34,
+   "perFrameMs": 0.005
+  },
+  "drawRadar": {
+   "totalMs": 7.8,
+   "n": 300,
+   "avgMs": 0.026,
+   "maxMs": 0.14,
+   "perFrameMs": 0.004
+  },
+  "audio.setMachinery": {
+   "totalMs": 6.5,
+   "n": 1800,
+   "avgMs": 0.004,
+   "maxMs": 0.03,
+   "perFrameMs": 0.004
+  },
+  "FEffects.lights": {
+   "totalMs": 3.8,
+   "n": 1800,
+   "avgMs": 0.002,
+   "maxMs": 0.11,
+   "perFrameMs": 0.002
+  },
+  "audio.setSteam": {
+   "totalMs": 3,
+   "n": 1800,
+   "avgMs": 0.002,
+   "maxMs": 0.05,
+   "perFrameMs": 0.002
+  },
+  "audio.step": {
+   "totalMs": 2.8,
+   "n": 119,
+   "avgMs": 0.023,
+   "maxMs": 0.44,
+   "perFrameMs": 0.002
+  },
+  "audio.setThreat": {
+   "totalMs": 1.7,
+   "n": 1800,
+   "avgMs": 0.001,
+   "maxMs": 0.12,
+   "perFrameMs": 0.001
+  },
+  "saveCheckpoint": {
+   "totalMs": 1.6,
+   "n": 1,
+   "avgMs": 1.589,
+   "maxMs": 1.59,
+   "perFrameMs": 0.001
+  },
+  "audio.setPressure": {
+   "totalMs": 1.5,
+   "n": 1800,
+   "avgMs": 0.001,
+   "maxMs": 0.02,
+   "perFrameMs": 0.001
+  },
+  "sim.snapshot": {
+   "totalMs": 1.2,
+   "n": 1,
+   "avgMs": 1.236,
+   "maxMs": 1.24,
+   "perFrameMs": 0.001
+  },
+  "audio.setEnvironment": {
+   "totalMs": 1,
+   "n": 1800,
+   "avgMs": 0.001,
+   "maxMs": 0.04,
+   "perFrameMs": 0.001
+  },
+  "syncDestruction": {
+   "totalMs": 0.6,
+   "n": 1800,
+   "avgMs": 0,
+   "maxMs": 0.04,
+   "perFrameMs": 0
+  },
+  "toast": {
+   "totalMs": 0,
+   "n": 4,
+   "avgMs": 0.009,
+   "maxMs": 0.01,
+   "perFrameMs": 0
+  }
+ }
+}

@@ -1,0 +1,128 @@
+{
+ "sources": {
+  "A": {
+   "root": ".relais/avant-t5",
+   "audioSha256": "c90230bf4a317bf9ec258bc8c2b70f0e9d5d6c4aeba41968042dc545e28e3b91",
+   "musicSha256": "b37e8d84098ee9e46569aee0dd283430599926d836100a1739efa97f8c5a43ec"
+  },
+  "B": {
+   "root": ".",
+   "audioSha256": "c90230bf4a317bf9ec258bc8c2b70f0e9d5d6c4aeba41968042dc545e28e3b91",
+   "musicSha256": "8970dbea7d839414e0b0eec8851f0b6c0a0315d1fdb4a6b5d6071e2cb84b9e7c"
+  }
+ },
+ "criterion": "B = A, ou B = A privé des setTargetAtTime répétant cible et constante de l’événement précédent du même paramètre",
+ "scenes": [
+  {
+   "scene": "a",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 7106,
+    "B": 7106,
+    "removed": 0,
+    "perFrameA": 3.7,
+    "perFrameB": 3.7
+   },
+   "params": 1046,
+   "identicalParams": 1046,
+   "cancelledParams": 9,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": null,
+   "pass": true
+  },
+  {
+   "scene": "b",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 2646,
+    "B": 2646,
+    "removed": 0,
+    "perFrameA": 1.38,
+    "perFrameB": 1.38
+   },
+   "params": 1558,
+   "identicalParams": 1558,
+   "cancelledParams": 12,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": null,
+   "pass": true
+  },
+  {
+   "scene": "c",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 9497,
+    "B": 9497,
+    "removed": 0,
+    "perFrameA": 4.95,
+    "perFrameB": 4.95
+   },
+   "params": 1802,
+   "identicalParams": 1802,
+   "cancelledParams": 11,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": null,
+   "pass": true
+  },
+  {
+   "scene": "d",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 2626,
+    "B": 2626,
+    "removed": 0,
+    "perFrameA": 1.37,
+    "perFrameB": 1.37
+   },
+   "params": 1337,
+   "identicalParams": 1337,
+   "cancelledParams": 9,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": null,
+   "pass": true
+  },
+  {
+   "scene": "t",
+   "frames": 1919,
+   "deterministic": true,
+   "automations": {
+    "A": 3737,
+    "B": 3737,
+    "removed": 0,
+    "perFrameA": 1.95,
+    "perFrameB": 1.95
+   },
+   "params": 1863,
+   "identicalParams": 1863,
+   "cancelledParams": 17,
+   "cancelledIdentical": true,
+   "deduplicatedParams": [],
+   "mismatches": [],
+   "mismatchCount": 0,
+   "statsEqual": true,
+   "titlePrepared": true,
+   "pass": true
+  }
+ ],
+ "pass": true
+}

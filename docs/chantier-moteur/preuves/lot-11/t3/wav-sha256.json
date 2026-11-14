@@ -1,0 +1,22 @@
+{
+ "1-actuel.wav": {
+  "bytes": 4992044,
+  "sha256": "c2ac5353b4ec0a9bb65444849c8466e5c9b3aee912f845eb5852a64ccbd968ac"
+ },
+ "2-recettes-doom-chaine-actuelle.wav": {
+  "bytes": 4992044,
+  "sha256": "e9384d9aa8004fe14d1b3af7c5f62d85351ca7881a6610ced2a54648634f1efc"
+ },
+ "3-prereglage-doom.wav": {
+  "bytes": 4992044,
+  "sha256": "a9ac0e16764214ff83d45ba15fe1a9a72c1ff986ba23f970f94e7485bfac7024"
+ },
+ "4-actuel-duck-etagere.wav": {
+  "bytes": 4992044,
+  "sha256": "6bb009ef7bb113c11c0afb12540aff7b1872f0a0b30dd6874775c947f43e1f3a"
+ },
+ "5-recettes-metal-chaine-actuelle.wav": {
+  "bytes": 4992044,
+  "sha256": "83e94e3ff6d2a54db9131cecc8afeac2e15b42986d69e51cc3c8d4a20c00acd4"
+ }
+}

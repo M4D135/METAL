@@ -1,0 +1,150 @@
+{
+ "job": "ab",
+ "sr": 48000,
+ "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+ "errors": [],
+ "sources": {
+  "A": {
+   "root": "/home/m4d135/metal-chantier/voies/audio/.relais/avant-t5",
+   "audioSha256": "c90230bf4a317bf9ec258bc8c2b70f0e9d5d6c4aeba41968042dc545e28e3b91",
+   "musicSha256": "b37e8d84098ee9e46569aee0dd283430599926d836100a1739efa97f8c5a43ec",
+   "recipesSha256": "da0485d3cc20169bf7429a8c74e16d7e5ec02d608234b04264d779be610626d4"
+  },
+  "B": {
+   "root": "/home/m4d135/metal-chantier/voies/audio",
+   "audioSha256": "c90230bf4a317bf9ec258bc8c2b70f0e9d5d6c4aeba41968042dc545e28e3b91",
+   "musicSha256": "8970dbea7d839414e0b0eec8851f0b6c0a0315d1fdb4a6b5d6071e2cb84b9e7c",
+   "recipesSha256": "da0485d3cc20169bf7429a8c74e16d7e5ec02d608234b04264d779be610626d4"
+  }
+ },
+ "sameSource": false,
+ "nullCriterion": "MIX-08 : différence RMS <= -110 dBFS et crête <= -80 dBFS (null = -Infinity, sorties identiques)",
+ "rows": [
+  {
+   "scene": "c",
+   "label": "Roquettes, explosions et casses (monde classique 2, « Veille des cendres »)",
+   "diffPeakDbFS": -132.45,
+   "diffRmsDbFS": -154.54,
+   "identical": false,
+   "firstDiffSec": 0.061,
+   "firstOver90Sec": null,
+   "nullTestPass": true,
+   "noise": {
+    "renders": 1,
+    "peakDbFS": -132.45,
+    "rmsDbFS": -155.11,
+    "identical": false
+   },
+   "audioParamCalls": {
+    "A": 9485,
+    "B": 9485
+   },
+   "A": {
+    "peak": 0.623,
+    "rmsDbFS": -19.07,
+    "audioParamCalls": 9485,
+    "peakVoices": 14,
+    "stolenVoices": 0,
+    "fxSkipped": 57,
+    "titlePrepared": null,
+    "recipeTable": true,
+    "renderMs": 1724
+   },
+   "B": {
+    "peak": 0.623,
+    "rmsDbFS": -19.07,
+    "audioParamCalls": 9485,
+    "peakVoices": 14,
+    "stolenVoices": 0,
+    "fxSkipped": 57,
+    "titlePrepared": null,
+    "recipeTable": true,
+    "renderMs": 1756
+   }
+  },
+  {
+   "scene": "a",
+   "label": "Rafales de SMG sur « Fer noir » (monde classique 0, graine 96)",
+   "diffPeakDbFS": -132.45,
+   "diffRmsDbFS": -156.13,
+   "identical": false,
+   "firstDiffSec": 0.06,
+   "firstOver90Sec": null,
+   "nullTestPass": true,
+   "noise": {
+    "renders": 1,
+    "peakDbFS": -132.45,
+    "rmsDbFS": -158.33,
+    "identical": false
+   },
+   "audioParamCalls": {
+    "A": 7100,
+    "B": 7100
+   },
+   "A": {
+    "peak": 0.424,
+    "rmsDbFS": -21.07,
+    "audioParamCalls": 7100,
+    "peakVoices": 5,
+    "stolenVoices": 0,
+    "fxSkipped": 4,
+    "titlePrepared": null,
+    "recipeTable": true,
+    "renderMs": 1514
+   },
+   "B": {
+    "peak": 0.424,
+    "rmsDbFS": -21.07,
+    "audioParamCalls": 7100,
+    "peakVoices": 5,
+    "stolenVoices": 0,
+    "fxSkipped": 4,
+    "titlePrepared": null,
+    "recipeTable": true,
+    "renderMs": 1414
+   }
+  },
+  {
+   "scene": "t",
+   "label": "Écran titre : musique d'accueil (setTitlePlaying) pendant 30 s",
+   "diffPeakDbFS": -96.75,
+   "diffRmsDbFS": -143.88,
+   "identical": false,
+   "firstDiffSec": 0.06,
+   "firstOver90Sec": null,
+   "nullTestPass": true,
+   "noise": {
+    "renders": 1,
+    "peakDbFS": null,
+    "rmsDbFS": null,
+    "identical": true
+   },
+   "audioParamCalls": {
+    "A": 3711,
+    "B": 3711
+   },
+   "A": {
+    "peak": 0.369,
+    "rmsDbFS": -18.93,
+    "audioParamCalls": 3711,
+    "peakVoices": 0,
+    "stolenVoices": 0,
+    "fxSkipped": 0,
+    "titlePrepared": true,
+    "recipeTable": true,
+    "renderMs": 995
+   },
+   "B": {
+    "peak": 0.369,
+    "rmsDbFS": -18.93,
+    "audioParamCalls": 3711,
+    "peakVoices": 0,
+    "stolenVoices": 0,
+    "fxSkipped": 0,
+    "titlePrepared": true,
+    "recipeTable": true,
+    "renderMs": 939
+   }
+  }
+ ]
+}

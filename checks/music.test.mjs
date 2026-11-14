@@ -37,7 +37,7 @@ class Param {
 }
 class Context {
   constructor(){this.currentTime=0;this.state='running';this.nodes=[];this.sources=[];this.buffers=[];this.closed=false;}
-  node(kind){const n={kind,connections:[],disconnected:false,connect(target){this.connections.push(target);return target;},disconnect(){this.connections=[];this.disconnected=true;}};this.nodes.push(n);return n;}
+  node(kind){const n={kind,connections:[],targets:[],disconnected:false,connect(target){this.connections.push(target);this.targets.push(target);return target;},disconnect(){this.connections=[];this.disconnected=true;}};this.nodes.push(n);return n;}
   createGain(){const n=this.node('gain');n.gain=new Param(1);return n;}
   createStereoPanner(){const n=this.node('pan');n.pan=new Param();return n;}
   createBuffer(channels,length,rate){assert.equal(channels,1);assert(rate>=8000);const data=new Float32Array(length),buffer={duration:length/rate,sampleRate:rate,length,getChannelData:()=>data};this.buffers.push(buffer);return buffer;}
@@ -140,7 +140,7 @@ test('warmup yields between instruments, shares pending work and opens no audio 
   let yields=0,contexts=0;const cold={setTimeout:fn=>{yields++;queueMicrotask(fn);},AudioContext:class{constructor(){contexts++;}}};vm.runInNewContext(source,cold);
   const first=cold.FMusic.warmup(0);assert.equal(first,cold.FMusic.warmup(0),'concurrent requests share synthesis');const meta=await first;
   assert(yields>=7,'PCM generation is split into loading-screen tasks');assert.equal(contexts,0);assert.equal(meta.bpm,100);assert.equal(meta.bytes,cold.FMusic.getModule(0).length);assert.equal(bytesHash(cold.FMusic.getModule(0)),bytesHash(Music.getModule(0)));
-  const before=yields;await cold.FMusic.warmup(0);assert.equal(yields,before,'cached modules add no new jobs');await cold.FMusic.warmup(1);await cold.FMusic.warmup(2);assert(yields<=before+2,'other stages reuse the same instrument bank');assert.equal(contexts,0);
+  const before=yields;await cold.FMusic.warmup(0);assert.equal(yields,before,'cached modules add no new jobs');await cold.FMusic.warmup(1);await cold.FMusic.warmup(2);assert.equal(yields,before+40,'LOAD-13: each remaining stage yields once per module phase plus its closing pause — seven kit drums, eight kit bars, kit extras, compose, serialize, decode = 19 phases, ×2 stages');assert.equal(contexts,0);
 });
 
 test('preparing future AudioBuffers never switches the score and avoids first-use buffer work in combat',()=>{
@@ -199,6 +199,36 @@ test('title warmup is shared, yields its instrument work and needs no audio devi
  let yields=0,contexts=0;const cold={setTimeout:fn=>{yields++;queueMicrotask(fn);},AudioContext:class{constructor(){contexts++;}}};vm.runInNewContext(source,cold);
  const first=cold.FMusic.warmup('title');assert.equal(first,cold.FMusic.warmup('title'));const meta=await first;
  assert.equal(meta.bpm,212);assert.equal(meta.title,'Furie d’acier');assert.equal(meta.bytes,cold.FMusic.getModule('title').length);assert(yields>=10);assert.equal(contexts,0);
- const before=yields;await cold.FMusic.warmup('title');assert.equal(yields,before);await cold.FMusic.warmup(0);assert.equal(yields,before+1,'world preparation reuses the shared instruments');
+  const before=yields;await cold.FMusic.warmup('title');assert.equal(yields,before);await cold.FMusic.warmup(0);assert.equal(yields,before+20,'LOAD-13: world preparation reuses the shared instruments and yields once per module phase plus its closing pause — seven kit drums, eight kit bars, kit extras, compose, serialize, decode = 19 phases');
  assert.equal(bytesHash(cold.FMusic.getModule('title')),bytesHash(Music.getModule('title')));assert.equal(contexts,0);
+});
+// RESTE-09 (lot 11) : la variante « deux GainNode persistants par piste » du point (1) reste
+// écartée sur avis du constat lui-même (« à écarter : 30 nœuds par seconde sont insignifiants…
+// réutiliser un gain qui porte encore des automations planifiées peut produire des clics »).
+// Le test ne compte plus les nœuds — ce comptage verrouillait l'état contraire de la fiche et
+// aurait bloqué quiconque voudrait implémenter le point (1) (tour 2, problème 7). Il garde les
+// invariants neutres (une source par note, pas de panoramisation par note) et vérifie la
+// propriété de qualité réelle qui justifiait l'écart : toute note coupée avant sa fin naturelle
+// fond au silence (le fondu ~8 ms de music.js:380), donc ne clique pas.
+test('sixty seconds of music fade every note cut before its natural end to silence (no click)',async()=>{
+  await Music.warmup(0);
+  const r=rig();r.music.setStage(0);r.music.setPlaying(true);
+  const graph=r.ctx.nodes.slice();
+  run(r,60);
+  const notes=r.music.stats.scheduledNotes,created=r.ctx.nodes.filter(n=>graph.indexOf(n)<0);
+  assert(notes>200,'soixante secondes de musique programment des notes, eu '+notes);
+  const sources=created.filter(n=>n.kind==='source');
+  assert.equal(sources.length,notes,'une AudioBufferSourceNode par note');
+  assert.equal(created.filter(n=>n.kind==='pan').length,0,'aucun nœud de panoramisation par note');
+  let cut=0;
+  for(const s of sources){
+    const natural=s.startTime+(s.buffer?s.buffer.duration/s.playbackRate.value:0);
+    if(s.stopTime<natural-1e-4){
+      cut++;
+      const gain=s.targets[0];
+      assert(gain&&gain.gain&&gain.gain.events.some(e=>e[0]==='target'&&e[1]<=.001),
+        'une note coupée avant sa fin naturelle doit fondre au silence (fondu 8 ms), sinon clic');
+    }
+  }
+  assert(cut>0,'des notes sont réellement coupées par la suivante, sinon le test est vide, eu '+cut);
 });

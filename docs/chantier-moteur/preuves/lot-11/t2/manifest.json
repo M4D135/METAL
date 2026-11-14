@@ -1,0 +1,165 @@
+{
+  "schema": "metal-lot-proof-manifest-v1",
+  "task": "lot-11/T2 dédoublonnage strict des automatisations (LOOP-14, MIX-08, RESTE-09 point 5)",
+  "proofClass": "visuellement identique : critère audio MIX-08 (RMS ≤ −110 dB, crête ≤ −80 dBFS) en c, a, t ; journal des automatisations = A privé des seuls doublons",
+  "baseline": {
+    "version": "0.8.1",
+    "commit": "fda6445e6335c2cac474e6c29cef9879d2149671",
+    "srcAudioSha256": "4b36fde20d003c7a785c05f1315cd568d309dd08dd6bdc30ec2283bdbe452b6d"
+  },
+  "environment": {
+    "machine": "Mac M5, 10 cœurs, arm64",
+    "os": "macOS 27.2.1",
+    "node": "v24.18.0",
+    "chrome": "Google Chrome 157.0.8103.39, --headless=new, file://, sans port ni réseau",
+    "offlineSampleRate": 48000
+  },
+  "archivePolicy": {
+    "format": "gzip",
+    "compressionLevel": 9,
+    "mtime": 0,
+    "embeddedFilename": null,
+    "threshold": "200 Ko, plus le journal de tests"
+  },
+  "sourceFiles": [
+    {
+      "path": "src/audio.js",
+      "sha256": "fd03c584ffc9a0c1ba0c32d5c117feae8c80b02e0d8af968f082833b25b2d6fd"
+    },
+    {
+      "path": "src/music.js",
+      "sha256": "6f1ab99a45162fb7a60e92cfbad6127a97cd8f5d2421c302b5df61605bf61f74"
+    },
+    {
+      "path": "checks/audio.test.mjs",
+      "sha256": "fa93f15ec0ae9d31c3b6c6f00278298aeeeef36445fe15865e8a053edd272458"
+    },
+    {
+      "path": "dist/index.html",
+      "sha256": "070bd432430b3119f76abf33d6cf187aae4b197b2b9a259a63c840175d776430"
+    },
+    {
+      "path": "SIZE.json",
+      "sha256": "00d4848b2cad9013938d68b87e9ebf3505418a1b3aaf7d70427dbe7be3f66eaf"
+    }
+  ],
+  "toolFiles": [
+    {
+      "path": "docs/chantier-moteur/bancs/mix/gen.mjs",
+      "sha256": "fd34759004bd58bde60765e519a4505ed476fe776167deb08be0fd6f0c2858f4"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/mix/mix.js",
+      "sha256": "c465ba7f0318cfd821aef129734c96fa07d1c07b4c040abab671ce48b0f21000"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/mix/mix.html",
+      "sha256": "8604debc1cdae582b76e8571a47ad7353169001eaf45c941eca9d7b2603a2e6e"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/mix/run.py",
+      "sha256": "41a7d872f0c89b48004f247930eed7f55b0076f607f26bcc925bdbdb909bdb0c"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/loop/play.mjs",
+      "sha256": "bcfdc931c8f8ba18bb4ad9b1bea2ac7377f8aac3468c3b2f61a2f3670ded25f7"
+    },
+    {
+      "path": "docs/chantier-moteur/bancs/feel/doomish.mjs",
+      "sha256": "d36b4e8ab51b1c909a5e7022f2e429374cbb574a5f2274603cd09550ea0c836d"
+    },
+    {
+      "path": "docs/chantier-moteur/preuves/lot-11/t0/scenes.js.gz",
+      "sha256": "f070e847e4d2555ae6702f329e7e2eaa00bba0e8b6cf4916ea6164db35472fa2"
+    }
+  ],
+  "scenesJsSha256": "1f066203d3a8a5ca27262a691375a028cc890536f97b1be6b44ea3f4b62f9345",
+  "files": [
+    {
+      "path": "README.md",
+      "purpose": "Ce qui change, résultats, test ajouté, commandes et limites",
+      "bytes": 12388,
+      "sha256": "753916e03dbc377d0af22a689f062e39b02433e1f7c158404d121323c170d12b"
+    },
+    {
+      "path": "ab-t2.json",
+      "purpose": "mix.html?job=ab&scenes=c,a,t&noise=3, A = archive fda6445, B = arbre de T2",
+      "bytes": 2680,
+      "sha256": "f4d62c59cef34b43e99ee734a58c7b91e8c549fccf5b2eaf20407885dc34dfd8"
+    },
+    {
+      "path": "journal.mjs",
+      "purpose": "Preuve par journal des automatisations (domaine principal), A contre B, 5 scènes",
+      "bytes": 11790,
+      "sha256": "505e357db0949814c0555d0104225a935937afd2cf39442e5e8ca4c63d8d288c"
+    },
+    {
+      "path": "journal.json",
+      "purpose": "node journal.mjs <archive fda6445> . scenes.js a,b,c,d,t",
+      "bytes": 15686,
+      "sha256": "3fbf112461ff78f2a6215d18432d7d95a3bb883912c4757d08e977f26b702da4"
+    },
+    {
+      "path": "perfab.html",
+      "purpose": "Page jetable du banc MIX : temps des rappels d'image et du rendu, A et B alternés",
+      "bytes": 1482,
+      "sha256": "26e12dc7c40a479841b081e036d57bc852e73eeeb9c968a2681b5350a1f8740d"
+    },
+    {
+      "path": "perfab.json",
+      "purpose": "perfab.html?scenes=c,a&reps=9, A = archive fda6445, B = arbre de T2",
+      "bytes": 974,
+      "sha256": "8add76c3c3264782d9ae91efeaf2d33e6f1215d12327af78eed541643d879253"
+    },
+    {
+      "path": "pair.mjs",
+      "purpose": "Coût JS par image de la séquence audio de game.js, A contre B, rondes alternées, domaine principal",
+      "bytes": 4010,
+      "sha256": "dc903b1555b85c982b08192dbc3dacead21452c856bade35debca4f9d6cda5bf"
+    },
+    {
+      "path": "pair.json",
+      "purpose": "node pair.mjs <archive fda6445> . 9 3600, deux séries",
+      "bytes": 587,
+      "sha256": "fd87943620e663882a19b8094b8546583f558017cb24493467e0204635033abd"
+    },
+    {
+      "path": "play-before.json",
+      "purpose": "docs/chantier-moteur/bancs/loop/play.mjs . 30 60 sur l'arbre avant modification (= fda6445) (node:vm, comptes seulement)",
+      "bytes": 4093,
+      "sha256": "e68a1c076800eb577cb9ab063d4e021382f5459482a8f74d947c78af2e636173"
+    },
+    {
+      "path": "play-after.json",
+      "purpose": "docs/chantier-moteur/bancs/loop/play.mjs . 30 60 (node:vm, comptes seulement)",
+      "bytes": 4081,
+      "sha256": "cdc068850cfc415ce3b127f490f34713e11a1c168142f2850421706294ea5fb3"
+    },
+    {
+      "path": "audio-root.mjs",
+      "purpose": "Banc audio de RESTE-09 (bancs/reste/audio.mjs de l'audit, racine en argument), domaine principal",
+      "bytes": 5119,
+      "sha256": "21d93ebd4c10eb96b7261ba643ddedd0dc97d9f58e7259251dce3bd60ddbb574"
+    },
+    {
+      "path": "audio-root-before.txt",
+      "purpose": "node audio-root.mjs . sur l'arbre avant modification (= fda6445)",
+      "bytes": 749,
+      "sha256": "ce12b5d4326335f09ad22f3b050b6d608e6c8fd6190e95c5c014310c776e4cd9"
+    },
+    {
+      "path": "audio-root-after.txt",
+      "purpose": "node audio-root.mjs .",
+      "bytes": 747,
+      "sha256": "31a4e11c8145e1ceed8109c5737a04b9c8acd13e0d28df58647f71a142a17086"
+    },
+    {
+      "path": "npm-test.log.gz",
+      "purpose": "npm test complet sur l'arbre de T2",
+      "bytes": 27947,
+      "sha256": "35f4507a4ce13af523c1317e247a1195dbe6dd71212c300579cc2e394f722602",
+      "uncompressedBytes": 143848,
+      "uncompressedSha256": "52dc83f1226286ab8f068e7054f050543b2f3918a3e993bbcb01c280790aac87"
+    }
+  ]
+}

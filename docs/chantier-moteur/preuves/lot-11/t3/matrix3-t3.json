@@ -1,0 +1,611 @@
+{
+ "job": "matrix",
+ "sr": 48000,
+ "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+ "errors": [],
+ "rows": [
+  {
+   "scene": "a",
+   "recipe": "cur",
+   "comp": "cur",
+   "duck": "cur",
+   "peakOut": 0.392,
+   "peakPreGuard": 0.392,
+   "aboveKnee": 0,
+   "aboveKneePct": 0,
+   "clipEpisodes": 0,
+   "rmsOutDb": -23.83,
+   "gr": {
+    "minDb": -0.58,
+    "meanDb": -0.03,
+    "pctBelow3": 0,
+    "pctBelow6": 0,
+    "reductionAttrMinDb": -0.6
+   },
+   "duckDepth": {
+    "minDb": -6.94,
+    "shelfMinDb": 0
+   },
+   "shots": {
+    "smg": {
+     "n": 93,
+     "transientOverMusicDb": {
+      "p10": 5.8,
+      "p50": 8.48
+     },
+     "grDb": {
+      "p50": -0.28,
+      "p10": -0.44
+     }
+    }
+   },
+   "shortTerm": {
+    "fxOverMusicDb": {
+     "p10": -20.32,
+     "p50": -6.89,
+     "p90": -0.28
+    },
+    "activeWindows": 242
+   },
+   "levels": {
+    "fxRmsDb": -35.04,
+    "musicRmsDb": -25.08
+   },
+   "low120": {
+    "fxDb": -48.02,
+    "musicDb": -26.93,
+    "fxMinusMusicDb": -21.08,
+    "fxLowSharePct": 5.04,
+    "musicLowSharePct": 65.35
+   },
+   "pump": {
+    "perBurst": [
+     [
+      7.29,
+      0.35
+     ],
+     [
+      7.22,
+      6.73
+     ],
+     [
+      7.38,
+      4.52
+     ],
+     [
+      7.36,
+      7.38
+     ],
+     [
+      7.42,
+      7.31
+     ],
+     [
+      7.48,
+      6.24
+     ],
+     [
+      7.34,
+      0.41
+     ],
+     [
+      7.31,
+      7.31
+     ],
+     [
+      7.29,
+      7.04
+     ],
+     [
+      7.33,
+      6.11
+     ]
+    ],
+    "bursts": 10,
+    "dropDb": {
+     "p50": 7.34,
+     "max": 7.48
+    },
+    "rippleDb": {
+     "p50": 6.73,
+     "max": 7.38
+    },
+    "shelfDropDb": 0
+   },
+   "voices": {
+    "peakVoices": 4,
+    "stolenVoices": 0,
+    "fxSkipped": 4,
+    "meanPerFrame": 1.07,
+    "maxAtFrame": 4
+   },
+   "render": {
+    "ms": 1634,
+    "msPerAudioSecond": 48.77,
+    "replayMs": 170,
+    "audioParamCalls": 7100
+   }
+  },
+  {
+   "scene": "a",
+   "recipe": "doom",
+   "comp": "cur",
+   "duck": "cur",
+   "peakOut": 0.424,
+   "peakPreGuard": 0.424,
+   "aboveKnee": 0,
+   "aboveKneePct": 0,
+   "clipEpisodes": 0,
+   "rmsOutDb": -21,
+   "gr": {
+    "minDb": -0.88,
+    "meanDb": -0.09,
+    "pctBelow3": 0,
+    "pctBelow6": 0,
+    "reductionAttrMinDb": -0.93
+   },
+   "duckDepth": {
+    "minDb": -6.94,
+    "shelfMinDb": 0
+   },
+   "shots": {
+    "smg": {
+     "n": 93,
+     "transientOverMusicDb": {
+      "p10": 11.98,
+      "p50": 14.45
+     },
+     "grDb": {
+      "p50": -0.55,
+      "p10": -0.73
+     }
+    }
+   },
+   "shortTerm": {
+    "fxOverMusicDb": {
+     "p10": -20.32,
+     "p50": 3.28,
+     "p90": 10.85
+    },
+    "activeWindows": 246
+   },
+   "levels": {
+    "fxRmsDb": -24.36,
+    "musicRmsDb": -25.08
+   },
+   "low120": {
+    "fxDb": -30.64,
+    "musicDb": -26.93,
+    "fxMinusMusicDb": -3.7,
+    "fxLowSharePct": 23.6,
+    "musicLowSharePct": 65.35
+   },
+   "pump": {
+    "perBurst": [
+     [
+      7.62,
+      0.68
+     ],
+     [
+      7.56,
+      7.07
+     ],
+     [
+      7.8,
+      4.95
+     ],
+     [
+      7.64,
+      7.66
+     ],
+     [
+      7.58,
+      7.42
+     ],
+     [
+      7.55,
+      6.31
+     ],
+     [
+      7.75,
+      0.82
+     ],
+     [
+      7.74,
+      7.75
+     ],
+     [
+      7.54,
+      7.28
+     ],
+     [
+      7.76,
+      6.53
+     ]
+    ],
+    "bursts": 10,
+    "dropDb": {
+     "p50": 7.64,
+     "max": 7.8
+    },
+    "rippleDb": {
+     "p50": 7.07,
+     "max": 7.75
+    },
+    "shelfDropDb": 0
+   },
+   "voices": {
+    "peakVoices": 5,
+    "stolenVoices": 0,
+    "fxSkipped": 4,
+    "meanPerFrame": 1.49,
+    "maxAtFrame": 5
+   },
+   "render": {
+    "ms": 1588,
+    "msPerAudioSecond": 47.39,
+    "replayMs": 118,
+    "audioParamCalls": 7100
+   }
+  },
+  {
+   "scene": "a",
+   "recipe": "metal",
+   "comp": "cur",
+   "duck": "cur",
+   "peakOut": 0.424,
+   "peakPreGuard": 0.424,
+   "aboveKnee": 0,
+   "aboveKneePct": 0,
+   "clipEpisodes": 0,
+   "rmsOutDb": -21,
+   "gr": {
+    "minDb": -0.88,
+    "meanDb": -0.09,
+    "pctBelow3": 0,
+    "pctBelow6": 0,
+    "reductionAttrMinDb": -0.93
+   },
+   "duckDepth": {
+    "minDb": -6.94,
+    "shelfMinDb": 0
+   },
+   "shots": {
+    "smg": {
+     "n": 93,
+     "transientOverMusicDb": {
+      "p10": 11.98,
+      "p50": 14.45
+     },
+     "grDb": {
+      "p50": -0.55,
+      "p10": -0.73
+     }
+    }
+   },
+   "shortTerm": {
+    "fxOverMusicDb": {
+     "p10": -20.32,
+     "p50": 3.28,
+     "p90": 10.85
+    },
+    "activeWindows": 246
+   },
+   "levels": {
+    "fxRmsDb": -24.36,
+    "musicRmsDb": -25.08
+   },
+   "low120": {
+    "fxDb": -30.64,
+    "musicDb": -26.93,
+    "fxMinusMusicDb": -3.7,
+    "fxLowSharePct": 23.6,
+    "musicLowSharePct": 65.35
+   },
+   "pump": {
+    "perBurst": [
+     [
+      7.62,
+      0.68
+     ],
+     [
+      7.56,
+      7.07
+     ],
+     [
+      7.8,
+      4.95
+     ],
+     [
+      7.64,
+      7.66
+     ],
+     [
+      7.58,
+      7.42
+     ],
+     [
+      7.55,
+      6.31
+     ],
+     [
+      7.75,
+      0.82
+     ],
+     [
+      7.74,
+      7.75
+     ],
+     [
+      7.54,
+      7.28
+     ],
+     [
+      7.76,
+      6.53
+     ]
+    ],
+    "bursts": 10,
+    "dropDb": {
+     "p50": 7.64,
+     "max": 7.8
+    },
+    "rippleDb": {
+     "p50": 7.07,
+     "max": 7.75
+    },
+    "shelfDropDb": 0
+   },
+   "voices": {
+    "peakVoices": 5,
+    "stolenVoices": 0,
+    "fxSkipped": 4,
+    "meanPerFrame": 1.49,
+    "maxAtFrame": 5
+   },
+   "render": {
+    "ms": 1696,
+    "msPerAudioSecond": 50.63,
+    "replayMs": 120,
+    "audioParamCalls": 7100
+   }
+  },
+  {
+   "scene": "d",
+   "recipe": "cur",
+   "comp": "cur",
+   "duck": "cur",
+   "peakOut": 0.544,
+   "peakPreGuard": 0.544,
+   "aboveKnee": 0,
+   "aboveKneePct": 0,
+   "clipEpisodes": 0,
+   "rmsOutDb": -22.8,
+   "gr": {
+    "minDb": -1.76,
+    "meanDb": -0.05,
+    "pctBelow3": 0,
+    "pctBelow6": 0,
+    "reductionAttrMinDb": -1.82
+   },
+   "duckDepth": {
+    "minDb": -8.4,
+    "shelfMinDb": 0
+   },
+   "shots": {
+    "shotgun": {
+     "n": 12,
+     "transientOverMusicDb": {
+      "p10": 6.81,
+      "p50": 8.58
+     },
+     "grDb": {
+      "p50": -1.41,
+      "p10": -1.62
+     }
+    },
+    "smg": {
+     "n": 25,
+     "transientOverMusicDb": {
+      "p10": 5.24,
+      "p50": 9.66
+     },
+     "grDb": {
+      "p50": -0.35,
+      "p10": -0.61
+     }
+    }
+   },
+   "shortTerm": {
+    "fxOverMusicDb": {
+     "p10": -19.22,
+     "p50": -13.96,
+     "p90": -0.48
+    },
+    "activeWindows": 300
+   },
+   "levels": {
+    "fxRmsDb": -33.21,
+    "musicRmsDb": -24.09
+   },
+   "low120": {
+    "fxDb": -41.24,
+    "musicDb": -26.01,
+    "fxMinusMusicDb": -15.23,
+    "fxLowSharePct": 15.73,
+    "musicLowSharePct": 64.31
+   },
+   "voices": {
+    "peakVoices": 12,
+    "stolenVoices": 0,
+    "fxSkipped": 3,
+    "meanPerFrame": 2.05,
+    "maxAtFrame": 12
+   },
+   "render": {
+    "ms": 1830,
+    "msPerAudioSecond": 54.61,
+    "replayMs": 134,
+    "audioParamCalls": 2620
+   }
+  },
+  {
+   "scene": "d",
+   "recipe": "doom",
+   "comp": "cur",
+   "duck": "cur",
+   "peakOut": 0.599,
+   "peakPreGuard": 0.599,
+   "aboveKnee": 0,
+   "aboveKneePct": 0,
+   "clipEpisodes": 0,
+   "rmsOutDb": -20,
+   "gr": {
+    "minDb": -2.46,
+    "meanDb": -0.15,
+    "pctBelow3": 0,
+    "pctBelow6": 0,
+    "reductionAttrMinDb": -2.56
+   },
+   "duckDepth": {
+    "minDb": -8.4,
+    "shelfMinDb": 0
+   },
+   "shots": {
+    "shotgun": {
+     "n": 12,
+     "transientOverMusicDb": {
+      "p10": 12.22,
+      "p50": 14.04
+     },
+     "grDb": {
+      "p50": -1.88,
+      "p10": -2.17
+     }
+    },
+    "smg": {
+     "n": 25,
+     "transientOverMusicDb": {
+      "p10": 10.48,
+      "p50": 15.69
+     },
+     "grDb": {
+      "p50": -0.6,
+      "p10": -0.86
+     }
+    }
+   },
+   "shortTerm": {
+    "fxOverMusicDb": {
+     "p10": -19.15,
+     "p50": -10.19,
+     "p90": 10.73
+    },
+    "activeWindows": 301
+   },
+   "levels": {
+    "fxRmsDb": -22.59,
+    "musicRmsDb": -24.09
+   },
+   "low120": {
+    "fxDb": -28.98,
+    "musicDb": -26.01,
+    "fxMinusMusicDb": -2.98,
+    "fxLowSharePct": 22.97,
+    "musicLowSharePct": 64.31
+   },
+   "voices": {
+    "peakVoices": 12,
+    "stolenVoices": 0,
+    "fxSkipped": 3,
+    "meanPerFrame": 2.39,
+    "maxAtFrame": 12
+   },
+   "render": {
+    "ms": 1801,
+    "msPerAudioSecond": 53.76,
+    "replayMs": 136,
+    "audioParamCalls": 2620
+   }
+  },
+  {
+   "scene": "d",
+   "recipe": "metal",
+   "comp": "cur",
+   "duck": "cur",
+   "peakOut": 0.599,
+   "peakPreGuard": 0.599,
+   "aboveKnee": 0,
+   "aboveKneePct": 0,
+   "clipEpisodes": 0,
+   "rmsOutDb": -20,
+   "gr": {
+    "minDb": -2.46,
+    "meanDb": -0.15,
+    "pctBelow3": 0,
+    "pctBelow6": 0,
+    "reductionAttrMinDb": -2.56
+   },
+   "duckDepth": {
+    "minDb": -8.4,
+    "shelfMinDb": 0
+   },
+   "shots": {
+    "shotgun": {
+     "n": 12,
+     "transientOverMusicDb": {
+      "p10": 12.22,
+      "p50": 14.04
+     },
+     "grDb": {
+      "p50": -1.88,
+      "p10": -2.17
+     }
+    },
+    "smg": {
+     "n": 25,
+     "transientOverMusicDb": {
+      "p10": 10.48,
+      "p50": 15.69
+     },
+     "grDb": {
+      "p50": -0.6,
+      "p10": -0.86
+     }
+    }
+   },
+   "shortTerm": {
+    "fxOverMusicDb": {
+     "p10": -19.15,
+     "p50": -10.19,
+     "p90": 10.73
+    },
+    "activeWindows": 301
+   },
+   "levels": {
+    "fxRmsDb": -22.59,
+    "musicRmsDb": -24.09
+   },
+   "low120": {
+    "fxDb": -28.98,
+    "musicDb": -26.01,
+    "fxMinusMusicDb": -2.98,
+    "fxLowSharePct": 22.97,
+    "musicLowSharePct": 64.31
+   },
+   "voices": {
+    "peakVoices": 12,
+    "stolenVoices": 0,
+    "fxSkipped": 3,
+    "meanPerFrame": 2.39,
+    "maxAtFrame": 12
+   },
+   "render": {
+    "ms": 1864,
+    "msPerAudioSecond": 55.63,
+    "replayMs": 138,
+    "audioParamCalls": 2620
+   }
+  }
+ ]
+}

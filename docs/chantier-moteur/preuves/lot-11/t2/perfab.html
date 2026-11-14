@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><title>perf A/B</title>
+<script src="src.js"></script><script src="scenes.js"></script><script src="mix.js"></script>
+<script>
+// Page jetable (non versionnée) : temps JS des rappels d'image (vrais AudioParam de Chrome) et temps de rendu, A puis B alternés.
+(async () => {
+  const M = window.MIX, Q = new URLSearchParams(location.search), out = {job: 'perfab', errors: [], rows: []};
+  try {
+    (0, eval)(SRC.music);
+    const reps = +Q.get('reps') || 7, scenes = {...SCENES, t: M.titleScene()};
+    for (const sc of (Q.get('scenes') || 'c,a').split(',')) {
+      const t = {A: {js: [], audio: [], params: 0}, B: {js: [], audio: [], params: 0}}, frames = M.K0 + scenes[sc].frames.length - 1;
+      for (let r = 0; r < reps; r++) for (const k of (r % 2 ? ['B', 'A'] : ['A', 'B'])) {
+        const R = await M.render(scenes[sc], {source: k}); t[k].js.push(R.replayMs / frames * 1000); t[k].audio.push((R.ms - R.replayMs) / R.seconds); t[k].params = R.params;
+      }
+      const med = a => M.r3(M.quant(a, .5)), row = {scene: sc, reps, frames};
+      for (const k of ['A', 'B']) row[k] = {jsUsPerFrameMedian: med(t[k].js), jsUsPerFrameMin: M.r3(Math.min(...t[k].js)), renderMsPerSecondMedian: med(t[k].audio), renderMsPerSecondMin: M.r3(Math.min(...t[k].audio)), audioParamCalls: t[k].params, jsUs: t[k].js.map(M.r3)};
+      out.rows.push(row);
+    }
+  } catch (e) { out.errors.push(String(e && e.stack || e)); }
+  M.emit(out);
+})();
+</script>

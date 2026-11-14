@@ -1,0 +1,27 @@
+{
+  "schema": "metal-music-modules-v1",
+  "note": "Sha256 des modules MOD produits par FMusic.getModule, calculés dans Node sur les deux arbres. A = .relais/avant-t5 (f70b785, avant T5), B = l'arbre avec T5. Aucun écart.",
+  "A": {
+    "root": ".relais/avant-t5",
+    "modules": [
+      "50d88a07744be3d2e51a98c15f5367351f4238c504644e5475aebf64d8758cd0",
+      "c12b06dab600fbc391299f10b6b1814db39b6c8bc7e23569c2bd1f204b81fcbd",
+      "738adaa5a8460e6f8fb8a3f6b11f05d25034dede0845553587b87ea03d7a6c39"
+    ],
+    "title": "88dfafde9f335f640c907cb709e96de72bc00d7a9fa6fb020a4625b08a08efe7",
+    "track0": {"title": "Fer noir", "bpm": 100, "style": "Doom industriel", "duration": 76.8, "channels": 4},
+    "trackTitle": {"title": "Furie d’acier", "bpm": 212, "style": "Thrash metal", "duration": 54.339622641509436, "channels": 4}
+  },
+  "B": {
+    "root": ".",
+    "modules": [
+      "50d88a07744be3d2e51a98c15f5367351f4238c504644e5475aebf64d8758cd0",
+      "c12b06dab600fbc391299f10b6b1814db39b6c8bc7e23569c2bd1f204b81fcbd",
+      "738adaa5a8460e6f8fb8a3f6b11f05d25034dede0845553587b87ea03d7a6c39"
+    ],
+    "title": "88dfafde9f335f640c907cb709e96de72bc00d7a9fa6fb020a4625b08a08efe7",
+    "track0": {"title": "Fer noir", "bpm": 100, "style": "Doom industriel", "duration": 76.8, "channels": 4},
+    "trackTitle": {"title": "Furie d’acier", "bpm": 212, "style": "Thrash metal", "duration": 54.339622641509436, "channels": 4}
+  },
+  "identical": true
+}

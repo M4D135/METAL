@@ -1,6 +1,12 @@
-// Banc MIX — rendu hors ligne du mixage complet de METAL 0.8.0 (src/audio.js + src/music.js, copies en mémoire).
-// La chaîne est celle du vrai FAudio.create() : le source n'est modifié que par les variantes déclarées ci-dessous
-// (remplacements exacts, vérifiés uniques) et par deux lignes d'instrumentation qui exposent les nœuds.
+// Banc MIX — rendu hors ligne du mixage complet de METAL (src/audio.js + src/music.js, copies en mémoire ; écrit
+// sur 0.8.0, rejoué sur 0.8.1). La chaîne est celle du vrai FAudio.create() : le source n'est modifié que par les
+// variantes déclarées ci-dessous (remplacements exacts, vérifiés uniques) et par deux lignes d'instrumentation qui
+// exposent les nœuds. Exception : v.source ('A' = SRC, 'B' = SRC_B, job=ab) rend la source telle quelle, sans aucun
+// remplacement ni réglage imposé ; seules la sortie (canaux 0 et 1), audio.stats et le compte d'automatisations
+// sont alors mesurés. Une scène marquée title (scène t) joue la musique d'accueil par setTitlePlaying(true).
+// Lot 11/T3 : recipe 'metal' charge src/audio-recipes.js de SRC après audio.js et crée FAudio comme game.js
+// (FAudio.create(MetalAudio.options())) ; le rendu « tel quel » (job=ab) fait de même quand la source a ce fichier,
+// sauf v.plain (FAudio.create() sans option, le moteur par défaut).
 'use strict';
 const Q = new URLSearchParams(location.search), SR = +Q.get('sr') || 48000, K0 = 120, HZ = 60, TAIL = 1.5;
 function emit(obj) { const s = btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); for (let i = 0; i < s.length; i += 6000) console.log('MIXCHUNK ' + s.slice(i, i + 6000)); console.log('MIXDONE'); }
@@ -9,14 +15,16 @@ const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000
 
 // ---------- variantes ----------
 const COMP = {
-  cur: {threshold: -19, knee: 18, ratio: 5, attack: .004, release: .18},        // src/audio.js:314-315
-  feel07: {threshold: -12, knee: 6, ratio: 3, attack: .012, release: .12},      // FEEL-07
-  lim: {threshold: -6, knee: 4, ratio: 12, attack: .001, release: .09},         // proposition MIX : limiteur de sécurité
+  cur: {threshold: -12, knee: 6, ratio: 3, attack: .012, release: .12},          // FEEL-07, src/audio.js depuis le tour 1
+  v02: {threshold: -19, knee: 18, ratio: 5, attack: .004, release: .18},         // limiteur v0.2 d'avant FEEL-07
+  feel07: {threshold: -12, knee: 6, ratio: 3, attack: .012, release: .12},       // FEEL-07
+  lim: {threshold: -6, knee: 4, ratio: 12, attack: .001, release: .09},          // proposition MIX : limiteur de sécurité
   lim2: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10},
   off: {threshold: 0, knee: 0, ratio: 1, attack: .004, release: .18}
 };
 const DUCK = {
-  cur: {weapon: .45, hold: null, mode: 'gain'},                                  // src/audio.js:137-149
+  cur: {weapon: .35, hold: null, mode: 'gain'},                                   // FEEL-07, src/audio.js (DUCK_HOLD 0,22 / 0,18)
+  v02: {weapon: .45, hold: {}, mode: 'gain'},                                    // duck v0.2 d'avant FEEL-07 (pas de table de maintien)
   feel07: {weapon: .35, hold: {fracture: .22, rocket: .22, grenade: .22, grenadeLaunch: .22, shot: .18}, mode: 'gain'},
   shelf: {weapon: .25, hold: null, mode: 'shelf', fullband: 0},                  // étagère basse 150 Hz, −12 dB, pas de duck large bande
   shelfmix: {weapon: .25, hold: null, mode: 'shelf', fullband: .3},              // étagère −12 dB + duck large bande léger (×0,775)
@@ -26,14 +34,17 @@ const DUCK = {
 };
 const synthCache = new Map();
 let RECIPE = 'cur';
-window.__SYNTH = function (name, variant, rate, original) {
-  const proto = RECIPE === 'doom' && DOOMISH.RECIPES[name], key = (proto ? 'doom' : 'cur') + '|' + name + '|' + variant + '|' + rate;
-  let v = synthCache.get(key); if (!v) { v = proto ? DOOMISH.synth(name, variant | 0, rate || 22050) : original(name, variant, rate); synthCache.set(key, v); }
+window.__SYNTH = function (name, variant, rate, original) { // 'metal' : la table de recettes de METAL (consultée avant synthesize par FAudio)
+  const metal = RECIPE === 'metal' && window.MetalAudio && window.MetalAudio.recipes[name], proto = !metal && RECIPE === 'doom' && DOOMISH.RECIPES[name], key = (metal ? 'metal' : proto ? 'doom' : 'cur') + '|' + name + '|' + variant + '|' + rate;
+  let v = synthCache.get(key); if (!v) { v = metal ? metal.synth(variant | 0, rate || 22050) : proto ? DOOMISH.synth(name, variant | 0, rate || 22050) : (typeof original === 'function' ? original(name, variant, rate) : window.FAudio.synthesize(name, variant, rate)); synthCache.set(key, v); }
   return v;
 };
 function buildAudio(v) {
   let s = SRC.audio; const duck = DUCK[v.duck || 'cur'];
-  s = patchOnce(s, 'function synthesize(name, variant, sampleRate) {', 'function synthesize(name, variant, sampleRate) { return window.__SYNTH(name, variant, sampleRate, synthesize0); }\n  function synthesize0(name, variant, sampleRate) {', 'synth');
+   // Lot 11/T1 (LOAD-13) : le moteur interne est reprenable et warmBank appelle synthJob
+   // directement, plus synthesize. Le crochet du banc porte donc sur synthJob, via une table
+   // __OVERRIDE ; sinon la variante 'doom' construirait silencieusement la banque v0.2.
+   s = patchOnce(s, 'function synthJob(name, variant, sampleRate) {', 'function synthJob(name, variant, sampleRate) { var ov = window.__OVERRIDE && window.__OVERRIDE[name]; if (ov) { var d = ov(variant | 0, sampleRate); return {total: d.length, step: function () { return true; }, seal: function () { return d; }}; } return synthJob0(name, variant, sampleRate); }\n  function synthJob0(name, variant, sampleRate) {', 'synth');
   s = patchOnce(s, 'musicBus = remember(ctx.createGain()); musicBus.gain.value = MUSIC_GAIN; musicBus.connect(master);',
     'musicBus = remember(ctx.createGain()); musicBus.gain.value = MUSIC_GAIN; ' + (duck.mode === 'shelf'
       ? "var duckShelf = remember(ctx.createBiquadFilter()); duckShelf.type = 'lowshelf'; duckShelf.frequency.value = " + (v.shelfHz || 150) + "; duckShelf.gain.value = 0; " + (v.shelfK ? "duckShelf.gain.automationRate = 'k-rate'; " : '') + "musicBus.connect(duckShelf); duckShelf.connect(master); window.__duckShelf = duckShelf;"
@@ -41,8 +52,8 @@ function buildAudio(v) {
     ' window.__NODES = {master: master, limiter: limiter, guard: guard, effects: effects, ambience: ambience, musicBus: musicBus, musicOut: window.__duckShelf || musicBus};', 'nodes');
   s = patchOnce(s, 'damping.connect(master); damping.connect(feedback); feedback.connect(delay);', 'damping.connect(master); damping.connect(feedback); feedback.connect(delay); window.__NODES.damping = damping;', 'damping');
   if (v.musicGain && v.musicGain !== 1) s = patchOnce(s, 'var MUSIC_GAIN = .56,', 'var MUSIC_GAIN = ' + (.56 * v.musicGain) + ',', 'musicGain');
-  if (duck.weapon !== .45) s = patchOnce(s, "(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? .45 :", "(shot|fracture|rocket|grenade|grenadeLaunch|shieldBlock|shieldBash|melee|hurt)$/.test(cue) ? " + duck.weapon + " :", 'duckWeapon');
-  if (duck.hold) s = patchOnce(s, 'hold = strength < .4 ? .28 : .14;', 'hold = ' + JSON.stringify(duck.hold) + '[cue] || (strength < .4 ? .28 : .14);', 'duckHold');
+  if (duck.weapon !== .35) s = patchOnce(s, 'var strength = weapon ? .35 :', 'var strength = weapon ? ' + duck.weapon + ' :', 'duckWeapon');
+  if (duck.hold) s = patchOnce(s, 'hold = DUCK_HOLD[cue] || (weapon ? .14 : strength < .4 ? .28 : .14);', 'hold = ' + JSON.stringify(duck.hold) + '[cue] || (weapon ? .14 : strength < .4 ? .28 : .14);', 'duckHold');
   if (duck.mode === 'shelf') s = patchOnce(s, 'musicBus.gain.cancelScheduledValues(now);\n        musicBus.gain.setTargetAtTime(MUSIC_GAIN * duckDepth, now, .006);\n        musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18);',
     'duckShelf_apply(now);', 'duckApply').replace('function duckMusic() {', 'function duckShelf_apply(now) { var f = window.__duckShelf, fb = ' + (duck.fullband || 0) + '; f.gain.cancelScheduledValues(now); f.gain.setTargetAtTime(20 * Math.log10(duckDepth), now, .006); f.gain.setTargetAtTime(0, duckUntil, .18);' +
       ' if (fb > 0) { musicBus.gain.cancelScheduledValues(now); musicBus.gain.setTargetAtTime(MUSIC_GAIN * (1 - fb * (1 - duckDepth)), now, .006); musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18); } }\n      function duckMusic() {');
@@ -88,36 +99,51 @@ function countParams(ctx, counter) {
 function sceneFrames(scene) { return scene.frames.length; }
 async function render(scene, v, opt = {}) {
   RECIPE = v.recipe || 'cur';
+  window.__OVERRIDE = RECIPE === 'doom' ? Object.fromEntries(Object.keys(DOOMISH.RECIPES).map(n => [n, (variant, rate) => DOOMISH.synth(n, variant | 0, rate || 22050)])) : null;
   const N = sceneFrames(scene), seconds = (K0 + N) / HZ + TAIL, ctx = new OfflineAudioContext(12, Math.ceil(seconds * SR), SR);
   Object.defineProperty(ctx, 'state', {get: () => 'running'});
   const counter = {n: 0}; countParams(ctx, counter); window.__L14 = {sent: 0, skipped: 0};
   const saved = window.AudioContext; window.AudioContext = function () { return ctx; };
-  delete window.FAudio; (0, eval)(buildAudio(v));
-  const audio = FAudio.create(); audio.start(); window.AudioContext = saved;
-  const nodes = window.__NODES, comp = COMP[v.comp || 'cur'];
-  for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) nodes.limiter[k].value = comp[k];
+  const raw = !!v.source, sharedMusic = window.FMusic; window.__NODES = null; window.__duckShelf = null; delete window.MetalAudio;
+  if (raw) { // job=ab : FMusic puis FAudio de la source choisie, réévalués à chaque rendu, sans remplacement ; FMusic de SRC rétabli après le rendu
+    const src = v.source === 'B' ? window.SRC_B : window.SRC; if (!src) throw new Error('source ' + v.source + ' absente de src.js (gen.mjs, 4e argument)');
+    delete window.FMusic; (0, eval)(src.music); delete window.FAudio; (0, eval)(src.audio); if (src.recipes && !v.plain) (0, eval)(src.recipes);
+  } else {
+    delete window.FAudio; (0, eval)(buildAudio(v));
+    if (v.recipe === 'metal') { if (!SRC.recipes) throw new Error('recipes=metal : src/audio-recipes.js absent de la racine A (gen.mjs)'); (0, eval)(SRC.recipes); }
+  }
+  // Création comme game.js : FAudio.create(window.MetalAudio?.options?.()).
+  // Écran titre : le jeu ouvre le contexte coupé (audioGate) puis rétablit le son après setTitlePlaying(true).
+  const audio = FAudio.create(window.MetalAudio && typeof window.MetalAudio.options === 'function' ? window.MetalAudio.options() : undefined); if (scene.title) audio.setMuted(true); audio.start(); window.AudioContext = saved;
+  const nodes = raw ? null : window.__NODES, comp = COMP[v.comp || 'cur'], taps = !raw && !v.noTaps;
+  if (nodes) for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) nodes.limiter[k].value = comp[k];
 
-  if (v.oversample) nodes.guard.oversample = v.oversample;
+  if (nodes && v.oversample) nodes.guard.oversample = v.oversample;
   // prises : 2,3 sortie limiteur ; 4,5 entrée limiteur ; 6,7 musique après duck ; 8,9 effets + écho + ambiances ; 10 duck ; 11 étagère
-  const merger = ctx.createChannelMerger(12); if (!v.noTaps) merger.connect(ctx.destination);
+  const merger = ctx.createChannelMerger(12); if (taps) merger.connect(ctx.destination);
   const tap = (list, ch) => { const up = ctx.createGain(); up.channelCount = 2; up.channelCountMode = 'explicit'; up.channelInterpretation = 'speakers'; const sp = ctx.createChannelSplitter(2); for (const n of list) n.connect(up); up.connect(sp); sp.connect(merger, 0, ch); sp.connect(merger, 1, ch + 1); };
-  if (!v.noTaps) { tap([nodes.limiter], 2); tap([nodes.master], 4); tap([nodes.musicOut], 6); tap([nodes.effects, nodes.damping, nodes.ambience], 8); }
-  const one = ctx.createConstantSource(); one.offset.value = 1; if (!v.noTaps) one.start();
+  if (taps) { tap([nodes.limiter], 2); tap([nodes.master], 4); tap([nodes.musicOut], 6); tap([nodes.effects, nodes.damping, nodes.ambience], 8); }
+  const one = ctx.createConstantSource(); one.offset.value = 1; if (taps) one.start();
   const mirror = (param, scale, ch, initial) => {
     const g = ctx.createGain(); g.gain.value = initial; one.connect(g); g.connect(merger, 0, ch);
     for (const m of ['setValueAtTime', 'linearRampToValueAtTime', 'exponentialRampToValueAtTime', 'setTargetAtTime', 'cancelScheduledValues']) { const o = param[m]; param[m] = function () { const a = Array.from(arguments); if (m !== 'cancelScheduledValues') a[0] = a[0] * scale; g.gain[m].apply(g.gain, a); AudioParam.prototype.__mixCounter.n--; return o.apply(param, arguments); }; }
     return g;
   };
-  const keep = [nodes.musicBus.gain, mirror(nodes.musicBus.gain, 1, 10, nodes.musicBus.gain.value)];
+  const keep = nodes ? [nodes.musicBus.gain, mirror(nodes.musicBus.gain, 1, 10, nodes.musicBus.gain.value)] : [];
   if (window.__duckShelf) keep.push(window.__duckShelf.gain, mirror(window.__duckShelf.gain, -1 / 60, 11, 0));
   audio.setMix({master: 1, music: opt.music === undefined ? .45 : opt.music, effects: 1, ambience: 1});
-  audio.setStage(scene.stage); audio.setEnvironment(scene.env || {}, 0); audio.setMuted(false); audio.setPlaying(true);
+  let titlePrepared = null;
+  if (scene.title) { // écran titre (game.js : prepareTitle, setTitlePlaying(true), audioGate, puis audio.tick à chaque image)
+    if (typeof audio.setTitlePlaying !== 'function') throw new Error('scène ' + scene.name + ' : setTitlePlaying absent de cette source');
+    if (typeof audio.prepareTitle === 'function') titlePrepared = await audio.prepareTitle();
+    audio.setTitlePlaying(true); audio.setMuted(false);
+  } else { audio.setStage(scene.stage); audio.setEnvironment(scene.env || {}, 0); audio.setMuted(false); audio.setPlaying(true); }
   const red = new Float32Array(K0 + N), voices = new Uint8Array(K0 + N), mvoices = new Uint8Array(K0 + N), biome = scene.env && scene.env.biome;
   let replayMs = 0;
   for (let k = 1; k < K0 + N; k++) {
     ctx.suspend(k / HZ).then(() => {
       const a = performance.now(), f = k - K0;
-      if (f >= 0 && !opt.silent) {
+      if (f >= 0 && !opt.silent && !scene.title) {
         const fr = scene.frames[f];
         for (const [name, o] of fr.c) {
           let arg = o;
@@ -127,15 +153,25 @@ async function render(scene, v, opt = {}) {
         const s = fr.s; audio.setEnvironment(scene.env || {}, s[0]); audio.setMachinery(s[1], s[2], s[3], s[4]); audio.setSteam(s[5], s[6], s[7]); audio.setThreat(s[8]); audio.setPressure(s[9]); audio.tick(1 / HZ);
         if (fr.f) audio.step(fr.f[0], {outdoor: !!fr.f[1], biome});
       } else audio.tick(1 / HZ);
-      red[k] = nodes.limiter.reduction; voices[k] = audio.stats.voices; mvoices[k] = 0;
+      red[k] = nodes ? nodes.limiter.reduction : 0; voices[k] = audio.stats.voices; mvoices[k] = 0;
       replayMs += performance.now() - a; ctx.resume();
     });
   }
   const t0 = performance.now(), buffer = await ctx.startRendering(), ms = performance.now() - t0;
   const stats = Object.assign({}, audio.stats), l14 = Object.assign({}, window.__L14);
   try { audio.dispose(); } catch (_) {}
-  return {buffer, ms, replayMs, stats, red, voices, seconds, params: counter.n, l14};
+  if (raw) window.FMusic = sharedMusic;
+  const table = !!(window.MetalAudio && window.MetalAudio.recipes); delete window.MetalAudio;
+  return {buffer, ms, replayMs, stats, red, voices, seconds, params: counter.n, l14, titlePrepared, table};
 }
+// différence échantillon par échantillon de la sortie (canaux 0 et 1), en dBFS ; premier écart non nul et au-delà de −90 dBFS
+function diffOut(x, y) {
+  let pk = 0, e = 0, n = 0, first = -1, firstLoud = -1; const loud = Math.pow(10, -90 / 20);
+  if (x.length !== y.length) throw new Error('longueurs différentes : ' + x.length + ' / ' + y.length);
+  for (const c of [0, 1]) { const a = x.getChannelData(c), b = y.getChannelData(c); for (let i = 0; i < a.length; i++) { const d = Math.abs(a[i] - b[i]); if (d > 0 && (first < 0 || i < first)) first = i; if (d > loud && (firstLoud < 0 || i < firstLoud)) firstLoud = i; if (d > pk) pk = d; e += d * d; n++; } }
+  return {peakDbFS: pk ? r2(dB(pk)) : null, rmsDbFS: e ? r2(dB(Math.sqrt(e / n))) : null, identical: pk === 0, firstDiffSec: first < 0 ? null : r3(first / x.sampleRate), firstOver90Sec: firstLoud < 0 ? null : r3(firstLoud / x.sampleRate)};
+}
+function outLevels(b) { const L = b.getChannelData(0), R = b.getChannelData(1); return {peak: r3(Math.max(peakRange(L, 0, L.length), peakRange(R, 0, R.length))), rmsDbFS: r2(dB(Math.hypot(rmsRange(L, 0, L.length), rmsRange(R, 0, R.length)) / Math.SQRT2))}; }
 
 // ---------- analyse ----------
 function rmsRange(d, a, b) { a = Math.max(0, a | 0); b = Math.min(d.length, b | 0); let e = 0; for (let i = a; i < b; i++) e += d[i] * d[i]; return Math.sqrt(e / Math.max(1, b - a)); }
@@ -228,4 +264,7 @@ function pumpScene() { // cadences nominales, sans surchauffe : SMG 8/s pendant 
   run(11, 15, 1, ['fracture', {level: 1, pan: 0, hand: 'right'}]); run(17, 22, 1.2, ['rocket', {level: 1, pan: 0, hand: 'right', owner: 'player'}]);
   return {name: 'p', label: 'Cadences nominales (SMG 8/s, pistolet, pompe, roquette) sur « Fer noir »', stage: 0, env: {}, frames, bursts};
 }
-window.MIX = {render, analyse, calib, isoScene, pumpScene, COMP, DUCK, emit, rmsRange, peakRange, lowpass, quant, dB, r2, r3, SR, K0, HZ, buildAudio};
+function titleScene() { // écran titre : musique d'accueil thrash de la 0.8.1 (setTitlePlaying(true)) pendant 30 s, aucun événement
+  return {name: 't', label: 'Écran titre : musique d\'accueil (setTitlePlaying) pendant 30 s', stage: 0, env: {}, frames: emptyFrames(30 * HZ), title: true};
+}
+window.MIX = {render, analyse, calib, isoScene, pumpScene, titleScene, diffOut, outLevels, COMP, DUCK, emit, rmsRange, peakRange, lowpass, quant, dB, r2, r3, SR, K0, HZ, buildAudio};

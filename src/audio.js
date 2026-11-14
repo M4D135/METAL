@@ -17,7 +17,11 @@
   // sweeps; every shot contains its crack, body and mechanical action in one
   // voice. Two seeded variants avoid identical automatic-fire transients.
   // The pure renderer is exposed for offline waveform/peak/duration checks.
-  function synthesize(name, variant, sampleRate) {
+  // LOAD-13: the renderer is resumable. step(n) advances n samples and keeps
+  // the filter state, so warmBank can slice a heavy effect across loading
+  // frames without changing one sample; synthesize runs the same renderer to
+  // its end and therefore returns exactly the same Float32Array.
+  function synthJob(name, variant, sampleRate) {
     var exp=Math.exp,sin=Math.sin,abs=Math.abs,max=Math.max,min=Math.min,PI=Math.PI;
     var rate = max(8000,min(48000,Number(sampleRate)||22050)), split=name.split(':'), action=split[0], material=materials[split[1]], motor=action==='motor';
     if (effectNames.indexOf(name)<0) throw new Error('Unknown procedural sound: '+name);
@@ -32,7 +36,12 @@
       var count=action==='break'?7:3;
       for(var b=1;b<count;b++){starts.push(action==='land'?b*.052+rand()*.009:[0,.022,.054,.096,.16,.25,.38][b]+rand()*.012);weights.push((action==='land'?.32:.64)*exp(-b*(action==='land'?.5:.24)));}
     }
-    for(var i=0;i<out.length;i++){
+    var i=0, sealed=false;
+    return {
+      total: out.length,
+      step: function (count) {
+        var end=min(out.length,i+(count>0?count:out.length));
+        for(;i<end;i++){
       var t=i/rate,white=rand()*2-1;low+=alpha*(white-low);soft+=slow*(white-soft);
       var bright=white-low,band=low-soft,x=0,u,j;
       if(material){
@@ -81,24 +90,108 @@
       // natural crest factor. No clipping/normalization runs during combat.
       highpass=.991*(highpass+x-previous);previous=x;
       var fade=min(1,t/(motor?.006:.00045),(duration-t)/.009);out[i]=highpass*max(0,fade);peak=max(peak,abs(out[i]));
-    }
-    var normal=peak>0?.84/peak:0;
-    for(i=0;i<out.length;i++)out[i]*=normal;
-    out[0]=0;out[out.length-1]=0;return out;
+        }
+        return i>=out.length;
+      },
+      // Same normalization as the synchronous path, applied once, after the
+      // last sample: crest factor and both zero ends are unchanged.
+      seal: function () {
+        if(sealed)return out; sealed=true;
+        var normal=peak>0?.84/peak:0;
+        for(var k=0;k<out.length;k++)out[k]*=normal;
+        out[0]=0;out[out.length-1]=0;return out;
+      }
+    };
+  }
+  function synthesize(name, variant, sampleRate) { var job=synthJob(name,variant,sampleRate); job.step(0); return job.seal(); }
+  // FEEL-06 / MIX-01: parametric layered report for a game's recipe table.
+  // Crack [gain, ms], pitched thump {f0,f1,tp,ta,g}, saturated two-pole noise
+  // body {cut,tb,g,drive}, mechanism clicks [[s,gain,Hz]], short room {tr,g},
+  // then a rate-aware 25 Hz DC blocker and gentle density saturation. Every
+  // number comes from the game; this knows no weapon. Seeded by name+variant.
+  var ROOM_TAPS=[[.011,.34],[.017,.27],[.023,.21],[.031,.15],[.043,.10]];
+  // Resumable form of the layered report, same interface as synthJob: {total,
+  // step(count), seal()}. A game recipe built by FAudio.recipe is therefore
+  // cuttable like an engine effect, so LOAD-13 can bound it inside the slice.
+  // The sample loop, the LCG and the normalization are byte for byte those of
+  // the one-shot layered() below: step(64) four times seals the same
+  // Float32Array as step(0).
+  function layeredJob(name,spec,variant,sampleRate){
+    var exp=Math.exp,sin=Math.sin,tanh=Math.tanh,min=Math.min,PI=Math.PI,s=spec||{},key=String(name);
+    var rate=Math.max(8000,min(48000,Number(sampleRate)||22050)),seed=(0x5eed^Math.imul((variant|0)+1,0x9e3779b9))>>>0;
+    for(var h=0;h<key.length;h++)seed=(Math.imul(seed,33)^key.charCodeAt(h))>>>0;
+    function rnd(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296*2-1;}
+    function one(f){return 1-exp(-2*PI*f/rate);}
+    var n=Math.max(0,Math.ceil(Number(s.dur)*rate))||0,out=new Float32Array(n),tune=1+(rnd()*.03);
+    var c=s.crack,th=s.thump,b=s.body,room=s.room,mech=[],taps=[],hist=room?new Float32Array(n):null,i=0,k,m,u,sealed=false;
+    (s.mech||[]).forEach(function(q){mech.push([q[0],q[1],q[2],one(q[2]*1.4),one(q[2]*.7)]);});
+    if(room)ROOM_TAPS.forEach(function(q){taps.push([Math.round(q[0]*rate),q[1]]);});
+    var crackPole=one(2500),crackTau=c?c[1]/1000:1,bodyPole=b?one(b.cut):0,bodyNorm=b?tanh(b.drive):1,roomPole=one(900),dcR=exp(-2*PI*25/rate),density=tanh(1.25);
+    var hp=0,phase=0,lp1=0,lp2=0,bandA=0,bandB=0,roomLp=0,dcx=0,dcy=0;
+    return {
+      total: n,
+      step: function (count) {
+        var end=min(n,i+(count>0?count:n));
+        for(;i<end;i++){
+      var t=i/rate,w=rnd(),x=0,clicks=0;
+      if(c){hp+=crackPole*(w-hp);x=(w-hp)*c[0]*exp(-t/crackTau);}
+      if(th){phase+=2*PI*((th.f1+(th.f0-th.f1)*exp(-t/th.tp))*tune)/rate;x+=sin(phase)*th.g*min(1,t/.0006)*exp(-t/th.ta);}
+      if(b){lp1+=bodyPole*(w-lp1);lp2+=bodyPole*(lp1-lp2);x+=tanh(lp2*3.2*b.g*exp(-t/b.tb)*b.drive)/bodyNorm;}
+      for(k=0;k<mech.length;k++){m=mech[k];u=t-m[0];if(u>=0&&u<.06){bandA+=m[3]*(w-bandA);bandB+=m[4]*(bandA-bandB);clicks+=((bandA-bandB)*2.2*exp(-u/.004)+.35*sin(2*PI*m[2]*u)*exp(-u/.011))*m[1];}}
+      x+=clicks;
+      if(room){hist[i]=x;for(k=0;k<taps.length;k++)if(i>=taps[k][0])x+=hist[i-taps[k][0]]*taps[k][1]*room.g*2.2;roomLp+=roomPole*(w-roomLp);x+=roomLp*room.g*1.6*exp(-t/room.tr)*min(1,t/.012);}
+      dcy=x-dcx+dcR*dcy;dcx=x;out[i]=tanh(dcy*1.25)/density;
+        }
+        return i>=n;
+      },
+      seal: function () {
+        if(sealed)return out; sealed=true;
+        var fade=Math.round((Number.isFinite(s.fade)?s.fade:.012)*rate),peak=0,j;
+        for(j=0;j<fade&&j<n;j++)out[n-1-j]*=j/fade;
+        for(j=0;j<n;j++)peak=Math.max(peak,Math.abs(out[j]));
+        var gain=peak>0?.84/peak:0;for(j=0;j<n;j++)out[j]*=gain;
+        if(n){out[0]=0;out[n-1]=0;}return out;
+      }
+    };
+  }
+  function layered(name,spec,variant,sampleRate){var job=layeredJob(name,spec,variant,sampleRate);job.step(0);return job.seal();}
+  // A recipe table only replaces built-in names. Output that throws, is empty
+  // or not finite falls back to the v0.2 recipe: without a table, PCM is v0.2.
+  function tablePCM(recipes,name,variant,sampleRate){
+    var r=recipes&&effectNames.indexOf(name)>=0&&Object.prototype.hasOwnProperty.call(recipes,name)?recipes[name]:null,data=null;
+    if(!r||typeof r.synth!=='function')return null;
+    try{data=r.synth(variant|0,Math.max(8000,Math.min(48000,Number(sampleRate)||22050)));}catch(_){return null;}
+    if(!data||!(data.length>0))return null;
+    for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i]))return null;
+    return data;
   }
   window.FAudio = {
-    synthesize: synthesize,
+    synthesize: function (name, variant, sampleRate, recipes) { return tablePCM(recipes,name,variant,sampleRate)||synthesize(name,variant,sampleRate); },
+    recipe: function (name, spec) { return {variants:spec&&spec.variants===1?1:2,synth:function(variant,rate){return layered(name,spec,variant,rate);},job:function(variant,rate){return layeredJob(name,spec,variant,rate);}}; },
     effectNames: effectNames.slice(),
-    create: function () {
+    create: function (options) {
+      var recipes = Object.create(null), table = options && options.recipes;
+      if (table) Object.keys(table).forEach(function (name) { var r = table[name]; if (r && typeof r.synth === 'function' && effectNames.indexOf(name) >= 0) recipes[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
+      // A game may add its own one-shot names (confirmations, stings). They are
+      // prepared with the bank, never during play, and never touch an engine
+      // effect name: without them the bank is the built-in one, bit for bit.
+      var extras = Object.create(null), extraTable = options && options.extras;
+      if (extraTable) Object.keys(extraTable).sort().forEach(function (name) { var r = extraTable[name]; if (r && typeof r.synth === 'function' && name && effectNames.indexOf(name) < 0 && name.indexOf('motor:') !== 0 && name.indexOf(':') < 0) extras[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
+      var extraNames = Object.keys(extras);
       var ctx = null, master, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
-      var lastStep = -1, stepSide = 1, lastAlert = -1;
+      var lastStep = -1, stepSide = 1, lastAlert = -1, lastTouch = -1, touchRun = 0;
       var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false, titlePlaying = false;
       var bank = Object.create(null), motors = [], ambientDuckUntil = 0, variation = 0, warming = null, warmTimer = null, warmResolve = null;
       var mix = {master:1,music:.45,effects:1,ambience:1};
-      var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null);
+      var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null), targets = new WeakMap();
       var priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
       var MUSIC_GAIN = .56, EFFECTS_GAIN = .9, AMBIENCE_GAIN = .7;
+      // FEEL-07: how long each weapon cue holds the soundtrack down before the
+      // 180 ms release. The heavy reports (pump shell, rocket, grenade) hold
+      // 220 ms, the SMG burst only 180 ms, so automatic fire lets the music
+      // back between rounds instead of burying it for a whole magazine.
+      var DUCK_HOLD = {fracture: .22, rocket: .22, grenade: .22, grenadeLaunch: .22, shot: .18};
       var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
       function remember(node) { persistent.push(node); return node; }
       function random() {
@@ -136,11 +229,11 @@
       }
       function duckMusic() {
         if (cueDucked || !musicBus || !cue || mix.effects <= 0) return;
-        var strength = /^(shot|fracture|rocket|grenade|grenadeLaunch|melee|hurt)$/.test(cue) ? .45 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism)$/.test(cue) ? .68 : 1;
-        if (strength === 1) return;
+        var weapon = /^(shot|fracture|rocket|grenade|grenadeLaunch|melee|hurt)$/.test(cue);
+        var strength = weapon ? .35 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism)$/.test(cue) ? .68 : 1;        if (strength === 1) return;
         strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
         cueDucked = true;
-        var now = ctx.currentTime, hold = strength < .4 ? .28 : .14;
+        var now = ctx.currentTime, hold = DUCK_HOLD[cue] || (weapon ? .14 : strength < .4 ? .28 : .14);
         ambientDuckUntil = Math.max(ambientDuckUntil,now+.20);
         duckDepth = now < duckUntil ? Math.min(duckDepth, strength) : strength;
         duckUntil = Math.max(duckUntil, now + hold);
@@ -186,22 +279,34 @@
         if(event)event.pan=Math.max(-1,Math.min(1,event.pan+side));
         return event;
       }
+      // LOOP-14 / MIX-08: setTargetAtTime is a memoryless exponential, so the
+      // same target and time constant sent again draws the same curve. Strict
+      // equality only: a threshold leaves an audible error. Setters still apply
+      // at once; this memory absorbs tick's repeat in the same frame. Every
+      // automation of the persistent ambience parameters goes through here;
+      // master and music buses never do (cancelled, scheduled ahead).
+      function approach(param, value, time, tau) {
+        var last = targets.get(param);
+        if (last && last.value === value && last.tau === tau) return;
+        param.setTargetAtTime(value, time, tau);
+        if (last) { last.value = value; last.tau = tau; } else targets.set(param, {value: value, tau: tau});
+      }
       function updateSteam() {
         if (!ctx || !steamLevel || disposed) return;
         var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
         stats.steamGain=audible?steam*.055*mask:0;
-        steamLevel.gain.setTargetAtTime(stats.steamGain, ctx.currentTime, steam ? .06 : .018);
-        if (steamPan.pan) steamPan.pan.setTargetAtTime(steamSide, ctx.currentTime, .12);
-        steamFilter.frequency.setTargetAtTime(1950-steamOccluded*1250,ctx.currentTime,.12);
+        approach(steamLevel.gain, stats.steamGain, ctx.currentTime, steam ? .06 : .018);
+        if (steamPan.pan) approach(steamPan.pan, steamSide, ctx.currentTime, .12);
+        approach(steamFilter.frequency, 1950-steamOccluded*1250, ctx.currentTime, .12);
       }
       function updateMachinery() {
         if(!ctx||disposed)return;
         var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
         stats.machineryGain=audible?machinery*.075*mask:0;
         motors.forEach(function(m){
-          m.gain.gain.setTargetAtTime(m.kind===machineKind?stats.machineryGain:0,ctx.currentTime,.055);
-          if(m.pan.pan)m.pan.pan.setTargetAtTime(machineSide,ctx.currentTime,.09);
-          m.filter.frequency.setTargetAtTime(4200-machineOccluded*3400,ctx.currentTime,.12);
+          approach(m.gain.gain,m.kind===machineKind?stats.machineryGain:0,ctx.currentTime,.055);
+          if(m.pan.pan)approach(m.pan.pan,machineSide,ctx.currentTime,.09);
+          approach(m.filter.frequency,4200-machineOccluded*3400,ctx.currentTime,.12);
         });
       }
       function horrorCue(kind,value) {
@@ -263,7 +368,7 @@
         track(s, [s, f, g, p], level);
         s.start(t, random() * .7); s.stop(t + duration + .02);
       }
-      function pcm(name,level,pan,event,rate,bus) {
+      function pcm(name,level,pan,event,rate,bus,cutoff) {
         if(!reserve(level,bus))return;
         var choices=bank[name];if(!choices)return;
         duckMusic();event=event||{};
@@ -272,7 +377,12 @@
         var source=ctx.createBufferSource(),gain=ctx.createGain(),panorama=panNode(pan),nodes=[source,gain,panorama],t=ctx.currentTime;
         source.buffer=buffer;source.playbackRate.value=pitch;
         var occluded=Math.max(0,Math.min(1,Number(event.occluded)||0)),distance=Math.max(0,Math.min(1,Number.isFinite(event.level)?event.level:1));
-        if(occluded>0||distance<.7){var filter=ctx.createBiquadFilter();filter.type='lowpass';filter.Q.value=.55;filter.frequency.value=Math.max(650,(4200+distance*9000)*(1-occluded*.88));source.connect(filter);filter.connect(gain);nodes.push(filter);}else source.connect(gain);
+        // FEEL-07: an optional ceiling on top of the distance muffle. Enemy fire
+        // is asked for at 1.1 kHz so a salvo reads as "over there" and never
+        // competes with the player's own report for the same 2-4 kHz space.
+        var cut=(occluded>0||distance<.7)?Math.max(650,(4200+distance*9000)*(1-occluded*.88)):Infinity;
+        if(Number.isFinite(cutoff))cut=Math.min(cut,cutoff);
+        if(Number.isFinite(cut)){var filter=ctx.createBiquadFilter();filter.type='lowpass';filter.Q.value=.55;filter.frequency.value=cut;source.connect(filter);filter.connect(gain);nodes.push(filter);}else source.connect(gain);
         gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(level,t+.0006);
         gain.gain.setValueAtTime(level,t+buffer.duration/pitch-.006);gain.gain.linearRampToValueAtTime(0,t+buffer.duration/pitch);
         gain.connect(panorama);panorama.connect(bus||effects);track(source,nodes,level);
@@ -290,13 +400,22 @@
       function warmBank(yieldWork) {
         if(!ctx||disposed)return Promise.resolve(false);
         if(stats.pcmReady)return Promise.resolve(true);
+        function variantsOf(name){var recipe=recipes[name]||extras[name];return recipe?recipe.variants:name.indexOf('motor:')===0?1:2;}
+        function recipeData(name,variant){
+          var recipe=recipes[name]||extras[name];
+          if(recipe){var data=null;try{data=recipe.synth(variant|0,22050);}catch(_){}
+            if(data&&data.length>0){for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i])){data=null;break;}
+              if(data)return data;}}
+          return synthesize(name,variant,22050);
+        }
+        function bufferFor(name,data){
+          var buffer=ctx.createBuffer(1,data.length,22050);
+          buffer.getChannelData(0).set(data);bank[name].push(buffer);stats.pcmBuffers++;stats.pcmBytes+=data.byteLength;
+        }
         function build(name){
           if(bank[name]||!ctx||disposed)return;
-          var variants=name.indexOf('motor:')===0?1:2;bank[name]=[];
-          for(var v=0;v<variants;v++){
-            var data=synthesize(name,v,22050),buffer=ctx.createBuffer(1,data.length,22050);
-            buffer.getChannelData(0).set(data);bank[name].push(buffer);stats.pcmBuffers++;stats.pcmBytes+=data.byteLength;
-          }
+          bank[name]=[];
+          for(var v=0;v<variantsOf(name);v++)bufferFor(name,recipeData(name,v));
         }
         function finish(){
           if(!ctx||disposed)return false;
@@ -305,10 +424,106 @@
         }
         // Loading yields between small batches. A legacy caller which starts
         // play without prepare gets the same complete bank before play begins.
-        if(!yieldWork||typeof setTimeout!=='function'){effectNames.forEach(build);return Promise.resolve(finish());}
+        var bankNames = extraNames.length ? effectNames.concat(extraNames) : effectNames;
+        if(!yieldWork||typeof setTimeout!=='function'){bankNames.forEach(build);return Promise.resolve(finish());}
         if(warming)return warming;
-        var index=0;
-        warming=new Promise(function(resolve){warmResolve=resolve;function batch(){warmTimer=null;if(!ctx||disposed){warmResolve=null;resolve(false);return;}for(var i=0;i<2&&index<effectNames.length;i++)build(effectNames[index++]);if(index<effectNames.length)warmTimer=setTimeout(batch,0);else{warmResolve=null;resolve(finish());}}batch();});
+        // LOAD-13: the loading screen yields on a time budget, never on an
+        // effect count. One unit of work is one variant, and the built-in
+        // renderer is resumable, so even the heaviest break stops inside the
+        // budget and resumes on the next slice; an opaque recipe from a game
+        // cannot be cut, so it always opens a fresh slice. Without a clock
+        // (test rigs, cold realms) the same queue advances one variant per
+        // slice, deterministically: no slice count depends on time there.
+        // The bank stays bit for bit the synchronous one.
+        var SLICE_MS=8,BLOCK=256,BLOCK_TARGET_MS=1.5,BLOCK_MIN=16,SLICE_MARGIN_MS=.6,jobs=[],index=0,cost=Object.create(null),peakCost=Object.create(null),worst=0;
+        for(var ni=0;ni<bankNames.length;ni++){var jobName=bankNames[ni];var jobRecipe=recipes[jobName]||extras[jobName]||null;for(var jobVariant=0;jobVariant<variantsOf(jobName);jobVariant++)jobs.push({name:jobName,variant:jobVariant,recipe:jobRecipe,opaque:!!(jobRecipe&&typeof jobRecipe.job!=='function'),renderer:null,total:0,opened:false,blockMs:0,ms:0,block:BLOCK,per:0,done:0});}
+        var clock=typeof performance==='object'&&performance&&typeof performance.now==='function'?function(){return performance.now();}:null;
+        function open(job){job.opened=true;if(job.opaque)return;
+          // A recipe built by FAudio.recipe carries its own resumable renderer,
+          // so a game's weapon is cuttable exactly like an engine effect.
+          job.renderer=job.recipe?job.recipe.job(job.variant,22050):synthJob(job.name,job.variant,22050);
+          job.total=job.renderer.total;
+          // The first block of a job used to run unconditionally at 256 samples, which
+          // cost up to 19 ms on the heaviest break. Size it from a measured cost instead:
+          // the variant already rendered for this name, else the worst rate seen so far.
+          // Nothing is known yet (first job of the bank) → BLOCK_MIN, never BLOCK: the one
+          // block no prediction can cover stays at most BLOCK_MIN samples long.
+          var seen=cost[job.name],avg=seen!==undefined&&job.total>0?seen/job.total:0;
+          // The average rate of the variant already rendered underestimates the peak:
+          // a break gets more expensive as its staggered impacts come in. Size from the
+          // worst rate ever seen for this name. When nothing is known about the name,
+          // nothing is guessed either: the job opens at BLOCK_MIN samples, which is
+          // bounded even for the heaviest effect, and the next blocks are sized from
+          // this job's own measured rate. Guessing from the global worst is what let
+          // rocket#0 and break:metal#0 open a 256-sample block worth 13 to 18 ms.
+          var per=Math.max(avg,peakCost[job.name]||0);
+          job.block=clock&&per>0?Math.max(BLOCK_MIN,Math.min(BLOCK,Math.floor(BLOCK_TARGET_MS/per))):BLOCK_MIN;
+        }
+        function predict(job){var seen=cost[job.name];return Math.max(seen!==undefined?seen:0,worst*job.total);}
+        function finite(data){if(!data||!(data.length>0))return false;for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i]))return false;return true;}
+        function run(job,deadline){
+          if(bank[job.name]&&bank[job.name].length>job.variant)return true;
+          if(!bank[job.name])bank[job.name]=[];
+          var t0=clock?clock():0;
+          if(job.opaque){
+            bufferFor(job.name,recipeData(job.name,job.variant));
+            if(clock){var ms=clock()-t0;if(cost[job.name]===undefined)cost[job.name]=ms;}
+            return true;
+          }
+          for(;;){
+            // Predict with the worse of the last block and the job's own worst rate at
+            // this block size: a cheap stretch of the envelope must not buy an expensive
+            // one, which is what let a single block run 15 ms past the budget.
+            if(clock&&job.blockMs>0&&clock()+Math.max(job.blockMs,job.per*job.block)>deadline)return false;
+            var b0=clock?clock():0,from=job.done;
+            var done=job.renderer.step(job.block);
+            job.done=done?job.total:Math.min(job.total,from+job.block);
+            if(clock){
+              var spent=clock()-b0,did=job.done-from;
+              job.ms+=spent;job.blockMs=spent;
+              if(did>0){
+                var per=spent/did;
+                // Running maximum, never an average: the cheap tail of an effect must
+                // not re-open a block of 256 samples just before its expensive middle.
+                if(per>job.per)job.per=per;
+                if(job.per>peakCost[job.name])peakCost[job.name]=job.per;
+                job.block=Math.max(BLOCK_MIN,Math.min(BLOCK,Math.floor(BLOCK_TARGET_MS/job.per)));
+                if(job.per>worst)worst=job.per;
+              }
+            }
+            if(done)break;
+          }
+          // The cost of a name is its complete sample time, recorded once, when the job
+          // is finished: recorded earlier it came from a partial run and sized the next
+          // variant's first block far too large.
+          if(clock&&cost[job.name]===undefined)cost[job.name]=job.ms;
+          var sealed=job.renderer.seal();
+          job.renderer=null;
+          // Same fallback as recipeData for a game recipe: bad output falls back to v0.2.
+          bufferFor(job.name,job.recipe&&!finite(sealed)?synthesize(job.name,job.variant,22050):sealed);
+          return true;
+        }
+        warming=new Promise(function(resolve){warmResolve=resolve;function pump(){
+          warmTimer=null;
+          if(!ctx||disposed){warmResolve=null;resolve(false);return;}
+          var sliceT0=clock?clock():0,work=false;
+          for(;;){
+            if(index>=jobs.length)break;
+            var job=jobs[index];
+            if(!job.opened)open(job);
+            if(clock){
+              var left=SLICE_MS-(clock()-sliceT0);
+              // The slice is bounded by what the browser actually runs: the timer
+              // callback, its microtasks, seal() and createBuffer. Keep a margin
+              // instead of spending the whole 8 ms on the sample loop.
+              if(left<=SLICE_MARGIN_MS)break;
+              if(work&&job.opaque&&predict(job)>left)break;
+            }else if(work)break;
+            if(!run(job,sliceT0+SLICE_MS-SLICE_MARGIN_MS))break;
+            index++;work=true;
+          }
+          if(index<jobs.length)warmTimer=setTimeout(pump,0);else{warmResolve=null;resolve(finish());}
+        }pump();});
         return warming;
       }
       function initialize() {
@@ -320,8 +535,12 @@
           master = remember(ctx.createGain());
           master.gain.value = muted ? 0 : .65 * mix.master;
           var limiter = remember(ctx.createDynamicsCompressor());
-          limiter.threshold.value = -19; limiter.knee.value = 18;
-          limiter.ratio.value = 5; limiter.attack.value = .004; limiter.release.value = .18;
+          // FEEL-07 (MIX-02): -12 dB, knee 6, ratio 3:1, 12 ms in, 120 ms out.
+          // The MIX bench decided these values on the four recorded scenes and a
+          // 24-round SMG burst: peak stays <= .68 and no sample reaches the .875
+          // guard, so nothing saturates. Chrome runs the attack about 6 ms early.
+          limiter.threshold.value = -12; limiter.knee.value = 6;
+          limiter.ratio.value = 3; limiter.attack.value = .012; limiter.release.value = .12;
           // The existing compressor/mix stays intact. This final soft ceiling
           // is exactly linear below .875 and mathematically bounded above it,
           // including coincident rockets, debris and the MOD soundtrack.
@@ -341,7 +560,7 @@
           var send = remember(ctx.createGain()), delay = remember(ctx.createDelay(.5));
           echoSend = send;
           var damping = remember(ctx.createBiquadFilter()), feedback = remember(ctx.createGain());
-          send.gain.value = .065; delay.delayTime.value = .117;
+          send.gain.value = .09; delay.delayTime.value = .117;
           damping.type = 'lowpass'; damping.frequency.value = 1450; feedback.gain.value = .14;
           effects.connect(send); send.connect(delay); delay.connect(damping);
           damping.connect(master); damping.connect(feedback); feedback.connect(delay);
@@ -399,10 +618,10 @@
         var wind=Math.max(0,Math.min(2,Number.isFinite(environment.wind)?environment.wind:1));
         var gust=Math.max(0,Math.min(1,(Math.sin(now*.19+1.2)+.28*Math.sin(now*.53)-.28)*1.25));
         var mask=(1-Math.max(threat,pressure)*.45)*(now<ambientDuckUntil?.55:1);
-        airFilter.frequency.setTargetAtTime(780+stage*180+(environment.biome==='woodland'?-100:0),now,.4);
+        approach(airFilter.frequency,780+stage*180+(environment.biome==='woodland'?-100:0),now,.4);
         stats.windGain=active&&mix.ambience>0?outside*wind*gust*.020*mask:0;
-        airVolume.gain.setTargetAtTime(stats.windGain,now,stats.windGain?.22:.045);
-        echoSend.gain.setTargetAtTime(.065-outside*.055,now,.45);
+        approach(airVolume.gain,stats.windGain,now,stats.windGain?.22:.045);
+        approach(echoSend.gain,.09-outside*.08,now,.45);
 
       }
       function cancelTestMix() {
@@ -416,7 +635,7 @@
         if (musicBus && ctx) { musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setTargetAtTime(MUSIC_GAIN,ctx.currentTime,.03); }
         duckUntil = 0; duckDepth = 1; stats.duckGain = MUSIC_GAIN;
         updateMaster();
-        if (ctx && !playing) {airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;updateSteam();updateMachinery();}
+        if (ctx && !playing) {approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;updateSteam();updateMachinery();}
       }
       function testMix(options) {
         cancelTestMix();
@@ -478,7 +697,7 @@
             musicBus.gain.setTargetAtTime(MUSIC_GAIN,ctx.currentTime,.018);
             duckUntil = 0; duckDepth = 1; ambientDuckUntil = 0; stats.duckGain = MUSIC_GAIN;
             for (var entry of Array.from(voices)) { try { entry.source.stop(); } catch (_) {} clean(entry); }
-            airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018); stats.windGain = 0;
+            approach(airVolume.gain,0,ctx.currentTime,.018); stats.windGain = 0;
             updateSteam(); updateMachinery();
           }
           syncMusic();
@@ -489,12 +708,12 @@
           muted = next;
           updateMaster();
           updateSteam();updateMachinery();
-          if(muted&&!preview&&ctx&&airVolume){airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;}
+          if(muted&&!preview&&ctx&&airVolume){approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;}
         },
         setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
         setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
         setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); syncMusic(); },
-        setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing){titlePlaying=false;if(ctx)warmBank(false);} updateSteam();updateMachinery(); syncMusic(); if (!playing && ctx && airVolume) {airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
+        setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing){titlePlaying=false;if(ctx)warmBank(false);} updateSteam();updateMachinery(); syncMusic(); if (!playing && ctx && airVolume) {approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
         setMix: function (value) {
           for (var key in mix) if (Number.isFinite(value && value[key])) mix[key] = Math.max(0, Math.min(1, value[key]));
           if (!ctx || disposed) return;
@@ -502,7 +721,7 @@
           effects.gain.setTargetAtTime(EFFECTS_GAIN * mix.effects, ctx.currentTime, .025);
           ambience.gain.setTargetAtTime(AMBIENCE_GAIN * mix.ambience, ctx.currentTime, .025);
           updateSteam();updateMachinery();
-          if(mix.ambience<=0){airVolume.gain.setTargetAtTime(0,ctx.currentTime,.018);stats.windGain=0;}
+          if(mix.ambience<=0){approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;}
           if (music) music.setVolume(mix.music);
         },
         setEnvironment: function (value, amount) { environment = value || {}; outside = Math.max(0, Math.min(1, Number(amount) || 0)); },
@@ -604,7 +823,13 @@
           event = event || {};
           var pan = Math.max(-1,Math.min(1,Number(event.pan)||0)), e = effectEvent('enemyShot:'+Math.round(pan*4),event,.06);
           if (!e || e.level < .055) return;
-          pcm(event.kind===3?'grenade':'smg',e.level*(event.kind===3?.28:.24),pan,event,event.kind===3?1.13:1);
+          // FEEL-07: the enemy fires the player's own report, slowed to .85, closed
+          // at 1.1 kHz, without the mechanical click and at level .24, so a salvo
+          // reads as "over there" instead of a thinner copy of the player's shot.
+          // The mech-free copies come from METAL's extras; without them the v0.2
+          // cues keep their own rate and click rather than falling silent.
+          var heavy = event.kind === 3, alt = heavy ? 'enemyGrenade' : 'enemySmg';
+          pcm(bank[alt] ? alt : (heavy ? 'grenade' : 'smg'), e.level * .24, pan, event, .85, null, 1100);
         },
         bossPhase: function () {
           [0, .18, .36].forEach(function (offset) {
@@ -612,13 +837,24 @@
             tone(440, 220, .25, .04, 'triangle', offset, .2, 1200);
           });
         },
-        hit: function () {
+        hit: function (value) {
+          // FEEL-07: a game's confirmation replaces the v0.2 click. The run of
+          // consecutive hits lives here, on the audio clock: nothing enters the
+          // simulation and nothing is saved.
+          if (extras.touchConfirm) {
+            var t = ctx ? ctx.currentTime : 0;
+            touchRun = lastTouch < 0 || t - lastTouch > .45 ? 0 : Math.min(6, touchRun + 1);
+            lastTouch = t;
+            pcm('touchConfirm', .30, Number(value && value.pan) || 0, value, Math.pow(2, touchRun / 12));
+            return;
+          }
           pcm('click',.12,0,null,1.3);
         },
         hurt: function () {
           pcm('body',.45,0,null,.85);
         },
-        kill: function () {
+        kill: function (value) {
+          if (extras.killConfirm) { pcm('killConfirm', .45, 0, value, 1); return; }
           pcm('body',.19,0,null,.94);pcm('impact:dirt',.09,0,null);
         },
         pickup: function () {

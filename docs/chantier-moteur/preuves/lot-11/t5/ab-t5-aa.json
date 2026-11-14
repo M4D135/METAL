@@ -1,0 +1,66 @@
+{
+ "job": "ab",
+ "sr": 48000,
+ "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+ "errors": [],
+ "sources": {
+  "A": {
+   "root": "/home/m4d135/metal-chantier/voies/audio/.relais/avant-t5",
+   "audioSha256": "c90230bf4a317bf9ec258bc8c2b70f0e9d5d6c4aeba41968042dc545e28e3b91",
+   "musicSha256": "b37e8d84098ee9e46569aee0dd283430599926d836100a1739efa97f8c5a43ec",
+   "recipesSha256": "da0485d3cc20169bf7429a8c74e16d7e5ec02d608234b04264d779be610626d4"
+  },
+  "B": {
+   "root": "/home/m4d135/metal-chantier/voies/audio/.relais/avant-t5",
+   "audioSha256": "c90230bf4a317bf9ec258bc8c2b70f0e9d5d6c4aeba41968042dc545e28e3b91",
+   "musicSha256": "b37e8d84098ee9e46569aee0dd283430599926d836100a1739efa97f8c5a43ec",
+   "recipesSha256": "da0485d3cc20169bf7429a8c74e16d7e5ec02d608234b04264d779be610626d4"
+  }
+ },
+ "sameSource": true,
+ "nullCriterion": "MIX-08 : différence RMS <= -110 dBFS et crête <= -80 dBFS (null = -Infinity, sorties identiques)",
+ "rows": [
+  {
+   "scene": "t",
+   "label": "Écran titre : musique d'accueil (setTitlePlaying) pendant 30 s",
+   "diffPeakDbFS": -128.93,
+   "diffRmsDbFS": -154.94,
+   "identical": false,
+   "firstDiffSec": 0.06,
+   "firstOver90Sec": null,
+   "nullTestPass": true,
+   "noise": {
+    "renders": 1,
+    "peakDbFS": -128.93,
+    "rmsDbFS": -155.67,
+    "identical": false
+   },
+   "audioParamCalls": {
+    "A": 3711,
+    "B": 3711
+   },
+   "A": {
+    "peak": 0.369,
+    "rmsDbFS": -18.93,
+    "audioParamCalls": 3711,
+    "peakVoices": 0,
+    "stolenVoices": 0,
+    "fxSkipped": 0,
+    "titlePrepared": true,
+    "recipeTable": true,
+    "renderMs": 1019
+   },
+   "B": {
+    "peak": 0.369,
+    "rmsDbFS": -18.93,
+    "audioParamCalls": 3711,
+    "peakVoices": 0,
+    "stolenVoices": 0,
+    "fxSkipped": 0,
+    "titlePrepared": true,
+    "recipeTable": true,
+    "renderMs": 1069
+   }
+  }
+ ]
+}

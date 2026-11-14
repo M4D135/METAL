@@ -299,26 +299,58 @@
       for(let i=0;i<6;i++)if(!instrumentBank?.[i]){await pause();instrument(i);}
       if(stage==='title')for(let i=0;i<5;i++)if(!titleBank?.[i]){await pause();titleInstrument(i);}
       if(!tensionSample){await pause();tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};}
+      const steps=moduleSteps(stage);
+      if(steps)for(const phase of steps.phases){await pause();phase();}
       await pause();return info();
     });
     preparing.set(stage,task);preparation=task.catch(()=>{});
     task.then(()=>preparing.delete(stage),()=>preparing.delete(stage));return task;
   }
+  function moduleSteps(stage){
+    // LOAD-13: the expensive phases of a module — drum kit, compose, serialize,
+    // decode — are separate resumable sub-tasks, so warmup can yield between them
+    // and a loading screen paints inside the budget. The kit is itself cut per
+    // bar: eight bars and a crash sample in one block were the last slice that
+    // no audio budget could cover (19 to 22 ms on the title). `phases` is the
+    // fine-grained list warmup walks; kit/compose/serialize/decode stay the
+    // coarse API moduleFor uses, and run exactly the same calls in order.
+    // Running them back to back is exactly what moduleFor always did.
+    stage=stageOf(stage);if(modules.has(stage))return null;
+    const title=stage==='title',song=songOf(stage),built={title,samples:Array.from({length:6},(_,i)=>title&&i<3?titleInstrument(i):instrument(i)),score:null,bytes:null};
+    const kitPhases=[];
+    for(const [i,kind] of ['kick','snare','hat','open','crash','tom','ride'].entries())kitPhases.push(function kitDrum(){
+      if(!percussionBank)percussionBank={};
+      if(!percussionBank[kind])percussionBank[kind]=drumHit(kind,907+i*113);
+    });
+    for(let i=0;i<8;i++){const bar=i;kitPhases.push(function kitBar(){built.samples.push({name:'MTL KIT '+song.bpm+' '+String.fromCharCode(65+bar),volume:60,pcm:title?titleDrumBar(bar,percussionBank):drumBar(stage,bar,percussionBank)});});}
+    kitPhases.push(function kitExtras(){
+      if(!tensionSample)tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};
+      built.samples.push(tensionSample);
+      if(title)built.samples.push(titleInstrument(3),titleInstrument(4));
+    });
+    const composePhase=function(){built.score=title?composeTitle(built.samples):compose(stage,built.samples);};
+    const serializePhase=function(){built.bytes=serialize(built.score);};
+    const decodePhase=function(){if(!modules.has(stage))modules.set(stage,decode(built.bytes));};
+    return {
+      kit(){for(const phase of kitPhases)phase();},
+      compose(){composePhase();},
+      serialize(){serializePhase();},
+      decode(){decodePhase();},
+      phases:kitPhases.concat([composePhase,serializePhase,decodePhase])
+    };
+  }
   function moduleFor(stage){
-    stage=stageOf(stage);if(modules.has(stage))return modules.get(stage);
-    const title=stage==='title',song=songOf(stage),samples=Array.from({length:6},(_,i)=>title&&i<3?titleInstrument(i):instrument(i));
-    if(!percussionBank){percussionBank={};for(const [i,kind] of ['kick','snare','hat','open','crash','tom','ride'].entries())percussionBank[kind]=drumHit(kind,907+i*113);}
-    for(let i=0;i<8;i++)samples.push({name:'MTL KIT '+song.bpm+' '+String.fromCharCode(65+i),volume:60,pcm:title?titleDrumBar(i,percussionBank):drumBar(stage,i,percussionBank)});
-    if(!tensionSample)tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};
-    samples.push(tensionSample);
-    if(title)samples.push(titleInstrument(3),titleInstrument(4));
-    const value=decode(serialize(title?composeTitle(samples):compose(stage,samples)));modules.set(stage,value);return value;
+    stage=stageOf(stage);
+    const steps=moduleSteps(stage);
+    if(steps){steps.kit();steps.compose();steps.serialize();steps.decode();}
+    return modules.get(stage);
   }
   function getModule(stage){return moduleFor(stage).bytes.slice();}
   function getTrack(stage){stage=stageOf(stage);const song=songOf(stage);return {title:song.title,bpm:song.bpm,style:song.style,duration:(stage==='title'?TITLE_ORDERS.length*960:7680)/song.bpm,channels:4};}
   function create(ctx,output){
     let stage=0,threat=0,volume=.4,playing=false,disposed=false,module=null,order=0,row=0,nextTime=null,bpm=125,speed=6;
     const voices=new Set(),buffers=new Map(),nodes=[],tracks=[],stats={activeVoices:0,peakVoices:0,scheduledRows:0,scheduledNotes:0,resyncs:0,playing:false,stage:0,order:0,row:0,tempo:100};
+    const events=Array.from({length:4},()=>({sample:0,pitch:0,effect:0,param:0}));
     const ready=!!(ctx&&output&&ctx.createBuffer&&ctx.createBufferSource&&ctx.createGain),remember=n=>(nodes.push(n),n);
     const master=ready?remember(ctx.createGain()):null;
     if(master){master.gain.value=0;master.connect(output);for(let i=0;i<4;i++){
@@ -329,7 +361,7 @@
     function cleanup(v){if(!voices.delete(v))return;for(const n of [v.source,v.gain])try{n.disconnect();}catch(_){}if(tracks[v.track]?.voice===v)tracks[v.track].voice=null;stats.activeVoices=voices.size;}
     function stopAll(immediate=false){
       if(!ready)return;const now=ctx.currentTime;
-      for(const v of Array.from(voices)){
+      for(const v of voices){
         try{v.gain.gain.cancelScheduledValues(now);v.gain.gain.setTargetAtTime(.0001,now,.003);v.source.stop(now+(immediate?0:.015));}catch(_){}
         v.end=now+(immediate?0:.015);if(immediate)cleanup(v);
       }
@@ -354,11 +386,13 @@
       stats.scheduledNotes++;stats.activeVoices=voices.size;stats.peakVoices=max(stats.peakVoices,voices.size);
     }
     function schedule(time){
-      const bytes=module.bytes,base=1084+(module.order[order]*64+row)*16,events=[];
+      const bytes=module.bytes,base=1084+(module.order[order]*64+row)*16;
+      // RESTE-09: the four channel records of a row are allocated once per
+      // instance and refilled, so a scheduled row allocates nothing.
       for(let channel=0;channel<4;channel++){
-        const at=base+channel*4,a=bytes[at],b=bytes[at+1],c=bytes[at+2],param=bytes[at+3],sample=(a&240)|(c>>4),pitch=((a&15)<<8)|b,effect=c&15;
-        if(effect===15&&param){if(param<32)speed=param;else bpm=param;}
-        events.push({sample,pitch,effect,param});
+        const at=base+channel*4,a=bytes[at],b=bytes[at+1],c=bytes[at+2],param=bytes[at+3],e=events[channel];
+        e.sample=(a&240)|(c>>4);e.pitch=((a&15)<<8)|b;e.effect=c&15;e.param=param;
+        if(e.effect===15&&param){if(param<32)speed=param;else bpm=param;}
       }
       for(let i=0;i<4;i++){
         const e=events[i],t=tracks[i];if(e.sample){t.sample=e.sample;t.volume=module.samples[e.sample-1].volume;}
@@ -373,7 +407,10 @@
     function tick(){
       if(!ready||disposed||!playing||volume<=0||ctx.state!=='running')return;
       load();const now=ctx.currentTime;
-      for(const v of Array.from(voices))if(v.end<now-.02)cleanup(v);
+      // RESTE-09: deleting the current entry of a Set during for…of is defined
+      // and keeps insertion order, so the same voices are cleaned in the same
+      // order with no per-frame array allocation.
+      for(const v of voices)if(v.end<now-.02)cleanup(v);
       if(nextTime===null||nextTime<now-.20){if(nextTime!==null){stopAll();row=floor(row/16)*16;stats.resyncs++;}nextTime=now+.035;}
       let count=0;while(nextTime<now+.28&&count++<6){const at=max(now+.002,nextTime);nextTime+=schedule(at);}
     }
