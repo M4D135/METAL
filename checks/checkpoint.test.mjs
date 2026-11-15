@@ -8,7 +8,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'profiles', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'game'].map(name =>
+const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'profiles', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'touch', 'host', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -43,7 +43,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
         toggle(name, enabled) { enabled ??= !classes.has(name); enabled ? classes.add(name) : classes.delete(name); } },
       addEventListener: (name, callback) => events.set(name, callback),
       emit: (name, event = {}) => task(() => events.get(name)?.({ preventDefault: noop, ...event })),
-      click: () => task(() => events.get('click')?.({ preventDefault: noop })),
+      click: () => task(() => events.get('click')?.({ preventDefault: noop, detail:0 })),
       querySelector: selector => element(id + selector),
       querySelectorAll: () => [0, 1, 2].map(n => element(id + n)),
       setAttribute: noop, focus: noop, setPointerCapture: noop, getContext: () => draw, requestPointerLock() { context.document.pointerLockElement = value; },
@@ -60,7 +60,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   };
   if (runtime.idle !== false) context.requestIdleCallback = (callback, options) => idle.push({ callback, options, mode: element('body').dataset.state || 'menu' });
   context.window = context; vm.createContext(context);
-  for (const name of ['profiles', 'destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
+  for (const name of ['profiles', 'destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'touch', 'host']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
   if(runtime.brain){vm.runInContext(sources.brain, context, {filename:'brain.js'});const createBrain=context.FBrain.create;context.FBrain.create=options=>{const brain=createBrain(options);brains.push(brain);return brain;};}
   const create = context.FSimulation.create;
   context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); return sim; };
@@ -228,7 +228,7 @@ test('The campaign pistol HUD, keyboard, wheel, touch button and left hand use t
   const rightAmmo = sim.state.inventory.ammo[0];
   app.element('left-fire-button').emit('pointerdown', { pointerId: 10 });
   for (let i = 0; i < 8; i++) app.frame(100);
-  app.element('left-fire-button').emit('lostpointercapture');
+  app.emit('lostpointercapture',{pointerId:8});
   assert.equal(sim.state.inventory.ammo[0], rightAmmo); assert.equal(sim.state.inventory.ammo[4], 1);
   app.key('KeyP'); app.key('KeyP', false); app.element('restart').click();
   assert.equal(app.simulations.at(-1).state.weapon, 4);
@@ -320,9 +320,9 @@ test('Mouse and touch left inputs fire the paired weapon and R always dashes',()
   assert.equal(sim.state.inventory.ammo[1],afterMouse,'a released mouse never keeps firing');
   app.key('KeyR');app.frame(100);app.key('KeyR',false);assert(sim.state.player.dash>0,'R always dashes, whatever the left hand holds');
   assert.equal(app.sounds.some(q=>q.name==='shieldBash'),false);
-  app.element('left-fire-button').emit('pointerdown',{pointerId:8});app.frame(100);
+  app.element('left-fire-button').emit('pointerdown',{pointerId:8,clientX:100,clientY:100,pointerType:'touch'});app.frame(100);
   assert(sim.state.inventory.ammo[1]<afterMouse,'the touch left button fires the paired weapon');
-  app.element('left-fire-button').emit('lostpointercapture');const afterTouch=sim.state.inventory.ammo[1];for(let i=0;i<8;i++)app.frame(100);
+  app.emit('lostpointercapture',{pointerId:8});const afterTouch=sim.state.inventory.ammo[1];for(let i=0;i<8;i++)app.frame(100);
   assert.equal(sim.state.inventory.ammo[1],afterTouch,'a released touch button never keeps firing');
 });
 

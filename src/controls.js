@@ -50,7 +50,7 @@
     if((pad.moveX||0)**2+(pad.moveY||0)**2>(host.moveX||0)**2+(host.moveY||0)**2){out.moveX=pad.moveX;out.moveY=pad.moveY;}
     out.lookX=(host.lookX||0)+(pad.lookX||0);out.lookY=(host.lookY||0)+(pad.lookY||0);
     for(const k of ['fire','fireLeft','sprint','dash','pulse','melee','interact','switchProfile'])out[k]=!!(host[k]||pad[k]);
-    out.jumpHeld=!!(host.jumpHeld||pad.jump);return out;
+    out.jumpHeld=!!(host.jumpHeld||pad.jumpHeld||pad.jump);return out;
   }
   G.MetalControls={create,merge};
 })(typeof window!=='undefined'?window:globalThis);

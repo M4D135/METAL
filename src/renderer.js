@@ -1180,6 +1180,8 @@
         return !(center[2]+r<near||center[2]-r>far||Math.abs(center[0])>center[2]*horizontal+r*(1+horizontal)||Math.abs(center[1])>center[2]*tan+r*(1+tan));
       }
       function collect(object){
+        const objectFocal=object.faces[0]?.overlay&&camera.overlayFov?height/(2*Math.tan(Math.max(40,Math.min(110,camera.overlayFov))*Math.PI/360)):focal;
+        const project=v=>[width*.5+v[0]*objectFocal/v[2],height*.5-v[1]*objectFocal/v[2]];
         if(!inView(object.p,object.radius))return;
         stats.instances++;
         const phase=t*.85+object.p[0]*.37+object.p[2]*.21,bend=object.sway&&environment?environment.wind*.055:0;
@@ -1858,6 +1860,7 @@
       renderBatch(dynamicBatch,dynamicBuffer,false);
       if(particles.length)renderEffects(particles,eye,t);
       if(overlay.length||overlayParticles.length) {
+        if(camera.overlayFov&&camera.overlayFov!==camera.fov){const of=1/Math.tan(Math.max(40,Math.min(110,camera.overlayFov))*Math.PI/360);projection[0]=of/(canvas.width/canvas.height);projection[5]=of;multiply(projection,view,vp);gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);}
         if(blackout){selected.forEach(({light},i)=>{const c=light.color||[1,1,1],power=light.power===undefined?1:light.power;lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});gl.uniform3fv(uniforms.uLightColor,lightColors);}
         gl.clear(gl.DEPTH_BUFFER_BIT);if(overlay.length)renderBatch(pack(overlay,environment,true,overlayRows),overlayBuffer,true);
         if(overlayParticles.length)renderEffects(overlayParticles,eye,t);

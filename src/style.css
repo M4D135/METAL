@@ -185,3 +185,7 @@ body.touch #loadout-toggle,body.touch #weapon-label,body.touch #weapon-switch,bo
 body.touch #profile-button.profile-control{position:fixed;left:var(--control-left);right:auto;top:auto;bottom:calc(var(--control-bottom) + 116px);width:124px;min-width:124px;height:52px;min-height:52px;grid-template-columns:1fr;padding:6px 8px;gap:3px;border-radius:9px}
 body.touch #profile-button .profile-current{font-size:10px;gap:5px}body.touch #profile-active-label,body.touch #profile-resource,body.touch #profile-action{font-size:10px;letter-spacing:0}body.touch #profile-shortcut{display:none}
 body.touch #pulse-button{left:calc(var(--control-left) + 132px)}body.touch #interact-button{width:min(162px,calc(100vw - 224px));min-width:96px;max-width:162px}
+
+body.touch #move-zone.running{border-color:var(--acid);box-shadow:0 0 18px #c3ec5540}body.touch #move-zone.running #move-stick{background:#c3ec5580}
+
+body.touch #hud{overflow:hidden;overflow:clip}

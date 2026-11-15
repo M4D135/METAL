@@ -86,8 +86,8 @@ const lo=Number(el.min)||0,hi=el.max===''?100:Number(el.max),step=Number(el.step
 el.value=String(Math.min(hi,Math.max(lo,Math.round((v+n*step)*1e9)/1e9)));E(el,'input');return el;
 }
 if(el.tagName==='SELECT'){
-const os=Array.from(el.options||[]).filter(o=>!o.disabled),n=os.findIndex(o=>o.value===el.value);
-if(os.length){el.value=os[Math.max(0,Math.min(os.length-1,n+n))].value;E(el,'change');}return el;
+const os=Array.from(el.options||[]).filter(o=>!o.disabled),index=os.findIndex(o=>o.value===el.value);
+if(os.length){el.value=os[Math.max(0,Math.min(os.length-1,index+n))].value;E(el,'change');}return el;
 }
 }
 if(c==='accept'){

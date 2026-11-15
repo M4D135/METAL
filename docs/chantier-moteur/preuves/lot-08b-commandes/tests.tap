@@ -1,0 +1,820 @@
+TAP version 13
+# Subtest: V2 shell starts a free left hand, shows physical boss rewards and resumes claimed upgrades exactly once
+ok 1 - V2 shell starts a free left hand, shows physical boss rewards and resumes claimed upgrades exactly once
+  ---
+  duration_ms: 84.530637
+  ...
+# Subtest: V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world
+ok 2 - V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world
+  ---
+  duration_ms: 57.518252
+  ...
+# Subtest: Victory fanfare begins after the result screen has stopped active gameplay voices
+ok 3 - Victory fanfare begins after the result screen has stopped active gameplay voices
+  ---
+  duration_ms: 26.629393
+  ...
+# Subtest: The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen
+ok 4 - The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen
+  ---
+  duration_ms: 199.130245
+  ...
+# Subtest: A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode
+ok 5 - A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode
+  ---
+  duration_ms: 130.76686
+  ...
+# Subtest: Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly
+ok 6 - Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly
+  ---
+  duration_ms: 96.184041
+  ...
+# Subtest: The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal
+ok 7 - The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal
+  ---
+  duration_ms: 101.164399
+  ...
+# Subtest: Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell
+ok 8 - Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell
+  ---
+  duration_ms: 112.550988
+  ...
+# Subtest: Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered
+ok 9 - Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered
+  ---
+  duration_ms: 79.022535
+  ...
+# Subtest: A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial
+ok 10 - A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial
+  ---
+  duration_ms: 185.6255
+  ...
+# Subtest: Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together
+ok 11 - Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together
+  ---
+  duration_ms: 45.320673
+  ...
+# Subtest: Mouse and touch left inputs fire the paired weapon and R always dashes
+ok 12 - Mouse and touch left inputs fire the paired weapon and R always dashes
+  ---
+  duration_ms: 49.36745
+  ...
+# Subtest: Both hands and fourth-calibre ammunition survive sector Continue and entry restart
+ok 13 - Both hands and fourth-calibre ammunition survive sector Continue and entry restart
+  ---
+  duration_ms: 41.648663
+  ...
+# Subtest: Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint
+ok 14 - Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint
+  ---
+  duration_ms: 118.826625
+  ...
+# Subtest: Physical armor pickups update the HUD, retain excess and keep one flat hundred-point capacity
+ok 15 - Physical armor pickups update the HUD, retain excess and keep one flat hundred-point capacity
+  ---
+  duration_ms: 55.779854
+  ...
+# Subtest: The browser shell carries fractional armor through Continue, resume and entry restart without refilling
+ok 16 - The browser shell carries fractional armor through Continue, resume and entry restart without refilling
+  ---
+  duration_ms: 65.648974
+  ...
+# Subtest: The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations
+ok 17 - The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations
+  ---
+  duration_ms: 20.48462
+  ...
+# Subtest: The real arsenal HUD locks missing guns, equips found weapons across substeps and reports spent ammunition
+ok 18 - The real arsenal HUD locks missing guns, equips found weapons across substeps and reports spent ammunition
+  ---
+  duration_ms: 31.682169
+  ...
+# Subtest: Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill
+ok 19 - Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill
+  ---
+  duration_ms: 73.323393
+  ...
+# Subtest: Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue action
+ok 20 - Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue action
+  ---
+  duration_ms: 40.52609
+  ...
+# Subtest: Reserved enemies remain absent from character geometry and animation until physically deployed
+ok 21 - Reserved enemies remain absent from character geometry and animation until physically deployed
+  ---
+  duration_ms: 27.269616
+  ...
+# Subtest: Continue restores a current-generation checkpoint at its relay
+ok 22 - Continue restores a current-generation checkpoint at its relay
+  ---
+  duration_ms: 17.512737
+  ...
+# Subtest: A real fall below a terrace opens the death screen and Continue restores the safe checkpoint
+ok 23 - A real fall below a terrace opens the death screen and Continue restores the safe checkpoint
+  ---
+  duration_ms: 58.309355
+  ...
+# Subtest: Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall
+ok 24 - Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall
+  ---
+  duration_ms: 54.502433
+  ...
+# Subtest: Continue migrates generation 4 to the same sector without losing prior-sector totals
+ok 25 - Continue migrates generation 4 to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 20.957596
+  ...
+# Subtest: Continue migrates generation 3 to the same sector without losing prior-sector totals
+ok 26 - Continue migrates generation 3 to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 20.249852
+  ...
+# Subtest: Continue migrates generation legacy to the same sector without losing prior-sector totals
+ok 27 - Continue migrates generation legacy to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 26.022179
+  ...
+# Subtest: An invalid snapshot restarts its sector and preserves the first migration backup
+ok 28 - An invalid snapshot restarts its sector and preserves the first migration backup
+  ---
+  duration_ms: 17.905761
+  ...
+# Subtest: LOAD-01: an unrecoverable classic point restarts with its exact entry equipment
+ok 29 - LOAD-01: an unrecoverable classic point restarts with its exact entry equipment
+  ---
+  duration_ms: 58.160746
+  ...
+# Subtest: LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment
+ok 30 - LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment
+  ---
+  duration_ms: 55.032144
+  ...
+# Subtest: LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment
+ok 31 - LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment
+  ---
+  duration_ms: 57.909419
+  ...
+# Subtest: LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment
+ok 32 - LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment
+  ---
+  duration_ms: 55.867214
+  ...
+# Subtest: LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoint
+ok 33 - LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoint
+  ---
+  duration_ms: 87.989047
+  ...
+# Subtest: LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy checkpoint
+ok 34 - LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy checkpoint
+  ---
+  duration_ms: 88.248886
+  ...
+# Subtest: LOAD-01: a failed fallback launch never replaces the active rejected checkpoint
+ok 35 - LOAD-01: a failed fallback launch never replaces the active rejected checkpoint
+  ---
+  duration_ms: 57.851611
+  ...
+# Subtest: LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+ok 36 - LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+  ---
+  duration_ms: 57.683979
+  ...
+# Subtest: LOAD-01: generated l:0 rubble restores exactly after three real rocket breaches
+ok 37 - LOAD-01: generated l:0 rubble restores exactly after three real rocket breaches
+  ---
+  duration_ms: 1828.274619
+  ...
+# Subtest: LOAD-01: generated c:9 rubble restores exactly after three real rocket breaches
+ok 38 - LOAD-01: generated c:9 rubble restores exactly after three real rocket breaches
+  ---
+  duration_ms: 2010.593149
+  ...
+# Subtest: F activates a mechanism once through a multi-substep frame and writes its checkpoint
+ok 39 - F activates a mechanism once through a multi-substep frame and writes its checkpoint
+  ---
+  duration_ms: 26.930065
+  ...
+# Subtest: The contextual button operates a real lift, carries the camera, and saves the arrival
+ok 40 - The contextual button operates a real lift, carries the camera, and saves the arrival
+  ---
+  duration_ms: 54.979632
+  ...
+# Subtest: Options rebind the actual interaction key, persist it, and never start the expedition
+ok 41 - Options rebind the actual interaction key, persist it, and never start the expedition
+  ---
+  duration_ms: 24.746565
+  ...
+# Subtest: Image and mix controls reach the renderer/audio and do not advance a paused simulation
+ok 42 - Image and mix controls reach the renderer/audio and do not advance a paused simulation
+  ---
+  duration_ms: 25.625427
+  ...
+# Subtest: Rupture input launches a physical projectile and sends a traversable breach to the renderer
+ok 43 - Rupture input launches a physical projectile and sends a traversable breach to the renderer
+  ---
+  duration_ms: 109.79784
+  ...
+# Subtest: restoring intact geometry after a breach refreshes rendering even when controller revisions are reused
+ok 44 - restoring intact geometry after a breach refreshes rendering even when controller revisions are reused
+  ---
+  duration_ms: 20.023165
+  ...
+# Subtest: difficulty settings affect the real simulation, persist, and preserve health and campaign state
+ok 45 - difficulty settings affect the real simulation, persist, and preserve health and campaign state
+  ---
+  duration_ms: 21.652907
+  ...
+# Subtest: audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint
+ok 46 - audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint
+  ---
+  duration_ms: 118.288722
+  ...
+# Subtest: audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources
+ok 47 - audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources
+  ---
+  duration_ms: 50.049273
+  ...
+# Subtest: audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout
+ok 48 - audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout
+  ---
+  duration_ms: 52.249077
+  ...
+# Subtest: audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage
+ok 49 - audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage
+  ---
+  duration_ms: 69.516999
+  ...
+# Subtest: audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule
+ok 50 - audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule
+  ---
+  duration_ms: 73.804159
+  ...
+# Subtest: LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+ok 51 - LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+  ---
+  duration_ms: 20.765548
+  ...
+# Subtest: LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+ok 52 - LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+  ---
+  duration_ms: 14.464135
+  ...
+# Subtest: LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+ok 53 - LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 13.536536
+  ...
+# Subtest: LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+ok 54 - LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 13.10705
+  ...
+# Subtest: LOAD-03: finishing the expedition cancels a pending checkpoint write
+ok 55 - LOAD-03: finishing the expedition cancels a pending checkpoint write
+  ---
+  duration_ms: 31.530425
+  ...
+# Subtest: LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+ok 56 - LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+  ---
+  duration_ms: 62.402387
+  ...
+# Subtest: LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+ok 57 - LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+  ---
+  duration_ms: 33.400918
+  ...
+# Subtest: LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+ok 58 - LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+  ---
+  duration_ms: 36.529136
+  ...
+# Subtest: LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+ok 59 - LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+  ---
+  duration_ms: 31.840296
+  ...
+# Subtest: LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+ok 60 - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+  ---
+  duration_ms: 41.31492
+  ...
+# Subtest: LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+ok 61 - LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+  ---
+  duration_ms: 26.619298
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-0
+ok 62 - pre-massive browser Continue, save and Continue again: classic-0
+  ---
+  duration_ms: 3173.434317
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-2
+ok 63 - pre-massive browser Continue, save and Continue again: classic-2
+  ---
+  duration_ms: 3817.897943
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-0
+ok 64 - pre-massive browser Continue, save and Continue again: campaign1-0
+  ---
+  duration_ms: 3628.525985
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-9
+ok 65 - pre-massive browser Continue, save and Continue again: campaign1-9
+  ---
+  duration_ms: 2870.737817
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-17
+ok 66 - pre-massive browser Continue, save and Continue again: campaign1-17
+  ---
+  duration_ms: 3826.697585
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-0
+ok 67 - pre-massive browser Continue, save and Continue again: campaign2-0
+  ---
+  duration_ms: 3476.989139
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-9
+ok 68 - pre-massive browser Continue, save and Continue again: campaign2-9
+  ---
+  duration_ms: 3612.974995
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-17
+ok 69 - pre-massive browser Continue, save and Continue again: campaign2-17
+  ---
+  duration_ms: 4144.048416
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-rubble
+ok 70 - pre-massive browser Continue, save and Continue again: classic-rubble
+  ---
+  duration_ms: 3717.151336
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-rubble
+ok 71 - pre-massive browser Continue, save and Continue again: campaign2-rubble
+  ---
+  duration_ms: 4711.671753
+  ...
+# Subtest: MASTER tuning, first connected pad, full analog magnitude and bounded curves
+ok 72 - MASTER tuning, first connected pad, full analog magnitude and bounded curves
+  ---
+  duration_ms: 9.154832
+  ...
+# Subtest: Analog trigger hysteresis and press fronts do not repeat while held
+ok 73 - Analog trigger hysteresis and press fronts do not repeat while held
+  ---
+  duration_ms: 2.955163
+  ...
+# Subtest: Pause clear suppresses every held button until release, including fire and jump
+ok 74 - Pause clear suppresses every held button until release, including fire and jump
+  ---
+  duration_ms: 1.959484
+  ...
+# Subtest: Pad bindings normalize idempotently and reject conflicts without stealing controls
+ok 75 - Pad bindings normalize idempotently and reject conflicts without stealing controls
+  ---
+  duration_ms: 3.204251
+  ...
+# Subtest: Old Space dodge migrates to jump without stealing a custom R binding
+ok 76 - Old Space dodge migrates to jump without stealing a custom R binding
+  ---
+  duration_ms: 1.327629
+  ...
+# Subtest: Merged host and pad preserve strongest move, add look, and retain every held action
+ok 77 - Merged host and pad preserve strongest move, add look, and retain every held action
+  ---
+  duration_ms: 0.985663
+  ...
+# Subtest: Menu focus excludes disabled, hidden ancestors and zero rectangles; range sends input
+ok 78 - Menu focus excludes disabled, hidden ancestors and zero rectangles; range sends input
+  ---
+  duration_ms: 1.290621
+  ...
+# Subtest: Pad menu directions repeat after delay but A/B are edges only
+ok 79 - Pad menu directions repeat after delay but A/B are edges only
+  ---
+  duration_ms: 1.904173
+  ...
+# Subtest: Rumble requires a gesture, merges pending effects, limits calls, and clears on pause
+ok 80 - Rumble requires a gesture, merges pending effects, limits calls, and clears on pause
+  ---
+  duration_ms: 2.098172
+  ...
+# Subtest: Legacy pulse actuator, refusal and unplug are harmless; zero intensity survives reload
+ok 81 - Legacy pulse actuator, refusal and unplug are harmless; zero intensity survives reload
+  ---
+  duration_ms: 7.160036
+  ...
+# Subtest: E01 — Chargement : API statique complète, seul FInput s’ajoute au global
+ok 82 - E01 — Chargement : API statique complète, seul FInput s’ajoute au global
+  ---
+  duration_ms: 7.221427
+  ...
+# Subtest: E02 — Source propre : ni hasard, ni horloge, ni réseau, aucun nom propre au jeu, 18 000 octets au plus
+ok 83 - E02 — Source propre : ni hasard, ni horloge, ni réseau, aucun nom propre au jeu, 18 000 octets au plus
+  ---
+  duration_ms: 1.361421
+  ...
+# Subtest: E03 — Config invalide : create lève « FInput : … »
+ok 84 - E03 — Config invalide : create lève « FInput : … »
+  ---
+  duration_ms: 5.064855
+  ...
+# Subtest: E03b — Toutes les règles de la déclaration, sans toucher à la config
+ok 85 - E03b — Toutes les règles de la déclaration, sans toucher à la config
+  ---
+  duration_ms: 6.13063
+  ...
+# Subtest: E04 — Défauts METAL : Espace saute, R esquive, V frappe, aucun code en double
+ok 86 - E04 — Défauts METAL : Espace saute, R esquive, V frappe, aucun code en double
+  ---
+  duration_ms: 1.334749
+  ...
+# Subtest: E04b — normalize à l’étape 2 : table des touches gardée entière ou par défaut, réglages bornés
+ok 87 - E04b — normalize à l’étape 2 : table des touches gardée entière ou par défaut, réglages bornés
+  ---
+  duration_ms: 7.595379
+  ...
+# Subtest: E05 — AZERTY et QWERTY : chaque touche seule, puis frame et step
+ok 88 - E05 — AZERTY et QWERTY : chaque touche seule, puis frame et step
+  ---
+  duration_ms: 3.868249
+  ...
+# Subtest: E06 — Parité avec game.js (annexe B) : 600 images, graine 7, égalité au bit près
+ok 89 - E06 — Parité avec game.js (annexe B) : 600 images, graine 7, égalité au bit près
+  ---
+  duration_ms: 42.847893
+  ...
+# Subtest: E07 — Appui court (LOOP-06) : R appuyée et relâchée avant frame
+ok 90 - E07 — Appui court (LOOP-06) : R appuyée et relâchée avant frame
+  ---
+  duration_ms: 2.297932
+  ...
+# Subtest: E08 — Répétition : la touche ajoutée par repeat est tenue, sans front ni impulsion
+ok 91 - E08 — Répétition : la touche ajoutée par repeat est tenue, sans front ni impulsion
+  ---
+  duration_ms: 1.674893
+  ...
+# Subtest: E09 — Action tenue avec verrou : Entrée appuyée et relâchée dans l’image (LOOP-06)
+ok 92 - E09 — Action tenue avec verrou : Entrée appuyée et relâchée dans l’image (LOOP-06)
+  ---
+  duration_ms: 1.340142
+  ...
+# Subtest: E10 — Deux pas dans une image : impulsion et regard au premier pas seulement
+ok 93 - E10 — Deux pas dans une image : impulsion et regard au premier pas seulement
+  ---
+  duration_ms: 1.130622
+  ...
+# Subtest: E11 — Image sans pas : le regard attend dans pendingLook (STAB-06)
+ok 94 - E11 — Image sans pas : le regard attend dans pendingLook (STAB-06)
+  ---
+  duration_ms: 1.037135
+  ...
+# Subtest: E12 — clear() : touches relâchées, verrous effacés, regard en attente à 0
+ok 95 - E12 — clear() : touches relâchées, verrous effacés, regard en attente à 0
+  ---
+  duration_ms: 1.356173
+  ...
+# Subtest: E13 — Pas de -0 : aucune sortie numérique ne vaut -0 (sorties de E06 ; E50 à l’étape 7)
+ok 96 - E13 — Pas de -0 : aucune sortie numérique ne vaut -0 (sorties de E06 ; E50 à l’étape 7)
+  ---
+  duration_ms: 54.353313
+  ...
+# Subtest: E14 — Sources virtuelles : boutons de souris et boutons tactiles
+ok 97 - E14 — Sources virtuelles : boutons de souris et boutons tactiles
+  ---
+  duration_ms: 1.914189
+  ...
+# Subtest: E14b — frame() et step() : objets neufs, ordre fixe des clés, fronts dans l’ordre d’arrivée, dt borné
+ok 98 - E14b — frame() et step() : objets neufs, ordre fixe des clés, fronts dans l’ordre d’arrivée, dt borné
+  ---
+  duration_ms: 1.817037
+  ...
+# Subtest: E14c — Appareil actif sans manette : clavier, souris, tactile, filtre de 800 ms
+ok 99 - E14c — Appareil actif sans manette : clavier, souris, tactile, filtre de 800 ms
+  ---
+  duration_ms: 2.334796
+  ...
+# Subtest: E14d — configure et settings : réglages appliqués, touches tenues recomptées sans front
+ok 100 - E14d — configure et settings : réglages appliqués, touches tenues recomptées sans front
+  ---
+  duration_ms: 2.108188
+  ...
+# Subtest: E15 — Conflit clavier : la touche d’une autre action est refusée, réglages intacts
+ok 101 - E15 — Conflit clavier : la touche d’une autre action est refusée, réglages intacts
+  ---
+  duration_ms: 2.552651
+  ...
+# Subtest: E16 — Affectation clavier : la liste de l’action vaut [code], toutes les autres sont inchangées
+ok 102 - E16 — Affectation clavier : la liste de l’action vaut [code], toutes les autres sont inchangées
+  ---
+  duration_ms: 3.418907
+  ...
+# Subtest: E17 — Touches réservées : Échap, Méta, Ctrl, Alt et F5 sont refusées
+ok 103 - E17 — Touches réservées : Échap, Méta, Ctrl, Alt et F5 sont refusées
+  ---
+  duration_ms: 4.044505
+  ...
+# Subtest: E18 — Manette : conflit, boutons réservés ou inconnus, unbind puis assign
+ok 104 - E18 — Manette : conflit, boutons réservés ou inconnus, unbind puis assign
+  ---
+  duration_ms: 17.071811
+  ...
+# Subtest: E18b — assign et unbind : ordre des contrôles, appareil et action inconnus, déclaration validée
+ok 105 - E18b — assign et unbind : ordre des contrôles, appareil et action inconnus, déclaration validée
+  ---
+  duration_ms: 5.511686
+  ...
+# Subtest: E19 — normalize stable : idempotent, stable après un aller-retour JSON, défauts pour une table invalide
+ok 106 - E19 — normalize stable : idempotent, stable après un aller-retour JSON, défauts pour une table invalide
+  ---
+  duration_ms: 10.446734
+  ...
+# Subtest: E20 — Bornes de tune : nombres finis bornés, booléens gardés, le reste aux défauts
+ok 107 - E20 — Bornes de tune : nombres finis bornés, booléens gardés, le reste aux défauts
+  ---
+  duration_ms: 24.38703
+  ...
+# Subtest: E21 — Action manquante : codes par défaut libres, sinon premier repli libre (clavier), sinon []
+ok 108 - E21 — Action manquante : codes par défaut libres, sinon premier repli libre (clavier), sinon []
+  ---
+  duration_ms: 2.605675
+  ...
+# Subtest: E21b — Mêmes réponses que FOptions sur les profils de checks/options.test.mjs
+ok 109 - E21b — Mêmes réponses que FOptions sur les profils de checks/options.test.mjs
+  ---
+  duration_ms: 6.472517
+  ...
+# Subtest: E22 — Migration v1 → v2 : Espace saute, R esquive ; migrate seulement pour un format plus ancien
+ok 110 - E22 — Migration v1 → v2 : Espace saute, R esquive ; migrate seulement pour un format plus ancien
+  ---
+  duration_ms: 11.615516
+  ...
+# Subtest: E23 — Capture clavier : le prochain appui va à frame().captured, jamais au jeu
+ok 111 - E23 — Capture clavier : le prochain appui va à frame().captured, jamais au jeu
+  ---
+  duration_ms: 2.743211
+  ...
+# Subtest: E24 — radial : zone morte radiale avec remise à l’échelle
+ok 112 - E24 — radial : zone morte radiale avec remise à l’échelle
+  ---
+  duration_ms: 0.675167
+  ...
+# Subtest: E25 — Déplacement à la manette : zone morte .15, course au bout du stick (n ≥ .92)
+ok 113 - E25 — Déplacement à la manette : zone morte .15, course au bout du stick (n ≥ .92)
+  ---
+  duration_ms: 2.362459
+  ...
+# Subtest: E26 — Lacet (FEEL-10) : 5,40, 76,34, 156,65 et 300 °/s à 20, 50, 70 et 100 %
+ok 114 - E26 — Lacet (FEEL-10) : 5,40, 76,34, 156,65 et 300 °/s à 20, 50, 70 et 100 %
+  ---
+  duration_ms: 2.974011
+  ...
+# Subtest: E27 — Tangage : +190 °/s × dt vers le haut, opposé avec padInvertY
+ok 115 - E27 — Tangage : +190 °/s × dt vers le haut, opposé avec padInvertY
+  ---
+  duration_ms: 3.167659
+  ...
+# Subtest: E28 — Demi-tour : 58 images de 1/120 s (0,483 s) et 29 de 1/60 s ; 600 ms sans surcroît
+ok 116 - E28 — Demi-tour : 58 images de 1/120 s (0,483 s) et 29 de 1/60 s ; 600 ms sans surcroît
+  ---
+  duration_ms: 31.120441
+  ...
+# Subtest: E29 — Ralentissement sur cible : lookScale .55, sur la visée à la manette seulement
+ok 117 - E29 — Ralentissement sur cible : lookScale .55, sur la visée à la manette seulement
+  ---
+  duration_ms: 5.269351
+  ...
+# Subtest: E30 — Gâchettes : hystérésis .30 / .18, fronts aux images 2 et 6
+ok 118 - E30 — Gâchettes : hystérésis .30 / .18, fronts aux images 2 et 6
+  ---
+  duration_ms: 2.711835
+  ...
+# Subtest: E31 — Valeur analogique : RT .5 → 0,473684 ; .04 → 0 ; 1 → 1 ; sa touche → 1
+ok 119 - E31 — Valeur analogique : RT .5 → 0,473684 ; .04 → 0 ; 1 → 1 ; sa touche → 1
+  ---
+  duration_ms: 1.33339
+  ...
+# Subtest: E32 — Fusion : déplacement le plus fort, visée sommée avec la souris, plusieurs manettes
+ok 120 - E32 — Fusion : déplacement le plus fort, visée sommée avec la souris, plusieurs manettes
+  ---
+  duration_ms: 1.615501
+  ...
+# Subtest: E33 — Branchement à chaud : connected et disconnected une seule fois, null et mapping non standard acceptés
+ok 121 - E33 — Branchement à chaud : connected et disconnected une seule fois, null et mapping non standard acceptés
+  ---
+  duration_ms: 2.382524
+  ...
+# Subtest: E33b — navigator.getGamepads est appelé comme une méthode (sinon « Illegal invocation » dans Chrome)
+ok 122 - E33b — navigator.getGamepads est appelé comme une méthode (sinon « Illegal invocation » dans Chrome)
+  ---
+  duration_ms: 3.790361
+  ...
+# Subtest: E34 — Front de bouton : A tenu 10 images → un seul saut
+ok 123 - E34 — Front de bouton : A tenu 10 images → un seul saut
+  ---
+  duration_ms: 1.967629
+  ...
+# Subtest: E34b — configure à la manette : la table pad des réglages, un bouton tenu qui change d’action la tient sans front
+ok 124 - E34b — configure à la manette : la table pad des réglages, un bouton tenu qui change d’action la tient sans front
+  ---
+  duration_ms: 2.315868
+  ...
+# Subtest: E35 — Appareil actif : bouton ou axe au-delà de .3 → manette ; clavier, tactile, souris
+ok 125 - E35 — Appareil actif : bouton ou axe au-delà de .3 → manette ; clavier, tactile, souris
+  ---
+  duration_ms: 1.588382
+  ...
+# Subtest: E36 — Capture manette et clear() : ni front ni impulsion pour l’appui capturé ; l’image après clear() sans front
+ok 126 - E36 — Capture manette et clear() : ni front ni impulsion pour l’appui capturé ; l’image après clear() sans front
+  ---
+  duration_ms: 2.298876
+  ...
+# Subtest: E37 — Échange des sticks : le stick gauche tourne la vue, le droit déplace
+ok 127 - E37 — Échange des sticks : le stick gauche tourne la vue, le droit déplace
+  ---
+  duration_ms: 2.396811
+  ...
+# Subtest: E38 — keyName : mêmes noms que FOptions.keyName
+ok 128 - E38 — keyName : mêmes noms que FOptions.keyName
+  ---
+  duration_ms: 0.995999
+  ...
+# Subtest: E39 — Libellés appris : la touche vue par keyDown (AZERTY), la table de setLayout, sinon keyName ; les chiffres gardent leur nom
+ok 129 - E39 — Libellés appris : la touche vue par keyDown (AZERTY), la table de setLayout, sinon keyName ; les chiffres gardent leur nom
+  ---
+  duration_ms: 1.114894
+  ...
+# Subtest: E39b — Libellés : un caractère visible, codes Key… seulement, appris avant la table, invite clavier jointe par « / » ou « — »
+ok 130 - E39b — Libellés : un caractère visible, codes Key… seulement, appris avant la table, invite clavier jointe par « / » ou « — »
+  ---
+  duration_ms: 9.186464
+  ...
+# Subtest: E40 — Glyphes : Xbox, PlayStation, générique ; invites tactile et souris, action non affectée, action inconnue
+ok 131 - E40 — Glyphes : Xbox, PlayStation, générique ; invites tactile et souris, action non affectée, action inconnue
+  ---
+  duration_ms: 1.389405
+  ...
+# Subtest: E40b — glyph et dernière manette active : tables complètes, nom ou style inconnus, index le plus bas, remise à null au débranchement
+ok 132 - E40b — glyph et dernière manette active : tables complètes, nom ou style inconnus, index le plus bas, remise à null au débranchement
+  ---
+  duration_ms: 2.404812
+  ...
+# Subtest: E41 — guessDevice : règle de BITUME (TACT-08), matchMedia appelé comme une méthode, toute erreur → keyboard
+ok 133 - E41 — guessDevice : règle de BITUME (TACT-08), matchMedia appelé comme une méthode, toute erreur → keyboard
+  ---
+  duration_ms: 1.104574
+  ...
+# Subtest: E42 — Vibrations : appel exact, limiteur de 40 ms, intensité .5, sans actionneur, exception, aucun rejet non traité
+ok 134 - E42 — Vibrations : appel exact, limiteur de 40 ms, intensité .5, sans actionneur, exception, aucun rejet non traité
+  ---
+  duration_ms: 16.092804
+  ...
+# Subtest: E42b — rumble : bornes, manette visée, limiteur mis à jour au seul succès, rien avant frame()
+ok 135 - E42b — rumble : bornes, manette visée, limiteur mis à jour au seul succès, rien avant frame()
+  ---
+  duration_ms: 3.486186
+  ...
+# Subtest: FInput.clear arrête les vibrations lancées, même après déconnexion, sans reset répété
+ok 136 - FInput.clear arrête les vibrations lancées, même après déconnexion, sans reset répété
+  ---
+  duration_ms: 1.444029
+  ...
+# Subtest: FInput.clear utilise un effet nul quand reset est absent
+ok 137 - FInput.clear utilise un effet nul quand reset est absent
+  ---
+  duration_ms: 1.010782
+  ...
+# Subtest: FInput.clear annule chaque actionneur utilisé et tolère refus asynchrones ou exceptions
+ok 138 - FInput.clear annule chaque actionneur utilisé et tolère refus asynchrones ou exceptions
+  ---
+  duration_ms: 1.890637
+  ...
+# Subtest: Every first-person part stays in front of the near plane and each hand keeps its own side of the sight
+ok 139 - Every first-person part stays in front of the near plane and each hand keeps its own side of the sight
+  ---
+  duration_ms: 311.131394
+  ...
+# Subtest: Both hands stay clear of the crosshair on every phone and desktop frame
+ok 140 - Both hands stay clear of the crosshair on every phone and desktop frame
+  ---
+  duration_ms: 153.900996
+  ...
+# Subtest: Equipping or changing the left-hand weapon never moves the right-hand gun or its muzzle assembly
+ok 141 - Equipping or changing the left-hand weapon never moves the right-hand gun or its muzzle assembly
+  ---
+  duration_ms: 118.09717
+  ...
+# Subtest: System mouse acceleration is opt-in and only accepts stored booleans
+ok 142 - System mouse acceleration is opt-in and only accepts stored booleans
+  ---
+  duration_ms: 2.13518
+  ...
+# Subtest: Older preferences migrate while new controls have safe bounded values
+ok 143 - Older preferences migrate while new controls have safe bounded values
+  ---
+  duration_ms: 0.259567
+  ...
+# Subtest: Rebinding changes the real input map, preserves other actions and survives JSON storage
+ok 144 - Rebinding changes the real input map, preserves other actions and survives JSON storage
+  ---
+  duration_ms: 0.444608
+  ...
+# Subtest: Conflicts and reserved keys never silently disable another action
+ok 145 - Conflicts and reserved keys never silently disable another action
+  ---
+  duration_ms: 0.22072
+  ...
+# Subtest: Adding melee preserves an existing custom V binding and finds a free default key
+ok 146 - Adding melee preserves an existing custom V binding and finds a free default key
+  ---
+  duration_ms: 1.677085
+  ...
+# Subtest: campaign pistol selection migrates without stealing a customized Digit5 binding
+ok 147 - campaign pistol selection migrates without stealing a customized Digit5 binding
+  ---
+  duration_ms: 0.623439
+  ...
+# Subtest: The frame gate keeps a regular whole-vsync cadence and exposes the actual rate
+ok 148 - The frame gate keeps a regular whole-vsync cadence and exposes the actual rate
+  ---
+  duration_ms: 35.599282
+  ...
+# Subtest: Unlimited and near-native rates never discard a valid callback after calibration
+ok 149 - Unlimited and near-native rates never discard a valid callback after calibration
+  ---
+  duration_ms: 5.316198
+  ...
+# Subtest: The frame gate recalibrates on display changes, long suspension and clock restart
+ok 150 - The frame gate recalibrates on display changes, long suspension and clock restart
+  ---
+  duration_ms: 1.050702
+  ...
+# Subtest: Changing the target is immediate and malformed timestamps cannot poison the gate
+ok 151 - Changing the target is immediate and malformed timestamps cannot poison the gate
+  ---
+  duration_ms: 0.832255
+  ...
+# Subtest: Exact half-integer ratios choose their measured divisor on the first calibration and never oscillate
+ok 152 - Exact half-integer ratios choose their measured divisor on the first calibration and never oscillate
+  ---
+  duration_ms: 22.3838
+  ...
+# Subtest: Small timestamp jitter around a divider boundary cannot restart the display phase
+ok 153 - Small timestamp jitter around a divider boundary cannot restart the display phase
+  ---
+  duration_ms: 57.340236
+  ...
+# Subtest: Divider hysteresis yields to a changed display, target or suspended clock
+ok 154 - Divider hysteresis yields to a changed display, target or suspended clock
+  ---
+  duration_ms: 1.924301
+  ...
+# Subtest: les lignes statiques portent le niveau de détail, les lignes dynamiques restent à zéro
+ok 155 - les lignes statiques portent le niveau de détail, les lignes dynamiques restent à zéro
+  ---
+  duration_ms: 16.823635
+  ...
+# Subtest: pointer ownership, invalid input, cancellation and independent held actions
+ok 156 - pointer ownership, invalid input, cancellation and independent held actions
+  ---
+  duration_ms: 1.453134
+  ...
+# Subtest: floating joystick follows finger and sprint has hysteresis
+ok 157 - floating joystick follows finger and sprint has hysteresis
+  ---
+  duration_ms: 0.17728
+  ...
+# Subtest: fire aim ignores initial tremor, sums coalesced distance once per frame
+ok 158 - fire aim ignores initial tremor, sums coalesced distance once per frame
+  ---
+  duration_ms: 0.381375
+  ...
+# Subtest: portrait world FOV preserves horizontal visibility and gyro orientation/invalid samples
+ok 159 - portrait world FOV preserves horizontal visibility and gyro orientation/invalid samples
+  ---
+  duration_ms: 0.185584
+  ...
+# Subtest: wake lock is released after delayed acquisition, re-acquired on visibility, and disposed
+ok 160 - wake lock is released after delayed acquisition, re-acquired on visibility, and disposed
+  ---
+  duration_ms: 0.630831
+  ...
+# Subtest: gyro permission result cannot reactivate after user switched it off
+ok 161 - gyro permission result cannot reactivate after user switched it off
+  ---
+  duration_ms: 0.146752
+  ...
+# Subtest: controller select moves one enabled option in either direction
+ok 162 - controller select moves one enabled option in either direction
+  ---
+  duration_ms: 0.203152
+  ...
+1..162
+# tests 162
+# suites 0
+# pass 162
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 44696.906414
