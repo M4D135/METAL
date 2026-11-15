@@ -179,7 +179,7 @@
       if (extraTable) Object.keys(extraTable).sort().forEach(function (name) { var r = extraTable[name]; if (r && typeof r.synth === 'function' && name && effectNames.indexOf(name) < 0 && name.indexOf('motor:') !== 0 && name.indexOf(':') < 0) extras[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
       var extraNames = Object.keys(extras);
       var ctx = null, master, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
-      var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
+      var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0, musicCue = '';
       var lastStep = -1, stepSide = 1, lastAlert = -1, lastTouch = -1, touchRun = 0;
       var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false, titlePlaying = false;
       var bank = Object.create(null), motors = [], ambientDuckUntil = 0, variation = 0, warming = null, warmTimer = null, warmResolve = null;
@@ -192,7 +192,7 @@
       // 220 ms, the SMG burst only 180 ms, so automatic fire lets the music
       // back between rounds instead of burying it for a whole magazine.
       var DUCK_HOLD = {fracture: .22, rocket: .22, grenade: .22, grenadeLaunch: .22, shot: .18};
-      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
+      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0,musicCue:''};
       function remember(node) { persistent.push(node); return node; }
       function random() {
         noiseSeed = (Math.imul(noiseSeed, 1664525) + 1013904223) | 0;
@@ -259,9 +259,25 @@
         if (!music) return;
         // The title is a score selection, never an environmental stage or a
         // running simulation. Keep stage numeric for wind/room calculations.
-        music.setStage(titlePlaying ? 'title' : stage);
+        // An in-game event may hold an adaptive piece; the sector theme only
+        // returns when that hold is released, never on every frame.
+        var wanted = titlePlaying ? 'title' : (musicCue || String(stage));
+        music.setStage(wanted);
         music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65));
         music.setPlaying(playing || titlePlaying);
+        stats.musicCue = titlePlaying ? '' : musicCue;
+      }
+      function requestMusic(cue, meta) {
+        if (!music || disposed || titlePlaying) return false;
+        if (cue === null || cue === undefined || cue === '') { musicCue = ''; syncMusic(); return true; }
+        var name = String(cue), info = meta || {};
+        if (!window.FMusic || !window.FMusic.isCue || !window.FMusic.isCue(name)) return false;
+        var accepted = music.setCue(name, {key: info.key || name, urgent: !!info.urgent, force: !!info.force});
+        // The hold is kept even when the director ignores a duplicate: the
+        // sector theme must not snap back under a piece already requested.
+        musicCue = name;
+        stats.musicCue = name;
+        return accepted;
       }
       function effectEvent(name, value, interval) {
         if (!available()) return null;
@@ -691,6 +707,7 @@
           cancelTestMix();
           if (next && playing) api.setPlaying(false);
           titlePlaying = next;
+          if (next) musicCue = '';
           if (next && ctx) {
             // A last combat impact must not duck the first title riff.
             musicBus.gain.cancelScheduledValues(ctx.currentTime);
@@ -711,8 +728,13 @@
           if(muted&&!preview&&ctx&&airVolume){approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;}
         },
         setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
+        // MUS-04: an in-game event asks the adaptive director for another piece.
+        // The transport is never restarted by the caller: FImuse finishes the
+        // bar, plays the written join and enters the target on the bar line.
+        requestMusic: requestMusic,
+        releaseMusic: function () { return requestMusic(''); },
         setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
-        setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); syncMusic(); },
+        setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; machinery = 0; musicCue = ''; updateSteam();updateMachinery(); syncMusic(); },
         setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing){titlePlaying=false;if(ctx)warmBank(false);} updateSteam();updateMachinery(); syncMusic(); if (!playing && ctx && airVolume) {approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
         setMix: function (value) {
           for (var key in mix) if (Number.isFinite(value && value[key])) mix[key] = Math.max(0, Math.min(1, value[key]));
@@ -959,7 +981,7 @@
       // Priority belongs to a cue, not its waveform. A rocket's click, body
       // and exhaust keep the same reservation and cause one short music dip.
       var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
-      var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose)/;
+      var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose|requestMusic|releaseMusic)/;
       Object.keys(api).forEach(function (name) {
         if (typeof api[name] !== 'function' || helpers.test(name)) return;
         var method = api[name];
