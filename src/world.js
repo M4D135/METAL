@@ -11,7 +11,7 @@
   // FPassages est lu au chargement, comme FMath : un banc qui installe `window`
   // le temps d'exécuter les modules puis le retire doit quand même pouvoir créer
   // un monde (checks/checkpoint.test.mjs, LOAD-01).
-  const FPassages = window.FPassages;
+  const FPassages = window.FPassages, MetalProfiles = window.MetalProfiles;
   if (!FPassages) throw new Error('FWorld: charger src/passages.js avant src/world.js');
   const TAU = Math.PI * 2;
   const themes = [
@@ -678,6 +678,7 @@
     if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);}
     polishTrees(world);
     demolitionMetadata(world,options?.legacyTraps===true);
+    if(options.profiles===true){if(!MetalProfiles)throw new Error("Load profiles.js before creating a class expedition");MetalProfiles.world(world);}
     world.detailStats.added=world.meshes.length-world.detailStats.base;
     world.detailStats.tiers=[0,1,2].map(level=>world.meshes.filter(m=>(m.detail||0)===level).length);
     return world;
