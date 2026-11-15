@@ -9,3 +9,8 @@ __pycache__/
 artifacts/
 *.tar.gz
 *.zip
+
+# Copies de travail que musicvar.mjs régénère à chaque mesure (les marqueurs
+# .copie-du-depot et *.patch restent suivis, eux).
+docs/chantier-moteur/bancs/mix/musicvar/src/music.js
+docs/chantier-moteur/bancs/mix/musicvar/checks/
