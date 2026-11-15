@@ -27,7 +27,7 @@
   const fixedLoop=FLoop.create({hz:60,maxSteps:5}),poseView=FLoop.view({single:['player'],many:['enemies','bullets','projectiles']});let renderState=null,aimShownX=0,aimShownY=0;
   const framePacer=FOptions.createFrameGate();let cadenceHintAt=0,autoCadence=60,cadencePending=0,deferLaunch=false,pendingStart=null;
   const cadenceLimit=()=>prefs.fpsLimit===-1?autoCadence:prefs.fpsLimit;
-  let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
+  let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,checkpointWaitAt=-1,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'],ammoNames=['balles','cartouches','roquettes','grenades','balles'];
   const worldCache=new Map(),worldJobs=new Map();let preparationSerial=0;
   let titleGesture=false,titleReady=false,titlePending=null,titleSerial=0,titleWaiting=false,titleBlocked=false,windowFocused=document.hasFocus?.()!==false;
@@ -222,11 +222,13 @@
     const later=()=>{saveQueued=false;writeSave();};
     if(typeof requestIdleCallback==='function')requestIdleCallback(later,{timeout:500});else setTimeout(later,0);
   }
-  addEventListener('pagehide',writeSave);document.addEventListener('visibilitychange',()=>{if(document.hidden)writeSave();});
-  function saveCheckpoint(){
+  function flushCheckpoint(){if(checkpointPending&&!sim?.state.player.airborne)saveCheckpoint(true);writeSave();}
+  addEventListener('pagehide',flushCheckpoint);document.addEventListener('visibilitychange',()=>{if(document.hidden)flushCheckpoint();});
+  function saveCheckpoint(force=false){
     if(!sim||sim.state.dead||sim.state.won)return;
     if(sim.state.player.airborne){checkpointPending=true;return;}
-    checkpointPending=false;
+    if(!force&&sim.state.aiStats?.navPending>0){if(checkpointWaitAt<0)checkpointWaitAt=sim.state.time;if(sim.state.time-checkpointWaitAt<1.5){checkpointPending=true;return;}}
+    checkpointPending=false;checkpointWaitAt=-1;
     checkpoint=sim.snapshot();
     savedRun={version:world.campaign?3:2,...(world.profileVersion?{profiles:world.profileVersion}:{}),...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
     queueSave(savedRun);
@@ -286,7 +288,7 @@
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
   function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode){
-    checkpointPending=false;
+    checkpointPending=false;checkpointWaitAt=-1;
     campaignMode=asCampaign;campaignRevision=revision;profileMode=profiles&&asCampaign&&revision===2;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps,profileMode);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale

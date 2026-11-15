@@ -101,10 +101,10 @@ function findApproachScenario(index){
     const sim=FSimulation.create(isolated);openGates(sim);const encounter=sim.state.encounters[0];
     for(const observer of observerPositions(sim,encounter)){
       Object.assign(sim.state.player,{x:observer.x,y:observer.y,z:observer.z});
-      const distant=encounter.spawnEntries.filter(entry=>Math.hypot(entry.x-observer.x,entry.z-observer.z)>30&&sim.state.enemies.some(e=>sim.safeEntry(e,entry,encounter)));
+      const distant=encounter.spawnEntries.filter(entry=>Math.hypot(entry.x-observer.x,entry.z-observer.z)>30&&sim.nav.connected(entry.x,entry.z,encounter.trigger.x,encounter.trigger.z)===true&&sim.state.enemies.some(e=>sim.safeEntry(e,entry,encounter)));
       if(distant.length){
         // Exercise the long approach explicitly using only genuinely generated,
-        // currently hidden choices. The coverage test above uses the whole list.
+        // currently hidden, connected choices. Swept machinery can seal other rooms. The coverage test above uses the whole list.
         sim.dispose();isolated.encounters[0].spawnEntries=plain(distant);
         const run=FSimulation.create(isolated);openGates(run);Object.assign(run.state.player,{x:observer.x,y:observer.y,z:observer.z});
         return {world:isolated,sim:run,encounter:run.state.encounters[0],observer};

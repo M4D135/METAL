@@ -1,0 +1,418 @@
+{
+  "environment": {
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "platform": "linux",
+    "arch": "arm64",
+    "release": "6.17.0-1026-nvidia",
+    "cpu": "unknown",
+    "logicalCpus": 20,
+    "loadAverage": [
+      3.32,
+      3.84,
+      4.27
+    ]
+  },
+  "baseline": "a8fc47ad86cc0cf4ecc579d8327243cf2b0434e30d66f58aeaccf5df80c686da",
+  "candidate": "e5438feae032134abb9c5274304769fe251350f3b03f14f5cb088d4e1d9656dd",
+  "pairs": 7200,
+  "rows": [
+    {
+      "name": "legacy0",
+      "searches": 15,
+      "steps": [
+        {
+          "samples": 1200,
+          "totalUs": 669060,
+          "meanUs": 557.55,
+          "medianUs": 0,
+          "p95Us": 1008,
+          "p99Us": 3001,
+          "maxUs": 15809
+        },
+        {
+          "samples": 1200,
+          "totalUs": 613101,
+          "meanUs": 510.9175,
+          "medianUs": 0,
+          "p95Us": 1002,
+          "p99Us": 2723,
+          "maxUs": 16846
+        }
+      ],
+      "traversals": [
+        {
+          "samples": 600,
+          "totalUs": 13573,
+          "meanUs": 22.621666666666666,
+          "medianUs": 0,
+          "p95Us": 0,
+          "p99Us": 1000,
+          "maxUs": 2000
+        },
+        {
+          "samples": 600,
+          "totalUs": 9499,
+          "meanUs": 15.831666666666667,
+          "medianUs": 0,
+          "p95Us": 0,
+          "p99Us": 1000,
+          "maxUs": 1003
+        }
+      ],
+      "routes": [
+        {
+          "samples": 60,
+          "totalUs": 319846,
+          "meanUs": 5330.766666666666,
+          "medianUs": 2001,
+          "p95Us": 38534,
+          "p99Us": 46024,
+          "maxUs": 46024
+        },
+        {
+          "samples": 60,
+          "totalUs": 296243,
+          "meanUs": 4937.383333333333,
+          "medianUs": 2000,
+          "p95Us": 35970,
+          "p99Us": 42106,
+          "maxUs": 42106
+        }
+      ],
+      "routesFound": 15,
+      "snapshot": "d020ca53323d1eef7308e1029d9fc8f16fc5c7dbb57fa4ccfdc53c74e9b99ff5"
+    },
+    {
+      "name": "legacy2",
+      "searches": 73,
+      "steps": [
+        {
+          "samples": 1200,
+          "totalUs": 467882,
+          "meanUs": 389.90166666666664,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2000,
+          "maxUs": 6000
+        },
+        {
+          "samples": 1200,
+          "totalUs": 467890,
+          "meanUs": 389.90833333333336,
+          "medianUs": 0,
+          "p95Us": 1002,
+          "p99Us": 2000,
+          "maxUs": 6001
+        }
+      ],
+      "traversals": [
+        {
+          "samples": 600,
+          "totalUs": 92181,
+          "meanUs": 153.635,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 3983,
+          "maxUs": 6730
+        },
+        {
+          "samples": 600,
+          "totalUs": 90926,
+          "meanUs": 151.54333333333332,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 4000,
+          "maxUs": 6000
+        }
+      ],
+      "routes": [
+        {
+          "samples": 60,
+          "totalUs": 896698,
+          "meanUs": 14944.966666666667,
+          "medianUs": 2999,
+          "p95Us": 11000,
+          "p99Us": 408938,
+          "maxUs": 408938
+        },
+        {
+          "samples": 60,
+          "totalUs": 844944,
+          "meanUs": 14082.4,
+          "medianUs": 3000,
+          "p95Us": 12770,
+          "p99Us": 370899,
+          "maxUs": 370899
+        }
+      ],
+      "routesFound": 10,
+      "snapshot": "dee7a122528fa3b9ee03f711ad16ddfbd0369990d92300f26b7f2b35fe6b8097"
+    },
+    {
+      "name": "campaign6",
+      "searches": 24,
+      "steps": [
+        {
+          "samples": 1200,
+          "totalUs": 435064,
+          "meanUs": 362.55333333333334,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2001,
+          "maxUs": 6999
+        },
+        {
+          "samples": 1200,
+          "totalUs": 412979,
+          "meanUs": 344.14916666666664,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2000,
+          "maxUs": 7492
+        }
+      ],
+      "traversals": [
+        {
+          "samples": 600,
+          "totalUs": 82808,
+          "meanUs": 138.01333333333332,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 3001,
+          "maxUs": 5999
+        },
+        {
+          "samples": 600,
+          "totalUs": 90172,
+          "meanUs": 150.28666666666666,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 3000,
+          "maxUs": 6000
+        }
+      ],
+      "routes": [
+        {
+          "samples": 60,
+          "totalUs": 1346322,
+          "meanUs": 22438.7,
+          "medianUs": 3001,
+          "p95Us": 286284,
+          "p99Us": 483499,
+          "maxUs": 483499
+        },
+        {
+          "samples": 60,
+          "totalUs": 1370063,
+          "meanUs": 22834.383333333335,
+          "medianUs": 3000,
+          "p95Us": 297669,
+          "p99Us": 486995,
+          "maxUs": 486995
+        }
+      ],
+      "routesFound": 7,
+      "snapshot": "30de4177f58948047f11bc9dbd239e5e1acf3120e3645848c2ddb991cdae842f"
+    },
+    {
+      "name": "campaign17",
+      "searches": 76,
+      "steps": [
+        {
+          "samples": 1200,
+          "totalUs": 493015,
+          "meanUs": 410.84583333333336,
+          "medianUs": 0,
+          "p95Us": 1002,
+          "p99Us": 2003,
+          "maxUs": 7845
+        },
+        {
+          "samples": 1200,
+          "totalUs": 493256,
+          "meanUs": 411.0466666666667,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2000,
+          "maxUs": 7000
+        }
+      ],
+      "traversals": [
+        {
+          "samples": 600,
+          "totalUs": 92941,
+          "meanUs": 154.90166666666667,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 3001,
+          "maxUs": 7999
+        },
+        {
+          "samples": 600,
+          "totalUs": 98404,
+          "meanUs": 164.00666666666666,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 4000,
+          "maxUs": 7580
+        }
+      ],
+      "routes": [
+        {
+          "samples": 60,
+          "totalUs": 1158996,
+          "meanUs": 19316.6,
+          "medianUs": 3000,
+          "p95Us": 57916,
+          "p99Us": 500790,
+          "maxUs": 500790
+        },
+        {
+          "samples": 60,
+          "totalUs": 1137719,
+          "meanUs": 18961.983333333334,
+          "medianUs": 2999,
+          "p95Us": 52997,
+          "p99Us": 501839,
+          "maxUs": 501839
+        }
+      ],
+      "routesFound": 10,
+      "snapshot": "59b5aa18e9c1de6f4a122ea55a45549fba8383504bfc6a9aa5a30508da38da1a"
+    },
+    {
+      "name": "profiles6",
+      "searches": 9,
+      "steps": [
+        {
+          "samples": 1200,
+          "totalUs": 316386,
+          "meanUs": 263.655,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2000,
+          "maxUs": 4002
+        },
+        {
+          "samples": 1200,
+          "totalUs": 346869,
+          "meanUs": 289.0575,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 1731,
+          "maxUs": 4000
+        }
+      ],
+      "traversals": [
+        {
+          "samples": 600,
+          "totalUs": 93176,
+          "meanUs": 155.29333333333332,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 3001,
+          "maxUs": 7634
+        },
+        {
+          "samples": 600,
+          "totalUs": 93684,
+          "meanUs": 156.14,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 3998,
+          "maxUs": 5999
+        }
+      ],
+      "routes": [
+        {
+          "samples": 60,
+          "totalUs": 1948580,
+          "meanUs": 32476.333333333332,
+          "medianUs": 4000,
+          "p95Us": 330864,
+          "p99Us": 500938,
+          "maxUs": 500938
+        },
+        {
+          "samples": 60,
+          "totalUs": 1911872,
+          "meanUs": 31864.533333333333,
+          "medianUs": 3000,
+          "p95Us": 319956,
+          "p99Us": 490983,
+          "maxUs": 490983
+        }
+      ],
+      "routesFound": 10,
+      "snapshot": "0cf7eb64f19d7fcb8d885188f169d11e49361b88b9f3161b541f3bd3e966eb3c"
+    },
+    {
+      "name": "profiles17",
+      "searches": 33,
+      "steps": [
+        {
+          "samples": 1200,
+          "totalUs": 372739,
+          "meanUs": 310.61583333333334,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2000,
+          "maxUs": 5000
+        },
+        {
+          "samples": 1200,
+          "totalUs": 340669,
+          "meanUs": 283.8908333333333,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2000,
+          "maxUs": 5001
+        }
+      ],
+      "traversals": [
+        {
+          "samples": 600,
+          "totalUs": 91527,
+          "meanUs": 152.545,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 3530,
+          "maxUs": 7000
+        },
+        {
+          "samples": 600,
+          "totalUs": 96448,
+          "meanUs": 160.74666666666667,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 3001,
+          "maxUs": 6744
+        }
+      ],
+      "routes": [
+        {
+          "samples": 60,
+          "totalUs": 1445522,
+          "meanUs": 24092.033333333333,
+          "medianUs": 3001,
+          "p95Us": 316001,
+          "p99Us": 505974,
+          "maxUs": 505974
+        },
+        {
+          "samples": 60,
+          "totalUs": 1431502,
+          "meanUs": 23858.366666666665,
+          "medianUs": 3000,
+          "p95Us": 310929,
+          "p99Us": 509002,
+          "maxUs": 509002
+        }
+      ],
+      "routesFound": 8,
+      "snapshot": "dbf9f22e970c179da11eacdca9b61541faabab103080c5de1cfa9da87154a675"
+    }
+  ],
+  "identical": true
+}

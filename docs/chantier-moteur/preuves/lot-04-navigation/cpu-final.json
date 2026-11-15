@@ -1,0 +1,353 @@
+{
+  "environment": {
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "platform": "linux",
+    "arch": "arm64",
+    "release": "6.17.0-1026-nvidia",
+    "cpu": "unknown",
+    "logicalCpus": 20,
+    "loadAverage": [
+      1.31,
+      2.17,
+      2.48
+    ]
+  },
+  "baselineLoaded": "a7450ab42510a0c090fabc7ebbdcd5f0de191024cdf068c87ce7f43b2537512c",
+  "candidateSource": "d233dbeda2da1d5c66a3509d0cd298ab0d799e8cf0818ce9921115e9d5c7e905",
+  "steps": 10800,
+  "rows": [
+    {
+      "name": "legacy0",
+      "creationUs": [
+        54310,
+        72602
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 62476,
+          "meanUs": 780.95,
+          "medianUs": 998,
+          "p95Us": 3000,
+          "p99Us": 4999,
+          "maxUs": 4999
+        },
+        {
+          "samples": 80,
+          "totalUs": 2001,
+          "meanUs": 25.0125,
+          "medianUs": 0,
+          "p95Us": 0,
+          "p99Us": 1001,
+          "maxUs": 1001
+        }
+      ],
+      "found": [
+        18,
+        11
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 270870,
+          "meanUs": 150.48333333333332,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1046,
+          "maxUs": 6864
+        },
+        {
+          "samples": 1800,
+          "totalUs": 266368,
+          "meanUs": 147.98222222222222,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1007,
+          "maxUs": 7205
+        }
+      ],
+      "maxSearches": 1,
+      "maxSpawnRays": 32,
+      "maxNavCells": 768,
+      "snapshot": "d50d006e810b50881742ab9da1ab16de492c4e1e3afa5f6dfbbf047ae1688190"
+    },
+    {
+      "name": "legacy2",
+      "creationUs": [
+        54361,
+        86887
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 97340,
+          "meanUs": 1216.75,
+          "medianUs": 1000,
+          "p95Us": 3001,
+          "p99Us": 5544,
+          "maxUs": 5544
+        },
+        {
+          "samples": 80,
+          "totalUs": 10001,
+          "meanUs": 125.0125,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 2000,
+          "maxUs": 2000
+        }
+      ],
+      "found": [
+        14,
+        10
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 313034,
+          "meanUs": 173.90777777777777,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1001,
+          "maxUs": 2080
+        },
+        {
+          "samples": 1800,
+          "totalUs": 301166,
+          "meanUs": 167.31444444444443,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1003,
+          "maxUs": 2000
+        }
+      ],
+      "maxSearches": 2,
+      "maxSpawnRays": 36,
+      "maxNavCells": 88,
+      "snapshot": "6e9b0284ad363ed5925943c6a13bebf5f2b3f5a8d56588a0f9ac76682ff7467d"
+    },
+    {
+      "name": "campaign6",
+      "creationUs": [
+        60316,
+        60063
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 101221,
+          "meanUs": 1265.2625,
+          "medianUs": 1000,
+          "p95Us": 4000,
+          "p99Us": 6612,
+          "maxUs": 6612
+        },
+        {
+          "samples": 80,
+          "totalUs": 2000,
+          "meanUs": 25,
+          "medianUs": 0,
+          "p95Us": 0,
+          "p99Us": 1000,
+          "maxUs": 1000
+        }
+      ],
+      "found": [
+        12,
+        10
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 246369,
+          "meanUs": 136.87166666666667,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1001,
+          "maxUs": 2101
+        },
+        {
+          "samples": 1800,
+          "totalUs": 257204,
+          "meanUs": 142.89111111111112,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1002,
+          "maxUs": 2001
+        }
+      ],
+      "maxSearches": 2,
+      "maxSpawnRays": 30,
+      "maxNavCells": 92,
+      "snapshot": "44a11378a08d56f2f5f6b1a78a927844e5b4bc8f302321e8b17145e1ca9fa014"
+    },
+    {
+      "name": "campaign17",
+      "creationUs": [
+        43786,
+        60225
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 96321,
+          "meanUs": 1204.0125,
+          "medianUs": 1000,
+          "p95Us": 3001,
+          "p99Us": 5797,
+          "maxUs": 5797
+        },
+        {
+          "samples": 80,
+          "totalUs": 5997,
+          "meanUs": 74.9625,
+          "medianUs": 0,
+          "p95Us": 999,
+          "p99Us": 1000,
+          "maxUs": 1000
+        }
+      ],
+      "found": [
+        16,
+        13
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 353421,
+          "meanUs": 196.345,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1002,
+          "maxUs": 3000
+        },
+        {
+          "samples": 1800,
+          "totalUs": 272888,
+          "meanUs": 151.60444444444445,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1002,
+          "maxUs": 2000
+        }
+      ],
+      "maxSearches": 2,
+      "maxSpawnRays": 64,
+      "maxNavCells": 88,
+      "snapshot": "f54e3aadc28a3ed7cfae279a80787b4a05ef94b61e3bc0d5684a702385ea67d1"
+    },
+    {
+      "name": "profiles6",
+      "creationUs": [
+        61199,
+        73328
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 97722,
+          "meanUs": 1221.525,
+          "medianUs": 1000,
+          "p95Us": 3999,
+          "p99Us": 6000,
+          "maxUs": 6000
+        },
+        {
+          "samples": 80,
+          "totalUs": 1590,
+          "meanUs": 19.875,
+          "medianUs": 0,
+          "p95Us": 0,
+          "p99Us": 997,
+          "maxUs": 997
+        }
+      ],
+      "found": [
+        17,
+        11
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 243539,
+          "meanUs": 135.29944444444445,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1000,
+          "maxUs": 3001
+        },
+        {
+          "samples": 1800,
+          "totalUs": 183117,
+          "meanUs": 101.73166666666667,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1001,
+          "maxUs": 1053
+        }
+      ],
+      "maxSearches": 1,
+      "maxSpawnRays": 64,
+      "maxNavCells": 24,
+      "snapshot": "48c938715d84660cee6afd9fd1acff0a6b4a521f86be1d5ba8446a5968921289"
+    },
+    {
+      "name": "profiles17",
+      "creationUs": [
+        39035,
+        57262
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 100960,
+          "meanUs": 1262,
+          "medianUs": 1000,
+          "p95Us": 3999,
+          "p99Us": 6000,
+          "maxUs": 6000
+        },
+        {
+          "samples": 80,
+          "totalUs": 2977,
+          "meanUs": 37.2125,
+          "medianUs": 0,
+          "p95Us": 0,
+          "p99Us": 1000,
+          "maxUs": 1000
+        }
+      ],
+      "found": [
+        17,
+        15
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 288864,
+          "meanUs": 160.48,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1001,
+          "maxUs": 2001
+        },
+        {
+          "samples": 1800,
+          "totalUs": 231447,
+          "meanUs": 128.58166666666668,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1002,
+          "maxUs": 2002
+        }
+      ],
+      "maxSearches": 2,
+      "maxSpawnRays": 47,
+      "maxNavCells": 25,
+      "snapshot": "e0803e5b7c4adfadc5b9e5ff3d9be94118e3b1febf9f4c153333bb623899eb5b"
+    }
+  ],
+  "note": "AI behavior intentionally differs. Paired replay equality compares two current instances; reference only supplies CPU timings. Timings are main-realm thread CPU, not FPS or GPU.",
+  "deterministic": true
+}

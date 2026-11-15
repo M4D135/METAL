@@ -1,0 +1,47 @@
+✔ Gamepad reaches real simulation, jump/profile fronts are single-use across substeps (84.039191ms)
+✔ Gamepad pause/resume never replays a held trigger; disconnect pauses and stops vibration (84.815338ms)
+✔ A remapped pad button fires in game and does not require pointer lock (65.699194ms)
+✔ A brief mouse press between frames fires exactly once at 20, 30, 60 and 144 Hz (285.126796ms)
+✔ A brief key press between frames fires exactly once at 20, 30, 60 and 144 Hz (285.014696ms)
+✔ A brief touch press between frames fires exactly once at 20, 30, 60 and 144 Hz (282.729633ms)
+✔ A latched press is sent only to the first substep; holding still drives subsequent substeps (66.136882ms)
+✔ A brief press just before the pistol becomes ready survives the cooldown and is consumed by its shot (72.478732ms)
+✔ An expired press and key repeat cannot schedule a delayed shot; the buffer duration is configurable (167.778315ms)
+✔ A right-hand shot cannot consume a buffered left-hand shot (58.572681ms)
+✔ Keyboard rebinding and simultaneous touch taps preserve independent hand intentions (53.922761ms)
+✔ Switching away and back cancels an earlier intention instead of firing the new equipment (53.00829ms)
+✔ Pause, focus loss, hidden tab and context loss clear unconsumed input (192.056037ms)
+✔ A mouse press without pointer lock is not a fire intention (57.197927ms)
+✔ Pointer cancellation clears pending fire while normal touch release preserves a tap (142.953362ms)
+✔ The left-hand trigger stays a held action and is never latched as a firearm (92.237974ms)
+✔ Thirty small wheel events cross the threshold only once and respect the 150 ms cooldown (50.411235ms)
+✔ Wheel direction changes reset partial travel, line/page modes normalize and pause clears accumulation (46.650537ms)
+✔ Pointer capture is requested in the canvas gesture and its matching mouse press never fires (47.463212ms)
+✔ Raw mouse input is the default; the saved system-acceleration preference and reset control change the request (94.333704ms)
+✔ Unsupported raw input retries exactly once without options for synchronous and promise APIs (99.778809ms)
+✔ A failed lock keeps drag-look usable without mouse firing and leaves touch gestures unchanged (162.382193ms)
+✔ Late lock failure or success after pause cannot recapture the pointer in a menu (133.469655ms)
+✔ Legacy pointer-lock error events give a usable fallback and cancelling capture cannot block the next click (59.086098ms)
+✔ Pointer cancellation invalidates a pending raw-input retry (58.658408ms)
+✔ Late pointer-lock success after pointer cancellation is released for promise and void APIs (125.486278ms)
+✔ A normal mouse release keeps an asynchronous pointer-lock request valid (125.027147ms)
+✔ The paused image options refresh the displayed cadence after target and display changes (110.713665ms)
+✔ tout import relatif d un banc tools/proof pointe sur un fichier committé (3.330401ms)
+✔ tout chemin de banc ou de doc cité par une preuve du lot 05 existe (1.412498ms)
+✔ tout banc qui écrit un fichier importe bien writeFileSync (0.811715ms)
+✔ une preuve qui publie un chiffre d alloc-image.mjs donne médiane et intervalle (1.033545ms)
+✔ les bancs de coût à deux racines mesurent en lockstep et publient un contrôle (0.512173ms)
+✔ le contrôle sommeEtapes du profil « au-delà » rend compte du total (0.130452ms)
+✔ toutes les pistes écartées de l« au-delà » sont chiffrées (0.174692ms)
+✔ les deux bancs exigés par les preuves T3 et T9 sont bien dans le dépôt (0.063025ms)
+✔ le constructeur renvoie toujours les mêmes clés, dans le même ordre (1.460307ms)
+✔ les valeurs par défaut se lisent exactement comme un champ absent (0.111923ms)
+✔ aucun producteur n'ajoute de clé au littéral canonique (1463.01925ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3313.32827

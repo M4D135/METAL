@@ -12,7 +12,7 @@ const CONSTS = ('TEXTURE_2D FRAMEBUFFER ARRAY_BUFFER DEPTH_TEST CULL_FACE TRIANG
   'COLOR_ATTACHMENT0 CLAMP_TO_EDGE BLEND VERTEX_SHADER UNSIGNED_SHORT UNSIGNED_INT TEXTURE_WRAP_T ' +
   'TEXTURE_WRAP_S TEXTURE_MIN_FILTER TEXTURE_MAG_FILTER SRC_ALPHA ONE_MINUS_SRC_ALPHA LINK_STATUS ' +
   'LEQUAL FRAGMENT_SHADER DEPTH_COMPONENT COLOR_BUFFER_BIT BACK COMPILE_STATUS STREAM_DRAW ' +
-  'DEPTH_COMPONENT16 FRAMEBUFFER_COMPLETE').split(' ');
+  'DEPTH_COMPONENT16 FRAMEBUFFER_COMPLETE MAX_RENDERBUFFER_SIZE MAX_TEXTURE_SIZE').split(' ');
 
 const TYPED = new Set(['Float32Array','Uint16Array','Uint32Array','Uint8Array','Int32Array','Float64Array','Uint8ClampedArray']);
 
@@ -35,7 +35,7 @@ function serialize(value, out) {
 }
 
 export function makeGL(recorder, {reuse = false} = {}) {
-  const gl = {}; let serial = 100, constant = 1000;
+  const gl = {drawingBufferWidth:0,drawingBufferHeight:0}; let serial = 100, constant = 1000;
   for (const k of CONSTS) gl[k] = ++constant;
   gl.FRAMEBUFFER_COMPLETE = 36053; gl.COLOR_BUFFER_BIT = 16384; gl.DEPTH_BUFFER_BIT = 256;
   const obj = kind => ({__glid: ++serial, kind});
@@ -48,7 +48,7 @@ export function makeGL(recorder, {reuse = false} = {}) {
     'deleteTexture deleteVertexArray depthFunc depthMask disable drawArrays drawBuffers drawElementsInstanced ' +
     'enable enableVertexAttribArray framebufferRenderbuffer framebufferTexture2D getExtension getParameter ' +
     'getProgramInfoLog getProgramParameter getShaderInfoLog getShaderParameter getUniformLocation isContextLost ' +
-    'linkProgram polygonOffset readBuffer renderbufferStorage shaderSource texImage2D texParameteri ' +
+    'linkProgram polygonOffset readBuffer readPixels renderbufferStorage shaderSource texImage2D texParameteri ' +
     'texSubImage2D uniform1f uniform1fv uniform1i uniform2f uniform2i uniform3f uniform3fv uniform4f ' +
     'uniformMatrix4fv useProgram vertexAttribDivisor vertexAttribPointer viewport').split(' ');
   for (const name of NAMES) {
@@ -166,7 +166,7 @@ export function loadModels(root, env) {
   const start = find('function systemsReady()', mLine);
   const end = find('function renderHUD', start);
   const body = [lines[mLine], ...lines.slice(start, end)].join('\n');
-  const factory = vm.runInThisContext('(function(env){let {sim,world,quality,renderer,actorMotion,systemMotion,motion,leftMotion,prefs,clamp,FMotion,FActors,FEffects,FRender,window,innerWidth,innerHeight}=env;let shieldLift=0;\n' + body + '\nreturn {models};})', {filename: 'game-models.js'});
+  const factory = vm.runInThisContext('(function(env){let {sim,world,quality,renderer,actorMotion,systemMotion,motion,leftMotion,prefs,clamp,FMotion,FActors,FEffects,FRender,window,innerWidth,innerHeight}=env;let shieldLift=0,renderState=null;\n' + body + '\nreturn {models};})', {filename: 'game-models.js'});
   return factory(env);
 }
 

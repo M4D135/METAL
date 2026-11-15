@@ -148,7 +148,7 @@ test('Late inference is rejected after elapsed observation time, destruction, mo
 
 test('Current asynchronous scores affect real tactics and disposal prevents an old sector from receiving future work',async()=>{
   const {FSimulation}=load(),brain=delayed(),sim=FSimulation.create(world({enemies:[{x:0,y:0,z:-12,type:1}]}),{brain});sim.state.enemies[0].cooldown=30;
-  sim.step(.025);answer(brain.requests[0]);await flush();sim.step(.025);assert.equal(sim.state.aiStats.neuralApplied,1);assert.equal(sim.state.aiStats.neuralBackend,'webnn');
+  sim.step(.025);answer(brain.requests[0]);await flush();sim.step(.025);assert.equal(sim.state.aiStats.neuralApplied,0,'early advice must wait for its simulation deadline');advance(sim,.225);assert.equal(sim.state.aiStats.neuralApplied,1);assert.equal(sim.state.aiStats.neuralBackend,'webnn');
   sim.state.enemies[0].planWait=sim.state.enemies[0].thinkWait=0;sim.step(.025);assert.equal(sim.state.enemies[0].tactic,'flank');assert(Math.abs(sim.state.enemies[0].goalX)>1);
   advance(sim,.3);const request=brain.requests.at(-1);sim.dispose();answer(request);await flush();sim.step(.025);assert.equal(sim.state.aiStats.neuralApplied,1);
 });
@@ -161,5 +161,5 @@ test('Boss policy uses the same neural scores to choose a different telegraphed 
 
 test('Scheduling stays at four bounded batches per second and never waits for hardware during a simulation step',()=>{
   const {FSimulation}=load(),brain=delayed(),sim=FSimulation.create(world({enemies:Array.from({length:24},(_,i)=>({x:(i%6-2.5)*3,y:0,z:-8-Math.floor(i/6)*3,type:0}))}),{brain});
-  for(const e of sim.state.enemies)e.cooldown=30;advance(sim,1);assert.equal(brain.requests.length,1,'One pending dispatch must suppress more submissions');assert(brain.requests[0].features.length<=16);assert(sim.state.time>=.99);sim.dispose();
+  for(const e of sim.state.enemies)e.cooldown=30;advance(sim,1);assert.equal(brain.requests.length,4,'Late results are abandoned at the four-per-second simulation deadline');assert(brain.requests[0].features.length<=16);assert(sim.state.time>=.99);sim.dispose();
 });

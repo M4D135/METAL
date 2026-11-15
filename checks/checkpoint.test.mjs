@@ -1012,3 +1012,10 @@ test('A zero-step browser frame shows mouse aim and retains action edges until c
 test('Browser catch-up is bounded and pausing discards elapsed menu time',()=>{
  const steps=[],app=harness(null,{},world,{step:(dt,input)=>steps.push({dt,...input})});app.element('start').click();app.frame(1000);assert.equal(steps.length,5);app.key('KeyP');app.key('KeyP',false);app.frame(60000);assert.equal(steps.length,5);app.element('resume').click();app.frame(1000/60);assert.equal(steps.length,6);
 });
+for(const release of ['ready','deadline','pagehide'])test(`navigation maintenance defers the checkpoint until ${release}`,()=>{
+ const app=deferred(null);app.element('start').click();app.runIdle();const sim=app.simulations.at(-1),shots=watchSnapshots(sim);let busy=true;
+ Object.defineProperty(sim.state.aiStats,'navPending',{configurable:true,get:()=>busy?500:0,set(){}});
+ sim.state.player.x=6;app.frame(100);assert.equal(sim.state.relays,1);assert.equal(shots.length,0,'navigation still has pending work');
+ if(release==='ready'){busy=false;app.frame(100);}else if(release==='pagehide')app.emit('pagehide');else for(let i=0;i<30&&!shots.length;i++)app.frame(100);
+ assert.equal(shots.length,1);app.runIdle();assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays,1);
+});

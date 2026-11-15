@@ -1,0 +1,353 @@
+{
+  "environment": {
+    "node": "v24.18.0",
+    "v8": "13.6.233.17-node.50",
+    "platform": "linux",
+    "arch": "arm64",
+    "release": "6.17.0-1026-nvidia",
+    "cpu": "unknown",
+    "logicalCpus": 20,
+    "loadAverage": [
+      1.25,
+      1.72,
+      2.47
+    ]
+  },
+  "baselineLoaded": "a7450ab42510a0c090fabc7ebbdcd5f0de191024cdf068c87ce7f43b2537512c",
+  "candidateSource": "9b9c97dd4115b67589364edf52f71e54c71705a8dd67175b65f665c6aa7bc137",
+  "steps": 10800,
+  "rows": [
+    {
+      "name": "legacy0",
+      "creationUs": [
+        144886,
+        157552
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 151938,
+          "meanUs": 1899.225,
+          "medianUs": 1000,
+          "p95Us": 7000,
+          "p99Us": 9894,
+          "maxUs": 9894
+        },
+        {
+          "samples": 80,
+          "totalUs": 7998,
+          "meanUs": 99.975,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 3001,
+          "maxUs": 3001
+        }
+      ],
+      "found": [
+        18,
+        11
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 639831,
+          "meanUs": 355.46166666666664,
+          "medianUs": 0,
+          "p95Us": 1002,
+          "p99Us": 2076,
+          "maxUs": 13507
+        },
+        {
+          "samples": 1800,
+          "totalUs": 689056,
+          "meanUs": 382.8088888888889,
+          "medianUs": 0,
+          "p95Us": 1002,
+          "p99Us": 2946,
+          "maxUs": 17533
+        }
+      ],
+      "maxSearches": 1,
+      "maxSpawnRays": 32,
+      "maxNavCells": 768,
+      "snapshot": "d50d006e810b50881742ab9da1ab16de492c4e1e3afa5f6dfbbf047ae1688190"
+    },
+    {
+      "name": "legacy2",
+      "creationUs": [
+        150693,
+        212060
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 229512,
+          "meanUs": 2868.9,
+          "medianUs": 2002,
+          "p95Us": 7999,
+          "p99Us": 10998,
+          "maxUs": 10998
+        },
+        {
+          "samples": 80,
+          "totalUs": 15997,
+          "meanUs": 199.9625,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 5000,
+          "maxUs": 5000
+        }
+      ],
+      "found": [
+        14,
+        10
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 790378,
+          "meanUs": 439.0988888888889,
+          "medianUs": 0,
+          "p95Us": 1002,
+          "p99Us": 2001,
+          "maxUs": 7013
+        },
+        {
+          "samples": 1800,
+          "totalUs": 667780,
+          "meanUs": 370.9888888888889,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2001,
+          "maxUs": 6005
+        }
+      ],
+      "maxSearches": 2,
+      "maxSpawnRays": 36,
+      "maxNavCells": 88,
+      "snapshot": "6e9b0284ad363ed5925943c6a13bebf5f2b3f5a8d56588a0f9ac76682ff7467d"
+    },
+    {
+      "name": "campaign6",
+      "creationUs": [
+        152904,
+        155177
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 233380,
+          "meanUs": 2917.25,
+          "medianUs": 2001,
+          "p95Us": 7999,
+          "p99Us": 12000,
+          "maxUs": 12000
+        },
+        {
+          "samples": 80,
+          "totalUs": 12998,
+          "meanUs": 162.475,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 3000,
+          "maxUs": 3000
+        }
+      ],
+      "found": [
+        12,
+        10
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 732826,
+          "meanUs": 407.12555555555554,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2001,
+          "maxUs": 6000
+        },
+        {
+          "samples": 1800,
+          "totalUs": 618400,
+          "meanUs": 343.55555555555554,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2000,
+          "maxUs": 7001
+        }
+      ],
+      "maxSearches": 2,
+      "maxSpawnRays": 30,
+      "maxNavCells": 92,
+      "snapshot": "44a11378a08d56f2f5f6b1a78a927844e5b4bc8f302321e8b17145e1ca9fa014"
+    },
+    {
+      "name": "campaign17",
+      "creationUs": [
+        115848,
+        172577
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 216427,
+          "meanUs": 2705.3375,
+          "medianUs": 2000,
+          "p95Us": 7000,
+          "p99Us": 7999,
+          "maxUs": 7999
+        },
+        {
+          "samples": 80,
+          "totalUs": 14981,
+          "meanUs": 187.2625,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2997,
+          "maxUs": 2997
+        }
+      ],
+      "found": [
+        16,
+        13
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 903351,
+          "meanUs": 501.8616666666667,
+          "medianUs": 0,
+          "p95Us": 1003,
+          "p99Us": 2001,
+          "maxUs": 9001
+        },
+        {
+          "samples": 1800,
+          "totalUs": 737445,
+          "meanUs": 409.69166666666666,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 1999,
+          "maxUs": 5015
+        }
+      ],
+      "maxSearches": 2,
+      "maxSpawnRays": 64,
+      "maxNavCells": 88,
+      "snapshot": "f54e3aadc28a3ed7cfae279a80787b4a05ef94b61e3bc0d5684a702385ea67d1"
+    },
+    {
+      "name": "profiles6",
+      "creationUs": [
+        149288,
+        181709
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 203872,
+          "meanUs": 2548.4,
+          "medianUs": 2000,
+          "p95Us": 8001,
+          "p99Us": 9998,
+          "maxUs": 9998
+        },
+        {
+          "samples": 80,
+          "totalUs": 9999,
+          "meanUs": 124.9875,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 1001,
+          "maxUs": 1001
+        }
+      ],
+      "found": [
+        17,
+        11
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 613913,
+          "meanUs": 341.0627777777778,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2001,
+          "maxUs": 7963
+        },
+        {
+          "samples": 1800,
+          "totalUs": 519928,
+          "meanUs": 288.8488888888889,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 1998,
+          "maxUs": 5002
+        }
+      ],
+      "maxSearches": 1,
+      "maxSpawnRays": 64,
+      "maxNavCells": 24,
+      "snapshot": "48c938715d84660cee6afd9fd1acff0a6b4a521f86be1d5ba8446a5968921289"
+    },
+    {
+      "name": "profiles17",
+      "creationUs": [
+        113912,
+        145448
+      ],
+      "routes": [
+        {
+          "samples": 80,
+          "totalUs": 219239,
+          "meanUs": 2740.4875,
+          "medianUs": 2000,
+          "p95Us": 7999,
+          "p99Us": 11534,
+          "maxUs": 11534
+        },
+        {
+          "samples": 80,
+          "totalUs": 11002,
+          "meanUs": 137.525,
+          "medianUs": 0,
+          "p95Us": 1000,
+          "p99Us": 2002,
+          "maxUs": 2002
+        }
+      ],
+      "found": [
+        17,
+        15
+      ],
+      "steps": [
+        {
+          "samples": 1800,
+          "totalUs": 728708,
+          "meanUs": 404.8377777777778,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 2001,
+          "maxUs": 6002
+        },
+        {
+          "samples": 1800,
+          "totalUs": 580174,
+          "meanUs": 322.31888888888886,
+          "medianUs": 0,
+          "p95Us": 1001,
+          "p99Us": 1842,
+          "maxUs": 6342
+        }
+      ],
+      "maxSearches": 2,
+      "maxSpawnRays": 47,
+      "maxNavCells": 25,
+      "snapshot": "e0803e5b7c4adfadc5b9e5ff3d9be94118e3b1febf9f4c153333bb623899eb5b"
+    }
+  ],
+  "note": "AI behavior intentionally differs. Paired replay equality compares two current instances; reference only supplies CPU timings. Timings are main-realm thread CPU, not FPS or GPU.",
+  "deterministic": true
+}

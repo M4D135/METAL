@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root=new URL('../',import.meta.url);
-const modules=['destruction','economy','simulation','motion','actors','effects','soundscape','options','input','controls','game'];
+const modules=['destruction','economy','simulation','motion','actors','effects','soundscape','options','input','controls','loop','schedule','touch','jobs','tasks','host','game'];
 const sources=Object.fromEntries(modules.map(name=>[name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 const noop=()=>{};
 
@@ -33,7 +33,7 @@ function shell({touch=false,settings={},bufferMs,requestLock,pointerLockAvailabl
     const events=new Map(),classes=new Set();
     const value={id,tagName:id==='world'?'CANVAS':'BUTTON',hidden:false,textContent:'',innerHTML:'',style:{},dataset:{},firstChild:{textContent:''},
       classList:{add:name=>classes.add(name),remove:name=>classes.delete(name),toggle(name,on){on??=!classes.has(name);on?classes.add(name):classes.delete(name);}},
-      addEventListener:(name,fn)=>on(events,name,fn),emit:(name,event={})=>emit(events,name,{target:value,...event}),
+      addEventListener:(name,fn)=>on(events,name,fn),emit:(name,event={})=>{const payload={target:value,clientX:0,clientY:0,...event};emit(events,name,payload);if(['pointerup','pointercancel','lostpointercapture'].includes(name))emit(listeners,name,payload);},
       click:()=>emit(events,'click',{target:value}),querySelector:selector=>element(id+selector),querySelectorAll:()=>[0,1,2].map(n=>element(id+n)),
       setAttribute:noop,focus:noop,setPointerCapture:noop,getContext:()=>draw,getBoundingClientRect:()=>({left:0,top:0,width:100,height:100}),
       requestPointerLock(...args){lockRequests++;lockCalls.push(args);const acquire=()=>{context.document.pointerLockElement=value;emit(documentListeners,'pointerlockchange');};return requestLock?requestLock(args,acquire):acquire();}};
@@ -120,7 +120,7 @@ test('A latched press is sent only to the first substep; holding still drives su
 });
 
 test('A brief press just before the pistol becomes ready survives the cooldown and is consumed by its shot',()=>{
-  const app=shell();firstShot(app);app.frame(100);app.frame(100);app.frame(60);
+  const app=shell();firstShot(app);for(let i=0;i<30&&app.sim.state.weaponCooldowns[4]>.065;i++)app.frame(20);
   assert(app.sim.state.weaponCooldowns[4]>0&&app.sim.state.weaponCooldowns[4]<.07);
   tap(app,'key');for(let i=0;i<6;i++)app.frame(20);
   assert.equal(app.sim.state.shots,2);for(let i=0;i<20;i++)app.frame(20);assert.equal(app.sim.state.shots,2);

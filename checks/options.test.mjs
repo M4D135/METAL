@@ -12,7 +12,7 @@ test('System mouse acceleration is opt-in and only accepts stored booleans',()=>
 test('Older preferences migrate while new controls have safe bounded values',()=>{
   const v=options.normalize({muted:true,quality:'high',softMotion:false,fov:300,sensitivity:NaN,musicVolume:-2,brightness:Infinity,showFps:'false'});
   assert.equal(v.muted,true);assert.equal(v.quality,'high');assert.equal(v.softMotion,false);assert.equal(v.fov,110);assert.equal(v.sensitivity,1);assert.equal(v.musicVolume,0);assert.equal(v.brightness,1);assert.equal(v.showFps,true);assert.equal(options.defaults(true).fov,79);
-  assert.equal(v.aiAcceleration,'auto');assert.equal(options.normalize({aiAcceleration:'cpu'}).aiAcceleration,'cpu');assert.equal(options.normalize({aiAcceleration:'npu-active'}).aiAcceleration,'auto');
+  assert.equal(v.aiAcceleration,'cpu');assert.equal(options.normalize({aiAcceleration:'auto'}).aiAcceleration,'auto');assert.equal(options.normalize({aiAcceleration:'cpu'}).aiAcceleration,'cpu');assert.equal(options.normalize({aiAcceleration:'npu-active'}).aiAcceleration,'cpu');
 });
 test('Rebinding changes the real input map, preserves other actions and survives JSON storage',()=>{
   const a=options.defaults(),r=options.assign(a.bindings,'interact','KeyG');assert.equal(r.ok,true);

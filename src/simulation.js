@@ -2,6 +2,62 @@
 (function (G) {
   'use strict';
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  /* FERRO — deterministic undirected grid, local edge invalidation and bounded connectivity repair. */
+function navigationGraph(cells,width,testEdge){
+  const n=cells.length,known=new Uint8Array(n),open=new Uint8Array(n),previous=new Uint8Array(n),parent=new Int32Array(n).fill(-1);
+  const queue=new Int32Array(n),queued=new Uint8Array(n);let head=0,tail=0,pending=0,ready=false,rebuild=true,phase=0,cursor=0;
+  const stats={edgeTests:0,unions:0,relabels:0,invalidations:0};
+  const neighbor=(i,k)=>k===0?(i%width?i-1:-1):k===1?(i%width<width-1&&i+1<n?i+1:-1):k===2?(i>=width?i-width:-1):(i+width<n?i+width:-1);
+  const reverse=k=>k^1;
+  function root(i){if(i<0||!cells[i]||parent[i]<0)return -1;while(parent[i]!==i){parent[i]=parent[parent[i]];i=parent[i];}return i;}
+  function union(a,b){if(parent[a]<0)parent[a]=a;if(parent[b]<0)parent[b]=b;const x=root(a),y=root(b);if(x>=0&&y>=0&&x!==y){parent[Math.max(x,y)]=Math.min(x,y);stats.unions++;}}
+  function enqueue(i){if(i<0||queued[i])return;queued[i]=1;queue[tail]=i;tail=(tail+1)%n;pending++;}
+  function edge(i,k){
+    const j=neighbor(i,k),bit=1<<k,back=1<<reverse(k);if(j<0)return false;if(known[i]&bit)return !!(open[i]&bit);
+    const allowed=!!(cells[i]&&cells[j]&&testEdge(i,j));stats.edgeTests++;
+    if((previous[i]&bit)&&!allowed)rebuild=true;
+    known[i]|=bit;known[j]|=back;
+    if(allowed){open[i]|=bit;open[j]|=back;previous[i]|=bit;previous[j]|=back;if(!phase&&!rebuild)union(i,j);}
+    else{open[i]&=~bit;open[j]&=~back;previous[i]&=~bit;previous[j]&=~back;}
+    return allowed;
+  }
+  function invalidate(i){
+    if(i<0||i>=n)return;ready=false;stats.invalidations++;if(phase){phase=cursor=0;rebuild=true;}
+    known[i]=open[i]=0;
+    for(let k=0;k<4;k++){const j=neighbor(i,k);if(j>=0){const bit=1<<reverse(k);known[j]&=~bit;open[j]&=~bit;}}
+    enqueue(i);
+  }
+  function clear(){
+    known.fill(0);open.fill(0);queued.fill(0);head=tail=pending=0;ready=false;rebuild=true;phase=cursor=0;
+    for(let i=0;i<n;i++)if(cells[i]||previous[i])enqueue(i);
+  }
+  function relabel(budget){
+    let used=0;if(!phase){phase=1;cursor=0;stats.relabels++;}
+    while(used<budget){
+      if(phase===1){if(cursor===n){phase=2;cursor=0;continue;}parent[cursor]=cells[cursor]?cursor:-1;cursor++;used++;}
+      else if(phase===2){
+        if(cursor===n){phase=cursor=0;rebuild=false;ready=true;break;}
+        const i=cursor++;if(cells[i]){if(open[i]&2)union(i,i+1);if(open[i]&8)union(i,i+width);}used++;
+      }
+    }
+  }
+  function pump(limit=96){
+    let used=0;
+    while(pending&&used<limit){
+      const i=queue[head];let complete=true;
+      for(let k=0;k<4;k++){
+        if(neighbor(i,k)<0||known[i]&(1<<k))continue;
+        if(used>=limit){complete=false;break;}edge(i,k);used++;
+      }
+      if(!complete)break;head=(head+1)%n;pending--;queued[i]=0;
+    }
+    if(!pending){if(rebuild)relabel(limit===Infinity?Infinity:Math.max(1,limit*8));else ready=true;}
+    return used;
+  }
+  clear();
+  return {known,open,parent,stats,neighbor,edge,invalidate,clear,pump,flush(){while(!ready)pump(Infinity);},component(i){return ready?root(i):-1;},get ready(){return ready;},get pending(){return pending+(rebuild?(phase===2?n:2*n)-cursor:0);}};
+}
+
   const HP=[3,5,4,30], HEIGHT=[1.35,1.05,1.6,1.8], ATTACKS=['idle','aim','burst','rush','recover','stunned'];
   const AIR=['airborne','airVX','airVY','airVZ','airTime','padCooldown','padId'];
   const pipeNozzle=q=>{const v=[q.dx??0,q.dy??1,q.dz??0],n=Math.hypot(...v)||1;return [q.x+v[0]/n*.46,q.y+v[1]/n*.46,q.z+v[2]/n*.46];};
@@ -280,9 +336,17 @@
     let solids=destruction?.colliders||world.colliders;
     const b=world.bounds,trapBoxes=[];let bossAttackSerial=0,explosionSerial=0,projectileSerial=0,rubbleSerial=0,terrainDirty=false,seenDestructionToken=destruction?.delta().token;
     const doorBoxes=s.doors.map(d=>({minX:d.x-d.w/2,maxX:d.x+d.w/2,minZ:d.z-d.d/2,maxZ:d.z+d.d/2,minY:0,maxY:0}));
-    let navDirty=false,routeBudget=Infinity,routeSearches=0,routeDeferred=0;
+    let navDirty=false,routeBudget=Infinity,routeWork=Infinity,routeSearches=0,routeDeferred=0,navEpoch=0;const failedRoutes=new Map(),approachRoutes=new Map(),entryComponents=new Map(),DEFER=false;let spawnRays=0,stepEventStart=0;const attackTokens=new Set();
     // Local nav invalidation (SIM-01): [minX,maxX,minZ,maxZ] of what changed since the last refresh.
     const navRects=[],noTraps=[];
+    const navigationTraps=[];
+    function trapFootprint(t){
+      if(t.kind!=='blade'&&t.kind!=='press')return null;
+      const q={minX:t.x-t.w/2,maxX:t.x+t.w/2,minY:t.y,maxY:t.y+(t.h||.3),minZ:t.z-t.d/2,maxZ:t.z+t.d/2};
+      if(t.kind==='press')q.maxY+=t.travel||2.6;else{const axis=t.axis==='z'?'Z':'X',travel=t.travel||1.65;q['min'+axis]-=travel;q['max'+axis]+=travel;}return q;
+    }
+    function indexNavigationTraps(){navigationTraps.length=0;for(const t of s.traps)if(!t.destroyed){const q=trapFootprint(t);if(q)navigationTraps.push(q);}}
+    indexNavigationTraps();
     function navMark(q){if(advanced&&q)navRects.push(q.minX,q.maxX,q.minZ,q.maxZ);}
     function updateDoorBoxes(doors=s.doors){
       // Mutated in place: any vertical move (progression, opening, destruction) marks the door.
@@ -342,7 +406,7 @@
         navDirty=true;
       }
       for(const m of s.mechanisms)if(!destruction.isAlive(m.destructibleId)){m.shellHp=0;activateMechanism(m,true);}
-      for(const t of s.traps)if(!destruction.isAlive(t.destructibleId)){t.hp=0;t.destroyed=true;t.box=null;t.hot=t.warning=false;}
+      for(const t of s.traps)if(!destruction.isAlive(t.destructibleId)){if(!t.destroyed){navMark(trapFootprint(t));navDirty=true;}t.hp=0;t.destroyed=true;t.box=null;t.hot=t.warning=false;}
       for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}
     }
     let fingerprint=2166136261;
@@ -809,10 +873,18 @@
     }
     function sight(ax,az,bx,bz,ay=groundAt(ax,az)+1.2,by=groundAt(bx,bz)+1.2){const dx=bx-ax,dz=bz-az,dy=by-ay,l=Math.hypot(dx,dy,dz);return l<.01||ray([ax,ay,az],[dx/l,dy/l,dz/l],l)>=l-.02;}
     const cell=.8,nx=Math.ceil((b.maxX-b.minX)/cell)+1,nz=Math.ceil((b.maxZ-b.minZ)/cell)+1;
-    const nav=new Uint8Array(nx*nz),dist=new Int16Array(nx*nz),queue=new Int32Array(nx*nz);
+    const nav=new Uint8Array(nx*nz),navY=new Float64Array(nx*nz),navSub=new Uint8Array(nx*nz),navRegion=new Uint8Array(nx*nz),dist=new Int16Array(nx*nz),queue=new Int32Array(nx*nz);
     const coord=i=>[b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell];
     const idx=(x,z)=>clamp(Math.round((z-b.minZ)/cell),0,nz-1)*nx+clamp(Math.round((x-b.minX)/cell),0,nx-1);
-    for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;}navRects.length=0;
+    function realFloor(x,z){
+      if(!floors.length)return true;
+      const gx=Math.floor(x/8)-floorGX,gz=Math.floor(z/8)-floorGZ,local=gx>=0&&gx<floorGW&&gz>=0&&gz<floorGD?floorBuckets[gz*floorGW+gx]:floors;
+      for(const f of local)if(!f.substrate&&!f.fallback&&Math.abs(x-f.x)<=f.w/2+1e-7&&Math.abs(z-f.z)<=f.d/2+1e-7)return true;return false;
+    }
+    for(let i=0;i<nav.length;i++){const [x,z]=coord(i);navSub[i]=realFloor(x,z)?0:1;}
+    for(let i=0;i<nav.length;i++)if(!navSub[i]){const x=i%nx,z=Math.floor(i/nx);for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++)if(x+dx>=0&&x+dx<nx&&z+dz>=0&&z+dz<nz)navRegion[(z+dz)*nx+x+dx]=1;}
+    function updateNavCell(i){const x=b.minX+(i%nx)*cell,z=b.minZ+Math.floor(i/nx)*cell;navY[i]=ground(x,z,noTraps);nav[i]=navRegion[i]&&!blocked(x,z,.4,navY[i],doorBoxes,solids,navigationTraps)?1:0;}
+    for(let i=0;i<nav.length;i++)updateNavCell(i);navRects.length=0;
     function rebuildNav(){
       dist.fill(-1);let start=idx(p.x,p.z);
       if(!nav[start]){let best=Infinity;for(let i=0;i<nav.length;i++)if(nav[i]){const [x,z]=coord(i),d=(x-p.x)**2+(z-p.z)**2;if(d<best){best=d;start=i;}}}
@@ -977,7 +1049,7 @@
       e.hasMemory=false;e.active=false;e.seen=false;e.memory=0;e.alert=0;e.awareness='patrol';e.windup=e.burstLeft=e.rushTime=0;e.dodgeTime=e.dodgeDelay=0;e.attackState='idle';e.path=[];e.pathAt=0;e.goalX=e.x;e.goalZ=e.z;e.planWait=0;
       if(bossProgression)e.entryGrace=0;
     }
-    function safeEntry(e,entry,encounter){
+    function safeEntry(e,entry,encounter,budgeted=false){
       const y=entry.y??ground(entry.x,entry.z),r=radius(e);
       if(Math.hypot(entry.x-p.x,entry.z-p.z)<10||!Number.isFinite(y)||Math.abs(ground(entry.x,entry.z)-y)>.08||blocked(entry.x,entry.z,r,y)||actorBlocked(e,entry.x,entry.z,r,y))return false;
       if(s.enemies.some(a=>a!==e&&alive(a)&&Math.abs(a.baseY-y)<2.2&&Math.hypot(a.x-entry.x,a.z-entry.z)<radius(a)+r+.55))return false;
@@ -987,17 +1059,20 @@
       const yaw=Math.atan2(encounter.trigger.x-entry.x,entry.z-encounter.trigger.z),sn=Math.sin(yaw),cs=Math.cos(yaw),samples=[[0,0],[-.9,0],[.9,0],[0,-.9],[0,.9],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65]];
       if(e.type===1&&barrel({...e,x:entry.x,z:entry.z,baseY:y,yaw},encounter.trigger.x,(encounter.trigger.y||0)+1.45,encounter.trigger.z).blocked)return false;
       if(e.type===1)samples.push([sn*1.5, -cs*1.5]);
-      for(const h of [.2,1.1,2.15])for(const [dx,dz] of samples){
+      for(const h of [1.1,.2,2.15])for(const [dx,dz] of samples){
+        if(budgeted){if(spawnRays>=64)return false;spawnRays++;}
         const delta=[entry.x+dx-origin[0],y+h-origin[1],entry.z+dz-origin[2]],d=Math.hypot(...delta);
         if(ray(origin,delta.map(v=>v/d),d)>=d-.06)return false;
       }
       return true;
     }
     // SIM-06: counts in one pass per encounter, no flatMap/filter arrays.
+    const encounterIds=new WeakMap();
+    function idsFor(q){let ids=encounterIds.get(q);if(!ids){ids=Int32Array.from(q.waves.flatMap(w=>w.enemyIds));encounterIds.set(q,ids);}return ids;}
     function encounterCounts(){
       for(const q of s.encounters){
         let total=0,remaining=0,activeCount=0;
-        for(const w of q.waves)for(const id of w.enemyIds){const e=s.enemies[id];total++;if(e.hp>0)remaining++;if(alive(e)&&e.combatEnabled)activeCount++;}
+        for(const id of idsFor(q)){const e=s.enemies[id];total++;if(e.hp>0)remaining++;if(alive(e)&&e.combatEnabled)activeCount++;}
         q.total=total;q.remaining=remaining;q.active=activeCount;
       }
       let reserveCount=0,combatCount=0;
@@ -1012,7 +1087,7 @@
         encounterWait=.2;let probes=8;
         for(const q of s.encounters){
           if(campaign&&q.requiresTrophy&&trophyState(q.requiresTrophy)?.phase!=='trial')continue;
-          let remainingCount=0;for(const w of q.waves)for(const id of w.enemyIds)if(s.enemies[id].hp>0)remainingCount++;
+          let remainingCount=0;for(const id of idsFor(q))if(s.enemies[id].hp>0)remainingCount++;
           if(!remainingCount){if(q.status!=='cleared'){q.status='cleared';q.pendingWave=-1;q.timer=0;emit('encounterClear',{id:q.id,label:q.label||'Zone sécurisée'});}continue;}
           if(q.status==='dormant'&&inEncounter(q))announceWave(q,0);
           if(q.status==='active'&&q.wave>=0&&q.waves[q.wave].enemyIds.every(id=>s.enemies[id].hp<=0)&&q.wave+1<q.waves.length&&inEncounter(q,8))announceWave(q,q.wave+1);
@@ -1036,8 +1111,17 @@
             if(!present(e)){
               let entry=null;const entries=q.spawnEntries||[];
               for(let i=0;i<entries.length&&probes>0;i++){
-                probes--;const candidate=entries[(e.id+i+(bossProgression?Math.floor(s.time*5+.0001):0))%entries.length];if(!safeEntry(e,candidate,q))continue;
-                if(bossProgression&&q.naturalEntries){approachPath=route({...e,x:candidate.x,z:candidate.z},q.trigger.x,q.trigger.z);if(approachPath===null)continue;}
+                probes--;const entryIndex=(e.id+i+(bossProgression?Math.floor(s.time*5+.0001):0))%entries.length,candidate=entries[entryIndex],key=q.id+':'+entryIndex+':'+radius(e);
+                if(bossProgression&&q.naturalEntries&&graph.ready){
+                  if(!entryComponents.has(key))entryComponents.set(key,connected(candidate.x,candidate.z,q.trigger.x,q.trigger.z,radius(e)));
+                  if(entryComponents.get(key)===false)continue;
+                }
+                if(!safeEntry(e,candidate,q,true)){if(spawnRays>=64){probes=0;break;}continue;}
+                if(bossProgression&&q.naturalEntries){
+                  approachPath=approachRoutes.has(key)?approachRoutes.get(key):route({...e,x:candidate.x,z:candidate.z},q.trigger.x,q.trigger.z);
+                  if(approachPath===DEFER){approachPath=null;probes=0;break;}if(approachPath===null)continue;
+                  if(graph.ready)approachRoutes.set(key,approachPath);approachPath=approachPath.slice();
+                }
                 entry=candidate;break;
               }
               if(!entry)continue;
@@ -1084,7 +1168,13 @@
     }
     function returnToPost(e,dt){
       const q=enemyEncounter.get(e.id);if(!q||!e.returning)return;
-      const home=world.enemies[e.id];if(e.planWait<=0){if(!setGoal(e,home.x,home.z,'advance',2.4)){e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;e.planWait=.4;}}
+      const home=world.enemies[e.id];if(e.planWait<=0){
+        if(connected(e.x,e.z,home.x,home.z,radius(e))===false){
+          const back=s.jumpPads.find(pad=>connected(e.x,e.z,pad.x,pad.z,radius(e))===true&&connected(pad.target.x,pad.target.z,home.x,home.z,radius(e))===true);
+          if(back){goal(e,back.x,back.z,'advance',2.4);navigate(e,dt);return;}
+          e.returning=false;clearEvidence(e);e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;return;
+        }
+        if(!goal(e,home.x,home.z,'advance',2.4)){e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;e.planWait=.4;}}
       navigate(e,dt);if(Math.hypot(e.x-home.x,e.z-home.z)<.5){e.returning=false;clearEvidence(e);}
     }
     const introSafe=()=>campaign&&s.campaign.trophies.some(t=>t.phase==='grace'&&t.timer>0)||horror&&s.director.grace>0&&Math.hypot(p.x-world.spawn.x,p.z-world.spawn.z)<14;
@@ -1134,7 +1224,7 @@
         if(giant(e)){s.bossAttacks=s.bossAttacks.filter(a=>a.bossId!==e.id);e.weakPointOpen=false;e.weakTimer=0;emit('bossDeath',{id:e.id,x:e.x,y:e.y,z:e.z,scale:scale(e)});for(let i=0;i<12;i++){const angle=i*2.399963,size=scale(e),id=++explosionSerial;s.explosions.push({id,kind:'boss',owner:e.id,x:e.x+Math.cos(angle)*size*.5,y:e.baseY+size*(.35+i*.23),z:e.z+Math.sin(angle)*size*.5,age:-i*.09,life:2.8,radius:size*.56,power:55,seed:id*911});}if(s.explosions.length>24)s.explosions.splice(0,s.explosions.length-24);}
         s.kills++;dropLoot(e);if(origin.credit){s.combo++;s.comboTime=4;}
         const multiplier=1+Math.min(4,s.combo-1)*.25,points=Math.round([100,150,125,2000][e.type]*multiplier);
-        if(origin.credit){s.score+=points;awardProfile(e.type===3?100:10,origin.profile);}emit('kill',{kind:e.type,boss:e.type===3,points:origin.credit?points:0,credited:!!origin.credit});particles(e.x,e.y,e.z,6,e.type===3?32:18);
+        if(origin.credit){s.score+=points;awardProfile(e.type===3?100:10,origin.profile);}emit('kill',{id:e.id,x:e.x,y:e.y,z:e.z,kind:e.type,boss:e.type===3,points:origin.credit?points:0,credited:!!origin.credit});particles(e.x,e.y,e.z,6,e.type===3?32:18);
         if(origin.credit&&s.combo>1)emit('combo',{count:s.combo,multiplier});
         if(e.type===3)s.bossAlive=s.enemies.some(q=>q.type===3&&q.hp>0);
       }else bossPhase(e);
@@ -1241,7 +1331,7 @@
       for(const t of s.traps){
         if(t.destroyed)continue;const q=t.box||{minX:t.x-t.w/2,maxX:t.x+t.w/2,minY:t.y,maxY:t.y+.3,minZ:t.z-t.d/2,maxZ:t.z+t.d/2};
         const d=distanceBox(point,q);if(d>(r||.18))continue;t.hp=Math.max(r?0:1,(t.hp??18)-power*(r?Math.max(.2,1-d/r):1));
-        if(!t.hp){t.destroyed=true;t.hot=t.warning=false;t.box=null;emit('trap',{id:t.id,kind:t.kind,destroyed:true,x:t.x,y:t.y,z:t.z});}
+        if(!t.hp){navMark(trapFootprint(t));navDirty=true;t.destroyed=true;t.hot=t.warning=false;t.box=null;emit('trap',{id:t.id,kind:t.kind,destroyed:true,x:t.x,y:t.y,z:t.z});}
       }
     }
     function blastExposure(point,x,y,z){
@@ -1602,6 +1692,7 @@
       return false;
     }
     function projectile(e,angle=0,speed=7,damage=8){
+      if(advanced&&!e.seen)angle=angle*1.6+Math.sin(e.id*17+s.time*13)*.045;
       const muzzle=barrel(e,e.aimX,e.aimY,e.aimZ,angle<0?-1:1);let source=muzzle.point;
       if(!muzzle.blocked&&!clearLane(e,e.aimX,e.aimY,e.aimZ,source))return;
       const horizontal=Math.hypot(e.aimX-source[0],e.aimZ-source[2]),pitch=Math.atan2(e.aimY-source[1],horizontal||.01),yaw=Math.atan2(e.aimX-source[0],source[2]-e.aimZ)+angle;
@@ -1620,7 +1711,7 @@
       if(!e.burstLeft)e.attackState='recover';
     }
     function attack(e){
-      e.attackState='recover';e.cooldown=([2.05,2.9,2.65,e.phase?2.15:2.85][e.type]-.08*(world.stage||0))*enemyCadence();
+      e.attackState='recover';e.cooldown=([2.05,2.9,2.65,e.phase?2.15:2.85][e.type]-.08*(world.stage||0))*enemyCadence()*(advanced&&!e.seen?1/.6:1);
       if(hasOrdnance(e)){enemyOrdnance(e);return;}
       if(e.type===0)projectile(e,0,7.2,8);
       else if(e.type===1){
@@ -1710,17 +1801,30 @@
       return true;
     }
     function radius(e){return giant(e)?1.5*scale(e):e.type===3?1.05:.38;}
-    function segmentFree(ax,az,bx,bz,r=.4){
+    const segmentBoxes=[],segmentSeen=new WeakMap();let segmentSerial=0;
+    function segmentCandidates(minX,maxX,minZ,maxZ){
+      // Out-of-bounds solids retain the full conservative fallback.
+      if(minX<b.minX||maxX>b.maxX||minZ<b.minZ||maxZ>b.maxZ)return solids;
+      segmentBoxes.length=0;const stamp=++segmentSerial;
+      const x0=Math.max(0,Math.floor(minX/bucketSize)-bucketX),x1=Math.min(bucketWidth-1,Math.floor(maxX/bucketSize)-bucketX);
+      const z0=Math.max(0,Math.floor(minZ/bucketSize)-bucketZ),z1=Math.min(bucketDepth-1,Math.floor(maxZ/bucketSize)-bucketZ);
+      if((x1-x0+1)*(z1-z0+1)>16)return solids;
+      for(let iz=z0;iz<=z1;iz++)for(let ix=x0;ix<=x1;ix++){
+        const list=collisionBuckets[iz*bucketWidth+ix];for(let i=0;i<list.length;i++){const q=list[i];if(segmentSeen.get(q)===stamp)continue;segmentSeen.set(q,stamp);segmentBoxes.push(q);}
+      }
+      return segmentBoxes;
+    }
+    function segmentFree(ax,az,bx,bz,r=.4,ay=ground(ax,az,noTraps),by=ground(bx,bz,noTraps)){
       // Static map only, like the walking cells (SIM-V1): trap poses never enter routes or the
       // edge cache; traps still block bodies in move() and still hurt.
-      if(blocked(ax,az,r,ground(ax,az),doorBoxes,solids,noTraps)||blocked(bx,bz,r,ground(bx,bz),doorBoxes,solids,noTraps))return false;
-      const dx=bx-ax,dz=bz-az,ay=groundAt(ax,az),by=groundAt(bx,bz),lowY=Math.min(ay,by),highY=Math.max(ay,by),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
+      if(blocked(ax,az,r,ay,doorBoxes,solids,navigationTraps)||blocked(bx,bz,r,by,doorBoxes,solids,navigationTraps))return false;
+      const dx=bx-ax,dz=bz-az,lowY=Math.min(ay,by),highY=Math.max(ay,by),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
       // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
       const short=Math.max(Math.abs(dx),Math.abs(dz))/2+r<=bucketRadius;
-      const local=short?collisionBuckets[(Math.floor((az+bz)/2/bucketSize)-bucketZ)*bucketWidth+Math.floor((ax+bx)/2/bucketSize)-bucketX]||solids:solids;
+      const local=short?collisionBuckets[(Math.floor((az+bz)/2/bucketSize)-bucketZ)*bucketWidth+Math.floor((ax+bx)/2/bucketSize)-bucketX]||solids:segmentCandidates(minX,maxX,minZ,maxZ);
       // SIM-09: the two lists and the two slab axes are unrolled; no array per call.
-      for(let pass=0;pass<2;pass++){
-        const list=pass?doorBoxes:local;
+      for(let pass=0;pass<3;pass++){
+        const list=pass===2?navigationTraps:pass?doorBoxes:local;
         for(let i=0;i<list.length;i++){
           const q=list[i];
           if(q.maxY<=lowY+.06||q.minY>=highY+1.8)continue;
@@ -1742,18 +1846,29 @@
       if(floors.length){
         const count=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.3));let previous=ay;
         for(let j=1;j<=count;j++){
-          const x=ax+dx*j/count,z=az+dz*j/count,y=ground(x,z);
-          if(!Number.isFinite(y)||Math.abs(y-previous)>.42||blocked(x,z,r,y,doorBoxes,solids,noTraps))return false;
+          const x=ax+dx*j/count,z=az+dz*j/count,y=ground(x,z,noTraps);
+          if(!Number.isFinite(y)||Math.abs(y-previous)>.42||blocked(x,z,r,y,doorBoxes,solids,navigationTraps))return false;
           previous=y;
         }
       }
       return true;
     }
     const routeCost=new Float64Array(nav.length),routePrev=new Int32Array(nav.length),routeStamp=new Uint32Array(nav.length),routeClosed=new Uint32Array(nav.length);
-    const edgeKnown=new Uint8Array(nav.length),edgeOpen=new Uint8Array(nav.length),navQueued=new Uint8Array(nav.length),navQueue=new Int32Array(nav.length);let routeSerial=0,navHead=0,navTail=0,navPending=0;
+    function edgeTest(i,j){
+      // Adjacent grid edges are axis-aligned. Their body sweep is the exact
+      // expanded box interval; endpoints were already validated by updateNavCell.
+      if(!nav[i]||!nav[j])return false;
+      const ax=b.minX+(i%nx)*cell,az=b.minZ+Math.floor(i/nx)*cell,bx=b.minX+(j%nx)*cell,bz=b.minZ+Math.floor(j/nx)*cell;
+      const ay=navY[i],by=navY[j],low=Math.min(ay,by),high=Math.max(ay,by),minX=Math.min(ax,bx),maxX=Math.max(ax,bx),minZ=Math.min(az,bz),maxZ=Math.max(az,bz);
+      const local=collisionBuckets[(Math.floor((az+bz)/2/bucketSize)-bucketZ)*bucketWidth+Math.floor((ax+bx)/2/bucketSize)-bucketX]||solids;
+      for(let pass=0;pass<3;pass++){const list=pass===2?navigationTraps:pass?doorBoxes:local;for(let k=0;k<list.length;k++){const q=list[k];if(q.maxY<=low+.06||q.minY>=high+1.8)continue;if(q.minX-.4<=maxX&&q.maxX+.4>=minX&&q.minZ-.4<=maxZ&&q.maxZ+.4>=minZ)return false;}}
+      if(floors.length){let previous=ay;for(let k=1;k<=3;k++){const x=ax+(bx-ax)*k/3,z=az+(bz-az)*k/3,y=ground(x,z,noTraps);if(!Number.isFinite(y)||Math.abs(y-previous)>.42||(y<low||y>high)&&blocked(x,z,.4,y,doorBoxes,solids,navigationTraps))return false;previous=y;}}
+      return true;
+    }
+    const graph=navigationGraph(nav,nx,edgeTest),edgeKnown=graph.known,edgeOpen=graph.open,navQueued=new Uint8Array(nav.length),navQueue=new Int32Array(nav.length);let routeSerial=0,navHead=0,navTail=0,navPending=0;
     function pumpNav(limit=768){
-      let work=0;while(navPending&&work<limit){const i=navQueue[navHead];navHead=(navHead+1)%nav.length;navPending--;navQueued[i]=0;const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;work++;}
-      s.aiStats.navUpdates=work;s.aiStats.navPending=navPending;
+      let work=0;while(navPending&&work<limit){const i=navQueue[navHead];navHead=(navHead+1)%nav.length;navPending--;navQueued[i]=0;updateNavCell(i);graph.invalidate(i);work++;}
+      if(!navPending)graph.pump(limit===Infinity?Infinity:96);s.aiStats.navUpdates=work;s.aiStats.navPending=navPending+graph.pending;
     }
     function navEnqueue(i){if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}}
     const navWindow=new Int32Array(4);
@@ -1783,14 +1898,15 @@
       // Colliders/rays change at once; the advisory grid follows through the amortised queue.
       // One metre covers the largest agent; one extra cell covers cached edges.
       // Past a quarter of the grid (BOSS-08), all is redone.
+      if(!navRects.length)return;indexNavigationTraps();navEpoch++;failedRoutes.clear();approachRoutes.clear();entryComponents.clear();
       let reach=0;for(let k=0;k<navRects.length&&reach*4<=nav.length;k+=4)reach+=navReach(k);
       const global=reach*4>nav.length;
-      if(global){for(let i=0;i<nav.length;i++)navEnqueue(i);edgeKnown.fill(0);edgeOpen.fill(0);}
+      if(global){for(let i=0;i<nav.length;i++)if(navRegion[i])navEnqueue(i);graph.clear();}
       else for(let k=0;k<navRects.length;k+=4){
         const ax=navRects[k]-1-1e-6,bx=navRects[k+1]+1+1e-6,az=navRects[k+2]-1-1e-6,bz=navRects[k+3]+1+1e-6;navReach(k);
         for(let iz=navWindow[2];iz<=navWindow[3];iz++)for(let ix=navWindow[0];ix<=navWindow[1];ix++){
-          const i=iz*nx+ix,x=b.minX+ix*cell,z=b.minZ+iz*cell;edgeKnown[i]=0;edgeOpen[i]=0;
-          if(x>=ax&&x<=bx&&z>=az&&z<=bz)navEnqueue(i);
+          const i=iz*nx+ix,x=b.minX+ix*cell,z=b.minZ+iz*cell;graph.invalidate(i);
+          if(navRegion[i]&&x>=ax&&x<=bx&&z>=az&&z<=bz)navEnqueue(i);
         }
       }
       if(resetPaths)for(const e of s.enemies){
@@ -1802,45 +1918,61 @@
     function refreshNav(reset=true){
       // Gameplay changes re-plan only intersecting routes; restore and simple worlds rebuild at once.
       if(advanced&&reset)navInvalidate(true);
-      else{navRects.length=0;navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;}edgeKnown.fill(0);edgeOpen.fill(0);}
+      else{indexNavigationTraps();navEpoch++;failedRoutes.clear();approachRoutes.clear();entryComponents.clear();navRects.length=0;navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++)updateNavCell(i);graph.clear();graph.flush();s.aiStats.navPending=0;}
       if(reset&&!advanced)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
       if(!advanced)rebuildNav();
     }
+    const nearJ=new Int32Array(49),nearD=new Float64Array(49);
     function nearestNode(x,z,r){
-      const center=idx(x,z),cx=center%nx,cz=Math.floor(center/nx);let best=-1,distance=Infinity;
+      // Same answer as the row-major scan (minimum distance, first row-major on ties),
+      // but the expensive sweep runs in increasing distance and stops at the first success.
+      const center=idx(x,z),cx=center%nx,cz=Math.floor(center/nx);let n=0;
       for(let dz=-3;dz<=3;dz++)for(let dx=-3;dx<=3;dx++){
         const ix=cx+dx,iz=cz+dz;if(ix<0||ix>=nx||iz<0||iz>=nz)continue;
         const j=iz*nx+ix;if(!nav[j])continue;
         const [px,pz]=coord(j),d=(px-x)**2+(pz-z)**2;
-        if(d<distance&&segmentFree(x,z,px,pz,r)){best=j;distance=d;}
+        let at=n++;while(at>0&&nearD[at-1]>d){nearD[at]=nearD[at-1];nearJ[at]=nearJ[at-1];at--;}nearD[at]=d;nearJ[at]=j;
       }
-      return best;
+      for(let k=0;k<n;k++){const [px,pz]=coord(nearJ[k]);if(segmentFree(x,z,px,pz,r))return nearJ[k];}
+      return -1;
     }
-    function route(e,x,z){
+    function componentAt(x,z,r=.4){const i=nearestNode(x,z,r);return i<0?-1:graph.component(i);}
+    function connected(ax,az,bx,bz,r=.4){if(!graph.ready||navPending)return null;const a=componentAt(ax,az,r),b=componentAt(bx,bz,r);return a>=0&&a===b;}
+    function usefulPad(e,pad,tx,tz){
+      if(!graph.ready)return true;const target=componentAt(tx,tz),landing=componentAt(pad.target.x,pad.target.z);if(target>=0&&landing===target)return true;
+      const start=componentAt(e.x,e.z);return s.jumpPads.some(back=>back!==pad&&componentAt(back.x,back.z)===landing&&componentAt(back.target.x,back.target.z)===start);
+    }
+    const heapNode=new Int32Array(9608),heapKey=new Float64Array(9608);let hn=0;
+    function hpush(i,cost){let at=hn++;while(at){const parent=(at-1)>>1;if(heapKey[parent]<=cost)break;heapNode[at]=heapNode[parent];heapKey[at]=heapKey[parent];at=parent;}heapNode[at]=i;heapKey[at]=cost;}
+    function hpop(){const value=heapNode[0];hn--;if(hn){const lastN=heapNode[hn],lastK=heapKey[hn];let at=0;while(at*2+1<hn){let child=at*2+1;if(child+1<hn&&heapKey[child+1]<heapKey[child])child++;if(heapKey[child]>=lastK)break;heapNode[at]=heapNode[child];heapKey[at]=heapKey[child];at=child;}heapNode[at]=lastN;heapKey[at]=lastK;}return value;}
+    function route(e,x,z,local=false){
       const r=radius(e);
-      if(blocked(x,z,r))return null;
+      if(blocked(x,z,r,ground(x,z,noTraps),doorBoxes,solids,navigationTraps))return null;
       if(segmentFree(e.x,e.z,x,z,r))return [];
-      if(routeBudget<=0){routeDeferred++;return null;}routeBudget--;routeSearches++;
+      if(navPending){routeDeferred++;return DEFER;}
       const start=nearestNode(e.x,e.z,r),end=nearestNode(x,z,r);if(start<0||end<0)return null;
-      const stamp=++routeSerial,heap=[];
+      if(graph.ready&&graph.component(start)!==graph.component(end))return null;
+      if(routeBudget<=0||routeWork<=0){routeDeferred++;return DEFER;}routeBudget--;routeSearches++;
+      const failureKey=start+':'+end+':'+r;if(graph.ready&&failedRoutes.has(failureKey))return null;
+      const stamp=++routeSerial;hn=0;
       const heuristic=i=>Math.abs(i%nx-end%nx)+Math.abs(Math.floor(i/nx)-Math.floor(end/nx));
-      function push(i,cost){let at=heap.length;heap.push([i,cost]);while(at){const parent=(at-1)>>1;if(heap[parent][1]<=cost)break;heap[at]=heap[parent];at=parent;}heap[at]=[i,cost];}
-      function pop(){const value=heap[0],last=heap.pop();if(heap.length){let at=0;while(at*2+1<heap.length){let child=at*2+1;if(child+1<heap.length&&heap[child+1][1]<heap[child][1])child++;if(heap[child][1]>=last[1])break;heap[at]=heap[child];at=child;}heap[at]=last;}return value[0];}
-      routeStamp[start]=stamp;routeCost[start]=0;routePrev[start]=-1;push(start,heuristic(start));
-      let explored=0,found=false;
-      while(heap.length&&explored++<2400){
-        const i=pop();if(routeClosed[i]===stamp)continue;routeClosed[i]=stamp;if(i===end){found=true;break;}
-        const ix=i%nx,neighbors=[ix?i-1:-1,ix<nx-1?i+1:-1,i-nx,i+nx];
+      routeStamp[start]=stamp;routeCost[start]=0;routePrev[start]=-1;hpush(start,heuristic(start));
+      let explored=0,found=false;const maxNodes=local?Math.min(2400,64+8*heuristic(start)):2400;
+      while(hn&&explored++<maxNodes){
+        if(routeWork<=0){routeDeferred++;return DEFER;}routeWork--;
+        const i=hpop();if(routeClosed[i]===stamp)continue;routeClosed[i]=stamp;if(i===end){found=true;break;}
+        const ix=i%nx;
         for(let k=0;k<4;k++){
-          const j=neighbors[k];if(j<0||j>=nav.length||!nav[j]||routeClosed[j]===stamp)continue;
+          const j=k===0?(ix?i-1:-1):k===1?(ix<nx-1?i+1:-1):k===2?i-nx:i+nx;if(j<0||j>=nav.length||!nav[j]||routeClosed[j]===stamp)continue;
           const mask=1<<k;
-          if(!(edgeKnown[i]&mask)){edgeKnown[i]|=mask;if(segmentFree(...coord(i),...coord(j),.4))edgeOpen[i]|=mask;}
-          if(!(edgeOpen[i]&mask)||r>.4&&!segmentFree(...coord(i),...coord(j),r))continue;
+          if(!(edgeKnown[i]&mask)){routeWork-=8;graph.edge(i,k);}
+          if(!(edgeOpen[i]&mask))continue;
+          if(r>.4){routeWork-=8;if(!segmentFree(...coord(i),...coord(j),r))continue;}
           const cost=routeCost[i]+1;if(routeStamp[j]===stamp&&routeCost[j]<=cost)continue;
-          routeStamp[j]=stamp;routeCost[j]=cost;routePrev[j]=i;push(j,cost+heuristic(j));
+          routeStamp[j]=stamp;routeCost[j]=cost;routePrev[j]=i;hpush(j,cost+heuristic(j));
         }
       }
-      if(!found)return null;
+      if(!found){if(!hn&&graph.ready){if(failedRoutes.size>=4096)failedRoutes.clear();failedRoutes.set(failureKey,navEpoch);}return null;}
       const raw=[];for(let i=end;i>=0;i=routePrev[i])raw.push(i);raw.reverse();
       // String-pull this bounded local route once, rather than trace many rays every frame.
       const result=[];let ax=e.x,az=e.z,at=0;
@@ -1851,8 +1983,31 @@
     function setGoal(e,x,z,tactic,commit=0){
       const encounter=progression&&enemyEncounter.get(e.id);
       if(encounter&&!e.returning){const t=encounter.trigger,dx=x-t.x,dz=z-t.z,d=Math.hypot(dx,dz),limit=encounter.leashRadius||38;if(d>limit){x=t.x+dx/d*limit;z=t.z+dz/d*limit;}}
-      const path=route(e,x,z);if(!path)return false;
+      if(navSub[idx(x,z)]&&!navSub[idx(e.x,e.z)]){const tx=e.hasMemory?e.lastSeenX:e.x,tz=e.hasMemory?e.lastSeenZ:e.z,dx=tx-x,dz=tz-z,d=Math.hypot(dx,dz);if(d)for(let n=0;n<16&&navSub[idx(x,z)];n++){const step=Math.min(.8,Math.hypot(tx-x,tz-z));x+=dx/d*step;z+=dz/d*step;}if(navSub[idx(x,z)])return null;}
+      const local=tactic==='cover'||tactic==='flank';if(local&&Math.abs(ground(x,z,noTraps)-e.baseY)>.6)return null;
+      const path=route(e,x,z,local);if(path===DEFER){e.thinkWait=Math.min(e.thinkWait,.1);return DEFER;}if(path===null)return null;
       e.goalX=x;e.goalZ=z;e.path=path;e.pathAt=0;e.tactic=tactic;e.planWait=commit;e.stuck=0;return true;
+    }
+    function proxyGoal(e,tx,tz){
+      if(!graph.ready||!e.hasMemory)return false;const own=componentAt(e.x,e.z,radius(e));if(own<0||connected(e.x,e.z,tx,tz,radius(e))!==false)return false;
+      const center=idx(tx,tz),cx=center%nx,cz=Math.floor(center/nx),best=[];
+      for(let dz=-14;dz<=14;dz++)for(let dx=-14;dx<=14;dx++){
+        const ix=cx+dx,iz=cz+dz;if(ix<0||ix>=nx||iz<0||iz>=nz)continue;const i=iz*nx+ix;if(navSub[i]||!nav[i]||graph.component(i)!==own)continue;
+        const [x,z]=coord(i),score=Math.hypot(x-tx,z-tz)+(Math.abs(navY[i]-e.baseY)>1.5?4:0);let at=best.length;while(at&&best[at-1].score>score)at--;best.splice(at,0,{i,x,z,score});if(best.length>6)best.pop();
+      }
+      for(const q of best)if(sight(q.x,q.z,e.lastSeenX,e.lastSeenZ,navY[q.i]+HEIGHT[e.type],e.lastSeenY))q.score-=3;
+      best.sort((a,b)=>a.score-b.score||a.i-b.i);for(const q of best){const result=setGoal(e,q.x,q.z,'advance',1.5);if(result!==null)return true;}return false;
+    }
+    function goal(e,x,z,tactic,commit=0){const result=setGoal(e,x,z,tactic,commit);return result!==null||tactic==='advance'&&proxyGoal(e,x,z);}
+    function flankSide(e){if(!e.seen)return e.squad%2?-1:1;const cross=Math.sin(p.yaw)*(e.z-p.z)+Math.cos(p.yaw)*(e.x-p.x);return (Math.sign(cross)||1)*(e.id%2?-1:1);}
+    function assignAttackTokens(){
+      attackTokens.clear();if(!advanced)return;const limit=2+s.difficulty,candidates=[];
+      for(const e of s.enemies)if(alive(e)&&!giant(e)&&(!progression||e.combatEnabled)&&!e.sleeping){
+        if(e.windup>0||e.burstLeft>0||e.rushTime>0)attackTokens.add(e.id);
+        else if(e.hasMemory&&(e.seen||s.time-e.observedAt<1.2||e.weapon==='grenade'&&s.time-e.observedAt<4))candidates.push(e);
+      }
+      candidates.sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z)||a.id-b.id);
+      for(const e of candidates){if(attackTokens.size>=limit)break;attackTokens.add(e.id);}s.aiStats.attackTokens=attackTokens.size;
     }
     function reached(e){return Math.hypot(e.goalX-e.x,e.goalZ-e.z)<.16;}
     function protects(e,x,z){
@@ -1867,26 +2022,24 @@
         if(Math.hypot(x-e.x,z-e.z)>10)continue;
         for(const [cx,cz] of [[q.minX-r,z],[q.maxX+r,z],[x,q.minZ-r],[x,q.maxZ+r]]){
           const d=Math.hypot(cx-e.x,cz-e.z);
-          if(d<.35||d>10||blocked(cx,cz,.4)||Math.hypot(cx-e.lastSeenX,cz-e.lastSeenZ)<3||sight(e.lastSeenX,e.lastSeenZ,cx,cz,e.lastSeenY,groundAt(cx,cz)+HEIGHT[e.type])||!protects(e,cx,cz))continue;
+          if(d<.35||d>10||Math.abs(ground(cx,cz,noTraps)-e.baseY)>.6||blocked(cx,cz,.4)||Math.hypot(cx-e.lastSeenX,cz-e.lastSeenZ)<3)continue;
           const occupied=nearby(cx,cz,12).some(q=>q!==e&&q.hp>0&&q.tactic==='cover'&&Math.hypot(cx-q.goalX,cz-q.goalZ)<1.3);
           choices.push({x:cx,z:cz,score:d+(occupied?8:0)});
         }
       }
       choices.sort((a,b)=>a.score-b.score);
-      for(const q of choices.slice(0,7))if(setGoal(e,q.x,q.z,'cover')){e.holdTime=[1.1,1.25,1.4][e.id%3];return true;}
+      let attempts=0;for(const q of choices){if(sight(e.lastSeenX,e.lastSeenZ,q.x,q.z,e.lastSeenY,groundAt(q.x,q.z)+HEIGHT[e.type])||!protects(e,q.x,q.z))continue;if(attempts++>=7)break;const result=setGoal(e,q.x,q.z,'cover');if(result===DEFER)return true;if(result){e.holdTime=[1.1,1.25,1.4][e.id%3];return true;}}
       return false;
     }
     function peek(e){
-      const choices=[];
       for(const d of [1.2,2.4,3.6])for(let j=0;j<12;j++){
         const angle=j*Math.PI/6,x=e.x+Math.cos(angle)*d,z=e.z+Math.sin(angle)*d;
-        if(blocked(x,z,.4)||Math.hypot(x-e.lastSeenX,z-e.lastSeenZ)<3||!sight(x,z,e.lastSeenX,e.lastSeenZ,groundAt(x,z)+HEIGHT[e.type],e.lastSeenY))continue;
-        choices.push({x,z,d});
+        if(Math.abs(ground(x,z,noTraps)-e.baseY)>.6||blocked(x,z,.4)||Math.hypot(x-e.lastSeenX,z-e.lastSeenZ)<3||!sight(x,z,e.lastSeenX,e.lastSeenZ,groundAt(x,z)+HEIGHT[e.type],e.lastSeenY))continue;
+        const result=setGoal(e,x,z,'flank',2.3);if(result===DEFER)return true;if(result){e.coverWait=4.5;return true;}
       }
-      for(const q of choices)if(setGoal(e,q.x,q.z,'flank',2.3)){e.coverWait=4.5;return true;}
       e.coverWait=2;e.holdTime=0;return false;
     }
-    function invalidateBrain(){brainEpoch++;brainPending=brainReady=null;brainAdvice.clear();brainWait=0;}
+    function invalidateBrain(){brainEpoch++;brainPending=brainReady=null;brainAdvice.clear();brainWait=0;brainCursor=0;}
     function brainEligible(e){return alive(e)&&!e.sleeping&&e.hasMemory&&(!progression||giant(e)||e.combatEnabled)&&(!giant(e)||e.bossAwake)&&(!e.bossWave||e.bossReleased);}
     function brainObservation(e){
       return {id:e.id,x:e.x,z:e.z,hp:e.hp,seen:e.seen,phase:e.phase,lastSeenX:e.lastSeenX,lastSeenY:e.lastSeenY,lastSeenZ:e.lastSeenZ};
@@ -1895,7 +2048,7 @@
       return brain&&!brainDisposed&&q.epoch===brainEpoch&&q.revision===s.destructionRevision&&q.generation===(brain.status?.generation??0)&&s.time-q.time<=.75&&s.time>=q.time&&brainEligible(e)&&e.hp===q.hp&&e.seen===q.seen&&e.phase===q.phase&&Math.hypot(e.x-q.x,e.z-q.z)<3&&Math.hypot(e.lastSeenX-q.lastSeenX,e.lastSeenY-q.lastSeenY,e.lastSeenZ-q.lastSeenZ)<2.1;
     }
     function consumeBrain(){
-      if(!brainReady)return;const {request,result}=brainReady;brainReady=null;if(brainPending===request)brainPending=null;
+      if(!brainReady||s.time+1e-8<brainReady.request.time+.25)return;const {request,result}=brainReady;brainReady=null;if(brainPending===request)brainPending=null;
       if(request.epoch!==brainEpoch||s.dead||s.won||!result||result.count!==request.observations.length||result.scores?.length!==result.count*8){if(brain)s.aiStats.neuralDiscarded++;return;}
       for(let i=0;i<request.observations.length;i++){
         const item={...request.observations[i],epoch:request.epoch,revision:request.revision,generation:request.generation,time:request.time},e=s.enemies[item.id],scores=Array.from(result.scores.slice(i*8,i*8+8));
@@ -1904,7 +2057,7 @@
       }
     }
     function updateBrain(dt){
-      if(!brain||brainDisposed)return;consumeBrain();brainWait=Math.max(0,brainWait-dt);if(brainPending||brainWait>0||s.dead||s.won)return;
+      if(!brain||brainDisposed)return;consumeBrain();if(brainPending&&s.time+1e-8>=brainPending.time+.25){brainPending=brainReady=null;s.aiStats.neuralDiscarded++;}brainWait=Math.max(0,brainWait-dt);if(brainPending||brainWait>0||s.dead||s.won)return;
       const candidates=s.enemies.filter(brainEligible);if(!candidates.length)return;
       const chosen=[],rows=[],limit=Math.min(16,candidates.length);
       for(let i=0;i<limit;i++){
@@ -1918,7 +2071,7 @@
       try{
         const output=brain.evaluate(rows),ready=result=>{if(brainPending===request&&!brainDisposed)brainReady={request,result};};
         if(output&&typeof output.then==='function')Promise.resolve(output).then(ready,()=>{if(brainPending===request){brainPending=null;s.aiStats.neuralDiscarded++;}});
-        else{ready(output);consumeBrain();}
+        else ready(output);
       }catch(_){brainPending=null;s.aiStats.neuralDiscarded++;}
     }
     function neuralScores(e){const q=brainAdvice.get(e.id);if(!q)return null;if(!brainCurrent(q,e)){brainAdvice.delete(e.id);return null;}return q.scores;}
@@ -1927,10 +2080,10 @@
       let action=0;for(let i=1;i<4;i++)if(scores[i]>scores[action]+1e-5)action=i;
       const desired=hasOrdnance(e)?e.weapon==='grenade'?12:16:e.type===1?3.8:e.type===2?13:e.role==='assault'?5.2:e.role==='suppressor'?11:7.5;
       if(action===3){if(d<desired*.72||d>desired+4||!canShoot(e,e.lastSeenX,e.lastSeenY,e.lastSeenZ))return false;e.tactic='hold';e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;return true;}
-      if(action===0){if(d<=desired+.8)return false;return setGoal(e,e.x+dx/d*(d-desired),e.z+dz/d*(d-desired),'advance',1.1);}
+      if(action===0){if(d<=desired+.8)return false;return goal(e,e.x+dx/d*(d-desired),e.z+dz/d*(d-desired),'advance',1.1);}
       if(action===2&&e.coverWait<=0&&cover(e))return true;
-      const side=e.squad%2?-1:1,base=Math.atan2(-dz,-dx),range=action===2?Math.max(desired+2,Math.min(20,d+4)):desired;
-      for(const offset of action===2?[side*.2,-side*.45,side*.65]:[side*.95,side*1.3,-side*.95]){const angle=base+offset;if(setGoal(e,e.lastSeenX+Math.cos(angle)*range,e.lastSeenZ+Math.sin(angle)*range,'flank',1.4))return true;}
+      const side=flankSide(e),base=Math.atan2(-dz,-dx),range=action===2?Math.max(desired+2,Math.min(20,d+4)):desired;
+      for(const offset of action===2?[side*.2,-side*.45,side*.65]:[side*.95,side*1.3,-side*.95]){const angle=base+offset;if(goal(e,e.lastSeenX+Math.cos(angle)*range,e.lastSeenZ+Math.sin(angle)*range,'flank',1.4))return true;}
       return false;
     }
     function plan(e){
@@ -1939,12 +2092,12 @@
       if(e.type===2&&!advanced){e.tactic='hold';e.path=[];e.pathAt=0;e.goalX=e.x;e.goalZ=e.z;return;}
       if(advanced&&e.type!==3&&e.hasMemory&&e.padCooldown<=0){
         const direct=Math.hypot(e.x-e.lastSeenX,e.z-e.lastSeenZ);
-        for(const pad of s.jumpPads)if(pad.id!==e.padId&&Math.hypot(e.x-pad.x,e.z-pad.z)<12&&Math.abs(e.baseY-pad.y)<.6&&Math.hypot(pad.target.x-e.lastSeenX,pad.target.z-e.lastSeenZ)+5<direct){
-          if(setGoal(e,pad.x,pad.z,'advance',2.4))return;
+        for(const pad of s.jumpPads)if(pad.id!==e.padId&&Math.hypot(e.x-pad.x,e.z-pad.z)<12&&Math.abs(e.baseY-pad.y)<.6&&Math.hypot(pad.target.x-e.lastSeenX,pad.target.z-e.lastSeenZ)+5<direct&&usefulPad(e,pad,e.lastSeenX,e.lastSeenZ)){
+          if(goal(e,pad.x,pad.z,'advance',2.4))return;
         }
       }
       if(e.stuck>1.1){
-        const path=route(e,e.goalX,e.goalZ);e.planWait=0;e.path=path||[];e.pathAt=0;e.stuck=0;
+        const path=route(e,e.goalX,e.goalZ);if(path===DEFER){e.thinkWait=Math.min(e.thinkWait,.1);return;}e.planWait=0;e.path=path||[];e.pathAt=0;e.stuck=0;
         if(!path&&e.tactic==='cover'){e.tactic='hold';e.coverWait=1.5;e.holdTime=0;}
       }
       if(e.hasMemory&&e.tactic==='cover'){
@@ -1958,27 +2111,28 @@
         const span=e.type===3?1.6:2.5;
         for(let j=0;j<4;j++){
           const angle=(++e.patrolIndex+e.id)*Math.PI/2,x=home.x+Math.cos(angle)*span,z=home.z+Math.sin(angle)*span;
-          if(setGoal(e,x,z,'advance'))return;
+          if(goal(e,x,z,'advance'))return;
         }
         e.tactic='hold';return;
       }
       if(e.type===0&&e.hp<=e.maxHp*.55&&e.coverWait<=0&&cover(e))return;
+      if(advanced&&e.seen&&!attackTokens.has(e.id)){const dx=e.x-e.lastSeenX,dz=e.z-e.lastSeenZ,d=Math.hypot(dx,dz)||1,side=flankSide(e),advance=e.role==='assault'?Math.max(0,d-5):Math.max(0,d-10);if(goal(e,e.x-dz/d*side*2.4-dx/d*advance,e.z+dx/d*side*2.4-dz/d*advance,'flank',.8))return;}
       if(!e.seen){
         if(e.type===3){
           const x=clamp(e.lastSeenX,home.x-4,home.x+4),z=clamp(e.lastSeenZ,home.z-4,home.z+4);
-          if(setGoal(e,x,z,'advance'))return;
+          if(goal(e,x,z,'advance'))return;
           e.tactic='hold';return;
         }
         const d=Math.hypot(e.lastSeenX-e.x,e.lastSeenZ-e.z);
         if(d>1.2){
-          if(setGoal(e,e.lastSeenX,e.lastSeenZ,'advance'))return;
+          if(goal(e,e.lastSeenX,e.lastSeenZ,'advance'))return;
           const near=nearestNode(e.lastSeenX,e.lastSeenZ,.28);
           if(near>=0&&setGoal(e,...coord(near),'advance'))return;
         }else{
           e.awareness='search';
           for(let j=0;j<4;j++){
             const angle=(++e.searchIndex+e.id)*2.399963,distance=1.8+(e.searchIndex%2)*.9;
-            if(setGoal(e,e.lastSeenX+Math.cos(angle)*distance,e.lastSeenZ+Math.sin(angle)*distance,'advance',1.2))return;
+            if(goal(e,e.lastSeenX+Math.cos(angle)*distance,e.lastSeenZ+Math.sin(angle)*distance,'advance',1.2))return;
           }
         }
         e.tactic='hold';return;
@@ -1986,7 +2140,7 @@
       const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz)||.01;
       if(neuralPlan(e,dx,dz,d))return;
       if(advanced&&e.type===0){
-        const side=e.squad%2?-1:1,base=Math.atan2(-dz,-dx);
+        const side=flankSide(e),base=Math.atan2(-dz,-dx);
         // Complementary squad roles choose real positions around the last observation.
         // A suppressor holds range, an assault closes, a flanker takes a side lane.
         const range=e.role==='assault'?4.5+(e.id%3)*.7:e.role==='suppressor'?10+(e.id%3):7.5+(e.id%2);
@@ -1994,34 +2148,34 @@
         const spread=e.role==='flanker'?.95:e.role==='assault'?.25:.5;
         for(const offset of [side*spread,side*(spread+.4),-side*spread]){
           const angle=base+offset,x=e.lastSeenX+Math.cos(angle)*range,z=e.lastSeenZ+Math.sin(angle)*range;
-          if(setGoal(e,x,z,e.role==='flanker'?'flank':'advance',e.role==='flanker'?2.2:1.1))return;
+          if(goal(e,x,z,e.role==='flanker'?'flank':'advance',e.role==='flanker'?2.2:1.1))return;
         }
       }else if(e.type===0){
         const base=Math.atan2(-dz,-dx),side=e.id%2?-1:1,range=clamp(d,5.7,8);
         for(const offset of [side*.9,side*1.35,-side*.9]){
           const angle=base+offset;
-          if(setGoal(e,e.lastSeenX+Math.cos(angle)*range,e.lastSeenZ+Math.sin(angle)*range,'flank',2.6))return;
+          if(goal(e,e.lastSeenX+Math.cos(angle)*range,e.lastSeenZ+Math.sin(angle)*range,'flank',2.6))return;
         }
       }else if(hasOrdnance(e)){
         const desired=e.weapon==='grenade'?12:16,base=Math.atan2(-dz,-dx),side=e.squad%2?-1:1;
         if(d>=9&&d<=20&&canShoot(e,e.lastSeenX,e.lastSeenY,e.lastSeenZ)){e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;e.tactic='hold';return;}
-        for(const offset of [side*.35,-side*.35,side*.8]){const angle=base+offset;if(setGoal(e,e.lastSeenX+Math.cos(angle)*desired,e.lastSeenZ+Math.sin(angle)*desired,'flank',1.8))return;}
+        for(const offset of [side*.35,-side*.35,side*.8]){const angle=base+offset;if(goal(e,e.lastSeenX+Math.cos(angle)*desired,e.lastSeenZ+Math.sin(angle)*desired,'flank',1.8))return;}
       }else if(e.type===1){
         if(d<4.1){e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;e.tactic='hold';return;}
-        if(setGoal(e,e.x+dx/d*(d-3.8),e.z+dz/d*(d-3.8),'advance'))return;
+        if(goal(e,e.x+dx/d*(d-3.8),e.z+dz/d*(d-3.8),'advance'))return;
       }else if(e.type===2&&advanced){
         // Mobile sentinels redeploy their tripod to keep a useful ranged lane.
         if(d>=10&&d<=16&&canShoot(e,e.lastSeenX,e.lastSeenY,e.lastSeenZ)){e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;e.tactic='hold';return;}
         const base=Math.atan2(-dz,-dx),side=e.squad%2?-1:1;
         for(const offset of [side*.40,-side*.40,side*.85]){
           const angle=base+offset;
-          if(setGoal(e,e.lastSeenX+Math.cos(angle)*13,e.lastSeenZ+Math.sin(angle)*13,'flank',1.7))return;
+          if(goal(e,e.lastSeenX+Math.cos(angle)*13,e.lastSeenZ+Math.sin(angle)*13,'flank',1.7))return;
         }
       }else {
         // The Custodian guards the arena; it never wanders into a narrow service doorway.
         const side=e.id%2?-1:1,radial=d>14?1.6:d<5?-1:0;
         const x=clamp(e.x+dx/d*radial-dz/d*side*1.5,home.x-4,home.x+4),z=clamp(e.z+dz/d*radial+dx/d*side*1.5,home.z-4,home.z+4);
-        if(setGoal(e,x,z,'advance',1.8))return;
+        if(goal(e,x,z,'advance',1.8))return;
       }
       e.tactic='hold';
     }
@@ -2156,11 +2310,11 @@
     }
     function updateEnemies(dt){
       let threat=0,awake=0,dormant=0,reserve=0;
-      routeBudget=advanced?2:Infinity;routeSearches=routeDeferred=0;updateEncounters(dt);rebuildNeighbors();const count=s.enemies.length;
+      routeBudget=advanced?2:Infinity;routeWork=advanced?6000:Infinity;routeSearches=routeDeferred=spawnRays=0;updateEncounters(dt);s.aiStats.spawnRays=spawnRays;rebuildNeighbors();assignAttackTokens();let eventPlans=3;const count=s.enemies.length;
       if(enemyStarts.length<count*2)enemyStarts=new Float64Array(count*2);
       for(let i=0;i<count;i++){const e=s.enemies[i];enemyStarts[i*2]=e.x;enemyStarts[i*2+1]=e.z;}
       for(const e of s.enemies){
-        e.moveSpeed=0;let sensed=false;if(e.hp<=0)continue;if(!present(e)){e.sleeping=true;e.seen=false;reserve++;continue;}e.deployAge=Math.min(2,e.deployAge+dt);airTimers(e,dt);if(e.airborne)airMove(e,dt);if(e.hp<=0)continue;
+        e.moveSpeed=0;let sensed=false;const previouslySeen=e.seen;if(e.hp<=0)continue;if(!present(e)){e.sleeping=true;e.seen=false;reserve++;continue;}e.deployAge=Math.min(2,e.deployAge+dt);airTimers(e,dt);if(e.airborne)airMove(e,dt);if(e.hp<=0)continue;
         if(e.bossWave&&!e.bossReleased){e.sleeping=true;e.seen=false;dormant++;continue;}
         if(giant(e)){if(tickBoss(e,dt)){awake++;if(e.bossAwake)threat++;}else dormant++;continue;}
         const d=Math.hypot(p.x-e.x,p.z-e.z);
@@ -2185,7 +2339,13 @@
         if(!e.sleeping&&e.senseWait<=0){e.senseWait+=.15;perceive(e);sensed=true;}
         if(e.hasMemory&&e.memory<=0){e.hasMemory=false;e.active=false;e.awareness='patrol';e.alert=0;e.seen=false;e.planWait=0;e.tactic='hold';e.path=[];e.pathAt=0;e.goalX=e.x;e.goalZ=e.z;e.thinkWait=0;}
         if(e.sleeping){e.seen=false;e.dodgeTime=e.dodgeDelay=0;e.stun=Math.max(0,e.stun-dt);continue;}
+        if(advanced&&e.seen&&attackTokens.size<2+s.difficulty)attackTokens.add(e.id);
         if(e.hasMemory&&d<26)threat++;
+        if(advanced&&eventPlans>0){
+          let trigger=previouslySeen!==e.seen;
+          for(let k=stepEventStart;!trigger&&k<s.events.length;k++){const event=s.events[k];trigger=(event.name==='dash'||event.name==='jump'||event.name==='jumpPad'&&event.actor==='player')&&d<20&&e.seen||event.name==='kill'&&Math.hypot(event.x-e.x,event.z-e.z)<8;}
+          if(trigger){e.thinkWait=Math.min(e.thinkWait,0);eventPlans--;}
+        }
         if(e.stun>0){e.stun=Math.max(0,e.stun-dt);e.attackState=e.stun>0?'stunned':'recover';continue;}
         if(avoidBossZone(e,dt))continue;
         if(bossProgression&&e.entryGrace>0){
@@ -2193,7 +2353,7 @@
           // follow that route until arrival or actual sight, never a hidden player.
           const q=enemyEncounter.get(e.id);if(q){
             remember(e,q.trigger.x,q.trigger.z,'investigate',7,(q.trigger.y||0)+1.45);
-            if(e.planWait<=0){if(!setGoal(e,q.trigger.x,q.trigger.z,'advance',2.4))e.planWait=.4;}
+            if(e.planWait<=0){if(!goal(e,q.trigger.x,q.trigger.z,'advance',2.4))e.planWait=.4;}
             e.tactic='advance';e.attackState='idle';e.yaw=Math.atan2(e.goalX-e.x,e.z-e.goalZ);navigate(e,dt);continue;
           }
         }
@@ -2207,13 +2367,16 @@
           if(!e.dodgeTime){e.thinkWait=0;e.planWait=0;}
         }
         if(e.burstLeft>0){if(e.burstWait<=0)burst(e);continue;}
-        if(e.windup>0){e.windup=Math.max(0,e.windup-dt);if(!e.windup)attack(e);continue;}
-        if(e.thinkWait<=0){e.thinkWait+=.65+(e.id%3)*.05;plan(e);}
+        if(e.windup>0){if(advanced&&e.type===0&&!e.airborne&&e.dodgeDelay<=0){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz)||1,side=flankSide(e);move(e,-dz/d*side*.9*dt,dx/d*side*.9*dt,radius(e));}e.windup=Math.max(0,e.windup-dt);if(!e.windup)attack(e);continue;}
+        if(e.thinkWait<=0){e.thinkWait+=(advanced&&e.hasMemory?.45-s.difficulty*.05:.65)+(e.id%3)*.05;plan(e);}
         if(e.hasMemory)e.yaw=Math.atan2(e.lastSeenX-e.x,e.z-e.lastSeenZ);
         else if(e.type===2){const home=world.enemies[e.id],yaw=Number.isFinite(home.yaw)?home.yaw:Math.atan2(world.spawn.x-home.x,home.z-world.spawn.z);e.yaw=yaw+Math.sin(s.time*.45+e.id)*.85;}
-        if(!introSafe()&&e.seen&&e.tactic!=='cover'&&d<(advanced?29:22)&&e.cooldown<=0&&(!hasOrdnance(e)||sensed)&&canShoot(e,e.lastSeenX,e.lastSeenY,e.lastSeenZ)){
+        const observedAge=s.time-e.observedAt,suppression=advanced&&!e.seen&&e.hasMemory&&observedAge<1.2,flushGrenade=advanced&&!e.seen&&e.hasMemory&&e.weapon==='grenade'&&observedAge>=1.5&&observedAge<=4&&Math.hypot(e.x-e.lastSeenX,e.z-e.lastSeenZ)>=6&&Math.hypot(e.x-e.lastSeenX,e.z-e.lastSeenZ)<=24;
+        if(!introSafe()&&(e.seen||suppression||flushGrenade)&&(!advanced||attackTokens.has(e.id))&&e.tactic!=='cover'&&d<(advanced?29:22)&&e.cooldown<=0&&(!hasOrdnance(e)||sensed)&&canShoot(e,e.lastSeenX,e.lastSeenY,e.lastSeenZ)){
           const lead=advanced?Math.min(.65,d/14):0;
-          e.aimX=clamp(e.lastSeenX+e.observedVX*lead,b.minX+.1,b.maxX-.1);e.aimY=e.lastSeenY+(advanced?e.observedVY*lead*.45:0);e.aimZ=clamp(e.lastSeenZ+e.observedVZ*lead,b.minZ+.1,b.maxZ-.1);
+          e.aimX=clamp(e.lastSeenX+e.observedVX*lead,b.minX+.1,b.maxX-.1);e.aimY=e.lastSeenY;e.aimZ=clamp(e.lastSeenZ+e.observedVZ*lead,b.minZ+.1,b.maxZ-.1);
+          const floor=ground(e.aimX,e.aimZ,noTraps);if(advanced&&e.seen&&p.airborne)e.aimY=Math.max(floor+1.45,e.lastSeenY+e.observedVY*lead-(p.padId?GRAVITY:motionProfile.gravity||GRAVITY)*lead*lead/2);e.aimY=Math.max(floor+.3,e.aimY);
+          if(suppression)s.aiStats.suppression=(s.aiStats.suppression||0)+1;if(flushGrenade)s.aiStats.flushGrenades=(s.aiStats.flushGrenades||0)+1;
           e.yaw=Math.atan2(e.aimX-e.x,e.z-e.aimZ);e.windupMax=hasOrdnance(e)?e.weapon==='grenade'?1.15:1.05:[advanced?.52:.65,advanced?.8:.9,advanced?.65:.75,e.phase?.9:1.15][e.type];
           e.windup=e.windupMax;e.attackState='aim';continue;
         }
@@ -2324,7 +2487,7 @@
     }
     function step(dt,input={}){
       dt=Number.isFinite(dt)?clamp(dt,0,.05):0;if(s.won||s.dead||checkPlayerBounds())return;
-      syncArmor();
+      stepEventStart=s.events.length;syncArmor();
       s.time+=dt;s.elapsed+=dt;fireWait=Math.max(0,fireWait-dt);emptyWait=Math.max(0,emptyWait-dt);navWait-=dt;hazardWait=Math.max(0,hazardWait-dt);recovery=Math.max(0,recovery-dt);
       if(arsenal){for(let i=0;i<weaponSlots;i++)weaponWait[i]=Math.max(0,weaponWait[i]-dt);s.leftFlash=Math.max(0,s.leftFlash-dt*9);}
       s.flash=Math.max(0,s.flash-dt*9);s.damage=Math.max(0,s.damage-dt*1.9);s.hitMarker=Math.max(0,s.hitMarker-dt);s.pulseVisual=Math.max(0,s.pulseVisual-dt);
@@ -2374,8 +2537,8 @@
     function snapshot(){
       // A checkpoint materialises the advisory map once, so continuation has the
       // same routes as a freshly restored world. No actor or gameplay timer moves.
-      if(navPending)pumpNav(nav.length);syncArmor();
-      invalidateBrain();
+      if(navPending||!graph.ready){pumpNav(Infinity);graph.flush();s.aiStats.navPending=0;}syncArmor();
+      invalidateBrain();failedRoutes.clear();approachRoutes.clear();entryComponents.clear();
       return {version:1,aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
         state:{...pick(s,NUMBERS),difficulty:s.difficulty,director:pick(s.director,DIRECTOR),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
           ...(profilesEnabled?{profiles:exportProfiles()}:{}),
@@ -2654,9 +2817,9 @@
         updateDoorBoxes();navDirty=terrainDirty=false;refreshNav(false);rebuildNeighbors();updateHazards(false);return true;
       }catch(_){return false;}
     }
-    clipEscape=boundaryAt(p.x,p.z);
+    graph.flush();clipEscape=boundaryAt(p.x,p.z);
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
-    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
+    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
-  G.FSimulation={create,clamp,copyCampaign,campaignPolicy,copyArmor};
+  G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor};
 })(typeof window!=='undefined'?window:globalThis);

@@ -1,5 +1,5 @@
 import {withChrome} from '../../render/chrome.mjs';
-import{readFileSync,writeFileSync,mkdirSync}from'node:fs';import assert from'node:assert/strict';
+import{readFileSync,writeFileSync,mkdirSync} from 'node:fs';import assert from'node:assert/strict';
 import{resolve,dirname,join}from'node:path';import{fileURLToPath}from'node:url';import{tmpdir}from'node:os';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../../..'),out=resolve(process.argv[2]||join(tmpdir(),'metal-worker-'+process.pid));mkdirSync(out,{recursive:true});
 const html=readFileSync(root+'/dist/index.html','utf8'),scripts=[...html.matchAll(/<script\b[^>]*data-worker[^>]*>[\s\S]*?<\/script>/g)].map(x=>x[0]);assert(scripts.length>=14);

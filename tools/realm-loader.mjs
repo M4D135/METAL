@@ -16,7 +16,7 @@ export const DEFAULT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 export const DEFAULT_MODULES = Object.freeze(['renderer','world','destruction','economy','brain','simulation']);
 // FPassages (src/passages.js) est optionnel : une racine antérieure au lot
 // « jeu-pieges-massifs » n'a pas ce fichier et doit rester mesurable telle quelle.
-const OPTIONAL_BEFORE_WORLD = ['passages'];
+const OPTIONAL_BEFORE_WORLD = ['passages', 'profiles'];
 const hash = text => createHash('sha256').update(text).digest('hex');
 
 // Default module list of one root. Since lot 01 suite (MURS-V1), world.js takes
