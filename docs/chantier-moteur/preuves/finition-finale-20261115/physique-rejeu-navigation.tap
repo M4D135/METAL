@@ -1,0 +1,23 @@
+✔ physical props react to impacts and are covered by sight and standing support (86.515667ms)
+✔ rejected physical data does not change the live simulation or rigid bodies (17.588ms)
+✔ all generated props avoid required markers in the eighteen class worlds (11806.661916ms)
+✔ a checkpoint preserves locomotion while pushing and stays exact for 300 further steps (189.98275ms)
+✔ physical explosion starts a delayed barrel chain and keeps a valid save (51.422875ms)
+✔ moving rubble damages and stuns an enemy, but a slow object cannot hurt it (5.082417ms)
+✔ profile teleport does not sweep the player proxy through intervening props (14.653792ms)
+✔ physical grenade rebounds from a thin wall and rolls without the three bounce cutoff (3.755292ms)
+✔ final checkpoint v2 reads the intermediate physical v1 without changing the future (122.153792ms)
+✔ a dynamic save row cannot alias the player proxy and rejection remains atomic (15.458917ms)
+✔ worker-baked navigation keeps the exact initial state and 900 physical steps (34793.040375ms)
+✔ digest observes simulation without flushing navigation or changing state (57.257958ms)
+✔ quantized inputs and dated selection, difficulty, snapshot and restore commands replay exactly (574.441458ms)
+✔ one recording spans six scene lifetimes with identical scene digests (636.136ms)
+✔ 100 seconds with rigid bodies, physical grenades and checkpoint commands replay exactly (728.212875ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 47158.370959

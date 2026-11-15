@@ -1,0 +1,839 @@
+{
+  "schema": "metal-final-t5-summary-v1",
+  "hardware": "Mac Apple M5",
+  "node": "v24.18.0",
+  "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+  "cases": 34,
+  "worldIndices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+  ],
+  "newProcesses": true,
+  "unmodifiedSources": true,
+  "artificialWarmup": false,
+  "driver": "FPilot, entrées ordinaires, aucun GOD, départ arène MetalDemo, difficulté 0",
+  "simulationSecondsPerCase": 60,
+  "physics": true,
+  "units": "milliseconds, process.threadCpuUsage; wall time kept separately",
+  "maxFirstBreakCpuMs": 4.703,
+  "maxAnyRevisionCpuMs": 7.731,
+  "maxAnyStepCpuMs": 7.731,
+  "cpuStepsOver8": 0,
+  "sourceSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "renderer": "601818f20a03fad09168eacd2864365689a4cf985dfde0c13d59a29d47eb5570",
+    "profiles": "086d08e837ae8cc97d51b6c638f206e4e0374352da3a4b286f36def2eb072ce7",
+    "world": "9ecffd872920398ec731cdb74a8080f9dbf85bd42fb28cbf3ccbf89bb9533105",
+    "destruction": "8e7d89cff2428207df42b1feb90e7c785c915ff4f36a6263a4b7b02131692f55",
+    "economy": "1d1d50657864190afdb91639c56142c44714119f54e0685d8a4c4aa4cc6f4dc6",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "physics": "86fb239f386132383fd5cd780fdd5ee9affd202f0876ec50de44ea24cab3fdae",
+    "metal-physics": "0670ab8d88207bec5bded5ab430ee7f245bc7d2fb760d387895517e12618d1e7",
+    "actors": "6377cdc15c820c593705a2f0cea07ff04d2e30b9d241799269c645d5637dce3f",
+    "simulation": "f90651403d8faac75f00a3a8dd59dca8034a820909faeb5b97115f5dbe731f3a",
+    "demo": "1169679cfa96463222f6343a6f4f3feeadfc7b90cd65d8f1b7ece6e9e0600575",
+    "pilot": "884d4b73a9083a2e31b97ccf7ab8f1c0bfcd27e0cbf226da82f60f6e61d80e41",
+    "demo-metal": "d438cc451dfc6a50607fb3f52b5f168960f282dd0727b17b5486fb24d0cac6c1"
+  },
+  "rows": [
+    {
+      "file": "0-0.json",
+      "index": 0,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.78954200000004,
+        "cpu": 3.792,
+        "revision": 1,
+        "debris": 21,
+        "physical": 145,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.239,
+      "maxRevisionCpuMs": 3.792,
+      "cpuP99Ms": 0.284,
+      "wallMaxMs": 5.212707999999992,
+      "snapshot": "082b0cdefa2b0c96a38ba85a33998d6cb69626f87a7f8df8f70b2fb47cc47377",
+      "dead": false
+    },
+    {
+      "file": "0-1.json",
+      "index": 0,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.830332999999996,
+        "cpu": 3.829,
+        "revision": 1,
+        "debris": 21,
+        "physical": 145,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.271,
+      "maxRevisionCpuMs": 3.829,
+      "cpuP99Ms": 0.3,
+      "wallMaxMs": 5.249540999999994,
+      "snapshot": "082b0cdefa2b0c96a38ba85a33998d6cb69626f87a7f8df8f70b2fb47cc47377",
+      "dead": false
+    },
+    {
+      "file": "0-2.json",
+      "index": 0,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.8197079999999914,
+        "cpu": 3.822,
+        "revision": 1,
+        "debris": 21,
+        "physical": 145,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.303,
+      "maxRevisionCpuMs": 3.822,
+      "cpuP99Ms": 0.287,
+      "wallMaxMs": 5.29079200000001,
+      "snapshot": "082b0cdefa2b0c96a38ba85a33998d6cb69626f87a7f8df8f70b2fb47cc47377",
+      "dead": false
+    },
+    {
+      "file": "0-3.json",
+      "index": 0,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.8182919999999854,
+        "cpu": 3.821,
+        "revision": 1,
+        "debris": 21,
+        "physical": 145,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.326,
+      "maxRevisionCpuMs": 3.821,
+      "cpuP99Ms": 0.313,
+      "wallMaxMs": 5.306874999999991,
+      "snapshot": "082b0cdefa2b0c96a38ba85a33998d6cb69626f87a7f8df8f70b2fb47cc47377",
+      "dead": false
+    },
+    {
+      "file": "0-4.json",
+      "index": 0,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.028374999999983,
+        "cpu": 4.015,
+        "revision": 1,
+        "debris": 21,
+        "physical": 145,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.285,
+      "maxRevisionCpuMs": 4.015,
+      "cpuP99Ms": 0.299,
+      "wallMaxMs": 5.270040999999992,
+      "snapshot": "082b0cdefa2b0c96a38ba85a33998d6cb69626f87a7f8df8f70b2fb47cc47377",
+      "dead": false
+    },
+    {
+      "file": "1-0.json",
+      "index": 1,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.335207999999966,
+        "cpu": 4.335,
+        "revision": 1,
+        "debris": 52,
+        "physical": 144,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.373,
+      "maxRevisionCpuMs": 4.335,
+      "cpuP99Ms": 0.425,
+      "wallMaxMs": 5.358749999999986,
+      "snapshot": "2d6a9c0343eac2f97072ba7a401a1a23b736dcf857614b98c844cc3abc1ba6dc",
+      "dead": false
+    },
+    {
+      "file": "1-1.json",
+      "index": 1,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.507040999999958,
+        "cpu": 4.506,
+        "revision": 1,
+        "debris": 52,
+        "physical": 144,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.556,
+      "maxRevisionCpuMs": 4.506,
+      "cpuP99Ms": 0.438,
+      "wallMaxMs": 5.542040999999983,
+      "snapshot": "2d6a9c0343eac2f97072ba7a401a1a23b736dcf857614b98c844cc3abc1ba6dc",
+      "dead": false
+    },
+    {
+      "file": "1-2.json",
+      "index": 1,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.439042000000029,
+        "cpu": 4.443,
+        "revision": 1,
+        "debris": 52,
+        "physical": 144,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.387,
+      "maxRevisionCpuMs": 4.443,
+      "cpuP99Ms": 0.451,
+      "wallMaxMs": 5.371166999999986,
+      "snapshot": "2d6a9c0343eac2f97072ba7a401a1a23b736dcf857614b98c844cc3abc1ba6dc",
+      "dead": false
+    },
+    {
+      "file": "1-3.json",
+      "index": 1,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.401666000000034,
+        "cpu": 4.405,
+        "revision": 1,
+        "debris": 52,
+        "physical": 144,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.28,
+      "maxRevisionCpuMs": 4.405,
+      "cpuP99Ms": 0.424,
+      "wallMaxMs": 5.260499999999979,
+      "snapshot": "2d6a9c0343eac2f97072ba7a401a1a23b736dcf857614b98c844cc3abc1ba6dc",
+      "dead": false
+    },
+    {
+      "file": "1-4.json",
+      "index": 1,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.708082999999988,
+        "cpu": 4.703,
+        "revision": 1,
+        "debris": 52,
+        "physical": 144,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.534,
+      "maxRevisionCpuMs": 4.703,
+      "cpuP99Ms": 0.436,
+      "wallMaxMs": 5.544749999999993,
+      "snapshot": "2d6a9c0343eac2f97072ba7a401a1a23b736dcf857614b98c844cc3abc1ba6dc",
+      "dead": false
+    },
+    {
+      "file": "10-0.json",
+      "index": 10,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.348708000000045,
+        "cpu": 4.354,
+        "revision": 1,
+        "debris": 45,
+        "physical": 145,
+        "events": [
+          "explosion",
+          "materialBreak",
+          "weakHit",
+          "shot",
+          "hit",
+          "debrisLand"
+        ]
+      },
+      "maxStepCpuMs": 5.564,
+      "maxRevisionCpuMs": 4.354,
+      "cpuP99Ms": 0.423,
+      "wallMaxMs": 5.557290999999992,
+      "snapshot": "2cfdb619f0680343a65af017b3ea23d75d5f6e4301005628aa1b100e3ea38c5d",
+      "dead": false
+    },
+    {
+      "file": "11-0.json",
+      "index": 11,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.5790420000000154,
+        "cpu": 3.581,
+        "revision": 1,
+        "debris": 13,
+        "physical": 137,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.635,
+      "maxRevisionCpuMs": 3.581,
+      "cpuP99Ms": 0.408,
+      "wallMaxMs": 5.611791000000011,
+      "snapshot": "4c2f7b9474bacd514760ca667f31e26fccfeee5208f50eb98508e3ca87138ecc",
+      "dead": false
+    },
+    {
+      "file": "12-0.json",
+      "index": 12,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.874791000000016,
+        "cpu": 3.878,
+        "revision": 1,
+        "debris": 13,
+        "physical": 137,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.428,
+      "maxRevisionCpuMs": 3.878,
+      "cpuP99Ms": 0.372,
+      "wallMaxMs": 5.40462500000001,
+      "snapshot": "b13733289557eb2ed854188853bb512242339d5880a11e3a6c989005f1e3b441",
+      "dead": false
+    },
+    {
+      "file": "13-0.json",
+      "index": 13,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.555250000000001,
+        "cpu": 4.559,
+        "revision": 1,
+        "debris": 53,
+        "physical": 153,
+        "events": [
+          "explosion",
+          "materialBreak",
+          "debrisLand"
+        ]
+      },
+      "maxStepCpuMs": 5.911,
+      "maxRevisionCpuMs": 4.559,
+      "cpuP99Ms": 0.581,
+      "wallMaxMs": 5.8809590000000185,
+      "snapshot": "8e978c3b941c7c23387e25c4096ed89f4ded9934d728ebf9e16816d66e210ee1",
+      "dead": false
+    },
+    {
+      "file": "14-0.json",
+      "index": 14,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.247500000000002,
+        "cpu": 4.22,
+        "revision": 1,
+        "debris": 11,
+        "physical": 135,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 7.731,
+      "maxRevisionCpuMs": 7.731,
+      "cpuP99Ms": 0.504,
+      "wallMaxMs": 7.732083000000102,
+      "snapshot": "33e8713baad58223064cdbc9713d01459372893bfd5a67f4dad52217afb2ebac",
+      "dead": false
+    },
+    {
+      "file": "15-0.json",
+      "index": 15,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.108499999999992,
+        "cpu": 4.112,
+        "revision": 1,
+        "debris": 25,
+        "physical": 141,
+        "events": [
+          "explosion",
+          "materialBreak",
+          "hurt"
+        ]
+      },
+      "maxStepCpuMs": 5.883,
+      "maxRevisionCpuMs": 4.112,
+      "cpuP99Ms": 0.404,
+      "wallMaxMs": 5.8591249999999775,
+      "snapshot": "6ba2308bd4ecd2d7c872132918654ceb1a9c30e7d75e701940c6db586e401fff",
+      "dead": false
+    },
+    {
+      "file": "16-0.json",
+      "index": 16,
+      "firstBreak": {
+        "step": 223,
+        "wall": 3.1310829999999896,
+        "cpu": 3.128,
+        "revision": 1,
+        "debris": 27,
+        "physical": 119,
+        "events": [
+          "trap",
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 6.059,
+      "maxRevisionCpuMs": 3.128,
+      "cpuP99Ms": 0.562,
+      "wallMaxMs": 6.02883300000002,
+      "snapshot": "51699a668be48d51193207757e3b08d72a02180f7b464a3389830991fe9cbc85",
+      "dead": false
+    },
+    {
+      "file": "17-0.json",
+      "index": 17,
+      "firstBreak": {
+        "step": 132,
+        "wall": 4.033166999999992,
+        "cpu": 4.032,
+        "revision": 1,
+        "debris": 19,
+        "physical": 118,
+        "events": [
+          "debrisLand",
+          "explosion",
+          "materialBreak",
+          "alerted"
+        ]
+      },
+      "maxStepCpuMs": 7.031,
+      "maxRevisionCpuMs": 7.031,
+      "cpuP99Ms": 0.486,
+      "wallMaxMs": 7.028374999999983,
+      "snapshot": "23b115521fc479051654678164b26353096dd255673c938143fa27ab2e32c820",
+      "dead": false
+    },
+    {
+      "file": "17-1.json",
+      "index": 17,
+      "firstBreak": {
+        "step": 132,
+        "wall": 4.473041000000023,
+        "cpu": 4.396,
+        "revision": 1,
+        "debris": 19,
+        "physical": 118,
+        "events": [
+          "debrisLand",
+          "explosion",
+          "materialBreak",
+          "alerted"
+        ]
+      },
+      "maxStepCpuMs": 7.133,
+      "maxRevisionCpuMs": 7.133,
+      "cpuP99Ms": 0.466,
+      "wallMaxMs": 7.140625,
+      "snapshot": "23b115521fc479051654678164b26353096dd255673c938143fa27ab2e32c820",
+      "dead": false
+    },
+    {
+      "file": "17-2.json",
+      "index": 17,
+      "firstBreak": {
+        "step": 132,
+        "wall": 4.006166000000007,
+        "cpu": 4.009,
+        "revision": 1,
+        "debris": 19,
+        "physical": 118,
+        "events": [
+          "debrisLand",
+          "explosion",
+          "materialBreak",
+          "alerted"
+        ]
+      },
+      "maxStepCpuMs": 7.109,
+      "maxRevisionCpuMs": 7.109,
+      "cpuP99Ms": 0.464,
+      "wallMaxMs": 7.1146249999999895,
+      "snapshot": "23b115521fc479051654678164b26353096dd255673c938143fa27ab2e32c820",
+      "dead": false
+    },
+    {
+      "file": "17-3.json",
+      "index": 17,
+      "firstBreak": {
+        "step": 132,
+        "wall": 4.229916000000003,
+        "cpu": 4.232,
+        "revision": 1,
+        "debris": 19,
+        "physical": 118,
+        "events": [
+          "debrisLand",
+          "explosion",
+          "materialBreak",
+          "alerted"
+        ]
+      },
+      "maxStepCpuMs": 7.385,
+      "maxRevisionCpuMs": 7.385,
+      "cpuP99Ms": 0.495,
+      "wallMaxMs": 7.386500000000012,
+      "snapshot": "23b115521fc479051654678164b26353096dd255673c938143fa27ab2e32c820",
+      "dead": false
+    },
+    {
+      "file": "17-4.json",
+      "index": 17,
+      "firstBreak": {
+        "step": 132,
+        "wall": 3.975291999999996,
+        "cpu": 3.978,
+        "revision": 1,
+        "debris": 19,
+        "physical": 118,
+        "events": [
+          "debrisLand",
+          "explosion",
+          "materialBreak",
+          "alerted"
+        ]
+      },
+      "maxStepCpuMs": 7.452,
+      "maxRevisionCpuMs": 7.452,
+      "cpuP99Ms": 0.461,
+      "wallMaxMs": 7.918417000000034,
+      "snapshot": "23b115521fc479051654678164b26353096dd255673c938143fa27ab2e32c820",
+      "dead": false
+    },
+    {
+      "file": "2-0.json",
+      "index": 2,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.735958000000039,
+        "cpu": 3.732,
+        "revision": 1,
+        "debris": 15,
+        "physical": 139,
+        "events": [
+          "explosion",
+          "materialBreak",
+          "bossArmorHit",
+          "shot",
+          "hit"
+        ]
+      },
+      "maxStepCpuMs": 5.516,
+      "maxRevisionCpuMs": 3.732,
+      "cpuP99Ms": 0.35,
+      "wallMaxMs": 5.501207999999991,
+      "snapshot": "ae3edd59a8966ac80a7c5a2765acff1732d599dbaee028419fcc933e91f99c82",
+      "dead": false
+    },
+    {
+      "file": "2-1.json",
+      "index": 2,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.5564580000000205,
+        "cpu": 3.558,
+        "revision": 1,
+        "debris": 15,
+        "physical": 139,
+        "events": [
+          "explosion",
+          "materialBreak",
+          "bossArmorHit",
+          "shot",
+          "hit"
+        ]
+      },
+      "maxStepCpuMs": 5.399,
+      "maxRevisionCpuMs": 3.558,
+      "cpuP99Ms": 0.358,
+      "wallMaxMs": 5.375458999999978,
+      "snapshot": "ae3edd59a8966ac80a7c5a2765acff1732d599dbaee028419fcc933e91f99c82",
+      "dead": false
+    },
+    {
+      "file": "2-2.json",
+      "index": 2,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.716458999999986,
+        "cpu": 3.719,
+        "revision": 1,
+        "debris": 15,
+        "physical": 139,
+        "events": [
+          "explosion",
+          "materialBreak",
+          "bossArmorHit",
+          "shot",
+          "hit"
+        ]
+      },
+      "maxStepCpuMs": 5.366,
+      "maxRevisionCpuMs": 3.719,
+      "cpuP99Ms": 0.379,
+      "wallMaxMs": 5.343832999999989,
+      "snapshot": "ae3edd59a8966ac80a7c5a2765acff1732d599dbaee028419fcc933e91f99c82",
+      "dead": false
+    },
+    {
+      "file": "2-3.json",
+      "index": 2,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.6129999999999995,
+        "cpu": 3.617,
+        "revision": 1,
+        "debris": 15,
+        "physical": 139,
+        "events": [
+          "explosion",
+          "materialBreak",
+          "bossArmorHit",
+          "shot",
+          "hit"
+        ]
+      },
+      "maxStepCpuMs": 5.569,
+      "maxRevisionCpuMs": 3.617,
+      "cpuP99Ms": 0.377,
+      "wallMaxMs": 5.55979099999999,
+      "snapshot": "ae3edd59a8966ac80a7c5a2765acff1732d599dbaee028419fcc933e91f99c82",
+      "dead": false
+    },
+    {
+      "file": "2-4.json",
+      "index": 2,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.762708000000032,
+        "cpu": 3.762,
+        "revision": 1,
+        "debris": 15,
+        "physical": 139,
+        "events": [
+          "explosion",
+          "materialBreak",
+          "bossArmorHit",
+          "shot",
+          "hit"
+        ]
+      },
+      "maxStepCpuMs": 5.448,
+      "maxRevisionCpuMs": 3.762,
+      "cpuP99Ms": 0.383,
+      "wallMaxMs": 5.427750000000003,
+      "snapshot": "ae3edd59a8966ac80a7c5a2765acff1732d599dbaee028419fcc933e91f99c82",
+      "dead": false
+    },
+    {
+      "file": "3-0.json",
+      "index": 3,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.609166000000016,
+        "cpu": 3.611,
+        "revision": 1,
+        "debris": 17,
+        "physical": 139,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.341,
+      "maxRevisionCpuMs": 3.611,
+      "cpuP99Ms": 0.338,
+      "wallMaxMs": 5.323958000000005,
+      "snapshot": "f97873f8a6b71dc725ecd4b1d8cb05bb211fde77077808d2bb1fff139b352049",
+      "dead": false
+    },
+    {
+      "file": "4-0.json",
+      "index": 4,
+      "firstBreak": {
+        "step": 241,
+        "wall": 2.9704579999999794,
+        "cpu": 2.939,
+        "revision": 1,
+        "debris": 27,
+        "physical": 125,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.539,
+      "maxRevisionCpuMs": 2.939,
+      "cpuP99Ms": 0.469,
+      "wallMaxMs": 5.529167000000001,
+      "snapshot": "cbd12f9a25569e2a941d34ce6e548fb0200b0e839627b174fa3475eb9191e2eb",
+      "dead": false
+    },
+    {
+      "file": "5-0.json",
+      "index": 5,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.500541999999996,
+        "cpu": 3.503,
+        "revision": 1,
+        "debris": 12,
+        "physical": 136,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.533,
+      "maxRevisionCpuMs": 3.503,
+      "cpuP99Ms": 0.344,
+      "wallMaxMs": 5.518624999999986,
+      "snapshot": "fea589769b1650acb14a8c0e31c5a61e298fe6e8e9733fa7135e4b96a24e8b2f",
+      "dead": false
+    },
+    {
+      "file": "6-0.json",
+      "index": 6,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.262665999999967,
+        "cpu": 4.267,
+        "revision": 1,
+        "debris": 28,
+        "physical": 144,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.368,
+      "maxRevisionCpuMs": 4.267,
+      "cpuP99Ms": 0.361,
+      "wallMaxMs": 5.347083999999995,
+      "snapshot": "b7460ccfaa14d7ace4c0e1db9fb03300de8ae0c386c58848edadfe5b5b6838e2",
+      "dead": false
+    },
+    {
+      "file": "7-0.json",
+      "index": 7,
+      "firstBreak": {
+        "step": 658,
+        "wall": 4.3397919999999885,
+        "cpu": 4.34,
+        "revision": 1,
+        "debris": 51,
+        "physical": 145,
+        "events": [
+          "explosion",
+          "materialBreak",
+          "debrisLand"
+        ]
+      },
+      "maxStepCpuMs": 5.39,
+      "maxRevisionCpuMs": 4.34,
+      "cpuP99Ms": 0.483,
+      "wallMaxMs": 5.369,
+      "snapshot": "de2e70c1bf107575b2d9ac9a02e79f9aaed0a1fcea4bb5e46c954fb7e6af13a3",
+      "dead": false
+    },
+    {
+      "file": "8-0.json",
+      "index": 8,
+      "firstBreak": {
+        "step": 658,
+        "wall": 3.5092920000000163,
+        "cpu": 3.515,
+        "revision": 1,
+        "debris": 14,
+        "physical": 132,
+        "events": [
+          "explosion",
+          "materialBreak"
+        ]
+      },
+      "maxStepCpuMs": 5.547,
+      "maxRevisionCpuMs": 3.515,
+      "cpuP99Ms": 0.427,
+      "wallMaxMs": 5.5454579999999964,
+      "snapshot": "9e1b0a5473252872c99ebc0f6c699f04c61ba41fc5276fcb22ff3b04bf730fee",
+      "dead": false
+    },
+    {
+      "file": "9-0.json",
+      "index": 9,
+      "firstBreak": {
+        "step": 657,
+        "wall": 2.325958000000014,
+        "cpu": 2.32,
+        "revision": 1,
+        "debris": 7,
+        "physical": 121,
+        "events": [
+          "materialBreak",
+          "shot"
+        ]
+      },
+      "maxStepCpuMs": 5.256,
+      "maxRevisionCpuMs": 2.46,
+      "cpuP99Ms": 0.375,
+      "wallMaxMs": 5.235750000000024,
+      "snapshot": "bb6fa8971cbcbe6468cc37d53fdddf46a12eb7dd388df6777e0348e7039dcc4f",
+      "dead": false
+    }
+  ],
+  "scope": "34 cas sur cette machine, pas une garantie universelle de temps mural ou FPS. La série rejetée porte une version différente."
+}

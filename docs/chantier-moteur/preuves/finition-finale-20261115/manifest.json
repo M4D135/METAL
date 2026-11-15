@@ -1,0 +1,121 @@
+{
+  "schema": "metal-finish-evidence-v1",
+  "date": "2026-11-15",
+  "sourceBaseCommit": "cd198ae",
+  "artifact": {
+    "version": "0.9.2",
+    "html_bytes": 1373769,
+    "html_decimal_kb": 1373.77,
+    "html_kib": 1341.57,
+    "gzip_bytes": 431688,
+    "sha256": "c9c53bd7db725dc90a9bea68715f8e113e23ef10b0ad4f2dc241d03a9e53fdba",
+    "external_assets": 0,
+    "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+    "source_bytes": {
+      "fmath.js": 19961,
+      "passages.js": 10108,
+      "surface.js": 3419,
+      "skies.js": 23094,
+      "gpu-profile.js": 2548,
+      "reflections.js": 11411,
+      "renderer.js": 147277,
+      "profiles.js": 8488,
+      "world.js": 142916,
+      "destruction.js": 31452,
+      "physics.js": 78128,
+      "metal-physics.js": 23078,
+      "music.js": 61763,
+      "imuse.js": 10260,
+      "music-director.js": 3908,
+      "audio.js": 76053,
+      "audio-recipes.js": 4897,
+      "soundscape.js": 5077,
+      "economy.js": 11561,
+      "brain.js": 8923,
+      "simulation.js": 272422,
+      "motion.js": 8280,
+      "actors.js": 29087,
+      "effects.js": 20784,
+      "options.js": 10103,
+      "input.js": 17991,
+      "controls.js": 4128,
+      "loop.js": 7685,
+      "schedule.js": 4221,
+      "touch.js": 3698,
+      "jobs.js": 5829,
+      "tasks.js": 759,
+      "host.js": 2713,
+      "demo.js": 28562,
+      "pilot.js": 21972,
+      "demo-metal.js": 3405,
+      "replay-metal.js": 2188,
+      "game.js": 139675
+    }
+  },
+  "tests": {
+    "pass": 1213,
+    "fail": 0,
+    "todo": 1
+  },
+  "uiChecks": 13,
+  "physicalController": false,
+  "physicalMobile": false,
+  "files": {
+    "demo-30min.json": {
+      "bytes": 14503,
+      "sha256": "f27521d0cf03a665b930070de6cb9a30add6890893503e42aef04bfaaba525a2"
+    },
+    "desktop-switch.png": {
+      "bytes": 700212,
+      "sha256": "510ad72a07a95453f1f79ac004ee2faf2c12c4e1cb39f85e50efd13a04ab12a4"
+    },
+    "interface-chrome.json": {
+      "bytes": 7899,
+      "sha256": "25016e2e8d222b81929b5b256d7295f2451a09bcb15832d478ad0b2feee962d2"
+    },
+    "physique-rejeu-navigation.tap": {
+      "bytes": 1572,
+      "sha256": "b5150b725e5010680e706ee1a670b695030ddafe5fd81ce69ff927c268afe985"
+    },
+    "reflets-chrome.json": {
+      "bytes": 7893,
+      "sha256": "63bf9a1633c074ebe9ee8b2ef3fbaacba4a525d0001bce2d625a886a5f9d197c"
+    },
+    "reflets-source.json": {
+      "bytes": 1367,
+      "sha256": "738ee72d3f02f76e172cc34dcbe89a106cfc2f2eda153e94def98e3d62aeb1e9"
+    },
+    "regressions.tap": {
+      "bytes": 10391,
+      "sha256": "eacc874ca8adb1f8b91a2da3421720f014058dffc4f8d5afa8ba24b6aeba45ab"
+    },
+    "suite-complete.tap": {
+      "bytes": 306408,
+      "sha256": "03ddf053d238ae3288d1b9b6b33f3cc98a928d6fac97d0acf6adb38a4d3ca781"
+    },
+    "t5-final-json.tar.gz": {
+      "bytes": 7110,
+      "sha256": "da8c040a88fb216f56358bcf9ff2715b312856d7d1d0ffbd34661907f814fdc6"
+    },
+    "t5-intermediaire-rejete-json.tar.gz": {
+      "bytes": 13200,
+      "sha256": "6a28aa8a50c6dd70b2e55cc5fbfc7762f6d206ca8fc4af01e674bc0e36bf7bd4"
+    },
+    "t5-summary.json": {
+      "bytes": 21430,
+      "sha256": "c76a50ca5e37f5f92297780edb9ac28e0c5a24e7d8dee3f1d1f853b0b4bbcc71"
+    },
+    "touch-landscape.png": {
+      "bytes": 287562,
+      "sha256": "6fd7951343715d586ef423e5404641ed61459149a6e91060be75cd510677c88d"
+    },
+    "touch-portrait.png": {
+      "bytes": 251449,
+      "sha256": "cc91bac3b1bec7285618cd0792d09dd56f0e884ec7d648b30f0514f8921fc2b3"
+    },
+    "touch-small.png": {
+      "bytes": 150259,
+      "sha256": "cbf74b5e6b2cde563384757aa5cd981a514aa1e284f44fe031a9b50a151712c8"
+    }
+  }
+}

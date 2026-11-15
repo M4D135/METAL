@@ -14,7 +14,7 @@ window.__hold=async(index,n=3)=>{__pad.buttons[index]={value:1,pressed:true};awa
 window.__mode=target=>new Promise((resolve,reject)=>{const end=performance.now()+60000;function poll(){if(document.body.dataset.state===target)resolve();else if(performance.now()>end)reject(Error('mode '+document.body.dataset.state+' != '+target));else setTimeout(poll,25);}poll();});
 </script>`;
 const source=readFileSync(root+'/dist/index.html','utf8'),path=out+'/profiles.html';writeFileSync(path,source.replace('<head>','<head>'+hook));const results=[];
-await withChrome({chromePath:'/usr/bin/google-chrome',angle:'swiftshader',window:'960x640'},async browser=>{
+await withChrome({chromePath:process.env.METAL_CHROME||'/usr/bin/google-chrome',angle:process.env.METAL_ANGLE||'swiftshader',window:'960x640'},async browser=>{
  const page=await browser.openPage(path);await page.evaluate('__frames(3)');await page.evaluate("document.getElementById('start').click()");await page.evaluate("__mode('playing')");
  await page.evaluate("document.getElementById('pause-main').click()");await page.evaluate("__mode('menu')");
  const before=await page.evaluate("JSON.stringify(Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)])))");

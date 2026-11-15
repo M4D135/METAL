@@ -3,7 +3,7 @@
 from pathlib import Path
 import gzip, hashlib, json
 ROOT=Path(__file__).resolve().parents[1]
-modules=['fmath.js','passages.js','surface.js','skies.js','gpu-profile.js','renderer.js','profiles.js','world.js','destruction.js','physics.js','metal-physics.js','music.js','imuse.js','music-director.js','audio.js','audio-recipes.js','soundscape.js','economy.js','brain.js','simulation.js','motion.js','actors.js','effects.js','options.js','input.js','controls.js','loop.js','schedule.js','touch.js','jobs.js','tasks.js','host.js','demo.js','pilot.js','demo-metal.js','replay-metal.js','game.js']
+modules=['fmath.js','passages.js','surface.js','skies.js','gpu-profile.js','reflections.js','renderer.js','profiles.js','world.js','destruction.js','physics.js','metal-physics.js','music.js','imuse.js','music-director.js','audio.js','audio-recipes.js','soundscape.js','economy.js','brain.js','simulation.js','motion.js','actors.js','effects.js','options.js','input.js','controls.js','loop.js','schedule.js','touch.js','jobs.js','tasks.js','host.js','demo.js','pilot.js','demo-metal.js','replay-metal.js','game.js']
 sim_hash=hashlib.sha256(b''.join((ROOT/'src'/n).read_bytes() for n in ['fmath.js','renderer.js','profiles.js','world.js','destruction.js','economy.js','brain.js','simulation.js','physics.js','metal-physics.js','actors.js'])).hexdigest()
 css=(ROOT/'src/style.css').read_text()
 code='\n;\n'.join((ROOT/'src'/name).read_text() for name in modules)

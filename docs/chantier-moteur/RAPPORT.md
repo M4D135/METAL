@@ -1,5 +1,7 @@
 # METAL — rapport du chantier moteur
 
+> État final du 15 novembre 2026 : [livraison intégrée et limites restantes](rapports/finition-finale-20261115.md). 1 213 tests réussis, zéro échec, un TODO ; T5 final 34 cas sous 8 ms CPU ; 13 contrôles Chrome, manette simulée et tactile. Les paragraphes datés ci-dessous sont les paliers historiques, pas l’état actuel.
+
 Référence de départ : METAL **0.8.1**, `main` au commit
 `63668aca7045e62cd524973b226f21e9ec5703e8`. La version du jeu reste inchangée.
 

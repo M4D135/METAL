@@ -1,0 +1,436 @@
+{
+  "gates": [
+    {
+      "mode": "off",
+      "changed": 0,
+      "max": 0,
+      "red": 0,
+      "stats": {
+        "mode": "off",
+        "ready": false,
+        "faces": 0,
+        "cycles": 0,
+        "screenPasses": 0,
+        "history": 0,
+        "revision": -1
+      },
+      "glError": 0
+    },
+    {
+      "mode": "probe",
+      "changed": 452271,
+      "max": 77,
+      "red": -525795,
+      "stats": {
+        "mode": "probe",
+        "ready": true,
+        "faces": 0,
+        "cycles": 1,
+        "screenPasses": 0,
+        "history": 0,
+        "revision": 1
+      },
+      "glError": 0
+    },
+    {
+      "mode": "screen",
+      "changed": 451891,
+      "max": 77,
+      "red": -464059,
+      "stats": {
+        "mode": "screen",
+        "ready": true,
+        "faces": 0,
+        "cycles": 1,
+        "screenPasses": 1,
+        "history": 4,
+        "revision": 1
+      },
+      "glError": 0
+    }
+  ],
+  "pairs": [
+    {
+      "repeat": 0,
+      "mode": "base",
+      "gpu": 1.172375,
+      "sync": 1.7000000476837158,
+      "late": 0,
+      "passes": {
+        "opaque": 0.610666,
+        "dynamic": 0,
+        "post": 0.587375
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 0,
+      "mode": "off",
+      "gpu": 1.234957,
+      "sync": 2,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.627791,
+        "dynamic": 0,
+        "post": 0.609541
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 0,
+      "mode": "probe",
+      "gpu": 1.496041,
+      "sync": 2.5,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.67425,
+        "dynamic": 0,
+        "post": 0.655625
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 0,
+      "mode": "screen",
+      "gpu": 2.63079,
+      "sync": 1.800000011920929,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.652624,
+        "dynamic": 0,
+        "reflection-screen": 0.96075,
+        "post": 0.993833
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 1,
+      "mode": "screen",
+      "gpu": 2.752873,
+      "sync": 2.5,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.683333,
+        "dynamic": 0,
+        "reflection-screen": 0.892375,
+        "post": 0.919874
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 1,
+      "mode": "probe",
+      "gpu": 1.5041250000000002,
+      "sync": 2.300000011920929,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.663958,
+        "dynamic": 0,
+        "post": 0.659499
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 1,
+      "mode": "off",
+      "gpu": 1.0824989999999999,
+      "sync": 2,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.627874,
+        "dynamic": 0,
+        "post": 0.455625
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 1,
+      "mode": "base",
+      "gpu": 1.198749,
+      "sync": 1.899999976158142,
+      "late": 0,
+      "passes": {
+        "opaque": 0.616791,
+        "dynamic": 0,
+        "post": 0.596125
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 2,
+      "mode": "base",
+      "gpu": 1.071499,
+      "sync": 2,
+      "late": 0,
+      "passes": {
+        "opaque": 0.620375,
+        "dynamic": 0,
+        "post": 0.449249
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 2,
+      "mode": "off",
+      "gpu": 1.218041,
+      "sync": 2,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.62825,
+        "dynamic": 0,
+        "post": 0.603499
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 2,
+      "mode": "probe",
+      "gpu": 1.510166,
+      "sync": 2.199999988079071,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.684958,
+        "dynamic": 0,
+        "post": 0.653208
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 2,
+      "mode": "screen",
+      "gpu": 2.7135819999999997,
+      "sync": 2.800000011920929,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.683375,
+        "dynamic": 0,
+        "reflection-screen": 0.93525,
+        "post": 0.957791
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 3,
+      "mode": "screen",
+      "gpu": 2.7744560000000003,
+      "sync": 2.600000023841858,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.677041,
+        "dynamic": 0,
+        "reflection-screen": 0.89775,
+        "post": 0.941458
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 3,
+      "mode": "probe",
+      "gpu": 1.3491659999999999,
+      "sync": 2.100000023841858,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.668583,
+        "dynamic": 0,
+        "post": 0.653999
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 3,
+      "mode": "off",
+      "gpu": 1.128832,
+      "sync": 2.199999988079071,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.640041,
+        "dynamic": 0,
+        "post": 0.490708
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 3,
+      "mode": "base",
+      "gpu": 1.08125,
+      "sync": 2,
+      "late": 0,
+      "passes": {
+        "opaque": 0.617458,
+        "dynamic": 0,
+        "post": 0.457
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 4,
+      "mode": "base",
+      "gpu": 1.094873,
+      "sync": 1.899999976158142,
+      "late": 0,
+      "passes": {
+        "opaque": 0.614124,
+        "dynamic": 0,
+        "post": 0.464624
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 4,
+      "mode": "off",
+      "gpu": 1.081458,
+      "sync": 2,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.624833,
+        "dynamic": 0,
+        "post": 0.454666
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 4,
+      "mode": "probe",
+      "gpu": 1.40104,
+      "sync": 2,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.672874,
+        "dynamic": 0,
+        "post": 0.661791
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    },
+    {
+      "repeat": 4,
+      "mode": "screen",
+      "gpu": 2.628457,
+      "sync": 2.5,
+      "late": 0,
+      "passes": {
+        "reflection-probe": 0,
+        "opaque": 0.675041,
+        "dynamic": 0,
+        "reflection-screen": 0.948124,
+        "post": 0.980666
+      },
+      "native": [
+        640,
+        360
+      ],
+      "glError": 0
+    }
+  ],
+  "destruction": {
+    "invalid": {
+      "mode": "probe",
+      "ready": false,
+      "faces": 1,
+      "cycles": 28,
+      "screenPasses": 0,
+      "history": 3,
+      "revision": 1
+    },
+    "ready": {
+      "mode": "probe",
+      "ready": true,
+      "faces": 0,
+      "cycles": 29,
+      "screenPasses": 0,
+      "history": 3,
+      "revision": 2
+    },
+    "glError": 0
+  },
+  "errors": []
+}

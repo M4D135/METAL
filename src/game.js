@@ -13,7 +13,7 @@
   const preparationJobs=FJobs.create({environment:window,handlers:MetalTasks.jobs,bootstrap:'FJobs.serve(MetalTasks.jobs);',forceMain:new URLSearchParams(location.search).get('jobs')==='main'});
   addEventListener('pagehide',()=>preparationJobs.dispose());
   window.FMusic?.setPreparer?.((value,seed)=>preparationJobs.mode==='main'?null:preparationJobs.request('music',{stage:value,seed}).then(r=>r.prepared));
-  const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0,weakFlash=0,killFlash=0,freezeUntil=0;const hurtDirections=[];
+  const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0,weakFlash=0,killFlash=0,freezeUntil=0;const hurtDirections=[],impactMarks=[];let deflectUntil=0,deflectCount=0,deflectWindow=0,deflectHints=0;
   const recoil={shot:{omega:38,velocity:1.9*38/27,pitchDegrees:.35,rollDegrees:.6},pistol:{omega:30,velocity:1.45*30/27,pitchDegrees:.6},fracture:{omega:18,velocity:3.5*18/27,pitchDegrees:2,fovDegrees:-1.8},rocket:{omega:14,velocity:5.5*14/27,pitchDegrees:2.6,fovDegrees:-2.5},grenade:{omega:16,velocity:4.2*16/27,pitchDegrees:1.2}};
   const audio=FAudio.create({...window.MetalAudio?.options?.(),asyncPrepare:preparationJobs.mode!=='main',preparePCM:(name,variant)=>preparationJobs.mode==='main'?null:preparationJobs.request('fx',{name,variant}).then(r=>r.pcm)}),soundscape=FSoundscape.create(),motion=FMotion.create({recoil,cameraSteps:true}),leftMotion=FMotion.create({recoil,cameraSteps:true}),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   // MUS-04 : l'état de la simulation choisit la pièce, le mixeur la joue. Le
@@ -26,7 +26,7 @@
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const frameTasks=FSchedule.create({now:()=>performance.now()});
   const fixedLoop=FLoop.create({hz:60,maxSteps:5}),poseView=FLoop.view({single:['player'],many:['enemies','bullets','projectiles']});let renderState=null,aimShownX=0,aimShownY=0;
-  const framePacer=FOptions.createFrameGate();let cadenceHintAt=0,autoCadence=60,cadencePending=0,deferLaunch=false,pendingStart=null;
+  const framePacer=FOptions.createFrameGate();let cadenceHintAt=0,autoCadence=60,cadencePending=0,deferLaunch=false,pendingStart=null,renderLoadPending=false;
   const cadenceLimit=()=>prefs.fpsLimit===-1?autoCadence:prefs.fpsLimit;
   let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,checkpointWaitAt=-1,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'],ammoNames=['balles','cartouches','roquettes','grenades','balles'];
@@ -84,7 +84,7 @@
   function cachedWorld(...args){const q=worldSpec(...args);return worldCache.get(q.key)||cacheWorld(q.key,FWorld.create(q.seed,q.index,q.options));}
   function prepareWorld(...args){
     const q=worldSpec(...args);if(worldCache.has(q.key))return Promise.resolve(worldCache.get(q.key));if(worldJobs.has(q.key))return worldJobs.get(q.key);
-    const pending=preparationJobs.request('world',q).then(value=>cacheWorld(q.key,value)).finally(()=>worldJobs.delete(q.key));worldJobs.set(q.key,pending);return pending;
+    const pending=preparationJobs.request('world',{...q,prepare:true}).then(value=>cacheWorld(q.key,value)).finally(()=>worldJobs.delete(q.key));worldJobs.set(q.key,pending);return pending;
   }
   const titleScreen=()=>mode==='menu'||mode==='options';
   const currentTrack=()=>titleScreen()?'title':world?.stage??stage%3;
@@ -184,6 +184,7 @@
       $(id+'-setting').value=String(Math.round(prefs[key]*multiplier));$(id+'-value').textContent=(id==='sensitivity'?prefs[key].toFixed(2).replace('.',','):Math.round(prefs[key]*multiplier))+suffix;
     }
     $('gyro-mode').value=prefs.gyroMode;$('gyro-hint').textContent=host.gyro?'Gyroscope actif.':'Facultatif · activation depuis ce menu, si le navigateur le permet.';
+    $('reflections').value=prefs.reflections;
     $('render-scale').value=String(prefs.renderScale);renderer?.setRenderScale?.(prefs.renderScale);
     $('fps-limit').value=String(prefs.fpsLimit);cadenceHint();$('fps-counter').hidden=!prefs.showFps;$('scanlines').hidden=!prefs.crt;$('vignette').hidden=renderer?.stats.backend==='webgl2'||!prefs.vignette;$('damage').hidden=renderer?.stats.backend==='webgl2';
     $('crosshair').style.scale=String(prefs.crosshairScale);canvas.style.filter=renderer?.stats.backend==='webgl2'||prefs.brightness===1?'none':'brightness('+prefs.brightness+')';
@@ -194,7 +195,7 @@
     controlHints();
     $('music-title').textContent=trackLabel();
     const software=renderer?.stats.backend==='canvas2d';
-    $('bloom-toggle').disabled=software;$('graphics-hint').textContent=software?'Rendu logiciel de secours, avec une définition limitée. Les ombres restent réglables.':'Résolution native par défaut. Le détail règle la portée et les ombres ; seule l’échelle choisie ci-dessus change la définition. La cadence automatique est choisie au chargement puis conservée dans le secteur.';
+    $('bloom-toggle').disabled=software;$('reflections').disabled=software;$('graphics-hint').textContent=software?'Rendu logiciel de secours, avec une définition limitée. Les ombres restent réglables.':'Résolution native par défaut. Le détail règle la portée et les ombres ; seule l’échelle choisie ci-dessus change la définition. La cadence automatique est choisie au chargement puis conservée dans le secteur.';
     const silent=[['musicVolume','Musique coupée'],['effectsVolume','Effets coupés'],['ambienceVolume','Ambiances coupées']].filter(([key])=>prefs[key]===0).map(([,label])=>label);
     $('audio-status').textContent=muted||prefs.masterVolume===0?'Son coupé. Activez le son et le volume général pour écouter.':silent.length?silent.join(' · ')+'. Réglez les curseurs pour les entendre.':'Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.';
     document.body.classList.toggle('low-motion',!softMotion);audio.setMix?.({master:prefs.masterVolume,music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});audioGate();syncTitle();saveSettings();renderBindings();
@@ -260,7 +261,8 @@
   }
   function restoreRun(v){
     if(!validSave(v))return false;
-    load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1,v.combatVersion===1);
+    if(sim?.state.dead&&world.seed===v.seed&&stage===savedIndex(v)&&sim.restore(v.checkpoint,{recover:true})){if(deferLaunch)renderLoadPending=true;else syncDestruction();return acceptRestoredRun(v);}
+    load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1,v.combatVersion===1,null,{rigidBodies:!!v.checkpoint?.rigidBodies});
     if((v.generation||3)!==(world.generation||3))return false;
     if(sim.restore(v.checkpoint,{recover:true}))return acceptRestoredRun(v);
     // La génération 6 a eu deux implantations de machines. Essayer l'ancienne
@@ -268,7 +270,7 @@
     // Aucun champ ni empreinte du point source n'est réécrit. Un point repris et
     // enregistré à nouveau garde son identité et suit le même chemin au prochain lancement.
     if(world.generation===6&&typeof v.checkpoint.fingerprint==='string'&&v.checkpoint.fingerprint!==sim.snapshot().fingerprint){
-      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,true,v.profiles===1,v.combatVersion===1);
+      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,true,v.profiles===1,v.combatVersion===1,null,{rigidBodies:!!v.checkpoint?.rigidBodies});
       if(sim.restore(v.checkpoint,{recover:true}))return acceptRestoredRun(v);
     }
     return false;
@@ -290,7 +292,7 @@
         }
       }
       runStats={...v.runStats};selectedWeapon=[0,1,2,3,4].includes(v.checkpoint?.state?.weapon)?v.checkpoint.state.weapon:0;
-      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1,v.combatVersion===1);
+      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1,v.combatVersion===1,null,{rigidBodies:!!v.checkpoint?.rigidBodies});
       start(v.generation!==world.generation?'Les lieux ont changé. Reprise à l’entrée du même secteur ; progression précédente conservée.':'Point de reprise illisible. Reprise à l’entrée de ce secteur.');
       saveCheckpoint();
     }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2,false,true,true);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
@@ -306,16 +308,16 @@
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
   function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode,prepared=null,simulationOptions={}){
-    checkpointPending=false;checkpointWaitAt=-1;
+    checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;deflectUntil=0;
     campaignMode=asCampaign;campaignRevision=revision;profileMode=profiles&&asCampaign&&revision===2;combatMode=combat&&asCampaign&&revision===2;stage=n;if(newSeed!==undefined)seed=newSeed;world=prepared||cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps,profileMode,combatMode);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale
     // 3/4/5-slot entry cannot block restoration of a healthy checkpoint.
     const carry=entry&&(entry.inventory.weapons.length===slots||slots===4&&entry.inventory.weapons.length===3)?entry:null;
-    sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),armorSystem:true,...(brain?{brain}:{}),...(demoQuery.get('record')==='1'?{brain:null}:{}),...simulationOptions});attachReplay({seed,index:n,options:{campaign:asCampaign,campaignVersion:revision,legacyTraps,profiles:profileMode,combatVersion:combatMode?1:undefined},loadout:carry,simulationOptions:{armorSystem:true}});sim.setDifficulty?.(prefs.difficulty);
+    sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),armorSystem:true,...(brain?{brain}:{}),...(demoQuery.get('record')==='1'?{brain:null}:{}),...simulationOptions});attachReplay({seed,index:n,options:{campaign:asCampaign,campaignVersion:revision,legacyTraps,profiles:profileMode,combatVersion:combatMode?1:undefined},loadout:carry,simulationOptions:{armorSystem:true,...simulationOptions}});sim.setDifficulty?.(prefs.difficulty);
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
-    renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,skyEnvironment(world));renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;renderToken=sim.destruction?.delta?.().token;
+    renderLoadPending=true;if(!deferLaunch)loadRender();
     motion.reset();leftMotion.reset();lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
     soundscape.reset();audio.setStage?.(world.stage, seed);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);musicDirector?.reset();
     $('music-title').textContent=trackLabel();
@@ -325,7 +327,9 @@
     $('restart').textContent=world.campaign?'RECOMMENCER CE MONDE':'RECOMMENCER CE SECTEUR';
     document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=touch;hudWait=0;renderHUD();weaponHint();
   }
+  function loadRender(){renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,skyEnvironment(world));renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;renderToken=sim.destruction?.delta?.().token;renderLoadPending=false;}
   function syncDestruction(){
+    if(renderLoadPending)return;
     const d=sim?.destruction,revision=sim?.state.destructionRevision??d?.revision;if(!d)return;
     const delta=d.delta?.(renderToken);if(delta?delta.token===renderToken:revision===renderRevision)return;
     if(renderer.updateWorld)renderer.updateWorld(d.meshes,revision,d.lights,delta);else renderer.setWorld(d.meshes,d.lights||world.lights,skyEnvironment(world));
@@ -365,15 +369,16 @@
       $('loading-detail').textContent='Assemblage du territoire et de la simulation…';$('loading-bar').style.width='76%';
       await new Promise(resolve=>requestAnimationFrame(resolve));if(ticket!==preparationSerial)return;
       deferLaunch=true;pendingStart=null;try{action();}finally{deferLaunch=false;}
+      $('loading-detail').textContent='Préparation de l’image et des effets…';$('loading-bar').style.width='82%';await new Promise(resolve=>requestAnimationFrame(resolve));if(ticket!==preparationSerial)return;if(renderLoadPending)loadRender();await new Promise(resolve=>requestAnimationFrame(resolve));if(ticket!==preparationSerial)return;
       if(pendingStart&&prefs.fpsLimit===-1&&renderer.calibrate&&!document.hidden&&windowFocused){
         $('loading-detail').textContent='Mesure de la cadence à résolution native…';$('loading-bar').style.width='88%';
         const p=sim.state.player,camera={pos:[p.x,(p.y||0)+1.62,p.z],yaw:p.yaw,pitch:p.pitch,fov:prefs.fov};
-        renderState=null;const measured=await renderer.calibrate(camera,models(sim.state.time,true,camera),{time:sim.state.time,shadows:prefs.shadows,bloom:prefs.bloom},30);
+        renderState=null;const measured=await renderer.calibrate(camera,models(sim.state.time,true,camera),{time:sim.state.time,shadows:prefs.shadows,bloom:prefs.bloom,reflections:prefs.reflections},30);
         if(ticket!==preparationSerial)return;
         autoCadence=cadencePending||FOptions.cadenceChoice(measured?.p95,autoCadence);cadencePending=0;renderer.setBudgetTarget?.(autoCadence);cadenceHint();
       }
       if(pendingStart){const {message}=pendingStart;pendingStart=null;start(message);}
-    }catch(error){deferLaunch=false;pendingStart=null;setMode('menu');toast('Préparation interrompue. Réessayez depuis le menu.',4);console.error('METAL preparation:',error);}
+    }catch(error){if(ticket!==preparationSerial)return;deferLaunch=false;pendingStart=null;setMode('menu');toast('Préparation interrompue. Réessayez depuis le menu.',4);console.error('METAL preparation:',error);}
   }
   function result(dead,reason){
     const s=sim.state,finished=!dead&&stage===(world.campaign?17:2);
@@ -394,6 +399,8 @@
     let checkpointDue=false;const trophyIds=new Set(sim.state.events.filter(e=>e.name==='trophy'||e.name==='bossReward').map(e=>e.id));
     for(const e of sim.state.events){
       if(mode==='playing')controls.event(e,sim.state.player);
+      if(e.name==='materialImpact'&&e.deflected){const t=sim.state.time;deflectUntil=t+.14;if(e.normal){impactMarks.push({source:e.sourceId,until:t+20,p:[e.x,e.y,e.z].map((v,k)=>v+e.normal[k]*.012),size:e.normal.map(v=>v?.018:.07)});if(impactMarks.length>32)impactMarks.shift();}if(t-deflectWindow>2.5){deflectWindow=t;deflectCount=0;}if(++deflectCount===4&&deflectHints<2&&mode==='playing'){deflectHints++;toast(sim.state.activeProfile==='light'?'Structure blindée · passez au lourd pour ouvrir une brèche.':'Structure blindée · utilisez une grenade ou une roquette.',3);}}
+      if(e.name==='materialBreak')for(let k=impactMarks.length-1;k>=0;k--)if(impactMarks[k].source===e.sourceId)impactMarks.splice(k,1);
       if(e.name==='boundaryContact')boundaryFlash=.15;if(e.name==='weakHit')weakFlash=.3;if(e.name==='hurt'&&Number.isFinite(e.x)&&Number.isFinite(e.z)){hurtDirections.push({angle:Math.atan2(e.x-sim.state.player.x,sim.state.player.z-e.z),life:.6});if(hurtDirections.length>4)hurtDirections.shift();}if(e.name==='kill'&&e.credited)killFlash=.3;
       // shots is shared by both hands: consume only the hand that really fired.
       if(e.name==='shot'||e.name==='fracture'||(e.name==='rocket'||e.name==='grenadeLaunch')&&e.owner==='player'){
@@ -624,6 +631,7 @@
   }
   function models(t,playing,camera){
     const out=[],s=renderState||sim.state,p=s.player;sim.rigid?.models(out,camera,fixedLoop.frame.alpha);machinery(out,t);ambience(out,t);systems(out,t);
+    for(let i=impactMarks.length-1;i>=0;i--){const q=impactMarks[i];if(q.until<s.time){impactMarks.splice(i,1);continue;}out.push({...m('box',q.p,q.size,2),color:[.06,.07,.08]});}
     if(window.FEffects)out.push(...FEffects.build(s,world,camera,{quality,backend:renderer.stats.backend}));
     // All registered machines remain in the simulation; distance only reduces model detail.
     // Match the renderer's whole approach transition conservatively. The renderer
@@ -631,7 +639,7 @@
     const longView=(world.environment?.longViewZones||[]).some(a=>Math.abs(p.x-a.x)<=a.w/2+35&&Math.abs(p.z-a.z)<=a.d/2+35);
     const range=longView?100:renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);
     const nearby=(x,z,r=3)=>(x-p.x)**2+(z-p.z)**2<(range+r)**2;
-    const actorVisible=renderer.actorFilter?.(camera,{shadows:prefs.shadows})||(()=>true);
+    const actorVisible=renderer.actorFilter?.(camera,{shadows:prefs.shadows,reflections:prefs.reflections})||(()=>true);
     for(const c of s.cores){
       if(!nearby(c.x,c.z))continue;
       out.push(m('cylinder',[c.x,(c.y||0)+.13,c.z],[.95,.26,.95],0),m('ring',[c.x,(c.y||0)+.29,c.z],[1.15,.1,1.15],c.taken?0:5));
@@ -946,7 +954,7 @@
     sim?.dispose?.();setMode('demo');$('demo-banner').hidden=false;demoMix(true);
     demoBench=benchSeconds?{seconds:0,steps:0,frames:[],stepMs:[],drawMs:[],scenes:[],started:performance.now()}:null;
     const scenes=MetalDemo.scenes(96,!!benchSeconds);
-    const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
+    const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,prepare:!scene.boss,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
     demoRunner=FDemo.runner({scenes,stallSeconds:50,onError:error=>console.error('METAL demo:',error),onStop:()=>demoAttract?.stop('error'),open:async scene=>{
       document.body.classList.add('demo-loading');const raw=await prepare(scene);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(ticket!==demoSerial)return null;
       const prepared=MetalDemo.world(raw,scene),carry=MetalDemo.loadout(scene.index,scene.boss&&scene.index%2?'heavy':'light');
@@ -1025,7 +1033,7 @@
     }else{fixedLoop.reset();poseView.clear();$('damage').style.opacity='0';if(titleScreen()){activateTitle();audio.tick(dt);}}
     for(const hit of hurtDirections)hit.life-=dt;while(hurtDirections.length&&hurtDirections[0].life<=0)hurtDirections.shift();$('hurt-directions').querySelectorAll('i').forEach((node,i)=>{const hit=hurtDirections[i];node.style.opacity=hit?String(Math.max(0,hit.life/.6)):0;if(hit)node.style.transform='rotate('+(hit.angle-sim.state.player.yaw)+'rad)';});
     weakFlash=Math.max(0,weakFlash-dt);killFlash=Math.max(0,killFlash-dt);$('crosshair').classList.toggle('weak-hit',weakFlash>0);$('crosshair').classList.toggle('kill-hit',killFlash>0);
-    boundaryFlash=Math.max(0,boundaryFlash-dt);$('crosshair').classList.toggle('boundary-contact',boundaryFlash>0);
+    $('crosshair').classList.toggle('deflect',sim.state.time<deflectUntil);boundaryFlash=Math.max(0,boundaryFlash-dt);$('crosshair').classList.toggle('boundary-contact',boundaryFlash>0);
     controls.flush(now,mode==='playing'&&!document.hidden&&windowFocused);
     syncDestruction();
     if((sceneDirty||titleScreen()||mode==='demo'||mode==='playing'&&!loadoutOpen)&&(mode!=='playing'||now>=freezeUntil)){
@@ -1041,7 +1049,7 @@
     const aimOffset=canvas.clientHeight*.5*Math.tan(recoilPitch)/Math.tan(clamp(camera.fov,40,110)*Math.PI/360);$('crosshair').style.marginTop=(aimOffset*Math.cos(camera.roll)).toFixed(2)+'px';$('crosshair').style.marginLeft=(-aimOffset*Math.sin(camera.roll)).toFixed(2)+'px';
     renderPartner(camera);
     const drawing=demoBench?performance.now():0,drawModels=models(t,isPlay&&(mode!=='demo'||demoShot==='eyes'),camera);if(mode==='demo'&&demoShot!=='eyes')drawModels.push(...FActors.build({id:-1,type:sim.state.activeProfile==='heavy'?1:0,x:p.x,z:p.z,baseY:p.y,y:p.y+1.35,yaw:p.yaw,hp:p.hp,moveSpeed:sim.state.moving,awareness:'patrol'},{time:t,quality,backend:renderer.stats.backend}));
-    renderer.draw(camera,drawModels,{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,brightness:prefs.brightness,vignette:prefs.vignette,shadows:prefs.shadows,bloom:prefs.bloom,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
+    renderer.draw(camera,drawModels,{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,brightness:prefs.brightness,vignette:prefs.vignette,shadows:prefs.shadows,bloom:prefs.bloom,reflections:prefs.reflections,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
     if(demoBench)demoBench.drawMs.push(performance.now()-drawing);
     sceneDirty=false;
     }
@@ -1071,6 +1079,7 @@
     if(!sim.selectLeftWeapon(next)){toast('Équipement indisponible pour la main gauche',1.8);renderHUD();return;}
     selectedWeapon=sim.state.weapon;clearFireIntents();leftMotion.impulse('switch');audio.switchWeapon?.();renderHUD();
   }
+  $('loading-cancel').addEventListener('click',()=>{preparationSerial++;deferLaunch=false;pendingStart=null;setMode('menu');});
   $('start').addEventListener('click',()=>{const nextSeed=savedRun?(Date.now()>>>0)%1000000:seed;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true});});
   $('resume-expedition').addEventListener('click',()=>preparePlay(savedIndex(savedRun),()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1}));
   $('intro-options').addEventListener('click',()=>setMode('options'));
@@ -1103,8 +1112,9 @@
   for(const [id,key] of [['pad-invert','padInvertY'],['pad-assist','padAssist'],['pad-swap','padSwapSticks'],['touch-assist','touchAssist'],['portrait-fov','portraitFov']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
   $('demo-delay').addEventListener('change',()=>{prefs.demoDelay=Number($('demo-delay').value);settings();});
   $('render-scale').addEventListener('change',()=>{prefs.renderScale=Number($('render-scale').value);settings();renderer.resize(quality);});
+  $('reflections').addEventListener('change',()=>{prefs.reflections=$('reflections').value;settings();});
   $('fps-limit').addEventListener('change',()=>{prefs.fpsLimit=Number($('fps-limit').value);settings();});
-  $('reset-image').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['quality','softMotion','fov','brightness','shadows','bloom','showFps','crt','vignette','fpsLimit','renderScale'])prefs[key]=d[key];quality=prefs.quality;softMotion=prefs.softMotion;renderer.resize(quality);settings();});
+  $('reset-image').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['quality','softMotion','fov','brightness','shadows','bloom','reflections','showFps','crt','vignette','fpsLimit','renderScale'])prefs[key]=d[key];quality=prefs.quality;softMotion=prefs.softMotion;renderer.resize(quality);settings();});
   $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','bindings','bindingsVersion','padBindings','padVersion','padYaw','padPitch','padDead','padCurve','padInvertY','padAssist','padVibration','padSwapSticks'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
   $('reset-audio').addEventListener('click',()=>{audio.cancelTestMix?.();const d=FOptions.defaults(touch);for(const key of ['masterVolume','musicVolume','effectsVolume','ambienceVolume'])prefs[key]=d[key];muted=false;settings();$('audio-status').textContent='Mix recommandé rétabli. Testez les tirs et les ambiances.';});
   $('test-audio').addEventListener('click',async()=>{

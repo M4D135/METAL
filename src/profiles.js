@@ -40,7 +40,10 @@
   function canDamage(group,bullet,source){
     if(group.profileProtected)return false;
     if(group.profileRequired==='heavy')return !bullet&&source?.owner==='player'&&source.profile==='heavy';
-    if(group.kind==='wall'||group.kind==='roof')return !bullet&&source?.owner!==undefined&&(source.owner!=='player'||source.profile==='heavy');
+    const pieces=group.active||[],floor=['arena_inlay','floor_drain','threshold','hazard_marking','trail','ground_patch','leaf_litter','jump_landing','dock_warning','trap_warning','arena_path_mark','trap_plate'];
+    if(pieces.length&&pieces.every(e=>e.mesh.ground||floor.includes(e.mesh.category)))return false;
+    const bounds=group.bounds,armored=group.kind==='wall'||group.kind==='roof'||group.kind==='support'&&(!bounds||Math.min(bounds.maxX-bounds.minX,bounds.maxZ-bounds.minZ)>=.6)||pieces.some(e=>['boundary','hill','cliff','cliff_stratum'].includes(e.mesh.category));
+    if(armored)return !bullet&&source?.owner!==undefined&&(source.owner!=='player'||source.profile==='heavy');
     return true;
   }
   function world(w){

@@ -207,3 +207,10 @@ body.touch #arsenal .left-hand-strip{flex-wrap:wrap}body.touch #arsenal .left-he
 
 body:not(.touch) #boss-status{top:88px}body:not(.touch)[data-boss=true] .score-status{opacity:0}@media(max-height:540px){body:not(.touch) #boss-status{top:74px}}
 body[data-state=demo] #hud>:not(#crosshair):not(#boss-status):not(#boss-cue):not(#hurt-directions){display:none!important}body[data-state=demo] #boss-status{top:64px}@media(max-width:600px){#demo-banner{font-size:10px;padding:8px 10px;width:calc(100vw - 40px);line-height:1.4}body[data-state=demo] #boss-status{top:68px}}
+
+#crosshair.deflect{border:1px solid #ffc782;border-radius:50%;width:26px;height:26px;margin-left:-13px;margin-top:-13px}#crosshair.deflect i{background:#ffc782}
+/* Keep the weapon choices readable without covering the lower centre. */
+body:not(.touch) .hud-bottom{grid-template-columns:minmax(145px,1fr) minmax(250px,360px) minmax(155px,1fr);gap:20px;bottom:16px}
+body:not(.touch) #arsenal{grid-column:auto;order:0}body:not(.touch) #arsenal .weapon-slot{min-height:58px;padding:5px;grid-template-rows:26px auto}body:not(.touch) #arsenal .weapon-slot svg{height:26px;width:45px}body:not(.touch) #arsenal .slot-name{font-size:7px}body:not(.touch) #arsenal .left-hand-strip{padding:5px 7px}body:not(.touch) .vital{padding:10px 12px}body:not(.touch) .vital strong{font-size:40px}body:not(.touch) .ammo-readout>strong{font-size:38px}
+@media(max-width:740px){body:not(.touch) .hud-bottom{grid-template-columns:1fr 1fr}body:not(.touch) #arsenal{grid-column:1/-1;order:-1;max-width:360px;justify-self:center}}
+body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-height:4.5em;overflow:hidden}

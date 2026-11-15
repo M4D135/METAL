@@ -255,7 +255,7 @@
     }
 
     // ---- Static decor. Outside the step, may allocate. Boxes {minX, maxX, minY, maxY, minZ, maxZ} and floors {x, z, w, d,
-    function setStatics(boxes,floors){
+    function setStatics(boxes,floors,changedBounds){
       const where='setStatics';
       if(boxes===undefined||boxes===null)boxes=[];
       if(floors===undefined||floors===null)floors=[];
@@ -315,7 +315,10 @@
       for(let c=0;c<pn;c++){if(pK[c]-Math.floor(pK[c]/KM)*KM>=NB)continue;pK[kept]=pK[c];pI[kept]=pI[c];pJn[kept]=pJn[c];pJ1[kept]=pJ1[c];pJ2[kept]=pJ2[c];kept++;}
       pn=kept;tableBuild();
       let woken=0;
-      for(let i=1;i<top;i++)if((FL[i]&(ALIVE|ASLEEP|PENDING))===(ALIVE|ASLEEP)){wake(i);woken++;}
+      const local=changedBounds&&['minX','maxX','minY','maxY','minZ','maxZ'].every(k=>finite(changedBounds[k]))?changedBounds:null;
+      for(let i=1;i<top;i++)if((FL[i]&(ALIVE|ASLEEP|PENDING))===(ALIVE|ASLEEP)){
+        const b=i*6;if(local&&(BB[b]>local.maxX+.12||BB[b+3]<local.minX-.12||BB[b+1]>local.maxY+.12||BB[b+4]<local.minY-.12||BB[b+2]>local.maxZ+.12||BB[b+5]<local.minZ-.12))continue;wake(i);woken++;
+      }
       let h=fnv(2166136261,n);
       const words=a=>{const u=new Uint32Array(a.buffer);for(let k=0;k<u.length;k++)h=fnv(h,u[k]);};
       words(sP);words(sH);words(sR);for(let k=0;k<n;k++)h=fnv(h,sO[k]);words(sF);words(sE);for(let k=0;k<n;k++)h=fnv(h,sM[k]>>>0);

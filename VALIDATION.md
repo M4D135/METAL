@@ -1,5 +1,7 @@
 # Validation du chantier moteur — lot 01 terminé — 12 novembre 2026
 
+> État final du 15 novembre 2026 : [livraison intégrée et limites restantes](docs/chantier-moteur/rapports/finition-finale-20261115.md). 1 213 tests réussis, zéro échec, un TODO ; T5 final 34 cas sous 8 ms CPU ; 13 contrôles Chrome, manette simulée et tactile. Les paragraphes datés ci-dessous sont les paliers historiques, pas l’état actuel.
+
 **LOAD-01, LOOP-01/LOOP-V2, STAB-V1, LOOP-06, LOOP-10 et LOOP-09.** La branche réunit les reprises compatibles, le tampon de tir par main, la capture/annulation du pointeur, la molette seuillée et le limiteur stabilisé avec indication de la cadence choisie.
 
 | Contrôle | Résultat |

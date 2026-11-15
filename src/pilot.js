@@ -14,7 +14,7 @@ function createPilot(sim,world,opt={}){
   // --- cache d'arêtes paresseux (4 bits par cellule : -x,+x,-z,+z), vidé quand la topologie change
   const edgeKnown=new Uint8Array(N),edgeOpen=new Uint8Array(N);
   const gCost=new Float32Array(N),prev=new Int32Array(N),stamp=new Uint32Array(N),closed=new Uint32Array(N);
-  let search=null,searchBudget=96,lastProfile=s.activeProfile,targetReady=0;
+  let search=null,searchBudget=96,lastProfile=s.activeProfile,targetReady=0,jetRecover=false;
   let heapI=new Int32Array(4096),heapK=new Float32Array(4096),heapN=0,serial=0;
   const stats={astar:0,astarFail:0,astarNoEnd:0,astarCap:0,astarNodes:0,edgeTests:0,replans:0,unstick:0,interacts:0,think:0,topology:0,nearestLoose:0,padRoutes:0};
   const OFF=[-1,1,-nx,nx],REV=[1,0,3,2];
@@ -59,7 +59,7 @@ function createPilot(sim,world,opt={}){
   function objectives(){
     const list=[];const B=boss(),pg=world.profileGoals;
     if(pg){
-      const wall=breachMesh,relay=s.mechanisms.find(m=>m.id===pg.mechanism),clear=wall&&traverse(pg.entry.x,pg.entry.z,wall.p[0]+1.2,pg.entry.z,.3);
+      const wall=breachMesh,relay=s.mechanisms.find(m=>m.id===pg.mechanism),clear=wall&&(!sim.destruction?.isAlive(pg.breach)||traverse(pg.entry.x,pg.entry.z,wall.p[0]+1.2,pg.entry.z,.3));
       if(!clear){
         if(!s.inventory.weapons[3]||s.inventory.ammo[3]===0){for(const q of s.pickups)if(!q.taken&&q.weapon===3&&(s.inventory.weapons[3]||q.kind==='weapon'))list.push({key:'supply:'+q.id,x:q.x,y:q.y,z:q.z,pri:1.5,reach:.6,profile:'heavy'});}
         else list.push({key:'breach',x:wall.p[0]-6,y:pg.entry.y,z:pg.entry.z,pri:2,reach:.6,profile:'heavy',shoot:[wall.p[0],pg.entry.y+1.3,pg.entry.z]});
@@ -196,17 +196,27 @@ function createPilot(sim,world,opt={}){
     for(const a of s.bossAttacks||[])if(a.kind==='ring'&&a.active){const d=Math.hypot(p.x-a.x,p.z-a.z),eta=(d-a.currentRadius)/(a.radius/a.activeDuration);if(eta>=0&&eta<.24){if(!p.airborne)input.jump=true;else if(p.dash<=0)input.dash=true;}}
     if(B?.bossAwake&&B.hp>0&&B.profileRequired&&s.activeProfile!==B.profileRequired&&Math.hypot(p.x-B.x,p.z-B.z)<32){input.switchProfile=true;input.fire=false;return;}
     if(goal?.shoot&&Math.hypot(goal.x-p.x,goal.z-p.z)<1.5){const [x,y,z]=goal.shoot,dx=x-p.x,dz=z-p.z,ey=wrap(Math.atan2(dx,-dz)-p.yaw),ep=Math.atan2(y-p.y-1.62,Math.hypot(dx,dz))-p.pitch;input.moveX=input.moveY=0;input.lookX=clamp(ey*12,-6,6)*dt;input.lookY=clamp(ep*12,-6,6)*dt;input.weapon=3;input.fire=Math.abs(ey)<.035&&Math.abs(ep)<.035;if(!sim.destruction?.isAlive(world.profileGoals.breach)){path=null;goal=null;search=null;replanAt=0;}}
-    if(goal?.fly&&Math.hypot(goal.x-p.x,goal.z-p.z)<.8){input.moveX=input.moveY=0;input.jump=!p.airborne;input.jumpHeld=p.y<goal.fly-.1;input.fire=false;}
+    if(goal?.fly&&Math.hypot(goal.x-p.x,goal.z-p.z)<12){const dx=goal.x-p.x,dz=goal.z-p.z,d=Math.hypot(dx,dz),fly=p.y<goal.fly+.65;input.moveX=d>.55?(dx*cy+dz*sy)/d:0;input.moveY=d>.55?(dx*sy-dz*cy)/d:0;input.jump=!p.airborne;input.jumpHeld=fly;input.sprint=false;input.dash=false;input.fire=input.fireLeft=false;unstickUntil=0;lastProgressT=t;}
     // Local steering uses the current collision boxes (the A* projection
     // deliberately ignores the whole swept footprint of a moving blade).
     if(moving&&!fightBoss&&!goal?.fly&&!p.airborne){
       const len=Math.hypot(mx,mz)||1,dx=mx/len,dz=mz/len;
-      const clear=(x,z)=>{for(const d of [.45,.85]){const px=p.x+x*d,pz=p.z+z*d,gy=sim.ground(px,pz);if(Math.abs(gy-p.y)>.5||sim.blocked(px,pz,.3,gy))return false;}return true;};
+      const rigid=sim.rigid,surface=(x,z,ceiling)=>Math.max(sim.ground(x,z),rigid?.support(x,z,.3,ceiling)??-Infinity);
+      const clear=(x,z)=>{for(const d of [.45,.85]){const px=p.x+x*d,pz=p.z+z*d,gy=surface(px,pz,p.y+.42);if(gy-p.y>.43||p.y-gy>1.4||sim.blocked(px,pz,.3,gy)||rigid?.obstacle(px,pz,.3,gy,1.8))return false;}return true;};
+      if(rigid&&!clear(dx,dz)){const px=p.x+dx*.65,pz=p.z+dz*.65,top=rigid.support(px,pz,.3,p.y+(s.activeProfile==='heavy'?.9:1.1));if(top>p.y+.42&&top-p.y<=(s.activeProfile==='heavy'?.9:1.1)&&!sim.blocked(px,pz,.3,top)&&!rigid.obstacle(px,pz,.3,top,1.8)){input.jump=true;input.moveX=dx*cy+dz*sy;input.moveY=dx*sy-dz*cy;return;}}
+
       if(!clear(dx,dz)){
         let best=null,score=-Infinity;for(const a of [.4,-.4,.8,-.8,1.2,-1.2,1.55,-1.55,2,-2,Math.PI]){const c=Math.cos(a),v=Math.sin(a),x=dx*c-dz*v,z=dx*v+dz*c;if(!clear(x,z))continue;const value=x*dx+z*dz+(a>0?.03:0);if(value>score){score=value;best=[x,z];}}
         if(best){input.moveX=best[0]*cy+best[1]*sy;input.moveY=best[0]*sy-best[1]*cy;}else input.moveX=input.moveY=0;
       }
     }
+    // The light operator crosses swept trap footprints in flight; a body or
+    // a blade must never pin the demonstration pilot on the damaging floor.
+    if(s.activeProfile==='light'&&!goal?.fly)for(const q of s.traps||[]){
+      if(q.destroyed)continue;const tx=q.kind==='blade'&&q.axis!=='z'?(q.travel||1.65):0,tz=q.kind==='blade'&&q.axis==='z'?(q.travel||1.65):0;
+      if(Math.abs(p.x-q.x)<q.w/2+tx+1.8&&Math.abs(p.z-q.z)<q.d/2+tz+1.8&&p.y<q.y+(q.kind==='press'?(q.travel||2.6)+(q.h||.65):q.h||.3)+.8){input.jump=!p.airborne;input.jumpHeld=true;}
+    }
+    if(s.activeProfile==='light'){if(s.jetpack.fuel<.12)jetRecover=true;else if(s.jetpack.fuel>=Math.min(2.5,s.jetpack.capacity))jetRecover=false;if(jetRecover){input.jump=input.jumpHeld=false;if(goal?.fly&&Math.hypot(goal.x-p.x,goal.z-p.z)<3)input.moveX=input.moveY=0;}}
     // Release the triggers before overheating, retaining ordinary cooling rules.
     if(s.weaponHeat?.[input.weapon??s.weapon]>.8)input.fire=false;
     // 8) interaction : seulement un mécanisme (jamais un atelier : la démo n'ouvre pas de menu)

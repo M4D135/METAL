@@ -1,5 +1,7 @@
 # Lot 03s — validation T5 sur la production 930c199
 
+> Revalidation finale du 15 novembre : [assemblage avec classes et physique](finition-finale-20261115.md), 34 processus neufs, maximum première casse 4,703 ms CPU, maximum tout pas 7,731 ms CPU. Le rapport ci-dessous conserve la référence historique 930c199.
+
 **T5 satisfait le seuil strict de 8 ms sur les 15 premières casses mesurées en processus neufs.** Le périmètre 03s T1/T4/T5 est validé sur `930c1998f6c22ade094473e63ad6d6ed9e660956`. Aucun changement supplémentaire du moteur n’a été retenu et aucun nouveau gain de code n’est annoncé.
 
 La preuve complète est dans [summary.json](../preuves/lot-03s-t5/summary.json). Les reçus bruts, leurs SHA, les scripts exactement exécutés et la topologie CPU y sont référencés. Les anciennes mesures et les essais rejetés restent historiques et intacts.

@@ -166,7 +166,7 @@ export function loadModels(root, env) {
   const start = find('function systemsReady()', mLine);
   const end = find('function renderHUD', start);
   const body = [lines[mLine], ...lines.slice(start, end)].join('\n');
-  const factory = vm.runInThisContext('(function(env){let {sim,world,quality,renderer,actorMotion,systemMotion,motion,leftMotion,prefs,clamp,FMotion,FActors,FEffects,FRender,window,innerWidth,innerHeight}=env;let shieldLift=0,renderState=null;\n' + body + '\nreturn {models};})', {filename: 'game-models.js'});
+  const factory = vm.runInThisContext('(function(env){let {sim,world,quality,renderer,actorMotion,systemMotion,motion,leftMotion,prefs,clamp,FMotion,FActors,FEffects,FRender,window,innerWidth,innerHeight}=env;let shieldLift=0,renderState=null;const impactMarks=[];\n' + body + '\nreturn {models};})', {filename: 'game-models.js'});
   return factory(env);
 }
 

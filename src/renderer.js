@@ -1485,7 +1485,8 @@
     const surface=native?window.FSurface.create(canvas,{limit:maxSize,maxPixels:options.maxPixels,scale:options.renderScale}):null;
     const watch=native?window.FSurface.budget({target:60,onBudget:options.onBudget}):null;
     if(surface){stats.native=surface.stats;stats.budget=watch.stats;stats.budgetLog=watch.log;}
-    let drawing=false,profiler=null,profileOptions=null;
+    let drawing=false,profiler=null,profileOptions=null,reflections=null,probeBuffer=null,probeBatch=null,probeKey='';
+    const probeView=new Float32Array(16),probeProjection=new Float32Array(16),probeVP=new Float32Array(16);
     const screenCaches=new Map(),screenValues=new Float32Array(4);let composeScreen=false;
     let fskyProgram=null,fskyBound=null,fskyCache={},skyFrame={},fogCaches=new Map();
     const skyCamera={right:null,up:null,forward:null,fov:[0,0],height:0,time:0,vignette:options.composition?1:.76,dither:options.composition?0:1,mask:0,layers:[1,1,1,1]};
@@ -1607,14 +1608,15 @@
       const sky=environment?.sky;gl.uniform1f(cache.enabled,sky?1:0);
       if(sky&&cache.bound!==sky){window.FSky.bind(gl,target,sky.uniforms,cache.locations);cache.bound=sky;}
     }
+    const reflectionShader=source=>window.FSceneReflections?window.FSceneReflections.shader(source):source;
     function initialize() {
       capacity.clear();if(profiler){profiler.dispose();profiler=window.FGPUProfile.create(gl,profileOptions);}
       fskyProgram=null;fskyBound=null;fskyCache={};skyFrame={};fogCaches.clear();screenCaches.clear();stats.skyError=null;
       if(window.FSky)try{fskyProgram=link(window.FSky.VERT,screenShader('fsky',window.FSky.FRAG));}catch(error){stats.skyError=String(error.message||error);}
-      try{program=link(VERT,screenShader('world',skyFogShader(specularShader(FRAG))));}catch(error){if(!fskyProgram)throw error;gl.deleteProgram(fskyProgram);fskyProgram=null;stats.skyError=String(error.message||error);program=link(VERT,screenShader('world',specularShader(FRAG)));}
+      try{program=link(VERT,reflectionShader(screenShader('world',skyFogShader(specularShader(FRAG)))));}catch(error){if(!fskyProgram)throw error;gl.deleteProgram(fskyProgram);fskyProgram=null;stats.skyError=String(error.message||error);program=link(VERT,reflectionShader(screenShader('world',specularShader(FRAG))));}
       depthProgram=link(VERT,DEPTH_FRAG);postProgram=link(POST_VERT,screenShader('post',POST_FRAG));skyProgram=link(POST_VERT,screenShader('sky',SKY_FRAG));
       try{fxProgram=link(FX_VERT,screenShader('fx',skyFogShader(FX_FRAG)));}catch(error){if(!fskyProgram)throw error;stats.skyFogError=String(error.message||error);fxProgram=link(FX_VERT,screenShader('fx',FX_FRAG));}
-      uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightRange','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uSkyTop','uSkyBottom','uEnvironment','uCullCentre','uCullRange']) uniforms[name]=gl.getUniformLocation(program,name);
+      uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightRange','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uSkyTop','uSkyBottom','uEnvironment','uCullCentre','uCullRange','uSceneProbe','uProbeReady','uProbeOrigin']) uniforms[name]=gl.getUniformLocation(program,name);
       postUniforms={};for(const name of ['uScene','uBloom','uTexel','uPass'])postUniforms[name]=gl.getUniformLocation(postProgram,name);
       skyUniforms={};for(const name of ['uSkyRight','uSkyUp','uSkyForward','uSkyTop','uSkyBottom','uSkyFog','uSunDirection','uSunColor','uSkyFov','uSkyMotion'])skyUniforms[name]=gl.getUniformLocation(skyProgram,name);
       fxUniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uAmbient','uFogColor','uEnvironment','uTime'])fxUniforms[name]=gl.getUniformLocation(fxProgram,name);
@@ -1626,6 +1628,7 @@
       gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,24,12);
       ibo=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,source.indices,gl.STATIC_DRAW);
       for(let i=2;i<6;i++) {gl.enableVertexAttribArray(i);gl.vertexAttribDivisor(i,1);}
+      reflections?.dispose();reflections=window.FSceneReflections?.create(gl,link)||null;stats.reflections=reflections?.stats;probeBuffer=gl.createBuffer();probeBatch=null;probeKey='';
       worldBuffer=gl.createBuffer();dynamicBuffer=gl.createBuffer();overlayBuffer=gl.createBuffer();fxBuffer=gl.createBuffer();
       // Main colour and the three shadow views must keep independent instance buffers.
       staticCaches=[worldBuffer,gl.createBuffer(),gl.createBuffer(),gl.createBuffer()].map(buffer=>({buffer,entries:[],batch:pack([])}));
@@ -1813,7 +1816,7 @@
       gl.uniform3fv(depthCullCentre,center);gl.uniform3fv(depthCullRange,sunRanges);
       renderStatic(sunCasterOut,2,true,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
-    function skyPass(axes,f,time,afterOpaque=false){
+    function skyPass(axes,f,time,afterOpaque=false,probeSize=0){
       const sky=fskyProgram&&environment.sky;
       if(afterOpaque){gl.enable(gl.DEPTH_TEST);gl.depthMask(false);}else gl.disable(gl.DEPTH_TEST);
       gl.disable(gl.CULL_FACE);gl.bindVertexArray(postVao);
@@ -1821,7 +1824,7 @@
         gl.useProgram(fskyProgram);bindScreen(fskyProgram);skyCamera.mask=composeScreen?1:0;
         if(fskyBound!==sky){window.FSky.bind(gl,fskyProgram,sky.uniforms,fskyCache);fskyBound=sky;}
         skyCamera.right=axes.right;skyCamera.up=axes.up;skyCamera.forward=axes.forward;
-        skyCamera.fov[0]=canvas.width/canvas.height/f;skyCamera.fov[1]=1/f;skyCamera.height=canvas.height;skyCamera.time=time;
+        skyCamera.fov[0]=(probeSize?1:canvas.width/canvas.height)/f;skyCamera.fov[1]=1/f;skyCamera.height=probeSize||canvas.height;skyCamera.time=time;
         window.FSky.bind(gl,fskyProgram,window.FSky.frameUniforms(skyCamera,skyFrame),fskyCache);
         stats.sky=sky.id;stats.skyPass=afterOpaque?'after-opaque':'before-opaque';
       }else{
@@ -1829,7 +1832,7 @@
         gl.uniform3fv(skyUniforms.uSkyRight,axes.right);gl.uniform3fv(skyUniforms.uSkyUp,axes.up);gl.uniform3fv(skyUniforms.uSkyForward,axes.forward);
         gl.uniform3fv(skyUniforms.uSkyTop,environment.skyTop);gl.uniform3fv(skyUniforms.uSkyBottom,environment.skyBottom);gl.uniform3fv(skyUniforms.uSkyFog,environment.fog);
         gl.uniform3fv(skyUniforms.uSunDirection,environment.sunDirection);gl.uniform3fv(skyUniforms.uSunColor,environment.sunColor);
-        gl.uniform2f(skyUniforms.uSkyFov,canvas.width/canvas.height/f,1/f);gl.uniform2f(skyUniforms.uSkyMotion,time,environment.wind);stats.sky='legacy';stats.skyPass='before-opaque';
+        gl.uniform2f(skyUniforms.uSkyFov,(probeSize?1:canvas.width/canvas.height)/f,1/f);gl.uniform2f(skyUniforms.uSkyMotion,time,environment.wind);stats.sky='legacy';stats.skyPass='before-opaque';
       }
       gl.drawArrays(gl.TRIANGLES,0,3);stats.drawCalls++;gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);
       if(afterOpaque){gl.depthMask(true);gl.useProgram(program);gl.bindVertexArray(vao);}
@@ -1867,6 +1870,7 @@
     function actorFilter(camera,fx={}){
       stats.actorsConsidered=stats.actorsCulled=0;actorLightPlan=null;
       if(disposed||stats.contextLost){stats.actorFilterMode='inactive';return ()=>true;}
+      if(fx.reflections&&fx.reflections!=='off'){stats.actorFilterMode='reflection';return ()=>true;}
       const t=fx.time||0,shake=fx.shake||0,p=camera.pos||[0,1.6,0],axes=cameraAxes(camera);
       const eye=[p[0]+Math.sin(t*57)*shake*.025,p[1]+Math.sin(t*71)*shake*.015,p[2]];
       const cssWidth=canvas.clientWidth||window.innerWidth||800,cssHeight=canvas.clientHeight||window.innerHeight||600;
@@ -1906,6 +1910,7 @@
     function draw(camera,dynamic,fx) {
       if(disposed||stats.contextLost) return;
       profiler?.start();fx=fx||{};if(native){autoScale=1;if(fx.adaptive===true)watch.update(fx.frameMs);}else autoScale=governor.update(fx,quality);drawing=true;try{resize();}finally{drawing=false;}
+      const reflectionMode=reflections&&['probe','screen'].includes(fx.reflections)?fx.reflections:'off';
       composeScreen=!!post&&!!options.composition;stats.composition=composeScreen;
       screenValues[0]=Math.max(0,Math.min(1,fx.damage||0));screenValues[1]=Math.max(0,Math.min(1,fx.pulse||0));screenValues[2]=Number.isFinite(fx.brightness)?Math.max(.5,Math.min(2,fx.brightness)):1;screenValues[3]=fx.vignette===false?0:1;
       const t=fx.time||0,shake=fx.shake||0,p=camera.pos||[0,1.6,0];
@@ -1950,6 +1955,7 @@
         gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.clear(gl.DEPTH_BUFFER_BIT);
         for(let i=0;i<shadowLights.length;i++)if(!profiler||profiler.begin('lamp'+i)){shadowPass(shadowLights[i],dynamicBatch,i,null,t);profiler?.end();}if(environment&&(!profiler||profiler.begin('sun'))){sunShadowPass(eye,axes,dynamicBatch,t);profiler?.end();}if(!profiler||profiler.begin('torch')){shadowPass({p:torchPosition},dynamicBatch,2,axes,t);profiler?.end();}
       }
+      reflections?.beginScreen(post?.scene,reflectionMode);
       gl.bindFramebuffer(gl.FRAMEBUFFER,(stats.bloom||composeScreen)?post.scene.framebuffer:null);gl.viewport(0,0,canvas.width,canvas.height);
       const skyAfter=!!(fskyProgram&&environment?.sky)&&options.skyFirst!==true;
       gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);if(environment&&!skyAfter&&(!profiler||profiler.begin('sky'))){skyPass(axes,f,t);profiler?.end();}gl.useProgram(program);gl.bindVertexArray(vao);
@@ -1962,10 +1968,23 @@
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,stats.shadows?shadowTarget.texture:whiteTexture);gl.uniform1i(uniforms.uShadowMap,2);
       gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrices);gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,stats.shadows&&environment?1:0);gl.uniform3fv(uniforms.uTorchPosition,torchPosition);
       gl.uniform3fv(uniforms.uCullCentre,eye);gl.uniform3fv(uniforms.uCullRange,ranges);
+      if(reflections){
+        if(!profiler||profiler.begin('reflection-probe')){reflections.update(reflectionMode,eye,dynamic||[],indexRevision,t,(origin,face,size)=>{
+          gl.clearColor(...(environment?.skyBottom||[.12,.16,.18]),1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);if(environment)skyPass(face,1,t,false,size);
+          gl.useProgram(program);gl.bindVertexArray(vao);bindSkyFog(program);bindScreen(program);reflections.bind(uniforms,false);
+          const {right:r,up:u,forward:f}=face;probeView.set([r[0],u[0],-f[0],0,r[1],u[1],-f[1],0,r[2],u[2],-f[2],0,-(r[0]*origin[0]+r[1]*origin[1]+r[2]*origin[2]),-(u[0]*origin[0]+u[1]*origin[1]+u[2]*origin[2]),f[0]*origin[0]+f[1]*origin[1]+f[2]*origin[2],1]);probeProjection.fill(0);probeProjection[0]=probeProjection[5]=1;probeProjection[10]=(48+.045)/(.045-48);probeProjection[11]=-1;probeProjection[14]=2*48*.045/(.045-48);multiply(probeProjection,probeView,probeVP);
+          gl.uniformMatrix4fv(uniforms.uViewProjection,false,probeVP);gl.uniform3fv(uniforms.uEye,origin);gl.uniform3fv(uniforms.uForward,forward);gl.uniform2f(uniforms.uResolution,size,size);gl.uniform4f(uniforms.uShadowSettings,0,1,0,0);gl.uniform4f(uniforms.uEffects,t,fx.flash||0,0,0);gl.uniform3fv(uniforms.uCullCentre,origin);gl.uniform3fv(uniforms.uCullRange,[48,48,48]);
+          const key=indexRevision+':'+origin.join(',');if(probeKey!==key){probeKey=key;probeBatch=pack(worldIndex.query(origin,[48,48,48]).map(e=>e.mesh),environment);gl.bindBuffer(gl.ARRAY_BUFFER,probeBuffer);uploadRows(probeBuffer,probeBatch.values);}
+          renderBatch(probeBatch,probeBuffer,false);renderBatch(dynamicBatch,dynamicBuffer,false);if(particles.length)renderEffects(particles,origin,t);
+        });profiler?.end();}
+        gl.bindFramebuffer(gl.FRAMEBUFFER,(stats.bloom||composeScreen)?post.scene.framebuffer:null);gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.035,.06,.073,1);gl.useProgram(program);gl.bindVertexArray(vao);reflections.bind(uniforms,reflectionMode!=='off');gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);gl.uniform3fv(uniforms.uEye,eye);gl.uniform3fv(uniforms.uForward,forward);gl.uniform2f(uniforms.uResolution,canvas.width,canvas.height);gl.uniform4f(uniforms.uEffects,t,fx.flash||0,fx.damage||0,Math.max(0,Math.min(1,fx.pulse||0)));gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,stats.shadows&&environment?1:0);gl.uniform3fv(uniforms.uCullCentre,eye);gl.uniform3fv(uniforms.uCullRange,ranges);
+      }
       if(!profiler||profiler.begin('opaque')){renderStatic(shown,0);profiler?.end();}
       if(!profiler||profiler.begin('dynamic')){renderBatch(dynamicBatch,dynamicBuffer,false);profiler?.end();}
       if(skyAfter&&(!profiler||profiler.begin('sky'))){skyPass(axes,f,t,true);profiler?.end();}
+      if(reflectionMode==='screen')gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
       if(particles.length&&(!profiler||profiler.begin('particles'))){renderEffects(particles,eye,t);profiler?.end();}
+      if(reflectionMode==='screen'&&post&&(!profiler||profiler.begin('reflection-screen'))){reflections.resolve(post.scene,reflectionMode,{pos:eye},axes,projection,view,t,indexRevision,reflections.key);profiler?.end();gl.useProgram(program);gl.bindVertexArray(vao);reflections.bind(uniforms);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,stats.shadows?shadowTarget.texture:whiteTexture);gl.activeTexture(gl.TEXTURE0);}
       if((overlay.length||overlayParticles.length)&&(!profiler||profiler.begin('weapon'))) {
         if(camera.overlayFov&&camera.overlayFov!==camera.fov){const of=1/Math.tan(Math.max(40,Math.min(110,camera.overlayFov))*Math.PI/360);projection[0]=of/(canvas.width/canvas.height);projection[5]=of;multiply(projection,view,vp);gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);}
         if(blackout){selected.forEach(({light},i)=>{const c=light.color||[1,1,1],power=light.power===undefined?1:light.power;lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});gl.uniform3fv(uniforms.uLightColor,lightColors);}
@@ -1983,7 +2002,7 @@
       for(const buffer of [vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer]) gl.deleteBuffer(buffer);
       for(const cache of staticCaches.slice(1))gl.deleteBuffer(cache.buffer);
       capacity.clear();
-      freePost();deleteTarget(shadowTarget);gl.deleteTexture(whiteTexture);
+      reflections?.dispose();if(probeBuffer)gl.deleteBuffer(probeBuffer);freePost();deleteTarget(shadowTarget);gl.deleteTexture(whiteTexture);
       gl.deleteVertexArray(vao);gl.deleteVertexArray(postVao);gl.deleteProgram(program);gl.deleteProgram(depthProgram);gl.deleteProgram(postProgram);gl.deleteProgram(skyProgram);gl.deleteProgram(fxProgram);if(fskyProgram)gl.deleteProgram(fskyProgram);
     }
     async function calibrate(camera,dynamic,fx={},frames=30){

@@ -1,0 +1,29 @@
+{
+  "machine": "Apple M5, Chrome ANGLE Metal",
+  "size": [
+    640,
+    360
+  ],
+  "loadedSources": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "surface": "46915edee28daa0408ea1c18abd664babef76e2e6bce52c2990a431f90cee77e",
+    "skies": "bd4b38002c8c800a5f7551a73712c721909ed22ae145d15fbf7f853ff30eddea",
+    "gpu-profile": "513e7cb0523a50f62edb427f2ed563ec98d9bc771a70f357fce8409157faa9c4",
+    "reflections": "56e799146c1849adc8d58bfa20e771015dbe377a834eae769674ff4402ff0a4c",
+    "renderer": "601818f20a03fad09168eacd2864365689a4cf985dfde0c13d59a29d47eb5570",
+    "profiles": "61858c97a16fda3cfe7d70b698fd7e7612383ee43928af129fe29795083070c9",
+    "world": "9ecffd872920398ec731cdb74a8080f9dbf85bd42fb28cbf3ccbf89bb9533105",
+    "actors": "6377cdc15c820c593705a2f0cea07ff04d2e30b9d241799269c645d5637dce3f"
+  },
+  "changedSinceReceipt": [
+    "profiles"
+  ],
+  "note": "Seul profiles.js a changé après ce banc ; la scène de boîtes utilise directement FRender et aucun profil/monde. renderer/reflections et leurs dépendances sont identiques. Cinq répétitions alternées ; pas une mesure FPS du jeu complet.",
+  "gpuMedianMs": {
+    "base": 1.094873,
+    "off": 1.128832,
+    "probe": 1.496041,
+    "screen": 2.7135819999999997
+  }
+}

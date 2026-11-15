@@ -12,7 +12,7 @@ export function viewModels(root=new URL('../src/',import.meta.url)) {
   const mesh=source.match(/  const m=\(shape,p,s,mat,r=\[0,0,0\],emissive=0\)=>[^\n]+/)[0];
   const noop=()=>{},context={renderState:null,window:{},quality:'auto',innerWidth:1280,innerHeight:800,FRender:{mesh:FRenderMesh},
     clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),machinery:noop,ambience:noop,systems:noop,
-    exitReady:()=>false,actorMotion:new Map(),prefs:{shadows:true},
+    impactMarks:[],exitReady:()=>false,actorMotion:new Map(),prefs:{shadows:true},
     renderer:{stats:{backend:'webgl2'}},
     world:{environment:{},trophies:[],exit:{x:1000,y:0,z:1000}},
   };
