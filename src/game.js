@@ -80,7 +80,12 @@
   }
   function audioGate(){
     const audibleScene=mode==='playing'||['dead','cleared','complete'].includes(mode)||titleScreen()&&audio.stats?.titlePlaying;
-    audio.setMuted(muted||document.hidden||!windowFocused||!audibleScene);
+    const gated=muted||document.hidden||!windowFocused||!audibleScene;
+    audio.setMuted(gated);
+    // MIX-V4 : quand rien n'est audible — menu sans musique de titre, pause,
+    // onglet cache, fenetre sans focus, son coupe — le contexte audio s'endort
+    // apres 1,5 s et ne coute plus rien. Le reveil est la promesse de resume().
+    audio.setIdle?.(gated);
   }
   function activateTitle(){
     if(!wantsTitle()||!titleReady||audio.stats?.preview||audio.stats?.titlePlaying)return;
@@ -283,7 +288,7 @@
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;renderToken=sim.destruction?.delta?.().token;
     motion.reset();leftMotion.reset();lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
-    soundscape.reset();audio.setStage?.(world.stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
+    soundscape.reset();audio.setStage?.(world.stage, seed);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
     $('music-title').textContent=trackLabel();
     $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaignVersion===2?(stage<6?'Équipement '+(stage+1)+' / 6':'Assaut '+(stage-5)+' / 12')+' · ':world.campaign?world.chapterTitle+' · ':'')+world.title;
     $('mission-summary').innerHTML=world.campaignVersion===2?'<span><b>6</b> ÉQUIPEMENT</span><span><b>12</b> ASSAUT</span><span><b>18</b> MONDES</span>':world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';

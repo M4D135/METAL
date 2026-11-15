@@ -165,10 +165,34 @@
     for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i]))return null;
     return data;
   }
+  // MIX-02 : le rattrapage automatique du DynamicsCompressor de Chromium. Le
+  // nœud remonte tout de (1/courbe(0 dBFS))^0,6, un gain que le code ne nomme
+  // jamais et qui change dès qu'on touche au seuil, au genou ou au ratio. La
+  // courbe de genou est T + (1 - e^(-k(x-T)))/k, k trouvé par 15 bissections
+  // géométriques entre 0,1 et 10 000 pour que la pente en dB prise entre x et
+  // 1,001x à l'entrée du genou vaille 1/ratio. Reproduit au centième les quatre
+  // couples rendus par le banc (job=calib) : 3,731 / 4,547 / 2,557 / 3,531 dB.
+  function makeupDb(threshold, knee, ratio) {
+    var t = Number(threshold); if (!Number.isFinite(t)) t = 0;
+    var g = Math.max(0, Number(knee) || 0), r = Math.max(1, Number(ratio) || 1);
+    var T = Math.pow(10, t / 20), xk = Math.pow(10, (t + g) / 20), LOG1001 = Math.log(1.001);
+    function curve(x, k) { return x < T ? x : T + (1 - Math.exp(-k * (x - T))) / k; }
+    function slope(k) { return Math.log(curve(1.001 * xk, k) / curve(xk, k)) / LOG1001; }
+    var target = 1 / r, lo = 0.1, hi = 10000, i, k;
+    for (i = 0; i < 15; i++) { k = Math.sqrt(lo * hi); if (slope(k) > target) lo = k; else hi = k; }
+    k = Math.sqrt(lo * hi);
+    var y1 = t + g > 0 ? curve(1, k) : Math.pow(10, (20 * Math.log10(curve(xk, k)) - (t + g) / r) / 20);
+    return -0.6 * 20 * Math.log10(y1);
+  }
+  // Le rattrapage de référence : celui de la chaîne v0.2 (-19 / genou 18 / 5:1),
+  // seul repère fixe commun aux trois jeux. level:'fixe' ramène le niveau des
+  // sons faibles à ce qu'il était avec cette chaîne-là.
+  var MAKEUP_REFERENCE = makeupDb(-19, 18, 5);
   window.FAudio = {
     synthesize: function (name, variant, sampleRate, recipes) { return tablePCM(recipes,name,variant,sampleRate)||synthesize(name,variant,sampleRate); },
     recipe: function (name, spec) { return {variants:spec&&spec.variants===1?1:2,synth:function(variant,rate){return layered(name,spec,variant,rate);},job:function(variant,rate){return layeredJob(name,spec,variant,rate);}}; },
     effectNames: effectNames.slice(),
+    makeupDb: makeupDb,
     create: function (options) {
       var recipes = Object.create(null), table = options && options.recipes;
       if (table) Object.keys(table).forEach(function (name) { var r = table[name]; if (r && typeof r.synth === 'function' && effectNames.indexOf(name) >= 0) recipes[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
@@ -178,21 +202,65 @@
       var extras = Object.create(null), extraTable = options && options.extras;
       if (extraTable) Object.keys(extraTable).sort().forEach(function (name) { var r = extraTable[name]; if (r && typeof r.synth === 'function' && name && effectNames.indexOf(name) < 0 && name.indexOf('motor:') !== 0 && name.indexOf(':') < 0) extras[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
       var extraNames = Object.keys(extras);
-      var ctx = null, master, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
+      // MIX-11: a bench may hand the engine an OfflineAudioContext so the whole
+      // mix renders offline, deterministically, with no device and no clock. An
+      // injected context is never opened, resumed nor closed by the engine; it
+      // reports 'suspended' while rendering, so it counts as live on its own.
+      var injected = options && options.context && typeof options.context.createGain === 'function' ? options.context : null;
+      var offline = !!(injected && typeof injected.startRendering === 'function');
+      // MIX-02 : la chaîne maître peut être réglée par le jeu. Sans option, les
+      // valeurs et le comportement d'aujourd'hui, au bit près. Avec
+      // chain:{masterGain, compressor:{threshold,knee,ratio,attack,release},
+      // level:'auto'|'fixe'}, level:'fixe' ajoute un GainNode APRÈS le
+      // compresseur et AVANT l'écrêteur — jamais sur master.gain, qui est avant
+      // le compresseur et déplacerait son point de travail.
+      // MIX-V1 : les tenues du duck deviennent une classe par famille de cues,
+      // avec sa profondeur et son maintien. Sans l'option, rien ne change : les
+      // trois expressions régulières et la table de maintien d'aujourd'hui. Un
+      // jeu qui la donne remplace, pour les cues qu'elle nomme, la profondeur
+      // et/ou le maintien ; fixed:true ignore le niveau du son (cueLevel).
+      var duckClasses = null;
+      if (options && options.duck && Array.isArray(options.duck.classes)) {
+        duckClasses = [];
+        options.duck.classes.forEach(function (c) {
+          if (!c) return;
+          var re = c.cues instanceof RegExp ? c.cues : c.cues && c.cues.length
+            ? new RegExp('^(?:' + [].concat(c.cues).join('|') + ')$') : null;
+          if (!re) return;
+          duckClasses.push({re: re, depth: Number.isFinite(c.depth) ? c.depth : null,
+            hold: Number.isFinite(c.hold) ? c.hold : null, fixed: !!c.fixed});
+        });
+        if (!duckClasses.length) duckClasses = null;
+      }
+      // MIX-04 : un jeu releve le niveau de ses propres rapports d'armes (option
+      // weaponGain), jamais ceux des ennemis ni les autres effets : la table n'est
+      // lue que dans les cues du joueur. Sans option, le multiplicateur vaut
+      // exactement 1 et le rendu reste identique bit a bit.
+      var voiceGain = options && options.weaponGain ? options.weaponGain : null;
+      function wg(name) { return voiceGain && Number.isFinite(voiceGain[name]) ? voiceGain[name] : 1; }
+      var chain = options && options.chain ? options.chain : null;
+      var chainComp = chain && chain.compressor ? chain.compressor : null;
+      var chainFixed = !!(chain && chain.level === 'fixe');
+      var MASTER_GAIN = chain && Number.isFinite(chain.masterGain) ? chain.masterGain : .65;
+      function chainValue(key, fallback) { return chainComp && Number.isFinite(chainComp[key]) ? chainComp[key] : fallback; }
+      var ctx = null, master, limiter, guard, chainMakeup, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter, hiss, air;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
       var lastStep = -1, stepSide = 1, lastAlert = -1, lastTouch = -1, touchRun = 0;
       var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false, titlePlaying = false;
       var bank = Object.create(null), motors = [], ambientDuckUntil = 0, variation = 0, warming = null, warmTimer = null, warmResolve = null;
       var mix = {master:1,music:.45,effects:1,ambience:1};
       var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null), targets = new WeakMap();
-      var priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
+      // MIX-10 : la graine du morceau, donnee par le jeu, varie la boucle. Sans
+      // elle (aucun setStage avec graine), FMusic recoit undefined et joue
+      // l'arrangement ecrit, octet pour octet comme avant.
+      var musicSeed, priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
       var MUSIC_GAIN = .56, EFFECTS_GAIN = .9, AMBIENCE_GAIN = .7;
       // FEEL-07: how long each weapon cue holds the soundtrack down before the
       // 180 ms release. The heavy reports (pump shell, rocket, grenade) hold
       // 220 ms, the SMG burst only 180 ms, so automatic fire lets the music
       // back between rounds instead of burying it for a whole magazine.
       var DUCK_HOLD = {fracture: .22, rocket: .22, grenade: .22, grenadeLaunch: .22, shot: .18};
-      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
+      var stats = {idle:false,voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,makeupDb:0,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
       function remember(node) { persistent.push(node); return node; }
       function random() {
         noiseSeed = (Math.imul(noiseSeed, 1664525) + 1013904223) | 0;
@@ -209,8 +277,13 @@
         stats.voices = voices.size; stats.peakVoices = Math.max(stats.peakVoices, voices.size);
         source.onended = function () { clean(entry); };
       }
+      function live() {
+        // An offline context stays 'suspended' until startRendering() and has no
+        // clock to wait for: for the engine it is live from the first call.
+        return !!ctx && (offline || ctx.state === 'running');
+      }
       function available() {
-        return ctx && !disposed && (!muted || preview) && ctx.state === 'running';
+        return ctx && !disposed && (!muted || preview) && live();
       }
       function reserve(level, bus) {
         if (!available() || titlePlaying && !preview || level <= .0001 || (bus === ambience ? mix.ambience : mix.effects) <= 0) return false;
@@ -230,10 +303,20 @@
       function duckMusic() {
         if (cueDucked || !musicBus || !cue || mix.effects <= 0) return;
         var weapon = /^(shot|fracture|rocket|grenade|grenadeLaunch|melee|hurt)$/.test(cue);
-        var strength = weapon ? .35 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism)$/.test(cue) ? .68 : 1;        if (strength === 1) return;
-        strength = 1 - (1-strength) * Math.min(1,Math.max(0,cueLevel)*1.25);
+        var strength = weapon ? .35 : /^(boss|horror|metallic|powerCut|alarm|explosion)/.test(cue) ? .38 : /^(empty|weaponPickup|trophy|wave|core|mechanism)$/.test(cue) ? .68 : 1, duckClass = null;
+        // MIX-V1 : une classe qui nomme ce cue prend la main sur la profondeur et
+        // sur le maintien. Sans l'option duck.classes, duckClass reste nul et le
+        // calcul ci-dessous est exactement celui d'aujourd'hui.
+        if (duckClasses) for (var di = 0; di < duckClasses.length; di++) if (duckClasses[di].re.test(cue)) { duckClass = duckClasses[di]; break; }
+        if (duckClass && duckClass.depth !== null) strength = duckClass.depth;
+        if (strength === 1) return;
+        // MIX-V2 : un duck de 6,9 dB pour des tirs a 20 % de volume est une perte
+        // sèche. La profondeur suit le volume des effets, et a 1 (le defaut) le
+        // facteur vaut exactement 1 : le rendu reste identique bit a bit.
+        strength = 1 - (1-strength) * (duckClass && duckClass.fixed ? 1 : Math.min(1,Math.max(0,cueLevel)*1.25)) * Math.min(1,mix.effects);
         cueDucked = true;
         var now = ctx.currentTime, hold = DUCK_HOLD[cue] || (weapon ? .14 : strength < .4 ? .28 : .14);
+        if (duckClass && duckClass.hold !== null) hold = duckClass.hold;
         ambientDuckUntil = Math.max(ambientDuckUntil,now+.20);
         duckDepth = now < duckUntil ? Math.min(duckDepth, strength) : strength;
         duckUntil = Math.max(duckUntil, now + hold);
@@ -246,11 +329,11 @@
         if (!ctx || !master || disposed) return;
         var now = ctx.currentTime;
         master.gain.cancelScheduledValues(now);
-        master.gain.setTargetAtTime(muted && !preview ? 0 : .65 * mix.master, now, .025);
+        master.gain.setTargetAtTime(muted && !preview ? 0 : MASTER_GAIN * mix.master, now, .025);
         // An audio-clock cutoff guarantees a two-second menu audition even if
         // the UI thread/timers are throttled. Its JS pump is also cancelled.
         if (preview && muted) {
-          master.gain.setValueAtTime(.65 * mix.master, Math.max(now,preview.end-.018));
+          master.gain.setValueAtTime(MASTER_GAIN * mix.master, Math.max(now,preview.end-.018));
           master.gain.linearRampToValueAtTime(0, preview.end);
         }
       }
@@ -259,7 +342,7 @@
         if (!music) return;
         // The title is a score selection, never an environmental stage or a
         // running simulation. Keep stage numeric for wind/room calculations.
-        music.setStage(titlePlaying ? 'title' : stage);
+        music.setStage(titlePlaying ? 'title' : stage, titlePlaying ? undefined : musicSeed);
         music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65));
         music.setPlaying(playing || titlePlaying);
       }
@@ -291,11 +374,24 @@
         param.setTargetAtTime(value, time, tau);
         if (last) { last.value = value; last.tau = tau; } else targets.set(param, {value: value, tau: tau});
       }
+      // MIX-07 : une boucle dont la cible de gain est nulle ne doit pas couter de
+      // DSP. On la debranche de son filtre et on la rebranche des que la cible
+      // remonte. Le BufferSource continue de tourner : rien n'est arrete, relance
+      // ni recalcul en phase, et le gain revient par la meme automatisation.
+      var links = new Map();
+      function loopLink(source, filter, on) {
+        if (!source || !filter) return;
+        var linked = links.get(source) !== false;
+        if (on === linked) return;
+        try { if (on) source.connect(filter); else source.disconnect(filter); } catch (err) {}
+        links.set(source, on);
+      }
       function updateSteam() {
         if (!ctx || !steamLevel || disposed) return;
         var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
         stats.steamGain=audible?steam*.055*mask:0;
         approach(steamLevel.gain, stats.steamGain, ctx.currentTime, steam ? .06 : .018);
+        loopLink(hiss, steamFilter, stats.steamGain > 0);
         if (steamPan.pan) approach(steamPan.pan, steamSide, ctx.currentTime, .12);
         approach(steamFilter.frequency, 1950-steamOccluded*1250, ctx.currentTime, .12);
       }
@@ -304,7 +400,9 @@
         var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
         stats.machineryGain=audible?machinery*.075*mask:0;
         motors.forEach(function(m){
-          approach(m.gain.gain,m.kind===machineKind?stats.machineryGain:0,ctx.currentTime,.055);
+          var target=m.kind===machineKind?stats.machineryGain:0;
+          approach(m.gain.gain,target,ctx.currentTime,.055);
+          loopLink(m.source,m.filter,target>0);
           if(m.pan.pan)approach(m.pan.pan,machineSide,ctx.currentTime,.09);
           approach(m.filter.frequency,4200-machineOccluded*3400,ctx.currentTime,.12);
         });
@@ -528,29 +626,35 @@
       }
       function initialize() {
         if (ctx || disposed || failed) return;
-        var Audio = window.AudioContext || window.webkitAudioContext;
-        if (!Audio) { failed = true; return; }
+        if (!injected) {
+          var Audio = window.AudioContext || window.webkitAudioContext;
+          if (!Audio) { failed = true; return; }
+        }
         try {
-          ctx = new Audio();
+          ctx = injected || new Audio();
           master = remember(ctx.createGain());
-          master.gain.value = muted ? 0 : .65 * mix.master;
-          var limiter = remember(ctx.createDynamicsCompressor());
+          master.gain.value = muted ? 0 : MASTER_GAIN * mix.master;
+          limiter = remember(ctx.createDynamicsCompressor());
           // FEEL-07 (MIX-02): -12 dB, knee 6, ratio 3:1, 12 ms in, 120 ms out.
           // The MIX bench decided these values on the four recorded scenes and a
           // 24-round SMG burst: peak stays <= .68 and no sample reaches the .875
           // guard, so nothing saturates. Chrome runs the attack about 6 ms early.
-          limiter.threshold.value = -12; limiter.knee.value = 6;
-          limiter.ratio.value = 3; limiter.attack.value = .012; limiter.release.value = .12;
+          limiter.threshold.value = chainValue('threshold', -12); limiter.knee.value = chainValue('knee', 6);
+          limiter.ratio.value = chainValue('ratio', 3); limiter.attack.value = chainValue('attack', .012); limiter.release.value = chainValue('release', .12);
+          stats.makeupDb = makeupDb(limiter.threshold.value, limiter.knee.value, limiter.ratio.value);
+          if (chainFixed) { chainMakeup = remember(ctx.createGain()); chainMakeup.gain.value = Math.pow(10, (MAKEUP_REFERENCE - stats.makeupDb) / 20); }
           // The existing compressor/mix stays intact. This final soft ceiling
           // is exactly linear below .875 and mathematically bounded above it,
           // including coincident rockets, debris and the MOD soundtrack.
-          var guard = remember(ctx.createWaveShaper()), curve = new Float32Array(2049);
+          guard = remember(ctx.createWaveShaper()); var curve = new Float32Array(2049);
           for (var ci = 0; ci < curve.length; ci++) {
             var input = ci / 1024 - 1, magnitude = Math.abs(input);
             curve[ci] = Math.sign(input) * (magnitude <= .875 ? magnitude : .875 + .095 * (1 - Math.exp(-(magnitude - .875) / .095)));
           }
           guard.curve = curve; guard.oversample = 'none'; stats.outputCeiling = curve[curve.length-1];
           master.connect(limiter); limiter.connect(guard); guard.connect(ctx.destination);
+          // level:'fixe' : après le compresseur, avant l'écrêteur (voir plus haut).
+          if (chainMakeup) { limiter.disconnect(); limiter.connect(chainMakeup); chainMakeup.connect(guard); }
           effects = remember(ctx.createGain()); effects.gain.value = EFFECTS_GAIN * mix.effects; effects.connect(master);
           ambience = remember(ctx.createGain()); ambience.gain.value = AMBIENCE_GAIN * mix.ambience; ambience.connect(master);
           musicBus = remember(ctx.createGain()); musicBus.gain.value = MUSIC_GAIN; musicBus.connect(master);
@@ -572,11 +676,11 @@
             smooth = smooth * .96 + white * .04;
             data[i] = white * .64 + smooth * .55;
           }
-          var hiss = remember(ctx.createBufferSource());steamFilter = remember(ctx.createBiquadFilter());
+          hiss = remember(ctx.createBufferSource());steamFilter = remember(ctx.createBiquadFilter());
           steamLevel = remember(ctx.createGain()); steamPan = remember(panNode(0));
           hiss.buffer = noiseBuffer; hiss.loop = true; steamFilter.type = 'bandpass'; steamFilter.frequency.value = 1950; steamFilter.Q.value = .6; steamLevel.gain.value = 0;
           hiss.connect(steamFilter); steamFilter.connect(steamLevel); steamLevel.connect(steamPan); steamPan.connect(ambience); hiss.start();
-          var air = remember(ctx.createBufferSource()); airVolume = remember(ctx.createGain());
+          air = remember(ctx.createBufferSource()); airVolume = remember(ctx.createGain());
           airFilter = remember(ctx.createBiquadFilter());
           air.buffer = noiseBuffer; air.loop = true;
           airFilter.type = 'bandpass'; airFilter.frequency.value = 780; airFilter.Q.value = .55;
@@ -592,13 +696,30 @@
           if(playing)warmBank(false);
         } catch (_) {
           failed = true;
-          if (ctx) { try { ctx.close().catch(function () {}); } catch (_) {} }
+          if (ctx && !injected) { try { ctx.close().catch(function () {}); } catch (_) {} }
           ctx = null;
         }
       }
+      // MIX-V4 : au repos, le contexte audio ne doit plus rien couter. Apres 1,5 s
+      // sans rien a dire — le temps que les queues trainantes s'eteignent —, on le
+      // suspend ; le reveil est la promesse de resume(), asynchrone par nature.
+      // Ni start() ni testMix() ne laissent le contexte endormi.
+      var idle = false, idleTimer = null;
+      function clearIdle() { if (idleTimer !== null) { clearTimeout(idleTimer); idleTimer = null; } }
+      function setIdle(value) {
+        var next = !!value;
+        if (!next) { clearIdle(); if (idle) { idle = false; stats.idle = false; resume(); } return; }
+        if (idle || idleTimer !== null) return;
+        idle = true; stats.idle = true;
+        idleTimer = setTimeout(function () {
+          idleTimer = null;
+          if (idle && !disposed && !offline && ctx) { try { ctx.suspend().catch(function () {}); } catch (_) {} }
+        }, 1500);
+      }
       function resume() {
         initialize();
-        if (!ctx || disposed) return Promise.resolve();
+        clearIdle(); idle = false; stats.idle = false;
+        if (!ctx || disposed || offline) return Promise.resolve();
         if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
           try { return ctx.resume().catch(function () {}); } catch (_) {}
         }
@@ -621,6 +742,7 @@
         approach(airFilter.frequency,780+stage*180+(environment.biome==='woodland'?-100:0),now,.4);
         stats.windGain=active&&mix.ambience>0?outside*wind*gust*.020*mask:0;
         approach(airVolume.gain,stats.windGain,now,stats.windGain?.22:.045);
+        loopLink(air,airFilter,stats.windGain>0);
         approach(echoSend.gain,.09-outside*.08,now,.45);
 
       }
@@ -642,7 +764,7 @@
         var serial = ++previewSerial;
         if (disposed || options && options.muted || mix.master <= 0 || typeof setTimeout !== 'function') return Promise.resolve(false);
         return resume().then(function () {
-          if (!ctx || disposed || serial !== previewSerial || ctx.state !== 'running') return false;
+          if (!ctx || disposed || serial !== previewSerial || !live()) return false;
           warmBank(false);
           var start = ctx.currentTime, audition = {id:serial,end:start+2,timer:null,index:0};
           preview = audition; stats.preview = true; updateMaster();
@@ -658,7 +780,7 @@
           ];
           function pump() {
             if (preview !== audition || disposed) return;
-            if (ctx.currentTime >= audition.end || ctx.state !== 'running') { cancelTestMix(); return; }
+            if (ctx.currentTime >= audition.end || !live()) { cancelTestMix(); return; }
             while (audition.index < events.length && ctx.currentTime-start >= events[audition.index].at) events[audition.index++].run();
             tick(); audition.timer = setTimeout(pump,40);
           }
@@ -682,7 +804,7 @@
           // to start/resume in a user gesture; no world effects are synthesized.
           if (disposed || !window.FMusic) return Promise.resolve(false);
           return FMusic.warmup('title').then(function () {
-            return !!(ctx && ctx.state === 'running' && !disposed && music && music.prepare('title'));
+            return !!(ctx && live() && !disposed && music && music.prepare('title'));
           });
         },
         setTitlePlaying: function (value) {
@@ -712,7 +834,7 @@
         },
         setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
         setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
-        setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); syncMusic(); },
+        setStage: function (value, valueSeed) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); if (arguments.length > 1) musicSeed = Number.isFinite(valueSeed) ? valueSeed | 0 : undefined; pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); syncMusic(); },
         setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing){titlePlaying=false;if(ctx)warmBank(false);} updateSteam();updateMachinery(); syncMusic(); if (!playing && ctx && airVolume) {approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
         setMix: function (value) {
           for (var key in mix) if (Number.isFinite(value && value[key])) mix[key] = Math.max(0, Math.min(1, value[key]));
@@ -721,14 +843,20 @@
           effects.gain.setTargetAtTime(EFFECTS_GAIN * mix.effects, ctx.currentTime, .025);
           ambience.gain.setTargetAtTime(AMBIENCE_GAIN * mix.ambience, ctx.currentTime, .025);
           updateSteam();updateMachinery();
-          if(mix.ambience<=0){approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;}
+          if(mix.ambience<=0){approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;loopLink(air,airFilter,false);}
           if (music) music.setVolume(mix.music);
         },
         setEnvironment: function (value, amount) { environment = value || {}; outside = Math.max(0, Math.min(1, Number(amount) || 0)); },
         setMachinery: function (value, pan, kind, occluded) { machinery = Math.max(0,Math.min(1,Number(value)||0));machineSide=Math.max(-1,Math.min(1,Number(pan)||0));machineKind=['fan','piston','reactor','lift'].indexOf(kind)>=0?kind:'lift';machineOccluded=Math.max(0,Math.min(1,Number(occluded)||0));updateMachinery(); },
         setSteam: function (value, pan, occluded) { steam = Math.max(0,Math.min(1,Number(value)||0)); steamSide = Math.max(-1,Math.min(1,Number(pan)||0));steamOccluded=Math.max(0,Math.min(1,Number(occluded)||0)); updateSteam(); },
         stats: stats,
+        // MIX-11: the nodes of the real chain, for the offline bench and the
+        // tests only. A game never reads them; nothing here is a public API.
+        graph: function () {
+          return ctx ? {master: master, limiter: limiter, guard: guard, effects: effects, ambience: ambience, musicBus: musicBus} : null;
+        },
         tick: tick,
+        setIdle: setIdle,
         testMix: testMix,
         cancelTestMix: cancelTestMix,
         materialImpact: function(value){materialCue('impact',value);},
@@ -741,7 +869,7 @@
         alarm: function (event) { horrorCue('alarm',event); },
         rocket: function (value) {
           if(!playing&&!preview)return;
-          var e = handEvent('rocket',value,.055); if (e)pcm('rocket',.57*e.level,e.pan,e.event);
+          var e = handEvent('rocket',value,.055); if (e)pcm('rocket',.57*e.level*wg('rocket'),e.pan,e.event);
         },
         grenade: function (value) {
           if(!playing&&!preview)return;
@@ -774,7 +902,7 @@
         },
         bossTell: function (value) {
           var e = effectEvent('bossTell',value,.25); if (!e) return; var g = e.level;
-          tone(92,180,.52,.09*g,'triangle',0,e.pan,1100);tone(370,530,.28,.035*g,'sine',.08,-e.pan*.3);noise(.16,.035*g,720,e.pan,.12,'bandpass');
+          tone(92,180,.52,.27*g,'triangle',0,e.pan,1100);tone(370,530,.28,.105*g,'sine',.08,-e.pan*.3);noise(.16,.105*g,720,e.pan,.12,'bandpass');
         },
         bossRoar: function (value) {
           var e = effectEvent('bossRoar',value,.6); if (!e) return; var g = e.level;
@@ -792,11 +920,11 @@
           var pistol=!!value&&value.weapon===4;
           if(!playing&&!preview)return;
           var e=handEvent(pistol?'pistol':'shot',value,pistol?.08:.045);if(!e)return;var g=e.level;
-          pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g,e.pan,e.event);
+          pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g*wg(pistol?'pistol':'smg'),e.pan,e.event);
         },
         fracture: function (value) {
           if(!playing&&!preview)return;
-          var e=handEvent('fracture',value,.075);if(e)pcm('shotgun',.77*e.level,e.pan,e.event);
+          var e=handEvent('fracture',value,.075);if(e)pcm('shotgun',.77*e.level*wg('shotgun'),e.pan,e.event);
         },
         pulse: function () {
           if (!available()) return;
@@ -937,6 +1065,7 @@
           pcm('step:'+kind,.13*weight,stepSide*.16,surface,1+(weight-1)*.035);
         },
         dispose: function () {
+          clearIdle();
           if (disposed) return;
           cancelTestMix();
           disposed = true;
@@ -952,14 +1081,14 @@
             try { node.disconnect(); } catch (_) {}
           });
           persistent.length = 0;
-          if (ctx) { try { ctx.close().catch(function () {}); } catch (_) {} }
+          if (ctx && !injected) { try { ctx.close().catch(function () {}); } catch (_) {} }
           ctx = null; noiseBuffer = null;bank=Object.create(null);motors.length=0;
         }
       };
       // Priority belongs to a cue, not its waveform. A rocket's click, body
       // and exhaust keep the same reservation and cause one short music dip.
       var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
-      var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose)/;
+      var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose|graph)/;
       Object.keys(api).forEach(function (name) {
         if (typeof api[name] !== 'function' || helpers.test(name)) return;
         var method = api[name];

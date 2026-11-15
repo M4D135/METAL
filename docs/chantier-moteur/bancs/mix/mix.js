@@ -19,7 +19,7 @@ const COMP = {
   v02: {threshold: -19, knee: 18, ratio: 5, attack: .004, release: .18},         // limiteur v0.2 d'avant FEEL-07
   feel07: {threshold: -12, knee: 6, ratio: 3, attack: .012, release: .12},       // FEEL-07
   lim: {threshold: -6, knee: 4, ratio: 12, attack: .001, release: .09},          // proposition MIX : limiteur de sécurité
-  lim2: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10},
+  lim2: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10},  metal: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10},              // préréglage MIX-04 que METAL règle lui-même
   off: {threshold: 0, knee: 0, ratio: 1, attack: .004, release: .18}
 };
 const DUCK = {
@@ -57,10 +57,8 @@ function buildAudio(v) {
   if (duck.mode === 'shelf') s = patchOnce(s, 'musicBus.gain.cancelScheduledValues(now);\n        musicBus.gain.setTargetAtTime(MUSIC_GAIN * duckDepth, now, .006);\n        musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18);',
     'duckShelf_apply(now);', 'duckApply').replace('function duckMusic() {', 'function duckShelf_apply(now) { var f = window.__duckShelf, fb = ' + (duck.fullband || 0) + '; f.gain.cancelScheduledValues(now); f.gain.setTargetAtTime(20 * Math.log10(duckDepth), now, .006); f.gain.setTargetAtTime(0, duckUntil, .18);' +
       ' if (fb > 0) { musicBus.gain.cancelScheduledValues(now); musicBus.gain.setTargetAtTime(MUSIC_GAIN * (1 - fb * (1 - duckDepth)), now, .006); musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18); } }\n      function duckMusic() {');
-  if (v.weaponGain && v.weaponGain !== 1) { const k = v.weaponGain;
-    s = patchOnce(s, "pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g,e.pan,e.event);", "pcm(pistol?'pistol':'smg',(pistol?.63:.49)*g*" + k + ",e.pan,e.event);", 'wg1');
-    s = patchOnce(s, "if(e)pcm('shotgun',.77*e.level,e.pan,e.event);", "if(e)pcm('shotgun',.77*e.level*" + k + ",e.pan,e.event);", 'wg2');
-    s = patchOnce(s, "if (e)pcm('rocket',.57*e.level,e.pan,e.event);", "if (e)pcm('rocket',.57*e.level*" + k + ",e.pan,e.event);", 'wg3'); }
+  // MIX-04 : les gains d'armes sont devenus une option du moteur (weaponGain),
+  // plus un remplacement de texte. La variante du banc passe donc par l'option.
   if (v.duckTau) s = patchOnce(s, 'f.gain.setTargetAtTime(0, duckUntil, .18);', 'f.gain.setTargetAtTime(0, duckUntil, ' + v.duckTau + ');', 'tau1').replace('musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, .18); } }', 'musicBus.gain.setTargetAtTime(MUSIC_GAIN, duckUntil, ' + v.duckTau + '); } }');
   if (v.noLoops) { // attribution : boucles d'ambiance (vapeur, vent, 4 moteurs) non démarrées
     s = patchOnce(s, 'steamPan.connect(ambience); hiss.start();', 'steamPan.connect(ambience);', 'nl1');
@@ -70,7 +68,9 @@ function buildAudio(v) {
   if (v.noGuard) s = patchOnce(s, 'master.connect(limiter); limiter.connect(guard); guard.connect(ctx.destination);', 'master.connect(limiter); limiter.connect(ctx.destination);', 'ng');
   if (v.noEcho) s = patchOnce(s, 'effects.connect(send); send.connect(delay); delay.connect(damping);', 'send.connect(delay); delay.connect(damping);', 'ne');
   if (v.tell === 'boss04') { // BOSS-04 : gain du tell ×3 (0,09 → 0,27) ; la portée 90 m est appliquée au rejeu
-    s = patchOnce(s, "tone(92,180,.52,.09*g,'triangle',0,e.pan,1100);tone(370,530,.28,.035*g,'sine',.08,-e.pan*.3);noise(.16,.035*g,720,e.pan,.12,'bandpass');", "tone(92,180,.52,.27*g,'triangle',0,e.pan,1100);tone(370,530,.28,.105*g,'sine',.08,-e.pan*.3);noise(.16,.105*g,720,e.pan,.12,'bandpass');", 'tell');
+    // Depuis T5/MIX-05 le dépôt porte déjà ces gains : la variante ne patche plus
+    // rien et mesure la source telle quelle. Elle reste pour rejouer l'audit.
+    if (s.includes(".52,.09*g,'triangle'")) s = patchOnce(s, "tone(92,180,.52,.09*g,'triangle',0,e.pan,1100);tone(370,530,.28,.035*g,'sine',.08,-e.pan*.3);noise(.16,.035*g,720,e.pan,.12,'bandpass');", "tone(92,180,.52,.27*g,'triangle',0,e.pan,1100);tone(370,530,.28,.105*g,'sine',.08,-e.pan*.3);noise(.16,.105*g,720,e.pan,.12,'bandpass');", 'tell');
   }
   if (v.loop14 === 'exact' || v.loop14 === 'seuil') { // LOOP-14 : setters qui mémorisent, une mise à jour par image, dédoublonnage
     const thr = v.loop14 === 'seuil';
@@ -101,7 +101,7 @@ async function render(scene, v, opt = {}) {
   RECIPE = v.recipe || 'cur';
   window.__OVERRIDE = RECIPE === 'doom' ? Object.fromEntries(Object.keys(DOOMISH.RECIPES).map(n => [n, (variant, rate) => DOOMISH.synth(n, variant | 0, rate || 22050)])) : null;
   const N = sceneFrames(scene), seconds = (K0 + N) / HZ + TAIL, ctx = new OfflineAudioContext(12, Math.ceil(seconds * SR), SR);
-  Object.defineProperty(ctx, 'state', {get: () => 'running'});
+  if (!v.inject) Object.defineProperty(ctx, 'state', {get: () => 'running'}); // MIX-11 : avec v.inject, le contexte garde son etat reel ('suspended')
   const counter = {n: 0}; countParams(ctx, counter); window.__L14 = {sent: 0, skipped: 0};
   const saved = window.AudioContext; window.AudioContext = function () { return ctx; };
   const raw = !!v.source, sharedMusic = window.FMusic; window.__NODES = null; window.__duckShelf = null; delete window.MetalAudio;
@@ -114,9 +114,11 @@ async function render(scene, v, opt = {}) {
   }
   // Création comme game.js : FAudio.create(window.MetalAudio?.options?.()).
   // Écran titre : le jeu ouvre le contexte coupé (audioGate) puis rétablit le son après setTitlePlaying(true).
-  const audio = FAudio.create(window.MetalAudio && typeof window.MetalAudio.options === 'function' ? window.MetalAudio.options() : undefined); if (scene.title) audio.setMuted(true); audio.start(); window.AudioContext = saved;
-  const nodes = raw ? null : window.__NODES, comp = COMP[v.comp || 'cur'], taps = !raw && !v.noTaps;
-  if (nodes) for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) nodes.limiter[k].value = comp[k];
+  const opts = window.MetalAudio && typeof window.MetalAudio.options === 'function' ? window.MetalAudio.options() : {};
+  if (v.weaponGain && v.weaponGain !== 1) opts.weaponGain = {pistol: v.weaponGain, smg: v.weaponGain, shotgun: v.weaponGain, rocket: v.weaponGain};
+  if (v.inject) opts.context = ctx; const audio = FAudio.create(opts); if (scene.title) audio.setMuted(true); audio.start(); window.AudioContext = saved;
+  const nodes = raw ? null : window.__NODES, comp = v.comp === 'metal' ? null : COMP[v.comp || 'cur'], taps = !raw && !v.noTaps;
+  if (nodes && comp) for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) nodes.limiter[k].value = comp[k];
 
   if (nodes && v.oversample) nodes.guard.oversample = v.oversample;
   // prises : 2,3 sortie limiteur ; 4,5 entrée limiteur ; 6,7 musique après duck ; 8,9 effets + écho + ambiances ; 10 duck ; 11 étagère
@@ -148,6 +150,10 @@ async function render(scene, v, opt = {}) {
         for (const [name, o] of fr.c) {
           let arg = o;
           if (name === 'bossTell' && v.tell === 'boss04' && o.distance !== undefined) { const fade = Math.max(0, 1 - o.distance / 90); arg = Object.assign({}, o, {level: fade * fade / (1 + o.distance * .018) * (o.occluded ? .34 : 1)}); }
+          // MIX-05 tel que livre METAL : portee 90 m dans ranges ET plancher de
+          // niveau 0,6 dans l'enclos (src/soundscape.js). La scene (d) est l'arène
+          // du boss, le joueur y est : le plancher s'applique.
+          if (name === 'bossTell' && v.tell === 'metal' && o.distance !== undefined) { const fade = Math.max(0, 1 - o.distance / 90); arg = Object.assign({}, o, {level: Math.max(.6, fade * fade / (1 + o.distance * .018) * (o.occluded ? .34 : 1))}); }
           audio[name](Object.assign({}, arg));
         }
         const s = fr.s; audio.setEnvironment(scene.env || {}, s[0]); audio.setMachinery(s[1], s[2], s[3], s[4]); audio.setSteam(s[5], s[6], s[7]); audio.setThreat(s[8]); audio.setPressure(s[9]); audio.tick(1 / HZ);
@@ -158,11 +164,11 @@ async function render(scene, v, opt = {}) {
     });
   }
   const t0 = performance.now(), buffer = await ctx.startRendering(), ms = performance.now() - t0;
-  const stats = Object.assign({}, audio.stats), l14 = Object.assign({}, window.__L14);
+  const stats = Object.assign({}, audio.stats), l14 = Object.assign({}, window.__L14), g = v.graph && typeof audio.graph === 'function' ? audio.graph() : null, graphKeys = g ? Object.keys(g).sort().join(',') : null, graphOk = g ? Object.keys(g).every(k => g[k] && typeof g[k].connect === 'function') : null;
   try { audio.dispose(); } catch (_) {}
   if (raw) window.FMusic = sharedMusic;
   const table = !!(window.MetalAudio && window.MetalAudio.recipes); delete window.MetalAudio;
-  return {buffer, ms, replayMs, stats, red, voices, seconds, params: counter.n, l14, titlePrepared, table};
+  return {buffer, ms, replayMs, stats, red, voices, seconds, params: counter.n, l14, titlePrepared, table, graphKeys, graphOk};
 }
 // différence échantillon par échantillon de la sortie (canaux 0 et 1), en dBFS ; premier écart non nul et au-delà de −90 dBFS
 function diffOut(x, y) {
@@ -229,6 +235,17 @@ function analyse(R, scene, calib) {
       if (!seg.length || !late.length) continue; const base = pre.length ? quant(pre, .5) : 0; drops.push(base - Math.min(...seg)); ripples.push(Math.max(...late) - Math.min(...late));
       let sm = 0; for (let i = Math.round((K0 + a) / HZ * sr); i < Math.round((K0 + z) / HZ * sr); i += 16) sm = Math.min(sm, -SH[i] * 60); shelfDrops.push(-sm); }
     out.pump = {perBurst: drops.map((d, i) => [r2(d), r2(ripples[i])]), bursts: drops.length, dropDb: {p50: r2(quant(drops, .5)), max: r2(Math.max(...drops))}, rippleDb: {p50: r2(quant(ripples, .5)), max: r2(Math.max(...ripples))}, shelfDropDb: r2(Math.max(...shelfDrops))};
+    // MIX-11 : le duck se lit aussi par bande. Pour chaque rafale, energie de la
+    // musique apres duck pendant la rafale contre la meme duree juste avant, en
+    // energies cumulees sous chaque frequence : le grave peut pomper sans que la
+    // moyenne large bande bouge (ce que mesurent MIX-03 et MIX-V1).
+    const edges = [120, 250, 500, 1000, 2000, 4000], mLp = edges.map(hz => lowpass(mum, hz, sr));
+    const bandEnergy = (i0, i1) => { let prev = 0; return edges.map((hz, k) => { const c = rmsRange(mLp[k], i0, i1) ** 2, v = Math.max(0, c - prev); prev = Math.max(prev, c); return Math.sqrt(v); }); };
+    const bandDrops = edges.map(() => []);
+    for (const [a2, z2] of scene.bursts) { if (z2 === undefined) continue; const s0 = Math.max(from, Math.floor((K0 + a2) / HZ * sr)), e0 = Math.floor((K0 + z2) / HZ * sr), L = e0 - s0; if (L < Math.round(.5 * sr)) continue;
+      const pre = bandEnergy(Math.max(from, s0 - L), s0), seg = bandEnergy(s0, e0);
+      edges.forEach((hz, k) => { if (pre[k] > 1e-5) bandDrops[k].push(dB(seg[k] / pre[k])); }); }
+    out.duckBands = {}; edges.forEach((hz, k) => { out.duckBands['<' + hz] = bandDrops[k].length ? r2(quant(bandDrops[k], .5)) : null; });
   }
   let vmax = 0, vsum = 0; for (let k = K0; k < R.voices.length; k++) { vmax = Math.max(vmax, R.voices[k]); vsum += R.voices[k]; }
   out.voices = {peakVoices: R.stats.peakVoices, stolenVoices: R.stats.stolenVoices, fxSkipped: R.stats.fxSkipped, meanPerFrame: r2(vsum / (R.voices.length - K0)), maxAtFrame: vmax};
@@ -245,7 +262,9 @@ async function calibrate(name) {
   const comp2 = ctx.createDynamicsCompressor(); for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) comp2[k].value = c[k]; is.connect(comp2); comp2.connect(m, 0, 1); m.connect(ctx.destination);
   osc.start(); is.start(); const b = await ctx.startRendering(), d0 = b.getChannelData(0), d1 = b.getChannelData(1);
   const makeup = rmsRange(d0, SR, SR * 1.4) / (.001 / Math.SQRT2); let at = 0, pk = 0; for (let i = SR; i < d1.length; i++) if (Math.abs(d1[i]) > pk) { pk = Math.abs(d1[i]); at = i; }
-  return {name, ...c, makeupDb: r2(dB(makeup)), delay: at - SR * 1.5, delayMs: r2((at - SR * 1.5) / SR * 1000)};
+  // MIX-02 : le rattrapage que FAudio annonce (FAudio.makeupDb) contre celui que Chrome rend.
+  const annonce = window.FAudio && typeof window.FAudio.makeupDb === 'function' ? r2(window.FAudio.makeupDb(c.threshold, c.knee, c.ratio)) : null;
+  return {name, ...c, makeupDb: r2(dB(makeup)), annonceDb: annonce, delay: at - SR * 1.5, delayMs: r2((at - SR * 1.5) / SR * 1000)};
 }
 const CAL = {};
 async function calib(name) { return CAL[name] || (CAL[name] = await calibrate(name)); }

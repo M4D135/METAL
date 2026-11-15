@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root=new URL('../',import.meta.url);
-const source=Object.fromEntries(['music','audio','audio-recipes','soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls','game'].map(name=>
+const source=Object.fromEntries(['music','audio','audio-recipes','soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls','loop','schedule','touch','jobs','tasks','host','game'].map(name=>
   [name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 class Param{
   constructor(value=0){this.value=value;this.events=[];}
@@ -20,7 +20,7 @@ class Param{
 }
 class Context{
   constructor(){this.currentTime=0;this.sampleRate=44100;this.state='suspended';this.nodes=[];this.sources=[];this.buffers=[];this.resumes=0;this.closes=0;this.destination=this.node('destination');}
-  node(kind){const n={kind,connections:[],disconnected:false,connect(target){this.connections.push(target);return target;},disconnect(){this.connections=[];this.disconnected=true;}};this.nodes.push(n);return n;}
+  node(kind){const n={kind,connections:[],ever:[],disconnected:false,connect(target){if(!this.connections.includes(target))this.connections.push(target);if(!this.ever.includes(target))this.ever.push(target);return target;},disconnect(target){if(target===undefined){this.connections=[];}else{const i=this.connections.indexOf(target);if(i>=0)this.connections.splice(i,1);}this.disconnected=this.connections.length===0;}};this.nodes.push(n);return n;}
   createGain(){const n=this.node('gain');n.gain=new Param(1);return n;}
   createStereoPanner(){const n=this.node('pan');n.pan=new Param();return n;}
   createBiquadFilter(){const n=this.node('filter');n.frequency=new Param(350);n.Q=new Param(1);return n;}
@@ -35,6 +35,7 @@ class Context{
   createBufferSource(){return this.scheduled('source');}
   advance(seconds){this.currentTime+=seconds;for(const n of this.sources){const natural=n.kind==='source'&&!n.loop?n.startTime+Math.max(0,(n.buffer?.duration||0)-n.offset)/n.playbackRate.value:Infinity;if(!n.ended&&Math.min(n.stopTime,natural)<=this.currentTime){n.ended=true;n.onended?.();}}}
   resume(){this.resumes++;this.state='running';return Promise.resolve();}
+  suspend(){this.suspends=(this.suspends||0)+1;this.state='suspended';return Promise.resolve();}
   close(){this.closes++;this.state='closed';return Promise.resolve();}
 }
 // recipes: METAL's table (src/audio-recipes.js) passed as game.js does; options: any other create() argument.
@@ -55,7 +56,8 @@ function bandDb(pcm,lo,hi,rate=22050){let n=1;while(n<pcm.length)n<<=1;const re=
   for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=len)for(let k=0,cr=1,ci=0;k<len/2;k++){const p=i+k,q=p+len/2,vr=re[q]*cr-im[q]*ci,vi=re[q]*ci+im[q]*cr;re[q]=re[p]-vr;im[q]=im[p]-vi;re[p]+=vr;im[p]+=vi;[cr,ci]=[cr*wr-ci*wi,cr*wi+ci*wr];}}
   let e=0;for(let k=1;k<n/2;k++){const f=k*rate/n;if(f>=lo&&f<hi)e+=re[k]**2+im[k]**2;}return 10*Math.log10(2*e/n);}
 const pcmKey=pcm=>Buffer.from(pcm.buffer,pcm.byteOffset,pcm.byteLength).toString('base64');
-function effectGain(source){let n=source.connections[0];if(n.kind==='filter')n=n.connections[0];return n;}
+function linkOf(n){return n.connections[0]||n.ever[0];}
+function effectGain(source){let n=linkOf(source);if(n.kind==='filter')n=n.connections[0];return n;}
 function effectPeak(source){return Math.max(...effectGain(source).gain.events.map(e=>e.value));}
 
 test('original PCM has bounded peaks, quiet tails and distinct material and weapon signatures',()=>{
@@ -216,11 +218,11 @@ test('empty rooms have no tonal bed, exterior wind has gaps, and every environme
 
 test('nearby machinery and steam are spatial, occluded, source-dependent and controlled by ambience',async()=>{
   const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);
-  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>n.connections[0].frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),count=r.ctx.sources.length,buffers=r.ctx.buffers.length;
+  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>linkOf(n).frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),count=r.ctx.sources.length,buffers=r.ctx.buffers.length;
   const ambience=effectGain(steam).connections[0].connections[0];assert.equal(ambience.gain.value,.7);
   r.audio.setMachinery(.75,-.7,'fan',0);let machine=machines.find(n=>effectGain(n).gain.value>0);assert(machine);assert.equal(effectGain(machine).connections[0].pan.value,-.7);
-  const open=machine.connections[0].frequency.value;r.audio.setMachinery(.75,.6,'fan',1);assert(machine.connections[0].frequency.value<open*.3);assert.equal(effectGain(machine).connections[0].pan.value,.6);
-  r.audio.setSteam(.8,-.45,0);const steamOpen=steam.connections[0].frequency.value;r.audio.setSteam(.8,-.45,1);assert(steam.connections[0].frequency.value<steamOpen*.4);assert.equal(effectGain(steam).connections[0].pan.value,-.45);
+  const open=linkOf(machine).frequency.value;r.audio.setMachinery(.75,.6,'fan',1);assert(linkOf(machine).frequency.value<open*.3);assert.equal(effectGain(machine).connections[0].pan.value,.6);
+  r.audio.setSteam(.8,-.45,0);const steamOpen=linkOf(steam).frequency.value;r.audio.setSteam(.8,-.45,1);assert(linkOf(steam).frequency.value<steamOpen*.4);assert.equal(effectGain(steam).connections[0].pan.value,-.45);
   r.audio.setMachinery(.5,.1,'piston',0);assert.equal(effectGain(machine).gain.value,0);assert.equal(machines.filter(n=>effectGain(n).gain.value>0).length,1,'kind changes crossfade a fixed pool');
   for(let i=0;i<120;i++){r.audio.setMachinery(.5,.1,'piston',.5);r.audio.setSteam(.8,-.45,.5);}assert.equal(r.ctx.sources.length,count);assert.equal(r.ctx.buffers.length,buffers);
   r.audio.setMix({ambience:0});assert.equal(ambience.gain.value,0);assert.equal(r.audio.stats.steamGain,0);assert.equal(r.audio.stats.machineryGain,0);
@@ -232,9 +234,9 @@ test('nearby machinery and steam are spatial, occluded, source-dependent and con
 
 test('steady ambience is automated once per change and every wind cut can be undone at the same instant (LOOP-14)',async()=>{
   const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);
-  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>n.connections[0].frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),air=loops.find(n=>n!==steam&&!machines.includes(n));
+  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>linkOf(n).frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),air=loops.find(n=>n!==steam&&!machines.includes(n));
   const delay=r.ctx.nodes.find(n=>n.kind==='delay'),send=r.ctx.nodes.find(n=>n.kind==='gain'&&n.connections.includes(delay)),wind=effectGain(air).gain;
-  const params=[steam,air,...machines].flatMap(n=>[n.connections[0].frequency,effectGain(n).gain,effectGain(n).connections[0].pan]).filter(Boolean).concat(send.gain);assert.equal(params.length,18);
+  const params=[steam,air,...machines].flatMap(n=>[linkOf(n).frequency,effectGain(n).gain,effectGain(n).connections[0].pan]).filter(Boolean).concat(send.gain);assert.equal(params.length,18);
   const sent=()=>params.reduce((sum,p)=>sum+p.events.length,0),frame=outside=>{r.audio.setEnvironment({wind:1},outside);r.audio.setMachinery(.6,-.4,'fan',.3);r.audio.setSteam(.5,.2,.1);r.audio.setThreat(.2);r.audio.setPressure(.1);r.audio.tick();};
   frame(0);const settled=sent();for(let i=0;i<120;i++){r.ctx.currentTime+=1/60;frame(0);}
   assert.equal(sent(),settled,'unchanged targets are not sent again, neither by the next frame nor by tick after a setter');
@@ -377,7 +379,7 @@ test('final output guard preserves ordinary samples and bounds any finite overlo
 
 test('explosion/boss storms stay bounded and continuous steam follows actual play state with one source',async()=>{
   const r=rig();await r.audio.start();r.audio.setPlaying(true);r.audio.setStage(1);
-  const hiss=r.ctx.sources.find(n=>n.loop&&n.connections[0]?.frequency?.value===1950),gain=hiss.connections[0].connections[0];assert(hiss);
+  const hiss=r.ctx.sources.find(n=>n.loop&&linkOf(n)?.frequency?.value===1950),gain=linkOf(hiss).connections[0];assert(hiss);
   r.audio.setSteam(.7,.3);assert(Math.abs(gain.gain.value-.0385)<1e-9);const sources=r.ctx.sources.length;
   for(let i=0;i<100;i++)r.audio.setSteam(.7,.3);assert.equal(r.ctx.sources.length,sources,'pipes share one persistent source');
   for(let step=0;step<120;step++){
@@ -430,7 +432,7 @@ function shell({touch=false,settings:storedSettings,recipes=false}={}){
   // The shell receives the same observed real audio instance as the direct API tests.
   // With recipes, game.js's own create() argument builds that instance.
   const createAudio=r.scope.FAudio.create;r.scope.FAudio.create=recipes?options=>{r.createOptions=options;return r.audio=createAudio(options);}:()=>r.audio;
-  for(const name of ['soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
+  for(const name of ['soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls','loop','schedule','touch','jobs','tasks','host'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
   const create=r.scope.FSimulation.create;r.scope.FSimulation.create=value=>{const sim=create(value);simulations.push(sim);return sim;};
   vm.runInContext(source.game,r.scope,{filename:'game.js'});assert.deepEqual(errors,[],'game must initialize without an audio or DOM exception');
   return Object.assign(r,{element,listeners,documentListeners,simulations,downloads,blobs,timers,memory,gesture(name='pointerup',event={}){emit(listeners,name,{type:name,target:element('body'),isTrusted:true,button:0,preventDefault:noop,...event});},visibility(visible){r.scope.document.hidden=!visible;emit(documentListeners,'visibilitychange',{});},focus(){focused=true;emit(listeners,'focus',{});},blur(){focused=false;emit(listeners,'blur',{});},frame(ms=40){now+=ms;if(r.ctx)r.advanceTimers(ms/1000);const batch=frames;frames=[];for(const fn of batch)fn(now);},async flush(){for(let i=0;i<12;i++){await Promise.resolve();this.frame(10);}},async ready(){for(let i=0;i<40;i++){this.frame();await Promise.resolve();await Promise.resolve();if(this.mode()!=='loading')return;}throw new Error('loading did not finish');},mode:()=>element('body').dataset.state||'menu'});
@@ -791,18 +793,18 @@ test('the prepared bank equals the direct synthesis for every name, recipe-backe
 test('FEEL-07 fige les quatre réglages décidés : compresseur maître, maintien du duck, voix ennemie, envoi écho',async()=>{
   const r=rig({recipes:true});r.audio.setStage(1);r.audio.setPlaying(true);await r.audio.start();r.audio.tick();
   const ctx=r.ctx,limiter=ctx.nodes.find(n=>n.kind==='limiter'),guard=ctx.nodes.find(n=>n.kind==='guard');
-  assert.deepEqual([limiter.threshold.value,limiter.knee.value,limiter.ratio.value,limiter.attack.value,limiter.release.value],[-12,6,3,.012,.12],'le compresseur maitre est a -12 dB, genou 6, ratio 3:1, attaque 12 ms, relachement 120 ms');
+  assert.deepEqual([limiter.threshold.value,limiter.knee.value,limiter.ratio.value,limiter.attack.value,limiter.release.value],[-9,6,8,.002,.1],'le compresseur maitre est le préréglage MIX-04 : −9 dB, genou 6, ratio 8:1, attaque 2 ms, relâchement 100 ms');
   assert(guard.curve&&guard.curve.length>1,'le plafond souple .875 reste sous le nouveau compresseur');assert.equal(guard.oversample,'none');
   const delay=ctx.nodes.find(n=>n.kind==='delay'),send=ctx.nodes.find(n=>n.kind==='gain'&&n.connections.includes(delay));
   assert(send,'le bus des effets a bien un envoi vers le delai');assert.equal(send.gain.value,.09,'lenvoi decho des armes est a 0,09');
   const bus=r.music[0].output,base=bus.gain.value;
   r.audio.fracture();
   assert(Math.abs(r.audio.stats.duckGain-base*.35)<1e-6,'la pompe abat la musique a 0,35 de son niveau, pas 0,45');
-  let hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.22)<1e-9,'la pompe tient le caniveau 0,22 s, '+hold);
+  let hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.30)<1e-9,'la pompe tient le caniveau 0,30 s depuis les tenues MIX-V1, '+hold);
   r.ctx.advance(1.5);r.audio.tick();bus.gain.events.length=0;
   r.audio.shot({level:1});
   assert(Math.abs(r.audio.stats.duckGain-base*.35)<1e-6,'la rafale de SMG abat la musique a 0,35');
-  hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.18)<1e-9,'le SMG ne tient le caniveau que 0,18 s, '+hold);
+  hold=bus.gain.events.at(-1).time-ctx.currentTime;assert(Math.abs(hold-.36)<1e-9,'le SMG tient le caniveau 0,36 s depuis les tenues MIX-V1, '+hold);
   r.ctx.advance(1.5);r.audio.tick();
   const before=ctx.sources.length;r.audio.enemyShot({kind:0,level:1,pan:0});
   assert.equal(ctx.sources.length,before+1,'une salve ennemie joue un seul tampon');
@@ -817,3 +819,222 @@ test('FEEL-07 fige les quatre réglages décidés : compresseur maître, maintie
   assert.equal(plain.ctx.sources.length,n+1,'sans la table METAL, lenemi garde le tampon v0.2 plutot que le silence');
   assert.equal(plain.ctx.sources.at(-1).connections[0].frequency.value,1100,'le passe-bas sapplique aussi a la voix de secours');
   r.audio.dispose();plain.audio.dispose();});
+
+// MIX-11 (lot 11b T2) : injecter un contexte hors ligne, et lire le vrai graphe.
+class OfflineContext extends Context{
+  constructor(){super();this.renders=0;this.state='suspended';}
+  startRendering(){this.renders++;return Promise.resolve({sampleRate:this.sampleRate,length:0,numberOfChannels:2,getChannelData:()=>new Float32Array(0)});}
+}
+test('un contexte hors ligne injecte tient pour disponible, nest jamais ouvert, relance ni ferme, et api.graph() rend les six noeuds (MIX-11)',async()=>{
+  const ctx=new OfflineContext();
+  const r=rig({options:{context:ctx}});
+  assert.equal(r.audio.graph(),null,'avant toute ouverture, le graphe nest pas rendu');
+  await r.audio.start();
+  assert.equal(ctx.resumes,0,'le moteur ne relance jamais un contexte qui lui est confié');
+  assert.equal(ctx.closes,0,'le moteur ne ferme jamais un contexte qui lui est confié');
+  const g=r.audio.graph();
+  assert(g,'le graphe est rendu des que le contexte est adopte');
+  assert.deepEqual(Object.keys(g).sort(),['ambience','effects','guard','limiter','master','musicBus'],'api.graph() rend maitre, ecreteur, garde, effets, ambiance et bus de musique');
+  for(const k of Object.keys(g))assert.equal(typeof g[k].connect,'function',k+' est bien un noeud');
+  assert.equal(g.limiter.kind,'limiter','le limiteur expose est le vrai compresseur de la chaine');
+  assert.equal(g.guard.kind,'guard','le garde expose est le vrai ecreteur');
+  assert(g.musicBus.connections.includes(g.master),'le bus de musique rendu est bien celui qui monte au maitre');
+  r.audio.setStage(1);r.audio.setPlaying(true);r.audio.tick();
+  const before=ctx.sources.length;r.audio.shot({level:1});
+  assert.equal(ctx.sources.length,before+1,'un tir est bien programme sur un contexte hors ligne, malgre son etat « suspended »');
+  assert(r.tracker.stats.scheduledRows>0,'le mod joue aussi sur un contexte hors ligne');
+  r.audio.dispose();
+  assert.equal(ctx.closes,0,'la liberation ne ferme pas le contexte du banc');
+  const plain=rig();await plain.audio.start();plain.audio.setStage(1);plain.audio.setPlaying(true);plain.audio.tick();
+  const n=plain.ctx.sources.length;plain.audio.shot({level:1});
+  assert.equal(plain.ctx.sources.length,n+1,'sans contexte injecte, le jeu normal joue toujours');
+  plain.audio.dispose();
+  assert.equal(plain.ctx.closes,1,'en revanche le contexte que le moteur a ouvert est bien ferme');
+});
+
+// MIX-02 (lot 11b T3) : le rattrapage caché du compresseur, annoncé et compensé.
+test('FAudio.makeupDb rend le rattrapage automatique du compresseur aux quatre couples mesurés, et chain level:"fixe" le compense après le compresseur (MIX-02)',async()=>{
+  const MESURES=[[-12,6,3,3.73],[-19,18,5,4.55],[-6,4,12,2.56],[-9,6,8,3.53]];
+  const r=rig();await r.audio.start();
+  for(const [seuil,genou,ratio,mesure] of MESURES){
+    const annonce=r.scope.FAudio.makeupDb(seuil,genou,ratio);
+    assert(Math.abs(annonce-mesure)<=0.05,'rattrapage ('+seuil+' dB, genou '+genou+', '+ratio+':1) annoncé '+annonce.toFixed(3)+', rendu '+mesure+' par le banc');
+  }
+  assert.equal(r.audio.stats.makeupDb,r.scope.FAudio.makeupDb(-12,6,3),'stats.makeupDb rend bien le rattrapage du compresseur en place');
+  const g0=r.audio.graph();
+  assert(g0.limiter.connections.includes(g0.guard),'sans option chain, le limiteur monte toujours directement a l ecreteur');
+  assert.equal(r.ctx.nodes.filter(n=>n.kind==='gain'&&g0.limiter.connections.includes(n)).length,0,'aucun gain de rattrapage n est ajoute par defaut');
+  assert.equal(g0.master.gain.value,.65,'le maitre reste a 0,65 sans option chain');
+  r.audio.dispose();
+  const f=rig({options:{chain:{masterGain:.65,compressor:{threshold:-9,knee:6,ratio:8,attack:.002,release:.1},level:'fixe'}}});
+  await f.audio.start();
+  const g=f.audio.graph();
+  assert.deepEqual([g.limiter.threshold.value,g.limiter.knee.value,g.limiter.ratio.value,g.limiter.attack.value,g.limiter.release.value],[-9,6,8,.002,.1],'chain.compressor regle le vrai compresseur');
+  assert.equal(g.limiter.connections.length,1,'le limiteur ne sort plus que vers le gain de rattrapage');
+  const compensation=g.limiter.connections[0];
+  assert.equal(compensation.kind,'gain','level fixe ajoute un GainNode');
+  assert(compensation.connections.includes(g.guard),'entre le compresseur et l ecreteur, jamais avant le compresseur');
+  const attendu=Math.pow(10,(r.scope.FAudio.makeupDb(-19,18,5)-r.scope.FAudio.makeupDb(-9,6,8))/20);
+  assert(Math.abs(compensation.gain.value-attendu)<1e-12,'le gain vaut 10^((4,547 - 3,531)/20) = '+attendu.toFixed(4)+', mesure '+compensation.gain.value);
+  assert.equal(g.master.gain.value,.65,'master.gain n est pas touche : le point de travail du compresseur ne bouge pas');
+  assert.equal(f.audio.stats.makeupDb,r.scope.FAudio.makeupDb(-9,6,8),'stats rend le rattrapage du nouveau compresseur');
+  f.audio.dispose();
+  const m=rig({options:{chain:{masterGain:.5}}});await m.audio.start();
+  assert.equal(m.audio.graph().master.gain.value,.5,'chain.masterGain regle bien le maitre');
+  assert.deepEqual([m.audio.graph().limiter.threshold.value,m.audio.graph().limiter.knee.value,m.audio.graph().limiter.ratio.value],[-12,6,3],'sans compressor dans chain, les reglages en place restent');
+  m.audio.dispose();
+});
+
+// MIX-V2 (lot 11b T8) : le duck suit le volume des effets, et ne bouge pas à 1.
+test('le duck de la musique est proportionnel au volume des effets et reste identique bit à bit à effets = 1 (MIX-V2)',async()=>{
+  const r=rig();r.audio.setStage(1);r.audio.setPlaying(true);await r.audio.start();r.audio.tick();
+  const bus=r.music[0].output,base=bus.gain.value;
+  r.audio.setMix({master:1,music:.45,effects:1,ambience:1});
+  r.audio.shot({level:1});
+  assert(Math.abs(r.audio.stats.duckGain-base*.35)<1e-6,'à effets = 1 (le défaut), le caniveau reste à 0,35 du niveau de la musique, pas plus');
+  const aEffetsUn=r.audio.stats.duckGain;
+  r.ctx.advance(1.5);r.audio.tick();
+  for(const [effets,attendu] of [[.5,1-.65*.5],[.2,1-.65*.2],[.05,1-.65*.05]]){
+    r.audio.setMix({master:1,music:.45,effects:effets,ambience:1});
+    r.audio.shot({level:1});
+    const voulu=base*attendu;
+    assert(Math.abs(r.audio.stats.duckGain-voulu)<1e-6,'à '+effets*100+' % d\'effets le caniveau vaut '+r.audio.stats.duckGain.toFixed(4)+', attendu '+voulu.toFixed(4));
+    r.ctx.advance(1.5);r.audio.tick();
+  }
+  r.audio.setMix({master:1,music:.45,effects:1,ambience:1});
+  r.audio.shot({level:1});
+  assert.equal(r.audio.stats.duckGain,aEffetsUn,'revenu à effets = 1, le duck est exactement le même nombre');
+  r.ctx.advance(1.5);r.audio.tick();
+  r.audio.setMix({master:1,music:.45,effects:0,ambience:1});
+  r.audio.shot({level:1});
+  assert.equal(r.audio.stats.duckGain,base,'à effets = 0 la musique ne plonge pas pour des tirs inaudibles');
+  r.audio.dispose();
+});
+
+// MIX-V1 (lot 11b T4) : les tenues du duck deviennent une option du moteur.
+test('duck.classes remplace profondeur et tenue cue par cue, et sans l\'option le duck est exactement celui d\'aujourd\'hui (MIX-V1)',async()=>{
+  function caniveau(audio,ctx,bus,name,arg){
+    audio[name](arg);
+    const g=bus.gain.events.at(-1).time-ctx.currentTime;
+    return {gain:audio.stats.duckGain,hold:g};
+  }
+  const nu=rig();nu.audio.setStage(1);nu.audio.setPlaying(true);await nu.audio.start();nu.audio.tick();
+  const busN=nu.music[0].output,baseN=busN.gain.value;
+  let r=caniveau(nu.audio,nu.ctx,busN,'shot',{level:1,weapon:0,seed:1});
+  assert(Math.abs(r.gain-baseN*.35)<1e-6,'sans option, le SMG abat toujours la musique a 0,35');
+  assert(Math.abs(r.hold-.18)<1e-9,'sans option, le SMG tient toujours 0,18 s, mesure '+r.hold);
+  nu.audio.dispose();
+  const m=rig({options:{duck:{classes:[{cues:['shot'],hold:.36},{cues:['fracture','rocket','grenade','grenadeLaunch'],hold:.30}]}}});
+  m.audio.setStage(1);m.audio.setPlaying(true);await m.audio.start();m.audio.tick();
+  const busM=m.music[0].output,baseM=busM.gain.value;
+  r=caniveau(m.audio,m.ctx,busM,'shot',{level:1,weapon:0,seed:1});
+  assert(Math.abs(r.hold-.36)<1e-9,'la classe allonge la tenue du tir a 0,36 s, mesure '+r.hold);
+  assert(Math.abs(r.gain-baseM*.35)<1e-6,'la tenue ne change pas la profondeur : toujours 0,35');
+  m.ctx.advance(1.5);m.audio.tick();busM.gain.events.length=0;
+  r=caniveau(m.audio,m.ctx,busM,'fracture',{level:1,seed:1});
+  assert(Math.abs(r.hold-.30)<1e-9,'la pompe est tenue 0,30 s, mesure '+r.hold);
+  m.audio.dispose();
+  const d=rig({options:{duck:{classes:[{cues:['shot'],depth:.5,hold:.2},{cues:['switchWeapon'],depth:.6,fixed:true}]}}});
+  d.audio.setStage(1);d.audio.setPlaying(true);await d.audio.start();d.audio.tick();
+  const busD=d.music[0].output,baseD=busD.gain.value;
+  r=caniveau(d.audio,d.ctx,busD,'shot',{level:1,weapon:0,seed:1});
+  assert(Math.abs(r.gain-baseD*.5)<1e-6,'la classe peut aussi imposer sa profondeur');
+  assert(Math.abs(r.hold-.2)<1e-9,'et son maintien, mesure '+r.hold);
+  d.ctx.advance(1.5);d.audio.tick();busD.gain.events.length=0;
+  d.audio.switchWeapon();
+  assert(Math.abs(d.audio.stats.duckGain-baseD*.6)<1e-6,'fixed:true fait duck un cue que le moteur ne duckait pas, a profondeur fixe');
+  d.ctx.advance(1.5);d.audio.tick();busD.gain.events.length=0;
+  d.audio.shot({level:.2,weapon:0,seed:1});
+  const demi=baseD*(1-.5*Math.min(1,.2*1.25));
+  assert(Math.abs(d.audio.stats.duckGain-demi)<1e-6,'hors fixed, le niveau du son pondere toujours la profondeur');
+  d.audio.dispose();
+});
+
+// MIX-04 (lot 11b T5) : le préréglage Doom est une option du moteur, pas son défaut.
+test('le préréglage Doom de METAL passe par chain et weaponGain : limiteur −9/6/8 sans compensation, rapports du joueur ×1,41, ennemis inchangés (MIX-04)',async()=>{
+  const metal=rig({recipes:true});metal.audio.setStage(1);metal.audio.setPlaying(true);await metal.audio.start();metal.audio.tick();
+  const g=metal.audio.graph();
+  assert.deepEqual([g.limiter.threshold.value,g.limiter.knee.value,g.limiter.ratio.value,g.limiter.attack.value,g.limiter.release.value],[-9,6,8,.002,.1],'le préréglage regle le limiteur a −9 dB, genou 6, ratio 8:1, attaque 2 ms, relâchement 100 ms');
+  assert(g.limiter.connections.includes(g.guard),'level:auto : aucun gain de rattrapage ne sépare le compresseur de l\'écrêteur');
+  assert.equal(metal.audio.stats.makeupDb,metal.scope.FAudio.makeupDb(-9,6,8),'le rattrapage annoncé est bien celui du nouveau compresseur');
+  metal.audio.shot({level:1,weapon:0,seed:1});
+  const rapportJoueur=effectPeak(metal.ctx.sources.at(-1));
+  metal.ctx.advance(1.5);metal.audio.tick();
+  metal.audio.enemyShot({kind:0,level:1,pan:0});
+  const rapportEnnemi=effectPeak(metal.ctx.sources.at(-1));
+  metal.audio.dispose();
+  const nu=rig({options:{recipes:metal.scope.MetalAudio.recipes,extras:metal.scope.MetalAudio.extras}});
+  nu.audio.setStage(1);nu.audio.setPlaying(true);await nu.audio.start();nu.audio.tick();
+  const gn=nu.audio.graph();
+  assert.deepEqual([gn.limiter.threshold.value,gn.limiter.knee.value,gn.limiter.ratio.value],[-12,6,3],'sans chain, le moteur garde son compresseur à lui');
+  nu.audio.shot({level:1,weapon:0,seed:1});
+  const sansRapport=effectPeak(nu.ctx.sources.at(-1));
+  nu.ctx.advance(1.5);nu.audio.tick();
+  nu.audio.enemyShot({kind:0,level:1,pan:0});
+  const sansEnnemi=effectPeak(nu.ctx.sources.at(-1));
+  assert(Math.abs(rapportJoueur/sansRapport-1.41)<1e-9,'le rapport du joueur est multiplié par 1,41 : '+sansRapport.toFixed(4)+' → '+rapportJoueur.toFixed(4));
+  assert.equal(rapportEnnemi,sansEnnemi,'les tirs ennemis ne montent pas : la table n\'est lue que dans les cues du joueur');
+  nu.audio.dispose();
+});
+
+// MIX-07 (lot 11b T12) : une boucle silencieuse ne coute plus de DSP.
+test('une boucle d ambiance au repos est debranchee de son filtre, sans etre arrete, et se rebranche (MIX-07)',async()=>{
+  const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);
+  const steam=r.ctx.sources.find(n=>n.loop&&linkOf(n).frequency.value===1950);assert(steam,'la boucle de vapeur existe');
+  const filtre=linkOf(steam);
+  r.audio.setSteam(.8,.4);r.audio.tick();
+  assert(steam.connections.includes(filtre),'une boucle audible reste branchee a son filtre');
+  const avant=steam.stopTime;r.audio.setSteam(0,0);r.audio.tick();
+  assert(!steam.connections.includes(filtre),'la cible de gain a zero debranche la source du filtre');
+  assert.equal(steam.stopTime,avant,'rien n est arrete ni relance : la boucle continue de tourner');
+  assert(filtre.connections.length>0,'le filtre et le gain restent en place, prets a recevoir a nouveau');
+  r.audio.setSteam(.8,.4);r.audio.tick();
+  assert(steam.connections.includes(filtre),'la source se rebranche des que la cible remonte');
+  const air=r.ctx.sources.find(n=>n.loop&&n!==steam&&linkOf(n).frequency.value>=780);assert(air,'la boucle de vent existe');
+  const filtreAir=linkOf(air);
+  r.audio.setEnvironment({wind:1},1);for(let i=0;i<40;i++){r.ctx.currentTime=i*.5;r.audio.tick();if(r.audio.stats.windGain>0)break;}
+  assert(air.connections.includes(filtreAir),'le vent audible est branche a son filtre');
+  r.audio.setEnvironment({wind:1},0);for(let i=0;i<200;i++){r.ctx.currentTime=i*.5;r.audio.tick();if(r.audio.stats.windGain===0)break;}
+  assert.equal(r.audio.stats.windGain,0,'le vent exterior a des silences');
+  assert(!air.connections.includes(filtreAir),'le vent a zero est debranche de son filtre');
+  r.audio.dispose();
+});
+
+// MIX-05 (lot 11b T6) : une alerte de jeu tient son caniveau, quelle que soit la distance.
+test('l annonce du boss abat la musique a 0,38 quel que soit son niveau : fixed ignore cueLevel (MIX-05)',async()=>{
+  const r=rig({recipes:true});r.audio.setStage(1);r.audio.setPlaying(true);await r.audio.start();r.audio.tick();
+  const base=r.audio.stats.duckGain;
+  r.audio.bossTell({level:.2,pan:0});const loin=r.audio.stats.duckGain;
+  r.ctx.advance(1.5);r.audio.tick();assert.equal(r.audio.stats.duckGain,base,'le caniveau se relache entre deux annonces');
+  r.audio.bossTell({level:1,pan:0});const dessus=r.audio.stats.duckGain;
+  assert(Math.abs(loin-dessus)<1e-12,'le caniveau de l annonce ne suit plus son niveau : '+loin+' contre '+dessus);
+  assert(Math.abs(loin-base*.38)<1e-9,'l annonce abat la musique a 0,38 de son niveau, mesure '+loin/base);
+  r.ctx.advance(1.5);r.audio.tick();
+  r.audio.hurt({level:.2,pan:0});const blessureLoin=r.audio.stats.duckGain;
+  r.ctx.advance(1.5);r.audio.tick();
+  r.audio.hurt({level:1,pan:0});const blessureDessus=r.audio.stats.duckGain;
+  assert(blessureDessus<blessureLoin-1e-9,'un cue sans fixed reste proportionnel au volume des effets : '+blessureLoin+' puis '+blessureDessus);
+  r.audio.dispose();
+});
+
+// MIX-V4 (lot 11b T10) : au repos, le contexte ne coute plus rien.
+test('au repos le contexte se suspend apres 1,5 s, et se reveille a la demande, par start() comme par testMix (MIX-V4)',async()=>{
+  const r=rig();await r.audio.start();r.audio.setPlaying(true);r.ctx.advance(.1);
+  assert.equal(r.ctx.state,'running','en jeu, le contexte tourne');
+  r.audio.setIdle(true);
+  assert.equal(r.ctx.state,'running','la suspension attend 1,5 s que les queues trainantes s eteignent');
+  r.advanceTimers(1.6);
+  assert.equal(r.ctx.state,'suspended','apres 1,5 s de repos, le contexte est suspendu');
+  assert.equal(r.audio.stats.idle,true,'len statistique le dit');
+  const resumes=r.ctx.resumes;
+  r.audio.setIdle(false);
+  assert.equal(r.ctx.state,'running','setIdle(false) reveille le contexte');
+  assert.equal(r.ctx.resumes,resumes+1,'et le reveil passe par la promesse de resume()');
+  assert.equal(r.audio.stats.idle,false);
+  r.audio.setIdle(true);r.advanceTimers(1);r.audio.setIdle(false);r.advanceTimers(3);
+  assert.equal(r.ctx.state,'running','un repos interrompu avant l echeance ne suspend jamais');
+  r.audio.setIdle(true);r.advanceTimers(1.6);assert.equal(r.ctx.state,'suspended','deuxieme endormissement');
+  await r.audio.start();assert.equal(r.ctx.state,'running','start() ne laisse jamais le contexte endormi');
+  await r.audio.testMix({});assert.equal(r.ctx.state,'running','testMix() non plus');
+  r.audio.dispose();
+});

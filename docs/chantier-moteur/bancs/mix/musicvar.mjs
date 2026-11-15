@@ -7,8 +7,14 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 const root = process.argv[2], here = new URL('./musicvar/', import.meta.url).pathname;
 const original = readFileSync(root + '/src/music.js', 'utf8');
-function patchOnce(src, from, to, tag) { const at = src.indexOf(from); if (at < 0) throw new Error('patch introuvable : ' + tag); if (src.indexOf(from, at + 1) >= 0) throw new Error('patch non unique : ' + tag); return src.slice(0, at) + to + src.slice(at + from.length); }
+function patchOnce(src, from, to, tag) { const at = src.indexOf(from); if (at < 0) { if (src.includes(to)) return src; throw new Error('patch introuvable : ' + tag); } if (src.indexOf(from, at + 1) >= 0) throw new Error('patch non unique : ' + tag); return src.slice(0, at) + to + src.slice(at + from.length); }
 let s = original;
+// Le prototype est devenu le code : quand src/music.js porte deja la variation
+// (lot 11b T7), on ne patche plus rien et on mesure la source reelle. La cle de
+// comparaison « module sans graine identique » se lit alors contre une racine de
+// reference passee en quatrieme argument.
+const integrated = s.includes('MIX-10');
+if (!integrated) {
 s = patchOnce(s, 'function compose(stage,samples){', 'function compose(stage,samples,seed){', 'compose');
 s = patchOnce(s, "const orders=stage===0?[0,1,2,1,3,1,4,5]:stage===1?[0,1,2,1,3,4,1,5]:[0,1,2,3,1,4,2,5];", "const orders=stage===0?[0,1,2,1,3,1,4,5]:stage===1?[0,1,2,1,3,4,1,5]:[0,1,2,3,1,4,2,5],base=orders.slice();", 'orders');
 s = patchOnce(s, "    return {title:song.moduleTitle,patterns,orders,samples};",
@@ -35,6 +41,7 @@ s = patchOnce(s, "function getTrack(stage){const song=SONGS[stageOf(stage)];retu
 s = patchOnce(s, "let stage=0,threat=0,volume=.4,", "let seed,stage=0,threat=0,volume=.4,", 'state');
 s = patchOnce(s, "function load(){if(module)return;module=moduleFor(stage);", "function load(){if(module)return;module=moduleFor(stage,seed);", 'load');
 s = patchOnce(s, "setStage(value){const next=stageOf(value);if(disposed||next===stage)return;stopAll();stage=next;", "setStage(value,nextSeed){const next=stageOf(value);if(disposed||next===stage&&nextSeed===seed)return;stopAll();stage=next;seed=nextSeed;", 'setStage');
+}
 writeFileSync(here + 'src/music.js', s); copyFileSync(root + '/checks/music.test.mjs', here + 'checks/music.test.mjs');
 const hash = b => createHash('sha256').update(b).digest('hex').slice(0, 16);
 const A = {}, B = {}; vm.runInNewContext(original, A); vm.runInNewContext(s, B);

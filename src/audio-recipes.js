@@ -37,5 +37,27 @@
   Object.keys(confirmations).forEach(function (name) { extras[name] = FAudio.recipe(name, confirmations[name]); });
   extras.enemySmg = FAudio.recipe('enemySmg', noMech(weapons.smg));
   extras.enemyGrenade = FAudio.recipe('enemyGrenade', noMech(weapons.grenade));
-  window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras}; }};
+  // MIX-V1 : le pistolet tire tous les 0,32 s. Une tenue de 0,18 s laisse la
+  // musique remonter puis replonger trois fois par seconde (ondulation mesurée
+  // 5,8 dB à la scène « Fer noir »). Tenir 0,36 s au tir et 0,30 s aux armes
+  // lourdes supprime l'ondulation, sans toucher à la profondeur du duck ni au
+  // timbre de la musique : le retour reste à tau 0,18 s.
+  var duckClasses = [
+    {cues: ['shot'], hold: .36},
+    {cues: ['fracture', 'rocket', 'grenade', 'grenadeLaunch'], hold: .30},
+    // MIX-05 : a 17 m l'annonce du boss ne duckait presque pas la musique (le duck
+    // suivait le niveau du son, ×0,84 soit −1,5 dB). Une alerte de jeu doit tenir
+    // son caniveau, quel que soit la distance : fixed ignore cueLevel.
+    {cues: ['bossTell', 'bossRoar', 'bossImpact', 'bossPhase'], fixed: true}
+  ];
+  // MIX-04 : le préréglage « Doom » mesuré par le banc. Les rapports du joueur
+  // montent de 3 dB (×1,41 : pistolet 0,89, SMG 0,69, pompe 1,09, roquette 0,80
+  // sur les gains internes 0,63 / 0,49 / 0,77 / 0,57), et le limiteur passe à
+  // −9 dB, genou 6, ratio 8:1, attaque 2 ms, relâchement 100 ms. level:'auto' :
+  // pas de compensation du rattrapage, la crête de la scène (c) passerait de
+  // 0,77 à 0,87, au ras du genou de l'écrêteur. Les tirs ennemis ne sont pas
+  // concernés : la table n'est lue que dans les cues du joueur.
+  var weaponGain = {pistol: 1.41, smg: 1.41, shotgun: 1.41, rocket: 1.41};
+  var chain = {compressor: {threshold: -9, knee: 6, ratio: 8, attack: .002, release: .10}, level: 'auto'};
+  window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras, duck: {classes: duckClasses}, weaponGain: weaponGain, chain: chain}; }};
 }());

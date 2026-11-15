@@ -1,0 +1,1 @@
+{"job":"fxvol","errors":[],"rows":[{"effectsVolume":1,"duckMinDb":-9.12,"fxRmsDb":-33.79,"fxPeak":0.375},{"effectsVolume":0.5,"duckMinDb":-3.41,"fxRmsDb":-39.81,"fxPeak":0.187},{"effectsVolume":0.2,"duckMinDb":-1.21,"fxRmsDb":-47.77,"fxPeak":0.075},{"effectsVolume":0.05,"duckMinDb":-0.29,"fxRmsDb":-59.81,"fxPeak":0.019}]}
