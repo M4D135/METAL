@@ -698,9 +698,21 @@
     }
     function mix(){if(!ready||disposed)return;const now=ctx.currentTime,levels=key==='title'?[.86,.72,.52,.93,.9]:[.94+threat*.04,.78,.30+threat*.22,.95+threat*.08,.9];tracks.forEach((t,i)=>t.gain.gain.setTargetAtTime(levels[i],now,.07));}
     function level(){if(!master||disposed)return;const now=ctx.currentTime;master.gain.cancelScheduledValues(now);master.gain.setTargetAtTime(playing?volume:0,now,.012);}
-    function load(){if(score)return;score=scoreOf(key);bpm=score.bpm;speed=score.speed;stats.tempo=bpm;}
+    // RESTE-09: la ligne à lire est calculée une fois par mesure, pas par
+    // ligne : la table, le motif et la mesure ne changent qu'au bord de mesure.
+    let rowBase=0,stride=16,channels=4,bytes=null,slot=0;
+    function load(){if(score)return;score=scoreOf(key);bpm=score.bpm;speed=score.speed;stats.tempo=bpm;stride=score.stride;channels=score.channels;bytes=score.bytes;slot=slotOf(key);}
+    // Les tampons d'instruments sont partagés par pièce et par numéro : la clé
+    // reste un nombre, une concaténation par note se paierait à chaque note.
+    const slots=new Map();
+    function slotOf(value){
+      let at=slots.get(value);
+      if(at===undefined){const cue=CUE_IDS.indexOf(value);at=(cue>=0?4+cue:value==='title'?3:Number(value))*32;slots.set(value,at);}
+      return at;
+    }
     function buffer(sample,whichKey=key){
-      const cacheKey=whichKey+'#'+sample;if(buffers.has(cacheKey))return buffers.get(cacheKey);
+      const cacheKey=(whichKey===key?slot:slotOf(whichKey))+sample;
+      if(buffers.has(cacheKey))return buffers.get(cacheKey);
       const source=whichKey===key&&score?score:scoreOf(whichKey),data=source.samples[sample-1].pcm,b=ctx.createBuffer(1,data.length,RATE),channel=b.getChannelData(0);for(let i=0;i<data.length;i++)channel[i]=data[i]/128;
       buffers.set(cacheKey,b);return b;
     }
@@ -726,20 +738,21 @@
       plan=director.nextBar();
       if(plan.cue!==key)applyCue(plan.cue);
       planSegment=score.segments[plan.segment]||score.segments[score.order[0]];
+      rowBase=score.header+(planSegment.pattern*64+plan.bar*16)*stride;
       for(let i=0;i<tracks.length;i++)tracks[i].gate.gain.setTargetAtTime(plan.layers.indexOf(TRACKS[i])>=0?1:0,time,.012);
       stats.bar=plan.bar;stats.layers=plan.layers.join(',');stats.transition=plan.transition||'';
     }
     function schedule(time){
       if(rowInBar===0)startBar(time);
-      const bytes=score.bytes||null,base=score.header+(planSegment.pattern*64+plan.bar*16+rowInBar)*score.stride;
+      const base=rowBase+rowInBar*stride;
       // RESTE-09: the channel records of a row are allocated once per instance
       // and refilled, so a scheduled row allocates nothing.
-      for(let channel=0;channel<score.channels;channel++){
+      for(let channel=0;channel<channels;channel++){
         const at=base+channel*4,a=bytes[at],b=bytes[at+1],c=bytes[at+2],param=bytes[at+3],e=events[channel];
         e.sample=(a&240)|(c>>4);e.pitch=((a&15)<<8)|b;e.effect=c&15;e.param=param;
         if(e.effect===15&&param){if(param<32)speed=param;else bpm=param;}
       }
-      for(let i=0;i<score.channels;i++){
+      for(let i=0;i<channels;i++){
         const e=events[i],t=tracks[i];if(e.sample){t.sample=e.sample;t.volume=score.samples[e.sample-1].volume;}
         if(e.effect===12)t.volume=min(64,e.param);
         if(e.pitch){t.period=e.pitch;note(i,t.sample,e.pitch,time);}

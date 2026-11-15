@@ -23,6 +23,10 @@ for (let i = 0; i < args.length; i++) {
 }
 if (!roots.length) roots.push(process.cwd());
 const STAGES = [0, 1, 2, 'title'];
+// MUS-05 : les pièces adaptatives sont mesurées comme les modules, plus le
+// chef d'orchestre du jeu. Une image de jeu vaut 16,7 ms : tout ce qui est
+// synchrone doit rester très en dessous.
+const CUES = ['calm', 'combat', 'boss', 'victory'];
 
 class Param {
   constructor(v = 0) { this.value = v; }
@@ -54,6 +58,7 @@ class Context {
 function realm(root, globals = {}) {
   const modules = ['music'];
   if (existsSync(join(root, 'src', 'imuse.js'))) modules.push('imuse');
+  if (existsSync(join(root, 'src', 'music-director.js'))) modules.push('music-director');
   const v = loadRealm({root, modules, globals});
   return v.window;
 }
@@ -85,9 +90,15 @@ function directorCost(W) {
   return {barUs: +us.toFixed(4), bars, switches: d.stats.switches, transitions: d.stats.transitions};
 }
 
-function tickCost(W, stage) {
+// Ordonnancement des notes, mesuré image par image. `cue` est une pièce
+// adaptative (cinq pistes) au lieu d'un module historique (quatre pistes).
+function tickCost(W, key) {
   const ctx = new Context(), music = W.FMusic.create(ctx, ctx.createGain());
-  music.setStage(stage); music.setVolume(1); music.setPlaying(true);
+  if (typeof key === 'string' && W.FMusic.isCue && W.FMusic.isCue(key)) {
+    if (!music.setCue(key, {key: 'bench', force: true})) return {absent: true};
+    music.setThreat(1);
+  } else music.setStage(key);
+  music.setVolume(1); music.setPlaying(true);
   const frames = Math.round(opt.seconds / opt.frame);
   for (let f = 0; f < frames / 4; f++) { music.tick(); ctx.advance(opt.frame); }   // chauffe
   const before = music.stats.scheduledNotes;
@@ -98,6 +109,40 @@ function tickCost(W, stage) {
   const out = {tickUs: +us.toFixed(3), frames, notes: s.scheduledNotes - before, rows: s.scheduledRows, peakVoices: s.peakVoices, resyncs: s.resyncs};
   music.dispose();
   return out;
+}
+
+// Le séquenceur sur la vraie table du jeu, pas sur un jeu de motifs de banc.
+function tableDirectorCost(W) {
+  if (!W.FImuse || !W.FMusic || !W.FMusic.descriptorTable) return {barUs: null, bars: 0, switches: 0, transitions: 0, absent: true};
+  const d = W.FImuse.create({cues: W.FMusic.descriptorTable(), cue: '0', intensityStep: .05});
+  const ids = Object.keys(W.FMusic.descriptorTable());
+  const bars = Math.round(opt.seconds * 2);
+  let t0 = performance.now();
+  for (let i = 0; i < bars; i++) {
+    if (i % 97 === 0) d.setIntensity((i % 7) / 6);
+    if (i % 61 === 0) d.request(ids[i % ids.length], {key: 'e' + (i % 61)});
+    d.nextBar();
+  }
+  const us = (performance.now() - t0) * 1000 / bars;
+  return {barUs: +us.toFixed(4), bars, switches: d.stats.switches, transitions: d.stats.transitions};
+}
+
+// Le chef d'orchestre du jeu, une fois par image, sur une scène qui change.
+function gameDirectorCost(W) {
+  if (!W.FMusicDirector) return {updateUs: null, frames: 0, changes: 0, absent: true};
+  let changes = 0;
+  const d = W.FMusicDirector.create({host: {request: () => { changes++; return true; }, release: () => { changes++; return true; }}});
+  const frames = Math.round(opt.seconds / opt.frame), state = {threat: 0, director: {pressure: 0}, bossAlive: false, won: false, dead: false};
+  let t0 = performance.now();
+  for (let f = 0; f < frames; f++) {
+    const t = f * opt.frame;
+    state.threat = t < 20 ? .8 : t < 40 ? 0 : .6;
+    state.director.pressure = t < 20 ? .7 : 0;
+    state.bossAlive = t > 25 && t < 30;
+    d.update(state, opt.frame);
+  }
+  const us = (performance.now() - t0) * 1000 / frames;
+  return {updateUs: +us.toFixed(4), frames, changes};
 }
 
 // Synthèse : le coût d'un module complet et la plus grosse tranche synchrone.
@@ -115,9 +160,11 @@ async function synthCost(root, stage) {
 
 async function pass(root) {
   const W = realm(root);
-  const out = {director: directorCost(W)};
+  const out = {director: directorCost(W), table: tableDirectorCost(W), game: gameDirectorCost(W)};
   for (const stage of STAGES) out['stage' + stage] = tickCost(realm(root), stage);
+  for (const cue of CUES) out['cue' + cue] = tickCost(realm(root), cue);
   for (const stage of STAGES) out['synth' + stage] = await synthCost(root, stage);
+  for (const cue of CUES) out['synthCue' + cue] = await synthCost(root, cue);
   return out;
 }
 
@@ -130,7 +177,7 @@ for (let r = 0; r < opt.reps; r++) {
 const median = list => { const s = [...list].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
 const summary = {};
 for (const root of roots) {
-  summary[root] = {barUs: median(runs[root].map(x => x.director.barUs))};
+  summary[root] = {barUs: median(runs[root].map(x => x.director.barUs)), tableBarUs: median(runs[root].map(x => x.table.barUs)), directorUpdateUs: median(runs[root].map(x => x.game.updateUs))};
   for (const stage of STAGES) {
     const key = 'stage' + stage, synth = 'synth' + stage;
     summary[root]['tickUs_' + key] = median(runs[root].map(x => x[key].tickUs));
@@ -140,6 +187,17 @@ for (const root of roots) {
       over8: median(runs[root].map(x => x[synth].over8)),
       moduleBytes: runs[root][0][synth].moduleBytes
     };
+  }
+  for (const cue of CUES) {
+    const key = 'cue' + cue, synth = 'synthCue' + cue;
+    summary[root]['tickUs_cue_' + cue] = median(runs[root].map(x => x[key].tickUs));
+    summary[root]['synth_cue_' + cue] = {
+      ms: median(runs[root].map(x => x[synth].synthMs)),
+      maxSlice: median(runs[root].map(x => x[synth].maxSliceMs)),
+      over8: median(runs[root].map(x => x[synth].over8)),
+      moduleBytes: runs[root][0][synth].moduleBytes
+    };
+    summary[root]['notesCue_' + cue] = runs[root][0][key].notes;
   }
   summary[root].notesStage1 = runs[root][0].stage1.notes;
   summary[root].peakVoicesStage1 = runs[root][0].stage1.peakVoices;

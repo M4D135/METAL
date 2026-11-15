@@ -1,0 +1,2678 @@
+{
+ "schema": "metal-music-cost-v1",
+ "node": "v24.18.0",
+ "reps": 9,
+ "seconds": 30,
+ "frameMs": 16.6667,
+ "runs": {
+  "/home/m4d135/metal-chantier/voies/audio2": [
+   {
+    "director": {
+     "barUs": 3.8464,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "table": {
+     "barUs": 11.4036,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "game": {
+     "updateUs": 0.4172,
+     "frames": 1800,
+     "changes": 1
+    },
+    "stage0": {
+     "tickUs": 0.339,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.763,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.611,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.878,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.318,
+     "frames": 1800,
+     "notes": 97,
+     "rows": 191,
+     "peakVoices": 7,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.519,
+     "frames": 1800,
+     "notes": 733,
+     "rows": 502,
+     "peakVoices": 18,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.456,
+     "frames": 1800,
+     "notes": 407,
+     "rows": 366,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.39,
+     "frames": 1800,
+     "notes": 298,
+     "rows": 313,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 84.75,
+     "slices": 28,
+     "maxSliceMs": 13.66,
+     "over8": 2,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 82.03,
+     "slices": 28,
+     "maxSliceMs": 14.26,
+     "over8": 2,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 81.8,
+     "slices": 28,
+     "maxSliceMs": 15.48,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 91.73,
+     "slices": 33,
+     "maxSliceMs": 10.82,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 107.45,
+     "slices": 37,
+     "maxSliceMs": 14.48,
+     "over8": 2,
+     "moduleBytes": 6400
+    },
+    "synthCuecombat": {
+     "synthMs": 97.01,
+     "slices": 37,
+     "maxSliceMs": 11.8,
+     "over8": 3,
+     "moduleBytes": 8960
+    },
+    "synthCueboss": {
+     "synthMs": 104.07,
+     "slices": 37,
+     "maxSliceMs": 13.34,
+     "over8": 2,
+     "moduleBytes": 10240
+    },
+    "synthCuevictory": {
+     "synthMs": 98.34,
+     "slices": 37,
+     "maxSliceMs": 13.58,
+     "over8": 2,
+     "moduleBytes": 8960
+    }
+   },
+   {
+    "director": {
+     "barUs": 0.6469,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "table": {
+     "barUs": 0.3739,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "game": {
+     "updateUs": 0.3286,
+     "frames": 1800,
+     "changes": 1
+    },
+    "stage0": {
+     "tickUs": 0.215,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.444,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.361,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.577,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.197,
+     "frames": 1800,
+     "notes": 97,
+     "rows": 191,
+     "peakVoices": 7,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.553,
+     "frames": 1800,
+     "notes": 733,
+     "rows": 502,
+     "peakVoices": 18,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.43,
+     "frames": 1800,
+     "notes": 407,
+     "rows": 366,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.488,
+     "frames": 1800,
+     "notes": 298,
+     "rows": 313,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 77.59,
+     "slices": 28,
+     "maxSliceMs": 15.01,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 77.23,
+     "slices": 28,
+     "maxSliceMs": 13.83,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 76.07,
+     "slices": 28,
+     "maxSliceMs": 13.77,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 93.58,
+     "slices": 33,
+     "maxSliceMs": 13.33,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 102.63,
+     "slices": 37,
+     "maxSliceMs": 13.5,
+     "over8": 2,
+     "moduleBytes": 6400
+    },
+    "synthCuecombat": {
+     "synthMs": 102.71,
+     "slices": 37,
+     "maxSliceMs": 13.96,
+     "over8": 2,
+     "moduleBytes": 8960
+    },
+    "synthCueboss": {
+     "synthMs": 102.26,
+     "slices": 37,
+     "maxSliceMs": 13.75,
+     "over8": 2,
+     "moduleBytes": 10240
+    },
+    "synthCuevictory": {
+     "synthMs": 103.86,
+     "slices": 37,
+     "maxSliceMs": 13.89,
+     "over8": 2,
+     "moduleBytes": 8960
+    }
+   },
+   {
+    "director": {
+     "barUs": 0.6469,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "table": {
+     "barUs": 0.3429,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "game": {
+     "updateUs": 0.18,
+     "frames": 1800,
+     "changes": 1
+    },
+    "stage0": {
+     "tickUs": 0.444,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.76,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.611,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.523,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.244,
+     "frames": 1800,
+     "notes": 97,
+     "rows": 191,
+     "peakVoices": 7,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.432,
+     "frames": 1800,
+     "notes": 733,
+     "rows": 502,
+     "peakVoices": 18,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.357,
+     "frames": 1800,
+     "notes": 407,
+     "rows": 366,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.332,
+     "frames": 1800,
+     "notes": 298,
+     "rows": 313,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 81.86,
+     "slices": 28,
+     "maxSliceMs": 15.02,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 76.22,
+     "slices": 28,
+     "maxSliceMs": 13.87,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 79.75,
+     "slices": 28,
+     "maxSliceMs": 13.84,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 92.39,
+     "slices": 33,
+     "maxSliceMs": 14.19,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 100.28,
+     "slices": 37,
+     "maxSliceMs": 11.9,
+     "over8": 2,
+     "moduleBytes": 6400
+    },
+    "synthCuecombat": {
+     "synthMs": 103.01,
+     "slices": 37,
+     "maxSliceMs": 14.31,
+     "over8": 2,
+     "moduleBytes": 8960
+    },
+    "synthCueboss": {
+     "synthMs": 110.87,
+     "slices": 37,
+     "maxSliceMs": 13.86,
+     "over8": 2,
+     "moduleBytes": 10240
+    },
+    "synthCuevictory": {
+     "synthMs": 102.71,
+     "slices": 37,
+     "maxSliceMs": 12.63,
+     "over8": 2,
+     "moduleBytes": 8960
+    }
+   },
+   {
+    "director": {
+     "barUs": 0.6051,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "table": {
+     "barUs": 0.3267,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "game": {
+     "updateUs": 0.1783,
+     "frames": 1800,
+     "changes": 1
+    },
+    "stage0": {
+     "tickUs": 0.222,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.418,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.385,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.439,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.203,
+     "frames": 1800,
+     "notes": 97,
+     "rows": 191,
+     "peakVoices": 7,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.448,
+     "frames": 1800,
+     "notes": 733,
+     "rows": 502,
+     "peakVoices": 18,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.842,
+     "frames": 1800,
+     "notes": 407,
+     "rows": 366,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.331,
+     "frames": 1800,
+     "notes": 298,
+     "rows": 313,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 74.4,
+     "slices": 28,
+     "maxSliceMs": 12.59,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 74.24,
+     "slices": 28,
+     "maxSliceMs": 10.95,
+     "over8": 2,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 73.83,
+     "slices": 28,
+     "maxSliceMs": 12.03,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 91.09,
+     "slices": 33,
+     "maxSliceMs": 13.3,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 101.92,
+     "slices": 37,
+     "maxSliceMs": 13.32,
+     "over8": 2,
+     "moduleBytes": 6400
+    },
+    "synthCuecombat": {
+     "synthMs": 102.19,
+     "slices": 37,
+     "maxSliceMs": 12.86,
+     "over8": 2,
+     "moduleBytes": 8960
+    },
+    "synthCueboss": {
+     "synthMs": 102.59,
+     "slices": 37,
+     "maxSliceMs": 13.03,
+     "over8": 2,
+     "moduleBytes": 10240
+    },
+    "synthCuevictory": {
+     "synthMs": 105.03,
+     "slices": 37,
+     "maxSliceMs": 13.66,
+     "over8": 2,
+     "moduleBytes": 8960
+    }
+   },
+   {
+    "director": {
+     "barUs": 0.6168,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "table": {
+     "barUs": 0.3459,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "game": {
+     "updateUs": 0.1845,
+     "frames": 1800,
+     "changes": 1
+    },
+    "stage0": {
+     "tickUs": 0.181,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.331,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.29,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 1.197,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.171,
+     "frames": 1800,
+     "notes": 97,
+     "rows": 191,
+     "peakVoices": 7,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.394,
+     "frames": 1800,
+     "notes": 733,
+     "rows": 502,
+     "peakVoices": 18,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.974,
+     "frames": 1800,
+     "notes": 407,
+     "rows": 366,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.258,
+     "frames": 1800,
+     "notes": 298,
+     "rows": 313,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 80.92,
+     "slices": 28,
+     "maxSliceMs": 14.61,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 73.3,
+     "slices": 28,
+     "maxSliceMs": 12.61,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 75.67,
+     "slices": 28,
+     "maxSliceMs": 10.28,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 89.57,
+     "slices": 33,
+     "maxSliceMs": 11.03,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 104.51,
+     "slices": 37,
+     "maxSliceMs": 13.21,
+     "over8": 2,
+     "moduleBytes": 6400
+    },
+    "synthCuecombat": {
+     "synthMs": 100.34,
+     "slices": 37,
+     "maxSliceMs": 12.71,
+     "over8": 2,
+     "moduleBytes": 8960
+    },
+    "synthCueboss": {
+     "synthMs": 102.82,
+     "slices": 37,
+     "maxSliceMs": 11.45,
+     "over8": 2,
+     "moduleBytes": 10240
+    },
+    "synthCuevictory": {
+     "synthMs": 103.26,
+     "slices": 37,
+     "maxSliceMs": 11.98,
+     "over8": 2,
+     "moduleBytes": 8960
+    }
+   },
+   {
+    "director": {
+     "barUs": 2.7189,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "table": {
+     "barUs": 0.3507,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "game": {
+     "updateUs": 0.3092,
+     "frames": 1800,
+     "changes": 1
+    },
+    "stage0": {
+     "tickUs": 0.219,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.359,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.363,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.424,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.204,
+     "frames": 1800,
+     "notes": 97,
+     "rows": 191,
+     "peakVoices": 7,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.479,
+     "frames": 1800,
+     "notes": 733,
+     "rows": 502,
+     "peakVoices": 18,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.369,
+     "frames": 1800,
+     "notes": 407,
+     "rows": 366,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.318,
+     "frames": 1800,
+     "notes": 298,
+     "rows": 313,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 76.43,
+     "slices": 28,
+     "maxSliceMs": 12.41,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 75.46,
+     "slices": 28,
+     "maxSliceMs": 11.79,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 76.27,
+     "slices": 28,
+     "maxSliceMs": 12.17,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 87.67,
+     "slices": 33,
+     "maxSliceMs": 10.64,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 102.44,
+     "slices": 37,
+     "maxSliceMs": 12.47,
+     "over8": 2,
+     "moduleBytes": 6400
+    },
+    "synthCuecombat": {
+     "synthMs": 100.29,
+     "slices": 37,
+     "maxSliceMs": 12.7,
+     "over8": 2,
+     "moduleBytes": 8960
+    },
+    "synthCueboss": {
+     "synthMs": 102.87,
+     "slices": 37,
+     "maxSliceMs": 12.91,
+     "over8": 2,
+     "moduleBytes": 10240
+    },
+    "synthCuevictory": {
+     "synthMs": 101.6,
+     "slices": 37,
+     "maxSliceMs": 13.08,
+     "over8": 2,
+     "moduleBytes": 8960
+    }
+   },
+   {
+    "director": {
+     "barUs": 0.6536,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "table": {
+     "barUs": 0.3288,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "game": {
+     "updateUs": 0.2022,
+     "frames": 1800,
+     "changes": 1
+    },
+    "stage0": {
+     "tickUs": 0.21,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.62,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.302,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.471,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.232,
+     "frames": 1800,
+     "notes": 97,
+     "rows": 191,
+     "peakVoices": 7,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.441,
+     "frames": 1800,
+     "notes": 733,
+     "rows": 502,
+     "peakVoices": 18,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.407,
+     "frames": 1800,
+     "notes": 407,
+     "rows": 366,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.299,
+     "frames": 1800,
+     "notes": 298,
+     "rows": 313,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 76.38,
+     "slices": 28,
+     "maxSliceMs": 10.56,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 75.71,
+     "slices": 28,
+     "maxSliceMs": 13.71,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 75.67,
+     "slices": 28,
+     "maxSliceMs": 11.12,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 87.71,
+     "slices": 33,
+     "maxSliceMs": 10.63,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 106.74,
+     "slices": 37,
+     "maxSliceMs": 14.3,
+     "over8": 2,
+     "moduleBytes": 6400
+    },
+    "synthCuecombat": {
+     "synthMs": 100.73,
+     "slices": 37,
+     "maxSliceMs": 11.98,
+     "over8": 2,
+     "moduleBytes": 8960
+    },
+    "synthCueboss": {
+     "synthMs": 101.07,
+     "slices": 37,
+     "maxSliceMs": 11.25,
+     "over8": 2,
+     "moduleBytes": 10240
+    },
+    "synthCuevictory": {
+     "synthMs": 100.13,
+     "slices": 37,
+     "maxSliceMs": 11.74,
+     "over8": 2,
+     "moduleBytes": 8960
+    }
+   },
+   {
+    "director": {
+     "barUs": 0.8448,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "table": {
+     "barUs": 0.3243,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "game": {
+     "updateUs": 0.2001,
+     "frames": 1800,
+     "changes": 1
+    },
+    "stage0": {
+     "tickUs": 0.211,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.354,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.435,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.454,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.233,
+     "frames": 1800,
+     "notes": 97,
+     "rows": 191,
+     "peakVoices": 7,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 1.119,
+     "frames": 1800,
+     "notes": 733,
+     "rows": 502,
+     "peakVoices": 18,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.425,
+     "frames": 1800,
+     "notes": 407,
+     "rows": 366,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.308,
+     "frames": 1800,
+     "notes": 298,
+     "rows": 313,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 80.18,
+     "slices": 28,
+     "maxSliceMs": 14.89,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 76.67,
+     "slices": 28,
+     "maxSliceMs": 13.46,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 75.85,
+     "slices": 28,
+     "maxSliceMs": 13.58,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 89.48,
+     "slices": 33,
+     "maxSliceMs": 14.32,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 104.09,
+     "slices": 37,
+     "maxSliceMs": 14.97,
+     "over8": 2,
+     "moduleBytes": 6400
+    },
+    "synthCuecombat": {
+     "synthMs": 100.27,
+     "slices": 37,
+     "maxSliceMs": 13.52,
+     "over8": 2,
+     "moduleBytes": 8960
+    },
+    "synthCueboss": {
+     "synthMs": 102.26,
+     "slices": 37,
+     "maxSliceMs": 14.1,
+     "over8": 2,
+     "moduleBytes": 10240
+    },
+    "synthCuevictory": {
+     "synthMs": 103.66,
+     "slices": 37,
+     "maxSliceMs": 13.27,
+     "over8": 2,
+     "moduleBytes": 8960
+    }
+   },
+   {
+    "director": {
+     "barUs": 0.6096,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "table": {
+     "barUs": 0.328,
+     "bars": 60,
+     "switches": 0,
+     "transitions": 0
+    },
+    "game": {
+     "updateUs": 0.1682,
+     "frames": 1800,
+     "changes": 1
+    },
+    "stage0": {
+     "tickUs": 0.209,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.391,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.363,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.525,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.295,
+     "frames": 1800,
+     "notes": 97,
+     "rows": 191,
+     "peakVoices": 7,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.452,
+     "frames": 1800,
+     "notes": 733,
+     "rows": 502,
+     "peakVoices": 18,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.481,
+     "frames": 1800,
+     "notes": 407,
+     "rows": 366,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.341,
+     "frames": 1800,
+     "notes": 298,
+     "rows": 313,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 80.96,
+     "slices": 28,
+     "maxSliceMs": 15.64,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 78.99,
+     "slices": 28,
+     "maxSliceMs": 13.52,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 77.07,
+     "slices": 28,
+     "maxSliceMs": 14.64,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 90.35,
+     "slices": 33,
+     "maxSliceMs": 13.61,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 102.88,
+     "slices": 37,
+     "maxSliceMs": 12.58,
+     "over8": 2,
+     "moduleBytes": 6400
+    },
+    "synthCuecombat": {
+     "synthMs": 101.18,
+     "slices": 37,
+     "maxSliceMs": 13.58,
+     "over8": 2,
+     "moduleBytes": 8960
+    },
+    "synthCueboss": {
+     "synthMs": 102.54,
+     "slices": 37,
+     "maxSliceMs": 13.89,
+     "over8": 2,
+     "moduleBytes": 10240
+    },
+    "synthCuevictory": {
+     "synthMs": 100.21,
+     "slices": 37,
+     "maxSliceMs": 11.56,
+     "over8": 2,
+     "moduleBytes": 8960
+    }
+   }
+  ],
+  "/home/m4d135/metal-chantier/voies/audio2/.relais/avant-t1": [
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "table": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "game": {
+     "updateUs": null,
+     "frames": 0,
+     "changes": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.238,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.388,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.335,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.572,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.497,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.24,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.304,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.231,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 78.72,
+     "slices": 28,
+     "maxSliceMs": 13.35,
+     "over8": 2,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 75.71,
+     "slices": 28,
+     "maxSliceMs": 13.46,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 78.32,
+     "slices": 28,
+     "maxSliceMs": 12.81,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 89.23,
+     "slices": 33,
+     "maxSliceMs": 12.08,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 76.56,
+     "slices": 28,
+     "maxSliceMs": 14.79,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuecombat": {
+     "synthMs": 77.45,
+     "slices": 28,
+     "maxSliceMs": 13.92,
+     "over8": 2,
+     "moduleBytes": 259920
+    },
+    "synthCueboss": {
+     "synthMs": 80.76,
+     "slices": 28,
+     "maxSliceMs": 14.18,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuevictory": {
+     "synthMs": 77.43,
+     "slices": 28,
+     "maxSliceMs": 13.36,
+     "over8": 2,
+     "moduleBytes": 259920
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "table": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "game": {
+     "updateUs": null,
+     "frames": 0,
+     "changes": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.241,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.409,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.459,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.564,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.282,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.231,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.286,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.534,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 79.15,
+     "slices": 28,
+     "maxSliceMs": 14.07,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 80.15,
+     "slices": 28,
+     "maxSliceMs": 14.18,
+     "over8": 2,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 79.88,
+     "slices": 28,
+     "maxSliceMs": 15.23,
+     "over8": 2,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 92.69,
+     "slices": 33,
+     "maxSliceMs": 14.19,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 82.25,
+     "slices": 28,
+     "maxSliceMs": 13.84,
+     "over8": 2,
+     "moduleBytes": 259920
+    },
+    "synthCuecombat": {
+     "synthMs": 81.11,
+     "slices": 28,
+     "maxSliceMs": 14.19,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCueboss": {
+     "synthMs": 77.22,
+     "slices": 28,
+     "maxSliceMs": 14.58,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuevictory": {
+     "synthMs": 76.28,
+     "slices": 28,
+     "maxSliceMs": 13.75,
+     "over8": 1,
+     "moduleBytes": 259920
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "table": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "game": {
+     "updateUs": null,
+     "frames": 0,
+     "changes": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.261,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.527,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.427,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.524,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.198,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.274,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.215,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.192,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 77.88,
+     "slices": 28,
+     "maxSliceMs": 11.52,
+     "over8": 2,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 74.8,
+     "slices": 28,
+     "maxSliceMs": 12.41,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 72.74,
+     "slices": 28,
+     "maxSliceMs": 11.64,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 88.37,
+     "slices": 33,
+     "maxSliceMs": 12.01,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 76.6,
+     "slices": 28,
+     "maxSliceMs": 13.49,
+     "over8": 2,
+     "moduleBytes": 259920
+    },
+    "synthCuecombat": {
+     "synthMs": 77.07,
+     "slices": 28,
+     "maxSliceMs": 14.78,
+     "over8": 2,
+     "moduleBytes": 259920
+    },
+    "synthCueboss": {
+     "synthMs": 72.12,
+     "slices": 28,
+     "maxSliceMs": 12.73,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuevictory": {
+     "synthMs": 75.42,
+     "slices": 28,
+     "maxSliceMs": 12.2,
+     "over8": 1,
+     "moduleBytes": 259920
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "table": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "game": {
+     "updateUs": null,
+     "frames": 0,
+     "changes": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.349,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.321,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.341,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.866,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.21,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.285,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.212,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.242,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 77.19,
+     "slices": 28,
+     "maxSliceMs": 14.42,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 73.47,
+     "slices": 28,
+     "maxSliceMs": 12.77,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 77,
+     "slices": 28,
+     "maxSliceMs": 13.58,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 90.48,
+     "slices": 33,
+     "maxSliceMs": 14.55,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 75,
+     "slices": 28,
+     "maxSliceMs": 13.04,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuecombat": {
+     "synthMs": 75.29,
+     "slices": 28,
+     "maxSliceMs": 14.21,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCueboss": {
+     "synthMs": 76.17,
+     "slices": 28,
+     "maxSliceMs": 14.41,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuevictory": {
+     "synthMs": 76.69,
+     "slices": 28,
+     "maxSliceMs": 12.88,
+     "over8": 1,
+     "moduleBytes": 259920
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "table": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "game": {
+     "updateUs": null,
+     "frames": 0,
+     "changes": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.203,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.346,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.294,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.883,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.187,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.219,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.206,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.183,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 76,
+     "slices": 28,
+     "maxSliceMs": 12.26,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 72.26,
+     "slices": 28,
+     "maxSliceMs": 11.99,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 76.34,
+     "slices": 28,
+     "maxSliceMs": 14.44,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 89.25,
+     "slices": 33,
+     "maxSliceMs": 13.08,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 76.82,
+     "slices": 28,
+     "maxSliceMs": 13.68,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuecombat": {
+     "synthMs": 79.31,
+     "slices": 28,
+     "maxSliceMs": 14.31,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCueboss": {
+     "synthMs": 74.28,
+     "slices": 28,
+     "maxSliceMs": 13.04,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuevictory": {
+     "synthMs": 76.52,
+     "slices": 28,
+     "maxSliceMs": 13.41,
+     "over8": 2,
+     "moduleBytes": 259920
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "table": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "game": {
+     "updateUs": null,
+     "frames": 0,
+     "changes": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.247,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.308,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.366,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.429,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.171,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.204,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.194,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.158,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 75.79,
+     "slices": 28,
+     "maxSliceMs": 13.2,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 73.54,
+     "slices": 28,
+     "maxSliceMs": 12.31,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 76.01,
+     "slices": 28,
+     "maxSliceMs": 13.4,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 89.51,
+     "slices": 33,
+     "maxSliceMs": 11.8,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 76.61,
+     "slices": 28,
+     "maxSliceMs": 11.77,
+     "over8": 2,
+     "moduleBytes": 259920
+    },
+    "synthCuecombat": {
+     "synthMs": 73.38,
+     "slices": 28,
+     "maxSliceMs": 11,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCueboss": {
+     "synthMs": 76.19,
+     "slices": 28,
+     "maxSliceMs": 11.54,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuevictory": {
+     "synthMs": 74.15,
+     "slices": 28,
+     "maxSliceMs": 10.66,
+     "over8": 1,
+     "moduleBytes": 259920
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "table": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "game": {
+     "updateUs": null,
+     "frames": 0,
+     "changes": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.176,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.372,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.312,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.528,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.171,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.246,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.238,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.199,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 73.71,
+     "slices": 28,
+     "maxSliceMs": 12.65,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 73.64,
+     "slices": 28,
+     "maxSliceMs": 10.48,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 74.26,
+     "slices": 28,
+     "maxSliceMs": 13.33,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 88.09,
+     "slices": 33,
+     "maxSliceMs": 11.61,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 71.37,
+     "slices": 28,
+     "maxSliceMs": 10.92,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuecombat": {
+     "synthMs": 71.98,
+     "slices": 28,
+     "maxSliceMs": 10.87,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCueboss": {
+     "synthMs": 72.81,
+     "slices": 28,
+     "maxSliceMs": 11.88,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuevictory": {
+     "synthMs": 74.29,
+     "slices": 28,
+     "maxSliceMs": 11.39,
+     "over8": 1,
+     "moduleBytes": 259920
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "table": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "game": {
+     "updateUs": null,
+     "frames": 0,
+     "changes": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.201,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.382,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.347,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.474,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.388,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.223,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.22,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.214,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 73.97,
+     "slices": 28,
+     "maxSliceMs": 11.41,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 71.74,
+     "slices": 28,
+     "maxSliceMs": 10.54,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 74.4,
+     "slices": 28,
+     "maxSliceMs": 11.28,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 86.78,
+     "slices": 33,
+     "maxSliceMs": 12.15,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 72.7,
+     "slices": 28,
+     "maxSliceMs": 11.01,
+     "over8": 2,
+     "moduleBytes": 259920
+    },
+    "synthCuecombat": {
+     "synthMs": 76.89,
+     "slices": 28,
+     "maxSliceMs": 14.28,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCueboss": {
+     "synthMs": 71.71,
+     "slices": 28,
+     "maxSliceMs": 11.03,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuevictory": {
+     "synthMs": 74.61,
+     "slices": 28,
+     "maxSliceMs": 10.61,
+     "over8": 1,
+     "moduleBytes": 259920
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "table": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "game": {
+     "updateUs": null,
+     "frames": 0,
+     "changes": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.202,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.344,
+     "frames": 1800,
+     "notes": 435,
+     "rows": 428,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.406,
+     "frames": 1800,
+     "notes": 430,
+     "rows": 365,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.579,
+     "frames": 1800,
+     "notes": 861,
+     "rows": 534,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "cuecalm": {
+     "tickUs": 0.206,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuecombat": {
+     "tickUs": 0.201,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cueboss": {
+     "tickUs": 0.203,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "cuevictory": {
+     "tickUs": 0.185,
+     "frames": 1800,
+     "notes": 178,
+     "rows": 252,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 76.76,
+     "slices": 28,
+     "maxSliceMs": 12.02,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 77.42,
+     "slices": 28,
+     "maxSliceMs": 13.33,
+     "over8": 1,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 78.15,
+     "slices": 28,
+     "maxSliceMs": 13.26,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 90.77,
+     "slices": 33,
+     "maxSliceMs": 14.12,
+     "over8": 1,
+     "moduleBytes": 183704
+    },
+    "synthCuecalm": {
+     "synthMs": 75.93,
+     "slices": 28,
+     "maxSliceMs": 13.97,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuecombat": {
+     "synthMs": 78.21,
+     "slices": 28,
+     "maxSliceMs": 14.03,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCueboss": {
+     "synthMs": 75.43,
+     "slices": 28,
+     "maxSliceMs": 12.01,
+     "over8": 1,
+     "moduleBytes": 259920
+    },
+    "synthCuevictory": {
+     "synthMs": 80.36,
+     "slices": 28,
+     "maxSliceMs": 13.59,
+     "over8": 1,
+     "moduleBytes": 259920
+    }
+   }
+  ]
+ },
+ "summary": {
+  "/home/m4d135/metal-chantier/voies/audio2": {
+   "barUs": 0.6469,
+   "tableBarUs": 0.3429,
+   "directorUpdateUs": 0.2001,
+   "tickUs_stage0": 0.215,
+   "synth_stage0": {
+    "ms": 80.18,
+    "maxSlice": 14.61,
+    "over8": 1,
+    "moduleBytes": 259920
+   },
+   "tickUs_stage1": 0.418,
+   "synth_stage1": {
+    "ms": 76.22,
+    "maxSlice": 13.52,
+    "over8": 1,
+    "moduleBytes": 194400
+   },
+   "tickUs_stage2": 0.363,
+   "synth_stage2": {
+    "ms": 76.07,
+    "maxSlice": 13.58,
+    "over8": 1,
+    "moduleBytes": 210544
+   },
+   "tickUs_stagetitle": 0.523,
+   "synth_stagetitle": {
+    "ms": 90.35,
+    "maxSlice": 13.3,
+    "over8": 1,
+    "moduleBytes": 183704
+   },
+   "tickUs_cue_calm": 0.232,
+   "synth_cue_calm": {
+    "ms": 102.88,
+    "maxSlice": 13.32,
+    "over8": 2,
+    "moduleBytes": 6400
+   },
+   "notesCue_calm": 97,
+   "tickUs_cue_combat": 0.452,
+   "synth_cue_combat": {
+    "ms": 100.73,
+    "maxSlice": 12.86,
+    "over8": 2,
+    "moduleBytes": 8960
+   },
+   "notesCue_combat": 733,
+   "tickUs_cue_boss": 0.43,
+   "synth_cue_boss": {
+    "ms": 102.59,
+    "maxSlice": 13.34,
+    "over8": 2,
+    "moduleBytes": 10240
+   },
+   "notesCue_boss": 407,
+   "tickUs_cue_victory": 0.331,
+   "synth_cue_victory": {
+    "ms": 102.71,
+    "maxSlice": 13.08,
+    "over8": 2,
+    "moduleBytes": 8960
+   },
+   "notesCue_victory": 298,
+   "notesStage1": 435,
+   "peakVoicesStage1": 14
+  },
+  "/home/m4d135/metal-chantier/voies/audio2/.relais/avant-t1": {
+   "barUs": null,
+   "tableBarUs": null,
+   "directorUpdateUs": null,
+   "tickUs_stage0": 0.238,
+   "synth_stage0": {
+    "ms": 76.76,
+    "maxSlice": 12.65,
+    "over8": 1,
+    "moduleBytes": 259920
+   },
+   "tickUs_stage1": 0.372,
+   "synth_stage1": {
+    "ms": 73.64,
+    "maxSlice": 12.41,
+    "over8": 1,
+    "moduleBytes": 194400
+   },
+   "tickUs_stage2": 0.347,
+   "synth_stage2": {
+    "ms": 76.34,
+    "maxSlice": 13.33,
+    "over8": 1,
+    "moduleBytes": 210544
+   },
+   "tickUs_stagetitle": 0.564,
+   "synth_stagetitle": {
+    "ms": 89.25,
+    "maxSlice": 12.15,
+    "over8": 1,
+    "moduleBytes": 183704
+   },
+   "tickUs_cue_calm": 0.206,
+   "synth_cue_calm": {
+    "ms": 76.56,
+    "maxSlice": 13.49,
+    "over8": 1,
+    "moduleBytes": 259920
+   },
+   "notesCue_calm": 178,
+   "tickUs_cue_combat": 0.231,
+   "synth_cue_combat": {
+    "ms": 77.07,
+    "maxSlice": 14.19,
+    "over8": 1,
+    "moduleBytes": 259920
+   },
+   "notesCue_combat": 178,
+   "tickUs_cue_boss": 0.215,
+   "synth_cue_boss": {
+    "ms": 75.43,
+    "maxSlice": 12.73,
+    "over8": 1,
+    "moduleBytes": 259920
+   },
+   "notesCue_boss": 178,
+   "tickUs_cue_victory": 0.199,
+   "synth_cue_victory": {
+    "ms": 76.28,
+    "maxSlice": 12.88,
+    "over8": 1,
+    "moduleBytes": 259920
+   },
+   "notesCue_victory": 178,
+   "notesStage1": 435,
+   "peakVoicesStage1": 14
+  }
+ }
+}
