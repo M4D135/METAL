@@ -1,16 +1,20 @@
 # Validation — Lot 05 : rendu, coût processeur
 
-Branche `chantier/lot-05-rendu-cpu`, base `35c654a`, tête `b4cc615`
-(T1 à T19, dont quatre abandons sur mesures : T10, T13, T14, T16). Rapport
+Branche `chantier/lot-05-rendu-cpu`, base `35c654a`, tête `a7cefc6`
+(cette page est commitée un cran au-dessus)
+(T1 à T19, dont **cinq** abandons sur mesures : T10, T13, T14, T16, et T17
+annulée par `55449a7`). Rapport
 complet : `docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
 
 ## Ce qui a été testé, et comment
 
 ### Suite automatique
 
-- `npm test` complet : **519 tests, 519 réussis, 0 échec** (référence de
-  départ du lot : 505/505). Journaux : `.relais/npm-test-t1.log` à
-  `.relais/npm-test-t7.log`.
+- `npm test` complet : **529 tests, 529 réussis, 0 échec** (référence de
+  départ du lot : 505/505 ; à la remise du lot avant contre-vérification :
+  519/519 ; après les correctifs du tour 1 : 525/525). Journaux :
+  `.relais/npm-test-t1.log` à `.relais/npm-test-t7.log`, et
+  `.relais/npm-test-t2a.log` pour les correctifs du tour 2.
 - `python3 tools/build.py` relancé à chaque tâche ; `SIZE.json` régénéré et
   commité avec chaque tâche.
 
@@ -60,7 +64,13 @@ complet : `docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
   sur 20 cœurs). Le suivi de contenu de l'enregistreur est désactivé en mode
   coût (il pénalisait injustement le code à `bufferData`).
 - Bancs de l'audit réutilisés : `pickups.mjs` (T5), `alt.mjs` (T1),
-  `gc-bench.mjs` (T3).
+  `gc-bench.mjs` (T3). **Limite, vérifiée au tour 2** : ces trois bancs ne
+  tournent plus sur les sources actuelles — leur `harness.mjs` ne charge pas
+  `src/fmath.js` et lève « FWorld: charger src/fmath.js avant src/world.js ».
+  Les captures `t1/banc-alt-C.txt` et `t5/` restent des traces historiques.
+  L'équivalent maintenu est `tools/proof/lot05/` (scène portées par
+  `tools/proof/render-scene.mjs`), seul utilisé désormais pour les preuves
+  rejouées, dont `t3/gc-par-image.json`.
 - Bancs écrits pour la reprise (dans `tools/proof/lot05/`, comparaisons
   appariées base/tête sur deux worktrees) : `pack-cost.mjs` (T8),
   `effects-ab2.mjs` (T9, T10), `actors-cost.mjs` (T11, T17),
@@ -94,7 +104,20 @@ complet : `docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
   rejetée dans une matrice de passe réelle.
 - `checks/mesh-constructor.test.mjs` (T8) — le constructeur unique produit les
   28 champs dans l'ordre, `ground` reste `undefined`, et les producteurs ne
-  créent plus qu'une seule classe cachée.
+  créent plus qu'une classe cachée **par forme** (6 formes réelles, donc 6
+  classes, mesuré aux natives par `tools/proof/lot05/mesh-shape.mjs` :
+  `formesDeClassesCachees: 6`, `partMemeClasseCachee: 1`, 0 clé ajoutée après
+  création contre 29 150 avant T8).
+- `checks/actors-no-mesh-pool.test.mjs` (annulation de T17, `55449a7`) —
+  `meshInto` absent de `FRender`, aucun maillage ni aucune position recyclés
+  entre deux `FActors.build`, rien de retenu du tableau de l'appelant. Vérifié
+  qu'il échoue bien sur `2f311a3`, le commit de la tâche annulée.
+- `checks/lot05-bancs.test.mjs` (correctifs du tour 2) — tout import relatif
+  des bancs de `tools/proof/` et tout chemin de banc ou de doc cité par une
+  preuve du lot 05 doivent exister dans le dépôt ; `writeFileSync` doit être
+  importé par tout banc qui écrit. Ce garde-fou est `not ok` sur `bdd3f2d`, où
+  `gc-bench.mjs` et `effects-ab.mjs` importaient un `harness.mjs` jamais
+  committé.
 
 ## Ce qui attend un vrai appareil
 
@@ -121,12 +144,15 @@ complet : `docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
 
 ## Ce qui reste ouvert
 
-Quatre tâches abandonnées sur mesures, chacune avec ses chiffres dans
+Cinq tâches abandonnées sur mesures, chacune avec ses chiffres dans
 `docs/chantier-moteur/preuves/lot-05-rendu-cpu/` : T10 (cache des gravats),
 T13 (table d'instances en texture), T14 (écrivain d'instances — à reprendre
 avec l'allocation de la simulation), T16 (VAO — à reprendre après une mesure
-sur Metal ou D3D11). L'étape « au-delà » est documentée par un profil
-d'étapes de `draw()` et trois pistes écartées, sans commit supplémentaire.
+sur Metal ou D3D11), et **T17 (réservoir de maillages d'acteurs)**, annulée par
+`55449a7` après coup : le banc apparié la mesurait à 1,33 en isolé et 1,13 sur
+`models()`, une régression. Elle reste sous garde-fou
+`checks/actors-no-mesh-pool.test.mjs`. L'étape « au-delà » est documentée par un
+profil d'étapes de `draw()` et trois pistes écartées, sans commit supplémentaire.
 
 
 ## Complément de contre-vérification Codex — 14 novembre 2026
@@ -150,3 +176,22 @@ code du jeu ni artefact dist n'est modifié par ce correctif d'outillage.
 
 Journaux : `/home/m4d135/work/codex-blocages-20261114/render-tools-smoke.json`,
 `render-effects-smoke.log` et `render-phases.json`.
+
+## Contre-vérification et correctifs — tour 2, 15 novembre 2026
+
+Reprise des huit problèmes relevés par le contre-vérificateur sur `bdd3f2d`.
+Détail complet par problème dans
+`docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`, section « Contre-vérification
+et correctifs ». Ce qui a été **rejoué sur cette machine** (Spark, Node 24.18) :
+
+- les deux bancs cassés tournent : `node tools/proof/lot05/gc-bench.mjs . 300 camp:17`
+  et `node tools/proof/lot05/effects-ab.mjs .relais/t8 300 camp:17` (300/300 sorties
+  identiques) ;
+- preuve T3 rejouée sur le banc corrigé (`record:false`, modes `drawcall` et
+  `drawnone`) : `draw()` 0,64 → 0,32 Mo repris par image, ratio 0,50, plancher du
+  banc 0 — le plafond de la fiche (0,2 Mo) n'est pas atteint, et c'est écrit tel quel ;
+- preuve T9 rejouée en apparié (`effects-ab2.mjs`, trois exécutions de 1200 images,
+  1200/1200 identiques) : ratioP50 médian 0,665, intervalle 0,647 – 0,751 ;
+- garde-fou `checks/lot05-bancs.test.mjs` ajouté à `npm test` et vérifié `not ok`
+  sur `bdd3f2d` (c'est le problème 1 lui-même qu'il attrape) ;
+- `npm test` complet : 529/529, 0 échec (525 avant ces correctifs, 505 à la base du lot).
