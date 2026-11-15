@@ -3,7 +3,7 @@
 from pathlib import Path
 import gzip, hashlib, json
 ROOT=Path(__file__).resolve().parents[1]
-modules=['fmath.js','passages.js','surface.js','skies.js','renderer.js','profiles.js','world.js','destruction.js','music.js','imuse.js','music-director.js','audio.js','audio-recipes.js','soundscape.js','economy.js','brain.js','simulation.js','motion.js','actors.js','effects.js','options.js','input.js','controls.js','loop.js','schedule.js','touch.js','jobs.js','tasks.js','host.js','game.js']
+modules=['fmath.js','passages.js','surface.js','skies.js','gpu-profile.js','renderer.js','profiles.js','world.js','destruction.js','music.js','imuse.js','music-director.js','audio.js','audio-recipes.js','soundscape.js','economy.js','brain.js','simulation.js','motion.js','actors.js','effects.js','options.js','input.js','controls.js','loop.js','schedule.js','touch.js','jobs.js','tasks.js','host.js','game.js']
 css=(ROOT/'src/style.css').read_text()
 code='\n;\n'.join((ROOT/'src'/name).read_text() for name in modules)
 shared={'fmath.js','passages.js','renderer.js','profiles.js','world.js','destruction.js','music.js','imuse.js','audio.js','audio-recipes.js','economy.js','brain.js','simulation.js','jobs.js','tasks.js'}

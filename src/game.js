@@ -21,7 +21,7 @@
     request:(cue,meta)=>typeof audio.requestMusic==='function'?audio.requestMusic(cue,meta):false,
     release:()=>typeof audio.releaseMusic==='function'?audio.releaseMusic():false
   }}):null;
-  let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
+  let sceneDirty=true,renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const frameTasks=FSchedule.create({now:()=>performance.now()});
   const fixedLoop=FLoop.create({hz:60,maxSteps:5}),poseView=FLoop.view({single:['player'],many:['enemies','bullets','projectiles']});let renderState=null,aimShownX=0,aimShownY=0;
@@ -171,6 +171,7 @@
     renderBindings();if(focus)$('tab-'+name).focus();
   }
   function settings(){
+    sceneDirty=true;
     Object.assign(prefs,{muted,quality,softMotion});controls.configure(prefs);touchControls.configure(prefs);
     $('sound-toggle').querySelector('strong').textContent=muted?'Coupé':'Activé';
     $('quality-toggle').querySelector('strong').textContent={auto:'Auto',low:'Économie',high:'Haute'}[quality];
@@ -293,6 +294,7 @@
   }
   function clearInput(){fixedLoop.reset();fixedLoop.observe(performance.now());aimShownX=aimShownY=0;poseView.clear();renderState=null;controls.clear();touchControls.clear();paintStick();padState={};jumpQueued=switchProfileQueued=false;touchJump=null;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
+    sceneDirty=true;
     audio.cancelTestMix?.();
     last=performance.now();perfStart=0;perfFrames=0;
     $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
@@ -972,6 +974,7 @@
     boundaryFlash=Math.max(0,boundaryFlash-dt);$('crosshair').classList.toggle('boundary-contact',boundaryFlash>0);
     controls.flush(now,mode==='playing'&&!document.hidden&&windowFocused);
     syncDestruction();
+    if(sceneDirty||titleScreen()||mode==='playing'&&!loadoutOpen){
     renderState=poseView.render(sim.state,mode==='playing'&&!loadoutOpen?fixedLoop.frame.alpha:1);
     const p=renderState.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
     if(mode==='playing'&&!loadoutOpen){const aim=FLoop.aim(sim.state.player.yaw,sim.state.player.pitch,lookDX,lookDY,-1.2,1.2);p.yaw=aim.yaw;p.pitch=aim.pitch;}
@@ -981,6 +984,8 @@
     camera.overlayFov=camera.fov;if(touch&&prefs.portraitFov)camera.fov=FTouch.fovFor(innerWidth/innerHeight,camera.fov);
     renderPartner(camera);
     renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,shadows:prefs.shadows,bloom:prefs.bloom,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
+    sceneDirty=false;
+    }
     frameTasks.pump(FSchedule.budget(framePacer.period*framePacer.stride,performance.now()-frameStart));
     // Count completed frame intervals in real time, with a stable readout at most twice/s.
     if(!perfStart){perfStart=now;perfFrames=0;}else perfFrames++;
@@ -1055,7 +1060,7 @@
     const track=currentTrack(),data=window.FMusic?.getModule(track);if(!data){$('audio-status').textContent='Le module audio est indisponible.';return;}
     const url=URL.createObjectURL(new Blob([data],{type:'audio/mod'})),link=document.createElement('a');link.href=url;link.download=track==='title'?'METAL-titre.mod':'METAL-'+String(stage+1).padStart(2,'0')+'.mod';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('audio-status').textContent='Module généré : '+Math.round(data.byteLength/1000)+' ko. Téléchargement lancé.';
   });
-  $('loadout-toggle').addEventListener('click',()=>{if(mode!=='playing')return;loadoutOpen=!loadoutOpen;clearInput();document.body.classList.toggle('loadout-open',loadoutOpen);$('loadout-toggle').setAttribute('aria-expanded',String(loadoutOpen));});
+  $('loadout-toggle').addEventListener('click',()=>{if(mode!=='playing')return;loadoutOpen=!loadoutOpen;sceneDirty=true;clearInput();document.body.classList.toggle('loadout-open',loadoutOpen);$('loadout-toggle').setAttribute('aria-expanded',String(loadoutOpen));});
   $('map-button').addEventListener('click',()=>{$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();});
   $('weapon-switch').addEventListener('click',()=>switchWeapon());
   for(let i=0;i<5;i++)$('weapon-slot-'+i).addEventListener('click',()=>switchWeapon(i));
@@ -1158,9 +1163,10 @@
   $('immersive-button').addEventListener('click',()=>host.immersive());
   $('gyro-mode').addEventListener('change',async()=>{prefs.gyroMode=$('gyro-mode').value;const on=await host.enableGyro(prefs.gyroMode!=='off');if(!on)prefs.gyroMode='off';settings();});
   addEventListener('blur',()=>{windowFocused=false;controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');else{audioGate();syncTitle();}});
-  addEventListener('focus',()=>{windowFocused=true;syncTitle();audioGate();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
-  addEventListener('resize',()=>renderer?.resize(quality));
+  addEventListener('focus',()=>{sceneDirty=true;windowFocused=true;syncTitle();audioGate();});
+  document.addEventListener('visibilitychange',()=>{sceneDirty=true;if(document.hidden){controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
+  addEventListener('resize',()=>{sceneDirty=true;renderer?.resize(quality);});
+  canvas.addEventListener('webglcontextrestored',()=>{sceneDirty=true;});
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   try{
     renderer=FRender.create(canvas,{resolution:'native',renderScale:prefs.renderScale,onBudget:()=>{if(prefs.fpsLimit===-1&&autoCadence===60)cadencePending=30;}});renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';

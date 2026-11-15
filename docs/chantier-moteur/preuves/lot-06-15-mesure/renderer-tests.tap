@@ -1,0 +1,45 @@
+✔ query results stay asynchronous for at least two frames (0.82618ms)
+✔ disjoint timing is discarded, never reported as a measurement (0.41797ms)
+✔ unavailable GPU timers keep CPU timing and bounded memory (1.363926ms)
+✔ omitted passes issue no query and context disposal deletes every pending query (0.283345ms)
+✔ a stalled driver cannot accumulate unbounded queries (0.752852ms)
+✔ les marges automatiques gardent le taux de reconstruction sous 15 % à 80 m/s (42.195767ms)
+✔ une marge fixe impose la reconstruction et reste couvrante (44.0768ms)
+✔ cullMargin 0 reproduit exactement la sélection sans cache (78.418127ms)
+✔ la marge ne rétrécit jamais pendant la validité du cache (57.475956ms)
+✔ a destruction revision replaces every colour/depth instance cache and retains lights/environment (18.692959ms)
+✔ geometry updates preserve the adaptive resolution and can retire destroyed lamps (16.440227ms)
+✔ Canvas geometry/light revisions match a fresh scene and leave unchanged frames identical (35.723077ms)
+✔ translucent FX skip all shadow passes, preserve depth writes and render before the weapon overlay (10.22578ms)
+✔ Canvas arena range includes a full giant from the arena border without extending ordinary detail tiers (16.741893ms)
+✔ GPU arena keeps essential terrain behind the giant while fine-detail ranges remain bounded (12.127518ms)
+✔ Canvas giant bodies cast grounded shadows above the old sixteen-metre height limit (16.439523ms)
+✔ blackouts dim only real nearby lamp contributions, preserve shadow geometry and recover within 1.2 seconds (32.282036ms)
+✔ danger telegraphs keep their designed opacity at grazing ground angles (27.443212ms)
+✔ foliage is one immutable closed crown shared with exact raycasts and every GPU quality (40.988113ms)
+✔ transient lights are local, bounded and never reassign existing shadow slots or rebuild geometry (12.153966ms)
+✔ Canvas transient lighting reaches cached surfaces and expires outside its real range (19.162562ms)
+✔ only explicit flames use the animated fire material, leaving smoke and danger masks unchanged (14.134104ms)
+✔ a translucent first-person overlay blends after the opaque hand depth and never enters world shadows (26.685992ms)
+✔ smoke and spark finish stays in one depth-safe FX pass while hazard and ring contracts keep precedence (13.269395ms)
+✔ a distant destruction revision preserves warm colour, torch, lamp and sun selections (8.512235ms)
+✔ a full destruction delta restores the scene even when its numeric revision is unchanged (11.453002ms)
+✔ Canvas lamp dependencies preserve exact lighting through far removals, additions and ordering ties (82.285794ms)
+✔ moving a static identity updates both colour rows and Canvas shadow geometry (41.73154ms)
+✔ native GPU rendering keeps physical pixels in every detail mode and under sustained load (255.413217ms)
+✔ native software fallback honors a manual scale within its explicit software ceiling (14.831227ms)
+✔ les lignes statiques portent le niveau de détail, les lignes dynamiques restent à zéro (19.41509ms)
+✔ les casters du soleil suivent la caméra malgré le tableau de filtre réutilisé (31.317055ms)
+✔ le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres false) (113.080751ms)
+✔ le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres true) (140.545434ms)
+✔ le cache temporel de vue est réellement réutilisé pendant la visite (21.527118ms)
+✔ une modification du monde invalide immédiatement la sélection de garde (11.057592ms)
+✔ deux sélections différentes de même hash et même taille actualisent les instances GPU (25.494738ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 848.196101

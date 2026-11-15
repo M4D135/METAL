@@ -1,0 +1,353 @@
+{
+  "schema": "ferro-native-bench-v1",
+  "sources": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "surface": "46915edee28daa0408ea1c18abd664babef76e2e6bce52c2990a431f90cee77e",
+    "skies": "bd4b38002c8c800a5f7551a73712c721909ed22ae145d15fbf7f853ff30eddea",
+    "gpu-profile": "513e7cb0523a50f62edb427f2ed563ec98d9bc771a70f357fce8409157faa9c4",
+    "renderer": "52725c345cafdaf2da54d74444583babdec2b531d143a97017450049d3f69a96",
+    "profiles": "aec726e379b17e8e0f2116eaf0066e2e367a053d14000e8e3ef73c30e0bb1a1b",
+    "world": "18fa25f33ec832cc4afd3b0925642a0085ab360cb5e6a8e4827570904f813c44",
+    "actors": "d1917f4f18a94845ceb7e7fe004d8880d3d321e5b53f437b49f21a4e30f054ba"
+  },
+  "rows": [
+    {
+      "scene": 0,
+      "width": 512,
+      "selected": {
+        "world": 0,
+        "native": [
+          {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          }
+        ]
+      },
+      "gate": {
+        "bytes": 589824,
+        "changed": 0,
+        "max": 0
+      },
+      "repetitions": []
+    },
+    {
+      "scene": 1,
+      "width": 512,
+      "selected": {
+        "world": 5,
+        "native": [
+          {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          }
+        ]
+      },
+      "gate": {
+        "bytes": 589824,
+        "changed": 0,
+        "max": 0
+      },
+      "repetitions": []
+    },
+    {
+      "scene": 2,
+      "width": 512,
+      "selected": {
+        "world": 11,
+        "native": [
+          {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          }
+        ]
+      },
+      "gate": {
+        "bytes": 589824,
+        "changed": 0,
+        "max": 0
+      },
+      "repetitions": []
+    },
+    {
+      "scene": 3,
+      "width": 512,
+      "selected": {
+        "world": 17,
+        "native": [
+          {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          }
+        ]
+      },
+      "gate": {
+        "bytes": 589824,
+        "changed": 0,
+        "max": 0
+      },
+      "repetitions": []
+    },
+    {
+      "scene": 0,
+      "width": 1024,
+      "selected": {
+        "world": 0,
+        "native": [
+          {
+            "device": [
+              1024,
+              576
+            ],
+            "buffer": [
+              1024,
+              576
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 1
+          },
+          {
+            "device": [
+              1024,
+              576
+            ],
+            "buffer": [
+              1024,
+              576
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 1
+          }
+        ]
+      },
+      "gate": {
+        "bytes": 2359296,
+        "changed": 0,
+        "max": 0
+      },
+      "repetitions": []
+    },
+    {
+      "scene": 1,
+      "width": 1024,
+      "selected": {
+        "world": 5,
+        "native": [
+          {
+            "device": [
+              1024,
+              576
+            ],
+            "buffer": [
+              1024,
+              576
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 1
+          },
+          {
+            "device": [
+              1024,
+              576
+            ],
+            "buffer": [
+              1024,
+              576
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 1
+          }
+        ]
+      },
+      "gate": {
+        "bytes": 2359296,
+        "changed": 1,
+        "max": 1
+      },
+      "repetitions": []
+    },
+    {
+      "scene": 2,
+      "width": 1024,
+      "selected": {
+        "world": 11,
+        "native": [
+          {
+            "device": [
+              1024,
+              576
+            ],
+            "buffer": [
+              1024,
+              576
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 1
+          },
+          {
+            "device": [
+              1024,
+              576
+            ],
+            "buffer": [
+              1024,
+              576
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 1
+          }
+        ]
+      },
+      "gate": {
+        "bytes": 2359296,
+        "changed": 0,
+        "max": 0
+      },
+      "repetitions": []
+    },
+    {
+      "scene": 3,
+      "width": 1024,
+      "selected": {
+        "world": 17,
+        "native": [
+          {
+            "device": [
+              1024,
+              576
+            ],
+            "buffer": [
+              1024,
+              576
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 1
+          },
+          {
+            "device": [
+              1024,
+              576
+            ],
+            "buffer": [
+              1024,
+              576
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 1
+          }
+        ]
+      },
+      "gate": {
+        "bytes": 2359296,
+        "changed": 0,
+        "max": 0
+      },
+      "repetitions": []
+    }
+  ],
+  "note": "GPU timers are summed measured passes, excluding clears/uniform setup. ReadPixels synchronized time is not GPU-only. CPU includes profiling only when enabled. Ablations are diagnostic and deliberately change the image.",
+  "device": {
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "timer": true,
+    "dpr": 1
+  },
+  "ablations": [],
+  "exactImageGate": false
+}

@@ -326,19 +326,19 @@
       float diffuse=max(dot(n,l),0.);
       float visibility=i==0?shadow(geometricNormal,l,0):i==1&&uEnvironment.x<.5?shadow(geometricNormal,l,1):1.;
       light+=uLightColor[i]*attenuation*(diffuse*visibility+.035);
-      specular+=uLightColor[i]*attenuation*visibility*metalHighlight(n,view,l,roughness,f0)*2.4;
+      if(diffuse>0.)specular+=uLightColor[i]*attenuation*visibility*metalHighlight(n,view,l,roughness,f0)*2.4;
     }
     float sunlight=outdoors>.5?shadow(geometricNormal,uSunDirection,1):0.;
     float leafBack=m>10.5&&m<11.5?max(dot(-n,uSunDirection),0.)*.24:0.;
     light+=uSunColor*(max(dot(n,uSunDirection),0.)+leafBack)*sunlight;
-    specular+=uSunColor*sunlight*metalHighlight(n,view,uSunDirection,roughness,f0);
+    if(sunlight>0.&&dot(n,uSunDirection)>0.)specular+=uSunColor*sunlight*metalHighlight(n,view,uSunDirection,roughness,f0);
     vec3 torchVector=uTorchPosition-vWorld;
     float torchDistance=length(torchVector);
     vec3 torchDirection=normalize(torchVector);
     float cone=smoothstep(.59,.96,dot(-torchDirection,uForward));
     float torch=cone/(1.+torchDistance*torchDistance*.045)*shadow(geometricNormal,torchDirection,2);
     light+=vec3(.44,.52,.56)*torch*max(dot(n,torchDirection),0.);
-    specular+=vec3(.44,.52,.56)*torch*metalHighlight(n,view,torchDirection,roughness,f0)*1.5;
+    if(torch>0.&&dot(n,torchDirection)>0.)specular+=vec3(.44,.52,.56)*torch*metalHighlight(n,view,torchDirection,roughness,f0)*1.5;
     vec3 muzzleVector=uTorchPosition+uForward*.8-vWorld;
     float muzzleDistance=length(muzzleVector),muzzlePower=uEffects.y*2.2/(1.+muzzleDistance*muzzleDistance*.14);
     vec3 muzzleDirection=muzzleVector/max(muzzleDistance,.001);
@@ -1485,7 +1485,7 @@
     const surface=native?window.FSurface.create(canvas,{limit:maxSize,maxPixels:options.maxPixels,scale:options.renderScale}):null;
     const watch=native?window.FSurface.budget({target:60,onBudget:options.onBudget}):null;
     if(surface){stats.native=surface.stats;stats.budget=watch.stats;stats.budgetLog=watch.log;}
-    let drawing=false;
+    let drawing=false,profiler=null,profileOptions=null;
     let fskyProgram=null,fskyBound=null,fskyCache={},skyFrame={},fogCaches=new Map();
     const skyCamera={right:null,up:null,forward:null,fov:[0,0],height:0,time:0,vignette:.76,dither:1,mask:0,layers:[1,1,1,1]};
     let program,depthProgram,postProgram,skyProgram,fxProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer,uniforms,postUniforms,skyUniforms,fxUniforms,depthMatrix,depthWind,depthCullCentre,depthCullRange;
@@ -1547,6 +1547,15 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindRenderbuffer(gl.RENDERBUFFER,null);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,null);
       stats.bloom=!!post;stats.shadows=!!shadowTarget;
     }
+    function specularShader(source){return options.exactSpecular!==true?source.replace('if(diffuse>0.)','').replace('if(sunlight>0.&&dot(n,uSunDirection)>0.)','').replace('if(torch>0.&&dot(n,torchDirection)>0.)',''):source;}
+    function profile(value){
+      if(value===undefined)return profiler?.stats||null;
+      if(value===false){profiler?.dispose();profiler=null;profileOptions=null;return null;}
+      if(!window.FGPUProfile)return null;
+      profileOptions=value===true?{}:value;
+      if(profiler)profiler.configure(profileOptions);else profiler=window.FGPUProfile.create(gl,profileOptions);
+      return profiler.stats;
+    }
     function skyFogShader(source){
       if(!fskyProgram)return source;
       source=source.replace('  out vec4 fragColor;',window.FSky.FOG_GLSL+'uniform float uFskyEnabled;\n  out vec4 fragColor;');
@@ -1562,10 +1571,10 @@
       if(sky&&cache.bound!==sky){window.FSky.bind(gl,target,sky.uniforms,cache.locations);cache.bound=sky;}
     }
     function initialize() {
-      capacity.clear();
+      capacity.clear();if(profiler){profiler.dispose();profiler=window.FGPUProfile.create(gl,profileOptions);}
       fskyProgram=null;fskyBound=null;fskyCache={};skyFrame={};fogCaches.clear();stats.skyError=null;
       if(window.FSky)try{fskyProgram=link(window.FSky.VERT,window.FSky.FRAG);}catch(error){stats.skyError=String(error.message||error);}
-      try{program=link(VERT,skyFogShader(FRAG));}catch(error){if(!fskyProgram)throw error;gl.deleteProgram(fskyProgram);fskyProgram=null;stats.skyError=String(error.message||error);program=link(VERT,FRAG);}
+      try{program=link(VERT,skyFogShader(specularShader(FRAG)));}catch(error){if(!fskyProgram)throw error;gl.deleteProgram(fskyProgram);fskyProgram=null;stats.skyError=String(error.message||error);program=link(VERT,specularShader(FRAG));}
       depthProgram=link(VERT,DEPTH_FRAG);postProgram=link(POST_VERT,POST_FRAG);skyProgram=link(POST_VERT,SKY_FRAG);
       try{fxProgram=link(FX_VERT,skyFogShader(FX_FRAG));}catch(error){if(!fskyProgram)throw error;stats.skyFogError=String(error.message||error);fxProgram=link(FX_VERT,FX_FRAG);}
       uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightRange','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uSkyTop','uSkyBottom','uEnvironment','uCullCentre','uCullRange']) uniforms[name]=gl.getUniformLocation(program,name);
@@ -1855,7 +1864,7 @@
     }
     function draw(camera,dynamic,fx) {
       if(disposed||stats.contextLost) return;
-      fx=fx||{};if(native){autoScale=1;if(fx.adaptive===true)watch.update(fx.frameMs);}else autoScale=governor.update(fx,quality);drawing=true;try{resize();}finally{drawing=false;}
+      profiler?.start();fx=fx||{};if(native){autoScale=1;if(fx.adaptive===true)watch.update(fx.frameMs);}else autoScale=governor.update(fx,quality);drawing=true;try{resize();}finally{drawing=false;}
       const t=fx.time||0,shake=fx.shake||0,p=camera.pos||[0,1.6,0];
       const axes=cameraAxes(camera),{right,up,forward}=axes;
       const eye=[p[0]+Math.sin(t*57.)*shake*.025,p[1]+Math.sin(t*71.)*shake*.015,p[2]];
@@ -1896,11 +1905,11 @@
       if(dynamicBatch.values.length){gl.bindBuffer(gl.ARRAY_BUFFER,dynamicBuffer);uploadRows(dynamicBuffer,dynamicBatch.values);}
       if(stats.shadows){
         gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.clear(gl.DEPTH_BUFFER_BIT);
-        shadowLights.forEach((light,i)=>shadowPass(light,dynamicBatch,i,null,t));if(environment)sunShadowPass(eye,axes,dynamicBatch,t);shadowPass({p:torchPosition},dynamicBatch,2,axes,t);
+        for(let i=0;i<shadowLights.length;i++)if(!profiler||profiler.begin('lamp'+i)){shadowPass(shadowLights[i],dynamicBatch,i,null,t);profiler?.end();}if(environment&&(!profiler||profiler.begin('sun'))){sunShadowPass(eye,axes,dynamicBatch,t);profiler?.end();}if(!profiler||profiler.begin('torch')){shadowPass({p:torchPosition},dynamicBatch,2,axes,t);profiler?.end();}
       }
       gl.bindFramebuffer(gl.FRAMEBUFFER,stats.bloom?post.scene.framebuffer:null);gl.viewport(0,0,canvas.width,canvas.height);
       const skyAfter=!!(fskyProgram&&environment?.sky)&&options.skyFirst!==true;
-      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);if(environment&&!skyAfter)skyPass(axes,f,t);gl.useProgram(program);gl.bindVertexArray(vao);
+      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);if(environment&&!skyAfter&&(!profiler||profiler.begin('sky'))){skyPass(axes,f,t);profiler?.end();}gl.useProgram(program);gl.bindVertexArray(vao);
       bindSkyFog(program);gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);gl.uniform3fv(uniforms.uEye,eye);gl.uniform3fv(uniforms.uForward,forward);
       gl.uniform2f(uniforms.uWindTime,environment?environment.wind:0,t);gl.uniform3fv(uniforms.uSunDirection,environment?environment.sunDirection:[.4,.8,.3]);gl.uniform3fv(uniforms.uSunColor,environment?environment.sunColor:[0,0,0]);
       gl.uniform3fv(uniforms.uAmbient,environment?environment.ambient:[.075,.10,.12]);gl.uniform3fv(uniforms.uFogColor,environment?environment.fog:[.009,.018,.024]);gl.uniform2f(uniforms.uEnvironment,environment?1:0,environment?environment.fogDensity:.014);
@@ -1910,23 +1919,23 @@
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,stats.shadows?shadowTarget.texture:whiteTexture);gl.uniform1i(uniforms.uShadowMap,2);
       gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrices);gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,stats.shadows&&environment?1:0);gl.uniform3fv(uniforms.uTorchPosition,torchPosition);
       gl.uniform3fv(uniforms.uCullCentre,eye);gl.uniform3fv(uniforms.uCullRange,ranges);
-      renderStatic(shown,0);
-      renderBatch(dynamicBatch,dynamicBuffer,false);
-      if(skyAfter)skyPass(axes,f,t,true);
-      if(particles.length)renderEffects(particles,eye,t);
-      if(overlay.length||overlayParticles.length) {
+      if(!profiler||profiler.begin('opaque')){renderStatic(shown,0);profiler?.end();}
+      if(!profiler||profiler.begin('dynamic')){renderBatch(dynamicBatch,dynamicBuffer,false);profiler?.end();}
+      if(skyAfter&&(!profiler||profiler.begin('sky'))){skyPass(axes,f,t,true);profiler?.end();}
+      if(particles.length&&(!profiler||profiler.begin('particles'))){renderEffects(particles,eye,t);profiler?.end();}
+      if((overlay.length||overlayParticles.length)&&(!profiler||profiler.begin('weapon'))) {
         if(camera.overlayFov&&camera.overlayFov!==camera.fov){const of=1/Math.tan(Math.max(40,Math.min(110,camera.overlayFov))*Math.PI/360);projection[0]=of/(canvas.width/canvas.height);projection[5]=of;multiply(projection,view,vp);gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);}
         if(blackout){selected.forEach(({light},i)=>{const c=light.color||[1,1,1],power=light.power===undefined?1:light.power;lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});gl.uniform3fv(uniforms.uLightColor,lightColors);}
         gl.clear(gl.DEPTH_BUFFER_BIT);if(overlay.length)renderBatch(pack(overlay,environment,true,overlayRows),overlayBuffer,true);
-        if(overlayParticles.length)renderEffects(overlayParticles,eye,t);
+        if(overlayParticles.length)renderEffects(overlayParticles,eye,t);profiler?.end();
       }
-      if(stats.bloom)postPass();
+      if(stats.bloom&&(!profiler||profiler.begin('post'))){postPass();profiler?.end();}
     }
     function lost(event){event.preventDefault();stats.contextLost=true;}
     function restored(){if(!disposed) initialize();}
     canvas.addEventListener('webglcontextlost',lost);canvas.addEventListener('webglcontextrestored',restored);
     function dispose() {
-      if(disposed) return;disposed=true;surface?.dispose();
+      if(disposed) return;disposed=true;profiler?.dispose();profiler=null;surface?.dispose();
       canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
       for(const buffer of [vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer]) gl.deleteBuffer(buffer);
       for(const cache of staticCaches.slice(1))gl.deleteBuffer(cache.buffer);
@@ -1945,7 +1954,7 @@
       times.sort((a,b)=>a-b);gaps.sort((a,b)=>a-b);
       const result={p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],refreshMs:gaps[Math.floor(gaps.length*.5)]||0,frames:times.length,buffer:[canvas.width,canvas.height]};stats.calibration=result;return result;
     }
-    return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter,calibrate,setRenderScale:value=>surface?.setScale(value),setBudgetTarget:value=>watch?.setTarget(value)};
+    return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter,calibrate,profile,setRenderScale:value=>surface?.setScale(value),setBudgetTarget:value=>watch?.setTarget(value)};
   }
   // Constructeur unique de maillage dynamique (RESTE-03) : même littéral, même ordre,
   // tous les champs lus par le moteur sont présents dès la création. Les producteurs

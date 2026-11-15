@@ -1223,6 +1223,39 @@ const presets=[
 G.FSky={VERSION:1,VERT,FOG_GLSL,FRAG,UNIFORMS,defaults,presets,normalize,validate,direction,view,resolve,frameUniforms,bind,radianceAt,fogAt,encode,signature};
 })(typeof window!=='undefined'?window:globalThis);
 </script>
+<script data-module="gpu-profile.js" data-role="page">(function(G){'use strict';
+  // Opt-in instrumentation. No query or timing work is performed until create().
+  function create(gl,options={}){
+    const now=options.now||(()=>performance.now()),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2'),pending=[],history=[],limit=128;
+    const stats={gpu:!!ext,frames:0,discarded:0,overflow:0,pending:0,history};
+    let frame=0,active=null,row=null,omitted=new Set(options.omit||[]),disposed=false;
+    function poll(){
+      if(!ext)return;
+      if(gl.getParameter(ext.GPU_DISJOINT_EXT)){
+        for(const item of pending){gl.deleteQuery(item.query);item.row.valid=false;stats.discarded++;}pending.length=0;
+      }else for(let i=0;i<pending.length;){
+        const item=pending[i];
+        if(frame-item.frame<2||!gl.getQueryParameter(item.query,gl.QUERY_RESULT_AVAILABLE)){i++;continue;}
+        const ns=gl.getQueryParameter(item.query,gl.QUERY_RESULT);gl.deleteQuery(item.query);pending.splice(i,1);
+        if(Number.isFinite(ns)&&ns>=0){item.row.gpu[item.name]=(item.row.gpu[item.name]||0)+ns/1e6;item.row.completed++;}else{item.row.valid=false;stats.discarded++;}
+      }
+      stats.pending=pending.length;
+    }
+    function start(){if(disposed)return;frame++;poll();row={frame,cpu:{},gpu:{},queries:0,completed:0,valid:true};history.push(row);if(history.length>240)history.shift();stats.frames=frame;}
+    function begin(name){
+      if(disposed||omitted.has(name)||omitted.has(name.replace(/\d+$/,'')))return false;
+      if(active)throw new Error('Overlapping GPU profile passes');
+      if(!row)start();active={name,time:now(),query:null,row,frame};
+      if(ext&&pending.length<limit){const query=gl.createQuery();if(query){gl.beginQuery(ext.TIME_ELAPSED_EXT,query);active.query=query;row.queries++;}}else if(ext){stats.overflow++;row.valid=false;}
+      return true;
+    }
+    function end(){if(!active)return;const item=active;active=null;item.row.cpu[item.name]=(item.row.cpu[item.name]||0)+Math.max(0,now()-item.time);if(item.query){gl.endQuery(ext.TIME_ELAPSED_EXT);pending.push(item);stats.pending=pending.length;}}
+    function dispose(){if(disposed)return;end();for(const item of pending)gl.deleteQuery(item.query);pending.length=0;stats.pending=0;disposed=true;}
+    return {start,begin,end,poll,dispose,stats,configure(value){omitted=new Set(value?.omit||[]);},reset(){end();for(const item of pending)gl.deleteQuery(item.query);pending.length=0;history.length=0;row=null;stats.pending=0;}};
+  }
+  G.FGPUProfile={create};
+})(typeof window!=='undefined'?window:globalThis);
+</script>
 <script data-module="renderer.js" data-role="shared" data-worker>/* FERRO — original WebGL2 renderer. All surfaces and meshes are mathematical. */
 (function () {
   'use strict';
@@ -1551,19 +1584,19 @@ G.FSky={VERSION:1,VERT,FOG_GLSL,FRAG,UNIFORMS,defaults,presets,normalize,validat
       float diffuse=max(dot(n,l),0.);
       float visibility=i==0?shadow(geometricNormal,l,0):i==1&&uEnvironment.x<.5?shadow(geometricNormal,l,1):1.;
       light+=uLightColor[i]*attenuation*(diffuse*visibility+.035);
-      specular+=uLightColor[i]*attenuation*visibility*metalHighlight(n,view,l,roughness,f0)*2.4;
+      if(diffuse>0.)specular+=uLightColor[i]*attenuation*visibility*metalHighlight(n,view,l,roughness,f0)*2.4;
     }
     float sunlight=outdoors>.5?shadow(geometricNormal,uSunDirection,1):0.;
     float leafBack=m>10.5&&m<11.5?max(dot(-n,uSunDirection),0.)*.24:0.;
     light+=uSunColor*(max(dot(n,uSunDirection),0.)+leafBack)*sunlight;
-    specular+=uSunColor*sunlight*metalHighlight(n,view,uSunDirection,roughness,f0);
+    if(sunlight>0.&&dot(n,uSunDirection)>0.)specular+=uSunColor*sunlight*metalHighlight(n,view,uSunDirection,roughness,f0);
     vec3 torchVector=uTorchPosition-vWorld;
     float torchDistance=length(torchVector);
     vec3 torchDirection=normalize(torchVector);
     float cone=smoothstep(.59,.96,dot(-torchDirection,uForward));
     float torch=cone/(1.+torchDistance*torchDistance*.045)*shadow(geometricNormal,torchDirection,2);
     light+=vec3(.44,.52,.56)*torch*max(dot(n,torchDirection),0.);
-    specular+=vec3(.44,.52,.56)*torch*metalHighlight(n,view,torchDirection,roughness,f0)*1.5;
+    if(torch>0.&&dot(n,torchDirection)>0.)specular+=vec3(.44,.52,.56)*torch*metalHighlight(n,view,torchDirection,roughness,f0)*1.5;
     vec3 muzzleVector=uTorchPosition+uForward*.8-vWorld;
     float muzzleDistance=length(muzzleVector),muzzlePower=uEffects.y*2.2/(1.+muzzleDistance*muzzleDistance*.14);
     vec3 muzzleDirection=muzzleVector/max(muzzleDistance,.001);
@@ -2710,7 +2743,7 @@ G.FSky={VERSION:1,VERT,FOG_GLSL,FRAG,UNIFORMS,defaults,presets,normalize,validat
     const surface=native?window.FSurface.create(canvas,{limit:maxSize,maxPixels:options.maxPixels,scale:options.renderScale}):null;
     const watch=native?window.FSurface.budget({target:60,onBudget:options.onBudget}):null;
     if(surface){stats.native=surface.stats;stats.budget=watch.stats;stats.budgetLog=watch.log;}
-    let drawing=false;
+    let drawing=false,profiler=null,profileOptions=null;
     let fskyProgram=null,fskyBound=null,fskyCache={},skyFrame={},fogCaches=new Map();
     const skyCamera={right:null,up:null,forward:null,fov:[0,0],height:0,time:0,vignette:.76,dither:1,mask:0,layers:[1,1,1,1]};
     let program,depthProgram,postProgram,skyProgram,fxProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer,uniforms,postUniforms,skyUniforms,fxUniforms,depthMatrix,depthWind,depthCullCentre,depthCullRange;
@@ -2772,6 +2805,15 @@ G.FSky={VERSION:1,VERT,FOG_GLSL,FRAG,UNIFORMS,defaults,presets,normalize,validat
       gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindRenderbuffer(gl.RENDERBUFFER,null);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,null);
       stats.bloom=!!post;stats.shadows=!!shadowTarget;
     }
+    function specularShader(source){return options.exactSpecular!==true?source.replace('if(diffuse>0.)','').replace('if(sunlight>0.&&dot(n,uSunDirection)>0.)','').replace('if(torch>0.&&dot(n,torchDirection)>0.)',''):source;}
+    function profile(value){
+      if(value===undefined)return profiler?.stats||null;
+      if(value===false){profiler?.dispose();profiler=null;profileOptions=null;return null;}
+      if(!window.FGPUProfile)return null;
+      profileOptions=value===true?{}:value;
+      if(profiler)profiler.configure(profileOptions);else profiler=window.FGPUProfile.create(gl,profileOptions);
+      return profiler.stats;
+    }
     function skyFogShader(source){
       if(!fskyProgram)return source;
       source=source.replace('  out vec4 fragColor;',window.FSky.FOG_GLSL+'uniform float uFskyEnabled;\n  out vec4 fragColor;');
@@ -2787,10 +2829,10 @@ G.FSky={VERSION:1,VERT,FOG_GLSL,FRAG,UNIFORMS,defaults,presets,normalize,validat
       if(sky&&cache.bound!==sky){window.FSky.bind(gl,target,sky.uniforms,cache.locations);cache.bound=sky;}
     }
     function initialize() {
-      capacity.clear();
+      capacity.clear();if(profiler){profiler.dispose();profiler=window.FGPUProfile.create(gl,profileOptions);}
       fskyProgram=null;fskyBound=null;fskyCache={};skyFrame={};fogCaches.clear();stats.skyError=null;
       if(window.FSky)try{fskyProgram=link(window.FSky.VERT,window.FSky.FRAG);}catch(error){stats.skyError=String(error.message||error);}
-      try{program=link(VERT,skyFogShader(FRAG));}catch(error){if(!fskyProgram)throw error;gl.deleteProgram(fskyProgram);fskyProgram=null;stats.skyError=String(error.message||error);program=link(VERT,FRAG);}
+      try{program=link(VERT,skyFogShader(specularShader(FRAG)));}catch(error){if(!fskyProgram)throw error;gl.deleteProgram(fskyProgram);fskyProgram=null;stats.skyError=String(error.message||error);program=link(VERT,specularShader(FRAG));}
       depthProgram=link(VERT,DEPTH_FRAG);postProgram=link(POST_VERT,POST_FRAG);skyProgram=link(POST_VERT,SKY_FRAG);
       try{fxProgram=link(FX_VERT,skyFogShader(FX_FRAG));}catch(error){if(!fskyProgram)throw error;stats.skyFogError=String(error.message||error);fxProgram=link(FX_VERT,FX_FRAG);}
       uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightRange','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uSkyTop','uSkyBottom','uEnvironment','uCullCentre','uCullRange']) uniforms[name]=gl.getUniformLocation(program,name);
@@ -3080,7 +3122,7 @@ G.FSky={VERSION:1,VERT,FOG_GLSL,FRAG,UNIFORMS,defaults,presets,normalize,validat
     }
     function draw(camera,dynamic,fx) {
       if(disposed||stats.contextLost) return;
-      fx=fx||{};if(native){autoScale=1;if(fx.adaptive===true)watch.update(fx.frameMs);}else autoScale=governor.update(fx,quality);drawing=true;try{resize();}finally{drawing=false;}
+      profiler?.start();fx=fx||{};if(native){autoScale=1;if(fx.adaptive===true)watch.update(fx.frameMs);}else autoScale=governor.update(fx,quality);drawing=true;try{resize();}finally{drawing=false;}
       const t=fx.time||0,shake=fx.shake||0,p=camera.pos||[0,1.6,0];
       const axes=cameraAxes(camera),{right,up,forward}=axes;
       const eye=[p[0]+Math.sin(t*57.)*shake*.025,p[1]+Math.sin(t*71.)*shake*.015,p[2]];
@@ -3121,11 +3163,11 @@ G.FSky={VERSION:1,VERT,FOG_GLSL,FRAG,UNIFORMS,defaults,presets,normalize,validat
       if(dynamicBatch.values.length){gl.bindBuffer(gl.ARRAY_BUFFER,dynamicBuffer);uploadRows(dynamicBuffer,dynamicBatch.values);}
       if(stats.shadows){
         gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.clear(gl.DEPTH_BUFFER_BIT);
-        shadowLights.forEach((light,i)=>shadowPass(light,dynamicBatch,i,null,t));if(environment)sunShadowPass(eye,axes,dynamicBatch,t);shadowPass({p:torchPosition},dynamicBatch,2,axes,t);
+        for(let i=0;i<shadowLights.length;i++)if(!profiler||profiler.begin('lamp'+i)){shadowPass(shadowLights[i],dynamicBatch,i,null,t);profiler?.end();}if(environment&&(!profiler||profiler.begin('sun'))){sunShadowPass(eye,axes,dynamicBatch,t);profiler?.end();}if(!profiler||profiler.begin('torch')){shadowPass({p:torchPosition},dynamicBatch,2,axes,t);profiler?.end();}
       }
       gl.bindFramebuffer(gl.FRAMEBUFFER,stats.bloom?post.scene.framebuffer:null);gl.viewport(0,0,canvas.width,canvas.height);
       const skyAfter=!!(fskyProgram&&environment?.sky)&&options.skyFirst!==true;
-      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);if(environment&&!skyAfter)skyPass(axes,f,t);gl.useProgram(program);gl.bindVertexArray(vao);
+      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);if(environment&&!skyAfter&&(!profiler||profiler.begin('sky'))){skyPass(axes,f,t);profiler?.end();}gl.useProgram(program);gl.bindVertexArray(vao);
       bindSkyFog(program);gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);gl.uniform3fv(uniforms.uEye,eye);gl.uniform3fv(uniforms.uForward,forward);
       gl.uniform2f(uniforms.uWindTime,environment?environment.wind:0,t);gl.uniform3fv(uniforms.uSunDirection,environment?environment.sunDirection:[.4,.8,.3]);gl.uniform3fv(uniforms.uSunColor,environment?environment.sunColor:[0,0,0]);
       gl.uniform3fv(uniforms.uAmbient,environment?environment.ambient:[.075,.10,.12]);gl.uniform3fv(uniforms.uFogColor,environment?environment.fog:[.009,.018,.024]);gl.uniform2f(uniforms.uEnvironment,environment?1:0,environment?environment.fogDensity:.014);
@@ -3135,23 +3177,23 @@ G.FSky={VERSION:1,VERT,FOG_GLSL,FRAG,UNIFORMS,defaults,presets,normalize,validat
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,stats.shadows?shadowTarget.texture:whiteTexture);gl.uniform1i(uniforms.uShadowMap,2);
       gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrices);gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,stats.shadows&&environment?1:0);gl.uniform3fv(uniforms.uTorchPosition,torchPosition);
       gl.uniform3fv(uniforms.uCullCentre,eye);gl.uniform3fv(uniforms.uCullRange,ranges);
-      renderStatic(shown,0);
-      renderBatch(dynamicBatch,dynamicBuffer,false);
-      if(skyAfter)skyPass(axes,f,t,true);
-      if(particles.length)renderEffects(particles,eye,t);
-      if(overlay.length||overlayParticles.length) {
+      if(!profiler||profiler.begin('opaque')){renderStatic(shown,0);profiler?.end();}
+      if(!profiler||profiler.begin('dynamic')){renderBatch(dynamicBatch,dynamicBuffer,false);profiler?.end();}
+      if(skyAfter&&(!profiler||profiler.begin('sky'))){skyPass(axes,f,t,true);profiler?.end();}
+      if(particles.length&&(!profiler||profiler.begin('particles'))){renderEffects(particles,eye,t);profiler?.end();}
+      if((overlay.length||overlayParticles.length)&&(!profiler||profiler.begin('weapon'))) {
         if(camera.overlayFov&&camera.overlayFov!==camera.fov){const of=1/Math.tan(Math.max(40,Math.min(110,camera.overlayFov))*Math.PI/360);projection[0]=of/(canvas.width/canvas.height);projection[5]=of;multiply(projection,view,vp);gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);}
         if(blackout){selected.forEach(({light},i)=>{const c=light.color||[1,1,1],power=light.power===undefined?1:light.power;lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});gl.uniform3fv(uniforms.uLightColor,lightColors);}
         gl.clear(gl.DEPTH_BUFFER_BIT);if(overlay.length)renderBatch(pack(overlay,environment,true,overlayRows),overlayBuffer,true);
-        if(overlayParticles.length)renderEffects(overlayParticles,eye,t);
+        if(overlayParticles.length)renderEffects(overlayParticles,eye,t);profiler?.end();
       }
-      if(stats.bloom)postPass();
+      if(stats.bloom&&(!profiler||profiler.begin('post'))){postPass();profiler?.end();}
     }
     function lost(event){event.preventDefault();stats.contextLost=true;}
     function restored(){if(!disposed) initialize();}
     canvas.addEventListener('webglcontextlost',lost);canvas.addEventListener('webglcontextrestored',restored);
     function dispose() {
-      if(disposed) return;disposed=true;surface?.dispose();
+      if(disposed) return;disposed=true;profiler?.dispose();profiler=null;surface?.dispose();
       canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
       for(const buffer of [vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer]) gl.deleteBuffer(buffer);
       for(const cache of staticCaches.slice(1))gl.deleteBuffer(cache.buffer);
@@ -3170,7 +3212,7 @@ G.FSky={VERSION:1,VERT,FOG_GLSL,FRAG,UNIFORMS,defaults,presets,normalize,validat
       times.sort((a,b)=>a-b);gaps.sort((a,b)=>a-b);
       const result={p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],refreshMs:gaps[Math.floor(gaps.length*.5)]||0,frames:times.length,buffer:[canvas.width,canvas.height]};stats.calibration=result;return result;
     }
-    return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter,calibrate,setRenderScale:value=>surface?.setScale(value),setBudgetTarget:value=>watch?.setTarget(value)};
+    return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter,calibrate,profile,setRenderScale:value=>surface?.setScale(value),setBudgetTarget:value=>watch?.setTarget(value)};
   }
   // Constructeur unique de maillage dynamique (RESTE-03) : même littéral, même ordre,
   // tous les champs lus par le moteur sont présents dès la création. Les producteurs
@@ -12546,7 +12588,7 @@ G.FHost={create};
     request:(cue,meta)=>typeof audio.requestMusic==='function'?audio.requestMusic(cue,meta):false,
     release:()=>typeof audio.releaseMusic==='function'?audio.releaseMusic():false
   }}):null;
-  let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
+  let sceneDirty=true,renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const frameTasks=FSchedule.create({now:()=>performance.now()});
   const fixedLoop=FLoop.create({hz:60,maxSteps:5}),poseView=FLoop.view({single:['player'],many:['enemies','bullets','projectiles']});let renderState=null,aimShownX=0,aimShownY=0;
@@ -12696,6 +12738,7 @@ G.FHost={create};
     renderBindings();if(focus)$('tab-'+name).focus();
   }
   function settings(){
+    sceneDirty=true;
     Object.assign(prefs,{muted,quality,softMotion});controls.configure(prefs);touchControls.configure(prefs);
     $('sound-toggle').querySelector('strong').textContent=muted?'Coupé':'Activé';
     $('quality-toggle').querySelector('strong').textContent={auto:'Auto',low:'Économie',high:'Haute'}[quality];
@@ -12818,6 +12861,7 @@ G.FHost={create};
   }
   function clearInput(){fixedLoop.reset();fixedLoop.observe(performance.now());aimShownX=aimShownY=0;poseView.clear();renderState=null;controls.clear();touchControls.clear();paintStick();padState={};jumpQueued=switchProfileQueued=false;touchJump=null;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
+    sceneDirty=true;
     audio.cancelTestMix?.();
     last=performance.now();perfStart=0;perfFrames=0;
     $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
@@ -13497,6 +13541,7 @@ G.FHost={create};
     boundaryFlash=Math.max(0,boundaryFlash-dt);$('crosshair').classList.toggle('boundary-contact',boundaryFlash>0);
     controls.flush(now,mode==='playing'&&!document.hidden&&windowFocused);
     syncDestruction();
+    if(sceneDirty||titleScreen()||mode==='playing'&&!loadoutOpen){
     renderState=poseView.render(sim.state,mode==='playing'&&!loadoutOpen?fixedLoop.frame.alpha:1);
     const p=renderState.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
     if(mode==='playing'&&!loadoutOpen){const aim=FLoop.aim(sim.state.player.yaw,sim.state.player.pitch,lookDX,lookDY,-1.2,1.2);p.yaw=aim.yaw;p.pitch=aim.pitch;}
@@ -13506,6 +13551,8 @@ G.FHost={create};
     camera.overlayFov=camera.fov;if(touch&&prefs.portraitFov)camera.fov=FTouch.fovFor(innerWidth/innerHeight,camera.fov);
     renderPartner(camera);
     renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,shadows:prefs.shadows,bloom:prefs.bloom,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
+    sceneDirty=false;
+    }
     frameTasks.pump(FSchedule.budget(framePacer.period*framePacer.stride,performance.now()-frameStart));
     // Count completed frame intervals in real time, with a stable readout at most twice/s.
     if(!perfStart){perfStart=now;perfFrames=0;}else perfFrames++;
@@ -13580,7 +13627,7 @@ G.FHost={create};
     const track=currentTrack(),data=window.FMusic?.getModule(track);if(!data){$('audio-status').textContent='Le module audio est indisponible.';return;}
     const url=URL.createObjectURL(new Blob([data],{type:'audio/mod'})),link=document.createElement('a');link.href=url;link.download=track==='title'?'METAL-titre.mod':'METAL-'+String(stage+1).padStart(2,'0')+'.mod';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('audio-status').textContent='Module généré : '+Math.round(data.byteLength/1000)+' ko. Téléchargement lancé.';
   });
-  $('loadout-toggle').addEventListener('click',()=>{if(mode!=='playing')return;loadoutOpen=!loadoutOpen;clearInput();document.body.classList.toggle('loadout-open',loadoutOpen);$('loadout-toggle').setAttribute('aria-expanded',String(loadoutOpen));});
+  $('loadout-toggle').addEventListener('click',()=>{if(mode!=='playing')return;loadoutOpen=!loadoutOpen;sceneDirty=true;clearInput();document.body.classList.toggle('loadout-open',loadoutOpen);$('loadout-toggle').setAttribute('aria-expanded',String(loadoutOpen));});
   $('map-button').addEventListener('click',()=>{$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();});
   $('weapon-switch').addEventListener('click',()=>switchWeapon());
   for(let i=0;i<5;i++)$('weapon-slot-'+i).addEventListener('click',()=>switchWeapon(i));
@@ -13683,9 +13730,10 @@ G.FHost={create};
   $('immersive-button').addEventListener('click',()=>host.immersive());
   $('gyro-mode').addEventListener('change',async()=>{prefs.gyroMode=$('gyro-mode').value;const on=await host.enableGyro(prefs.gyroMode!=='off');if(!on)prefs.gyroMode='off';settings();});
   addEventListener('blur',()=>{windowFocused=false;controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');else{audioGate();syncTitle();}});
-  addEventListener('focus',()=>{windowFocused=true;syncTitle();audioGate();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
-  addEventListener('resize',()=>renderer?.resize(quality));
+  addEventListener('focus',()=>{sceneDirty=true;windowFocused=true;syncTitle();audioGate();});
+  document.addEventListener('visibilitychange',()=>{sceneDirty=true;if(document.hidden){controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
+  addEventListener('resize',()=>{sceneDirty=true;renderer?.resize(quality);});
+  canvas.addEventListener('webglcontextrestored',()=>{sceneDirty=true;});
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   try{
     renderer=FRender.create(canvas,{resolution:'native',renderScale:prefs.renderScale,onBudget:()=>{if(prefs.fpsLimit===-1&&autoCadence===60)cadencePending=30;}});renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
