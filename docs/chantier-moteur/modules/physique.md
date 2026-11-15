@@ -1,4 +1,8 @@
+> API actuelle : [capsules continues et raccords locaux](physique-geometrie.md).
+
 # FPhysics — noyau de corps rigides (module physique du lot 17)
+
+> État du 15 novembre 2026 : le module est désormais raccordé au jeu. Voir [intégration](../rapports/physique-20261115.md) et [géométrie, capsules et gouverneur](../rapports/physique-geometrie-20261115.md). Le tableau initial ci-dessous reste historique.
 
 `src/physics.js` expose le global `FPhysics` : des corps rigides déterministes (boîtes orientées, sphères, capsules) contre un décor statique de boîtes et de sols, plats ou en pente. C'est le module moteur générique de FERRO : il ne sait rien du contenu de METAL, et c'est le jeu qui décrit ses objets. Les constats et la fiche du lot 17 l'appellent « FPhys » : c'est le même module.
 

@@ -1,5 +1,20 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';
 const ctx={window:{},TextEncoder,TextDecoder};vm.createContext(ctx);for(const n of ['fmath','passages','renderer','profiles','world','destruction','economy','simulation','demo','pilot','demo-metal'])vm.runInContext(readFileSync(new URL('../src/'+n+'.js',import.meta.url),'utf8'),ctx,{filename:n+'.js'});const {FSimulation:S,FWorld:W,FPilot:P,MetalDemo:D}=ctx.window,copy=v=>JSON.parse(JSON.stringify(v));
 function fixture(){return {seed:96,stage:0,generation:6,spawn:{x:0,y:0,z:18,yaw:0},bounds:{minX:-32,maxX:32,minZ:-32,maxZ:32},walkable:[{x:0,y:0,z:0,w:64,d:64}],colliders:[],meshes:[],lights:[],enemies:[{x:0,y:0,z:0,type:3,bossScale:5.4,bossKind:'colossus',maxHp:250,arena:{x:0,z:0,r:28}}],cores:[{id:0,x:-28,y:0,z:28},{id:1,x:-26,y:0,z:28},{id:2,x:-24,y:0,z:28}],pickups:[],exit:{x:28,y:0,z:28}};}
+test('boss strafing steers around a physical barricade while retaining aim',()=>{
+  const sim=S.create(fixture());sim.state.enemies[0].bossAwake=true;
+  const open={},blocked={},wall=(x,z)=>x<-.2;
+  P.create(sim,sim.state.world).think(open,1/60);
+  P.create({...sim,rigid:{support:()=>-Infinity,obstacle:wall}},sim.state.world).think(blocked,1/60);
+  assert(wall(open.moveX*.85,18-open.moveY*.85),'ordinary strafe meets barricade');
+  assert(!wall(blocked.moveX*.85,18-blocked.moveY*.85),'combat pilot chooses clear direction');
+  assert(Math.hypot(blocked.moveX,blocked.moveY)>.5,'does not stop indefinitely');
+  assert.equal(blocked.lookX,open.lookX,'keeps the boss in its sights');sim.dispose();
+});
+test('a visible boss does not disable escape from an immobilised position',()=>{
+  const sim=S.create(fixture());sim.state.enemies[0].bossAwake=true;const pilot=P.create(sim,sim.state.world),input={};let escaped=false;
+  for(let i=0;i<240;i++){pilot.think(input,1/60);escaped ||= input.dash&&input.melee;sim.state.time+=1/60;}
+  assert(pilot.stats.unstick>0);assert(escaped,'requests movement to escape even while aiming at the boss');sim.dispose();
+});
 test('the pilot writes inputs only and makes deterministic bounded search decisions',()=>{const a=S.create(fixture()),b=S.create(fixture()),pa=P.create(a,a.state.world),pb=P.create(b,b.state.world),ia={},ib={};for(let i=0;i<1200;i++){const before=copy(a.state);pa.think(ia,1/60);assert.deepEqual(copy(a.state),before,'think mutated simulation');pb.think(ib,1/60);assert.deepEqual(copy(ia),copy(ib));a.step(1/60,ia);b.step(1/60,ib);a.state.events=[];b.state.events=[];}assert.deepEqual(copy(a.snapshot()),copy(b.snapshot()));assert(pa.stats.astarNodes<1200*600);});
 test('scene equipment is legal class progression and normal simulation saves contain no demonstration flag',()=>{for(const i of [0,1,4,6,11,12,15,17]){const w=W.create(96,i,{campaign:true,campaignVersion:2,profiles:true,combatVersion:1}),scene={index:i,boss:true},world=D.world(w,scene),loadout=D.loadout(i,i%2?'heavy':'light'),s=S.create(world,loadout);assert.equal(s.state.activeProfile,i%2?'heavy':'light');assert.equal(s.state.player.x,w.bossArena.x-24);assert(!s.blocked(s.state.player.x,s.state.player.z,.28,s.state.player.y));assert.equal(s.state.campaign.claimedBossRewards.length,i);const save=s.snapshot();assert(!('demo' in save));assert(S.create(world,loadout).restore(save));s.dispose();}});

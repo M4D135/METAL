@@ -1,0 +1,280 @@
+{
+  "cases": 34,
+  "firstMax": 7.809,
+  "stepMax": 8.803,
+  "overBudget": 1,
+  "rows": [
+    {
+      "file": "00-0.json",
+      "index": 0,
+      "repeat": 0,
+      "first": 6.372,
+      "max": 6.372,
+      "spikes": 0
+    },
+    {
+      "file": "00-1.json",
+      "index": 0,
+      "repeat": 1,
+      "first": 6.476,
+      "max": 6.595,
+      "spikes": 0
+    },
+    {
+      "file": "00-2.json",
+      "index": 0,
+      "repeat": 2,
+      "first": 7.36,
+      "max": 7.361,
+      "spikes": 0
+    },
+    {
+      "file": "00-3.json",
+      "index": 0,
+      "repeat": 3,
+      "first": 6.887,
+      "max": 6.887,
+      "spikes": 0
+    },
+    {
+      "file": "00-4.json",
+      "index": 0,
+      "repeat": 4,
+      "first": 5.888,
+      "max": 5.98,
+      "spikes": 0
+    },
+    {
+      "file": "01-0.json",
+      "index": 1,
+      "repeat": 0,
+      "first": 7.031,
+      "max": 7.031,
+      "spikes": 0
+    },
+    {
+      "file": "01-1.json",
+      "index": 1,
+      "repeat": 1,
+      "first": 7.339,
+      "max": 8.803,
+      "spikes": 1
+    },
+    {
+      "file": "01-2.json",
+      "index": 1,
+      "repeat": 2,
+      "first": 7.031,
+      "max": 7.031,
+      "spikes": 0
+    },
+    {
+      "file": "01-3.json",
+      "index": 1,
+      "repeat": 3,
+      "first": 7.809,
+      "max": 7.809,
+      "spikes": 0
+    },
+    {
+      "file": "01-4.json",
+      "index": 1,
+      "repeat": 4,
+      "first": 7.273,
+      "max": 7.273,
+      "spikes": 0
+    },
+    {
+      "file": "02-0.json",
+      "index": 2,
+      "repeat": 0,
+      "first": 6.531,
+      "max": 6.696,
+      "spikes": 0
+    },
+    {
+      "file": "02-1.json",
+      "index": 2,
+      "repeat": 1,
+      "first": 7.316,
+      "max": 7.316,
+      "spikes": 0
+    },
+    {
+      "file": "02-2.json",
+      "index": 2,
+      "repeat": 2,
+      "first": 6.907,
+      "max": 6.907,
+      "spikes": 0
+    },
+    {
+      "file": "02-3.json",
+      "index": 2,
+      "repeat": 3,
+      "first": 6.44,
+      "max": 6.736,
+      "spikes": 0
+    },
+    {
+      "file": "02-4.json",
+      "index": 2,
+      "repeat": 4,
+      "first": 6.247,
+      "max": 6.247,
+      "spikes": 0
+    },
+    {
+      "file": "03-0.json",
+      "index": 3,
+      "repeat": 0,
+      "first": 5.506,
+      "max": 5.971,
+      "spikes": 0
+    },
+    {
+      "file": "04-0.json",
+      "index": 4,
+      "repeat": 0,
+      "first": 4.557,
+      "max": 5.95,
+      "spikes": 0
+    },
+    {
+      "file": "05-0.json",
+      "index": 5,
+      "repeat": 0,
+      "first": 5.823,
+      "max": 5.918,
+      "spikes": 0
+    },
+    {
+      "file": "06-0.json",
+      "index": 6,
+      "repeat": 0,
+      "first": 6.044,
+      "max": 6.044,
+      "spikes": 0
+    },
+    {
+      "file": "07-0.json",
+      "index": 7,
+      "repeat": 0,
+      "first": 6.35,
+      "max": 6.35,
+      "spikes": 0
+    },
+    {
+      "file": "08-0.json",
+      "index": 8,
+      "repeat": 0,
+      "first": 6.315,
+      "max": 6.315,
+      "spikes": 0
+    },
+    {
+      "file": "09-0.json",
+      "index": 9,
+      "repeat": 0,
+      "first": 4.489,
+      "max": 6.004,
+      "spikes": 0
+    },
+    {
+      "file": "10-0.json",
+      "index": 10,
+      "repeat": 0,
+      "first": 6.453,
+      "max": 6.453,
+      "spikes": 0
+    },
+    {
+      "file": "11-0.json",
+      "index": 11,
+      "repeat": 0,
+      "first": 5.992,
+      "max": 5.992,
+      "spikes": 0
+    },
+    {
+      "file": "12-0.json",
+      "index": 12,
+      "repeat": 0,
+      "first": 6.078,
+      "max": 6.092,
+      "spikes": 0
+    },
+    {
+      "file": "13-0.json",
+      "index": 13,
+      "repeat": 0,
+      "first": 6.531,
+      "max": 6.531,
+      "spikes": 0
+    },
+    {
+      "file": "14-0.json",
+      "index": 14,
+      "repeat": 0,
+      "first": 5.794,
+      "max": 6.213,
+      "spikes": 0
+    },
+    {
+      "file": "15-0.json",
+      "index": 15,
+      "repeat": 0,
+      "first": 5.869,
+      "max": 6.175,
+      "spikes": 0
+    },
+    {
+      "file": "16-0.json",
+      "index": 16,
+      "repeat": 0,
+      "first": 4.897,
+      "max": 6.027,
+      "spikes": 0
+    },
+    {
+      "file": "17-0.json",
+      "index": 17,
+      "repeat": 0,
+      "first": 6.277,
+      "max": 6.277,
+      "spikes": 0
+    },
+    {
+      "file": "17-1.json",
+      "index": 17,
+      "repeat": 1,
+      "first": 6.637,
+      "max": 6.637,
+      "spikes": 0
+    },
+    {
+      "file": "17-2.json",
+      "index": 17,
+      "repeat": 2,
+      "first": 6.975,
+      "max": 6.975,
+      "spikes": 0
+    },
+    {
+      "file": "17-3.json",
+      "index": 17,
+      "repeat": 3,
+      "first": 7.039,
+      "max": 7.039,
+      "spikes": 0
+    },
+    {
+      "file": "17-4.json",
+      "index": 17,
+      "repeat": 4,
+      "first": 6.84,
+      "max": 6.84,
+      "spikes": 0
+    }
+  ]
+}

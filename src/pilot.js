@@ -79,7 +79,7 @@ function createPilot(sim,world,opt={}){
     const list=objectives().filter(o=>!(blocked.get(o.key)>s.time));
     list.sort((a,c)=>a.pri-c.pri||Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(c.x-p.x,c.z-p.z));
     for(const o of list){
-      if(o.boss&&boss()?.bossAwake){goal=o;goalKey=o.key;path=[];wi=0;return true;}
+      if(o.boss&&boss()?.bossAwake&&Math.hypot(p.x-boss().x,p.z-boss().z)<30){goal=o;goalKey=o.key;path=[];wi=0;return true;}
       if(Math.hypot(o.x-p.x,o.z-p.z)<o.reach&&Math.abs((o.y||0)-p.y)<.8){goal=o;goalKey=o.key;path=[];wi=0;return true;}
       let r=yield* astar(p.x,p.z,o.x,o.z);if(!r){r=yield* astar(p.x,p.z,o.x,o.z,true);if(r)stats.padRoutes++;}
       if(r){goal=o;if(goalKey!==o.key){goalKey=o.key;bestGoalDist=Infinity;lastGoalProgressT=s.time;}path=r;wi=0;return true;}
@@ -150,7 +150,7 @@ function createPilot(sim,world,opt={}){
       const gd=Math.hypot(goal.x-p.x,goal.z-p.z);if(gd<bestGoalDist-.5){bestGoalDist=gd;lastGoalProgressT=t;}
     }
     // combat : s'arrêter et mitrailler quand une cible visible est proche ; reculer si elle colle ; tourner autour du colosse
-    const fightBoss=B&&B.hp>0&&B.bossAwake&&tg===B;
+    const fightBoss=B&&B.hp>0&&B.bossAwake&&tg===B&&dT<30;
     if(tg&&!fightBoss&&dT<20&&t<holdUntil+0){/* maintien en cours */}
     if(tg&&!fightBoss){
       if(t>strafeFlipAt){strafe=-strafe;strafeFlipAt=t+1.1+((tg.id*7)%5)*.17;}
@@ -166,7 +166,7 @@ function createPilot(sim,world,opt={}){
     // 5) sortie de blocage : aucun progrès de position alors qu'on veut bouger
     if(t-lastProgressT>.9){
       const d=Math.hypot(p.x-lastProgressX,p.z-lastProgressZ);
-      if(moving&&d<.35&&!tg){stuckLevel++;replanAt=0;if(stuckLevel>=2){unstickUntil=t+.7;unstickDir=-unstickDir;stats.unstick++;edgeKnown.fill(0);cellKnown.fill(0);edgeOpen.fill(0);}if(stuckLevel>=5&&goal){blocked.set(goal.key,t+10);stuckLevel=0;}}
+      if(moving&&(d<.35||goal?.boss&&!fightBoss&&t-lastGoalProgressT>8)&&(!tg||tg===B)){stuckLevel++;replanAt=0;if(stuckLevel>=2){unstickUntil=t+.7;unstickDir=-unstickDir;stats.unstick++;edgeKnown.fill(0);cellKnown.fill(0);edgeOpen.fill(0);}if(stuckLevel>=5&&goal){blocked.set(goal.key,t+10);stuckLevel=0;}}
       else if(d>=.35)stuckLevel=0;
       lastProgressT=t;lastProgressX=p.x;lastProgressZ=p.z;
     }
@@ -199,7 +199,7 @@ function createPilot(sim,world,opt={}){
     if(goal?.fly&&Math.hypot(goal.x-p.x,goal.z-p.z)<12){const dx=goal.x-p.x,dz=goal.z-p.z,d=Math.hypot(dx,dz),fly=p.y<goal.fly+.65;input.moveX=d>.55?(dx*cy+dz*sy)/d:0;input.moveY=d>.55?(dx*sy-dz*cy)/d:0;input.jump=!p.airborne;input.jumpHeld=fly;input.sprint=false;input.dash=false;input.fire=input.fireLeft=false;unstickUntil=0;lastProgressT=t;}
     // Local steering uses the current collision boxes (the A* projection
     // deliberately ignores the whole swept footprint of a moving blade).
-    if(moving&&!fightBoss&&!goal?.fly&&!p.airborne){
+    if(moving&&!goal?.fly&&!p.airborne){
       const len=Math.hypot(mx,mz)||1,dx=mx/len,dz=mz/len;
       const rigid=sim.rigid,surface=(x,z,ceiling)=>Math.max(sim.ground(x,z),rigid?.support(x,z,.3,ceiling)??-Infinity);
       const clear=(x,z)=>{for(const d of [.45,.85]){const px=p.x+x*d,pz=p.z+z*d,gy=surface(px,pz,p.y+.42);if(gy-p.y>.43||p.y-gy>1.4||sim.blocked(px,pz,.3,gy)||rigid?.obstacle(px,pz,.3,gy,1.8))return false;}return true;};

@@ -1,0 +1,181 @@
+{
+  "schema": "metal-t5-final-v1",
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "index": 1,
+  "seed": 96,
+  "seconds": 60,
+  "driver": "FPilot, ordinary input, no invulnerability",
+  "sourceSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "renderer": "601818f20a03fad09168eacd2864365689a4cf985dfde0c13d59a29d47eb5570",
+    "profiles": "086d08e837ae8cc97d51b6c638f206e4e0374352da3a4b286f36def2eb072ce7",
+    "world": "9ecffd872920398ec731cdb74a8080f9dbf85bd42fb28cbf3ccbf89bb9533105",
+    "destruction": "8e7d89cff2428207df42b1feb90e7c785c915ff4f36a6263a4b7b02131692f55",
+    "economy": "1d1d50657864190afdb91639c56142c44714119f54e0685d8a4c4aa4cc6f4dc6",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "physics-geometry": "f70f3b724d852f621aff804573dc11ae94c719f8f9b5a5c997257cefaa9c1230",
+    "physics": "1f3fd7204bd80d58438695e1c08e7561f0e35fa8af1bc0f59e47ba19012c81aa",
+    "metal-physics": "f9111449cd200cb6cf3f8883fe1cb19ec1e56ee04d9933c68097a77006106c2e",
+    "actors": "6377cdc15c820c593705a2f0cea07ff04d2e30b9d241799269c645d5637dce3f",
+    "simulation": "f90651403d8faac75f00a3a8dd59dca8034a820909faeb5b97115f5dbe731f3a",
+    "demo": "1169679cfa96463222f6343a6f4f3feeadfc7b90cd65d8f1b7ece6e9e0600575",
+    "pilot": "45afca42c9230a27654af455d9f9437873bedde4d907d3e6c1bd18000f96f0d2",
+    "demo-metal": "d438cc451dfc6a50607fb3f52b5f168960f282dd0727b17b5486fb24d0cac6c1"
+  },
+  "loadedSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "renderer": "601818f20a03fad09168eacd2864365689a4cf985dfde0c13d59a29d47eb5570",
+    "profiles": "086d08e837ae8cc97d51b6c638f206e4e0374352da3a4b286f36def2eb072ce7",
+    "world": "9ecffd872920398ec731cdb74a8080f9dbf85bd42fb28cbf3ccbf89bb9533105",
+    "destruction": "8e7d89cff2428207df42b1feb90e7c785c915ff4f36a6263a4b7b02131692f55",
+    "economy": "1d1d50657864190afdb91639c56142c44714119f54e0685d8a4c4aa4cc6f4dc6",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "physics-geometry": "4a7776c76be9bbac3b2a4c6783aae5baa63f5e8ed3ef31a7d3cc84bf2d4ae6b0",
+    "physics": "70e6b671678e55e6ddbccf8392edb8c43dd7387f4ffb960bdc556e4ba56bb8b6",
+    "metal-physics": "54a5bf86075e2ce5cc89cd9cdb79fea5f6cbb72ef7b54278f81a1c0093d0fa6c",
+    "actors": "6377cdc15c820c593705a2f0cea07ff04d2e30b9d241799269c645d5637dce3f",
+    "simulation": "57ebfecf559935f1d985ef871a06e40aeee3e19a1d895d745501dd201d88cc80",
+    "demo": "1169679cfa96463222f6343a6f4f3feeadfc7b90cd65d8f1b7ece6e9e0600575",
+    "pilot": "45afca42c9230a27654af455d9f9437873bedde4d907d3e6c1bd18000f96f0d2",
+    "demo-metal": "d438cc451dfc6a50607fb3f52b5f168960f282dd0727b17b5486fb24d0cac6c1"
+  },
+  "physical": true,
+  "combatVersion": 1,
+  "firstBreak": {
+    "step": 658,
+    "wall": 8.468583999999964,
+    "cpu": 8.468,
+    "revision": 1,
+    "debris": 52,
+    "physical": 144,
+    "phases": {
+      "simulation:syncDestruction": 4.729749999999967,
+      "simulation:pumpNav": 0.00012500000002546585,
+      "metal-physics:blast": 0.034207999999978256,
+      "metal-physics:rubble": 0.2963720000001331,
+      "simulation:sceneryResult": 0.7191249999999627,
+      "simulation:damageScenery": 2.259749999999997,
+      "simulation:rebuildCollision": 0.10658300000000054,
+      "physics-geometry:merge": 1.6264579999999569,
+      "physics-geometry:setStatics": 1.887625000000014,
+      "physics:setStatics": 4.445958999999959,
+      "simulation:explode": 7.017583999999999,
+      "simulation:updateEnemies": 0.02949999999998454,
+      "metal-physics:step": 0.381416999999999,
+      "simulation:updateDebris": 0.8413749999999709,
+      "simulation:updateProjectiles": 1.2269589999999653
+    },
+    "events": [
+      "explosion",
+      "materialBreak"
+    ]
+  },
+  "revisions": [
+    {
+      "step": 658,
+      "wall": 8.468583999999964,
+      "cpu": 8.468,
+      "revision": 1,
+      "debris": 52,
+      "physical": 144,
+      "phases": {
+        "simulation:syncDestruction": 4.729749999999967,
+        "simulation:pumpNav": 0.00012500000002546585,
+        "metal-physics:blast": 0.034207999999978256,
+        "metal-physics:rubble": 0.2963720000001331,
+        "simulation:sceneryResult": 0.7191249999999627,
+        "simulation:damageScenery": 2.259749999999997,
+        "simulation:rebuildCollision": 0.10658300000000054,
+        "physics-geometry:merge": 1.6264579999999569,
+        "physics-geometry:setStatics": 1.887625000000014,
+        "physics:setStatics": 4.445958999999959,
+        "simulation:explode": 7.017583999999999,
+        "simulation:updateEnemies": 0.02949999999998454,
+        "metal-physics:step": 0.381416999999999,
+        "simulation:updateDebris": 0.8413749999999709,
+        "simulation:updateProjectiles": 1.2269589999999653
+      },
+      "events": [
+        "explosion",
+        "materialBreak"
+      ]
+    },
+    {
+      "step": 2579,
+      "wall": 3.95150000000001,
+      "cpu": 3.957,
+      "revision": 2,
+      "debris": 51,
+      "physical": 159,
+      "phases": {
+        "simulation:syncDestruction": 2.491416999999956,
+        "simulation:pumpNav": 0.00012499999991177901,
+        "metal-physics:blast": 0.015750000000025466,
+        "metal-physics:rubble": 0.06979199999989305,
+        "simulation:sceneryResult": 0.11025000000006457,
+        "simulation:damageScenery": 0.7362080000000333,
+        "simulation:rebuildCollision": 0.10654199999999037,
+        "physics-geometry:merge": 1.2370410000000902,
+        "physics-geometry:setStatics": 0.16600000000005366,
+        "physics:setStatics": 2.3172909999999547,
+        "simulation:explode": 3.2446659999999383,
+        "simulation:updateEnemies": 0.016875000000027285,
+        "metal-physics:step": 0.4421660000000429,
+        "simulation:updateDebris": 0.022540999999932865,
+        "simulation:updateProjectiles": 0.46574999999995725
+      },
+      "events": [
+        "explosion",
+        "materialBreak",
+        "debrisLand"
+      ]
+    }
+  ],
+  "spikes": [
+    {
+      "step": 658,
+      "wall": 8.468583999999964,
+      "cpu": 8.468,
+      "revision": 1,
+      "debris": 52,
+      "physical": 144,
+      "phases": {
+        "simulation:syncDestruction": 4.729749999999967,
+        "simulation:pumpNav": 0.00012500000002546585,
+        "metal-physics:blast": 0.034207999999978256,
+        "metal-physics:rubble": 0.2963720000001331,
+        "simulation:sceneryResult": 0.7191249999999627,
+        "simulation:damageScenery": 2.259749999999997,
+        "simulation:rebuildCollision": 0.10658300000000054,
+        "physics-geometry:merge": 1.6264579999999569,
+        "physics-geometry:setStatics": 1.887625000000014,
+        "physics:setStatics": 4.445958999999959,
+        "simulation:explode": 7.017583999999999,
+        "simulation:updateEnemies": 0.02949999999998454,
+        "metal-physics:step": 0.381416999999999,
+        "simulation:updateDebris": 0.8413749999999709,
+        "simulation:updateProjectiles": 1.2269589999999653
+      },
+      "events": [
+        "explosion",
+        "materialBreak"
+      ]
+    }
+  ],
+  "wall": {
+    "p50": 0.24812500000007276,
+    "p99": 0.5474590000000035,
+    "max": 8.468583999999964
+  },
+  "cpu": {
+    "p50": 0.249,
+    "p99": 0.543,
+    "max": 8.468
+  },
+  "dead": false,
+  "bossHp": 160.48192115459847,
+  "snapshot": "522fddf343dd6661c7fdabf13dcfd73769d5f1d85173a02afc66aad1bf2fe7c4"
+}

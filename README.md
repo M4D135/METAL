@@ -8,6 +8,8 @@
 
 ## Finition du 15 novembre 2026
 
+Complément physique : collisions continues de capsule, raccords du décor sans accroche, objets tournés et appuis physiques ; les reprises précédentes conservent leur géométrie. [Contrôles et API](docs/chantier-moteur/rapports/physique-geometrie-20261115.md).
+
 Les nouvelles expéditions proposent deux personnages à positions distinctes : **léger** (pistolet, pompe, mitraillette et jetpack) et **lourd** (pistolet automatique, grenades et roquettes). Chaque personnage garde sa progression. **T au clavier, RB à la manette ou le bouton « Passer au lourd / léger »** change de personnage. Maintenir Espace ou A fait voler le léger. Le repère du partenaire indique sa direction, sa distance et son étage. Les brèches, relais aériens et exigences des boss rendent leur coopération obligatoire.
 
 Sur téléphone, les actions occupent les coins, l’ATH est compact et le bouton ARMES ouvre l’équipement en suspendant le combat. Le bouton de tir permet aussi de viser en glissant ; le manche virtuel peut se déplacer sous le doigt et déclencher la course. Les commandes et menus à la manette restent reconfigurables.

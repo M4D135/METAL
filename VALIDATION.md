@@ -1,3 +1,5 @@
+> Mise à jour physique du 15 novembre 2026 : [capsules continues, raccords locaux et validation finale](docs/chantier-moteur/rapports/physique-geometrie-20261115.md). 1229 tests réussis, zéro échec, un TODO ; T5 première casse maximale 7.809 ms CPU (pic initial hors casse 8.803 ms), démo sans mort ni stagnation et 13 contrôles Chrome.
+
 # Validation du chantier moteur — lot 01 terminé — 12 novembre 2026
 
 > État final du 15 novembre 2026 : [livraison intégrée et limites restantes](docs/chantier-moteur/rapports/finition-finale-20261115.md). 1 213 tests réussis, zéro échec, un TODO ; T5 final 34 cas sous 8 ms CPU ; 13 contrôles Chrome, manette simulée et tactile. Les paragraphes datés ci-dessous sont les paliers historiques, pas l’état actuel.

@@ -5700,6 +5700,123 @@ G.FSceneReflections={create,shader};
   G.FDestruction={create};
 })(typeof window!=='undefined'?window:globalThis);
 </script>
+<script data-module="physics-geometry.js" data-role="shared" data-worker>/* FERRO — collision geometry for new physical worlds. No DOM or rendering.
+   Exact rectangular unions remove tiled seams; old snapshots retain the original geometry.
+   Capsule sweeps use convex distance and conservative advancement, never time samples. */
+(function(G){'use strict';
+function merge(a,n){
+  const alive=new Uint8Array(n).fill(1);let changed=true;
+  while(changed){changed=false;for(let axis=0;axis<3;axis++){
+    const groups=new Map(),u=(axis+1)%3,v=(axis+2)%3;
+    for(let i=0;i<n;i++)if(alive[i]&&!a.O[i]){const b=i*6,key=a.F[i]+'|'+a.E[i]+'|'+a.M[i]+'|'+a.A[b+u]+'|'+a.A[b+u+3]+'|'+a.A[b+v]+'|'+a.A[b+v+3];let list=groups.get(key);if(!list)groups.set(key,list=[]);list.push(i);}
+    for(const list of groups.values()){list.sort((i,j)=>a.A[i*6+axis]-a.A[j*6+axis]||i-j);let prev=list[0];for(let k=1;k<list.length;k++){const i=list[k],b=i*6,p=prev*6;if(a.A[b+axis]>a.A[p+axis+3]+1e-9){prev=i;continue;}a.A[p+axis+3]=Math.max(a.A[p+axis+3],a.A[b+axis+3]);a.P[prev*3+axis]=(a.A[p+axis]+a.A[p+axis+3])*.5;a.H[prev*3+axis]=(a.A[p+axis+3]-a.A[p+axis])*.5;alive[i]=0;changed=true;}}
+  }}
+  let count=0;for(const [key,width] of [['P',3],['H',3],['R',9],['A',6],['F',1],['E',1],['O',1],['M',1]]){count=0;for(let i=0;i<n;i++)if(alive[i]){if(i!==count)a[key].copyWithin(count*width,i*width,(i+1)*width);count++;}}return count;
+}
+function attach(w,d){
+  const {P,H,HR,R,BB,SH,FL,GRP,GEN,V}=d,pa=new Float64Array(3),pb=new Float64Array(3),cuts=new Float64Array(8),a0=new Float64Array(3),a1=new Float64Array(3),b0=new Float64Array(3),b1=new Float64Array(3),closest=new Float64Array(7);
+  let st=null,neighbors=[],identities=new Map();
+  let faceHeads=new Int32Array(w.config.maxStatics*6),nextHeads=new Int32Array(w.config.maxStatics*6);
+  const heads=new Int32Array(w.config.maxStatics*4),links=new Int32Array(w.config.maxStatics*2),oldToNew=new Int32Array(w.config.maxStatics),newToOld=new Int32Array(w.config.maxStatics);
+  const roots=new Int32Array(FL.length),members=new Int32Array(FL.length),anchored=new Uint8Array(FL.length),speed=new Float64Array(FL.length);
+  w.stats.governedSleep=0;w.stats.overBudget=0;
+  function setStatics(a){
+    const next=[],keys=new Map();nextHeads.fill(-1,0,a.count*6);oldToNew.fill(-1);newToOld.fill(-1);
+    for(let i=0;i<a.count;i++)if(!a.O[i]){const b=i*6,key=a.A[b]+'|'+a.A[b+1]+'|'+a.A[b+2]+'|'+a.A[b+3]+'|'+a.A[b+4]+'|'+a.A[b+5];let list=keys.get(key);if(!list)keys.set(key,list=[]);const previous=identities.get(key),old=previous?.[list.length];list.push(i);if(old!==undefined){oldToNew[old]=i;newToOld[i]=old;}}
+    const link=(face,neighbor)=>{next.push(neighbor,nextHeads[face]);nextHeads[face]=next.length-2;};
+    // Remap unchanged faces and drop removed neighbours. Only newly shaped boxes
+    // need geometric comparisons, including both sides of each new seam.
+    if(st&&st.count){
+      for(let i=0;i<a.count;i++){const old=newToOld[i];if(old<0)continue;for(let face=0;face<6;face++)for(let j=faceHeads[old*6+face];j>=0;j=neighbors[j+1]){const mapped=oldToNew[neighbors[j]];if(mapped>=0)link(i*6+face,mapped);}}
+      for(let i=0;i<a.count;i++)if(!a.O[i]&&newToOld[i]<0)for(let j=0;j<a.count;j++)if(i!==j&&!a.O[j]&&(newToOld[j]>=0||j>i))for(let axis=0;axis<3;axis++){
+        const b=i*6,c=j*6,u=(axis+1)%3,v=(axis+2)%3;
+        if(Math.min(a.A[b+u+3],a.A[c+u+3])<=Math.max(a.A[b+u],a.A[c+u])+1e-9||Math.min(a.A[b+v+3],a.A[c+v+3])<=Math.max(a.A[b+v],a.A[c+v])+1e-9)continue;
+        for(let side=0;side<2;side++){const left=a.A[b+axis+side*3],right=a.A[c+axis+(1-side)*3];if(Math.round(left*1e6)!==Math.round(right*1e6)||Math.abs(left-right)>1e-6)continue;link(i*6+axis*2+side,j);link(j*6+axis*2+1-side,i);}
+      }
+    }else for(let axis=0;axis<3;axis++){
+      const planes=new Map(),u=(axis+1)%3,v=(axis+2)%3;let count=0;
+      for(let i=0;i<a.count;i++)if(!a.O[i])for(let side=0;side<2;side++){const key=Math.round(a.A[i*6+axis+side*3]*1e6);let bucket=planes.get(key);if(bucket===undefined){bucket=count++;planes.set(key,bucket);heads[bucket*2]=heads[bucket*2+1]=-1;}links[i*2+side]=heads[bucket*2+side];heads[bucket*2+side]=i;}
+      for(let bucket=0;bucket<count;bucket++)for(let i=heads[bucket*2];i>=0;i=links[i*2])for(let j=heads[bucket*2+1];j>=0;j=links[j*2+1]){
+        if(i===j)continue;const b=i*6,c=j*6;if(Math.abs(a.A[b+axis]-a.A[c+axis+3])>1e-6||Math.min(a.A[b+u+3],a.A[c+u+3])<=Math.max(a.A[b+u],a.A[c+u])+1e-9||Math.min(a.A[b+v+3],a.A[c+v+3])<=Math.max(a.A[b+v],a.A[c+v])+1e-9)continue;
+        link(i*6+axis*2,j);link(j*6+axis*2+1,i);
+      }
+    }
+    let masked=0;for(let i=0;i<a.count*6;i++)if(nextHeads[i]>=0)masked++;const previousHeads=faceHeads;faceHeads=nextHeads;nextHeads=previousHeads;st=a;neighbors=next;identities=keys;w.stats.internalFaces=masked;return masked;
+  }
+  function filter(index,n,N,P,S,I){let count=0;for(let k=0;k<n;k++){const p=k*3;let internal=false;for(let axis=0;axis<3;axis++){if(Math.abs(N[p+axis])<.999)continue;const side=N[p+axis]>0?0:1,head=faceHeads[index*6+axis*2+side];if(head<0)break;const u=(axis+1)%3,v=(axis+2)%3,plane=st.A[index*6+axis+side*3];if(S[k]<0&&Math.abs(P[p+axis]-plane)>.03)break;for(let j=head;j>=0;j=neighbors[j+1]){const b=neighbors[j]*6;if(P[p+u]>=st.A[b+u]-.006&&P[p+u]<=st.A[b+u+3]+.006&&P[p+v]>=st.A[b+v]-.006&&P[p+v]<=st.A[b+v+3]+.006){internal=true;break;}}break;}if(!internal){for(let j=0;j<3;j++){N[count*3+j]=N[p+j];P[count*3+j]=P[p+j];}S[count]=S[k];I[count]=I[k];count++;}}return count;}
+  // Only slow, supported contact islands may be sacrificed to the awake budget.
+  // An airborne body is never frozen; overBudget reports an unavoidable excess.
+  function govern(AL,ACT,UF,na,cA,cB,cN,cS,nc,limit){
+    let awake=0;for(let i=1;i<d.count();i++)if((FL[i]&31)===1)awake++;if(awake<=limit){w.stats.overBudget=0;return 0;}
+    members.fill(0);anchored.fill(0);speed.fill(0);for(let k=0;k<na;k++){const i=AL[k];if(ACT[i]!==1||FL[i]&2)continue;let root=i;while(UF[root]!==root)root=UF[root];roots[i]=root;members[root]++;const v=i*6,energy=V[v]*V[v]+V[v+1]*V[v+1]+V[v+2]*V[v+2]+.25*(V[v+3]*V[v+3]+V[v+4]*V[v+4]+V[v+5]*V[v+5]);speed[root]=Math.max(speed[root],energy);}
+    for(let k=0;k<nc;k++)if(cS[k]<=.005){const a=cA[k],b=cB[k],ny=cN[k*3+1];if(ACT[a]===1&&!(FL[a]&2)&&(!b||FL[b]&6)&&ny<-.5)anchored[roots[a]]=1;if(b&&ACT[b]===1&&!(FL[b]&2)&&(FL[a]&6)&&ny>.5)anchored[roots[b]]=1;}
+    let slept=0;while(awake>limit){let best=0,value=Infinity;for(let i=1;i<d.count();i++)if(members[i]&&anchored[i]&&speed[i]<.04&&speed[i]<value){best=i;value=speed[i];}if(!best)break;for(let k=0;k<na;k++){const i=AL[k];if(ACT[i]===1&&!(FL[i]&2)&&roots[i]===best){FL[i]|=2;V.fill(0,i*6,i*6+6);slept++;awake--;}}members[best]=0;}
+    w.stats.governedSleep+=slept;w.stats.overBudget=Math.max(0,awake-limit);return slept;
+  }
+  const validVector=v=>v&&v.length===3&&Number.isFinite(v[0])&&Number.isFinite(v[1])&&Number.isFinite(v[2]);
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  function boxDistance(x,y,z,radius,height,cp,ch,cr,i){
+    const p=i*3,rot=i*9,dx=x-cp[p],dy=y+radius-cp[p+1],dz=z-cp[p+2],length=height-2*radius;
+    for(let k=0;k<3;k++){pa[k]=dx*cr[rot+k]+dy*cr[rot+3+k]+dz*cr[rot+6+k];pb[k]=cr[rot+3+k]*length;}
+    let nc=2;cuts[0]=0;cuts[1]=1;for(let k=0;k<3;k++)if(Math.abs(pb[k])>1e-14)for(let sign=-1;sign<=1;sign+=2){const t=(sign*ch[p+k]-pa[k])/pb[k];if(t>0&&t<1)cuts[nc++]=t;}
+    for(let i=1;i<nc;i++){const t=cuts[i];let j=i;while(j&&cuts[j-1]>t){cuts[j]=cuts[j-1];j--;}cuts[j]=t;}
+    let best=Infinity,bt=0;
+    for(let j=0;j<nc-1;j++){const lo=cuts[j],hi=cuts[j+1],mid=(lo+hi)*.5;let aa=0,ab=0;for(let k=0;k<3;k++){const q=pa[k]+pb[k]*mid,h=ch[p+k];if(q>h||q<-h){const c=pa[k]-(q>h?h:-h);aa+=pb[k]*pb[k];ab+=pb[k]*c;}}const t=aa?Math.max(lo,Math.min(hi,-ab/aa)):lo;let ds=0;for(let k=0;k<3;k++){const q=pa[k]+pb[k]*t,h=ch[p+k],v=q>h?q-h:q<-h?q+h:0;ds+=v*v;}if(ds<best){best=ds;bt=t;}}
+    let sep;for(let k=0;k<3;k++){a0[k]=pa[k]+pb[k]*bt;b0[k]=Math.max(-ch[p+k],Math.min(ch[p+k],a0[k]));a1[k]=a0[k]-b0[k];}
+    if(best>1e-20){const len=Math.sqrt(best);for(let k=0;k<3;k++)a1[k]/=len;sep=len-radius;}else{let depth=Infinity,axis=1,sign=1;for(let k=0;k<3;k++){const lo=Math.min(pa[k],pa[k]+pb[k]),hi=Math.max(pa[k],pa[k]+pb[k]),up=ch[p+k]+radius-lo,down=ch[p+k]+radius+hi;if(up<depth){depth=up;axis=k;sign=1;}if(down<depth){depth=down;axis=k;sign=-1;}}a1.fill(0);a1[axis]=sign;b0[axis]=sign*ch[p+axis];sep=-depth;}
+    closest[0]=sep;for(let k=0;k<3;k++){closest[1+k]=cr[rot+3*k]*a1[0]+cr[rot+3*k+1]*a1[1]+cr[rot+3*k+2]*a1[2];closest[4+k]=cp[p+k]+cr[rot+3*k]*b0[0]+cr[rot+3*k+1]*b0[1]+cr[rot+3*k+2]*b0[2];}
+  }
+  function roundDistance(x,y,z,radius,height,i){
+    const p=i*3,t=i*9,extent=HR[p+1]-HR[p],other=H[p];a0[0]=x;a0[1]=y+radius;a0[2]=z;a1[0]=0;a1[1]=height-2*radius;a1[2]=0;
+    for(let k=0;k<3;k++){b0[k]=P[p+k]-R[t+3*k+1]*extent;b1[k]=2*R[t+3*k+1]*extent;pa[k]=a0[k]-b0[k];}
+    const aa=dot(a1,a1),bb=dot(b1,b1),ab=dot(a1,b1),ar=dot(a1,pa),br=dot(b1,pa),den=aa*bb-ab*ab;let s=aa>1e-16?(den>1e-16?Math.max(0,Math.min(1,(ab*br-bb*ar)/den)):0):0,t0=bb>1e-16?(ab*s+br)/bb:0;
+    if(t0<0){t0=0;s=aa>1e-16?Math.max(0,Math.min(1,-ar/aa)):0;}else if(t0>1){t0=1;s=aa>1e-16?Math.max(0,Math.min(1,(ab-ar)/aa)):0;}else if(bb<1e-16)s=aa>1e-16?Math.max(0,Math.min(1,-ar/aa)):0;
+    let ds=0;for(let k=0;k<3;k++){pb[k]=b0[k]+b1[k]*t0;pa[k]=a0[k]+a1[k]*s-pb[k];ds+=pa[k]*pa[k];}const len=Math.sqrt(ds);closest[0]=len-radius-other;for(let k=0;k<3;k++){const normal=len>1e-12?pa[k]/len:k===1?1:0;closest[1+k]=normal;closest[4+k]=pb[k]+normal*other;}
+  }
+  function sweepCapsule(pos,delta,options={},out={}){
+    const radius=options.radius??.28,height=options.height??1.8,mask=options.mask??65535,ignore=options.ignore??0,skin=options.skin??.001;
+    if(!validVector(pos)||!validVector(delta)||!Number.isFinite(radius)||radius<=0||!Number.isFinite(height)||height<2*radius||!Number.isFinite(skin)||skin<0)throw TypeError('FPhysics.sweepCapsule: finite capsule and displacement required');
+    out.hit=false;out.fraction=1;out.handle=0;out.staticIndex=-1;out.depth=0;out.nx=out.ny=out.nz=0;
+    const x0=Math.min(pos[0],pos[0]+delta[0])-radius-skin,x1=Math.max(pos[0],pos[0]+delta[0])+radius+skin,y0=Math.min(pos[1],pos[1]+delta[1])-skin,y1=Math.max(pos[1],pos[1]+delta[1])+height+skin,z0=Math.min(pos[2],pos[2]+delta[2])-radius-skin,z1=Math.max(pos[2],pos[2]+delta[2])+radius+skin;
+    const ns=options.statics===false||!(mask&1)?0:st?.count||0,nb=d.count();
+    for(let j=0;j<ns+nb-1;j++){
+      const isStatic=j<ns,i=isStatic?j:j-ns+1,handle=isStatic?0:GEN[i]*4096+i;
+      if(!isStatic&&((FL[i]&(1|8|16))!==1||!(GRP[i]&mask)||handle===ignore))continue;
+      const bounds=isStatic?st.A:BB,b=i*6;if(bounds[b]>x1||bounds[b+3]<x0||bounds[b+1]>y1||bounds[b+4]<y0||bounds[b+2]>z1||bounds[b+5]<z0)continue;
+      let t=0;for(let it=0;it<24;it++){
+        const x=pos[0]+delta[0]*t,y=pos[1]+delta[1]*t,z=pos[2]+delta[2]*t;if(isStatic)boxDistance(x,y,z,radius,height,st.P,st.H,st.R,i);else if(SH[i])roundDistance(x,y,z,radius,height,i);else boxDistance(x,y,z,radius,height,P,H,R,i);
+        const sep=closest[0],closing=-(delta[0]*closest[1]+delta[1]*closest[2]+delta[2]*closest[3]);
+        if(t===0&&sep<skin&&options.ignoreInitial)break;
+        if(t===0&&sep< -1e-6&&options.allowExit&&closing<=1e-10)break;
+        if(sep<=skin+1e-7){if(t===0&&sep>=-1e-6&&closing<=1e-10)break;if(t<=out.fraction){out.hit=true;out.fraction=t;out.handle=handle;out.staticIndex=isStatic?i:-1;out.depth=Math.max(0,-sep);out.nx=closest[1];out.ny=closest[2];out.nz=closest[3];out.x=closest[4];out.y=closest[5];out.z=closest[6];}break;}
+        if(closing<=1e-12)break;t+=(sep-skin)/closing;if(t>out.fraction||t>1)break;
+      }
+    }return out;
+  }
+  function character(options={}){
+    const opt={radius:options.radius??.28,height:options.height??1.8,skin:options.skin??.002,mask:options.mask??65535,ignore:options.ignore??0,statics:options.statics!==false},step=options.step??.42,slope=options.slope??.7;
+    if(!Number.isFinite(step)||step<0||!Number.isFinite(slope)||slope<0||slope>1)throw TypeError('FPhysics.character: invalid step or slope');
+    const p=new Float64Array(3),v=new Float64Array(3),up=new Float64Array(3),candidate=new Float64Array(3),h={},landing={},support={};
+    function move(pos,delta,out={}){
+      if(!validVector(pos)||!validVector(delta))throw TypeError('FPhysics.character.move: finite vectors required');p.set(pos);v.set(delta);out.grounded=false;out.handle=0;out.nx=out.ny=out.nz=0;
+      for(let pass=0;pass<4;pass++){
+        sweepCapsule(p,v,opt,h);if(!h.hit){for(let k=0;k<3;k++)p[k]+=v[k];break;}
+        if(h.depth>1e-6){const lift=Math.min(.5,h.depth+opt.skin);p[0]+=h.nx*lift;p[1]+=h.ny*lift;p[2]+=h.nz*lift;continue;}
+        if(step>0&&h.ny<slope&&(v[0]*v[0]+v[2]*v[2])>1e-12&&delta[1]<=.001){
+          up[0]=0;up[1]=-.06;up[2]=0;sweepCapsule(p,up,opt,support);
+          if(support.hit&&support.ny>=slope){up[1]=step;sweepCapsule(p,up,opt,landing);if(!landing.hit){candidate.set(p);candidate[1]+=step;up[0]=v[0];up[1]=0;up[2]=v[2];sweepCapsule(candidate,up,opt,landing);if(!landing.hit){candidate[0]+=v[0];candidate[2]+=v[2];up[0]=0;up[1]=-step-.06;up[2]=0;sweepCapsule(candidate,up,opt,landing);if(landing.hit&&landing.ny>=slope){candidate[1]+=up[1]*landing.fraction;p.set(candidate);out.grounded=true;out.handle=landing.handle;out.nx=landing.nx;out.ny=landing.ny;out.nz=landing.nz;break;}}}}
+        }
+        for(let k=0;k<3;k++){p[k]+=v[k]*h.fraction;v[k]*=1-h.fraction;}const normal=v[0]*h.nx+v[1]*h.ny+v[2]*h.nz;if(normal<0){v[0]-=h.nx*normal;v[1]-=h.ny*normal;v[2]-=h.nz*normal;}out.nx=h.nx;out.ny=h.ny;out.nz=h.nz;if(h.ny>=slope){out.grounded=true;out.handle=h.handle;}if(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]<1e-16)break;
+      }
+      if(delta[1]<=.001&&!out.grounded){up[0]=0;up[1]=-.06;up[2]=0;sweepCapsule(p,up,opt,h);if(h.hit&&h.ny>=slope){p[1]+=up[1]*h.fraction;out.grounded=true;out.handle=h.handle;out.nx=h.nx;out.ny=h.ny;out.nz=h.nz;}}
+      out.x=p[0];out.y=p[1];out.z=p[2];out.vx=out.vy=out.vz=0;if(out.handle){const i=out.handle&4095;out.vx=V[i*6];out.vy=V[i*6+1];out.vz=V[i*6+2];}return out;
+    }return {move};
+  }
+  w.sweepCapsule=sweepCapsule;w.character=character;return {setStatics,filter,govern};
+}
+G.FPhysicsGeometry={merge,attach};
+})(typeof window!=='undefined'?window:globalThis);
+</script>
 <script data-module="physics.js" data-role="shared" data-worker>/* FERRO — FPhysics: deterministic rigid bodies (oriented boxes, spheres, capsules) against static boxes.
    Rules: no clock, no random source; Math.sqrt/abs/floor/imul/min/max only (trig only in TRIG blocks);
    fixed iteration order; typed arrays; no allocation per step; canonical derived values; -0 normalised.
@@ -5795,8 +5912,10 @@ G.FSceneReflections={create,shader};
     return wrong(where,'material must be a name or an index of MATERIALS');
   }
   function create(o){
-    const C=settings(o),bounded=o.bounded===true,fp=fingerprintOf(C)+(bounded?'/B1':''),clock=typeof o.clock==='function'?o.clock:null;
+    const C=settings(o),bounded=o.bounded===true,geometry=o.geometry===true,fp=fingerprintOf(C)+(bounded?'/B1':'')+(geometry?'/G1':''),clock=typeof o.clock==='function'?o.clock:null;
     if(o.bounded!==undefined&&typeof o.bounded!=='boolean')fail('bounded must be a boolean');
+    if(geometry&&!G.FPhysicsGeometry)fail('geometry module required');
+    let geometryApi=null;
     const NB=C.capacity+1,MS=C.maxStatics,MC=C.maxContacts,KM=NB+MS+1;
     const minX=C.bounds.minX,maxX=C.bounds.maxX,minZ=C.bounds.minZ,maxZ=C.bounds.maxZ,cell=C.cell;
     const GW=Math.floor((maxX-minX)/cell)+1,GD=Math.floor((maxZ-minZ)/cell)+1,CELLS=GW*GD;
@@ -5963,9 +6082,9 @@ G.FSceneReflections={create,shader};
       if(floors===undefined||floors===null)floors=[];
       if(!Array.isArray(boxes))wrong(where,'boxes must be an array');
       if(!Array.isArray(floors))wrong(where,'floors must be an array');
-      const n=(C.ground===null?0:1)+boxes.length+floors.length;
+      let n=(C.ground===null?0:1)+boxes.length+floors.length,merged=0;
       if(n>MS)wrong(where,n+' statics exceed maxStatics ('+MS+')');
-      const nP=new Float64Array(n*3),nH=new Float64Array(n*3),nR=new Float64Array(n*9),nA=new Float64Array(n*6),nF=new Float64Array(n),nE=new Float64Array(n),nO=new Uint8Array(n),nM=new Int32Array(n);
+      let nP=new Float64Array(n*3),nH=new Float64Array(n*3),nR=new Float64Array(n*9),nA=new Float64Array(n*6),nF=new Float64Array(n),nE=new Float64Array(n),nO=new Uint8Array(n),nM=new Int32Array(n);
       const put=(s,x0,y0,z0,x1,y1,z1,f,e,m)=>{
         const p=s*3,b=s*6;nP[p]=(x0+x1)/2;nP[p+1]=(y0+y1)/2;nP[p+2]=(z0+z1)/2;nH[p]=(x1-x0)/2;nH[p+1]=(y1-y0)/2;nH[p+2]=(z1-z0)/2;
         nR[s*9]=nR[s*9+4]=nR[s*9+8]=1;for(let k=0;k<3;k++){nA[b+k]=nP[p+k]-nH[p+k];nA[b+3+k]=nP[p+k]+nH[p+k];}nF[s]=f;nE[s]=e;nM[s]=m;
@@ -6004,6 +6123,7 @@ G.FSceneReflections={create,shader};
         if(a)obb(s++,[x+a*g,y-g,z],[fw/2*L,T/2,fd/2],[u,-a*u,0,a*u,u,0,0,0,1],...sf);
         else obb(s++,[x,y-g,z+c*g],[fw/2,T/2,fd/2*L],[1,0,0,0,u,c*u,0,-c*u,u],...sf);
       }
+      if(geometry){const a={P:nP,H:nH,R:nR,A:nA,F:nF,E:nE,O:nO,M:nM},count=G.FPhysicsGeometry.merge(a,n);merged=n-count;n=count;nP=nP.subarray(0,n*3);nH=nH.subarray(0,n*3);nR=nR.subarray(0,n*9);nA=nA.subarray(0,n*6);nF=nF.subarray(0,n);nE=nE.subarray(0,n);nO=nO.subarray(0,n);nM=nM.subarray(0,n);}
       const same=(a,b)=>{for(let k=0;k<a.length;k++)if(!Object.is(a[k],b[k]))return false;return true;};
       if(decor&&n===NS&&same(nP,sP)&&same(nH,sH)&&same(nR,sR)&&same(nO,sO)&&same(nF,sF)&&same(nE,sE)&&same(nM,sM))return {statics:NS,merged:0,masked:0,woken:0};
       decor=true;NS=n;sP=nP;sH=nH;sR=nR;sA=nA;sF=nF;sE=nE;sO=nO;sM=nM;sT=new Int32Array(n);stamp=0;
@@ -6022,10 +6142,10 @@ G.FSceneReflections={create,shader};
         const b=i*6;if(local&&(BB[b]>local.maxX+.12||BB[b+3]<local.minX-.12||BB[b+1]>local.maxY+.12||BB[b+4]<local.minY-.12||BB[b+2]>local.maxZ+.12||BB[b+5]<local.minZ-.12))continue;wake(i);woken++;
       }
       let h=fnv(2166136261,n);
-      const words=a=>{const u=new Uint32Array(a.buffer);for(let k=0;k<u.length;k++)h=fnv(h,u[k]);};
+      const words=a=>{const u=new Uint32Array(a.buffer,a.byteOffset,a.byteLength/4);for(let k=0;k<u.length;k++)h=fnv(h,u[k]);};
       words(sP);words(sH);words(sR);for(let k=0;k<n;k++)h=fnv(h,sO[k]);words(sF);words(sE);for(let k=0;k<n;k++)h=fnv(h,sM[k]>>>0);
-      w.staticsHash=(h>>>0).toString(16).padStart(8,'0');stats.statics=n;
-      return {statics:n,merged:0,masked:0,woken};
+      w.staticsHash=(h>>>0).toString(16).padStart(8,'0');stats.statics=n;geometryApi?.setStatics({count:n,P:sP,H:sH,R:sR,A:sA,O:sO});
+      return {statics:n,merged,masked:geometry?stats.internalFaces:0,woken};
     }
 
     // ---- Bodies (outside the step; may allocate): boxes, spheres and capsules, dynamic (awake, asleep or pending) or
@@ -6288,6 +6408,7 @@ G.FSceneReflections={create,shader};
       if(EV)contactEvents();
       clamp(na);
       if(clock)phase(1);
+      if(geometry)for(let c=0;c<nc;c++){const a=cA[c],b=cB[c];if(FL[a]&ASLEEP&&!WK[a]&&cMax[c]*IM[a]>C.wakeSpeed){WK[a]=1;nwake++;}if(FL[b]&ASLEEP&&!WK[b]&&cMax[c]*IM[b]>C.wakeSpeed){WK[b]=1;nwake++;}}
       cacheStore();                                       // 14.
       if(nwake>0){for(let i=1;i<top;i++)if(WK[i]){WK[i]=0;if(FL[i]&ASLEEP){wake(i);TOUCH[i]=1;}}nwake=0;}   // 15. deferred wakes
       const slept=islands(na);                            // 17.
@@ -6297,7 +6418,7 @@ G.FSceneReflections={create,shader};
         P[p]+=0;P[p+1]+=0;P[p+2]+=0;Q[q]+=0;Q[q+1]+=0;Q[q+2]+=0;Q[q+3]+=0;V[v]+=0;V[v+1]+=0;V[v+2]+=0;V[v+3]+=0;V[v+4]+=0;V[v+5]+=0;
         derive(i);ACT[i]=0;
       }
-      stats.awake=na-nk-slept;stats.contacts=nc;stats.manifolds=nm;
+      stats.awake=na-nk-slept;if(geometry){stats.awake=0;for(let i=1;i<top;i++)if((FL[i]&31)===ALIVE)stats.awake++;}stats.contacts=nc;stats.manifolds=nm;
       if(clock)phase(3);
     }
 
@@ -6330,7 +6451,8 @@ G.FSceneReflections={create,shader};
             for(let q=sStart[c],e=sStart[c+1];q<e;q++){
               const s=sItems[q];if(sT[s]===stamp)continue;sT[s]=stamp;const s6=s*6;
               if(FB[a6]>sA[s6+3]||FB[a6+3]<sA[s6]||FB[a6+1]>sA[s6+4]||FB[a6+4]<sA[s6+1]||FB[a6+2]>sA[s6+5]||FB[a6+5]<sA[s6+2])continue;
-              tests++;SCR[0]=marginA;const k=SH[a]?turn(boxRound(sP,sH,s*3,sR,s*9,a)):boxBox(P,H,a3,R,a9,sP,sH,s*3,sR,s*9);
+              tests++;SCR[0]=marginA;let k=SH[a]?turn(boxRound(sP,sH,s*3,sR,s*9,a)):boxBox(P,H,a3,R,a9,sP,sH,s*3,sR,s*9);
+              if(k&&geometryApi)k=geometryApi.filter(s,k,mN,mP,mS,mI);
               if(k){SCR[3]=Math.sqrt(FR[a]*sF[s]);SCR[4]=RE[a]>sE[s]?RE[a]:sE[s];emit(a,0,a*KM+NB+s,k);}
             }
           }
@@ -6345,7 +6467,7 @@ G.FSceneReflections={create,shader};
             if(kin&&(g||FL[b]&KINEMATIC)){if(g&&!(FL[b]&KINEMATIC)&&!WK[b]){WK[b]=1;nwake++;}continue;}
             tests++;const lo=a<b?a:b,hi=a<b?b:a,sb=Math.sqrt(V[b6]*V[b6]+V[b6+1]*V[b6+1]+V[b6+2]*V[b6+2]);
             SCR[0]=marginA+sb*h;const k=SH[lo]|SH[hi]?bodies(lo,hi):boxBox(P,H,lo*3,R,lo*9,P,H,hi*3,R,hi*9);
-            if(k){SCR[3]=Math.sqrt(FR[a]*FR[b]);SCR[4]=RE[a]>RE[b]?RE[a]:RE[b];emit(lo,hi,lo*KM+hi,k);if(g===1&&!WK[b]&&!(FL[b]&KINEMATIC)){WK[b]=1;nwake++;}}
+            if(k){SCR[3]=Math.sqrt(FR[a]*FR[b]);SCR[4]=RE[a]>RE[b]?RE[a]:RE[b];emit(lo,hi,lo*KM+hi,k);if(!geometry&&g===1&&!WK[b]&&!(FL[b]&KINEMATIC)){WK[b]=1;nwake++;}}
           }
         }
       }
@@ -6519,6 +6641,7 @@ G.FSceneReflections={create,shader};
         }
         const dvx=V[b6]+V[b6+4]*rbz-V[b6+5]*rby-V[a6]-(V[a6+4]*raz-V[a6+5]*ray),dvy=V[b6+1]+V[b6+5]*rbx-V[b6+3]*rbz-V[a6+1]-(V[a6+5]*rax-V[a6+3]*raz),dvz=V[b6+2]+V[b6+3]*rby-V[b6+4]*rbx-V[a6+2]-(V[a6+3]*ray-V[a6+4]*rax);
         cV0[c]=dvx*nx+dvy*ny+dvz*nz;cMax[c]=0;
+        if(geometry&&cV0[c]<-C.wakeSpeed){const a=cA[c],b=cB[c];if(FL[a]&ASLEEP&&!WK[a]){WK[a]=1;nwake++;}if(FL[b]&ASLEEP&&!WK[b]){WK[b]=1;nwake++;}}
       }
     }
     function warm(){
@@ -6607,6 +6730,7 @@ G.FSceneReflections={create,shader};
       for(let n=0;n<na;n++){const i=AL[n];if(ACT[i]!==1)continue;const r=find(i);if(ST[i]<IMIN[r])IMIN[r]=ST[i];}
       let slept=0;
       for(let n=0;n<na;n++){const i=AL[n],fallback=bounded&&TOUCH[i]&&AT[i]>=C.fallbackSteps&&FN[i]>=C.windowSteps;if(ACT[i]===1&&(IMIN[find(i)]>=SCR[21]||fallback)){FL[i]|=ASLEEP;const v=i*6;V[v]=V[v+1]=V[v+2]=V[v+3]=V[v+4]=V[v+5]=0;slept++;if(fallback)stats.fallbackSleep++;}}
+      if(bounded&&geometryApi)slept+=geometryApi.govern(AL,ACT,UF,na,cA,cB,cN,cS,nc,C.maxAwake);
       if(slept>0){stats.sleeping+=slept;restDirty=true;}
       return slept;
     }
@@ -6714,6 +6838,7 @@ G.FSceneReflections={create,shader};
 
     const w={config:C,fingerprint:fp,staticsHash:'',stats,events,joints,addJoint,removeJoint,validJoint:h=>jointSlot(h)>0,phaseMs:PH,setStatics,updateStatics:setStatics,addBody,removeBody,teleport,queryBox,wakeBox,ray,sample,valid,isAsleep,isLost,body,
       impulse,setVelocity,setKinematic,blast,pose,matrix,step,snapshot,restore,hash};
+    if(geometry)geometryApi=G.FPhysicsGeometry.attach(w,{P,H,HR,R,BB,SH,FL,GRP,GEN,V,count:()=>top});
     setStatics([],[]);
     return w;
   }
@@ -6756,11 +6881,12 @@ function props(world,solids){
   }return out;
 }
 function create(world,solids,host={}){
-  const F=G.FPhysics,s=host.state,options={bounded:true,bounds:world.bounds,capacity:384,maxStatics:Math.max(4096,solids.length+(world.walkable||[]).length+128),maxContacts:8192,maxJoints:24,ground:(world.walkable||[]).length?null:0,massMin:3,massMax:150};
+  const F=G.FPhysics,s=host.state,options={bounded:true,geometry:!!G.FPhysicsGeometry&&host.geometry!==false,bounds:world.bounds,capacity:384,maxStatics:Math.max(4096,solids.length+(world.walkable||[]).length+128),maxContacts:8192,maxJoints:24,ground:(world.walkable||[]).length?null:0,massMin:3,massMax:150};
   let phys=F.create(options),rows=[],systems=[],proxies=[],rigs=[],player=0,serial=0,tick=0,dirty=false,latestSolids=solids;
   const impactAt=new Float64Array((world.enemies?.length||0)+1).fill(-1000),energyBefore=new Float64Array(4096);
   const navMap=new Map(),navBoxes=[],navPending=new Map();
   const byHandle=new Map(),rub=new Map(),near=new Int32Array(384),sample=new Float64Array(18),pose=new Float64Array(7),rotation=new Float64Array(3),box={},hit={},pushed=new Int32Array(4096).fill(-1),soundAt=new Float64Array(4096).fill(-1000);
+  const capsuleFrom=new Float64Array(3),capsuleDelta=new Float64Array(3),capsuleHit={},capsuleOptions={radius:.28,height:1.8,mask:10,statics:false,skin:.001};
   phys.setStatics(solids,world.walkable||[]);
   function add(def,asleep=false){
     const size=def.size,shape=def.shape==='capsule'?'capsule':def.shape==='sphere'?'sphere':'box';
@@ -6791,12 +6917,13 @@ function create(world,solids,host={}){
   function remove(q){if(navMap.has(q.handle))navPending.set(q.handle,null);phys.removeBody(q.handle);byHandle.delete(q.handle);if(q.rubbleId!==null)rub.delete(q.rubbleId);const i=rows.indexOf(q);if(i>=0)rows.splice(i,1);}
   function query(x,y,z,r,height){box.minX=x-r;box.maxX=x+r;box.minY=y;box.maxY=y+height;box.minZ=z-r;box.maxZ=z+r;return phys.queryBox(box,near,10);}
   function blocked(actor,x,z,r,y,height=1.8){
-    const n=query(x,y+.025,z,r,height-.05);let blocked=false;
-    for(let j=0;j<n;j++){const h=near[j];if(!phys.sample(h,sample))continue;const dx=Math.max(sample[0]-x,0,x-sample[3]),dz=Math.max(sample[2]-z,0,z-sample[5]);if(dx*dx+dz*dz>=r*r||sample[4]<=y+.035||sample[1]>=y+height-.04)continue;
+    const exact=phys.sweepCapsule&&height>=r*2;let n;
+    if(exact){capsuleFrom[0]=actor?.x??x;capsuleFrom[1]=y+.025;capsuleFrom[2]=actor?.z??z;capsuleDelta[0]=x-capsuleFrom[0];capsuleDelta[1]=0;capsuleDelta[2]=z-capsuleFrom[2];capsuleOptions.radius=r;capsuleOptions.height=Math.max(r*2,height-.05);capsuleOptions.ignoreInitial=false;capsuleOptions.allowExit=!!actor;phys.sweepCapsule(capsuleFrom,capsuleDelta,capsuleOptions,capsuleHit);n=capsuleHit.hit&&capsuleHit.handle?1:0;if(n)near[0]=capsuleHit.handle;}else n=query(x,y+.025,z,r,height-.05);let blocked=false;
+    for(let j=0;j<n;j++){const h=near[j];if(!phys.sample(h,sample))continue;const dx=Math.max(sample[0]-x,0,x-sample[3]),dz=Math.max(sample[2]-z,0,z-sample[5]);if(!exact&&(dx*dx+dz*dz>=r*r||sample[4]<=y+.035||sample[1]>=y+height-.04))continue;
       blocked=true;const d=actor?Math.hypot(x-actor.x,z-actor.z):0,mass=sample[15];if(d>1e-6&&d<.5&&mass<60&&pushed[h&4095]!==tick){pushed[h&4095]=tick;const q=byHandle.get(h),force=Math.min(60,mass*Math.min(4,d*60)*.6);phys.impulse(h,x,y+.6,z,(x-actor.x)/d*force,0,(z-actor.z)/d*force);if(actor===s?.player&&q){q.credit=s.time;q.profile=s.activeProfile||null;}}
     }return blocked;
   }
-  function support(x,z,r,ceiling){let y=-Infinity,n=query(x,-100,z,r,ceiling+100.08);for(let j=0;j<n;j++){phys.sample(near[j],sample);const dx=Math.max(sample[0]-x,0,x-sample[3]),dz=Math.max(sample[2]-z,0,z-sample[5]);if(dx*dx+dz*dz<r*r&&sample[4]<=ceiling+.025&&sample[4]>y)y=sample[4];}return y;}
+  function support(x,z,r,ceiling){if(phys.sweepCapsule){capsuleFrom[0]=x;capsuleFrom[1]=ceiling+.03;capsuleFrom[2]=z;capsuleDelta[0]=0;capsuleDelta[1]=-Math.max(0,ceiling+100.03);capsuleDelta[2]=0;capsuleOptions.radius=r;capsuleOptions.height=Math.max(1.8,2*r);capsuleOptions.ignoreInitial=true;phys.sweepCapsule(capsuleFrom,capsuleDelta,capsuleOptions,capsuleHit);return capsuleHit.hit&&capsuleHit.ny>=.7?capsuleFrom[1]+capsuleDelta[1]*capsuleHit.fraction:-Infinity;}let y=-Infinity,n=query(x,-100,z,r,ceiling+100.08);for(let j=0;j<n;j++){phys.sample(near[j],sample);const dx=Math.max(sample[0]-x,0,x-sample[3]),dz=Math.max(sample[2]-z,0,z-sample[5]);if(dx*dx+dz*dz<r*r&&sample[4]<=ceiling+.025&&sample[4]>y)y=sample[4];}return y;}
   function shoot(point,direction,power,impulse,credit=true){
     const n=query(point[0],point[1]-.13,point[2],.13,.26);if(!n)return false;let q=null;for(let j=0;j<n&&!q;j++)q=byHandle.get(near[j]);if(!q)return false;
     const dir=direction||[0,1,0];phys.impulse(q.handle,point[0],point[1],point[2],dir[0]*impulse,dir[1]*impulse,dir[2]*impulse);
@@ -6860,7 +6987,7 @@ function create(world,solids,host={}){
   function snapshot(){return {version:1,serial,player,systems:copy(systems),rigs:copy(rigs),proxies:copy(proxies),impacts:Array.from(impactAt),navigation:copy({boxes:navBoxes,pending:Array.from(navPending)}),rows:copy(rows),physics:phys.snapshot()};}
   function restore(value){
     if(!value||value.version!==1||!Number.isInteger(value.serial)||value.serial<0||!Array.isArray(value.rows)||value.rows.length>384||!Array.isArray(value.systems)||JSON.stringify(value.systems)!==JSON.stringify(systems)||value.player!==player||!Array.isArray(value.rigs)||JSON.stringify(value.rigs)!==JSON.stringify(rigs)||!Array.isArray(value.proxies)||value.proxies.length!==proxies.length||!value.proxies.every((q,i)=>q.handle===proxies[i].handle&&Number.isInteger(q.enemy)&&q.enemy>=-1&&q.enemy<(world.enemies?.length||0))||!Array.isArray(value.impacts)||value.impacts.length!==impactAt.length||!value.impacts.every(v=>Number.isFinite(v)&&v>=-1000&&v<=1e9))throw Error('Invalid rigid bodies');
-    const next=F.create(options);next.setStatics(latestSolids,world.walkable||[]);next.restore(value.physics);const handles=new Set(),ids=new Set(),rubbleIds=new Set(),projectileIds=new Set(),reserved=new Set([player,...systems.map(q=>q.handle),...proxies.map(q=>q.handle)]);for(const h of reserved)if(h&&(!next.sample(h,sample)||!(sample[16]&4)))throw Error('Invalid physical actor');
+    const next=F.create({...options,geometry:typeof value.physics?.fp==='string'&&value.physics.fp.endsWith('/G1')});next.setStatics(latestSolids,world.walkable||[]);next.restore(value.physics);const handles=new Set(),ids=new Set(),rubbleIds=new Set(),projectileIds=new Set(),reserved=new Set([player,...systems.map(q=>q.handle),...proxies.map(q=>q.handle)]);for(const h of reserved)if(h&&(!next.sample(h,sample)||!(sample[16]&4)))throw Error('Invalid physical actor');
     for(const q of value.rows){if(!q||!Number.isInteger(q.id)||q.id<1||q.id>value.serial||ids.has(q.id)||handles.has(q.handle)||reserved.has(q.handle)||!next.valid(q.handle)||!['prop','barrel','rubble','wreck','grenade'].includes(q.kind)||!['box','bevel','sphere','octa','cylinder','capsule'].includes(q.shape)||!Array.isArray(q.size)||q.size.length!==3||!q.size.every(v=>Number.isFinite(v)&&v>0&&v<=4)||!Number.isFinite(q.hp)||q.hp<0||q.hp>10||!Number.isFinite(q.fuse)||q.fuse<-.1&&q.fuse!==-1||q.fuse>.36||!Number.isFinite(q.credit)||!['light','heavy',null].includes(q.profile))throw Error('Invalid physical metadata');if(!Number.isInteger(q.mat)||q.mat<0||q.mat>12||q.color!==undefined&&(!Array.isArray(q.color)||q.color.length!==3||!q.color.every(v=>Number.isFinite(v)&&v>=0&&v<=2)))throw Error('Invalid physical appearance');
       if(q.kind==='rubble'){if(!Number.isInteger(q.rubbleId)||q.rubbleId<1||rubbleIds.has(q.rubbleId))throw Error('Invalid rubble reference');rubbleIds.add(q.rubbleId);}else if(q.rubbleId!==null)throw Error('Unexpected rubble reference');
       if(q.kind==='grenade'){if(!Number.isInteger(q.projectileId)||q.projectileId<1||projectileIds.has(q.projectileId))throw Error('Invalid projectile reference');projectileIds.add(q.projectileId);}else if(q.projectileId!==null)throw Error('Unexpected projectile reference');
@@ -14564,7 +14691,7 @@ function createPilot(sim,world,opt={}){
     const list=objectives().filter(o=>!(blocked.get(o.key)>s.time));
     list.sort((a,c)=>a.pri-c.pri||Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(c.x-p.x,c.z-p.z));
     for(const o of list){
-      if(o.boss&&boss()?.bossAwake){goal=o;goalKey=o.key;path=[];wi=0;return true;}
+      if(o.boss&&boss()?.bossAwake&&Math.hypot(p.x-boss().x,p.z-boss().z)<30){goal=o;goalKey=o.key;path=[];wi=0;return true;}
       if(Math.hypot(o.x-p.x,o.z-p.z)<o.reach&&Math.abs((o.y||0)-p.y)<.8){goal=o;goalKey=o.key;path=[];wi=0;return true;}
       let r=yield* astar(p.x,p.z,o.x,o.z);if(!r){r=yield* astar(p.x,p.z,o.x,o.z,true);if(r)stats.padRoutes++;}
       if(r){goal=o;if(goalKey!==o.key){goalKey=o.key;bestGoalDist=Infinity;lastGoalProgressT=s.time;}path=r;wi=0;return true;}
@@ -14635,7 +14762,7 @@ function createPilot(sim,world,opt={}){
       const gd=Math.hypot(goal.x-p.x,goal.z-p.z);if(gd<bestGoalDist-.5){bestGoalDist=gd;lastGoalProgressT=t;}
     }
     // combat : s'arrêter et mitrailler quand une cible visible est proche ; reculer si elle colle ; tourner autour du colosse
-    const fightBoss=B&&B.hp>0&&B.bossAwake&&tg===B;
+    const fightBoss=B&&B.hp>0&&B.bossAwake&&tg===B&&dT<30;
     if(tg&&!fightBoss&&dT<20&&t<holdUntil+0){/* maintien en cours */}
     if(tg&&!fightBoss){
       if(t>strafeFlipAt){strafe=-strafe;strafeFlipAt=t+1.1+((tg.id*7)%5)*.17;}
@@ -14651,7 +14778,7 @@ function createPilot(sim,world,opt={}){
     // 5) sortie de blocage : aucun progrès de position alors qu'on veut bouger
     if(t-lastProgressT>.9){
       const d=Math.hypot(p.x-lastProgressX,p.z-lastProgressZ);
-      if(moving&&d<.35&&!tg){stuckLevel++;replanAt=0;if(stuckLevel>=2){unstickUntil=t+.7;unstickDir=-unstickDir;stats.unstick++;edgeKnown.fill(0);cellKnown.fill(0);edgeOpen.fill(0);}if(stuckLevel>=5&&goal){blocked.set(goal.key,t+10);stuckLevel=0;}}
+      if(moving&&(d<.35||goal?.boss&&!fightBoss&&t-lastGoalProgressT>8)&&(!tg||tg===B)){stuckLevel++;replanAt=0;if(stuckLevel>=2){unstickUntil=t+.7;unstickDir=-unstickDir;stats.unstick++;edgeKnown.fill(0);cellKnown.fill(0);edgeOpen.fill(0);}if(stuckLevel>=5&&goal){blocked.set(goal.key,t+10);stuckLevel=0;}}
       else if(d>=.35)stuckLevel=0;
       lastProgressT=t;lastProgressX=p.x;lastProgressZ=p.z;
     }
@@ -14684,7 +14811,7 @@ function createPilot(sim,world,opt={}){
     if(goal?.fly&&Math.hypot(goal.x-p.x,goal.z-p.z)<12){const dx=goal.x-p.x,dz=goal.z-p.z,d=Math.hypot(dx,dz),fly=p.y<goal.fly+.65;input.moveX=d>.55?(dx*cy+dz*sy)/d:0;input.moveY=d>.55?(dx*sy-dz*cy)/d:0;input.jump=!p.airborne;input.jumpHeld=fly;input.sprint=false;input.dash=false;input.fire=input.fireLeft=false;unstickUntil=0;lastProgressT=t;}
     // Local steering uses the current collision boxes (the A* projection
     // deliberately ignores the whole swept footprint of a moving blade).
-    if(moving&&!fightBoss&&!goal?.fly&&!p.airborne){
+    if(moving&&!goal?.fly&&!p.airborne){
       const len=Math.hypot(mx,mz)||1,dx=mx/len,dz=mz/len;
       const rigid=sim.rigid,surface=(x,z,ceiling)=>Math.max(sim.ground(x,z),rigid?.support(x,z,.3,ceiling)??-Infinity);
       const clear=(x,z)=>{for(const d of [.45,.85]){const px=p.x+x*d,pz=p.z+z*d,gy=surface(px,pz,p.y+.42);if(gy-p.y>.43||p.y-gy>1.4||sim.blocked(px,pz,.3,gy)||rigid?.obstacle(px,pz,.3,gy,1.8))return false;}return true;};
@@ -15733,7 +15860,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.9.2',simHash:'8f65d2f1fa16716a281cb4d989dc49a7e7fa950354692d19675075e32082bd8b',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.9.2',simHash:'79d98ecd46f11a870a8033406301a326f9f8f3622b6e4d93d427f90873202105',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){

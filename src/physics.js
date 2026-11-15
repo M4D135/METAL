@@ -93,8 +93,10 @@
     return wrong(where,'material must be a name or an index of MATERIALS');
   }
   function create(o){
-    const C=settings(o),bounded=o.bounded===true,fp=fingerprintOf(C)+(bounded?'/B1':''),clock=typeof o.clock==='function'?o.clock:null;
+    const C=settings(o),bounded=o.bounded===true,geometry=o.geometry===true,fp=fingerprintOf(C)+(bounded?'/B1':'')+(geometry?'/G1':''),clock=typeof o.clock==='function'?o.clock:null;
     if(o.bounded!==undefined&&typeof o.bounded!=='boolean')fail('bounded must be a boolean');
+    if(geometry&&!G.FPhysicsGeometry)fail('geometry module required');
+    let geometryApi=null;
     const NB=C.capacity+1,MS=C.maxStatics,MC=C.maxContacts,KM=NB+MS+1;
     const minX=C.bounds.minX,maxX=C.bounds.maxX,minZ=C.bounds.minZ,maxZ=C.bounds.maxZ,cell=C.cell;
     const GW=Math.floor((maxX-minX)/cell)+1,GD=Math.floor((maxZ-minZ)/cell)+1,CELLS=GW*GD;
@@ -261,9 +263,9 @@
       if(floors===undefined||floors===null)floors=[];
       if(!Array.isArray(boxes))wrong(where,'boxes must be an array');
       if(!Array.isArray(floors))wrong(where,'floors must be an array');
-      const n=(C.ground===null?0:1)+boxes.length+floors.length;
+      let n=(C.ground===null?0:1)+boxes.length+floors.length,merged=0;
       if(n>MS)wrong(where,n+' statics exceed maxStatics ('+MS+')');
-      const nP=new Float64Array(n*3),nH=new Float64Array(n*3),nR=new Float64Array(n*9),nA=new Float64Array(n*6),nF=new Float64Array(n),nE=new Float64Array(n),nO=new Uint8Array(n),nM=new Int32Array(n);
+      let nP=new Float64Array(n*3),nH=new Float64Array(n*3),nR=new Float64Array(n*9),nA=new Float64Array(n*6),nF=new Float64Array(n),nE=new Float64Array(n),nO=new Uint8Array(n),nM=new Int32Array(n);
       const put=(s,x0,y0,z0,x1,y1,z1,f,e,m)=>{
         const p=s*3,b=s*6;nP[p]=(x0+x1)/2;nP[p+1]=(y0+y1)/2;nP[p+2]=(z0+z1)/2;nH[p]=(x1-x0)/2;nH[p+1]=(y1-y0)/2;nH[p+2]=(z1-z0)/2;
         nR[s*9]=nR[s*9+4]=nR[s*9+8]=1;for(let k=0;k<3;k++){nA[b+k]=nP[p+k]-nH[p+k];nA[b+3+k]=nP[p+k]+nH[p+k];}nF[s]=f;nE[s]=e;nM[s]=m;
@@ -302,6 +304,7 @@
         if(a)obb(s++,[x+a*g,y-g,z],[fw/2*L,T/2,fd/2],[u,-a*u,0,a*u,u,0,0,0,1],...sf);
         else obb(s++,[x,y-g,z+c*g],[fw/2,T/2,fd/2*L],[1,0,0,0,u,c*u,0,-c*u,u],...sf);
       }
+      if(geometry){const a={P:nP,H:nH,R:nR,A:nA,F:nF,E:nE,O:nO,M:nM},count=G.FPhysicsGeometry.merge(a,n);merged=n-count;n=count;nP=nP.subarray(0,n*3);nH=nH.subarray(0,n*3);nR=nR.subarray(0,n*9);nA=nA.subarray(0,n*6);nF=nF.subarray(0,n);nE=nE.subarray(0,n);nO=nO.subarray(0,n);nM=nM.subarray(0,n);}
       const same=(a,b)=>{for(let k=0;k<a.length;k++)if(!Object.is(a[k],b[k]))return false;return true;};
       if(decor&&n===NS&&same(nP,sP)&&same(nH,sH)&&same(nR,sR)&&same(nO,sO)&&same(nF,sF)&&same(nE,sE)&&same(nM,sM))return {statics:NS,merged:0,masked:0,woken:0};
       decor=true;NS=n;sP=nP;sH=nH;sR=nR;sA=nA;sF=nF;sE=nE;sO=nO;sM=nM;sT=new Int32Array(n);stamp=0;
@@ -320,10 +323,10 @@
         const b=i*6;if(local&&(BB[b]>local.maxX+.12||BB[b+3]<local.minX-.12||BB[b+1]>local.maxY+.12||BB[b+4]<local.minY-.12||BB[b+2]>local.maxZ+.12||BB[b+5]<local.minZ-.12))continue;wake(i);woken++;
       }
       let h=fnv(2166136261,n);
-      const words=a=>{const u=new Uint32Array(a.buffer);for(let k=0;k<u.length;k++)h=fnv(h,u[k]);};
+      const words=a=>{const u=new Uint32Array(a.buffer,a.byteOffset,a.byteLength/4);for(let k=0;k<u.length;k++)h=fnv(h,u[k]);};
       words(sP);words(sH);words(sR);for(let k=0;k<n;k++)h=fnv(h,sO[k]);words(sF);words(sE);for(let k=0;k<n;k++)h=fnv(h,sM[k]>>>0);
-      w.staticsHash=(h>>>0).toString(16).padStart(8,'0');stats.statics=n;
-      return {statics:n,merged:0,masked:0,woken};
+      w.staticsHash=(h>>>0).toString(16).padStart(8,'0');stats.statics=n;geometryApi?.setStatics({count:n,P:sP,H:sH,R:sR,A:sA,O:sO});
+      return {statics:n,merged,masked:geometry?stats.internalFaces:0,woken};
     }
 
     // ---- Bodies (outside the step; may allocate): boxes, spheres and capsules, dynamic (awake, asleep or pending) or
@@ -586,6 +589,7 @@
       if(EV)contactEvents();
       clamp(na);
       if(clock)phase(1);
+      if(geometry)for(let c=0;c<nc;c++){const a=cA[c],b=cB[c];if(FL[a]&ASLEEP&&!WK[a]&&cMax[c]*IM[a]>C.wakeSpeed){WK[a]=1;nwake++;}if(FL[b]&ASLEEP&&!WK[b]&&cMax[c]*IM[b]>C.wakeSpeed){WK[b]=1;nwake++;}}
       cacheStore();                                       // 14.
       if(nwake>0){for(let i=1;i<top;i++)if(WK[i]){WK[i]=0;if(FL[i]&ASLEEP){wake(i);TOUCH[i]=1;}}nwake=0;}   // 15. deferred wakes
       const slept=islands(na);                            // 17.
@@ -595,7 +599,7 @@
         P[p]+=0;P[p+1]+=0;P[p+2]+=0;Q[q]+=0;Q[q+1]+=0;Q[q+2]+=0;Q[q+3]+=0;V[v]+=0;V[v+1]+=0;V[v+2]+=0;V[v+3]+=0;V[v+4]+=0;V[v+5]+=0;
         derive(i);ACT[i]=0;
       }
-      stats.awake=na-nk-slept;stats.contacts=nc;stats.manifolds=nm;
+      stats.awake=na-nk-slept;if(geometry){stats.awake=0;for(let i=1;i<top;i++)if((FL[i]&31)===ALIVE)stats.awake++;}stats.contacts=nc;stats.manifolds=nm;
       if(clock)phase(3);
     }
 
@@ -628,7 +632,8 @@
             for(let q=sStart[c],e=sStart[c+1];q<e;q++){
               const s=sItems[q];if(sT[s]===stamp)continue;sT[s]=stamp;const s6=s*6;
               if(FB[a6]>sA[s6+3]||FB[a6+3]<sA[s6]||FB[a6+1]>sA[s6+4]||FB[a6+4]<sA[s6+1]||FB[a6+2]>sA[s6+5]||FB[a6+5]<sA[s6+2])continue;
-              tests++;SCR[0]=marginA;const k=SH[a]?turn(boxRound(sP,sH,s*3,sR,s*9,a)):boxBox(P,H,a3,R,a9,sP,sH,s*3,sR,s*9);
+              tests++;SCR[0]=marginA;let k=SH[a]?turn(boxRound(sP,sH,s*3,sR,s*9,a)):boxBox(P,H,a3,R,a9,sP,sH,s*3,sR,s*9);
+              if(k&&geometryApi)k=geometryApi.filter(s,k,mN,mP,mS,mI);
               if(k){SCR[3]=Math.sqrt(FR[a]*sF[s]);SCR[4]=RE[a]>sE[s]?RE[a]:sE[s];emit(a,0,a*KM+NB+s,k);}
             }
           }
@@ -643,7 +648,7 @@
             if(kin&&(g||FL[b]&KINEMATIC)){if(g&&!(FL[b]&KINEMATIC)&&!WK[b]){WK[b]=1;nwake++;}continue;}
             tests++;const lo=a<b?a:b,hi=a<b?b:a,sb=Math.sqrt(V[b6]*V[b6]+V[b6+1]*V[b6+1]+V[b6+2]*V[b6+2]);
             SCR[0]=marginA+sb*h;const k=SH[lo]|SH[hi]?bodies(lo,hi):boxBox(P,H,lo*3,R,lo*9,P,H,hi*3,R,hi*9);
-            if(k){SCR[3]=Math.sqrt(FR[a]*FR[b]);SCR[4]=RE[a]>RE[b]?RE[a]:RE[b];emit(lo,hi,lo*KM+hi,k);if(g===1&&!WK[b]&&!(FL[b]&KINEMATIC)){WK[b]=1;nwake++;}}
+            if(k){SCR[3]=Math.sqrt(FR[a]*FR[b]);SCR[4]=RE[a]>RE[b]?RE[a]:RE[b];emit(lo,hi,lo*KM+hi,k);if(!geometry&&g===1&&!WK[b]&&!(FL[b]&KINEMATIC)){WK[b]=1;nwake++;}}
           }
         }
       }
@@ -817,6 +822,7 @@
         }
         const dvx=V[b6]+V[b6+4]*rbz-V[b6+5]*rby-V[a6]-(V[a6+4]*raz-V[a6+5]*ray),dvy=V[b6+1]+V[b6+5]*rbx-V[b6+3]*rbz-V[a6+1]-(V[a6+5]*rax-V[a6+3]*raz),dvz=V[b6+2]+V[b6+3]*rby-V[b6+4]*rbx-V[a6+2]-(V[a6+3]*ray-V[a6+4]*rax);
         cV0[c]=dvx*nx+dvy*ny+dvz*nz;cMax[c]=0;
+        if(geometry&&cV0[c]<-C.wakeSpeed){const a=cA[c],b=cB[c];if(FL[a]&ASLEEP&&!WK[a]){WK[a]=1;nwake++;}if(FL[b]&ASLEEP&&!WK[b]){WK[b]=1;nwake++;}}
       }
     }
     function warm(){
@@ -905,6 +911,7 @@
       for(let n=0;n<na;n++){const i=AL[n];if(ACT[i]!==1)continue;const r=find(i);if(ST[i]<IMIN[r])IMIN[r]=ST[i];}
       let slept=0;
       for(let n=0;n<na;n++){const i=AL[n],fallback=bounded&&TOUCH[i]&&AT[i]>=C.fallbackSteps&&FN[i]>=C.windowSteps;if(ACT[i]===1&&(IMIN[find(i)]>=SCR[21]||fallback)){FL[i]|=ASLEEP;const v=i*6;V[v]=V[v+1]=V[v+2]=V[v+3]=V[v+4]=V[v+5]=0;slept++;if(fallback)stats.fallbackSleep++;}}
+      if(bounded&&geometryApi)slept+=geometryApi.govern(AL,ACT,UF,na,cA,cB,cN,cS,nc,C.maxAwake);
       if(slept>0){stats.sleeping+=slept;restDirty=true;}
       return slept;
     }
@@ -1012,6 +1019,7 @@
 
     const w={config:C,fingerprint:fp,staticsHash:'',stats,events,joints,addJoint,removeJoint,validJoint:h=>jointSlot(h)>0,phaseMs:PH,setStatics,updateStatics:setStatics,addBody,removeBody,teleport,queryBox,wakeBox,ray,sample,valid,isAsleep,isLost,body,
       impulse,setVelocity,setKinematic,blast,pose,matrix,step,snapshot,restore,hash};
+    if(geometry)geometryApi=G.FPhysicsGeometry.attach(w,{P,H,HR,R,BB,SH,FL,GRP,GEN,V,count:()=>top});
     setStatics([],[]);
     return w;
   }

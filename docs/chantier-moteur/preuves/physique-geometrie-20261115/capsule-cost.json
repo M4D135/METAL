@@ -1,0 +1,100 @@
+{
+  "schema": "metal-geometry-bench-v1",
+  "node": "v24.18.0",
+  "platform": "darwin",
+  "sourceSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "renderer": "601818f20a03fad09168eacd2864365689a4cf985dfde0c13d59a29d47eb5570",
+    "profiles": "086d08e837ae8cc97d51b6c638f206e4e0374352da3a4b286f36def2eb072ce7",
+    "world": "9ecffd872920398ec731cdb74a8080f9dbf85bd42fb28cbf3ccbf89bb9533105",
+    "destruction": "8e7d89cff2428207df42b1feb90e7c785c915ff4f36a6263a4b7b02131692f55",
+    "economy": "1d1d50657864190afdb91639c56142c44714119f54e0685d8a4c4aa4cc6f4dc6",
+    "physics-geometry": "c22965240de6a8f743aad87ff8514aaf7932a1c7f2a3635812b912e5fd9e9653",
+    "physics": "90372b9bbd021a313203d698da47c0ba34b37b5afc8cf961fe027e5a9a8dfc94",
+    "metal-physics": "f9111449cd200cb6cf3f8883fe1cb19ec1e56ee04d9933c68097a77006106c2e",
+    "actors": "6377cdc15c820c593705a2f0cea07ff04d2e30b9d241799269c645d5637dce3f",
+    "simulation": "f90651403d8faac75f00a3a8dd59dca8034a820909faeb5b97115f5dbe731f3a"
+  },
+  "loadedSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "renderer": "601818f20a03fad09168eacd2864365689a4cf985dfde0c13d59a29d47eb5570",
+    "profiles": "086d08e837ae8cc97d51b6c638f206e4e0374352da3a4b286f36def2eb072ce7",
+    "world": "9ecffd872920398ec731cdb74a8080f9dbf85bd42fb28cbf3ccbf89bb9533105",
+    "destruction": "8e7d89cff2428207df42b1feb90e7c785c915ff4f36a6263a4b7b02131692f55",
+    "economy": "1d1d50657864190afdb91639c56142c44714119f54e0685d8a4c4aa4cc6f4dc6",
+    "physics-geometry": "c22965240de6a8f743aad87ff8514aaf7932a1c7f2a3635812b912e5fd9e9653",
+    "physics": "90372b9bbd021a313203d698da47c0ba34b37b5afc8cf961fe027e5a9a8dfc94",
+    "metal-physics": "f9111449cd200cb6cf3f8883fe1cb19ec1e56ee04d9933c68097a77006106c2e",
+    "actors": "6377cdc15c820c593705a2f0cea07ff04d2e30b9d241799269c645d5637dce3f",
+    "simulation": "f90651403d8faac75f00a3a8dd59dca8034a820909faeb5b97115f5dbe731f3a"
+  },
+  "rows": [
+    {
+      "index": 0,
+      "oldStatics": 468,
+      "mergedStatics": 340,
+      "internalFaces": 421,
+      "buildPairWallMs": 8.649040999999997,
+      "queryMedianMicroseconds": 1.0784,
+      "querySamplesMicroseconds": [
+        1.0505,
+        1.0545,
+        1.0784,
+        1.0841,
+        1.1094
+      ],
+      "queryCount": 60000
+    },
+    {
+      "index": 5,
+      "oldStatics": 526,
+      "mergedStatics": 400,
+      "internalFaces": 399,
+      "buildPairWallMs": 7.054708000000005,
+      "queryMedianMicroseconds": 1.2876,
+      "querySamplesMicroseconds": [
+        1.2709,
+        1.2782,
+        1.2876,
+        1.3151,
+        1.3685
+      ],
+      "queryCount": 60000
+    },
+    {
+      "index": 11,
+      "oldStatics": 526,
+      "mergedStatics": 400,
+      "internalFaces": 399,
+      "buildPairWallMs": 5.790625000000034,
+      "queryMedianMicroseconds": 1.3393,
+      "querySamplesMicroseconds": [
+        1.3037,
+        1.3122,
+        1.3393,
+        1.3426,
+        1.3611
+      ],
+      "queryCount": 60000
+    },
+    {
+      "index": 17,
+      "oldStatics": 524,
+      "mergedStatics": 398,
+      "internalFaces": 399,
+      "buildPairWallMs": 5.386707999999999,
+      "queryMedianMicroseconds": 1.4089,
+      "querySamplesMicroseconds": [
+        1.3952,
+        1.4035,
+        1.4089,
+        1.4091,
+        1.4887
+      ],
+      "queryCount": 60000
+    }
+  ],
+  "note": "Five measured batches after one warmup batch; generic capsule including statics near the spawn, mostly clear space, not a dense-contact worst case. Full main-realm CPU time; no VM and no FPS claim."
+}
