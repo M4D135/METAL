@@ -61,13 +61,13 @@
     next.upgrades[reward.personalUpgrade]=Math.min(PERSONAL_RANKS,next.upgrades[reward.personalUpgrade]+1);
     return next;
   }
-  function ammoCaps(profile,options={}){if(!validate(profile))return null;const caps=BASE_CAPS.map(value=>Math.floor(value*(1+.25*profile.upgrades.capacity)));if(options.campaign===true)caps.push(1);return caps;}
+  function ammoCaps(profile,options={}){if(!validate(profile))return null;if(options.capacities!==undefined){const c=options.capacities;return Array.isArray(c)&&c.length===(options.campaign===true?5:4)&&c.every(x=>Number.isSafeInteger(x)&&x>=0&&x<=100000)?c.slice():null;}const caps=BASE_CAPS.map(value=>Math.floor(value*(1+.25*profile.upgrades.capacity)));if(options.campaign===true)caps.push(1);return caps;}
   function catalog(){return ITEMS.map(item=>({...item}));}
   function copyState(state,options={}){
     if(!shape(state,['profile','inventory','hp']))return null;
     const profile=copy(state.profile);if(!profile)return null;
     const campaign=options.campaign===true,caps=ammoCaps(profile,options),inventory=state.inventory;
-    if(!inventory||!Array.isArray(inventory.weapons)||!Array.isArray(inventory.ammo))return null;
+    if(!caps||!inventory||!Array.isArray(inventory.weapons)||!Array.isArray(inventory.ammo))return null;
     const slots=inventory.weapons.length;
     if(!(campaign?[5]:[3,4]).includes(slots)||!shape(inventory,['weapons','ammo'])||Object.keys(inventory.weapons).length!==slots||(campaign?!inventory.weapons.some(Boolean):inventory.weapons[0]!==true)||inventory.ammo.length!==slots||Object.keys(inventory.ammo).length!==slots||!Array.from({length:slots},(_,i)=>i).every(i=>own(inventory.weapons,i)&&typeof inventory.weapons[i]==='boolean'&&own(inventory.ammo,i)&&integer(inventory.ammo[i],caps[i])))return null;
     if(!Number.isFinite(state.hp)||state.hp<0||state.hp>stats(profile).maxHp)return null;
