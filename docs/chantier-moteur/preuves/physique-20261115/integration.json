@@ -1,0 +1,335 @@
+{
+  "schema": "metal-physics-integration-v1",
+  "rows": [
+    {
+      "index": 0,
+      "ready": 119.50762499999999,
+      "props": 90,
+      "types": {
+        "prop": 78,
+        "barrel": 12,
+        "rubble": 117,
+        "wreck": 24
+      },
+      "bodyStats": {
+        "bodies": 287,
+        "awake": 7,
+        "sleeping": 224,
+        "pending": 0,
+        "kinematic": 56,
+        "lost": 0,
+        "statics": 474,
+        "joints": 13,
+        "contacts": 55,
+        "manifolds": 16,
+        "tests": 22,
+        "substeps": 2,
+        "events": 0,
+        "refused": 0,
+        "dropContacts": 0,
+        "forcedSleep": 0,
+        "fallbackSleep": 15,
+        "wakes": 404,
+        "droppedSteps": 0,
+        "broken": 0
+      },
+      "steps": {
+        "p50": 0.1293749999999818,
+        "p99": 1.001874999999984,
+        "max": 5.6386249999999905
+      },
+      "saves": [
+        {
+          "time": 2.9999999999999942,
+          "okay": true,
+          "hash": "43cd71f6",
+          "restored": "43cd71f6",
+          "bytes": 145811
+        },
+        {
+          "time": 5.999999999999984,
+          "okay": true,
+          "hash": "3ae4bb4b",
+          "restored": "3ae4bb4b",
+          "bytes": 211775
+        },
+        {
+          "time": 9.000000000000027,
+          "okay": true,
+          "hash": "ad5d230c",
+          "restored": "ad5d230c",
+          "bytes": 209172
+        },
+        {
+          "time": 12.000000000000176,
+          "okay": true,
+          "hash": "b5455963",
+          "restored": "b5455963",
+          "bytes": 265205
+        },
+        {
+          "time": 15.000000000000325,
+          "okay": true,
+          "hash": "a8184178",
+          "restored": "a8184178",
+          "bytes": 294410
+        },
+        {
+          "time": 18.00000000000026,
+          "okay": true,
+          "hash": "6a18855a",
+          "restored": "6a18855a",
+          "bytes": 291543
+        },
+        {
+          "time": 21.00000000000009,
+          "okay": true,
+          "hash": "e39ae0ec",
+          "restored": "e39ae0ec",
+          "bytes": 291393
+        },
+        {
+          "time": 23.99999999999992,
+          "okay": true,
+          "hash": "7879c2d6",
+          "restored": "7879c2d6",
+          "bytes": 291668
+        },
+        {
+          "time": 26.999999999999748,
+          "okay": true,
+          "hash": "b155b995",
+          "restored": "b155b995",
+          "bytes": 295326
+        },
+        {
+          "time": 29.999999999999577,
+          "okay": true,
+          "hash": "aa082e9e",
+          "restored": "aa082e9e",
+          "bytes": 291928
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "ready": 91.272917,
+      "props": 90,
+      "types": {
+        "prop": 80,
+        "barrel": 10,
+        "rubble": 114,
+        "wreck": 36
+      },
+      "bodyStats": {
+        "bodies": 296,
+        "awake": 15,
+        "sleeping": 224,
+        "pending": 0,
+        "kinematic": 56,
+        "lost": 0,
+        "statics": 474,
+        "joints": 16,
+        "contacts": 69,
+        "manifolds": 25,
+        "tests": 30,
+        "substeps": 2,
+        "events": 0,
+        "refused": 0,
+        "dropContacts": 0,
+        "forcedSleep": 0,
+        "fallbackSleep": 1,
+        "wakes": 966,
+        "droppedSteps": 0,
+        "broken": 0
+      },
+      "steps": {
+        "p50": 0.18616599999995742,
+        "p99": 1.0986250000000837,
+        "max": 3.6407500000000255
+      },
+      "saves": [
+        {
+          "time": 2.9999999999999942,
+          "okay": true,
+          "hash": "e9788ffb",
+          "restored": "e9788ffb",
+          "bytes": 275993
+        },
+        {
+          "time": 5.999999999999984,
+          "okay": true,
+          "hash": "31406d33",
+          "restored": "31406d33",
+          "bytes": 311096
+        },
+        {
+          "time": 9.000000000000027,
+          "okay": true,
+          "hash": "ff860e0f",
+          "restored": "ff860e0f",
+          "bytes": 305633
+        },
+        {
+          "time": 12.000000000000176,
+          "okay": true,
+          "hash": "f5d3792c",
+          "restored": "f5d3792c",
+          "bytes": 325504
+        },
+        {
+          "time": 15.000000000000325,
+          "okay": true,
+          "hash": "e7849830",
+          "restored": "e7849830",
+          "bytes": 332013
+        },
+        {
+          "time": 18.00000000000026,
+          "okay": true,
+          "hash": "7815daaf",
+          "restored": "7815daaf",
+          "bytes": 333590
+        },
+        {
+          "time": 21.00000000000009,
+          "okay": true,
+          "hash": "6b7233e1",
+          "restored": "6b7233e1",
+          "bytes": 320268
+        },
+        {
+          "time": 23.99999999999992,
+          "okay": true,
+          "hash": "1f201611",
+          "restored": "1f201611",
+          "bytes": 336462
+        },
+        {
+          "time": 26.999999999999748,
+          "okay": true,
+          "hash": "d346ffc1",
+          "restored": "d346ffc1",
+          "bytes": 338472
+        },
+        {
+          "time": 29.999999999999577,
+          "okay": true,
+          "hash": "b82ddaca",
+          "restored": "b82ddaca",
+          "bytes": 336996
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "ready": 113.14499999999998,
+      "props": 90,
+      "types": {
+        "prop": 79,
+        "barrel": 11,
+        "rubble": 95,
+        "wreck": 48
+      },
+      "bodyStats": {
+        "bodies": 300,
+        "awake": 22,
+        "sleeping": 211,
+        "pending": 0,
+        "kinematic": 67,
+        "lost": 0,
+        "statics": 536,
+        "joints": 17,
+        "contacts": 91,
+        "manifolds": 34,
+        "tests": 52,
+        "substeps": 2,
+        "events": 2,
+        "refused": 0,
+        "dropContacts": 0,
+        "forcedSleep": 0,
+        "fallbackSleep": 0,
+        "wakes": 904,
+        "droppedSteps": 0,
+        "broken": 2
+      },
+      "steps": {
+        "p50": 0.20379200000024866,
+        "p99": 1.3257079999998496,
+        "max": 2.7398749999997563
+      },
+      "saves": [
+        {
+          "time": 2.9999999999999942,
+          "okay": true,
+          "hash": "16fee401",
+          "restored": "16fee401",
+          "bytes": 373179
+        },
+        {
+          "time": 5.999999999999984,
+          "okay": true,
+          "hash": "38ef8c77",
+          "restored": "38ef8c77",
+          "bytes": 369736
+        },
+        {
+          "time": 9.000000000000027,
+          "okay": true,
+          "hash": "7c101f66",
+          "restored": "7c101f66",
+          "bytes": 369626
+        },
+        {
+          "time": 12.000000000000176,
+          "okay": true,
+          "hash": "e5032e99",
+          "restored": "e5032e99",
+          "bytes": 377213
+        },
+        {
+          "time": 15.000000000000325,
+          "okay": true,
+          "hash": "d6ac1485",
+          "restored": "d6ac1485",
+          "bytes": 378477
+        },
+        {
+          "time": 18.00000000000026,
+          "okay": true,
+          "hash": "67db90b5",
+          "restored": "67db90b5",
+          "bytes": 397445
+        },
+        {
+          "time": 21.00000000000009,
+          "okay": true,
+          "hash": "1e0796ea",
+          "restored": "1e0796ea",
+          "bytes": 442781
+        },
+        {
+          "time": 23.99999999999992,
+          "okay": true,
+          "hash": "1bc8d277",
+          "restored": "1bc8d277",
+          "bytes": 504224
+        },
+        {
+          "time": 26.999999999999748,
+          "okay": true,
+          "hash": "57578c9e",
+          "restored": "57578c9e",
+          "bytes": 498665
+        },
+        {
+          "time": 29.999999999999577,
+          "okay": true,
+          "hash": "f16b5242",
+          "restored": "f16b5242",
+          "bytes": 490496
+        }
+      ]
+    }
+  ]
+}

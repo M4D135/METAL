@@ -1,0 +1,45 @@
+{
+  "before": {
+    "props": 90,
+    "joints": 6,
+    "handle": 4,
+    "pos": [
+      -47.72457721656181,
+      1.104,
+      31.632240292336792
+    ]
+  },
+  "after": {
+    "pos": [
+      -47.71989630980422,
+      0.2946649076591664,
+      30.848435891350118
+    ],
+    "save": true,
+    "hash": "5230aeb2",
+    "restored": "5230aeb2",
+    "stats": {
+      "bodies": 146,
+      "awake": 0,
+      "sleeping": 89,
+      "pending": 0,
+      "kinematic": 56,
+      "lost": 0,
+      "statics": 468,
+      "joints": 6,
+      "contacts": 0,
+      "manifolds": 0,
+      "tests": 0,
+      "substeps": 0,
+      "events": 0,
+      "refused": 0,
+      "dropContacts": 0,
+      "forcedSleep": 0,
+      "fallbackSleep": 0,
+      "wakes": 0,
+      "droppedSteps": 0,
+      "broken": 0
+    }
+  },
+  "errors": []
+}

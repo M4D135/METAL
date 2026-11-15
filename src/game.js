@@ -623,7 +623,7 @@
     }
   }
   function models(t,playing,camera){
-    const out=[],s=renderState||sim.state,p=s.player;machinery(out,t);ambience(out,t);systems(out,t);
+    const out=[],s=renderState||sim.state,p=s.player;sim.rigid?.models(out,camera,fixedLoop.frame.alpha);machinery(out,t);ambience(out,t);systems(out,t);
     if(window.FEffects)out.push(...FEffects.build(s,world,camera,{quality,backend:renderer.stats.backend}));
     // All registered machines remain in the simulation; distance only reduces model detail.
     // Match the renderer's whole approach transition conservatively. The renderer

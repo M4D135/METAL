@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {stateDigest} from '../tools/proof/digest.mjs';
 import {loadRealm} from '../tools/realm-loader.mjs';
 const modules=['fmath','passages','renderer','profiles','world','destruction','economy','brain','simulation'];
-const realm=loadRealm({modules,transform:(name,src)=>name==='simulation'?src.replace('nav:{connected,heights:',`nav:{connected,probeGoal(e,x,z,budget=2){routeBudget=budget;routeWork=6000;return setGoal(e,x,z,'advance');},probeRoute(e,x,z,budget=2){routeBudget=budget;routeWork=6000;return route(e,x,z);},heights:`):src});
+const realm=loadRealm({modules,transform:(name,src)=>name==='simulation'?src.replace('nav:{connected,',`nav:{connected,probeGoal(e,x,z,budget=2){routeBudget=budget;routeWork=6000;return setGoal(e,x,z,'advance');},probeRoute(e,x,z,budget=2){routeBudget=budget;routeWork=6000;return route(e,x,z);},`):src});
 const {FSimulation,FWorld,FBrain}=realm.window;
 function fixture(extra={}){return {seed:96,generation:5,spawn:{x:0,z:0,yaw:0},bounds:{minX:-8,maxX:8,minZ:-8,maxZ:8},colliders:[],enemies:[],pickups:[],cores:[],exit:{x:7,z:7},...extra};}
 function expected(cells,w,closed){const c=new Int32Array(cells.length).fill(-1),neighbors=i=>[i%w?i-1:-1,i%w<w-1?i+1:-1,i-w,i+w];let id=0;for(let i=0;i<cells.length;i++)if(cells[i]&&c[i]<0){const q=[i];c[i]=id;for(let p=0;p<q.length;p++)for(const j of neighbors(q[p]))if(j>=0&&j<cells.length&&cells[j]&&c[j]<0&&!closed.has([Math.min(j,q[p]),Math.max(j,q[p])].join(':'))){c[j]=id;q.push(j);}id++;}return c;}
