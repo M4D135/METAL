@@ -1,0 +1,195 @@
+TAP version 13
+# Subtest: System mouse acceleration is opt-in and only accepts stored booleans
+ok 1 - System mouse acceleration is opt-in and only accepts stored booleans
+  ---
+  duration_ms: 2.29985
+  ...
+# Subtest: Older preferences migrate while new controls have safe bounded values
+ok 2 - Older preferences migrate while new controls have safe bounded values
+  ---
+  duration_ms: 0.371471
+  ...
+# Subtest: Rebinding changes the real input map, preserves other actions and survives JSON storage
+ok 3 - Rebinding changes the real input map, preserves other actions and survives JSON storage
+  ---
+  duration_ms: 0.577071
+  ...
+# Subtest: Conflicts and reserved keys never silently disable another action
+ok 4 - Conflicts and reserved keys never silently disable another action
+  ---
+  duration_ms: 1.01411
+  ...
+# Subtest: Adding melee preserves an existing custom V binding and finds a free default key
+ok 5 - Adding melee preserves an existing custom V binding and finds a free default key
+  ---
+  duration_ms: 0.55147
+  ...
+# Subtest: campaign pistol selection migrates without stealing a customized Digit5 binding
+ok 6 - campaign pistol selection migrates without stealing a customized Digit5 binding
+  ---
+  duration_ms: 0.451791
+  ...
+# Subtest: The frame gate keeps a regular whole-vsync cadence and exposes the actual rate
+ok 7 - The frame gate keeps a regular whole-vsync cadence and exposes the actual rate
+  ---
+  duration_ms: 32.687418
+  ...
+# Subtest: Unlimited and near-native rates never discard a valid callback after calibration
+ok 8 - Unlimited and near-native rates never discard a valid callback after calibration
+  ---
+  duration_ms: 4.888931
+  ...
+# Subtest: The frame gate recalibrates on display changes, long suspension and clock restart
+ok 9 - The frame gate recalibrates on display changes, long suspension and clock restart
+  ---
+  duration_ms: 0.883326
+  ...
+# Subtest: Changing the target is immediate and malformed timestamps cannot poison the gate
+ok 10 - Changing the target is immediate and malformed timestamps cannot poison the gate
+  ---
+  duration_ms: 0.975262
+  ...
+# Subtest: Exact half-integer ratios choose their measured divisor on the first calibration and never oscillate
+ok 11 - Exact half-integer ratios choose their measured divisor on the first calibration and never oscillate
+  ---
+  duration_ms: 24.449695
+  ...
+# Subtest: Small timestamp jitter around a divider boundary cannot restart the display phase
+ok 12 - Small timestamp jitter around a divider boundary cannot restart the display phase
+  ---
+  duration_ms: 57.964887
+  ...
+# Subtest: Divider hysteresis yields to a changed display, target or suspended clock
+ok 13 - Divider hysteresis yields to a changed display, target or suspended clock
+  ---
+  duration_ms: 2.017371
+  ...
+# Subtest: native scale and stable automatic cadence have bounded independent preferences
+ok 14 - native scale and stable automatic cadence have bounded independent preferences
+  ---
+  duration_ms: 0.782846
+  ...
+# Subtest: a destruction revision replaces every colour/depth instance cache and retains lights/environment
+ok 15 - a destruction revision replaces every colour/depth instance cache and retains lights/environment
+  ---
+  duration_ms: 19.5075
+  ...
+# Subtest: geometry updates preserve the adaptive resolution and can retire destroyed lamps
+ok 16 - geometry updates preserve the adaptive resolution and can retire destroyed lamps
+  ---
+  duration_ms: 19.085981
+  ...
+# Subtest: Canvas geometry/light revisions match a fresh scene and leave unchanged frames identical
+ok 17 - Canvas geometry/light revisions match a fresh scene and leave unchanged frames identical
+  ---
+  duration_ms: 44.242219
+  ...
+# Subtest: translucent FX skip all shadow passes, preserve depth writes and render before the weapon overlay
+ok 18 - translucent FX skip all shadow passes, preserve depth writes and render before the weapon overlay
+  ---
+  duration_ms: 12.04184
+  ...
+# Subtest: Canvas arena range includes a full giant from the arena border without extending ordinary detail tiers
+ok 19 - Canvas arena range includes a full giant from the arena border without extending ordinary detail tiers
+  ---
+  duration_ms: 19.809516
+  ...
+# Subtest: GPU arena keeps essential terrain behind the giant while fine-detail ranges remain bounded
+ok 20 - GPU arena keeps essential terrain behind the giant while fine-detail ranges remain bounded
+  ---
+  duration_ms: 10.597428
+  ...
+# Subtest: Canvas giant bodies cast grounded shadows above the old sixteen-metre height limit
+ok 21 - Canvas giant bodies cast grounded shadows above the old sixteen-metre height limit
+  ---
+  duration_ms: 21.080008
+  ...
+# Subtest: blackouts dim only real nearby lamp contributions, preserve shadow geometry and recover within 1.2 seconds
+ok 22 - blackouts dim only real nearby lamp contributions, preserve shadow geometry and recover within 1.2 seconds
+  ---
+  duration_ms: 35.408322
+  ...
+# Subtest: danger telegraphs keep their designed opacity at grazing ground angles
+ok 23 - danger telegraphs keep their designed opacity at grazing ground angles
+  ---
+  duration_ms: 31.189678
+  ...
+# Subtest: foliage is one immutable closed crown shared with exact raycasts and every GPU quality
+ok 24 - foliage is one immutable closed crown shared with exact raycasts and every GPU quality
+  ---
+  duration_ms: 40.565077
+  ...
+# Subtest: transient lights are local, bounded and never reassign existing shadow slots or rebuild geometry
+ok 25 - transient lights are local, bounded and never reassign existing shadow slots or rebuild geometry
+  ---
+  duration_ms: 14.455866
+  ...
+# Subtest: Canvas transient lighting reaches cached surfaces and expires outside its real range
+ok 26 - Canvas transient lighting reaches cached surfaces and expires outside its real range
+  ---
+  duration_ms: 19.441773
+  ...
+# Subtest: only explicit flames use the animated fire material, leaving smoke and danger masks unchanged
+ok 27 - only explicit flames use the animated fire material, leaving smoke and danger masks unchanged
+  ---
+  duration_ms: 11.460882
+  ...
+# Subtest: a translucent first-person overlay blends after the opaque hand depth and never enters world shadows
+ok 28 - a translucent first-person overlay blends after the opaque hand depth and never enters world shadows
+  ---
+  duration_ms: 32.72969
+  ...
+# Subtest: smoke and spark finish stays in one depth-safe FX pass while hazard and ring contracts keep precedence
+ok 29 - smoke and spark finish stays in one depth-safe FX pass while hazard and ring contracts keep precedence
+  ---
+  duration_ms: 11.055907
+  ...
+# Subtest: a distant destruction revision preserves warm colour, torch, lamp and sun selections
+ok 30 - a distant destruction revision preserves warm colour, torch, lamp and sun selections
+  ---
+  duration_ms: 11.207314
+  ...
+# Subtest: a full destruction delta restores the scene even when its numeric revision is unchanged
+ok 31 - a full destruction delta restores the scene even when its numeric revision is unchanged
+  ---
+  duration_ms: 11.422562
+  ...
+# Subtest: Canvas lamp dependencies preserve exact lighting through far removals, additions and ordering ties
+ok 32 - Canvas lamp dependencies preserve exact lighting through far removals, additions and ordering ties
+  ---
+  duration_ms: 100.251848
+  ...
+# Subtest: moving a static identity updates both colour rows and Canvas shadow geometry
+ok 33 - moving a static identity updates both colour rows and Canvas shadow geometry
+  ---
+  duration_ms: 51.025961
+  ...
+# Subtest: native GPU rendering keeps physical pixels in every detail mode and under sustained load
+ok 34 - native GPU rendering keeps physical pixels in every detail mode and under sustained load
+  ---
+  duration_ms: 286.757931
+  ...
+# Subtest: physical dimensions use rounded edges and the observer never mutates the canvas
+ok 35 - physical dimensions use rounded edges and the observer never mutates the canvas
+  ---
+  duration_ms: 0.67059
+  ...
+# Subtest: pixel and device limits are explicit without a hidden floor that can exceed them
+ok 36 - pixel and device limits are explicit without a hidden floor that can exceed them
+  ---
+  duration_ms: 0.116335
+  ...
+# Subtest: sustained load reports once without choosing a scale or changing the target
+ok 37 - sustained load reports once without choosing a scale or changing the target
+  ---
+  duration_ms: 2.885801
+  ...
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 887.896135

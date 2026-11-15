@@ -970,11 +970,12 @@
 
   // CPU fallback: actual transformed polygons, perspective projection and near clipping.
   // It intentionally has fewer facets and a shorter draw distance than the GPU renderer.
-  function createSoftware(canvas) {
+  function createSoftware(canvas,options={}) {
     const ctx=canvas.getContext('2d',{alpha:false});
     if(!ctx) throw new Error('Le rendu graphique est indisponible dans ce navigateur.');
     const base={},coarseBase={},palette=[[.105,.135,.15],[.36,.18,.065],[.13,.16,.17],[.57,.58,.54],[.025,.74,.77],[1,.42,.06],[.68,.055,.025],[.065,.075,.085],[.16,.21,.075],[.32,.31,.27],[.18,.10,.04],[.105,.255,.055],[.035,.12,.15]];
     const stats={backend:'canvas2d',webglVersion:0,drawCalls:0,triangles:0,instances:0,contextLost:false,bloom:false,shadows:false};
+    const surface=options.resolution==='native'?window.FSurface.create(canvas,{scale:options.renderScale}):null;if(surface)stats.native=surface.stats;
     // Couleurs de nuance mémoïsées : 'rgb(r,g,b)' ne dépend que de (r,g,b).
     const shadeCache=new Map();
     // Tampons de sommets réutilisés d'une face à l'autre (rien n'est retenu ici :
@@ -1123,7 +1124,8 @@
     function resize(next){
       if(next!==undefined)quality=next;
       const cssWidth=canvas.clientWidth||window.innerWidth||800,cssHeight=canvas.clientHeight||window.innerHeight||600;
-      const requested=typeof quality==='number'?Math.max(.5,Math.min(1.5,quality)):quality==='low'?.8:quality==='high'?1.25:1;
+      if(surface)surface.measure();
+      const requested=surface?surface.size().ratio:typeof quality==='number'?Math.max(.5,Math.min(1.5,quality)):quality==='low'?.8:quality==='high'?1.25:1;
       const limit=quality==='low'?[720,480]:quality==='high'?[1280,900]:[1024,720];
       const ratio=Math.min(requested,limit[0]/cssWidth,limit[1]/cssHeight);
       const width=Math.max(1,Math.round(cssWidth*ratio)),height=Math.max(1,Math.round(cssHeight*ratio));
@@ -1132,6 +1134,7 @@
         vignette=ctx.createRadialGradient(width*.5,height*.47,height*.15,width*.5,height*.5,Math.hypot(width,height)*.58);
         vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(0,5,12,.47)');
       }
+      if(surface){surface.record(width,height);surface.stats.capped='software';surface.stats.scale=ratio/(window.devicePixelRatio||1);}
       stats.renderScale=1;stats.pixelRatio=ratio;stats.width=width;stats.height=height;
       return {width,height,ratio};
     }
@@ -1442,13 +1445,13 @@
         stats.actorsCulled++;return false;
       };
     }
-    function dispose(){disposed=true;world=spatialIndex([]);lights=[];vignette=null;shadowGeometry=new WeakMap();staticCasterPlan=null;}
-    return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter};
+    function dispose(){surface?.dispose();disposed=true;world=spatialIndex([]);lights=[];vignette=null;shadowGeometry=new WeakMap();staticCasterPlan=null;}
+    return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter,setRenderScale:value=>surface?.setScale(value)};
   }
 
   function create(canvas,options={}) {
     const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
-    if(!gl) return createSoftware(canvas);
+    if(!gl) return createSoftware(canvas,options);
     // Marges du cache de vue : 'auto' (défaut) suit la vitesse, un objet {distance,angle}
     // les fixe (en mètres et en radians), 0 force un culling exact reconstruit à chaque image.
     const marginOption=options.cullMargin===undefined?'auto':options.cullMargin;
@@ -1475,6 +1478,11 @@
     const shadowView=new Float32Array(16),shadowProjection=new Float32Array(16),shadowMatrix=new Float32Array(16),shadowMatrices=new Float32Array(48);
     const lightPositions=new Float32Array(36),lightColors=new Float32Array(36),lightRanges=new Float32Array(12);
     const stats={drawCalls:0,triangles:0,instances:0,contextLost:false,webglVersion:2,backend:'webgl2',bloom:false,shadows:false};
+    const native=options.resolution==='native',maxSize=native?Math.min(Number(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE))||16384,Number(gl.getParameter(gl.MAX_TEXTURE_SIZE))||16384):16384;
+    const surface=native?window.FSurface.create(canvas,{limit:maxSize,maxPixels:options.maxPixels,scale:options.renderScale}):null;
+    const watch=native?window.FSurface.budget({target:60,onBudget:options.onBudget}):null;
+    if(surface){stats.native=surface.stats;stats.budget=watch.stats;stats.budgetLog=watch.log;}
+    let drawing=false;
     let program,depthProgram,postProgram,skyProgram,fxProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer,uniforms,postUniforms,skyUniforms,fxUniforms,depthMatrix,depthWind,depthCullCentre,depthCullRange;
     let post=null,shadowTarget=null,whiteTexture=null,targetKey='',shadowKey='',shadowLight=null;
     let world=[],worldIndex=spatialIndex([]),lights=[],environment=null,worldBatch=pack([]),quality='auto',disposed=false,worldRevision=0;
@@ -1518,7 +1526,7 @@
     function ensureTargets(){
       const key=canvas.width+'x'+canvas.height+':'+quality;if(key===targetKey)return;targetKey=key;
       freePost();
-      if(quality==='low'){deleteTarget(shadowTarget);shadowTarget=null;shadowKey='';stats.bloom=stats.shadows=false;return;}
+      if(quality==='low'&&!native){deleteTarget(shadowTarget);shadowTarget=null;shadowKey='';stats.bloom=stats.shadows=false;return;}
       const width=canvas.width,height=canvas.height,bw=Math.max(1,Math.ceil(width/4)),bh=Math.max(1,Math.ceil(height/4));
       const scene=colorTarget(width,height,true),a=colorTarget(bw,bh,false),b=colorTarget(bw,bh,false);
       if(scene&&a&&b)post={scene,a,b};else{deleteTarget(scene);deleteTarget(a);deleteTarget(b);}
@@ -1593,6 +1601,15 @@
     }
     function resize(next) {
       if(next!==undefined&&next!==quality){quality=next;governor.reset();autoScale=1;}
+      if(surface){
+        if(next!==undefined)surface.measure();const size=surface.size(),{width,height,ratio}=size;
+        if(!drawing)return size;
+        if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+        const actualWidth=Number(gl.drawingBufferWidth)||width,actualHeight=Number(gl.drawingBufferHeight)||height;
+        surface.record(actualWidth,actualHeight);if(actualWidth!==width||actualHeight!==height)surface.stats.capped='gpu';
+        stats.renderScale=surface.stats.scale;stats.pixelRatio=ratio;stats.width=actualWidth;stats.height=actualHeight;
+        ensureTargets();gl.viewport(0,0,actualWidth,actualHeight);return size;
+      }
       const pixelRatio=window.devicePixelRatio||1;
       let ratio=typeof quality==='number'?quality:quality==='low'?.8:quality==='high'?Math.min(pixelRatio,2):Math.min(pixelRatio,1.5);
       const cssWidth=canvas.clientWidth||window.innerWidth||800,cssHeight=canvas.clientHeight||window.innerHeight||600;
@@ -1802,7 +1819,7 @@
     }
     function draw(camera,dynamic,fx) {
       if(disposed||stats.contextLost) return;
-      fx=fx||{};autoScale=governor.update(fx,quality);resize();
+      fx=fx||{};if(native){autoScale=1;if(fx.adaptive===true)watch.update(fx.frameMs);}else autoScale=governor.update(fx,quality);drawing=true;try{resize();}finally{drawing=false;}
       const t=fx.time||0,shake=fx.shake||0,p=camera.pos||[0,1.6,0];
       const axes=cameraAxes(camera),{right,up,forward}=axes;
       const eye=[p[0]+Math.sin(t*57.)*shake*.025,p[1]+Math.sin(t*71.)*shake*.015,p[2]];
@@ -1871,7 +1888,7 @@
     function restored(){if(!disposed) initialize();}
     canvas.addEventListener('webglcontextlost',lost);canvas.addEventListener('webglcontextrestored',restored);
     function dispose() {
-      if(disposed) return;disposed=true;
+      if(disposed) return;disposed=true;surface?.dispose();
       canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
       for(const buffer of [vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer]) gl.deleteBuffer(buffer);
       for(const cache of staticCaches.slice(1))gl.deleteBuffer(cache.buffer);
@@ -1879,7 +1896,18 @@
       freePost();deleteTarget(shadowTarget);gl.deleteTexture(whiteTexture);
       gl.deleteVertexArray(vao);gl.deleteVertexArray(postVao);gl.deleteProgram(program);gl.deleteProgram(depthProgram);gl.deleteProgram(postProgram);gl.deleteProgram(skyProgram);gl.deleteProgram(fxProgram);
     }
-    return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter};
+    async function calibrate(camera,dynamic,fx={},frames=30){
+      const times=[],gaps=[],pixel=new Uint8Array(4),now=()=>window.performance?.now?.()??Date.now();let previous=0;
+      for(let i=0;i<frames+5;i++){
+        if(disposed||stats.contextLost)return null;
+        const stamp=await new Promise(resolve=>window.requestAnimationFrame?window.requestAnimationFrame(resolve):resolve(now()));
+        const t=now();draw(camera,dynamic,{...fx,adaptive:false});gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
+        if(i>=5){times.push(now()-t);if(previous)gaps.push(stamp-previous);}previous=stamp;
+      }
+      times.sort((a,b)=>a-b);gaps.sort((a,b)=>a-b);
+      const result={p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],refreshMs:gaps[Math.floor(gaps.length*.5)]||0,frames:times.length,buffer:[canvas.width,canvas.height]};stats.calibration=result;return result;
+    }
+    return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter,calibrate,setRenderScale:value=>surface?.setScale(value),setBudgetTarget:value=>watch?.setTarget(value)};
   }
   // Constructeur unique de maillage dynamique (RESTE-03) : même littéral, même ordre,
   // tous les champs lus par le moteur sont présents dès la création. Les producteurs

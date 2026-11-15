@@ -8,7 +8,7 @@ const box=(p,s,extra={})=>({shape:'box',p,s,mat:3,...extra});
 const floor=box([0,-.12,-4],[24,.24,24],{mat:2,ground:true}),wall=box([0,1.6,-4],[5,3.2,.5]);
 const original=[floor,wall],broken=[floor,box([-1.75,1.6,-4],[1.5,3.2,.5]),box([1.75,1.6,-4],[1.5,3.2,.5]),box([0,2.85,-4],[2,.7,.5])];
 const lights=[{p:[-2,5,1],color:[1,.6,.3],power:12},{p:[3,6,-6],color:[.3,.7,1],power:9}];
-function gpu(){
+function gpu(options={},device={}){
   const calls=[],draws=[],buffers=new Map(),uniforms=new Map();let serial=0,bound=null,currentProgram=null,framebuffer=null,instanceOffset=0;
   const gl=new Proxy({FRAMEBUFFER_COMPLETE:36053,COLOR_BUFFER_BIT:16384,DEPTH_BUFFER_BIT:256},{get(target,name){
     if(name in target)return target[name];if(/^[A-Z_0-9]+$/.test(name))return name;
@@ -25,13 +25,13 @@ function gpu(){
       if(name==='drawElementsInstanced')draws.push({program:currentProgram,framebuffer,values:(buffers.get(bound)||[]).slice(instanceOffset,instanceOffset+args[4]*16),count:args[4],indexCount:args[1],indexOffset:args[3],callIndex:calls.length-1});
     };
   }});
-  const canvas={width:960,height:600,clientWidth:960,clientHeight:600,getContext:()=>gl,addEventListener(){},removeEventListener(){}},scope={window:{innerWidth:960,innerHeight:600,devicePixelRatio:1}};vm.runInNewContext(source,scope);
-  return {renderer:scope.window.FRender.create(canvas),api:scope.window.FRender,calls,draws,uniforms,canvas};
+  const canvas={width:960,height:600,clientWidth:960,clientHeight:600,getContext:()=>gl,addEventListener(){},removeEventListener(){}},scope={window:{innerWidth:960,innerHeight:600,devicePixelRatio:1,...device}};if(options.resolution==='native')vm.runInNewContext(readFileSync(new URL('../src/surface.js',import.meta.url),'utf8'),scope);vm.runInNewContext(source,scope);
+  return {renderer:scope.window.FRender.create(canvas,options),api:scope.window.FRender,calls,draws,uniforms,canvas};
 }
-function software(){
+function software(options={}){
   const calls=[],gradient={addColorStop(...args){calls.push(['colorStop',...args]);}},ctx=new Proxy({},{get(target,name){if(name in target)return target[name];return (...args)=>{calls.push([name,...args]);return name.startsWith('create')?gradient:undefined;};},set(target,name,value){calls.push(['set',name,value===gradient?'gradient':value]);target[name]=value;return true;}});
-  const canvas={width:960,height:600,clientWidth:960,clientHeight:600,getContext:kind=>kind==='2d'?ctx:null},scope={window:{innerWidth:960,innerHeight:600,devicePixelRatio:1}};vm.runInNewContext(source,scope);
-  return {renderer:scope.window.FRender.create(canvas),calls};
+  const canvas={width:960,height:600,clientWidth:960,clientHeight:600,getContext:kind=>kind==='2d'?ctx:null},scope={window:{innerWidth:960,innerHeight:600,devicePixelRatio:1}};if(options.resolution==='native')vm.runInNewContext(readFileSync(new URL('../src/surface.js',import.meta.url),'utf8'),scope);vm.runInNewContext(source,scope);
+  return {renderer:scope.window.FRender.create(canvas,options),calls,canvas};
 }
 const rows=draws=>draws.flatMap(d=>Array.from({length:d.values.length/16},(_,i)=>d.values.slice(i*16,i*16+16)));
 const isWall=row=>row[0]===0&&Math.abs(row[1]-1.6)<1e-5&&row[2]===-4&&row[4]===5&&Math.abs(row[5]-3.2)<1e-5;
@@ -244,4 +244,22 @@ test('moving a static identity updates both colour rows and Canvas shadow geomet
   const fresh=software();fresh.renderer.setWorld(scene,lights);fresh.renderer.resize('auto');fresh.calls.length=0;fresh.renderer.draw(camera,[],fx);assert.deepEqual(a.calls,fresh.calls);
   g.renderer.updateWorld(scene,1);g.draws.length=0;g.renderer.draw(camera,[],fx);assert(!rows(g.draws).some(isWall));assert(rows(g.draws).some(row=>row[0]===3&&row[2]===-8));
   a.renderer.dispose();g.renderer.dispose();fresh.renderer.dispose();
+});
+
+
+test('native GPU rendering keeps physical pixels in every detail mode and under sustained load',()=>{
+  for(const [w,h,dpr] of [[320,568,1],[390,844,3],[844,390,3],[1280,720,1],[1920,1080,1],[2560,1440,1],[1440,900,2],[1512,982,2],[2048,1080,2]]){
+    const notices=[],g=gpu({resolution:'native',onBudget:q=>notices.push(q)},{devicePixelRatio:dpr});g.canvas.clientWidth=w;g.canvas.clientHeight=h;
+    for(const quality of ['auto','high','low']){g.renderer.resize(quality);g.renderer.draw(camera,[],fx);assert.equal(g.canvas.width,w*dpr);assert.equal(g.canvas.height,h*dpr);}
+    g.renderer.resize('auto');const changes=g.renderer.stats.native.changes;
+    for(let i=0;i<240;i++)g.renderer.draw(camera,[],{time:2,adaptive:true,frameMs:30});
+    assert.equal(g.renderer.stats.native.changes,changes);assert.equal(g.renderer.stats.renderScale,1);assert.equal(notices.length,1);assert.equal(g.renderer.stats.budget.sustained,true);
+    const width=g.canvas.width;g.renderer.setRenderScale(.75);assert.equal(g.canvas.width,width,'a preference waits for draw');g.renderer.draw(camera,[],fx);assert.equal(g.canvas.width,Math.floor(w*dpr*.75));g.renderer.dispose();
+  }
+});
+
+
+test('native software fallback honors a manual scale within its explicit software ceiling',()=>{
+  const g=software({resolution:'native'});g.renderer.resize('auto');g.renderer.draw(camera,[],fx);assert.equal(g.canvas.width,960);assert.equal(g.renderer.stats.native.capped,'software');
+  g.renderer.setRenderScale(.5);g.renderer.draw(camera,[],fx);assert.equal(g.canvas.width,480);assert.equal(g.canvas.height,300);g.renderer.dispose();
 });

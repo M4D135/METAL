@@ -1,16 +1,17 @@
 {
   "version": "0.9.2",
-  "html_bytes": 1090487,
-  "html_decimal_kb": 1090.49,
-  "html_kib": 1064.93,
-  "gzip_bytes": 336991,
-  "sha256": "111adcf34daf036a0fd9b189122bbafe8aaa3676987f968fb18760b721573e13",
+  "html_bytes": 1098918,
+  "html_decimal_kb": 1098.92,
+  "html_kib": 1073.16,
+  "gzip_bytes": 339863,
+  "sha256": "5b92d8c4cdf6dd76c0705b65dd758cc3ed2aa49b4be1a1b9060d73253763f667",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
     "fmath.js": 19961,
     "passages.js": 10108,
-    "renderer.js": 130284,
+    "surface.js": 3419,
+    "renderer.js": 133114,
     "profiles.js": 7943,
     "world.js": 142602,
     "destruction.js": 30624,
@@ -26,7 +27,7 @@
     "motion.js": 6404,
     "actors.js": 28298,
     "effects.js": 19555,
-    "options.js": 9669,
+    "options.js": 9861,
     "input.js": 17991,
     "controls.js": 4128,
     "loop.js": 7685,
@@ -35,6 +36,6 @@
     "jobs.js": 5829,
     "tasks.js": 609,
     "host.js": 2713,
-    "game.js": 120855
+    "game.js": 122414
   }
 }

@@ -1004,7 +1004,7 @@ test('Fixed browser loop preserves simulation state across 60, 75, 120 and 144 H
  for(const point of points)assert.equal(point,points[0]);
 });
 test('A zero-step browser frame shows mouse aim and retains action edges until consumed once',()=>{
- const steps=[],app=harness(null,{},world,{step:(dt,input)=>steps.push({dt,...input})});app.element('start').click();app.frame(1);const sim=app.simulations.at(-1),before=steps.length,yaw=sim.state.player.yaw;
+ const steps=[],app=harness(null,{'ferro-settings':JSON.stringify({fpsLimit:0})},world,{step:(dt,input)=>steps.push({dt,...input})});app.element('start').click();app.frame(1);const sim=app.simulations.at(-1),before=steps.length,yaw=sim.state.player.yaw;
  app.emitDocument('mousemove',{movementX:10,movementY:-5});app.key('KeyV');app.key('KeyV',false);app.frame(1);
  assert.equal(steps.length,before);assert.equal(sim.state.player.yaw,yaw);assert(Math.abs(app.frames.at(-1).camera.yaw-yaw-.022)<1e-10);
  app.frame(20);assert.equal(steps.filter(i=>i.melee).length,1);assert(Math.abs(sim.state.player.yaw-yaw-.022)<1e-10);app.frame(20);assert.equal(steps.filter(i=>i.melee).length,1);

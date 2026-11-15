@@ -141,3 +141,13 @@ test('Divider hysteresis yields to a changed display, target or suspended clock'
   settle(90,60,2);settle(90,30,3);
   assert.equal(options.frameGate(gate,now+=1000/90,60),true);assert.equal(gate.stride,2);
 });
+
+
+test('native scale and stable automatic cadence have bounded independent preferences',()=>{
+  assert.equal(options.defaults().renderScale,1);assert.equal(options.defaults().fpsLimit,-1);
+  for(const scale of [1,.85,.75,.66,.5])assert.equal(options.normalize({renderScale:scale}).renderScale,scale);
+  for(const scale of [0,NaN,Infinity,.2,2,'0.5'])assert.equal(options.normalize({renderScale:scale}).renderScale,1);
+  assert.equal(options.normalize({fpsLimit:144}).fpsLimit,144);assert.equal(options.normalize({fpsLimit:0}).fpsLimit,0);
+  assert.equal(options.cadenceChoice(10,60),60);assert.equal(options.cadenceChoice(12,60),30);
+  assert.equal(options.cadenceChoice(10,30),30);assert.equal(options.cadenceChoice(8,30),60);assert.equal(options.cadenceChoice(undefined),30);
+});
