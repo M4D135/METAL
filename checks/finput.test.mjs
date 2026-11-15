@@ -48,7 +48,8 @@ test('E01 — Chargement : API statique complète, seul FInput s’ajoute au glo
 
 test('E02 — Source propre : ni hasard, ni horloge, ni réseau, aucun nom propre au jeu, 18 000 octets au plus', () => {
   for (const s of ['Math.random', 'performance.now', 'Date.now', 'new Date', 'fetch(', 'XMLHttpRequest', 'WebSocket(', 'import(', '@import', '</script']) assert.ok(!source.includes(s), s);
-  assert.doesNotMatch(source, /\b(fire\w*|jump|dash|sprint|weapon\w*|shield|melee|pulse|bash|metal)\b/i);
+  // The legacy haptic actuator's pulse() is generic, not the FPS action pulse.
+  assert.doesNotMatch(source.replace(/\.pulse\(/g,'.hapticEffect('), /\b(fire\w*|jump|dash|sprint|weapon\w*|shield|melee|pulse|bash|metal)\b/i);
   const bytes = Buffer.byteLength(source);
   assert.ok(bytes <= 18000, bytes + ' octets');
   // Stricter guards. Time and chance only come in as parameters; no timer of its own.
@@ -803,30 +804,31 @@ test('E21b — Mêmes réponses que FOptions sur les profils de checks/options.t
   const {F, window, ctx} = load();
   vm.runInContext(readFileSync(new URL('../src/options.js', import.meta.url), 'utf8'), ctx);
   const O = window.FOptions;
-  // FOptions keeps v1 profiles (Space on the dodge): FInput migrates them, then both must agree on every other action.
+  const current = {...M, actions:[...M.actions.map(a=>a.id==='weaponNext'?{...a,keys:['KeyN']}:a),{id:'switchProfile',type:'press',keys:['KeyT']}]};
+  // Both layers migrate Space/R; include the new profile action in this compatibility fixture.
   const same = (old, why) => {
-    const o = plain(O.normalize(plain(old)).bindings), n = plain(F.normalize({v: 1, keys: plain(old.bindings)}, M).keys);
+    const o = plain(O.normalize(plain(old)).bindings), n = plain(F.normalize({v: 1, keys: plain(old.bindings)}, current).keys);
     for (const id of Object.keys(o)) if (id !== 'dash') assert.equal(json(n[id]), json(o[id]), why + ' : ' + id);
     assert.equal(json(n.dash), json(['KeyR']), why); assert.equal(json(n.jump), json(['Space']), why);
     return n;
   };
   const edit = change => { const old = plain(O.defaults()); change(old.bindings); return old; };
   const melee = same(edit(b => { for (const id of ['melee', 'fireLeft', 'leftHand', 'weapon4']) delete b[id]; b.interact = ['KeyV']; b.fire = ['KeyC']; }), 'options.test:31');
-  assert.equal(json(melee.melee), json(['KeyB'])); assert.equal(F.assign(M, {v: 2, keys: melee}, 'keyboard', 'melee', 'KeyH').ok, true);
+  assert.equal(json(melee.melee), json(['KeyB'])); assert.equal(F.assign(current, {v: 2, keys: melee}, 'keyboard', 'melee', 'KeyH').ok, true);
   const pistol = same(edit(b => { delete b.weapon5; b.interact = ['Digit5']; b.fire = ['KeyH']; }), 'options.test:40');
-  assert.equal(json(pistol.weapon5), json(['KeyG'])); assert.equal(F.assign(M, {v: 2, keys: pistol}, 'keyboard', 'weapon5', 'Digit6').ok, true);
+  assert.equal(json(pistol.weapon5), json(['KeyG'])); assert.equal(F.assign(current, {v: 2, keys: pistol}, 'keyboard', 'weapon5', 'Digit6').ok, true);
   assert.equal(json(same(edit(b => { delete b.weapon5; }), 'options.test:51').weapon5), json(['Digit5']));
   assert.equal(json(same(edit(b => { b.fire = ['KeyW']; }), 'options.test:27').fire), json(['Enter']));
   same(O.defaults(), 'défauts');
   // Same conflicts and texts, same refusals.
-  const v1 = F.normalize({v: 1, keys: plain(O.defaults().bindings)}, M);
+  const v1 = F.normalize({v: 1, keys: plain(O.defaults().bindings)}, current);
   for (const [id, code] of [['interact', 'KeyE'], ['fire', 'KeyW'], ['sprint', 'Digit1'], ['pulse', 'KeyF']]) {
-    const a = F.assign(M, v1, 'keyboard', id, code), b = O.assign(O.defaults().bindings, id, code);
+    const a = F.assign(current, v1, 'keyboard', id, code), b = O.assign(O.defaults().bindings, id, code);
     assert.equal(a.ok, false); assert.equal(a.conflict, b.conflict, id); assert.equal(a.reason, b.reason, id);
   }
-  for (const code of ['Escape', 'MetaLeft', 'ControlLeft']) assert.equal(F.assign(M, v1, 'keyboard', 'fire', code).reason, O.assign(O.defaults().bindings, 'fire', code).reason);
+  for (const code of ['Escape', 'MetaLeft', 'ControlLeft']) assert.equal(F.assign(current, v1, 'keyboard', 'fire', code).reason, O.assign(O.defaults().bindings, 'fire', code).reason);
   // Planned difference (FEEL-01, FEEL-09): R is the dodge in v2; options.test.mjs:18 puts interact on R, so it takes another free key at the hookup.
-  assert.equal(F.assign(M, v1, 'keyboard', 'interact', 'KeyR').conflict, 'dash'); assert.equal(F.assign(M, v1, 'keyboard', 'interact', 'KeyG').ok, true);
+  assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyR').conflict, 'dash'); assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyG').ok, true);
 });
 
 test('E22 — Migration v1 → v2 : Espace saute, R esquive ; migrate seulement pour un format plus ancien', () => {

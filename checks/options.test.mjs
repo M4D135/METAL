@@ -15,10 +15,10 @@ test('Older preferences migrate while new controls have safe bounded values',()=
   assert.equal(v.aiAcceleration,'auto');assert.equal(options.normalize({aiAcceleration:'cpu'}).aiAcceleration,'cpu');assert.equal(options.normalize({aiAcceleration:'npu-active'}).aiAcceleration,'auto');
 });
 test('Rebinding changes the real input map, preserves other actions and survives JSON storage',()=>{
-  const a=options.defaults(),r=options.assign(a.bindings,'interact','KeyR');assert.equal(r.ok,true);
+  const a=options.defaults(),r=options.assign(a.bindings,'interact','KeyG');assert.equal(r.ok,true);
   const stored=options.normalize(JSON.parse(JSON.stringify({...a,bindings:r.bindings})));
-  assert.equal(options.matches(stored.bindings,'interact','KeyR'),true);assert.equal(options.matches(stored.bindings,'interact','KeyF'),false);
-  assert.equal(options.down(stored.bindings,new Set(['KeyR']),'interact'),true);assert.equal(options.matches(stored.bindings,'pulse','KeyE'),true);
+  assert.equal(options.matches(stored.bindings,'interact','KeyG'),true);assert.equal(options.matches(stored.bindings,'interact','KeyF'),false);
+  assert.equal(options.down(stored.bindings,new Set(['KeyG']),'interact'),true);assert.equal(options.matches(stored.bindings,'pulse','KeyE'),true);
 });
 test('Conflicts and reserved keys never silently disable another action',()=>{
   const a=options.defaults(),original=JSON.stringify(a);

@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
 const root=new URL('../',import.meta.url);
-const modules=['destruction','economy','simulation','motion','actors','effects','soundscape','options','game'];
+const modules=['destruction','economy','simulation','motion','actors','effects','soundscape','options','input','controls','game'];
 const sources=Object.fromEntries(modules.map(name=>[name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 const noop=()=>{};
 
@@ -20,7 +20,7 @@ function inputWorld(seed,index,options){
     progression:{version:1,weaponSlots:5,startWeapons:[true,true,true,true,true],startAmmo:[180,36,12,16,1],ammoCaps:[180,36,12,16,1],maxActive:8}};
 }
 
-function shell({touch=false,settings={},bufferMs,requestLock,pointerLockAvailable=true}={}){
+function shell({touch=false,settings={},bufferMs,requestLock,pointerLockAvailable=true,gamepads=[]}={}){
   const elements=new Map(),listeners=new Map(),documentListeners=new Map(),simulations=[],steps=[],sounds=[],errors=[],lockCalls=[];
   const memory=new Map([['ferro-settings',JSON.stringify(settings)]]);
   let now=0,nextFrame,focused=true,lockRequests=0;
@@ -40,7 +40,7 @@ function shell({touch=false,settings={},bufferMs,requestLock,pointerLockAvailabl
     elements.set(id,value);return value;
   }
   const context={console:{error:(...args)=>errors.push(args)},performance:{now:()=>now},innerWidth:1280,innerHeight:800,URLSearchParams,
-    setTimeout,clearTimeout,navigator:{maxTouchPoints:touch?2:0},location:{search:touch?'?touch=1':''},matchMedia:()=>({matches:false}),
+    setTimeout,clearTimeout,navigator:{maxTouchPoints:touch?2:0,getGamepads:()=>gamepads},location:{search:touch?'?touch=1':''},matchMedia:()=>({matches:false}),
     requestAnimationFrame:fn=>{nextFrame=fn;},addEventListener:(name,fn)=>on(listeners,name,fn),
     document:{body:element('body'),getElementById:element,addEventListener:(name,fn)=>on(documentListeners,name,fn),hasFocus:()=>focused,
       pointerLockElement:null,exitPointerLock(){this.pointerLockElement=null;emit(documentListeners,'pointerlockchange');}},
@@ -77,6 +77,30 @@ function tap(app,kind='mouse',left=false){
   else if(kind==='key'){const code=left?'KeyC':'Enter';app.key(code);app.key(code,false);}
   else{const button=app.element(left?'left-fire-button':'fire-button');button.emit('pointerdown',{pointerId:left?2:1,pointerType:'touch'});button.emit('pointerup',{pointerId:left?2:1,pointerType:'touch'});button.emit('lostpointercapture',{pointerId:left?2:1,pointerType:'touch'});}
 }
+
+function simulatedPad(){return {index:0,id:'Xbox simulated',connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({value:0,pressed:false}))};}
+function padButton(p,index,value){p.buttons[index]={value,pressed:value>.5};}
+test('Gamepad reaches real simulation, jump/profile fronts are single-use across substeps',()=>{
+  const pad=simulatedPad(),app=shell({gamepads:[pad]});app.frame();const shots=app.sim.state.shots;
+  padButton(pad,7,1);padButton(pad,0,1);padButton(pad,5,1);pad.axes[0]=.7;app.steps.length=0;app.frame(60);
+  assert(app.sim.state.shots>shots);assert(app.steps.length>=3);
+  assert.equal(app.steps.filter(q=>q.input.jump).length,1);assert.equal(app.steps.filter(q=>q.input.switchProfile).length,1);
+  assert(app.steps.every(q=>q.input.jumpHeld));assert(app.steps.every(q=>q.input.moveX>0));assert(app.steps.every(q=>q.input.assist&&q.input.touchAssist===false));
+  app.steps.length=0;app.frame(60);assert(app.steps.every(q=>!q.input.jump&&!q.input.switchProfile));
+});
+test('Gamepad pause/resume never replays a held trigger; disconnect pauses and stops vibration',()=>{
+  let resets=0;const calls=[],pad=simulatedPad(),pads=[pad];pad.vibrationActuator={playEffect:(type,v)=>{calls.push(v);return Promise.resolve();},reset:()=>{resets++;return Promise.resolve();}};
+  const app=shell({gamepads:pads});app.frame();padButton(pad,7,1);app.frame();assert(calls.length>0);
+  padButton(pad,9,1);app.frame();assert.equal(app.element('body').dataset.state,'paused');assert(resets>0);const shots=app.sim.state.shots;
+  padButton(pad,9,0);app.frame();padButton(pad,9,1);app.frame();assert.equal(app.element('body').dataset.state,'playing');
+  for(let i=0;i<60;i++)app.frame();assert.equal(app.sim.state.shots,shots);
+  padButton(pad,9,0);padButton(pad,7,0);app.frame();padButton(pad,7,1);app.frame(200);assert(app.sim.state.shots>shots);
+  pads.length=0;app.frame();assert.equal(app.element('body').dataset.state,'paused');assert(resets>=2);
+});
+test('A remapped pad button fires in game and does not require pointer lock',()=>{
+  const pad=simulatedPad(),app=shell({gamepads:[pad],pointerLockAvailable:false,settings:{padBindings:{fire:['X'],interact:['RT']}}});app.frame();const shots=app.sim.state.shots;
+  padButton(pad,2,1);app.frame();assert.equal(app.sim.state.shots,shots+1);assert.equal(app.element('body').dataset.state,'playing');assert.equal(app.context.document.pointerLockElement,null);
+});
 function firstShot(app){app.key('Enter');app.frame(10);app.key('Enter',false);assert.equal(app.sim.state.shots,1);}
 
 for(const kind of ['mouse','key','touch'])test(`A brief ${kind} press between frames fires exactly once at 20, 30, 60 and 144 Hz`,()=>{
