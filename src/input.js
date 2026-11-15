@@ -78,7 +78,7 @@
   function guessDevice(win=G){try{const m=q=>win.matchMedia(q).matches;return m('(pointer: coarse)')||win.navigator?.maxTouchPoints>0&&m('(hover: none)')?'touch':'keyboard';}catch(e){return 'keyboard';}}
   function focusMove(root,cmd,doc){/* step 6 */}
   function create(config){
-    const C=compile(config),held=new Set(),pressed=[],learnt=new Map();
+    const C=compile(config),held=new Set(),pressed=[],learnt=new Map(),rumbling=new Set();
     // per action: keys k, mouse m, fingers t, pad buttons g (indexes pi), stick ends gr and tr, pad value gv
     const A=C.actions.map(a=>({a,k:0,m:false,t:0,g:false,gr:false,tr:false,gv:0,latch:false,edge:false})),at=id=>A[C.index.get(id)];
     const sticks=C.sticks.map(s=>({kx:s.name+'X',ky:s.name+'Y',move:s.type==='move',x:s.x.map(at),y:s.y.map(at),rate:s.rate,pad:s.pad,run:s.run&&at(s.run)})),look=sticks.find(s=>!s.move),walk=sticks.find(s=>s.move);
@@ -103,7 +103,7 @@
         const was=on(s);if(device==='mouse'){s.m=!!down;mouse(t);}else{s.t=down?s.t+1:Math.max(0,s.t-1);dev='touch';touchT=t;}rise(s,was);return true;
       },
       addLook(x,y,device){px+=fin(x);py+=fin(y);if(DEVICES.includes(device))dev=device;},
-      clear(){held.clear();for(const s of A){s.k=s.t=s.gv=0;s.m=s.g=s.gr=s.tr=s.latch=s.edge=false;}pressed.length=0;px=py=pmx=pmy=tmx=tmy=hold=0;cap=got=null;quiet=true;},
+      clear(){for(const a of rumbling){try{const r=typeof a.reset==='function'?a.reset():a.playEffect('dual-rumble',{startDelay:0,duration:1,weakMagnitude:0,strongMagnitude:0});if(typeof r?.catch==='function')r.catch(()=>{});}catch(e){}}rumbling.clear();held.clear();for(const s of A){s.k=s.t=s.gv=0;s.m=s.g=s.gr=s.tr=s.latch=s.edge=false;}pressed.length=0;px=py=pmx=pmy=tmx=tmy=hold=0;cap=got=null;quiet=true;},
       configure,get settings(){return copy(S);},get device(){return dev;},
       assign:(device,action,code)=>rebind(C,S,device,action,code),
       unbind:(device,action)=>rebind(C,S,device,action,null,true),
@@ -116,7 +116,7 @@
       // no pad, actuator or playEffect: it throws
       rumble(strong,weak,ms,t){
         const v=S.tune.padVibration;if(v<=0||t-rt<K.rumbleGap)return false;
-        try{const r=(gp.get(lp)||gp.values().next().value).vibrationActuator.playEffect('dual-rumble',{startDelay:0,duration:clamp(ms,5000),weakMagnitude:clamp(weak,1)*v,strongMagnitude:clamp(strong,1)*v});if(typeof r?.catch==='function')r.catch(()=>{});}catch(e){return false;}
+        try{const a=(gp.get(lp)||gp.values().next().value).vibrationActuator,r=a.playEffect('dual-rumble',{startDelay:0,duration:clamp(ms,5000),weakMagnitude:clamp(weak,1)*v,strongMagnitude:clamp(strong,1)*v});rumbling.add(a);if(typeof r?.catch==='function')r.catch(()=>{});}catch(e){return false;}
         rt=t;return true;
       },
       frame(dt,ctx){

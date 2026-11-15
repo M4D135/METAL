@@ -1541,3 +1541,30 @@ test('E42b — rumble : bornes, manette visée, limiteur mis à jour au seul suc
   const other = F.create(M); other.frame(DT); assert.equal(other.rumble(.5, .5, 50, 1002), true); assert.equal(ok.calls.length, 2);
   pads.list = [];
 });
+
+// Transfer from EMPRISE's suspend/stop contract: clearing input also ends its haptics.
+test('FInput.clear arrête les vibrations lancées, même après déconnexion, sans reset répété', () => {
+  const {F,pads}=load(), calls=[];
+  const actuator={playEffect(type,options){calls.push({type,options});},reset(){calls.push({reset:true});}};
+  const input=F.create(M);pads.list=[fakePad({actuator})];input.frame(1/60);
+  input.clear();assert.equal(calls.length,0,'aucun effet lancé, aucun reset');
+  assert.equal(input.rumble(.7,.4,5000,1000),true);pads.list=[];input.frame(1/60);
+  input.clear();assert.equal(calls.length,2);assert.equal(calls[1].reset,true);
+  input.clear();assert.equal(calls.length,2,'clear est idempotent côté actionneur');
+});
+test('FInput.clear utilise un effet nul quand reset est absent', () => {
+  const {F,pads}=load(), calls=[];
+  const actuator={playEffect(type,options){calls.push({type,...options});}};
+  const input=F.create(M);pads.list=[fakePad({actuator})];input.frame(1/60);
+  input.rumble(.7,.4,5000,1000);input.clear();
+  assert.equal(calls.length,2);assert.equal(json(calls[1]),json({type:'dual-rumble',startDelay:0,duration:1,weakMagnitude:0,strongMagnitude:0}));
+});
+test('FInput.clear annule chaque actionneur utilisé et tolère refus asynchrones ou exceptions', async () => {
+  const {F,pads}=load(), resets=[];
+  const a={playEffect(){},reset(){resets.push('a');return Promise.reject(new Error('débranchée'));}};
+  const b={playEffect(){},reset(){resets.push('b');throw new Error('indisponible');}};
+  const input=F.create(M);pads.list=[fakePad({actuator:a})];input.frame(1/60);input.rumble(.4,.4,5000,1000);
+  pads.list=[fakePad({index:1,actuator:b})];input.frame(1/60);input.rumble(.4,.4,5000,1100);
+  assert.doesNotThrow(()=>input.clear());await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(json(resets),json(['a','b']));input.clear();assert.equal(resets.length,2);
+});

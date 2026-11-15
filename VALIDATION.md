@@ -626,3 +626,8 @@ Le secours Canvas utilise un tri de polygones et des ombres projetées simplifi�
 ## Reprise contrôlée du 15 novembre 2026
 
 Suite complète753/753, pièges/DDA174/174, build et compatibilité Chrome/SwiftShader de deux sauvegardes génération6 avant pièges massifs réussis.40débris structurels conservés par sauvegarde, stockage inchangé, aucune erreurJS. Retrait complet des raccourcis e366203 ; garanties99596c3 conservées et nouveau test ennemi. Détails, taille, sources et limites : `docs/chantier-moteur/rapports/integration-20261115.md`. Aucun GPU réel, téléphone, manette physique ou son à l’oreille validé.
+
+
+## Transfert FERRO depuis Emprise —15 novembre2026
+
+FInput.clear annule les vibrations émises ;82/82tests ciblés input+finput surSpark,3nouveaux tests de régression. Module non raccordé au jeu avantlot08 ; aucune manette réelle validée. La suite complète753/753 précédente n’est pas requalifiée en suite810 de cette tête. Voir `docs/chantier-moteur/rapports/ferro-transfert-emprise-20261115.md`.
