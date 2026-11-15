@@ -2,12 +2,14 @@
 (function(){
   'use strict';
   const $=id=>document.getElementById(id),canvas=$('world'),clamp=FSimulation.clamp;
-  const touch=matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>1||new URLSearchParams(location.search).get('touch')==='1';
+  const forceTouch=new URLSearchParams(location.search).get('touch')==='1';
+  let touch=forceTouch||FInput.guessDevice(window)==='touch';
   document.body.classList.toggle('touch',touch);
   let prefs=FOptions.defaults(touch);
   try{prefs=FOptions.normalize(JSON.parse(localStorage.getItem('ferro-settings')||'{}'),touch);}catch{}
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)prefs.softMotion=false;
-  let {muted,quality,softMotion}=prefs,bindingAction=null,optionsTab='game';
+  let {muted,quality,softMotion}=prefs,bindingAction=null,padBindingAction=null,optionsTab='game';
+  const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,boundaryFlash=0;
   const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
@@ -109,22 +111,32 @@
   }
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
-  function bindingLabel(id){return (prefs.bindings[id]||[]).map(FOptions.keyName).join(' / ');}
+  function bindingLabel(id){return controls.label(id);}
+  function activeDevice(device){controls.use(device);touch=forceTouch||device==='touch';document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch||device==='gamepad'&&prefs.padAssist;}
+  function controlHints(){
+    $('interact-key').textContent=bindingLabel('interact');
+    $('intro-controls').textContent=controls.device==='gamepad'?'LS déplacer · RS viser · '+bindingLabel('fire')+' tirer · '+bindingLabel('jump')+' sauter':'Clavier, manette ou écran tactile';
+    $('help-text').textContent=controls.device==='gamepad'?'LS : déplacement · RS : visée · '+['fire','fireLeft','jump','dash','melee','interact','weaponNext','switchProfile','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · '):'ZQSD / WASD : déplacer · Souris : viser · '+['fire','jump','dash','melee','interact','switchProfile','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · ');
+  }
   function weaponHint(){const keys=Array.from({length:world?.campaign?5:4},(_,i)=>bindingLabel('weapon'+(i+1)));$('weapon-switch').title='Armes : '+keys.join(' / ')+' ou molette';}
   function renderBindings(){
-    $('key-bindings').innerHTML=FOptions.actions.map(a=>'<div class="binding-row"><span>'+a.label+'</span><button id="bind-'+a.id+'" class="'+(bindingAction===a.id?'listening':'')+'" aria-label="Modifier la touche : '+a.label+'">'+(bindingAction===a.id?'Touche…':bindingLabel(a.id))+'</button></div>').join('');
+    const focusId=document.activeElement?.id;
+    $('key-bindings').innerHTML=FOptions.actions.map(a=>'<div class="binding-row"><span>'+a.label+'</span><button id="bind-'+a.id+'" class="'+(bindingAction===a.id?'listening':'')+'" aria-label="Modifier la touche : '+a.label+'">'+(bindingAction===a.id?'Touche…':(prefs.bindings[a.id]||[]).map(FOptions.keyName).join(' / '))+'</button><button id="pad-bind-'+a.id+'" aria-label="Modifier le bouton manette : '+a.label+'">'+(padBindingAction===a.id?'Bouton…':controls.padLabel(a.id))+'</button><button id="pad-clear-'+a.id+'" aria-label="Effacer le bouton manette : '+a.label+'">—</button></div>').join('');
     for(const a of FOptions.actions)$('bind-'+a.id).addEventListener('click',()=>{bindingAction=a.id;$('binding-status').textContent='Appuyez sur une touche pour « '+a.label+' ». Échap pour annuler.';renderBindings();$('bind-'+a.id).focus();});
+    for(const a of FOptions.actions)$('pad-bind-'+a.id).addEventListener('click',()=>{bindingAction=null;padBindingAction=a.id;controls.capture('gamepad');$('binding-status').textContent='Appuyez sur un bouton pour « '+a.label+' ». Échap annule ; Retour arrière efface.';renderBindings();$('pad-bind-'+a.id).focus();});
+    for(const a of FOptions.actions)$('pad-clear-'+a.id).addEventListener('click',()=>{prefs.padBindings=FOptions.assignPad(prefs.padBindings,a.id,null).bindings;padBindingAction=null;controls.capture(null);settings();$('binding-status').textContent='Bouton libéré : '+a.label+'.';});
+    if(focusId&&/^(bind-|pad-bind-|pad-clear-)/.test(focusId))$(focusId)?.focus();
   }
   function selectTab(name,focus=false){
     if(optionsTab==='audio'&&name!=='audio')audio.cancelTestMix?.();
     if(name==='game')brainStatus();
-    optionsTab=name;bindingAction=null;
+    optionsTab=name;bindingAction=padBindingAction=null;controls.capture(null);
     for(const id of ['game','image','audio','controls']){const active=id===name;$('tab-'+id).setAttribute('aria-selected',String(active));$('tab-'+id).tabIndex=active?0:-1;$('pane-'+id).hidden=!active;}
     $('options-body').scrollTop=0;$('binding-status').textContent='Cliquez sur une touche pour la modifier. Échap annule. Le clic gauche et la molette restent disponibles.';
     renderBindings();if(focus)$('tab-'+name).focus();
   }
   function settings(){
-    Object.assign(prefs,{muted,quality,softMotion});
+    Object.assign(prefs,{muted,quality,softMotion});controls.configure(prefs);
     $('sound-toggle').querySelector('strong').textContent=muted?'Coupé':'Activé';
     $('quality-toggle').querySelector('strong').textContent={auto:'Auto',low:'Économie',high:'Haute'}[quality];
     $('difficulty-setting').value=String(prefs.difficulty);$('difficulty-hint').textContent=['Standard · apprenez à lire les attaques ; la pression monte avec les secteurs et les objectifs.','Brutal · des machines plus agressives, des tirs plus rapprochés et moins de répit.','Cauchemar · des attaques plus rapides, des impacts plus durs et une forte pression.'][prefs.difficulty];brainStatus();
@@ -135,13 +147,14 @@
     }
     $('fps-limit').value=String(prefs.fpsLimit);cadenceHint();$('fps-counter').hidden=!prefs.showFps;$('scanlines').hidden=!prefs.crt;$('vignette').hidden=!prefs.vignette;
     $('crosshair').style.scale=String(prefs.crosshairScale);canvas.style.filter=prefs.brightness===1?'none':'brightness('+prefs.brightness+')';
-    $('interact-key').textContent=FOptions.keyName(prefs.bindings.interact[0]);
+    $('interact-key').textContent=bindingLabel('interact');
+    for(const [id,key,mul] of [['pad-yaw','padYaw',1],['pad-pitch','padPitch',1],['pad-dead','padDead',100],['pad-curve','padCurve',100],['pad-vibration','padVibration',100]]){$(id+'-setting').value=String(Math.round(prefs[key]*mul));$(id+'-value').textContent=String(Math.round(prefs[key]*mul));}
+    for(const [id,key] of [['pad-invert','padInvertY'],['pad-assist','padAssist'],['pad-swap','padSwapSticks']]){$(id+'-toggle').setAttribute('aria-pressed',String(prefs[key]));$(id+'-toggle').querySelector('strong').textContent=prefs[key]?'Oui':'Non';}
     $('map-button').title='Carte ('+bindingLabel('map')+')';weaponHint();
-    if(!touch)$('intro-controls').textContent=JSON.stringify(prefs.bindings)===JSON.stringify(FOptions.defaults(false).bindings)?'ZQSD / WASD · Souris · Clic pour tirer':'Commandes personnalisées · Souris · Clic pour tirer';
+    controlHints();
     $('music-title').textContent=trackLabel();
     const software=renderer?.stats.backend==='canvas2d';
     $('bloom-toggle').disabled=software;$('graphics-hint').textContent=software?'Rendu CPU de secours : WebGL 2 est indisponible dans ce navigateur. Auto adapte la résolution ; les ombres restent réglables.':'Rendu GPU · WebGL 2. Auto adapte la résolution à la fluidité. Haute augmente la portée et la précision. Les réglages sont appliqués immédiatement.';
-    if(!touch)$('help-text').innerHTML=bindingLabel('forward')+' / '+bindingLabel('left')+' / '+bindingLabel('back')+' / '+bindingLabel('right')+' : déplacer · Souris : viser<br>Clic / '+bindingLabel('fire')+' : tirer · '+bindingLabel('weapon1')+' / '+bindingLabel('weapon2')+' / '+bindingLabel('weapon3')+' / '+bindingLabel('weapon4')+' / '+bindingLabel('weapon5')+' : armes trouvées<br>Clic droit / '+bindingLabel('fireLeft')+' · '+bindingLabel('leftHand')+' : changer d’arme gauche<br>'+bindingLabel('interact')+' : commandes et ascenseurs · '+bindingLabel('pulse')+' : onde défensive<br>'+bindingLabel('melee')+' : coup de crosse · '+bindingLabel('dash')+' : esquive<br>'+bindingLabel('sprint')+' : courir · '+bindingLabel('map')+' : carte · Échap : pause';
     const silent=[['musicVolume','Musique coupée'],['effectsVolume','Effets coupés'],['ambienceVolume','Ambiances coupées']].filter(([key])=>prefs[key]===0).map(([,label])=>label);
     $('audio-status').textContent=muted||prefs.masterVolume===0?'Son coupé. Activez le son et le volume général pour écouter.':silent.length?silent.join(' · ')+'. Réglez les curseurs pour les entendre.':'Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.';
     document.body.classList.toggle('low-motion',!softMotion);audio.setMix?.({master:prefs.masterVolume,music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});audioGate();syncTitle();saveSettings();renderBindings();
@@ -238,12 +251,12 @@
       saveCheckpoint();
     }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
   }
-  function clearInput(){keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
+  function clearInput(){controls.clear();padState={};jumpQueued=switchProfileQueued=false;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
     audio.cancelTestMix?.();
     last=performance.now();perfStart=0;perfFrames=0;
     $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
-    mode=value;bindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing');audioGate();syncTitle();
+    mode=value;bindingAction=padBindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing');audioGate();syncTitle();
     if(value==='paused'||value==='options'){$('pause-kicker').textContent=value==='options'?'CONSOLE DE RÉGLAGE':'SIGNAL EN ATTENTE';$('resume').innerHTML=(value==='options'?'Retour':'Reprendre')+' <span class="arrow-icon" aria-hidden="true"></span>';$('restart').hidden=$('pause-main').hidden=value==='options';selectTab(value==='options'?'image':optionsTab);}
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
@@ -271,9 +284,9 @@
     if(renderer.updateWorld)renderer.updateWorld(d.meshes,revision,d.lights);else renderer.setWorld(d.meshes,d.lights||world.lights,world.environment);
     renderRevision=revision;
   }
-  function freePointerHint(){if(mode==='playing'&&document.pointerLockElement!==canvas)toast('Glissez pour viser · '+bindingLabel('fire')+' : tirer. Cliquez pour capturer la souris.',4);}
+  function freePointerHint(){if(mode==='playing'&&controls.device!=='gamepad'&&document.pointerLockElement!==canvas)toast('Glissez pour viser · '+bindingLabel('fire')+' : tirer. Cliquez pour capturer la souris.',4);}
   function lock(){
-    if(touch)return;
+    if(touch||controls.device==='gamepad')return;
     pointerLockWanted=true;
     if(document.pointerLockElement===canvas)return;
     const ticket=++pointerRequestSerial,current=()=>ticket===pointerRequestSerial&&mode==='playing'&&!document.hidden&&windowFocused;
@@ -324,6 +337,8 @@
   function events(){
     let checkpointDue=false;const trophyIds=new Set(sim.state.events.filter(e=>e.name==='trophy'||e.name==='bossReward').map(e=>e.id));
     for(const e of sim.state.events){
+      if(mode==='playing')controls.event(e,sim.state.player);
+      if(e.name==='boundaryContact')boundaryFlash=.15;
       // shots is shared by both hands: consume only the hand that really fired.
       if(e.name==='shot'||e.name==='fracture'||(e.name==='rocket'||e.name==='grenadeLaunch')&&e.owner==='player'){
         if(e.hand==='left')fireLeftPressed=false;else firePressed=false;
@@ -707,6 +722,8 @@
     return out;
   }
   function renderHUD(){
+    const profile=sim.state.activeProfile,jet=sim.state.jetpack;$('profile-status').hidden=profile!=='light'&&profile!=='heavy';
+    if(profile==='light'||profile==='heavy')$('profile-status').textContent=(profile==='light'?'LÉGER · JETPACK'+(jet?' '+Math.round(100*jet.fuel/Math.max(1,jet.capacity))+' %':''):'LOURD · EXPLOSIFS')+' · '+bindingLabel('switchProfile')+' : changer';
     const s=sim.state,p=s.player;
     const stats=sim.stats||{maxHp:100},maxHp=s.maxHp||stats.maxHp||100,healthRatio=p.hp/maxHp;
     $('hp').textContent=String(Math.ceil(p.hp));$('health-max').textContent='/ '+maxHp;$('hp-bar').style.width=clamp(healthRatio*100,0,100)+'%';$('hp-bar').style.background=healthRatio<.3?'#ff795e':'var(--acid)';
@@ -799,8 +816,41 @@
     const text=ready?(prefs.fpsLimit?'Cadence régulière : ≈ '+Math.round(framePacer.effectiveHz)+' i/s · écran ≈ '+Math.round(hz)+' Hz.':'Sans limite · écran mesuré à ≈ '+Math.round(hz)+' Hz.'):'Mesure de la cadence de l’écran…';
     if($('fps-effective').textContent!==text)$('fps-effective').textContent=text;
   }
+  function pollControls(now){
+    const dt=Math.max(0,Math.min(.12,(now-padLast)/1000));padLast=now;
+    if(document.hidden||!windowFocused){controls.clear();return;}
+    const f=controls.frame(dt);
+    if(f.deviceChanged){activeDevice(f.device);controlHints();if(mode==='options'||mode==='paused')renderBindings();}
+    if(f.connected.length){$('pad-status').textContent='Manette connectée · '+f.connected[0].id;if(mode==='playing')toast('Manette connectée',2);}
+    if(f.disconnected.length){controls.clear();if(controls.device==='gamepad'&&mode==='playing')setMode('paused');$('pad-status').textContent=f.pads.length?'Manette disponible':'Manette débranchée · reconnectez-la ou utilisez le clavier';}
+    if(f.device==='gamepad'&&(f.pressed.length||f.nav?.direction||f.nav?.adjust)){
+      titleGesture=true;titleBlocked=false;audio.resume();if(titleScreen())syncTitle();
+      if(titleBlocked)$('pad-status').textContent='A : activer le son · cliquez si le navigateur le demande';
+    }
+    if(padBindingAction){
+      if(f.captured){const id=padBindingAction,result=FOptions.assignPad(prefs.padBindings,id,f.captured.code);if(result.ok){prefs.padBindings=result.bindings;padBindingAction=null;settings();$('binding-status').textContent='Bouton enregistré.';$('pad-bind-'+id).focus();}else{padBindingAction=null;controls.capture(null);renderBindings();$('binding-status').textContent=result.reason+' Libérez ce bouton avec —, puis réessayez.';}}
+      controls.step();return;
+    }
+    if(f.pressed.includes('pause')){togglePause();return;}
+    if(mode==='playing'){
+      if(f.pressed.includes('jump'))jumpQueued=true;if(f.pressed.includes('switchProfile'))switchProfileQueued=true;
+      if(f.pressed.includes('fire'))pressFire();if(f.pressed.includes('fireLeft'))pressFire(true);
+      if(f.pressed.includes('weaponNext'))switchWeapon();if(f.pressed.includes('leftHand'))switchLeft();
+      for(let i=0;i<5;i++)if(f.pressed.includes('weapon'+(i+1)))switchWeapon(i);
+      if(f.pressed.includes('map')){$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();}
+    }else{
+      controls.step();const root=$(mode==='menu'?'intro':mode==='shop'?'shop':['paused','options'].includes(mode)?'pause':'result'),nav=f.nav;
+      if(!nav||mode==='loading')return;
+      if(nav.back){if(mode==='paused'||mode==='options'||mode==='shop')togglePause();else if(['dead','cleared','complete'].includes(mode))$('back-menu').click();return;}
+      const focused=document.activeElement,adjustable=focused?.type==='range'||focused?.tagName==='SELECT';
+      if(nav.adjust&&adjustable)FInput.focusMove(root,nav.adjust,document);
+      else if((nav.previous||nav.next)&&['paused','options'].includes(mode)){const names=['game','image','audio','controls'],n=names.indexOf(optionsTab);selectTab(names[(n+(nav.next?1:3))%4],true);}
+      if(nav.direction)FInput.focusMove(root,nav.direction,document);
+      if(nav.accept)FInput.focusMove(root,'accept',document);
+    }
+  }
   function frame(now){
-    requestAnimationFrame(frame);const present=FOptions.frameGate(framePacer,now,prefs.fpsLimit);
+    requestAnimationFrame(frame);pollControls(now);const present=FOptions.frameGate(framePacer,now,prefs.fpsLimit);
     if((mode==='options'||mode==='paused')&&optionsTab==='image'&&now-cadenceHintAt>=500){cadenceHintAt=now;cadenceHint();}
     if(!present)return;
     const frameMs=Math.max(0,now-last),dt=clamp(frameMs/1000,0,.12);last=now;clock+=dt;
@@ -808,19 +858,20 @@
     if(mode==='loading')return;
     const signals={time:sim.state.time,lookYaw:0,lookPitch:0,firing:false};
     if(mode==='playing'){
+      padState=controls.step();
       const held=id=>FOptions.down(prefs.bindings,keys,id);
       input.moveX=Number(held('right'))-Number(held('left'))+stick.x;
       input.moveY=Number(held('forward'))-Number(held('back'))-stick.y;
       input.lookX=lookDX+(Number(held('turnRight'))-Number(held('turnLeft')))*dt*1.9;input.lookY=lookDY;
-      const fireHeld=mouseFire||touchFire||held('fire'),fireLeftHeld=mouseLeftFire||touchLeftFire||held('fireLeft');
-      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');
+      const fireHeld=mouseFire||touchFire||held('fire')||padState.fire,fireLeftHeld=mouseLeftFire||touchLeftFire||held('fireLeft')||padState.fireLeft;
+      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump');input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(input,padState));input.assist=touch||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch;
       signals.lookYaw=dt>0?input.lookX/dt:0;signals.lookPitch=dt>0?input.lookY/dt:0;signals.firing=input.fire;
-      lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;
+      lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=jumpQueued=switchProfileQueued=false;
       // STAB-V1: tolerate timestamp rounding and 59.94 Hz until the fixed-step loop lands.
       // Each part stays below 17.7 ms; precision noise must not double the work at 60 Hz.
       const steps=Math.max(1,Math.ceil(dt*60-.06)),part=dt/steps;
       for(let i=0;i<steps;i++){
-        sim.step(part,input);input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=false;
+        sim.step(part,input);input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=input.jump=input.switchProfile=false;
         events();
         if(mode!=='playing')break;
         // A short press is offered once per frame until fired or expired. Held
@@ -847,6 +898,8 @@
       hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.09;}
       $('crosshair').classList.toggle('hit',sim.state.hitMarker>0);$('damage').style.opacity=String(sim.state.damage*.45);
     }else{$('damage').style.opacity='0';if(titleScreen()){activateTitle();audio.tick(dt);}}
+    boundaryFlash=Math.max(0,boundaryFlash-dt);$('crosshair').classList.toggle('boundary-contact',boundaryFlash>0);
+    controls.flush(now,mode==='playing'&&!document.hidden&&windowFocused);
     syncDestruction();
     const p=sim.state.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
     signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);leftMotion.update(mode==='playing'?dt:0,sim.state.locomotion||{},{...signals,firing:input.fireLeft},softMotion);
@@ -906,9 +959,11 @@
   for(const id of tabs){$('tab-'+id).addEventListener('click',()=>selectTab(id));$('tab-'+id).addEventListener('keydown',e=>{let next=tabs.indexOf(id);if(e.code==='ArrowRight')next=(next+1)%4;else if(e.code==='ArrowLeft')next=(next+3)%4;else if(e.code==='Home')next=0;else if(e.code==='End')next=3;else return;e.preventDefault();selectTab(tabs[next],true);});}
   for(const [id,key] of [['shadows','shadows'],['bloom','bloom'],['fps','showFps'],['crt','crt'],['vignette','vignette'],['invert','invertY'],['pointer-acceleration','systemPointerAcceleration']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
   for(const [id,key,divisor] of [['fov','fov',1],['brightness','brightness',100],['sensitivity','sensitivity',100],['crosshair','crosshairScale',100],['master','masterVolume',100],['music','musicVolume',100],['effects','effectsVolume',100],['ambience','ambienceVolume',100]])$(id+'-setting').addEventListener('input',()=>{prefs[key]=Number($(id+'-setting').value)/divisor;settings();});
+  for(const [id,key,mul] of [['pad-yaw','padYaw',1],['pad-pitch','padPitch',1],['pad-dead','padDead',100],['pad-curve','padCurve',100],['pad-vibration','padVibration',100]])$(id+'-setting').addEventListener('input',()=>{prefs[key]=Number($(id+'-setting').value)/mul;settings();});
+  for(const [id,key] of [['pad-invert','padInvertY'],['pad-assist','padAssist'],['pad-swap','padSwapSticks']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
   $('fps-limit').addEventListener('change',()=>{prefs.fpsLimit=Number($('fps-limit').value);settings();});
   $('reset-image').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['quality','softMotion','fov','brightness','shadows','bloom','showFps','crt','vignette','fpsLimit'])prefs[key]=d[key];quality=prefs.quality;softMotion=prefs.softMotion;renderer.resize(quality);settings();});
-  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','bindings'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
+  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','bindings','bindingsVersion','padBindings','padVersion','padYaw','padPitch','padDead','padCurve','padInvertY','padAssist','padVibration','padSwapSticks'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
   $('reset-audio').addEventListener('click',()=>{audio.cancelTestMix?.();const d=FOptions.defaults(touch);for(const key of ['masterVolume','musicVolume','effectsVolume','ambienceVolume'])prefs[key]=d[key];muted=false;settings();$('audio-status').textContent='Mix recommandé rétabli. Testez les tirs et les ambiances.';});
   $('test-audio').addEventListener('click',async()=>{
     if(audio.stats?.preview){audio.cancelTestMix?.();activateTitle();$('audio-status').textContent='Test audio arrêté.';return;}
@@ -930,6 +985,8 @@
   $('shop-close').addEventListener('click',()=>{if(mode==='shop')togglePause();});
   $('reload').addEventListener('click',()=>location.reload());
   addEventListener('keydown',e=>{
+    activeDevice('keyboard');
+    if(padBindingAction){e.preventDefault();if(e.code==='Escape'){padBindingAction=null;controls.capture(null);renderBindings();}else if(e.code==='Backspace'){prefs.padBindings=FOptions.assignPad(prefs.padBindings,padBindingAction,null).bindings;padBindingAction=null;controls.capture(null);settings();}return;}
     if(!e.repeat&&!e.metaKey&&!e.altKey&&!e.ctrlKey&&!['ShiftLeft','ShiftRight','ControlLeft','ControlRight','AltLeft','AltRight','MetaLeft','MetaRight','Escape'].includes(e.code))titleUserGesture(e);
     if(bindingAction){
       e.preventDefault();if(e.repeat)return;
@@ -943,7 +1000,7 @@
     if(mode!=='playing'||['INPUT','SELECT','TEXTAREA'].includes(e.target?.tagName))return;
     const match=id=>FOptions.matches(prefs.bindings,id,e.code);
     if(FOptions.actions.some(a=>match(a.id)))e.preventDefault();
-    keys.add(e.code);if(match('dash')&&!e.repeat)dashQueued=true;if(match('pulse')&&!e.repeat)pulseQueued=true;if(match('melee')&&!e.repeat)meleeQueued=true;if(match('interact')&&!e.repeat)interactQueued=true;
+    keys.add(e.code);if(match('jump')&&!e.repeat)jumpQueued=true;if(match('switchProfile')&&!e.repeat)switchProfileQueued=true;if(match('weaponNext')&&!e.repeat)switchWeapon();if(match('dash')&&!e.repeat)dashQueued=true;if(match('pulse')&&!e.repeat)pulseQueued=true;if(match('melee')&&!e.repeat)meleeQueued=true;if(match('interact')&&!e.repeat)interactQueued=true;
     if(!e.repeat){if(match('fire'))pressFire();if(match('fireLeft'))pressFire(true);}
     if(!e.repeat)for(let i=0;i<5;i++)if(match('weapon'+(i+1)))switchWeapon(i);
     if(match('leftHand')&&!e.repeat)switchLeft();
@@ -966,39 +1023,40 @@
     // A cancelled request can still succeed through a promise or a legacy
     // document event. Only a fresh gesture may make that acquisition wanted.
     if(locked&&(mode!=='playing'||!pointerLockWanted)){wasLocked=false;document.exitPointerLock();return;}
-    if(wasLocked&&!locked&&mode==='playing')setMode('paused');
+    if(wasLocked&&!locked&&mode==='playing'&&controls.device!=='gamepad')setMode('paused');
     if(locked&&captureMouseButton!==null)toast('Souris capturée · relâchez puis cliquez pour tirer.',3);
     wasLocked=locked;
   });
   document.addEventListener('pointerlockerror',freePointerHint);
-  document.addEventListener('mousemove',e=>{if(mode==='playing'&&document.pointerLockElement===canvas){lookDX+=e.movementX*.0022*prefs.sensitivity;lookDY-=e.movementY*.0022*prefs.sensitivity*(prefs.invertY?-1:1);}});
+  document.addEventListener('mousemove',e=>{if(e.movementX||e.movementY)activeDevice('mouse');if(mode==='playing'&&document.pointerLockElement===canvas){lookDX+=e.movementX*.0022*prefs.sensitivity;lookDY-=e.movementY*.0022*prefs.sensitivity*(prefs.invertY?-1:1);}});
   // Mouse down/up report every button transition. Pointer down/up only report
   // the first pressed/last released mouse button, which would break dual fire.
   canvas.addEventListener('mousedown',e=>{if(mode!=='playing'||captureMouseButton!==null||document.pointerLockElement!==canvas)return;if(e.button===0){mouseFire=true;pressFire();}else if(e.button===2){mouseLeftFire=true;pressFire(true);}});
   canvas.addEventListener('pointerdown',e=>{
     if(mode!=='playing')return;
+    activeDevice(e.pointerType==='mouse'?'mouse':'touch');
     if(e.pointerType==='mouse'){if(document.pointerLockElement!==canvas){captureMouseButton=e.button??0;mouseFire=mouseLeftFire=false;dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);toast('Capture de la souris · ce clic ne tire pas.',3);lock();}}
-    else if(e.clientX>innerWidth*.36){dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}
+    else if(e.clientX>innerWidth*.36&&!dragLook){e.preventDefault();dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}
   });
   canvas.addEventListener('pointermove',e=>{if(dragLook?.id===e.pointerId&&!document.pointerLockElement&&mode==='playing'){const sensitivity=(touch?.004:.003)*prefs.sensitivity;lookDX+=(e.clientX-dragLook.x)*sensitivity;lookDY-=(e.clientY-dragLook.y)*sensitivity*(prefs.invertY?-1:1);dragLook.x=e.clientX;dragLook.y=e.clientY;}});
   function endMouse(e){if(e.button===captureMouseButton)captureMouseButton=null;if(e.button===0)mouseFire=false;else if(e.button===2)mouseLeftFire=false;if(!mouseFire&&!mouseLeftFire)dragLook=null;}
   addEventListener('mouseup',endMouse);
   function endPointer(e){if(e.pointerType==='mouse'&&(e.type==='pointercancel'||e.buttons===0)){mouseFire=mouseLeftFire=false;captureMouseButton=null;if(e.type==='pointercancel'){clearFireIntents();++pointerRequestSerial;if(document.pointerLockElement!==canvas)pointerLockWanted=false;}}if(dragLook?.id===e.pointerId&&!mouseFire&&!mouseLeftFire)dragLook=null;if(moveTouch?.id===e.pointerId){moveTouch=null;stick.x=stick.y=0;$('move-stick').style.transform='';}}
   addEventListener('pointerup',endPointer);addEventListener('pointercancel',endPointer);canvas.addEventListener('contextmenu',e=>e.preventDefault());
-  $('move-zone').addEventListener('pointerdown',e=>{if(mode!=='playing'||moveTouch)return;e.preventDefault();const rect=$('move-zone').getBoundingClientRect();moveTouch={id:e.pointerId,x:rect.left+rect.width/2,y:rect.top+rect.height/2};$('move-zone').setPointerCapture(e.pointerId);joystick(e);});
+  $('move-zone').addEventListener('pointerdown',e=>{if(mode!=='playing'||moveTouch)return;activeDevice('touch');e.preventDefault();const rect=$('move-zone').getBoundingClientRect();moveTouch={id:e.pointerId,x:rect.left+rect.width/2,y:rect.top+rect.height/2};$('move-zone').setPointerCapture(e.pointerId);joystick(e);});
   function joystick(e){if(moveTouch?.id!==e.pointerId)return;const dx=e.clientX-moveTouch.x,dy=e.clientY-moveTouch.y,n=Math.max(1,Math.hypot(dx,dy)/34);stick.x=dx/n/34;stick.y=dy/n/34;$('move-stick').style.transform='translate('+dx/n+'px,'+dy/n+'px)';}
   $('move-zone').addEventListener('pointermove',joystick);
-  $('fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();touchFire=true;pressFire();$('fire-button').setPointerCapture(e.pointerId);});
+  $('fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;activeDevice('touch');e.preventDefault();touchFire=true;pressFire();$('fire-button').setPointerCapture(e.pointerId);});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('fire-button').addEventListener(name,()=>{if(name==='pointercancel'||name==='lostpointercapture'&&touchFire)firePressed=false;touchFire=false;});
-  $('left-fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||$('left-fire-button').disabled)return;e.preventDefault();touchLeftFire=true;pressFire(true);$('left-fire-button').setPointerCapture(e.pointerId);});
+  $('left-fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||$('left-fire-button').disabled)return;activeDevice('touch');e.preventDefault();touchLeftFire=true;pressFire(true);$('left-fire-button').setPointerCapture(e.pointerId);});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('left-fire-button').addEventListener(name,()=>{if(name==='pointercancel'||name==='lostpointercapture'&&touchLeftFire)fireLeftPressed=false;touchLeftFire=false;});
   $('dash-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();dashQueued=true;});
   $('pulse-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();pulseQueued=true;});
   $('melee-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();meleeQueued=true;});
   $('interact-button').addEventListener('click',e=>{if(mode!=='playing'||$('interact-button').disabled)return;e.preventDefault();interactQueued=true;canvas.focus({preventScroll:true});});
-  addEventListener('blur',()=>{windowFocused=false;audio.cancelTestMix?.();if(mode==='playing')setMode('paused');else{audioGate();syncTitle();}});
+  addEventListener('blur',()=>{windowFocused=false;controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');else{audioGate();syncTitle();}});
   addEventListener('focus',()=>{windowFocused=true;syncTitle();audioGate();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
   addEventListener('resize',()=>renderer?.resize(quality));
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   if(touch){$('intro-controls').textContent='Déplacez-vous à gauche · Visez à droite';$('help-text').innerHTML='Joystick gauche : déplacer · Glisser à droite : viser<br>Grand cercle : main droite · TIR G : main gauche<br>Flèche : esquive<br>Anneaux : onde · Crosse : attaque au contact<br>Emplacement : main droite · Menu main gauche : arme de la main gauche<br>Bouton contextuel : commande ou ascenseur<br>Ramassez armes et munitions. Les réserves sont limitées.';}

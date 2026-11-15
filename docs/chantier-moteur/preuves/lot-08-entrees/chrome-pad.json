@@ -1,0 +1,86 @@
+{
+  "schema": "metal-pad-chrome-v1",
+  "artifactSha256": "744edf284b9528c061177246e98e1fc1b52f264ad5ff293f272db88c3a12a445",
+  "simulated": true,
+  "physicalController": false,
+  "results": [
+    {
+      "name": "startup",
+      "finput": "function",
+      "controls": "function",
+      "effects": 0,
+      "state": "menu"
+    },
+    {
+      "name": "pad-menu-options",
+      "focused": "intro-options",
+      "state": "options"
+    },
+    {
+      "name": "pad-start",
+      "state": "playing",
+      "pointerLockRequests": 0,
+      "devicePad": true
+    },
+    {
+      "name": "pad-play",
+      "before": {
+        "shots": 0,
+        "x": -41.6,
+        "z": 44.800000000000004,
+        "yaw": 0
+      },
+      "after": {
+        "shots": 2,
+        "x": -40.40956364267973,
+        "z": 46.11122940801708,
+        "yaw": 1.4431944455515786
+      },
+      "effects": 2,
+      "lastInput": {
+        "moveX": 0,
+        "moveY": 0,
+        "lookX": 0,
+        "lookY": 0,
+        "fire": false,
+        "fireLeft": false,
+        "dash": false,
+        "pulse": false,
+        "melee": false,
+        "interact": false,
+        "weapon": 4,
+        "sprint": false,
+        "assist": true,
+        "switchProfile": false,
+        "jumpHeld": false,
+        "jump": false,
+        "touchAssist": false
+      }
+    },
+    {
+      "name": "pad-options-range",
+      "tab": "tab-controls",
+      "before": "100",
+      "after": "95",
+      "stored": 0.95,
+      "resets": 1
+    },
+    {
+      "name": "pad-remap",
+      "stored": [
+        "RB"
+      ],
+      "status": "Bouton enregistré."
+    },
+    {
+      "name": "disconnect",
+      "state": "paused",
+      "resets": 1,
+      "status": "Manette débranchée · reconnectez-la ou utilisez le clavier"
+    },
+    {
+      "name": "browser-errors",
+      "errors": []
+    }
+  ]
+}

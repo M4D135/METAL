@@ -8,7 +8,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'game'].map(name =>
+const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -60,7 +60,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   };
   if (runtime.idle !== false) context.requestIdleCallback = (callback, options) => idle.push({ callback, options, mode: element('body').dataset.state || 'menu' });
   context.window = context; vm.createContext(context);
-  for (const name of ['destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
+  for (const name of ['destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
   if(runtime.brain){vm.runInContext(sources.brain, context, {filename:'brain.js'});const createBrain=context.FBrain.create;context.FBrain.create=options=>{const brain=createBrain(options);brains.push(brain);return brain;};}
   const create = context.FSimulation.create;
   context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); return sim; };
@@ -309,7 +309,7 @@ test('Four real weapon pickups feed the HUD and both mouse buttons fire independ
   const overlays=app.frames.at(-1).meshes.filter(m=>m.overlay);assert(overlays.length>50);for(const mesh of overlays)assert(mesh.p.concat(mesh.s,mesh.r).every(Number.isFinite));
 });
 
-test('Mouse and touch left inputs fire the paired weapon and Space always dashes',()=>{
+test('Mouse and touch left inputs fire the paired weapon and R always dashes',()=>{
   const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app);
   app.element('weapon-slot-0').click();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
   assert.equal(sim.state.equipment.left,1);assert.equal(app.element('left-hand-status').textContent,'CLIC DROIT · TIR');
@@ -318,7 +318,7 @@ test('Mouse and touch left inputs fire the paired weapon and Space always dashes
   const overlays=app.frames.at(-1).meshes.filter(m=>m.overlay);assert(overlays.length>50);for(const mesh of overlays)assert(mesh.p.concat(mesh.s,mesh.r).every(Number.isFinite));
   app.emit('mouseup',{button:2});const afterMouse=sim.state.inventory.ammo[1];for(let i=0;i<8;i++)app.frame(100);
   assert.equal(sim.state.inventory.ammo[1],afterMouse,'a released mouse never keeps firing');
-  app.key('Space');app.frame(100);app.key('Space',false);assert(sim.state.player.dash>0,'Space always dashes, whatever the left hand holds');
+  app.key('KeyR');app.frame(100);app.key('KeyR',false);assert(sim.state.player.dash>0,'R always dashes, whatever the left hand holds');
   assert.equal(app.sounds.some(q=>q.name==='shieldBash'),false);
   app.element('left-fire-button').emit('pointerdown',{pointerId:8});app.frame(100);
   assert(sim.state.inventory.ammo[1]<afterMouse,'the touch left button fires the paired weapon');
@@ -365,7 +365,7 @@ test('Physical armor pickups update the HUD, retain excess and keep one flat hun
   sim.move(sim.state.player,-6,6);app.frame(100);
   assert.equal(sim.state.armor.points,90);assert.equal(sim.state.pickups.at(-2).taken,true);assert.equal(app.element('armor-bar').style.width,'90%');
   app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');assert.deepEqual(plain(sim.state.armor),{points:90,capacity:100},'a paired weapon changes nothing in the armor pool');
-  app.key('Space');app.frame(100);app.key('Space',false);assert(sim.state.player.dash>0);assert.equal(sim.state.armor.points,90);
+  app.key('KeyR');app.frame(100);app.key('KeyR',false);assert(sim.state.player.dash>0);assert.equal(sim.state.armor.points,90);
 });
 
 test('The browser shell carries fractional armor through Continue, resume and entry restart without refilling',()=>{
@@ -685,11 +685,11 @@ test('Options rebind the actual interaction key, persist it, and never start the
   assert.equal(app.element('body').dataset.state,'options');assert.equal(app.simulations.at(-1).state.elapsed,0);
   app.element('tab-controls').click();app.element('bind-interact').click();app.key('KeyE');
   assert.match(app.element('binding-status').textContent,/Déjà utilisée/);
-  app.key('KeyR');assert.equal(JSON.parse(app.memory.get('ferro-settings')).bindings.interact[0],'KeyR');
+  app.key('KeyG');assert.equal(JSON.parse(app.memory.get('ferro-settings')).bindings.interact[0],'KeyG');
   app.element('resume').click();app.element('start').click();app.key('KeyF');app.frame(100);app.key('KeyF',false);
   assert.equal(app.simulations.at(-1).state.mechanisms[0].active,false,'Old key must no longer activate');
-  app.key('KeyR');app.frame(100);app.key('KeyR',false);
-  assert.equal(app.simulations.at(-1).state.mechanisms[0].active,true);assert.equal(app.element('interact-key').textContent,'R');
+  app.key('KeyG');app.frame(100);app.key('KeyG',false);
+  assert.equal(app.simulations.at(-1).state.mechanisms[0].active,true);assert.equal(app.element('interact-key').textContent,'G');
 });
 
 test('Image and mix controls reach the renderer/audio and do not advance a paused simulation', () => {

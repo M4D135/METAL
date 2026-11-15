@@ -1,0 +1,550 @@
+TAP version 13
+# Subtest: MASTER tuning, first connected pad, full analog magnitude and bounded curves
+ok 1 - MASTER tuning, first connected pad, full analog magnitude and bounded curves
+  ---
+  duration_ms: 9.396614
+  ...
+# Subtest: Analog trigger hysteresis and press fronts do not repeat while held
+ok 2 - Analog trigger hysteresis and press fronts do not repeat while held
+  ---
+  duration_ms: 2.933235
+  ...
+# Subtest: Pause clear suppresses every held button until release, including fire and jump
+ok 3 - Pause clear suppresses every held button until release, including fire and jump
+  ---
+  duration_ms: 2.207142
+  ...
+# Subtest: Pad bindings normalize idempotently and reject conflicts without stealing controls
+ok 4 - Pad bindings normalize idempotently and reject conflicts without stealing controls
+  ---
+  duration_ms: 4.557595
+  ...
+# Subtest: Old Space dodge migrates to jump without stealing a custom R binding
+ok 5 - Old Space dodge migrates to jump without stealing a custom R binding
+  ---
+  duration_ms: 2.224694
+  ...
+# Subtest: Merged host and pad preserve strongest move, add look, and retain every held action
+ok 6 - Merged host and pad preserve strongest move, add look, and retain every held action
+  ---
+  duration_ms: 1.602761
+  ...
+# Subtest: Menu focus excludes disabled, hidden ancestors and zero rectangles; range sends input
+ok 7 - Menu focus excludes disabled, hidden ancestors and zero rectangles; range sends input
+  ---
+  duration_ms: 2.117142
+  ...
+# Subtest: Pad menu directions repeat after delay but A/B are edges only
+ok 8 - Pad menu directions repeat after delay but A/B are edges only
+  ---
+  duration_ms: 3.291265
+  ...
+# Subtest: Rumble requires a gesture, merges pending effects, limits calls, and clears on pause
+ok 9 - Rumble requires a gesture, merges pending effects, limits calls, and clears on pause
+  ---
+  duration_ms: 3.410257
+  ...
+# Subtest: Legacy pulse actuator, refusal and unplug are harmless; zero intensity survives reload
+ok 10 - Legacy pulse actuator, refusal and unplug are harmless; zero intensity survives reload
+  ---
+  duration_ms: 11.976298
+  ...
+# Subtest: E01 — Chargement : API statique complète, seul FInput s’ajoute au global
+ok 11 - E01 — Chargement : API statique complète, seul FInput s’ajoute au global
+  ---
+  duration_ms: 3.15989
+  ...
+# Subtest: E02 — Source propre : ni hasard, ni horloge, ni réseau, aucun nom propre au jeu, 18 000 octets au plus
+ok 12 - E02 — Source propre : ni hasard, ni horloge, ni réseau, aucun nom propre au jeu, 18 000 octets au plus
+  ---
+  duration_ms: 0.573102
+  ...
+# Subtest: E03 — Config invalide : create lève « FInput : … »
+ok 13 - E03 — Config invalide : create lève « FInput : … »
+  ---
+  duration_ms: 2.031223
+  ...
+# Subtest: E03b — Toutes les règles de la déclaration, sans toucher à la config
+ok 14 - E03b — Toutes les règles de la déclaration, sans toucher à la config
+  ---
+  duration_ms: 3.649456
+  ...
+# Subtest: E04 — Défauts METAL : Espace saute, R esquive, V frappe, aucun code en double
+ok 15 - E04 — Défauts METAL : Espace saute, R esquive, V frappe, aucun code en double
+  ---
+  duration_ms: 0.80206
+  ...
+# Subtest: E04b — normalize à l’étape 2 : table des touches gardée entière ou par défaut, réglages bornés
+ok 16 - E04b — normalize à l’étape 2 : table des touches gardée entière ou par défaut, réglages bornés
+  ---
+  duration_ms: 4.720315
+  ...
+# Subtest: E05 — AZERTY et QWERTY : chaque touche seule, puis frame et step
+ok 17 - E05 — AZERTY et QWERTY : chaque touche seule, puis frame et step
+  ---
+  duration_ms: 1.931431
+  ...
+# Subtest: E06 — Parité avec game.js (annexe B) : 600 images, graine 7, égalité au bit près
+ok 18 - E06 — Parité avec game.js (annexe B) : 600 images, graine 7, égalité au bit près
+  ---
+  duration_ms: 22.966072
+  ...
+# Subtest: E07 — Appui court (LOOP-06) : R appuyée et relâchée avant frame
+ok 19 - E07 — Appui court (LOOP-06) : R appuyée et relâchée avant frame
+  ---
+  duration_ms: 1.218906
+  ...
+# Subtest: E08 — Répétition : la touche ajoutée par repeat est tenue, sans front ni impulsion
+ok 20 - E08 — Répétition : la touche ajoutée par repeat est tenue, sans front ni impulsion
+  ---
+  duration_ms: 1.132603
+  ...
+# Subtest: E09 — Action tenue avec verrou : Entrée appuyée et relâchée dans l’image (LOOP-06)
+ok 21 - E09 — Action tenue avec verrou : Entrée appuyée et relâchée dans l’image (LOOP-06)
+  ---
+  duration_ms: 0.881852
+  ...
+# Subtest: E10 — Deux pas dans une image : impulsion et regard au premier pas seulement
+ok 22 - E10 — Deux pas dans une image : impulsion et regard au premier pas seulement
+  ---
+  duration_ms: 0.696429
+  ...
+# Subtest: E11 — Image sans pas : le regard attend dans pendingLook (STAB-06)
+ok 23 - E11 — Image sans pas : le regard attend dans pendingLook (STAB-06)
+  ---
+  duration_ms: 0.641725
+  ...
+# Subtest: E12 — clear() : touches relâchées, verrous effacés, regard en attente à 0
+ok 24 - E12 — clear() : touches relâchées, verrous effacés, regard en attente à 0
+  ---
+  duration_ms: 0.832044
+  ...
+# Subtest: E13 — Pas de -0 : aucune sortie numérique ne vaut -0 (sorties de E06 ; E50 à l’étape 7)
+ok 25 - E13 — Pas de -0 : aucune sortie numérique ne vaut -0 (sorties de E06 ; E50 à l’étape 7)
+  ---
+  duration_ms: 26.502856
+  ...
+# Subtest: E14 — Sources virtuelles : boutons de souris et boutons tactiles
+ok 26 - E14 — Sources virtuelles : boutons de souris et boutons tactiles
+  ---
+  duration_ms: 1.070523
+  ...
+# Subtest: E14b — frame() et step() : objets neufs, ordre fixe des clés, fronts dans l’ordre d’arrivée, dt borné
+ok 27 - E14b — frame() et step() : objets neufs, ordre fixe des clés, fronts dans l’ordre d’arrivée, dt borné
+  ---
+  duration_ms: 1.176075
+  ...
+# Subtest: E14c — Appareil actif sans manette : clavier, souris, tactile, filtre de 800 ms
+ok 28 - E14c — Appareil actif sans manette : clavier, souris, tactile, filtre de 800 ms
+  ---
+  duration_ms: 1.057003
+  ...
+# Subtest: E14d — configure et settings : réglages appliqués, touches tenues recomptées sans front
+ok 29 - E14d — configure et settings : réglages appliqués, touches tenues recomptées sans front
+  ---
+  duration_ms: 1.328042
+  ...
+# Subtest: E15 — Conflit clavier : la touche d’une autre action est refusée, réglages intacts
+ok 30 - E15 — Conflit clavier : la touche d’une autre action est refusée, réglages intacts
+  ---
+  duration_ms: 1.536297
+  ...
+# Subtest: E16 — Affectation clavier : la liste de l’action vaut [code], toutes les autres sont inchangées
+ok 31 - E16 — Affectation clavier : la liste de l’action vaut [code], toutes les autres sont inchangées
+  ---
+  duration_ms: 2.595988
+  ...
+# Subtest: E17 — Touches réservées : Échap, Méta, Ctrl, Alt et F5 sont refusées
+ok 32 - E17 — Touches réservées : Échap, Méta, Ctrl, Alt et F5 sont refusées
+  ---
+  duration_ms: 3.020114
+  ...
+# Subtest: E18 — Manette : conflit, boutons réservés ou inconnus, unbind puis assign
+ok 33 - E18 — Manette : conflit, boutons réservés ou inconnus, unbind puis assign
+  ---
+  duration_ms: 6.543107
+  ...
+# Subtest: E18b — assign et unbind : ordre des contrôles, appareil et action inconnus, déclaration validée
+ok 34 - E18b — assign et unbind : ordre des contrôles, appareil et action inconnus, déclaration validée
+  ---
+  duration_ms: 3.021955
+  ...
+# Subtest: E19 — normalize stable : idempotent, stable après un aller-retour JSON, défauts pour une table invalide
+ok 35 - E19 — normalize stable : idempotent, stable après un aller-retour JSON, défauts pour une table invalide
+  ---
+  duration_ms: 5.729654
+  ...
+# Subtest: E20 — Bornes de tune : nombres finis bornés, booléens gardés, le reste aux défauts
+ok 36 - E20 — Bornes de tune : nombres finis bornés, booléens gardés, le reste aux défauts
+  ---
+  duration_ms: 11.095022
+  ...
+# Subtest: E21 — Action manquante : codes par défaut libres, sinon premier repli libre (clavier), sinon []
+ok 37 - E21 — Action manquante : codes par défaut libres, sinon premier repli libre (clavier), sinon []
+  ---
+  duration_ms: 1.296506
+  ...
+# Subtest: E21b — Mêmes réponses que FOptions sur les profils de checks/options.test.mjs
+ok 38 - E21b — Mêmes réponses que FOptions sur les profils de checks/options.test.mjs
+  ---
+  duration_ms: 4.310412
+  ...
+# Subtest: E22 — Migration v1 → v2 : Espace saute, R esquive ; migrate seulement pour un format plus ancien
+ok 39 - E22 — Migration v1 → v2 : Espace saute, R esquive ; migrate seulement pour un format plus ancien
+  ---
+  duration_ms: 5.147753
+  ...
+# Subtest: E23 — Capture clavier : le prochain appui va à frame().captured, jamais au jeu
+ok 40 - E23 — Capture clavier : le prochain appui va à frame().captured, jamais au jeu
+  ---
+  duration_ms: 1.464617
+  ...
+# Subtest: E24 — radial : zone morte radiale avec remise à l’échelle
+ok 41 - E24 — radial : zone morte radiale avec remise à l’échelle
+  ---
+  duration_ms: 0.452286
+  ...
+# Subtest: E25 — Déplacement à la manette : zone morte .15, course au bout du stick (n ≥ .92)
+ok 42 - E25 — Déplacement à la manette : zone morte .15, course au bout du stick (n ≥ .92)
+  ---
+  duration_ms: 1.467177
+  ...
+# Subtest: E26 — Lacet (FEEL-10) : 5,40, 76,34, 156,65 et 300 °/s à 20, 50, 70 et 100 %
+ok 43 - E26 — Lacet (FEEL-10) : 5,40, 76,34, 156,65 et 300 °/s à 20, 50, 70 et 100 %
+  ---
+  duration_ms: 1.77724
+  ...
+# Subtest: E27 — Tangage : +190 °/s × dt vers le haut, opposé avec padInvertY
+ok 44 - E27 — Tangage : +190 °/s × dt vers le haut, opposé avec padInvertY
+  ---
+  duration_ms: 1.781016
+  ...
+# Subtest: E28 — Demi-tour : 58 images de 1/120 s (0,483 s) et 29 de 1/60 s ; 600 ms sans surcroît
+ok 45 - E28 — Demi-tour : 58 images de 1/120 s (0,483 s) et 29 de 1/60 s ; 600 ms sans surcroît
+  ---
+  duration_ms: 15.983448
+  ...
+# Subtest: E29 — Ralentissement sur cible : lookScale .55, sur la visée à la manette seulement
+ok 46 - E29 — Ralentissement sur cible : lookScale .55, sur la visée à la manette seulement
+  ---
+  duration_ms: 2.543252
+  ...
+# Subtest: E30 — Gâchettes : hystérésis .30 / .18, fronts aux images 2 et 6
+ok 47 - E30 — Gâchettes : hystérésis .30 / .18, fronts aux images 2 et 6
+  ---
+  duration_ms: 1.456858
+  ...
+# Subtest: E31 — Valeur analogique : RT .5 → 0,473684 ; .04 → 0 ; 1 → 1 ; sa touche → 1
+ok 48 - E31 — Valeur analogique : RT .5 → 0,473684 ; .04 → 0 ; 1 → 1 ; sa touche → 1
+  ---
+  duration_ms: 0.857228
+  ...
+# Subtest: E32 — Fusion : déplacement le plus fort, visée sommée avec la souris, plusieurs manettes
+ok 49 - E32 — Fusion : déplacement le plus fort, visée sommée avec la souris, plusieurs manettes
+  ---
+  duration_ms: 0.964203
+  ...
+# Subtest: E33 — Branchement à chaud : connected et disconnected une seule fois, null et mapping non standard acceptés
+ok 50 - E33 — Branchement à chaud : connected et disconnected une seule fois, null et mapping non standard acceptés
+  ---
+  duration_ms: 1.268506
+  ...
+# Subtest: E33b — navigator.getGamepads est appelé comme une méthode (sinon « Illegal invocation » dans Chrome)
+ok 51 - E33b — navigator.getGamepads est appelé comme une méthode (sinon « Illegal invocation » dans Chrome)
+  ---
+  duration_ms: 2.112407
+  ...
+# Subtest: E34 — Front de bouton : A tenu 10 images → un seul saut
+ok 52 - E34 — Front de bouton : A tenu 10 images → un seul saut
+  ---
+  duration_ms: 1.093419
+  ...
+# Subtest: E34b — configure à la manette : la table pad des réglages, un bouton tenu qui change d’action la tient sans front
+ok 53 - E34b — configure à la manette : la table pad des réglages, un bouton tenu qui change d’action la tient sans front
+  ---
+  duration_ms: 2.698516
+  ...
+# Subtest: E35 — Appareil actif : bouton ou axe au-delà de .3 → manette ; clavier, tactile, souris
+ok 54 - E35 — Appareil actif : bouton ou axe au-delà de .3 → manette ; clavier, tactile, souris
+  ---
+  duration_ms: 0.870396
+  ...
+# Subtest: E36 — Capture manette et clear() : ni front ni impulsion pour l’appui capturé ; l’image après clear() sans front
+ok 55 - E36 — Capture manette et clear() : ni front ni impulsion pour l’appui capturé ; l’image après clear() sans front
+  ---
+  duration_ms: 1.140602
+  ...
+# Subtest: E37 — Échange des sticks : le stick gauche tourne la vue, le droit déplace
+ok 56 - E37 — Échange des sticks : le stick gauche tourne la vue, le droit déplace
+  ---
+  duration_ms: 1.195307
+  ...
+# Subtest: E38 — keyName : mêmes noms que FOptions.keyName
+ok 57 - E38 — keyName : mêmes noms que FOptions.keyName
+  ---
+  duration_ms: 0.526238
+  ...
+# Subtest: E39 — Libellés appris : la touche vue par keyDown (AZERTY), la table de setLayout, sinon keyName ; les chiffres gardent leur nom
+ok 58 - E39 — Libellés appris : la touche vue par keyDown (AZERTY), la table de setLayout, sinon keyName ; les chiffres gardent leur nom
+  ---
+  duration_ms: 0.661501
+  ...
+# Subtest: E39b — Libellés : un caractère visible, codes Key… seulement, appris avant la table, invite clavier jointe par « / » ou « — »
+ok 59 - E39b — Libellés : un caractère visible, codes Key… seulement, appris avant la table, invite clavier jointe par « / » ou « — »
+  ---
+  duration_ms: 2.948499
+  ...
+# Subtest: E40 — Glyphes : Xbox, PlayStation, générique ; invites tactile et souris, action non affectée, action inconnue
+ok 60 - E40 — Glyphes : Xbox, PlayStation, générique ; invites tactile et souris, action non affectée, action inconnue
+  ---
+  duration_ms: 0.594109
+  ...
+# Subtest: E40b — glyph et dernière manette active : tables complètes, nom ou style inconnus, index le plus bas, remise à null au débranchement
+ok 61 - E40b — glyph et dernière manette active : tables complètes, nom ou style inconnus, index le plus bas, remise à null au débranchement
+  ---
+  duration_ms: 1.522746
+  ...
+# Subtest: E41 — guessDevice : règle de BITUME (TACT-08), matchMedia appelé comme une méthode, toute erreur → keyboard
+ok 62 - E41 — guessDevice : règle de BITUME (TACT-08), matchMedia appelé comme une méthode, toute erreur → keyboard
+  ---
+  duration_ms: 0.815693
+  ...
+# Subtest: E42 — Vibrations : appel exact, limiteur de 40 ms, intensité .5, sans actionneur, exception, aucun rejet non traité
+ok 63 - E42 — Vibrations : appel exact, limiteur de 40 ms, intensité .5, sans actionneur, exception, aucun rejet non traité
+  ---
+  duration_ms: 10.286145
+  ...
+# Subtest: E42b — rumble : bornes, manette visée, limiteur mis à jour au seul succès, rien avant frame()
+ok 64 - E42b — rumble : bornes, manette visée, limiteur mis à jour au seul succès, rien avant frame()
+  ---
+  duration_ms: 1.964839
+  ...
+# Subtest: FInput.clear arrête les vibrations lancées, même après déconnexion, sans reset répété
+ok 65 - FInput.clear arrête les vibrations lancées, même après déconnexion, sans reset répété
+  ---
+  duration_ms: 0.903292
+  ...
+# Subtest: FInput.clear utilise un effet nul quand reset est absent
+ok 66 - FInput.clear utilise un effet nul quand reset est absent
+  ---
+  duration_ms: 0.676909
+  ...
+# Subtest: FInput.clear annule chaque actionneur utilisé et tolère refus asynchrones ou exceptions
+ok 67 - FInput.clear annule chaque actionneur utilisé et tolère refus asynchrones ou exceptions
+  ---
+  duration_ms: 1.145643
+  ...
+# Subtest: Gamepad reaches real simulation, jump/profile fronts are single-use across substeps
+ok 68 - Gamepad reaches real simulation, jump/profile fronts are single-use across substeps
+  ---
+  duration_ms: 46.787101
+  ...
+# Subtest: Gamepad pause/resume never replays a held trigger; disconnect pauses and stops vibration
+ok 69 - Gamepad pause/resume never replays a held trigger; disconnect pauses and stops vibration
+  ---
+  duration_ms: 35.046658
+  ...
+# Subtest: A remapped pad button fires in game and does not require pointer lock
+ok 70 - A remapped pad button fires in game and does not require pointer lock
+  ---
+  duration_ms: 13.17914
+  ...
+# Subtest: A brief mouse press between frames fires exactly once at 20, 30, 60 and 144 Hz
+ok 71 - A brief mouse press between frames fires exactly once at 20, 30, 60 and 144 Hz
+  ---
+  duration_ms: 84.775905
+  ...
+# Subtest: A brief key press between frames fires exactly once at 20, 30, 60 and 144 Hz
+ok 72 - A brief key press between frames fires exactly once at 20, 30, 60 and 144 Hz
+  ---
+  duration_ms: 79.656152
+  ...
+# Subtest: A brief touch press between frames fires exactly once at 20, 30, 60 and 144 Hz
+ok 73 - A brief touch press between frames fires exactly once at 20, 30, 60 and 144 Hz
+  ---
+  duration_ms: 81.501056
+  ...
+# Subtest: A latched press is sent only to the first substep; holding still drives subsequent substeps
+ok 74 - A latched press is sent only to the first substep; holding still drives subsequent substeps
+  ---
+  duration_ms: 13.167348
+  ...
+# Subtest: A brief press just before the pistol becomes ready survives the cooldown and is consumed by its shot
+ok 75 - A brief press just before the pistol becomes ready survives the cooldown and is consumed by its shot
+  ---
+  duration_ms: 19.702327
+  ...
+# Subtest: An expired press and key repeat cannot schedule a delayed shot; the buffer duration is configurable
+ok 76 - An expired press and key repeat cannot schedule a delayed shot; the buffer duration is configurable
+  ---
+  duration_ms: 55.775588
+  ...
+# Subtest: A right-hand shot cannot consume a buffered left-hand shot
+ok 77 - A right-hand shot cannot consume a buffered left-hand shot
+  ---
+  duration_ms: 23.041384
+  ...
+# Subtest: Keyboard rebinding and simultaneous touch taps preserve independent hand intentions
+ok 78 - Keyboard rebinding and simultaneous touch taps preserve independent hand intentions
+  ---
+  duration_ms: 21.535455
+  ...
+# Subtest: Switching away and back cancels an earlier intention instead of firing the new equipment
+ok 79 - Switching away and back cancels an earlier intention instead of firing the new equipment
+  ---
+  duration_ms: 16.089463
+  ...
+# Subtest: Pause, focus loss, hidden tab and context loss clear unconsumed input
+ok 80 - Pause, focus loss, hidden tab and context loss clear unconsumed input
+  ---
+  duration_ms: 49.949535
+  ...
+# Subtest: A mouse press without pointer lock is not a fire intention
+ok 81 - A mouse press without pointer lock is not a fire intention
+  ---
+  duration_ms: 12.231129
+  ...
+# Subtest: Pointer cancellation clears pending fire while normal touch release preserves a tap
+ok 82 - Pointer cancellation clears pending fire while normal touch release preserves a tap
+  ---
+  duration_ms: 36.834394
+  ...
+# Subtest: The left-hand trigger stays a held action and is never latched as a firearm
+ok 83 - The left-hand trigger stays a held action and is never latched as a firearm
+  ---
+  duration_ms: 67.048417
+  ...
+# Subtest: Thirty small wheel events cross the threshold only once and respect the 150 ms cooldown
+ok 84 - Thirty small wheel events cross the threshold only once and respect the 150 ms cooldown
+  ---
+  duration_ms: 13.054277
+  ...
+# Subtest: Wheel direction changes reset partial travel, line/page modes normalize and pause clears accumulation
+ok 85 - Wheel direction changes reset partial travel, line/page modes normalize and pause clears accumulation
+  ---
+  duration_ms: 11.642235
+  ...
+# Subtest: Pointer capture is requested in the canvas gesture and its matching mouse press never fires
+ok 86 - Pointer capture is requested in the canvas gesture and its matching mouse press never fires
+  ---
+  duration_ms: 13.010021
+  ...
+# Subtest: Raw mouse input is the default; the saved system-acceleration preference and reset control change the request
+ok 87 - Raw mouse input is the default; the saved system-acceleration preference and reset control change the request
+  ---
+  duration_ms: 24.138739
+  ...
+# Subtest: Unsupported raw input retries exactly once without options for synchronous and promise APIs
+ok 88 - Unsupported raw input retries exactly once without options for synchronous and promise APIs
+  ---
+  duration_ms: 23.50559
+  ...
+# Subtest: A failed lock keeps drag-look usable without mouse firing and leaves touch gestures unchanged
+ok 89 - A failed lock keeps drag-look usable without mouse firing and leaves touch gestures unchanged
+  ---
+  duration_ms: 37.66687
+  ...
+# Subtest: Late lock failure or success after pause cannot recapture the pointer in a menu
+ok 90 - Late lock failure or success after pause cannot recapture the pointer in a menu
+  ---
+  duration_ms: 22.287196
+  ...
+# Subtest: Legacy pointer-lock error events give a usable fallback and cancelling capture cannot block the next click
+ok 91 - Legacy pointer-lock error events give a usable fallback and cancelling capture cannot block the next click
+  ---
+  duration_ms: 14.391631
+  ...
+# Subtest: Pointer cancellation invalidates a pending raw-input retry
+ok 92 - Pointer cancellation invalidates a pending raw-input retry
+  ---
+  duration_ms: 11.254734
+  ...
+# Subtest: Late pointer-lock success after pointer cancellation is released for promise and void APIs
+ok 93 - Late pointer-lock success after pointer cancellation is released for promise and void APIs
+  ---
+  duration_ms: 26.642199
+  ...
+# Subtest: A normal mouse release keeps an asynchronous pointer-lock request valid
+ok 94 - A normal mouse release keeps an asynchronous pointer-lock request valid
+  ---
+  duration_ms: 27.420148
+  ...
+# Subtest: The paused image options refresh the displayed cadence after target and display changes
+ok 95 - The paused image options refresh the displayed cadence after target and display changes
+  ---
+  duration_ms: 60.503487
+  ...
+# Subtest: System mouse acceleration is opt-in and only accepts stored booleans
+ok 96 - System mouse acceleration is opt-in and only accepts stored booleans
+  ---
+  duration_ms: 2.793155
+  ...
+# Subtest: Older preferences migrate while new controls have safe bounded values
+ok 97 - Older preferences migrate while new controls have safe bounded values
+  ---
+  duration_ms: 0.520509
+  ...
+# Subtest: Rebinding changes the real input map, preserves other actions and survives JSON storage
+ok 98 - Rebinding changes the real input map, preserves other actions and survives JSON storage
+  ---
+  duration_ms: 0.899308
+  ...
+# Subtest: Conflicts and reserved keys never silently disable another action
+ok 99 - Conflicts and reserved keys never silently disable another action
+  ---
+  duration_ms: 0.230703
+  ...
+# Subtest: Adding melee preserves an existing custom V binding and finds a free default key
+ok 100 - Adding melee preserves an existing custom V binding and finds a free default key
+  ---
+  duration_ms: 0.52123
+  ...
+# Subtest: campaign pistol selection migrates without stealing a customized Digit5 binding
+ok 101 - campaign pistol selection migrates without stealing a customized Digit5 binding
+  ---
+  duration_ms: 0.380606
+  ...
+# Subtest: The frame gate keeps a regular whole-vsync cadence and exposes the actual rate
+ok 102 - The frame gate keeps a regular whole-vsync cadence and exposes the actual rate
+  ---
+  duration_ms: 28.935469
+  ...
+# Subtest: Unlimited and near-native rates never discard a valid callback after calibration
+ok 103 - Unlimited and near-native rates never discard a valid callback after calibration
+  ---
+  duration_ms: 3.97771
+  ...
+# Subtest: The frame gate recalibrates on display changes, long suspension and clock restart
+ok 104 - The frame gate recalibrates on display changes, long suspension and clock restart
+  ---
+  duration_ms: 0.637213
+  ...
+# Subtest: Changing the target is immediate and malformed timestamps cannot poison the gate
+ok 105 - Changing the target is immediate and malformed timestamps cannot poison the gate
+  ---
+  duration_ms: 0.510253
+  ...
+# Subtest: Exact half-integer ratios choose their measured divisor on the first calibration and never oscillate
+ok 106 - Exact half-integer ratios choose their measured divisor on the first calibration and never oscillate
+  ---
+  duration_ms: 18.14659
+  ...
+# Subtest: Small timestamp jitter around a divider boundary cannot restart the display phase
+ok 107 - Small timestamp jitter around a divider boundary cannot restart the display phase
+  ---
+  duration_ms: 44.587335
+  ...
+# Subtest: Divider hysteresis yields to a changed display, target or suspended clock
+ok 108 - Divider hysteresis yields to a changed display, target or suspended clock
+  ---
+  duration_ms: 1.557241
+  ...
+1..108
+# tests 108
+# suites 0
+# pass 108
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1018.767687

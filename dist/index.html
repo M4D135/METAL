@@ -121,6 +121,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
 .intro-audio{display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:158px}.intro-score{font-size:8px;letter-spacing:1.2px;color:#a6b7ae}.intro-score i{font-style:normal;color:var(--acid);padding:0 4px}.intro-audio .text-button{min-height:40px;padding:10px 0;color:var(--acid);font-size:10px;letter-spacing:1.3px}.intro-audio.is-playing .intro-score{color:#e4edcf}#intro-music-status{font-size:7px;letter-spacing:.25px;line-height:1.4;color:#8da198}.intro-bottom>#intro-controls{min-width:0}.intro-settings{flex-shrink:0}
 @media(max-width:650px){.intro-audio{min-width:145px}.intro-score{font-size:7px;letter-spacing:.75px}.intro-audio .text-button{font-size:9px;min-height:44px;padding:12px 0}.intro-bottom{align-items:center;gap:12px}.intro-bottom>#intro-controls{max-width:130px;font-size:7px}.intro-settings{gap:13px}#intro-music-status{font-size:6.5px}}
 @media(max-height:540px){.intro-audio{gap:0}.intro-audio .text-button{min-height:35px;padding:8px 0}.intro-score{font-size:7px}#intro-music-status{font-size:6px}.intro-bottom>#intro-controls{max-width:none}}
+
+/* All menu inputs expose pad focus as well as keyboard focus. */
+body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px solid var(--acid);outline-offset:3px}body.pad #touch-controls{display:none}.binding-row>span{flex:1}.binding-row button{min-width:64px}body.touch #hud{pointer-events:none}body.touch #hud button,body.touch #hud select,body.touch #move-zone,body.touch .weapon-slot,body.touch .top-buttons{pointer-events:auto}
+
+.profile-status{position:absolute;left:50%;bottom:105px;transform:translateX(-50%);font-size:11px;color:var(--acid);background:#07110bc9;padding:7px 12px;pointer-events:none}.boundary-contact{filter:brightness(1.6)}.binding-row button[id^="pad-clear-"]{min-width:28px;max-width:36px}
 </style>
 </head>
 <body data-state="menu">
@@ -152,7 +157,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     <div id="direction"><span id="target-symbol">◇</span><span id="target-label">RELAIS</span><span id="target-distance"></span><span id="target-arrow">↑</span></div>
     <button id="interact-button" hidden><kbd id="interact-key">F</kbd><span><strong id="interaction-label">ACTIVER</strong><small id="interaction-reason"></small></span></button>
     <div id="radar-wrap"><canvas id="radar" width="180" height="180" aria-label="Carte des salles, trophées, relais, commandes, ascenseurs et sortie"></canvas><span id="room-name">SAS D’ACCÈS</span><span id="altitude">ALT. 0,0 m</span></div>
-    <footer class="hud-bottom">
+    <p id="profile-status" class="profile-status" hidden></p><footer class="hud-bottom">
       <div class="vital" id="health-panel"><span class="stat-label"><span class="health-cross" aria-hidden="true">+</span> INTÉGRITÉ</span><div class="health-number"><strong id="hp">100</strong><span class="percent" id="health-max">/ 100</span></div><div class="bar"><i id="hp-bar"></i></div><span id="health-state">SYSTÈMES OPÉRATIONNELS</span><span id="armor-rating">BLINDAGE 0 %</span><div class="armor-pool" id="armor-pool" hidden role="group" aria-label="Réserve d’armure"><span>ARMURE <b id="armor-points">0</b><small id="armor-cap">/ 100</small></span><div class="armor-track"><i id="armor-bar"></i></div></div></div>
       <nav id="arsenal" aria-label="Armes de l’arsenal"><div class="arsenal-heading"><span>ARSENAL <b id="arsenal-count">1 / 4</b></span><span class="wallet"><b id="wallet-credits">0</b> CR <i></i><b id="wallet-cores">0</b> NOYAUX</span></div><div class="weapon-slots" id="weapon-slots"><button id="weapon-slot-0" class="weapon-slot selected" aria-label="MITRAILLETTE" aria-pressed="true"><kbd id="slot-key-0">1</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-0">D</span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M7 18h34v-3h15v9H41v5H26l-4 12h-8l3-12H7z"/><path d="M13 20h24m-6-5v-4h5v4m-18 17h6"/></svg><span class="slot-name">MITRAILLETTE</span><strong id="slot-ammo-0">48</strong></button><button id="weapon-slot-1" class="weapon-slot locked" aria-label="DOUBLE POMPE" aria-pressed="false" disabled><kbd id="slot-key-1">2</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-1"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M5 17h28v-3h25v7H34v4h24v7H27l-4 10h-8l2-10H5z"/><path d="M9 20h19m9-2h17m-17 10h17"/></svg><span class="slot-name">DOUBLE POMPE</span><strong id="slot-ammo-1">À TROUVER</strong></button><button id="weapon-slot-2" class="weapon-slot locked" aria-label="ROQUETTES" aria-pressed="false" disabled><kbd id="slot-key-2">3</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-2"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M6 16h49v16H6zM3 14h5v20H3zm51 0h6v20h-6zM26 32h8v10h-8zM35 11h11v5H35z"/><path d="M13 20h34m-34 7h20"/></svg><span class="slot-name">ROQUETTES</span><strong id="slot-ammo-2">À TROUVER</strong></button><button id="weapon-slot-3" class="weapon-slot locked" aria-label="GRENADES" aria-pressed="false" disabled><kbd id="slot-key-3">4</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-3"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M5 17h21l4-5h26v10H43v7H29l-4 11h-9l2-10H5z"/><circle cx="33" cy="26" r="11"/><path d="M31 18h4m-9 7h5m6 0h5m-11 8h4M43 16h11"/></svg><span class="slot-name">GRENADES</span><strong id="slot-ammo-3">À TROUVER</strong></button><button id="weapon-slot-4" class="weapon-slot" aria-label="PISTOLET" aria-pressed="false" hidden><kbd id="slot-key-4">5</kbd><span class="slot-hand" id="slot-hand-4"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M9 12h42l5 4v8H32l-7 18H14l5-18H9z"/><path d="M14 16h35M37 19h13M20 29h8M39 12V8h5v4"/></svg><span class="slot-name">PISTOLET</span><strong id="slot-ammo-4">∞</strong></button></div><div class="left-hand-strip"><label for="left-hand-setting"><kbd id="left-hand-key">X</kbd> MAIN GAUCHE</label><select id="left-hand-setting" aria-label="Équipement de la main gauche"><option value="none">Libre</option><option id="left-option-0" value="0" disabled>Mitraillette</option><option id="left-option-1" value="1" disabled>Double pompe</option><option id="left-option-2" value="2" disabled>Lance-roquettes</option><option id="left-option-3" value="3" disabled>Lance-grenades</option><option id="left-option-4" value="4" disabled hidden>Pistolet</option></select><strong id="left-hand-stock">LIBRE</strong><span id="left-hand-status">X · CHANGER</span></div></nav>
       <div class="weapon-status" id="weapon-readout"><span class="equipped-label">MAIN DROITE</span><button id="weapon-switch" title="Changer d’arme trouvée (1 à 5, molette)" aria-label="Changer d’arme"><span id="weapon-label">IMPULSE</span><span class="swap-icon" aria-hidden="true"></span></button><div class="ammo-readout"><strong id="ammo-count">48</strong><span><b id="ammo-cap">/ 180</b><small id="ammo-unit">CELLULES</small></span></div><div class="heat-caption"><span id="heat-status">CHALEUR</span></div><div class="bar"><i id="heat-bar"></i></div><div class="ability-strip"><span id="dash-label">ESPACE · ESQUIVE PRÊTE</span><span id="pulse-label">E · ONDE PRÊTE</span><span id="melee-label">V · CROSSE</span></div></div>
@@ -164,7 +169,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     <div class="options-layout">
       <nav class="options-tabs" role="tablist" aria-label="Rubriques des options"><button id="tab-game" role="tab" aria-controls="pane-game" aria-selected="true"><span>01</span> Partie</button><button id="tab-image" role="tab" aria-controls="pane-image" aria-selected="false"><span>02</span> Image</button><button id="tab-audio" role="tab" aria-controls="pane-audio" aria-selected="false"><span>03</span> Audio</button><button id="tab-controls" role="tab" aria-controls="pane-controls" aria-selected="false"><span>04</span> Commandes</button></nav>
       <div class="options-body" id="options-body">
-        <section id="pane-game" role="tabpanel" aria-labelledby="tab-game"><p class="option-section-label">L’EXPÉDITION</p><h3>Gardez le signal.</h3><p class="panel-copy" id="checkpoint-status">Reprise au dernier point enregistré.</p><div class="mission-summary" id="mission-summary"><span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span></div><label class="option-row difficulty-row" for="difficulty-setting"><span>Difficulté</span><select id="difficulty-setting"><option value="0">Standard</option><option value="1">Brutal</option><option value="2">Cauchemar</option></select></label><p id="difficulty-hint" class="option-hint">La pression monte avec les secteurs et les objectifs.</p><label class="option-row ai-row" for="ai-setting"><span>Accélération de l’IA</span><select id="ai-setting"><option value="auto">Auto · NPU / GPU</option><option value="cpu">CPU · compatibilité</option></select></label><p class="option-hint" id="ai-status" role="status">Détection de l’accélérateur…</p><p class="help" id="help-text">ZQSD / WASD : déplacer · Souris : viser<br>Clic : tirer · 1 à 5 ou molette : arme trouvée<br>F : commandes et ascenseurs · E : onde défensive · V : crosse<br>Espace : esquiver · Maj : courir<br>M : carte · Échap : pause</p><p class="option-hint">Vous partez au pistolet. Les six premiers boss complètent l’arsenal ; les douze mondes suivants poursuivent l’assaut. Les boss laissent des armes, des améliorations d’armes et du personnage. Avancez sur leur caisse pour récupérer le butin. Les munitions et plaques d’armure se trouvent aussi sur le terrain. Les ateliers réparent et améliorent votre équipement. Les plaques ramassées rechargent l’armure, dans la limite de 100 points. Le pistolet garde des munitions illimitées ; les autres réserves sont limitées. Les machines sortent par vagues ; profitez des accalmies pour vous ravitailler. Marchez sur les tremplins pour bondir. Rupture ouvre des brèches ; reculez avant de tirer. Les colosses exposent leur cœur après leurs attaques. Surveillez les zones au sol, les grenades et les fuites brûlantes. Relais, commandes et paliers enregistrent la progression.</p><div class="menu-actions"><button id="restart" class="secondary">RECOMMENCER CE SECTEUR</button><button id="pause-main" class="text-button">RETOUR AU SIGNAL</button></div></section>
+        <section id="pane-game" role="tabpanel" aria-labelledby="tab-game"><p class="option-section-label">L’EXPÉDITION</p><h3>Gardez le signal.</h3><p class="panel-copy" id="checkpoint-status">Reprise au dernier point enregistré.</p><div class="mission-summary" id="mission-summary"><span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span></div><label class="option-row difficulty-row" for="difficulty-setting"><span>Difficulté</span><select id="difficulty-setting"><option value="0">Standard</option><option value="1">Brutal</option><option value="2">Cauchemar</option></select></label><p id="difficulty-hint" class="option-hint">La pression monte avec les secteurs et les objectifs.</p><label class="option-row ai-row" for="ai-setting"><span>Accélération de l’IA</span><select id="ai-setting"><option value="auto">Auto · NPU / GPU</option><option value="cpu">CPU · compatibilité</option></select></label><p class="option-hint" id="ai-status" role="status">Détection de l’accélérateur…</p><p class="help" id="help-text">ZQSD / WASD : déplacer · Souris : viser<br>Clic : tirer · 1 à 5 ou molette : arme trouvée<br>F : commandes et ascenseurs · E : onde défensive · V : crosse<br>Espace : sauter · R : esquiver · Maj : courir<br>M : carte · Échap : pause</p><p class="option-hint">Vous partez au pistolet. Les six premiers boss complètent l’arsenal ; les douze mondes suivants poursuivent l’assaut. Les boss laissent des armes, des améliorations d’armes et du personnage. Avancez sur leur caisse pour récupérer le butin. Les munitions et plaques d’armure se trouvent aussi sur le terrain. Les ateliers réparent et améliorent votre équipement. Les plaques ramassées rechargent l’armure, dans la limite de 100 points. Le pistolet garde des munitions illimitées ; les autres réserves sont limitées. Les machines sortent par vagues ; profitez des accalmies pour vous ravitailler. Marchez sur les tremplins pour bondir. Rupture ouvre des brèches ; reculez avant de tirer. Les colosses exposent leur cœur après leurs attaques. Surveillez les zones au sol, les grenades et les fuites brûlantes. Relais, commandes et paliers enregistrent la progression.</p><div class="menu-actions"><button id="restart" class="secondary">RECOMMENCER CE SECTEUR</button><button id="pause-main" class="text-button">RETOUR AU SIGNAL</button></div></section>
         <section id="pane-image" role="tabpanel" aria-labelledby="tab-image" hidden><p class="option-section-label">AFFICHAGE</p><h3>Votre terrain de jeu.</h3><div class="option-grid">
           <button class="option-toggle" id="quality-toggle">Qualité <strong>Auto</strong></button><label class="option-row" for="fps-limit"><span>Cadence visée</span><select id="fps-limit" aria-describedby="fps-effective"><option value="0">Sans limite</option><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="120">120 FPS</option></select></label><p class="option-hint" id="fps-effective" role="status" style="grid-column:1/-1;margin:0">Mesure de la cadence de l’écran…</p>
           <label class="option-slider" for="fov-setting"><span>Champ de vision <output id="fov-value">74°</output></span><input id="fov-setting" type="range" min="60" max="110" step="1"></label><label class="option-slider" for="brightness-setting"><span>Luminosité <output id="brightness-value">100 %</output></span><input id="brightness-setting" type="range" min="70" max="140" step="5"></label>
@@ -173,7 +178,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         <section id="pane-audio" role="tabpanel" aria-labelledby="tab-audio" hidden><p class="option-section-label">MIXAGE</p><h3>Du métal dans les circuits.</h3><button class="option-toggle" id="sound-toggle">Son <strong>Activé</strong></button><div class="option-grid audio-sliders">
           <label class="option-slider" for="master-setting"><span>Volume général <output id="master-value">100 %</output></span><input id="master-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="music-setting"><span>Musique MOD <output id="music-value">45 %</output></span><input id="music-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="effects-setting"><span>Armes et impacts <output id="effects-value">100 %</output></span><input id="effects-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="ambience-setting"><span>Ambiances <output id="ambience-value">100 %</output></span><input id="ambience-setting" type="range" min="0" max="100" step="5"></label>
         </div><div class="tracker-card"><span class="tracker-badge">MOD / 4 CANAUX</span><strong id="music-title">Furie d’acier · 212 BPM</strong><p>Un accueil thrash metal à 212 BPM : riffs rapides, double grosse caisse et breaks. Trois autres compositions accompagnent les mondes. Instruments et morceaux entièrement synthétisés.</p><button id="export-mod" class="text-button">EXPORTER LE MOD DU TITRE ↓</button></div><div class="menu-actions audio-actions"><button id="test-audio" class="secondary">TESTER TIRS ET AMBIANCES</button><button id="reset-audio" class="text-button">RÉTABLIR LE MIX RECOMMANDÉ</button></div><p id="audio-status" class="option-hint" role="status">Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.</p></section>
-        <section id="pane-controls" role="tabpanel" aria-labelledby="tab-controls" hidden><p class="option-section-label">VISÉE & DÉPLACEMENT</p><h3>À votre main.</h3><div class="option-grid"><label class="option-slider" for="sensitivity-setting"><span>Sensibilité <output id="sensitivity-value">1,00 ×</output></span><input id="sensitivity-setting" type="range" min="25" max="300" step="5"></label><button class="option-toggle" id="invert-toggle">Axe vertical inversé <strong>Non</strong></button><button class="option-toggle" id="pointer-acceleration-toggle" aria-describedby="pointer-acceleration-hint">Accélération du système <strong>Désactivée</strong></button><label class="option-slider" for="crosshair-setting"><span>Taille du viseur <output id="crosshair-value">100 %</output></span><input id="crosshair-setting" type="range" min="75" max="150" step="5"></label></div><p class="option-hint" id="pointer-acceleration-hint">Désactivée : visée directe si le navigateur le permet. Activée : conserve l’accélération habituelle de votre souris.</p><p class="option-hint" id="binding-status" role="status">Cliquez sur une touche pour la modifier. Échap annule. Le clic gauche et la molette restent disponibles.</p><div id="key-bindings" class="binding-grid"></div><button id="reset-controls" class="text-button">RÉTABLIR LES COMMANDES PAR DÉFAUT</button></section>
+        <section id="pane-controls" role="tabpanel" aria-labelledby="tab-controls" hidden><p class="option-section-label">VISÉE & DÉPLACEMENT</p><h3>À votre main.</h3><div class="option-grid"><label class="option-slider" for="sensitivity-setting"><span>Sensibilité <output id="sensitivity-value">1,00 ×</output></span><input id="sensitivity-setting" type="range" min="25" max="300" step="5"></label><button class="option-toggle" id="invert-toggle">Axe vertical inversé <strong>Non</strong></button><button class="option-toggle" id="pointer-acceleration-toggle" aria-describedby="pointer-acceleration-hint">Accélération du système <strong>Désactivée</strong></button><label class="option-slider" for="crosshair-setting"><span>Taille du viseur <output id="crosshair-value">100 %</output></span><input id="crosshair-setting" type="range" min="75" max="150" step="5"></label></div><p class="option-hint" id="pointer-acceleration-hint">Désactivée : visée directe si le navigateur le permet. Activée : conserve l’accélération habituelle de votre souris.</p><h3>Manette</h3><p id="pad-status" class="option-hint" role="status">Branchez une manette, puis appuyez sur un bouton.</p><div class="option-grid"><label class="option-slider" for="pad-yaw-setting"><span>Vitesse horizontale (°/s) <output id="pad-yaw-value"></output></span><input id="pad-yaw-setting" type="range" min="60" max="600" step="10"></label><label class="option-slider" for="pad-pitch-setting"><span>Vitesse verticale (°/s) <output id="pad-pitch-value"></output></span><input id="pad-pitch-setting" type="range" min="40" max="400" step="10"></label><label class="option-slider" for="pad-dead-setting"><span>Zone morte (%) <output id="pad-dead-value"></output></span><input id="pad-dead-setting" type="range" min="0" max="40" step="1"></label><label class="option-slider" for="pad-curve-setting"><span>Courbe (×100) <output id="pad-curve-value"></output></span><input id="pad-curve-setting" type="range" min="100" max="300" step="5"></label><label class="option-slider" for="pad-vibration-setting"><span>Vibrations (%) <output id="pad-vibration-value"></output></span><input id="pad-vibration-setting" type="range" min="0" max="100" step="5"></label><button class="option-toggle" id="pad-invert-toggle">Visée verticale inversée <strong>Non</strong></button><button class="option-toggle" id="pad-assist-toggle">Aide à la visée <strong>Non</strong></button><button class="option-toggle" id="pad-swap-toggle">Échanger les sticks <strong>Non</strong></button></div><p class="option-hint">Croix ou stick : naviguer · A : valider · B : retour · LB/RB : onglets, ou réglage du curseur sélectionné · gâchettes : régler. Les colonnes ci-dessous indiquent clavier puis manette. Sélectionnez un bouton pour le réaffecter.</p><p class="option-hint" id="binding-status" role="status">Cliquez sur une touche pour la modifier. Échap annule. Le clic gauche et la molette restent disponibles.</p><div id="key-bindings" class="binding-grid"></div><button id="reset-controls" class="text-button">RÉTABLIR LES COMMANDES PAR DÉFAUT</button></section>
       </div>
     </div><footer class="options-footer"><span>Réglages enregistrés sur cet appareil.</span><button id="resume" class="primary">Reprendre <span class="arrow-icon" aria-hidden="true"></span></button></footer>
   </div></section>
@@ -10041,28 +10046,37 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
 /* FERRO — persistent preferences and conflict-free keyboard bindings. */
 (function(){
   'use strict';
-  const actions=[['forward','Avancer',['KeyW','KeyZ','ArrowUp']],['back','Reculer',['KeyS','ArrowDown']],['left','À gauche',['KeyA','KeyQ']],['right','À droite',['KeyD']],['turnLeft','Tourner à gauche',['ArrowLeft']],['turnRight','Tourner à droite',['ArrowRight']],['fire','Tirer · main droite',['Enter']],['fireLeft','Tirer · main gauche',['KeyC']],['leftHand','Changer la main gauche',['KeyX']],['sprint','Courir',['ShiftLeft','ShiftRight']],['dash','Esquive',['Space']],['pulse','Onde défensive',['KeyE']],['melee','Coup de crosse',['KeyV']],['interact','Interagir',['KeyF']],['weapon1','Mitraillette',['Digit1']],['weapon2','Double pompe',['Digit2']],['weapon3','Lance-roquettes',['Digit3']],['weapon4','Lance-grenades',['Digit4']],['weapon5','Pistolet',['Digit5']],['map','Carte',['KeyM']],['pause','Pause',['KeyP']]];
+  const actions=[['forward','Avancer',['KeyW','KeyZ','ArrowUp']],['back','Reculer',['KeyS','ArrowDown']],['left','À gauche',['KeyA','KeyQ']],['right','À droite',['KeyD']],['turnLeft','Tourner à gauche',['ArrowLeft']],['turnRight','Tourner à droite',['ArrowRight']],['fire','Tirer · main droite',['Enter']],['fireLeft','Tirer · main gauche',['KeyC']],['leftHand','Changer la main gauche',['KeyX']],['sprint','Courir',['ShiftLeft','ShiftRight']],['jump','Sauter / jetpack',['Space']],['dash','Esquive',['KeyR']],['pulse','Onde défensive',['KeyE']],['melee','Coup de crosse',['KeyV']],['interact','Interagir',['KeyF']],['weapon1','Mitraillette',['Digit1']],['weapon2','Double pompe',['Digit2']],['weapon3','Lance-roquettes',['Digit3']],['weapon4','Lance-grenades',['Digit4']],['weapon5','Pistolet',['Digit5']],['map','Carte',['KeyM']],['pause','Pause',['KeyP']],['weaponNext','Arme suivante',['KeyN']],['switchProfile','Changer de profil',['KeyT']]];
+  const padNames=['A','B','X','Y','LB','RB','LT','RT','Back','Start','L3','R3','Up','Down','Left','Right'];
+  const padDefaults={fire:['RT'],fireLeft:['LT'],sprint:['L3'],jump:['A'],dash:['B'],pulse:['LB'],melee:['R3'],interact:['X'],weaponNext:['Y'],switchProfile:['RB'],weapon1:['Up'],weapon2:['Right'],weapon3:['Down'],weapon4:['Left'],map:['Back'],pause:['Start']};
   const allowed=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space|Enter|Backspace|Tab)$/.test(code);
-  function defaults(touch){return {muted:false,quality:'auto',difficulty:0,aiAcceleration:'auto',softMotion:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:0,masterVolume:1,musicVolume:.45,effectsVolume:1,ambienceVolume:1,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()]))};}
+  function defaults(touch){return {muted:false,quality:'auto',difficulty:0,aiAcceleration:'auto',softMotion:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:0,masterVolume:1,musicVolume:.45,effectsVolume:1,ambienceVolume:1,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:1,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1};}
   function normalize(raw,touch){
     const out=defaults(touch),v=raw&&typeof raw==='object'?raw:{};
-    for(const id of ['muted','softMotion','invertY','systemPointerAcceleration','shadows','bloom','showFps','crt','vignette'])if(typeof v[id]==='boolean')out[id]=v[id];
+    for(const id of ['muted','softMotion','invertY','systemPointerAcceleration','shadows','bloom','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks'])if(typeof v[id]==='boolean')out[id]=v[id];
     if(['auto','low','high'].includes(v.quality))out.quality=v.quality;
     if(['auto','cpu'].includes(v.aiAcceleration))out.aiAcceleration=v.aiAcceleration;
-    for(const [id,min,max] of [['fov',60,110],['brightness',.7,1.4],['sensitivity',.25,3],['crosshairScale',.75,1.5],['masterVolume',0,1],['musicVolume',0,1],['effectsVolume',0,1],['ambienceVolume',0,1]])if(typeof v[id]==='number'&&Number.isFinite(v[id]))out[id]=Math.max(min,Math.min(max,v[id]));
+    for(const [id,min,max] of [['fov',60,110],['brightness',.7,1.4],['sensitivity',.25,3],['crosshairScale',.75,1.5],['masterVolume',0,1],['musicVolume',0,1],['effectsVolume',0,1],['ambienceVolume',0,1],['padYaw',60,600],['padPitch',40,400],['padDead',0,.4],['padCurve',1,3],['padVibration',0,1],['touchAccel',0,1]])if(typeof v[id]==='number'&&Number.isFinite(v[id]))out[id]=Math.max(min,Math.min(max,v[id]));
     if([0,30,60,120].includes(v.fpsLimit))out.fpsLimit=v.fpsLimit;
     if([0,1,2].includes(v.difficulty))out.difficulty=v.difficulty;
-    if(v.bindings&&typeof v.bindings==='object'){
+    const bindings=v.bindings&&typeof v.bindings==='object'?{...v.bindings}:null;
+    if(bindings&&v.bindingsVersion!==2&&!bindings.jump&&JSON.stringify(bindings.dash)===JSON.stringify(['Space'])){const used=new Set(Object.entries(bindings).filter(([k])=>k!=='dash').flatMap(([,a])=>Array.isArray(a)?a:[]));bindings.dash=[['KeyR','KeyG','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>!used.has(k))||'KeyR'];}
+    if(bindings){
       const candidate={},seen=new Set();let valid=true;
-      const added=['melee','fireLeft','leftHand','weapon4','weapon5'],used=new Set(actions.flatMap(([id])=>Array.isArray(v.bindings[id])?v.bindings[id]:added.includes(id)?[]:out.bindings[id]));
-      for(const id of added)if(v.bindings[id]===undefined){const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];const key=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(key=>!used.has(key));if(key){out.bindings[id]=[key];used.add(key);}}
+      const added=['melee','fireLeft','leftHand','weapon4','weapon5','jump','weaponNext','switchProfile'],used=new Set(actions.flatMap(([id])=>Array.isArray(bindings[id])?bindings[id]:added.includes(id)?[]:out.bindings[id]));
+      for(const id of added)if(bindings[id]===undefined){const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];const key=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(key=>!used.has(key));if(key){out.bindings[id]=[key];used.add(key);}}
       for(const [id] of actions){
-        const codes=v.bindings[id]??out.bindings[id];
+        const codes=bindings[id]??out.bindings[id];
         if(!Array.isArray(codes)||codes.length<1||codes.length>3){valid=false;break;}
         candidate[id]=codes.slice();
         for(const code of codes){if(!allowed(code)||seen.has(code))valid=false;seen.add(code);}
       }
       if(valid)out.bindings=candidate;
+    }
+    if(v.padBindings&&typeof v.padBindings==='object'){
+      const used=new Set(),candidate={};let valid=true;
+      for(const [id] of actions)if(Object.prototype.hasOwnProperty.call(v.padBindings,id)){const a=v.padBindings[id];if(!Array.isArray(a)||a.length>2){valid=false;break;}for(const n of a){if(!padNames.includes(n)||used.has(n))valid=false;used.add(n);}}
+      if(valid){for(const [id] of actions)candidate[id]=Object.prototype.hasOwnProperty.call(v.padBindings,id)?v.padBindings[id].slice():out.padBindings[id].filter(n=>!used.has(n)&&used.add(n));out.padBindings=candidate;}
     }
     return out;
   }
@@ -10071,6 +10085,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const conflict=actions.find(([id])=>id!==action&&bindings[id]?.includes(code));
     if(conflict)return {ok:false,reason:'Déjà utilisée : '+conflict[1]+'.',conflict:conflict[0]};
     return {ok:true,bindings:{...bindings,[action]:[code]}};
+  }
+  function assignPad(bindings,action,code){
+    if(!actions.some(a=>a[0]===action)||code!==null&&!padNames.includes(code))return {ok:false,reason:'Bouton réservé ou inconnu.'};
+    const conflict=code===null?null:actions.find(([id])=>id!==action&&bindings[id]?.includes(code));
+    if(conflict)return {ok:false,reason:'Déjà utilisé : '+conflict[1]+'.',conflict:conflict[0]};
+    return {ok:true,bindings:{...bindings,[action]:code===null?[]:[code]}};
   }
   function keyName(code){return ({Space:'Espace',Enter:'Entrée',ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',ShiftLeft:'Maj G',ShiftRight:'Maj D',ControlLeft:'Ctrl G',ControlRight:'Ctrl D',Backspace:'Retour',Tab:'Tab'})[code]||String(code).replace(/^(Key|Digit)/,'');}
   // LOOP-09: observe every rAF, including callbacks whose drawing is skipped.
@@ -10121,20 +10141,282 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     g.due+=target;if(g.due<now-target)g.due=now+target;
     return true;
   }
-  window.FOptions={defaults,normalize,assign,keyName,createFrameGate,frameGate,fireBufferMs:150,actions:actions.map(([id,label])=>({id,label})),down:(bindings,keys,id)=>(bindings[id]||[]).some(code=>keys.has(code)),matches:(bindings,id,code)=>(bindings[id]||[]).includes(code)};
+  window.FOptions={defaults,normalize,assign,assignPad,padNames,keyName,createFrameGate,frameGate,fireBufferMs:150,actions:actions.map(([id,label])=>({id,label})),down:(bindings,keys,id)=>(bindings[id]||[]).some(code=>keys.has(code)),matches:(bindings,id,code)=>(bindings[id]||[]).includes(code)};
 })();
+
+;
+/* FERRO input. Contract: docs/chantier-moteur/modules/entrees.md */
+(function(G){
+'use strict';
+const PAD_BUTTONS=Object.freeze(['A','B','X','Y','LB','RB','LT','RT','Back','Start','L3','R3','Up','Down','Left','Right','Home']);
+const TUNE={sensitivity:[1,.25,3],invertY:[false],padYaw:[300,60,600],padPitch:[190,40,400],padDead:[.12,0,.4],moveDead:[.15,0,.4],padCurve:[1.7,1,3],padBoost:[.8,0,1.5],padInvertY:[false],padVibration:[1,0,1],swapSticks:[false],touchAccel:[1,0,1],touchPitch:[1,.5,1.5],stickRadius:[56,32,96]};
+for(const k in TUNE)Object.freeze(TUNE[k]);Object.freeze(TUNE);
+const K={outer:.97,boostAt:.97,boostAfter:.18,boostRamp:.30,trigOn:.30,trigOff:.18,valueDead:.05,padRun:.92,activeAxis:.3,navAxis:.5,navDelay:.40,navRepeat:.12,touchDead:.12,follow:1.6,runOn:1.25,runOff:1.05,touchRad:.004,v0:400,v1:2200,accel:2.2,slop:4,compatMs:800,rumbleGap:40,dtMax:.25,tdtMin:.008,tdtMax:.05};
+const allowKey=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space|Enter|Backspace|Tab)$/.test(code);
+const NAMES={Space:'Espace',Enter:'Entrée',ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',ShiftLeft:'Maj G',ShiftRight:'Maj D',ControlLeft:'Ctrl G',ControlRight:'Ctrl D',Backspace:'Retour',Tab:'Tab'};
+const GLYPHS={xbox:{Back:'Vue',Start:'Menu',L3:'LS',R3:'RS',Home:'Xbox'},ps:{A:'✕',B:'○',X:'□',Y:'△',LB:'L1',RB:'R1',LT:'L2',RT:'R2',Back:'Create',Start:'Options',Home:'PS'}};
+const DEVICES=['keyboard','mouse','touch','gamepad'],own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k),isObj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+const need=(ok,what)=>{if(!ok)throw new Error('FInput : '+what+'.');},padOk=name=>name!=='Home'&&PAD_BUTTONS.includes(name),letter=c=>typeof c==='string'&&/^Key/.test(c);
+const fin=v=>Number.isFinite(v)?v:0,copy=o=>JSON.parse(JSON.stringify(o)),clamp=(v,hi)=>Math.min(hi,Math.max(0,v))||0;
+function keyName(code){return own(NAMES,code)?NAMES[code]:String(code).replace(/^(Key|Digit)/,'');}
+function compile(config){
+need(isObj(config),'config invalide');
+const allow=config.allowKey===undefined?allowKey:config.allowKey,list=config.actions,actions=[],index=new Map(),owner=new Map();
+need(typeof allow==='function','allowKey invalide');need(Array.isArray(list)&&list.length>0,'actions invalides');
+const isKey=c=>typeof c==='string'&&!!allow(c),text=v=>v===undefined||typeof v==='string';
+const codes=(id,v,max,ok,dev)=>{const r=v===undefined?[]:v;need(Array.isArray(r)&&r.length<=max&&r.every(ok),(dev==='k'?'touches':'boutons')+' invalides pour '+id);for(const c of r){need(!owner.has(dev+c),c+' déjà affecté à '+owner.get(dev+c));owner.set(dev+c,id);}return r.slice();};
+for(const a of list){
+const id=isObj(a)?a.id:undefined;
+need(typeof id==='string'&&/^[A-Za-z][A-Za-z0-9]*$/.test(id),'id invalide : '+String(id));need(!index.has(id),'id en double : '+id);need(a.type==='hold'||a.type==='press'||a.type==='value','type inconnu pour '+id);
+const label=a.label===undefined?id:a.label;
+need(typeof label==='string'&&text(a.touch)&&text(a.mouse),'libellé invalide pour '+id);need(a.alt===undefined||Array.isArray(a.alt)&&a.alt.every(isKey),'repli invalide pour '+id);
+actions.push({id,label,type:a.type,keys:codes(id,a.keys,3,isKey,'k'),pad:codes(id,a.pad,2,padOk,'p'),touch:a.touch,mouse:a.mouse,alt:a.alt?a.alt.slice():[]});index.set(id,actions.length-1);
+}
+const held=id=>index.has(id)&&actions[index.get(id)].type==='hold',decl=config.sticks===undefined?{}:config.sticks,sticks=[];
+need(isObj(decl),'sticks invalides');
+for(const name of Object.keys(decl)){
+const s=decl[name],w='stick '+name;
+need(/^[a-z][A-Za-z0-9]*$/.test(name)&&!index.has(name+'X')&&!index.has(name+'Y'),'nom de stick invalide : '+name);need(isObj(s)&&(s.type==='move'||s.type==='look')&&!sticks.some(t=>t.type===s.type),w+' : type invalide ou en double');
+const axis=v=>{const r=v===undefined?[]:v;need(Array.isArray(r)&&(r.length===0||r.length===2)&&r.every(held),w+' : axe invalide');return r.slice();},x=axis(s.x),y=axis(s.y);
+need(new Set(x.concat(y)).size===x.length+y.length,w+' : action en double');need(s.pad===undefined||(s.pad==='LS'||s.pad==='RS')&&!sticks.some(t=>t.pad===s.pad),w+' : pad invalide');
+need(s.run===undefined||s.type==='move'&&held(s.run),w+' : run invalide');need(s.rate===undefined||s.type==='look'&&Number.isFinite(s.rate)&&s.rate>0,w+' : rate invalide');
+sticks.push({name,type:s.type,x,y,pad:s.pad||null,run:s.run===undefined?null:s.run,rate:s.rate===undefined?2:s.rate});
+}
+const version=config.version===undefined?1:config.version,device=config.device===undefined?'keyboard':config.device,mouseScale=config.mouseScale===undefined?.0022:config.mouseScale;
+need(Number.isInteger(version)&&version>=1,'version invalide');need(DEVICES.includes(device),'appareil invalide : '+String(device));need(Number.isFinite(mouseScale),'mouseScale invalide');
+need(config.getGamepads===undefined||typeof config.getGamepads==='function','getGamepads invalide');
+return {actions,index,sticks,version,device,mouseScale,isKey,getGamepads:config.getGamepads||null,migrate:typeof config.migrate==='function'?config.migrate:null,settings:config.settings,one:config.singlePad===true,menu:config.menu===true,moveCurve:config.moveCurve===true,release:config.releaseAfterClear===true};
+}
+function radial(x,y,inner,outer){const m=Math.hypot(x,y),n=Math.min(1,(m-inner)/(outer-inner));return m>inner?[x/m*n||0,y/m*n||0,n]:[0,0,0];}
+function padStyle(id){return /054c|playstation|dualshock|dualsense|sony/i.test(id)?'ps':/045e|xbox|xinput/i.test(id)?'xbox':'generic';}
+function glyph(name,style){const g=own(GLYPHS,style)?GLYPHS[style]:{},a='Arrow'+name;return own(g,name)?g[name]:own(NAMES,a)?NAMES[a]:name;}
+function initial(C){const s={v:C.version,keys:{},pad:{},tune:{}};for(const a of C.actions){s.keys[a.id]=a.keys.slice();s.pad[a.id]=a.pad.slice();}for(const k in TUNE)s.tune[k]=TUNE[k][0];return s;}
+function table(t,C,f,max,ok){
+if(!isObj(t))return null;
+const used=new Set(),out={},free=c=>!used.has(c);
+for(const a of C.actions)if(own(t,a.id)){const v=t[a.id];if(!Array.isArray(v)||v.length>max||!v.every(c=>ok(c)&&free(c)&&used.add(c)))return null;}
+for(const a of C.actions){let v=t[a.id];if(!own(t,a.id)){v=a[f].filter(free);if(!v.length&&f==='keys')v=a.alt.filter(free).slice(0,1);for(const c of v)used.add(c);}out[a.id]=v;}
+return out;
+}
+function settle(raw,C){
+let r={};if(isObj(raw))try{r=copy(raw);}catch(e){}if(!isObj(r))r={};
+const from=Number.isInteger(r.v)?r.v:0,{migrate}=C;
+if(from<C.version&&migrate)try{const m=copy(migrate(copy(r),from));if(isObj(m))r=m;}catch(e){}
+const s=initial(C),t=isObj(r.tune)?r.tune:{};s.keys=table(r.keys,C,'keys',3,C.isKey)||s.keys;s.pad=table(r.pad,C,'pad',2,padOk)||s.pad;
+for(const k in TUNE){const [d,lo,hi]=TUNE[k],v=own(t,k)?t[k]:d;s.tune[k]=lo===undefined?typeof v==='boolean'?v:d:Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d;}
+return s;
+}
+function rebind(C,settings,device,action,code,none){
+const kb=device==='keyboard',f=kb?'keys':'pad',no=reason=>({ok:false,reason});
+if(!kb&&device!=='gamepad')return no('Appareil inconnu.');
+if(!C.index.has(action))return no('Action inconnue.');
+if(!none&&!(kb?C.isKey(code):padOk(code)))return no(kb?'Cette touche est réservée au navigateur.':code==='Home'?'Ce bouton est réservé au système.':'Bouton inconnu.');
+const s=settle(settings,C),other=none?null:C.actions.find(a=>a.id!==action&&s[f][a.id].includes(code));
+if(other)return {ok:false,conflict:other.id,reason:'Déjà utilisé'+(kb?'e':'')+' : '+other.label+'.'};
+s[f][action]=none?[]:[code];return {ok:true,settings:s};
+}
+function defaults(config){return initial(compile(config));}
+function normalize(raw,config){return settle(raw,compile(config));}
+function assign(config,settings,device,action,code){return rebind(compile(config),settings,device,action,code);}
+function unbind(config,settings,device,action){return rebind(compile(config),settings,device,action,null,true);}
+function guessDevice(win=G){try{const m=q=>win.matchMedia(q).matches;return m('(pointer: coarse)')||win.navigator?.maxTouchPoints>0&&m('(hover: none)')?'touch':'keyboard';}catch(e){return 'keyboard';}}
+function focusMove(R,c,D=G.document){
+if(!R||!D)return null;
+const es=Array.from(R.querySelectorAll?.('button,input,select,a[href],[tabindex]')||[]).filter(e=>!e.disabled&&!e.closest?.('[hidden]')&&e.getClientRects?.().length&&e.getAttribute?.('aria-hidden')!=='true');
+if(!es.length)return null;
+let at=es.indexOf(D.activeElement),el=es[at];
+const E=(e,type)=>e.dispatchEvent?.(new G.Event(type,{bubbles:true}));
+if(el&&(c==='decrease'||c==='increase'||(c==='left'||c==='right')&&el.type==='range')){
+const n=c==='decrease'||c==='left'?-1:1;
+if(el.type==='range'){
+const lo=Number(el.min)||0,hi=el.max===''?100:Number(el.max),step=Number(el.step)||1,v=Number(el.value)||0;
+el.value=String(Math.min(hi,Math.max(lo,Math.round((v+n*step)*1e9)/1e9)));E(el,'input');return el;
+}
+if(el.tagName==='SELECT'){
+const os=Array.from(el.options||[]).filter(o=>!o.disabled),n=os.findIndex(o=>o.value===el.value);
+if(os.length){el.value=os[Math.max(0,Math.min(os.length-1,n+n))].value;E(el,'change');}return el;
+}
+}
+if(c==='accept'){
+if(el){if(el.tagName==='SELECT')return focusMove(R,'increase',D);el.click?.();return el;}
+at=0;
+}else if(['up','left','down','right'].includes(c))at=at<0?0:(at+(c==='up'||c==='left'?-1:1)+es.length)%es.length;
+else if(at<0)at=0;
+el=es[at];el.focus?.({preventScroll:true});el.scrollIntoView?.({block:'nearest'});return el;
+}
+function create(config){
+const C=compile(config),held=new Set(),pressed=[],learnt=new Map(),rumbling=new Set(),acts=new WeakMap(),blocked=new Set();
+const A=C.actions.map(a=>({a,k:0,m:false,t:0,g:false,gr:false,tr:false,gv:0,latch:false,edge:false})),at=id=>A[C.index.get(id)];
+const sticks=C.sticks.map(s=>({kx:s.name+'X',ky:s.name+'Y',move:s.type==='move',x:s.x.map(at),y:s.y.map(at),rate:s.rate,pad:s.pad,run:s.run&&at(s.run)})),look=sticks.find(s=>!s.move),walk=sticks.find(s=>s.move);
+let S,codes,lay=null,lp=null,rt=-Infinity,dev=C.device,shown=dev,touchT=-Infinity,px=0,py=0,pmx=0,pmy=0,tmx=0,tmy=0,cap=null,got=null,seen=new Map(),gp=new Map(),pb=[],hold=0,quiet=false,block=false,navKey='',nh=0,nd=0;
+const trig=[false,false],on=s=>s.k>0||s.m||s.t>0||s.g||s.gr||s.tr,axis=v=>v.length?Number(on(v[1]))-Number(on(v[0])):0;
+const rise=(s,was,pad)=>{if(!was&&on(s)&&!(pad&&quiet)){s.latch=true;if(!s.edge){s.edge=true;pressed.push(s.a.id);}}},mouse=t=>{if(!(t-touchT<K.compatMs))dev='mouse';};
+const keyLabel=code=>{if(letter(code)){if(learnt.has(code))return learnt.get(code);const v=lay&&(typeof lay.get==='function'?lay.get(code):lay[code]);if(typeof v==='string'&&v)return [...v].length>1?v:v.toUpperCase();}return keyName(code);};
+const list=(v,f)=>v.length?v.map(f).join(' / '):'—';
+function configure(raw){S=settle(raw,C);codes=new Map();for(const s of A){s.k=0;for(const c of S.keys[s.a.id]){codes.set(c,s);if(held.has(c))s.k++;}s.pi=S.pad[s.a.id].map(n=>PAD_BUTTONS.indexOf(n));s.g=s.pi.some(j=>pb[j]);}return copy(S);}
+configure(C.settings);
+return {
+keyDown(code,t,repeat,key){
+dev='keyboard';if(letter(code)&&typeof key==='string'&&/^[^\s\p{C}]$/u.test(key))learnt.set(code,key.toUpperCase());
+if(cap==='keyboard'){if(!repeat&&typeof code==='string'){got={device:'keyboard',code};cap=null;}return true;}
+const s=codes.get(code);if(typeof code==='string'&&!held.has(code)){held.add(code);if(s){const was=on(s);s.k++;if(!repeat)rise(s,was);}}return !!s;
+},
+keyUp(code){const s=codes.get(code);if(held.delete(code)&&s)s.k--;return !!s;},
+mouseMove(dx,dy,t){const T=S.tune;px+=fin(dx)*C.mouseScale*T.sensitivity;py-=fin(dy)*C.mouseScale*T.sensitivity*(T.invertY?-1:1);mouse(t);},
+button(id,down,t,device){
+const s=at(id);if(!s||device!=='mouse'&&device!=='touch')return false;
+const was=on(s);if(device==='mouse'){s.m=!!down;mouse(t);}else{s.t=down?s.t+1:Math.max(0,s.t-1);dev='touch';touchT=t;}rise(s,was);return true;
+},
+addLook(x,y,device){px+=fin(x);py+=fin(y);if(DEVICES.includes(device))dev=device;},
+clear(){for(const a of rumbling){try{const r=typeof a.reset==='function'?a.reset():typeof a.playEffect==='function'?a.playEffect('dual-rumble',{startDelay:0,duration:1,weakMagnitude:0,strongMagnitude:0}):a.pulse(0,0);if(typeof r?.catch==='function')r.catch(()=>{});}catch(e){}}rumbling.clear();held.clear();for(const s of A){s.k=s.t=s.gv=0;s.m=s.g=s.gr=s.tr=s.latch=s.edge=false;}pressed.length=0;px=py=pmx=pmy=tmx=tmy=hold=0;cap=got=null;quiet=true;block=C.release;navKey='';nh=nd=0;},
+configure,get settings(){return copy(S);},get device(){return dev;},
+assign:(device,action,code)=>rebind(C,S,device,action,code),
+unbind:(device,action)=>rebind(C,S,device,action,null,true),
+capture(device){cap=device==='keyboard'||device==='gamepad'?device:null;got=null;},
+keyLabel,setLayout(map){lay=isObj(map)?map:null;},
+label(id,device=dev){
+const s=at(id);if(!s)return '?';
+const a=s.a;return device==='gamepad'?list(S.pad[id],n=>glyph(n,lp?.style||'generic')):device==='touch'?a.touch??a.label:device==='mouse'&&a.mouse!==undefined?a.mouse:list(S.keys[id],keyLabel);
+},
+rumble(strong,weak,ms,t){
+const v=S.tune.padVibration;if(v<=0||t-rt<K.rumbleGap)return false;
+try{const card=gp.has(lp)?lp:gp.keys().next().value,p=gp.get(card);if(!card)return false;if(!C.one||!acts.has(card))acts.set(card,p.vibrationActuator||p.hapticActuators?.[0]||null);const a=acts.get(card);if(!a)return false;
+const strongMagnitude=clamp(strong,1)*v,weakMagnitude=clamp(weak,1)*v,duration=clamp(ms,5000),r=typeof a.playEffect==='function'?a.playEffect('dual-rumble',{startDelay:0,duration,weakMagnitude,strongMagnitude}):a.pulse(Math.max(strongMagnitude,weakMagnitude),duration);rumbling.add(a);if(typeof r?.catch==='function')r.catch(()=>{});
+}catch(e){return false;}
+rt=t;return true;
+},
+frame(dt,ctx){
+dt=Number.isFinite(dt)?Math.min(K.dtMax,Math.max(0,dt)):0;
+const T=S.tune,sc=Number.isFinite(ctx?.lookScale)?ctx.lookScale:1,now=new Map(),P=new Map(),con=[],dis=[],b=[],tv=[0,0],card=o=>({...o});
+const side=s=>s&&s.pad?s.pad==='LS'!==T.swapSticks?0:2:-1,ms=side(walk),ls=side(look);
+let L=[],fa=null,mv=[0,0,0],lk=mv,navX=0,navY=0;
+try{L=Array.from((C.getGamepads?C.getGamepads():G.navigator.getGamepads())||[]);}catch(e){}
+const first=C.one?L.filter(p=>p&&typeof p==='object'&&p.connected!==false).sort((a,b)=>(a.index||0)-(b.index||0))[0]:null;
+L.forEach((p,i)=>{
+if(!p||typeof p!=='object'||p.connected===false)return;
+const id=String(p.id??''),index=p.index??i,key=index+':'+id,ax=j=>fin((p.axes||[])[j]),bt=p.buttons||[];
+const o=now.get(key)||seen.get(key)||{index,id,style:padStyle(id),standard:p.mapping==='standard'};
+if(!now.has(key)){if(!seen.has(key))con.push(card(o));now.set(key,o);P.set(o,p);}
+if(C.one&&p!==first)return;
+if(C.one)lp=o;
+let act=false;
+for(let j=0;j<17;j++){const q=bt[j]||0,v=fin(q.value??q),d=!!q.pressed;act=act||d||v>K.activeAxis;if(j===6||j===7)tv[j-6]=Math.max(tv[j-6],v);else b[j]=b[j]||d||v>.5;}
+for(let j=0;j<4;j++)act=act||Math.abs(ax(j))>K.activeAxis;
+if(act&&!(fa&&fa.index<=index))fa=o;
+const r=(o,dz,w)=>{const v=o<0?w:radial(ax(o),ax(o+1),dz,K.outer);return v[2]>w[2]?v:w;};mv=r(ms,T.moveDead,mv);lk=r(ls,T.padDead,lk);
+if(Math.abs(ax(0))>Math.abs(navX))navX=ax(0);if(Math.abs(ax(1))>Math.abs(navY))navY=ax(1);
+});
+for(const [key,o] of seen)if(!now.has(key))dis.push({index:o.index,id:o.id});
+seen=now;gp=P;for(let j=0;j<2;j++)b[j+6]=trig[j]=trig[j]?tv[j]>K.trigOff:tv[j]>K.trigOn;
+if(fa)dev='gamepad';lp=fa||(P.has(lp)?lp:null);
+if(block){for(let j=0;j<17;j++)if(b[j])blocked.add(j);block=false;}
+for(const j of blocked){if(!b[j])blocked.delete(j);else{b[j]=false;if(j===6||j===7)tv[j-6]=0;}}
+const code=cap==='gamepad'&&PAD_BUTTONS.find((n,j)=>j<16&&b[j]&&!pb[j]);
+if(code){got={device:cap,code};cap=null;quiet=true;}
+const val=j=>j===6||j===7?tv[j-6]>K.valueDead?Math.min(1,(tv[j-6]-K.valueDead)/(1-K.valueDead)):0:+!!b[j];
+for(const s of A){const was=on(s);s.g=s.pi.some(j=>b[j]);s.gv=s.pi.reduce((m,j)=>Math.max(m,val(j)),0);rise(s,was,1);}
+const moveGain=C.moveCurve&&mv[2]>0?Math.pow(mv[2],T.padCurve)/mv[2]:1;pmx=mv[0]*moveGain;pmy=-mv[1]*moveGain;
+if(walk&&walk.run){const s=walk.run,was=on(s);s.gr=mv[2]>=K.padRun;rise(s,was,1);}
+const [x,y,n]=lk,c=n>0?Math.pow(n,T.padCurve)/n:0;hold=n>K.boostAt?hold+dt:0;
+const e=hold>K.boostAfter?Math.min(1,(hold-K.boostAfter)/K.boostRamp):0;
+px+=x*c*T.padYaw*(1+T.padBoost*e)*sc*Math.PI/180*dt;py+=-y*c*T.padPitch*sc*(T.padInvertY?-1:1)*Math.PI/180*dt;
+if(look){px+=axis(look.x)*dt*look.rate;py+=axis(look.y)*dt*look.rate;}
+let nav=null;
+if(C.menu&&!got){
+const dir=b[12]?'up':b[13]?'down':b[14]?'left':b[15]?'right':Math.abs(navY)>.5?(navY<0?'up':'down'):Math.abs(navX)>.5?(navX<0?'left':'right'):'';
+const adjust=b[4]||b[6]?'decrease':b[5]||b[7]?'increase':'',repeat=adjust||dir,key=repeat;
+const changed=key!==navKey;if(changed){navKey=key;nh=0;nd=K.navDelay;}else nh+=dt;
+const moved=key&&(changed||nh>=nd);if(moved&&nh>0)nd+=K.navRepeat;
+nav={direction:moved&&!adjust?dir:null,adjust:moved&&adjust?adjust:null,accept:!!b[0]&&!pb[0]&&!quiet,back:!!b[1]&&!pb[1]&&!quiet,previous:!!b[4]&&!pb[4]&&!quiet,next:!!b[5]&&!pb[5]&&!quiet};
+}
+pb=b;quiet=false;
+const r={pressed:pressed.slice(),nav,device:dev,deviceChanged:dev!==shown,connected:con,disconnected:dis,pads:[...now.values()].map(card),captured:got};
+shown=dev;got=null;pressed.length=0;for(const s of A)s.edge=false;return r;
+},
+step(){
+const o={};
+for(const s of sticks){let x=px,y=py;if(s.move){x=axis(s.x);y=axis(s.y);if(pmx*pmx+pmy*pmy>x*x+y*y){x=pmx;y=pmy;}if(tmx*tmx+tmy*tmy>x*x+y*y){x=tmx;y=tmy;}}o[s.kx]=x||0;o[s.ky]=y||0;}
+px=py=0;
+for(const s of A){const k=s.a.type;o[s.a.id]=k==='press'?s.latch:k==='hold'?on(s)||s.latch:Math.max(s.gv,s.k>0||s.m||s.t>0?1:0);s.latch=false;}
+return o;
+},
+pendingLook(){return {x:px||0,y:py||0};}
+};
+}
+G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,keyName,radial,padStyle,glyph,guessDevice,focusMove};
+})(typeof window!=='undefined'?window:globalThis);
+
+;
+/* METAL — FPS mapping and feedback. FInput owns devices; simulation receives values only. */
+(function(G){
+  'use strict';
+  const holds=new Set(['forward','back','left','right','turnLeft','turnRight','fire','fireLeft','sprint','jump']);
+  function create(prefs,{device='keyboard',getGamepads}={}){
+    const actions=G.FOptions.actions.map(a=>({...a,type:holds.has(a.id)?'hold':'press',keys:[],pad:[]}));
+    const input=G.FInput.create({actions,sticks:{move:{type:'move',pad:'LS',run:'sprint'},look:{type:'look',pad:'RS'}},device,getGamepads,singlePad:true,menu:true,moveCurve:true,releaseAfterClear:true});
+    let settings=prefs,pending=null,lastEffect=-Infinity,gesture=false;
+    function configure(p){
+      settings=p;input.configure({v:1,keys:Object.fromEntries(actions.map(a=>[a.id,[]])),pad:p.padBindings,tune:{padYaw:p.padYaw,padPitch:p.padPitch,padDead:p.padDead,moveDead:p.padDead,padCurve:p.padCurve,padInvertY:p.padInvertY,padVibration:p.padVibration,swapSticks:p.padSwapSticks}});
+      if(!p.padVibration){pending=null;input.clear();}
+    }
+    configure(prefs);
+    function queue(strong,weak,duration){
+      if(!gesture||input.device!=='gamepad'||!settings.padVibration)return;
+      pending={strong:Math.max(pending?.strong||0,strong),weak:Math.max(pending?.weak||0,weak),duration:Math.max(pending?.duration||0,duration)};
+    }
+    return {
+      configure,get device(){return input.device;},
+      use(device){input.addLook(0,0,device);},
+      label(id){return input.device==='gamepad'?input.label(id,'gamepad'):(settings.bindings[id]||[]).map(G.FOptions.keyName).join(' / ');},
+      padLabel(id){return input.label(id,'gamepad');},
+      frame(dt){const f=input.frame(dt);if(f.device==='gamepad'&&(f.pressed.length||f.nav?.direction||f.nav?.adjust))gesture=true;return f;},
+      step:()=>input.step(),capture:device=>input.capture(device),
+      clear(){pending=null;input.clear();},
+      flush(now,playing){
+        if(!playing||input.device!=='gamepad'||!gesture){pending=null;return false;}
+        if(!pending||now-lastEffect<40)return false;
+        const q=pending;pending=null;const played=input.rumble(q.strong,q.weak,q.duration,now);if(played)lastEffect=now;return played;
+      },
+      event(e,player){
+        const distance=()=>Math.hypot((e.x??player?.x??0)-(player?.x||0),(e.y??player?.y??0)-(player?.y||0),(e.z??player?.z??0)-(player?.z||0));
+        if(e.name==='shot'||['rocket','grenadeLaunch','fracture'].includes(e.name)&&e.owner==='player'){if(e.name!=='shot')e={...e,weapon:e.name==='grenadeLaunch'?3:2};const q=[[.08,.12,45],[.55,.35,140],[.6,.3,180],[.5,.4,160],[.12,.15,65]][e.weapon]||[.12,.15,65];queue(...q);}
+        else if(e.name==='hurt')queue(.45*Math.min(1,(e.damage??e.amount??10)/20),.15,160);
+        else if(e.name==='explosion'){const v=.7*Math.max(0,1-distance()/12);if(v)queue(v,v*.6,250);}
+        else if(e.name==='bossDeath')queue(.8,.6,300);
+        else if(['pickup','ammoPickup','weaponPickup','armorPickup','lootPickup'].includes(e.name))queue(.12,.2,70);
+        else if(e.name==='trap'&&distance()<10)queue(.65,.4,180);
+        else if(e.name==='boundaryContact')queue(.04,.06,35);
+        else if(e.name==='land'||e.name==='landing')queue(.25,.15,90);
+        else if(e.name==='jetpack')queue(.06,.12,55);
+        else if(e.name==='profileSwitch'||e.name==='profileChanged'||e.name==='switchProfile')queue(.28,.45,120);
+      }
+    };
+  }
+  // Preserve each source's magnitude. Adding two movement sources would let a
+  // held keyboard direction amplify a stick; angles and buttons do combine.
+  function merge(host,pad){
+    const out={...host};
+    if((pad.moveX||0)**2+(pad.moveY||0)**2>(host.moveX||0)**2+(host.moveY||0)**2){out.moveX=pad.moveX;out.moveY=pad.moveY;}
+    out.lookX=(host.lookX||0)+(pad.lookX||0);out.lookY=(host.lookY||0)+(pad.lookY||0);
+    for(const k of ['fire','fireLeft','sprint','dash','pulse','melee','interact','switchProfile'])out[k]=!!(host[k]||pad[k]);
+    out.jumpHeld=!!(host.jumpHeld||pad.jump);return out;
+  }
+  G.MetalControls={create,merge};
+})(typeof window!=='undefined'?window:globalThis);
 
 ;
 /* FERRO — browser shell, checkpoints and procedural characters. */
 (function(){
   'use strict';
   const $=id=>document.getElementById(id),canvas=$('world'),clamp=FSimulation.clamp;
-  const touch=matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>1||new URLSearchParams(location.search).get('touch')==='1';
+  const forceTouch=new URLSearchParams(location.search).get('touch')==='1';
+  let touch=forceTouch||FInput.guessDevice(window)==='touch';
   document.body.classList.toggle('touch',touch);
   let prefs=FOptions.defaults(touch);
   try{prefs=FOptions.normalize(JSON.parse(localStorage.getItem('ferro-settings')||'{}'),touch);}catch{}
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)prefs.softMotion=false;
-  let {muted,quality,softMotion}=prefs,bindingAction=null,optionsTab='game';
+  let {muted,quality,softMotion}=prefs,bindingAction=null,padBindingAction=null,optionsTab='game';
+  const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,boundaryFlash=0;
   const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
@@ -10236,22 +10518,32 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   }
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
-  function bindingLabel(id){return (prefs.bindings[id]||[]).map(FOptions.keyName).join(' / ');}
+  function bindingLabel(id){return controls.label(id);}
+  function activeDevice(device){controls.use(device);touch=forceTouch||device==='touch';document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch||device==='gamepad'&&prefs.padAssist;}
+  function controlHints(){
+    $('interact-key').textContent=bindingLabel('interact');
+    $('intro-controls').textContent=controls.device==='gamepad'?'LS déplacer · RS viser · '+bindingLabel('fire')+' tirer · '+bindingLabel('jump')+' sauter':'Clavier, manette ou écran tactile';
+    $('help-text').textContent=controls.device==='gamepad'?'LS : déplacement · RS : visée · '+['fire','fireLeft','jump','dash','melee','interact','weaponNext','switchProfile','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · '):'ZQSD / WASD : déplacer · Souris : viser · '+['fire','jump','dash','melee','interact','switchProfile','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · ');
+  }
   function weaponHint(){const keys=Array.from({length:world?.campaign?5:4},(_,i)=>bindingLabel('weapon'+(i+1)));$('weapon-switch').title='Armes : '+keys.join(' / ')+' ou molette';}
   function renderBindings(){
-    $('key-bindings').innerHTML=FOptions.actions.map(a=>'<div class="binding-row"><span>'+a.label+'</span><button id="bind-'+a.id+'" class="'+(bindingAction===a.id?'listening':'')+'" aria-label="Modifier la touche : '+a.label+'">'+(bindingAction===a.id?'Touche…':bindingLabel(a.id))+'</button></div>').join('');
+    const focusId=document.activeElement?.id;
+    $('key-bindings').innerHTML=FOptions.actions.map(a=>'<div class="binding-row"><span>'+a.label+'</span><button id="bind-'+a.id+'" class="'+(bindingAction===a.id?'listening':'')+'" aria-label="Modifier la touche : '+a.label+'">'+(bindingAction===a.id?'Touche…':(prefs.bindings[a.id]||[]).map(FOptions.keyName).join(' / '))+'</button><button id="pad-bind-'+a.id+'" aria-label="Modifier le bouton manette : '+a.label+'">'+(padBindingAction===a.id?'Bouton…':controls.padLabel(a.id))+'</button><button id="pad-clear-'+a.id+'" aria-label="Effacer le bouton manette : '+a.label+'">—</button></div>').join('');
     for(const a of FOptions.actions)$('bind-'+a.id).addEventListener('click',()=>{bindingAction=a.id;$('binding-status').textContent='Appuyez sur une touche pour « '+a.label+' ». Échap pour annuler.';renderBindings();$('bind-'+a.id).focus();});
+    for(const a of FOptions.actions)$('pad-bind-'+a.id).addEventListener('click',()=>{bindingAction=null;padBindingAction=a.id;controls.capture('gamepad');$('binding-status').textContent='Appuyez sur un bouton pour « '+a.label+' ». Échap annule ; Retour arrière efface.';renderBindings();$('pad-bind-'+a.id).focus();});
+    for(const a of FOptions.actions)$('pad-clear-'+a.id).addEventListener('click',()=>{prefs.padBindings=FOptions.assignPad(prefs.padBindings,a.id,null).bindings;padBindingAction=null;controls.capture(null);settings();$('binding-status').textContent='Bouton libéré : '+a.label+'.';});
+    if(focusId&&/^(bind-|pad-bind-|pad-clear-)/.test(focusId))$(focusId)?.focus();
   }
   function selectTab(name,focus=false){
     if(optionsTab==='audio'&&name!=='audio')audio.cancelTestMix?.();
     if(name==='game')brainStatus();
-    optionsTab=name;bindingAction=null;
+    optionsTab=name;bindingAction=padBindingAction=null;controls.capture(null);
     for(const id of ['game','image','audio','controls']){const active=id===name;$('tab-'+id).setAttribute('aria-selected',String(active));$('tab-'+id).tabIndex=active?0:-1;$('pane-'+id).hidden=!active;}
     $('options-body').scrollTop=0;$('binding-status').textContent='Cliquez sur une touche pour la modifier. Échap annule. Le clic gauche et la molette restent disponibles.';
     renderBindings();if(focus)$('tab-'+name).focus();
   }
   function settings(){
-    Object.assign(prefs,{muted,quality,softMotion});
+    Object.assign(prefs,{muted,quality,softMotion});controls.configure(prefs);
     $('sound-toggle').querySelector('strong').textContent=muted?'Coupé':'Activé';
     $('quality-toggle').querySelector('strong').textContent={auto:'Auto',low:'Économie',high:'Haute'}[quality];
     $('difficulty-setting').value=String(prefs.difficulty);$('difficulty-hint').textContent=['Standard · apprenez à lire les attaques ; la pression monte avec les secteurs et les objectifs.','Brutal · des machines plus agressives, des tirs plus rapprochés et moins de répit.','Cauchemar · des attaques plus rapides, des impacts plus durs et une forte pression.'][prefs.difficulty];brainStatus();
@@ -10262,13 +10554,14 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     }
     $('fps-limit').value=String(prefs.fpsLimit);cadenceHint();$('fps-counter').hidden=!prefs.showFps;$('scanlines').hidden=!prefs.crt;$('vignette').hidden=!prefs.vignette;
     $('crosshair').style.scale=String(prefs.crosshairScale);canvas.style.filter=prefs.brightness===1?'none':'brightness('+prefs.brightness+')';
-    $('interact-key').textContent=FOptions.keyName(prefs.bindings.interact[0]);
+    $('interact-key').textContent=bindingLabel('interact');
+    for(const [id,key,mul] of [['pad-yaw','padYaw',1],['pad-pitch','padPitch',1],['pad-dead','padDead',100],['pad-curve','padCurve',100],['pad-vibration','padVibration',100]]){$(id+'-setting').value=String(Math.round(prefs[key]*mul));$(id+'-value').textContent=String(Math.round(prefs[key]*mul));}
+    for(const [id,key] of [['pad-invert','padInvertY'],['pad-assist','padAssist'],['pad-swap','padSwapSticks']]){$(id+'-toggle').setAttribute('aria-pressed',String(prefs[key]));$(id+'-toggle').querySelector('strong').textContent=prefs[key]?'Oui':'Non';}
     $('map-button').title='Carte ('+bindingLabel('map')+')';weaponHint();
-    if(!touch)$('intro-controls').textContent=JSON.stringify(prefs.bindings)===JSON.stringify(FOptions.defaults(false).bindings)?'ZQSD / WASD · Souris · Clic pour tirer':'Commandes personnalisées · Souris · Clic pour tirer';
+    controlHints();
     $('music-title').textContent=trackLabel();
     const software=renderer?.stats.backend==='canvas2d';
     $('bloom-toggle').disabled=software;$('graphics-hint').textContent=software?'Rendu CPU de secours : WebGL 2 est indisponible dans ce navigateur. Auto adapte la résolution ; les ombres restent réglables.':'Rendu GPU · WebGL 2. Auto adapte la résolution à la fluidité. Haute augmente la portée et la précision. Les réglages sont appliqués immédiatement.';
-    if(!touch)$('help-text').innerHTML=bindingLabel('forward')+' / '+bindingLabel('left')+' / '+bindingLabel('back')+' / '+bindingLabel('right')+' : déplacer · Souris : viser<br>Clic / '+bindingLabel('fire')+' : tirer · '+bindingLabel('weapon1')+' / '+bindingLabel('weapon2')+' / '+bindingLabel('weapon3')+' / '+bindingLabel('weapon4')+' / '+bindingLabel('weapon5')+' : armes trouvées<br>Clic droit / '+bindingLabel('fireLeft')+' · '+bindingLabel('leftHand')+' : changer d’arme gauche<br>'+bindingLabel('interact')+' : commandes et ascenseurs · '+bindingLabel('pulse')+' : onde défensive<br>'+bindingLabel('melee')+' : coup de crosse · '+bindingLabel('dash')+' : esquive<br>'+bindingLabel('sprint')+' : courir · '+bindingLabel('map')+' : carte · Échap : pause';
     const silent=[['musicVolume','Musique coupée'],['effectsVolume','Effets coupés'],['ambienceVolume','Ambiances coupées']].filter(([key])=>prefs[key]===0).map(([,label])=>label);
     $('audio-status').textContent=muted||prefs.masterVolume===0?'Son coupé. Activez le son et le volume général pour écouter.':silent.length?silent.join(' · ')+'. Réglez les curseurs pour les entendre.':'Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.';
     document.body.classList.toggle('low-motion',!softMotion);audio.setMix?.({master:prefs.masterVolume,music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});audioGate();syncTitle();saveSettings();renderBindings();
@@ -10365,12 +10658,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       saveCheckpoint();
     }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
   }
-  function clearInput(){keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
+  function clearInput(){controls.clear();padState={};jumpQueued=switchProfileQueued=false;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
     audio.cancelTestMix?.();
     last=performance.now();perfStart=0;perfFrames=0;
     $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
-    mode=value;bindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing');audioGate();syncTitle();
+    mode=value;bindingAction=padBindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing');audioGate();syncTitle();
     if(value==='paused'||value==='options'){$('pause-kicker').textContent=value==='options'?'CONSOLE DE RÉGLAGE':'SIGNAL EN ATTENTE';$('resume').innerHTML=(value==='options'?'Retour':'Reprendre')+' <span class="arrow-icon" aria-hidden="true"></span>';$('restart').hidden=$('pause-main').hidden=value==='options';selectTab(value==='options'?'image':optionsTab);}
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
@@ -10398,9 +10691,9 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     if(renderer.updateWorld)renderer.updateWorld(d.meshes,revision,d.lights);else renderer.setWorld(d.meshes,d.lights||world.lights,world.environment);
     renderRevision=revision;
   }
-  function freePointerHint(){if(mode==='playing'&&document.pointerLockElement!==canvas)toast('Glissez pour viser · '+bindingLabel('fire')+' : tirer. Cliquez pour capturer la souris.',4);}
+  function freePointerHint(){if(mode==='playing'&&controls.device!=='gamepad'&&document.pointerLockElement!==canvas)toast('Glissez pour viser · '+bindingLabel('fire')+' : tirer. Cliquez pour capturer la souris.',4);}
   function lock(){
-    if(touch)return;
+    if(touch||controls.device==='gamepad')return;
     pointerLockWanted=true;
     if(document.pointerLockElement===canvas)return;
     const ticket=++pointerRequestSerial,current=()=>ticket===pointerRequestSerial&&mode==='playing'&&!document.hidden&&windowFocused;
@@ -10451,6 +10744,8 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   function events(){
     let checkpointDue=false;const trophyIds=new Set(sim.state.events.filter(e=>e.name==='trophy'||e.name==='bossReward').map(e=>e.id));
     for(const e of sim.state.events){
+      if(mode==='playing')controls.event(e,sim.state.player);
+      if(e.name==='boundaryContact')boundaryFlash=.15;
       // shots is shared by both hands: consume only the hand that really fired.
       if(e.name==='shot'||e.name==='fracture'||(e.name==='rocket'||e.name==='grenadeLaunch')&&e.owner==='player'){
         if(e.hand==='left')fireLeftPressed=false;else firePressed=false;
@@ -10834,6 +11129,8 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     return out;
   }
   function renderHUD(){
+    const profile=sim.state.activeProfile,jet=sim.state.jetpack;$('profile-status').hidden=profile!=='light'&&profile!=='heavy';
+    if(profile==='light'||profile==='heavy')$('profile-status').textContent=(profile==='light'?'LÉGER · JETPACK'+(jet?' '+Math.round(100*jet.fuel/Math.max(1,jet.capacity))+' %':''):'LOURD · EXPLOSIFS')+' · '+bindingLabel('switchProfile')+' : changer';
     const s=sim.state,p=s.player;
     const stats=sim.stats||{maxHp:100},maxHp=s.maxHp||stats.maxHp||100,healthRatio=p.hp/maxHp;
     $('hp').textContent=String(Math.ceil(p.hp));$('health-max').textContent='/ '+maxHp;$('hp-bar').style.width=clamp(healthRatio*100,0,100)+'%';$('hp-bar').style.background=healthRatio<.3?'#ff795e':'var(--acid)';
@@ -10926,8 +11223,41 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     const text=ready?(prefs.fpsLimit?'Cadence régulière : ≈ '+Math.round(framePacer.effectiveHz)+' i/s · écran ≈ '+Math.round(hz)+' Hz.':'Sans limite · écran mesuré à ≈ '+Math.round(hz)+' Hz.'):'Mesure de la cadence de l’écran…';
     if($('fps-effective').textContent!==text)$('fps-effective').textContent=text;
   }
+  function pollControls(now){
+    const dt=Math.max(0,Math.min(.12,(now-padLast)/1000));padLast=now;
+    if(document.hidden||!windowFocused){controls.clear();return;}
+    const f=controls.frame(dt);
+    if(f.deviceChanged){activeDevice(f.device);controlHints();if(mode==='options'||mode==='paused')renderBindings();}
+    if(f.connected.length){$('pad-status').textContent='Manette connectée · '+f.connected[0].id;if(mode==='playing')toast('Manette connectée',2);}
+    if(f.disconnected.length){controls.clear();if(controls.device==='gamepad'&&mode==='playing')setMode('paused');$('pad-status').textContent=f.pads.length?'Manette disponible':'Manette débranchée · reconnectez-la ou utilisez le clavier';}
+    if(f.device==='gamepad'&&(f.pressed.length||f.nav?.direction||f.nav?.adjust)){
+      titleGesture=true;titleBlocked=false;audio.resume();if(titleScreen())syncTitle();
+      if(titleBlocked)$('pad-status').textContent='A : activer le son · cliquez si le navigateur le demande';
+    }
+    if(padBindingAction){
+      if(f.captured){const id=padBindingAction,result=FOptions.assignPad(prefs.padBindings,id,f.captured.code);if(result.ok){prefs.padBindings=result.bindings;padBindingAction=null;settings();$('binding-status').textContent='Bouton enregistré.';$('pad-bind-'+id).focus();}else{padBindingAction=null;controls.capture(null);renderBindings();$('binding-status').textContent=result.reason+' Libérez ce bouton avec —, puis réessayez.';}}
+      controls.step();return;
+    }
+    if(f.pressed.includes('pause')){togglePause();return;}
+    if(mode==='playing'){
+      if(f.pressed.includes('jump'))jumpQueued=true;if(f.pressed.includes('switchProfile'))switchProfileQueued=true;
+      if(f.pressed.includes('fire'))pressFire();if(f.pressed.includes('fireLeft'))pressFire(true);
+      if(f.pressed.includes('weaponNext'))switchWeapon();if(f.pressed.includes('leftHand'))switchLeft();
+      for(let i=0;i<5;i++)if(f.pressed.includes('weapon'+(i+1)))switchWeapon(i);
+      if(f.pressed.includes('map')){$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();}
+    }else{
+      controls.step();const root=$(mode==='menu'?'intro':mode==='shop'?'shop':['paused','options'].includes(mode)?'pause':'result'),nav=f.nav;
+      if(!nav||mode==='loading')return;
+      if(nav.back){if(mode==='paused'||mode==='options'||mode==='shop')togglePause();else if(['dead','cleared','complete'].includes(mode))$('back-menu').click();return;}
+      const focused=document.activeElement,adjustable=focused?.type==='range'||focused?.tagName==='SELECT';
+      if(nav.adjust&&adjustable)FInput.focusMove(root,nav.adjust,document);
+      else if((nav.previous||nav.next)&&['paused','options'].includes(mode)){const names=['game','image','audio','controls'],n=names.indexOf(optionsTab);selectTab(names[(n+(nav.next?1:3))%4],true);}
+      if(nav.direction)FInput.focusMove(root,nav.direction,document);
+      if(nav.accept)FInput.focusMove(root,'accept',document);
+    }
+  }
   function frame(now){
-    requestAnimationFrame(frame);const present=FOptions.frameGate(framePacer,now,prefs.fpsLimit);
+    requestAnimationFrame(frame);pollControls(now);const present=FOptions.frameGate(framePacer,now,prefs.fpsLimit);
     if((mode==='options'||mode==='paused')&&optionsTab==='image'&&now-cadenceHintAt>=500){cadenceHintAt=now;cadenceHint();}
     if(!present)return;
     const frameMs=Math.max(0,now-last),dt=clamp(frameMs/1000,0,.12);last=now;clock+=dt;
@@ -10935,19 +11265,20 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     if(mode==='loading')return;
     const signals={time:sim.state.time,lookYaw:0,lookPitch:0,firing:false};
     if(mode==='playing'){
+      padState=controls.step();
       const held=id=>FOptions.down(prefs.bindings,keys,id);
       input.moveX=Number(held('right'))-Number(held('left'))+stick.x;
       input.moveY=Number(held('forward'))-Number(held('back'))-stick.y;
       input.lookX=lookDX+(Number(held('turnRight'))-Number(held('turnLeft')))*dt*1.9;input.lookY=lookDY;
-      const fireHeld=mouseFire||touchFire||held('fire'),fireLeftHeld=mouseLeftFire||touchLeftFire||held('fireLeft');
-      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');
+      const fireHeld=mouseFire||touchFire||held('fire')||padState.fire,fireLeftHeld=mouseLeftFire||touchLeftFire||held('fireLeft')||padState.fireLeft;
+      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump');input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(input,padState));input.assist=touch||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch;
       signals.lookYaw=dt>0?input.lookX/dt:0;signals.lookPitch=dt>0?input.lookY/dt:0;signals.firing=input.fire;
-      lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;
+      lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=jumpQueued=switchProfileQueued=false;
       // STAB-V1: tolerate timestamp rounding and 59.94 Hz until the fixed-step loop lands.
       // Each part stays below 17.7 ms; precision noise must not double the work at 60 Hz.
       const steps=Math.max(1,Math.ceil(dt*60-.06)),part=dt/steps;
       for(let i=0;i<steps;i++){
-        sim.step(part,input);input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=false;
+        sim.step(part,input);input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=input.jump=input.switchProfile=false;
         events();
         if(mode!=='playing')break;
         // A short press is offered once per frame until fired or expired. Held
@@ -10974,6 +11305,8 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.09;}
       $('crosshair').classList.toggle('hit',sim.state.hitMarker>0);$('damage').style.opacity=String(sim.state.damage*.45);
     }else{$('damage').style.opacity='0';if(titleScreen()){activateTitle();audio.tick(dt);}}
+    boundaryFlash=Math.max(0,boundaryFlash-dt);$('crosshair').classList.toggle('boundary-contact',boundaryFlash>0);
+    controls.flush(now,mode==='playing'&&!document.hidden&&windowFocused);
     syncDestruction();
     const p=sim.state.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
     signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);leftMotion.update(mode==='playing'?dt:0,sim.state.locomotion||{},{...signals,firing:input.fireLeft},softMotion);
@@ -11033,9 +11366,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   for(const id of tabs){$('tab-'+id).addEventListener('click',()=>selectTab(id));$('tab-'+id).addEventListener('keydown',e=>{let next=tabs.indexOf(id);if(e.code==='ArrowRight')next=(next+1)%4;else if(e.code==='ArrowLeft')next=(next+3)%4;else if(e.code==='Home')next=0;else if(e.code==='End')next=3;else return;e.preventDefault();selectTab(tabs[next],true);});}
   for(const [id,key] of [['shadows','shadows'],['bloom','bloom'],['fps','showFps'],['crt','crt'],['vignette','vignette'],['invert','invertY'],['pointer-acceleration','systemPointerAcceleration']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
   for(const [id,key,divisor] of [['fov','fov',1],['brightness','brightness',100],['sensitivity','sensitivity',100],['crosshair','crosshairScale',100],['master','masterVolume',100],['music','musicVolume',100],['effects','effectsVolume',100],['ambience','ambienceVolume',100]])$(id+'-setting').addEventListener('input',()=>{prefs[key]=Number($(id+'-setting').value)/divisor;settings();});
+  for(const [id,key,mul] of [['pad-yaw','padYaw',1],['pad-pitch','padPitch',1],['pad-dead','padDead',100],['pad-curve','padCurve',100],['pad-vibration','padVibration',100]])$(id+'-setting').addEventListener('input',()=>{prefs[key]=Number($(id+'-setting').value)/mul;settings();});
+  for(const [id,key] of [['pad-invert','padInvertY'],['pad-assist','padAssist'],['pad-swap','padSwapSticks']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
   $('fps-limit').addEventListener('change',()=>{prefs.fpsLimit=Number($('fps-limit').value);settings();});
   $('reset-image').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['quality','softMotion','fov','brightness','shadows','bloom','showFps','crt','vignette','fpsLimit'])prefs[key]=d[key];quality=prefs.quality;softMotion=prefs.softMotion;renderer.resize(quality);settings();});
-  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','bindings'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
+  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','bindings','bindingsVersion','padBindings','padVersion','padYaw','padPitch','padDead','padCurve','padInvertY','padAssist','padVibration','padSwapSticks'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
   $('reset-audio').addEventListener('click',()=>{audio.cancelTestMix?.();const d=FOptions.defaults(touch);for(const key of ['masterVolume','musicVolume','effectsVolume','ambienceVolume'])prefs[key]=d[key];muted=false;settings();$('audio-status').textContent='Mix recommandé rétabli. Testez les tirs et les ambiances.';});
   $('test-audio').addEventListener('click',async()=>{
     if(audio.stats?.preview){audio.cancelTestMix?.();activateTitle();$('audio-status').textContent='Test audio arrêté.';return;}
@@ -11057,6 +11392,8 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   $('shop-close').addEventListener('click',()=>{if(mode==='shop')togglePause();});
   $('reload').addEventListener('click',()=>location.reload());
   addEventListener('keydown',e=>{
+    activeDevice('keyboard');
+    if(padBindingAction){e.preventDefault();if(e.code==='Escape'){padBindingAction=null;controls.capture(null);renderBindings();}else if(e.code==='Backspace'){prefs.padBindings=FOptions.assignPad(prefs.padBindings,padBindingAction,null).bindings;padBindingAction=null;controls.capture(null);settings();}return;}
     if(!e.repeat&&!e.metaKey&&!e.altKey&&!e.ctrlKey&&!['ShiftLeft','ShiftRight','ControlLeft','ControlRight','AltLeft','AltRight','MetaLeft','MetaRight','Escape'].includes(e.code))titleUserGesture(e);
     if(bindingAction){
       e.preventDefault();if(e.repeat)return;
@@ -11070,7 +11407,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     if(mode!=='playing'||['INPUT','SELECT','TEXTAREA'].includes(e.target?.tagName))return;
     const match=id=>FOptions.matches(prefs.bindings,id,e.code);
     if(FOptions.actions.some(a=>match(a.id)))e.preventDefault();
-    keys.add(e.code);if(match('dash')&&!e.repeat)dashQueued=true;if(match('pulse')&&!e.repeat)pulseQueued=true;if(match('melee')&&!e.repeat)meleeQueued=true;if(match('interact')&&!e.repeat)interactQueued=true;
+    keys.add(e.code);if(match('jump')&&!e.repeat)jumpQueued=true;if(match('switchProfile')&&!e.repeat)switchProfileQueued=true;if(match('weaponNext')&&!e.repeat)switchWeapon();if(match('dash')&&!e.repeat)dashQueued=true;if(match('pulse')&&!e.repeat)pulseQueued=true;if(match('melee')&&!e.repeat)meleeQueued=true;if(match('interact')&&!e.repeat)interactQueued=true;
     if(!e.repeat){if(match('fire'))pressFire();if(match('fireLeft'))pressFire(true);}
     if(!e.repeat)for(let i=0;i<5;i++)if(match('weapon'+(i+1)))switchWeapon(i);
     if(match('leftHand')&&!e.repeat)switchLeft();
@@ -11093,39 +11430,40 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     // A cancelled request can still succeed through a promise or a legacy
     // document event. Only a fresh gesture may make that acquisition wanted.
     if(locked&&(mode!=='playing'||!pointerLockWanted)){wasLocked=false;document.exitPointerLock();return;}
-    if(wasLocked&&!locked&&mode==='playing')setMode('paused');
+    if(wasLocked&&!locked&&mode==='playing'&&controls.device!=='gamepad')setMode('paused');
     if(locked&&captureMouseButton!==null)toast('Souris capturée · relâchez puis cliquez pour tirer.',3);
     wasLocked=locked;
   });
   document.addEventListener('pointerlockerror',freePointerHint);
-  document.addEventListener('mousemove',e=>{if(mode==='playing'&&document.pointerLockElement===canvas){lookDX+=e.movementX*.0022*prefs.sensitivity;lookDY-=e.movementY*.0022*prefs.sensitivity*(prefs.invertY?-1:1);}});
+  document.addEventListener('mousemove',e=>{if(e.movementX||e.movementY)activeDevice('mouse');if(mode==='playing'&&document.pointerLockElement===canvas){lookDX+=e.movementX*.0022*prefs.sensitivity;lookDY-=e.movementY*.0022*prefs.sensitivity*(prefs.invertY?-1:1);}});
   // Mouse down/up report every button transition. Pointer down/up only report
   // the first pressed/last released mouse button, which would break dual fire.
   canvas.addEventListener('mousedown',e=>{if(mode!=='playing'||captureMouseButton!==null||document.pointerLockElement!==canvas)return;if(e.button===0){mouseFire=true;pressFire();}else if(e.button===2){mouseLeftFire=true;pressFire(true);}});
   canvas.addEventListener('pointerdown',e=>{
     if(mode!=='playing')return;
+    activeDevice(e.pointerType==='mouse'?'mouse':'touch');
     if(e.pointerType==='mouse'){if(document.pointerLockElement!==canvas){captureMouseButton=e.button??0;mouseFire=mouseLeftFire=false;dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);toast('Capture de la souris · ce clic ne tire pas.',3);lock();}}
-    else if(e.clientX>innerWidth*.36){dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}
+    else if(e.clientX>innerWidth*.36&&!dragLook){e.preventDefault();dragLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}
   });
   canvas.addEventListener('pointermove',e=>{if(dragLook?.id===e.pointerId&&!document.pointerLockElement&&mode==='playing'){const sensitivity=(touch?.004:.003)*prefs.sensitivity;lookDX+=(e.clientX-dragLook.x)*sensitivity;lookDY-=(e.clientY-dragLook.y)*sensitivity*(prefs.invertY?-1:1);dragLook.x=e.clientX;dragLook.y=e.clientY;}});
   function endMouse(e){if(e.button===captureMouseButton)captureMouseButton=null;if(e.button===0)mouseFire=false;else if(e.button===2)mouseLeftFire=false;if(!mouseFire&&!mouseLeftFire)dragLook=null;}
   addEventListener('mouseup',endMouse);
   function endPointer(e){if(e.pointerType==='mouse'&&(e.type==='pointercancel'||e.buttons===0)){mouseFire=mouseLeftFire=false;captureMouseButton=null;if(e.type==='pointercancel'){clearFireIntents();++pointerRequestSerial;if(document.pointerLockElement!==canvas)pointerLockWanted=false;}}if(dragLook?.id===e.pointerId&&!mouseFire&&!mouseLeftFire)dragLook=null;if(moveTouch?.id===e.pointerId){moveTouch=null;stick.x=stick.y=0;$('move-stick').style.transform='';}}
   addEventListener('pointerup',endPointer);addEventListener('pointercancel',endPointer);canvas.addEventListener('contextmenu',e=>e.preventDefault());
-  $('move-zone').addEventListener('pointerdown',e=>{if(mode!=='playing'||moveTouch)return;e.preventDefault();const rect=$('move-zone').getBoundingClientRect();moveTouch={id:e.pointerId,x:rect.left+rect.width/2,y:rect.top+rect.height/2};$('move-zone').setPointerCapture(e.pointerId);joystick(e);});
+  $('move-zone').addEventListener('pointerdown',e=>{if(mode!=='playing'||moveTouch)return;activeDevice('touch');e.preventDefault();const rect=$('move-zone').getBoundingClientRect();moveTouch={id:e.pointerId,x:rect.left+rect.width/2,y:rect.top+rect.height/2};$('move-zone').setPointerCapture(e.pointerId);joystick(e);});
   function joystick(e){if(moveTouch?.id!==e.pointerId)return;const dx=e.clientX-moveTouch.x,dy=e.clientY-moveTouch.y,n=Math.max(1,Math.hypot(dx,dy)/34);stick.x=dx/n/34;stick.y=dy/n/34;$('move-stick').style.transform='translate('+dx/n+'px,'+dy/n+'px)';}
   $('move-zone').addEventListener('pointermove',joystick);
-  $('fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();touchFire=true;pressFire();$('fire-button').setPointerCapture(e.pointerId);});
+  $('fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;activeDevice('touch');e.preventDefault();touchFire=true;pressFire();$('fire-button').setPointerCapture(e.pointerId);});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('fire-button').addEventListener(name,()=>{if(name==='pointercancel'||name==='lostpointercapture'&&touchFire)firePressed=false;touchFire=false;});
-  $('left-fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||$('left-fire-button').disabled)return;e.preventDefault();touchLeftFire=true;pressFire(true);$('left-fire-button').setPointerCapture(e.pointerId);});
+  $('left-fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||$('left-fire-button').disabled)return;activeDevice('touch');e.preventDefault();touchLeftFire=true;pressFire(true);$('left-fire-button').setPointerCapture(e.pointerId);});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('left-fire-button').addEventListener(name,()=>{if(name==='pointercancel'||name==='lostpointercapture'&&touchLeftFire)fireLeftPressed=false;touchLeftFire=false;});
   $('dash-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();dashQueued=true;});
   $('pulse-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();pulseQueued=true;});
   $('melee-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();meleeQueued=true;});
   $('interact-button').addEventListener('click',e=>{if(mode!=='playing'||$('interact-button').disabled)return;e.preventDefault();interactQueued=true;canvas.focus({preventScroll:true});});
-  addEventListener('blur',()=>{windowFocused=false;audio.cancelTestMix?.();if(mode==='playing')setMode('paused');else{audioGate();syncTitle();}});
+  addEventListener('blur',()=>{windowFocused=false;controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');else{audioGate();syncTitle();}});
   addEventListener('focus',()=>{windowFocused=true;syncTitle();audioGate();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){controls.clear();audio.cancelTestMix?.();if(mode==='playing')setMode('paused');}else windowFocused=document.hasFocus?.()!==false;syncTitle();audioGate();});
   addEventListener('resize',()=>renderer?.resize(quality));
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   if(touch){$('intro-controls').textContent='Déplacez-vous à gauche · Visez à droite';$('help-text').innerHTML='Joystick gauche : déplacer · Glisser à droite : viser<br>Grand cercle : main droite · TIR G : main gauche<br>Flèche : esquive<br>Anneaux : onde · Crosse : attaque au contact<br>Emplacement : main droite · Menu main gauche : arme de la main gauche<br>Bouton contextuel : commande ou ascenseur<br>Ramassez armes et munitions. Les réserves sont limitées.';}
