@@ -11,7 +11,7 @@
   let {muted,quality,softMotion}=prefs,bindingAction=null,padBindingAction=null,optionsTab='game';
   const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0;
   const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
-  let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
+  let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
   let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
@@ -273,7 +273,7 @@
     sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),armorSystem:true,...(brain?{brain}:{})});sim.setDifficulty?.(prefs.difficulty);
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
-    renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;
+    renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;renderToken=sim.destruction?.delta?.().token;
     motion.reset();leftMotion.reset();lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
     soundscape.reset();audio.setStage?.(world.stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
     $('music-title').textContent=trackLabel();
@@ -284,9 +284,10 @@
     document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=touch;hudWait=0;renderHUD();weaponHint();
   }
   function syncDestruction(){
-    const d=sim?.destruction,revision=sim?.state.destructionRevision??d?.revision;if(!d||revision===renderRevision)return;
-    if(renderer.updateWorld)renderer.updateWorld(d.meshes,revision,d.lights);else renderer.setWorld(d.meshes,d.lights||world.lights,world.environment);
-    renderRevision=revision;
+    const d=sim?.destruction,revision=sim?.state.destructionRevision??d?.revision;if(!d)return;
+    const delta=d.delta?.(renderToken);if(delta?delta.token===renderToken:revision===renderRevision)return;
+    if(renderer.updateWorld)renderer.updateWorld(d.meshes,revision,d.lights,delta);else renderer.setWorld(d.meshes,d.lights||world.lights,world.environment);
+    renderRevision=revision;renderToken=delta?.token;
   }
   function freePointerHint(){if(mode==='playing'&&controls.device!=='gamepad'&&document.pointerLockElement!==canvas)toast('Glissez pour viser · '+bindingLabel('fire')+' : tirer. Cliquez pour capturer la souris.',4);}
   function lock(){

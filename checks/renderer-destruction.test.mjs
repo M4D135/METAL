@@ -211,3 +211,37 @@ test('smoke and spark finish stays in one depth-safe FX pass while hazard and ri
   assert(!g.calls.some(c=>c.name.startsWith('create')),'particle finish must reuse existing GPU resources');
   assert.equal(r.stats.fxInstances,4);r.dispose();
 });
+
+test('a distant destruction revision preserves warm colour, torch, lamp and sun selections',()=>{
+  const g=gpu(),r=g.renderer,far=box([900,2,-900],[2,4,2]),environment={biome:'woodland',outdoorZones:[{x:0,z:0,w:100,d:100}],sunDirection:[-.4,.8,.3]};
+  r.setWorld([far,...original],lights,environment);r.draw(camera,[],fx);const rebuilds={...r.stats.cache};g.calls.length=0;g.draws.length=0;
+  r.updateWorld(original,1);r.draw(camera,[],fx);
+  for(const key of ['viewRebuilds','torchRebuilds','sunRebuilds'])assert.equal(r.stats.cache[key],rebuilds[key],key+' must survive a distant break');
+  assert(!g.calls.some(c=>c.name==='bufferData'||c.name==='bufferSubData'),'unchanged selections retain their GPU instance rows');assert(rows(g.draws).some(isWall));r.dispose();
+});
+
+test('a full destruction delta restores the scene even when its numeric revision is unchanged',()=>{
+  const g=gpu(),r=g.renderer;r.setWorld(original,lights);r.draw(camera,[],fx);g.draws.length=0;
+  assert.equal(r.updateWorld(broken,0,lights,{full:true}),true);r.draw(camera,[],fx);assert(!rows(g.draws).some(isWall));r.dispose();
+});
+
+test('Canvas lamp dependencies preserve exact lighting through far removals, additions and ordering ties',()=>{
+  const scenes=[lights.slice(0,1),[...lights,{p:[100,8,0],color:[1,.1,.3],power:600}],lights.slice().reverse(),[]];
+  const a=software();a.renderer.setWorld(original,lights);a.renderer.resize('auto');a.renderer.draw(camera,[],fx);
+  for(let i=0;i<scenes.length;i++){
+    a.renderer.updateWorld(original,i+1,scenes[i]);a.calls.length=0;a.renderer.draw(camera,[],fx);
+    const fresh=software();fresh.renderer.setWorld(original,scenes[i]);fresh.renderer.resize('auto');fresh.calls.length=0;fresh.renderer.draw(camera,[],fx);
+    assert.deepEqual(a.calls,fresh.calls,'lighting revision '+i+' equals a fresh scene');fresh.renderer.dispose();
+  }
+  a.renderer.dispose();
+});
+
+test('moving a static identity updates both colour rows and Canvas shadow geometry',()=>{
+  const moving=box([0,1.6,-4],[5,3.2,.5]),scene=[floor,moving],a=software(),g=gpu();
+  for(const r of [a.renderer,g.renderer]){r.setWorld(scene,lights);r.resize('auto');r.draw(camera,[],fx);}
+  moving.p[0]=3;moving.p[2]=-8;
+  a.renderer.updateWorld(scene,1);a.calls.length=0;a.renderer.draw(camera,[],fx);
+  const fresh=software();fresh.renderer.setWorld(scene,lights);fresh.renderer.resize('auto');fresh.calls.length=0;fresh.renderer.draw(camera,[],fx);assert.deepEqual(a.calls,fresh.calls);
+  g.renderer.updateWorld(scene,1);g.draws.length=0;g.renderer.draw(camera,[],fx);assert(!rows(g.draws).some(isWall));assert(rows(g.draws).some(row=>row[0]===3&&row[2]===-8));
+  a.renderer.dispose();g.renderer.dispose();fresh.renderer.dispose();
+});

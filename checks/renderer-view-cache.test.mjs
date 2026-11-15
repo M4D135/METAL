@@ -49,7 +49,7 @@ function tour(gpu, invalidate, shadows) {
   const visible = [], main = [];
   for (let i = 0; i < 48; i++) {
     const a = i * .19, camera = {pos: [Math.sin(a) * 11, 1.6 + Math.sin(i * .7) * .4, Math.cos(a) * 11], yaw: a, pitch: -.05 + Math.sin(i * .3) * .2, fov: 74};
-    if (invalidate) renderer.updateWorld(meshes, i + 1);
+    if (invalidate) renderer.updateWorld(meshes, i + 1, undefined, {full:true});
     renderer.draw(camera, [], {...fx, shadows});
     visible.push(renderer.stats.staticVisible);
     main.push(gpu.draws.filter(d => d.framebuffer === null).map(d => d.count + ':' + d.values.join(',')).join('#'));

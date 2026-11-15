@@ -821,40 +821,94 @@
   function metadata(mesh){
     return {mesh,p:mesh.p||[0,0,0],radius:Math.hypot(...(mesh.s||[1,1,1]))*.5,detail:Math.max(0,Math.min(2,Math.floor(mesh.detail||0))),software:null,softwareCoarse:null};
   }
-  function spatialIndex(meshes,environment,previous){
-    const levels=[new Map(),new Map(),new Map()],maxRadius=[0,0,0],entries=[],byMesh=new WeakMap();
-    for(const mesh of meshes||[]){
-      // Destruction replaces changed meshes; retained immutable meshes keep
-      // their instance rows and expensive Canvas face/lighting caches.
-      const retained=previous&&previous.byMesh.get(mesh),e=retained||metadata(mesh),key=Math.floor(e.p[0]/8)+','+Math.floor(e.p[2]/8),map=levels[e.detail];
-      let cell=map.get(key);
-      if(!cell){cell={list:[],sumY:0,minY:Infinity,maxY:-Infinity};map.set(key,cell);}
-      cell.list.push(e);cell.sumY+=e.p[1];if(e.p[1]<cell.minY)cell.minY=e.p[1];if(e.p[1]>cell.maxY)cell.maxY=e.p[1];
-      maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
-      if(!retained){const p=e.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
-        e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment)+(e.detail+1)*8,c[0],c[1],c[2],mesh.color?1:0]);}
-      e.order=entries.length;entries.push(e);byMesh.set(mesh,e);
+  function spatialIndex(meshes,environment,previous,delta){
+    if(previous)return previous.update(meshes||[],delta);
+    let entries=[],generation=0,nextSlot=0,capacity=0,px,py,pz,rad;
+    const byMesh=new WeakMap(),slots=[],free=[],maxRadius=[0,0,0];
+    let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+    for(const m of meshes||[]){const p=m.p||[0,0,0],x=Math.floor(p[0]/8),z=Math.floor(p[2]/8);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minZ=Math.min(minZ,z);maxZ=Math.max(maxZ,z);}
+    if(minX===Infinity)minX=maxX=minZ=maxZ=0;
+    minX-=4;maxX+=4;minZ-=4;maxZ+=4;
+    const nx=maxX-minX+1,nz=maxZ-minZ+1,dense=Number.isSafeInteger(nx*nz)&&nx*nz<=262144;
+    // Normal worlds use a dense table of cell lists. Pathological extents stay
+    // sparse instead of allocating a continent-sized array.
+    const levels=dense?[new Array(nx*nz),new Array(nx*nz),new Array(nx*nz)]:[new Map(),new Map(),new Map()];
+    function cellAt(level,x,z,create=false){
+      const grid=levels[level],key=dense?(x-minX)*nz+z-minZ:x+','+z;
+      let cell=dense?grid[key]:grid.get(key);
+      if(!cell&&create){cell={x,z,level,list:[],sumY:0,minY:Infinity,maxY:-Infinity,radius:0,seen:0,lastOrder:-1};if(dense)grid[key]=cell;else grid.set(key,cell);}
+      return cell;
+    }
+    function grow(required){
+      if(required<=capacity)return;capacity=Math.max(64,required,capacity*2);
+      const copy=a=>{const b=new Float64Array(capacity);if(a)b.set(a);return b;};px=copy(px);py=copy(py);pz=copy(pz);rad=copy(rad);
+    }
+    function makeEntry(mesh){
+      const e=metadata(mesh),i=free.length?free.pop():nextSlot++;grow(i+1);
+      const p=e.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
+      e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment)+(e.detail+1)*8,c[0],c[1],c[2],mesh.color?1:0]);
+      e.created=generation;e.sourceDetail=mesh.detail||0;e.slot=i;e.size=[s[0],s[1],s[2]];e.live=true;slots[i]=e;px[i]=p[0];py[i]=p[1];pz[i]=p[2];rad[i]=e.radius;
+      e.cell=cellAt(e.detail,Math.floor(p[0]/8),Math.floor(p[2]/8),true);byMesh.set(mesh,e);return e;
+    }
+    function cellBounds(cell){
+      const r=cell.radius;return {level:cell.level,minX:cell.x*8-r,maxX:cell.x*8+8+r,minY:cell.minY-r,maxY:cell.maxY+r,minZ:cell.z*8-r,maxZ:cell.z*8+8+r};
+    }
+    function update(next,delta){
+      // A four-cell halo absorbs ordinary destruction fragments. Crossing it
+      // rebuilds in one revision; no removed wall survives for a second frame.
+      generation++;maxRadius.fill(0);
+      const dirty=new Set(),changes=[],retained=[];
+      // The shared destruction delta identifies retirements directly. Generic
+      // callers still get the generation diff, including in-place movement.
+      const old=delta&&!delta.full&&Array.isArray(delta.removed)&&Array.isArray(delta.added)?delta.removed.map(mesh=>byMesh.get(mesh)).filter(Boolean):entries;
+      function touch(cell){if(dirty.has(cell))return;dirty.add(cell);if(cell.list.length)changes.push(cellBounds(cell));}
+      for(let order=0;order<next.length;order++){
+        const mesh=next[order],p=mesh.p||[0,0,0],s=mesh.s||[1,1,1];let e=byMesh.get(mesh);
+        if(e&&(e.gen===generation||px[e.slot]!==p[0]||py[e.slot]!==p[1]||pz[e.slot]!==p[2]||e.size[0]!==s[0]||e.size[1]!==s[1]||e.size[2]!==s[2]||e.sourceDetail!==(mesh.detail||0)))e=null;
+        if(!e){
+          const x=Math.floor(p[0]/8),z=Math.floor(p[2]/8);if(x<minX||x>maxX||z<minZ||z>maxZ)return spatialIndex(next,environment);
+          e=makeEntry(mesh);touch(e.cell);e.cell.list.push(e.slot);
+        }
+        else{
+          const cell=e.cell;if(cell.seen===generation&&e.order<cell.lastOrder)touch(cell);
+          cell.seen=generation;cell.lastOrder=e.order;
+        }
+        e.order=order;e.gen=generation;retained.push(e);maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
+      }
+      for(const e of old)if(e.gen!==generation){touch(e.cell);e.live=false;slots[e.slot]=null;free.push(e.slot);if(byMesh.get(e.mesh)===e)byMesh.delete(e.mesh);}
+      for(const cell of dirty){
+        cell.list=cell.list.filter(i=>slots[i]?.gen===generation).sort((a,b)=>slots[a].order-slots[b].order);
+        cell.sumY=0;cell.minY=Infinity;cell.maxY=-Infinity;cell.radius=0;
+        for(const i of cell.list){cell.sumY+=py[i];cell.minY=Math.min(cell.minY,py[i]);cell.maxY=Math.max(cell.maxY,py[i]);cell.radius=Math.max(cell.radius,rad[i]);}
+        if(cell.list.length)changes.push(cellBounds(cell));
+      }
+      entries=retained;index.entries=entries;index.generation=generation;index.changes=changes;index.full=generation===1;index.changedCells=dirty.size;return index;
     }
     function query(eye,ranges,out,frustum){
       const result=out||[];result.length=0;
       for(let level=0;level<3;level++){
         const range=ranges[level];if(!(range>0))continue;
-        const radius=range+maxRadius[level];
-        for(let x=Math.floor((eye[0]-radius)/8);x<=Math.floor((eye[0]+radius)/8);x++)for(let z=Math.floor((eye[2]-radius)/8);z<=Math.floor((eye[2]+radius)/8);z++){
-          const cell=levels[level].get(x+','+z);if(!cell)continue;
-          // DRAW-08 : une cellule de 8 m est englobée par une sphère centrée sur la hauteur
-          // moyenne de ses entrées. Le test est exactement celui de visible(), donc une cellule
-          // rejetée ne peut contenir aucune entrée que le test par entrée aurait gardée.
+        const radius=range+maxRadius[level],x0=Math.max(minX,Math.floor((eye[0]-radius)/8)),x1=Math.min(maxX,Math.floor((eye[0]+radius)/8)),z0=Math.max(minZ,Math.floor((eye[2]-radius)/8)),z1=Math.min(maxZ,Math.floor((eye[2]+radius)/8));
+        for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++){
+          const cell=cellAt(level,x,z);if(!cell||!cell.list.length)continue;
           if(frustum){
             const count=cell.list.length,cy=cell.sumY/count,half=Math.max(cy-cell.minY,cell.maxY-cy);
             if(!visibleSphere(x*8+4,cy,z*8+4,5.656854249492381+half+maxRadius[level],eye,frustum.axes,frustum.horizontal,frustum.vertical,frustum.far))continue;
           }
-          for(const e of cell.list){const d=(e.p[0]-eye[0])**2+(e.p[1]-eye[1])**2+(e.p[2]-eye[2])**2;if(d<=(range+e.radius)**2)result.push(e);}
+          for(const i of cell.list){const d=(px[i]-eye[0])**2+(py[i]-eye[1])**2+(pz[i]-eye[2])**2;if(d<=(range+rad[i])**2)result.push(slots[i]);}
         }
       }
       return result;
     }
-    return {entries,query,byMesh};
+    const index={entries,query,byMesh,update,generation,changes:[],full:true,changedCells:0,dense};
+    return update(meshes||[]);
+  }
+  function changedSelection(index,origin,ranges){
+    if(index.full)return true;
+    for(const q of index.changes){const r=ranges[q.level];if(!(r>0))continue;
+      if(origin[0]+r>=q.minX&&origin[0]-r<=q.maxX&&origin[1]+r>=q.minY&&origin[1]-r<=q.maxY&&origin[2]+r>=q.minZ&&origin[2]-r<=q.maxZ)return true;
+    }
+    return false;
   }
   function visibleSphere(cx,cy,cz,r,eye,axes,horizontal,vertical,far){
     const x=cx-eye[0],y=cy-eye[1],d=cz-eye[2],f=axes.forward,right=axes.right,up=axes.up;
@@ -1037,16 +1091,32 @@
       shadowGeometry=new WeakMap();staticCasterPlan=null;for(const e of world.entries)shadowGeometry.set(e.mesh,null);
       worldRevision=0;stats.worldRevision=0;stats.staticTotal=world.entries.length;stats.biome=environment?environment.biome:null;
     }
-    function updateWorld(meshes,revision,points){
-      if(disposed||revision===worldRevision)return false;
-      const changedLights=Array.isArray(points)&&(points.length!==lights.length||points.some((light,i)=>light!==lights[i]));
+    function updateWorld(meshes,revision,points,delta){
+      if(disposed||revision===worldRevision&&!delta?.full)return false;
+      const previousLights=lights,changedLights=Array.isArray(points)&&(points.length!==lights.length||points.some((light,i)=>light!==lights[i]));
       if(changedLights)lights=points;
-      const next=meshes||[],ground=next.some(mesh=>mesh.ground===true);world=spatialIndex(next,environment,world);
-      // Legacy scenes infer the floor. Switching that rule invalidates their
-      // receiver classification, even for otherwise unchanged surfaces.
-      if(ground!==explicitGround||changedLights)for(const e of world.entries)e.software=e.softwareCoarse=null;
-      explicitGround=ground;staticCasterPlan=null;
-      for(const e of world.entries)if(!shadowGeometry.has(e.mesh))shadowGeometry.set(e.mesh,null);
+      const next=meshes||[],ground=next.some(mesh=>mesh.ground===true);world=spatialIndex(next,environment,delta?.full?null:world,delta);
+      // Fixed Canvas lighting uses the nearest FOUR lamps, with no hard range
+      // cutoff. Retire exactly the cached faces whose lamp dependencies change.
+      const removed=changedLights?new Set(previousLights.filter(light=>!lights.includes(light))):null;
+      const reordered=changedLights&&previousLights.filter(light=>lights.includes(light)).some((light,i)=>light!==lights.filter(l=>previousLights.includes(l))[i]);
+      const additions=changedLights&&(reordered||lights.some(light=>!previousLights.includes(light)));
+      function stale(object){
+        if(!object)return false;
+        return object.faces.some(face=>{
+          const parts=face.fixedLampParts;if(!parts)return false;
+          if(parts.some((light,i)=>i%2===0&&removed.has(light)))return true;
+          if(!additions)return false;
+          const p=face.center,nearby=lights.map(light=>({light,d:(light.p[0]-p[0])**2+(light.p[1]-p[1])**2+(light.p[2]-p[2])**2})).sort((a,b)=>a.d-b.d).slice(0,4);
+          return nearby.length*2!==parts.length||nearby.some(({light},i)=>light!==parts[i*2]);
+        });
+      }
+      for(const e of world.entries){
+        if(ground!==explicitGround||changedLights&&(stale(e.software)||stale(e.softwareCoarse)))e.software=e.softwareCoarse=null;
+        if(e.created===world.generation||!shadowGeometry.has(e.mesh))shadowGeometry.set(e.mesh,null);
+      }
+      explicitGround=ground;
+      if(staticCasterPlan&&changedSelection(world,staticCasterPlan.eye,[environment?25:13,13,0]))staticCasterPlan=null;
       worldRevision=revision===undefined?worldRevision+1:revision;stats.worldRevision=worldRevision;stats.staticTotal=world.entries.length;
       return true;
     }
@@ -1500,14 +1570,23 @@
       if(stats.contextLost||disposed) return;
       gl.bindBuffer(gl.ARRAY_BUFFER,worldBuffer);capacity.delete(worldBuffer);uploadRows(worldBuffer,worldBatch.values,gl.STATIC_DRAW);
     }
-    function updateWorld(meshes,revision,points){
-      if(disposed||revision===worldRevision)return false;
-      if(Array.isArray(points)&&(points.length!==lights.length||points.some((light,i)=>light!==lights[i]))){lights=points;if(!lights.includes(shadowLight))shadowLight=null;}
-      world=meshes||[];worldIndex=spatialIndex(world,environment,worldIndex);worldBatch=pack([]);
-      // Every depth view must stop referencing removed walls immediately. GPU
-      // storage is reused; only the affected instance lists upload next draw.
-      lampCasters=[];actorLightPlan=null;for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);cache.gen=undefined;}
-      worldRevision=revision===undefined?worldRevision+1:revision;stats.worldRevision=worldRevision;stats.staticTotal=world.length;indexRevision++;viewCache=torchCache=sunCache=null;
+    function updateWorld(meshes,revision,points,delta){
+      if(disposed||revision===worldRevision&&!delta?.full)return false;
+      const changedLights=Array.isArray(points)&&(points.length!==lights.length||points.some((light,i)=>light!==lights[i]));
+      if(changedLights){lights=points;actorLightPlan=null;if(!lights.includes(shadowLight))shadowLight=null;}
+      world=meshes||[];worldIndex=spatialIndex(world,environment,delta?.full?null:worldIndex,delta);indexRevision++;
+      function keep(cache){if(!cache||changedSelection(worldIndex,cache.origin,cache.ranges))return null;cache.revision=indexRevision;return cache;}
+      viewCache=keep(viewCache);torchCache=keep(torchCache);sunCache=keep(sunCache);
+      for(let i=0;i<lampCasters.length;i++){const c=lampCasters[i];if(c&&(!lights.includes(c.light)||changedSelection(worldIndex,c.p,SHADOW_RANGES)))lampCasters[i]=null;}
+      // Clear dead references now, before any colour or shadow pass can run.
+      // Unchanged lists retain their rows and GPU storage across distant breaks.
+      for(const cache of staticCaches){
+        if(worldIndex.full||cache.entries.some(e=>!e.live)){cache.entries=[];cache.batch=pack([]);cache.gen=undefined;}
+        // Removing an earlier mesh renumbers survivors without changing their
+        // instance rows. Keep the hash filter consistent with those new orders.
+        else if(cache.gen!==undefined){let hash=0;for(const e of cache.entries)hash=(hash*31+e.order)|0;cache.gen=hash;}
+      }
+      worldRevision=revision===undefined?worldRevision+1:revision;stats.worldRevision=worldRevision;stats.staticTotal=world.length;
       return true;
     }
     function resize(next) {
@@ -1632,7 +1711,7 @@
       gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);gl.uniform2f(depthWind,environment.wind,time);
       const sunRanges=[extent+24,26,0],sunGrid=Math.max(SUN_GRID,Math.min(16,guardMargin.distance*2)),grid=[Math.round(center[0]/sunGrid),Math.round(center[1]/sunGrid),Math.round(center[2]/sunGrid)];
       if(!sunCache||sunCache.revision!==indexRevision||sunCache.extent!==extent||sunCache.grid[0]!==grid[0]||sunCache.grid[1]!==grid[1]||sunCache.grid[2]!==grid[2])
-        {const pad=1.74*sunGrid;sunCache={revision:indexRevision,extent,grid,candidates:worldIndex.query(center,[sunRanges[0]+pad,sunRanges[1]+pad,0])};cacheStats.sunRebuilds++;}
+        {const pad=1.74*sunGrid;sunCache={revision:indexRevision,extent,grid,origin:center.slice(),ranges:[sunRanges[0]+pad,sunRanges[1]+pad,0],candidates:worldIndex.query(center,[sunRanges[0]+pad,sunRanges[1]+pad,0])};cacheStats.sunRebuilds++;}
       const candidates=sunCache.candidates;
       const px=p[0],py=p[1],pz=p[2],rx=r[0],ry=r[1],rz=r[2],ux=u[0],uy=u[1],uz=u[2],fwx=fw[0],fwy=fw[1],fwz=fw[2];
       sunCasterOut.length=0;

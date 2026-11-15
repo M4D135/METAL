@@ -1,0 +1,103 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lot 03r — destruction, preuve d’image</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<pre id="out"></pre>
+<script src="../../../src/fmath.js"></script>
+<script src="../../../src/passages.js"></script>
+<script src="../../../src/profiles.js"></script>
+<script src="../../../src/world.js"></script>
+<script src="../../../src/renderer.js"></script>
+<script src="../../../src/destruction.js"></script>
+<script>
+// Page de preuve du lot 05 : mêmes sources, mêmes graines, mêmes caméras.
+// Aucune horloge, aucun aléa : tout vient des paramètres de render().
+(function () {
+  'use strict';
+  const out = document.getElementById('out'), canvas = document.getElementById('c');
+  function fail(message, extra) { out.textContent = JSON.stringify({error: String(message), ...(extra ? {detail: String(extra)} : {})}); }
+  let cachedWorld = null, cachedKey = '';
+  function worldFor(seed, index, campaign) {
+    const key = seed + ':' + index + ':' + campaign;
+    if (cachedKey !== key) { cachedWorld = campaign ? FWorld.create(seed, index, {campaign: true, campaignVersion: 2, profiles: true}) : FWorld.create(seed, index); cachedKey = key; }
+    return cachedWorld;
+  }
+  function pseudo(seed) { let s = (seed >>> 0) || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+  function dynamicMeshes(world, camera, seed) {
+    const rnd = pseudo(seed), shapes = ['box', 'sphere', 'cylinder', 'octa', 'ring', 'bevel', 'foliage'], out = [];
+    for (let i = 0; i < 90; i++) {
+      const a = rnd() * Math.PI * 2, d = 2 + rnd() * 26;
+      out.push({shape: shapes[i % shapes.length], p: [camera.pos[0] + Math.cos(a) * d, 0.4 + rnd() * 3, camera.pos[2] + Math.sin(a) * d],
+        s: [0.4 + rnd() * 1.6, 0.4 + rnd() * 1.6, 0.4 + rnd() * 1.6], mat: i % 13, r: [rnd() * 2 - 1, rnd() * 2 - 1, rnd() * 2 - 1],
+        emissive: i % 7 === 0 ? 0.6 : 0, color: i % 5 === 0 ? [rnd(), rnd(), rnd()] : undefined,
+        alpha: i % 9 === 0 ? 0.45 : undefined, overlay: i % 11 === 0, fx: i % 9 === 0, ground: false});
+    }
+    return out;
+  }
+  const CAMERAS = [
+    {yaw: 0, pitch: -0.05}, {yaw: 1.1, pitch: 0.12}, {yaw: 2.4, pitch: -0.22}, {yaw: 3.7, pitch: 0.3},
+    {yaw: 4.9, pitch: -0.4}, {yaw: 5.8, pitch: 0.05}];
+  window.proof = {
+    render(options) {
+      const o = options || {}, seed = o.seed === undefined ? 96 : o.seed, index = o.world === undefined ? 17 : o.world;
+      const campaign = o.campaign === undefined ? true : !!o.campaign, quality = o.quality || 'auto';
+      const width = o.width || 1280, height = o.height || 720, time = o.time === undefined ? 3.5 : o.time;
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      Object.defineProperty(canvas, 'clientWidth', {value: width, configurable: true});
+      Object.defineProperty(canvas, 'clientHeight', {value: height, configurable: true});
+      const software = o.backend === 'canvas2d';
+      const original = HTMLCanvasElement.prototype.getContext;
+      if (software) HTMLCanvasElement.prototype.getContext = function (kind) { return kind === '2d' ? original.call(this, '2d') : null; };
+      let renderer = null;
+      try {
+        renderer = FRender.create(canvas);
+        renderer.resize(quality);
+        const world = worldFor(seed, index, campaign);
+        renderer.setWorld(world.meshes, world.lights, world.environment);
+        const base = [world.spawn.x, (world.spawn.y || 0) + 1.62, world.spawn.z];
+        const target=world.destructibles.find(g=>g.kind==='wall'&&!g.profileProtected&&g.meshes.some(i=>world.meshes[i]?.p)),targetMesh=target&&world.meshes[target.meshes.find(i=>world.meshes[i]?.p)];
+        const cam = CAMERAS[(o.camera || 0) % CAMERAS.length];
+        const camera = {pos: [base[0] + (o.dx || 0), base[1], base[2] + (o.dz || 0)], yaw: cam.yaw, pitch: cam.pitch, roll: 0, fov: o.fov || 74};
+        if(targetMesh){camera.pos=[targetMesh.p[0],targetMesh.p[1]+.8,targetMesh.p[2]+12];camera.yaw=0;camera.pitch=-.06;}
+        const destruction=FDestruction.create(world);let token=destruction.delta().token;
+        const dynamic = o.dynamic === false ? [] : dynamicMeshes(world, camera, (seed * 31 + index * 7 + (o.camera || 0)) >>> 0);
+        const fx = {time, flash: 0, lights: [], damage: 0, pulse: 0, shake: 0, frameMs: 16.7, shadows: o.shadows !== false, bloom: o.bloom !== false, adaptive: false};
+        for (let i = 0; i < (o.warmup || 2); i++) renderer.draw(camera, dynamic, {...fx, time: time + i * 0.001});
+        if(o.destroy){
+          if(!targetMesh)throw Error('missing break target');
+          destruction.blast(targetMesh.p,3.5,500);const delta=destruction.delta(token);
+          if(!delta.added.length&&!delta.removed.length)throw Error('no geometry changed');
+          renderer.updateWorld(destruction.meshes,destruction.revision,destruction.lights,delta);
+        }
+        renderer.draw(camera, dynamic, fx);
+        const gl = renderer.gl || null;
+        const size = [width, height];
+        let data;
+        if (software) { data = new Uint8Array(canvas.getContext('2d').getImageData(0, 0, width, height).data.buffer); }
+        else {
+          const ctx = canvas.getContext('webgl2');
+          data = new Uint8Array(width * height * 4);
+          ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE, data);
+          void gl;
+        }
+        const stats = renderer.stats;
+        return {width, height, data, origin: software ? 'top-left' : 'bottom-left',
+          stats: {drawCalls: stats.drawCalls, triangles: stats.triangles, instances: stats.instances, staticVisible: stats.staticVisible, shadowMaps: stats.shadowMaps, backend: stats.backend, destructionRevision: destruction.revision}};
+      } finally {
+        HTMLCanvasElement.prototype.getContext = original;
+        if (renderer && renderer.dispose) renderer.dispose();
+      }
+    },
+    environment() {
+      const ctx = canvas.getContext('webgl2');
+      const debug = ctx && ctx.getExtension('WEBGL_debug_renderer_info');
+      return {webgl2: !!ctx, renderer: debug ? ctx.getParameter(debug.UNMASKED_RENDERER_WEBGL) : null,
+        fmath: typeof FMath !== 'undefined', fworld: typeof FWorld !== 'undefined', frender: typeof FRender !== 'undefined'};
+    },
+  };
+  window.addEventListener('error', e => fail(e.message, e.filename + ':' + e.lineno));
+  out.textContent = JSON.stringify({ready: true});
+})();
+</script>
