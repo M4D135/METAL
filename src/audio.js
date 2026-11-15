@@ -1060,6 +1060,10 @@
           tone(246.94,246.94,.36,.07*g,'sawtooth',.13,.12,1600);
           tone(329.63,329.63,.48,.06*g,'triangle',.25,0,2200);
         },
+        heatWarning: function (value) {
+          var e=effectEvent('heatWarning:'+((value&&value.hand)||'right'),value,.6);if(!e)return;
+          pcm('click',.09*e.level,e.event.hand==='left'?-.2:.2,e.event,.78);
+        },
         empty: function (value) {
           var e=effectEvent('empty',value,.18);if(!e)return;
           pcm('click',.24*e.level,e.pan,e.event,1.2);

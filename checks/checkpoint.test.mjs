@@ -38,7 +38,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   function element(id) {
     if (elements.has(id)) return elements.get(id);
     const events = new Map(), classes = new Set();
-    const value = { hidden: false, textContent: '', innerHTML: '', style: {}, dataset: {}, firstChild: { textContent: '' },
+    const value = { hidden: false, textContent: '', innerHTML: '', style:{setProperty(name,value){this[name]=String(value);},getPropertyValue(name){return this[name]||"";},removeProperty(name){const value=this[name]||"";delete this[name];return value;}}, dataset: {}, firstChild: { textContent: '' },
       classList: { add: name => classes.add(name), remove: name => classes.delete(name),
         toggle(name, enabled) { enabled ??= !classes.has(name); enabled ? classes.add(name) : classes.delete(name); } },
       addEventListener: (name, callback) => events.set(name, callback),

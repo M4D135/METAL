@@ -189,3 +189,10 @@ body.touch #pulse-button{left:calc(var(--control-left) + 132px)}body.touch #inte
 body.touch #move-zone.running{border-color:var(--acid);box-shadow:0 0 18px #c3ec5540}body.touch #move-zone.running #move-stick{background:#c3ec5580}
 
 body.touch #hud{overflow:hidden;overflow:clip}
+
+/* Independent weapon heat stays inside the existing controls. */
+#heat-bar,.left-heat i{transform-origin:left;transition:transform .12s}
+.left-heat[hidden]{display:none}.left-heat{display:block;grid-column:1/-1;height:3px;width:100%;background:#71e1cc24;overflow:hidden}.left-heat i{display:block;height:100%;width:100%;background:#71e1cc;transform:scaleX(0)}
+.weapon-slot.overheated{border-color:#ff795e}body.touch #left-fire-button::after{content:"";position:absolute;left:5px;right:5px;bottom:4px;height:3px;background:linear-gradient(90deg,#71e1cc var(--left-heat,0%),transparent 0);pointer-events:none}body.touch #left-fire-button.overheated::after{background:#ff795e}
+
+body.touch #arsenal .left-hand-strip{flex-wrap:wrap}body.touch #arsenal .left-heat{flex:0 0 100%}

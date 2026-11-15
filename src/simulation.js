@@ -327,7 +327,9 @@ function navigationGraph(cells,width,testEdge){
       if(id!==undefined)clipIds.add(String(id));
     }
     let fireWait=0,navWait=0,hazardWait=0,recovery=0,interactHeld=false,encounterWait=0,emptyWait=0;
-    const weaponWait=weaponIds.map(()=>0);if(arsenal)s.weaponCooldowns=weaponWait;
+    const weaponWait=weaponIds.map(()=>0),weaponCarry=new Float64Array(weaponSlots);let thermalSerialized=arsenal;
+    if(arsenal){s.weaponCooldowns=weaponWait;s.weaponHeat=weaponIds.map(()=>0);s.weaponOverheated=weaponIds.map(()=>false);}
+    function mirrorHeat(){if(arsenal){p.heat=s.weaponHeat[s.weapon];p.overheated=s.weaponOverheated[s.weapon];}}
     // Neural scores are advisory and never move bodies or apply damage. Pending
     // hardware work belongs to this simulation/epoch, not a later restored save.
     let brainEpoch=0,brainWait=0,brainPending=null,brainReady=null,brainCursor=0,brainDisposed=false;
@@ -918,7 +920,7 @@ function navigationGraph(cells,width,testEdge){
       exportProfiles();const from=s.activeProfile,to=from==='light'?'heavy':'light',next=s.profiles[to];
       const healthRatio=p.hp/s.maxHp;s.activeProfile=to;s.economy=next.economy;stats=G.FEconomy.stats(s.economy);s.maxHp=stats.maxHp;p.hp=Math.min(s.maxHp,healthRatio*s.maxHp);
       s.weapon=s.equipment.right=s.inventory.weapons[next.weapon]?next.weapon:4;s.equipment.left=next.left!==null&&s.inventory.weapons[next.left]?next.left:null;
-      Object.assign(p,next.position);stopMotion(true);jumpBuffer=coyote=0;jumpWasPressed=false;p.dashing=0;clipEscape=boundaryAt(p.x,p.z);s.jetpack.active=false;emit('profileSwitch',{from,to,x:p.x,y:p.y,z:p.z});return true;
+      Object.assign(p,next.position);stopMotion(true);jumpBuffer=coyote=0;jumpWasPressed=false;p.dashing=0;clipEscape=boundaryAt(p.x,p.z);s.jetpack.active=false;mirrorHeat();emit('profileSwitch',{from,to,x:p.x,y:p.y,z:p.z});return true;
     }
     function exportInventory(){return {weapons:s.inventory.weapons.slice(),ammo:s.inventory.ammo.slice()};}
     function exportCampaign(){return {version:s.campaign.version,discovered:s.campaign.discovered.slice(),...(bossProgression?{claimedBossRewards:s.campaign.claimedBossRewards.slice()}:{})};}
@@ -939,12 +941,12 @@ function navigationGraph(cells,width,testEdge){
       refreshAdaptation();
       emit('purchase',{id,itemId,label:result.item?.label||itemId,cost:{...result.cost}});return result;
     }
-    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id))return false;if(arsenal){if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;syncArmor();return true;}
+    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id))return false;if(arsenal){if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;mirrorHeat();syncArmor();return true;}
     function selectLeftWeapon(id){
       if(!arsenal||s.dead||s.won)return false;
       if(id!==null&&(!Number.isInteger(id)||id<0||id>=weaponSlots||!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id)))return false;
       if(id===s.weapon){if(!Number.isInteger(s.equipment.left))return false;s.weapon=s.equipment.right=s.equipment.left;}
-      s.equipment.left=id;syncArmor();return true;
+      s.equipment.left=id;mirrorHeat();syncArmor();return true;
     }
     function pickupKind(q){return q.kind||q.type||'health';}
     function campaignPickupAllowed(q,kind){
@@ -1560,10 +1562,10 @@ function navigationGraph(cells,width,testEdge){
       if(!handgun&&s.inventory.ammo[weapon]<=0){if(emptyWait<=0){emit('empty',{weapon,hand});emptyWait=1;}return melee();}
       const shotgun=weapon===1,rocket=weapon===2,grenade=weapon===3,ordnance=rocket||grenade;
       const calibration=bossProgression?G.FEconomy.weaponStats(s.economy,weapon):{damageMultiplier:1,heatMultiplier:1};
-      if(p.overheated||ordnance&&s.projectiles.length>=48)return false;
+      if(s.weaponOverheated[weapon]||ordnance&&s.projectiles.length>=48)return false;
       const shells=shotgun?Math.min(2,s.inventory.ammo[weapon]):1,delay=handgun?(profilesEnabled&&s.activeProfile==='heavy'?.14:.32):rocket?1.25:grenade?.95:shotgun?shells===2?.98:.78:.125;
-      if(!handgun)s.inventory.ammo[weapon]-=shells;weaponWait[weapon]=delay;fireWait=Math.max(fireWait,delay);
-      p.heat=Math.min(1,p.heat+(handgun?.06:rocket?.48:grenade?.38:shotgun?shells===2?.47:.32:.09)*calibration.heatMultiplier);if(p.heat>=.99){p.overheated=true;emit('overheat');}
+      if(!handgun)s.inventory.ammo[weapon]-=shells;weaponWait[weapon]=Math.max(0,delay-weaponCarry[weapon]);weaponCarry[weapon]=0;fireWait=Math.max(fireWait,delay);
+      thermalSerialized=true;const wasWarm=s.weaponHeat[weapon]>=.75;s.weaponHeat[weapon]=Math.min(1,s.weaponHeat[weapon]+(handgun?.06:rocket?.34:grenade?.28:shotgun?shells===2?.36:.26:.055)*calibration.heatMultiplier);if(!wasWarm&&s.weaponHeat[weapon]>=.75)emit('heatWarning',{weapon,hand});if(s.weaponHeat[weapon]>=.99){s.weaponOverheated[weapon]=true;emit('overheat',{weapon,hand});}mirrorHeat();
       const cy=Math.cos(p.yaw),sy=Math.sin(p.yaw),cp=Math.cos(p.pitch),sp=Math.sin(p.pitch),forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],eye=[p.x,p.y+1.62,p.z];
       const target=hitRay(eye,forward,ordnance?80:shotgun?24:75,assist),decorative=destruction?.raycast?.(eye,forward,target.distance);if(decorative&&decorative.distance<target.distance)target.distance=decorative.distance;
       const aim=eye.map((v,k)=>v+forward[k]*target.distance),muzzle=playerMuzzle(eye,forward,right,up,hand,rocket?.24:grenade?.17:0),origin=muzzle.point,toward=aim.map((v,k)=>v-origin[k]),length=Math.hypot(...toward)||1,base=toward.map(v=>v/length);
@@ -1621,7 +1623,7 @@ function navigationGraph(cells,width,testEdge){
     }
     function pulse(){
       if(s.dead||s.won||p.pulseCooldown>0)return false;
-      p.pulseCooldown=7;s.pulseVisual=.65;p.heat=Math.max(0,p.heat-.28);
+      p.pulseCooldown=7;s.pulseVisual=.65;if(arsenal){thermalSerialized=true;s.weaponHeat[s.weapon]=Math.max(0,s.weaponHeat[s.weapon]-.28);mirrorHeat();}else p.heat=Math.max(0,p.heat-.28);
       let hits=0;
       for(const e of s.enemies)if(alive(e)){
         const dx=e.x-p.x,dz=e.z-p.z,d=Math.hypot(dx,dz);
@@ -2487,15 +2489,19 @@ function navigationGraph(cells,width,testEdge){
     }
     function step(dt,input={}){
       dt=Number.isFinite(dt)?clamp(dt,0,.05):0;if(s.won||s.dead||checkPlayerBounds())return;
-      stepEventStart=s.events.length;syncArmor();
+      stepEventStart=s.events.length;if(arsenal&&dt>0)thermalSerialized=true;syncArmor();
       s.time+=dt;s.elapsed+=dt;fireWait=Math.max(0,fireWait-dt);emptyWait=Math.max(0,emptyWait-dt);navWait-=dt;hazardWait=Math.max(0,hazardWait-dt);recovery=Math.max(0,recovery-dt);
-      if(arsenal){for(let i=0;i<weaponSlots;i++)weaponWait[i]=Math.max(0,weaponWait[i]-dt);s.leftFlash=Math.max(0,s.leftFlash-dt*9);}
+      if(arsenal){for(let i=0;i<weaponSlots;i++){const before=weaponWait[i],held=input.fire&&i===(Number.isInteger(input.weapon)?input.weapon:s.weapon)||input.fireLeft&&i===s.equipment.left;weaponCarry[i]=held&&before>0&&before<=dt+1e-9?Math.max(0,dt-before):0;weaponWait[i]=Math.max(0,before-dt);if(weaponWait[i]<1e-9)weaponWait[i]=0;}s.leftFlash=Math.max(0,s.leftFlash-dt*9);}
       s.flash=Math.max(0,s.flash-dt*9);s.damage=Math.max(0,s.damage-dt*1.9);s.hitMarker=Math.max(0,s.hitMarker-dt);s.pulseVisual=Math.max(0,s.pulseVisual-dt);
       s.comboTime=Math.max(0,s.comboTime-dt);if(!s.comboTime)s.combo=0;
       let switched=false;if(profilesEnabled){profileHintWait=Math.max(0,profileHintWait-dt);if(input.switchProfile&&!profileWasPressed)switched=switchProfile();profileWasPressed=!!input.switchProfile;}
       if(!switched&&Number.isInteger(input.weapon)&&input.weapon>=0&&input.weapon<weaponSlots)selectWeapon(input.weapon);
       p.yaw+=Number.isFinite(input.lookX)?input.lookX:0;p.pitch=clamp(p.pitch+(Number.isFinite(input.lookY)?input.lookY:0),-1.2,1.2);
-      p.heat=Math.max(0,p.heat-dt*(fireWait>0?.1:.35)*stats.coolingMultiplier);if(p.overheated&&p.heat<.3){p.overheated=false;emit('cooled');}
+      if(arsenal){
+        for(let i=0;i<weaponSlots;i++){const equipped=i===s.weapon||i===s.equipment.left,firing=i===s.weapon&&input.fire||i===s.equipment.left&&input.fireLeft,rate=equipped?(firing&&!s.weaponOverheated[i]?.22:.55):weaponWait[i]>0?.1:.35;
+          s.weaponHeat[i]=Math.max(0,s.weaponHeat[i]-dt*rate*stats.coolingMultiplier);if(s.weaponOverheated[i]&&s.weaponHeat[i]<.55){s.weaponOverheated[i]=false;emit('cooled',{weapon:i});}}
+        mirrorHeat();
+      }else{p.heat=Math.max(0,p.heat-dt*(fireWait>0?.1:.35)*stats.coolingMultiplier);if(p.overheated&&p.heat<.3){p.overheated=false;emit('cooled');}}
       p.dash=Math.max(0,p.dash-dt);p.pulseCooldown=Math.max(0,p.pulseCooldown-dt);
       airTimers(p,dt);for(const j of s.jumpPads)j.flash=Math.max(0,j.flash-dt);
       syncDestruction();updateSystems(dt);pumpNav();updateDirector(dt);updateEnvironment(dt);if(checkPlayerBounds())return;if(input.interact&&!interactHeld)interact();interactHeld=!!input.interact;
@@ -2511,7 +2517,7 @@ function navigationGraph(cells,width,testEdge){
       if(input.melee)melee();
       const aimAssist=input.touchAssist?'touch':!!input.assist;
       if(input.fire)fire(aimAssist);
-      if(arsenal&&input.fireLeft&&Number.isInteger(s.equipment.left))fire(aimAssist,'left');
+      if(arsenal&&input.fireLeft&&Number.isInteger(s.equipment.left))fire(aimAssist,'left');if(arsenal)weaponCarry.fill(0);
       if(navWait<=0){if(!advanced)rebuildNav();navWait=.6;}
       updateTrophies(dt);refreshAdaptation();updateEnemies(dt);updateBossAttacks(dt);updateProjectiles(dt);if(checkPlayerBounds())return;
       for(const bullet of s.bullets){
@@ -2535,6 +2541,7 @@ function navigationGraph(cells,width,testEdge){
       if(s.relays===3&&!s.bossAlive&&(!bossProgression||s.campaign.claimedBossRewards.includes(world.index))&&s.mechanisms.every(m=>!m.required||m.active)&&Math.abs(p.y-(world.exit.y||0))<.8&&Math.hypot(p.x-world.exit.x,p.z-world.exit.z)<1.5&&!s.dead){s.won=true;s.score+=500;stopMotion();emit('win');}
     }
     function snapshot(){
+      mirrorHeat();
       // A checkpoint materialises the advisory map once, so continuation has the
       // same routes as a freshly restored world. No actor or gameplay timer moves.
       if(navPending||!graph.ready){pumpNav(Infinity);graph.flush();s.aiStats.navPending=0;}syncArmor();
@@ -2546,7 +2553,7 @@ function navigationGraph(cells,width,testEdge){
           ...(campaign?{campaign:{...exportCampaign(),trophies:s.campaign.trophies.map(t=>({...t}))}}:{}),
           ...(campaign?{adaptation:{...s.adaptation}}:{}),
           ...(armorEnabled?{armor:{...s.armor},...(!progression?{armorPickupRemaining:s.pickups.map(q=>q.remaining)}:{})}:{}),
-          ...(arsenal?{equipment:{...s.equipment}}:{}),
+          ...(arsenal?{equipment:{...s.equipment},...(thermalSerialized||s.weaponHeat.some(v=>v!==p.heat)||s.weaponOverheated.some(v=>v!==p.overheated)?{weaponHeat:s.weaponHeat.slice(),weaponOverheated:s.weaponOverheated.slice()}:{})}:{}),
           ...(progression?{inventory:exportInventory(),encounters:s.encounters.map(q=>({id:q.id,...pick(q,ENCOUNTER_STATE)})),pickupRemaining:s.pickups.map(q=>q.remaining),loot:s.loot.map(q=>({...q,ammo:q.ammo.slice()}))}:{}),
           enemies:s.enemies.map(e=>({...pick(e,ENEMY),...pick(e,AI),...pick(e,AI2),...pick(e,AI3),...pick(e,BOSS),...(progression?pick(e,ENCOUNTER_AI):{}),...(bossProgression?{entryGrace:e.entryGrace}:{}),path:e.path.slice()})),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q})),
           mechanisms:s.mechanisms.map(m=>m.active),doors:s.doors.map(d=>d.progress),lifts:s.lifts.map(l=>pick(l,['y','target','powered','moving','carrying'])),
@@ -2602,11 +2609,14 @@ function navigationGraph(cells,width,testEdge){
           adaptation={...policy,entryTier:saved.entryTier,bossHpFactor:savedBossFactor};
           require(Object.keys(adaptation).every(key=>saved[key]===adaptation[key]));savedCombat=policy.maxActive;
         }else require(a.campaign===undefined&&a.adaptation===undefined);
-        let equipment=null,savedWeaponWait=null;
+        let equipment=null,savedWeaponWait=null,savedHeat=null,savedOverheated=null,savedThermalFormat=false;
         if(arsenal){
           equipment=equipmentValue(a.equipment,inventory);require(equipment&&equipment.right===a.weapon);
           require(Array.isArray(t.weaponWait)&&t.weaponWait.length===weaponSlots&&weaponIds.every(i=>number(t.weaponWait[i],0,[.125,.98,1.25,.95,.32][i])));savedWeaponWait=t.weaponWait.slice();
-        }else require(a.equipment===undefined&&t.weaponWait===undefined);
+          const modernHeat=a.weaponHeat!==undefined||a.weaponOverheated!==undefined;savedThermalFormat=modernHeat;
+          if(modernHeat){require(Array.isArray(a.weaponHeat)&&a.weaponHeat.length===weaponSlots&&a.weaponHeat.every(v=>number(v,0,1))&&Array.isArray(a.weaponOverheated)&&a.weaponOverheated.length===weaponSlots&&a.weaponOverheated.every(bool));require(a.weaponHeat[a.weapon]===a.player.heat&&a.weaponOverheated[a.weapon]===a.player.overheated);savedHeat=a.weaponHeat.slice();savedOverheated=a.weaponOverheated.slice();}
+          else{savedHeat=weaponIds.map(()=>a.player.heat);savedOverheated=weaponIds.map(()=>a.player.overheated);}
+        }else require(a.equipment===undefined&&t.weaponWait===undefined&&a.weaponHeat===undefined&&a.weaponOverheated===undefined);
         if(armorEnabled){
           const capacity=armorCapacity(inventory,equipment);
           if(data.armorVersion===1){
@@ -2805,7 +2815,7 @@ function navigationGraph(cells,width,testEdge){
         if(profilesEnabled){s.activeProfile=profiles.active;s.profiles=profiles.classes;s.profiles[s.activeProfile].economy=s.economy;s.jetpack={...profiles.jetpack,capacity:G.MetalProfiles.capacity(profiles.classes.light.xp),active:false};profileWasPressed=false;jetSoundWait=profileHintWait=0;}
         if(campaign){s.campaign=campaignState;s.adaptation=adaptation;maxCombat=savedCombat;bossHpFactor=savedBossFactor;adaptationKey=campaignArsenalKey(inventory);}
         if(armorEnabled)s.armor=armor;
-        if(arsenal){s.equipment={right:equipment.right,left:equipment.left};for(let i=0;i<weaponSlots;i++)weaponWait[i]=savedWeaponWait[i];s.leftFlash=0;}
+        if(arsenal){s.equipment={right:equipment.right,left:equipment.left};for(let i=0;i<weaponSlots;i++)weaponWait[i]=savedWeaponWait[i];s.weaponHeat=savedHeat;s.weaponOverheated=savedOverheated;thermalSerialized=savedThermalFormat;weaponCarry.fill(0);mirrorHeat();s.leftFlash=0;}
         invalidateBrain();
         s.cores=world.cores.map((c,i)=>({...c,taken:a.cores[i]}));s.pickups=world.pickups.map((c,i)=>({...c,taken:a.pickups[i],remaining:pickupRemaining?pickupRemaining[i]:armorRemaining?armorRemaining[i]:Math.max(0,Math.floor(c.amount||0))}));if(encounters)for(let i=0;i<encounters.length;i++)Object.assign(s.encounters[i],encounters[i]);
         giants=s.enemies.filter(giant);destruction=candidate;solids=savedSolids;seenDestructionToken=destruction?.delta().token;s.destructionRevision++;trapStates=s.traps;trapBoxes.length=0;trapBoxes.push(...savedTrapBoxes);rebuildCollision();

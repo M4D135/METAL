@@ -31,7 +31,7 @@ function shell({touch=false,settings={},bufferMs,requestLock,pointerLockAvailabl
   function element(id){
     if(elements.has(id))return elements.get(id);
     const events=new Map(),classes=new Set();
-    const value={id,tagName:id==='world'?'CANVAS':'BUTTON',hidden:false,textContent:'',innerHTML:'',style:{},dataset:{},firstChild:{textContent:''},
+    const value={id,tagName:id==='world'?'CANVAS':'BUTTON',hidden:false,textContent:'',innerHTML:'',style:{setProperty(name,value){this[name]=String(value);},getPropertyValue(name){return this[name]||"";},removeProperty(name){const value=this[name]||"";delete this[name];return value;}},dataset:{},firstChild:{textContent:''},
       classList:{add:name=>classes.add(name),remove:name=>classes.delete(name),toggle(name,on){on??=!classes.has(name);on?classes.add(name):classes.delete(name);}},
       addEventListener:(name,fn)=>on(events,name,fn),emit:(name,event={})=>{const payload={target:value,clientX:0,clientY:0,...event};emit(events,name,payload);if(['pointerup','pointercancel','lostpointercapture'].includes(name))emit(listeners,name,payload);},
       click:()=>emit(events,'click',{target:value}),querySelector:selector=>element(id+selector),querySelectorAll:()=>[0,1,2].map(n=>element(id+n)),

@@ -97,3 +97,21 @@ test('campaign pistol recoil is gentler than the rifle, cadence independent and 
   }
   for(const n of settled)close(n,settled[0]);
 });
+
+const GAME=readFileSync(new URL('../src/game.js',import.meta.url),'utf8'),recoil=vm.runInNewContext('('+GAME.match(/  const recoil=(.+);/)[1]+')');
+test('Configured weapon recoil reaches its pitch and returns below ten percent on schedule',()=>{
+ for(const [kind,ms] of [['shot',129],['pistol',163],['fracture',272],['rocket',349],['grenade',306]]){
+  const motion=M.create({recoil});motion.impulse(kind);let peak=0,peakAt=0,below=0;
+  for(let i=1;i<=800;i++){const view=motion.update(.001,{}, {},true);if(view.pitch>peak){peak=view.pitch;peakAt=i;}else if(!below&&i>peakAt&&view.pitch<peak*.1)below=i;}
+  close(peak,recoil[kind].pitchDegrees*Math.PI/180,.00004);assert(Math.abs(below-ms)<=2,kind+': '+below+' ms');assert(Math.abs(motion.view.pitch)<.0001);
+ }
+});
+test('Configured recoil is cadence independent, reduced to thirty percent and resettable',()=>{
+ const results=[];for(const fps of [20,60,120]){const m=M.create({recoil});m.impulse('rocket');for(let i=0;i<fps/2;i++)m.update(1/fps,{}, {},true);results.push(JSON.parse(JSON.stringify(m.view)));}
+ for(const v of results.slice(1)){close(v.pitch,results[0].pitch);close(v.recoilFov,results[0].recoilFov);}
+ const full=M.create({recoil}),low=M.create({recoil});for(const m of [full,low])m.impulse('fracture');const a=full.update(.05,{}, {},true),b=low.update(.05,{}, {},false);close(b.pitch,a.pitch*.3);close(b.recoilFov,a.recoilFov*.3);assert(a.recoilFov<0);low.reset();assert.equal(low.view.pitch,0);assert.equal(low.view.recoilFov,0);
+});
+test('Recoil tuning is copied and the rifle alternates its roll without changing default behavior',()=>{
+ const tuning={shot:{...recoil.shot}},m=M.create({recoil:tuning});tuning.shot.pitchDegrees=100;m.impulse('shot');assert(m.update(1/38,{}, {},true).pitch<.01);const first=m.view.recoilRoll;for(let i=0;i<60;i++)m.update(1/60,{}, {},true);m.impulse('shot');assert(first*m.update(1/38,{}, {},true).recoilRoll<0);
+ const legacy=M.create();legacy.impulse('rocket');assert.equal(legacy.update(.05,{}, {},true).pitch,0);
+});
