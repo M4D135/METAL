@@ -100,6 +100,193 @@ Elles priment sur les valeurs par défaut des fiches. Les fiches concernées les
 5. **Physique.** Pas de saisie ni de lancer d'objets pour le moment. Tout le reste est voulu : explosions, décor cassé en débris physiques, machines détruites qui se disloquent ou s'effondrent (lot 17).
 6. **Ciel.** 18 ciels distincts, un par monde (lot 16).
 
+## 6 ter. Décisions de David du 13 novembre
+
+Elles priment sur §6 et §6 bis quand elles parlent du même sujet, et sur les fiches.
+
+1. **Le bouclier sort du jeu.** « le bouclier vire le c inutile ». Ce n'est pas un réglage de
+   touche : le bouclier est supprimé. Ni énergie de bouclier, ni blocage de tirs, ni coup de
+   bouclier à l'esquive, ni onde défensive qui en dépend, ni ramassage, ni pièce d'équipement,
+   ni jauge au HUD, ni ses sons. La touche C (« Tirer / bouclier · main gauche ») devient le tir
+   de la main gauche, sans second rôle. Tout ce qui s'y rattachait (`shieldEnergy`, `shieldBash`,
+   `shieldBlock`, `shieldRaise`, `shieldFacing`, `shieldLift`, `shieldPickup`, `shieldPart`, les
+   pièces d'arsenal et les ramassages correspondants, les lignes de `options.js`, les réglages,
+   les bancs et les tests) est retiré ou remplacé par un comportement qui n'a pas de bouclier.
+   Les passages des fiches 09, 09b et 10 qui demandent un « bouclier utile » sont caducs : ne pas
+   le réintroduire. Un lot dédié porte ce changement (`jeu-bouclier-supprime`).
+2. **Pièges : massifs, obligatoires, plus dangereux.** « les pieges doivent être obligatoire, pas
+   dans un coin de map inutiles, ils doivent être massif et couper le chemin ». Un piège se place
+   sur le chemin obligatoire — le seul passage qui fait aller d'une zone à l'autre (porte, couloir,
+   pont, brèche dans un mur, sortie d'arène) — et le **coupe en travers**, sur toute sa largeur ou
+   presque : on ne peut pas simplement marcher à côté. Il est **massif et visible de loin** (on le
+   voit venir ; son annonce reste lisible, comme pour une attaque de colosse). Aucun piège décoratif
+   dans un coin, hors des zones de passage : ce qui n'est pas sur le chemin obligatoire est retiré.
+   **Densité et dégâts relevés** : le piège devient une source principale de danger d'un secteur,
+   pas un détail. Le joueur garde de quoi le traiter — le voir venir, le désarmer, ou le détruire
+   selon la règle de destruction du lot 14 — mais pas l'ignorer. Un lot dédié porte ce changement
+   (`jeu-pieges-massifs`).
+
+## 6 quater. Décisions de David du 14 novembre
+
+Elles priment sur §6, §6 bis, §6 ter et sur les fiches quand elles parlent du même sujet.
+
+1. **Deux profils de personnage, commutables en pleine partie, avec une progression propre à chacun.**
+   « on va faire deux profils de perso, léger avec jetpack et armes légères pistolet, pompe, mitraillette,
+   et un autre perso lourd avec pistolet automatique, lance grenade, rocket. les deux profils on peut
+   switcher en cours de partie. chaque profil a sa progression, donc on switch de l'un a l'autre pour les
+   faire progresser en parallèle. »
+   - **Profil léger** : jetpack (vol, hauteur, élan) + armes légères — pistolet, fusil à pompe, mitraillette.
+   - **Profil lourd** : pistolet automatique, lance-grenades, lance-roquettes. Pas de jetpack.
+   - Le **changement de profil se fait en cours de partie** (une touche au clavier, un bouton au pad), sans
+     écran de chargement, sans repartir d'un point de reprise : le joueur garde sa position, ses munitions,
+     ses ennemis vivants.
+   - **Chaque profil a SA progression** : niveaux, améliorations, déblocages, compteur d'expérience propres.
+     On passe de l'un à l'autre pour les faire progresser **en parallèle** ; la progression de l'un ne doit
+     pas être un simple copié de l'autre.
+   - **Le switch est une mécanique de progression obligatoire**, pas un confort : il existe des zones
+     bloquantes pour l'un et ouvrables par l'autre. Exemples donnés par David :
+     - des **murs que seul le lourd casse** (explosifs, conformément à §6 bis point 3 et au lot 14) : le lourd
+       va au même endroit et casse pour ouvrir le passage au léger ;
+     - des **mécanismes qu'il faut atteindre en volant** (jetpack du léger, en hauteur) qui activent un
+       ascenseur ou une porte et débloquent la progression du lourd ;
+     - des **boss faisables uniquement en léger**, d'autres **uniquement en lourd** ;
+     - « plein d'autres situations rendant le switch entre les deux profils obligatoire ».
+   - Ce que cela impose, à traiter dans le lot dédié (`jeu-profils-commutables`) :
+     - l'**état des deux profils dans la sauvegarde** (progression, améliorations, profil actif, carburant du
+       jetpack) — cohérent avec le lot 12 qui fige une seule révision de format ;
+     - un **HUD qui dit quel profil est actif** et ce que le autre seul peut faire, sans mensonge ni zone morte ;
+     - une **règle de test** : une zone bloquée pour un profil doit avoir sa solution explicite avec l'autre,
+       prouvée par un banc qui montre qu'**on ne peut pas passer sans changer de profil** (et pas seulement
+       « c'est plus long avec le mauvais ») ;
+     - les deux profils doivent avoir des **capacités que l'autre n'a pas** (vol pour l'un, explosifs pour
+       l'autre) : un profil ne doit jamais se réduire à un multiplicateur de dégâts de l'autre ;
+     - l'équilibrage, les colosses et les arènes de boss à relire sous cet angle (lot 10), la génération des
+       mondes à faire coopérer avec la règle des passages obligatoires (`FPassages`, lot pièges du 13/11).
+2. **La manette doit être prise en charge comme dans BITUME.** Référence d'exigence : l'entrée de jeu du
+   module de BITUME (`src/jeu.js`, fonctions `lireManette` et `naviguerManette`), qui est validée en jeu.
+   Reprendre les mêmes choix, pas le code (les deux jeux n'ont pas le même moteur) :
+   - lecture par `navigator.getGamepads()`, pads débranchés/rebranchés supportés, premier pad connecté utilisé ;
+   - **zone morte de 0,07 puis exposant 1,3** sur le manche (« vif au centre sans à-coup, plein volant au bout
+     de la course ») ; gâchettes lues en **analogique** (`buttons[i].value`), pas seulement en tout-ou-rien ;
+   - **fronts de boutons** : un bouton compte comme appuyé au-dessus de 0,5, et « nouvel appui » = appuyé
+     maintenant et pas au pas d'avant (tableau `precedent`), pour que les menus et les actions ne se déclenchent
+     pas en boucle ;
+   - **menus entièrement navigables au pad** : focus déplacé sur les `button, input` réellement visibles
+     (non `disabled`, `getClientRects()` non vide, hors `[hidden]`), croix et stick pour se déplacer, **A valide,
+     B revient**, gâchettes ou LB/RB pour régler un curseur (`input type=range`, avec l'évènement `input`
+     déclenché) ;
+   - un **appui sur le pad compte comme geste utilisateur** : il réveille le son et fait sortir de la démo,
+     comme le clavier et la souris ;
+   - mapping FPS par défaut (voir §6 bis et le schéma de David : `Espace` saute, `R` esquive, `V` frappe),
+     **réaffectable au pad comme au clavier**, avec détection de conflit ; **vibration** quand le pad la supporte ;
+   - **vibration de la manette** (demande explicite de David du 14/11 : « gere les vibrations de la manette ») :
+     - aller chercher l'actionneur une fois par pad connecté : `pad.vibrationActuator` avec
+       `playEffect('dual-rumble', { startDelay, duration, weakMagnitude, strongMagnitude })` (Chrome, Edge),
+       repli sur `pad.hapticActuators[0].pulse(valeur, durée)` (Firefox et anciens Chrome), et **aucune erreur**
+       si le pad n'a pas d'actionneur — la vibration est alors un non-événement, et `VALIDATION.md` le dit ;
+     - les promesses de l'API peuvent être rejetées (pad débranché en cours d'effet, effet annulé) : les promesses
+       sont **toujours** récupérées (`catch`), jamais ignorées, et un rejet ne casse ni l'image ni la simulation ;
+     - **jamais un effet par image** : les effets se mettent en file d'attente côté pilote et finissent par saturer.
+       Garder par pad une demande en cours (magnitude faible et magnitude forte maximales depuis le dernier
+       déclenchement) et rejouer au plus un effet par fenêtre (quelques dizaines de ms), en fusionnant les demandes ;
+     - ce qui doit se **ressentir** : tir d'arme légère (léger), tir de pompe, de lance-grenades et de roquette
+       (fort, distinct), dégâts subis (proportionnels au dégât), explosion proche, mort d'un colosse ou d'un boss,
+       ramassage, piège qui se déclenche (le joueur doit sentir qu'il est entré dedans), atterrissage, poussée du
+       jetpack (impulsion légère continue par à-coups, pas effet permanent), **changement de profil** (impulsion
+       caractéristique, la même des deux sens, pour que le joueur sache lequel est actif sans regarder le HUD) ;
+     - **réglages** : intensité globale de 0 à 1 et coupure complète dans les options, comme les autres réglages,
+       appliquée à tous les effets et respectée après rechargement de la page ;
+     - pas de vibration quand personne n'a touché à rien : ni en démo automatique, ni avant le premier geste
+       utilisateur (le pad qui vibre tout seul sur une page ouverte en fond est un défaut) ;
+     - banc : pad simulé avec un `vibrationActuator` factice qui enregistre les effets reçus, prouvant (a) qu'un
+       évènement donné déclenche l'impulsion attendue avec les bonnes magnitudes, (b) qu'un même évènement répété
+       ne dépasse pas la limite d'effets par seconde, (c) qu'aucun effet n'est émis en démo ni avant le premier geste.
+   - la manette **annoncée à l'écran** : ligne d'aide avec le mapping et pied de page du type
+     « Clavier, manette ou écran tactile », comme dans BITUME ;
+   - aucun pad n'est branché sur le Spark : `VALIDATION.md` doit le dire honnêtement (« manette réelle non
+     vérifiée »), comme le fait BITUME, et les bancs doivent couvrir la lecture par un pad simulé.
+3. **Plus de musiques, plus rapides, et un enchaînement adaptatif à la iMUSE.** « il faudrait plus de musiques
+   de metal et de musiques plus rythmées comme du Slayer, du Megadeth, et autres groupes de metal rapide, les
+   musiques de doom, et un système de changement et enchaînement de musique selon ce qu'il se passe dans le jeu,
+   comme dans les produits LucasArts et le système SCUMM qui faisait changer de musique avec transition selon
+   l'évènement qui se passait ou l'endroit où on allait, le perso qui arrivait etc. »
+   - Le nom exact du système de LucasArts est **iMUSE** (SCUMM est le moteur d'aventure) : c'est iMUSE qui sert
+     de modèle — changements **avec transition**, sans couture audible.
+   - **Style** : metal rapide et rythmé (thrash : inspiration Slayer, Megadeth et voisins), plus des pièces
+     **doom** (lourdes, lentes, menaçantes) pour les moments qui le demandent. La musique d'accueil thrash de
+     la 0.8.1 reste et reste jouable.
+   - **Aucun fichier audio, aucun extrait de ces groupes** (§8 interdit assets et dépendances) : tout est
+     synthétisé par le moteur, comme le reste du jeu. S'inspirer des procédés (tempo, palm-muting, riffs en
+     tierces, double grosse caisse, grooves en croches/sixte-doubles), jamais des enregistrements ni des
+     mélodies reconnaissables.
+   - Deux mécaniques distinctes, toutes les deux demandées :
+     - **couches verticales** : batterie, basse, guitare rythmique, lead, percussions d'annonce, qui entrent et
+       sortent selon l'intensité (exploration, accrochage, combat, boss, victoire), calées sur la mesure ;
+     - **enchaînements horizontaux** : quand l'évènement arrive, on finit la mesure (ou le segment) en cours,
+       puis on bascule sur le bon segment au prochain point de synchronisation, avec une transition écrite
+       (pont, roulement, montée) — pas de coupure ni de fondu au hasard.
+   - **Déclencheurs** à couvrir au minimum : entrée dans une zone / un type d'endroit, arrivée d'ennemis
+     (nombre et type, dont colosse et boss), passage en combat / décrochage, danger grave, victoire de secteur
+     ou de boss, moments calmes. Le même évènement ne doit pas faire repartir la musique à zéro.
+   - Contraintes : rien ne sort de la simulation ni du pas fixe 1/60 s, aucun appel réseau, aucun fichier ;
+     le coût CPU de la synthèse et du séquencement est mesuré avant/après, et la musique ne doit jamais faire
+     manquer une image (budget des tâches de préparation, lot 11).
+   - Lot dédié : `jeu-musique-metal`, sur la piste audio, après les lots 11 et 11b.
+
+## 6 quinquies. Décision de David du 14 novembre (après-midi) — les reflets
+
+« améliore les reflets et effets de reflexion ». État des lieux dans `src/renderer.js` : la réflexion
+est **analytique** — un dégradé hémisphérique ciel/sol (`uSkyBottom`/`uSkyTop`), un large lobe de nuage
+procédural filtré par la rugosité, le soleil et les sources ponctuelles en spéculaire (`metalHighlight`).
+Rien ne reflète la scène : ni les murs (cassés ou entiers), ni les ennemis, ni la torche, ni les explosions,
+ni les flaques. C'est ce que David veut voir changer.
+
+1. **Ce qui doit refléter la scène réelle**, par ordre de priorité :
+   - **sonde d'environnement** (cubemap procédural généré par le moteur, aucun fichier) qui contient la
+     géométrie proche du joueur : murs, sol, décombres, ennemis et colosses, lampes, feu de bouche,
+     explosions. Rafraîchie sur **changement d'état** (révision de zone de l'interface de delta du lot 03s,
+     ou à défaut un compteur de révision local en attendant) et non à chaque image ; dégradation propre
+     pendant le rafraîchissement, jamais d'image figée ni de face noire.
+   - **reflets d'écran (SSR)** pour les surfaces lisses à l'écran : sol mouillé, métal poli, verre, carrosserie
+     des machines, avec un dénoise temporel à accumulation **bornée** et un repli propre sur la sonde quand le
+     rayon sort de l'écran ou n'a pas de profondeur (pas de traînées, pas de bandes noires, pas de reflet
+     d'un objet disparu).
+   - **flaques et sols mouillés** : rugosité variable à la surface, reflet atténué avec la distance, légère
+     distorsion d'eau ; le sec garde l'aspect actuel.
+   - **armes en main** (première personne) : canon et parties métalliques qui prennent la sonde et le spéculaire,
+     pour que le changement de profil ou d'arme se lise aussi dans les reflets.
+2. **Contraintes non négociables** (elles viennent des règles déjà posées) :
+   - **résolution native, jamais baissée automatiquement**. Si un passe est calculé en demi-résolution, il est
+     reconstruit en résolution native avant l'affichage et un test d'image le prouve sur un motif de référence
+     (aucune perte de netteté mesurée par rapport à la base).
+   - **aucune perte de qualité** : un reflet qui ne tient pas le budget est **éteint**, pas flouté ni dégradé
+     sous le seuil acceptable. Le bloom n'est pas un reflet : ne pas « faire des reflets » en gonflant le bloom.
+   - **aucun asset, aucun fichier, aucun appel réseau** : tout est procédural, comme le reste du jeu.
+   - **budget d'image mesuré** : surcoût chiffré en apparié base/tête (5 répétitions alternées, médianes) sur la
+     scène de référence du lot 05, plus le compte des images longues. Aucune nouvelle image longue n'est admise
+     sans qu'elle soit écrite, mesurée et justifiée.
+   - cible : WebGL 2 sur les PC NVIDIA dans le navigateur ; le repli Canvas 2D reste inchangé et ne casse pas.
+3. **Réglages** : une option « Reflets » dans le menu (`éteint` / `sonde` / `sonde + écran`), sauvegardée avec les
+   autres réglages, appliquée sans toucher aux autres réglages. Le réglage par défaut est le plus haut qui tient
+   le budget mesuré, et le rapport dit lequel et pourquoi.
+4. **Preuves exigées** : paires d'images avant/après (même graine, même caméra, même monde) ; tableau de coût
+   avant/après ; un test d'image qui **échoue** si le reflet disparaît (par exemple une surface métallique face à
+   une source colorée) ; un test de **cohérence** qui échoue si la sonde ne se rafraîchit pas quand un mur
+   porteur est détruit aux explosifs ; un test qui échoue si l'option « éteint » laisse subsister un coût de
+   reflet.
+5. **Ce qu'il ne faut pas faire** : assombrir la scène pour que les reflets « ressortent », ajouter un SSAO déguisé,
+   mettre du reflet sur ce qui n'en a pas (béton brut, tissu, bois), introduire une dépendance ou un fichier,
+   toucher à la résolution d'affichage.
+
+## 6 sexies. Demandes de David du 15 novembre — échanges entre jeux et suivi des demandes
+
+Dans le chat dédié à METAL, David demande : « regarde bien ce qu'on fait avec ce moteur sur les autres projets comme emprise (rade), bitume et point de rupture, prend le meilleur pour notre moteur ferro sur ce projet », puis « recherche sur le spark tout ce que j'avais demandé comme amélioration de ce jeu ».
+
+- Comparer les réalisations actuelles d'Emprise/RADE, BITUME et Point de rupture ; reprendre dans METAL les améliorations adaptées à sa copie de FERRO, avec provenance, contraintes, tests et bénéfice vérifiable. Cette demande remplace sur ce point l'ancienne phrase du §2 demandant d'ignorer BITUME et Point de rupture.
+- Chaque jeu garde sa propre copie du moteur (décision du 12 novembre) ; cette comparaison ne recrée pas de dépôt commun ni ne modifie les autres projets.
+- Rechercher sur le Spark les demandes conservées, rattacher chacune à sa source et distinguer une demande explicite de David, une proposition d'agent, une interprétation et une exigence remplacée. Indiquer ce qui est intégré, en cours ou non vérifié sans assimiler un rapport à une validation.
+- La recherche des demandes et les transferts entre jeux complètent les lots existants ; les critères de preuve, la compatibilité des sauvegardes et la résolution native restent applicables.
+
 ## 7. Les lots, dans l'ordre
 
 Si `lots/lot-NN.md` n'existe pas encore, n'invente pas son contenu : finis le lot en cours et signale-le.
