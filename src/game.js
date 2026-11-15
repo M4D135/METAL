@@ -730,9 +730,15 @@
     return out;
   }
   function renderHUD(){
-    const profile=sim.state.activeProfile,jet=sim.state.jetpack;$('profile-button').hidden=!profile;$('profile-button').textContent=profile==='heavy'?'→ LÉGER':'→ LOURD';$('jump-button').textContent=profile==='light'?'SAUT / VOL':'SAUT';$('profile-status').hidden=profile!=='light'&&profile!=='heavy';
-    if(profile==='light'||profile==='heavy')$('profile-status').textContent=(profile==='light'?'LÉGER · JETPACK'+(jet?' '+Math.round(100*jet.fuel/Math.max(1,jet.capacity))+' %':''):'LOURD · EXPLOSIFS')+' · NV '+MetalProfiles.level(sim.state.profiles[profile].xp)+' · '+sim.state.profiles[profile].xp+' XP · '+bindingLabel('switchProfile')+' : changer';
-    if(touch&&profile)$('profile-status').textContent=(profile==='light'?'LÉGER · VOL '+Math.round(100*jet.fuel/jet.capacity)+' %':'LOURD · EXPLOSIFS');
+    const profile=sim.state.activeProfile,jet=sim.state.jetpack,profileButton=$('profile-button');profileButton.hidden=!profile;
+    $('jump-button').textContent=profile==='light'?'SAUT / VOL':'SAUT';
+    if(profile){
+      const target=profile==='light'?'lourd':'léger',shortcut=bindingLabel('switchProfile');profileButton.dataset.profile=profile;
+      $('profile-active-label').textContent=profile==='light'?'LÉGER':'LOURD';
+      $('profile-resource').textContent=profile==='light'?Math.round(100*jet.fuel/jet.capacity)+' % VOL':'EXPLOSIFS';
+      $('profile-action').textContent='Passer au '+target;$('profile-shortcut').textContent=shortcut;
+      profileButton.setAttribute('aria-label','Personnage actif : '+(profile==='light'?'léger':'lourd')+'. Passer au '+target+(touch?'':'. Raccourci : '+shortcut));profileButton.title='Changer de personnage'+(touch?'':' · '+shortcut);
+    }
     const s=sim.state,p=s.player;
     const stats=sim.stats||{maxHp:100},maxHp=s.maxHp||stats.maxHp||100,healthRatio=p.hp/maxHp;
     $('hp').textContent=String(Math.ceil(p.hp));$('health-max').textContent='/ '+maxHp;$('hp-bar').style.width=clamp(healthRatio*100,0,100)+'%';$('hp-bar').style.background=healthRatio<.3?'#ff795e':'var(--acid)';
@@ -1073,7 +1079,10 @@
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('left-fire-button').addEventListener(name,()=>{if(name==='pointercancel'||name==='lostpointercapture'&&touchLeftFire)fireLeftPressed=false;touchLeftFire=false;});
   $('jump-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||touchJump!==null)return;activeDevice('touch');e.preventDefault();touchJump=e.pointerId;jumpQueued=true;$('jump-button').setPointerCapture(e.pointerId);});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('jump-button').addEventListener(name,e=>{if(e.pointerId===touchJump)touchJump=null;});
-  $('profile-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;activeDevice('touch');e.preventDefault();switchProfileQueued=true;});
+  function requestProfileSwitch(){if(mode!=='playing'||!sim.state.activeProfile)return;switchProfileQueued=true;}
+  $('profile-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;activeDevice(e.pointerType==='mouse'?'keyboard':'touch');e.preventDefault();requestProfileSwitch();});
+  $('profile-button').addEventListener('click',e=>{if(e.detail===0)requestProfileSwitch();});
+  $('profile-button').addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();e.stopPropagation();if(!e.repeat)requestProfileSwitch();}});
   $('dash-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();dashQueued=true;});
   $('pulse-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();pulseQueued=true;});
   $('melee-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();meleeQueued=true;});
