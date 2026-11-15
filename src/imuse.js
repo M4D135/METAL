@@ -119,59 +119,64 @@
 
     // Requests are idempotent. The same piece, the same queued piece and the
     // same event key that already caused this visit change nothing at all.
+    // `force` is the host saying the situation really did change: the piece is
+    // re-entered on the next bar line, still through the written join.
     function request(id, meta) {
       if (!cues[id]) { stats.ignored++; return false; }
-      const info = meta || {}, urgent = !!info.urgent, key = info.key || '';
-      if (!pending && !joining && id === cueId) { stats.ignored++; return false; }
-      if (pending && pending.cue === id) { pending.urgent = pending.urgent || urgent; stats.ignored++; return false; }
-      if (key && !pending && fired.get(cueId) === key) { stats.ignored++; return false; }
-      if (key && pending && fired.get(pending.cue) === key) { stats.ignored++; return false; }
-      pending = {cue: id, urgent, key}; stats.pending = id;
+      const info = meta || {}, urgent = !!info.urgent, key = info.key || '', force = !!info.force;
+      if (!force) {
+        if (!pending && !joining && id === cueId) { stats.ignored++; return false; }
+        if (pending && pending.cue === id) { pending.urgent = pending.urgent || urgent; stats.ignored++; return false; }
+        if (key && !pending && fired.get(cueId) === key) { stats.ignored++; return false; }
+        if (key && pending && fired.get(pending.cue) === key) { stats.ignored++; return false; }
+      }
+      pending = {cue: id, urgent: urgent || force, key}; stats.pending = id;
       return true;
     }
 
-    // The host calls this once per bar, just before scheduling that bar. The
-    // bar returned is always the one that follows the last bar already played,
-    // whatever the transport had to do to get there.
+    // The bar returned is always self-consistent: cue, segment and bar index
+    // all describe the same bar, so a host can switch its score on it.
     function nextBar() {
-      const cue = cueOf(cueId), playedCue = cueId;
-      let segment, playedName = segmentName, kind = null, played;
+      const cue = cueOf(cueId);
+      const name = joining ? transition.segment : segmentName;
+      const segment = cue.segments[name];
+      const out = {
+        cue: cueId, segment: name, bar: joining ? transition.bar : bar, bars: segment.bars, index: barIndex,
+        layers: layersOf(cue, segment), transition: joining ? transition.kind : null,
+        tempo: cue.bpm === undefined ? 120 : cue.bpm, intensity: quantized,
+        pending: pending ? pending.cue : ''
+      };
+      barIndex++; stats.barIndex = barIndex;
+      advance(cue);
+      return out;
+    }
 
+    // Move the transport to the bar that follows the one just handed out.
+    function advance(cue) {
       if (joining) {
         const join = transition;
-        segment = cue.segments[join.segment]; playedName = join.segment; kind = join.kind; played = join.bar;
         if (join.bar + 1 >= join.bars) {
           // The written join is over: the next bar belongs to the target. A
           // request made during the join wins over the original target.
           enterCue(pending && pending.cue !== join.target ? pending.cue : join.target);
         } else join.bar++;
-      } else {
-        segment = cue.segments[segmentName]; played = bar;
-        let consumed = false;
-        if (pending) {
-          const finished = bar + 1 >= segment.bars;
-          if (finished || pending.urgent) {
-            const join = pickTransition(cue, segmentName, pending.cue);
-            if (join) {
-              transition = {kind: join.kind || 'fill', segment: join.segment, bars: join.bars, bar: 0, target: pending.cue};
-              joining = true; stats.transitions++; stats.transition = transition.kind;
-            } else enterCue(pending.cue);
-            consumed = true;
+        return;
+      }
+      if (pending) {
+        const finished = bar + 1 >= cue.segments[segmentName].bars;
+        if (finished || pending.urgent) {
+          const join = pickTransition(cue, segmentName, pending.cue);
+          if (join) {
+            transition = {kind: join.kind || 'fill', segment: join.segment, bars: join.bars, bar: 0, target: pending.cue};
+            joining = true; stats.transitions++; stats.transition = transition.kind;
+            return;
           }
-        }
-        if (!consumed) {
-          if (bar + 1 >= segment.bars) { bar = 0; segmentName = nextSegment(cue, segmentName); }
-          else bar++;
+          enterCue(pending.cue);
+          return;
         }
       }
-
-      barIndex++; stats.barIndex = barIndex;
-      return {
-        cue: playedCue, segment: playedName, bar: played, bars: segment.bars, index: barIndex - 1,
-        layers: layersOf(cue, segment), transition: kind,
-        tempo: cue.bpm === undefined ? 120 : cue.bpm, intensity: quantized,
-        pending: pending ? pending.cue : ''
-      };
+      if (bar + 1 >= cue.segments[segmentName].bars) { bar = 0; segmentName = nextSegment(cue, segmentName); }
+      else bar++;
     }
 
     function state() {
@@ -187,6 +192,10 @@
     return {
       nextBar, request, setIntensity, state, stats, validate,
       cueIds: () => ids.slice(),
+      // A host that pauses its transport asks to come back on a bar line: the
+      // position restarts at the top of the current segment, the queued request
+      // and the memory of fired events survive.
+      realign() { if (!joining) bar = 0; },
       // A host that restarts a run resets the transport without rebuilding.
       reset(id) {
         cueId = cues[id] !== undefined ? id : defaultCue;

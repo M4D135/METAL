@@ -16,8 +16,9 @@
   // the meaning (or the PCM/score) of the three historical world indices.
   const TITLE_SONG={title:'Furie d’acier',moduleTitle:'METAL - FURIE ACIER',style:'Thrash metal',bpm:212,root:38};
   const TITLE_ORDERS=[0,1,2,1,3,4,5,2,6,4,1,7];
+  const WORLD_ORDERS=[[0,1,2,1,3,1,4,5],[0,1,2,1,3,4,1,5],[0,1,2,3,1,4,2,5]];
   let instrumentBank=null,titleBank=null,percussionBank=null,tensionSample=null;
-  const modules=new Map(),clamp=(x,a,b)=>max(a,min(b,x)),stageOf=x=>x==='title'?'title':clamp(floor(Number(x)||0),0,2),songOf=x=>x==='title'?TITLE_SONG:SONGS[x];
+  const modules=new Map(),cueModules=new Map(),cueBanks=new Map(),clamp=(x,a,b)=>max(a,min(b,x)),stageOf=x=>x==='title'?'title':clamp(floor(Number(x)||0),0,2),songOf=x=>x==='title'?TITLE_SONG:SONGS[x];
   const period=midi=>PERIODS[clamp(round(midi)-36,0,35)];
   function random(seed){return ()=>{seed=(imul(seed,1664525)+1013904223)|0;return (seed>>>0)/2147483648-1;};}
   function pcm(data,peak=.84){
@@ -61,7 +62,7 @@
     return pcm(out,bass?.78:.88);
   }
   function drumHit(kind,seed){
-    const duration={kick:.32,snare:.27,hat:.10,open:.34,crash:1.25,tom:.32,ride:.29}[kind],out=new Float32Array(ceil(duration*RATE)),rand=random(seed);
+    const duration={kick:.32,snare:.27,hat:.10,open:.34,crash:1.25,tom:.32,ride:.29,gong:1.9,timpani:.9}[kind],out=new Float32Array(ceil(duration*RATE)),rand=random(seed);
     let low=0,phase=0;
     for(let i=0;i<out.length;i++){
       const t=i/RATE,noise=rand();low+=.24*(noise-low);const high=noise-low;let v=0;
@@ -70,6 +71,10 @@
         v=sin(phase)*exp(-t*12)+sin(phase*2)*.21*exp(-t*24)+high*.48*exp(-t*125);
       }else if(kind==='snare')v=(high*.88+noise*.15)*exp(-t*14)+(sin(t*TAU*177)*.43+sin(t*TAU*331)*.17)*exp(-t*23);
       else if(kind==='tom'){phase+=TAU*(105+63*exp(-t*15))/RATE;v=sin(phase)*exp(-t*12)+high*.10*exp(-t*30);}
+      // MUS-02: the announcement layer needs tuned metal and a kettle drum,
+      // not a cymbal. Both are new waveforms, never a re-pitch of the kit.
+      else if(kind==='gong'){phase+=TAU*(92+34*exp(-t*7))/RATE;v=sin(phase)*exp(-t*3.1)+sin(phase*2.71)*.24*exp(-t*5.2)+sin(phase*5.13)*.09*exp(-t*8)+high*.05*exp(-t*38);}
+      else if(kind==='timpani'){phase+=TAU*(118+52*exp(-t*11))/RATE;v=sin(phase)*exp(-t*6.5)+sin(phase*1.62)*.17*exp(-t*11)+high*.10*exp(-t*55);}
       else{
         const metal=(sign(sin(t*TAU*1237))+sign(sin(t*TAU*1871))+sign(sin(t*TAU*2819)))/3;
         const decay=kind==='hat'?48:kind==='open'?15:kind==='ride'?17:4.3;
@@ -141,7 +146,7 @@
     const song=SONGS[stage],patterns=Array.from({length:6},()=>new Uint8Array(1024));
     // Four-bar phrases: opening impact, riff, answer, breakdown, climax, turn.
     // The third channel leaves holes for the rhythm section, then answers it.
-    const orders=stage===0?[0,1,2,1,3,1,4,5]:stage===1?[0,1,2,1,3,4,1,5]:[0,1,2,3,1,4,2,5];
+    const orders=WORLD_ORDERS[stage];
     function put(pattern,row,channel,sample,midi,effect=0,param=0){
       const pitch=midi===null?0:period(midi),at=(row*4+channel)*4,p=patterns[pattern];
       p[at]=(sample&240)|(pitch>>8);p[at+1]=pitch&255;p[at+2]=((sample&15)<<4)|effect;p[at+3]=param;
@@ -241,6 +246,220 @@
     for(const p of patterns){p[2]=(p[2]&240)|15;p[3]=6;p[14]=(p[14]&240)|15;p[15]=TITLE_SONG.bpm;}
     return {title:TITLE_SONG.moduleTitle,patterns,orders:TITLE_ORDERS,samples};
   }
+  // -------------------------------------------------------------------------
+  // MUS-02 — adaptive repertoire. Fast thrash and heavy doom, written as
+  // processes (tempo, palm-muting, thirds, double kick), never as a
+  // transcription, and synthesized by the same code as everything else. The
+  // three historical world modules and the title thrash above are untouched,
+  // byte for byte: this section only adds.
+  //
+  // Every cue is a five-track score: 0 rhythm guitar, 1 bass, 2 lead, 3 drums,
+  // 4 announcement percussion. Those five tracks are exactly the five vertical
+  // layers FImuse moves in and out on a bar boundary.
+  // -------------------------------------------------------------------------
+  const TRACKS=['rhythm','bass','lead','drums','announce'];
+  const LAYER_FLOOR={rhythm:0,bass:0,drums:0,lead:.35,announce:.7};
+  const KIT_KINDS=['kick','snare','hat','open','crash','tom','ride','gong','timpani'];
+  function kitHits(){
+    // Same seeds as the historical kit, so the shared hits are the same PCM.
+    if(!percussionBank)percussionBank={};
+    for(let i=0;i<KIT_KINDS.length;i++)if(!percussionBank[KIT_KINDS[i]])percussionBank[KIT_KINDS[i]]=drumHit(KIT_KINDS[i],907+i*113);
+    return percussionBank;
+  }
+  // Grooves are drum processes per style. `variant` selects the bar flavour:
+  // 0 and 6 open with a crash, 3 and 7 fill, 4 is a real stop, 5 a snare roll.
+  function cueBar(style,bpm,variant,hits){
+    const beat=60/bpm,step=beat/4,out=new Float32Array(ceil((beat*4+.25)*RATE));
+    function hit(kind,row,velocity=1){const at=round(row*step*RATE),data=hits[kind];if(!data)return;for(let i=0;i<data.length&&at+i<out.length;i++)out[at+i]+=data[i]*velocity;}
+    const fill=variant===3||variant===7,open=variant===2||variant===6,roll=variant===5,stop=variant===4;
+    const rows=(a,b)=>{for(const r of a)hit(b,typeof r==='object'?r[0]:r,typeof r==='object'?r[1]:1);};
+    if(stop){
+      rows([[0,1.05],[10,.85],[14,.95]],'kick');rows([8],'snare');rows([0,4,8,12],'ride');hit('crash',0,.5);
+    }else if(roll){
+      rows([0,6,8,11,14],'kick');for(let r=8;r<16;r++)hit('snare',r,.34+(r-8)*.055);rows([0,4],'hat');hit('tom',15,.8);
+    }else if(style==='thrash'||style==='blast'){
+      const sixteenth=style==='thrash'&&variant%2===0||style==='blast';
+      const kicks=sixteenth?Array.from({length:16},(_,i)=>[i,i%4===0?1:i%2?.72:.88]):[[0,1],[1,.86],[3,.8],[6,.95],[7,.8],[8,1],[10,.82],[11,.8],[14,.95],[15,.8]];
+      rows(kicks,'kick');rows(open?[8]:[4,12],[.86,.9]);rows(open?[0,4,8,12]:Array.from({length:16},(_,i)=>[i,i%4===0?.9:.6]))
+      ;for(const r of (open?[0,4,8,12]:[0,2,4,6,8,10,12,14]))hit(open?'ride':'hat',r,open?.62:.5);
+    }else if(style==='charge'){
+      rows([[0,1],[2,.84],[3,.84],[6,.95],[8,1],[10,.84],[11,.84],[14,.95]],'kick');rows([4,12],[.85,.9]);
+      for(const r of [0,2,4,6,8,10,12,14])hit(open?'ride':'hat',r,r%4?.6:.86);
+    }else if(style==='doom'){
+      rows([[0,1.05],[6,.9],[10,.95]],'kick');rows([8],.8);
+      for(const r of [0,4,8,12])hit(open?'ride':'hat',r,r%4?.5:.72);
+    }else if(style==='dirge'){
+      rows([[0,1.05]],'kick');rows([8],.72);for(const r of [0,8])hit('ride',r,.5);
+    }else{
+      rows([[0,1],[8,.95],[11,.8]],'kick');rows([4,12],[.85,.88]);
+      for(const r of [0,2,4,6,8,10,12,14])hit(open?'ride':'hat',r,r%4?.58:.82);
+    }
+    if(variant===0||variant===6)hit('crash',0,.66);
+    if(fill){hit('snare',13,.6);hit('tom',14,.74);hit('snare',14.5,.7);hit('tom',15,.82);hit('snare',15.5,.64);}
+    for(let i=0;i<out.length;i++)out[i]=tanh(out[i]*1.25)*min(1,(out.length-i)/110);
+    return pcm(out,.9);
+  }
+  // Announcement percussion: a tuned gong and a kettle drum answer an event,
+  // on the bar, over whatever the rest of the band is doing.
+  function announceBar(style,bpm,variant,hits){
+    const beat=60/bpm,step=beat/4,out=new Float32Array(ceil((beat*4+.3)*RATE));
+    function hit(kind,row,velocity=1){const at=round(row*step*RATE),data=hits[kind];if(!data)return;for(let i=0;i<data.length&&at+i<out.length;i++)out[at+i]+=data[i]*velocity;}
+    if(variant===0){hit('gong',0,.95);hit('crash',0,.4);}
+    else if(variant===1){hit('timpani',0,.9);hit('timpani',4,.82);hit('timpani',8,.95);hit('timpani',12,.7);hit('gong',8,.5);}
+    else if(variant===2){for(let r=8;r<16;r++)hit('tom',r,.3+(r-8)*.05);hit('crash',0,.55);hit('gong',14,.7);}
+    else if(variant===3){hit('gong',0,.8);hit('timpani',10,.85);hit('timpani',14,.9);}
+    else if(variant===4){hit('timpani',0,.95);hit('gong',8,.85);hit('crash',8,.42);}
+    else if(variant===5){for(let r=0;r<16;r+=2)hit('timpani',r,.55+(r%8===0?.25:0));}
+    else if(variant===6){hit('gong',0,1);hit('timpani',6,.8);hit('tom',12,.7);hit('crash',0,.5);}
+    else{hit('timpani',0,.85);hit('timpani',2,.7);hit('gong',8,.9);hit('snare',14,.6);hit('snare',15,.7);}
+    for(let i=0;i<out.length;i++)out[i]=tanh(out[i]*1.2)*min(1,(out.length-i)/120);
+    return pcm(out,.86);
+  }
+  // Riff cells per style: rows, fret offset and instrument (1 palm-muted,
+  // 2 open power chord). Thrash picks sixteenths, doom lets the notes ring.
+  const RIFFS={
+    thrash:[[[0,0,1],[1,0,1],[2,0,1],[3,0,1],[4,1,1],[6,0,1],[7,0,1],[8,0,1],[9,0,1],[10,3,1],[11,0,1],[12,1,1],[14,6,1],[15,0,1]],
+      [[0,0,2],[2,0,1],[3,0,1],[4,0,1],[6,1,1],[7,0,1],[8,0,2],[10,0,1],[11,0,1],[12,3,1],[14,1,2],[15,0,1]]],
+    charge:[[[0,0,2],[2,0,1],[3,0,1],[4,0,1],[6,0,1],[7,0,1],[8,0,2],[10,0,1],[11,0,1],[12,1,2],[14,0,1],[15,0,1]],
+      [[0,0,1],[1,0,1],[3,0,1],[4,1,1],[6,0,1],[7,0,1],[8,0,1],[10,3,1],[11,0,1],[12,0,1],[14,1,1],[15,0,1]]],
+    blast:[[[0,0,1],[1,0,1],[2,0,1],[3,0,1],[4,0,1],[5,0,1],[6,0,1],[7,0,1],[8,0,2],[9,0,1],[10,0,1],[11,0,1],[12,1,1],[13,0,1],[14,0,1],[15,0,1]],
+      [[0,0,2],[2,0,1],[3,0,1],[4,0,1],[6,1,1],[7,0,1],[8,0,1],[10,0,1],[11,0,1],[12,0,1],[14,3,1],[15,0,1]]],
+    doom:[[[0,0,2],[6,0,1],[10,0,1],[14,1,1]],[[0,0,2],[4,0,1],[8,0,1],[11,3,1],[14,0,1]]],
+    dirge:[[[0,0,2],[8,0,1]],[[0,0,2],[6,0,1],[12,1,1]]],
+    rock:[[[0,0,2],[3,0,1],[6,0,1],[8,0,2],[11,0,1],[14,1,1]],[[0,0,1],[2,0,1],[4,1,1],[6,0,1],[8,0,2],[12,0,1],[14,3,1]]]
+  };
+  // Lead answers: diatonic thirds of the dark mode, never a parallel shift.
+  const LEADS={
+    thrash:[[64,67,65,64,70,67,65,62],[64,65,70,67,64,62,65,67],[62,65,68,65,64,67,71,68]],
+    doom:[[52,55,53,52,58,55,53,50],[53,55,60,58,55,53,52,55]],
+    rock:[[60,63,65,63,60,67,65,63],[62,65,67,65,62,69,67,65]]
+  };
+  const CUE_DEFS={
+    calm:{title:'Veille basse',moduleTitle:'METAL - VEILLE BASSE',style:'Doom lent',bpm:72,root:36,groove:'dirge',lead:'doom',
+      form:['pad','pad','answer','pad'],shifts:[[0,0,3,1],[0,0,1,-2],[0,3,1,0],[0,1,5,0]],layers:['bass','rhythm','lead','drums'],
+      announce:[1,3],intensity:.1},
+    doom1:{title:'Chape de fer',moduleTitle:'METAL - CHAPE DE FER',style:'Doom lourd',bpm:62,root:35,groove:'doom',lead:'doom',
+      form:['riff','riff','answer','riff','break','riff','turn','riff'],shifts:[[0,0,1,-2],[0,0,3,1],[0,5,1,0],[0,1,6,0],[0,3,1,5],[0,1,-2,0],[0,3,5,1],[0,0,1,3]],
+      layers:['rhythm','bass','lead','drums'],announce:[0,4],intensity:.3},
+    doom2:{title:'Puits de sel',moduleTitle:'METAL - PUITS DE SEL',style:'Doom pesant',bpm:54,root:34,groove:'doom',lead:'doom',
+      form:['riff','answer','riff','break','riff','turn','riff','riff'],shifts:[[0,0,-2,1],[0,-2,3,1],[0,3,-2,5],[0,1,-2,0],[0,3,5,1],[3,1,-2,0],[0,0,1,5],[0,5,3,1]],
+      layers:['rhythm','bass','lead','drums'],announce:[3,6],intensity:.35},
+    thrash1:{title:'Rouille vive',moduleTitle:'METAL - ROUILLE VIVE',style:'Thrash',bpm:196,root:38,groove:'thrash',lead:'thrash',
+      form:['riff','riff','answer','riff','climax','riff','turn','riff'],shifts:[[0,0,1,6],[0,0,3,1],[3,1,0,0],[0,6,1,0],[0,3,1,5],[0,1,3,0],[0,5,1,3],[0,0,6,1]],
+      layers:['rhythm','bass','lead','drums'],announce:[0,2],intensity:.55},
+    thrash2:{title:'Scie noire',moduleTitle:'METAL - SCIE NOIRE',style:'Thrash rapide',bpm:208,root:39,groove:'charge',lead:'thrash',
+      form:['riff','riff','climax','riff','answer','riff','turn','climax'],shifts:[[0,0,3,1],[0,3,1,0],[0,0,5,3],[0,1,6,0],[0,0,1,3],[0,5,3,1],[0,0,1,-2],[0,3,5,1]],
+      layers:['rhythm','bass','lead','drums'],announce:[1,6],intensity:.6},
+    combat:{title:'Meute',moduleTitle:'METAL - MEUTE',style:'Thrash rapide',bpm:214,root:40,groove:'thrash',lead:'thrash',
+      form:['riff','riff','climax','answer','riff','turn','climax','riff'],shifts:[[0,0,1,3],[0,3,1,0],[0,0,5,1],[3,1,0,0],[0,6,1,0],[0,3,1,5],[0,0,3,6],[0,1,-2,0]],
+      layers:['rhythm','bass','lead','drums','announce'],announce:[0,1,2,4],intensity:.8},
+    boss:{title:'Colosse',moduleTitle:'METAL - COLOSSE',style:'Groove lourd',bpm:152,root:36,groove:'charge',lead:'doom',
+      form:['riff','riff','break','answer','riff','climax','turn','riff'],shifts:[[0,0,1,-2],[0,0,3,5],[0,6,1,0],[0,3,1,0],[0,0,5,3],[0,1,6,0],[0,3,-2,1],[0,0,1,3]],
+      layers:['rhythm','bass','lead','drums','announce'],announce:[0,1,3,4,6],intensity:.9},
+    victory:{title:'Acier tenu',moduleTitle:'METAL - ACIER TENU',style:'Métal héroïque',bpm:128,root:40,groove:'rock',lead:'rock',
+      form:['intro','riff','answer','climax','riff','climax'],shifts:[[0,0,3,5],[0,0,1,3],[0,4,1,0],[0,0,7,3],[0,3,1,0],[0,0,5,7]],
+      layers:['rhythm','bass','lead','drums','announce'],announce:[0,4,6],intensity:.7}
+  };
+  const CUE_IDS=Object.keys(CUE_DEFS);
+  const TRANSITIONS=[['fill','fill',1],['roll','roll',2],['bridge','bridge',2]];
+  function cueInstrument(id,index){
+    // Per-cue guitars: new pick attacks from new seeds, so no two cues share a
+    // strum, and none of them borrows the historical world bank.
+    const key=id+'#'+index;
+    if(!cueBanks.has(key)){
+      const spec=[['MTL ADAPT PALM','thrashPalm',[0,7,12],.26],['MTL ADAPT POWER','thrashOpen',[0,7,12],1.25],
+        ['MTL ADAPT LEAD','thrashLead',[0],1.0],['MTL ADAPT THIRD','lead',[0,3],1.4]][index];
+      cueBanks.set(key,{name:spec[0],volume:index===2?40:56,pcm:strings(spec[1],spec[2],spec[3],7001+index*337+CUE_IDS.indexOf(id)*97)});
+    }
+    return cueBanks.get(key);
+  }
+  function composeCue(id,def,samples){
+    const kinds=Array.from(new Set(def.form.concat(['fill','roll','bridge']))),patternOf=new Map(kinds.map((k,i)=>[k,i]));
+    const patterns=kinds.map(()=>new Uint8Array(64*TRACKS.length*4)),shiftOf={};
+    def.form.forEach((kind,i)=>{if(!(kind in shiftOf))shiftOf[kind]=def.shifts[i%def.shifts.length];});
+    function put(pattern,row,track,sample,midi,effect=12,param=52){
+      const pitch=midi===null?0:period(clamp(midi,36,79)),at=(row*TRACKS.length+track)*4,p=patterns[pattern];
+      p[at]=(sample&240)|(pitch>>8);p[at+1]=pitch&255;p[at+2]=((sample&15)<<4)|effect;p[at+3]=param;
+    }
+    // Sample numbers: 1..6 the shared synthesized instruments, 7..14 the baked
+    // drum bars of this groove, 15 the tritone texture, 16..23 the baked
+    // announcement bars, 24..27 this cue's own guitars.
+    const PALM=24,POWER=25,SOLO=26,THIRD=27,BASS=4;
+    for(const kind of kinds){
+      const pattern=patternOf.get(kind),join=kind==='fill'||kind==='roll'||kind==='bridge';
+      for(let bar=0;bar<4;bar++){
+        const start=bar*16,drop=kind==='break',half=kind==='bridge';
+        const root=def.root+(join?0:(shiftOf[kind]||[0,0,0,0])[bar]);
+        const cells=drop?RIFFS.doom[1]:(RIFFS[def.groove]||RIFFS.rock)[(bar+kind.length)%2];
+        const announce=16+(def.announce[(bar+pattern)%def.announce.length]%8);
+        if(join){
+          // Written joins: a rising run over the roll, never a random fade.
+          const step=half?2:1;
+          for(let r=0;r<16;r+=step)put(pattern,start+r,2,SOLO,clamp(root+12+(r/step|0)+bar*2,36,79),12,26+(r%4)*3);
+          put(pattern,start,3,7+(rollBar(kind,bar)),48,12,58);
+          put(pattern,start,4,announce,48,12,56);
+        }else if(kind==='bridge'){
+          put(pattern,start,0,POWER,clamp(root,36,59),12,50);put(pattern,start+8,0,0,null,12,0);
+          put(pattern,start,1,BASS,clamp(root-12,36,59),12,46);
+          put(pattern,start,2,SOLO,clamp(root+6,36,79),12,30);
+          put(pattern,start,4,announce,48,12,54);
+        }else{
+          for(const [r,offset,sample] of cells){
+            const note=clamp(root+offset,36,59),accent=r%4===0;
+            put(pattern,start+r,0,sample===2?POWER:PALM,note,12,sample===2?56:accent?58:47);
+            if(def.groove==='doom'||def.groove==='dirge'||r%2===0||r===15)put(pattern,start+r,1,BASS,clamp(note-12,36,59),12,accent?52:44);
+          }
+          if(kind==='answer'||kind==='climax'||kind==='intro'){
+            const line=LEADS[def.lead]?LEADS[def.lead][(bar+pattern)%LEADS[def.lead].length]:LEADS.rock[(bar+pattern)%LEADS.rock.length];
+            for(let r=0;r<16;r+=2){const index=(bar*4+r/2)%line.length;put(pattern,start+r,2,index%3===1?THIRD:SOLO,clamp(line[index]+(kind==='climax'?7:0),36,79),12,r===0?40:32);}
+            if(bar%2)put(pattern,start+15,2,0,null,12,0);
+          }else if(kind==='turn'){
+            put(pattern,start+4,2,SOLO,clamp(root+12,36,79),12,34);put(pattern,start+7,2,0,null,12,0);
+            put(pattern,start+12,2,THIRD,clamp(root+15,36,79),12,30);
+          }else if(kind==='pad'){
+            for(let r=0;r<16;r+=4)put(pattern,start+r,2,SOLO,clamp(root+12+(r/4%3)*3,36,79),12,r===0?26:20);
+          }
+          if(drop)for(const r of [3,7,11,15])for(const track of [0,1,2])put(pattern,start+r,track,0,null,12,0);
+          const kit=drop?4:bar===3?3:(bar+pattern)%2;
+          put(pattern,start,3,7+kit,48,12,60);
+          if(def.layers.includes('announce')&&bar%2===1)put(pattern,start,4,announce,48,12,52);
+        }
+        if(kind==='fill'&&bar===3)for(const track of [0,1,2])put(pattern,start+15,track,0,null,12,0);
+      }
+      const p=patterns[pattern];p[2]=(p[2]&240)|15;p[3]=6;p[14]=(p[14]&240)|15;p[15]=def.bpm;
+    }
+    const segments=Object.create(null);
+    def.form.forEach((kind,i)=>{segments['s'+i]={pattern:patternOf.get(kind),bars:4,layers:def.layers.slice()};});
+    for(const [name,,bars] of TRANSITIONS)segments['t'+name]={pattern:patternOf.get(name),bars,layers:['drums','announce','lead']};
+    const bytes=new Uint8Array(patterns.reduce((n,p)=>n+p.length,0));
+    let at=0;for(const p of patterns){bytes.set(p,at);at+=p.length;}
+    return {title:def.moduleTitle,bpm:def.bpm,speed:6,channels:TRACKS.length,stride:TRACKS.length*4,header:0,
+      bytes,patterns,segments,order:def.form.map((_,i)=>'s'+i),samples};
+  }
+  // A join gets its own drum bar: a roll for the roll, a stop for the bridge.
+  function rollBar(kind,bar){return kind==='roll'?5:kind==='bridge'?4:bar===3?3:(bar+1)%2;}
+  function cueSteps(id){
+    id=String(id);if(cueModules.has(id))return null;
+    const def=CUE_DEFS[id];if(!def)return null;
+    const built={samples:Array.from({length:6},(_,i)=>instrument(i)),score:null};
+    const phases=[];
+    for(let i=0;i<6;i++)phases.push(function instrumentPhase(){built.samples[i]=instrument(i);});
+    for(let i=0;i<4;i++)phases.push(function guitarPhase(){built.samples[23+i]=cueInstrument(id,i);});
+    for(let i=0;i<8;i++){const bar=i;phases.push(function kitBar(){built.samples[6+bar]={name:'MTL ADAPT '+def.bpm+' '+String.fromCharCode(65+bar),volume:60,pcm:cueBar(def.groove,def.bpm,bar,kitHits())};});}
+    phases.push(function tensionPhase(){if(!tensionSample)tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};built.samples[14]=tensionSample;});
+    for(let i=0;i<8;i++){const bar=i;phases.push(function announceBarPhase(){built.samples[15+bar]={name:'MTL ANNOUNCE '+def.bpm+' '+String.fromCharCode(65+bar),volume:56,pcm:announceBar(def.groove,def.bpm,bar,kitHits())};});}
+    phases.push(function composePhase(){cueModules.set(id,composeCue(id,def,built.samples));});
+    return {phases};
+  }
+  function cueFor(id){
+    id=String(id);
+    if(!cueModules.has(id)){const steps=cueSteps(id);if(!steps)return null;for(const phase of steps.phases)phase();}
+    return cueModules.get(id);
+  }
+  function cueBytes(id){const score=cueFor(id);return score?score.patterns.reduce((n,p)=>n+p.length,0):0;}
+  function isCue(id){return Object.prototype.hasOwnProperty.call(CUE_DEFS,String(id));}
+  function cueTrack(id){const def=CUE_DEFS[String(id)];return {title:def.title,bpm:def.bpm,style:def.style,duration:def.form.length*4*60/def.bpm,channels:TRACKS.length};}
+  function cueLayerMin(id){const def=CUE_DEFS[String(id)],min={};for(const track of TRACKS)min[track]=LAYER_FLOOR[track];if(def.intensity!==undefined)min.lead=Math.max(0,Math.min(.9,def.intensity-.35));return min;}
   function serialize(score){
     const size=1084+score.patterns.length*1024+score.samples.reduce((n,s)=>n+s.pcm.length,0),bytes=new Uint8Array(size);
     const word=(at,v)=>{bytes[at]=v>>8;bytes[at+1]=v&255;},text=(at,s,n)=>{for(let i=0;i<min(n,s.length);i++)bytes[at+i]=s.charCodeAt(i)&127;};
@@ -286,25 +505,115 @@
     }
     return titleBank[index];
   }
+  // A score key is '0','1','2','title' for the historical modules and a name
+  // for the adaptive cues. Descriptors are built without synthesizing: the
+  // director only needs the shape of the arrangement, never its PCM.
+  function keyOf(value){return isCue(value)?String(value):value==='title'?'title':String(stageOf(value));}
+  const LEGACY_LAYERS=['rhythm','bass','lead','drums'];
+  // The historical modules carry no written join of their own, and their
+  // exported bytes must stay untouched. The join is therefore appended to the
+  // score the player reads, never to the module: one bar of roll under a
+  // rising lead, built from the kit bars and the lead instrument the module
+  // already owns.
+  function legacyJoin(bpm){
+    const p=new Uint8Array(1024);
+    function put(row,channel,sample,midi,effect,param){
+      const pitch=midi===null?0:period(clamp(midi,36,79)),at=(row*4+channel)*4;
+      p[at]=(sample&240)|(pitch>>8);p[at+1]=pitch&255;p[at+2]=((sample&15)<<4)|effect;p[at+3]=param;
+    }
+    put(0,3,12,48,12,62);
+    for(let r=0;r<16;r+=2)put(r,2,3,clamp(52+(r>>1),36,79),12,28+(r%4)*2);
+    p[2]=(p[2]&240)|15;p[3]=6;p[14]=(p[14]&240)|15;p[15]=bpm;
+    return p;
+  }
+  function legacyDescriptor(key){
+    const title=key==='title',orders=title?TITLE_ORDERS:WORLD_ORDERS[Number(key)],song=title?TITLE_SONG:SONGS[Number(key)];
+    const segments=Object.create(null);
+    orders.forEach((p,k)=>{segments['s'+k]={bars:4,layers:LEGACY_LAYERS.slice()};});
+    segments.tfill={bars:1,layers:['drums','lead']};
+    const layerMin={};for(const track of TRACKS)layerMin[track]=LAYER_FLOOR[track];
+    layerMin.announce=1.1;
+    return {bpm:song.bpm,entry:'s0',order:orders.map((_,k)=>'s'+k),segments,layerMin,
+      transitions:[{from:'*',to:'*',kind:'fill',segment:'tfill',bars:1}]};
+  }
+  function cueDescriptor(id){
+    const def=CUE_DEFS[String(id)],segments=Object.create(null);
+    def.form.forEach((kind,i)=>{segments['s'+i]={bars:4,layers:def.layers.slice()};});
+    for(const [name,,bars] of TRANSITIONS)segments['t'+name]={bars,layers:['drums','announce','lead']};
+    return {bpm:def.bpm,entry:'s0',order:def.form.map((_,i)=>'s'+i),segments,layerMin:cueLayerMin(id),
+      transitions:[{from:'*',to:'*',kind:'fill',segment:'tfill',bars:1},{from:'*',to:'*',kind:'bridge',segment:'tbridge',bars:2}]};
+  }
+  const ALL_KEYS=['0','1','2','title'].concat(CUE_IDS);
+  function descriptorTable(){
+    const cues=Object.create(null);
+    for(const key of ALL_KEYS)cues[key]=key==='0'||key==='1'||key==='2'||key==='title'?legacyDescriptor(key):cueDescriptor(key);
+    return cues;
+  }
+  function legacyScore(key){
+    const module=moduleFor(key==='title'?'title':Number(key)),segments=Object.create(null);
+    module.order.forEach((p,k)=>{segments['s'+k]={pattern:p,bars:4,layers:LEGACY_LAYERS.slice()};});
+    const join=Math.max.apply(null,module.order)+1;
+    segments.tfill={pattern:join,bars:1,layers:['drums','lead']};
+    // The player reads the module bytes plus the appended join bar; the module
+    // itself, and therefore getModule(), is never modified.
+    const bytes=new Uint8Array(module.bytes.length+1024);
+    bytes.set(module.bytes,0);bytes.set(legacyJoin(module.bpm),1084+join*1024);
+    return {title:module.title,bpm:module.bpm,speed:module.speed,channels:4,stride:16,header:1084,bytes,
+      segments,order:module.order.map((_,k)=>'s'+k),samples:module.samples};
+  }
+  const scoreCache=new Map();
+  function scoreOf(key){
+    if(scoreCache.has(key))return scoreCache.get(key);
+    const score=isCue(key)?cueFor(key):legacyScore(key);
+    scoreCache.set(key,score);return score;
+  }
+  // Without FImuse (a host that ships music.js alone) the player still needs a
+  // transport: a plain cyclic walk of the order, all layers open.
+  function fallbackDirector(options){
+    const cues=options.cues||{};
+    let id=cues[options.cue]!==undefined?options.cue:Object.keys(cues)[0],position=0,bar=0,pending=null,quantized=0;
+    const stats={barIndex:0,switches:0,transitions:0,ignored:0,layerChanges:0,pending:'',transition:''};
+    return {
+      nextBar(){
+        if(pending){id=pending;pending=null;position=0;bar=0;stats.pending='';stats.switches++;}
+        const cue=cues[id],name=cue.order[position],segment=cue.segments[name];
+        const layers=(segment.layers||[]).filter(layer=>(cue.layerMin[layer]||0)<=quantized);
+        const out={cue:id,segment:name,bar,bars:segment.bars,index:stats.barIndex,layers,transition:null,tempo:cue.bpm,intensity:quantized,pending:pending||''};
+        // The plain transport still has to walk the form: bar, then segment.
+        if(bar+1>=segment.bars){bar=0;position=(position+1)%cue.order.length;}else bar++;
+        stats.barIndex++;
+        return out;
+      },
+      request(target,meta){
+        const info=meta||{};if(!cues[target])return false;
+        if(!info.force&&(target===id||pending===target))return false;
+        pending=target;stats.pending=target;return true;
+      },
+      setIntensity(value){const next=Math.max(0,Math.min(1,Number(value)||0));if(next===quantized)return false;quantized=next;stats.layerChanges++;return true;},
+      realign(){bar=0;},
+      state(){const cue=cues[id],name=cue.order[position];return {cue:id,segment:name,bar,bars:cue.segments[name].bars,barIndex:stats.barIndex,intensity:quantized,pending:pending||'',transition:'',layers:[]};},
+      stats,reset(target){id=cues[target]?target:id;position=0;bar=0;pending=null;stats.pending='';stats.barIndex=0;}
+    };
+  }
   let preparation=Promise.resolve();const preparing=new Map();
-  function warmup(stage){
-    stage=stageOf(stage);
-    const info=()=>({...getTrack(stage),bytes:moduleFor(stage).bytes.length});
-    if(modules.has(stage))return Promise.resolve(info());
-    if(preparing.has(stage))return preparing.get(stage);
+  function warmup(value){
+    const key=keyOf(value),cue=isCue(key);
+    const info=()=>({...getTrack(key),bytes:cue?cueBytes(key):moduleFor(key==='title'?'title':Number(key)).bytes.length});
+    if(cue?cueModules.has(key):modules.has(key==='title'?'title':Number(key)))return Promise.resolve(info());
+    if(preparing.has(key))return preparing.get(key);
     const pause=()=>new Promise(resolve=>typeof G.setTimeout==='function'?G.setTimeout(resolve,0):resolve());
     const task=preparation.then(async()=>{
       // Instrument-sized jobs let a loading screen paint between expensive
       // synthesis steps. This prepares PCM/score only: no device is opened.
       for(let i=0;i<6;i++)if(!instrumentBank?.[i]){await pause();instrument(i);}
-      if(stage==='title')for(let i=0;i<5;i++)if(!titleBank?.[i]){await pause();titleInstrument(i);}
+      if(key==='title')for(let i=0;i<5;i++)if(!titleBank?.[i]){await pause();titleInstrument(i);}
       if(!tensionSample){await pause();tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};}
-      const steps=moduleSteps(stage);
+      const steps=cue?cueSteps(key):moduleSteps(key==='title'?'title':Number(key));
       if(steps)for(const phase of steps.phases){await pause();phase();}
       await pause();return info();
     });
-    preparing.set(stage,task);preparation=task.catch(()=>{});
-    task.then(()=>preparing.delete(stage),()=>preparing.delete(stage));return task;
+    preparing.set(key,task);preparation=task.catch(()=>{});
+    task.then(()=>preparing.delete(key),()=>preparing.delete(key));return task;
   }
   function moduleSteps(stage){
     // LOAD-13: the expensive phases of a module — drum kit, compose, serialize,
@@ -345,19 +654,39 @@
     if(steps){steps.kit();steps.compose();steps.serialize();steps.decode();}
     return modules.get(stage);
   }
-  function getModule(stage){return moduleFor(stage).bytes.slice();}
-  function getTrack(stage){stage=stageOf(stage);const song=songOf(stage);return {title:song.title,bpm:song.bpm,style:song.style,duration:(stage==='title'?TITLE_ORDERS.length*960:7680)/song.bpm,channels:4};}
+  function getModule(value){
+    if(isCue(value)){
+      // Adaptive cues have no MOD container: the exported bytes are their
+      // concatenated five-track pattern tables, which is what the tracker reads.
+      const score=cueFor(String(value)),total=score.patterns.reduce((n,p)=>n+p.length,0),out=new Uint8Array(total);
+      let at=0;for(const p of score.patterns){out.set(p,at);at+=p.length;}return out;
+    }
+    return moduleFor(value==='title'?'title':stageOf(value)).bytes.slice();
+  }
+  function getTrack(value){
+    if(isCue(value))return cueTrack(String(value));
+    const stage=value==='title'?'title':stageOf(value),song=songOf(stage);
+    return {title:song.title,bpm:song.bpm,style:song.style,duration:(stage==='title'?TITLE_ORDERS.length*960:7680)/song.bpm,channels:4};
+  }
   function create(ctx,output){
-    let stage=0,threat=0,volume=.4,playing=false,disposed=false,module=null,order=0,row=0,nextTime=null,bpm=125,speed=6;
-    const voices=new Set(),buffers=new Map(),nodes=[],tracks=[],stats={activeVoices:0,peakVoices:0,scheduledRows:0,scheduledNotes:0,resyncs:0,playing:false,stage:0,order:0,row:0,tempo:100};
-    const events=Array.from({length:4},()=>({sample:0,pitch:0,effect:0,param:0}));
+    let key='0',threat=0,volume=.4,playing=false,disposed=false,score=null,bpm=125,speed=6;
+    let rowInBar=0,nextTime=null,plan=null,planSegment=null;
+    const voices=new Set(),buffers=new Map(),nodes=[],tracks=[],stats={activeVoices:0,peakVoices:0,scheduledRows:0,scheduledNotes:0,resyncs:0,playing:false,stage:0,order:0,row:0,tempo:100,cue:'0',bar:0,layers:'',transition:''};
+    const events=Array.from({length:TRACKS.length},()=>({sample:0,pitch:0,effect:0,param:0}));
     const ready=!!(ctx&&output&&ctx.createBuffer&&ctx.createBufferSource&&ctx.createGain),remember=n=>(nodes.push(n),n);
     const master=ready?remember(ctx.createGain()):null;
-    if(master){master.gain.value=0;master.connect(output);for(let i=0;i<4;i++){
+    if(master){master.gain.value=0;master.connect(output);for(let i=0;i<TRACKS.length;i++){
       const gain=remember(ctx.createGain()),pan=remember(ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain());
-      if(pan.pan)pan.pan.value=[-.32,-.06,.32,.06][i];gain.connect(pan);pan.connect(master);
+      if(pan.pan)pan.pan.value=[-.32,-.06,.32,.06,0][i];gain.connect(pan);pan.connect(master);
       tracks.push({gain,voice:null,sample:0,period:428,volume:64});
-    }}
+    }
+    // MUS-02: one layer gate per track, between the note envelope and the
+    // track fader. A layer enters or leaves on the bar without ever rewriting
+    // the mix levels the mixer owns, and without cutting a note mid-ring.
+    for(const t of tracks){t.gate=remember(ctx.createGain());t.gate.gain.value=1;t.gate.connect(t.gain);}
+    }
+    const cueTable=descriptorTable();
+    const director=(G.FImuse?G.FImuse:{create:fallbackDirector}).create({cues:cueTable,cue:key,intensityStep:.05});
     function cleanup(v){if(!voices.delete(v))return;for(const n of [v.source,v.gain])try{n.disconnect();}catch(_){}if(tracks[v.track]?.voice===v)tracks[v.track].voice=null;stats.activeVoices=voices.size;}
     function stopAll(immediate=false){
       if(!ready)return;const now=ctx.currentTime;
@@ -367,41 +696,57 @@
       }
       for(const t of tracks){t.voice=null;t.sample=0;t.volume=64;}
     }
-    function mix(){if(!ready||disposed)return;const now=ctx.currentTime,levels=stage==='title'?[.86,.72,.52,.93]:[.94+threat*.04,.78,.30+threat*.22,.95+threat*.08];tracks.forEach((t,i)=>t.gain.gain.setTargetAtTime(levels[i],now,.07));}
+    function mix(){if(!ready||disposed)return;const now=ctx.currentTime,levels=key==='title'?[.86,.72,.52,.93,.9]:[.94+threat*.04,.78,.30+threat*.22,.95+threat*.08,.9];tracks.forEach((t,i)=>t.gain.gain.setTargetAtTime(levels[i],now,.07));}
     function level(){if(!master||disposed)return;const now=ctx.currentTime;master.gain.cancelScheduledValues(now);master.gain.setTargetAtTime(playing?volume:0,now,.012);}
-    function load(){if(module)return;module=moduleFor(stage);bpm=module.bpm;speed=module.speed;stats.tempo=bpm;}
-    function buffer(sample,whichStage=stage){
-      const key=(whichStage==='title'?3:whichStage)*32+sample;if(buffers.has(key))return buffers.get(key);
-      const score=whichStage===stage&&module?module:moduleFor(whichStage),data=score.samples[sample-1].pcm,b=ctx.createBuffer(1,data.length,RATE),channel=b.getChannelData(0);for(let i=0;i<data.length;i++)channel[i]=data[i]/128;
-      buffers.set(key,b);return b;
+    function load(){if(score)return;score=scoreOf(key);bpm=score.bpm;speed=score.speed;stats.tempo=bpm;}
+    function buffer(sample,whichKey=key){
+      const cacheKey=whichKey+'#'+sample;if(buffers.has(cacheKey))return buffers.get(cacheKey);
+      const source=whichKey===key&&score?score:scoreOf(whichKey),data=source.samples[sample-1].pcm,b=ctx.createBuffer(1,data.length,RATE),channel=b.getChannelData(0);for(let i=0;i<data.length;i++)channel[i]=data[i]/128;
+      buffers.set(cacheKey,b);return b;
     }
     function note(track,sample,pitch,time){
-      const t=tracks[track],instrument=module.samples[sample-1];if(!instrument||instrument.pcm.length<4)return;
+      const t=tracks[track],instrument=score.samples[sample-1];if(!instrument||instrument.pcm.length<4)return;
       if(t.voice&&t.voice.end>time){const old=t.voice;old.gain.gain.setTargetAtTime(.0001,time,.0015);try{old.source.stop(time+.008);}catch(_){}old.end=time+.008;}
       if(voices.size>=MAX_VOICES)return;
       const source=ctx.createBufferSource(),gain=ctx.createGain(),b=buffer(sample),rate=428/pitch,end=time+b.duration/rate;
       source.buffer=b;source.playbackRate.setValueAtTime(rate,time);gain.gain.setValueAtTime(0,time);gain.gain.linearRampToValueAtTime(t.volume/64,time+.0015);
-      source.connect(gain);gain.connect(t.gain);
+      source.connect(gain);gain.connect(t.gate);
       const v={source,gain,track,end};voices.add(v);t.voice=v;source.onended=()=>cleanup(v);source.start(time);source.stop(end+.001);
       stats.scheduledNotes++;stats.activeVoices=voices.size;stats.peakVoices=max(stats.peakVoices,voices.size);
     }
+    function applyCue(next){
+      if(next===key)return;
+      key=next;score=null;rowInBar=0;load();
+      stats.stage=key==='title'?'title':(isCue(key)?key:Number(key));stats.cue=key;mix();
+    }
+    // The bar is the unit of synchronization: the director is asked exactly
+    // once per bar, immediately before that bar is scheduled, so a layer move
+    // or a written join always lands on the bar line and never mid-note.
+    function startBar(time){
+      plan=director.nextBar();
+      if(plan.cue!==key)applyCue(plan.cue);
+      planSegment=score.segments[plan.segment]||score.segments[score.order[0]];
+      for(let i=0;i<tracks.length;i++)tracks[i].gate.gain.setTargetAtTime(plan.layers.indexOf(TRACKS[i])>=0?1:0,time,.012);
+      stats.bar=plan.bar;stats.layers=plan.layers.join(',');stats.transition=plan.transition||'';
+    }
     function schedule(time){
-      const bytes=module.bytes,base=1084+(module.order[order]*64+row)*16;
-      // RESTE-09: the four channel records of a row are allocated once per
-      // instance and refilled, so a scheduled row allocates nothing.
-      for(let channel=0;channel<4;channel++){
+      if(rowInBar===0)startBar(time);
+      const bytes=score.bytes||null,base=score.header+(planSegment.pattern*64+plan.bar*16+rowInBar)*score.stride;
+      // RESTE-09: the channel records of a row are allocated once per instance
+      // and refilled, so a scheduled row allocates nothing.
+      for(let channel=0;channel<score.channels;channel++){
         const at=base+channel*4,a=bytes[at],b=bytes[at+1],c=bytes[at+2],param=bytes[at+3],e=events[channel];
         e.sample=(a&240)|(c>>4);e.pitch=((a&15)<<8)|b;e.effect=c&15;e.param=param;
         if(e.effect===15&&param){if(param<32)speed=param;else bpm=param;}
       }
-      for(let i=0;i<4;i++){
-        const e=events[i],t=tracks[i];if(e.sample){t.sample=e.sample;t.volume=module.samples[e.sample-1].volume;}
+      for(let i=0;i<score.channels;i++){
+        const e=events[i],t=tracks[i];if(e.sample){t.sample=e.sample;t.volume=score.samples[e.sample-1].volume;}
         if(e.effect===12)t.volume=min(64,e.param);
         if(e.pitch){t.period=e.pitch;note(i,t.sample,e.pitch,time);}
         else if(e.effect===12&&t.voice)t.voice.gain.gain.setTargetAtTime(t.volume/64,time,.002);
       }
-      stats.order=order;stats.row=row;stats.tempo=bpm;stats.scheduledRows++;
-      row++;if(row===64){row=0;order=(order+1)%module.order.length;}
+      stats.order=planSegment.pattern;stats.row=plan.bar*16+rowInBar;stats.tempo=bpm;stats.scheduledRows++;
+      rowInBar++;if(rowInBar===16)rowInBar=0;
       return 2.5*speed/bpm;
     }
     function tick(){
@@ -411,25 +756,43 @@
       // and keeps insertion order, so the same voices are cleaned in the same
       // order with no per-frame array allocation.
       for(const v of voices)if(v.end<now-.02)cleanup(v);
-      if(nextTime===null||nextTime<now-.20){if(nextTime!==null){stopAll();row=floor(row/16)*16;stats.resyncs++;}nextTime=now+.035;}
+      if(nextTime===null||nextTime<now-.20){if(nextTime!==null){stopAll();rowInBar=0;stats.resyncs++;}nextTime=now+.035;}
       let count=0;while(nextTime<now+.28&&count++<6){const at=max(now+.002,nextTime);nextTime+=schedule(at);}
     }
     mix();
     return {
-      setStage(value){const next=stageOf(value);if(disposed||next===stage)return;stopAll();stage=next;stats.stage=stage;module=null;order=row=0;nextTime=null;mix();},
-      setThreat(value){const next=clamp(Number(value)||0,0,1);if(disposed||abs(next-threat)<.01)return;threat=next;mix();},
-      setVolume(value){if(disposed)return;const next=clamp(Number(value)||0,0,1);if(next===volume)return;volume=next;if(!volume){stopAll();nextTime=null;row=floor(row/16)*16;}level();},
-      setPlaying(value){if(disposed||playing===!!value)return;playing=!!value;stats.playing=playing;if(!playing){stopAll();row=floor(row/16)*16;}nextTime=null;level();},
-      prepare(value=stage){
-        if(!ready||disposed)return false;const next=stageOf(value),score=moduleFor(next);
+      setStage(value){
+        if(disposed)return;const next=keyOf(value);if(next===key)return;
+        stopAll();key=next;score=null;plan=null;planSegment=null;rowInBar=0;nextTime=null;
+        stats.stage=next==='title'?'title':Number(next);stats.cue=next;director.reset(key);mix();
+      },
+      // MUS-02/MUS-04: an in-game event asks for another piece. The transport
+      // is never restarted: FImuse finishes the bar, then the segment, then
+      // plays the written join, then enters the target.
+      setCue(value,meta){
+        if(disposed||value===null||value===undefined)return false;
+        // Unlike setStage, which keeps its historical clamping, an event request
+        // must name a real piece: a typo is refused instead of falling back to
+        // the first world song.
+        const next=String(value);if(!cueTable[next])return false;
+        const info=meta||{};
+        if(next===key&&!info.force)return false;
+        return director.request(next,{urgent:!!info.urgent,force:!!info.force,key:info.key||next});
+      },
+      cueState(){return director.state();},
+      setThreat(value){const next=clamp(Number(value)||0,0,1);if(disposed||abs(next-threat)<.01)return;threat=next;director.setIntensity(next);mix();},
+      setVolume(value){if(disposed)return;const next=clamp(Number(value)||0,0,1);if(next===volume)return;volume=next;if(!volume){stopAll();nextTime=null;rowInBar=0;}level();},
+      setPlaying(value){if(disposed||playing===!!value)return;playing=!!value;stats.playing=playing;if(!playing){stopAll();rowInBar=0;}else if(director.realign)director.realign();nextTime=null;level();},
+      prepare(value=key){
+        if(!ready||disposed)return false;const next=keyOf(value),score=scoreOf(next);
         // Three world banks plus the independent title bank, retained across changes.
         // Loading a future bank does not seek, switch stage or start any notes.
-        for(let i=0;i<score.samples.length;i++)if(score.samples[i].pcm.length>2)buffer(i+1,next);
+        for(let i=0;i<score.samples.length;i++)if(score.samples[i]&&score.samples[i].pcm.length>2)buffer(i+1,next);
         return true;
       },
       tick,getModule,getTrack,stats,
       dispose(){if(disposed)return;stopAll(true);disposed=true;playing=false;stats.playing=false;buffers.clear();for(const n of nodes)try{n.disconnect();}catch(_){}nodes.length=0;}
     };
   }
-  G.FMusic={create,getModule,getTrack,warmup};
+  G.FMusic={create,getModule,getTrack,warmup,isCue,cueIds:()=>CUE_IDS.slice(),cueDescriptor,descriptorTable};
 })(typeof window!=='undefined'?window:globalThis);
