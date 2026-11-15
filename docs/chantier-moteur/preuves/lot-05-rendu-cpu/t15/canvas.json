@@ -1,15 +1,21 @@
 {
  "tache": "T15 [RCPU-09] repli Canvas 2D : boucles indexées et mémoïsation",
- "base": ".relais/avant-t15 = commit T12 (068b8c8)",
- "banc": "node tools/proof/lot05/canvas-cost.mjs <base>,<tete> <images> <monde> <qualite> — renderer.draw seul (drawMs de tools/proof/render-scene.mjs), ctx silencieux pendant les temps, paires alternées base/tête, 5 reps, 90 images de chauffe",
+ "base": ".relais/t12 = commit T12 (068b8c8)",
+ "tete": ".relais/t15 = commit T15 (39dc8c0)",
+ "banc": "node tools/proof/lot05/canvas-cost.mjs <base>,<tete> <images> <monde> <qualite> <reps> — renderer.draw seul (drawMs de tools/proof/render-scene.mjs), scène sans traceur ctx pendant les temps, DEUX SCÈNES EN LOCKSTEP avec ordre inversé à chaque image (même structure que costInterleaved de tools/proof/render-proof.mjs), 5 reps, 90 images de chauffe, exécution de contrôle même racine contre elle-même publiée",
  "flux": "node tools/proof/render-scene.mjs makeScene({canvas2d:true}) puis recorder.digest() sur 300 images — les appels ctx (nom + arguments sérialisés) sont hachés sha256",
  "resultats": {
-  "camp6_auto": {"images": 300, "baseP50Ms": 33.4431, "teteP50Ms": 31.3798, "ratioP50": 0.9383, "ratioParPaire": 0.9537, "appels": 2866, "triangles": 4969, "instances": 606, "digest": "9bc7701460dc7abfde4f6e676a0cead8187abf185d5c250b83f9529aa87b92ce", "identique": true},
-  "camp6_low": {"images": 300, "baseP50Ms": 6.7993, "teteP50Ms": 7.4002, "ratioP50": 1.0884, "ratioParPaire": 1.0197, "identique": true, "note": "à 7 ms/image, la part du JS mesurable est sous le bruit de l'harnais : neutre"},
-  "legacy0_auto": {"images": 300, "baseP50Ms": 30.3345, "teteP50Ms": 30.3931, "ratioP50": 1.0019, "ratioParPaire": 0.991, "identique": true}
+  "camp6_auto": [
+   {"images": 300, "baseP50Ms": 48.984, "teteP50Ms": 44.674, "ratioDrawP50": 0.912, "controleDrawP50": 1.0211, "ratioCorrige": 0.8932, "ratioParPaire": 0.9156, "appels": 2866, "triangles": 4969, "instances": 606, "digest": "9bc7701460dc7abfde4f6e676a0cead8187abf185d5c250b83f9529aa87b92ce", "identique": true},
+   {"images": 300, "baseP50Ms": 50.759, "teteP50Ms": 46.469, "ratioDrawP50": 0.9155, "controleDrawP50": 0.9827, "ratioCorrige": 0.9316, "ratioParPaire": 0.9142, "identique": true}
+  ],
+  "camp6_low": [{"images": 300, "baseP50Ms": 27.744, "teteP50Ms": 25.596, "ratioDrawP50": 0.9226, "controleDrawP50": 0.9914, "ratioCorrige": 0.9306, "ratioParPaire": 0.9565, "identique": true}],
+  "legacy0_auto": [{"images": 300, "baseP50Ms": 22.334, "teteP50Ms": 20.494, "ratioDrawP50": 0.9176, "controleDrawP50": 1.0008, "ratioCorrige": 0.9168, "ratioParPaire": 0.9589, "identique": true}]
  },
+ "mediane": {"ratioDrawP50": 0.914, "ratioCorrige": 0.922, "ratioParPaire": 0.915},
  "annonceFiche": "aucun pourcentage annoncé pour RCPU-09 ; preuve exigée = bench avant/après et flux d'appels ctx identique sur 300 images",
- "mesure": "-6,2 % de p50 sur camp:6 auto (ratio par paire 0,954), neutre sur legacy:0 et camp:6 low. Le poste dominant reste l'appel ctx lui-même, pas le JS : le gain est donc borné et n'est annoncé nulle part comme acquis.",
+ "mesure": "repli Canvas 2D : draw() p50 corrigé 0,922 (brut 0,912 – 0,916 selon les exécutions, contrôles 0,983 – 1,021), soit environ −8 % ; flux d'appels ctx identique à l'empreinte près sur les trois cas (2 866 appels, 4 969 triangles, 606 instances). Le poste dominant reste l'appel ctx lui-même, pas le JS : le gain est borné et n'est annoncé nulle part comme acquis.",
+ "correction": "Le tour 1 publiait 0,9383 (camp:6 auto), 1,0884 (camp:6 low, une prétendue régression) et 1,0019 (legacy:0) avec un banc qui déroulait `for (r…) for (root of [base,tete]) timing(root,1)` : un bloc de 300 images par racine et par répétition, la tête passant toujours en second. Relancé tel quel sur cette machine, ce banc donnait 1,0233 pour 0,938 annoncé — il ne reproduisait pas sa propre preuve. Réécrit sur costInterleaved (lockstep, ordre inversé à chaque image, contrôle publié), il retrouve le banc verrouillé : `node tools/proof/render-proof.mjs .relais/t12,.relais/t15 --mode cost --canvas2d --world camp:6 --frames 300 --reps 5` donnait brut 0,9291, contrôle 0,9982, corrigé 0,9308.",
  "changements": [
   "polygonPath et line sans spread : moveTo(points[0][0],points[0][1])",
   "shade : trois scalaires red/green/blue au lieu de lit.map + join, chaîne 'rgb(r,g,b)' mémoïsée dans une Map clé (r<<16|g<<8|b), vidée au-delà de 8 192 entrées",
@@ -18,6 +24,6 @@
   "comparateur de paint() sur clés précalculées (ground, plane, n0, n1, n2) avec exactement la même relation binaire que dot(a.face.n,b.face.n)"
  ],
  "gardeFou": "la relation du comparateur est binaire (elle dépend des deux items), donc aucune clé triable n'aurait pu la reproduire : les champs précalculés remplacent seulement les accès en chaîne. Les tableaux écran conservés viennent de project(), jamais des tampons réutilisés.",
- "tests": "checks/renderer-destruction (dont le test Canvas comparant les commandes après révision de monde), effects, actors : 47/47 ; npm test 519/519",
+ "tests": "checks/renderer-destruction (dont le test Canvas comparant les commandes après révision de monde), effects, actors : 47/47 ; npm test 519/519 à la tâche, 529/529 à la tête après correctifs du tour 2",
  "taille": "dist/index.html 867 197 -> 869 538 octets (+2 341, la fiche prévoyait +1 Ko)"
 }

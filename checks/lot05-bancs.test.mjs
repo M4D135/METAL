@@ -79,6 +79,21 @@ test('une preuve qui publie un chiffre d alloc-image.mjs donne médiane et inter
   assert.deepEqual(fautives, [], 'chiffre d\'allocation publié sans médiane ni intervalle : ' + fautives.join(', '));
 });
 
+test('les bancs de coût à deux racines mesurent en lockstep et publient un contrôle', () => {
+  // canvas-cost.mjs déroulait `for (r) for (root of [base,tete]) timing(root,1)` : un bloc
+  // de 300 images par racine, la tête toujours en second. Son ratio ne reproduisait pas
+  // la preuve (1,0233 mesuré pour 0,938 annoncé).
+  const exige = ['tools/proof/lot05/canvas-cost.mjs'];
+  const fautifs = [];
+  for (const f of exige) {
+    const src = readFileSync(join(racine, f), 'utf8');
+    const lockstep = /reverse\s*\(\s*\)/.test(src) && /for\s*\(\s*const j of order\s*\)/.test(src);
+    const controle = /controle/i.test(src);
+    if (!lockstep || !controle) fautifs.push(`${f} (lockstep=${lockstep}, controle=${controle})`);
+  }
+  assert.deepEqual(fautifs, [], 'banc non apparié ou sans contrôle : ' + fautifs.join(', '));
+});
+
 test('les deux bancs exigés par les preuves T3 et T9 sont bien dans le dépôt', () => {
   for (const f of ['tools/proof/lot05/gc-bench.mjs', 'tools/proof/lot05/effects-ab.mjs',
     'tools/proof/lot05/effects-ab2.mjs', 'tools/proof/lot05/alloc-image.mjs',

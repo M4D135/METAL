@@ -326,12 +326,18 @@ rz, r0 recalculés seulement si rx change).
   mémoïsée (Map clé `(r<<16|g<<8|b)`, vidée au-delà de 8 192 entrées), `collect`
   en boucles indexées sur tampons réutilisés, `maskGround` en min/max indexés,
   comparateur de `paint()` sur clés précalculées avec la même relation binaire.
-- `renderer.draw` seul, ctx silencieux, paires alternées, 300 images :
-  camp:6 auto p50 **33,443 → 31,380 ms** (ratio 0,938, par paire 0,954) ;
-  legacy:0 neutre (0,991) ; camp:6 low sous le bruit (1,020 à 7 ms/image).
-  Rejoué sur le banc corrigé (`controle/t12-t15-camp6-canvas2d.json`,
+- `renderer.draw` seul, scène sans traceur ctx, **deux scènes en lockstep avec
+  ordre inversé à chaque image**, 300 images × 5 reps, contrôle publié :
+  camp:6 auto p50 **48,98 → 44,67 ms** (brut 0,912, contrôle 1,021, corrigé 0,893 ;
+  deuxième exécution 0,916 / 0,983 / 0,932) ; camp:6 low corrigé 0,931 ;
+  legacy:0 corrigé 0,917. Médiane des exécutions : **corrigé 0,922**, par paire
+  0,915. Banc rejoué au tour 2 — la version précédente déroulait un bloc de 300
+  images par racine, la tête passant toujours en second, et publiait 0,938 / 1,002 /
+  1,088 sans reproduire sa propre preuve (relancée telle quelle : 1,0233).
+  Croisé avec le banc verrouillé (`controle/t12-t15-camp6-canvas2d.json`,
   `--canvas2d`, camp:6, 300 images, 5 reps) : brut 0,9012, contrôle 1,0074,
-  **corrigé 0,8946** — gain établi, un peu meilleur qu'annoncé.
+  **corrigé 0,8946** ; le contre-vérificateur y obtient 0,9291 / 0,9982 / 0,9308.
+  Les deux bancs vont maintenant dans le même sens.
 - **Flux d'appels ctx identique** sur 300 images dans les trois configurations.
 - `clip()` accepte désormais le nombre d'entrées réellement valides, seul
   changement d'API interne nécessaire aux tampons réutilisés.
