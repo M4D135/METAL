@@ -296,13 +296,20 @@ rz, r0 recalculés seulement si rx change).
 
 ### T14 — Écrivain d'instances et migration des producteurs [RESTE-01] — **abandonné pour ce lot**
 
-- Image complète mesurée (tas vidé, 400 images) : **92,2 Ko/image à camp:6,
-  199,6 Ko/image à camp:17** après T3/T8/T11 — déjà sous le palier corrigé de la
-  fiche (350 Ko/image).
-- Les producteurs (`models()`) ne pèsent plus que **70,5 et 47,9 Ko/image** :
-  même réduits à zéro, il resterait 21,7 et 151,7 Ko/image du côté simulation et
-  dessin. La cible « sous 50 Ko/image » n'est donc pas atteignable par la seule
-  migration des producteurs.
+- Image complète mesurée (médiane sur 5 exécutions de 1200 images, octets repris
+  par le ramasse-miettes) : **2 452 Ko/image à camp:6** (intervalle
+  2 312 – 2 480), **2 916 Ko/image à camp:17** (2 872 – 2 917), soit 14 et
+  9 scavenges par seconde. Le tour 1 publiait 92,2 et 199,6 Ko/image par
+  différence de `heapUsed` sur une seule exécution : non reproductible (343,6 puis
+  116,9 puis 56,8 sur la même racine) et surtout **borne basse** aveugle aux
+  scavenges survenus pendant la boucle. Le palier intermédiaire de 350 Ko/image
+  n'est donc **pas** atteint, contrairement à ce qu'annonçait la version
+  précédente de ce rapport.
+- Les producteurs (`models()`) pèsent **71,8 Ko/image à camp:6** (292 maillages)
+  et 48,2 à camp:17 (260) : la cible de la fiche (« sous 50 Ko/image ») est déjà
+  dépassée par les seuls producteurs, et le critère « sous 0,1 scavenge/s » est
+  hors de portée à 14 scavenges/s. La cible n'est donc pas atteignable par la
+  seule migration des producteurs : la simulation et le dessin portent le reste.
 - Obstacle de contrat : le tampon ne peut pas remplacer les objets lus par le
   tri des translucides (`renderer.js:742`), les drapeaux de surface
   (`renderer.js:711-716`), le filtre des projeteurs d'ombre
@@ -573,10 +580,14 @@ Autres écarts relevés au passage et corrigés sans qu'ils soient dans la liste
    Le téléversement statique est déjà à 0 Ko/image en régime établi et la churn
    des lignes dynamiques (77-79 % par image) annule le gain annoncé. À
    réexaminer seulement sur un GPU mobile réel.
-7. **T14, écrivain d'instances** — défaut appliqué : non migré. L'image est déjà
-   à 92-200 Ko/image, sous le palier corrigé de 350 Ko ; la cible de 50 Ko
-   suppose de traiter la simulation en même temps. Les producteurs restent sur
-   le constructeur d'objets, que le repli Canvas 2D exige.
+7. **T14, écrivain d'instances** — défaut appliqué : non migré. Mesure corrigée
+   au tour 2 (médiane sur 5 exécutions, octets repris par le GC) : l'image
+   complète est à **2 452 – 2 916 Ko/image** et 9 à 14 scavenges/s, très au-dessus
+   des 50 Ko/image et 0,1 scavenge/s de la fiche ; les producteurs seuls en
+   pèsent déjà 71,8 (camp:6). La cible suppose de traiter la simulation en même
+   temps. Les producteurs restent sur le constructeur d'objets, que le repli
+   Canvas 2D exige. (Le tour 1 annonçait « 92-200 Ko/image, sous le palier de
+   350 Ko » : c'était une borne basse, pas une mesure.)
 8. **T16, VAO** — défaut appliqué : non implémentés, conformément à la valeur par
    défaut de la fiche (gain mesuré nul sur Metal, non redémontrable ici).
 9. **T17, réservoir de maillages** — tâche **annulée** par `55449a7` : recyclage

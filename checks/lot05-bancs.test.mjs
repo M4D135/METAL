@@ -63,6 +63,22 @@ test('tout banc qui écrit un fichier importe bien writeFileSync', () => {
   assert.deepEqual(distraits, [], 'writeFileSync utilisé sans import : ' + distraits.join(', '));
 });
 
+test('une preuve qui publie un chiffre d alloc-image.mjs donne médiane et intervalle', () => {
+  // Le tour 1 publiait « koParImageImageComplete: 92,2 » issu d'une seule exécution
+  // de heapUsed entre deux GC : 343,6 puis 116,9 puis 56,8 sur la même racine.
+  // Un fichier peut citer le banc pour dire qu'il est instable (t17/cout.json) : il
+  // ne doit alors publier aucun chiffre de ce banc.
+  const fautives = [];
+  for (const f of preuves) {
+    const src = readFileSync(f, 'utf8');
+    if (!/"[\w"]*ImageComplete[\w"]*\s*:\s*\d/.test(src)) continue;
+    if (!/intervalle/i.test(src) || !/ex[eé]cut/i.test(src)) {
+      fautives.push(f.slice(racine.length + 1));
+    }
+  }
+  assert.deepEqual(fautives, [], 'chiffre d\'allocation publié sans médiane ni intervalle : ' + fautives.join(', '));
+});
+
 test('les deux bancs exigés par les preuves T3 et T9 sont bien dans le dépôt', () => {
   for (const f of ['tools/proof/lot05/gc-bench.mjs', 'tools/proof/lot05/effects-ab.mjs',
     'tools/proof/lot05/effects-ab2.mjs', 'tools/proof/lot05/alloc-image.mjs',
