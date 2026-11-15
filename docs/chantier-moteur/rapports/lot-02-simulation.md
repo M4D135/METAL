@@ -209,3 +209,8 @@ risque pour le déterminisme (débris, déjà prouvé identique en T3/T11) ou em
   points de reprise existants restent lisibles ; les formats ne sont pas modifiés dans ce lot.
 - Mesures sur machine partagée : les médianes appariées sont bruitées (contrôle A/A ±15 %) ; les
   ratios totaux et l'identité d'état (`ab2 identical=true`) sont les chiffres fiables retenus.
+
+
+## Contre-mesure et intégration15 novembre2026
+
+Contre-mesure indépendante sim2-verif :5répétitions appariées alternées, domaine principal,4scénarios identiques ; médianes B/A0,8511/0,9739/0,8289/0,9767. Gain dépendant du scénario ; aucun gain global -40/-60% ni gain combiné avec pièges déclaré atteint. Chargeur DDA corrigé après fusion (FPassages avant FWorld), assertions inchangées. Suite assemblée753/753 ; voir `integration-20261115.md`. Rapport final du contre-vérificateur attendu au moment de cette entrée.

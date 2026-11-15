@@ -222,3 +222,43 @@ test('un corps dans la bande d arrêt d une lame ne la fige pas hors de son repo
   }
   assert.equal(figee, null, `lame figée à ${figee} au lieu de son repos ${repos} après le départ du corps`);
 });
+
+// Le corps qui bloque une lame peut être un ennemi, pas seulement le joueur. Au
+// premier pas de repos qui suit la course, la requête spatiale doit encore le voir :
+// la lame reste arrêtée sur lui au lieu de le traverser pour rejoindre son repos.
+// C'est la garantie du retrait de `actors=hot||warning?trapActors(t):[p]`.
+test('une lame au repos ne traverse pas un ennemi encore dans sa bande d arrêt', () => {
+  const world = FWorld.create(1, 2, { campaign: true, campaignVersion: 2 });
+  const { ids } = firstCoupe(world);
+  const sim = simWindow.FSimulation.create(world, simOptions());
+  const t = sim.state.traps.find(q => ids.includes(q.id) && q.kind === 'blade');
+  assert.ok(t, 'la coupe ne pose aucune lame');
+  const e = sim.state.enemies.find(q => q.hp > 0);
+  assert.ok(e, 'le monde ne pose aucun ennemi pour le banc');
+  const axis = t.axis, travel = t.travel, key = axis === 'z' ? 'minZ' : 'minX';
+  const repos = (axis === 'z' ? t.z - travel : t.x - travel) - (axis === 'z' ? t.d : t.w) / 2;
+  const keepPlayer = () => Object.assign(sim.state.player, { x: world.spawn.x, z: world.spawn.z, y: sim.ground(world.spawn.x, world.spawn.z), hp: 1000, armor: 100 });
+  const holdEnemy = q => { const y = sim.ground(q.x, q.z); Object.assign(e, { x: q.x, z: q.z, y, baseY: y, hp: 1000, armor: 0, vx: 0, vz: 0, speed: 0, attackTime: 0, airborne: false }); };
+  const far = axis === 'z' ? { x: t.x + 6, z: t.z } : { x: t.x, z: t.z + 6 };
+  let blockedHot = null, restBox = null, inBand = false;
+  for (let i = 0; i < 1600 && restBox === null; i++) {
+    keepPlayer();
+    if (t.hot && t.progress > .5) inBand = true;
+    holdEnemy(inBand ? { x: t.x, z: t.z } : far);
+    sim.step(.025, {});
+    if (t.hot && t.box && Math.abs(t.box[key] - repos) > 1e-6) blockedHot = t.box[key];
+    if (blockedHot !== null && !t.hot) restBox = t.box ? t.box[key] : null;
+  }
+  assert.ok(blockedHot !== null, 'le banc ne stoppe aucune lame sur l ennemi : il ne prouverait rien');
+  assert.ok(restBox !== null && Math.abs(restBox - repos) > 1e-6,
+    `la lame a traversé l ennemi au repos (boîte ${restBox}, repos ${repos})`);
+  // Ennemi retiré : la lame doit alors rejoindre son repos (fix 99596c3).
+  let back = null;
+  for (let i = 0; i < 900 && back === null; i++) {
+    keepPlayer();
+    holdEnemy(far);
+    sim.step(.025, {});
+    if (!t.hot && !t.warning && !t.destroyed && t.box && Math.abs(t.box[key] - repos) < 1e-6) back = t.box[key];
+  }
+  assert.ok(back !== null, `la lame ne rejoint pas son repos ${repos} après le départ de l ennemi`);
+});

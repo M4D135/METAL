@@ -621,3 +621,8 @@ Le secours Canvas a reçu deux niveaux de facettes, des chapeaux de cylindres re
 Les essais ne remplacent pas une partie humaine complète ni une validation sur GPU physique, Safari macOS/iOS ou téléphone réel. Le multitouch simultané et l’équilibrage de la campagne restent à éprouver sur ces appareils.
 
 Le secours Canvas utilise un tri de polygones et des ombres projetées simplifiées ; certaines intersections peuvent rester imparfaites. Les ombres WebGL ne couvrent qu’un voisinage et les sources retenues, pas toutes les lumières du niveau. Le déplacement reste horizontal et la boucle conserve au plus 0,12 s par image : une machine durablement sous environ huit images/s peut encore ralentir la simulation.
+
+
+## Reprise contrôlée du 15 novembre 2026
+
+Suite complète753/753, pièges/DDA174/174, build et compatibilité Chrome/SwiftShader de deux sauvegardes génération6 avant pièges massifs réussis.40débris structurels conservés par sauvegarde, stockage inchangé, aucune erreurJS. Retrait complet des raccourcis e366203 ; garanties99596c3 conservées et nouveau test ennemi. Détails, taille, sources et limites : `docs/chantier-moteur/rapports/integration-20261115.md`. Aucun GPU réel, téléphone, manette physique ou son à l’oreille validé.

@@ -341,3 +341,8 @@ Fixtures et provenance : `checks/fixtures/pre-massive-traps/README.md`.
 Journaux et contrôles avant/après : `/home/m4d135/work/codex-blocages-20261114/`,
 notamment `metal-compat-full-fixed.log`, `metal-cross-compat.json` et
 `metal-chrome-compat.json`.
+
+
+## Rectification intégration15 novembre2026
+
+Les deux raccourcis updateEnvironment de e366203 sont retirés. Gain sous seuil non homologué et défaut ennemi au retour au repos reproduit. Garanties99596c3 préservées par recalcul systématique, tests joueur/ennemi verts. Les anciennes annonces de maintien/gain de cette optimisation ne décrivent plus la tête intégrée. Voir `integration-20261115.md` (753/753 et sauvegardes Chrome).

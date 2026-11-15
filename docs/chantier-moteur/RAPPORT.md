@@ -461,3 +461,8 @@ console. Preuve détaillée :
 - Les cinq modules ne changent pas encore le jeu : ils sont fusionnés, testés
   isolément et documentés, mais aucun n'est branché dans `game.js`.
 - Les lots 02 à 18 restent inachevés.
+
+
+## 15 novembre2026 — reprise et intégration contrôlée
+
+Pièges massifs/compatibilité anciennes sauvegardes et DDA assemblés ; raccourcis e366203 retirés ;753/753 tests, deux reprises Chrome réussies. Décisions13–15/11 rétablies dans le MASTER. Voir `rapports/integration-20261115.md` pour preuves, réserves et ordre des lots.
