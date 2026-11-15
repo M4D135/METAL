@@ -9,6 +9,12 @@
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)prefs.softMotion=false;
   let {muted,quality,softMotion}=prefs,bindingAction=null,optionsTab='game';
   const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
+  // MUS-04 : l'état de la simulation choisit la pièce, le mixeur la joue. Le
+  // chef d'orchestre ne joue rien lui-même et reste muet sans le module.
+  const musicDirector=window.FMusicDirector?window.FMusicDirector.create({host:{
+    request:(cue,meta)=>typeof audio.requestMusic==='function'?audio.requestMusic(cue,meta):false,
+    release:()=>typeof audio.releaseMusic==='function'?audio.releaseMusic():false
+  }}):null;
   let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
@@ -241,7 +247,7 @@
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;
     motion.reset();leftMotion.reset();lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
-    soundscape.reset();audio.setStage?.(world.stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);
+    soundscape.reset();audio.setStage?.(world.stage);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);musicDirector?.reset();
     $('music-title').textContent=trackLabel();
     $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaignVersion===2?(stage<6?'Équipement '+(stage+1)+' / 6':'Assaut '+(stage-5)+' / 12')+' · ':world.campaign?world.chapterTitle+' · ':'')+world.title;
     $('mission-summary').innerHTML=world.campaignVersion===2?'<span><b>6</b> ÉQUIPEMENT</span><span><b>12</b> ASSAUT</span><span><b>18</b> MONDES</span>':world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';
@@ -345,7 +351,7 @@
       if(e.name==='bossRoar'){const boss=sim.state.enemies.find(a=>a.id===e.id||a.id===e.bossId);if(boss)encounter(boss.bossName||'Le Colosse',e.phase>0?'PHASE '+(e.phase+1)+' · SURCHARGE':'COLOSSE ÉVEILLÉ · '+Math.round(3.325*(boss.bossScale||1))+' M');}
       if(e.name==='bossPhase')toast('SURCHARGE · le colosse change de rythme. Surveillez les zones au sol.',3.5);
       if(e.name==='bossDeath'){const boss=sim.state.enemies.find(a=>a.id===e.id);encounter(boss?.bossName||'Le Colosse','COLOSSE ABATTU');checkpointDue=true;}
-      if(e.name==='win'){result(false);audio.win?.();break;}
+      if(e.name==='win'){result(false);audio.win?.();musicDirector?.victory();break;}
       if(e.name==='dead'){result(true,e.reason);break;}
     }
     sim.state.events.length=0;
@@ -811,7 +817,7 @@
       const localSound=soundscape.sample(sim),motor=localSound.machinery,steam=localSound.steam;
       audio.setMachinery?.(motor.level,motor.pan,motor.kind,motor.occluded);
       audio.setSteam?.(steam.level,steam.pan,steam.occluded);
-      audio.setThreat(sim.state.threat||0);audio.setPressure?.(sim.state.director?.pressure||0);audio.tick(dt);
+      audio.setThreat(sim.state.threat||0);audio.setPressure?.(sim.state.director?.pressure||0);if(mode==='playing')musicDirector?.update(sim.state,dt);audio.tick(dt);
       if(mode==='playing'&&!sim.state.player.airborne&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving,{outdoor:outside,biome:world.environment?.biome});
       lastFootstep=footstep;
       for(const e of sim.state.enemies){
@@ -984,6 +990,10 @@
     renderer=FRender.create(canvas);renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
     savedRun=readSave();refreshContinue();load(0);settings();requestAnimationFrame(frame);
     window.FMusic?.warmup?.('title').catch(error=>console.error('METAL audio preparation:',error));
+    // Les pièces que le chef d'orchestre peut demander en cours de partie sont
+    // préparées en tâche de fond : la synthèse est déjà découpée en tâches
+    // d'écran de chargement, aucune ne bloque une image de jeu.
+    for(const cue of ['calm','combat','boss'])window.FMusic?.warmup?.(cue).catch(error=>console.error('METAL audio preparation:',error));
   }catch(error){$('intro').hidden=true;$('error').hidden=false;$('error-copy').textContent='Le moteur graphique n’a pas pu démarrer. Essayez de recharger la page ou d’utiliser un navigateur récent.';console.error('METAL initialization:',error);}
 })();
 

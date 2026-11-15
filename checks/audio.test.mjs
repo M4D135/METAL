@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
 const root=new URL('../',import.meta.url);
-const source=Object.fromEntries(['music','audio','audio-recipes','soundscape','economy','destruction','effects','simulation','motion','actors','options','game'].map(name=>
+const source=Object.fromEntries(['music','audio','audio-recipes','music-director','soundscape','economy','destruction','effects','simulation','motion','actors','options','game'].map(name=>
   [name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 class Param{
   constructor(value=0){this.value=value;this.events=[];}
@@ -429,7 +429,7 @@ function shell({touch=false,settings:storedSettings,recipes=false}={}){
   // The shell receives the same observed real audio instance as the direct API tests.
   // With recipes, game.js's own create() argument builds that instance.
   const createAudio=r.scope.FAudio.create;r.scope.FAudio.create=recipes?options=>{r.createOptions=options;return r.audio=createAudio(options);}:()=>r.audio;
-  for(const name of ['soundscape','economy','destruction','effects','simulation','motion','actors','options'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
+  for(const name of ['music-director','soundscape','economy','destruction','effects','simulation','motion','actors','options'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
   const create=r.scope.FSimulation.create;r.scope.FSimulation.create=value=>{const sim=create(value);simulations.push(sim);return sim;};
   vm.runInContext(source.game,r.scope,{filename:'game.js'});assert.deepEqual(errors,[],'game must initialize without an audio or DOM exception');
   return Object.assign(r,{element,listeners,documentListeners,simulations,downloads,blobs,timers,memory,gesture(name='pointerup',event={}){emit(listeners,name,{type:name,target:element('body'),isTrusted:true,button:0,preventDefault:noop,...event});},visibility(visible){r.scope.document.hidden=!visible;emit(documentListeners,'visibilitychange',{});},focus(){focused=true;emit(listeners,'focus',{});},blur(){focused=false;emit(listeners,'blur',{});},frame(ms=40){now+=ms;if(r.ctx)r.advanceTimers(ms/1000);const batch=frames;frames=[];for(const fn of batch)fn(now);},async flush(){for(let i=0;i<12;i++){await Promise.resolve();this.frame(10);}},async ready(){for(let i=0;i<40;i++){this.frame();await Promise.resolve();await Promise.resolve();if(this.mode()!=='loading')return;}throw new Error('loading did not finish');},mode:()=>element('body').dataset.state||'menu'});
@@ -877,4 +877,40 @@ test('sans audio ni FImuse, la demande de musique reste sans danger',async()=>{
   pump(r,900);assert.equal(r.tracker.stats.cue,'thrash1');
   assert(r.tracker.stats.scheduledNotes>50,'les pièces adaptatives jouent aussi sans FImuse');
   r.audio.dispose();
+});
+
+// ---------------------------------------------------------------------------
+// MUS-04 — la simulation amène la meute, le colosse et lacier tenu : une
+// alerte qui monte demande la meute, le colosse éveille prend la main, la
+// victoire l'emporte, et le thème du secteur revient quand le calme dure. Le
+// jeu ne coupe jamais le transport lui-même : il demande, FImuse finit la
+// mesure, joue la jointure écrite, puis entre sur la pièce cible.
+// ---------------------------------------------------------------------------
+test('la simulation amène la meute, le colosse et lacier tenu',async()=>{
+  const app=shell();app.element('start').click();await app.ready();app.frame();
+  assert.equal(app.audio.stats.musicCue,'','à lentrée du secteur, le thème du secteur joue');
+  assert.equal(app.tracker.stats.cue,'0');
+  const sim=app.simulations.at(-1),step=sim.step.bind(sim);
+  // Le test n'altère pas la simulation : il force seulement l'observable que
+  // le jeu lit chaque image, exactement comme le ferait une vraie meute.
+  let forced={threat:0,director:{pressure:0}};
+  sim.step=(dt,input)=>{step(dt,input);Object.assign(sim.state,forced);};
+  const run=frames=>{for(let f=0;f<frames;f++)app.frame();};
+  // Une pièce demandée est atteinte au plus tard après la mesure en cours, le
+  // segment entamé et la jointure écrite : quatre mesures au tempo le plus
+  // rapide du répertoire, largement couvert par les images ci-dessous.
+  const enter=(cue,frames)=>{
+    run(frames);
+    assert.equal(app.audio.stats.musicCue,cue,'le jeu a demandé « '+cue+' »');
+    assert.equal(app.tracker.stats.cue,cue,'le transport joue « '+cue+' »');
+  };
+  forced={threat:1,director:{pressure:0}};enter('combat',260);
+  assert(app.tracker.stats.scheduledNotes>0,'la meute joue réellement des notes');
+  assert(app.tracker.stats.layers.split(',').includes('announce'),'à pleine alerte, les percussions dannonce entrent');
+  forced={threat:.6,bossAlive:true,director:{pressure:0}};enter('boss',300);
+  forced={threat:.6,director:{pressure:0}};enter('combat',300);
+  forced={threat:0,director:{pressure:0}};enter('calm',900);
+  forced={threat:0,director:{pressure:0},won:true};enter('victory',300);
+  assert(app.tracker.stats.scheduledNotes>0,'le transport na jamais été coupé par un changement de pièce');
+  app.audio.dispose();
 });

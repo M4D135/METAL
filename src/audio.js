@@ -277,6 +277,9 @@
         // sector theme must not snap back under a piece already requested.
         musicCue = name;
         stats.musicCue = name;
+        // The piece is only reached at the next bar line, so its instruments are
+        // uploaded here rather than under the first note that needs them.
+        if (accepted && music.prepare) music.prepare(name);
         return accepted;
       }
       function effectEvent(name, value, interval) {
