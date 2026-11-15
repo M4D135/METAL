@@ -1,0 +1,304 @@
+{
+  "schema": "metal-03s-independent-review/1",
+  "created_at": "2026-11-15T01:12:10.679682+00:00",
+  "base": "c28ebda3f12e612370d8b8b6e1de63f7c667e77c",
+  "candidate": "a502235a206524e2eb245338ad3a09e11b6b383f (production source exactly fa9cf768417f6e7ccd3046f8b065c82570fa4181)",
+  "source_sha256_after_nav_delay_removal": {
+    "src/destruction.js": "0e14293a3a6f8c83c8495e1a210b4a84e98aa08c7364306f49ea3a28988ac1ad",
+    "src/simulation.js": "9d01b78472d14eab72c4804fbc3d34c6ab83e9d24bdd99c6f66624cc2f484536"
+  },
+  "checks": [
+    {
+      "name": "destruction_contract",
+      "node_tests": 6,
+      "passed": 6,
+      "proof": "destruction-contract.mjs"
+    },
+    {
+      "name": "nav_contract",
+      "node_tests": 3,
+      "passed": 3,
+      "proof": "nav-contract.mjs",
+      "instrumentation": "test-only facade exposes internal methods in evaluated memory; no source file modified"
+    },
+    {
+      "name": "checkpoint_after_breach",
+      "passed": true,
+      "before_fix": {
+        "live_nav": 0,
+        "restored_nav": 1,
+        "pending": 0
+      },
+      "after_fix": {
+        "live_nav": 1,
+        "restored_nav": 1,
+        "updates": 36,
+        "pending": 0
+      },
+      "invalid_restore_cases": 3,
+      "invalid_restore_preserves": [
+        "snapshot",
+        "destruction instance",
+        "mesh array",
+        "collider array",
+        "opaque token"
+      ],
+      "proof": "nav-checkpoint.mjs"
+    },
+    {
+      "name": "destruction_differential",
+      "passed": true,
+      "sequences": 8,
+      "operations": 280,
+      "compared": [
+        "meshes",
+        "colliders",
+        "lights",
+        "snapshots",
+        "hit/blast result payloads"
+      ],
+      "restore_exact_revision_included": true,
+      "proof": "destruction-differential.mjs"
+    },
+    {
+      "name": "quarter_grid_fixture",
+      "passed": true,
+      "grid_cells": 806,
+      "old_depth": 0.18,
+      "old_touched_cells": 182,
+      "old_fraction": 0.22580645161290322,
+      "new_depth": 1.8,
+      "new_touched_cells": 234,
+      "new_fraction": 0.2903225806451613,
+      "max_updates": 768,
+      "pending_before_checkpoint": 38,
+      "threshold_unchanged": 0.25,
+      "assertions_preserved": [
+        "global fallback",
+        "bounded nav batches",
+        "immediate physical accessibility",
+        "snapshot drains pending",
+        "restored map identical"
+      ],
+      "proof": "nav-quarter-fixture.mjs"
+    }
+  ],
+  "findings": [
+    {
+      "priority": 1,
+      "status": "fixed_and_verified",
+      "summary": "New deferred navigation invalidation was not captured by snapshot, producing different live/restored maps.",
+      "fix": "Owner removed navDelay; no extra actor/path mutation added to snapshot."
+    }
+  ],
+  "prepared_tests_for_owner": [
+    "destruction-delta.test.mjs",
+    "simulation-delta.test.mjs"
+  ],
+  "source_edits_by_reviewer": false,
+  "pending": [],
+  "updated_at": "2026-11-15T01:33:09.863007+00:00",
+  "performance_review": {
+    "status": "T1_T4_accepted_functional_T5_open_no_further_benchmarks",
+    "revision_cost_thread": {
+      "receipt": "/home/m4d135/metal-chantier/voies/sim2/.relais/codex03s-20261115/revision-cost-thread.json",
+      "receipt_sha256": "3c7cbe1be287118abe111cbe29c1592ef92d0ea12e51dae2ccb3fac60533d358",
+      "node": "v24.18.0",
+      "clock": "threadCpuUsage user+system; blast plus lazy mesh getter CPU, separately timed then summed",
+      "measured_impacts": 450,
+      "orders": {
+        "AB": 225,
+        "BA": 225
+      },
+      "source_hashes_match_reviewed_files": true,
+      "equality_assertions": true,
+      "baseline_mean_total_cpu_us": 3600.571111111111,
+      "candidate_mean_total_cpu_us": 1799.72,
+      "paired_median_total_cpu_ratio_upper_median": 0.5002498750624688,
+      "conventional_paired_median_total_cpu_ratio": 0.5001666666666666,
+      "limitations": [
+        "Direct destruction microbenchmark, not whole simulation or browser frame time.",
+        "Thread CPU excludes work on other threads; includes JIT/GC on measured thread."
+      ],
+      "quantization": {
+        "measured_pairs": 450,
+        "zero_a_total_cpu": 4,
+        "eligible_total_ratio_pairs": 446,
+        "zero_over_zero_blast": 1,
+        "method": "Conventional median over finite ratios with denominator >0; all raw samples retained for means."
+      },
+      "corrected_receipt": ".relais/codex03s-20261115/revision-cost-thread-summary-corrected.json",
+      "original_receipt_preserved": true
+    },
+    "ab2": {
+      "scenario": "legacy-s2 seed96 weapon2, 1800 steps, 30 simulated seconds",
+      "clock": "process.cpuUsage",
+      "measured_pairs": 5,
+      "excluded_warmup_pairs": 1,
+      "t1_isolated": {
+        "identical_all_passes": true,
+        "total_cpu_ratio": 1.025600349797383,
+        "median_paired_step_ratio": 1.0319148936170213
+      },
+      "integrated": {
+        "stableA": true,
+        "stableB": true,
+        "identical": false,
+        "first_difference_all_passes": 92,
+        "total_cpu_ratio": 0.9383190749662107,
+        "median_paired_step_ratio": 1.0101522842639594
+      },
+      "first_difference_proof": {
+        "proof": "ab2-first-difference.json",
+        "sha256": "41a10703ee494c656787027e061b3b6ea758728eae4102283e8aefd1e7a48444",
+        "method": "One untimed alternating A/B pair stopped at first mismatch; reproduced exact original hashes.",
+        "step": 92,
+        "hashes": [
+          "1355c290",
+          "9654766b"
+        ],
+        "snapshot_differences": {
+          "planWait": 8,
+          "thinkWait": 148
+        },
+        "other_fields_differ": false,
+        "attribution": "T4 selective route invalidation preserves actor planning/thinking timers outside touched routes; baseline reset all actors. Attribution proven only for first difference."
+      },
+      "limits": [
+        "The integrated variants are deterministic but do not follow identical later states.",
+        "Total ratio improvement does not imply every-step improvement; paired step median slightly slower.",
+        "No browser/GPU claim."
+      ]
+    },
+    "T5_milestone": {
+      "all_48_receipt_sha256_verified": true,
+      "raw_30_measured_fights_verified": true,
+      "node": "v24.18.0",
+      "clock": "threadCpuUsage",
+      "source_hashes_match_commit": true,
+      "production": true,
+      "measured_pairs_per_species": 5,
+      "each_simulated_duration_seconds": 60,
+      "candidate_first_break_ms": [
+        [
+          14,
+          4,
+          4.688,
+          13.791,
+          12.638
+        ],
+        [
+          12.972,
+          3.928,
+          13.857,
+          9.966,
+          10.838
+        ],
+        [
+          4.999,
+          3.04,
+          3.001,
+          3.002,
+          3.999
+        ]
+      ],
+      "under8ms_all5": [
+        false,
+        false,
+        true
+      ],
+      "navigation_pump_steps_per_minute": [
+        1,
+        2,
+        1
+      ],
+      "edge_wipes": 0,
+      "limits": [
+        "Uninstrumented production run except counting existing edgeKnown.fill hook.",
+        "Fresh process per fight; excluded preliminary processes do not warm JIT of later processes.",
+        "Concurrent load observed; no FPS, GPU or browser claim."
+      ]
+    }
+  },
+  "milestone_verdict": {
+    "T1_T4": "no open functional finding on fa9cf768417f6e7ccd3046f8b065c82570fa4181; sources match independently tested hashes",
+    "T5": "not accepted: first destruction step exceeds 8 ms in species 0 and 1; owner continues targeted profiling",
+    "integration": "assembly 34055f81312c183120b667fe4c2900be0a0e1271 reported by root, not reviewed here; combined validation pending"
+  },
+  "experimental_followup": {
+    "roofs": {
+      "read_only_source_review": "Map iteration order, support reduction order, immutable original support volumes preserved; no runtime support membership mutation found. Owner rejected performance experiment.",
+      "gc_jit_probe": "gc-jit-03s/diagnostic.json",
+      "limited_to_variant_sha256": "bb69cd72a2d988a29533931e456dca1e89556e025f9b0681f2ef99777ba1db9f",
+      "production_causal_attribution": false,
+      "observed_in_first_break658": {
+        "eager_deoptimizations": 6,
+        "dependency_invalidations": 8,
+        "gc_events": 0,
+        "damage_osr": false
+      },
+      "measurement": "One traced fresh process; CPU 7.85ms / wall 7.904ms is diagnostic, not acceptance.",
+      "source_sha256": "bb69cd72a2d988a29533931e456dca1e89556e025f9b0681f2ef99777ba1db9f",
+      "receipt_directory": ".relais/codex03s-20261115/t5-roofs",
+      "equality": true,
+      "measured_impacts": 450,
+      "baseline_fa9_mean_total_cpu_us": 1607.5311111111112,
+      "candidate_mean_total_cpu_us": 1940.9933333333333,
+      "candidate_first_break_max_ms": [
+        14,
+        9.956,
+        6.987
+      ],
+      "zero_baseline_cpu_samples": 76,
+      "decision": "Rejected: no established net performance benefit, T5 fails species0/1.",
+      "verified_targeted_tests": {
+        "pass": 40,
+        "fail": 0
+      },
+      "verified_fight_digests_equal": 15,
+      "removed_from_production_verified": true
+    },
+    "copyBox": {
+      "source_sha256": "0be02b591f7cc50a5b1b051ae1a2948a107463c63b7af40a8ad460227b031a7d",
+      "receipt_directory": ".relais/codex03s-20261115/t5-copybox",
+      "change": "Object.fromEntries(KEYS.map) replaced with literal of same six fields in same order. Only one source line.",
+      "read_only_source_review": "Semantically equivalent for all valid boxes; no functional finding.",
+      "equality": true,
+      "measured_impacts": 450,
+      "baseline_fa9_mean_total_cpu_us": 2042.4355555555555,
+      "candidate_mean_total_cpu_us": 2039.9333333333334,
+      "candidate_first_break_max_ms": [
+        10.947,
+        13.224,
+        7.999
+      ],
+      "zero_baseline_cpu_samples": 50,
+      "decision": "Rejected: no established net performance benefit, T5 fails species0/1.",
+      "verified_targeted_tests": {
+        "pass": 145,
+        "fail": 0
+      },
+      "verified_fight_digests_equal": 15,
+      "removed_from_production_verified": true
+    }
+  },
+  "review_status": "complete",
+  "final_documentation_commit": "a502235a206524e2eb245338ad3a09e11b6b383f",
+  "final_diff_scope": [
+    "docs/chantier-moteur/rapports/lot-03-destruction-sim.md",
+    "docs/chantier-moteur/rapports/lot-03s-preuves.json",
+    "tools/proof/lot03s/revision-cost.mjs"
+  ],
+  "final_worktree_clean": true,
+  "final_source_matches_fa9": true,
+  "final_verdict": {
+    "T1_T4": "Favorable independent review: no remaining functional finding on exact fa9 source, retained by a502.",
+    "T5": "Not accepted. First break exceeds 8 ms in species0 and1. Lot03s remains incomplete; no full-lot acceptance receipt.",
+    "rejected_experiments": "roofs and copyBox removed; no production source changes survived.",
+    "integration": "Parent owns assembly tests and Chrome validation; this verdict does not claim assembled integration passed."
+  },
+  "outside_reviewer_scope": [
+    "Parent assembled integration full suite and Chrome checks",
+    "Further T5 investigation if separately authorized"
+  ]
+}

@@ -471,3 +471,8 @@ Pièges massifs/compatibilité anciennes sauvegardes et DDA assemblés ; raccour
 ## 15 novembre2026 — musique adaptative T1 intégrée
 
 Module générique FImuse de4a6e445 corrigé (partition vide, propriété des descripteurs, mesures finies),828/828 tests complets et reprise navigateur de deux sauvegardes. T1 seulement : aucun nouveau raccordement musical ni quitus du lot complet. Voir `rapports/jeu-musique-metal-t1-integration.md`.
+
+
+## 15 novembre 2026 — palier destruction/navigation intégré
+
+Delta commun et navigation ciblée assemblés avec FImuse T1 : 838/838 tests et deux sauvegardes historiques reprises dans Chrome. Le lot 03s complet n’est pas clos : seuil T5 non atteint sur deux espèces. Voir `rapports/lot-03s-integration.md`.

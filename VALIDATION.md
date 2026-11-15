@@ -636,3 +636,8 @@ FInput.clear annule les vibrations émises ;82/82tests ciblés input+finput surS
 ## Musique adaptative T1 —15 novembre2026
 
 Brique FImuse chargée, sans raccordement musical au jeu. Trois défauts corrigés,18/18 tests ciblés, assemblage complet828/828. Deux anciennes sauvegardes reprises dans Chrome/SwiftShader, stockage inchangé et aucune erreurJS. Voir `docs/chantier-moteur/rapports/jeu-musique-metal-t1-integration.md`. Écoute humaine non effectuée.
+
+
+## Palier 03s T1/T4 et FImuse — 15 novembre 2026
+
+Assemblage : 838/838 tests, build réussi, deux anciennes sauvegardes reprises dans Chrome/SwiftShader avec stockage inchangé et aucune erreur JavaScript. Destruction/navigation intégrées ; T5 <8 ms reste ouvert. Voir `docs/chantier-moteur/rapports/lot-03s-integration.md`.

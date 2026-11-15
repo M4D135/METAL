@@ -1,0 +1,24 @@
+[
+  {
+    "id": "classic-rubble",
+    "state": "playing",
+    "imuseLoaded": true,
+    "fingerprint": "1e90ffc",
+    "relays": 0,
+    "debris": 40,
+    "saveUnchanged": true,
+    "refused": false,
+    "errors": []
+  },
+  {
+    "id": "campaign2-rubble",
+    "state": "playing",
+    "imuseLoaded": true,
+    "fingerprint": "1bjevpj",
+    "relays": 0,
+    "debris": 40,
+    "saveUnchanged": true,
+    "refused": false,
+    "errors": []
+  }
+]
