@@ -1,0 +1,415 @@
+TAP version 13
+# Subtest: V2 shell starts a free left hand, shows physical boss rewards and resumes claimed upgrades exactly once
+ok 1 - V2 shell starts a free left hand, shows physical boss rewards and resumes claimed upgrades exactly once
+  ---
+  duration_ms: 83.094276
+  ...
+# Subtest: V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world
+ok 2 - V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world
+  ---
+  duration_ms: 54.568313
+  ...
+# Subtest: Victory fanfare begins after the result screen has stopped active gameplay voices
+ok 3 - Victory fanfare begins after the result screen has stopped active gameplay voices
+  ---
+  duration_ms: 28.491772
+  ...
+# Subtest: The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen
+ok 4 - The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen
+  ---
+  duration_ms: 196.752455
+  ...
+# Subtest: A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode
+ok 5 - A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode
+  ---
+  duration_ms: 137.935688
+  ...
+# Subtest: Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly
+ok 6 - Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly
+  ---
+  duration_ms: 97.845964
+  ...
+# Subtest: The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal
+ok 7 - The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal
+  ---
+  duration_ms: 106.925313
+  ...
+# Subtest: Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell
+ok 8 - Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell
+  ---
+  duration_ms: 115.149121
+  ...
+# Subtest: Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered
+ok 9 - Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered
+  ---
+  duration_ms: 86.512743
+  ...
+# Subtest: A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial
+ok 10 - A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial
+  ---
+  duration_ms: 204.894811
+  ...
+# Subtest: Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together
+ok 11 - Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together
+  ---
+  duration_ms: 45.994686
+  ...
+# Subtest: Mouse and touch left inputs fire the paired weapon and R always dashes
+ok 12 - Mouse and touch left inputs fire the paired weapon and R always dashes
+  ---
+  duration_ms: 105.906862
+  ...
+# Subtest: Both hands and fourth-calibre ammunition survive sector Continue and entry restart
+ok 13 - Both hands and fourth-calibre ammunition survive sector Continue and entry restart
+  ---
+  duration_ms: 44.633489
+  ...
+# Subtest: Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint
+ok 14 - Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint
+  ---
+  duration_ms: 131.04388
+  ...
+# Subtest: Physical armor pickups update the HUD, retain excess and keep one flat hundred-point capacity
+ok 15 - Physical armor pickups update the HUD, retain excess and keep one flat hundred-point capacity
+  ---
+  duration_ms: 59.188378
+  ...
+# Subtest: The browser shell carries fractional armor through Continue, resume and entry restart without refilling
+ok 16 - The browser shell carries fractional armor through Continue, resume and entry restart without refilling
+  ---
+  duration_ms: 83.675278
+  ...
+# Subtest: The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations
+ok 17 - The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations
+  ---
+  duration_ms: 21.63697
+  ...
+# Subtest: The real arsenal HUD locks missing guns, equips found weapons across substeps and reports spent ammunition
+ok 18 - The real arsenal HUD locks missing guns, equips found weapons across substeps and reports spent ammunition
+  ---
+  duration_ms: 57.773135
+  ...
+# Subtest: Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill
+ok 19 - Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill
+  ---
+  duration_ms: 61.616394
+  ...
+# Subtest: Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue action
+ok 20 - Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue action
+  ---
+  duration_ms: 49.400176
+  ...
+# Subtest: Reserved enemies remain absent from character geometry and animation until physically deployed
+ok 21 - Reserved enemies remain absent from character geometry and animation until physically deployed
+  ---
+  duration_ms: 23.373874
+  ...
+# Subtest: Continue restores a current-generation checkpoint at its relay
+ok 22 - Continue restores a current-generation checkpoint at its relay
+  ---
+  duration_ms: 18.472757
+  ...
+# Subtest: A real fall below a terrace opens the death screen and Continue restores the safe checkpoint
+ok 23 - A real fall below a terrace opens the death screen and Continue restores the safe checkpoint
+  ---
+  duration_ms: 63.287747
+  ...
+# Subtest: Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall
+ok 24 - Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall
+  ---
+  duration_ms: 58.645027
+  ...
+# Subtest: Continue migrates generation 4 to the same sector without losing prior-sector totals
+ok 25 - Continue migrates generation 4 to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 24.659489
+  ...
+# Subtest: Continue migrates generation 3 to the same sector without losing prior-sector totals
+ok 26 - Continue migrates generation 3 to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 21.729672
+  ...
+# Subtest: Continue migrates generation legacy to the same sector without losing prior-sector totals
+ok 27 - Continue migrates generation legacy to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 18.956718
+  ...
+# Subtest: An invalid snapshot restarts its sector and preserves the first migration backup
+ok 28 - An invalid snapshot restarts its sector and preserves the first migration backup
+  ---
+  duration_ms: 23.718302
+  ...
+# Subtest: LOAD-01: an unrecoverable classic point restarts with its exact entry equipment
+ok 29 - LOAD-01: an unrecoverable classic point restarts with its exact entry equipment
+  ---
+  duration_ms: 57.79651
+  ...
+# Subtest: LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment
+ok 30 - LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment
+  ---
+  duration_ms: 52.207034
+  ...
+# Subtest: LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment
+ok 31 - LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment
+  ---
+  duration_ms: 60.275853
+  ...
+# Subtest: LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment
+ok 32 - LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment
+  ---
+  duration_ms: 57.726239
+  ...
+# Subtest: LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoint
+ok 33 - LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoint
+  ---
+  duration_ms: 97.256838
+  ...
+# Subtest: LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy checkpoint
+ok 34 - LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy checkpoint
+  ---
+  duration_ms: 93.26718
+  ...
+# Subtest: LOAD-01: a failed fallback launch never replaces the active rejected checkpoint
+ok 35 - LOAD-01: a failed fallback launch never replaces the active rejected checkpoint
+  ---
+  duration_ms: 53.198701
+  ...
+# Subtest: LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+ok 36 - LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+  ---
+  duration_ms: 61.104131
+  ...
+# Subtest: LOAD-01: generated l:0 rubble restores exactly after three real rocket breaches
+ok 37 - LOAD-01: generated l:0 rubble restores exactly after three real rocket breaches
+  ---
+  duration_ms: 2066.304651
+  ...
+# Subtest: LOAD-01: generated c:9 rubble restores exactly after three real rocket breaches
+ok 38 - LOAD-01: generated c:9 rubble restores exactly after three real rocket breaches
+  ---
+  duration_ms: 2014.893828
+  ...
+# Subtest: F activates a mechanism once through a multi-substep frame and writes its checkpoint
+ok 39 - F activates a mechanism once through a multi-substep frame and writes its checkpoint
+  ---
+  duration_ms: 29.781822
+  ...
+# Subtest: The contextual button operates a real lift, carries the camera, and saves the arrival
+ok 40 - The contextual button operates a real lift, carries the camera, and saves the arrival
+  ---
+  duration_ms: 103.630199
+  ...
+# Subtest: Options rebind the actual interaction key, persist it, and never start the expedition
+ok 41 - Options rebind the actual interaction key, persist it, and never start the expedition
+  ---
+  duration_ms: 36.533154
+  ...
+# Subtest: Image and mix controls reach the renderer/audio and do not advance a paused simulation
+ok 42 - Image and mix controls reach the renderer/audio and do not advance a paused simulation
+  ---
+  duration_ms: 16.124502
+  ...
+# Subtest: Rupture input launches a physical projectile and sends a traversable breach to the renderer
+ok 43 - Rupture input launches a physical projectile and sends a traversable breach to the renderer
+  ---
+  duration_ms: 111.691771
+  ...
+# Subtest: restoring intact geometry after a breach refreshes rendering even when controller revisions are reused
+ok 44 - restoring intact geometry after a breach refreshes rendering even when controller revisions are reused
+  ---
+  duration_ms: 27.083378
+  ...
+# Subtest: difficulty settings affect the real simulation, persist, and preserve health and campaign state
+ok 45 - difficulty settings affect the real simulation, persist, and preserve health and campaign state
+  ---
+  duration_ms: 21.509181
+  ...
+# Subtest: audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint
+ok 46 - audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint
+  ---
+  duration_ms: 117.684553
+  ...
+# Subtest: audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources
+ok 47 - audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources
+  ---
+  duration_ms: 41.363409
+  ...
+# Subtest: audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout
+ok 48 - audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout
+  ---
+  duration_ms: 49.726512
+  ...
+# Subtest: audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage
+ok 49 - audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage
+  ---
+  duration_ms: 67.039366
+  ...
+# Subtest: audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule
+ok 50 - audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule
+  ---
+  duration_ms: 78.884182
+  ...
+# Subtest: LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+ok 51 - LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+  ---
+  duration_ms: 14.09437
+  ...
+# Subtest: LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+ok 52 - LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+  ---
+  duration_ms: 11.202856
+  ...
+# Subtest: LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+ok 53 - LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 22.476928
+  ...
+# Subtest: LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+ok 54 - LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 13.774438
+  ...
+# Subtest: LOAD-03: finishing the expedition cancels a pending checkpoint write
+ok 55 - LOAD-03: finishing the expedition cancels a pending checkpoint write
+  ---
+  duration_ms: 21.145378
+  ...
+# Subtest: LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+ok 56 - LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+  ---
+  duration_ms: 57.842946
+  ...
+# Subtest: LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+ok 57 - LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+  ---
+  duration_ms: 40.050035
+  ...
+# Subtest: LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+ok 58 - LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+  ---
+  duration_ms: 26.790918
+  ...
+# Subtest: LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+ok 59 - LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+  ---
+  duration_ms: 39.176159
+  ...
+# Subtest: LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+ok 60 - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+  ---
+  duration_ms: 32.716406
+  ...
+# Subtest: LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+ok 61 - LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+  ---
+  duration_ms: 39.332045
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-0
+ok 62 - pre-massive browser Continue, save and Continue again: classic-0
+  ---
+  duration_ms: 3460.894776
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-2
+ok 63 - pre-massive browser Continue, save and Continue again: classic-2
+  ---
+  duration_ms: 3850.127601
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-0
+ok 64 - pre-massive browser Continue, save and Continue again: campaign1-0
+  ---
+  duration_ms: 3095.88717
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-9
+ok 65 - pre-massive browser Continue, save and Continue again: campaign1-9
+  ---
+  duration_ms: 3597.530646
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-17
+ok 66 - pre-massive browser Continue, save and Continue again: campaign1-17
+  ---
+  duration_ms: 4008.71177
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-0
+ok 67 - pre-massive browser Continue, save and Continue again: campaign2-0
+  ---
+  duration_ms: 2888.09113
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-9
+ok 68 - pre-massive browser Continue, save and Continue again: campaign2-9
+  ---
+  duration_ms: 3357.539472
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-17
+ok 69 - pre-massive browser Continue, save and Continue again: campaign2-17
+  ---
+  duration_ms: 4075.081514
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-rubble
+ok 70 - pre-massive browser Continue, save and Continue again: classic-rubble
+  ---
+  duration_ms: 3834.03984
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-rubble
+ok 71 - pre-massive browser Continue, save and Continue again: campaign2-rubble
+  ---
+  duration_ms: 4799.44444
+  ...
+# Subtest: Fixed browser loop preserves simulation state across 60, 75, 120 and 144 Hz
+ok 72 - Fixed browser loop preserves simulation state across 60, 75, 120 and 144 Hz
+  ---
+  duration_ms: 468.814427
+  ...
+# Subtest: A zero-step browser frame shows mouse aim and retains action edges until consumed once
+ok 73 - A zero-step browser frame shows mouse aim and retains action edges until consumed once
+  ---
+  duration_ms: 16.218334
+  ...
+# Subtest: Browser catch-up is bounded and pausing discards elapsed menu time
+ok 74 - Browser catch-up is bounded and pausing discards elapsed menu time
+  ---
+  duration_ms: 16.036816
+  ...
+# Subtest: stream preserves object key order and bounds large array messages
+ok 75 - stream preserves object key order and bounds large array messages
+  ---
+  duration_ms: 11.534211
+  ...
+# Subtest: worker protocol assembles streamed values and transfers PCM buffers
+ok 76 - worker protocol assembles streamed values and transfers PCM buffers
+  ---
+  duration_ms: 0.46745
+  ...
+# Subtest: a startup failure or invalid partial stream retries the same job locally
+ok 77 - a startup failure or invalid partial stream retries the same job locally
+  ---
+  duration_ms: 0.3043
+  ...
+# Subtest: watchdog suspends while hidden and recovers a stuck worker once visible
+ok 78 - watchdog suspends while hidden and recovers a stuck worker once visible
+  ---
+  duration_ms: 0.137887
+  ...
+# Subtest: disposal rejects in-flight work, ignores stale messages, and rejects later calls
+ok 79 - disposal rejects in-flight work, ignores stale messages, and rejects later calls
+  ---
+  duration_ms: 0.28502
+  ...
+# Subtest: no worker, constrained mobile and explicit main mode retain working handlers
+ok 80 - no worker, constrained mobile and explicit main mode retain working handlers
+  ---
+  duration_ms: 0.208189
+  ...
+# Subtest: worker server returns errors and answers pings without executing an unknown job
+ok 81 - worker server returns errors and answers pings without executing an unknown job
+  ---
+  duration_ms: 0.221757
+  ...
+1..81
+# tests 81
+# suites 0
+# pass 81
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 45931.537116

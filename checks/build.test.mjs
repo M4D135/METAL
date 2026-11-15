@@ -15,3 +15,8 @@ assert.ok(html.includes('FMath')&&html.includes('FPassages')&&html.includes('FSo
 const fmathAt=html.indexOf('G.FMath=Object.freeze('),worldReadsAt=html.indexOf('const FMath = window.FMath;');
 assert.ok(fmathAt>=0&&worldReadsAt>fmathAt,'FMath must be defined before world.js reads it');
 console.log(JSON.stringify({status:'PASS',html_bytes:data.length,external_assets:0,sha256:report.sha256},null,2));
+
+const workerScripts=[...html.matchAll(/<script[^>]*data-module="([^"]+)"[^>]*data-worker[^>]*>/g)].map(q=>q[1]);
+for(const name of ['fmath.js','world.js','music.js','audio.js','jobs.js','tasks.js'])assert(workerScripts.includes(name),name);
+assert(!workerScripts.includes('game.js'));
+assert(workerScripts.indexOf('fmath.js')<workerScripts.indexOf('world.js'));

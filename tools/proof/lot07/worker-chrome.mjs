@@ -1,0 +1,14 @@
+import {withChrome} from '../../render/chrome.mjs';
+import{readFileSync,writeFileSync,mkdirSync}from'node:fs';import assert from'node:assert/strict';
+import{resolve,dirname,join}from'node:path';import{fileURLToPath}from'node:url';import{tmpdir}from'node:os';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'../../..'),out=resolve(process.argv[2]||join(tmpdir(),'metal-worker-'+process.pid));mkdirSync(out,{recursive:true});
+const html=readFileSync(root+'/dist/index.html','utf8'),scripts=[...html.matchAll(/<script\b[^>]*data-worker[^>]*>[\s\S]*?<\/script>/g)].map(x=>x[0]);assert(scripts.length>=14);
+writeFileSync(out+'/worker.html','<!doctype html><title>METAL worker test</title>'+scripts.join('\n')+`<script>
+window.__jobs=FJobs.create({environment:window,handlers:MetalTasks.jobs,bootstrap:'FJobs.serve(MetalTasks.jobs);'});window.__ticks=0;setInterval(()=>__ticks++,4);window.__frames=0;function frame(){__frames++;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+window.__hash=value=>{const s=typeof value==='string'?value:JSON.stringify(value);let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return(h>>>0).toString(16);};
+</script>`);
+await withChrome({angle:'swiftshader',window:[800,600]},async browser=>{
+ const page=await browser.openPage(out+'/worker.html');
+ const result=await page.evaluate(`(async()=>{const results=[];for(const index of [0,17]){const q={seed:96,index,options:{campaign:true,campaignVersion:2,profiles:true}},before=__frames,ticksBefore=__ticks,t=performance.now(),remote=await __jobs.request('world',q),elapsed=performance.now()-t,frames=__frames-before,remoteHash=__hash(remote),localHash=__hash(MetalTasks.jobs.world(q));results.push({job:'world',index,remoteHash,localHash,elapsed,frames,ticks:__ticks-ticksBefore,meshes:remote.meshes.length,chunks:__jobs.stats.chunks});}for(const stage of ['title',0,1,2]){const remote=await __jobs.request('music',{stage}),local=MetalTasks.jobs.music({stage});results.push({job:'music',stage,equal:__hash([...remote.bytes])===__hash([...local.bytes]),bytes:remote.bytes.length});}for(const name of FAudio.effectNames.slice(0,4)){const q={name,variant:0},remote=await __jobs.request('fx',q),local=MetalTasks.jobs.fx(q);results.push({job:'fx',name,equal:__hash([...remote.pcm])===__hash([...local.pcm]),samples:remote.pcm.length});}const mode=__jobs.mode,stats={...__jobs.stats};__jobs.dispose();return {mode,stats,results};})()`);
+ writeFileSync(out+'/receipt.json',JSON.stringify(result,null,2));assert.equal(result.mode,'worker');for(const q of result.results)if(q.job==='world'){assert.equal(q.remoteHash,q.localHash);assert(q.ticks>0);assert(q.chunks>0);}else assert(q.equal);assert.deepEqual(page.errors,[]);writeFileSync(out+'/receipt.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));await page.close();
+});

@@ -1,10 +1,10 @@
 {
   "version": "0.9.2",
-  "html_bytes": 1027351,
-  "html_decimal_kb": 1027.35,
-  "html_kib": 1003.27,
-  "gzip_bytes": 317297,
-  "sha256": "cb7483ada989c970cd6a8463d3e792c64a24a659668d9770512296048ebb24c9",
+  "html_bytes": 1036911,
+  "html_decimal_kb": 1036.91,
+  "html_kib": 1012.61,
+  "gzip_bytes": 320113,
+  "sha256": "0e9d2af540ca81034f68f65b666ce63b8281b96e7d844d62bb458b69dbc9b795",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
@@ -31,7 +31,9 @@
     "loop.js": 7685,
     "schedule.js": 4221,
     "touch.js": 3698,
+    "jobs.js": 5829,
+    "tasks.js": 559,
     "host.js": 2713,
-    "game.js": 117807
+    "game.js": 119250
   }
 }

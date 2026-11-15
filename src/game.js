@@ -10,6 +10,8 @@
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)prefs.softMotion=false;
   let {muted,quality,softMotion}=prefs,bindingAction=null,padBindingAction=null,optionsTab='game';
   const touchControls=FTouch.create(prefs),host=FHost.create(window);
+  const preparationJobs=FJobs.create({environment:window,handlers:MetalTasks.jobs,bootstrap:'FJobs.serve(MetalTasks.jobs);',forceMain:new URLSearchParams(location.search).get('jobs')==='main'});
+  addEventListener('pagehide',()=>preparationJobs.dispose());
   const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0;
   const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
@@ -19,7 +21,7 @@
   const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
   let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'],ammoNames=['balles','cartouches','roquettes','grenades','balles'];
-  const worldCache=new Map();let preparationSerial=0;
+  const worldCache=new Map(),worldJobs=new Map();let preparationSerial=0;
   let titleGesture=false,titleReady=false,titlePending=null,titleSerial=0,titleWaiting=false,titleBlocked=false,windowFocused=document.hasFocus?.()!==false;
   const actorMotion=new Map(),systemMotion=new Map();
   const keys=new Set(),input={moveX:0,moveY:0,lookX:0,lookY:0,fire:false,fireLeft:false,dash:false,pulse:false,melee:false,interact:false,weapon:0,sprint:false,assist:touch};
@@ -51,15 +53,16 @@
     if(profiles&&(!MetalProfiles.owns(profiles,inventory)||JSON.stringify(profiles.classes[profiles.active].economy)!==JSON.stringify(economy)))return null;
     return {...(profiles?{profiles}:{}),inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
   }
-  function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode){
+  function worldSpec(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode){
     const key=(profiles?'profiles1:':'')+(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
-    if(!worldCache.has(key)){
-      let options=campaign?{campaign:true,campaignVersion:revision,...(profiles?{profiles:true}:{})}:undefined;
-      if(legacyTraps)options={...options,legacyTraps:true};
-      worldCache.set(key,FWorld.create(worldSeed,n,options));
-      while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);
-    }
-    return worldCache.get(key);
+    let options=campaign?{campaign:true,campaignVersion:revision,...(profiles?{profiles:true}:{})}:undefined;
+    if(legacyTraps)options={...options,legacyTraps:true};return {key,seed:worldSeed,index:n,options};
+  }
+  function cacheWorld(key,value){worldCache.set(key,value);while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);return value;}
+  function cachedWorld(...args){const q=worldSpec(...args);return worldCache.get(q.key)||cacheWorld(q.key,FWorld.create(q.seed,q.index,q.options));}
+  function prepareWorld(...args){
+    const q=worldSpec(...args);if(worldCache.has(q.key))return Promise.resolve(worldCache.get(q.key));if(worldJobs.has(q.key))return worldJobs.get(q.key);
+    const pending=preparationJobs.request('world',q).then(value=>cacheWorld(q.key,value)).finally(()=>worldJobs.delete(q.key));worldJobs.set(q.key,pending);return pending;
   }
   const titleScreen=()=>mode==='menu'||mode==='options';
   const currentTrack=()=>titleScreen()?'title':world?.stage??stage%3;
@@ -317,13 +320,13 @@
     toast(message||(world.profileVersion?'Deux profils · '+bindingLabel('switchProfile')+' : changer. Léger : maintenir le saut pour voler. Lourd : récupérer le lance-grenades près du départ.':world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
   function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2,false,true);saveCheckpoint();start();}
-  async function preparePlay(nextStage,action,asCampaign=campaignMode){
+  async function preparePlay(nextStage,action,asCampaign=campaignMode,plan={}){
     if(!window.FMusic?.warmup){action();return;}
     const ticket=++preparationSerial;titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent=(asCampaign?'MONDE ':'SECTEUR ')+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
     try{
       // Two animation frames show the preparation screen before any substantial work.
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      await Promise.all([FMusic.warmup(nextStage%3),brain?.prepare()]);await audio.prepare?.(nextStage%3);brainStatus();if(ticket!==preparationSerial)return;
+      await Promise.all([prepareWorld(nextStage,plan.seed??seed,asCampaign,plan.revision??campaignRevision,false,plan.profiles??profileMode),FMusic.warmup(nextStage%3),brain?.prepare()]);await audio.prepare?.(nextStage%3);brainStatus();if(ticket!==preparationSerial)return;
       $('loading-detail').textContent='Assemblage du territoire et de la simulation…';$('loading-bar').style.width='76%';
       await new Promise(resolve=>requestAnimationFrame(resolve));if(ticket!==preparationSerial)return;
       action();
@@ -341,7 +344,7 @@
     $('continue').innerHTML=(dead?'Reprendre au point de reprise':finished?'Nouvelle expédition':(world.campaign?'Rejoindre le monde ':'Rejoindre le secteur ')+(stage+2))+' <span class="arrow-icon" aria-hidden="true"></span>';
     if(finished)clearSave();
     setMode(dead?'dead':finished?'complete':'cleared');
-    if(!dead&&!finished&&window.FMusic?.warmup){const nextStage=stage+1,nextSeed=seed,nextCampaign=!!world.campaign;FMusic.warmup(nextStage%3).then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))).then(()=>{if(mode==='cleared'&&seed===nextSeed&&stage+1===nextStage)cachedWorld(nextStage,nextSeed,nextCampaign);}).catch(error=>console.error('METAL preparation:',error));}
+    if(!dead&&!finished&&window.FMusic?.warmup){const nextStage=stage+1,nextSeed=seed,nextCampaign=!!world.campaign;FMusic.warmup(nextStage%3).then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))).then(()=>{if(mode==='cleared'&&seed===nextSeed&&stage+1===nextStage)return prepareWorld(nextStage,nextSeed,nextCampaign);}).catch(error=>console.error('METAL preparation:',error));}
   }
   function formatTime(v){return Math.floor(v/60)+':'+String(Math.floor(v%60)).padStart(2,'0');}
   function events(){
@@ -966,16 +969,16 @@
     if(!sim.selectLeftWeapon(next)){toast('Équipement indisponible pour la main gauche',1.8);renderHUD();return;}
     selectedWeapon=sim.state.weapon;clearFireIntents();leftMotion.impulse('switch');audio.switchWeapon?.();renderHUD();
   }
-  $('start').addEventListener('click',()=>preparePlay(0,()=>newRun(savedRun?(Date.now()>>>0)%1000000:seed)));
-  $('resume-expedition').addEventListener('click',()=>preparePlay(savedIndex(savedRun),()=>resumeSaved(savedRun),savedRun?.version===3));
+  $('start').addEventListener('click',()=>{const nextSeed=savedRun?(Date.now()>>>0)%1000000:seed;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true});});
+  $('resume-expedition').addEventListener('click',()=>preparePlay(savedIndex(savedRun),()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1}));
   $('intro-options').addEventListener('click',()=>setMode('options'));
   $('pause-button').addEventListener('click',togglePause);$('resume').addEventListener('click',togglePause);
   $('restart').addEventListener('click',()=>preparePlay(stage,()=>{load(stage,undefined,stageEntryLoadout);saveCheckpoint();start('Nouvelle tentative. Équipement et crédits de l’entrée du secteur restaurés.');}));
   $('continue').addEventListener('click',()=>{
     if(mode==='dead'){
-      preparePlay(savedRun?savedIndex(savedRun):stage,()=>resumeSaved(savedRun),savedRun?.version===3);return;
+      preparePlay(savedRun?savedIndex(savedRun):stage,()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1});return;
     }
-    if(mode==='complete'){preparePlay(0,()=>newRun((Date.now()>>>0)%1000000));return;}
+    if(mode==='complete'){const nextSeed=(Date.now()>>>0)%1000000;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true});return;}
     const nextStage=stage+1,loadout=sim.exportLoadout?.()||sim.exportInventory?.();preparePlay(nextStage,()=>{load(nextStage,undefined,loadout);saveCheckpoint();start();});
   });
   $('back-menu').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
@@ -1122,7 +1125,10 @@
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   try{
     renderer=FRender.create(canvas);renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
-    savedRun=readSave();refreshContinue();load(0);settings();requestAnimationFrame(frame);
+    savedRun=readSave();refreshContinue();
+    if(preparationJobs.mode==='main')load(0);
+    else prepareWorld(0,seed).then(()=>{if(!sim&&!preparationSerial&&titleScreen()){load(0);settings();}}).catch(error=>{console.error('METAL world preparation:',error);});
+    settings();requestAnimationFrame(frame);
     window.FMusic?.warmup?.('title').catch(error=>console.error('METAL audio preparation:',error));
   }catch(error){$('intro').hidden=true;$('error').hidden=false;$('error-copy').textContent='Le moteur graphique n’a pas pu démarrer. Essayez de recharger la page ou d’utiliser un navigateur récent.';console.error('METAL initialization:',error);}
 })();
