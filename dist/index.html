@@ -4994,7 +4994,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       var chainFixed = !!(chain && chain.level === 'fixe');
       var MASTER_GAIN = chain && Number.isFinite(chain.masterGain) ? chain.masterGain : .65;
       function chainValue(key, fallback) { return chainComp && Number.isFinite(chainComp[key]) ? chainComp[key] : fallback; }
-      var ctx = null, master, limiter, guard, chainMakeup, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter;
+      var ctx = null, master, limiter, guard, chainMakeup, effects, ambience, musicBus, airFilter, airVolume, echoSend, noiseBuffer, steamLevel, steamPan, steamFilter, hiss, air;
       var muted = false, disposed = false, failed = false, threat = 0, pressure = 0, stage = 0;
       var lastStep = -1, stepSide = 1, lastAlert = -1, lastTouch = -1, touchRun = 0;
       var environment = {}, outside = 0, machinery = 0, machineSide = 0, machineKind = 'lift', machineOccluded = 0, steam = 0, steamSide = 0, steamOccluded = 0, music = null, playing = false, titlePlaying = false;
@@ -5122,11 +5122,24 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         param.setTargetAtTime(value, time, tau);
         if (last) { last.value = value; last.tau = tau; } else targets.set(param, {value: value, tau: tau});
       }
+      // MIX-07 : une boucle dont la cible de gain est nulle ne doit pas couter de
+      // DSP. On la debranche de son filtre et on la rebranche des que la cible
+      // remonte. Le BufferSource continue de tourner : rien n'est arrete, relance
+      // ni recalcul en phase, et le gain revient par la meme automatisation.
+      var links = new Map();
+      function loopLink(source, filter, on) {
+        if (!source || !filter) return;
+        var linked = links.get(source) !== false;
+        if (on === linked) return;
+        try { if (on) source.connect(filter); else source.disconnect(filter); } catch (err) {}
+        links.set(source, on);
+      }
       function updateSteam() {
         if (!ctx || !steamLevel || disposed) return;
         var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
         stats.steamGain=audible?steam*.055*mask:0;
         approach(steamLevel.gain, stats.steamGain, ctx.currentTime, steam ? .06 : .018);
+        loopLink(hiss, steamFilter, stats.steamGain > 0);
         if (steamPan.pan) approach(steamPan.pan, steamSide, ctx.currentTime, .12);
         approach(steamFilter.frequency, 1950-steamOccluded*1250, ctx.currentTime, .12);
       }
@@ -5135,7 +5148,9 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         var audible=playing&&available()&&mix.ambience>0,mask=ctx.currentTime<ambientDuckUntil?.55:1;
         stats.machineryGain=audible?machinery*.075*mask:0;
         motors.forEach(function(m){
-          approach(m.gain.gain,m.kind===machineKind?stats.machineryGain:0,ctx.currentTime,.055);
+          var target=m.kind===machineKind?stats.machineryGain:0;
+          approach(m.gain.gain,target,ctx.currentTime,.055);
+          loopLink(m.source,m.filter,target>0);
           if(m.pan.pan)approach(m.pan.pan,machineSide,ctx.currentTime,.09);
           approach(m.filter.frequency,4200-machineOccluded*3400,ctx.currentTime,.12);
         });
@@ -5409,11 +5424,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
             smooth = smooth * .96 + white * .04;
             data[i] = white * .64 + smooth * .55;
           }
-          var hiss = remember(ctx.createBufferSource());steamFilter = remember(ctx.createBiquadFilter());
+          hiss = remember(ctx.createBufferSource());steamFilter = remember(ctx.createBiquadFilter());
           steamLevel = remember(ctx.createGain()); steamPan = remember(panNode(0));
           hiss.buffer = noiseBuffer; hiss.loop = true; steamFilter.type = 'bandpass'; steamFilter.frequency.value = 1950; steamFilter.Q.value = .6; steamLevel.gain.value = 0;
           hiss.connect(steamFilter); steamFilter.connect(steamLevel); steamLevel.connect(steamPan); steamPan.connect(ambience); hiss.start();
-          var air = remember(ctx.createBufferSource()); airVolume = remember(ctx.createGain());
+          air = remember(ctx.createBufferSource()); airVolume = remember(ctx.createGain());
           airFilter = remember(ctx.createBiquadFilter());
           air.buffer = noiseBuffer; air.loop = true;
           airFilter.type = 'bandpass'; airFilter.frequency.value = 780; airFilter.Q.value = .55;
@@ -5458,6 +5473,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         approach(airFilter.frequency,780+stage*180+(environment.biome==='woodland'?-100:0),now,.4);
         stats.windGain=active&&mix.ambience>0?outside*wind*gust*.020*mask:0;
         approach(airVolume.gain,stats.windGain,now,stats.windGain?.22:.045);
+        loopLink(air,airFilter,stats.windGain>0);
         approach(echoSend.gain,.09-outside*.08,now,.45);
 
       }
@@ -5558,7 +5574,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           effects.gain.setTargetAtTime(EFFECTS_GAIN * mix.effects, ctx.currentTime, .025);
           ambience.gain.setTargetAtTime(AMBIENCE_GAIN * mix.ambience, ctx.currentTime, .025);
           updateSteam();updateMachinery();
-          if(mix.ambience<=0){approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;}
+          if(mix.ambience<=0){approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;loopLink(air,airFilter,false);}
           if (music) music.setVolume(mix.music);
         },
         setEnvironment: function (value, amount) { environment = value || {}; outside = Math.max(0, Math.min(1, Number(amount) || 0)); },

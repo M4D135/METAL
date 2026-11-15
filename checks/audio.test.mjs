@@ -19,7 +19,7 @@ class Param{
 }
 class Context{
   constructor(){this.currentTime=0;this.sampleRate=44100;this.state='suspended';this.nodes=[];this.sources=[];this.buffers=[];this.resumes=0;this.closes=0;this.destination=this.node('destination');}
-  node(kind){const n={kind,connections:[],disconnected:false,connect(target){this.connections.push(target);return target;},disconnect(){this.connections=[];this.disconnected=true;}};this.nodes.push(n);return n;}
+  node(kind){const n={kind,connections:[],ever:[],disconnected:false,connect(target){if(!this.connections.includes(target))this.connections.push(target);if(!this.ever.includes(target))this.ever.push(target);return target;},disconnect(target){if(target===undefined){this.connections=[];}else{const i=this.connections.indexOf(target);if(i>=0)this.connections.splice(i,1);}this.disconnected=this.connections.length===0;}};this.nodes.push(n);return n;}
   createGain(){const n=this.node('gain');n.gain=new Param(1);return n;}
   createStereoPanner(){const n=this.node('pan');n.pan=new Param();return n;}
   createBiquadFilter(){const n=this.node('filter');n.frequency=new Param(350);n.Q=new Param(1);return n;}
@@ -54,7 +54,8 @@ function bandDb(pcm,lo,hi,rate=22050){let n=1;while(n<pcm.length)n<<=1;const re=
   for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=len)for(let k=0,cr=1,ci=0;k<len/2;k++){const p=i+k,q=p+len/2,vr=re[q]*cr-im[q]*ci,vi=re[q]*ci+im[q]*cr;re[q]=re[p]-vr;im[q]=im[p]-vi;re[p]+=vr;im[p]+=vi;[cr,ci]=[cr*wr-ci*wi,cr*wi+ci*wr];}}
   let e=0;for(let k=1;k<n/2;k++){const f=k*rate/n;if(f>=lo&&f<hi)e+=re[k]**2+im[k]**2;}return 10*Math.log10(2*e/n);}
 const pcmKey=pcm=>Buffer.from(pcm.buffer,pcm.byteOffset,pcm.byteLength).toString('base64');
-function effectGain(source){let n=source.connections[0];if(n.kind==='filter')n=n.connections[0];return n;}
+function linkOf(n){return n.connections[0]||n.ever[0];}
+function effectGain(source){let n=linkOf(source);if(n.kind==='filter')n=n.connections[0];return n;}
 function effectPeak(source){return Math.max(...effectGain(source).gain.events.map(e=>e.value));}
 
 test('original PCM has bounded peaks, quiet tails and distinct material and weapon signatures',()=>{
@@ -215,11 +216,11 @@ test('empty rooms have no tonal bed, exterior wind has gaps, and every environme
 
 test('nearby machinery and steam are spatial, occluded, source-dependent and controlled by ambience',async()=>{
   const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);
-  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>n.connections[0].frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),count=r.ctx.sources.length,buffers=r.ctx.buffers.length;
+  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>linkOf(n).frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),count=r.ctx.sources.length,buffers=r.ctx.buffers.length;
   const ambience=effectGain(steam).connections[0].connections[0];assert.equal(ambience.gain.value,.7);
   r.audio.setMachinery(.75,-.7,'fan',0);let machine=machines.find(n=>effectGain(n).gain.value>0);assert(machine);assert.equal(effectGain(machine).connections[0].pan.value,-.7);
-  const open=machine.connections[0].frequency.value;r.audio.setMachinery(.75,.6,'fan',1);assert(machine.connections[0].frequency.value<open*.3);assert.equal(effectGain(machine).connections[0].pan.value,.6);
-  r.audio.setSteam(.8,-.45,0);const steamOpen=steam.connections[0].frequency.value;r.audio.setSteam(.8,-.45,1);assert(steam.connections[0].frequency.value<steamOpen*.4);assert.equal(effectGain(steam).connections[0].pan.value,-.45);
+  const open=linkOf(machine).frequency.value;r.audio.setMachinery(.75,.6,'fan',1);assert(linkOf(machine).frequency.value<open*.3);assert.equal(effectGain(machine).connections[0].pan.value,.6);
+  r.audio.setSteam(.8,-.45,0);const steamOpen=linkOf(steam).frequency.value;r.audio.setSteam(.8,-.45,1);assert(linkOf(steam).frequency.value<steamOpen*.4);assert.equal(effectGain(steam).connections[0].pan.value,-.45);
   r.audio.setMachinery(.5,.1,'piston',0);assert.equal(effectGain(machine).gain.value,0);assert.equal(machines.filter(n=>effectGain(n).gain.value>0).length,1,'kind changes crossfade a fixed pool');
   for(let i=0;i<120;i++){r.audio.setMachinery(.5,.1,'piston',.5);r.audio.setSteam(.8,-.45,.5);}assert.equal(r.ctx.sources.length,count);assert.equal(r.ctx.buffers.length,buffers);
   r.audio.setMix({ambience:0});assert.equal(ambience.gain.value,0);assert.equal(r.audio.stats.steamGain,0);assert.equal(r.audio.stats.machineryGain,0);
@@ -231,9 +232,9 @@ test('nearby machinery and steam are spatial, occluded, source-dependent and con
 
 test('steady ambience is automated once per change and every wind cut can be undone at the same instant (LOOP-14)',async()=>{
   const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);
-  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>n.connections[0].frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),air=loops.find(n=>n!==steam&&!machines.includes(n));
+  const loops=r.ctx.sources.filter(n=>n.loop),steam=loops.find(n=>linkOf(n).frequency.value===1950),machines=loops.filter(n=>n.buffer.duration===.8),air=loops.find(n=>n!==steam&&!machines.includes(n));
   const delay=r.ctx.nodes.find(n=>n.kind==='delay'),send=r.ctx.nodes.find(n=>n.kind==='gain'&&n.connections.includes(delay)),wind=effectGain(air).gain;
-  const params=[steam,air,...machines].flatMap(n=>[n.connections[0].frequency,effectGain(n).gain,effectGain(n).connections[0].pan]).filter(Boolean).concat(send.gain);assert.equal(params.length,18);
+  const params=[steam,air,...machines].flatMap(n=>[linkOf(n).frequency,effectGain(n).gain,effectGain(n).connections[0].pan]).filter(Boolean).concat(send.gain);assert.equal(params.length,18);
   const sent=()=>params.reduce((sum,p)=>sum+p.events.length,0),frame=outside=>{r.audio.setEnvironment({wind:1},outside);r.audio.setMachinery(.6,-.4,'fan',.3);r.audio.setSteam(.5,.2,.1);r.audio.setThreat(.2);r.audio.setPressure(.1);r.audio.tick();};
   frame(0);const settled=sent();for(let i=0;i<120;i++){r.ctx.currentTime+=1/60;frame(0);}
   assert.equal(sent(),settled,'unchanged targets are not sent again, neither by the next frame nor by tick after a setter');
@@ -376,7 +377,7 @@ test('final output guard preserves ordinary samples and bounds any finite overlo
 
 test('explosion/boss storms stay bounded and continuous steam follows actual play state with one source',async()=>{
   const r=rig();await r.audio.start();r.audio.setPlaying(true);r.audio.setStage(1);
-  const hiss=r.ctx.sources.find(n=>n.loop&&n.connections[0]?.frequency?.value===1950),gain=hiss.connections[0].connections[0];assert(hiss);
+  const hiss=r.ctx.sources.find(n=>n.loop&&linkOf(n)?.frequency?.value===1950),gain=linkOf(hiss).connections[0];assert(hiss);
   r.audio.setSteam(.7,.3);assert(Math.abs(gain.gain.value-.0385)<1e-9);const sources=r.ctx.sources.length;
   for(let i=0;i<100;i++)r.audio.setSteam(.7,.3);assert.equal(r.ctx.sources.length,sources,'pipes share one persistent source');
   for(let step=0;step<120;step++){
@@ -972,4 +973,27 @@ test('le préréglage Doom de METAL passe par chain et weaponGain : limiteur −
   assert(Math.abs(rapportJoueur/sansRapport-1.41)<1e-9,'le rapport du joueur est multiplié par 1,41 : '+sansRapport.toFixed(4)+' → '+rapportJoueur.toFixed(4));
   assert.equal(rapportEnnemi,sansEnnemi,'les tirs ennemis ne montent pas : la table n\'est lue que dans les cues du joueur');
   nu.audio.dispose();
+});
+
+// MIX-07 (lot 11b T12) : une boucle silencieuse ne coute plus de DSP.
+test('une boucle d ambiance au repos est debranchee de son filtre, sans etre arrete, et se rebranche (MIX-07)',async()=>{
+  const r=rig();r.audio.setMix({music:0});await r.audio.start();r.audio.setPlaying(true);
+  const steam=r.ctx.sources.find(n=>n.loop&&linkOf(n).frequency.value===1950);assert(steam,'la boucle de vapeur existe');
+  const filtre=linkOf(steam);
+  r.audio.setSteam(.8,.4);r.audio.tick();
+  assert(steam.connections.includes(filtre),'une boucle audible reste branchee a son filtre');
+  const avant=steam.stopTime;r.audio.setSteam(0,0);r.audio.tick();
+  assert(!steam.connections.includes(filtre),'la cible de gain a zero debranche la source du filtre');
+  assert.equal(steam.stopTime,avant,'rien n est arrete ni relance : la boucle continue de tourner');
+  assert(filtre.connections.length>0,'le filtre et le gain restent en place, prets a recevoir a nouveau');
+  r.audio.setSteam(.8,.4);r.audio.tick();
+  assert(steam.connections.includes(filtre),'la source se rebranche des que la cible remonte');
+  const air=r.ctx.sources.find(n=>n.loop&&n!==steam&&linkOf(n).frequency.value>=780);assert(air,'la boucle de vent existe');
+  const filtreAir=linkOf(air);
+  r.audio.setEnvironment({wind:1},1);for(let i=0;i<40;i++){r.ctx.currentTime=i*.5;r.audio.tick();if(r.audio.stats.windGain>0)break;}
+  assert(air.connections.includes(filtreAir),'le vent audible est branche a son filtre');
+  r.audio.setEnvironment({wind:1},0);for(let i=0;i<200;i++){r.ctx.currentTime=i*.5;r.audio.tick();if(r.audio.stats.windGain===0)break;}
+  assert.equal(r.audio.stats.windGain,0,'le vent exterior a des silences');
+  assert(!air.connections.includes(filtreAir),'le vent a zero est debranche de son filtre');
+  r.audio.dispose();
 });
