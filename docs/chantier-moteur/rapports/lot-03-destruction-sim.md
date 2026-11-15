@@ -23,28 +23,43 @@ La simulation consomme le delta commun. Une casse sans changement solide ne refa
 
 Reçus détaillés et SHA dans [lot-03s-preuves.json](lot-03s-preuves.json), journaux publics sous `.relais/codex03s-20261115/`. Spark sous charge concurrente (autre npm observé) ; ces mesures ne prouvent ni FPS ni latence navigateur.
 
-Destruction directe, Node24.18, domaine principal, CPU du thread : 450 impacts mesurés, cinq passes AB/BA après une passe initiale, égalité exacte après chaque impact. **Total blast + matérialisation meshes : 3600,57 → 1799,72 µs en moyenne ; ratio médian apparié 0,50025**. Côté candidat, blast 1164,50 µs et getter 635,22 µs. Le travail déplacé vers le getter est compté ; le gain du seul blast n'est pas le gain net. Les échantillons très courts restent soumis à la résolution de l'horloge.
+Destruction directe, Node24.18, domaine principal, CPU du thread : 450 impacts mesurés, cinq passes AB/BA après une passe initiale, égalité exacte après chaque impact. **Total blast + matérialisation meshes : 3600,57 → 1799,72 µs en moyenne ; ratio médian apparié 0,5001667**. Côté candidat, blast 1164,50 µs et getter 635,22 µs. Le travail déplacé vers le getter est compté ; le gain du seul blast n'est pas le gain net. Les échantillons très courts restent soumis à la résolution de l'horloge : 4 des 450 dénominateurs CPU total sont nuls et exclus des ratios, pas des moyennes. La médiane conventionnelle porte sur 446 ratios finis ; calcul corrigé depuis les rows conservées, sans nouveau banc.
 
-AB2 canonique, Node22.11, CPU processus, legacy-s2/arme2/1800 pas, cinq paires alternées et un échauffement :
+AB2 canonique, Node22.11, CPU processus, legacy-s2/arme 2/1800 pas, cinq paires alternées et un échauffement :
 - T1 isolé : `identical=true`, stabilité A/B et six passes identiques. Ratio CPU total 1,0256, médiane appariée 1,0319 : le microgain ne devient pas un gain de toute la boucle dans ce scénario.
-- T1/T4 : A/B stables, divergence déterministe au pas92 sur les six passes ; qualité T4 autorise les chemins ennemis différents. Ratio CPU total0,9383 mais médiane appariée1,0102 : pas de gain uniforme annoncé. Le rejeu indépendant au pas 92 attribue exactement le premier écart à 8 planWait et 148 thinkWait préservés : aucune position, HP, chemin ni destruction différente à cet instant. Reçu : lot-03s-premier-ecart.json, SHA256 41a10703ee494c656787027e061b3b6ea758728eae4102283e8aefd1e7a48444.
+- T1/T4 : A/B stables, divergence déterministe au pas 92 sur les six passes ; qualité T4 autorise les chemins ennemis différents. Ratio CPU total 0,9383 mais médiane appariée 1,0102 : pas de gain uniforme annoncé. Le rejeu indépendant au pas 92 attribue exactement le premier écart à 8 planWait et 148 thinkWait préservés : aucune position, HP, chemin ni destruction différente à cet instant. Reçu : lot-03s-premier-ecart.json, SHA256 41a10703ee494c656787027e061b3b6ea758728eae4102283e8aefd1e7a48444.
 
-Combats production, Node24.18, CPU thread, 60 s, GOD, seed96, pilote skilled, cinq paires par espèce alternant l'ordre A/B. Chaque combat est un processus neuf ; les runs préliminaires exclus ne chauffent pas les processus suivants. Toutes les paires ont la même durée réelle de60s. `edgeWipes=0`, pompe1/2/1 pas par minute sur espèces0/1/2, donc <40.
+Combats production, Node24.18, CPU thread, 60 s, GOD, seed 96, pilote skilled, cinq paires par espèce alternant l'ordre A/B. Chaque combat est un processus neuf ; les runs préliminaires exclus ne chauffent pas les processus suivants. Toutes les paires ont la même durée simulée de 60 s. `edgeWipes=0`, pompe1/2/1 pas par minute sur espèces 0/1/2, donc <40.
 
-| Espèce | Première casse | Médiane base | Médiane candidat | Maximum candidat | <8 ms aux5 mesures |
+| Espèce | Première casse | Médiane base | Médiane candidat | Maximum candidat | <8 ms aux 5 mesures |
 |---|---:|---:|---:|---:|---|
-| 0 | pas658, 10,967s |16,240ms|12,638ms|14,000ms|non|
-| 1 | pas658, 10,967s |17,940ms|10,838ms|13,857ms|non|
+| 0 | pas 658, 10,967s |16,240ms|12,638ms|14,000ms|non|
+| 1 | pas 658, 10,967s |17,940ms|10,838ms|13,857ms|non|
 | 2 | pas654, 10,900s |7,001ms|3,040ms|4,999ms|oui|
 
 ## T5 restant
 
 Le décalage de refreshNav a été essayé puis retiré : un checkpoint pris avant l'invalidation différée donnait une nav différente de sa restauration. Aucun nouveau champ save, ni flush supplémentaire de chemins dans snapshot, n'a été introduit pour masquer ce défaut. Le repro reste couvert.
 
-Les phases instrumentées (temps muraux inclusifs, non additionnables) indiquent encore damageScenery 2,35–9,53ms, nouveaux débris 0,75–1,41ms ; pumpNav est négligeable au pas de première casse. Les diagnostics BOUNDED et NO_SLEEP restent hors source et hors acceptation. Le filtre solide et le sommeil statique existaient déjà dans la base ; les anciennes sondes SOLIDONLY/SLEEP ne constituent pas de nouvelles optimisations. Désactiver le sommeil sur espèce2 ne réduit pas un coût significatif de cette première casse. Profil CPU du pas658 espèces0/1 demandé pour poursuivre ; aucun préchauffage artificiel ajouté.
+Les phases instrumentées (temps muraux inclusifs, non additionnables) indiquent encore damageScenery 2,35–9,53ms, nouveaux débris 0,75–1,41ms ; pumpNav est négligeable au pas de première casse. Les diagnostics BOUNDED et NO_SLEEP restent hors source et hors acceptation. Le filtre solide et le sommeil statique existaient déjà dans la base ; les anciennes sondes SOLIDONLY/SLEEP ne constituent pas de nouvelles optimisations. Désactiver le sommeil sur espèce2 ne réduit pas un coût significatif de cette première casse. Profil CPU du pas 658 espèces 0/1 demandé pour poursuivre ; aucun préchauffage artificiel ajouté.
 
 ## Reproduction
 
 `tools/proof/lot03s/revision-cost.mjs <base> <candidat> <sortie.json>` mesure blast, getter et total CPU. `tools/proof/lot03s/run.py --base <archive-c28> --candidate <clone> --out <dossier> --node <Node24>` reproduit la série threadCPU, les cinq paires/espèce et les diagnostics. Le pilote de combat vient du banc historique, mais charge les modules courants via `tools/realm-loader.mjs` (FMath/FPassages compris), sans VM de performance ni bouclier réintroduit.
 
 AB2 : `node tools/ab2.mjs <base> <candidat> --scenario legacy-s2 --weapon 2 --steps 1800 --reps 5 --warmups 1 --no-counters --out <reçu>`. Pour T1 isolé, copie source archivée de la base avec le seul destruction.js candidat. Aucune worktree créée, aucun push/service.
+
+## Compléments T5 rejetés
+
+Les deux essais ont été retirés. Les sources destruction.js et simulation.js sont exactement celles du palier fa9cf768. Aucun complément moteur n’est retenu sans gain établi.
+
+| Essai contre fa9 | Tests ciblés | Impacts exacts | Digests de combat identiques | CPU total microbanc A → B | Max première casse B (0 / 1 / 2) |
+|---|---:|---:|---:|---:|---:|
+| Groupes/supports préfiltrés, compte sans allocation |40/40|450|15/15|1607,53 → 1940,99 µs|14 / 9,956 / 6,987 ms|
+| copyBox littéral, mêmes champs et ordre |145/145|450|15/15|2042,44 → 2039,93 µs|10,947 / 13,224 / 7,999 ms|
+
+Le second essai est neutre en coût net (~−0,12%), sans gain uniforme ni seuil T5 atteint. Les patches rejetés, toutes les mesures et leurs versions sont conservés sous `t5-roofs/` et `t5-copybox/` ; les synthèses sont dans lot-03s-preuves.json. Les médianes y sont recalculées depuis les rows conservées, avec exclusion explicite des ratios non finis et la convention arithmétique usuelle.
+
+Les profils CPU inspector sur fa9 au pas 658 montrent un coût réparti entre damage, damageScenery, updateDebris et collision ; le démarrage/arrêt inspector visible dans le profil est hors pas mesuré. Ils ne prouvent pas le seuil d’acceptation. Une sonde indépendante GC/JIT **sur le candidat roofs rejeté**, en processus neuf sans inspector ni préchauffage, relève au pas 658 plusieurs déoptimisations (type feedback et wrong map), sans GC ni OSR damage observé. Son CPU 7,85 ms est un diagnostic instrumenté isolé, pas une validation T5, et n’est pas extrapolé à fa9. Reçus de cette sonde : `/home/m4d135/work/codex-metal-pilotage-20261115/gc-jit-03s/`, trace SHA256 `9755499fec3c802c0795212d0e0e43ad500c293b08d6960393e25fce4df5e4bd`.
+
+T5 reste ouvert pour une attribution plus précise avant d’autres modifications. Aucun préchauffage artificiel, décalage de physique ou relâchement de test n’a été ajouté. Le lot 03s complet n’est pas promu.

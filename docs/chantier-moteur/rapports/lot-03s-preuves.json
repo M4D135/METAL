@@ -2,7 +2,7 @@
   "schema": "metal-lot03s-evidence-v1",
   "date": "2026-11-15T01:22:17.074764+00:00",
   "base": "c28ebda3f12e612370d8b8b6e1de63f7c667e77c",
-  "status": "T1/T4 validated; T5 <8ms not achieved; development continues",
+  "status": "T1/T4 validated and source restored to fa9; T5 remains open, both follow-up source experiments rejected",
   "sourceSha256": {
     "a": {
       "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
@@ -29,14 +29,17 @@
     "impacts": 450,
     "aMeanCpuUs": 3600.571111111111,
     "bMeanCpuUs": 1164.5044444444445,
-    "pairedMedianRatio": 0.33377792597532513,
+    "pairedMedianRatio": 0.3332222592469177,
     "aMeanRenderUs": 0.7020755555661,
     "bMeanRenderUs": 657.9348422222112,
     "aMeanRenderCpuUs": 0,
     "bMeanRenderCpuUs": 635.2155555555555,
     "aMeanTotalCpuUs": 3600.571111111111,
     "bMeanTotalCpuUs": 1799.72,
-    "pairedMedianTotalCpuRatio": 0.5002498750624688
+    "pairedMedianTotalCpuRatio": 0.5001666666666666,
+    "excludedQuantizedBlastPairs": 4,
+    "excludedQuantizedTotalPairs": 4,
+    "medianConvention": "Arithmetic mean of the two middle values for an even sample; non-finite ratios excluded (A=0), B=0/A>0 retained"
   },
   "ab2": {
     "t1": {
@@ -458,6 +461,320 @@
     "revision-cost.json": "e870491b23a449f839e868b57d77f8b4de3b0dcd677fdcdf0b05fd752cfae2b6",
     "fight-4-0-b.json": "e02b2d23767bd30ad46adea2ecbf6fe9e30a34b2e3915acf9c65b40508c1ac48",
     "fight-5-0-b.json": "cd7566dc40b0dc8c6da59a2f688919c5bc396aca4627403f962918d6852ce6bd",
-    "fight-0-1-a.json": "40d05e2ec8fecb811a3e3b51088bf94b0695e2f8329282120ce0dc1067f3c88d"
+    "fight-0-1-a.json": "40d05e2ec8fecb811a3e3b51088bf94b0695e2f8329282120ce0dc1067f3c88d",
+    "revision-cost-thread-summary-corrected.json": "929b1eb85c99dc550a0c6080227c4fe12a0dea37e888d7516b6bb1b72a045f40"
+  },
+  "rejectedExperiments": [
+    {
+      "name": "t5-roofs",
+      "retained": false,
+      "reason": "No demonstrated net CPU benefit; T5 threshold remains unmet",
+      "base": "fa9cf768417f6e7ccd3046f8b065c82570fa4181",
+      "candidateSourceSha256": {
+        "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+        "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+        "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+        "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+        "destruction": "bb69cd72a2d988a29533931e456dca1e89556e025f9b0681f2ef99777ba1db9f",
+        "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+        "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+        "simulation": "9d01b78472d14eab72c4804fbc3d34c6ab83e9d24bdd99c6f66624cc2f484536"
+      },
+      "exactImpacts": 450,
+      "testsPassed": 40,
+      "combatDigestPairsEqual": 15,
+      "combatPairs": 15,
+      "revisionCost": {
+        "impacts": 450,
+        "aMeanCpuUs": 1146.3266666666666,
+        "bMeanCpuUs": 1183.8,
+        "pairedMedianRatio": 0.999000999000999,
+        "aMeanRenderUs": 456.4664355555558,
+        "bMeanRenderUs": 751.1446888888635,
+        "aMeanRenderCpuUs": 461.20444444444445,
+        "bMeanRenderCpuUs": 757.1933333333334,
+        "aMeanTotalCpuUs": 1607.5311111111112,
+        "bMeanTotalCpuUs": 1940.9933333333333,
+        "pairedMedianTotalCpuRatio": 1.0003333889074135,
+        "excludedQuantizedBlastPairs": 115,
+        "excludedQuantizedTotalPairs": 76
+      },
+      "fights": [
+        {
+          "species": 0,
+          "a": {
+            "firstBreakMs": [
+              3.997,
+              9.001,
+              4.875,
+              6.985,
+              13
+            ],
+            "medianMs": 6.985,
+            "maxMs": 13
+          },
+          "b": {
+            "firstBreakMs": [
+              3.993,
+              6.552,
+              9.983,
+              14,
+              11.973
+            ],
+            "medianMs": 9.983,
+            "maxMs": 14
+          }
+        },
+        {
+          "species": 1,
+          "a": {
+            "firstBreakMs": [
+              3.983,
+              5.975,
+              5.878,
+              11.001,
+              4.859
+            ],
+            "medianMs": 5.878,
+            "maxMs": 11.001
+          },
+          "b": {
+            "firstBreakMs": [
+              9.001,
+              8.983,
+              7.919,
+              9.956,
+              4.998
+            ],
+            "medianMs": 8.983,
+            "maxMs": 9.956
+          }
+        },
+        {
+          "species": 2,
+          "a": {
+            "firstBreakMs": [
+              5.994,
+              2,
+              5.993,
+              5.979,
+              5.901
+            ],
+            "medianMs": 5.979,
+            "maxMs": 5.994
+          },
+          "b": {
+            "firstBreakMs": [
+              4.934,
+              3.001,
+              4.925,
+              6,
+              6.987
+            ],
+            "medianMs": 4.934,
+            "maxMs": 6.987
+          }
+        }
+      ],
+      "receiptHashes": {
+        "fight-2-2-b.json": "f0e19289adf205094be6b24533a01b5b2da2462ff314467881dea956698e03e1",
+        "fight-3-0-a.json": "21432fbcafd6566c0a6a031e4834c05a1b804a7d7acd4d3826c440666721d0d5",
+        "fight-3-2-a.json": "6d91b169cb50661ea062f0d24ebd0a272077078920206df2ecb6f99e84970377",
+        "fight-4-1-a.json": "028cafa3c6b53954e71ab97f25bb9be75fc2046a8925427db240a529ad345e7f",
+        "fight-2-1-b.json": "c3a585ee820fa5fe7cd4a27660a12bc8fae878f8751ac5d307e27dc7ce77d54a",
+        "fight-3-0-b.json": "3715b1e275c0678e65c873ec3f8a47cdd027b0f374158463d21759388ffd7c8b",
+        "fight-5-2-b.json": "30822f06ab334cf1e1f01e5f8b3eaa0f21ead0f1049d9a01991a749a17839621",
+        "fight-3-1-b.json": "08ad6d19b0b6b242ce0666f1d76ac987a2486eedfcd7b1db3aed5515c3bda4e8",
+        "fight-3-1-a.json": "938194ca76e59ff9e0673182b721430d629e3ac0da75cabf2ca3e3e722b53cd8",
+        "fight-4-0-a.json": "c1793438ebfc21295e6b691b0c6bd166075c9d86445ce0ce1a79620535f19850",
+        "fight-0-1-b.json": "f09ebfbc87e0e66ae8fb371abf00df89fde29a21bc3f9c2cc446b3423e36b1fd",
+        "bench-run-thread.json": "af4b3449a8bae06fe050f208d1d56de15a5c9abffa21ef0f18c6effad178e1b5",
+        "fight-0-0-a.json": "2f3d8a4d99a55bb5e8222f0191d159e3a79bfec6d608ec40e80be794683ae5cd",
+        "fight-4-1-b.json": "9ba58a25cda887fca89752273cd1dd6ccfcb9a378160274cc51b44df8caf3872",
+        "revision-cost-thread.json": "cc56966c449c26d12c97125231c3c722171d00088a169f71ae81041fc2f17581",
+        "fight-2-0-a.json": "9a5445a9fd585b23002a966c9734763a6e20fc162a74268c7eef4982a1183798",
+        "fight-1-2-a.json": "b3008831065f442f4e8cfb676c6e991bbdf8b886275f4187af28a184135fa456",
+        "fight-0-2-b.json": "6358288bb39f8def535cc66ebdb3370ba7ea4280318b44973bf5069f90ed024e",
+        "fight-5-2-a.json": "4ca704dd4eef9f3c80ecde4930326b97b8e8c9652ab08ccedf9ace39e0df252a",
+        "fight-4-2-b.json": "ea405a08d6f7645cfcffe3b43e269ee5d6a19219eb074d0921f46f8d6678e15d",
+        "fight-2-1-a.json": "044b0f058949b9838a8c8022c8670051263ac18bfbc92b26f41791522d91362d",
+        "fight-5-0-a.json": "9c11fa3ec8a276f87da9d98a8bf1fb0a1b57d87eb30fe8a99bdc3411540a1d88",
+        "fight-1-2-b.json": "dc3a2d66c331f814d7587c59cc9e998dbfc3ee09897cbbe15d13792a80e2fde4",
+        "fight-0-2-a.json": "0899987f1c034cb58978b7181b14b86809124bd038ce006e82be81659652c9ad",
+        "fight-1-0-a.json": "ac869629564866c7797e7f6b9f8c419341a5d4d6f84e8b3b221db1660254cc36",
+        "fight-1-1-b.json": "c8bf608963e5b9e774fd50a41df1ff2d591db4c5a778743ebf1fbe11bf176371",
+        "fight-2-0-b.json": "783e5c43be7b09e66bde1c912d68cd4bfbb61d18b944c48f187ae3e3a3877267",
+        "fight-0-0-b.json": "d4fc5b1448849786a7043ee9b8d4bf7cd6ce4efb1ebc1e5a47b730c9f64f5c30",
+        "fight-3-2-b.json": "92e5d676ee9cb46d17dc7835d3323b3c040a308497cb707f107ae86ff339e179",
+        "fight-4-2-a.json": "331bb93540197f4a892d92b8299318c500494b85bed15088e9a489e76d5e5cd2",
+        "fight-5-1-a.json": "341e90a8ae27e36400047c01d73662d7916e1e1f773f05795864511cf75a120c",
+        "fight-5-1-b.json": "aabaef54b71e9881a1555e6f8f8037cc332b716e697d9ff2c418917b0a6ba317",
+        "fight-1-1-a.json": "b259b0faf2b15a0f36f5d1a47eb028c47a25d35e9f459d4cb49a3aa2cebd5974",
+        "fight-1-0-b.json": "7aa8364d626514fa271209805f26963084055ebac900f92681a0d2b705ac889e",
+        "fight-2-2-a.json": "eb775b97ee717be6e48308c684cd27984cb98fe4f69c671866da93d2379687ac",
+        "fight-4-0-b.json": "bca8f20027e5ce2335bda128eec891524dbc7da1a5a0d00504b8abb9ef6afdef",
+        "fight-5-0-b.json": "4b6b777e9277825e41f02a32f54787dd85daec985a5e3aadac4d416204db63ad",
+        "fight-0-1-a.json": "617d063cd0ea80b1236e2db234996a12c3d910c197c3c8967bdf97f4ba2db425"
+      },
+      "rejectedPatchSha256": "270a473fafe801e965446d28fea92cf1ce82fa8688d8471b392d125988cba34a"
+    },
+    {
+      "name": "t5-copybox",
+      "retained": false,
+      "reason": "No demonstrated net CPU benefit; T5 threshold remains unmet",
+      "base": "fa9cf768417f6e7ccd3046f8b065c82570fa4181",
+      "candidateSourceSha256": {
+        "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+        "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+        "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+        "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+        "destruction": "0be02b591f7cc50a5b1b051ae1a2948a107463c63b7af40a8ad460227b031a7d",
+        "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+        "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+        "simulation": "9d01b78472d14eab72c4804fbc3d34c6ab83e9d24bdd99c6f66624cc2f484536"
+      },
+      "exactImpacts": 450,
+      "testsPassed": 145,
+      "combatDigestPairsEqual": 15,
+      "combatPairs": 15,
+      "revisionCost": {
+        "impacts": 450,
+        "aMeanCpuUs": 1455.3555555555556,
+        "bMeanCpuUs": 1443.1666666666667,
+        "pairedMedianRatio": 1.0,
+        "excludedQuantizedBlastPairs": 86,
+        "aMeanRenderUs": 563.0068999999962,
+        "bMeanRenderUs": 612.9681222222441,
+        "aMeanRenderCpuUs": 587.08,
+        "bMeanRenderCpuUs": 596.7666666666667,
+        "aMeanTotalCpuUs": 2042.4355555555555,
+        "bMeanTotalCpuUs": 2039.9333333333334,
+        "pairedMedianTotalCpuRatio": 0.9995001874219102,
+        "excludedQuantizedTotalPairs": 50
+      },
+      "fights": [
+        {
+          "species": 0,
+          "a": {
+            "firstBreakMs": [
+              10.725,
+              5,
+              6.958,
+              3.993,
+              14.836
+            ],
+            "medianMs": 6.958,
+            "maxMs": 14.836
+          },
+          "b": {
+            "firstBreakMs": [
+              10.001,
+              6.999,
+              4.962,
+              10.947,
+              10.001
+            ],
+            "medianMs": 10.001,
+            "maxMs": 10.947
+          }
+        },
+        {
+          "species": 1,
+          "a": {
+            "firstBreakMs": [
+              9.774,
+              11.83,
+              4.003,
+              7.95,
+              9
+            ],
+            "medianMs": 9,
+            "maxMs": 11.83
+          },
+          "b": {
+            "firstBreakMs": [
+              13.224,
+              8,
+              3.986,
+              4.074,
+              4.794
+            ],
+            "medianMs": 4.794,
+            "maxMs": 13.224
+          }
+        },
+        {
+          "species": 2,
+          "a": {
+            "firstBreakMs": [
+              3,
+              5.019,
+              3.001,
+              6.001,
+              3
+            ],
+            "medianMs": 3.001,
+            "maxMs": 6.001
+          },
+          "b": {
+            "firstBreakMs": [
+              3.003,
+              6.001,
+              7.999,
+              5.99,
+              4.077
+            ],
+            "medianMs": 5.99,
+            "maxMs": 7.999
+          }
+        }
+      ],
+      "receiptHashes": {
+        "fight-2-2-b.json": "0a62b56a9e0537a7aebb29c1caa796862f9cab3239fa4b617ad8b8cc472490c8",
+        "fight-3-0-a.json": "9f5fa50772deb6e3305071e120b24c3acf201efdaa849bc27b5a3ed8f11da930",
+        "fight-3-2-a.json": "92a3830492306e7777413a68838b17a4788ee07aa1e9d253d95ad06dc8513ba3",
+        "fight-4-1-a.json": "805e98c843f0bf220d9b9563c86af601e2fb2a2d74e6d261fe7a8b6b7a0c7278",
+        "fight-2-1-b.json": "4daa93f47cab309685dac3abe8d3ca8172f8b0f226f395762dce09173ad70dae",
+        "fight-3-0-b.json": "f4ac03631dfa2906a5fd14d868f31351dd162f40aa25792a5dcef6b280c14dd3",
+        "fight-5-2-b.json": "e8eec4bc081dd6d87426aa4174ffed1deb18ef31ecf54e79134cb4b52c6dabf3",
+        "fight-3-1-b.json": "933cf07178f7f2adaa67835ed9f6fa8c4dcd7bd505892b6e7e4847431f49e7b4",
+        "fight-3-1-a.json": "03e91ed714e44354dd743cb77bee06014347cb367041418ccb583ba16f37919b",
+        "fight-4-0-a.json": "dd53e0adf89f43653b2628fafc8fae72e9af492da276ab14f7bfa1187f7d1e85",
+        "fight-0-1-b.json": "c2e7f9dc3d59215880b5fa502571e1cb0cbcc50c59f1c0c87d23ff955b6cc021",
+        "bench-run-thread.json": "bcd72405cb667d7aae496f8edf9cd7d0bccd139d4c716b6159b6f23ea568f7ee",
+        "fight-0-0-a.json": "4aa5ca0859a465d7261699d9dd195774305a875ca942f720ea3304687c78d882",
+        "fight-4-1-b.json": "dfef6fe631db4530f8f06870d3207c67dd60d58f922d6db292bf8dbf3e7fe71b",
+        "revision-cost-thread.json": "c0b9d115d09e78f90d24f1d93c128eee5bf4635d3d1649eb3876745e7997d7d5",
+        "fight-2-0-a.json": "2cf6a55e4b18171bc4188ba30ae51e8d020a1b0cf005e35e03be173d1bed8c56",
+        "fight-1-2-a.json": "240c310bbd597006c21abd2e17e07499c8fe82ca709bebd33218b54b6b984d8a",
+        "fight-0-2-b.json": "6c98e6a8c983718cd26adafc92b2a6dd1aed19917dd03a084e934d7103e2c760",
+        "fight-5-2-a.json": "8500df00ca73d3d762d0f5cb7670836f635cb16dc1723ffa37e26a0d1371aa33",
+        "fight-4-2-b.json": "ffced38c1d0473fab71ef4c22dbdf2578b9f0672cc444a5c5828ebe50bcd3a9f",
+        "fight-2-1-a.json": "8548457ad1be7683a7a9704dbe0dffd0bd42c890ed700f5bfb13aa7346da51e4",
+        "fight-5-0-a.json": "febe5d379378021a36e6c0bcbfdec735b3490d214c1a04635fb85f24aba9e1f1",
+        "fight-1-2-b.json": "fae82e5f3778a81eb7432794e1eff07aacee5889fc56cdc1a11ee2fdc8c3705e",
+        "fight-0-2-a.json": "f612d9367acc510f80ddaede507c5209bf926bdb951402cc4f27f91314d52e7d",
+        "fight-1-0-a.json": "50417010255b5e51718af9c3586e689a250ec500640eb83afdb46333fa33787f",
+        "fight-1-1-b.json": "12fd856b6b3f7e9436f3ae24e5637dfcddfab04ffff8153906939beaba65dde6",
+        "fight-2-0-b.json": "6081620469b7e312ae854e3afa5610479ddef09fcc250e0313c7d9ebddaece80",
+        "fight-0-0-b.json": "921d8c240feb961e10df5f379688013500070d2a5d26ede845cb352fb49e54f9",
+        "fight-3-2-b.json": "f2c6f2551b7a79dc3368d1ecf40d63305be29d34faae3bf994b4185b1457d1b7",
+        "fight-4-2-a.json": "49a2a4f27181473ecc835367f144c4d91a489d498d832edc7800444fb5340573",
+        "fight-5-1-a.json": "0960e6c0562264d603a315668bb5016fb25dbc74ba0064ce506df7ff4e717f88",
+        "fight-5-1-b.json": "c097507fcae4d7ed61031b2dbee1581699fab9f8dd12810379e34a5fa58e6dcb",
+        "fight-1-1-a.json": "58860a1d25e0d3b9018928327764a194c7e73ee23c086cac7f884a1a5d1622dd",
+        "fight-1-0-b.json": "293bf1f5ed0a209b80962becbd74b756a287c39e1dab74dc89cf1ec90e2d2983",
+        "fight-2-2-a.json": "bbb512a482c3a4d7d244e5cba2c9cd351b12da27111a971f8f43430654ef24f3",
+        "fight-4-0-b.json": "6de3364766e77935eb21133079fc97cde0c44f5ead69b792ec7d448279a123a5",
+        "fight-5-0-b.json": "6cefd913b91be3826c98c6ac247ad5d3b64af9233fb383b93991922029281721",
+        "fight-0-1-a.json": "c9dd30ece05d70ae1e9d44ea1607d5a160944e59b5bd8f2bce7401000fd3f244"
+      },
+      "rejectedPatchSha256": "ebf820f8237f2cbf9d4db609d4037d2abfb83c921b46edcff309f06ab46a1ab6"
+    }
+  ],
+  "sourceRestoredTo": "fa9cf768417f6e7ccd3046f8b065c82570fa4181",
+  "retainedSourceSha256": {
+    "destruction.js": "0e14293a3a6f8c83c8495e1a210b4a84e98aa08c7364306f49ea3a28988ac1ad",
+    "simulation.js": "9d01b78472d14eab72c4804fbc3d34c6ab83e9d24bdd99c6f66624cc2f484536"
   }
 }
