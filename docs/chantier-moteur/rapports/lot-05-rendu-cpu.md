@@ -460,8 +460,8 @@ avec le bloc d'ombres à 54,6 % (camp:17) et 56,4 % (camp:6) du dessin — le
 contre-vérificateur mesure 55,4 % et 54,2 % avec les mêmes chiffres.
 
 Le poste dominant est le **bloc d'ombres** (≈ 55 % du dessin), devant la
-statique et la vue. Trois pistes ont été évaluées et écartées sur mesures ou
-sur garde-fou, aucune n'est commitée :
+statique et la vue. Trois pistes ont été évaluées, **toutes trois chiffrées**,
+et écartées — aucune n'est commitée :
 
 1. **Pré-filtre par cellule dans `selectionCache` (vue et torche)** — le sur-
    ensemble est réutilisé tant que la caméra reste dans la marge (1,03 m de
@@ -476,7 +476,18 @@ sur garde-fou, aucune n'est commitée :
 2. **Réutilisation du jeu de projeteurs du soleil entre deux images** — le jeu
    est recalculé chaque image sur `sunCache.candidates` ; le réutiliser par pas
    de quantification introduirait une ombre portée avec une image de retard,
-   explicitement refusée par la fiche (apparition retardée).
+   explicitement refusée par la fiche (apparition retardée). **Mesuré au tour 2**
+   (`node tools/proof/lot05/sun-filter-cost.mjs . 300 <monde> auto 5`,
+   instrumentation `sun-sonde` et prototype `sun-reutilise` en lockstep) : le
+   filtre coûte **0,066 ms par image à camp:17 (5,5 % de `draw()`) et 0,054 ms à
+   camp:6 (4,9 %)**, sur 2 897 à 2 918 candidats examinés et 1 748 à 1 800
+   projeteurs retenus par image — c'est le plafond de la piste. Le prototype
+   complet va plus loin (ratio corrigé 0,827 à camp:17, 0,683 à camp:6) parce que
+   réutiliser le même tableau fait aussi toucher le cache de slots de
+   `renderStatic`. En regard, le jeu obtenu change d'une image à l'autre sur
+   **92,6 % (camp:17) à 96,3 % (camp:6)** des images : un jeu réutilisé serait
+   périmé neuf fois sur dix. Écartée sur le garde-fou de la fiche, chiffres à
+   l'appui.
 3. **Moins d'appels GL dans les passes d'ombre (VAO)** — mesuré en T16 :
    supprimer 190 appels par image ne déplace pas la mesure.
 

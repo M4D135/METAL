@@ -107,6 +107,17 @@ test('le contrôle sommeEtapes du profil « au-delà » rend compte du total', (
   }
 });
 
+test('toutes les pistes écartées de l« au-delà » sont chiffrées', () => {
+  // Le critère de fin de la mission demande des pistes « mesurées et écartées,
+  // chiffres à l'appui » ; la piste 2 était publiée avec "mesure": null.
+  const p = join(racine, 'docs', 'chantier-moteur', 'preuves', 'lot-05-rendu-cpu', 'au-dela', 'pistes-ecartees.json');
+  const j = JSON.parse(readFileSync(p, 'utf8'));
+  assert.ok(Array.isArray(j.pistes) && j.pistes.length === 3, 'trois pistes attendues');
+  const vides = j.pistes.filter(t => !t.mesure || typeof t.mesure !== 'object' || Object.keys(t.mesure).length === 0)
+    .map(t => t.nom);
+  assert.deepEqual(vides, [], 'pistes sans mesure : ' + vides.join(', '));
+});
+
 test('les deux bancs exigés par les preuves T3 et T9 sont bien dans le dépôt', () => {
   for (const f of ['tools/proof/lot05/gc-bench.mjs', 'tools/proof/lot05/effects-ab.mjs',
     'tools/proof/lot05/effects-ab2.mjs', 'tools/proof/lot05/alloc-image.mjs',

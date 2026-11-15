@@ -33,6 +33,29 @@ const OPERATIONS = {
       with: ['            const C=globalThis.__t19;if(C){C.cellsTested++;C.entriesTouched+=count;}',
         '            if(!visibleSphere(x*8+4,cy,z*8+4,5.656854249492381+half+maxRadius[level],eye,frustum.axes,frustum.horizontal,frustum.vertical,frustum.far)){if(C){C.cellsSkipped++;C.entriesSkipped+=count;}continue;}']},
   ],
+  // Sonde de la piste écartée n°2 de l'étape « au-delà » : coût de la boucle de
+  // filtrage des projeteurs du soleil, et fréquence à laquelle le jeu obtenu change
+  // d'une image à l'autre (ce que la réutilisation entre deux images rendrait tardif).
+  'sun-sonde': [
+    {op: 'after', anchor: ['      const candidates=sunCache.candidates;'],
+      insert: ["      const __sun=globalThis.__sun||(globalThis.__sun={ms:0,candidats:0,projeteurs:0,gens:[],images:0});",
+        '      const __t0=performance.now();']},
+    {op: 'after', anchor: ['      sunCasterOut.gen=sunHash;sunCasterOut.count=sunCasterOut.length;'],
+      insert: ['      __sun.ms+=performance.now()-__t0;__sun.candidats+=candidates.length;',
+        '      __sun.projeteurs+=sunCasterOut.length;__sun.gens.push(sunCasterOut.gen);__sun.images++;']},
+  ],
+  // Prototype de la même piste : le jeu de projeteurs de l'image précédente est réutilisé
+  // tel quel (le filtre n est pas rejoué). Mesure le gain maximal de la piste ; la fiche
+  // refuse l apparition retardée, donc le prototype n est pas commité.
+  'sun-reutilise': [
+    {op: 'replace', anchor: ['      sunCasterOut.length=0;'],
+      with: ["      if(globalThis.__sunReuseOn&&sunCasterOut.__prev){const keep=sunCasterOut.__prev;sunCasterOut.length=0;",
+        '        for(const e of keep)sunCasterOut.push(e);sunCasterOut.gen=sunCasterOut.__prevGen;sunCasterOut.count=sunCasterOut.length;',
+        '        globalThis.__sunReuse=(globalThis.__sunReuse||0)+1;}else{',
+        '      sunCasterOut.length=0;']},
+    {op: 'after', anchor: ['      sunCasterOut.gen=sunHash;sunCasterOut.count=sunCasterOut.length;'],
+      insert: ['      sunCasterOut.__prev=sunCasterOut.slice();sunCasterOut.__prevGen=sunHash;}']},
+  ],
   // Variante T16 (abandonnée) : un seul vertexAttribPointer au lieu de quatre par dessin.
   't16-sonde': [
     {op: 'replace', anchor: ['        for(let i=2;i<6;i++) gl.vertexAttribPointer(i,4,gl.FLOAT,false,64,group.offset+(i-2)*16);'],
