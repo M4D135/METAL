@@ -1,10 +1,10 @@
 {
   "version": "0.9.2",
-  "html_bytes": 862797,
-  "html_decimal_kb": 862.8,
-  "html_kib": 842.58,
-  "gzip_bytes": 265375,
-  "sha256": "eedbd9884a149cc78f3a5db9a33cc0ea28e63dcba34b21e183ffc03c9a6a5509",
+  "html_bytes": 872370,
+  "html_decimal_kb": 872.37,
+  "html_kib": 851.92,
+  "gzip_bytes": 268334,
+  "sha256": "7d2378c3ede8b030df958645a4513b2e4cac0ff0f1b15cc936c6cb71894c1573",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
@@ -13,6 +13,7 @@
     "world.js": 134607,
     "destruction.js": 26469,
     "music.js": 28535,
+    "imuse.js": 9570,
     "audio.js": 62955,
     "audio-recipes.js": 3255,
     "soundscape.js": 4402,

@@ -1,0 +1,766 @@
+{
+ "schema": "metal-music-cost-v1",
+ "node": "v24.18.0",
+ "reps": 5,
+ "seconds": 60,
+ "frameMs": 16.6667,
+ "runs": {
+  "/home/m4d135/metal-chantier/voies/audio2": [
+   {
+    "director": {
+     "barUs": 2.8764,
+     "bars": 120,
+     "switches": 1,
+     "transitions": 1
+    },
+    "stage0": {
+     "tickUs": 0.842,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.658,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 1.839,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.893,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 110.81,
+     "slices": 28,
+     "maxSliceMs": 14.64,
+     "over8": 4,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 102.78,
+     "slices": 28,
+     "maxSliceMs": 15.75,
+     "over8": 3,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 102.43,
+     "slices": 28,
+     "maxSliceMs": 21.21,
+     "over8": 3,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 120.86,
+     "slices": 33,
+     "maxSliceMs": 20.49,
+     "over8": 4,
+     "moduleBytes": 183704
+    }
+   },
+   {
+    "director": {
+     "barUs": 0.5901,
+     "bars": 120,
+     "switches": 1,
+     "transitions": 1
+    },
+    "stage0": {
+     "tickUs": 0.604,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.775,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.735,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 1.308,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 121.91,
+     "slices": 28,
+     "maxSliceMs": 17.64,
+     "over8": 5,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 120.48,
+     "slices": 28,
+     "maxSliceMs": 22.1,
+     "over8": 5,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 107.16,
+     "slices": 28,
+     "maxSliceMs": 19.87,
+     "over8": 6,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 115.71,
+     "slices": 33,
+     "maxSliceMs": 14.25,
+     "over8": 4,
+     "moduleBytes": 183704
+    }
+   },
+   {
+    "director": {
+     "barUs": 1.3381,
+     "bars": 120,
+     "switches": 1,
+     "transitions": 1
+    },
+    "stage0": {
+     "tickUs": 1.081,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.831,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 1.087,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.696,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 109.34,
+     "slices": 28,
+     "maxSliceMs": 13.97,
+     "over8": 4,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 76.52,
+     "slices": 28,
+     "maxSliceMs": 10.7,
+     "over8": 2,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 104.23,
+     "slices": 28,
+     "maxSliceMs": 16.94,
+     "over8": 3,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 118.64,
+     "slices": 33,
+     "maxSliceMs": 19.69,
+     "over8": 3,
+     "moduleBytes": 183704
+    }
+   },
+   {
+    "director": {
+     "barUs": 0.5985,
+     "bars": 120,
+     "switches": 1,
+     "transitions": 1
+    },
+    "stage0": {
+     "tickUs": 0.782,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.582,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.783,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.684,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 112.87,
+     "slices": 28,
+     "maxSliceMs": 17.42,
+     "over8": 4,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 106.4,
+     "slices": 28,
+     "maxSliceMs": 16.68,
+     "over8": 3,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 104.61,
+     "slices": 28,
+     "maxSliceMs": 19.92,
+     "over8": 3,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 127.48,
+     "slices": 33,
+     "maxSliceMs": 22.07,
+     "over8": 3,
+     "moduleBytes": 183704
+    }
+   },
+   {
+    "director": {
+     "barUs": 1.2481,
+     "bars": 120,
+     "switches": 1,
+     "transitions": 1
+    },
+    "stage0": {
+     "tickUs": 0.331,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.791,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.825,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.49,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 121.53,
+     "slices": 28,
+     "maxSliceMs": 24.39,
+     "over8": 5,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 112.58,
+     "slices": 28,
+     "maxSliceMs": 18.83,
+     "over8": 4,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 108.35,
+     "slices": 28,
+     "maxSliceMs": 17.79,
+     "over8": 4,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 119.28,
+     "slices": 33,
+     "maxSliceMs": 18.63,
+     "over8": 2,
+     "moduleBytes": 183704
+    }
+   }
+  ],
+  "/home/m4d135/metal-chantier/voies/audio2/.relais/avant-t1": [
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.494,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.879,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.844,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 1.351,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 108.01,
+     "slices": 28,
+     "maxSliceMs": 15.05,
+     "over8": 5,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 100.39,
+     "slices": 28,
+     "maxSliceMs": 18.14,
+     "over8": 3,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 102.59,
+     "slices": 28,
+     "maxSliceMs": 21.35,
+     "over8": 4,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 129.92,
+     "slices": 33,
+     "maxSliceMs": 21.04,
+     "over8": 4,
+     "moduleBytes": 183704
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.919,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 1.37,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.77,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 1.126,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 106.15,
+     "slices": 28,
+     "maxSliceMs": 20.02,
+     "over8": 3,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 104.7,
+     "slices": 28,
+     "maxSliceMs": 20.87,
+     "over8": 4,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 107.35,
+     "slices": 28,
+     "maxSliceMs": 17.18,
+     "over8": 4,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 115.34,
+     "slices": 33,
+     "maxSliceMs": 10.87,
+     "over8": 3,
+     "moduleBytes": 183704
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.716,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.472,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.529,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.828,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 112,
+     "slices": 28,
+     "maxSliceMs": 18.1,
+     "over8": 3,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 107.7,
+     "slices": 28,
+     "maxSliceMs": 18.14,
+     "over8": 5,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 98.51,
+     "slices": 28,
+     "maxSliceMs": 15.97,
+     "over8": 1,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 113.55,
+     "slices": 33,
+     "maxSliceMs": 21.1,
+     "over8": 3,
+     "moduleBytes": 183704
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.539,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.672,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.475,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.966,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 105.61,
+     "slices": 28,
+     "maxSliceMs": 16.27,
+     "over8": 3,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 101.79,
+     "slices": 28,
+     "maxSliceMs": 21.94,
+     "over8": 2,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 106.65,
+     "slices": 28,
+     "maxSliceMs": 19.97,
+     "over8": 4,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 123.11,
+     "slices": 33,
+     "maxSliceMs": 18.06,
+     "over8": 4,
+     "moduleBytes": 183704
+    }
+   },
+   {
+    "director": {
+     "barUs": null,
+     "bars": 0,
+     "switches": 0,
+     "transitions": 0,
+     "absent": true
+    },
+    "stage0": {
+     "tickUs": 0.605,
+     "frames": 3600,
+     "notes": 360,
+     "rows": 502,
+     "peakVoices": 8,
+     "resyncs": 0
+    },
+    "stage1": {
+     "tickUs": 0.536,
+     "frames": 3600,
+     "notes": 872,
+     "rows": 853,
+     "peakVoices": 14,
+     "resyncs": 0
+    },
+    "stage2": {
+     "tickUs": 0.97,
+     "frames": 3600,
+     "notes": 910,
+     "rows": 728,
+     "peakVoices": 12,
+     "resyncs": 0
+    },
+    "stagetitle": {
+     "tickUs": 0.728,
+     "frames": 3600,
+     "notes": 1681,
+     "rows": 1064,
+     "peakVoices": 19,
+     "resyncs": 0
+    },
+    "synth0": {
+     "synthMs": 114.59,
+     "slices": 28,
+     "maxSliceMs": 23.78,
+     "over8": 4,
+     "moduleBytes": 259920
+    },
+    "synth1": {
+     "synthMs": 105.61,
+     "slices": 28,
+     "maxSliceMs": 19.37,
+     "over8": 3,
+     "moduleBytes": 194400
+    },
+    "synth2": {
+     "synthMs": 104.24,
+     "slices": 28,
+     "maxSliceMs": 13.35,
+     "over8": 4,
+     "moduleBytes": 210544
+    },
+    "synthtitle": {
+     "synthMs": 115.9,
+     "slices": 33,
+     "maxSliceMs": 17.47,
+     "over8": 2,
+     "moduleBytes": 183704
+    }
+   }
+  ]
+ },
+ "summary": {
+  "/home/m4d135/metal-chantier/voies/audio2": {
+   "barUs": 1.2481,
+   "tickUs_stage0": 0.782,
+   "synth_stage0": {
+    "ms": 112.87,
+    "maxSlice": 17.42,
+    "over8": 4,
+    "moduleBytes": 259920
+   },
+   "tickUs_stage1": 0.775,
+   "synth_stage1": {
+    "ms": 106.4,
+    "maxSlice": 16.68,
+    "over8": 3,
+    "moduleBytes": 194400
+   },
+   "tickUs_stage2": 0.825,
+   "synth_stage2": {
+    "ms": 104.61,
+    "maxSlice": 19.87,
+    "over8": 3,
+    "moduleBytes": 210544
+   },
+   "tickUs_stagetitle": 0.696,
+   "synth_stagetitle": {
+    "ms": 119.28,
+    "maxSlice": 19.69,
+    "over8": 3,
+    "moduleBytes": 183704
+   },
+   "notesStage1": 872,
+   "peakVoicesStage1": 14
+  },
+  "/home/m4d135/metal-chantier/voies/audio2/.relais/avant-t1": {
+   "barUs": null,
+   "tickUs_stage0": 0.605,
+   "synth_stage0": {
+    "ms": 108.01,
+    "maxSlice": 18.1,
+    "over8": 3,
+    "moduleBytes": 259920
+   },
+   "tickUs_stage1": 0.672,
+   "synth_stage1": {
+    "ms": 104.7,
+    "maxSlice": 19.37,
+    "over8": 3,
+    "moduleBytes": 194400
+   },
+   "tickUs_stage2": 0.77,
+   "synth_stage2": {
+    "ms": 104.24,
+    "maxSlice": 17.18,
+    "over8": 4,
+    "moduleBytes": 210544
+   },
+   "tickUs_stagetitle": 0.966,
+   "synth_stagetitle": {
+    "ms": 115.9,
+    "maxSlice": 18.06,
+    "over8": 3,
+    "moduleBytes": 183704
+   },
+   "notesStage1": 872,
+   "peakVoicesStage1": 14
+  }
+ }
+}

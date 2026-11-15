@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: the director is a deterministic function of requests and bar calls
+ok 1 - the director is a deterministic function of requests and bar calls
+  ---
+  duration_ms: 2.343311
+  type: 'test'
+  ...
+# Subtest: the brick uses no clock, no randomness, no timer and no host content
+ok 2 - the brick uses no clock, no randomness, no timer and no host content
+  ---
+  duration_ms: 0.18696
+  type: 'test'
+  ...
+# Subtest: vertical layers follow the intensity and only move on a bar boundary
+ok 3 - vertical layers follow the intensity and only move on a bar boundary
+  ---
+  duration_ms: 0.182432
+  type: 'test'
+  ...
+# Subtest: a requested cue finishes its segment, plays the written join, then enters the target
+ok 4 - a requested cue finishes its segment, plays the written join, then enters the target
+  ---
+  duration_ms: 0.53528
+  type: 'test'
+  ...
+# Subtest: an urgent request still finishes the bar in progress, never cuts it
+ok 5 - an urgent request still finishes the bar in progress, never cuts it
+  ---
+  duration_ms: 0.100768
+  type: 'test'
+  ...
+# Subtest: a multi-bar join keeps its written length and is not cut short
+ok 6 - a multi-bar join keeps its written length and is not cut short
+  ---
+  duration_ms: 0.103136
+  type: 'test'
+  ...
+# Subtest: the same event never restarts the music from bar zero
+ok 7 - the same event never restarts the music from bar zero
+  ---
+  duration_ms: 0.153535
+  type: 'test'
+  ...
+# Subtest: a request already queued is not queued twice and a newer request still wins
+ok 8 - a request already queued is not queued twice and a newer request still wins
+  ---
+  duration_ms: 0.106784
+  type: 'test'
+  ...
+# Subtest: a request made during a join is honoured at the end of that join
+ok 9 - a request made during a join is honoured at the end of that join
+  ---
+  duration_ms: 0.117312
+  type: 'test'
+  ...
+# Subtest: without a written join the change still waits for the segment end
+ok 10 - without a written join the change still waits for the segment end
+  ---
+  duration_ms: 0.155392
+  type: 'test'
+  ...
+# Subtest: segments walk the declared order and loop without a gap
+ok 11 - segments walk the declared order and loop without a gap
+  ---
+  duration_ms: 0.103664
+  type: 'test'
+  ...
+# Subtest: intensity is quantized so a noisy signal cannot flap a layer every frame
+ok 12 - intensity is quantized so a noisy signal cannot flap a layer every frame
+  ---
+  duration_ms: 0.085488
+  type: 'test'
+  ...
+# Subtest: descriptors are validated before anything can run
+ok 13 - descriptors are validated before anything can run
+  ---
+  duration_ms: 0.33736
+  type: 'test'
+  ...
+# Subtest: an unknown cue is refused and counted, and reset puts the transport back
+ok 14 - an unknown cue is refused and counted, and reset puts the transport back
+  ---
+  duration_ms: 0.084736
+  type: 'test'
+  ...
+# Subtest: stats expose the transport for the frame-budget bench
+ok 15 - stats expose the transport for the frame-budget bench
+  ---
+  duration_ms: 0.079152
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 75.619772
