@@ -6,7 +6,7 @@
   const level=xp=>1+Math.min(19,Math.floor(Math.sqrt(xp/100)));
   const capacity=xp=>4+.2*(level(xp)-1);
   function fresh(economy){
-    return {version:1,active:'light',classes:Object.fromEntries(names.map(id=>[id,{xp:0,weapon:4,left:null,economy:G.FEconomy.campaign(economy||G.FEconomy.fresh())}])),jetpack:{fuel:4,recharge:0}};
+    return {version:1,active:'light',classes:Object.fromEntries(names.map(id=>[id,{xp:0,weapon:4,left:null,position:null,economy:G.FEconomy.campaign(economy||G.FEconomy.fresh())}])),jetpack:{fuel:4,recharge:0}};
   }
   function copy(value){
     if(!value||value.version!==1||!names.includes(value.active)||!value.classes)return null;
@@ -14,11 +14,24 @@
     for(const id of names){
       const q=value.classes[id],economy=q&&G.FEconomy.campaign(q.economy);
       if(!q||!Number.isSafeInteger(q.xp)||q.xp<0||q.xp>1e7||!weapons[id].includes(q.weapon)||q.left!==null&&(!weapons[id].includes(q.left)||q.left===q.weapon)||!economy)return null;
-      classes[id]={xp:q.xp,weapon:q.weapon,left:q.left,economy};
+      const position=q.position==null?null:copyPosition(q.position);if(q.position!=null&&!position)return null;
+      classes[id]={xp:q.xp,weapon:q.weapon,left:q.left,position,economy};
     }
     const j=value.jetpack,limit=capacity(classes.light.xp);
     if(!j||!Number.isFinite(j.fuel)||j.fuel<0||j.fuel>limit||!Number.isFinite(j.recharge)||j.recharge<0||j.recharge>.4)return null;
     return {version:1,active:value.active,classes,jetpack:{fuel:j.fuel,recharge:j.recharge}};
+  }
+  const poseKeys=['x','y','z','yaw','pitch','airborne','airVX','airVY','airVZ','airTime','padCooldown','padId'];
+  const position=p=>Object.fromEntries(poseKeys.map(k=>[k,p[k]]));
+  function copyPosition(p){
+    if(!p||!['x','y','z','yaw','pitch','airVX','airVY','airVZ','airTime','padCooldown'].every(k=>Number.isFinite(p[k]))||Math.abs(p.x)>10000||Math.abs(p.z)>10000||p.y< -14||p.y>1000||Math.abs(p.yaw)>1e6||Math.abs(p.pitch)>1.2||Math.abs(p.airVX)>32||Math.abs(p.airVZ)>32||p.airVY< -40||p.airVY>40||p.airTime<0||p.airTime>8||p.padCooldown<0||p.padCooldown>4||typeof p.airborne!=='boolean'||p.padId!==null&&typeof p.padId!=='string')return null;
+    return position(p);
+  }
+  function marker(player,target,{width,height,fov=75}){
+    const dx=target.x-player.x,dy=target.y-player.y-.62,dz=target.z-player.z,sy=Math.sin(player.yaw),cy=Math.cos(player.yaw),sp=Math.sin(player.pitch),cp=Math.cos(player.pitch),right=dx*cy+dz*sy,forward=dx*sy-dz*cy,depth=forward*cp+dy*sp,up=dy*cp-forward*sp,focal=height/(2*Math.tan(fov*Math.PI/390));
+    let x=width/2+right*focal/Math.max(.01,depth),y=height/2-up*focal/Math.max(.01,depth);const offscreen=depth<=0||x<90||x>width-90||y<100||y>height-120;
+    if(depth<=0){x=right<0?90:width-90;y=height*.42;}
+    return {x:Math.max(90,Math.min(width-90,x)),y:Math.max(100,Math.min(height-120,y)),distance:Math.hypot(dx,target.y-player.y,dz),height:target.y-player.y,offscreen,direction:depth<=0?(right<0?'←':'→'):x<90?'←':x>width-90?'→':y<100?'↑':y>height-120?'↓':'◇'};
   }
   const owns=(profiles,inventory)=>names.every(id=>{const q=profiles.classes[id];return inventory.weapons[q.weapon]&&(q.left===null||inventory.weapons[q.left]);});
   const owner=(weapon,active='light')=>weapon===4?active:weapon===2||weapon===3?'heavy':'light';
@@ -26,7 +39,8 @@
   const allowed=(profile,weapon)=>weapons[profile]?.includes(weapon)===true;
   function canDamage(group,bullet,source){
     if(group.profileProtected)return false;
-    if(group.kind==='wall'||group.kind==='roof'||group.profileRequired==='heavy')return !bullet&&source?.owner==='player'&&source.profile==='heavy';
+    if(group.profileRequired==='heavy')return !bullet&&source?.owner==='player'&&source.profile==='heavy';
+    if(group.kind==='wall'||group.kind==='roof')return !bullet&&source?.owner!==undefined&&(source.owner!=='player'||source.profile==='heavy');
     return true;
   }
   function world(w){
@@ -70,5 +84,5 @@
     w.profileGoals={breach:'profile-breach',mechanism:mechanism.id,door:'profile-door',boss:w.index%2?'heavy':'light',entry:{x:left-1,y,z},after:{x:right+1,y,z}};
     return w;
   }
-  G.MetalProfiles={names,weapons,owns,owner,ammoCaps,level,capacity,fresh,copy,allowed,canDamage,world};
+  G.MetalProfiles={names,weapons,owns,owner,position,copyPosition,marker,ammoCaps,level,capacity,fresh,copy,allowed,canDamage,world};
 })(typeof window!=='undefined'?window:globalThis);

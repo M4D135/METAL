@@ -678,7 +678,7 @@
     if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);}
     polishTrees(world);
     demolitionMetadata(world,options?.legacyTraps===true);
-    if(options.profiles===true){if(!MetalProfiles)throw new Error("Load profiles.js before creating a class expedition");MetalProfiles.world(world);}
+    if(options?.profiles===true){if(!MetalProfiles)throw new Error("Load profiles.js before creating a class expedition");MetalProfiles.world(world);}
     world.detailStats.added=world.meshes.length-world.detailStats.base;
     world.detailStats.tiers=[0,1,2].map(level=>world.meshes.filter(m=>(m.detail||0)===level).length);
     return world;

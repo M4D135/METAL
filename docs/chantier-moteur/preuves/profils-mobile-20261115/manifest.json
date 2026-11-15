@@ -1,0 +1,138 @@
+{
+  "schema": "metal-profils-mobile-v1",
+  "at": "2026-11-15T08:33:32.002464+00:00",
+  "artifact": {
+    "version": "0.9.2",
+    "html_bytes": 996229,
+    "html_decimal_kb": 996.23,
+    "html_kib": 972.88,
+    "gzip_bytes": 307335,
+    "sha256": "5e2fe6ce799e85fd716ff7aa6fc905b24a27174130467ba4f5c4d3df47c159ee",
+    "external_assets": 0,
+    "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+    "source_bytes": {
+      "fmath.js": 19961,
+      "passages.js": 10108,
+      "renderer.js": 123940,
+      "profiles.js": 7943,
+      "world.js": 142602,
+      "destruction.js": 30624,
+      "music.js": 28535,
+      "imuse.js": 9844,
+      "audio.js": 62955,
+      "audio-recipes.js": 3255,
+      "soundscape.js": 4402,
+      "economy.js": 11561,
+      "brain.js": 8923,
+      "simulation.js": 237406,
+      "motion.js": 6404,
+      "actors.js": 28298,
+      "effects.js": 19555,
+      "options.js": 9477,
+      "input.js": 17983,
+      "controls.js": 4114,
+      "game.js": 115165
+    }
+  },
+  "sources_sha256": {
+    "src/actors.js": "d1917f4f18a94845ceb7e7fe004d8880d3d321e5b53f437b49f21a4e30f054ba",
+    "src/audio-recipes.js": "fd923bfbdceb2fe5fb34fca8d1eea1bf2e86149cf49f61fe78fed24c84f32570",
+    "src/audio.js": "3b5528e2b4af232663268d491ea020f4d41d48c8adbd1585abb1e5ab26b9d3c7",
+    "src/brain.js": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "src/controls.js": "0fbf5ee1b0bca1d96d664549e0f4bacfbbc20f4956ab0686ac7daf281060949f",
+    "src/demo.js": "6a09719b8d6b28f61e6f2f15145fe1f8ee8133e57631db7a174e54e1984aa25f",
+    "src/destruction.js": "23ee4bfd06ed5e60a9ca17cb73502e4b914aefa58c93058283b29d48183f8b41",
+    "src/economy.js": "1d1d50657864190afdb91639c56142c44714119f54e0685d8a4c4aa4cc6f4dc6",
+    "src/effects.js": "3c4118b304187c82265c386319a4c4dd255ce642c8254a79e86b67e271c0ec91",
+    "src/fmath.js": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "src/game.js": "084a64d32437f11d11746349f3a618ed2b649421b0411632e4588842525f4edf",
+    "src/imuse.js": "1c708c2bee47a1aeee1020ef0cc6e076677838fb6b232ee2bb2ad00338e6fd38",
+    "src/index.html": "e3dbfc9d12fbea7846725512880afaa69f50afd7cc87ad935bef857023dfac37",
+    "src/input.js": "a89177dda96bb3c876b9a5282cb499f301f6da89f8718b6996386b0f56d2992b",
+    "src/loop.js": "2002052f16b930748cb33c59366686744d8f7ba0b05add3e517d6271e46214c5",
+    "src/motion.js": "64d4a56a24831ebf57dd4ea926b4e8ff99fe9515391672d956c8df803ee4f1f6",
+    "src/music.js": "170484ddcc50ce291dee3e065eeb1351bf377846c989a1c3405b4a8ab96e6f53",
+    "src/options.js": "e41a7aa2ec13cc22e96c4c493cfcc0d174cc42497b469108343675865ac0898a",
+    "src/passages.js": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "src/physics.js": "8b1ca9eba50d3be95f1cfe771ba2f2475f4f7f2592fe61715f887a0b869b2fd1",
+    "src/profiles.js": "aec726e379b17e8e0f2116eaf0066e2e367a053d14000e8e3ef73c30e0bb1a1b",
+    "src/renderer.js": "c8fe14b4bd61c4f521dccebbaf357d198a2657776333ef93cf5f774049684df4",
+    "src/schedule.js": "48a8b7cf0bba9a54ef6cff896110a654195b05606392c2d74ef3a3691edf9d12",
+    "src/simulation.js": "a8fc47ad86cc0cf4ecc579d8327243cf2b0434e30d66f58aeaccf5df80c686da",
+    "src/skies.js": "bd4b38002c8c800a5f7551a73712c721909ed22ae145d15fbf7f853ff30eddea",
+    "src/soundscape.js": "9ccc1b2a95e8daa035db44ca6964df6919328d5d55e4d344ca14f16205fce766",
+    "src/style.css": "278595e0d1b37ffb67982d81cec16ec3b6a843ed6fbd2932c0e57979d270d633",
+    "src/world.js": "18fa25f33ec832cc4afd3b0925642a0085ab360cb5e6a8e4827570904f813c44",
+    "tools/build.py": "46a08445a1fdda4097e88eef33845ca4e6c7c204066c4049c98e760111715f51",
+    "package.json": "213b02fefab587aceb96d15e631f6abf776ca812c8ae77dfa9454015e3d22543",
+    "checks/profiles.test.mjs": "6bf45551257058f53f24f74b3fdea2fbbffa43240eb5835dec825042c7996fc7",
+    "checks/checkpoint.test.mjs": "b91297b26046924fa9914b12e71a0b1aad028fbe4d420435e32f910364159a1e"
+  },
+  "validation": {
+    "full_suite": {
+      "passed": 906,
+      "total": 907,
+      "failure": "FWorld.create with null options",
+      "resolved_by": "optional options access; exact failing test rerun passes"
+    },
+    "checkpoint_tests": 71,
+    "profile_tests": 13,
+    "generated_corridors": 18,
+    "boss_rewards": 18,
+    "browser_receipt": "chrome.json",
+    "controller": "simulated standard gamepad, not physical",
+    "published": false,
+    "all_33_lots_complete": false
+  },
+  "files": [
+    {
+      "file": "profiles-full.tap.gz",
+      "raw_sha256": "875d5dba6f9ecefd44ced07951fbc8d7ebaeb703576b818af4f13b6a3cb47905",
+      "sha256": "0a463611963145432d24197dab26a4a43e6a35497c9c8b1ec202beae72c4409a"
+    },
+    {
+      "file": "profiles-world-null.tap.gz",
+      "raw_sha256": "9044d35f84fbf3014a8364e6c0270d606b0ac930df6de1e462c06b9361f693b6",
+      "sha256": "404f650ae0a54a74295f2e2e94eeaf0b23d13b41080f535260c290c20b5a56d1"
+    },
+    {
+      "file": "profiles-18-routes.tap.gz",
+      "raw_sha256": "c47c1bec9b513f3092d7ce379b8ca92c0da1f69db556c821cc53ce4d4ee1ff45",
+      "sha256": "620f3bf67da2c8bf9f47e5416724a19d9532adfaef3b6092c0e19cd524ce1108"
+    },
+    {
+      "file": "profiles-positions.tap.gz",
+      "raw_sha256": "9d4ce5d93c0195b5fd40374bfbc7ad6e7db4fac166a717aa9d5d1a4620eb8a56",
+      "sha256": "ab6661781d16c067ba7ec621c3c8a77b3237e442fb47ecf068ab635c718e8850"
+    },
+    {
+      "file": "profiles-checkpoint.tap.gz",
+      "raw_sha256": "157b2f5ac12b8660417612076d9d0104e019457d87008e1c2a91a593ac36c1d9",
+      "sha256": "36eac3b58a1a2c309ebec0702464eb044ac8cb3bdcfaaa787ac0f566061380cc"
+    },
+    {
+      "file": "chrome.json",
+      "sha256": "7736e98c32c2ca219c0d5585e9d751e0f4a0d1d495542c75579c6e7a774fd028"
+    },
+    {
+      "file": "chrome-profiles.mjs",
+      "sha256": "1738c4e3b2d1fdde11348bc96dabe5ebcb650ca6d608695b8297cb26fd9d3f96"
+    },
+    {
+      "file": "pad-light.png",
+      "sha256": "1f7ab4c3076011583ae2af5902bfee8c412c461623b94af5c4f210a8f74e4876"
+    },
+    {
+      "file": "mobile-portrait.png",
+      "sha256": "fb5432f28bc82afdb9b1d245f79b715d703457c8232b653413d2cd35e3df7a57"
+    },
+    {
+      "file": "mobile-landscape.png",
+      "sha256": "421725c953cd51295dfc371250bc8c63d4f228f8fa00ac89ea0a7b6cd63a99c5"
+    },
+    {
+      "file": "mobile-small.png",
+      "sha256": "bae87a88cd914c8fd8ca58b3a7d2a78d1ad9f5a22ebe6c4bb55763bb5012631e"
+    }
+  ]
+}

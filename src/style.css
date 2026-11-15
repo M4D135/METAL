@@ -118,3 +118,60 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
 body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px solid var(--acid);outline-offset:3px}body.pad #touch-controls{display:none}.binding-row>span{flex:1}.binding-row button{min-width:64px}body.touch #hud{pointer-events:none}body.touch #hud button,body.touch #hud select,body.touch #move-zone,body.touch .weapon-slot,body.touch .top-buttons{pointer-events:auto}
 
 .profile-status{position:absolute;left:50%;bottom:105px;transform:translateX(-50%);font-size:11px;color:var(--acid);background:#07110bc9;padding:7px 12px;pointer-events:none}.boundary-contact{filter:brightness(1.6)}.binding-row button[id^="pad-clear-"]{min-width:28px;max-width:36px}
+
+/* Class controls remain reachable alongside the movement stick. */
+body.touch #jump-button,body.touch #profile-button{position:absolute;left:max(24px,env(safe-area-inset-left));width:72px;min-height:48px;padding:8px;background:#142421dd;border:1px solid #71e1cc88;border-radius:9px;font-size:10px;font-weight:700;touch-action:none;pointer-events:auto}
+body.touch #jump-button{bottom:calc(366px + env(safe-area-inset-bottom))}body.touch #profile-button{bottom:calc(422px + env(safe-area-inset-bottom));border-color:#f4a85f88}
+@media(orientation:landscape) and (max-height:600px){body.touch #jump-button{left:142px;bottom:100px}body.touch #profile-button{left:142px;bottom:156px}}
+
+#partner-marker{position:absolute;z-index:3;transform:translate(-50%,-50%);pointer-events:none;padding:4px 6px;border:1px solid #71e1cc88;border-radius:4px;background:#101b20a8;color:#a6f5e8;font-size:10px;font-weight:700;white-space:nowrap;text-shadow:0 1px 2px #000}#partner-marker[data-profile="heavy"]{color:#ffca95;border-color:#ffb66e88}#partner-marker[data-offscreen="true"]{opacity:.85}
+
+/* Mobile: two corner control groups, a compact top HUD, details on demand. */
+#loadout-toggle{display:none}
+body.touch .hud-top{top:12px;left:12px;right:12px;padding:0;min-height:48px}
+body.touch .hud-top>div:first-child,body.touch .score-status,body.touch #fps-counter,body.touch .objective #objective-label,body.touch .sector-progress,body.touch .touch-move-label,body.touch .touch-look-label{display:none!important}
+body.touch .top-buttons{position:fixed;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));display:flex;gap:5px}
+body.touch .top-buttons .icon-button{width:48px;height:48px;min-width:48px;border-radius:7px;background:#101b20aa}
+body.touch #loadout-toggle{display:block;font-size:9px;font-weight:700}
+body.touch .hud-bottom{display:contents;position:static;padding:0;background:none;border:0}
+body.touch #health-panel{position:fixed;left:max(16px,env(safe-area-inset-left));top:16px;display:flex;align-items:center;gap:7px;width:auto;min-width:0;min-height:0;padding:5px 8px;border:0;border-radius:5px;background:#101b20a8}
+body.touch #health-panel>.stat-label,body.touch #health-panel>.bar,body.touch #health-state,body.touch #health-max,body.touch #armor-rating,body.touch #armor-cap,body.touch .armor-track{display:none!important}
+body.touch .health-number{display:flex;align-items:center;margin:0;padding:0;line-height:1}body.touch .health-number:before{content:'+';color:#d7f36b;font-size:18px;margin-right:4px}body.touch #hp{font-size:23px}
+body.touch #armor-pool{margin:0;padding:0;border:0;font-size:0}body.touch #armor-pool>span{font-size:0}body.touch #armor-points{font-size:13px;color:#71e1cc}body.touch #armor-points:before{content:'◇ ';font-size:12px}body.touch[data-armor="0"] #armor-pool{display:none}
+body.touch #weapon-readout{position:fixed;right:max(16px,env(safe-area-inset-right));top:70px;width:143px;min-height:0;padding:4px 7px;border:0;border-radius:5px;background:#101b20a8;text-align:right}
+body.touch #weapon-readout>.equipped-label,body.touch #weapon-readout .heat-caption,body.touch #weapon-readout .ability-strip,body.touch #ammo-cap,body.touch #ammo-unit{display:none}
+body.touch #weapon-switch{min-height:20px;font-size:9px;justify-content:flex-end}body.touch #weapon-label{font-size:9px}body.touch .ammo-readout{margin:0;min-height:0;line-height:1;justify-content:flex-end}body.touch #ammo-count{font-size:22px;line-height:1.1}body.touch #weapon-readout>.bar{height:2px;margin-top:3px}
+.profile-status{left:20px;top:180px;bottom:auto;transform:none;margin:0;max-width:220px;font-size:10px;line-height:1.4;padding:5px 7px}
+body.touch .profile-status{position:fixed;left:max(16px,env(safe-area-inset-left));top:92px;bottom:auto;transform:none;margin:0;padding:4px 6px;max-width:172px;white-space:nowrap;font-size:9px;background:#101b20a8}
+body.touch .objective{left:16px;top:64px;max-width:170px}body.touch #relays{gap:7px;margin:0}body.touch #relay-count{display:inline;font-size:9px}
+body.touch #radar-wrap{top:137px;right:16px;left:auto;bottom:auto;width:150px;padding:6px;background:#101b20e8}body.touch #radar{width:138px;height:138px}
+body.touch #direction{top:127px;bottom:auto;left:50%;transform:translateX(-50%);font-size:9px;padding:3px 6px;max-width:180px}
+body.touch #boss-status{top:150px;left:50%;width:min(250px,65vw);transform:translateX(-50%)}body.touch #boss-name{font-size:10px}body.touch #boss-attack{font-size:9px}
+body.touch #toast{bottom:215px;left:50%;width:max-content;max-width:85vw;transform:translateX(-50%);font-size:10px;padding:6px 8px}
+body.touch #encounter{top:35%;max-width:86vw}body.touch #encounter-name{font-size:20px}body.touch #encounter-caption{font-size:10px}
+body.touch #wave-status{top:150px;left:16px;max-width:190px;font-size:9px}body.touch #wave-detail{display:none}
+body.touch #move-zone{left:max(16px,env(safe-area-inset-left));bottom:max(20px,env(safe-area-inset-bottom));width:104px;height:104px;border-radius:50%;background:#17272333}
+body.touch #move-stick{width:40px;height:40px;margin:-20px}
+body.touch #fire-button{right:max(16px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));width:72px;height:72px}
+body.touch #jump-button,body.touch #profile-button,body.touch #dash-button,body.touch #pulse-button,body.touch #melee-button,body.touch #left-fire-button{position:fixed;width:48px;height:48px;min-height:48px;padding:4px;border-radius:10px;background:#102123a8;font-size:9px;left:auto;right:auto;top:auto;pointer-events:auto}
+body.touch #jump-button{right:98px;bottom:20px;border-color:#71e1cc88}
+body.touch #dash-button{right:16px;bottom:102px}
+body.touch #melee-button{right:74px;bottom:102px}
+body.touch #left-fire-button{right:156px;bottom:20px}body.touch #left-fire-button:disabled{display:none}
+body.touch #profile-button{left:16px;bottom:136px;width:60px;border-color:#ffb66e88}
+body.touch #pulse-button{left:86px;bottom:136px}
+body.touch #interact-button{left:auto;right:16px;bottom:160px;transform:none;max-width:170px;min-width:120px;min-height:48px;padding:6px 9px;font-size:10px}
+body.touch #interact-key{display:none}body.touch #supply-hint{left:16px;right:auto;bottom:196px;max-width:150px;transform:none;font-size:9px}
+body.touch #arsenal{display:none;position:fixed;left:16px;right:16px;top:50%;bottom:auto;transform:translateY(-50%);width:auto;padding:14px;background:#101b20f5;border:1px solid #71e1cc66;border-radius:10px;z-index:6}
+body.touch.loadout-open #arsenal{display:block}body.touch.loadout-open #touch-controls,body.touch.loadout-open #interact-button,body.touch.loadout-open #supply-hint{display:none!important}body.touch.loadout-open #loadout-toggle{color:#d7f36b;background:#26442d}
+body.touch #arsenal .weapon-slot{min-height:72px}body.touch #arsenal .left-hand-strip{display:flex;padding-top:10px}body.touch #arsenal .arsenal-heading{font-size:10px}
+@media(orientation:landscape) and (max-height:600px){body.touch #weapon-readout{top:68px}body.touch .profile-status{top:92px;left:16px;transform:none;max-width:172px}body.touch #toast{bottom:30px;max-width:40vw}body.touch #direction{top:16px}body.touch #boss-status{top:55px}body.touch #wave-status{left:50%;top:89px;transform:translateX(-50%)}body.touch #arsenal{left:23%;right:23%}body.touch #encounter{top:32%}}
+
+#partner-marker{max-width:160px;white-space:normal;text-align:center;line-height:1.3;overflow-wrap:anywhere}
+body.touch{--control-left:max(16px,env(safe-area-inset-left));--control-right:max(16px,env(safe-area-inset-right));--control-bottom:max(20px,env(safe-area-inset-bottom))}
+body.touch #move-zone{position:fixed;left:var(--control-left);bottom:var(--control-bottom)}body.touch #fire-button{position:fixed;right:var(--control-right);bottom:var(--control-bottom)}
+body.touch #jump-button{right:calc(var(--control-right) + 82px);bottom:var(--control-bottom)}body.touch #left-fire-button{right:calc(var(--control-right) + 140px);bottom:var(--control-bottom)}
+body.touch #dash-button{right:var(--control-right);bottom:calc(var(--control-bottom) + 82px)}body.touch #melee-button{right:calc(var(--control-right) + 58px);bottom:calc(var(--control-bottom) + 82px)}
+body.touch #profile-button{left:var(--control-left);bottom:calc(var(--control-bottom) + 116px)}body.touch #pulse-button{left:calc(var(--control-left) + 70px);bottom:calc(var(--control-bottom) + 116px)}
+@media(max-width:350px){body.touch #move-zone{width:92px;height:92px}}
+body.touch #loadout-toggle,body.touch #weapon-label,body.touch #weapon-switch,body.touch .profile-status,body.touch #relay-count,body.touch #direction,body.touch #jump-button,body.touch #profile-button,body.touch #dash-button,body.touch #pulse-button,body.touch #melee-button,body.touch #left-fire-button,body.touch #supply-hint,body.touch #wave-status,body.touch #boss-attack{font-size:10px}

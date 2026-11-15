@@ -248,7 +248,7 @@
       doors:(world.doors||[]).map(d=>({...d,progress:d.requires===undefined?1:0,open:d.requires===undefined,hp:18,destroyed:false})),
       lifts:(world.lifts||[]).map(l=>({...l,y:l.minY,target:l.minY,powered:l.requires===undefined,moving:false,carrying:false})),
       aiStats:{awake:0,dormant:0,reserve:0,combat:0,combatCap:maxCombat,alive:world.enemies.length,pathSearches:0,pathDeferred:0}};
-    if(profilesEnabled){s.activeProfile=initialProfiles.active;s.profiles=initialProfiles.classes;s.jetpack={...initialProfiles.jetpack,capacity:G.MetalProfiles.capacity(initialProfiles.classes.light.xp),active:false};s.economy=s.profiles[s.activeProfile].economy;}
+    if(profilesEnabled){for(const id of G.MetalProfiles.names)initialProfiles.classes[id].position=G.MetalProfiles.position(p);s.activeProfile=initialProfiles.active;s.profiles=initialProfiles.classes;s.jetpack={...initialProfiles.jetpack,capacity:G.MetalProfiles.capacity(initialProfiles.classes.light.xp),active:false};s.economy=s.profiles[s.activeProfile].economy;}
     const encounterMap=new Map(s.encounters.map(q=>[q.id,q])),enemyEncounter=new Map();
     // SIM-06: encounter index per enemy, same last-wins order as the map above.
     const enemyEncounterIndex=new Int32Array(s.enemies.length).fill(-1);
@@ -832,7 +832,7 @@
     }
     function exportProfiles(){
       if(!profilesEnabled)return null;
-      const active=s.profiles[s.activeProfile];active.economy=s.economy;active.weapon=s.weapon;active.left=s.equipment.left;
+      const active=s.profiles[s.activeProfile];active.economy=s.economy;active.weapon=s.weapon;active.left=s.equipment.left;active.position=G.MetalProfiles.position(p);
       return G.MetalProfiles.copy({version:1,active:s.activeProfile,classes:s.profiles,jetpack:s.jetpack});
     }
     function awardProfile(xp,id=s.activeProfile){
@@ -846,7 +846,7 @@
       exportProfiles();const from=s.activeProfile,to=from==='light'?'heavy':'light',next=s.profiles[to];
       const healthRatio=p.hp/s.maxHp;s.activeProfile=to;s.economy=next.economy;stats=G.FEconomy.stats(s.economy);s.maxHp=stats.maxHp;p.hp=Math.min(s.maxHp,healthRatio*s.maxHp);
       s.weapon=s.equipment.right=s.inventory.weapons[next.weapon]?next.weapon:4;s.equipment.left=next.left!==null&&s.inventory.weapons[next.left]?next.left:null;
-      s.jetpack.active=false;emit('profileSwitch',{from,to,x:p.x,y:p.y,z:p.z});return true;
+      Object.assign(p,next.position);stopMotion(true);jumpBuffer=coyote=0;jumpWasPressed=false;p.dashing=0;clipEscape=boundaryAt(p.x,p.z);s.jetpack.active=false;emit('profileSwitch',{from,to,x:p.x,y:p.y,z:p.z});return true;
     }
     function exportInventory(){return {weapons:s.inventory.weapons.slice(),ammo:s.inventory.ammo.slice()};}
     function exportCampaign(){return {version:s.campaign.version,discovered:s.campaign.discovered.slice(),...(bossProgression?{claimedBossRewards:s.campaign.claimedBossRewards.slice()}:{})};}
@@ -2404,7 +2404,7 @@
         require(profilesEnabled?data.physicsVersion===2:data.physicsVersion===undefined||data.physicsVersion===1);
         require(profilesEnabled?data.profileVersion===1:data.profileVersion===undefined&&a.profiles===undefined);
         const profiles=profilesEnabled?G.MetalProfiles.copy(a.profiles):null;
-        if(profilesEnabled)require(profiles&&JSON.stringify(profiles.classes[profiles.active].economy)===JSON.stringify(a.economy));
+        if(profilesEnabled){require(profiles&&JSON.stringify(profiles.classes[profiles.active].economy)===JSON.stringify(a.economy));for(const id of G.MetalProfiles.names){const q=profiles.classes[id].position;require(q&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-14,1000));}require(JSON.stringify(profiles.classes[profiles.active].position)===JSON.stringify(G.MetalProfiles.position(a.player)));}
         require(data.destructionVersion===undefined||data.destructionVersion===1);
         require(data.rubbleVersion===undefined||data.rubbleVersion===1);
         require(bossProgression?data.reinforcementVersion===undefined||data.reinforcementVersion===1:data.reinforcementVersion===undefined);

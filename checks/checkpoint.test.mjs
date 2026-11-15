@@ -8,7 +8,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'game'].map(name =>
+const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'profiles', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -60,7 +60,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   };
   if (runtime.idle !== false) context.requestIdleCallback = (callback, options) => idle.push({ callback, options, mode: element('body').dataset.state || 'menu' });
   context.window = context; vm.createContext(context);
-  for (const name of ['destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
+  for (const name of ['profiles', 'destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
   if(runtime.brain){vm.runInContext(sources.brain, context, {filename:'brain.js'});const createBrain=context.FBrain.create;context.FBrain.create=options=>{const brain=createBrain(options);brains.push(brain);return brain;};}
   const create = context.FSimulation.create;
   context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); return sim; };
@@ -599,7 +599,7 @@ test('LOAD-01: a failed refused-slot write cannot erase the old active point on 
 
 function generatedModules() {
   const previous = globalThis.window, modules = {}; globalThis.window = modules;
-  try { for (const name of ['fmath','passages','renderer','world','destruction','economy','brain','simulation']) vm.runInThisContext(sources[name], { filename: name + '.js' }); }
+  try { for (const name of ['fmath','passages','renderer','profiles','world','destruction','economy','brain','simulation']) vm.runInThisContext(sources[name], { filename: name + '.js' }); }
   finally { if (previous === undefined) delete globalThis.window; else globalThis.window = previous; }
   return modules;
 }

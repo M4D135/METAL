@@ -29,7 +29,7 @@ test('class snapshots restore both economies, held weapon, fuel and an ascending
  const snap=plain(sim.snapshot()),copy=FSimulation.create(world);assert(copy.restore(snap));assert.deepEqual(plain(copy.snapshot()),snap);
  for(const edit of [x=>x.state.profiles.classes.light.xp=-1,x=>x.state.profiles.jetpack.fuel=999,x=>x.state.profiles.classes.heavy.weapon=1,x=>x.state.economy.credits++,x=>delete x.state.profiles]){const bad=plain(snap);edit(bad);assert.equal(copy.restore(bad),false);assert.deepEqual(plain(copy.snapshot()),snap);}
  sim.step(1/120,{jumpHeld:true});copy.step(1/120,{jumpHeld:true});assert.deepEqual(plain(copy.snapshot()),plain(sim.snapshot()));
- const carry=FSimulation.create(world,sim.exportLoadout());assert.deepEqual(plain(carry.exportProfiles()),plain(sim.exportProfiles()));
+ const carry=FSimulation.create(world,sim.exportLoadout());for(const id of MetalProfiles.names){const a=plain(carry.exportProfiles().classes[id]),b=plain(sim.exportProfiles().classes[id]);delete a.position;delete b.position;assert.deepEqual(a,b);}assert.equal(carry.state.player.x,world.spawn.x);
 });
 
 test('projectile keeps its heavy origin through switch and save/restore',()=>{
@@ -38,7 +38,7 @@ test('projectile keeps its heavy origin through switch and save/restore',()=>{
 });
 
 test('only heavy player explosives breach walls; bullets and enemy blasts cannot bypass class gates',()=>{
- const mesh={shape:'box',p:[0,2,-3],s:[6,4,.6],mat:3},world=fixture({meshes:[mesh],destructibles:[{id:'wall',kind:'wall',strength:18,meshes:[0],colliders:[0]}],colliders:[{minX:-3,maxX:3,minY:0,maxY:4,minZ:-3.3,maxZ:-2.7,mesh:0}]});
+ const mesh={shape:'box',p:[0,2,-3],s:[6,4,.6],mat:3},world=fixture({meshes:[mesh],destructibles:[{id:'wall',kind:'wall',profileRequired:'heavy',strength:18,meshes:[0],colliders:[0]}],colliders:[{minX:-3,maxX:3,minY:0,maxY:4,minZ:-3.3,maxZ:-2.7,mesh:0}]});
  for(const [source,allowed] of [[undefined,false],[{owner:'player',profile:'light'},false],[{owner:0,profile:'heavy'},false],[{owner:'player',profile:'heavy'},true]]){const d=FDestruction.create(world,{canDamage:MetalProfiles.canDamage});d.hit([0,2,-3],999,[0,0,-1],source);assert(d.isAlive('wall'));d.blast([0,2,-3],5,999,undefined,source);assert.equal(d.isAlive('wall'),!allowed);}
 });
 
@@ -56,8 +56,9 @@ test('generated class campaign adds both ordered locks and alternates boss requi
  for(const index of [0,1,8,17]){const legacy=FWorld.create(96,index,{campaign:true,campaignVersion:2}),world=FWorld.create(96,index,{campaign:true,campaignVersion:2,profiles:true});assert.equal(legacy.profileVersion,undefined);assert.equal(world.profileVersion,1);assert(world.destructibles.find(g=>g.id==='profile-breach'));assert(world.mechanisms.find(m=>m.id==='profile-power'&&m.profileRequired==='light'));assert(world.doors.find(d=>d.id==='profile-door'&&d.requires==='profile-power'));assert(world.enemies.some(e=>e.bossScale>1&&e.profileRequired===(index%2?'heavy':'light')));const sim=FSimulation.create(world);assert(FSimulation.create(world).restore(sim.snapshot()));}
 });
 
-test('actual generated corridor requires heavy breach, light flight and relay activation in that order',()=>{
- const world=FWorld.create(96,0,{campaign:true,campaignVersion:2,profiles:true});
+test('all eighteen generated corridors require heavy breach, light flight and relay activation in that order',()=>{
+ for(let index=0;index<18;index++){
+ const world=FWorld.create(96,index,{campaign:true,campaignVersion:2,profiles:true});
  world.enemies=[];world.encounters=[];world.spawn={...world.profileGoals.entry,yaw:Math.PI/2};
  const sim=FSimulation.create(world,{inventory:{weapons:[true,true,true,true,true],ammo:[60,12,6,8,1]}}),p=sim.state.player,wall=world.meshes.find(m=>m.category==='profile-breach'),relay=world.mechanisms.find(m=>m.id==='profile-power'),door=world.doors.find(d=>d.id==='profile-door');
  advance(sim,1.5,{moveY:1,jump:true,jumpHeld:true});assert(p.x<wall.p[0]-.5,'light flew over the breach');advance(sim,1.5,{});assert(!sim.state.dead);
@@ -66,10 +67,11 @@ test('actual generated corridor requires heavy breach, light flight and relay ac
  // Approach the relay on the tunnel floor: a normal heavy jump is insufficient.
  p.x=relay.x;p.z=relay.z+1.4;p.y=relay.y-3.2;p.yaw=0;Object.assign(p,{airborne:false,airVX:0,airVY:0,airVZ:0,airTime:0});
  sim.step(1/120,{jump:true,jumpHeld:true});advance(sim,.3,{jumpHeld:true});assert.equal(sim.interact(),false);advance(sim,.5,{});
- sim.switchProfile();sim.step(1/120,{jump:true,jumpHeld:true});let activated=false;
+ sim.switchProfile();for(let i=0;i<800&&Math.hypot(p.x-relay.x,p.z-relay.z-1.4)>.2;i++){const dx=relay.x-p.x,dz=relay.z+1.4-p.z;p.yaw=Math.atan2(dx,-dz);sim.step(1/120,{moveY:Math.min(1,Math.hypot(dx,dz)*3)});}advance(sim,.4,{});assert(Math.hypot(p.x-relay.x,p.z-relay.z-1.4)<.6,'light failed to walk through the heavy breach');sim.step(1/120,{jump:true,jumpHeld:true});let activated=false;
  for(let i=0;i<180&&!activated;i++){sim.step(1/120,{jumpHeld:true});const q=sim.nearestInteraction();if(q?.id===relay.id)activated=sim.interact();}
  assert(activated,'light could not reach the aerial relay');assert(sim.state.profiles.light.xp>=40);advance(sim,1.5,{});assert(sim.state.doors.find(d=>d.id===door.id).progress>.99);
  sim.switchProfile();assert.equal(sim.state.activeProfile,'heavy');assert.equal(sim.state.mechanisms.find(m=>m.id===relay.id).active,true);
+ }
 });
 
 test('eighteen class bosses reject the wrong profile, route rewards to both banks, and carry their progression',()=>{
@@ -90,4 +92,19 @@ test('eighteen class bosses reject the wrong profile, route rewards to both bank
 test('switching upgraded vitality preserves integrity percentage without healing by repeated switches',()=>{
  const profiles=MetalProfiles.fresh();profiles.classes.light.economy.upgrades.vitality=2;const sim=FSimulation.create(fixture(),{profiles});sim.state.player.hp=sim.state.maxHp*.57;
  for(let i=0;i<100;i++){sim.switchProfile();assert(Math.abs(sim.state.player.hp/sim.state.maxHp-.57)<1e-12);}
+});
+
+test('each character stays at its own location; switching and checkpoint restore retain both positions',()=>{
+ const world=fixture(),sim=FSimulation.create(world);advance(sim,1,{moveY:1});advance(sim,.5,{});const light=plain(MetalProfiles.position(sim.state.player)),elapsed=sim.state.elapsed;
+ sim.switchProfile();assert.equal(sim.state.player.z,0);assert.equal(sim.state.elapsed,elapsed);advance(sim,1,{moveX:1});advance(sim,.5,{});const heavy=plain(MetalProfiles.position(sim.state.player));assert(heavy.x>3);
+ sim.switchProfile();assert.deepEqual(plain(MetalProfiles.position(sim.state.player)),light);sim.switchProfile();assert.deepEqual(plain(MetalProfiles.position(sim.state.player)),heavy);
+ const saved=plain(sim.snapshot()),copy=FSimulation.create(world);assert(copy.restore(saved));copy.switchProfile();assert.deepEqual(plain(MetalProfiles.position(copy.state.player)),light);copy.switchProfile();assert.deepEqual(plain(MetalProfiles.position(copy.state.player)),heavy);
+ const bad=plain(saved);bad.state.profiles.classes.light.position.x=10000;assert(!copy.restore(bad));assert.deepEqual(plain(copy.snapshot()),saved);
+});
+
+test('partner marker reports distance, elevation and a bounded direction for targets ahead and behind',()=>{
+ const player={x:0,y:0,z:0,yaw:0,pitch:0},screen={width:390,height:844,fov:75};
+ const ahead=MetalProfiles.marker(player,{x:0,y:0,z:-10},screen);assert.equal(ahead.distance,10);assert.equal(ahead.offscreen,false);assert.equal(ahead.x,195);
+ const high=MetalProfiles.marker(player,{x:3,y:4,z:0},screen);assert.equal(high.distance,5);assert.equal(high.height,4);
+ for(const target of [{x:20,y:0,z:10},{x:-20,y:0,z:10},{x:0,y:30,z:-10},{x:0,y:-30,z:-10}]){const q=MetalProfiles.marker(player,target,screen);assert(q.offscreen);assert(q.x>=60&&q.x<=330&&q.y>=100&&q.y<=724);}
 });

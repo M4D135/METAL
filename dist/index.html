@@ -126,6 +126,63 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
 body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px solid var(--acid);outline-offset:3px}body.pad #touch-controls{display:none}.binding-row>span{flex:1}.binding-row button{min-width:64px}body.touch #hud{pointer-events:none}body.touch #hud button,body.touch #hud select,body.touch #move-zone,body.touch .weapon-slot,body.touch .top-buttons{pointer-events:auto}
 
 .profile-status{position:absolute;left:50%;bottom:105px;transform:translateX(-50%);font-size:11px;color:var(--acid);background:#07110bc9;padding:7px 12px;pointer-events:none}.boundary-contact{filter:brightness(1.6)}.binding-row button[id^="pad-clear-"]{min-width:28px;max-width:36px}
+
+/* Class controls remain reachable alongside the movement stick. */
+body.touch #jump-button,body.touch #profile-button{position:absolute;left:max(24px,env(safe-area-inset-left));width:72px;min-height:48px;padding:8px;background:#142421dd;border:1px solid #71e1cc88;border-radius:9px;font-size:10px;font-weight:700;touch-action:none;pointer-events:auto}
+body.touch #jump-button{bottom:calc(366px + env(safe-area-inset-bottom))}body.touch #profile-button{bottom:calc(422px + env(safe-area-inset-bottom));border-color:#f4a85f88}
+@media(orientation:landscape) and (max-height:600px){body.touch #jump-button{left:142px;bottom:100px}body.touch #profile-button{left:142px;bottom:156px}}
+
+#partner-marker{position:absolute;z-index:3;transform:translate(-50%,-50%);pointer-events:none;padding:4px 6px;border:1px solid #71e1cc88;border-radius:4px;background:#101b20a8;color:#a6f5e8;font-size:10px;font-weight:700;white-space:nowrap;text-shadow:0 1px 2px #000}#partner-marker[data-profile="heavy"]{color:#ffca95;border-color:#ffb66e88}#partner-marker[data-offscreen="true"]{opacity:.85}
+
+/* Mobile: two corner control groups, a compact top HUD, details on demand. */
+#loadout-toggle{display:none}
+body.touch .hud-top{top:12px;left:12px;right:12px;padding:0;min-height:48px}
+body.touch .hud-top>div:first-child,body.touch .score-status,body.touch #fps-counter,body.touch .objective #objective-label,body.touch .sector-progress,body.touch .touch-move-label,body.touch .touch-look-label{display:none!important}
+body.touch .top-buttons{position:fixed;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));display:flex;gap:5px}
+body.touch .top-buttons .icon-button{width:48px;height:48px;min-width:48px;border-radius:7px;background:#101b20aa}
+body.touch #loadout-toggle{display:block;font-size:9px;font-weight:700}
+body.touch .hud-bottom{display:contents;position:static;padding:0;background:none;border:0}
+body.touch #health-panel{position:fixed;left:max(16px,env(safe-area-inset-left));top:16px;display:flex;align-items:center;gap:7px;width:auto;min-width:0;min-height:0;padding:5px 8px;border:0;border-radius:5px;background:#101b20a8}
+body.touch #health-panel>.stat-label,body.touch #health-panel>.bar,body.touch #health-state,body.touch #health-max,body.touch #armor-rating,body.touch #armor-cap,body.touch .armor-track{display:none!important}
+body.touch .health-number{display:flex;align-items:center;margin:0;padding:0;line-height:1}body.touch .health-number:before{content:'+';color:#d7f36b;font-size:18px;margin-right:4px}body.touch #hp{font-size:23px}
+body.touch #armor-pool{margin:0;padding:0;border:0;font-size:0}body.touch #armor-pool>span{font-size:0}body.touch #armor-points{font-size:13px;color:#71e1cc}body.touch #armor-points:before{content:'◇ ';font-size:12px}body.touch[data-armor="0"] #armor-pool{display:none}
+body.touch #weapon-readout{position:fixed;right:max(16px,env(safe-area-inset-right));top:70px;width:143px;min-height:0;padding:4px 7px;border:0;border-radius:5px;background:#101b20a8;text-align:right}
+body.touch #weapon-readout>.equipped-label,body.touch #weapon-readout .heat-caption,body.touch #weapon-readout .ability-strip,body.touch #ammo-cap,body.touch #ammo-unit{display:none}
+body.touch #weapon-switch{min-height:20px;font-size:9px;justify-content:flex-end}body.touch #weapon-label{font-size:9px}body.touch .ammo-readout{margin:0;min-height:0;line-height:1;justify-content:flex-end}body.touch #ammo-count{font-size:22px;line-height:1.1}body.touch #weapon-readout>.bar{height:2px;margin-top:3px}
+.profile-status{left:20px;top:180px;bottom:auto;transform:none;margin:0;max-width:220px;font-size:10px;line-height:1.4;padding:5px 7px}
+body.touch .profile-status{position:fixed;left:max(16px,env(safe-area-inset-left));top:92px;bottom:auto;transform:none;margin:0;padding:4px 6px;max-width:172px;white-space:nowrap;font-size:9px;background:#101b20a8}
+body.touch .objective{left:16px;top:64px;max-width:170px}body.touch #relays{gap:7px;margin:0}body.touch #relay-count{display:inline;font-size:9px}
+body.touch #radar-wrap{top:137px;right:16px;left:auto;bottom:auto;width:150px;padding:6px;background:#101b20e8}body.touch #radar{width:138px;height:138px}
+body.touch #direction{top:127px;bottom:auto;left:50%;transform:translateX(-50%);font-size:9px;padding:3px 6px;max-width:180px}
+body.touch #boss-status{top:150px;left:50%;width:min(250px,65vw);transform:translateX(-50%)}body.touch #boss-name{font-size:10px}body.touch #boss-attack{font-size:9px}
+body.touch #toast{bottom:215px;left:50%;width:max-content;max-width:85vw;transform:translateX(-50%);font-size:10px;padding:6px 8px}
+body.touch #encounter{top:35%;max-width:86vw}body.touch #encounter-name{font-size:20px}body.touch #encounter-caption{font-size:10px}
+body.touch #wave-status{top:150px;left:16px;max-width:190px;font-size:9px}body.touch #wave-detail{display:none}
+body.touch #move-zone{left:max(16px,env(safe-area-inset-left));bottom:max(20px,env(safe-area-inset-bottom));width:104px;height:104px;border-radius:50%;background:#17272333}
+body.touch #move-stick{width:40px;height:40px;margin:-20px}
+body.touch #fire-button{right:max(16px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));width:72px;height:72px}
+body.touch #jump-button,body.touch #profile-button,body.touch #dash-button,body.touch #pulse-button,body.touch #melee-button,body.touch #left-fire-button{position:fixed;width:48px;height:48px;min-height:48px;padding:4px;border-radius:10px;background:#102123a8;font-size:9px;left:auto;right:auto;top:auto;pointer-events:auto}
+body.touch #jump-button{right:98px;bottom:20px;border-color:#71e1cc88}
+body.touch #dash-button{right:16px;bottom:102px}
+body.touch #melee-button{right:74px;bottom:102px}
+body.touch #left-fire-button{right:156px;bottom:20px}body.touch #left-fire-button:disabled{display:none}
+body.touch #profile-button{left:16px;bottom:136px;width:60px;border-color:#ffb66e88}
+body.touch #pulse-button{left:86px;bottom:136px}
+body.touch #interact-button{left:auto;right:16px;bottom:160px;transform:none;max-width:170px;min-width:120px;min-height:48px;padding:6px 9px;font-size:10px}
+body.touch #interact-key{display:none}body.touch #supply-hint{left:16px;right:auto;bottom:196px;max-width:150px;transform:none;font-size:9px}
+body.touch #arsenal{display:none;position:fixed;left:16px;right:16px;top:50%;bottom:auto;transform:translateY(-50%);width:auto;padding:14px;background:#101b20f5;border:1px solid #71e1cc66;border-radius:10px;z-index:6}
+body.touch.loadout-open #arsenal{display:block}body.touch.loadout-open #touch-controls,body.touch.loadout-open #interact-button,body.touch.loadout-open #supply-hint{display:none!important}body.touch.loadout-open #loadout-toggle{color:#d7f36b;background:#26442d}
+body.touch #arsenal .weapon-slot{min-height:72px}body.touch #arsenal .left-hand-strip{display:flex;padding-top:10px}body.touch #arsenal .arsenal-heading{font-size:10px}
+@media(orientation:landscape) and (max-height:600px){body.touch #weapon-readout{top:68px}body.touch .profile-status{top:92px;left:16px;transform:none;max-width:172px}body.touch #toast{bottom:30px;max-width:40vw}body.touch #direction{top:16px}body.touch #boss-status{top:55px}body.touch #wave-status{left:50%;top:89px;transform:translateX(-50%)}body.touch #arsenal{left:23%;right:23%}body.touch #encounter{top:32%}}
+
+#partner-marker{max-width:160px;white-space:normal;text-align:center;line-height:1.3;overflow-wrap:anywhere}
+body.touch{--control-left:max(16px,env(safe-area-inset-left));--control-right:max(16px,env(safe-area-inset-right));--control-bottom:max(20px,env(safe-area-inset-bottom))}
+body.touch #move-zone{position:fixed;left:var(--control-left);bottom:var(--control-bottom)}body.touch #fire-button{position:fixed;right:var(--control-right);bottom:var(--control-bottom)}
+body.touch #jump-button{right:calc(var(--control-right) + 82px);bottom:var(--control-bottom)}body.touch #left-fire-button{right:calc(var(--control-right) + 140px);bottom:var(--control-bottom)}
+body.touch #dash-button{right:var(--control-right);bottom:calc(var(--control-bottom) + 82px)}body.touch #melee-button{right:calc(var(--control-right) + 58px);bottom:calc(var(--control-bottom) + 82px)}
+body.touch #profile-button{left:var(--control-left);bottom:calc(var(--control-bottom) + 116px)}body.touch #pulse-button{left:calc(var(--control-left) + 70px);bottom:calc(var(--control-bottom) + 116px)}
+@media(max-width:350px){body.touch #move-zone{width:92px;height:92px}}
+body.touch #loadout-toggle,body.touch #weapon-label,body.touch #weapon-switch,body.touch .profile-status,body.touch #relay-count,body.touch #direction,body.touch #jump-button,body.touch #profile-button,body.touch #dash-button,body.touch #pulse-button,body.touch #melee-button,body.touch #left-fire-button,body.touch #supply-hint,body.touch #wave-status,body.touch #boss-attack{font-size:10px}
 </style>
 </head>
 <body data-state="menu">
@@ -145,7 +202,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     <div class="intro-bottom"><span id="intro-controls">ZQSD / WASD · Souris · Clic pour tirer</span><div class="intro-settings"><button id="intro-options" class="text-button">OPTIONS</button><div id="intro-audio" class="intro-audio"><span class="intro-score">FURIE D’ACIER <i aria-hidden="true">/</i> 212 BPM</span><button id="intro-sound" class="text-button" aria-pressed="false" aria-describedby="intro-music-status">ÉCOUTER LE THRASH</button><span id="intro-music-status" role="status" aria-live="polite">Cliquez ou touchez pour écouter</span></div></div></div>
   </section>
   <div id="hud" hidden>
-    <header class="hud-top"><div class="sector-tag"><span class="logo-small">M/</span><div><span id="sector-number">MONDE 01 / 18</span><strong id="sector-title">Sas d’accès</strong></div></div><div class="top-buttons"><output id="fps-counter" class="fps-counter" title="Images par seconde" aria-label="Images par seconde" aria-live="off">— FPS</output><button id="map-button" class="icon-button" title="Carte (M)" aria-label="Afficher ou masquer la carte"><span class="map-icon" aria-hidden="true"></span></button><button id="pause-button" class="icon-button" title="Pause (Échap)" aria-label="Mettre en pause"><span class="pause-icon" aria-hidden="true"></span></button></div></header>
+    <header class="hud-top"><div class="sector-tag"><span class="logo-small">M/</span><div><span id="sector-number">MONDE 01 / 18</span><strong id="sector-title">Sas d’accès</strong></div></div><div class="top-buttons"><output id="fps-counter" class="fps-counter" title="Images par seconde" aria-label="Images par seconde" aria-live="off">— FPS</output><button id="loadout-toggle" class="icon-button" aria-label="Afficher ou masquer l’arsenal" aria-expanded="false">ARMES</button><button id="map-button" class="icon-button" title="Carte (M)" aria-label="Afficher ou masquer la carte"><span class="map-icon" aria-hidden="true"></span></button><button id="pause-button" class="icon-button" title="Pause (Échap)" aria-label="Mettre en pause"><span class="pause-icon" aria-hidden="true"></span></button></div></header>
     <div class="score-status"><span id="combo">SIGNAL STABLE</span><strong id="score">00000</strong><span class="stat-label">SCORE</span></div>
     <div class="objective"><span id="objective-label">RÉTABLIR L’ALIMENTATION</span><div id="relays" title="Relais synchronisés"><i></i><i></i><i></i><span id="relay-count">0 / 3</span></div><div class="sector-progress"><span>COMMANDES <b id="mechanism-count">0 / 3</b></span><span>MACHINES <b id="enemy-count">0 / 120</b></span></div></div>
     <div id="wave-status" hidden><span id="wave-label"></span><strong id="wave-count"></strong><span id="wave-detail"></span></div>
@@ -162,7 +219,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       <nav id="arsenal" aria-label="Armes de l’arsenal"><div class="arsenal-heading"><span>ARSENAL <b id="arsenal-count">1 / 4</b></span><span class="wallet"><b id="wallet-credits">0</b> CR <i></i><b id="wallet-cores">0</b> NOYAUX</span></div><div class="weapon-slots" id="weapon-slots"><button id="weapon-slot-0" class="weapon-slot selected" aria-label="MITRAILLETTE" aria-pressed="true"><kbd id="slot-key-0">1</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-0">D</span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M7 18h34v-3h15v9H41v5H26l-4 12h-8l3-12H7z"/><path d="M13 20h24m-6-5v-4h5v4m-18 17h6"/></svg><span class="slot-name">MITRAILLETTE</span><strong id="slot-ammo-0">48</strong></button><button id="weapon-slot-1" class="weapon-slot locked" aria-label="DOUBLE POMPE" aria-pressed="false" disabled><kbd id="slot-key-1">2</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-1"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M5 17h28v-3h25v7H34v4h24v7H27l-4 10h-8l2-10H5z"/><path d="M9 20h19m9-2h17m-17 10h17"/></svg><span class="slot-name">DOUBLE POMPE</span><strong id="slot-ammo-1">À TROUVER</strong></button><button id="weapon-slot-2" class="weapon-slot locked" aria-label="ROQUETTES" aria-pressed="false" disabled><kbd id="slot-key-2">3</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-2"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M6 16h49v16H6zM3 14h5v20H3zm51 0h6v20h-6zM26 32h8v10h-8zM35 11h11v5H35z"/><path d="M13 20h34m-34 7h20"/></svg><span class="slot-name">ROQUETTES</span><strong id="slot-ammo-2">À TROUVER</strong></button><button id="weapon-slot-3" class="weapon-slot locked" aria-label="GRENADES" aria-pressed="false" disabled><kbd id="slot-key-3">4</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-3"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M5 17h21l4-5h26v10H43v7H29l-4 11h-9l2-10H5z"/><circle cx="33" cy="26" r="11"/><path d="M31 18h4m-9 7h5m6 0h5m-11 8h4M43 16h11"/></svg><span class="slot-name">GRENADES</span><strong id="slot-ammo-3">À TROUVER</strong></button><button id="weapon-slot-4" class="weapon-slot" aria-label="PISTOLET" aria-pressed="false" hidden><kbd id="slot-key-4">5</kbd><span class="slot-hand" id="slot-hand-4"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M9 12h42l5 4v8H32l-7 18H14l5-18H9z"/><path d="M14 16h35M37 19h13M20 29h8M39 12V8h5v4"/></svg><span class="slot-name">PISTOLET</span><strong id="slot-ammo-4">∞</strong></button></div><div class="left-hand-strip"><label for="left-hand-setting"><kbd id="left-hand-key">X</kbd> MAIN GAUCHE</label><select id="left-hand-setting" aria-label="Équipement de la main gauche"><option value="none">Libre</option><option id="left-option-0" value="0" disabled>Mitraillette</option><option id="left-option-1" value="1" disabled>Double pompe</option><option id="left-option-2" value="2" disabled>Lance-roquettes</option><option id="left-option-3" value="3" disabled>Lance-grenades</option><option id="left-option-4" value="4" disabled hidden>Pistolet</option></select><strong id="left-hand-stock">LIBRE</strong><span id="left-hand-status">X · CHANGER</span></div></nav>
       <div class="weapon-status" id="weapon-readout"><span class="equipped-label">MAIN DROITE</span><button id="weapon-switch" title="Changer d’arme trouvée (1 à 5, molette)" aria-label="Changer d’arme"><span id="weapon-label">IMPULSE</span><span class="swap-icon" aria-hidden="true"></span></button><div class="ammo-readout"><strong id="ammo-count">48</strong><span><b id="ammo-cap">/ 180</b><small id="ammo-unit">CELLULES</small></span></div><div class="heat-caption"><span id="heat-status">CHALEUR</span></div><div class="bar"><i id="heat-bar"></i></div><div class="ability-strip"><span id="dash-label">ESPACE · ESQUIVE PRÊTE</span><span id="pulse-label">E · ONDE PRÊTE</span><span id="melee-label">V · CROSSE</span></div></div>
     </footer>
-    <div id="touch-controls"><div id="move-zone" aria-label="Joystick de déplacement"><span id="move-stick"></span></div><span class="touch-move-label">DÉPLACER</span><button id="dash-button" aria-label="Esquiver"><span class="dash-icon"></span></button><button id="pulse-button" aria-label="Onde de choc"><span class="pulse-icon"></span></button><button id="left-fire-button" aria-label="Tirer avec la main gauche" disabled><span id="left-fire-label">TIR G</span></button><button id="melee-button" aria-label="Coup de crosse"><span aria-hidden="true">CROSSE</span></button><button id="fire-button" aria-label="Tirer"><span></span></button><span class="touch-look-label">GLISSER POUR VISER</span></div>
+    <div id="partner-marker" hidden></div><div id="touch-controls"><button id="jump-button" aria-label="Sauter ; maintenir pour le jetpack du léger">SAUT / VOL</button><button id="profile-button" aria-label="Changer de profil">PROFIL</button><div id="move-zone" aria-label="Joystick de déplacement"><span id="move-stick"></span></div><span class="touch-move-label">DÉPLACER</span><button id="dash-button" aria-label="Esquiver"><span class="dash-icon"></span></button><button id="pulse-button" aria-label="Onde de choc"><span class="pulse-icon"></span></button><button id="left-fire-button" aria-label="Tirer avec la main gauche" disabled><span id="left-fire-label">TIR G</span></button><button id="melee-button" aria-label="Coup de crosse"><span aria-hidden="true">CROSSE</span></button><button id="fire-button" aria-label="Tirer"><span></span></button><span class="touch-look-label">GLISSER POUR VISER</span></div>
   </div>
   <section id="pause" class="screen modal-screen" hidden aria-labelledby="pause-title"><div class="panel options-shell">
     <header class="options-heading"><div><p class="eyebrow" id="pause-kicker">SIGNAL EN ATTENTE</p><h2 id="pause-title">Réglages de terrain.</h2></div><span class="options-edition">METAL / 08<br>ARSENAL</span></header>
@@ -2632,6 +2689,96 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
 })();
 
 ;
+/* METAL — two complementary classes. Rules are opt-in for new expeditions;
+ * historical worlds retain their geometry, arsenal and checkpoint identity. */
+(function(G){
+  'use strict';
+  const names=['light','heavy'],weapons={light:[4,1,0],heavy:[4,3,2]};
+  const level=xp=>1+Math.min(19,Math.floor(Math.sqrt(xp/100)));
+  const capacity=xp=>4+.2*(level(xp)-1);
+  function fresh(economy){
+    return {version:1,active:'light',classes:Object.fromEntries(names.map(id=>[id,{xp:0,weapon:4,left:null,position:null,economy:G.FEconomy.campaign(economy||G.FEconomy.fresh())}])),jetpack:{fuel:4,recharge:0}};
+  }
+  function copy(value){
+    if(!value||value.version!==1||!names.includes(value.active)||!value.classes)return null;
+    const classes={};
+    for(const id of names){
+      const q=value.classes[id],economy=q&&G.FEconomy.campaign(q.economy);
+      if(!q||!Number.isSafeInteger(q.xp)||q.xp<0||q.xp>1e7||!weapons[id].includes(q.weapon)||q.left!==null&&(!weapons[id].includes(q.left)||q.left===q.weapon)||!economy)return null;
+      const position=q.position==null?null:copyPosition(q.position);if(q.position!=null&&!position)return null;
+      classes[id]={xp:q.xp,weapon:q.weapon,left:q.left,position,economy};
+    }
+    const j=value.jetpack,limit=capacity(classes.light.xp);
+    if(!j||!Number.isFinite(j.fuel)||j.fuel<0||j.fuel>limit||!Number.isFinite(j.recharge)||j.recharge<0||j.recharge>.4)return null;
+    return {version:1,active:value.active,classes,jetpack:{fuel:j.fuel,recharge:j.recharge}};
+  }
+  const poseKeys=['x','y','z','yaw','pitch','airborne','airVX','airVY','airVZ','airTime','padCooldown','padId'];
+  const position=p=>Object.fromEntries(poseKeys.map(k=>[k,p[k]]));
+  function copyPosition(p){
+    if(!p||!['x','y','z','yaw','pitch','airVX','airVY','airVZ','airTime','padCooldown'].every(k=>Number.isFinite(p[k]))||Math.abs(p.x)>10000||Math.abs(p.z)>10000||p.y< -14||p.y>1000||Math.abs(p.yaw)>1e6||Math.abs(p.pitch)>1.2||Math.abs(p.airVX)>32||Math.abs(p.airVZ)>32||p.airVY< -40||p.airVY>40||p.airTime<0||p.airTime>8||p.padCooldown<0||p.padCooldown>4||typeof p.airborne!=='boolean'||p.padId!==null&&typeof p.padId!=='string')return null;
+    return position(p);
+  }
+  function marker(player,target,{width,height,fov=75}){
+    const dx=target.x-player.x,dy=target.y-player.y-.62,dz=target.z-player.z,sy=Math.sin(player.yaw),cy=Math.cos(player.yaw),sp=Math.sin(player.pitch),cp=Math.cos(player.pitch),right=dx*cy+dz*sy,forward=dx*sy-dz*cy,depth=forward*cp+dy*sp,up=dy*cp-forward*sp,focal=height/(2*Math.tan(fov*Math.PI/390));
+    let x=width/2+right*focal/Math.max(.01,depth),y=height/2-up*focal/Math.max(.01,depth);const offscreen=depth<=0||x<90||x>width-90||y<100||y>height-120;
+    if(depth<=0){x=right<0?90:width-90;y=height*.42;}
+    return {x:Math.max(90,Math.min(width-90,x)),y:Math.max(100,Math.min(height-120,y)),distance:Math.hypot(dx,target.y-player.y,dz),height:target.y-player.y,offscreen,direction:depth<=0?(right<0?'←':'→'):x<90?'←':x>width-90?'→':y<100?'↑':y>height-120?'↓':'◇'};
+  }
+  const owns=(profiles,inventory)=>names.every(id=>{const q=profiles.classes[id];return inventory.weapons[q.weapon]&&(q.left===null||inventory.weapons[q.left]);});
+  const owner=(weapon,active='light')=>weapon===4?active:weapon===2||weapon===3?'heavy':'light';
+  function ammoCaps(classes){const a=G.FEconomy.ammoCaps(classes.light.economy,{campaign:true}),b=G.FEconomy.ammoCaps(classes.heavy.economy,{campaign:true});return a.map((v,i)=>owner(i)==='heavy'?b[i]:v);}
+  const allowed=(profile,weapon)=>weapons[profile]?.includes(weapon)===true;
+  function canDamage(group,bullet,source){
+    if(group.profileProtected)return false;
+    if(group.profileRequired==='heavy')return !bullet&&source?.owner==='player'&&source.profile==='heavy';
+    if(group.kind==='wall'||group.kind==='roof')return !bullet&&source?.owner!==undefined&&(source.owner!=='player'||source.profile==='heavy');
+    return true;
+  }
+  function world(w){
+    if(!w.campaign||w.campaignVersion!==2)throw Error('Profiles require the current campaign');
+    const corridor=w.corridors.find(c=>c.arenaPath),arena=w.bossArena;
+    if(!corridor||!arena)throw Error('Profiles require a connected guardian arena');
+    const region='corridor-'+w.corridors.indexOf(corridor),left=corridor.x-corridor.w/2,right=corridor.x+corridor.w/2,y=corridor.y,z=corridor.z,depth=corridor.d;
+    const add=(p,size,category,color,solid=false)=>{
+      const index=w.meshes.length,mesh={shape:'box',p,s:size,mat:category==='profile-signal'?4:1,r:[0,0,0],color,outdoor:true,region,category,structural:true};
+      if(category==='profile-signal')mesh.emissive=.45;w.meshes.push(mesh);
+      let collider=-1;if(solid){mesh.solid=true;collider=w.colliders.length;w.colliders.push({minX:p[0]-size[0]/2,maxX:p[0]+size[0]/2,minY:p[1]-size[1]/2,maxY:p[1]+size[1]/2,minZ:p[2]-size[2]/2,maxZ:p[2]+size[2]/2,mesh:index});}
+      return {index,collider};
+    };
+    // A visible reinforced tunnel prevents flying over either lock. Its walls
+    // and the arena perimeter have to remain intact: an explosive side breach
+    // must not bypass the light class's power relay.
+    const protectedMeshes=new Set(w.outdoorBoundaries.filter(b=>w.meshes[b.mesh]?.region===region||w.meshes[b.mesh]?.region==='room-'+arena.room).map(b=>b.mesh));
+    for(const g of w.destructibles)if(g.meshes.some(i=>protectedMeshes.has(i)))g.profileProtected=true;
+    const steel=[.23,.29,.32],orange=[.95,.43,.12],cyan=[.22,.83,.84];
+    add([corridor.x,y+6.65,z],[corridor.w+.8,.3,depth+.8],'profile-roof',steel,true);
+    for(const sign of [-1,1])add([corridor.x,y+3.25,z+sign*depth/2],[corridor.w+.8,6.5,.32],'profile-side',steel,true);
+    const wallX=left+2.2,wall=add([wallX,y+3.25,z],[.65,6.5,depth],'profile-breach',steel,true),members=[wall.index];
+    for(const side of [-1,1])for(let i=-2;i<=2;i++)members.push(add([wallX+side*.334,y+1.6+i*.32,z],[.018,.12,depth*.78],'profile-signal',orange).index);
+    for(const i of members)w.meshes[i].destructibleId='profile-breach';
+    w.outdoorBoundaries.push({mesh:wall.index});
+    w.destructibles.push({id:'profile-breach',kind:'wall',profileRequired:'heavy',strength:18,meshes:members,colliders:[wall.collider]});
+    const mechanism={id:'profile-power',name:'Relais aérien · léger',x:corridor.x+.2,y:y+3.2,z:z-depth/2+.95,required:true,profileRequired:'light'};
+    w.mechanisms.push(mechanism);
+    add([mechanism.x,mechanism.y-.12,mechanism.z],[1.5,.24,1.5],'profile-platform',steel,true);
+    add([mechanism.x,mechanism.y+.55,mechanism.z-.35],[.48,1.1,.36],'profile-relay',steel);
+    add([mechanism.x,mechanism.y+.83,mechanism.z-.155],[.37,.34,.04],'profile-signal',cyan);
+    w.walkable.push({x:mechanism.x,z:mechanism.z,w:1.5,d:1.5,y:mechanism.y});
+    w.doors.push({id:'profile-door',x:right-1.3,y,z,w:.5,d:depth,h:6.5,requires:mechanism.id,profileProtected:true});
+    for(const side of [-1,1])add([right-1.3,y+3.2,z+side*(depth/2-.18)],[.65,6.4,.17],'profile-signal',cyan);
+    // The launcher is obtainable before the first required breach, independent
+    // of boss rewards. Its finite ammunition follows the expedition inventory.
+    if(w.index===0)w.pickups.push({id:'profile-launcher',kind:'weapon',weapon:3,amount:8,x:w.spawn.x+1,y:w.spawn.y||0,z:w.spawn.z,profileRequired:'heavy',profileUnlock:true});
+    w.pickups.push({id:'profile-breach-ammo',kind:'ammo',weapon:3,amount:8,x:left-1.2,y,z:z+.9,profileRequired:'heavy'});
+    for(const e of w.enemies)if(e.type===3&&e.bossScale>1)e.profileRequired=w.index%2?'heavy':'light';
+    w.profileVersion=1;
+    w.profileGoals={breach:'profile-breach',mechanism:mechanism.id,door:'profile-door',boss:w.index%2?'heavy':'light',entry:{x:left-1,y,z},after:{x:right+1,y,z}};
+    return w;
+  }
+  G.MetalProfiles={names,weapons,owns,owner,position,copyPosition,marker,ammoCaps,level,capacity,fresh,copy,allowed,canDamage,world};
+})(typeof window!=='undefined'?window:globalThis);
+
+;
 /* FERRO — deterministic architecture, constructed entirely from primitives. */
 (function () {
   'use strict';
@@ -2645,7 +2792,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
   // FPassages est lu au chargement, comme FMath : un banc qui installe `window`
   // le temps d'exécuter les modules puis le retire doit quand même pouvoir créer
   // un monde (checks/checkpoint.test.mjs, LOAD-01).
-  const FPassages = window.FPassages;
+  const FPassages = window.FPassages, MetalProfiles = window.MetalProfiles;
   if (!FPassages) throw new Error('FWorld: charger src/passages.js avant src/world.js');
   const TAU = Math.PI * 2;
   const themes = [
@@ -3312,6 +3459,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);}
     polishTrees(world);
     demolitionMetadata(world,options?.legacyTraps===true);
+    if(options?.profiles===true){if(!MetalProfiles)throw new Error("Load profiles.js before creating a class expedition");MetalProfiles.world(world);}
     world.detailStats.added=world.meshes.length-world.detailStats.base;
     world.detailStats.tiers=[0,1,2].map(level=>world.meshes.filter(m=>(m.detail||0)===level).length);
     return world;
@@ -4635,7 +4783,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     }
     return parts.filter((_,i)=>keep.has(i));
   }
-  function create(world){
+  function create(world,rules={}){
     const originalMeshes=world.meshes||[],originalColliders=world.colliders||[],groups=new Map(),meshOwner=new Map(),states=new Map(),leaked=new Set();
     let meshes=null,colliders=[],lights=(world.lights||[]).slice(),revision=0,token=Object.freeze({}),previousToken=null,lastDelta=null,emptyDelta=null;
     const definitions=world.destructibles||originalMeshes.map((m,i)=>m.ground||m.terrain?null:{id:'mesh-'+i,kind:'prop',strength:5,meshes:[i],colliders:originalColliders.flatMap((c,j)=>c.mesh===i?[j]:[])}).filter(Boolean);
@@ -4793,13 +4941,14 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
         return {structural:true,sourceId:q.sourceId,shape:m.shape||'box',x:m.p[0],y:m.p[1],z:m.p[2],size:m.s.slice(),rotation:(m.r||[0,0,0]).slice(),angularVelocity:[(random()-.5)*spin,(random()-.5)*spin,(random()-.5)*spin],velocity:[dir[0]*speed,q.kind==='roof'?-.25:.35+random()*.9+dir[1]*speed,dir[2]*speed],resting:false,mat:m.mat||0,color:m.color?.slice(),material,mass,life:1e7,seed};
       });
     }
-    function damage(point,radius,power,bullet,ignoreId,direction){
+    function damage(point,radius,power,bullet,ignoreId,direction,source){
       const result={changed:false,revision,debris:[],events:[],pipeLeaks:[],collapsed:[]},fallen=[];
       if(!validPoint(point)||!finite(radius)||!finite(power)||radius<=0||power<=0)return result;
       radius=clamp(radius,.05,12);power=clamp(power,0,1000);
       const reach={minX:point[0]-radius,maxX:point[0]+radius,minY:point[1]-radius,maxY:point[1]+radius,minZ:point[2]-radius,maxZ:point[2]+radius};
       let targets=query(reach).filter(g=>g.id!==String(ignoreId)&&isAlive(g.id)&&g.active.some(e=>distance(point,e.bounds)<=radius));
       if(bullet)targets=targets.sort((a,b)=>Math.min(...a.active.map(e=>distance(point,e.bounds)))-Math.min(...b.active.map(e=>distance(point,e.bounds)))).slice(0,1);
+      if(rules.canDamage)targets=targets.filter(g=>rules.canDamage(g,bullet,source));
       const touched=[],changedGroups=new Set();
       for(const g of targets){
         const nearest=g.active.reduce((best,e)=>!best||distance(point,e.bounds)<distance(point,best.bounds)?e:best,null),d=distance(point,nearest.bounds),impact=[Math.max(nearest.bounds.minX,Math.min(point[0],nearest.bounds.maxX)),Math.max(nearest.bounds.minY,Math.min(point[1],nearest.bounds.maxY)),Math.max(nearest.bounds.minZ,Math.min(point[2],nearest.bounds.maxZ))],amount=power*(bullet?1:Math.pow(Math.max(0,1-d/radius),.45));if(amount<=.02)continue;
@@ -4823,12 +4972,12 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
         for(const p of world.pipes||[])if(p.destructibleId===g.id&&!leaked.has(p.id)){leaked.add(p.id);result.pipeLeaks.push(p.id);}
       }
       if(result.changed){
-        for(const roof of groups.values())if(roof.supports?.length&&isAlive(roof.id)){
+        for(const roof of groups.values())if(roof.supports?.length&&isAlive(roof.id)&&(!rules.canDamage||rules.canDamage(roof,false,source))){
           const supports=roof.supports.map(id=>groups.get(String(id))).filter(Boolean),original=supports.reduce((v,g)=>v+g.originalVolume,0),remaining=supports.reduce((v,g)=>v+g.solids.reduce((n,q)=>n+volume(q.bounds),0),0);
           if(original>0&&remaining/original<(roof.supportRatio||.38)){
             const point=[(roof.bounds.minX+roof.bounds.maxX)/2,roof.bounds.minY,(roof.bounds.minZ+roof.bounds.maxZ)/2];removedGeometry(roof,roof.active,[],point,45,undefined,fallen);
             states.set(roof.id,{damage:0,cuts:[],removed:true});changedGroups.add(roof);roof.active=[];roof.solids=[];result.collapsed.push(roof.id);
-            for(const id of roof.dependents||[]){const g=groups.get(id);if(g&&isAlive(id)){removedGeometry(g,g.active,[],point,45,undefined,fallen);states.set(id,{damage:0,cuts:[],removed:true});changedGroups.add(g);g.active=[];g.solids=[];result.collapsed.push(id);}}
+            for(const id of roof.dependents||[]){const g=groups.get(id);if(g&&isAlive(id)&&(!rules.canDamage||rules.canDamage(g,false,source))){removedGeometry(g,g.active,[],point,45,undefined,fallen);states.set(id,{damage:0,cuts:[],removed:true});changedGroups.add(g);g.active=[];g.solids=[];result.collapsed.push(id);}}
             result.events.push({name:'materialBreak',x:point[0],y:point[1],z:point[2],sourceId:roof.id,material:materialOf(entries[roof.meshes[0]].mesh),power:45,seed:roof.meshes[0]*977+(revision+1)*911});
           }
         }
@@ -4859,7 +5008,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       const change=rebuild();revision=options.exactRevision?value.revision:Math.max(revision+1,value.revision);publish(change,true);return true;
     }
     return {get meshes(){return renderMeshes();},delta,get colliders(){return colliders;},get lights(){return lights;},get revision(){return revision;},isAlive,raycast,
-      hit:(point,power,direction)=>damage(point,.22,power,true,undefined,validPoint(direction)?direction:undefined),blast:(point,radius,power,ignoreId)=>damage(point,radius,power,false,ignoreId),snapshot,restore};
+      hit:(point,power,direction,source)=>damage(point,.22,power,true,undefined,validPoint(direction)?direction:undefined,source),blast:(point,radius,power,ignoreId,source)=>damage(point,radius,power,false,ignoreId,undefined,source),snapshot,restore};
   }
   G.FDestruction={create};
 })(typeof window!=='undefined'?window:globalThis);
@@ -6670,13 +6819,13 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     next.upgrades[reward.personalUpgrade]=Math.min(PERSONAL_RANKS,next.upgrades[reward.personalUpgrade]+1);
     return next;
   }
-  function ammoCaps(profile,options={}){if(!validate(profile))return null;const caps=BASE_CAPS.map(value=>Math.floor(value*(1+.25*profile.upgrades.capacity)));if(options.campaign===true)caps.push(1);return caps;}
+  function ammoCaps(profile,options={}){if(!validate(profile))return null;if(options.capacities!==undefined){const c=options.capacities;return Array.isArray(c)&&c.length===(options.campaign===true?5:4)&&c.every(x=>Number.isSafeInteger(x)&&x>=0&&x<=100000)?c.slice():null;}const caps=BASE_CAPS.map(value=>Math.floor(value*(1+.25*profile.upgrades.capacity)));if(options.campaign===true)caps.push(1);return caps;}
   function catalog(){return ITEMS.map(item=>({...item}));}
   function copyState(state,options={}){
     if(!shape(state,['profile','inventory','hp']))return null;
     const profile=copy(state.profile);if(!profile)return null;
     const campaign=options.campaign===true,caps=ammoCaps(profile,options),inventory=state.inventory;
-    if(!inventory||!Array.isArray(inventory.weapons)||!Array.isArray(inventory.ammo))return null;
+    if(!caps||!inventory||!Array.isArray(inventory.weapons)||!Array.isArray(inventory.ammo))return null;
     const slots=inventory.weapons.length;
     if(!(campaign?[5]:[3,4]).includes(slots)||!shape(inventory,['weapons','ammo'])||Object.keys(inventory.weapons).length!==slots||(campaign?!inventory.weapons.some(Boolean):inventory.weapons[0]!==true)||inventory.ammo.length!==slots||Object.keys(inventory.ammo).length!==slots||!Array.from({length:slots},(_,i)=>i).every(i=>own(inventory.weapons,i)&&typeof inventory.weapons[i]==='boolean'&&own(inventory.ammo,i)&&integer(inventory.ammo[i],caps[i])))return null;
     if(!Number.isFinite(state.hp)||state.hp<0||state.hp>stats(profile).maxHp)return null;
@@ -6890,11 +7039,11 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
   function copyArmor(value,capacity=200){
     return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===2&&value.version===1&&Number.isFinite(value.points)&&value.points>=0&&value.points<=capacity&&Number.isFinite(capacity)&&capacity>=0&&capacity<=200?{version:1,points:value.points}:null;
   }
-  function validBossRewards(profile,inventory,ledger){
+  function validBossRewards(profile,inventory,ledger,classes){
     if(!G.FEconomy?.validate(profile)||profile.version!==2||!Array.isArray(ledger))return false;
     const weapons=[0,0,0,0,0],personal={vitality:0,armor:0,capacity:0,power:0,cooling:0};
     for(const index of ledger){const reward=G.FEconomy.bossReward(index);if(!reward||reward.weapon!==null&&!inventory.weapons[reward.weapon])return false;weapons[reward.weaponUpgrade]++;personal[reward.personalUpgrade]++;}
-    return weapons.every((n,i)=>profile.weaponUpgrades[i]>=n)&&Object.keys(personal).every(key=>profile.upgrades[key]>=personal[key]);
+    return weapons.every((n,i)=>(classes?classes[G.MetalProfiles.owner(i)].economy:profile).weaponUpgrades[i]+(classes&&i===4?classes.heavy.economy.weaponUpgrades[i]:0)>=n)&&Object.keys(personal).every(key=>(classes?classes.light.economy.upgrades[key]+classes.heavy.economy.upgrades[key]:profile.upgrades[key])>=personal[key]);
   }
   function campaignPolicy(index,inventory,ceiling=16,version=1){
     if(version===2){const progress=clamp(Number(index)||0,0,17);return {version:2,tier:Math.min(5,progress/3),maxActive:clamp(ceiling,2,16),damageMultiplier:Math.round((.95+progress*.035)*1000)/1000,cadenceMultiplier:Math.round((.95+progress*.0175)*1000)/1000};}
@@ -6942,10 +7091,15 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     let maxCombat=nominalCombat;
     const campaign=world.campaign===true,bossProgression=campaign&&world.campaignVersion===2,arsenal=progression&&(world.progression.weaponSlots===4||campaign&&world.progression.weaponSlots===5),weaponSlots=arsenal?(campaign&&world.progression.weaponSlots===5?5:4):3,weaponIds=Array.from({length:weaponSlots},(_,i)=>i),pistol=campaign&&weaponSlots===5,armorEnabled=campaign||options.armorSystem===true||options.armor!==undefined;
     const brain=advanced&&options.brain&&typeof options.brain.evaluate==='function'?options.brain:null;
-    const initialEconomy=economyEnabled?(bossProgression?G.FEconomy.campaign:G.FEconomy.copy)(options.economy===undefined?G.FEconomy.fresh({campaignVersion:bossProgression?2:1}):options.economy):null;
+    const profilesEnabled=world.profileVersion===1;
+    if(profilesEnabled&&(!pistol||!G.MetalProfiles))throw new Error("Invalid class expedition");
+    let initialEconomy=economyEnabled?(bossProgression?G.FEconomy.campaign:G.FEconomy.copy)(options.economy===undefined?G.FEconomy.fresh({campaignVersion:bossProgression?2:1}):options.economy):null;
     if(economyEnabled&&!initialEconomy||!economyEnabled&&options.economy!==undefined)throw new Error('Invalid economy');
+    const initialProfiles=profilesEnabled?G.MetalProfiles.copy(options.profiles===undefined?G.MetalProfiles.fresh(initialEconomy):options.profiles):null;
+    if(profilesEnabled){if(!initialProfiles)throw new Error('Invalid profiles');initialEconomy=initialProfiles.classes[initialProfiles.active].economy;}
+    const destructionRules=profilesEnabled?{canDamage:G.MetalProfiles.canDamage}:undefined;
     const baseStats={maxHp:100,damageMultiplier:1,incomingMultiplier:1,coolingMultiplier:1};
-    let ammoCaps=(economyEnabled?G.FEconomy.ammoCaps(initialEconomy,{campaign:pistol}):(world.progression?.ammoCaps||(pistol?[180,36,12,16,1]:[180,36,12,16]))).slice(0,weaponSlots),stats=economyEnabled?G.FEconomy.stats(initialEconomy):{...baseStats};
+    let ammoCaps=(profilesEnabled?G.MetalProfiles.ammoCaps(initialProfiles.classes):economyEnabled?G.FEconomy.ammoCaps(initialEconomy,{campaign:pistol}):(world.progression?.ammoCaps||(pistol?[180,36,12,16,1]:[180,36,12,16]))).slice(0,weaponSlots),stats=economyEnabled?G.FEconomy.stats(initialEconomy):{...baseStats};
     const modernMovement=progression||world.generation>=6;
     const motionProfile=modernMovement?{walk:4.2,sprint:7.6,accel:16,friction:9,stop:2.2,dash:15.2,air:1.1,maxSpeed:10.5,gravity:20,jump:6.2}:{walk:4.2,sprint:5.8,accel:20,friction:32,reverse:38,dash:13.2,air:1};
     function inventoryValue(value,caps=ammoCaps){
@@ -6955,10 +7109,11 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     }
     const initialInventory=inventoryValue(options.inventory===undefined?{weapons:progression?(world.progression.startWeapons||weaponIds.map(i=>i===(pistol?4:0))):weaponIds.map(()=>true),ammo:progression?(world.progression.startAmmo||weaponIds.map(i=>pistol?i===4?1:0:i===0?48:0)):ammoCaps}:options.inventory);
     if(!initialInventory)throw new Error('Invalid inventory');
+    if(profilesEnabled&&!G.MetalProfiles.owns(initialProfiles,initialInventory))throw new Error('Invalid profile equipment');
     let initialCampaign=campaign?copyCampaign(options.campaign===undefined?{version:bossProgression?2:1,discovered:CAMPAIGN_GEAR.filter(g=>ownsGear(g,initialInventory)).map(g=>g.key),...(bossProgression?{claimedBossRewards:[]}:{})}:options.campaign,initialInventory):null;
     if(bossProgression&&initialCampaign?.version===1)initialCampaign={...initialCampaign,version:2,claimedBossRewards:[]};
     if(campaign&&(!initialCampaign||initialCampaign.version!==(bossProgression?2:1)))throw new Error('Invalid campaign');
-    if(bossProgression&&!validBossRewards(initialEconomy,initialInventory,initialCampaign.claimedBossRewards))throw new Error('Invalid boss rewards');
+    if(bossProgression&&!validBossRewards(initialEconomy,initialInventory,initialCampaign.claimedBossRewards,initialProfiles?.classes))throw new Error('Invalid boss rewards');
     const trophyDefs=campaign?world.trophies||[]:[];
     const initialPolicy=campaign?campaignPolicy(world.index,initialInventory,nominalCombat,bossProgression?2:1):null;
     let bossHpFactor=campaign?campaignBossFactor(world.index,initialPolicy.tier,bossProgression?2:1):1,adaptationKey=campaign?campaignArsenalKey(initialInventory):-1;
@@ -6971,12 +7126,13 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       if(!(left===null||Number.isInteger(left)&&left!==value.right&&inventory.weapons[left]))return null;
       return {right:value.right,left};
     }
-    const initialEquipment=arsenal?equipmentValue(options.equipment??{right:pistol?(initialInventory.weapons[4]?4:initialInventory.weapons.findIndex(Boolean)):0,left:null},initialInventory):null;
+    const initialEquipment=arsenal?equipmentValue(options.equipment??(profilesEnabled?{right:initialProfiles.classes[initialProfiles.active].weapon,left:initialProfiles.classes[initialProfiles.active].left}:null)??{right:pistol?(initialInventory.weapons[4]?4:initialInventory.weapons.findIndex(Boolean)):0,left:null},initialInventory):null;
     if(arsenal&&!initialEquipment)throw new Error('Invalid equipment');
+    if(profilesEnabled&&(initialEquipment.right!==initialProfiles.classes[initialProfiles.active].weapon||initialEquipment.left!==initialProfiles.classes[initialProfiles.active].left))throw new Error('Mismatched profile equipment');
     const initialArmorCap=100,initialArmor=armorEnabled?copyArmor(options.armor===undefined?{version:1,points:0}:options.armor,200):null;
     if(armorEnabled&&!initialArmor)throw new Error('Invalid armor');
     if(initialArmor)initialArmor.points=Math.min(initialArmor.points,initialArmorCap);
-    let destruction=G.FDestruction?.create(world)||null,trapStates=[];
+    let destruction=G.FDestruction?.create(world,destructionRules)||null,trapStates=[];
     // Static height rectangles share a small spatial index. Breach updates never
     // invalidate terrain, so path probes no longer rescan the entire landscape.
     const floorGX=Math.floor(world.bounds.minX/8),floorGZ=Math.floor(world.bounds.minZ/8),floorGW=Math.floor(world.bounds.maxX/8)-floorGX+1,floorGD=Math.floor(world.bounds.maxZ/8)-floorGZ+1;
@@ -7091,6 +7247,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       doors:(world.doors||[]).map(d=>({...d,progress:d.requires===undefined?1:0,open:d.requires===undefined,hp:18,destroyed:false})),
       lifts:(world.lifts||[]).map(l=>({...l,y:l.minY,target:l.minY,powered:l.requires===undefined,moving:false,carrying:false})),
       aiStats:{awake:0,dormant:0,reserve:0,combat:0,combatCap:maxCombat,alive:world.enemies.length,pathSearches:0,pathDeferred:0}};
+    if(profilesEnabled){for(const id of G.MetalProfiles.names)initialProfiles.classes[id].position=G.MetalProfiles.position(p);s.activeProfile=initialProfiles.active;s.profiles=initialProfiles.classes;s.jetpack={...initialProfiles.jetpack,capacity:G.MetalProfiles.capacity(initialProfiles.classes.light.xp),active:false};s.economy=s.profiles[s.activeProfile].economy;}
     const encounterMap=new Map(s.encounters.map(q=>[q.id,q])),enemyEncounter=new Map();
     // SIM-06: encounter index per enemy, same last-wins order as the map above.
     const enemyEncounterIndex=new Int32Array(s.enemies.length).fill(-1);
@@ -7104,7 +7261,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     const locomotion=s.locomotion={vx:0,vz:0,speed:0,forward:0,strafe:0,stridePhase:0,distance:0,
       moveBlend:0,sprintBlend:0,dashBlend:0,accelForward:0,accelStrafe:0,blocked:false};
     let velocityX=0,velocityZ=0,dashAge=.2,dashX=0,dashZ=0;
-    let jumpBuffer=0,coyote=0,jumpWasPressed=false,clipFeedbackWait=0,clipEscape=false;
+    let jumpBuffer=0,coyote=0,jumpWasPressed=false,clipFeedbackWait=0,clipEscape=false,profileWasPressed=false,jetSoundWait=0,profileHintWait=0;
     // Resolve owners once, then query the live pieces, never the original box:
     // opening a breach also opens its player-only boundary clip.
     const clipIds=new Set();
@@ -7232,9 +7389,10 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       }
     }
     function nearestInteraction(){
-      if(p.airborne)return null;
+      if(p.airborne&&!profilesEnabled)return null;
       const choices=[],add=(entry,x,y,z)=>{const d=Math.hypot(x-p.x,z-p.z);if(d<=2.6&&Math.abs(y-p.y)<1.05&&ray([p.x,p.y+1.4,p.z],[ (x-p.x)/(d||1),0,(z-p.z)/(d||1)],Math.max(0,d-.55))>=d-.6)choices.push({...entry,x,y,z,d});};
-      for(const m of s.mechanisms)if(!m.active)add({kind:'mechanism',id:m.id,label:m.name||'Activer le mécanisme'},m.x,m.y||0,m.z);
+      for(const m of s.mechanisms)if(!m.active&&(!p.airborne||m.profileRequired))add({kind:'mechanism',id:m.id,label:m.name||'Activer le mécanisme',disabled:!!m.profileRequired&&m.profileRequired!==s.activeProfile,reason:m.profileRequired&&m.profileRequired!==s.activeProfile?'Passez au profil léger':undefined},m.x,m.y||0,m.z);
+      if(p.airborne){choices.sort((a,c)=>a.d-c.d);return choices[0]||null;}
       if(economyEnabled)for(const q of world.shops||[])if(shopAccessible(q))add({kind:'shop',id:q.id,label:q.name||'Ouvrir l’atelier'},q.x,q.y||0,q.z);
       for(const l of s.lifts){
         const disabled=!l.powered,reason=disabled?'Rétablir l’alimentation':l.moving?'Ascenseur en mouvement':undefined;
@@ -7249,7 +7407,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       if(s.dead||s.won)return false;
       const q=nearestInteraction();if(!q||q.disabled)return false;
       if(q.kind==='mechanism'){
-        const m=s.mechanisms.find(m=>m.id===q.id);activateMechanism(m);return true;
+        const m=s.mechanisms.find(m=>m.id===q.id);activateMechanism(m);if(m.profileRequired)awardProfile(40);return true;
       }
       if(q.kind==='shop'){emit('shopOpen',{id:q.id});return true;}
       const l=s.lifts.find(l=>l.id===q.id);l.target=q.target;l.moving=Math.abs(l.target-l.y)>.01;l.carrying=onLift(l,p.x,p.z)&&Math.abs(p.y-l.y)<.25;
@@ -7365,7 +7523,9 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     // Modern player motion is evaluated in bounded physical slices. The legacy
     // profile, enemies, projectiles and authored jump pads keep their old path.
     function boundaryAt(x,z,r=.28,y=p.y){
-      if(!modernMovement||!clipIds.size)return false;
+      if(!modernMovement)return false;
+      if(profilesEnabled)for(const door of s.doors)if(door.profileProtected&&door.progress<.99&&Math.abs(x-door.x)<door.w/2+r&&Math.abs(z-door.z)<door.d/2+r)return true;
+      if(!clipIds.size)return false;
       for(const q of localSolids(x,z))if(clipIds.has(String(q.destructibleId))&&q.minY<y+1.8&&q.maxX-q.minX>=.12&&q.maxZ-q.minZ>=.12&&discBox(x,z,r,q))return true;
       return false;
     }
@@ -7393,6 +7553,10 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       let left=dt;
       while(left>1e-10&&p.airborne&&!s.dead){
         let h=Math.min(left,1/120,.09/Math.max(1,Math.hypot(p.airVX,p.airVY,p.airVZ)));
+        if(profilesEnabled&&s.activeProfile==='light'&&input.jumpHeld&&s.jetpack.fuel>0){
+          const powered=Math.min(h,s.jetpack.fuel);p.airVY=Math.min(5,p.airVY+32*powered);p.airTime=0;s.jetpack.fuel=Math.max(0,s.jetpack.fuel-powered);s.jetpack.recharge=.4;s.jetpack.active=true;
+          if(jetSoundWait<=0){emit('jetpack',{active:true,power:1,x:p.x,y:p.y,z:p.z});jetSoundWait=.12;}
+        }
         const old=p.y,vy=p.airVY,fallFrom=old-vy*p.airTime-10*p.airTime*p.airTime;
         let y=old+vy*h-10*h*h,landing=null;
         if(y<=old){
@@ -7472,6 +7636,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     }
     function modernLocomote(dt,input){
       if(!(dt>0))return;
+      if(profilesEnabled){s.jetpack.active=false;jetSoundWait=Math.max(0,jetSoundWait-dt);s.jetpack.recharge=Math.max(0,s.jetpack.recharge-dt);if(!p.airborne&&s.jetpack.recharge===0)s.jetpack.fuel=Math.min(s.jetpack.capacity,s.jetpack.fuel+dt*1.25);}
       if(!clipEscape||!boundaryAt(p.x,p.z))clipEscape=false;
       if(jumpBuffer>0&&(!p.airborne||coyote>0)&&p.padId===null)playerJump();
       let mx=Number.isFinite(input.moveX)?input.moveX:0,my=Number.isFinite(input.moveY)?input.moveY:0,n=Math.hypot(mx,my);
@@ -7664,31 +7829,53 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       if(!campaign)return;const key=campaignArsenalKey(s.inventory);if(key===adaptationKey)return;
       Object.assign(s.adaptation,campaignPolicy(world.index,s.inventory,nominalCombat,bossProgression?2:1));maxCombat=s.adaptation.maxActive;s.aiStats.combatCap=maxCombat;adaptationKey=key;
     }
+    function exportProfiles(){
+      if(!profilesEnabled)return null;
+      const active=s.profiles[s.activeProfile];active.economy=s.economy;active.weapon=s.weapon;active.left=s.equipment.left;active.position=G.MetalProfiles.position(p);
+      return G.MetalProfiles.copy({version:1,active:s.activeProfile,classes:s.profiles,jetpack:s.jetpack});
+    }
+    function awardProfile(xp,id=s.activeProfile){
+      if(!profilesEnabled||!s.profiles[id])return;
+      const profile=s.profiles[id],old=G.MetalProfiles.level(profile.xp);profile.xp=Math.min(1e7,profile.xp+xp);
+      s.jetpack.capacity=G.MetalProfiles.capacity(s.profiles.light.xp);
+      if(G.MetalProfiles.level(profile.xp)!==old){if(id===s.activeProfile)profile.economy=s.economy;profile.economy.credits=Math.min(1000000000,profile.economy.credits+75*(G.MetalProfiles.level(profile.xp)-old));emit('profileLevel',{profile:id,level:G.MetalProfiles.level(profile.xp)});}
+    }
+    function switchProfile(){
+      if(!profilesEnabled||s.dead||s.won)return false;
+      exportProfiles();const from=s.activeProfile,to=from==='light'?'heavy':'light',next=s.profiles[to];
+      const healthRatio=p.hp/s.maxHp;s.activeProfile=to;s.economy=next.economy;stats=G.FEconomy.stats(s.economy);s.maxHp=stats.maxHp;p.hp=Math.min(s.maxHp,healthRatio*s.maxHp);
+      s.weapon=s.equipment.right=s.inventory.weapons[next.weapon]?next.weapon:4;s.equipment.left=next.left!==null&&s.inventory.weapons[next.left]?next.left:null;
+      Object.assign(p,next.position);stopMotion(true);jumpBuffer=coyote=0;jumpWasPressed=false;p.dashing=0;clipEscape=boundaryAt(p.x,p.z);s.jetpack.active=false;emit('profileSwitch',{from,to,x:p.x,y:p.y,z:p.z});return true;
+    }
     function exportInventory(){return {weapons:s.inventory.weapons.slice(),ammo:s.inventory.ammo.slice()};}
     function exportCampaign(){return {version:s.campaign.version,discovered:s.campaign.discovered.slice(),...(bossProgression?{claimedBossRewards:s.campaign.claimedBossRewards.slice()}:{})};}
-    function exportLoadout(){return {inventory:exportInventory(),economy:economyEnabled?G.FEconomy.copy(s.economy):null,...(arsenal?{equipment:{right:s.weapon,left:s.equipment.left}}:{}),...(campaign?{campaign:exportCampaign()}:{}),...(armorEnabled?{armor:{version:1,points:s.armor.points}}:{})};}
+    function exportLoadout(){return {...(profilesEnabled?{profiles:exportProfiles()}:{}),inventory:exportInventory(),economy:economyEnabled?G.FEconomy.copy(s.economy):null,...(arsenal?{equipment:{right:s.weapon,left:s.equipment.left}}:{}),...(campaign?{campaign:exportCampaign()}:{}),...(armorEnabled?{armor:{version:1,points:s.armor.points}}:{})};}
     function armorCapacity(){return 100;}
     function syncArmor(){if(armorEnabled){s.armor.capacity=armorCapacity();s.armor.points=Math.min(s.armor.points,s.armor.capacity);}}
     function shopAccessible(q){return economyEnabled&&!s.dead&&!s.won&&p.hp>0&&Math.hypot(p.x-q.x,p.z-q.z)<=2.6&&Math.abs(p.y-(q.y||0))<1.05&&(!q.destructibleId||!destruction||destruction.isAlive(q.destructibleId))&&sight(p.x,p.z,q.x,q.z,p.y+1.4,(q.y||0)+1.4);}
-    function shopOffers(id){const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return null;const state={profile:s.economy,inventory:s.inventory,hp:p.hp};return G.FEconomy.catalog().filter(item=>(arsenal||item.weapon!==3)&&(!pistol||item.kind!=='weapon'&&(item.kind!=='ammo'||s.inventory.weapons[item.weapon]))).map(item=>({...item,...G.FEconomy.quote(state,item.id,{campaign:pistol})}));}
+    function economyOptions(){return {campaign:pistol,...(profilesEnabled?{capacities:ammoCaps}:{})};}
+    function profileCaps(){if(!profilesEnabled)return G.FEconomy.ammoCaps(s.economy,{campaign:pistol});s.profiles[s.activeProfile].economy=s.economy;return G.MetalProfiles.ammoCaps(s.profiles);}
+    function shopOffers(id){const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return null;const state={profile:s.economy,inventory:s.inventory,hp:p.hp};return G.FEconomy.catalog().filter(item=>(!profilesEnabled||item.weapon===undefined||G.MetalProfiles.allowed(s.activeProfile,item.weapon))&&(arsenal||item.weapon!==3)&&(!pistol||item.kind!=='weapon'&&(item.kind!=='ammo'||s.inventory.weapons[item.weapon]))).map(item=>({...item,...G.FEconomy.quote(state,item.id,economyOptions())}));}
     function buy(id,itemId){
       const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return {ok:false,reason:'Approchez un atelier accessible.',cost:{credits:0,cores:0}};
-      const result=G.FEconomy.transact({profile:s.economy,inventory:s.inventory,hp:p.hp},itemId,{campaign:pistol});if(!result.ok)return result;
-      const profile=G.FEconomy.copy(result.state.profile),caps=profile&&G.FEconomy.ammoCaps(profile,{campaign:pistol}).slice(0,weaponSlots),inventory=caps&&inventoryValue(result.state.inventory,caps),nextStats=profile&&G.FEconomy.stats(profile);
+      if(profilesEnabled){const item=G.FEconomy.catalog().find(q=>q.id===itemId);if(item?.weapon!==undefined&&!G.MetalProfiles.allowed(s.activeProfile,item.weapon))return {ok:false,reason:'Arme réservée à l’autre profil.',cost:{credits:0,cores:0}};}
+      const result=G.FEconomy.transact({profile:s.economy,inventory:s.inventory,hp:p.hp},itemId,economyOptions());if(!result.ok)return result;
+      const profile=G.FEconomy.copy(result.state.profile),caps=profile&&(profilesEnabled?G.MetalProfiles.ammoCaps({...s.profiles,[s.activeProfile]:{...s.profiles[s.activeProfile],economy:profile}}):G.FEconomy.ammoCaps(profile,{campaign:pistol})).slice(0,weaponSlots),inventory=caps&&inventoryValue(result.state.inventory,caps),nextStats=profile&&G.FEconomy.stats(profile);
       if(!profile||!inventory||!Number.isFinite(result.state.hp)||result.state.hp<=0||result.state.hp>nextStats.maxHp)return {ok:false,reason:'Transaction invalide.',cost:{credits:0,cores:0}};
-      s.economy=profile;s.inventory=inventory;p.hp=result.state.hp;stats=nextStats;ammoCaps=caps;s.maxHp=stats.maxHp;
+      s.economy=profile;if(profilesEnabled)s.profiles[s.activeProfile].economy=profile;s.inventory=inventory;p.hp=result.state.hp;stats=nextStats;ammoCaps=caps;s.maxHp=stats.maxHp;
       refreshAdaptation();
       emit('purchase',{id,itemId,label:result.item?.label||itemId,cost:{...result.cost}});return result;
     }
-    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id])return false;if(arsenal){if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;syncArmor();return true;}
+    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id))return false;if(arsenal){if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;syncArmor();return true;}
     function selectLeftWeapon(id){
       if(!arsenal||s.dead||s.won)return false;
-      if(id!==null&&(!Number.isInteger(id)||id<0||id>=weaponSlots||!s.inventory.weapons[id]))return false;
+      if(id!==null&&(!Number.isInteger(id)||id<0||id>=weaponSlots||!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id)))return false;
       if(id===s.weapon){if(!Number.isInteger(s.equipment.left))return false;s.weapon=s.equipment.right=s.equipment.left;}
       s.equipment.left=id;syncArmor();return true;
     }
     function pickupKind(q){return q.kind||q.type||'health';}
     function campaignPickupAllowed(q,kind){
+      if(profilesEnabled&&q.profileUnlock)return q.profileRequired===s.activeProfile;
       if(!pistol||kind!=='weapon'||s.inventory.weapons[q.weapon])return true;
       if(bossProgression)return false;
       const gear=CAMPAIGN_GEAR.find(g=>g.weapon===q.weapon),id=gear&&'trophy-'+gear.key;
@@ -7720,16 +7907,17 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       if(!bossProgression||q.kind!=='boss'||q.rewardTaken)return;
       const reward=G.FEconomy.bossReward(q.rewardIndex);if(!reward||q.rewardIndex!==world.index)return;
       if(s.campaign.claimedBossRewards.includes(q.rewardIndex)){q.rewardTaken=true;return;}
-      const profile=G.FEconomy.grantBossReward(s.economy,q.rewardIndex);if(!profile)return;
+      let profile=G.FEconomy.grantBossReward(s.economy,q.rewardIndex);if(!profile)return;
+      if(profilesEnabled){const owner=G.MetalProfiles.owner(reward.weaponUpgrade,s.activeProfile);if(owner!==s.activeProfile){profile.weaponUpgrades[reward.weaponUpgrade]=s.economy.weaponUpgrades[reward.weaponUpgrade];const target=s.profiles[owner].economy;target.weaponUpgrades[reward.weaponUpgrade]=Math.min(8,target.weaponUpgrades[reward.weaponUpgrade]+1);}}
       const found=reward.weapon!==null&&!s.inventory.weapons[reward.weapon];
-      s.economy=profile;stats=G.FEconomy.stats(profile);ammoCaps=G.FEconomy.ammoCaps(profile,{campaign:true});s.maxHp=stats.maxHp;
+      s.economy=profile;stats=G.FEconomy.stats(profile);ammoCaps=profileCaps();s.maxHp=stats.maxHp;
       if(found){s.inventory.weapons[reward.weapon]=true;selectWeapon(reward.weapon);emit('weaponPickup',{id:q.id,weapon:reward.weapon,amount:0,x:q.x,y:q.y,z:q.z,boss:true});}
       s.campaign.discovered=CAMPAIGN_GEAR.filter(g=>ownsGear(g,s.inventory)).map(g=>g.key);s.campaign.claimedBossRewards.push(q.rewardIndex);s.campaign.claimedBossRewards.sort((a,b)=>a-b);q.rewardTaken=true;refreshAdaptation();
-      emit('bossReward',{id:q.id,bossNumber:q.rewardIndex+1,weapon:found?reward.weapon:null,weaponUpgrade:{weapon:reward.weaponUpgrade,rank:profile.weaponUpgrades[reward.weaponUpgrade],label:reward.weaponUpgradeLabel},personalUpgrade:{key:reward.personalUpgrade,rank:profile.upgrades[reward.personalUpgrade],label:reward.personalUpgradeLabel},x:q.x,y:q.y,z:q.z});
+      emit('bossReward',{id:q.id,bossNumber:q.rewardIndex+1,weapon:found?reward.weapon:null,weaponUpgrade:{weapon:reward.weaponUpgrade,rank:(profilesEnabled?s.profiles[G.MetalProfiles.owner(reward.weaponUpgrade,s.activeProfile)].economy:profile).weaponUpgrades[reward.weaponUpgrade],label:reward.weaponUpgradeLabel},personalUpgrade:{key:reward.personalUpgrade,rank:profile.upgrades[reward.personalUpgrade],label:reward.personalUpgradeLabel},x:q.x,y:q.y,z:q.z});
     }
     function collectSupplies(){
       for(const q of s.pickups){
-        if(q.taken||Math.abs(p.y-(q.y||0))>=.8||Math.hypot(p.x-q.x,p.z-q.z)>=1||!sight(p.x,p.z,q.x,q.z,p.y+.8,(q.y||0)+.45))continue;
+        if(q.taken||profilesEnabled&&q.profileRequired&&q.profileRequired!==s.activeProfile||Math.abs(p.y-(q.y||0))>=.8||Math.hypot(p.x-q.x,p.z-q.z)>=1||!sight(p.x,p.z,q.x,q.z,p.y+.8,(q.y||0)+.45))continue;
         const kind=pickupKind(q);
         if(!campaignPickupAllowed(q,kind)||pistol&&Number.isInteger(q.requiresWeapon)&&!s.inventory.weapons[q.requiresWeapon])continue;
         if(kind==='armor'){
@@ -7937,7 +8125,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       }
     }
     function damageEnemy(e,amount,source,weak=false){
-      if(!alive(e))return;const origin=source||{x:p.x,y:p.y+1.45,z:p.z,credit:true};if(origin.credit)amount*=stats.damageMultiplier;if(giant(e))amount*=e.weakPointOpen&&weak?3.2:.30;if(e.bossWave)e.bossReleased=true;
+      if(!alive(e))return;const origin=source||{x:p.x,y:p.y+1.45,z:p.z,credit:true,...(profilesEnabled?{profile:s.activeProfile}:{})};if(profilesEnabled&&e.profileRequired&&(!origin.credit||origin.profile!==e.profileRequired)){if(origin.credit&&profileHintWait<=0){emit('profileBlocked',{required:e.profileRequired,boss:e.id});profileHintWait=1;}return;}if(origin.credit)amount*=(profilesEnabled&&origin.profile!==s.activeProfile?G.FEconomy.stats(s.profiles[origin.profile].economy):stats).damageMultiplier;if(giant(e))amount*=e.weakPointOpen&&weak?3.2:.30;if(e.bossWave)e.bossReleased=true;
       if(bossProgression)e.entryGrace=0;
       if(progression&&enemyEncounter.has(e.id)){e.encounterReleased=true;e.returning=false;e.quietTime=0;const encounter=enemyEncounter.get(e.id);if(encounter.status==='dormant')announceWave(encounter,0);}
       e.hp=Math.max(0,e.hp-amount);e.hurt=.2;remember(e,origin.x,origin.z,'investigate',7,origin.y);e.thinkWait=0;
@@ -7945,7 +8133,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
         if(giant(e)){s.bossAttacks=s.bossAttacks.filter(a=>a.bossId!==e.id);e.weakPointOpen=false;e.weakTimer=0;emit('bossDeath',{id:e.id,x:e.x,y:e.y,z:e.z,scale:scale(e)});for(let i=0;i<12;i++){const angle=i*2.399963,size=scale(e),id=++explosionSerial;s.explosions.push({id,kind:'boss',owner:e.id,x:e.x+Math.cos(angle)*size*.5,y:e.baseY+size*(.35+i*.23),z:e.z+Math.sin(angle)*size*.5,age:-i*.09,life:2.8,radius:size*.56,power:55,seed:id*911});}if(s.explosions.length>24)s.explosions.splice(0,s.explosions.length-24);}
         s.kills++;dropLoot(e);if(origin.credit){s.combo++;s.comboTime=4;}
         const multiplier=1+Math.min(4,s.combo-1)*.25,points=Math.round([100,150,125,2000][e.type]*multiplier);
-        if(origin.credit)s.score+=points;emit('kill',{kind:e.type,boss:e.type===3,points:origin.credit?points:0,credited:!!origin.credit});particles(e.x,e.y,e.z,6,e.type===3?32:18);
+        if(origin.credit){s.score+=points;awardProfile(e.type===3?100:10,origin.profile);}emit('kill',{kind:e.type,boss:e.type===3,points:origin.credit?points:0,credited:!!origin.credit});particles(e.x,e.y,e.z,6,e.type===3?32:18);
         if(origin.credit&&s.combo>1)emit('combo',{count:s.combo,multiplier});
         if(e.type===3)s.bossAlive=s.enemies.some(q=>q.type===3&&q.hp>0);
       }else bossPhase(e);
@@ -8027,11 +8215,11 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       if(result.changed&&!result.events?.length)emit('creak',{x:point[0],y:point[1],z:point[2],power});
     }
     function distanceBox(point,q){return Math.hypot(Math.max(q.minX-point[0],0,point[0]-q.maxX),Math.max(q.minY-point[1],0,point[1]-q.maxY),Math.max(q.minZ-point[2],0,point[2]-q.maxZ));}
-    function damageScenery(point,power,r=0,direction,ignoreId){
+    function damageScenery(point,power,r=0,direction,ignoreId,source){
       if(!(power>0))return;
-      const result=destruction&&(r>0?destruction.blast(point,r,power,ignoreId):destruction.hit(point,power,direction));sceneryResult(result,point,power);
+      const result=destruction&&(r>0?destruction.blast(point,r,power,ignoreId,source):destruction.hit(point,power,direction,source));sceneryResult(result,point,power);
       for(let i=0;i<s.doors.length;i++){
-        const d=s.doors[i];if(d.destroyed)continue;const distance=distanceBox(point,doorBoxes[i]);if(distance>(r||.18))continue;
+        const d=s.doors[i];if(d.destroyed||profilesEnabled&&d.profileProtected)continue;const distance=distanceBox(point,doorBoxes[i]);if(distance>(r||.18))continue;
         d.hp=Math.max(0,d.hp-power*(r?Math.max(.2,1-distance/r):1));
         if(!d.hp){
           const across=d.w>d.d,sourceId='door:'+d.id,y=(d.y||0)+d.h/2+d.progress*(d.h+.25),size=[across?d.w/2:d.w,d.h/2,across?d.d:d.d/2];
@@ -8041,7 +8229,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       }
       updateDoorBoxes();
       for(const m of s.mechanisms){
-        if(m.destroyed)continue;const d=Math.hypot(m.x-point[0],(m.y||0)+.95-point[1],m.z-point[2]);if(d>(r||.8))continue;
+        if(m.destroyed||profilesEnabled&&m.profileRequired)continue;const d=Math.hypot(m.x-point[0],(m.y||0)+.95-point[1],m.z-point[2]);if(d>(r||.8))continue;
         m.shellHp=Math.max(0,(m.shellHp??12)-power*(r?Math.max(.2,1-d/r):1));if(!m.shellHp)activateMechanism(m,true);
       }
       for(const q of s.pipes)if(Math.hypot(q.x-point[0],q.y-point[1],q.z-point[2])<(r||.9))leakPipe(q);
@@ -8060,7 +8248,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       for(const offset of [-.35,.35]){const target=[x,y+offset,z],v=target.map((n,k)=>n-point[k]),d=Math.hypot(...v);if(d<.08||ray(point,v.map(n=>n/d),d)>=d-.04)clear++;}
       return clear/2;
     }
-    function explode(point,r,damage,terrainPower,owner,shot=false,weakId=-1,ignoreId,kind){
+    function explode(point,r,damage,terrainPower,owner,shot=false,weakId=-1,ignoreId,kind,profile){
       const id=++explosionSerial,seed=(id*1103515245+(world.stage||0)*12345)>>>0;
       kind=kind||(owner==='environment'?'steam':Number.isInteger(owner)&&s.enemies[owner]&&giant(s.enemies[owner])?'boss':'blast');
       s.explosions.push({id,kind,owner,x:point[0],y:point[1],z:point[2],age:0,life:2.4,radius:r,power:terrainPower,seed});if(s.explosions.length>24)s.explosions.shift();
@@ -8078,17 +8266,17 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
           if(exposure*3.2>strength*.30){strength=exposure;weak=true;}
         }
         const amount=(owner==='player'?(bossProgression?damage:8.5):damage*.23)*strength;
-        if(amount>0){connected=true;damageEnemy(e,amount,{x:point[0],y:point[1],z:point[2],credit:owner==='player'},weak);if(e.hp>0){e.stun=Math.max(e.stun,.25);e.windup=0;e.burstLeft=0;}}
+        if(amount>0){connected=true;damageEnemy(e,amount,{x:point[0],y:point[1],z:point[2],credit:owner==='player',profile},weak);if(e.hp>0){e.stun=Math.max(e.stun,.25);e.windup=0;e.burstLeft=0;}}
       }
       if(shot&&connected){s.hits++;s.hitMarker=.22;emit('hit');}
-      damageScenery(point,terrainPower,r,undefined,ignoreId);syncDestruction();hear(point[0],point[2],34,point[1]);
+      damageScenery(point,terrainPower,r,undefined,ignoreId,{owner,profile});syncDestruction();hear(point[0],point[2],34,point[1]);
       particles(...point,5,22);
     }
     const castFound=[];
     function castVisit(cell){const stamp=solidSerial;for(let m=mirrorStart[cell],end=mirrorStart[cell+1];m<end;m++){const n=mirrorIdx[m];if(solidStamp[n]!==stamp){solidStamp[n]=stamp;castFound.push(n);}}return castBound;}
     let castBound=0;
     function castProjectile(o,d,far,r=.12){
-      let distance=far,normal=[0,1,0];
+      let distance=far,normal=[0,1,0],destructibleId;
       const lifts=s.lifts.map(l=>({minX:l.x-l.w/2,maxX:l.x+l.w/2,minY:l.y-.2,maxY:l.y,minZ:l.z-l.d/2,maxZ:l.z+l.d/2}));
       ensureMirror();if(++solidSerial>=4294967295){solidStamp.fill(0);solidSerial=1;}castFound.length=0;castBound=far;
       // r <= bucketRadius: every box that can be hit is listed in a crossed cell; keep the original order.
@@ -8100,7 +8288,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
           if(Math.abs(d[k])<1e-9){if(o[k]<min||o[k]>max){hi=-1;break;}}
           else{let a=(min-o[k])/d[k],c=(max-o[k])/d[k],sign=-1;if(a>c){[a,c]=[c,a];sign=1;}if(a>lo){lo=a;n=[0,0,0];n[k]=sign;}hi=Math.min(hi,c);if(hi<lo)break;}
         }
-        if(hi>=lo&&lo>=0&&lo<distance){distance=lo;normal=n;}
+        if(hi>=lo&&lo>=0&&lo<distance){distance=lo;normal=n;destructibleId=q.destructibleId;}
       }
       if(!floors.length){if(d[1]<-1e-8){const hit=(r-o[1])/d[1];if(hit>=0&&hit<distance){distance=hit;normal=[0,1,0];}}}
       else for(const f of floors){
@@ -8111,8 +8299,8 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
         let hit=relative+rate*enter<-.001?enter:rate<-1e-9?-relative/rate:Infinity;
         if(hit>=enter&&hit<=leave&&hit<distance){distance=hit;const n=Math.hypot(sx,1,sz);normal=[-sx/n,1/n,-sz/n];}
       }
-      const decorative=destruction?.raycast?.(o,d,distance);if(decorative&&decorative.distance<distance){distance=decorative.distance;normal=decorative.normal||normal;}
-      return {distance,normal};
+      const decorative=destruction?.raycast?.(o,d,distance);if(decorative&&decorative.distance<distance){distance=decorative.distance;normal=decorative.normal||normal;destructibleId=decorative.id;}
+      return {distance,normal,destructibleId};
     }
     function projectileVictim(q,o,d,far){
       let result=null,best=far,weak=false;
@@ -8123,7 +8311,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     }
     function spawnProjectile(kind,source,velocity,owner,settings={}){
       if(s.projectiles.length>=48)return false;
-      const q={id:++projectileSerial,kind,owner,x:source[0],y:source[1],z:source[2],vx:velocity[0],vy:velocity[1],vz:velocity[2],age:0,life:kind==='rocket'?5:4,fuse:kind==='grenade'?1.8:0,radius:kind==='rocket'?.24:.17,blastRadius:kind==='rocket'?3.4:3.2,damage:kind==='rocket'?28:24,terrainPower:kind==='rocket'?38:28,travel:0,bounces:0,resting:false,...settings};
+      const q={id:++projectileSerial,kind,owner,...(profilesEnabled&&owner==='player'?{profile:s.activeProfile}:{}),x:source[0],y:source[1],z:source[2],vx:velocity[0],vy:velocity[1],vz:velocity[2],age:0,life:kind==='rocket'?5:4,fuse:kind==='grenade'?1.8:0,radius:kind==='rocket'?.24:.17,blastRadius:kind==='rocket'?3.4:3.2,damage:kind==='rocket'?28:24,terrainPower:kind==='rocket'?38:28,travel:0,bounces:0,resting:false,...settings};
       s.projectiles.push(q);emit(kind==='grenade'&&owner==='player'&&settings.hand?'grenadeLaunch':kind,{x:q.x,y:q.y,z:q.z,owner,id:q.id,...(settings.hand?{hand:settings.hand,weapon:kind==='grenade'?3:2}:{})});return q;
     }
     // Two-entry memo: ground() cannot change during one updateDebris call, which resets it.
@@ -8238,15 +8426,16 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
         const count=Math.max(1,Math.ceil(dt*120)),h=dt/count;
         for(let i=0;i<count&&q.life>0;i++){
           q.age+=h;q.life-=h;if(q.kind==='grenade')q.fuse-=h;
-          if(q.kind==='grenade'&&q.fuse<=0){explode([q.x,q.y,q.z],q.blastRadius,q.damage,q.terrainPower,q.owner,q.owner==='player',-1,undefined,'grenade');q.life=0;break;}
+          if(q.kind==='grenade'&&q.fuse<=0){explode([q.x,q.y,q.z],q.blastRadius,q.damage,q.terrainPower,q.owner,q.owner==='player',-1,undefined,'grenade',q.profile);q.life=0;break;}
           if(q.resting)continue;
           const origin=[q.x,q.y,q.z],delta=[q.vx*h,q.vy*h-(q.kind==='grenade'?GRAVITY*h*h/2:0),q.vz*h],travel=Math.hypot(...delta);
           if(q.kind==='grenade')q.vy-=GRAVITY*h;
           if(travel<1e-9)continue;const dir=delta.map(v=>v/travel),wall=castProjectile(origin,dir,travel+.001,q.radius),victim=projectileVictim(q,origin,dir,Math.min(travel,wall.distance));
           const hit=victim.actor?victim.distance:wall.distance,amount=Math.min(travel,Math.max(0,hit-.002));q.x+=dir[0]*amount;q.y+=dir[1]*amount;q.z+=dir[2]*amount;q.travel+=amount;
           if(hit<=travel){
+            if(profilesEnabled&&q.kind==='grenade'&&q.profile==='heavy'&&q.age>=.07&&q.travel>=.7&&world.destructibles.some(g=>g.id===wall.destructibleId&&g.profileRequired==='heavy')){explode([q.x,q.y,q.z],q.blastRadius,q.damage,q.terrainPower,q.owner,true,-1,undefined,'grenade',q.profile);q.life=0;break;}
             if(q.kind==='rocket'){
-              if(q.age>=.07&&q.travel>=.7)explode([q.x,q.y,q.z],q.blastRadius,q.damage,q.terrainPower,q.owner,q.owner==='player',victim.weak?victim.actor.id:-1,undefined,'rocket');
+              if(q.age>=.07&&q.travel>=.7)explode([q.x,q.y,q.z],q.blastRadius,q.damage,q.terrainPower,q.owner,q.owner==='player',victim.weak?victim.actor.id:-1,undefined,'rocket',q.profile);
               else{damageScenery([q.x,q.y,q.z],8,0,dir);syncDestruction();emit('rocketDud',{x:q.x,y:q.y,z:q.z,owner:q.owner});particles(q.x,q.y,q.z,5,6);}
               q.life=0;
             }else{
@@ -8275,13 +8464,13 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     }
     function fireArsenal(assist,hand){
       const weapon=hand==='left'?s.equipment.left:s.weapon;
-      if(s.dead||s.won||!Number.isInteger(weapon)||!s.inventory.weapons[weapon]||weaponWait[weapon]>0)return false;
+      if(s.dead||s.won||!Number.isInteger(weapon)||!s.inventory.weapons[weapon]||weaponWait[weapon]>0||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,weapon))return false;
       const handgun=pistol&&weapon===4;
       if(!handgun&&s.inventory.ammo[weapon]<=0){if(emptyWait<=0){emit('empty',{weapon,hand});emptyWait=1;}return melee();}
       const shotgun=weapon===1,rocket=weapon===2,grenade=weapon===3,ordnance=rocket||grenade;
       const calibration=bossProgression?G.FEconomy.weaponStats(s.economy,weapon):{damageMultiplier:1,heatMultiplier:1};
       if(p.overheated||ordnance&&s.projectiles.length>=48)return false;
-      const shells=shotgun?Math.min(2,s.inventory.ammo[weapon]):1,delay=handgun?.32:rocket?1.25:grenade?.95:shotgun?shells===2?.98:.78:.125;
+      const shells=shotgun?Math.min(2,s.inventory.ammo[weapon]):1,delay=handgun?(profilesEnabled&&s.activeProfile==='heavy'?.14:.32):rocket?1.25:grenade?.95:shotgun?shells===2?.98:.78:.125;
       if(!handgun)s.inventory.ammo[weapon]-=shells;weaponWait[weapon]=delay;fireWait=Math.max(fireWait,delay);
       p.heat=Math.min(1,p.heat+(handgun?.06:rocket?.48:grenade?.38:shotgun?shells===2?.47:.32:.09)*calibration.heatMultiplier);if(p.heat>=.99){p.overheated=true;emit('overheat');}
       const cy=Math.cos(p.yaw),sy=Math.sin(p.yaw),cp=Math.cos(p.pitch),sp=Math.sin(p.pitch),forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],eye=[p.x,p.y+1.62,p.z];
@@ -9139,7 +9328,8 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       if(arsenal){for(let i=0;i<weaponSlots;i++)weaponWait[i]=Math.max(0,weaponWait[i]-dt);s.leftFlash=Math.max(0,s.leftFlash-dt*9);}
       s.flash=Math.max(0,s.flash-dt*9);s.damage=Math.max(0,s.damage-dt*1.9);s.hitMarker=Math.max(0,s.hitMarker-dt);s.pulseVisual=Math.max(0,s.pulseVisual-dt);
       s.comboTime=Math.max(0,s.comboTime-dt);if(!s.comboTime)s.combo=0;
-      if(Number.isInteger(input.weapon)&&input.weapon>=0&&input.weapon<weaponSlots)selectWeapon(input.weapon);
+      let switched=false;if(profilesEnabled){profileHintWait=Math.max(0,profileHintWait-dt);if(input.switchProfile&&!profileWasPressed)switched=switchProfile();profileWasPressed=!!input.switchProfile;}
+      if(!switched&&Number.isInteger(input.weapon)&&input.weapon>=0&&input.weapon<weaponSlots)selectWeapon(input.weapon);
       p.yaw+=Number.isFinite(input.lookX)?input.lookX:0;p.pitch=clamp(p.pitch+(Number.isFinite(input.lookY)?input.lookY:0),-1.2,1.2);
       p.heat=Math.max(0,p.heat-dt*(fireWait>0?.1:.35)*stats.coolingMultiplier);if(p.overheated&&p.heat<.3){p.overheated=false;emit('cooled');}
       p.dash=Math.max(0,p.dash-dt);p.pulseCooldown=Math.max(0,p.pulseCooldown-dt);
@@ -9185,8 +9375,9 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
       // same routes as a freshly restored world. No actor or gameplay timer moves.
       if(navPending)pumpNav(nav.length);syncArmor();
       invalidateBrain();
-      return {version:1,aiVersion:3,systemsVersion:1,physicsVersion:1,directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
+      return {version:1,aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
         state:{...pick(s,NUMBERS),difficulty:s.difficulty,director:pick(s.director,DIRECTOR),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
+          ...(profilesEnabled?{profiles:exportProfiles()}:{}),
           ...(economyEnabled?{economy:G.FEconomy.copy(s.economy)}:{}),
           ...(campaign?{campaign:{...exportCampaign(),trophies:s.campaign.trophies.map(t=>({...t}))}}:{}),
           ...(campaign?{adaptation:{...s.adaptation}}:{}),
@@ -9209,7 +9400,10 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
         require(data.version===1&&data.format==='FERRO'&&data.seed===world.seed&&data.stage===(world.stage||0)&&data.fingerprint===fingerprint&&a&&t);
         require(data.aiVersion===undefined||data.aiVersion===1||data.aiVersion===2||data.aiVersion===3);
         require(data.systemsVersion===undefined||data.systemsVersion===1);
-        require(data.physicsVersion===undefined||data.physicsVersion===1);
+        require(profilesEnabled?data.physicsVersion===2:data.physicsVersion===undefined||data.physicsVersion===1);
+        require(profilesEnabled?data.profileVersion===1:data.profileVersion===undefined&&a.profiles===undefined);
+        const profiles=profilesEnabled?G.MetalProfiles.copy(a.profiles):null;
+        if(profilesEnabled){require(profiles&&JSON.stringify(profiles.classes[profiles.active].economy)===JSON.stringify(a.economy));for(const id of G.MetalProfiles.names){const q=profiles.classes[id].position;require(q&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-14,1000));}require(JSON.stringify(profiles.classes[profiles.active].position)===JSON.stringify(G.MetalProfiles.position(a.player)));}
         require(data.destructionVersion===undefined||data.destructionVersion===1);
         require(data.rubbleVersion===undefined||data.rubbleVersion===1);
         require(bossProgression?data.reinforcementVersion===undefined||data.reinforcementVersion===1:data.reinforcementVersion===undefined);
@@ -9221,10 +9415,11 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
         require(campaign?data.campaignVersion===(bossProgression?2:1):data.campaignVersion===undefined);
         require(armorEnabled?(data.armorVersion===undefined||data.armorVersion===1):data.armorVersion===undefined);
         const economy=economyEnabled?G.FEconomy.copy(a.economy):null;if(economyEnabled)require(economy);else require(a.economy===undefined);
-        const savedCaps=economyEnabled?G.FEconomy.ammoCaps(economy,{campaign:pistol}).slice(0,weaponSlots):ammoCaps,savedStats=economyEnabled?G.FEconomy.stats(economy):{...baseStats};
+        const savedCaps=profilesEnabled?G.MetalProfiles.ammoCaps(profiles.classes):economyEnabled?G.FEconomy.ammoCaps(economy,{campaign:pistol}).slice(0,weaponSlots):ammoCaps,savedStats=economyEnabled?G.FEconomy.stats(economy):{...baseStats};
         let inventory=exportInventory(),encounters=null,pickupRemaining=null,loot=[],campaignState=null,adaptation=null,savedCombat=nominalCombat,savedBossFactor=1,armor=null,armorRemaining=null;
         if(progression){
           inventory=inventoryValue(a.inventory,savedCaps);require(inventory&&inventory.weapons[a.weapon]);
+          if(profilesEnabled)require(G.MetalProfiles.owns(profiles,inventory)&&a.weapon===profiles.classes[profiles.active].weapon&&a.equipment?.right===a.weapon&&a.equipment.left===profiles.classes[profiles.active].left);
           if(arsenal)require(a.inventory.weapons.length===weaponSlots&&a.inventory.ammo.length===weaponSlots);
           require(Array.isArray(a.encounters)&&a.encounters.length===s.encounters.length&&number(t.encounterWait,0,.2)&&number(t.emptyWait,0,1));
           encounters=a.encounters.map((q,i)=>{const home=s.encounters[i];require(q&&q.id===home.id&&ENCOUNTER_STATUS.includes(q.status)&&integer(q.wave,-1,home.waves.length-1)&&integer(q.pendingWave,-1,home.waves.length-1)&&number(q.timer,0,Math.max(2,home.waveGap||4)));require(q.pendingWave===-1||q.pendingWave===q.wave+1);require((q.status==='warning'||q.status==='waiting')===(q.pendingWave>=0));require(q.status!=='dormant'||q.wave===-1);require(q.status!=='active'||q.wave>=0);return {id:q.id,...pick(q,ENCOUNTER_STATE)};});
@@ -9234,7 +9429,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
         if(campaign){
           const state=a.campaign,profile=state&&copyCampaign({version:state.version,discovered:state.discovered,...(bossProgression?{claimedBossRewards:state.claimedBossRewards}:{})},inventory);
           require(profile&&profile.version===(bossProgression?2:1)&&Object.keys(state).length===(bossProgression?4:3)&&Array.isArray(state.trophies)&&state.trophies.length===trophyDefs.length);
-          if(bossProgression)require(validBossRewards(economy,inventory,profile.claimedBossRewards));
+          if(bossProgression)require(validBossRewards(economy,inventory,profile.claimedBossRewards,profiles?.classes));
           const trophies=state.trophies.map((entry,i)=>{const def=trophyDefs[i];require(entry&&Object.keys(entry).length===3&&entry.id===def.id&&TROPHY_PHASES.includes(entry.phase)&&number(entry.timer,0,clamp(Number(def.grace)||3,1,5))&&((entry.phase==='grace')===(entry.timer>0)));if(entry.phase!=='sealed')require(profile.discovered.includes(def.key));return {id:entry.id,phase:entry.phase,timer:entry.timer};});
           campaignState={...profile,trophies};
           const policy=campaignPolicy(world.index,inventory,nominalCombat,bossProgression?2:1),saved=a.adaptation;
@@ -9258,7 +9453,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
         }else require(a.armor===undefined&&a.armorPickupRemaining===undefined);
         let difficulty=0,director={...s.director};
         if(data.directorVersion===1){const d=a.director;require(integer(a.difficulty,0,2)&&d&&number(d.pressure,0,1)&&number(d.tension,0,1)&&HORROR.includes(d.eventType)&&number(d.eventAge,0,1e7)&&number(d.nextEvent,0,1e7)&&integer(d.events,0,1e9)&&number(d.progress,0,1)&&integer(d.tier,0,6)&&number(d.grace,0,10)&&number(d.eventX,b.minX,b.maxX)&&number(d.eventZ,b.minZ,b.maxZ)&&number(d.eventY,-1000,1000)&&number(d.eventIntensity,0,1));difficulty=a.difficulty;director=pick(d,DIRECTOR);}else require(a.difficulty===undefined&&a.director===undefined&&!horror);
-        let candidate=G.FDestruction?.create(world)||null;
+        let candidate=G.FDestruction?.create(world,destructionRules)||null;
         if(data.destructionVersion===1){require(candidate?candidate.restore(data.destruction,{exactRevision:true}):data.destruction===null);}else require(data.destruction===undefined);
         const savedSolids=candidate?.colliders||world.colliders;
         require(number(a.time,0,1e7)&&number(a.elapsed,0,1e7));
@@ -9297,10 +9492,11 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
           require(Array.isArray(a.projectiles)&&a.projectiles.length<=48&&integer(t.explosionSerial,0,1e9)&&integer(t.projectileSerial,0,1e9));const ids=new Set();
           projectiles=a.projectiles.map(q=>{
             require(q&&integer(q.id,1,t.projectileSerial)&&!ids.has(q.id));ids.add(q.id);require(q.kind==='rocket'||q.kind==='grenade');require(q.owner==='player'||integer(q.owner,0,s.enemies.length-1));
-            const damageLimit=bossProgression&&q.owner==='player'?(q.kind==='rocket'?32:28)*G.FEconomy.weaponStats(economy,q.kind==='rocket'?2:3).damageMultiplier:40;
+            require(profilesEnabled&&q.owner==='player'?q.profile==='heavy':q.profile===undefined);
+            const damageLimit=bossProgression&&q.owner==='player'?(q.kind==='rocket'?32:28)*G.FEconomy.weaponStats(profilesEnabled?profiles.classes.heavy.economy:economy,q.kind==='rocket'?2:3).damageMultiplier:40;
             require(number(q.x,b.minX-150,b.maxX+150)&&number(q.z,b.minZ-150,b.maxZ+150)&&number(q.y,-150,150));for(const k of ['vx','vy','vz'])require(number(q[k],-40,40));
             require(number(q.age,0,5)&&number(q.life,0,5)&&number(q.fuse,-.05,3)&&q.radius===(q.kind==='rocket'?.24:.17)&&number(q.blastRadius,2,4.2)&&number(q.damage,0,damageLimit+1e-8)&&number(q.terrainPower,0,80)&&number(q.travel,0,200)&&integer(q.bounces,0,3)&&bool(q.resting));
-            require(q.hand===undefined||arsenal&&q.owner==='player'&&(q.hand==='left'||q.hand==='right'));return {...pick(q,['id','kind','owner','x','y','z','vx','vy','vz','age','life','fuse','radius','blastRadius','damage','terrainPower','travel','bounces','resting']),...(q.hand?{hand:q.hand}:{})};
+            require(q.hand===undefined||arsenal&&q.owner==='player'&&(q.hand==='left'||q.hand==='right'));return {...pick(q,['id','kind','owner','x','y','z','vx','vy','vz','age','life','fuse','radius','blastRadius','damage','terrainPower','travel','bounces','resting']),...(q.hand?{hand:q.hand}:{}),...(q.profile?{profile:q.profile}:{})};
           });
         }else{require(a.projectiles===undefined&&a.pipes===undefined&&a.traps===undefined&&a.doorDamage===undefined&&a.mechanismDamage===undefined&&t.explosionSerial===undefined&&t.projectileSerial===undefined&&!pipes.length&&!traps.length);for(const d of doors){d.hp=18;d.destroyed=false;}for(const m of mechanisms){m.shellHp=12;m.destroyed=false;}}
         const savedDoors=doors.map(d=>({minX:d.x-d.w/2,maxX:d.x+d.w/2,minZ:d.z-d.d/2,maxZ:d.z+d.d/2,minY:(d.y||0)+(d.destroyed?1000:d.progress*(d.h+.25)),maxY:(d.y||0)+(d.destroyed?1000:d.progress*(d.h+.25))+d.h}));
@@ -9330,7 +9526,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
           if(data.physicsVersion===undefined){require(AIR.every(key=>e[key]===undefined));Object.assign(e,freshAir());}
           require(bool(e.airborne)&&number(e.airVX,-32,32)&&number(e.airVY,-40,40)&&number(e.airVZ,-32,32)&&number(e.airTime,0,8)&&number(e.padCooldown,0,4));
           require(e.padId===null||s.jumpPads.some(j=>j.id===e.padId));
-          if(e.airborne){require((e.type!==3||e.padId===null&&e.airVY<=.001)&&number(y,-14,top)&&ground(x,z)<=y+.08&&(e.padId!==null||e.airVY<=.001));if(e.airVY>0){const pad=s.jumpPads.find(j=>j.id===e.padId);require(pad&&y>=pad.y-.13);}}
+          if(e.airborne){require((e.type!==3||e.padId===null&&e.airVY<=.001)&&number(y,-14,top)&&ground(x,z)<=y+.08&&(e.padId!==null||e.airVY<=.001||profilesEnabled&&e===a.player));if(e.airVY>0&&!(profilesEnabled&&e===a.player&&e.padId===null)){const pad=s.jumpPads.find(j=>j.id===e.padId);require(pad&&y>=pad.y-.13);}}
           else require(e.airVX===0&&e.airVY===0&&e.airVZ===0&&e.airTime===0&&supported(x,z,y,e.type===3?1.05:e.type===undefined?.28:.38));
         }
         const v=a.player;if(v&&v.y===undefined&&data.systemsVersion===undefined)v.y=0;
@@ -9442,6 +9638,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
           return bullet;
         });
         Object.assign(p,pick(v,PLAYER));Object.assign(s,pick(a,NUMBERS),{difficulty,director,economy,inventory,loot,won:a.won,dead:a.dead,bossAlive:a.bossAlive,enemies,bullets,mechanisms,doors,lifts,pipes,traps,projectiles,bossAttacks});stats=savedStats;ammoCaps=savedCaps;s.maxHp=stats.maxHp;
+        if(profilesEnabled){s.activeProfile=profiles.active;s.profiles=profiles.classes;s.profiles[s.activeProfile].economy=s.economy;s.jetpack={...profiles.jetpack,capacity:G.MetalProfiles.capacity(profiles.classes.light.xp),active:false};profileWasPressed=false;jetSoundWait=profileHintWait=0;}
         if(campaign){s.campaign=campaignState;s.adaptation=adaptation;maxCombat=savedCombat;bossHpFactor=savedBossFactor;adaptationKey=campaignArsenalKey(inventory);}
         if(armorEnabled)s.armor=armor;
         if(arsenal){s.equipment={right:equipment.right,left:equipment.left};for(let i=0;i<weaponSlots;i++)weaponWait[i]=savedWeaponWait[i];s.leftFlash=0;}
@@ -9458,7 +9655,7 @@ body.pad button:focus,body.pad input:focus,body.pad select:focus{outline:2px sol
     }
     clipEscape=boundaryAt(p.x,p.z);
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
-    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
+    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
   G.FSimulation={create,clamp,copyCampaign,campaignPolicy,copyArmor};
 })(typeof window!=='undefined'?window:globalThis);
@@ -10576,9 +10773,9 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
   try{prefs=FOptions.normalize(JSON.parse(localStorage.getItem('ferro-settings')||'{}'),touch);}catch{}
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)prefs.softMotion=false;
   let {muted,quality,softMotion}=prefs,bindingAction=null,padBindingAction=null,optionsTab='game';
-  const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,boundaryFlash=0;
+  const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0;
   const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
-  let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
+  let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
   let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
@@ -10605,18 +10802,20 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
   }
   function copyLoadout(value){
     if(!value)return null;const inventory=value.inventory||value,economy=window.FEconomy?.copy(value.economy||window.FEconomy?.fresh());
-    if(value.economy&&!economy)return null;const five=inventory?.weapons?.length===5,caps=economy?FEconomy.ammoCaps(economy,{campaign:five}):[180,36,12,16,1];
+    const profiles=value.profiles===undefined?null:MetalProfiles.copy(value.profiles);if(value.profiles!==undefined&&!profiles)return null;
+    if(value.economy&&!economy)return null;const five=inventory?.weapons?.length===5,caps=profiles?MetalProfiles.ammoCaps(profiles.classes):economy?FEconomy.ammoCaps(economy,{campaign:five}):[180,36,12,16,1];
     if(!inventory||!Array.isArray(inventory.weapons)||![3,4,5].includes(inventory.weapons.length)||(five?!inventory.weapons.some(Boolean):!inventory.weapons[0])||!Array.isArray(inventory.ammo)||inventory.ammo.length!==inventory.weapons.length)return null;
     for(let i=0;i<inventory.weapons.length;i++)if(typeof inventory.weapons[i]!=='boolean'||!Number.isInteger(inventory.ammo[i])||inventory.ammo[i]<0||inventory.ammo[i]>(caps[i]??16))return null;
     const campaign=value.campaign===undefined?null:FSimulation.copyCampaign?.(value.campaign,inventory);if(value.campaign!==undefined&&!campaign)return null;
     let equipment;if(value.equipment){const q=value.equipment,left=q.left==='shield'?null:q.left??null;if(!Number.isInteger(q.right)||!inventory.weapons[q.right]||left!==null&&(!Number.isInteger(left)||!inventory.weapons[left]||left===q.right))return null;equipment={right:q.right,left};}
     const armor=value.armor===undefined?null:FSimulation.copyArmor?.(value.armor,100);if(value.armor!==undefined&&!armor)return null;
-    return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
+    if(profiles&&(!MetalProfiles.owns(profiles,inventory)||JSON.stringify(profiles.classes[profiles.active].economy)!==JSON.stringify(economy)))return null;
+    return {...(profiles?{profiles}:{}),inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
   }
-  function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false){
-    const key=(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
+  function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode){
+    const key=(profiles?'profiles1:':'')+(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
     if(!worldCache.has(key)){
-      let options=campaign?{campaign:true,campaignVersion:revision}:undefined;
+      let options=campaign?{campaign:true,campaignVersion:revision,...(profiles?{profiles:true}:{})}:undefined;
       if(legacyTraps)options={...options,legacyTraps:true};
       worldCache.set(key,FWorld.create(worldSeed,n,options));
       while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);
@@ -10679,7 +10878,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
   function bindingLabel(id){return controls.label(id);}
-  function activeDevice(device){controls.use(device);touch=forceTouch||device==='touch';document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch||device==='gamepad'&&prefs.padAssist;}
+  function activeDevice(device){const previousTouch=touch;controls.use(device);touch=forceTouch||device==='touch';if(touch&&!previousTouch)$('radar-wrap').hidden=true;document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch||device==='gamepad'&&prefs.padAssist;}
   function controlHints(){
     $('interact-key').textContent=bindingLabel('interact');
     $('intro-controls').textContent=controls.device==='gamepad'?'LS déplacer · RS viser · '+bindingLabel('fire')+' tirer · '+bindingLabel('jump')+' sauter':'Clavier, manette ou écran tactile';
@@ -10735,6 +10934,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     // Reject mixed classic/campaign checkpoints before load constructs a new
     // simulation. Reading an incompatible envelope leaves its source untouched.
     const campaign=v.version===3,state=v.checkpoint?.state;
+    if(v.profiles!==undefined&&v.profiles!==1||v.profiles===1&&(!campaign||v.campaignRevision!==2||v.checkpoint?.profileVersion!==1)||v.profiles===undefined&&v.checkpoint?.profileVersion!==undefined)return false;
     const fits=inventory=>!Array.isArray(inventory?.weapons)||(campaign?inventory.weapons.length===5:[3,4].includes(inventory.weapons.length));
     if(!fits(state?.inventory)||!campaign&&(state?.campaign!==undefined||v.checkpoint?.campaignVersion!==undefined))return false;
     return Number.isInteger(v.seed)&&v.seed>=0&&v.seed<=0xffffffff&&v.checkpoint&&v.runStats&&Object.keys(emptyStats()).every(k=>Number.isFinite(v.runStats[k])&&v.runStats[k]>=0&&v.runStats[k]<1e9);
@@ -10770,7 +10970,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     if(sim.state.player.airborne){checkpointPending=true;return;}
     checkpointPending=false;
     checkpoint=sim.snapshot();
-    savedRun={version:world.campaign?3:2,...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
+    savedRun={version:world.campaign?3:2,...(world.profileVersion?{profiles:world.profileVersion}:{}),...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
     queueSave(savedRun);
     refreshContinue();
   }
@@ -10783,7 +10983,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
   }
   function restoreRun(v){
     if(!validSave(v))return false;
-    load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1);
+    load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1);
     if((v.generation||3)!==(world.generation||3))return false;
     if(sim.restore(v.checkpoint,{recover:true}))return acceptRestoredRun(v);
     // La génération 6 a eu deux implantations de machines. Essayer l'ancienne
@@ -10791,7 +10991,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     // Aucun champ ni empreinte du point source n'est réécrit. Un point repris et
     // enregistré à nouveau garde son identité et suit le même chemin au prochain lancement.
     if(world.generation===6&&typeof v.checkpoint.fingerprint==='string'&&v.checkpoint.fingerprint!==sim.snapshot().fingerprint){
-      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,true);
+      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,true,v.profiles===1);
       if(sim.restore(v.checkpoint,{recover:true}))return acceptRestoredRun(v);
     }
     return false;
@@ -10813,23 +11013,23 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
         }
       }
       runStats={...v.runStats};selectedWeapon=[0,1,2,3,4].includes(v.checkpoint?.state?.weapon)?v.checkpoint.state.weapon:0;
-      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1);
+      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1);
       start(v.generation!==world.generation?'Les lieux ont changé. Reprise à l’entrée du même secteur ; progression précédente conservée.':'Point de reprise illisible. Reprise à l’entrée de ce secteur.');
       saveCheckpoint();
-    }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
+    }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2,false,true);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
   }
-  function clearInput(){controls.clear();padState={};jumpQueued=switchProfileQueued=false;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
+  function clearInput(){controls.clear();padState={};jumpQueued=switchProfileQueued=false;touchJump=null;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
     audio.cancelTestMix?.();
     last=performance.now();perfStart=0;perfFrames=0;
     $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
-    mode=value;bindingAction=padBindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing');audioGate();syncTitle();
+    mode=value;loadoutOpen=false;document.body.classList.remove('loadout-open');$('loadout-toggle').setAttribute('aria-expanded','false');bindingAction=padBindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing');audioGate();syncTitle();
     if(value==='paused'||value==='options'){$('pause-kicker').textContent=value==='options'?'CONSOLE DE RÉGLAGE':'SIGNAL EN ATTENTE';$('resume').innerHTML=(value==='options'?'Retour':'Reprendre')+' <span class="arrow-icon" aria-hidden="true"></span>';$('restart').hidden=$('pause-main').hidden=value==='options';selectTab(value==='options'?'image':optionsTab);}
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
-  function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false){
+  function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode){
     checkpointPending=false;
-    campaignMode=asCampaign;campaignRevision=revision;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps);
+    campaignMode=asCampaign;campaignRevision=revision;profileMode=profiles&&asCampaign&&revision===2;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps,profileMode);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale
     // 3/4/5-slot entry cannot block restoration of a healthy checkpoint.
@@ -10843,8 +11043,9 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     $('music-title').textContent=trackLabel();
     $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaignVersion===2?(stage<6?'Équipement '+(stage+1)+' / 6':'Assaut '+(stage-5)+' / 12')+' · ':world.campaign?world.chapterTitle+' · ':'')+world.title;
     $('mission-summary').innerHTML=world.campaignVersion===2?'<span><b>6</b> ÉQUIPEMENT</span><span><b>12</b> ASSAUT</span><span><b>18</b> MONDES</span>':world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';
+    if(world.profileVersion)$('mission-summary').innerHTML='<span><b>LÉGER</b> JETPACK · RELAIS AÉRIENS</span><span><b>LOURD</b> BRÈCHES · EXPLOSIFS</span><span><b>2</b> PROGRESSIONS</span>';
     $('restart').textContent=world.campaign?'RECOMMENCER CE MONDE':'RECOMMENCER CE SECTEUR';
-    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=false;hudWait=0;renderHUD();weaponHint();
+    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=touch;hudWait=0;renderHUD();weaponHint();
   }
   function syncDestruction(){
     const d=sim?.destruction,revision=sim?.state.destructionRevision??d?.revision;if(!d||revision===renderRevision)return;
@@ -10871,9 +11072,9 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
   }
   function start(message){
     titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode(document.hidden||!windowFocused?'paused':'playing');if(mode==='playing'){lock();canvas.focus({preventScroll:true});}
-    toast(message||(world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
+    toast(message||(world.profileVersion?'Deux profils · '+bindingLabel('switchProfile')+' : changer. Léger : maintenir le saut pour voler. Lourd : récupérer le lance-grenades près du départ.':world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
-  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2);saveCheckpoint();start();}
+  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2,false,true);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode){
     if(!window.FMusic?.warmup){action();return;}
     const ticket=++preparationSerial;titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent=(asCampaign?'MONDE ':'SECTEUR ')+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
@@ -10922,6 +11123,9 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
         checkpointDue=true;
         toast(e.count===3?(!systemsReady()?'Trois relais en ligne. Activez les commandes restantes.':sim.state.bossAlive?'Trois relais en ligne. Neutralisez le gardien.':'Trois relais en ligne. Rejoignez la sortie.'):'Relais '+e.count+' / 3 · intégrité restaurée · point de reprise',3.2);
       }
+      if(e.name==='profileSwitch'){selectedWeapon=sim.state.weapon;clearFireIntents();motion.impulse('switch');leftMotion.impulse('switch');audio.switchWeapon?.();toast(e.to==='light'?'LÉGER · maintenir le saut pour voler':'LOURD · explosifs pour ouvrir les passages',2.5);checkpointDue=true;}
+      if(e.name==='profileLevel'){toast((e.profile==='light'?'LÉGER':'LOURD')+' · NIVEAU '+e.level+' · +75 CR',3);checkpointDue=true;}
+      if(e.name==='profileBlocked')toast('GARDIEN · profil '+(e.required==='light'?'LÉGER':'LOURD')+' requis',2);
       if(e.name==='mechanism'){checkpointDue=true;const a=sim.state.mechanisms?.find(a=>a.id===e.id);toast((a?.name||'Commande')+' · alimentation rétablie · point de reprise',3.2);}
       if(e.name==='liftStop'&&e.carrying){checkpointDue=true;toast('Palier atteint · point de reprise',2.2);}
       if(e.name==='jumpPad'&&e.actor==='player')toast('PROPULSION · ajustez votre trajectoire en vol',1.6);
@@ -11289,8 +11493,9 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     return out;
   }
   function renderHUD(){
-    const profile=sim.state.activeProfile,jet=sim.state.jetpack;$('profile-status').hidden=profile!=='light'&&profile!=='heavy';
-    if(profile==='light'||profile==='heavy')$('profile-status').textContent=(profile==='light'?'LÉGER · JETPACK'+(jet?' '+Math.round(100*jet.fuel/Math.max(1,jet.capacity))+' %':''):'LOURD · EXPLOSIFS')+' · '+bindingLabel('switchProfile')+' : changer';
+    const profile=sim.state.activeProfile,jet=sim.state.jetpack;$('profile-button').hidden=!profile;$('profile-button').textContent=profile==='heavy'?'→ LÉGER':'→ LOURD';$('jump-button').textContent=profile==='light'?'SAUT / VOL':'SAUT';$('profile-status').hidden=profile!=='light'&&profile!=='heavy';
+    if(profile==='light'||profile==='heavy')$('profile-status').textContent=(profile==='light'?'LÉGER · JETPACK'+(jet?' '+Math.round(100*jet.fuel/Math.max(1,jet.capacity))+' %':''):'LOURD · EXPLOSIFS')+' · NV '+MetalProfiles.level(sim.state.profiles[profile].xp)+' · '+sim.state.profiles[profile].xp+' XP · '+bindingLabel('switchProfile')+' : changer';
+    if(touch&&profile)$('profile-status').textContent=(profile==='light'?'LÉGER · VOL '+Math.round(100*jet.fuel/jet.capacity)+' %':'LOURD · EXPLOSIFS');
     const s=sim.state,p=s.player;
     const stats=sim.stats||{maxHp:100},maxHp=s.maxHp||stats.maxHp||100,healthRatio=p.hp/maxHp;
     $('hp').textContent=String(Math.ceil(p.hp));$('health-max').textContent='/ '+maxHp;$('hp-bar').style.width=clamp(healthRatio*100,0,100)+'%';$('hp-bar').style.background=healthRatio<.3?'#ff795e':'var(--acid)';
@@ -11300,11 +11505,11 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     if(armor){$('armor-points').textContent=String(Math.ceil(armor.points));$('armor-cap').textContent='/ '+armor.capacity;$('armor-bar').style.width=clamp(armor.points/armor.capacity*100,0,100)+'%';$('armor-pool').title='Plaques à ramasser · absorbe un tiers des dégâts · blindage passif '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';$('armor-pool').setAttribute('aria-label','Armure : '+Math.ceil(armor.points)+' sur '+armor.capacity);document.body.dataset.armor=String(Math.ceil(armor.points));}
     $('wallet-credits').textContent=String(s.economy?.credits||0);$('wallet-cores').textContent=String(s.economy?.cores||0);
     $('heat-bar').style.width=p.heat*100+'%';$('heat-bar').style.background=p.overheated?'#ff795e':s.weapon===2?'#ee8d5d':s.weapon===1?'#e8ad66':'#6ce5d2';
-    const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0;$('weapon-label').textContent=weaponNames[s.weapon].toUpperCase()+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
-    const inventory=s.inventory,owned=inventory?.weapons||[true,true,true],ammo=inventory?.ammo?.[s.weapon],limited=!!world.progression,infinite=world.campaign&&s.weapon===4;
+    const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0,weaponName=profile==='heavy'&&s.weapon===4?'Pistolet automatique':weaponNames[s.weapon];$('weapon-label').textContent=weaponName.toUpperCase()+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
+    const inventory=s.inventory,owned=(inventory?.weapons||[true,true,true]).map((has,i)=>has&&(!profile||MetalProfiles.allowed(profile,i))),ammo=inventory?.ammo?.[s.weapon],limited=!!world.progression,infinite=world.campaign&&s.weapon===4;
     $('ammo-count').textContent=infinite?'∞':limited?String(ammo??0).padStart(2,'0'):'—';$('ammo-unit').textContent=ammoNames[s.weapon].toUpperCase();$('ammo-cap').textContent=infinite?'ILLIMITÉES':limited?'/ '+sim.ammoCaps[s.weapon]:'RÉSERVE';
     $('weapon-readout').classList.toggle('empty',!infinite&&limited&&ammo===0);$('heat-status').textContent=p.overheated?'REFROIDISSEMENT':!infinite&&limited&&ammo===0?'RÉSERVE ÉPUISÉE':'CHALEUR';
-    $('arsenal-count').textContent=owned.filter(Boolean).length+' / '+owned.length;
+    $('arsenal-count').textContent=owned.filter(Boolean).length+' / '+owned.length+(profile?' · NV '+MetalProfiles.level(s.profiles[profile].xp)+' · '+s.profiles[profile].xp+' XP':'');
     const left=s.equipment?.left??null;
     $('weapon-slots').style.gridTemplateColumns='repeat('+(world.campaign?Math.max(1,owned.filter(Boolean).length):4)+',minmax(0,1fr))';
     for(let i=0;i<5;i++){
@@ -11363,6 +11568,15 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     const room=world.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);$('room-name').textContent=room?room.name:isOutdoors(p.x,p.z)?'CHEMIN DE LIAISON':'COULOIR DE LIAISON';
     drawRadar();
   }
+  function renderPartner(camera){
+    const node=$('partner-marker'),s=sim.state,id=s.activeProfile==='light'?'heavy':'light',other=s.profiles?.[id]?.position;
+    node.hidden=!other||mode!=='playing'||loadoutOpen;if(node.hidden)return;
+    const q=MetalProfiles.marker({x:camera.pos[0],y:camera.pos[1]-1.62,z:camera.pos[2],yaw:camera.yaw,pitch:camera.pitch},other,{width:innerWidth,height:innerHeight,fov:camera.fov});
+    node.hidden=q.distance<1.5;if(node.hidden)return;
+    node.style.left=q.x+'px';node.style.top=q.y+'px';node.dataset.profile=id;node.dataset.offscreen=String(q.offscreen);
+    node.textContent=q.direction+' '+(id==='light'?'LÉGER':'LOURD')+' · '+Math.round(q.distance)+' m'+(Math.abs(q.height)>1.5?' · '+(q.height>0?'↑':'↓')+Math.round(Math.abs(q.height))+' m':'');
+    node.setAttribute('aria-label',(id==='light'?'Personnage léger':'Personnage lourd')+' en attente à '+Math.round(q.distance)+' mètres');
+  }
   function drawRadar(){
     if($('radar-wrap').hidden)return;
     const ctx=$('radar').getContext('2d'),b=world.bounds,k=160/Math.max(b.maxX-b.minX,b.maxZ-b.minZ),X=x=>10+(x-b.minX)*k,Z=z=>10+(z-b.minZ)*k;
@@ -11376,6 +11590,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     for(const a of world.trophies||[]){const state=sim.state.campaign?.trophies.find(q=>q.id===a.id);ctx.strokeStyle=state?.phase==='sealed'?'#ffcf78':'#71e1cc';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(X(a.x),Z(a.z),3.5,0,Math.PI*2);ctx.stroke();if(state?.phase==='sealed'){ctx.fillStyle='#ffcf78';ctx.fillRect(X(a.x)-1,Z(a.z)-1,2,2);}}
     const boss=sim.state.enemies.find(e=>e.type===3&&e.hp>0&&e.active);if(boss){ctx.fillStyle='#e89963';ctx.fillRect(X(boss.x)-3,Z(boss.z)-3,6,6);}
     ctx.strokeStyle=exitReady()?'#71e1cc':'#b08449';ctx.strokeRect(X(world.exit.x)-3,Z(world.exit.z)-3,6,6);
+    const otherId=sim.state.activeProfile==='light'?'heavy':'light',other=sim.state.profiles?.[otherId]?.position;if(other){ctx.strokeStyle=otherId==='light'?'#71e1cc':'#ffb66e';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(other.x),Z(other.z),4,0,Math.PI*2);ctx.stroke();ctx.fillStyle=ctx.strokeStyle;ctx.font='bold 8px Arial';ctx.fillText(otherId==='light'?'L':'H',X(other.x)+6,Z(other.z)+3);}
     const p=sim.state.player;ctx.save();ctx.translate(X(p.x),Z(p.z));ctx.rotate(p.yaw);ctx.fillStyle='#f2f5e5';ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(3.5,3.2);ctx.lineTo(0,1.5);ctx.lineTo(-3.5,3.2);ctx.closePath();ctx.fill();ctx.restore();
   }
   function cadenceHint(){
@@ -11424,14 +11639,14 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     if(!renderer||!sim||document.hidden){perfStart=0;perfFrames=0;return;}
     if(mode==='loading')return;
     const signals={time:sim.state.time,lookYaw:0,lookPitch:0,firing:false};
-    if(mode==='playing'){
+    if(mode==='playing'&&!loadoutOpen){
       padState=controls.step();
       const held=id=>FOptions.down(prefs.bindings,keys,id);
       input.moveX=Number(held('right'))-Number(held('left'))+stick.x;
       input.moveY=Number(held('forward'))-Number(held('back'))-stick.y;
       input.lookX=lookDX+(Number(held('turnRight'))-Number(held('turnLeft')))*dt*1.9;input.lookY=lookDY;
       const fireHeld=mouseFire||touchFire||held('fire')||padState.fire,fireLeftHeld=mouseLeftFire||touchLeftFire||held('fireLeft')||padState.fireLeft;
-      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump');input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(input,padState));input.assist=touch||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch;
+      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump')||touchJump!==null;input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(input,padState));input.assist=touch||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch;
       signals.lookYaw=dt>0?input.lookX/dt:0;signals.lookPitch=dt>0?input.lookY/dt:0;signals.firing=input.fire;
       lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=jumpQueued=switchProfileQueued=false;
       // STAB-V1: tolerate timestamp rounding and 59.94 Hz until the fixed-step loop lands.
@@ -11450,7 +11665,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
       outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
       const localSound=soundscape.sample(sim),motor=localSound.machinery,steam=localSound.steam;
       audio.setMachinery?.(motor.level,motor.pan,motor.kind,motor.occluded);
-      audio.setSteam?.(steam.level,steam.pan,steam.occluded);
+      audio.setSteam?.(Math.max(steam.level,sim.state.jetpack?.active ? .22 : 0),sim.state.jetpack?.active?0:steam.pan,sim.state.jetpack?.active?false:steam.occluded);
       audio.setThreat(sim.state.threat||0);audio.setPressure?.(sim.state.director?.pressure||0);audio.tick(dt);
       if(mode==='playing'&&!sim.state.player.airborne&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving,{outdoor:outside,biome:world.environment?.biome});
       lastFootstep=footstep;
@@ -11472,6 +11687,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);leftMotion.update(mode==='playing'?dt:0,sim.state.locomotion||{},{...signals,firing:input.fireLeft},softMotion);
     const camera={pos:[p.x,(p.y||0)+1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch,roll:isPlay?view.roll:0,fov:prefs.fov+(isPlay?view.fov:0)};
     if(mode==='menu'||mode==='options'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=(world.spawn.y||0)+1.72;}
+    renderPartner(camera);
     renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,shadows:prefs.shadows,bloom:prefs.bloom,horror:sim.state.director,adaptive:mode==='playing'&&(!prefs.fpsLimit||prefs.fpsLimit>=60)&&document.hasFocus()});
     // Count completed frame intervals in real time, with a stable readout at most twice/s.
     if(!perfStart){perfStart=now;perfFrames=0;}else perfFrames++;
@@ -11484,7 +11700,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
   function togglePause(){if(mode==='playing')setMode('paused');else if(mode==='options')setMode('menu');else if(mode==='paused'||mode==='shop'){audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});}}
   function switchWeapon(value,direction=1){
     if(mode!=='playing')return;
-    const owned=sim.state.inventory?.weapons||[true,true,true];let next=value;
+    const owned=(sim.state.inventory?.weapons||[true,true,true]).map((has,i)=>has&&(!sim.state.activeProfile||MetalProfiles.allowed(sim.state.activeProfile,i)));let next=value;
     if(next===undefined){next=selectedWeapon;for(let i=0;i<owned.length;i++){next=(next+direction+owned.length)%owned.length;if(owned[next])break;}}
     if(!owned[next]){toast(weaponNames[next]+' · arme à trouver dans le secteur',2);return;}
     if(next===selectedWeapon)return;
@@ -11493,7 +11709,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
   }
   function switchLeft(value){
     if(mode!=='playing'||!sim.selectLeftWeapon)return;
-    const inventory=sim.state.inventory,current=sim.state.equipment?.left??null,choices=[null,...inventory.weapons.flatMap((owned,i)=>owned&&i!==sim.state.weapon?[i]:[])];
+    const inventory=sim.state.inventory,current=sim.state.equipment?.left??null,choices=[null,...inventory.weapons.flatMap((owned,i)=>owned&&i!==sim.state.weapon&&(!sim.state.activeProfile||MetalProfiles.allowed(sim.state.activeProfile,i))?[i]:[])];
     const next=value===undefined?choices[(choices.indexOf(current)+1)%choices.length]:value;
     if(!sim.selectLeftWeapon(next)){toast('Équipement indisponible pour la main gauche',1.8);renderHUD();return;}
     selectedWeapon=sim.state.weapon;clearFireIntents();leftMotion.impulse('switch');audio.switchWeapon?.();renderHUD();
@@ -11545,6 +11761,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     const track=currentTrack(),data=window.FMusic?.getModule(track);if(!data){$('audio-status').textContent='Le module audio est indisponible.';return;}
     const url=URL.createObjectURL(new Blob([data],{type:'audio/mod'})),link=document.createElement('a');link.href=url;link.download=track==='title'?'METAL-titre.mod':'METAL-'+String(stage+1).padStart(2,'0')+'.mod';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('audio-status').textContent='Module généré : '+Math.round(data.byteLength/1000)+' ko. Téléchargement lancé.';
   });
+  $('loadout-toggle').addEventListener('click',()=>{if(mode!=='playing')return;loadoutOpen=!loadoutOpen;clearInput();document.body.classList.toggle('loadout-open',loadoutOpen);$('loadout-toggle').setAttribute('aria-expanded',String(loadoutOpen));});
   $('map-button').addEventListener('click',()=>{$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();});
   $('weapon-switch').addEventListener('click',()=>switchWeapon());
   for(let i=0;i<5;i++)$('weapon-slot-'+i).addEventListener('click',()=>switchWeapon(i));
@@ -11617,6 +11834,9 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('fire-button').addEventListener(name,()=>{if(name==='pointercancel'||name==='lostpointercapture'&&touchFire)firePressed=false;touchFire=false;});
   $('left-fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||$('left-fire-button').disabled)return;activeDevice('touch');e.preventDefault();touchLeftFire=true;pressFire(true);$('left-fire-button').setPointerCapture(e.pointerId);});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('left-fire-button').addEventListener(name,()=>{if(name==='pointercancel'||name==='lostpointercapture'&&touchLeftFire)fireLeftPressed=false;touchLeftFire=false;});
+  $('jump-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||touchJump!==null)return;activeDevice('touch');e.preventDefault();touchJump=e.pointerId;jumpQueued=true;$('jump-button').setPointerCapture(e.pointerId);});
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])$('jump-button').addEventListener(name,e=>{if(e.pointerId===touchJump)touchJump=null;});
+  $('profile-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;activeDevice('touch');e.preventDefault();switchProfileQueued=true;});
   $('dash-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();dashQueued=true;});
   $('pulse-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();pulseQueued=true;});
   $('melee-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();meleeQueued=true;});

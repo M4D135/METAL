@@ -9,9 +9,9 @@
   try{prefs=FOptions.normalize(JSON.parse(localStorage.getItem('ferro-settings')||'{}'),touch);}catch{}
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)prefs.softMotion=false;
   let {muted,quality,softMotion}=prefs,bindingAction=null,padBindingAction=null,optionsTab='game';
-  const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,boundaryFlash=0;
+  const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0;
   const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
-  let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
+  let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
   let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
@@ -38,18 +38,20 @@
   }
   function copyLoadout(value){
     if(!value)return null;const inventory=value.inventory||value,economy=window.FEconomy?.copy(value.economy||window.FEconomy?.fresh());
-    if(value.economy&&!economy)return null;const five=inventory?.weapons?.length===5,caps=economy?FEconomy.ammoCaps(economy,{campaign:five}):[180,36,12,16,1];
+    const profiles=value.profiles===undefined?null:MetalProfiles.copy(value.profiles);if(value.profiles!==undefined&&!profiles)return null;
+    if(value.economy&&!economy)return null;const five=inventory?.weapons?.length===5,caps=profiles?MetalProfiles.ammoCaps(profiles.classes):economy?FEconomy.ammoCaps(economy,{campaign:five}):[180,36,12,16,1];
     if(!inventory||!Array.isArray(inventory.weapons)||![3,4,5].includes(inventory.weapons.length)||(five?!inventory.weapons.some(Boolean):!inventory.weapons[0])||!Array.isArray(inventory.ammo)||inventory.ammo.length!==inventory.weapons.length)return null;
     for(let i=0;i<inventory.weapons.length;i++)if(typeof inventory.weapons[i]!=='boolean'||!Number.isInteger(inventory.ammo[i])||inventory.ammo[i]<0||inventory.ammo[i]>(caps[i]??16))return null;
     const campaign=value.campaign===undefined?null:FSimulation.copyCampaign?.(value.campaign,inventory);if(value.campaign!==undefined&&!campaign)return null;
     let equipment;if(value.equipment){const q=value.equipment,left=q.left==='shield'?null:q.left??null;if(!Number.isInteger(q.right)||!inventory.weapons[q.right]||left!==null&&(!Number.isInteger(left)||!inventory.weapons[left]||left===q.right))return null;equipment={right:q.right,left};}
     const armor=value.armor===undefined?null:FSimulation.copyArmor?.(value.armor,100);if(value.armor!==undefined&&!armor)return null;
-    return {inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
+    if(profiles&&(!MetalProfiles.owns(profiles,inventory)||JSON.stringify(profiles.classes[profiles.active].economy)!==JSON.stringify(economy)))return null;
+    return {...(profiles?{profiles}:{}),inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
   }
-  function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false){
-    const key=(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
+  function cachedWorld(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode){
+    const key=(profiles?'profiles1:':'')+(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
     if(!worldCache.has(key)){
-      let options=campaign?{campaign:true,campaignVersion:revision}:undefined;
+      let options=campaign?{campaign:true,campaignVersion:revision,...(profiles?{profiles:true}:{})}:undefined;
       if(legacyTraps)options={...options,legacyTraps:true};
       worldCache.set(key,FWorld.create(worldSeed,n,options));
       while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);
@@ -112,7 +114,7 @@
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
   function bindingLabel(id){return controls.label(id);}
-  function activeDevice(device){controls.use(device);touch=forceTouch||device==='touch';document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch||device==='gamepad'&&prefs.padAssist;}
+  function activeDevice(device){const previousTouch=touch;controls.use(device);touch=forceTouch||device==='touch';if(touch&&!previousTouch)$('radar-wrap').hidden=true;document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch||device==='gamepad'&&prefs.padAssist;}
   function controlHints(){
     $('interact-key').textContent=bindingLabel('interact');
     $('intro-controls').textContent=controls.device==='gamepad'?'LS déplacer · RS viser · '+bindingLabel('fire')+' tirer · '+bindingLabel('jump')+' sauter':'Clavier, manette ou écran tactile';
@@ -168,6 +170,7 @@
     // Reject mixed classic/campaign checkpoints before load constructs a new
     // simulation. Reading an incompatible envelope leaves its source untouched.
     const campaign=v.version===3,state=v.checkpoint?.state;
+    if(v.profiles!==undefined&&v.profiles!==1||v.profiles===1&&(!campaign||v.campaignRevision!==2||v.checkpoint?.profileVersion!==1)||v.profiles===undefined&&v.checkpoint?.profileVersion!==undefined)return false;
     const fits=inventory=>!Array.isArray(inventory?.weapons)||(campaign?inventory.weapons.length===5:[3,4].includes(inventory.weapons.length));
     if(!fits(state?.inventory)||!campaign&&(state?.campaign!==undefined||v.checkpoint?.campaignVersion!==undefined))return false;
     return Number.isInteger(v.seed)&&v.seed>=0&&v.seed<=0xffffffff&&v.checkpoint&&v.runStats&&Object.keys(emptyStats()).every(k=>Number.isFinite(v.runStats[k])&&v.runStats[k]>=0&&v.runStats[k]<1e9);
@@ -203,7 +206,7 @@
     if(sim.state.player.airborne){checkpointPending=true;return;}
     checkpointPending=false;
     checkpoint=sim.snapshot();
-    savedRun={version:world.campaign?3:2,...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
+    savedRun={version:world.campaign?3:2,...(world.profileVersion?{profiles:world.profileVersion}:{}),...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
     queueSave(savedRun);
     refreshContinue();
   }
@@ -216,7 +219,7 @@
   }
   function restoreRun(v){
     if(!validSave(v))return false;
-    load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1);
+    load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1);
     if((v.generation||3)!==(world.generation||3))return false;
     if(sim.restore(v.checkpoint,{recover:true}))return acceptRestoredRun(v);
     // La génération 6 a eu deux implantations de machines. Essayer l'ancienne
@@ -224,7 +227,7 @@
     // Aucun champ ni empreinte du point source n'est réécrit. Un point repris et
     // enregistré à nouveau garde son identité et suit le même chemin au prochain lancement.
     if(world.generation===6&&typeof v.checkpoint.fingerprint==='string'&&v.checkpoint.fingerprint!==sim.snapshot().fingerprint){
-      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,true);
+      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,true,v.profiles===1);
       if(sim.restore(v.checkpoint,{recover:true}))return acceptRestoredRun(v);
     }
     return false;
@@ -246,23 +249,23 @@
         }
       }
       runStats={...v.runStats};selectedWeapon=[0,1,2,3,4].includes(v.checkpoint?.state?.weapon)?v.checkpoint.state.weapon:0;
-      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1);
+      load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1);
       start(v.generation!==world.generation?'Les lieux ont changé. Reprise à l’entrée du même secteur ; progression précédente conservée.':'Point de reprise illisible. Reprise à l’entrée de ce secteur.');
       saveCheckpoint();
-    }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
+    }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2,false,true);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
   }
-  function clearInput(){controls.clear();padState={};jumpQueued=switchProfileQueued=false;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
+  function clearInput(){controls.clear();padState={};jumpQueued=switchProfileQueued=false;touchJump=null;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
     audio.cancelTestMix?.();
     last=performance.now();perfStart=0;perfFrames=0;
     $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
-    mode=value;bindingAction=padBindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing');audioGate();syncTitle();
+    mode=value;loadoutOpen=false;document.body.classList.remove('loadout-open');$('loadout-toggle').setAttribute('aria-expanded','false');bindingAction=padBindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing');audioGate();syncTitle();
     if(value==='paused'||value==='options'){$('pause-kicker').textContent=value==='options'?'CONSOLE DE RÉGLAGE':'SIGNAL EN ATTENTE';$('resume').innerHTML=(value==='options'?'Retour':'Reprendre')+' <span class="arrow-icon" aria-hidden="true"></span>';$('restart').hidden=$('pause-main').hidden=value==='options';selectTab(value==='options'?'image':optionsTab);}
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
-  function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false){
+  function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode){
     checkpointPending=false;
-    campaignMode=asCampaign;campaignRevision=revision;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps);
+    campaignMode=asCampaign;campaignRevision=revision;profileMode=profiles&&asCampaign&&revision===2;stage=n;if(newSeed!==undefined)seed=newSeed;world=cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps,profileMode);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale
     // 3/4/5-slot entry cannot block restoration of a healthy checkpoint.
@@ -276,8 +279,9 @@
     $('music-title').textContent=trackLabel();
     $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaignVersion===2?(stage<6?'Équipement '+(stage+1)+' / 6':'Assaut '+(stage-5)+' / 12')+' · ':world.campaign?world.chapterTitle+' · ':'')+world.title;
     $('mission-summary').innerHTML=world.campaignVersion===2?'<span><b>6</b> ÉQUIPEMENT</span><span><b>12</b> ASSAUT</span><span><b>18</b> MONDES</span>':world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';
+    if(world.profileVersion)$('mission-summary').innerHTML='<span><b>LÉGER</b> JETPACK · RELAIS AÉRIENS</span><span><b>LOURD</b> BRÈCHES · EXPLOSIFS</span><span><b>2</b> PROGRESSIONS</span>';
     $('restart').textContent=world.campaign?'RECOMMENCER CE MONDE':'RECOMMENCER CE SECTEUR';
-    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=false;hudWait=0;renderHUD();weaponHint();
+    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=touch;hudWait=0;renderHUD();weaponHint();
   }
   function syncDestruction(){
     const d=sim?.destruction,revision=sim?.state.destructionRevision??d?.revision;if(!d||revision===renderRevision)return;
@@ -304,9 +308,9 @@
   }
   function start(message){
     titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode(document.hidden||!windowFocused?'paused':'playing');if(mode==='playing'){lock();canvas.focus({preventScroll:true});}
-    toast(message||(world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
+    toast(message||(world.profileVersion?'Deux profils · '+bindingLabel('switchProfile')+' : changer. Léger : maintenir le saut pour voler. Lourd : récupérer le lance-grenades près du départ.':world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
-  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2);saveCheckpoint();start();}
+  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2,false,true);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode){
     if(!window.FMusic?.warmup){action();return;}
     const ticket=++preparationSerial;titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent=(asCampaign?'MONDE ':'SECTEUR ')+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
@@ -355,6 +359,9 @@
         checkpointDue=true;
         toast(e.count===3?(!systemsReady()?'Trois relais en ligne. Activez les commandes restantes.':sim.state.bossAlive?'Trois relais en ligne. Neutralisez le gardien.':'Trois relais en ligne. Rejoignez la sortie.'):'Relais '+e.count+' / 3 · intégrité restaurée · point de reprise',3.2);
       }
+      if(e.name==='profileSwitch'){selectedWeapon=sim.state.weapon;clearFireIntents();motion.impulse('switch');leftMotion.impulse('switch');audio.switchWeapon?.();toast(e.to==='light'?'LÉGER · maintenir le saut pour voler':'LOURD · explosifs pour ouvrir les passages',2.5);checkpointDue=true;}
+      if(e.name==='profileLevel'){toast((e.profile==='light'?'LÉGER':'LOURD')+' · NIVEAU '+e.level+' · +75 CR',3);checkpointDue=true;}
+      if(e.name==='profileBlocked')toast('GARDIEN · profil '+(e.required==='light'?'LÉGER':'LOURD')+' requis',2);
       if(e.name==='mechanism'){checkpointDue=true;const a=sim.state.mechanisms?.find(a=>a.id===e.id);toast((a?.name||'Commande')+' · alimentation rétablie · point de reprise',3.2);}
       if(e.name==='liftStop'&&e.carrying){checkpointDue=true;toast('Palier atteint · point de reprise',2.2);}
       if(e.name==='jumpPad'&&e.actor==='player')toast('PROPULSION · ajustez votre trajectoire en vol',1.6);
@@ -722,8 +729,9 @@
     return out;
   }
   function renderHUD(){
-    const profile=sim.state.activeProfile,jet=sim.state.jetpack;$('profile-status').hidden=profile!=='light'&&profile!=='heavy';
-    if(profile==='light'||profile==='heavy')$('profile-status').textContent=(profile==='light'?'LÉGER · JETPACK'+(jet?' '+Math.round(100*jet.fuel/Math.max(1,jet.capacity))+' %':''):'LOURD · EXPLOSIFS')+' · '+bindingLabel('switchProfile')+' : changer';
+    const profile=sim.state.activeProfile,jet=sim.state.jetpack;$('profile-button').hidden=!profile;$('profile-button').textContent=profile==='heavy'?'→ LÉGER':'→ LOURD';$('jump-button').textContent=profile==='light'?'SAUT / VOL':'SAUT';$('profile-status').hidden=profile!=='light'&&profile!=='heavy';
+    if(profile==='light'||profile==='heavy')$('profile-status').textContent=(profile==='light'?'LÉGER · JETPACK'+(jet?' '+Math.round(100*jet.fuel/Math.max(1,jet.capacity))+' %':''):'LOURD · EXPLOSIFS')+' · NV '+MetalProfiles.level(sim.state.profiles[profile].xp)+' · '+sim.state.profiles[profile].xp+' XP · '+bindingLabel('switchProfile')+' : changer';
+    if(touch&&profile)$('profile-status').textContent=(profile==='light'?'LÉGER · VOL '+Math.round(100*jet.fuel/jet.capacity)+' %':'LOURD · EXPLOSIFS');
     const s=sim.state,p=s.player;
     const stats=sim.stats||{maxHp:100},maxHp=s.maxHp||stats.maxHp||100,healthRatio=p.hp/maxHp;
     $('hp').textContent=String(Math.ceil(p.hp));$('health-max').textContent='/ '+maxHp;$('hp-bar').style.width=clamp(healthRatio*100,0,100)+'%';$('hp-bar').style.background=healthRatio<.3?'#ff795e':'var(--acid)';
@@ -733,11 +741,11 @@
     if(armor){$('armor-points').textContent=String(Math.ceil(armor.points));$('armor-cap').textContent='/ '+armor.capacity;$('armor-bar').style.width=clamp(armor.points/armor.capacity*100,0,100)+'%';$('armor-pool').title='Plaques à ramasser · absorbe un tiers des dégâts · blindage passif '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';$('armor-pool').setAttribute('aria-label','Armure : '+Math.ceil(armor.points)+' sur '+armor.capacity);document.body.dataset.armor=String(Math.ceil(armor.points));}
     $('wallet-credits').textContent=String(s.economy?.credits||0);$('wallet-cores').textContent=String(s.economy?.cores||0);
     $('heat-bar').style.width=p.heat*100+'%';$('heat-bar').style.background=p.overheated?'#ff795e':s.weapon===2?'#ee8d5d':s.weapon===1?'#e8ad66':'#6ce5d2';
-    const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0;$('weapon-label').textContent=weaponNames[s.weapon].toUpperCase()+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
-    const inventory=s.inventory,owned=inventory?.weapons||[true,true,true],ammo=inventory?.ammo?.[s.weapon],limited=!!world.progression,infinite=world.campaign&&s.weapon===4;
+    const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0,weaponName=profile==='heavy'&&s.weapon===4?'Pistolet automatique':weaponNames[s.weapon];$('weapon-label').textContent=weaponName.toUpperCase()+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
+    const inventory=s.inventory,owned=(inventory?.weapons||[true,true,true]).map((has,i)=>has&&(!profile||MetalProfiles.allowed(profile,i))),ammo=inventory?.ammo?.[s.weapon],limited=!!world.progression,infinite=world.campaign&&s.weapon===4;
     $('ammo-count').textContent=infinite?'∞':limited?String(ammo??0).padStart(2,'0'):'—';$('ammo-unit').textContent=ammoNames[s.weapon].toUpperCase();$('ammo-cap').textContent=infinite?'ILLIMITÉES':limited?'/ '+sim.ammoCaps[s.weapon]:'RÉSERVE';
     $('weapon-readout').classList.toggle('empty',!infinite&&limited&&ammo===0);$('heat-status').textContent=p.overheated?'REFROIDISSEMENT':!infinite&&limited&&ammo===0?'RÉSERVE ÉPUISÉE':'CHALEUR';
-    $('arsenal-count').textContent=owned.filter(Boolean).length+' / '+owned.length;
+    $('arsenal-count').textContent=owned.filter(Boolean).length+' / '+owned.length+(profile?' · NV '+MetalProfiles.level(s.profiles[profile].xp)+' · '+s.profiles[profile].xp+' XP':'');
     const left=s.equipment?.left??null;
     $('weapon-slots').style.gridTemplateColumns='repeat('+(world.campaign?Math.max(1,owned.filter(Boolean).length):4)+',minmax(0,1fr))';
     for(let i=0;i<5;i++){
@@ -796,6 +804,15 @@
     const room=world.rooms.find(r=>Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.z-r.z)<r.d/2);$('room-name').textContent=room?room.name:isOutdoors(p.x,p.z)?'CHEMIN DE LIAISON':'COULOIR DE LIAISON';
     drawRadar();
   }
+  function renderPartner(camera){
+    const node=$('partner-marker'),s=sim.state,id=s.activeProfile==='light'?'heavy':'light',other=s.profiles?.[id]?.position;
+    node.hidden=!other||mode!=='playing'||loadoutOpen;if(node.hidden)return;
+    const q=MetalProfiles.marker({x:camera.pos[0],y:camera.pos[1]-1.62,z:camera.pos[2],yaw:camera.yaw,pitch:camera.pitch},other,{width:innerWidth,height:innerHeight,fov:camera.fov});
+    node.hidden=q.distance<1.5;if(node.hidden)return;
+    node.style.left=q.x+'px';node.style.top=q.y+'px';node.dataset.profile=id;node.dataset.offscreen=String(q.offscreen);
+    node.textContent=q.direction+' '+(id==='light'?'LÉGER':'LOURD')+' · '+Math.round(q.distance)+' m'+(Math.abs(q.height)>1.5?' · '+(q.height>0?'↑':'↓')+Math.round(Math.abs(q.height))+' m':'');
+    node.setAttribute('aria-label',(id==='light'?'Personnage léger':'Personnage lourd')+' en attente à '+Math.round(q.distance)+' mètres');
+  }
   function drawRadar(){
     if($('radar-wrap').hidden)return;
     const ctx=$('radar').getContext('2d'),b=world.bounds,k=160/Math.max(b.maxX-b.minX,b.maxZ-b.minZ),X=x=>10+(x-b.minX)*k,Z=z=>10+(z-b.minZ)*k;
@@ -809,6 +826,7 @@
     for(const a of world.trophies||[]){const state=sim.state.campaign?.trophies.find(q=>q.id===a.id);ctx.strokeStyle=state?.phase==='sealed'?'#ffcf78':'#71e1cc';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(X(a.x),Z(a.z),3.5,0,Math.PI*2);ctx.stroke();if(state?.phase==='sealed'){ctx.fillStyle='#ffcf78';ctx.fillRect(X(a.x)-1,Z(a.z)-1,2,2);}}
     const boss=sim.state.enemies.find(e=>e.type===3&&e.hp>0&&e.active);if(boss){ctx.fillStyle='#e89963';ctx.fillRect(X(boss.x)-3,Z(boss.z)-3,6,6);}
     ctx.strokeStyle=exitReady()?'#71e1cc':'#b08449';ctx.strokeRect(X(world.exit.x)-3,Z(world.exit.z)-3,6,6);
+    const otherId=sim.state.activeProfile==='light'?'heavy':'light',other=sim.state.profiles?.[otherId]?.position;if(other){ctx.strokeStyle=otherId==='light'?'#71e1cc':'#ffb66e';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(other.x),Z(other.z),4,0,Math.PI*2);ctx.stroke();ctx.fillStyle=ctx.strokeStyle;ctx.font='bold 8px Arial';ctx.fillText(otherId==='light'?'L':'H',X(other.x)+6,Z(other.z)+3);}
     const p=sim.state.player;ctx.save();ctx.translate(X(p.x),Z(p.z));ctx.rotate(p.yaw);ctx.fillStyle='#f2f5e5';ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(3.5,3.2);ctx.lineTo(0,1.5);ctx.lineTo(-3.5,3.2);ctx.closePath();ctx.fill();ctx.restore();
   }
   function cadenceHint(){
@@ -857,14 +875,14 @@
     if(!renderer||!sim||document.hidden){perfStart=0;perfFrames=0;return;}
     if(mode==='loading')return;
     const signals={time:sim.state.time,lookYaw:0,lookPitch:0,firing:false};
-    if(mode==='playing'){
+    if(mode==='playing'&&!loadoutOpen){
       padState=controls.step();
       const held=id=>FOptions.down(prefs.bindings,keys,id);
       input.moveX=Number(held('right'))-Number(held('left'))+stick.x;
       input.moveY=Number(held('forward'))-Number(held('back'))-stick.y;
       input.lookX=lookDX+(Number(held('turnRight'))-Number(held('turnLeft')))*dt*1.9;input.lookY=lookDY;
       const fireHeld=mouseFire||touchFire||held('fire')||padState.fire,fireLeftHeld=mouseLeftFire||touchLeftFire||held('fireLeft')||padState.fireLeft;
-      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump');input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(input,padState));input.assist=touch||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch;
+      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump')||touchJump!==null;input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(input,padState));input.assist=touch||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch;
       signals.lookYaw=dt>0?input.lookX/dt:0;signals.lookPitch=dt>0?input.lookY/dt:0;signals.firing=input.fire;
       lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=jumpQueued=switchProfileQueued=false;
       // STAB-V1: tolerate timestamp rounding and 59.94 Hz until the fixed-step loop lands.
@@ -883,7 +901,7 @@
       outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
       const localSound=soundscape.sample(sim),motor=localSound.machinery,steam=localSound.steam;
       audio.setMachinery?.(motor.level,motor.pan,motor.kind,motor.occluded);
-      audio.setSteam?.(steam.level,steam.pan,steam.occluded);
+      audio.setSteam?.(Math.max(steam.level,sim.state.jetpack?.active ? .22 : 0),sim.state.jetpack?.active?0:steam.pan,sim.state.jetpack?.active?false:steam.occluded);
       audio.setThreat(sim.state.threat||0);audio.setPressure?.(sim.state.director?.pressure||0);audio.tick(dt);
       if(mode==='playing'&&!sim.state.player.airborne&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving,{outdoor:outside,biome:world.environment?.biome});
       lastFootstep=footstep;
@@ -905,6 +923,7 @@
     signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);leftMotion.update(mode==='playing'?dt:0,sim.state.locomotion||{},{...signals,firing:input.fireLeft},softMotion);
     const camera={pos:[p.x,(p.y||0)+1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch,roll:isPlay?view.roll:0,fov:prefs.fov+(isPlay?view.fov:0)};
     if(mode==='menu'||mode==='options'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=(world.spawn.y||0)+1.72;}
+    renderPartner(camera);
     renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,shadows:prefs.shadows,bloom:prefs.bloom,horror:sim.state.director,adaptive:mode==='playing'&&(!prefs.fpsLimit||prefs.fpsLimit>=60)&&document.hasFocus()});
     // Count completed frame intervals in real time, with a stable readout at most twice/s.
     if(!perfStart){perfStart=now;perfFrames=0;}else perfFrames++;
@@ -917,7 +936,7 @@
   function togglePause(){if(mode==='playing')setMode('paused');else if(mode==='options')setMode('menu');else if(mode==='paused'||mode==='shop'){audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});}}
   function switchWeapon(value,direction=1){
     if(mode!=='playing')return;
-    const owned=sim.state.inventory?.weapons||[true,true,true];let next=value;
+    const owned=(sim.state.inventory?.weapons||[true,true,true]).map((has,i)=>has&&(!sim.state.activeProfile||MetalProfiles.allowed(sim.state.activeProfile,i)));let next=value;
     if(next===undefined){next=selectedWeapon;for(let i=0;i<owned.length;i++){next=(next+direction+owned.length)%owned.length;if(owned[next])break;}}
     if(!owned[next]){toast(weaponNames[next]+' · arme à trouver dans le secteur',2);return;}
     if(next===selectedWeapon)return;
@@ -926,7 +945,7 @@
   }
   function switchLeft(value){
     if(mode!=='playing'||!sim.selectLeftWeapon)return;
-    const inventory=sim.state.inventory,current=sim.state.equipment?.left??null,choices=[null,...inventory.weapons.flatMap((owned,i)=>owned&&i!==sim.state.weapon?[i]:[])];
+    const inventory=sim.state.inventory,current=sim.state.equipment?.left??null,choices=[null,...inventory.weapons.flatMap((owned,i)=>owned&&i!==sim.state.weapon&&(!sim.state.activeProfile||MetalProfiles.allowed(sim.state.activeProfile,i))?[i]:[])];
     const next=value===undefined?choices[(choices.indexOf(current)+1)%choices.length]:value;
     if(!sim.selectLeftWeapon(next)){toast('Équipement indisponible pour la main gauche',1.8);renderHUD();return;}
     selectedWeapon=sim.state.weapon;clearFireIntents();leftMotion.impulse('switch');audio.switchWeapon?.();renderHUD();
@@ -978,6 +997,7 @@
     const track=currentTrack(),data=window.FMusic?.getModule(track);if(!data){$('audio-status').textContent='Le module audio est indisponible.';return;}
     const url=URL.createObjectURL(new Blob([data],{type:'audio/mod'})),link=document.createElement('a');link.href=url;link.download=track==='title'?'METAL-titre.mod':'METAL-'+String(stage+1).padStart(2,'0')+'.mod';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('audio-status').textContent='Module généré : '+Math.round(data.byteLength/1000)+' ko. Téléchargement lancé.';
   });
+  $('loadout-toggle').addEventListener('click',()=>{if(mode!=='playing')return;loadoutOpen=!loadoutOpen;clearInput();document.body.classList.toggle('loadout-open',loadoutOpen);$('loadout-toggle').setAttribute('aria-expanded',String(loadoutOpen));});
   $('map-button').addEventListener('click',()=>{$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();});
   $('weapon-switch').addEventListener('click',()=>switchWeapon());
   for(let i=0;i<5;i++)$('weapon-slot-'+i).addEventListener('click',()=>switchWeapon(i));
@@ -1050,6 +1070,9 @@
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('fire-button').addEventListener(name,()=>{if(name==='pointercancel'||name==='lostpointercapture'&&touchFire)firePressed=false;touchFire=false;});
   $('left-fire-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||$('left-fire-button').disabled)return;activeDevice('touch');e.preventDefault();touchLeftFire=true;pressFire(true);$('left-fire-button').setPointerCapture(e.pointerId);});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])$('left-fire-button').addEventListener(name,()=>{if(name==='pointercancel'||name==='lostpointercapture'&&touchLeftFire)fireLeftPressed=false;touchLeftFire=false;});
+  $('jump-button').addEventListener('pointerdown',e=>{if(mode!=='playing'||touchJump!==null)return;activeDevice('touch');e.preventDefault();touchJump=e.pointerId;jumpQueued=true;$('jump-button').setPointerCapture(e.pointerId);});
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])$('jump-button').addEventListener(name,e=>{if(e.pointerId===touchJump)touchJump=null;});
+  $('profile-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;activeDevice('touch');e.preventDefault();switchProfileQueued=true;});
   $('dash-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();dashQueued=true;});
   $('pulse-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();pulseQueued=true;});
   $('melee-button').addEventListener('pointerdown',e=>{if(mode!=='playing')return;e.preventDefault();meleeQueued=true;});
