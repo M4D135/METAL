@@ -1,6 +1,6 @@
 # Lot 03s — destruction et navigation
 
-Palier T1/T4 validé, **lot 03s non terminé : T5 reste à optimiser**. Base c28ebda3f12e612370d8b8b6e1de63f7c667e77c, branche codex/lot-03s-20261115. Rendu T2/T3 et FImuse hors périmètre. Version 0.9.2, formats de sauvegarde, RNG et ordre géométrique conservés.
+**Périmètre 03s T1/T4/T5 validé sur 930c199** : les quinze premières casses de production à froid restent strictement sous 8 ms, sans nouveau changement moteur. Voir [validation T5](lot-03s-t5.md). Le reste du présent rapport conserve les résultats historiques du palier T1/T4 et des essais antérieurs. Base c28ebda3f12e612370d8b8b6e1de63f7c667e77c, branche codex/lot-03s-20261115. Rendu T2/T3 et FImuse hors périmètre. Version 0.9.2, formats de sauvegarde, RNG et ordre géométrique conservés.
 
 ## Contrat runtime
 
@@ -37,7 +37,7 @@ Combats production, Node24.18, CPU thread, 60 s, GOD, seed 96, pilote skilled, c
 | 1 | pas 658, 10,967s |17,940ms|10,838ms|13,857ms|non|
 | 2 | pas654, 10,900s |7,001ms|3,040ms|4,999ms|oui|
 
-## T5 restant
+## Historique — T5 restait ouvert au palier fa9
 
 Le décalage de refreshNav a été essayé puis retiré : un checkpoint pris avant l'invalidation différée donnait une nav différente de sa restauration. Aucun nouveau champ save, ni flush supplémentaire de chemins dans snapshot, n'a été introduit pour masquer ce défaut. Le repro reste couvert.
 
@@ -49,7 +49,7 @@ Les phases instrumentées (temps muraux inclusifs, non additionnables) indiquent
 
 AB2 : `node tools/ab2.mjs <base> <candidat> --scenario legacy-s2 --weapon 2 --steps 1800 --reps 5 --warmups 1 --no-counters --out <reçu>`. Pour T1 isolé, copie source archivée de la base avec le seul destruction.js candidat. Aucune worktree créée, aucun push/service.
 
-## Compléments T5 rejetés
+## Historique — compléments T5 rejetés
 
 Les deux essais ont été retirés. Les sources destruction.js et simulation.js sont exactement celles du palier fa9cf768. Aucun complément moteur n’est retenu sans gain établi.
 
@@ -62,4 +62,4 @@ Le second essai est neutre en coût net (~−0,12%), sans gain uniforme ni seuil
 
 Les profils CPU inspector sur fa9 au pas 658 montrent un coût réparti entre damage, damageScenery, updateDebris et collision ; le démarrage/arrêt inspector visible dans le profil est hors pas mesuré. Ils ne prouvent pas le seuil d’acceptation. Une sonde indépendante GC/JIT **sur le candidat roofs rejeté**, en processus neuf sans inspector ni préchauffage, relève au pas 658 plusieurs déoptimisations (type feedback et wrong map), sans GC ni OSR damage observé. Son CPU 7,85 ms est un diagnostic instrumenté isolé, pas une validation T5, et n’est pas extrapolé à fa9. Reçus de cette sonde : `/home/m4d135/work/codex-metal-pilotage-20261115/gc-jit-03s/`, trace SHA256 `9755499fec3c802c0795212d0e0e43ad500c293b08d6960393e25fce4df5e4bd`.
 
-T5 reste ouvert pour une attribution plus précise avant d’autres modifications. Aucun préchauffage artificiel, décalage de physique ou relâchement de test n’a été ajouté. Le lot 03s complet n’est pas promu.
+À la fin de ces essais, T5 restait ouvert pour une attribution plus précise avant d’autres modifications. Aucun préchauffage artificiel, décalage de physique ou relâchement de test n’a été ajouté. Cet état historique ne constituait pas une promotion du lot 03s complet ; la validation de production ultérieure est documentée dans lot-03s-t5.md.

@@ -1,0 +1,186 @@
+[
+  {
+    "label": "trace-production",
+    "variant": "production",
+    "species": 1,
+    "trace": true,
+    "exit": 0,
+    "wallSeconds": 0.32549619674682617
+  },
+  {
+    "label": "trace-no-freeze-dirty",
+    "variant": "no-freeze-dirty",
+    "species": 1,
+    "trace": true,
+    "exit": 0,
+    "wallSeconds": 0.31960034370422363
+  },
+  {
+    "label": "trace-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 1,
+    "trace": true,
+    "exit": 0,
+    "wallSeconds": 0.31212496757507324
+  },
+  {
+    "label": "probe-0-0-production",
+    "variant": "production",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.27035069465637207
+  },
+  {
+    "label": "probe-0-0-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.2745323181152344
+  },
+  {
+    "label": "probe-0-1-production",
+    "variant": "production",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.30570197105407715
+  },
+  {
+    "label": "probe-0-1-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.28090643882751465
+  },
+  {
+    "label": "probe-1-0-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.29268336296081543
+  },
+  {
+    "label": "probe-1-0-production",
+    "variant": "production",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.27104830741882324
+  },
+  {
+    "label": "probe-1-1-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.2925903797149658
+  },
+  {
+    "label": "probe-1-1-production",
+    "variant": "production",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.3035275936126709
+  },
+  {
+    "label": "probe-2-0-production",
+    "variant": "production",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.2935769557952881
+  },
+  {
+    "label": "probe-2-0-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.2636537551879883
+  },
+  {
+    "label": "probe-2-1-production",
+    "variant": "production",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.2730417251586914
+  },
+  {
+    "label": "probe-2-1-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.2798295021057129
+  },
+  {
+    "label": "probe-3-0-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.30322766304016113
+  },
+  {
+    "label": "probe-3-0-production",
+    "variant": "production",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.2831084728240967
+  },
+  {
+    "label": "probe-3-1-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.3000025749206543
+  },
+  {
+    "label": "probe-3-1-production",
+    "variant": "production",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.27184271812438965
+  },
+  {
+    "label": "probe-4-0-production",
+    "variant": "production",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.2983362674713135
+  },
+  {
+    "label": "probe-4-0-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 0,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.27370643615722656
+  },
+  {
+    "label": "probe-4-1-production",
+    "variant": "production",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.2759361267089844
+  },
+  {
+    "label": "probe-4-1-null-proto-dirty",
+    "variant": "null-proto-dirty",
+    "species": 1,
+    "trace": false,
+    "exit": 0,
+    "wallSeconds": 0.27321934700012207
+  }
+]
