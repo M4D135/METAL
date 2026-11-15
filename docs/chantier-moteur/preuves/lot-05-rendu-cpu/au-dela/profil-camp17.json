@@ -6,14 +6,16 @@
  "images": 300,
  "node": "v24.18.0",
  "msParImage": {
-  "vue": 0.639,
-  "dynamique": 0.083,
-  "lumieres": 0.154,
-  "ombres": 2.376,
-  "statique": 0.795,
-  "effets": 0.202,
-  "post": 0.029,
-  "total": 4.315,
-  "sommeEtapes": 8.593
- }
+  "vue": 0.602,
+  "dynamique": 0.136,
+  "lumieres": 0.208,
+  "ombres": 2.555,
+  "statique": 0.899,
+  "effets": 0.203,
+  "post": 0.033,
+  "sommeEtapes": 4.636,
+  "total": 4.681
+ },
+ "controle": {"sommeEtapesSurTotal": 0.99, "ombresSurTotal": 0.546},
+ "note": "Régénéré au tour 2 : le banc additionnait `out` APRÈS y avoir inséré `total`, donc comptait le total deux fois (8,593 pour 4,315 dans la version commitée). `sommeEtapes` est maintenant calculé avant d'ajouter `total` et doit rester à ~1 de `total`. Les microsecondes absolues dépendent de la charge de la machine partagée (le contre-vérificateur mesure ombres 1,900 pour un total 3,432) ; ce qui se reproduit est la répartition : le bloc d'ombres fait 54,6 % ici, 55,4 % mesuré par le contre-vérificateur."
 }

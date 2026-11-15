@@ -437,19 +437,27 @@ après le revert de T17, sortie brute dans
 
 | étape de `draw()` | camp:17 (ms/image) | camp:6 (ms/image) |
 |---|---|---|
-| ombres (3 passes) | 2,376 | 1,758 |
-| statique (`renderStatic`+`renderBatch`) | 0,795 | 0,725 |
-| vue (cache + boucle `shown`) | 0,639 | 0,344 |
-| effets | 0,202 | 0,119 |
-| lumières | 0,154 | 0,101 |
-| dynamique (`pack` + upload) | 0,083 | 0,074 |
-| post | 0,029 | 0,029 |
-| **`draw()` complet** | **4,315** | **3,181** |
-| `models()` | 0,800 | 0,557 |
+| ombres (3 passes) | 2,555 | 2,018 |
+| statique (`renderStatic`+`renderBatch`) | 0,899 | 0,623 |
+| vue (cache + boucle `shown`) | 0,602 | 0,497 |
+| effets | 0,203 | 0,127 |
+| lumières | 0,208 | 0,162 |
+| dynamique (`pack` + upload) | 0,136 | 0,099 |
+| post | 0,033 | 0,028 |
+| somme des étapes (contrôle) | 4,636 | 3,554 |
+| **`draw()` complet** | **4,681** | **3,581** |
+| `models()` (hors `draw()`, banc de coût) | 0,800 | 0,557 |
+
+Le contrôle `sommeEtapes / total` vaut 0,99 et 0,99 : les sept étapes rendent
+compte du `draw()` mesuré. La version commitée au tour 1 affichait 8,593 pour
+4,315 et 6,331 pour 3,181, parce que le banc additionnait l'objet des étapes
+**après** y avoir inséré `total` — il comptait le total deux fois. Le banc est
+corrigé et les deux JSON régénérés.
 
 Les microsecondes dépendent de la charge de la machine (relevée 4,5 à 9,3 sur
 20 cœurs) : ce qui est stable et ce qui compte ici est la **répartition**,
-avec le bloc d'ombres à ≈ 55 % du dessin dans les deux mondes.
+avec le bloc d'ombres à 54,6 % (camp:17) et 56,4 % (camp:6) du dessin — le
+contre-vérificateur mesure 55,4 % et 54,2 % avec les mêmes chiffres.
 
 Le poste dominant est le **bloc d'ombres** (≈ 55 % du dessin), devant la
 statique et la vue. Trois pistes ont été évaluées et écartées sur mesures ou
@@ -558,7 +566,8 @@ Autres écarts relevés au passage et corrigés sans qu'ils soient dans la liste
 - l'étape « au-delà » annonçait une marge de sélection de « 0,029 m » : la
   valeur mesurée est 1,03 m (0,029 est le coût de l'étape `post` en ms/image) ;
 - la table du profil « au-delà » a été rejouée sur la tête après le revert de
-  T17 (ombres 2,376 / 1,758 ms par image, ≈ 55 % du dessin).
+  T17, puis régénérée au tour 2 après correction du contrôle `sommeEtapes`
+  (ombres 2,555 / 2,018 ms par image, 54,6 % et 56,4 % du dessin).
 
 ## Décisions à confirmer par David
 

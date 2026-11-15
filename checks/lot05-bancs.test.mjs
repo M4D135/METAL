@@ -94,6 +94,19 @@ test('les bancs de coût à deux racines mesurent en lockstep et publient un con
   assert.deepEqual(fautifs, [], 'banc non apparié ou sans contrôle : ' + fautifs.join(', '));
 });
 
+test('le contrôle sommeEtapes du profil « au-delà » rend compte du total', () => {
+  // Le banc additionnait l'objet des étapes APRÈS y avoir inséré `total` : il comptait
+  // le total deux fois (8,593 publié pour 4,315 mesurés).
+  for (const f of ['au-dela/profil-camp17.json', 'au-dela/profil-camp6.json']) {
+    const p = join(racine, 'docs', 'chantier-moteur', 'preuves', 'lot-05-rendu-cpu', f);
+    const j = JSON.parse(readFileSync(p, 'utf8'));
+    const {sommeEtapes, total} = j.msParImage || {};
+    assert.ok(typeof sommeEtapes === 'number' && typeof total === 'number', f + ' : sommeEtapes ou total absent');
+    assert.ok(Math.abs(sommeEtapes / total - 1) < 0.05,
+      f + ` : sommeEtapes ${sommeEtapes} pour total ${total} (écart ${((sommeEtapes / total - 1) * 100).toFixed(1)} %) — le contrôle compte une étape en trop ou en moins`);
+  }
+});
+
 test('les deux bancs exigés par les preuves T3 et T9 sont bien dans le dépôt', () => {
   for (const f of ['tools/proof/lot05/gc-bench.mjs', 'tools/proof/lot05/effects-ab.mjs',
     'tools/proof/lot05/effects-ab2.mjs', 'tools/proof/lot05/alloc-image.mjs',
