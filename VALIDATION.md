@@ -631,3 +631,8 @@ Suite complète753/753, pièges/DDA174/174, build et compatibilité Chrome/Swift
 ## Transfert FERRO depuis Emprise —15 novembre2026
 
 FInput.clear annule les vibrations émises ;82/82tests ciblés input+finput surSpark,3nouveaux tests de régression. Module non raccordé au jeu avantlot08 ; aucune manette réelle validée. La suite complète753/753 précédente n’est pas requalifiée en suite810 de cette tête. Voir `docs/chantier-moteur/rapports/ferro-transfert-emprise-20261115.md`.
+
+
+## Musique adaptative T1 —15 novembre2026
+
+Brique FImuse chargée, sans raccordement musical au jeu. Trois défauts corrigés,18/18 tests ciblés, assemblage complet828/828. Deux anciennes sauvegardes reprises dans Chrome/SwiftShader, stockage inchangé et aucune erreurJS. Voir `docs/chantier-moteur/rapports/jeu-musique-metal-t1-integration.md`. Écoute humaine non effectuée.

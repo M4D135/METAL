@@ -466,3 +466,8 @@ console. Preuve détaillée :
 ## 15 novembre2026 — reprise et intégration contrôlée
 
 Pièges massifs/compatibilité anciennes sauvegardes et DDA assemblés ; raccourcis e366203 retirés ;753/753 tests, deux reprises Chrome réussies. Décisions13–15/11 rétablies dans le MASTER. Voir `rapports/integration-20261115.md` pour preuves, réserves et ordre des lots.
+
+
+## 15 novembre2026 — musique adaptative T1 intégrée
+
+Module générique FImuse de4a6e445 corrigé (partition vide, propriété des descripteurs, mesures finies),828/828 tests complets et reprise navigateur de deux sauvegardes. T1 seulement : aucun nouveau raccordement musical ni quitus du lot complet. Voir `rapports/jeu-musique-metal-t1-integration.md`.

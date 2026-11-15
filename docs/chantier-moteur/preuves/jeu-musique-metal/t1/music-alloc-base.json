@@ -1,0 +1,107 @@
+{
+ "schema": "metal-music-alloc-v1",
+ "node": "v24.18.0",
+ "frameMs": 40,
+ "seconds": 60,
+ "reps": 5,
+ "runs": {
+  "/home/m4d135/metal-chantier/voies/audio2": [
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 0.721
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 1.823
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.272
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 0.992
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.047
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.658
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 0.989
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.049
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.558
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.016
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.017
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.576
+    }
+   },
+   {
+    "stage0": {
+     "notes": 1071,
+     "rows": 1202,
+     "moPerMinute": 1.014
+    },
+    "stage1": {
+     "notes": 2726,
+     "rows": 2043,
+     "moPerMinute": 2.017
+    },
+    "title": {
+     "notes": 5193,
+     "rows": 2547,
+     "moPerMinute": 2.539
+    }
+   }
+  ]
+ },
+ "summary": {
+  "/home/m4d135/metal-chantier/voies/audio2": {
+   "moPerMinuteStage0": 0.992,
+   "moPerMinuteStage1": 2.017,
+   "moPerMinuteTitle": 2.558,
+   "notesStage0": 1071,
+   "notesStage1": 2726,
+   "rowsStage0": 1202,
+   "rowsStage1": 2043
+  }
+ }
+}

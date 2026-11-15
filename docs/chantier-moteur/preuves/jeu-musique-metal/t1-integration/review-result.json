@@ -1,0 +1,73 @@
+{
+  "scope": "Empty cues, descriptor ownership, and finite positive integer bar counts for segments/transitions only",
+  "base_source_commit": "4a6e445083532a9bd95e8624070e2a6930979fb0",
+  "files": {
+    "src/imuse.js": {
+      "base_sha256": "ede72e889eda944bd92a353824ad85831ef2e4b7d30594d9cefe9e2143aed8d6",
+      "validated_sha256": "1c708c2bee47a1aeee1020ef0cc6e076677838fb6b232ee2bb2ad00338e6fd38"
+    },
+    "checks/imuse.test.mjs": {
+      "base_sha256": "e24cbbf9cbffb8d61c8d90b966882788ee78c71c185276e2d0c5821f95bfd921",
+      "validated_sha256": "05dbae59e16a9203fd859ec20dec90c0c2720ab25803c8d67d2e59449ac6b231"
+    }
+  },
+  "before": {
+    "exit": 1,
+    "tests": 18,
+    "pass": 17,
+    "fail": 1,
+    "log": "/Users/david/Documents/Codex/2026-11-15/metal-pilotage/work/imuse-integration/bars-before.log",
+    "scope": "17 earlier tests already fixed; new parameterized bars test fails"
+  },
+  "after": {
+    "exit": 0,
+    "tests": 18,
+    "pass": 18,
+    "fail": 0,
+    "log": "/Users/david/Documents/Codex/2026-11-15/metal-pilotage/work/imuse-integration/bars-after.log"
+  },
+  "live_modified": false,
+  "original_source_modified": false,
+  "patch_order": [
+    "integrate-imuse-t1.patch",
+    "review-corrections.patch"
+  ],
+  "limits": [
+    "No new music connected",
+    "No listening or GPU/device validation",
+    "No exhaustive validation of unrelated descriptor types"
+  ],
+  "prior_two_fixes": {
+    "before": {
+      "exit": 1,
+      "tests": 17,
+      "pass": 15,
+      "fail": 2,
+      "log": "/Users/david/Documents/Codex/2026-11-15/metal-pilotage/work/imuse-integration/review-before.log"
+    },
+    "after": {
+      "exit": 0,
+      "tests": 17,
+      "pass": 17,
+      "fail": 0,
+      "log": "/Users/david/Documents/Codex/2026-11-15/metal-pilotage/work/imuse-integration/review-after.log"
+    }
+  },
+  "parameterized_cases": {
+    "invalid": [
+      "Infinity",
+      "NaN",
+      0,
+      -1,
+      1.5
+    ],
+    "fields": [
+      "segment.bars",
+      "transition.bars"
+    ],
+    "valid": [
+      1,
+      2
+    ]
+  }
+}
