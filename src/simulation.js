@@ -96,7 +96,8 @@
     if(economyEnabled&&!initialEconomy||!economyEnabled&&options.economy!==undefined)throw new Error('Invalid economy');
     const baseStats={maxHp:100,damageMultiplier:1,incomingMultiplier:1,coolingMultiplier:1};
     let ammoCaps=(economyEnabled?G.FEconomy.ammoCaps(initialEconomy,{campaign:pistol}):(world.progression?.ammoCaps||(pistol?[180,36,12,16,1]:[180,36,12,16]))).slice(0,weaponSlots),stats=economyEnabled?G.FEconomy.stats(initialEconomy):{...baseStats};
-    const motionProfile=progression||world.generation>=6?{walk:5.4,sprint:7.6,accel:30,friction:42,reverse:50,dash:15.2,air:2.2}:{walk:4.2,sprint:5.8,accel:20,friction:32,reverse:38,dash:13.2,air:1};
+    const modernMovement=progression||world.generation>=6;
+    const motionProfile=modernMovement?{walk:4.2,sprint:7.6,accel:16,friction:9,stop:2.2,dash:15.2,air:1.1,maxSpeed:10.5,gravity:20,jump:6.2}:{walk:4.2,sprint:5.8,accel:20,friction:32,reverse:38,dash:13.2,air:1};
     function inventoryValue(value,caps=ammoCaps){
       if(arsenal&&!pistol&&value&&Array.isArray(value.weapons)&&value.weapons.length===3&&Array.isArray(value.ammo)&&value.ammo.length===3)value={...value,weapons:[...value.weapons,false],ammo:[...value.ammo,0]};
       if(!value||!Array.isArray(value.weapons)||value.weapons.length!==weaponSlots||!weaponIds.every(i=>typeof value.weapons[i]==='boolean')||(pistol?!value.weapons.some(Boolean):value.weapons[0]!==true)||!Array.isArray(value.ammo)||value.ammo.length!==weaponSlots||!weaponIds.every(i=>Number.isInteger(value.ammo[i])&&value.ammo[i]>=0&&value.ammo[i]<=caps[i]))return null;
@@ -253,6 +254,14 @@
     const locomotion=s.locomotion={vx:0,vz:0,speed:0,forward:0,strafe:0,stridePhase:0,distance:0,
       moveBlend:0,sprintBlend:0,dashBlend:0,accelForward:0,accelStrafe:0,blocked:false};
     let velocityX=0,velocityZ=0,dashAge=.2,dashX=0,dashZ=0;
+    let jumpBuffer=0,coyote=0,jumpWasPressed=false,clipFeedbackWait=0,clipEscape=false;
+    // Resolve owners once, then query the live pieces, never the original box:
+    // opening a breach also opens its player-only boundary clip.
+    const clipIds=new Set();
+    if(modernMovement)for(const edge of world.outdoorBoundaries||[]){
+      const id=world.meshes?.[edge.mesh]?.destructibleId??world.destructibles?.find(g=>g.meshes.includes(edge.mesh))?.id;
+      if(id!==undefined)clipIds.add(String(id));
+    }
     let fireWait=0,navWait=0,hazardWait=0,recovery=0,interactHeld=false,encounterWait=0,emptyWait=0;
     const weaponWait=weaponIds.map(()=>0);if(arsenal)s.weaponCooldowns=weaponWait;
     // Neural scores are advisory and never move bodies or apply damage. Pending
@@ -276,10 +285,11 @@
     const feet=e=>e===p?e.y:Number.isFinite(e.baseY)?e.baseY:groundAt(e.x,e.z);
     function putHeight(e,y){if(e===p||e.type===undefined)e.y=y;else{e.baseY=y;e.y=y+HEIGHT[e.type]*scale(e);}}
     function onLift(l,x,z,margin=0){return Math.abs(x-l.x)<=l.w/2-margin&&Math.abs(z-l.z)<=l.d/2-margin;}
-    function support(x,z,previous,r=.28){
+    function support(x,z,previous,r=.28,canStep=false){
       let y=ground(x,z);
       for(const l of s.lifts)if(onLift(l,x,z)&&Math.abs(l.y-previous)<=.43)y=Math.max(y,l.y);
       if(Math.abs(y-previous)>.43)for(const list of [localSolids(x,z),doorBoxes,trapBoxes])for(const q of list)if(Math.abs(q.maxY-previous)<=.43&&discBox(x,z,r,q))y=Math.max(y,q.maxY);
+      if(canStep)for(const q of localSolids(x,z))if(q.maxY>y&&q.maxY<=previous+.42&&q.minY<=previous+.42&&discBox(x,z,r,q)&&!blocked(x,z,r,q.maxY))y=q.maxY;
       return y;
     }
     // Static broad phase: all gameplay bodies fit within this expansion, including
@@ -352,6 +362,7 @@
     function localSolids(x,z){return collisionBuckets[(Math.floor(z/bucketSize)-bucketZ)*bucketWidth+Math.floor(x/bucketSize)-bucketX]||solids;}
     function discBox(x,z,r,q){const dx=x<q.minX?q.minX-x:x>q.maxX?x-q.maxX:0,dz=z<q.minZ?q.minZ-z:z>q.maxZ?z-q.maxZ:0;return dx*dx+dz*dz<r*r;}
     function actorBlocked(e,x,z,r,y){
+      if(e===p&&modernMovement&&!clipEscape&&boundaryAt(x,z,r,y)){boundaryContact();return true;}
       if(giant(e)&&e.arena&&Math.hypot(x-e.arena.x,z-e.arena.z)>Math.max(1,e.arena.r-2.1*scale(e)-5))return true;
       for(const g of giants)if(g!==e&&alive(g)&&y<g.baseY+bodyHeight(g)&&y+bodyHeight(e)>g.baseY&&Math.hypot(x-g.x,z-g.z)<radius(g)+r)return true;
       if(giant(e)){if(p.hp>0&&Math.abs(p.y-y)<bodyHeight(e)&&Math.hypot(x-p.x,z-p.z)<r+.28)return true;for(const other of nearby(x,z,r+2))if(other!==e&&other.hp>0&&Math.abs(other.baseY-y)<bodyHeight(e)&&Math.hypot(x-other.x,z-other.z)<r+radius(other))return true;}
@@ -362,11 +373,11 @@
       const count=Math.max(1,Math.ceil(Math.max(Math.abs(dx),Math.abs(dz))/.12));
       dx/=count;dz/=count;
       for(let j=0;j<count;j++){
-        let y=feet(e),next=support(e.x+dx,e.z,y,r);
-        if(advanced&&e===p&&next<y-.42&&free(e.x+dx,e.z,y)){Object.assign(e,{airborne:true,airVX:velocityX,airVY:0,airVZ:velocityZ,airTime:0});e.x+=dx;p.dashing=0;stopMotion();break;}
+        let y=feet(e),next=support(e.x+dx,e.z,y,r,e===p&&modernMovement);
+        if(advanced&&e===p&&next<y-.42&&free(e.x+dx,e.z,y)){if(modernMovement)startPlayerFall();else{Object.assign(e,{airborne:true,airVX:velocityX,airVY:0,airVZ:velocityZ,airTime:0});p.dashing=0;stopMotion();}e.x+=dx;break;}
         if(Math.abs(next-y)<=.42&&free(e.x+dx,e.z,next)){e.x+=dx;putHeight(e,next);}
-        y=feet(e);next=support(e.x,e.z+dz,y,r);
-        if(advanced&&e===p&&next<y-.42&&free(e.x,e.z+dz,y)){Object.assign(e,{airborne:true,airVX:velocityX,airVY:0,airVZ:velocityZ,airTime:0});e.z+=dz;p.dashing=0;stopMotion();break;}
+        y=feet(e);next=support(e.x,e.z+dz,y,r,e===p&&modernMovement);
+        if(advanced&&e===p&&next<y-.42&&free(e.x,e.z+dz,y)){if(modernMovement)startPlayerFall();else{Object.assign(e,{airborne:true,airVX:velocityX,airVY:0,airVZ:velocityZ,airTime:0});p.dashing=0;stopMotion();}e.z+=dz;break;}
         if(Math.abs(next-y)<=.42&&free(e.x,e.z+dz,next)){e.z+=dz;putHeight(e,next);}
       }
     }
@@ -421,13 +432,15 @@
       for(const list of [localSolids(x,z),doorBoxes,trapBoxes])for(const q of list)if(q.maxY<=ceiling+.08&&discBox(x,z,r,q))y=Math.max(y,q.maxY);
       return y;
     }
-    function land(e,y,impact){
+    function land(e,y,impact,fallFrom){
+      const modern=e===p&&modernMovement&&e.padId===null;
+      const carryX=e.airVX,carryZ=e.airVZ;
       // The world-wide substrate supports ordinary breached exits (a .25m
       // step), but must not catch a deep fall beneath a raised stage. Six m/s
       // is a 1.5m vertical fall; ordinary authored floors keep their old rules.
-      if(e===p&&impact>6&&fallbackLanding(e.x,e.z,y)){putHeight(e,y);fatalFall();return;}
+      if(e===p&&(modern?fallFrom-y>1.5:impact>6)&&fallbackLanding(e.x,e.z,y)){putHeight(e,y);fatalFall();return;}
       putHeight(e,y);e.airborne=false;e.airVX=e.airVY=e.airVZ=e.airTime=0;e.padCooldown=Math.max(.5,e.padCooldown);
-      if(e===p){stopMotion();p.dashing=0;}
+      if(e===p){if(modern){velocityX=carryX;velocityZ=carryZ;coyote=0;}else stopMotion();p.dashing=0;}
       else{e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;e.thinkWait=e.planWait=0;e.tactic='hold';}
       emit('land',{actor:e===p?'player':'enemy',enemyId:e===p?undefined:e.id,hard:impact>9,impact,x:e.x,y,z:e.z});
     }
@@ -437,8 +450,8 @@
       for(let i=0;i<count&&e.airborne;i++){
         if(e===p&&input){
           let mx=Number(input.moveX)||0,my=Number(input.moveY)||0,n=Math.max(1,Math.hypot(mx,my));mx/=n;my/=n;
-          e.airVX=clamp(e.airVX+(Math.cos(p.yaw)*mx+Math.sin(p.yaw)*my)*h*motionProfile.air,-32,32);
-          e.airVZ=clamp(e.airVZ+(Math.sin(p.yaw)*mx-Math.cos(p.yaw)*my)*h*motionProfile.air,-32,32);
+          e.airVX=clamp(e.airVX+(Math.cos(p.yaw)*mx+Math.sin(p.yaw)*my)*h*(modernMovement&&e.padId!==null?2.2:motionProfile.air),-32,32);
+          e.airVZ=clamp(e.airVZ+(Math.sin(p.yaw)*mx-Math.cos(p.yaw)*my)*h*(modernMovement&&e.padId!==null?2.2:motionProfile.air),-32,32);
         }
         const old=feet(e);let y=old+e.airVY*h-GRAVITY*h*h/2;e.airVY-=GRAVITY*h;e.airTime+=h;
         if(y>old){
@@ -499,7 +512,145 @@
       if(t<=.15)return .0125+t-.025;
       const u=(t-.15)/.05;return .1375+.05*(u-u*u*u+.5*u*u*u*u);
     }
+    // Modern player motion is evaluated in bounded physical slices. The legacy
+    // profile, enemies, projectiles and authored jump pads keep their old path.
+    function boundaryAt(x,z,r=.28,y=p.y){
+      if(!modernMovement||!clipIds.size)return false;
+      for(const q of localSolids(x,z))if(clipIds.has(String(q.destructibleId))&&q.minY<y+1.8&&q.maxX-q.minX>=.12&&q.maxZ-q.minZ>=.12&&discBox(x,z,r,q))return true;
+      return false;
+    }
+    function boundaryContact(){
+      if(clipFeedbackWait<=0){emit('boundaryContact',{x:p.x,y:p.y,z:p.z});clipFeedbackWait=.3;}
+    }
+    function startPlayerFall(){
+      let vx=velocityX,vz=velocityZ;
+      if(p.dashing>0){
+        const t=dashAge,u=t<.025?t/.025:(t-.15)/.05;
+        const weight=t<.025?u*u*(3-2*u):t<=.15?1:1-u*u*(3-2*u);
+        vx=vx*(1-weight)+dashX*motionProfile.dash*weight;vz=vz*(1-weight)+dashZ*motionProfile.dash*weight;
+      }
+      const speed=Math.hypot(vx,vz);if(speed>16){vx*=16/speed;vz*=16/speed;}
+      Object.assign(p,{airborne:true,airVX:vx,airVY:0,airVZ:vz,airTime:0,padId:null});
+      coyote=.1;
+    }
+    function playerJump(){
+      const vx=p.airborne?p.airVX:velocityX,vz=p.airborne?p.airVZ:velocityZ;
+      Object.assign(p,{airborne:true,airVX:vx,airVY:6.2,airVZ:vz,airTime:0,padId:null});
+      p.dashing=0;dashAge=.2;jumpBuffer=coyote=0;
+      emit('jump',{actor:'player',x:p.x,y:p.y,z:p.z});
+    }
+    function playerAirMove(dt,input){
+      let left=dt;
+      while(left>1e-10&&p.airborne&&!s.dead){
+        let h=Math.min(left,1/120,.09/Math.max(1,Math.hypot(p.airVX,p.airVY,p.airVZ)));
+        const old=p.y,vy=p.airVY,fallFrom=old-vy*p.airTime-10*p.airTime*p.airTime;
+        let y=old+vy*h-10*h*h,landing=null;
+        if(y<=old){
+          const floor=landingAt(p.x,p.z,old,.28);
+          if(y<=floor&&old>=floor-.08){
+            const hit=(vy+Math.sqrt(Math.max(0,vy*vy+40*(old-floor))))/20;
+            h=clamp(hit,0,h);y=floor;landing=floor;
+          }
+        }
+        let mx=Number(input.moveX)||0,my=Number(input.moveY)||0;
+        const magnitude=Math.hypot(mx,my),n=Math.max(1,magnitude);mx/=n;my/=n;
+        const wx=Math.cos(p.yaw)*mx+Math.sin(p.yaw)*my,wz=Math.sin(p.yaw)*mx-Math.cos(p.yaw)*my,wl=Math.hypot(wx,wz);
+        const oldVX=p.airVX,oldVZ=p.airVZ;
+        if(wl>1e-8){
+          const speed=(input.sprint?motionProfile.sprint:motionProfile.walk)*Math.min(1,wl),ux=wx/wl,uz=wz/wl;
+          const add=Math.max(0,Math.min(1.1*speed*h,speed-p.airVX*ux-p.airVZ*uz));
+          p.airVX+=add*ux;p.airVZ+=add*uz;
+          const after=Math.hypot(p.airVX,p.airVZ),limit=Math.max(10.5,Math.hypot(oldVX,oldVZ));
+          if(after>limit){p.airVX*=limit/after;p.airVZ*=limit/after;}
+        }
+        p.airVY=vy-20*h;p.airTime+=h;
+        if(y>old){
+          let head=false;
+          for(const list of [localSolids(p.x,p.z),doorBoxes,trapBoxes])for(const q of list)if(q.minY>=old+1.8-1e-7&&q.minY<y+1.8&&discBox(p.x,p.z,.28,q)){y=Math.min(y,q.minY-1.8);head=true;}
+          for(const l of s.lifts)if(onLift(l,p.x,p.z,-.28)&&l.y-.22>=old+1.8-1e-7&&l.y-.22<y+1.8){y=Math.min(y,l.y-.22-1.8);head=true;}
+          if(head){p.airVY=0;p.airTime=0;}
+        }
+        putHeight(p,y);
+        const nx=p.x+(oldVX+p.airVX)*h/2,nz=p.z+(oldVZ+p.airVZ)*h/2;
+        if(ground(nx,p.z)<=y+.02&&!blocked(nx,p.z,.28,y)&&!actorBlocked(p,nx,p.z,.28,y))p.x=nx;else p.airVX=0;
+        if(ground(p.x,nz)<=y+.02&&!blocked(p.x,nz,.28,y)&&!actorBlocked(p,p.x,nz,.28,y))p.z=nz;else p.airVZ=0;
+        p.dashing=Math.max(0,p.dashing-h);dashAge=Math.min(.2,dashAge+h);coyote=Math.max(0,coyote-h);left-=h;
+        if(landing!==null){land(p,landing,-p.airVY,fallFrom);break;}
+        if(y<-14||p.airTime>8){fatalFall();break;}
+      }
+      return left;
+    }
+    // Exact distance and final speed for exponential drag above STOP, followed
+    // by constant deceleration below it. No Euler friction or frame-rate scale.
+    function modernGround(dt,wx,wz,wishSpeed,skipFriction){
+      const f=9,stop=2.2;
+      let dx=0,dz=0;
+      if(skipFriction){dx=velocityX*dt;dz=velocityZ*dt;}
+      else if(wishSpeed>1e-8){
+        const ux=wx/wishSpeed,uz=wz/wishSpeed,along=velocityX*ux+velocityZ*uz;
+        const sideX=velocityX-along*ux,sideZ=velocityZ-along*uz,decay=Math.exp(-f*dt),area=(1-decay)/f;
+        let distance,next;
+        if(along<wishSpeed){
+          const acceleration=16*wishSpeed,t=Math.min(dt,(wishSpeed-along)/acceleration);
+          distance=along*t+acceleration*t*t/2+wishSpeed*(dt-t);next=Math.min(wishSpeed,along+acceleration*dt);
+        }else{
+          const t=Math.min(dt,Math.log(along/wishSpeed)/f);
+          distance=along*(1-Math.exp(-f*t))/f+wishSpeed*(dt-t);next=Math.max(wishSpeed,along*decay);
+        }
+        dx=distance*ux+sideX*area;dz=distance*uz+sideZ*area;
+        velocityX=next*ux+sideX*decay;velocityZ=next*uz+sideZ*decay;
+      }else{
+        const speed=Math.hypot(velocityX,velocityZ);
+        if(speed>0){
+          const exponential=speed>stop?Math.min(dt,Math.log(speed/stop)/f):0;
+          const at=speed*Math.exp(-f*exponential),linear=Math.min(dt-exponential,at/(f*stop));
+          const distance=speed*(1-Math.exp(-f*exponential))/f+at*linear-f*stop*linear*linear/2;
+          const next=Math.max(0,at-f*stop*(dt-exponential));
+          dx=velocityX/speed*distance;dz=velocityZ/speed*distance;velocityX*=next/speed;velocityZ*=next/speed;
+        }
+      }
+      let weight=0;
+      if(dashAge<.2){
+        const end=Math.min(.2,dashAge+dt),area=dashIntegral(end)-dashIntegral(dashAge);weight=area/dt;
+        dx=dx*(1-weight)+dashX*motionProfile.dash*area;dz=dz*(1-weight)+dashZ*motionProfile.dash*area;
+        dashAge=end;p.dashing=Math.max(0,.2-dashAge);
+      }else p.dashing=Math.max(0,p.dashing-dt);
+      const x=p.x,z=p.z;move(p,dx,dz);
+      const blockedX=Math.abs(p.x-x-dx)>1e-8,blockedZ=Math.abs(p.z-z-dz)>1e-8;
+      if(blockedX)velocityX=0;if(blockedZ)velocityZ=0;
+      return {distance:Math.hypot(p.x-x,p.z-z),blocked:blockedX||blockedZ,dash:weight};
+    }
+    function modernLocomote(dt,input){
+      if(!(dt>0))return;
+      if(!clipEscape||!boundaryAt(p.x,p.z))clipEscape=false;
+      if(jumpBuffer>0&&(!p.airborne||coyote>0)&&p.padId===null)playerJump();
+      let mx=Number.isFinite(input.moveX)?input.moveX:0,my=Number.isFinite(input.moveY)?input.moveY:0,n=Math.hypot(mx,my);
+      if(n>1){mx/=n;my/=n;n=1;}if(n<.002){mx=my=n=0;}
+      const cy=Math.cos(p.yaw),sy=Math.sin(p.yaw),speed=input.sprint?motionProfile.sprint:motionProfile.walk;
+      const wx=(cy*mx+sy*my)*speed,wz=(sy*mx-cy*my)*speed,wishSpeed=n*speed;
+      if(!p.airborne&&input.dash&&p.dash<=0){
+        p.dash=1.7;p.dashing=.2;dashAge=0;
+        if(n>.1){dashX=(cy*mx+sy*my)/n;dashZ=(sy*mx-cy*my)/n;}else{dashX=sy;dashZ=-cy;}emit('dash');
+      }
+      const x=p.x,z=p.z,previousX=locomotion.vx,previousZ=locomotion.vz,count=Math.max(1,Math.ceil(dt*120)),part=dt/count;
+      let distance=0,dashContribution=0,collided=false;
+      for(let i=0;i<count&&!s.dead;i++){
+        let remaining=part;
+        if(p.airborne){
+          if(p.padId===null)remaining=playerAirMove(part,input);
+          else{airMove(p,part,input);remaining=0;}
+        }
+        if(!p.airborne&&remaining>1e-10){const q=modernGround(remaining,wx,wz,wishSpeed,jumpBuffer>0);distance+=q.distance;dashContribution+=q.dash*remaining;collided||=q.blocked;}
+      }
+      const vx=(p.x-x)/dt,vz=(p.z-z)/dt;
+      Object.assign(locomotion,{vx,vz,speed:Math.hypot(vx,vz),forward:sy*vx-cy*vz,strafe:cy*vx+sy*vz,blocked:collided});
+      s.moving=locomotion.speed;locomotion.moveBlend=clamp(locomotion.speed/motionProfile.walk,0,1);locomotion.dashBlend=clamp(dashContribution/dt,0,1);
+      locomotion.sprintBlend=clamp((locomotion.speed-motionProfile.walk)/(motionProfile.sprint-motionProfile.walk),0,1)*(1-locomotion.dashBlend);
+      locomotion.accelForward=clamp((sy*(vx-previousX)-cy*(vz-previousZ))/dt,-80,80);locomotion.accelStrafe=clamp((cy*(vx-previousX)+sy*(vz-previousZ))/dt,-80,80);
+      locomotion.distance+=distance;locomotion.stridePhase=(locomotion.stridePhase+distance/(2.4+.5*locomotion.sprintBlend)*Math.PI*2)%(Math.PI*2);
+    }
     function locomote(dt,input){
+      if(modernMovement)return modernLocomote(dt,input);
       if(p.airborne){
         const x=p.x,z=p.z;airMove(p,dt,input);if(s.dead)return;
         const vx=dt>0?(p.x-x)/dt:0,vz=dt>0?(p.z-z)/dt:0;
@@ -971,7 +1122,7 @@
         for(let volume=0;volume<volumes;volume++){
           const y=volume?e.baseY+(e.type===1?1.88:2.89):e.y;
           const d=[e.x-origin[0],y-origin[1],e.z-origin[2]],along=d[0]*dir[0]+d[1]*dir[1]+d[2]*dir[2];
-          const radius=(volume?(e.type===1?.30:.36):e.type===3?1.15:.67)+(assist?Math.min(s.weapon?.16:.38,along*(s.weapon?.012:.025)):0);
+          const radius=(volume?(e.type===1?.30:.36):e.type===3?1.15:.67)+(assist?Math.min(s.weapon||modernMovement&&assist!=='touch'?.16:.38,along*(s.weapon||modernMovement&&assist!=='touch'?.012:.025)):0);
           if(along<0||along>distance+radius)continue;
           const perp=d[0]*d[0]+d[1]*d[1]+d[2]*d[2]-along*along;
           if(perp>radius*radius)continue;
@@ -2122,7 +2273,7 @@
       }
     }
     function unsupportedBodies(){
-      for(const e of [p,...s.enemies])if(alive(e)&&!e.airborne){const y=feet(e),floor=support(e.x,e.z,y,e===p?.28:radius(e));if(floor<y-.15){Object.assign(e,{airborne:true,airVX:e===p?velocityX:0,airVY:0,airVZ:e===p?velocityZ:0,airTime:0,padId:null});if(e===p){stopMotion();p.dashing=0;}}}
+      for(const e of [p,...s.enemies])if(alive(e)&&!e.airborne){const y=feet(e),floor=support(e.x,e.z,y,e===p?.28:radius(e),e===p&&modernMovement);if(floor<y-.15){Object.assign(e,{airborne:true,airVX:e===p?velocityX:0,airVY:0,airVZ:e===p?velocityZ:0,airTime:0,padId:null});if(e===p){if(modernMovement)startPlayerFall();else{stopMotion();p.dashing=0;}}}}
     }
     function updateHazards(damage=true){
       for(const h of s.hazards){
@@ -2145,10 +2296,18 @@
       airTimers(p,dt);for(const j of s.jumpPads)j.flash=Math.max(0,j.flash-dt);
       syncDestruction();updateSystems(dt);pumpNav();updateDirector(dt);updateEnvironment(dt);if(checkPlayerBounds())return;if(input.interact&&!interactHeld)interact();interactHeld=!!input.interact;
       if(input.pulse)pulse();
-      locomote(dt,input);if(checkPlayerBounds())return;checkPad(p);
+      if(modernMovement){
+        clipFeedbackWait=Math.max(0,clipFeedbackWait-dt);
+        if(input.jump&&!jumpWasPressed)jumpBuffer=.12;
+        jumpWasPressed=!!input.jump;
+      }
+      locomote(dt,input);
+      if(modernMovement)jumpBuffer=Math.max(0,jumpBuffer-dt);
+      if(checkPlayerBounds())return;checkPad(p);
       if(input.melee)melee();
-      if(input.fire)fire(input.assist);
-      if(arsenal&&input.fireLeft&&Number.isInteger(s.equipment.left))fire(input.assist,'left');
+      const aimAssist=input.touchAssist?'touch':!!input.assist;
+      if(input.fire)fire(aimAssist);
+      if(arsenal&&input.fireLeft&&Number.isInteger(s.equipment.left))fire(aimAssist,'left');
       if(navWait<=0){if(!advanced)rebuildNav();navWait=.6;}
       updateTrophies(dt);refreshAdaptation();updateEnemies(dt);updateBossAttacks(dt);updateProjectiles(dt);if(checkPlayerBounds())return;
       for(const bullet of s.bullets){
@@ -2441,12 +2600,13 @@
         giants=s.enemies.filter(giant);destruction=candidate;solids=savedSolids;seenDestructionToken=destruction?.delta().token;s.destructionRevision++;trapStates=s.traps;trapBoxes.length=0;trapBoxes.push(...savedTrapBoxes);rebuildCollision();
         bossAttackSerial=t.bossAttackSerial||0;explosionSerial=t.explosionSerial||0;projectileSerial=t.projectileSerial||0;rubbleSerial=t.rubbleSerial||0;s.explosions=[];s.debris=rubble;debrisSleep=new WeakMap();
         s.events=[];s.particles=[];for(const j of s.jumpPads)j.flash=0;s.pulseVisual=0;s.flash=0;s.damage=0;s.hitMarker=0;s.moving=0;s.threat=0;
-        fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;encounterWait=t.encounterWait||0;emptyWait=t.emptyWait||0;recovery=0;interactHeld=false;stopMotion(true);
+        fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;encounterWait=t.encounterWait||0;emptyWait=t.emptyWait||0;recovery=0;interactHeld=false;stopMotion(true);jumpBuffer=coyote=clipFeedbackWait=0;jumpWasPressed=false;clipEscape=boundaryAt(p.x,p.z);
         Object.assign(s.aiStats,{awake:enemies.filter(e=>alive(e)&&!e.sleeping).length,dormant:enemies.filter(e=>alive(e)&&e.sleeping).length,alive:enemies.filter(e=>e.hp>0).length,pathSearches:0,pathDeferred:0});if(progression)encounterCounts();
         if(options?.recover===true&&!s.dead&&!s.won){recovery=1.4;s.bullets=s.bullets.filter(q=>Math.hypot(q.x-p.x,q.z-p.z)>=2.4);}
         updateDoorBoxes();navDirty=terrainDirty=false;refreshNav(false);rebuildNeighbors();updateHazards(false);return true;
       }catch(_){return false;}
     }
+    clipEscape=boundaryAt(p.x,p.z);
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
     return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }

@@ -46,15 +46,15 @@ function trapSolidAt(sim, x, z) {
   });
 }
 
-function walkTo(sim, target, onStep = () => {}) {
+function walkTo(sim, target, onStep = () => {}, settle = false) {
   let lastX = null, lastZ = null, stuck = 0, side = 1;
   for (let frame = 0; frame < 1600; frame++) {
     const p = sim.state.player, dx = target.x - p.x, dz = target.z - p.z;
     const distance = Math.hypot(dx, dz);
-    if (distance < .09) return;
+    if (distance < .09 && (!settle || sim.state.locomotion.speed < .15)) return;
     assert.equal(sim.state.dead, false, 'Player died during navigation');
     if (sim.state.won) return;
-    const gain = Math.min(1, distance / .105);
+    const gain = Math.min(1, distance / (settle ? 2 : .105));
     const ux = dx / distance, uz = dz / distance;
     const engaged = trapSolidAt(sim, p.x, p.z);
     const ahead = trapSolidAt(sim, p.x + ux * Math.min(.9, distance), p.z + uz * Math.min(.9, distance));
@@ -263,7 +263,7 @@ function route(sim, target) {
     return closest;
   }
   const start = nearest(sim.state.player), end = nearest(target);
-  assert(start >= 0, 'Start does not map to navigable ground');
+  assert(start >= 0, 'Start does not map to navigable ground: '+JSON.stringify({player:sim.state.player,target}));
   assert(end >= 0, 'Objective does not map to navigable ground');
   const parent = new Int32Array(cells.length).fill(-1), queue = [start];
   parent[start] = start;
@@ -295,6 +295,8 @@ test('A real generated level can be completed using navigation and ordinary coll
   for (const mechanism of world.mechanisms || []) {
     const access = { x: mechanism.x, z: mechanism.z + .95 };
     for (const point of route(sim, access)) walkTo(sim, point, checkPosition);
+    // With retained momentum, settle before releasing the stick to operate the console.
+    walkTo(sim, access, checkPosition, true);
     assert.equal(sim.nearestInteraction()?.id, mechanism.id);
     assert.equal(sim.interact(), true);
     advance(sim, 1.2);
