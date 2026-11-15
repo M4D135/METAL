@@ -1,0 +1,2403 @@
+{
+  "sourceSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "surface": "46915edee28daa0408ea1c18abd664babef76e2e6bce52c2990a431f90cee77e",
+    "skies": "bd4b38002c8c800a5f7551a73712c721909ed22ae145d15fbf7f853ff30eddea",
+    "renderer": "c824f1039a4e48c2dba3e26b5f2311d9a31a23471f72f4fd5e9c1033d6712a02",
+    "profiles": "aec726e379b17e8e0f2116eaf0066e2e367a053d14000e8e3ef73c30e0bb1a1b",
+    "world": "18fa25f33ec832cc4afd3b0925642a0085ab360cb5e6a8e4827570904f813c44",
+    "game": "013ff9d6745249c64cdd1bb69ad0ae2bc72ac8d181a3d47af7be6c557a8a8fb8"
+  },
+  "backend": "SwiftShader: image checks, not hardware FPS",
+  "rows": [
+    {
+      "index": 0,
+      "id": "lisiere-aube",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 28,
+          "triangles": 90136,
+          "instances": 415,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14063,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 195776,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 413,
+          "staticSuperset": 549,
+          "staticCulled": 13650,
+          "cache": {
+            "viewFrames": 1,
+            "viewRebuilds": 1,
+            "torchRebuilds": 1,
+            "sunRebuilds": 1,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-aube",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 28,
+          "triangles": 90136,
+          "instances": 415,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14063,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 195776,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 413,
+          "staticSuperset": 549,
+          "staticCulled": 13650,
+          "cache": {
+            "viewFrames": 1,
+            "viewRebuilds": 1,
+            "torchRebuilds": 1,
+            "sunRebuilds": 1,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-aube",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 1,
+      "id": "carriere-aube-poussiere",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 27,
+          "triangles": 38092,
+          "instances": 359,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12558,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 148672,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 357,
+          "staticSuperset": 808,
+          "staticCulled": 12201,
+          "cache": {
+            "viewFrames": 2,
+            "viewRebuilds": 2,
+            "torchRebuilds": 2,
+            "sunRebuilds": 2,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-aube-poussiere",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 27,
+          "triangles": 38092,
+          "instances": 359,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12558,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 148672,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 357,
+          "staticSuperset": 808,
+          "staticCulled": 12201,
+          "cache": {
+            "viewFrames": 2,
+            "viewRebuilds": 2,
+            "torchRebuilds": 2,
+            "sunRebuilds": 2,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-aube-poussiere",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 2,
+      "id": "jardins-matin",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 32,
+          "triangles": 135132,
+          "instances": 2240,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17389,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 366080,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2238,
+          "staticSuperset": 2760,
+          "staticCulled": 15151,
+          "cache": {
+            "viewFrames": 3,
+            "viewRebuilds": 3,
+            "torchRebuilds": 3,
+            "sunRebuilds": 3,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-matin",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 32,
+          "triangles": 135132,
+          "instances": 2240,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17389,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 366080,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2238,
+          "staticSuperset": 2760,
+          "staticCulled": 15151,
+          "cache": {
+            "viewFrames": 3,
+            "viewRebuilds": 3,
+            "torchRebuilds": 3,
+            "sunRebuilds": 3,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-matin",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 3,
+      "id": "lisiere-plein-jour",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 28,
+          "triangles": 86320,
+          "instances": 470,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14072,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 185600,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 468,
+          "staticSuperset": 569,
+          "staticCulled": 13604,
+          "cache": {
+            "viewFrames": 4,
+            "viewRebuilds": 4,
+            "torchRebuilds": 4,
+            "sunRebuilds": 4,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-plein-jour",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 28,
+          "triangles": 86320,
+          "instances": 470,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14072,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 185600,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 468,
+          "staticSuperset": 569,
+          "staticCulled": 13604,
+          "cache": {
+            "viewFrames": 4,
+            "viewRebuilds": 4,
+            "torchRebuilds": 4,
+            "sunRebuilds": 4,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-plein-jour",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 4,
+      "id": "carriere-midi-voile",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 27,
+          "triangles": 36120,
+          "instances": 400,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12530,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 149696,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 398,
+          "staticSuperset": 857,
+          "staticCulled": 12132,
+          "cache": {
+            "viewFrames": 5,
+            "viewRebuilds": 5,
+            "torchRebuilds": 5,
+            "sunRebuilds": 5,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-midi-voile",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 27,
+          "triangles": 36120,
+          "instances": 400,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12530,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 149696,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 398,
+          "staticSuperset": 857,
+          "staticCulled": 12132,
+          "cache": {
+            "viewFrames": 5,
+            "viewRebuilds": 5,
+            "torchRebuilds": 5,
+            "sunRebuilds": 5,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-midi-voile",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 5,
+      "id": "jardins-ciel-pur",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 32,
+          "triangles": 126628,
+          "instances": 2170,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17615,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 339648,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2168,
+          "staticSuperset": 2709,
+          "staticCulled": 15447,
+          "cache": {
+            "viewFrames": 6,
+            "viewRebuilds": 6,
+            "torchRebuilds": 6,
+            "sunRebuilds": 6,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-ciel-pur",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 32,
+          "triangles": 126628,
+          "instances": 2170,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17615,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 339648,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2168,
+          "staticSuperset": 2709,
+          "staticCulled": 15447,
+          "cache": {
+            "viewFrames": 6,
+            "viewRebuilds": 6,
+            "torchRebuilds": 6,
+            "sunRebuilds": 6,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-ciel-pur",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 6,
+      "id": "lisiere-orage-sec",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 28,
+          "triangles": 89316,
+          "instances": 423,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14150,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 195200,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 421,
+          "staticSuperset": 525,
+          "staticCulled": 13729,
+          "cache": {
+            "viewFrames": 7,
+            "viewRebuilds": 7,
+            "torchRebuilds": 7,
+            "sunRebuilds": 7,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-orage-sec",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 28,
+          "triangles": 89316,
+          "instances": 423,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14150,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 195200,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 421,
+          "staticSuperset": 525,
+          "staticCulled": 13729,
+          "cache": {
+            "viewFrames": 7,
+            "viewRebuilds": 7,
+            "torchRebuilds": 7,
+            "sunRebuilds": 7,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-orage-sec",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 7,
+      "id": "carriere-vent-de-sable",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 29,
+          "triangles": 38844,
+          "instances": 392,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12511,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 151808,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 390,
+          "staticSuperset": 839,
+          "staticCulled": 12121,
+          "cache": {
+            "viewFrames": 8,
+            "viewRebuilds": 8,
+            "torchRebuilds": 8,
+            "sunRebuilds": 8,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-vent-de-sable",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 29,
+          "triangles": 38844,
+          "instances": 392,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12511,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 151808,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 390,
+          "staticSuperset": 839,
+          "staticCulled": 12121,
+          "cache": {
+            "viewFrames": 8,
+            "viewRebuilds": 8,
+            "torchRebuilds": 8,
+            "sunRebuilds": 8,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-vent-de-sable",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 8,
+      "id": "jardins-apres-midi",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 32,
+          "triangles": 134228,
+          "instances": 2261,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17409,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 364736,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2259,
+          "staticSuperset": 2804,
+          "staticCulled": 15150,
+          "cache": {
+            "viewFrames": 9,
+            "viewRebuilds": 9,
+            "torchRebuilds": 9,
+            "sunRebuilds": 9,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-apres-midi",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 32,
+          "triangles": 134228,
+          "instances": 2261,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17409,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 364736,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2259,
+          "staticSuperset": 2804,
+          "staticCulled": 15150,
+          "cache": {
+            "viewFrames": 9,
+            "viewRebuilds": 9,
+            "torchRebuilds": 9,
+            "sunRebuilds": 9,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-apres-midi",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 9,
+      "id": "lisiere-couvert",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 28,
+          "triangles": 88956,
+          "instances": 374,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 13912,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 186496,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 372,
+          "staticSuperset": 511,
+          "staticCulled": 13540,
+          "cache": {
+            "viewFrames": 10,
+            "viewRebuilds": 10,
+            "torchRebuilds": 10,
+            "sunRebuilds": 10,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-couvert",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 28,
+          "triangles": 88956,
+          "instances": 374,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 13912,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 186496,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 372,
+          "staticSuperset": 511,
+          "staticCulled": 13540,
+          "cache": {
+            "viewFrames": 10,
+            "viewRebuilds": 10,
+            "torchRebuilds": 10,
+            "sunRebuilds": 10,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-couvert",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 10,
+      "id": "carriere-cendres",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 29,
+          "triangles": 38880,
+          "instances": 390,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12535,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 150976,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 388,
+          "staticSuperset": 819,
+          "staticCulled": 12147,
+          "cache": {
+            "viewFrames": 11,
+            "viewRebuilds": 11,
+            "torchRebuilds": 11,
+            "sunRebuilds": 11,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-cendres",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 29,
+          "triangles": 38880,
+          "instances": 390,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12535,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 150976,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 388,
+          "staticSuperset": 819,
+          "staticCulled": 12147,
+          "cache": {
+            "viewFrames": 11,
+            "viewRebuilds": 11,
+            "torchRebuilds": 11,
+            "sunRebuilds": 11,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-cendres",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 11,
+      "id": "jardins-brume",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 32,
+          "triangles": 134460,
+          "instances": 2219,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17402,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 362752,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2217,
+          "staticSuperset": 2746,
+          "staticCulled": 15185,
+          "cache": {
+            "viewFrames": 12,
+            "viewRebuilds": 12,
+            "torchRebuilds": 12,
+            "sunRebuilds": 12,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-brume",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 32,
+          "triangles": 134460,
+          "instances": 2219,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17402,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 362752,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2217,
+          "staticSuperset": 2746,
+          "staticCulled": 15185,
+          "cache": {
+            "viewFrames": 12,
+            "viewRebuilds": 12,
+            "torchRebuilds": 12,
+            "sunRebuilds": 12,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-brume",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 12,
+      "id": "lisiere-couchant",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 28,
+          "triangles": 86648,
+          "instances": 358,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14124,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 188864,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 356,
+          "staticSuperset": 497,
+          "staticCulled": 13768,
+          "cache": {
+            "viewFrames": 13,
+            "viewRebuilds": 13,
+            "torchRebuilds": 13,
+            "sunRebuilds": 13,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-couchant",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 28,
+          "triangles": 86648,
+          "instances": 358,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14124,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 188864,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 356,
+          "staticSuperset": 497,
+          "staticCulled": 13768,
+          "cache": {
+            "viewFrames": 13,
+            "viewRebuilds": 13,
+            "torchRebuilds": 13,
+            "sunRebuilds": 13,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-couchant",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 13,
+      "id": "carriere-fournaise",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 27,
+          "triangles": 38940,
+          "instances": 386,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12516,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 153088,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 384,
+          "staticSuperset": 814,
+          "staticCulled": 12132,
+          "cache": {
+            "viewFrames": 14,
+            "viewRebuilds": 14,
+            "torchRebuilds": 14,
+            "sunRebuilds": 14,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-fournaise",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 27,
+          "triangles": 38940,
+          "instances": 386,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12516,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 153088,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 384,
+          "staticSuperset": 814,
+          "staticCulled": 12132,
+          "cache": {
+            "viewFrames": 14,
+            "viewRebuilds": 14,
+            "torchRebuilds": 14,
+            "sunRebuilds": 14,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-fournaise",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 14,
+      "id": "jardins-crepuscule-mauve",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 32,
+          "triangles": 136312,
+          "instances": 2170,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17462,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 359104,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2168,
+          "staticSuperset": 2696,
+          "staticCulled": 15294,
+          "cache": {
+            "viewFrames": 15,
+            "viewRebuilds": 15,
+            "torchRebuilds": 15,
+            "sunRebuilds": 15,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-crepuscule-mauve",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 32,
+          "triangles": 136312,
+          "instances": 2170,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17462,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 359104,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 2168,
+          "staticSuperset": 2696,
+          "staticCulled": 15294,
+          "cache": {
+            "viewFrames": 15,
+            "viewRebuilds": 15,
+            "torchRebuilds": 15,
+            "sunRebuilds": 15,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-crepuscule-mauve",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 15,
+      "id": "lisiere-nuit-de-lune",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 28,
+          "triangles": 87752,
+          "instances": 418,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14074,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 191104,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 416,
+          "staticSuperset": 574,
+          "staticCulled": 13658,
+          "cache": {
+            "viewFrames": 16,
+            "viewRebuilds": 16,
+            "torchRebuilds": 16,
+            "sunRebuilds": 16,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-nuit-de-lune",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 28,
+          "triangles": 87752,
+          "instances": 418,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 14074,
+          "biome": "woodland",
+          "worldRevision": 0,
+          "uploadBytes": 191104,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 416,
+          "staticSuperset": 574,
+          "staticCulled": 13658,
+          "cache": {
+            "viewFrames": 16,
+            "viewRebuilds": 16,
+            "torchRebuilds": 16,
+            "sunRebuilds": 16,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "lisiere-nuit-de-lune",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 16,
+      "id": "carriere-nuit-de-braises",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 27,
+          "triangles": 38052,
+          "instances": 382,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12499,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 149824,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 380,
+          "staticSuperset": 838,
+          "staticCulled": 12119,
+          "cache": {
+            "viewFrames": 17,
+            "viewRebuilds": 17,
+            "torchRebuilds": 17,
+            "sunRebuilds": 17,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-nuit-de-braises",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 27,
+          "triangles": 38052,
+          "instances": 382,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 12499,
+          "biome": "quarry",
+          "worldRevision": 0,
+          "uploadBytes": 149824,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 380,
+          "staticSuperset": 838,
+          "staticCulled": 12119,
+          "cache": {
+            "viewFrames": 17,
+            "viewRebuilds": 17,
+            "torchRebuilds": 17,
+            "sunRebuilds": 17,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "carriere-nuit-de-braises",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "index": 17,
+      "id": "jardins-dernier-signal",
+      "changed": 0,
+      "max": 0,
+      "stats": [
+        {
+          "drawCalls": 30,
+          "triangles": 98712,
+          "instances": 436,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17490,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 200512,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 434,
+          "staticSuperset": 636,
+          "staticCulled": 17056,
+          "cache": {
+            "viewFrames": 18,
+            "viewRebuilds": 18,
+            "torchRebuilds": 18,
+            "sunRebuilds": 18,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-dernier-signal",
+          "skyPass": "before-opaque"
+        },
+        {
+          "drawCalls": 30,
+          "triangles": 98712,
+          "instances": 436,
+          "contextLost": false,
+          "webglVersion": 2,
+          "backend": "webgl2",
+          "bloom": true,
+          "shadows": true,
+          "native": {
+            "device": [
+              512,
+              288
+            ],
+            "buffer": [
+              512,
+              288
+            ],
+            "scale": 1,
+            "capped": null,
+            "changes": 0
+          },
+          "budget": {
+            "target": 60,
+            "p50": 0,
+            "p95": 0,
+            "over": 0,
+            "sustained": false
+          },
+          "budgetLog": [],
+          "skyError": null,
+          "staticTotal": 17490,
+          "biome": "garden",
+          "worldRevision": 0,
+          "uploadBytes": 200512,
+          "renderScale": 1,
+          "pixelRatio": 1,
+          "width": 512,
+          "height": 288,
+          "viewDistance": 82,
+          "staticVisible": 434,
+          "staticSuperset": 636,
+          "staticCulled": 17056,
+          "cache": {
+            "viewFrames": 18,
+            "viewRebuilds": 18,
+            "torchRebuilds": 18,
+            "sunRebuilds": 18,
+            "marginDistance": 1,
+            "marginAngle": 4
+          },
+          "dynamicLights": 0,
+          "blackoutLights": 0,
+          "shadowMaps": 3,
+          "shadowMode": "sun-atlas",
+          "fxInstances": 1,
+          "sky": "jardins-dernier-signal",
+          "skyPass": "after-opaque"
+        }
+      ],
+      "errors": [
+        0,
+        0
+      ]
+    },
+    {
+      "restored": {
+        "supported": true,
+        "lost": false,
+        "sky": "jardins-dernier-signal",
+        "error": 0
+      },
+      "fallback": {
+        "backend": "webgl2",
+        "sky": "legacy",
+        "error": "Compilation 3D : ERROR: 0:1: 'invalid' : syntax error\n\u0000"
+      },
+      "legacy": [
+        {
+          "stage": 0,
+          "pitch": -0.3,
+          "changed": 0
+        },
+        {
+          "stage": 0,
+          "pitch": 0.4,
+          "changed": 0
+        },
+        {
+          "stage": 1,
+          "pitch": -0.3,
+          "changed": 0
+        },
+        {
+          "stage": 1,
+          "pitch": 0.4,
+          "changed": 0
+        },
+        {
+          "stage": 2,
+          "pitch": -0.3,
+          "changed": 0
+        },
+        {
+          "stage": 2,
+          "pitch": 0.4,
+          "changed": 0
+        }
+      ],
+      "software": {
+        "backend": "canvas2d"
+      }
+    }
+  ]
+}

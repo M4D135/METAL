@@ -61,6 +61,19 @@
     if(profiles&&(!MetalProfiles.owns(profiles,inventory)||JSON.stringify(profiles.classes[profiles.active].economy)!==JSON.stringify(economy)))return null;
     return {...(profiles?{profiles}:{}),inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
   }
+  const skyEnvironments=new WeakMap();
+  function skyEnvironment(w){
+    if(!window.FSky||!w.campaign||!w.environment)return w.environment;
+    let environment=skyEnvironments.get(w);if(!environment){
+      const sky=window.FSky.resolve(window.FSky.presets[w.index],{seed:w.seed}),top=window.FSky.radianceAt(sky,[0,1,0]),night=sky.principal!=='sun';
+      const disc=sky.uniforms[night?'uFskyMoonDisc':'uFskySunDisc'],peak=Math.max(disc[0],disc[1],disc[2],.001);
+      const sunColor=sky.principal==='none'?[.24,.30,.42]:Array.from(disc).slice(0,3).map(v=>v/peak*(night?.38:1.05));
+      const ambient=top.map((v,i)=>Math.max(night?.12:.16,Math.min(.42,v*.22+(night?.07:.12))));
+      environment={...w.environment,sky,fog:sky.fog.slice(),sunDirection:sky.light.slice(),sunColor,ambient,skyTop:top,skyBottom:sky.fog.slice()};
+      skyEnvironments.set(w,environment);
+    }
+    return environment;
+  }
   function worldSpec(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode){
     const key=(profiles?'profiles1:':'')+(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
     let options=campaign?{campaign:true,campaignVersion:revision,...(profiles?{profiles:true}:{})}:undefined;
@@ -297,7 +310,7 @@
     sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),armorSystem:true,...(brain?{brain}:{})});sim.setDifficulty?.(prefs.difficulty);
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
-    renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,world.environment);renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;renderToken=sim.destruction?.delta?.().token;
+    renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,skyEnvironment(world));renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;renderToken=sim.destruction?.delta?.().token;
     motion.reset();leftMotion.reset();lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
     soundscape.reset();audio.setStage?.(world.stage, seed);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);musicDirector?.reset();
     $('music-title').textContent=trackLabel();
@@ -310,7 +323,7 @@
   function syncDestruction(){
     const d=sim?.destruction,revision=sim?.state.destructionRevision??d?.revision;if(!d)return;
     const delta=d.delta?.(renderToken);if(delta?delta.token===renderToken:revision===renderRevision)return;
-    if(renderer.updateWorld)renderer.updateWorld(d.meshes,revision,d.lights,delta);else renderer.setWorld(d.meshes,d.lights||world.lights,world.environment);
+    if(renderer.updateWorld)renderer.updateWorld(d.meshes,revision,d.lights,delta);else renderer.setWorld(d.meshes,d.lights||world.lights,skyEnvironment(world));
     renderRevision=revision;renderToken=delta?.token;
   }
   function freePointerHint(){if(mode==='playing'&&controls.device!=='gamepad'&&document.pointerLockElement!==canvas)toast('Glissez pour viser · '+bindingLabel('fire')+' : tirer. Cliquez pour capturer la souris.',4);}

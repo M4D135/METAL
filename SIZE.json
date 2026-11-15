@@ -1,17 +1,18 @@
 {
   "version": "0.9.2",
-  "html_bytes": 1114833,
-  "html_decimal_kb": 1114.83,
-  "html_kib": 1088.7,
-  "gzip_bytes": 344700,
-  "sha256": "8bd1f3a5cb423c7899721716857d397a4782e6d3c8cf0845caa520a6e5f0977a",
+  "html_bytes": 1143141,
+  "html_decimal_kb": 1143.14,
+  "html_kib": 1116.35,
+  "gzip_bytes": 356110,
+  "sha256": "9c1de31e0c0f35184ab40fd425aef64eec277cfb221d866b115a55ad2e959bf6",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
     "fmath.js": 19961,
     "passages.js": 10108,
     "surface.js": 3419,
-    "renderer.js": 133114,
+    "skies.js": 23094,
+    "renderer.js": 137360,
     "profiles.js": 7943,
     "world.js": 142602,
     "destruction.js": 30624,
@@ -36,6 +37,6 @@
     "jobs.js": 5829,
     "tasks.js": 609,
     "host.js": 2713,
-    "game.js": 122786
+    "game.js": 123696
   }
 }

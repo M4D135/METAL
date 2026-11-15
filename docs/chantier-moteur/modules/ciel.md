@@ -2,7 +2,7 @@
 
 `src/skies.js` expose le global `FSky` : un ciel procédural rendu en une seule passe plein écran WebGL2, sans aucune texture. C'est un module moteur générique de FERRO (MASTER-PROMPT §6) : son code ne cite aucun identifiant de METAL. Les 18 préréglages du jeu forment un bloc de données à part, en fin de fichier (CIEL-13).
 
-**État : livré, testé, non branché.**
+**État au 15 novembre : raccordé au jeu**, voir [le rapport du lot 16](../rapports/lot-16-integration.md). Le relevé de livraison ci-dessous décrit la branche originale avant raccordement.
 
 - Aucun fichier existant n'est modifié. `tools/build.py` ne charge pas `src/skies.js` ; `dist/index.html` et `SIZE.json` restent identiques à l'octet.
 - `npm test` n'est pas touché : il ne lance ni `src/skies.js` ni `checks/fsky.test.mjs` (liste explicite de `package.json`). Référence de la base : 462 réussis sur 470 ; les 8 échecs sont les empreintes historiques de `checks/campaign-world.test.mjs` sur arm64.

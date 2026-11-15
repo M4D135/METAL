@@ -1,4 +1,4 @@
-// Module FSky — vérifications de la voie ciel. Hors `npm test` : node --test checks/fsky.test.mjs
+// Module FSky — vérifications du ciel intégré. Inclus dans npm test.
 import {createHash} from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
