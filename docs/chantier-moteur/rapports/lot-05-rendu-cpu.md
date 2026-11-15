@@ -9,6 +9,11 @@ L'en-tête de la version du 13 novembre annonçait « T1 à T7 faites, T8 à T19
 commencées » : faux depuis la reprise, le corps de ce rapport décrit bien T8 à
 T19. Journal détaillé : `.relais/journal.md`.
 
+Deux tours de contre-vérification ont suivi la remise : le tour 1 (9 problèmes,
+section « Contre-vérification et correctifs (tour 1) ») et le tour 2 (8
+problèmes, section « Contre-vérification et correctifs (tour 2) »), dont les
+chiffres publiés ici sont ceux mesurés au tour 2 sur cette machine.
+
 Mesures : comparaisons appariées alternées sur le même processus
 (`tools/proof/render-proof.mjs`), même graine, même scénario. Les ratios
 sont des médianes de plusieurs exécutions : la machine est partagée avec un
@@ -580,6 +585,58 @@ Autres écarts relevés au passage et corrigés sans qu'ils soient dans la liste
   T17, puis régénérée au tour 2 après correction du contrôle `sommeEtapes`
   (ombres 2,555 / 2,018 ms par image, 54,6 % et 56,4 % du dessin).
 
+## Contre-vérification et correctifs (tour 2, 15 novembre)
+
+Le contre-vérificateur a relu la tête `bdd3f2d` et relevé 8 problèmes. Chacun a
+été reproduit avec la commande citée en preuve sur cette machine (Spark, Node
+24.18), puis corrigé. Un commit par problème : `b4693cc` (1), `a7cefc6` (2 et 7),
+`70977f1` (3), `5efe1e3` (4), `a71a023` (5), `a8c370f` (6), `1736d0c` (8). Le
+commit `372e348`, arrivé entre-temps, amorçait les problèmes 1 et 6 ; il est
+conservé et complété, non réécrit.
+
+| # | problème | verdict | commit |
+|---|---|---|---|
+| 1 | `gc-bench.mjs` et `effects-ab.mjs` ne tournent pas (import d'un `harness.mjs` jamais committé) ; preuve T9 non appariée | **réel — corrigé** | `b4693cc` |
+| 2 | rapport T8 en contradiction avec sa preuve (6 classes, pas 1 ; `%HasFastProperties` identique avant et après) | **réel — corrigé** | `a7cefc6` |
+| 3 | page de validation restée à l'état d'avant les correctifs | **réel — corrigé** | `70977f1` |
+| 4 | `alloc-image.mjs` non reproductible, chiffre publié peu fiable | **réel — corrigé par un changement de méthode** | `5efe1e3` |
+| 5 | `canvas-cost.mjs` garde le défaut de structure corrigé ailleurs, ne reproduit pas son ratio | **réel — corrigé** | `a71a023` |
+| 6 | `sommeEtapes` de `phase-cost.mjs` compte le total deux fois, y compris dans les deux JSON commités | **réel — corrigé et régénéré** | `a8c370f` |
+| 7 | rapport décrivant encore T17 comme active (ligne T11, décision 9) | **réel — corrigé** | `a7cefc6` |
+| 8 | une des trois pistes « au-delà » sans aucune mesure (`"mesure": null`) | **réel — mesurée et chiffrée** | `1736d0c` |
+
+Ce que la reprise a révélé de plus, et qui n'était pas dans la liste :
+
+- **les deux bancs du problème 1, une fois rendus exécutables, mesuraient le
+  traceur GL et non le moteur** : `tools/proof/render-scene.mjs` sérialise chaque
+  argument d'appel (`Buffer.from(…).toString('hex')` sur chaque tampon), soit
+  2 Mo alloués par image. L'option `record:false` (enregistreur muet,
+  `makeCountingRecorder`) et le mode `drawnone` (plancher) ont été ajoutés pour
+  que la pression GC publiée soit celle du moteur : `draw()` 0,64 → 0,32 Mo par
+  image entre la base et la tête de T3, plancher du banc 0.
+- **le harnais d'audit est mort sur les sources actuelles** :
+  `docs/chantier-moteur/bancs/rcpu/harness.mjs` ne charge pas `src/fmath.js` et
+  lève « FWorld: charger src/fmath.js avant src/world.js » ; `alt.mjs`,
+  `pickups.mjs` et `gc-bench.mjs` (audit) échouent tous les trois à l'exécution.
+  Les captures `t1/banc-alt-C.txt` et `t5/` sont donc des traces historiques ;
+  les preuves rejouées viennent de `tools/proof/lot05/`.
+- **deux chiffres du tour 1 étaient des bornes basses présentées comme des
+  mesures** : la pression GC de T3 (0,6 Ko/image publié pour 0,32 Mo mesuré) et
+  l'allocation d'image de T14 (92,2 Ko publié pour 2 452 Ko mesurés). Les
+  conclusions tenant (gain de T3 = ÷2 ; abandon de T14), elles sont conservées
+  avec leurs chiffres vrais — et le seuil de la fiche pour T3 (moins de 0,2 Mo
+  par `draw()`) est écrit **non atteint**, avec l'écart (0,32 Mo).
+- `effects-ab2.mjs` levait une `ReferenceError` sur `--out` (`writeFileSync`
+  jamais importé) ; `effects-ab.mjs` reste dans le dépôt mais son rôle est
+  désormais explicite : équivalence d'écriture avec le prototype de l'audit, pas
+  une mesure de gain.
+- garde-fous ajoutés et branchés dans `npm test` :
+  `checks/lot05-bancs.test.mjs` (8 tests — imports des bancs, chemins cités par
+  les preuves, `writeFileSync` importé, médiane obligatoire pour un chiffre
+  d'allocation, lockstep et contrôle pour les bancs de coût à deux racines,
+  `sommeEtapes` cohérent, pistes « au-delà » toutes chiffrées). Vérifié en échec
+  sur `bdd3f2d` pour le problème 1, ce qui prouve qu'il l'attrape.
+
 ## Décisions à confirmer par David
 
 1. **T4, ordre de la sélection** — défaut appliqué : ordre de balayage de
@@ -649,14 +706,16 @@ Autres écarts relevés au passage et corrigés sans qu'ils soient dans la liste
 
 ## Tests
 
-`npm test` : **525 tests, 525 réussis, 0 échec** (référence de départ sur la
-base du lot : 505/505 ; à la remise du lot avant contre-vérification : 519/519).
+`npm test` : **533 tests, 533 réussis, 0 échec** (référence de départ sur la
+base du lot : 505/505 ; à la remise du lot avant contre-vérification : 519/519 ;
+après les correctifs du tour 1 : 525/525).
 Nouveaux fichiers : `checks/renderer-sun-filter.test.mjs`,
 `checks/renderer-detail-flags.test.mjs`, `checks/renderer-view-cache.test.mjs`,
 `checks/renderer-cull-margin.test.mjs`, `checks/motion-place.test.mjs`,
 `checks/mesh-constructor.test.mjs`, `checks/actors-no-mesh-pool.test.mjs`
-(garde-fou de l'annulation de T17), plus un test ajouté dans
-`checks/actor-visibility.test.mjs`.
+(garde-fou de l'annulation de T17), `checks/lot05-bancs.test.mjs`
+(garde-fou des bancs et des chemins de preuves, tour 2), plus un test ajouté
+dans `checks/actor-visibility.test.mjs`.
 
 `checks/mesh-constructor.test.mjs` (3 tests) n'était pas dans le script `test`
 de `package.json` et n'était donc jamais lancé par `npm test` ; c'est corrigé

@@ -10,11 +10,11 @@ complet : `docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
 
 ### Suite automatique
 
-- `npm test` complet : **529 tests, 529 réussis, 0 échec** (référence de
+- `npm test` complet : **533 tests, 533 réussis, 0 échec** (référence de
   départ du lot : 505/505 ; à la remise du lot avant contre-vérification :
   519/519 ; après les correctifs du tour 1 : 525/525). Journaux :
   `.relais/npm-test-t1.log` à `.relais/npm-test-t7.log`, et
-  `.relais/npm-test-t2a.log` pour les correctifs du tour 2.
+  `.relais/npm-test-final-t2.log` pour les correctifs du tour 2.
 - `python3 tools/build.py` relancé à chaque tâche ; `SIZE.json` régénéré et
   commité avec chaque tâche.
 
@@ -112,12 +112,15 @@ complet : `docs/chantier-moteur/rapports/lot-05-rendu-cpu.md`.
   `meshInto` absent de `FRender`, aucun maillage ni aucune position recyclés
   entre deux `FActors.build`, rien de retenu du tableau de l'appelant. Vérifié
   qu'il échoue bien sur `2f311a3`, le commit de la tâche annulée.
-- `checks/lot05-bancs.test.mjs` (correctifs du tour 2) — tout import relatif
-  des bancs de `tools/proof/` et tout chemin de banc ou de doc cité par une
-  preuve du lot 05 doivent exister dans le dépôt ; `writeFileSync` doit être
-  importé par tout banc qui écrit. Ce garde-fou est `not ok` sur `bdd3f2d`, où
-  `gc-bench.mjs` et `effects-ab.mjs` importaient un `harness.mjs` jamais
-  committé.
+- `checks/lot05-bancs.test.mjs` (correctifs du tour 2, 8 tests) — tout import
+  relatif des bancs de `tools/proof/` et tout chemin de banc ou de doc cité par
+  une preuve du lot 05 doivent exister dans le dépôt ; `writeFileSync` doit être
+  importé par tout banc qui écrit ; un chiffre d'allocation publié doit venir avec
+  sa médiane et son intervalle ; les bancs de coût à deux racines doivent mesurer
+  en lockstep et publier un contrôle ; `sommeEtapes` doit rendre compte du `total`
+  du profil « au-delà » ; aucune piste écartée ne peut être publiée sans mesure.
+  Ce garde-fou est `not ok` sur `bdd3f2d`, où `gc-bench.mjs` et `effects-ab.mjs`
+  importaient un `harness.mjs` jamais committé.
 
 ## Ce qui attend un vrai appareil
 
@@ -194,4 +197,4 @@ et correctifs ». Ce qui a été **rejoué sur cette machine** (Spark, Node 24.1
   1200/1200 identiques) : ratioP50 médian 0,665, intervalle 0,647 – 0,751 ;
 - garde-fou `checks/lot05-bancs.test.mjs` ajouté à `npm test` et vérifié `not ok`
   sur `bdd3f2d` (c'est le problème 1 lui-même qu'il attrape) ;
-- `npm test` complet : 529/529, 0 échec (525 avant ces correctifs, 505 à la base du lot).
+- `npm test` complet : 533/533, 0 échec (525 avant ces correctifs, 505 à la base du lot).
