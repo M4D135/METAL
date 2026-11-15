@@ -1834,17 +1834,17 @@ function navigationGraph(cells,width,testEdge){
       }
       return segmentBoxes;
     }
-    function segmentFree(ax,az,bx,bz,r=.4,ay=ground(ax,az,noTraps),by=ground(bx,bz,noTraps)){
+    function segmentFree(ax,az,bx,bz,r=.4,ay=ground(ax,az,noTraps),by=ground(bx,bz,noTraps),obstacles=navigationTraps){
       // Static map only, like the walking cells (SIM-V1): trap poses never enter routes or the
       // edge cache; traps still block bodies in move() and still hurt.
-      if(blocked(ax,az,r,ay,doorBoxes,solids,navigationTraps)||blocked(bx,bz,r,by,doorBoxes,solids,navigationTraps))return false;
+      if(blocked(ax,az,r,ay,doorBoxes,solids,obstacles)||blocked(bx,bz,r,by,doorBoxes,solids,obstacles))return false;
       const dx=bx-ax,dz=bz-az,lowY=Math.min(ay,by),highY=Math.max(ay,by),minX=Math.min(ax,bx)-r-1e-7,maxX=Math.max(ax,bx)+r+1e-7,minZ=Math.min(az,bz)-r-1e-7,maxZ=Math.max(az,bz)+r+1e-7;
       // Sweep the body, not an eye ray: low crates and narrow wall ends still block feet.
       const short=Math.max(Math.abs(dx),Math.abs(dz))/2+r<=bucketRadius;
       const local=short?collisionBuckets[(Math.floor((az+bz)/2/bucketSize)-bucketZ)*bucketWidth+Math.floor((ax+bx)/2/bucketSize)-bucketX]||solids:segmentCandidates(minX,maxX,minZ,maxZ);
       // SIM-09: the two lists and the two slab axes are unrolled; no array per call.
       for(let pass=0;pass<3;pass++){
-        const list=pass===2?navigationTraps:pass?doorBoxes:local;
+        const list=pass===2?obstacles:pass?doorBoxes:local;
         for(let i=0;i<list.length;i++){
           const q=list[i];
           if(q.maxY<=lowY+.06||q.minY>=highY+1.8)continue;
@@ -1867,7 +1867,7 @@ function navigationGraph(cells,width,testEdge){
         const count=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.3));let previous=ay;
         for(let j=1;j<=count;j++){
           const x=ax+dx*j/count,z=az+dz*j/count,y=ground(x,z,noTraps);
-          if(!Number.isFinite(y)||Math.abs(y-previous)>.42||blocked(x,z,r,y,doorBoxes,solids,navigationTraps))return false;
+          if(!Number.isFinite(y)||Math.abs(y-previous)>.42||blocked(x,z,r,y,doorBoxes,solids,obstacles))return false;
           previous=y;
         }
       }
@@ -2527,6 +2527,7 @@ function navigationGraph(cells,width,testEdge){
       s.comboTime=Math.max(0,s.comboTime-dt);if(!s.comboTime)s.combo=0;
       let switched=false;if(profilesEnabled){profileHintWait=Math.max(0,profileHintWait-dt);if(input.switchProfile&&!profileWasPressed)switched=switchProfile();profileWasPressed=!!input.switchProfile;}
       if(!switched&&Number.isInteger(input.weapon)&&input.weapon>=0&&input.weapon<weaponSlots)selectWeapon(input.weapon);
+      if(!switched&&arsenal&&Number.isInteger(input.leftWeapon)&&input.leftWeapon>=-1&&input.leftWeapon<weaponSlots)selectLeftWeapon(input.leftWeapon===-1?null:input.leftWeapon);
       p.yaw+=Number.isFinite(input.lookX)?input.lookX:0;p.pitch=clamp(p.pitch+(Number.isFinite(input.lookY)?input.lookY:0),-1.2,1.2);
       if(arsenal){
         for(let i=0;i<weaponSlots;i++){const equipped=i===s.weapon||i===s.equipment.left,firing=i===s.weapon&&input.fire||i===s.equipment.left&&input.fireLeft,rate=equipped?(firing&&!s.weaponOverheated[i]?.22:.55):weaponWait[i]>0?.1:.35;
@@ -2570,6 +2571,19 @@ function navigationGraph(cells,width,testEdge){
       s.particles=s.particles.filter(q=>q.life>0);
       s.bossAlive=s.enemies.some(e=>e.type===3&&e.hp>0);
       if(s.relays===3&&!s.bossAlive&&(!bossProgression||s.campaign.claimedBossRewards.includes(world.index))&&s.mechanisms.every(m=>!m.required||m.active)&&Math.abs(p.y-(world.exit.y||0))<.8&&Math.hypot(p.x-world.exit.x,p.z-world.exit.z)<1.5&&!s.dead){s.won=true;s.score+=500;stopMotion();emit('win');}
+    }
+    const digestBytes=new DataView(new ArrayBuffer(8));let digestValue=2166136261;
+    function digestMix(v){
+      if(typeof v==='number'){digestBytes.setFloat64(0,v,true);for(let i=0;i<8;i++)digestValue=Math.imul(digestValue^digestBytes.getUint8(i),16777619);}
+      else if(typeof v==='string'){for(let i=0;i<v.length;i++){const n=v.charCodeAt(i);digestValue=Math.imul(Math.imul(digestValue^(n&255),16777619)^(n>>>8),16777619);}}
+      else if(typeof v==='boolean')digestValue=Math.imul(digestValue^(v?17:23),16777619);
+      else if(v&&typeof v==='object'){for(const k in v){if(k==='world'||k==='events')continue;digestMix(k);digestMix(v[k]);}digestValue=Math.imul(digestValue^31,16777619);}
+      else digestValue=Math.imul(digestValue^7,16777619);
+    }
+    function digest(){
+      // Observation only: never snapshot() here; it materialises navigation and
+      // resets tactical caches. Deferred destruction damage is included as well.
+      digestValue=2166136261;digestMix(fingerprint);digestMix(s);digestMix(fireWait);digestMix(navWait);digestMix(hazardWait);digestMix(explosionSerial);digestMix(projectileSerial);digestMix(bossAttackSerial);digestMix(rubbleSerial);digestMix(encounterWait);digestMix(emptyWait);digestMix(weaponWait);digestMix(velocityX);digestMix(velocityZ);digestMix(dashAge);digestMix(dashX);digestMix(dashZ);digestMix(jumpBuffer);digestMix(coyote);digestMix(jumpWasPressed);digestMix(clipEscape);digestMix(profileWasPressed);digestMix(recovery);digestMix(interactHeld);destruction?.digestInto(digestMix);return digestValue>>>0;
     }
     function snapshot(){
       mirrorHeat();
@@ -2874,7 +2888,7 @@ function navigationGraph(cells,width,testEdge){
     }
     graph.flush();clipEscape=boundaryAt(p.x,p.z);
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
-    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
+    return {state:s,get destruction(){return destruction;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
   G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor};
 })(typeof window!=='undefined'?window:globalThis);

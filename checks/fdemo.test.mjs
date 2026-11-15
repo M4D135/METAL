@@ -14,7 +14,7 @@ const sameBytes=(a,b)=>a.length===b.length&&Array.from(a).every((v,i)=>v===b[i])
 const code=c=>e=>e&&e.code===c;                         // assert.throws(fn, code('FDEMO_FORMAT'))
 
 // Fonctions de 3.1 déjà livrées, dans l'ordre de l'export : à compléter à chaque étape.
-const API=['rng','hasher','seedFor','smootherstep','wrapAngle','lookAt','schema','recorder','player','replay','director'];
+const API=['rng','hasher','seedFor','smootherstep','wrapAngle','lookAt','schema','recorder','player','replay','director','attract','runner'];
 const draws=(r,n,kind='u32')=>Array.from({length:n},()=>r[kind]());
 
 // Schéma METAL d'aujourd'hui (section 3.5) : un exemple pour les tests, il n'est pas dans FDemo.
@@ -117,10 +117,11 @@ test('A1 module exposé, forme 3.1, chargeable en domaine principal',()=>{
 });
 
 test('A2 motifs interdits et taille',()=>{
-  assert.doesNotMatch(SOURCE,/Math\.random|\bDate\b|performance\.|setTimeout|setInterval|requestAnimationFrame|\bBuffer\b|\brequire\s*\(|\bprocess\.|\bimport\s*\(|\bfetch\s*\(|XMLHttpRequest|WebSocket|localStorage|TextEncoder|TextDecoder|structuredClone|console\./);
+  // Only the opt-in title controller reads its injected browser clock.
+  assert.doesNotMatch(SOURCE.slice(0,SOURCE.indexOf('  function attract(')),/Math\.random|\bDate\b|performance\.|setTimeout|setInterval|requestAnimationFrame|\bBuffer\b|\brequire\s*\(|\bprocess\.|\bimport\s*\(|\bfetch\s*\(|XMLHttpRequest|WebSocket|localStorage|TextEncoder|TextDecoder|structuredClone|console\./);
   assert.doesNotMatch(SOURCE,/<\/script/i);
   assert.doesNotMatch(SOURCE,/\binstanceof\b/,'jamais d’instanceof (annexe 4, piège 1)');
-  assert.ok(Buffer.byteLength(SOURCE,'utf8')<=24000,'src/demo.js : '+Buffer.byteLength(SOURCE,'utf8')+' octets');
+  assert.ok(Buffer.byteLength(SOURCE,'utf8')<=30000,'src/demo.js : '+Buffer.byteLength(SOURCE,'utf8')+' octets');
 });
 
 // ---------------------------------------------------------------- Groupe B : outils

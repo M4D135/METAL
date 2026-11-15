@@ -1,0 +1,815 @@
+{
+  "schema": "metal-demo-soak-v1",
+  "seconds": 1800,
+  "stats": {
+    "scenes": 13,
+    "steps": 108000,
+    "deaths": 0,
+    "stalls": 0,
+    "errors": 0,
+    "seconds": 1799.9999999986917
+  },
+  "step": {
+    "n": 108000,
+    "p50": 0.09796800000185613,
+    "p99": 1.1012470000000576,
+    "max": 17.423401000000013,
+    "over8": 3,
+    "over16": 1
+  },
+  "think": {
+    "n": 108000,
+    "p50": 0.010192000001552515,
+    "p99": 0.42801600000007056,
+    "max": 4.247134000000017,
+    "over8": 0,
+    "over16": 0
+  },
+  "memory": [
+    {
+      "s": 0,
+      "heap": 23332600
+    },
+    {
+      "s": 60,
+      "heap": 26231672
+    },
+    {
+      "s": 120,
+      "heap": 27168184
+    },
+    {
+      "s": 180,
+      "heap": 27498824
+    },
+    {
+      "s": 240,
+      "heap": 41921048
+    },
+    {
+      "s": 300,
+      "heap": 42289272
+    },
+    {
+      "s": 360,
+      "heap": 29000440
+    },
+    {
+      "s": 420,
+      "heap": 28957344
+    },
+    {
+      "s": 480,
+      "heap": 29406248
+    },
+    {
+      "s": 540,
+      "heap": 29448696
+    },
+    {
+      "s": 600,
+      "heap": 27519440
+    },
+    {
+      "s": 660,
+      "heap": 27227576
+    },
+    {
+      "s": 720,
+      "heap": 27523184
+    },
+    {
+      "s": 780,
+      "heap": 27908664
+    },
+    {
+      "s": 840,
+      "heap": 32155624
+    },
+    {
+      "s": 900,
+      "heap": 29532312
+    },
+    {
+      "s": 960,
+      "heap": 29406176
+    },
+    {
+      "s": 1020,
+      "heap": 29534544
+    },
+    {
+      "s": 1080,
+      "heap": 29587576
+    },
+    {
+      "s": 1140,
+      "heap": 29301872
+    },
+    {
+      "s": 1200,
+      "heap": 29499616
+    },
+    {
+      "s": 1260,
+      "heap": 29666632
+    },
+    {
+      "s": 1320,
+      "heap": 29786456
+    },
+    {
+      "s": 1380,
+      "heap": 29962176
+    },
+    {
+      "s": 1440,
+      "heap": 28054416
+    },
+    {
+      "s": 1500,
+      "heap": 27857272
+    },
+    {
+      "s": 1560,
+      "heap": 28163360
+    },
+    {
+      "s": 1620,
+      "heap": 28129928
+    },
+    {
+      "s": 1680,
+      "heap": 27948520
+    },
+    {
+      "s": 1740,
+      "heap": 32582808
+    }
+  ],
+  "rows": [
+    {
+      "id": "scene-0",
+      "index": 6,
+      "reason": "start",
+      "seconds": 222.70000000006937,
+      "shots": [
+        293,
+        48,
+        0,
+        1,
+        79
+      ],
+      "switches": 2,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 66,
+      "relays": 3,
+      "kills": 33,
+      "won": true,
+      "hp": 110.03946666666667,
+      "bossHp": 0,
+      "bossMax": 1900,
+      "goal": "exit",
+      "position": [
+        41.55846610542368,
+        6.4,
+        -44.229780933891625
+      ],
+      "ammo": [
+        84,
+        14,
+        12,
+        16,
+        1
+      ],
+      "pilot": {
+        "astar": 99,
+        "astarFail": 0,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 115582,
+        "edgeTests": 119112,
+        "replans": 128,
+        "unstick": 1,
+        "interacts": 4,
+        "think": 13362,
+        "topology": 33,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-1",
+      "index": 12,
+      "reason": "end",
+      "seconds": 86.54999999999637,
+      "shots": [
+        225,
+        35,
+        0,
+        0,
+        171
+      ],
+      "switches": 0,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 38,
+      "relays": 0,
+      "kills": 7,
+      "won": false,
+      "hp": 140,
+      "bossHp": 0,
+      "bossMax": 3500,
+      "goal": "boss",
+      "position": [
+        69.26518855205697,
+        3.2,
+        1.1449507397355319
+      ],
+      "ammo": [
+        0,
+        0,
+        15,
+        20,
+        1
+      ],
+      "pilot": {
+        "astar": 6,
+        "astarFail": 1,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 5564,
+        "edgeTests": 11028,
+        "replans": 68,
+        "unstick": 0,
+        "interacts": 0,
+        "think": 5193,
+        "topology": 11,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-2",
+      "index": 15,
+      "reason": "end",
+      "seconds": 240.00000000008313,
+      "shots": [
+        88,
+        22,
+        15,
+        20,
+        549
+      ],
+      "switches": 3,
+      "deaths": 0,
+      "bossKills": 0,
+      "breaks": 114,
+      "relays": 3,
+      "kills": 35,
+      "won": false,
+      "hp": 99.06792380952378,
+      "bossHp": 1390.8357015617066,
+      "bossMax": 5500,
+      "goal": "boss",
+      "position": [
+        92.59543154076634,
+        3.2,
+        16.873768306799864
+      ],
+      "ammo": [
+        265,
+        26,
+        4,
+        7,
+        1
+      ],
+      "pilot": {
+        "astar": 91,
+        "astarFail": 0,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 95988,
+        "edgeTests": 108585,
+        "replans": 158,
+        "unstick": 2,
+        "interacts": 4,
+        "think": 14400,
+        "topology": 47,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-3",
+      "index": 1,
+      "reason": "end",
+      "seconds": 222.3500000000691,
+      "shots": [
+        0,
+        1,
+        0,
+        17,
+        378
+      ],
+      "switches": 3,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 48,
+      "relays": 3,
+      "kills": 11,
+      "won": true,
+      "hp": 66.58957200411037,
+      "bossHp": 0,
+      "bossMax": 650,
+      "goal": "exit",
+      "position": [
+        67.40066824453993,
+        6.4,
+        -28.648176858193903
+      ],
+      "ammo": [
+        60,
+        36,
+        0,
+        8,
+        1
+      ],
+      "pilot": {
+        "astar": 81,
+        "astarFail": 0,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 40745,
+        "edgeTests": 28373,
+        "replans": 110,
+        "unstick": 6,
+        "interacts": 4,
+        "think": 13341,
+        "topology": 24,
+        "nearestLoose": 3,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-4",
+      "index": 4,
+      "reason": "end",
+      "seconds": 45.283333333332045,
+      "shots": [
+        187,
+        28,
+        0,
+        0,
+        64
+      ],
+      "switches": 0,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 43,
+      "relays": 0,
+      "kills": 7,
+      "won": false,
+      "hp": 100.4454,
+      "bossHp": 0,
+      "bossMax": 1600,
+      "goal": "boss",
+      "position": [
+        139.06829889855214,
+        6.4,
+        34.9604448513983
+      ],
+      "ammo": [
+        38,
+        2,
+        0,
+        16,
+        1
+      ],
+      "pilot": {
+        "astar": 3,
+        "astarFail": 0,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 36,
+        "edgeTests": 5793,
+        "replans": 39,
+        "unstick": 0,
+        "interacts": 0,
+        "think": 2717,
+        "topology": 14,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-5",
+      "index": 11,
+      "reason": "end",
+      "seconds": 59.56666666666457,
+      "shots": [
+        0,
+        0,
+        23,
+        6,
+        373
+      ],
+      "switches": 0,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 26,
+      "relays": 0,
+      "kills": 7,
+      "won": false,
+      "hp": 120,
+      "bossHp": 0,
+      "bossMax": 4550,
+      "goal": "boss",
+      "position": [
+        119.68809169117264,
+        6.4,
+        -5.30492987092639
+      ],
+      "ammo": [
+        225,
+        45,
+        0,
+        18,
+        1
+      ],
+      "pilot": {
+        "astar": 6,
+        "astarFail": 2,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 10754,
+        "edgeTests": 10755,
+        "replans": 45,
+        "unstick": 0,
+        "interacts": 0,
+        "think": 3574,
+        "topology": 8,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-0",
+      "index": 6,
+      "reason": "end",
+      "seconds": 222.70000000006937,
+      "shots": [
+        293,
+        48,
+        0,
+        1,
+        79
+      ],
+      "switches": 2,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 66,
+      "relays": 3,
+      "kills": 33,
+      "won": true,
+      "hp": 110.03946666666667,
+      "bossHp": 0,
+      "bossMax": 1900,
+      "goal": "exit",
+      "position": [
+        41.55846610542368,
+        6.4,
+        -44.229780933891625
+      ],
+      "ammo": [
+        84,
+        14,
+        12,
+        16,
+        1
+      ],
+      "pilot": {
+        "astar": 99,
+        "astarFail": 0,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 115582,
+        "edgeTests": 119112,
+        "replans": 128,
+        "unstick": 1,
+        "interacts": 4,
+        "think": 13362,
+        "topology": 33,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-1",
+      "index": 12,
+      "reason": "end",
+      "seconds": 86.54999999999637,
+      "shots": [
+        225,
+        35,
+        0,
+        0,
+        171
+      ],
+      "switches": 0,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 38,
+      "relays": 0,
+      "kills": 7,
+      "won": false,
+      "hp": 140,
+      "bossHp": 0,
+      "bossMax": 3500,
+      "goal": "boss",
+      "position": [
+        69.26518855205697,
+        3.2,
+        1.1449507397355319
+      ],
+      "ammo": [
+        0,
+        0,
+        15,
+        20,
+        1
+      ],
+      "pilot": {
+        "astar": 6,
+        "astarFail": 1,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 5564,
+        "edgeTests": 11028,
+        "replans": 68,
+        "unstick": 0,
+        "interacts": 0,
+        "think": 5193,
+        "topology": 11,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-2",
+      "index": 15,
+      "reason": "end",
+      "seconds": 240.00000000008313,
+      "shots": [
+        88,
+        22,
+        15,
+        20,
+        549
+      ],
+      "switches": 3,
+      "deaths": 0,
+      "bossKills": 0,
+      "breaks": 114,
+      "relays": 3,
+      "kills": 35,
+      "won": false,
+      "hp": 99.06792380952378,
+      "bossHp": 1390.8357015617066,
+      "bossMax": 5500,
+      "goal": "boss",
+      "position": [
+        92.59543154076634,
+        3.2,
+        16.873768306799864
+      ],
+      "ammo": [
+        265,
+        26,
+        4,
+        7,
+        1
+      ],
+      "pilot": {
+        "astar": 91,
+        "astarFail": 0,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 95988,
+        "edgeTests": 108585,
+        "replans": 158,
+        "unstick": 2,
+        "interacts": 4,
+        "think": 14400,
+        "topology": 47,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-3",
+      "index": 1,
+      "reason": "end",
+      "seconds": 222.3500000000691,
+      "shots": [
+        0,
+        1,
+        0,
+        17,
+        378
+      ],
+      "switches": 3,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 48,
+      "relays": 3,
+      "kills": 11,
+      "won": true,
+      "hp": 66.58957200411037,
+      "bossHp": 0,
+      "bossMax": 650,
+      "goal": "exit",
+      "position": [
+        67.40066824453993,
+        6.4,
+        -28.648176858193903
+      ],
+      "ammo": [
+        60,
+        36,
+        0,
+        8,
+        1
+      ],
+      "pilot": {
+        "astar": 81,
+        "astarFail": 0,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 40745,
+        "edgeTests": 28373,
+        "replans": 110,
+        "unstick": 6,
+        "interacts": 4,
+        "think": 13341,
+        "topology": 24,
+        "nearestLoose": 3,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-4",
+      "index": 4,
+      "reason": "end",
+      "seconds": 45.283333333332045,
+      "shots": [
+        187,
+        28,
+        0,
+        0,
+        64
+      ],
+      "switches": 0,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 43,
+      "relays": 0,
+      "kills": 7,
+      "won": false,
+      "hp": 100.4454,
+      "bossHp": 0,
+      "bossMax": 1600,
+      "goal": "boss",
+      "position": [
+        139.06829889855214,
+        6.4,
+        34.9604448513983
+      ],
+      "ammo": [
+        38,
+        2,
+        0,
+        16,
+        1
+      ],
+      "pilot": {
+        "astar": 3,
+        "astarFail": 0,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 36,
+        "edgeTests": 5793,
+        "replans": 39,
+        "unstick": 0,
+        "interacts": 0,
+        "think": 2717,
+        "topology": 14,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-5",
+      "index": 11,
+      "reason": "end",
+      "seconds": 59.56666666666457,
+      "shots": [
+        0,
+        0,
+        23,
+        6,
+        373
+      ],
+      "switches": 0,
+      "deaths": 0,
+      "bossKills": 1,
+      "breaks": 26,
+      "relays": 0,
+      "kills": 7,
+      "won": false,
+      "hp": 120,
+      "bossHp": 0,
+      "bossMax": 4550,
+      "goal": "boss",
+      "position": [
+        119.68809169117264,
+        6.4,
+        -5.30492987092639
+      ],
+      "ammo": [
+        225,
+        45,
+        0,
+        18,
+        1
+      ],
+      "pilot": {
+        "astar": 6,
+        "astarFail": 2,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 10754,
+        "edgeTests": 10755,
+        "replans": 45,
+        "unstick": 0,
+        "interacts": 0,
+        "think": 3574,
+        "topology": 8,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    },
+    {
+      "id": "scene-0",
+      "index": 6,
+      "reason": "end",
+      "seconds": 47.09999999999861,
+      "shots": [
+        48,
+        11,
+        0,
+        0,
+        0
+      ],
+      "switches": 1,
+      "deaths": 0,
+      "bossKills": 0,
+      "breaks": 16,
+      "relays": 1,
+      "kills": 9,
+      "won": false,
+      "hp": 68.77440000000001,
+      "bossHp": 1900,
+      "bossMax": 1900,
+      "goal": "core:1",
+      "position": [
+        -6.107690371795861,
+        0,
+        42.60990154386202
+      ],
+      "ammo": [
+        220,
+        33,
+        12,
+        16,
+        1
+      ],
+      "pilot": {
+        "astar": 23,
+        "astarFail": 0,
+        "astarNoEnd": 0,
+        "astarCap": 0,
+        "astarNodes": 30433,
+        "edgeTests": 44492,
+        "replans": 23,
+        "unstick": 0,
+        "interacts": 3,
+        "think": 2826,
+        "topology": 14,
+        "nearestLoose": 0,
+        "padRoutes": 0
+      }
+    }
+  ]
+}

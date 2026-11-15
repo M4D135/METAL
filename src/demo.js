@@ -1,4 +1,4 @@
-/* FERRO — mode démo : outils déterministes, enregistrement et rejeu d'entrées, réalisateur, enchaînement de scènes. Sans DOM, sans horloge, sans aléa global. */
+/* FERRO — mode démo : outils déterministes, enregistrement et rejeu d'entrées, réalisateur, enchaînement de scènes. Sans DOM, horloge injectée pour l’accueil ; noyau de rejeu sans aléa global. */
 (function(G){
   'use strict';
   const TAU=Math.PI*2,FNV=2166136261,PRIME=16777619,FORMAT=1,MAGIC='FDM1';
@@ -416,5 +416,51 @@
     reset();
     return {frame,update,reset,cut(){cutting=true;shown=false;stored=slot=0;}};
   }
-  G.FDemo={FORMAT,MAGIC,rng,hasher,seedFor,smootherstep,wrapAngle,lookAt,schema,recorder,player,replay,director};
+  // Independent title-screen lifecycle; no game globals, saving or simulation.
+  function attract(o={}){
+    const win=o.window||G,doc=o.document||win.document,now=o.now||(()=>performance.now()),read=v=>typeof v==='function'?v():v;
+    let state='idle',since=now(),swallowUntil=0,disposed=false,serial=0,padDown=false,consumePad=false,hiddenAt=null;
+    const mute=e=>{e?.preventDefault?.();e?.stopImmediatePropagation?.();e?.stopPropagation?.();};
+    function stop(reason='gesture'){
+      const live=state==='running'||state==='starting';serial++;state='idle';since=now();if(live){swallowUntil=since+(o.swallowMs??600);o.stop?.(reason);}return live;
+    }
+    function poke(e){
+      if(disposed)return;const key=e?.code||e?.key||'',modifier=/^(Shift|Control|Alt|Meta|CapsLock)/.test(key),browser=!!(e?.ctrlKey||e?.metaKey||e?.altKey||/^F\d{1,2}$/.test(key));
+      if(modifier)return;if(now()<swallowUntil&&!browser){mute(e);return;}
+      if(stop('gesture')){if(!e)consumePad=true;if(!browser)mute(e);}since=now();
+    }
+    const listeners=['pointerdown','keydown','wheel','touchstart','click','pointerup'];for(const name of listeners)win.addEventListener?.(name,poke,{capture:true,passive:false});
+    function tick(){
+      if(disposed)return;const t=now();let down=false;try{for(const p of win.navigator?.getGamepads?.()||[])if(p?.connected&&(p.buttons?.some(b=>b.pressed||b.value>.5)||p.axes?.some(a=>Math.abs(a)>.5)))down=true;}catch{}
+      if(down&&!padDown)poke();padDown=down;if(!down)consumePad=false;
+      if(doc?.hidden){if(hiddenAt===null){hiddenAt=t;o.onPause?.();}since=t;return;}if(hiddenAt!==null){const elapsed=t-hiddenAt;hiddenAt=null;o.onResume?.(elapsed);since=t;}
+      if(state==='starting'||state==='running')return;
+      if(down||read(o.enabled)===false||read(o.canStart)===false||win.matchMedia?.('(prefers-reduced-motion: reduce)').matches){state='idle';since=t;o.onCountdown?.(null);return;}
+      state='armed';const left=Math.max(0,(read(o.idleMs)??5000)-(t-since));o.onCountdown?.(left);if(left>0)return;
+      state='starting';const ticket=++serial;
+      try{const work=o.start?.();if(work&&typeof work.then==='function')work.then(ok=>{if(!disposed&&ticket===serial){state=ok===false?'idle':'running';since=now();}}).catch(error=>{if(ticket===serial){stop('error');o.onError?.(error);}});else{state=work===false?'idle':'running';since=t;}}
+      catch(error){stop('error');o.onError?.(error);}
+    }
+    return {tick,poke,stop,get state(){return state;},get swallowing(){return consumePad||now()<swallowUntil;},dispose(){if(disposed)return;stop('dispose');disposed=true;for(const name of listeners)win.removeEventListener?.(name,poke,true);}};
+  }
+  function runner(o={}){
+    const scenes=o.scenes||[];if(!scenes.length)throw Error('Demo scenes required');let at=-1,current=null,age=0,stalled=0,key='',recoveries=0,disposed=false,errors=[],time=0,opening=0;
+    const stats={scenes:0,steps:0,deaths:0,stalls:0,errors:0,seconds:0};
+    function next(reason='next'){
+      if(disposed)return;current?.dispose?.();current=null;age=stalled=0;recoveries=0;key='';at=(at+1)%scenes.length;const ticket=++opening;
+      try{const result=o.open(scenes[at],reason);const accept=value=>{if(disposed||ticket!==opening){value?.dispose?.();return;}current=value;stats.scenes++;o.onScene?.(scenes[at],reason);};if(result?.then)result.then(accept).catch(error=>{if(ticket===opening&&!disposed)fail(error);});else accept(result);}catch(error){fail(error);}
+    }
+    function fail(error){stats.errors++;errors=errors.filter(t=>time-t<60);errors.push(time);o.onError?.(error);if(errors.length>=3){dispose();o.onStop?.('errors');}else next('error');}
+    function step(dt){
+      if(disposed||!current||!(dt>0))return;
+      try{current.step(dt);time+=dt;age+=dt;stats.steps++;stats.seconds+=dt;const value=String(current.progressKey?.()??'');if(value!==key){key=value;stalled=0;}else stalled+=dt;
+        if(current.dead?.()){stats.deaths++;if(recoveries++<2&&current.recover?.()){stalled=0;return;}next('death');return;}
+        if(current.done?.()||age>=(scenes[at].maxSeconds||o.sceneSeconds||240)){next('end');return;}
+        if(stalled>=(o.stallSeconds||50)){stats.stalls++;if(recoveries++===0){current.reset?.();stalled=0;}else next('stall');}
+      }catch(error){fail(error);}
+    }
+    function dispose(){if(disposed)return;disposed=true;opening++;current?.dispose?.();current=null;}
+    return {step,next,dispose,stats,get scene(){return scenes[at];},get waiting(){return !current;},get stopped(){return disposed;}};
+  }
+  G.FDemo={FORMAT,MAGIC,rng,hasher,seedFor,smootherstep,wrapAngle,lookAt,schema,recorder,player,replay,director,attract,runner};
 })(typeof window!=='undefined'?window:globalThis);

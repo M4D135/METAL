@@ -324,6 +324,7 @@
       }
       return result;
     }
+    function digestInto(mix){mix(signature);mix(revision);for(const [id,q] of states){mix(id);mix(q);}for(const id of leaked)mix(id);}
     function snapshot(){return {version:1,signature,revision,states:Array.from(states,([id,s])=>({id,damage:s.damage,removed:!!s.removed,cuts:s.cuts.map(copyBox)})),leaks:Array.from(leaked)};}
     function restore(value,options={}){
       if(!value||value.version!==1||value.signature!==signature||!Number.isInteger(value.revision)||value.revision<0||value.revision>1e9||!Array.isArray(value.states)||value.states.length>groups.size||!Array.isArray(value.leaks))return false;
@@ -342,7 +343,7 @@
       const change=rebuild();revision=options.exactRevision?value.revision:Math.max(revision+1,value.revision);publish(change,true);return true;
     }
     return {get meshes(){return renderMeshes();},delta,get colliders(){return colliders;},get lights(){return lights;},get revision(){return revision;},isAlive,raycast,
-      hit:(point,power,direction,source)=>damage(point,.22,power,true,undefined,validPoint(direction)?direction:undefined,source),blast:(point,radius,power,ignoreId,source)=>damage(point,radius,power,false,ignoreId,undefined,source),snapshot,restore};
+      hit:(point,power,direction,source)=>damage(point,.22,power,true,undefined,validPoint(direction)?direction:undefined,source),blast:(point,radius,power,ignoreId,source)=>damage(point,radius,power,false,ignoreId,undefined,source),snapshot,restore,digestInto};
   }
   G.FDestruction={create};
 })(typeof window!=='undefined'?window:globalThis);

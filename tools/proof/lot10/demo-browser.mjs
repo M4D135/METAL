@@ -1,0 +1,29 @@
+import {withChrome} from '../../render/chrome.mjs';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+import {resolve,dirname} from 'node:path';import {fileURLToPath} from 'node:url';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'../../..'),out=resolve(process.argv[2]);mkdirSync(out,{recursive:true});
+const hook=`<script>
+localStorage.clear();window.__demoClock=0;window.__renders=[];Object.defineProperty(window,'FDemo',{configurable:true,set(v){const f=v.attract;v.attract=o=>{o.now=()=>__demoClock;const a=f(o);window.__attract=a;return a;};Object.defineProperty(window,'FDemo',{value:v,writable:true,configurable:true});}});Object.defineProperty(window,'FRender',{configurable:true,set(value){const create=value.create;value.create=function(...args){const r=create.apply(this,args),draw=r.draw;r.__draws=0;r.draw=function(...xs){r.__draws++;const p=window.__sims?.at(-1)?.state.player;r.__camera=xs[0];if(p&&r.__capture){r.__capture.push({pitch:xs[0].pitch,aim:p.pitch,dy:parseFloat(document.getElementById("crosshair").style.marginTop)||0});}return draw.apply(r,xs);};__renders.push(r);return r;};Object.defineProperty(window,'FRender',{value,writable:true,configurable:true});}});window.__effects=[];window.__sims=[];window.__inputs=[];
+window.__pad={index:0,id:'Xbox simulated',mapping:'standard',connected:true,axes:[0,0,0,0],buttons:Array.from({length:17},()=>({value:0,pressed:false})),vibrationActuator:{playEffect(type,e){__effects.push({type,...e});return Promise.resolve();},reset(){return Promise.resolve();}}};window.__pads=[__pad];Object.defineProperty(navigator,'getGamepads',{value:()=>__pads});
+HTMLCanvasElement.prototype.requestPointerLock=function(){return Promise.resolve();};
+Object.defineProperty(window,'FSimulation',{configurable:true,set(value){const create=value.create;value.create=function(...args){const s=create.apply(this,args),step=s.step;s.step=function(dt,i){__inputs.push({...i});if(__inputs.length>1000)__inputs.shift();return step.call(s,dt,i);};__sims.push(s);return s;};Object.defineProperty(window,'FSimulation',{value,writable:true,configurable:true});}});
+window.__frames=n=>new Promise(resolve=>{function next(){if(--n<=0)resolve();else requestAnimationFrame(next);}requestAnimationFrame(next);});
+window.__hold=async(index,n=3)=>{__pad.buttons[index]={value:1,pressed:true};await __frames(n);__pad.buttons[index]={value:0,pressed:false};await __frames(3);};
+window.__mode=target=>new Promise((resolve,reject)=>{const end=performance.now()+60000;function poll(){if(document.body.dataset.state===target)resolve();else if(performance.now()>end)reject(Error('mode '+document.body.dataset.state+' != '+target));else setTimeout(poll,25);}poll();});
+</script>`;
+const source=readFileSync(root+'/dist/index.html','utf8'),path=out+'/profiles.html';writeFileSync(path,source.replace('<head>','<head>'+hook));const results=[];
+await withChrome({chromePath:'/usr/bin/google-chrome',angle:'swiftshader',window:'960x640'},async browser=>{
+ const page=await browser.openPage(path);await page.evaluate('__frames(3)');await page.evaluate("document.getElementById('start').click()");await page.evaluate("__mode('playing')");
+ await page.evaluate("document.getElementById('pause-main').click()");await page.evaluate("__mode('menu')");
+ const before=await page.evaluate("JSON.stringify(Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)])))");
+ for(const gesture of ['pointerdown','keydown','wheel','touchstart','gamepad']){
+  await page.evaluate('__demoClock+=6000;__attract.tick()');await page.evaluate("__mode('demo')");
+  await page.evaluate(`new Promise((resolve,reject)=>{const end=performance.now()+60000;function check(){if(!document.body.classList.contains('demo-loading'))resolve();else if(performance.now()>end)reject(Error('demo loading timeout'));else setTimeout(check,25);}check();})`);
+  await page.evaluate('__frames(3)');const active=await page.evaluate("({banner:!document.getElementById('demo-banner').hidden,time:__sims.at(-1).state.time,index:__sims.at(-1).state.world.index,pointer:!!document.pointerLockElement,state:__attract.state})");assert(active.banner);assert(active.time>0);assert(!active.pointer);assert.equal(active.state,'running');
+  if(gesture==='pointerdown'){const shot=await page.send('Page.captureScreenshot',{format:'png'});writeFileSync(out+'/demo.png',Buffer.from(shot.data,'base64'));}
+  const exit=await page.evaluate(`(()=>{const s=__sims.at(-1),time=s.state.time;let event;if(${JSON.stringify(gesture)}==='gamepad'){__pad.buttons[0]={pressed:true,value:1};__attract.tick();}else{event=new Event(${JSON.stringify(gesture)},{bubbles:true,cancelable:true});if(${JSON.stringify(gesture)}==='keydown')Object.defineProperty(event,'code',{value:'KeyA'});document.body.dispatchEvent(event);}return {mode:document.body.dataset.state,time:s.state.time,unchanged:s.state.time===time,swallowed:event?event.defaultPrevented:__attract.swallowing};})()`);assert.equal(exit.mode,'menu');assert(exit.unchanged);assert(exit.swallowed);await page.evaluate('__pad.buttons[0]={pressed:false,value:0};__attract.tick();__frames(3)');assert.equal(await page.evaluate("JSON.stringify(Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)])))"),before);results.push({gesture,active,exit});
+ }
+ assert.deepEqual(page.errors,[]);await page.close();
+});writeFileSync(out+'/receipt.json',JSON.stringify({schema:'metal-demo-browser-v1',controlledClock:true,artifactSha256:createHash('sha256').update(source).digest('hex'),results},null,2));console.log(JSON.stringify(results,null,2));

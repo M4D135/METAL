@@ -1,0 +1,87 @@
+{
+  "schema": "metal-demo-browser-v1",
+  "controlledClock": true,
+  "artifactSha256": "b26c3e595f5623581e9190bca9cdf526c0fa696c91096b4cb523da185c615f9a",
+  "results": [
+    {
+      "gesture": "pointerdown",
+      "active": {
+        "banner": true,
+        "time": 0.24999999999999997,
+        "index": 6,
+        "pointer": false,
+        "state": "running"
+      },
+      "exit": {
+        "mode": "menu",
+        "time": 0.7500000000000007,
+        "unchanged": true,
+        "swallowed": true
+      }
+    },
+    {
+      "gesture": "keydown",
+      "active": {
+        "banner": true,
+        "time": 0.24999999999999997,
+        "index": 6,
+        "pointer": false,
+        "state": "running"
+      },
+      "exit": {
+        "mode": "menu",
+        "time": 0.24999999999999997,
+        "unchanged": true,
+        "swallowed": true
+      }
+    },
+    {
+      "gesture": "wheel",
+      "active": {
+        "banner": true,
+        "time": 0.16666666666666666,
+        "index": 6,
+        "pointer": false,
+        "state": "running"
+      },
+      "exit": {
+        "mode": "menu",
+        "time": 0.16666666666666666,
+        "unchanged": true,
+        "swallowed": true
+      }
+    },
+    {
+      "gesture": "touchstart",
+      "active": {
+        "banner": true,
+        "time": 0.16666666666666666,
+        "index": 6,
+        "pointer": false,
+        "state": "running"
+      },
+      "exit": {
+        "mode": "menu",
+        "time": 0.16666666666666666,
+        "unchanged": true,
+        "swallowed": true
+      }
+    },
+    {
+      "gesture": "gamepad",
+      "active": {
+        "banner": true,
+        "time": 0.16666666666666666,
+        "index": 6,
+        "pointer": false,
+        "state": "running"
+      },
+      "exit": {
+        "mode": "menu",
+        "time": 0.16666666666666666,
+        "unchanged": true,
+        "swallowed": true
+      }
+    }
+  ]
+}
