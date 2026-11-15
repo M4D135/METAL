@@ -1,0 +1,77 @@
+{
+  "schema": "metal-03r-destruction-pixels-v1",
+  "base": "/home/m4d135/metal-chantier/integration",
+  "head": "/home/m4d135/metal-chantier/voies/rendu-incremental",
+  "scenarios": [
+    {
+      "stage": 6,
+      "backend": "webgl2",
+      "identical": true,
+      "differentPixels": 0,
+      "destructionChangedPixels": 36893,
+      "baseSha256": "ef6355b39139c44248a55bcd8aa282a0ca716e3a284a1860c330ba8dface3a60",
+      "headSha256": "ef6355b39139c44248a55bcd8aa282a0ca716e3a284a1860c330ba8dface3a60",
+      "stats": {
+        "drawCalls": 24,
+        "triangles": 83176,
+        "instances": 1174,
+        "staticVisible": 1174,
+        "shadowMaps": 3,
+        "backend": "webgl2",
+        "destructionRevision": 1
+      }
+    },
+    {
+      "stage": 6,
+      "backend": "canvas2d",
+      "identical": true,
+      "differentPixels": 0,
+      "destructionChangedPixels": 64159,
+      "baseSha256": "f424ea6d9d285bb5c711ad24af505b7806cf4be3001611516891a44de772dab7",
+      "headSha256": "f424ea6d9d285bb5c711ad24af505b7806cf4be3001611516891a44de772dab7",
+      "stats": {
+        "drawCalls": 1533,
+        "triangles": 2942,
+        "instances": 555,
+        "staticVisible": 555,
+        "backend": "canvas2d",
+        "destructionRevision": 1
+      }
+    },
+    {
+      "stage": 17,
+      "backend": "webgl2",
+      "identical": true,
+      "differentPixels": 0,
+      "destructionChangedPixels": 22378,
+      "baseSha256": "fc6fcb0c99a0bc6affaecf0afc21def06e0e2e2b4fabcb1980d20bb2b54af623",
+      "headSha256": "fc6fcb0c99a0bc6affaecf0afc21def06e0e2e2b4fabcb1980d20bb2b54af623",
+      "stats": {
+        "drawCalls": 25,
+        "triangles": 96108,
+        "instances": 1519,
+        "staticVisible": 1519,
+        "shadowMaps": 3,
+        "backend": "webgl2",
+        "destructionRevision": 1
+      }
+    },
+    {
+      "stage": 17,
+      "backend": "canvas2d",
+      "identical": true,
+      "differentPixels": 0,
+      "destructionChangedPixels": 37355,
+      "baseSha256": "af16b1d76cae53986420e1099e545dd971674f0b44b3238b9bb3acb218f6d07c",
+      "headSha256": "af16b1d76cae53986420e1099e545dd971674f0b44b3238b9bb3acb218f6d07c",
+      "stats": {
+        "drawCalls": 1064,
+        "triangles": 2012,
+        "instances": 396,
+        "staticVisible": 396,
+        "backend": "canvas2d",
+        "destructionRevision": 1
+      }
+    }
+  ]
+}

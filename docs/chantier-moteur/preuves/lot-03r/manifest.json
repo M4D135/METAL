@@ -1,0 +1,119 @@
+{
+  "schema": "metal-03r-integration-proof-v1",
+  "at": "2026-11-15T09:18:44.681522+00:00",
+  "tested_commit": "5e23bfc6ecfd1b3727b82c4d4a300ad57ab6c670",
+  "artifact": {
+    "version": "0.9.2",
+    "html_bytes": 1005030,
+    "html_decimal_kb": 1005.03,
+    "html_kib": 981.47,
+    "gzip_bytes": 309899,
+    "sha256": "29f7792735b45d82e05a3f8fd605731a2f877575061eec03cbe5587ace65467b",
+    "external_assets": 0,
+    "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+    "source_bytes": {
+      "fmath.js": 19961,
+      "passages.js": 10108,
+      "renderer.js": 129749,
+      "profiles.js": 7943,
+      "world.js": 142602,
+      "destruction.js": 30624,
+      "music.js": 28535,
+      "imuse.js": 9844,
+      "audio.js": 62955,
+      "audio-recipes.js": 3255,
+      "soundscape.js": 4402,
+      "economy.js": 11561,
+      "brain.js": 8923,
+      "simulation.js": 237406,
+      "motion.js": 6404,
+      "actors.js": 28298,
+      "effects.js": 19555,
+      "options.js": 9477,
+      "input.js": 17983,
+      "controls.js": 4114,
+      "game.js": 115823
+    }
+  },
+  "sources_sha256": {
+    "src/actors.js": "d1917f4f18a94845ceb7e7fe004d8880d3d321e5b53f437b49f21a4e30f054ba",
+    "src/audio-recipes.js": "fd923bfbdceb2fe5fb34fca8d1eea1bf2e86149cf49f61fe78fed24c84f32570",
+    "src/audio.js": "3b5528e2b4af232663268d491ea020f4d41d48c8adbd1585abb1e5ab26b9d3c7",
+    "src/brain.js": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "src/controls.js": "0fbf5ee1b0bca1d96d664549e0f4bacfbbc20f4956ab0686ac7daf281060949f",
+    "src/demo.js": "6a09719b8d6b28f61e6f2f15145fe1f8ee8133e57631db7a174e54e1984aa25f",
+    "src/destruction.js": "23ee4bfd06ed5e60a9ca17cb73502e4b914aefa58c93058283b29d48183f8b41",
+    "src/economy.js": "1d1d50657864190afdb91639c56142c44714119f54e0685d8a4c4aa4cc6f4dc6",
+    "src/effects.js": "3c4118b304187c82265c386319a4c4dd255ce642c8254a79e86b67e271c0ec91",
+    "src/fmath.js": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "src/game.js": "2981ade976bdd2f7691faab2f1867f71a0dc2d9c93a129df9360995e75160004",
+    "src/imuse.js": "1c708c2bee47a1aeee1020ef0cc6e076677838fb6b232ee2bb2ad00338e6fd38",
+    "src/index.html": "238e92c7e9c437b473f33f1e4a8c495ef048abae55ddc1627c223897a1f40402",
+    "src/input.js": "a89177dda96bb3c876b9a5282cb499f301f6da89f8718b6996386b0f56d2992b",
+    "src/loop.js": "2002052f16b930748cb33c59366686744d8f7ba0b05add3e517d6271e46214c5",
+    "src/motion.js": "64d4a56a24831ebf57dd4ea926b4e8ff99fe9515391672d956c8df803ee4f1f6",
+    "src/music.js": "170484ddcc50ce291dee3e065eeb1351bf377846c989a1c3405b4a8ab96e6f53",
+    "src/options.js": "e41a7aa2ec13cc22e96c4c493cfcc0d174cc42497b469108343675865ac0898a",
+    "src/passages.js": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "src/physics.js": "8b1ca9eba50d3be95f1cfe771ba2f2475f4f7f2592fe61715f887a0b869b2fd1",
+    "src/profiles.js": "aec726e379b17e8e0f2116eaf0066e2e367a053d14000e8e3ef73c30e0bb1a1b",
+    "src/renderer.js": "e5e9e7e607da0afb661ac96226111eb52c3c98e416e6640fdfe9946f42fa1f6b",
+    "src/schedule.js": "48a8b7cf0bba9a54ef6cff896110a654195b05606392c2d74ef3a3691edf9d12",
+    "src/simulation.js": "a8fc47ad86cc0cf4ecc579d8327243cf2b0434e30d66f58aeaccf5df80c686da",
+    "src/skies.js": "bd4b38002c8c800a5f7551a73712c721909ed22ae145d15fbf7f853ff30eddea",
+    "src/soundscape.js": "9ccc1b2a95e8daa035db44ca6964df6919328d5d55e4d344ca14f16205fce766",
+    "src/style.css": "bcd83525a6a6c6e5ff2212f30fec275e0f77a89b2ff0a48fcadaf50259e133a6",
+    "src/world.js": "18fa25f33ec832cc4afd3b0925642a0085ab360cb5e6a8e4827570904f813c44"
+  },
+  "validation": {
+    "full_tests": 917,
+    "full_tests_ok": true,
+    "static_pixel_pairs": 14,
+    "destroyed_pixel_pairs": 4,
+    "identical_pixels": true,
+    "physical_pad_tested": false,
+    "new_T5_claim": false,
+    "deployed": false,
+    "all_program_complete": false
+  },
+  "files": [
+    {
+      "file": "index-bench.json",
+      "sha256": "442f6fd0da4cf5ad472d1afcff675f534d6f05bc8d49d22266ca8254f5bd4a66"
+    },
+    {
+      "file": "initial-index-bench.json",
+      "sha256": "3bc0b414fc95c1d8b18adc07f358ad2a3024135b1c88c72d86d2c09063257cfd"
+    },
+    {
+      "file": "pixels.json",
+      "sha256": "73b7f12136105f22228f015e4ba95e171a58187daeffcd556c58ed3df630ba8c"
+    },
+    {
+      "file": "destruction-pixels.json",
+      "sha256": "2b463b59155dba2515eb8cd61d243c42d1c1c57dabf01f4472cf5166f09d5aca"
+    },
+    {
+      "file": "ui.json",
+      "sha256": "9903d86c80bf4cde7212a909d3b6abe2e95695f83f6100b68c8b3dabae162ad2"
+    },
+    {
+      "file": "switch-assembled.png",
+      "sha256": "9d1ad8d31a9c869d5a124e8e5a369174a7889463104395828233c402a086563f"
+    },
+    {
+      "file": "ui-events.mjs",
+      "sha256": "2fd688224f41c0a273ab97e266e14230c76e4d22c1821ed51513f9d8bd781607"
+    },
+    {
+      "file": "03r-full-final.tap.gz",
+      "sha256": "88239c913108b3667a859d7483f311a18ea790144a239c793b8fb654c9c1f933",
+      "raw_sha256": "062896056cd0a6f937940e7f331bdf48124d9a5b68892867ba9857073c086ba8"
+    },
+    {
+      "file": "03r-targeted-final.tap.gz",
+      "sha256": "028e981af32c2c1766a707ba348249fddf85352a84b91cb0422b106879b56188",
+      "raw_sha256": "f0ea7d5514eb58c91d6422e8c3bba7707afcb1d24c916f35b4c552993e4baa81"
+    }
+  ]
+}

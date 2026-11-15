@@ -1,0 +1,159 @@
+{
+  "schema": "metal-03r-index-bench-v1",
+  "node": "v22.11.0",
+  "domain": "Node main realm",
+  "clock": "performance.now wall milliseconds; not GPU or FPS",
+  "updateScenario": "one replacement per revision; shared added/removed delta; 200 warmup + 3000 alternating samples",
+  "base": "/home/m4d135/metal-chantier/integration",
+  "head": "/home/m4d135/metal-chantier/voies/rendu-incremental",
+  "sourceSha256": [
+    "c8fe14b4bd61c4f521dccebbaf357d198a2657776333ef93cf5f774049684df4",
+    "e5e9e7e607da0afb661ac96226111eb52c3c98e416e6640fdfe9946f42fa1f6b"
+  ],
+  "worlds": [
+    {
+      "world": "camp:17",
+      "seed": 96,
+      "meshes": 17471,
+      "dense": true,
+      "query": [
+        {
+          "p50": 0.0473440000000096,
+          "p95": 0.15331100000003062,
+          "mean": 0.08324878466666583,
+          "samples": 1500
+        },
+        {
+          "p50": 0.01964799999996103,
+          "p95": 0.09801600000002963,
+          "mean": 0.04066518666666616,
+          "samples": 1500
+        }
+      ],
+      "queryControl": [
+        {
+          "p50": 0.044015999999942323,
+          "p95": 0.13438400000006823,
+          "mean": 0.07142662733333373,
+          "samples": 1500
+        },
+        {
+          "p50": 0.043808000000012726,
+          "p95": 0.135216000000014,
+          "mean": 0.07318771199999848,
+          "samples": 1500
+        }
+      ],
+      "queryCorrectedRatio": 0.4169755097097892,
+      "update": {
+        "cost": [
+          {
+            "p50": 3.306826000000001,
+            "p95": 6.435011999999915,
+            "mean": 3.6865745780000165,
+            "samples": 3000
+          },
+          {
+            "p50": 2.026603999999679,
+            "p95": 3.4188580000009097,
+            "mean": 2.265075494,
+            "samples": 3000
+          }
+        ],
+        "meanChangedCells": 1
+      },
+      "updateControl": {
+        "cost": [
+          {
+            "p50": 3.388041999998677,
+            "p95": 6.368260999995982,
+            "mean": 3.845781801333373,
+            "samples": 3000
+          },
+          {
+            "p50": 3.391176999997697,
+            "p95": 6.405316999997012,
+            "mean": 3.846230912333391,
+            "samples": 3000
+          }
+        ],
+        "meanChangedCells": 0
+      },
+      "updateCorrectedRatio": 0.6122881851485932,
+      "identicalQueryResultsAndOrder": true,
+      "checksum": 13917072
+    },
+    {
+      "world": "camp:6",
+      "seed": 96,
+      "meshes": 14131,
+      "dense": true,
+      "query": [
+        {
+          "p50": 0.04371199999877717,
+          "p95": 0.1303360000019893,
+          "mean": 0.06565495333334548,
+          "samples": 1500
+        },
+        {
+          "p50": 0.0181120000052033,
+          "p95": 0.0841119999968214,
+          "mean": 0.03520382599996325,
+          "samples": 1500
+        }
+      ],
+      "queryControl": [
+        {
+          "p50": 0.04246399999829009,
+          "p95": 0.12430400000448572,
+          "mean": 0.06341346533347193,
+          "samples": 1500
+        },
+        {
+          "p50": 0.04156700000021374,
+          "p95": 0.12348699999711243,
+          "mean": 0.06289821666667315,
+          "samples": 1500
+        }
+      ],
+      "queryCorrectedRatio": 0.42328994450747986,
+      "update": {
+        "cost": [
+          {
+            "p50": 2.828763000004983,
+            "p95": 4.794870999998238,
+            "mean": 3.0123063956666907,
+            "samples": 3000
+          },
+          {
+            "p50": 1.2952140000052168,
+            "p95": 2.6990829999995185,
+            "mean": 1.4335942543333586,
+            "samples": 3000
+          }
+        ],
+        "meanChangedCells": 1
+      },
+      "updateControl": {
+        "cost": [
+          {
+            "p50": 2.997801999998046,
+            "p95": 5.432214000000386,
+            "mean": 3.5801354590000702,
+            "samples": 3000
+          },
+          {
+            "p50": 2.9817389999952866,
+            "p95": 5.470582000001741,
+            "mean": 3.5755642916666934,
+            "samples": 3000
+          }
+        ],
+        "meanChangedCells": 0
+      },
+      "updateCorrectedRatio": 0.46033954750374506,
+      "identicalQueryResultsAndOrder": true,
+      "checksum": 12146656
+    }
+  ]
+}

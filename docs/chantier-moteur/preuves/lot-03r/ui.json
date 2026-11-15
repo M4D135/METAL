@@ -1,0 +1,58 @@
+{
+  "schema": "metal-profiles-browser-v1",
+  "artifactSha256": "29f7792735b45d82e05a3f8fd605731a2f877575061eec03cbe5587ace65467b",
+  "physicalController": false,
+  "results": [
+    {
+      "name": "new-class-run",
+      "profile": "light",
+      "hud": "LÉGER100 % VOLPasser au lourdT",
+      "goals": {
+        "breach": "profile-breach",
+        "mechanism": "profile-power",
+        "door": "profile-door",
+        "boss": "light",
+        "entry": {
+          "x": 48.304749802348674,
+          "y": 3.2,
+          "z": 0
+        },
+        "after": {
+          "x": 63.804749802348674,
+          "y": 3.2,
+          "z": 0
+        }
+      }
+    },
+    {
+      "name": "desktop-visible-profile-button",
+      "hidden": false,
+      "label": "Personnage actif : léger. Passer au lourd. Raccourci : T",
+      "text": "LÉGER100 % VOLPasser au lourdT",
+      "key": "T",
+      "hit": "profile-button",
+      "w": 198,
+      "h": 50
+    },
+    {
+      "name": "profile-button-click-and-keyboard-activation",
+      "passed": true
+    },
+    {
+      "name": "real-mouse-single-switch-without-shot",
+      "passed": true
+    },
+    {
+      "name": "focused-space-single-switch-no-jump-or-repeat",
+      "passed": true
+    },
+    {
+      "name": "keyboard-T-shortcut",
+      "passed": true
+    },
+    {
+      "name": "pad-RB-shortcut-and-visible-label",
+      "passed": true
+    }
+  ]
+}
