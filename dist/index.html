@@ -5737,25 +5737,52 @@ body.touch #hud{overflow:hidden;overflow:clip}
       stats,reset(target){id=cues[target]?target:id;position=0;bar=0;pending=null;stats.pending='';stats.barIndex=0;}
     };
   }
-  let preparation=Promise.resolve();const preparing=new Map();
-  function warmup(value){
-    const key=keyOf(value),cue=isCue(key);
-    const info=()=>({...getTrack(key),bytes:cue?cueBytes(key):moduleFor(key==='title'?'title':Number(key)).bytes.length});
-    if(cue?cueModules.has(key):modules.has(key==='title'?'title':Number(key)))return Promise.resolve(info());
-    if(preparing.has(key))return preparing.get(key);
+  function cacheKey(value,seed){const key=keyOf(value);return isCue(key)||key==='title'||seed===undefined?key:key+'/'+seed;}
+  function cloneData(value,seen=new Map()){
+    if(!value||typeof value!=='object')return value;if(seen.has(value))return seen.get(value);
+    if(ArrayBuffer.isView(value)){const copy=new value.constructor(value);seen.set(value,copy);return copy;}
+    const copy=Array.isArray(value)?[]:{};seen.set(value,copy);for(const key of Object.keys(value))copy[key]=cloneData(value[key],seen);return copy;
+  }
+  function prepared(value,seed){
+    const key=keyOf(value);if(isCue(key)||key==='title')seed=undefined;
+    return cloneData({key,seed,score:scoreOf(key,seed),module:isCue(key)?null:moduleFor(key==='title'?'title':Number(key),seed)});
+  }
+  function adoptPrepared(packet){
+    if(!packet||keyOf(packet.key)!==packet.key||packet.seed!==undefined&&!Number.isFinite(packet.seed))return false;
+    const key=packet.key,score=packet.score,id=cacheKey(key,packet.seed);
+    const samplesOK=q=>q&&Array.isArray(q.samples)&&q.samples.length<=31&&q.samples.every(v=>v&&v.pcm instanceof Int8Array&&v.pcm.length<=131072&&Number.isFinite(v.volume));
+    if(!samplesOK(score)||!(score.bytes instanceof Uint8Array)||score.bytes.length>1048576||!Number.isFinite(score.bpm)||score.bpm<30||score.bpm>255||![4,5].includes(score.channels)||!Array.isArray(score.order)||!score.order.length||!score.segments)return false;
+    for(const name of score.order){const q=score.segments[name];if(!q||!Number.isInteger(q.pattern)||q.pattern<0||q.pattern*64*score.channels*4>=score.bytes.length||!Number.isInteger(q.bars)||q.bars<1)return false;}
+    if(!isCue(key)&&(!samplesOK(packet.module)||!(packet.module.bytes instanceof Uint8Array)||packet.module.bytes.length<1084||!Array.isArray(packet.module.order)))return false;
+    if(id!==key)for(const old of scoreCache.keys())if(old!==key&&old.startsWith(key+'/'))scoreCache.delete(old);
+    scoreCache.set(id,score);
+    if(isCue(key))cueModules.set(key,score);
+    else{const stage=key==='title'?'title':Number(key),mk=packet.seed===undefined?stage:stage+'/'+packet.seed;
+      if(mk!==stage)for(const old of modules.keys())if(old!==stage&&String(old).startsWith(stage+'/'))modules.delete(old);
+      modules.set(mk,packet.module);}
+    return true;
+  }
+  let preparation=Promise.resolve(),preparer=null;const preparing=new Map();
+  function setPreparer(fn){preparer=typeof fn==='function'?fn:null;}
+  function warmup(value,seed){
+    const key=keyOf(value),cue=isCue(key);if(cue||key==='title')seed=undefined;
+    const id=cacheKey(key,seed),stage=key==='title'?'title':Number(key),mk=seed===undefined?stage:stage+'/'+seed;
+    const info=()=>({...getTrack(key,seed),bytes:cue?cueBytes(key):moduleFor(stage,seed).bytes.length});
+    if(cue?cueModules.has(key):modules.has(mk))return Promise.resolve(info());
+    if(preparing.has(id))return preparing.get(id);
     const pause=()=>new Promise(resolve=>typeof G.setTimeout==='function'?G.setTimeout(resolve,0):resolve());
     const task=preparation.then(async()=>{
-      // Instrument-sized jobs let a loading screen paint between expensive
-      // synthesis steps. This prepares PCM/score only: no device is opened.
+      if(preparer)try{const packet=await preparer(key,seed);if(packet&&adoptPrepared(packet))return info();}catch{}
+      // The fallback retains yielding instrument phases and the same score.
       for(let i=0;i<6;i++)if(!instrumentBank?.[i]){await pause();instrument(i);}
       if(key==='title')for(let i=0;i<5;i++)if(!titleBank?.[i]){await pause();titleInstrument(i);}
       if(!tensionSample){await pause();tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};}
-      const steps=cue?cueSteps(key):moduleSteps(key==='title'?'title':Number(key));
+      const steps=cue?cueSteps(key):moduleSteps(stage,seed);
       if(steps)for(const phase of steps.phases){await pause();phase();}
       await pause();return info();
     });
-    preparing.set(key,task);preparation=task.catch(()=>{});
-    task.then(()=>preparing.delete(key),()=>preparing.delete(key));return task;
+    preparing.set(id,task);preparation=task.catch(()=>{});
+    task.then(()=>preparing.delete(id),()=>preparing.delete(id));return task;
   }
   function moduleSteps(stage,seed){
     // LOAD-13: the expensive phases of a module — drum kit, compose, serialize,
@@ -5861,10 +5888,10 @@ body.touch #hud{overflow:hidden;overflow:clip}
       if(at===undefined){const cue=CUE_IDS.indexOf(value);at=(cue>=0?4+cue:value==='title'?3:Number(value))*32;slots.set(value,at);}
       return at;
     }
-    function buffer(sample,whichKey=key){
+    function buffer(sample,whichKey=key,whichSeed=seed){
       const cacheKey=(whichKey===key?slot:slotOf(whichKey))+sample;
       if(buffers.has(cacheKey))return buffers.get(cacheKey);
-      const source=whichKey===key&&score?score:scoreOf(whichKey,seed),data=source.samples[sample-1].pcm,b=ctx.createBuffer(1,data.length,RATE),channel=b.getChannelData(0);for(let i=0;i<data.length;i++)channel[i]=data[i]/128;
+      const source=whichKey===key&&score?score:scoreOf(whichKey,whichSeed),data=source.samples[sample-1].pcm,b=ctx.createBuffer(1,data.length,RATE),channel=b.getChannelData(0);for(let i=0;i<data.length;i++)channel[i]=data[i]/128;
       buffers.set(cacheKey,b);return b;
     }
     function note(track,sample,pitch,time){
@@ -5948,18 +5975,26 @@ body.touch #hud{overflow:hidden;overflow:clip}
       setThreat(value){const next=clamp(Number(value)||0,0,1);if(disposed||abs(next-threat)<.01)return;threat=next;director.setIntensity(next);mix();},
       setVolume(value){if(disposed)return;const next=clamp(Number(value)||0,0,1);if(next===volume)return;volume=next;if(!volume){stopAll();nextTime=null;rowInBar=0;}level();},
       setPlaying(value){if(disposed||playing===!!value)return;playing=!!value;stats.playing=playing;if(!playing){stopAll();rowInBar=0;}else if(director.realign)director.realign();nextTime=null;level();},
-      prepare(value=key){
-        if(!ready||disposed)return false;const next=keyOf(value),score=scoreOf(next,seed);
+      prepare(value=key,nextSeed=seed){
+        if(!ready||disposed)return false;const next=keyOf(value),score=scoreOf(next,nextSeed);
         // Three world banks plus the independent title bank, retained across changes.
         // Loading a future bank does not seek, switch stage or start any notes.
-        for(let i=0;i<score.samples.length;i++)if(score.samples[i]&&score.samples[i].pcm.length>2)buffer(i+1,next);
+        for(let i=0;i<score.samples.length;i++)if(score.samples[i]&&score.samples[i].pcm.length>2)buffer(i+1,next,nextSeed);
         return true;
+      },
+      async prepareAsync(value=key,nextSeed=seed){
+        if(!ready||disposed)return false;const next=keyOf(value),score=scoreOf(next,nextSeed);
+        for(let i=0;i<score.samples.length;i++)if(score.samples[i]?.pcm.length>2){
+          if(disposed)return false;buffer(i+1,next,nextSeed);
+          if(typeof G.setTimeout==='function')await new Promise(resolve=>G.setTimeout(resolve,0));
+        }
+        return !disposed;
       },
       tick,getModule,getTrack,stats,
       dispose(){if(disposed)return;stopAll(true);disposed=true;playing=false;stats.playing=false;buffers.clear();for(const n of nodes)try{n.disconnect();}catch(_){}nodes.length=0;}
     };
   }
-  G.FMusic={create,getModule,getTrack,warmup,isCue,cueIds:()=>CUE_IDS.slice(),cueDescriptor,descriptorTable};
+  G.FMusic={create,getModule,getTrack,warmup,prepared,adoptPrepared,setPreparer,isCue,cueIds:()=>CUE_IDS.slice(),cueDescriptor,descriptorTable};
 })(typeof window!=='undefined'?window:globalThis);</script>
 <script data-module="imuse.js" data-role="shared" data-worker>/* FImuse — generic adaptive music director, modelled on LucasArts iMUSE.
  *
@@ -6454,6 +6489,7 @@ body.touch #hud{overflow:hidden;overflow:clip}
     effectNames: effectNames.slice(),
     makeupDb: makeupDb,
     create: function (options) {
+      options=options||{};
       var recipes = Object.create(null), table = options && options.recipes;
       if (table) Object.keys(table).forEach(function (name) { var r = table[name]; if (r && typeof r.synth === 'function' && effectNames.indexOf(name) >= 0) recipes[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
       // A game may add its own one-shot names (confirmations, stings). They are
@@ -6774,7 +6810,7 @@ body.touch #hud{overflow:hidden;overflow:clip}
         var force=Math.min(1.25,.28+Math.sqrt(energy)*.55),mass=Math.max(.15,Math.min(8,Number(value.mass)||1));
         pcm(action+':'+kind,e.level*force*(action==='break'?.36:action==='land'?.15:.22),e.pan,value,Math.max(.74,Math.min(1.18,1.04-Math.log2(mass)*.055)));
       }
-      function warmBank(yieldWork) {
+      function warmBank(yieldWork,localOnly) {
         if(!ctx||disposed)return Promise.resolve(false);
         if(stats.pcmReady)return Promise.resolve(true);
         function variantsOf(name){var recipe=recipes[name]||extras[name];return recipe?recipe.variants:name.indexOf('motor:')===0?1:2;}
@@ -6804,6 +6840,20 @@ body.touch #hud{overflow:hidden;overflow:clip}
         var bankNames = extraNames.length ? effectNames.concat(extraNames) : effectNames;
         if(!yieldWork||typeof setTimeout!=='function'){bankNames.forEach(build);return Promise.resolve(finish());}
         if(warming)return warming;
+        if(!localOnly&&typeof options.preparePCM==='function'){
+          warming=(async function(){
+            for(var name of bankNames)for(var variant=0;variant<variantsOf(name);variant++){
+              if(disposed||!ctx)return false;if(bank[name]&&bank[name].length>variant)continue;
+              var data=await options.preparePCM(name,variant);
+              if(disposed||!ctx)return false;
+              if(!data||!(data instanceof Float32Array)||!data.length||data.length>220500)throw new Error('Unprepared PCM');
+              for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i]))throw new Error('Invalid PCM');
+              if(!bank[name])bank[name]=[];bufferFor(name,data);
+            }
+            return finish();
+          })().catch(function(){warming=null;return disposed?false:warmBank(true,true);});
+          return warming;
+        }
         // LOAD-13: the loading screen yields on a time budget, never on an
         // effect count. One unit of work is one variant, and the built-in
         // renderer is resumable, so even the heaviest break stops inside the
@@ -7069,21 +7119,30 @@ body.touch #hud{overflow:hidden;overflow:clip}
       api = {
         start: resume,
         resume: resume,
-        prepare: function (value) {
+        prepare: function (value, seed) {
           var next=Math.max(0,Math.min(2,Math.floor(Number(value)||0)));
           // The user gesture opens the shared context through start/resume.
           // This method only prepares existing player buffers after pure PCM
           // warmup; it neither opens a device nor changes the active score.
           if (disposed) return Promise.resolve(false);
-          var fx=warmBank(true),score=window.FMusic?FMusic.warmup(next):Promise.resolve(false);
-          return Promise.all([fx,score]).then(function () { return !!(ctx && !disposed && stats.pcmReady && (!music || music.prepare(next))); });
+          var fx=warmBank(true),score=window.FMusic?FMusic.warmup(next,seed):Promise.resolve(false);
+          return Promise.all([fx,score]).then(function () {
+            if(!ctx||disposed||!stats.pcmReady)return false;
+            if(!music)return true;return options.asyncPrepare?music.prepareAsync(next,seed):music.prepare(next,seed);
+          });
+        },
+        prepareCues: async function (values) {
+          if(disposed||!window.FMusic)return false;
+          for(var value of values){await FMusic.warmup(value);if(disposed)return false;
+            if(music){if(options.asyncPrepare)await music.prepareAsync(value);else music.prepare(value);}}
+          return !!ctx&&!disposed;
         },
         prepareTitle: function () {
           // Warm only the title instruments. Opening the device still belongs
           // to start/resume in a user gesture; no world effects are synthesized.
           if (disposed || !window.FMusic) return Promise.resolve(false);
           return FMusic.warmup('title').then(function () {
-            return !!(ctx && live() && !disposed && music && music.prepare('title'));
+            if(!ctx||!live()||disposed||!music)return false;return options.asyncPrepare?music.prepareAsync('title'):music.prepare('title');
           });
         },
         setTitlePlaying: function (value) {
@@ -11856,7 +11915,7 @@ G.FTouch={create,gyroAim,fovFor};
 (function(G){'use strict';
   const jobs={
     world:q=>G.FWorld.create(q.seed,q.index,q.options),
-    music:q=>({stage:q.stage,bytes:G.FMusic.getModule(q.stage)}),
+    music:q=>({stage:q.stage,bytes:G.FMusic.getModule(q.stage,q.seed),prepared:G.FMusic.prepared(q.stage,q.seed)}),
     fx:q=>{const options=G.MetalAudio.options(),recipe=options.recipes?.[q.name]||options.extras?.[q.name];return {name:q.name,variant:q.variant,pcm:recipe?recipe.synth(q.variant,22050):G.FAudio.synthesize(q.name,q.variant,22050)};}
   };
   G.MetalTasks={jobs};
@@ -11908,8 +11967,9 @@ G.FHost={create};
   const touchControls=FTouch.create(prefs),host=FHost.create(window);
   const preparationJobs=FJobs.create({environment:window,handlers:MetalTasks.jobs,bootstrap:'FJobs.serve(MetalTasks.jobs);',forceMain:new URLSearchParams(location.search).get('jobs')==='main'});
   addEventListener('pagehide',()=>preparationJobs.dispose());
+  window.FMusic?.setPreparer?.((value,seed)=>preparationJobs.mode==='main'?null:preparationJobs.request('music',{stage:value,seed}).then(r=>r.prepared));
   const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0;
-  const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
+  const audio=FAudio.create({...window.MetalAudio?.options?.(),asyncPrepare:preparationJobs.mode!=='main',preparePCM:(name,variant)=>preparationJobs.mode==='main'?null:preparationJobs.request('fx',{name,variant}).then(r=>r.pcm)}),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   // MUS-04 : l'état de la simulation choisit la pièce, le mixeur la joue. Le
   // chef d'orchestre ne joue rien lui-même et reste muet sans le module.
   const musicDirector=window.FMusicDirector?window.FMusicDirector.create({host:{
@@ -12233,7 +12293,7 @@ G.FHost={create};
     try{
       // Two animation frames show the preparation screen before any substantial work.
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      await Promise.all([prepareWorld(nextStage,plan.seed??seed,asCampaign,plan.revision??campaignRevision,false,plan.profiles??profileMode),FMusic.warmup(nextStage%3),brain?.prepare()]);await audio.prepare?.(nextStage%3);brainStatus();if(ticket!==preparationSerial)return;
+      await Promise.all([prepareWorld(nextStage,plan.seed??seed,asCampaign,plan.revision??campaignRevision,false,plan.profiles??profileMode),FMusic.warmup(nextStage%3,plan.seed??seed),brain?.prepare()]);await audio.prepare?.(nextStage%3,plan.seed??seed);await audio.prepareCues?.(window.FMusic?.cueIds?.()||[]);brainStatus();if(ticket!==preparationSerial)return;
       $('loading-detail').textContent='Assemblage du territoire et de la simulation…';$('loading-bar').style.width='76%';
       await new Promise(resolve=>requestAnimationFrame(resolve));if(ticket!==preparationSerial)return;
       action();

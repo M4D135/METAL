@@ -12,8 +12,9 @@
   const touchControls=FTouch.create(prefs),host=FHost.create(window);
   const preparationJobs=FJobs.create({environment:window,handlers:MetalTasks.jobs,bootstrap:'FJobs.serve(MetalTasks.jobs);',forceMain:new URLSearchParams(location.search).get('jobs')==='main'});
   addEventListener('pagehide',()=>preparationJobs.dispose());
+  window.FMusic?.setPreparer?.((value,seed)=>preparationJobs.mode==='main'?null:preparationJobs.request('music',{stage:value,seed}).then(r=>r.prepared));
   const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0;
-  const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
+  const audio=FAudio.create({...window.MetalAudio?.options?.(),asyncPrepare:preparationJobs.mode!=='main',preparePCM:(name,variant)=>preparationJobs.mode==='main'?null:preparationJobs.request('fx',{name,variant}).then(r=>r.pcm)}),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   // MUS-04 : l'état de la simulation choisit la pièce, le mixeur la joue. Le
   // chef d'orchestre ne joue rien lui-même et reste muet sans le module.
   const musicDirector=window.FMusicDirector?window.FMusicDirector.create({host:{
@@ -337,7 +338,7 @@
     try{
       // Two animation frames show the preparation screen before any substantial work.
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      await Promise.all([prepareWorld(nextStage,plan.seed??seed,asCampaign,plan.revision??campaignRevision,false,plan.profiles??profileMode),FMusic.warmup(nextStage%3),brain?.prepare()]);await audio.prepare?.(nextStage%3);brainStatus();if(ticket!==preparationSerial)return;
+      await Promise.all([prepareWorld(nextStage,plan.seed??seed,asCampaign,plan.revision??campaignRevision,false,plan.profiles??profileMode),FMusic.warmup(nextStage%3,plan.seed??seed),brain?.prepare()]);await audio.prepare?.(nextStage%3,plan.seed??seed);await audio.prepareCues?.(window.FMusic?.cueIds?.()||[]);brainStatus();if(ticket!==preparationSerial)return;
       $('loading-detail').textContent='Assemblage du territoire et de la simulation…';$('loading-bar').style.width='76%';
       await new Promise(resolve=>requestAnimationFrame(resolve));if(ticket!==preparationSerial)return;
       action();

@@ -1,0 +1,100 @@
+{
+  "mode": "worker",
+  "stats": {
+    "requests": 13,
+    "completed": 13,
+    "fallbacks": 0,
+    "chunks": 0
+  },
+  "repeatEqual": true,
+  "allocationsDuringPlay": 0,
+  "rows": [
+    {
+      "stage": "title",
+      "equal": true,
+      "adoptMs": 0.30000001192092896,
+      "uploadElapsedMs": 57.40000003576279,
+      "bytes": 183704
+    },
+    {
+      "stage": 0,
+      "seed": 96,
+      "equal": true,
+      "adoptMs": 0.2999999523162842,
+      "uploadElapsedMs": 45,
+      "bytes": 300880
+    },
+    {
+      "stage": 1,
+      "seed": 96,
+      "equal": true,
+      "adoptMs": 0.09999996423721313,
+      "uploadElapsedMs": 45.30000001192093,
+      "bytes": 235360
+    },
+    {
+      "stage": 2,
+      "seed": 96,
+      "equal": true,
+      "adoptMs": 0.09999996423721313,
+      "uploadElapsedMs": 46.200000047683716,
+      "bytes": 251504
+    },
+    {
+      "stage": "calm",
+      "equal": true,
+      "adoptMs": 0.09999996423721313,
+      "uploadElapsedMs": 94.69999998807907,
+      "bytes": 6400
+    },
+    {
+      "stage": "doom1",
+      "equal": true,
+      "adoptMs": 0.10000002384185791,
+      "uploadElapsedMs": 93.09999996423721,
+      "bytes": 8960
+    },
+    {
+      "stage": "doom2",
+      "equal": true,
+      "adoptMs": 0,
+      "uploadElapsedMs": 94.10000002384186,
+      "bytes": 8960
+    },
+    {
+      "stage": "thrash1",
+      "equal": true,
+      "adoptMs": 0.09999996423721313,
+      "uploadElapsedMs": 91.70000004768372,
+      "bytes": 8960
+    },
+    {
+      "stage": "thrash2",
+      "equal": true,
+      "adoptMs": 0,
+      "uploadElapsedMs": 90.80000001192093,
+      "bytes": 8960
+    },
+    {
+      "stage": "combat",
+      "equal": true,
+      "adoptMs": 0,
+      "uploadElapsedMs": 91.09999996423721,
+      "bytes": 8960
+    },
+    {
+      "stage": "boss",
+      "equal": true,
+      "adoptMs": 0.09999996423721313,
+      "uploadElapsedMs": 93.30000001192093,
+      "bytes": 10240
+    },
+    {
+      "stage": "victory",
+      "equal": true,
+      "adoptMs": 0.19999998807907104,
+      "uploadElapsedMs": 91.40000003576279,
+      "bytes": 8960
+    }
+  ]
+}

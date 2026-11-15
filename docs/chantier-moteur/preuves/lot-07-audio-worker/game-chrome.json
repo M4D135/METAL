@@ -1,0 +1,324 @@
+{
+  "schema": "metal-profiles-browser-v1",
+  "artifactSha256": "83942b234744229bb6378683a94ff305427c9aecf9a939ef2bbb9660658f9265",
+  "physicalController": false,
+  "results": [
+    {
+      "name": "new-class-run",
+      "profile": "light",
+      "hud": "LÉGER100 % VOLPasser au lourdT",
+      "goals": {
+        "breach": "profile-breach",
+        "mechanism": "profile-power",
+        "door": "profile-door",
+        "boss": "light",
+        "entry": {
+          "x": 48.304749802348674,
+          "y": 3.2,
+          "z": 0
+        },
+        "after": {
+          "x": 63.804749802348674,
+          "y": 3.2,
+          "z": 0
+        }
+      }
+    },
+    {
+      "name": "desktop-visible-profile-button",
+      "hidden": false,
+      "label": "Personnage actif : léger. Passer au lourd. Raccourci : T",
+      "text": "LÉGER100 % VOLPasser au lourdT",
+      "key": "T",
+      "hit": "profile-button",
+      "w": 198,
+      "h": 50
+    },
+    {
+      "name": "profile-button-click-and-keyboard-activation",
+      "passed": true
+    },
+    {
+      "name": "pad-RB-held-switches-once",
+      "before": {
+        "x": -41.6,
+        "z": 44.800000000000004,
+        "ammo": [
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "after": {
+        "x": -41.6,
+        "z": 44.800000000000004,
+        "ammo": [
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "profile": "heavy",
+      "hud": "LOURDEXPLOSIFSPasser au légerRB",
+      "effects": 1,
+      "weapon": "PISTOLET AUTOMATIQUE"
+    },
+    {
+      "name": "pad-A-held-jetpack",
+      "before": 4,
+      "after": 2.550000000000005,
+      "jumpHeld": true,
+      "airborne": true
+    },
+    {
+      "name": "other-character-marker",
+      "hidden": false,
+      "text": "→ LOURD · 8 m · ↓8 m",
+      "other": {
+        "x": -41.6,
+        "y": 0,
+        "z": 44.800000000000004,
+        "yaw": 0,
+        "pitch": 0,
+        "airborne": false,
+        "airVX": 0,
+        "airVY": 0,
+        "airVZ": 0,
+        "airTime": 0,
+        "padCooldown": 0,
+        "padId": null
+      }
+    },
+    {
+      "name": "checkpoint-enables-both-profiles",
+      "save": 1,
+      "classes": [
+        "light",
+        "heavy"
+      ]
+    },
+    {
+      "name": "touch-profile-and-held-flight",
+      "fuel": 2.6666666666666714,
+      "profile": "light",
+      "touch": true,
+      "buttons": [
+        {
+          "id": "jump-button",
+          "x": 244,
+          "y": 776,
+          "w": 48,
+          "h": 48,
+          "hit": "jump-button"
+        },
+        {
+          "id": "profile-button",
+          "x": 16,
+          "y": 656,
+          "w": 124,
+          "h": 52,
+          "hit": "profile-button"
+        }
+      ]
+    },
+    {
+      "name": "touch-fire-aim-floating-sprint-cancel",
+      "passed": true
+    },
+    {
+      "name": "touch-portrait",
+      "layout": [
+        {
+          "id": "move-zone",
+          "x": 16,
+          "y": 720,
+          "w": 104,
+          "h": 104,
+          "hit": "move-zone"
+        },
+        {
+          "id": "fire-button",
+          "x": 302,
+          "y": 752,
+          "w": 72,
+          "h": 72,
+          "hit": "fire-button"
+        },
+        {
+          "id": "jump-button",
+          "x": 244,
+          "y": 776,
+          "w": 48,
+          "h": 48,
+          "hit": "jump-button"
+        },
+        {
+          "id": "profile-button",
+          "x": 16,
+          "y": 656,
+          "w": 124,
+          "h": 52,
+          "hit": "profile-button"
+        },
+        {
+          "id": "dash-button",
+          "x": 326,
+          "y": 694,
+          "w": 48,
+          "h": 48,
+          "hit": "dash-button"
+        },
+        {
+          "id": "pulse-button",
+          "x": 148,
+          "y": 660,
+          "w": 48,
+          "h": 48,
+          "hit": "pulse-button"
+        },
+        {
+          "id": "melee-button",
+          "x": 268,
+          "y": 694,
+          "w": 48,
+          "h": 48,
+          "hit": "melee-button"
+        }
+      ]
+    },
+    {
+      "name": "touch-landscape",
+      "layout": [
+        {
+          "id": "move-zone",
+          "x": 16,
+          "y": 266,
+          "w": 104,
+          "h": 104,
+          "hit": "move-zone"
+        },
+        {
+          "id": "fire-button",
+          "x": 756,
+          "y": 298,
+          "w": 72,
+          "h": 72,
+          "hit": "fire-button"
+        },
+        {
+          "id": "jump-button",
+          "x": 698,
+          "y": 322,
+          "w": 48,
+          "h": 48,
+          "hit": "jump-button"
+        },
+        {
+          "id": "profile-button",
+          "x": 16,
+          "y": 202,
+          "w": 124,
+          "h": 52,
+          "hit": "profile-button"
+        },
+        {
+          "id": "dash-button",
+          "x": 780,
+          "y": 240,
+          "w": 48,
+          "h": 48,
+          "hit": "dash-button"
+        },
+        {
+          "id": "pulse-button",
+          "x": 148,
+          "y": 206,
+          "w": 48,
+          "h": 48,
+          "hit": "pulse-button"
+        },
+        {
+          "id": "melee-button",
+          "x": 722,
+          "y": 240,
+          "w": 48,
+          "h": 48,
+          "hit": "melee-button"
+        }
+      ]
+    },
+    {
+      "name": "touch-small",
+      "layout": [
+        {
+          "id": "move-zone",
+          "x": 16,
+          "y": 456,
+          "w": 92,
+          "h": 92,
+          "hit": "move-zone"
+        },
+        {
+          "id": "fire-button",
+          "x": 232,
+          "y": 476,
+          "w": 72,
+          "h": 72,
+          "hit": "fire-button"
+        },
+        {
+          "id": "jump-button",
+          "x": 174,
+          "y": 500,
+          "w": 48,
+          "h": 48,
+          "hit": "jump-button"
+        },
+        {
+          "id": "profile-button",
+          "x": 16,
+          "y": 380,
+          "w": 124,
+          "h": 52,
+          "hit": "profile-button"
+        },
+        {
+          "id": "dash-button",
+          "x": 256,
+          "y": 418,
+          "w": 48,
+          "h": 48,
+          "hit": "dash-button"
+        },
+        {
+          "id": "pulse-button",
+          "x": 148,
+          "y": 384,
+          "w": 48,
+          "h": 48,
+          "hit": "pulse-button"
+        },
+        {
+          "id": "melee-button",
+          "x": 198,
+          "y": 418,
+          "w": 48,
+          "h": 48,
+          "hit": "melee-button"
+        },
+        {
+          "id": "left-fire-button",
+          "x": 116,
+          "y": 500,
+          "w": 48,
+          "h": 48,
+          "hit": "left-fire-label"
+        }
+      ]
+    }
+  ]
+}

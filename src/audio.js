@@ -194,6 +194,7 @@
     effectNames: effectNames.slice(),
     makeupDb: makeupDb,
     create: function (options) {
+      options=options||{};
       var recipes = Object.create(null), table = options && options.recipes;
       if (table) Object.keys(table).forEach(function (name) { var r = table[name]; if (r && typeof r.synth === 'function' && effectNames.indexOf(name) >= 0) recipes[name] = {synth: r.synth, job: typeof r.job === 'function' ? r.job : null, variants: r.variants === 1 ? 1 : 2}; });
       // A game may add its own one-shot names (confirmations, stings). They are
@@ -514,7 +515,7 @@
         var force=Math.min(1.25,.28+Math.sqrt(energy)*.55),mass=Math.max(.15,Math.min(8,Number(value.mass)||1));
         pcm(action+':'+kind,e.level*force*(action==='break'?.36:action==='land'?.15:.22),e.pan,value,Math.max(.74,Math.min(1.18,1.04-Math.log2(mass)*.055)));
       }
-      function warmBank(yieldWork) {
+      function warmBank(yieldWork,localOnly) {
         if(!ctx||disposed)return Promise.resolve(false);
         if(stats.pcmReady)return Promise.resolve(true);
         function variantsOf(name){var recipe=recipes[name]||extras[name];return recipe?recipe.variants:name.indexOf('motor:')===0?1:2;}
@@ -544,6 +545,20 @@
         var bankNames = extraNames.length ? effectNames.concat(extraNames) : effectNames;
         if(!yieldWork||typeof setTimeout!=='function'){bankNames.forEach(build);return Promise.resolve(finish());}
         if(warming)return warming;
+        if(!localOnly&&typeof options.preparePCM==='function'){
+          warming=(async function(){
+            for(var name of bankNames)for(var variant=0;variant<variantsOf(name);variant++){
+              if(disposed||!ctx)return false;if(bank[name]&&bank[name].length>variant)continue;
+              var data=await options.preparePCM(name,variant);
+              if(disposed||!ctx)return false;
+              if(!data||!(data instanceof Float32Array)||!data.length||data.length>220500)throw new Error('Unprepared PCM');
+              for(var i=0;i<data.length;i++)if(!Number.isFinite(data[i]))throw new Error('Invalid PCM');
+              if(!bank[name])bank[name]=[];bufferFor(name,data);
+            }
+            return finish();
+          })().catch(function(){warming=null;return disposed?false:warmBank(true,true);});
+          return warming;
+        }
         // LOAD-13: the loading screen yields on a time budget, never on an
         // effect count. One unit of work is one variant, and the built-in
         // renderer is resumable, so even the heaviest break stops inside the
@@ -809,21 +824,30 @@
       api = {
         start: resume,
         resume: resume,
-        prepare: function (value) {
+        prepare: function (value, seed) {
           var next=Math.max(0,Math.min(2,Math.floor(Number(value)||0)));
           // The user gesture opens the shared context through start/resume.
           // This method only prepares existing player buffers after pure PCM
           // warmup; it neither opens a device nor changes the active score.
           if (disposed) return Promise.resolve(false);
-          var fx=warmBank(true),score=window.FMusic?FMusic.warmup(next):Promise.resolve(false);
-          return Promise.all([fx,score]).then(function () { return !!(ctx && !disposed && stats.pcmReady && (!music || music.prepare(next))); });
+          var fx=warmBank(true),score=window.FMusic?FMusic.warmup(next,seed):Promise.resolve(false);
+          return Promise.all([fx,score]).then(function () {
+            if(!ctx||disposed||!stats.pcmReady)return false;
+            if(!music)return true;return options.asyncPrepare?music.prepareAsync(next,seed):music.prepare(next,seed);
+          });
+        },
+        prepareCues: async function (values) {
+          if(disposed||!window.FMusic)return false;
+          for(var value of values){await FMusic.warmup(value);if(disposed)return false;
+            if(music){if(options.asyncPrepare)await music.prepareAsync(value);else music.prepare(value);}}
+          return !!ctx&&!disposed;
         },
         prepareTitle: function () {
           // Warm only the title instruments. Opening the device still belongs
           // to start/resume in a user gesture; no world effects are synthesized.
           if (disposed || !window.FMusic) return Promise.resolve(false);
           return FMusic.warmup('title').then(function () {
-            return !!(ctx && live() && !disposed && music && music.prepare('title'));
+            if(!ctx||!live()||disposed||!music)return false;return options.asyncPrepare?music.prepareAsync('title'):music.prepare('title');
           });
         },
         setTitlePlaying: function (value) {

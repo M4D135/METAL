@@ -1,0 +1,81 @@
+{
+  "mode": "worker",
+  "stats": {
+    "requests": 10,
+    "completed": 10,
+    "fallbacks": 0,
+    "chunks": 66
+  },
+  "results": [
+    {
+      "job": "world",
+      "index": 0,
+      "remoteHash": "df81723b",
+      "localHash": "df81723b",
+      "elapsed": 232.39999997615814,
+      "frames": 2,
+      "ticks": 52,
+      "meshes": 14063,
+      "chunks": 32
+    },
+    {
+      "job": "world",
+      "index": 17,
+      "remoteHash": "bd45e478",
+      "localHash": "bd45e478",
+      "elapsed": 198.69999998807907,
+      "frames": 0,
+      "ticks": 48,
+      "meshes": 17490,
+      "chunks": 66
+    },
+    {
+      "job": "music",
+      "stage": "title",
+      "equal": true,
+      "bytes": 183704
+    },
+    {
+      "job": "music",
+      "stage": 0,
+      "equal": true,
+      "bytes": 259920
+    },
+    {
+      "job": "music",
+      "stage": 1,
+      "equal": true,
+      "bytes": 194400
+    },
+    {
+      "job": "music",
+      "stage": 2,
+      "equal": true,
+      "bytes": 210544
+    },
+    {
+      "job": "fx",
+      "name": "pistol",
+      "equal": true,
+      "samples": 7498
+    },
+    {
+      "job": "fx",
+      "name": "smg",
+      "equal": true,
+      "samples": 5292
+    },
+    {
+      "job": "fx",
+      "name": "shotgun",
+      "equal": true,
+      "samples": 20286
+    },
+    {
+      "job": "fx",
+      "name": "rocket",
+      "equal": true,
+      "samples": 17640
+    }
+  ]
+}

@@ -631,25 +631,52 @@
       stats,reset(target){id=cues[target]?target:id;position=0;bar=0;pending=null;stats.pending='';stats.barIndex=0;}
     };
   }
-  let preparation=Promise.resolve();const preparing=new Map();
-  function warmup(value){
-    const key=keyOf(value),cue=isCue(key);
-    const info=()=>({...getTrack(key),bytes:cue?cueBytes(key):moduleFor(key==='title'?'title':Number(key)).bytes.length});
-    if(cue?cueModules.has(key):modules.has(key==='title'?'title':Number(key)))return Promise.resolve(info());
-    if(preparing.has(key))return preparing.get(key);
+  function cacheKey(value,seed){const key=keyOf(value);return isCue(key)||key==='title'||seed===undefined?key:key+'/'+seed;}
+  function cloneData(value,seen=new Map()){
+    if(!value||typeof value!=='object')return value;if(seen.has(value))return seen.get(value);
+    if(ArrayBuffer.isView(value)){const copy=new value.constructor(value);seen.set(value,copy);return copy;}
+    const copy=Array.isArray(value)?[]:{};seen.set(value,copy);for(const key of Object.keys(value))copy[key]=cloneData(value[key],seen);return copy;
+  }
+  function prepared(value,seed){
+    const key=keyOf(value);if(isCue(key)||key==='title')seed=undefined;
+    return cloneData({key,seed,score:scoreOf(key,seed),module:isCue(key)?null:moduleFor(key==='title'?'title':Number(key),seed)});
+  }
+  function adoptPrepared(packet){
+    if(!packet||keyOf(packet.key)!==packet.key||packet.seed!==undefined&&!Number.isFinite(packet.seed))return false;
+    const key=packet.key,score=packet.score,id=cacheKey(key,packet.seed);
+    const samplesOK=q=>q&&Array.isArray(q.samples)&&q.samples.length<=31&&q.samples.every(v=>v&&v.pcm instanceof Int8Array&&v.pcm.length<=131072&&Number.isFinite(v.volume));
+    if(!samplesOK(score)||!(score.bytes instanceof Uint8Array)||score.bytes.length>1048576||!Number.isFinite(score.bpm)||score.bpm<30||score.bpm>255||![4,5].includes(score.channels)||!Array.isArray(score.order)||!score.order.length||!score.segments)return false;
+    for(const name of score.order){const q=score.segments[name];if(!q||!Number.isInteger(q.pattern)||q.pattern<0||q.pattern*64*score.channels*4>=score.bytes.length||!Number.isInteger(q.bars)||q.bars<1)return false;}
+    if(!isCue(key)&&(!samplesOK(packet.module)||!(packet.module.bytes instanceof Uint8Array)||packet.module.bytes.length<1084||!Array.isArray(packet.module.order)))return false;
+    if(id!==key)for(const old of scoreCache.keys())if(old!==key&&old.startsWith(key+'/'))scoreCache.delete(old);
+    scoreCache.set(id,score);
+    if(isCue(key))cueModules.set(key,score);
+    else{const stage=key==='title'?'title':Number(key),mk=packet.seed===undefined?stage:stage+'/'+packet.seed;
+      if(mk!==stage)for(const old of modules.keys())if(old!==stage&&String(old).startsWith(stage+'/'))modules.delete(old);
+      modules.set(mk,packet.module);}
+    return true;
+  }
+  let preparation=Promise.resolve(),preparer=null;const preparing=new Map();
+  function setPreparer(fn){preparer=typeof fn==='function'?fn:null;}
+  function warmup(value,seed){
+    const key=keyOf(value),cue=isCue(key);if(cue||key==='title')seed=undefined;
+    const id=cacheKey(key,seed),stage=key==='title'?'title':Number(key),mk=seed===undefined?stage:stage+'/'+seed;
+    const info=()=>({...getTrack(key,seed),bytes:cue?cueBytes(key):moduleFor(stage,seed).bytes.length});
+    if(cue?cueModules.has(key):modules.has(mk))return Promise.resolve(info());
+    if(preparing.has(id))return preparing.get(id);
     const pause=()=>new Promise(resolve=>typeof G.setTimeout==='function'?G.setTimeout(resolve,0):resolve());
     const task=preparation.then(async()=>{
-      // Instrument-sized jobs let a loading screen paint between expensive
-      // synthesis steps. This prepares PCM/score only: no device is opened.
+      if(preparer)try{const packet=await preparer(key,seed);if(packet&&adoptPrepared(packet))return info();}catch{}
+      // The fallback retains yielding instrument phases and the same score.
       for(let i=0;i<6;i++)if(!instrumentBank?.[i]){await pause();instrument(i);}
       if(key==='title')for(let i=0;i<5;i++)if(!titleBank?.[i]){await pause();titleInstrument(i);}
       if(!tensionSample){await pause();tensionSample={name:'MTL TRITONE SCRAPE',volume:32,pcm:strings('open',[0,6,12],1.85,4101)};}
-      const steps=cue?cueSteps(key):moduleSteps(key==='title'?'title':Number(key));
+      const steps=cue?cueSteps(key):moduleSteps(stage,seed);
       if(steps)for(const phase of steps.phases){await pause();phase();}
       await pause();return info();
     });
-    preparing.set(key,task);preparation=task.catch(()=>{});
-    task.then(()=>preparing.delete(key),()=>preparing.delete(key));return task;
+    preparing.set(id,task);preparation=task.catch(()=>{});
+    task.then(()=>preparing.delete(id),()=>preparing.delete(id));return task;
   }
   function moduleSteps(stage,seed){
     // LOAD-13: the expensive phases of a module — drum kit, compose, serialize,
@@ -755,10 +782,10 @@
       if(at===undefined){const cue=CUE_IDS.indexOf(value);at=(cue>=0?4+cue:value==='title'?3:Number(value))*32;slots.set(value,at);}
       return at;
     }
-    function buffer(sample,whichKey=key){
+    function buffer(sample,whichKey=key,whichSeed=seed){
       const cacheKey=(whichKey===key?slot:slotOf(whichKey))+sample;
       if(buffers.has(cacheKey))return buffers.get(cacheKey);
-      const source=whichKey===key&&score?score:scoreOf(whichKey,seed),data=source.samples[sample-1].pcm,b=ctx.createBuffer(1,data.length,RATE),channel=b.getChannelData(0);for(let i=0;i<data.length;i++)channel[i]=data[i]/128;
+      const source=whichKey===key&&score?score:scoreOf(whichKey,whichSeed),data=source.samples[sample-1].pcm,b=ctx.createBuffer(1,data.length,RATE),channel=b.getChannelData(0);for(let i=0;i<data.length;i++)channel[i]=data[i]/128;
       buffers.set(cacheKey,b);return b;
     }
     function note(track,sample,pitch,time){
@@ -842,16 +869,24 @@
       setThreat(value){const next=clamp(Number(value)||0,0,1);if(disposed||abs(next-threat)<.01)return;threat=next;director.setIntensity(next);mix();},
       setVolume(value){if(disposed)return;const next=clamp(Number(value)||0,0,1);if(next===volume)return;volume=next;if(!volume){stopAll();nextTime=null;rowInBar=0;}level();},
       setPlaying(value){if(disposed||playing===!!value)return;playing=!!value;stats.playing=playing;if(!playing){stopAll();rowInBar=0;}else if(director.realign)director.realign();nextTime=null;level();},
-      prepare(value=key){
-        if(!ready||disposed)return false;const next=keyOf(value),score=scoreOf(next,seed);
+      prepare(value=key,nextSeed=seed){
+        if(!ready||disposed)return false;const next=keyOf(value),score=scoreOf(next,nextSeed);
         // Three world banks plus the independent title bank, retained across changes.
         // Loading a future bank does not seek, switch stage or start any notes.
-        for(let i=0;i<score.samples.length;i++)if(score.samples[i]&&score.samples[i].pcm.length>2)buffer(i+1,next);
+        for(let i=0;i<score.samples.length;i++)if(score.samples[i]&&score.samples[i].pcm.length>2)buffer(i+1,next,nextSeed);
         return true;
+      },
+      async prepareAsync(value=key,nextSeed=seed){
+        if(!ready||disposed)return false;const next=keyOf(value),score=scoreOf(next,nextSeed);
+        for(let i=0;i<score.samples.length;i++)if(score.samples[i]?.pcm.length>2){
+          if(disposed)return false;buffer(i+1,next,nextSeed);
+          if(typeof G.setTimeout==='function')await new Promise(resolve=>G.setTimeout(resolve,0));
+        }
+        return !disposed;
       },
       tick,getModule,getTrack,stats,
       dispose(){if(disposed)return;stopAll(true);disposed=true;playing=false;stats.playing=false;buffers.clear();for(const n of nodes)try{n.disconnect();}catch(_){}nodes.length=0;}
     };
   }
-  G.FMusic={create,getModule,getTrack,warmup,isCue,cueIds:()=>CUE_IDS.slice(),cueDescriptor,descriptorTable};
+  G.FMusic={create,getModule,getTrack,warmup,prepared,adoptPrepared,setPreparer,isCue,cueIds:()=>CUE_IDS.slice(),cueDescriptor,descriptorTable};
 })(typeof window!=='undefined'?window:globalThis);

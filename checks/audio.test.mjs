@@ -1135,3 +1135,20 @@ test('la simulation amène la meute, le colosse et lacier tenu',async()=>{
   assert(app.tracker.stats.scheduledNotes>0,'le transport na jamais été coupé par un changement de pièce');
   app.audio.dispose();
 });
+
+
+test('prepared PCM is uploaded once and a failed provider completes the remaining bank locally',async()=>{
+  for(const failAt of [0,2]){
+    let calls=0,r;const options={preparePCM:async(name,variant)=>{calls++;if(calls===failAt)throw Error('worker failed');return r.scope.FAudio.synthesize(name,variant,22050);}};
+    r=rig({options});r.scope.setTimeout=fn=>{queueMicrotask(fn);return 0;};
+    await r.audio.start();assert.equal(await r.audio.prepare(0),true);
+    const count=r.scope.FAudio.effectNames.reduce((n,key)=>n+(key.startsWith('motor:')?1:2),0);
+    assert.equal(r.audio.stats.pcmBuffers,count);assert.equal(calls,failAt||count);
+    const allocated=r.ctx.buffers.length;await r.audio.prepare(0);r.audio.setPlaying(true);r.audio.shot();assert.equal(r.ctx.buffers.length,allocated);r.audio.dispose();
+  }
+});
+test('disposing while a prepared PCM packet is in flight prevents its upload',async()=>{
+  let release;const waiting=new Promise(resolve=>release=resolve),r=rig({options:{preparePCM:()=>waiting}});
+  r.scope.FMusic.warmup=async()=>true;await r.audio.start();const pending=r.audio.prepare(0),before=r.ctx.buffers.length;
+  const pcm=r.scope.FAudio.synthesize('pistol',0,22050);r.audio.dispose();release(pcm);assert.equal(await pending,false);assert.equal(r.ctx.buffers.length,before);
+});
