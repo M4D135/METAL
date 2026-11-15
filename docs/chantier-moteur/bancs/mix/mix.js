@@ -68,7 +68,9 @@ function buildAudio(v) {
   if (v.noGuard) s = patchOnce(s, 'master.connect(limiter); limiter.connect(guard); guard.connect(ctx.destination);', 'master.connect(limiter); limiter.connect(ctx.destination);', 'ng');
   if (v.noEcho) s = patchOnce(s, 'effects.connect(send); send.connect(delay); delay.connect(damping);', 'send.connect(delay); delay.connect(damping);', 'ne');
   if (v.tell === 'boss04') { // BOSS-04 : gain du tell ×3 (0,09 → 0,27) ; la portée 90 m est appliquée au rejeu
-    s = patchOnce(s, "tone(92,180,.52,.09*g,'triangle',0,e.pan,1100);tone(370,530,.28,.035*g,'sine',.08,-e.pan*.3);noise(.16,.035*g,720,e.pan,.12,'bandpass');", "tone(92,180,.52,.27*g,'triangle',0,e.pan,1100);tone(370,530,.28,.105*g,'sine',.08,-e.pan*.3);noise(.16,.105*g,720,e.pan,.12,'bandpass');", 'tell');
+    // Depuis T5/MIX-05 le dépôt porte déjà ces gains : la variante ne patche plus
+    // rien et mesure la source telle quelle. Elle reste pour rejouer l'audit.
+    if (s.includes(".52,.09*g,'triangle'")) s = patchOnce(s, "tone(92,180,.52,.09*g,'triangle',0,e.pan,1100);tone(370,530,.28,.035*g,'sine',.08,-e.pan*.3);noise(.16,.035*g,720,e.pan,.12,'bandpass');", "tone(92,180,.52,.27*g,'triangle',0,e.pan,1100);tone(370,530,.28,.105*g,'sine',.08,-e.pan*.3);noise(.16,.105*g,720,e.pan,.12,'bandpass');", 'tell');
   }
   if (v.loop14 === 'exact' || v.loop14 === 'seuil') { // LOOP-14 : setters qui mémorisent, une mise à jour par image, dédoublonnage
     const thr = v.loop14 === 'seuil';
@@ -148,6 +150,10 @@ async function render(scene, v, opt = {}) {
         for (const [name, o] of fr.c) {
           let arg = o;
           if (name === 'bossTell' && v.tell === 'boss04' && o.distance !== undefined) { const fade = Math.max(0, 1 - o.distance / 90); arg = Object.assign({}, o, {level: fade * fade / (1 + o.distance * .018) * (o.occluded ? .34 : 1)}); }
+          // MIX-05 tel que livre METAL : portee 90 m dans ranges ET plancher de
+          // niveau 0,6 dans l'enclos (src/soundscape.js). La scene (d) est l'arène
+          // du boss, le joueur y est : le plancher s'applique.
+          if (name === 'bossTell' && v.tell === 'metal' && o.distance !== undefined) { const fade = Math.max(0, 1 - o.distance / 90); arg = Object.assign({}, o, {level: Math.max(.6, fade * fade / (1 + o.distance * .018) * (o.occluded ? .34 : 1))}); }
           audio[name](Object.assign({}, arg));
         }
         const s = fr.s; audio.setEnvironment(scene.env || {}, s[0]); audio.setMachinery(s[1], s[2], s[3], s[4]); audio.setSteam(s[5], s[6], s[7]); audio.setThreat(s[8]); audio.setPressure(s[9]); audio.tick(1 / HZ);

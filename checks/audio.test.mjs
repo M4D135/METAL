@@ -997,3 +997,20 @@ test('une boucle d ambiance au repos est debranchee de son filtre, sans etre arr
   assert(!air.connections.includes(filtreAir),'le vent a zero est debranche de son filtre');
   r.audio.dispose();
 });
+
+// MIX-05 (lot 11b T6) : une alerte de jeu tient son caniveau, quelle que soit la distance.
+test('l annonce du boss abat la musique a 0,38 quel que soit son niveau : fixed ignore cueLevel (MIX-05)',async()=>{
+  const r=rig({recipes:true});r.audio.setStage(1);r.audio.setPlaying(true);await r.audio.start();r.audio.tick();
+  const base=r.audio.stats.duckGain;
+  r.audio.bossTell({level:.2,pan:0});const loin=r.audio.stats.duckGain;
+  r.ctx.advance(1.5);r.audio.tick();assert.equal(r.audio.stats.duckGain,base,'le caniveau se relache entre deux annonces');
+  r.audio.bossTell({level:1,pan:0});const dessus=r.audio.stats.duckGain;
+  assert(Math.abs(loin-dessus)<1e-12,'le caniveau de l annonce ne suit plus son niveau : '+loin+' contre '+dessus);
+  assert(Math.abs(loin-base*.38)<1e-9,'l annonce abat la musique a 0,38 de son niveau, mesure '+loin/base);
+  r.ctx.advance(1.5);r.audio.tick();
+  r.audio.hurt({level:.2,pan:0});const blessureLoin=r.audio.stats.duckGain;
+  r.ctx.advance(1.5);r.audio.tick();
+  r.audio.hurt({level:1,pan:0});const blessureDessus=r.audio.stats.duckGain;
+  assert(blessureDessus<blessureLoin-1e-9,'un cue sans fixed reste proportionnel au volume des effets : '+blessureLoin+' puis '+blessureDessus);
+  r.audio.dispose();
+});

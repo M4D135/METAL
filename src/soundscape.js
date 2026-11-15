@@ -2,8 +2,13 @@
 (function(G){
   'use strict';
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const ranges={materialImpact:19,materialBreak:30,debrisLand:15,explosion:60,bossImpact:65,bossRoar:100,bossPhase:80,bossDeath:90,pipeLeak:20,steamWarning:17,liftStart:22,liftStop:22,doorOpen:18};
+  const ranges={materialImpact:19,materialBreak:30,debrisLand:15,explosion:60,bossTell:90,bossImpact:65,bossRoar:100,bossPhase:80,bossDeath:90,pipeLeak:20,steamWarning:17,liftStart:22,liftStop:22,doorOpen:18};
   const personal=new Set(['shot','fracture','rocket','grenadeLaunch','melee','dash','pulse','land']);
+  // MIX-05 : les telegraphes du boss sont des alertes de jeu, pas des sons du
+  // decor. Dans l'enclos, leur niveau ne peut pas descendre sous 0,6 ; le
+  // panoramique et l'occultation restent ceux de la localisation.
+  const tells=new Set(['bossTell','bossRoar','bossImpact','bossPhase']);
+  function inArena(sim){const a=sim.state.world&&sim.state.world.bossArena,p=sim.state.player;return !!a&&!!p&&Math.hypot(p.x-a.x,p.z-a.z)<a.r&&Math.abs((p.y||0)-a.y)<5;}
   function create(){
     const cache=new Map();let frameKey='',probes=0,revision='',currentSim=null;
     function reset(){cache.clear();frameKey=revision='';probes=0;currentSim=null;}
@@ -34,7 +39,9 @@
     }
     function event(sim,e){
       if(personal.has(e.name)&&(e.owner==='player'||e.actor==='player'||!Number.isFinite(e.x)))return {...e,level:1,pan:0,occluded:0};
-      return {...e,...locate(sim,e,ranges[e.name]||36)};
+      const located={...e,...locate(sim,e,ranges[e.name]||36)};
+      if(tells.has(e.name)&&inArena(sim))located.level=Math.max(.6,located.level);
+      return located;
     }
     function sample(sim){
       const state=sim.state,world=state.world,p=state.player,alive=q=>q.destructibleId===undefined||!sim.destruction||sim.destruction.isAlive(q.destructibleId);

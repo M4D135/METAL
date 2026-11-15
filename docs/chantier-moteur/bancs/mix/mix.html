@@ -39,7 +39,7 @@
     }
     if (job === 'tell') { // BOSS-04 : niveau de l'annonce du boss dans le mixage complet de la scène (d)
       out.rows = []; const sc = scenes.d, sr = M.SR, only = {...sc, frames: sc.frames.map(f => ({...f, c: f.c.filter(c => c[0] === 'bossTell'), f: null}))};
-      for (const tell of ['', 'boss04']) for (const recipe of ['cur', 'doom']) {
+      for (const tell of ['', 'boss04', 'metal']) for (const recipe of ['cur', 'doom']) {
         const v = {recipe, tell}, full = await M.render(sc, v), solo = await M.render(only, v, {music: 0}), mono = (b, c) => { const x = b.getChannelData(c), y = b.getChannelData(c + 1), o = new Float32Array(x.length); for (let i = 0; i < x.length; i++) o[i] = (x[i] + y[i]) * .5; return o; };
         const tl = mono(solo.buffer, 8), mu = mono(full.buffer, 6), fx = mono(full.buffer, 8);
         sc.frames.forEach((fr, f) => { for (const [name, o] of fr.c) if (name === 'bossTell') { const t = Math.ceil((M.K0 + f) / M.HZ * sr / 128) * 128, w = Math.round(.52 * sr), a = M.rmsRange(tl, t, t + w), m = M.rmsRange(mu, t, t + w), x = M.rmsRange(fx, t, t + w);

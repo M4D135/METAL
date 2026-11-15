@@ -881,7 +881,7 @@
         },
         bossTell: function (value) {
           var e = effectEvent('bossTell',value,.25); if (!e) return; var g = e.level;
-          tone(92,180,.52,.09*g,'triangle',0,e.pan,1100);tone(370,530,.28,.035*g,'sine',.08,-e.pan*.3);noise(.16,.035*g,720,e.pan,.12,'bandpass');
+          tone(92,180,.52,.27*g,'triangle',0,e.pan,1100);tone(370,530,.28,.105*g,'sine',.08,-e.pan*.3);noise(.16,.105*g,720,e.pan,.12,'bandpass');
         },
         bossRoar: function (value) {
           var e = effectEvent('bossRoar',value,.6); if (!e) return; var g = e.level;

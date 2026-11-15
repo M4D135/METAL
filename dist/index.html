@@ -5632,7 +5632,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
         },
         bossTell: function (value) {
           var e = effectEvent('bossTell',value,.25); if (!e) return; var g = e.level;
-          tone(92,180,.52,.09*g,'triangle',0,e.pan,1100);tone(370,530,.28,.035*g,'sine',.08,-e.pan*.3);noise(.16,.035*g,720,e.pan,.12,'bandpass');
+          tone(92,180,.52,.27*g,'triangle',0,e.pan,1100);tone(370,530,.28,.105*g,'sine',.08,-e.pan*.3);noise(.16,.105*g,720,e.pan,.12,'bandpass');
         },
         bossRoar: function (value) {
           var e = effectEvent('bossRoar',value,.6); if (!e) return; var g = e.level;
@@ -5886,7 +5886,11 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   // timbre de la musique : le retour reste à tau 0,18 s.
   var duckClasses = [
     {cues: ['shot'], hold: .36},
-    {cues: ['fracture', 'rocket', 'grenade', 'grenadeLaunch'], hold: .30}
+    {cues: ['fracture', 'rocket', 'grenade', 'grenadeLaunch'], hold: .30},
+    // MIX-05 : a 17 m l'annonce du boss ne duckait presque pas la musique (le duck
+    // suivait le niveau du son, ×0,84 soit −1,5 dB). Une alerte de jeu doit tenir
+    // son caniveau, quel que soit la distance : fixed ignore cueLevel.
+    {cues: ['bossTell', 'bossRoar', 'bossImpact', 'bossPhase'], fixed: true}
   ];
   // MIX-04 : le préréglage « Doom » mesuré par le banc. Les rapports du joueur
   // montent de 3 dB (×1,41 : pistolet 0,89, SMG 0,69, pompe 1,09, roquette 0,80
@@ -5905,8 +5909,13 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
 (function(G){
   'use strict';
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const ranges={materialImpact:19,materialBreak:30,debrisLand:15,explosion:60,bossImpact:65,bossRoar:100,bossPhase:80,bossDeath:90,pipeLeak:20,steamWarning:17,liftStart:22,liftStop:22,doorOpen:18};
+  const ranges={materialImpact:19,materialBreak:30,debrisLand:15,explosion:60,bossTell:90,bossImpact:65,bossRoar:100,bossPhase:80,bossDeath:90,pipeLeak:20,steamWarning:17,liftStart:22,liftStop:22,doorOpen:18};
   const personal=new Set(['shot','fracture','rocket','grenadeLaunch','melee','dash','pulse','land']);
+  // MIX-05 : les telegraphes du boss sont des alertes de jeu, pas des sons du
+  // decor. Dans l'enclos, leur niveau ne peut pas descendre sous 0,6 ; le
+  // panoramique et l'occultation restent ceux de la localisation.
+  const tells=new Set(['bossTell','bossRoar','bossImpact','bossPhase']);
+  function inArena(sim){const a=sim.state.world&&sim.state.world.bossArena,p=sim.state.player;return !!a&&!!p&&Math.hypot(p.x-a.x,p.z-a.z)<a.r&&Math.abs((p.y||0)-a.y)<5;}
   function create(){
     const cache=new Map();let frameKey='',probes=0,revision='',currentSim=null;
     function reset(){cache.clear();frameKey=revision='';probes=0;currentSim=null;}
@@ -5937,7 +5946,9 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
     }
     function event(sim,e){
       if(personal.has(e.name)&&(e.owner==='player'||e.actor==='player'||!Number.isFinite(e.x)))return {...e,level:1,pan:0,occluded:0};
-      return {...e,...locate(sim,e,ranges[e.name]||36)};
+      const located={...e,...locate(sim,e,ranges[e.name]||36)};
+      if(tells.has(e.name)&&inArena(sim))located.level=Math.max(.6,located.level);
+      return located;
     }
     function sample(sim){
       const state=sim.state,world=state.world,p=state.player,alive=q=>q.destructibleId===undefined||!sim.destruction||sim.destruction.isAlive(q.destructibleId);

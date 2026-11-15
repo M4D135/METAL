@@ -44,7 +44,11 @@
   // timbre de la musique : le retour reste à tau 0,18 s.
   var duckClasses = [
     {cues: ['shot'], hold: .36},
-    {cues: ['fracture', 'rocket', 'grenade', 'grenadeLaunch'], hold: .30}
+    {cues: ['fracture', 'rocket', 'grenade', 'grenadeLaunch'], hold: .30},
+    // MIX-05 : a 17 m l'annonce du boss ne duckait presque pas la musique (le duck
+    // suivait le niveau du son, ×0,84 soit −1,5 dB). Une alerte de jeu doit tenir
+    // son caniveau, quel que soit la distance : fixed ignore cueLevel.
+    {cues: ['bossTell', 'bossRoar', 'bossImpact', 'bossPhase'], fixed: true}
   ];
   // MIX-04 : le préréglage « Doom » mesuré par le banc. Les rapports du joueur
   // montent de 3 dB (×1,41 : pistolet 0,89, SMG 0,69, pompe 1,09, roquette 0,80

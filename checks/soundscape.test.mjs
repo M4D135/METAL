@@ -60,3 +60,18 @@ test('A louder unobstructed machine can replace an occluded closer one; player a
   const own=sound.event(sim,{name:'rocket',owner:'player',x:.3,y:1.4,z:-.6});assert.equal(own.level,1);assert.equal(own.pan,0);
   assert.equal(sound.event(sim,{name:'explosion',owner:'player',x:40,y:0,z:0}).occluded,1,'The player’s distant explosion is still a world sound');
 });
+
+// MIX-05 (lot 11b T6) : les telegraphes du boss sont des alertes de jeu.
+test('les annonces du boss portent a 90 m et ne descendent pas sous 0,6 de niveau dans l enclos (MIX-05)',()=>{
+  const sound=FSoundscape.create(),base={name:'bossTell',seed:3,y:1.62,z:0};
+  const dans=scene(world({bossArena:{x:0,y:0,z:0,r:28}})),loin=scene(world({bossArena:{x:400,y:0,z:400,r:28}}));
+  const ici=sound.event(dans,{...base,x:17}),hors=sound.event(loin,{...base,x:17});
+  assert.equal(ici.level,.6,'dans l enclos, l annonce est tenue a 0,6 la ou la distance la laissait a '+hors.level.toFixed(4));
+  assert(hors.level>0&&hors.level<.6,'hors de l enclos la loi de distance reprend, mesuree a '+hors.level.toFixed(4));
+  assert.equal(ici.pan,hors.pan,'le plancher de niveau ne touche pas le panoramique');
+  assert(sound.event(loin,{...base,x:60}).level>0,'la portee 90 m porte l annonce bien au-dela des 36 m du decor');
+  assert.equal(sound.event(loin,{...base,x:95}).level,0,'et elle s arrete a 90 m');
+  const rugissement=sound.event(dans,{name:'bossRoar',seed:3,y:1.62,z:0,x:17}),lointain=sound.event(loin,{name:'bossRoar',seed:3,y:1.62,z:0,x:17});
+  assert.equal(rugissement.level,.6,'le rugissement, la claque, la phase et le tell partagent le plancher, la ou le rugissement seul atteignait '+lointain.level.toFixed(4));
+  assert.equal(lointain.level,.5274885145482389,'hors de l enclos, le rugissement garde sa portee de 100 m sans plancher');
+});
