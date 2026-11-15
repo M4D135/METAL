@@ -60,8 +60,13 @@ par `setWorld`, tableaux de résultat de `query` réutilisés.
   contrôle 1,0123, **corrigé 0,8827** — gain établi.
 - octets téléversés par 200 images : 44,3 Mo en `bufferData` → 60 Ko
   d'allocation + 44,3 Mo en `bufferSubData` sans réallocation.
-- pression GC drawonly 1200 images : 0,6 → 0,5 Ko/image repris, un
-  Mark-Compact en moins (plafond de la fiche : 0,2 Mo/image).
+- pression GC dans `draw()` seul, 1200 images camp:17 (mode `drawcall`, banc
+  corrigé, plancher du banc à 0) : **0,64 → 0,32 Mo/image repris (ratio 0,50)**,
+  24 → 12 Scavenge. Le gain de T3 se reproduit, mais le plafond de la fiche
+  (moins de 0,2 Mo par `draw()`) **n'est pas atteint** : il reste 0,32 Mo par
+  image dans le rendu, lié pour l'essentiel à l'abandon de T14 (voir T14 et
+  « reste à faire »). Les chiffres publiés au tour 1 (0,6 → 0,5 **Ko**/image)
+  étaient faux d'un facteur ~1000 et sortaient d'un banc qui ne tournait plus.
 - preuves : `docs/chantier-moteur/preuves/lot-05-rendu-cpu/t3/`.
 - écart à la fiche : la preuve `bench/rcpu/alt.mjs` n'a pas été rejouée base
   contre tête (le banc mesure des variantes internes, pas le code du dépôt).
@@ -190,11 +195,16 @@ rz, r0 recalculés seulement si rx change).
   4× : aucun des deux bancs n'est capable d'invalider l'autre sur ce point.
 - Vérification robuste, indépendante du temps :
   `node --allow-natives-syntax tools/proof/lot05/mesh-shape.mjs <racine> 120 camp:17`.
-  Avant T8 (`.relais/t7`) : 30 classes cachées distinctes, 29 150 maillages sur 29 150
-  avec une clé ajoutée après création, seulement 28,4 % de la classe de référence.
-  Après T8 (tête) : **1 seule classe cachée, 0 clé ajoutée, 100 % en représentation
-  rapide** (`%HasFastProperties`). Preuves `t8/classes-cachees-natives-avant-t8.json`
+  Avant T8 (`.relais/t7`) : 30 classes cachées distinctes pour 6 formes, 29 150 maillages
+  sur 29 150 avec une clé ajoutée après création, seulement 28,4 % de la classe de référence.
+  Après T8 (tête) : **une classe cachée par forme (6 au total), 0 clé ajoutée, et toutes
+  les entrées d'une même forme dans la même classe** (`partMemeClasseCachee: 1`, mesuré
+  sur 29 149 paires). Preuves `t8/classes-cachees-natives-avant-t8.json`
   et `t8/classes-cachees-natives-tete.json`.
+- L'argument `%HasFastProperties` est retiré : `partRepresentationRapide` vaut 1 **avant
+  comme après** T8 (29 150 maillages sur 29 150 dans les deux JSON), il ne distingue donc
+  rien et ne peut pas être présenté comme un gain. Ce que T8 change, c'est le nombre de
+  classes (30 → 6) et les clés ajoutées après création (29 150 → 0).
 - Pixels Chrome/SwiftShader 14/14 identiques à écart nul ; `npm test` 519/519.
 - Preuves : `docs/chantier-moteur/preuves/lot-05-rendu-cpu/t8/`.
 - Garde-fou tenu : le constructeur est exporté sur une ligne séparée
@@ -207,10 +217,18 @@ rz, r0 recalculés seulement si rx change).
 - Un seul tri, puis partition stable par groupes contigus `(structural, rear,
   band)` ; le budget est vérifié dans la boucle de groupe au lieu d'un second
   tri.
-- `FEffects.build` p50 **0,284 → 0,144 ms** (ratio 0,507), p95 0,506 → 0,388.
-  La fiche annonçait « −50 à −70 % en plus de RCPU-06 » : atteint en bas de
-  plage.
-- « identical outputs 3000/3000 » dans les deux sens de comparaison ; pixels
+- `FEffects.build` mesuré **apparié** (`effects-ab2.mjs`, les deux écritures sur la
+  même image, ordre inversé à chaque image, 3 exécutions de 1200 images) :
+  p50 **0,259 → 0,172 ms à l'exécution médiane, ratioP50 médian 0,665**
+  (intervalle 0,647 – 0,751), ratio par paire médian 0,728. La fiche annonçait
+  0,272 → 0,186, soit 0,684 : le gain se reproduit.
+- Le ratio 0,507 annoncé au tour 1 venait de deux **exécutions séparées** de
+  `effects-ab.mjs` (0,284 d'un côté, 0,144 de l'autre) : sans appariement, il
+  n'était pas une mesure. La preuve `t9/effects-ab.json` publie la sortie appariée ;
+  l'ancien comparatif devient `t9/effects-ab-prototype-audit.json` et ne prouve
+  que l'équivalence d'écriture avec le prototype de l'audit.
+- « identical outputs 3000/3000 » dans les deux sens de comparaison, et
+  « 1200 / 1200 » sur les trois exécutions appariées ; pixels
   14/14 identiques ; `npm test` 519/519.
 - Preuves : `docs/chantier-moteur/preuves/lot-05-rendu-cpu/t9/`.
 
@@ -239,7 +257,10 @@ rz, r0 recalculés seulement si rx change).
   atteint.
 - Allocations **22,06 → 20,37 Ko/build** (ratio 0,923) : l'objectif −50 % n'est
   pas atteint ici, l'octet restant étant le maillage de 28 champs et ses
-  tableaux `p`, `s`, `r` — c'est T17 qui les supprime.
+  tableaux `p`, `s`, `r`. T17 devait les supprimer : la tâche a été **annulée**
+  par `55449a7` (réservoir mesuré 1,33 en isolé et 1,13 sur `models()`, donc une
+  régression), et `src/actors.js` ne contient plus ni `meshInto` ni réservoir.
+  L'octet reste donc, sous garde-fou `checks/actors-no-mesh-pool.test.mjs`.
 - Sorties identiques 72/72 ; flux GL et contenu des tampons identiques sur trois
   mondes ; `npm test` 519/519.
 - Preuves : `docs/chantier-moteur/preuves/lot-05-rendu-cpu/t11/`.
@@ -558,10 +579,11 @@ Autres écarts relevés au passage et corrigés sans qu'ils soient dans la liste
    le constructeur d'objets, que le repli Canvas 2D exige.
 8. **T16, VAO** — défaut appliqué : non implémentés, conformément à la valeur par
    défaut de la fiche (gain mesuré nul sur Metal, non redémontrable ici).
-9. **T17, réservoir de maillages** — défaut appliqué : recyclage activé en jeu,
-   optionnel à l'appel. Aucun consommateur ne garde les maillages d'une image à
-   l'autre (vérifié : `pack` copie, le cache d'ombres du repli ne mémorise
-   jamais un maillage dynamique).
+9. **T17, réservoir de maillages** — tâche **annulée** par `55449a7` : recyclage
+   non implémenté, aucun pool dans `src/actors.js` (ni `meshInto`, ni réservoir).
+   Le banc apparié mesurait 1,33 en isolé et 1,13 sur `models()` — une régression,
+   pas un gain. Le garde-fou `checks/actors-no-mesh-pool.test.mjs` (dans `npm test`)
+   échoue si un réservoir ou `meshInto` revient.
 10. **T19, filtrage par cellule** — défaut appliqué : activé seulement là où le
     filtre par entrée est exactement `visible()` dans la même image (repli Canvas
     2D, projeteurs d'ombre de lampe). Pas de filtrage dans le sur-ensemble
