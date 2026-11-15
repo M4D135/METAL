@@ -219,3 +219,7 @@ test('trophy lighting follows persisted discoveries and grace, retains its groun
   const crowded=Effects.lights({...state,explosions:blasts});assert.equal(crowded.length,4);assert(crowded.every(l=>!l.trophy),'combat transients retain all four existing slots');
   const one=Effects.lights({...state,explosions:blasts.slice(0,1)});assert.equal(one.length,2);assert(!one[0].trophy&&one[1].trophy);
 });
+
+test('Barrage and slam countdowns shrink to the true impact while their tall columns have different shapes',()=>{
+ for(const kind of ['slam','rocketZone']){const a={kind,x:0,y:0,z:-10,radius:3.2,tell:2,age:.5,warning:true,active:false};const early=Effects.build({bossAttacks:[a]},{},camera),late=Effects.build({bossAttacks:[{...a,age:1.5}]},{},camera);const column=early.find(m=>m.effectPart==='boss-column');assert(column);assert.equal(column.s[1],8);assert.equal(column.shape,kind==='slam'?'box':'cylinder');assert(early.find(m=>m.effectPart==='boss-countdown').s[0]>late.find(m=>m.effectPart==='boss-countdown').s[0]);assert(!Effects.build({bossAttacks:[{...a,age:2.2,warning:false,active:true}]},{},camera).some(m=>m.effectPart==='boss-column'));}
+});

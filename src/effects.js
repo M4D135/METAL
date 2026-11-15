@@ -30,7 +30,7 @@
       const p=[a.x,a.y+.026,a.z],warning=!!a.warning,color=warning?[1,.58,.08]:[1,.17,.035];
       const band=(radius,inner,part)=>{if(!(radius>.005)||radius<=inner)return;const m=puff(p,[radius*2,.022,radius*2],color,warning?.76:.68,warning?1.3:1.8,part,'ring',[0,0,0],true);if(m)m.innerRatio=clamp(inner/radius,0,.998);};
       if(a.kind==='ring'){
-        const r=warning?num(a.radius):num(a.currentRadius),inner=warning?Math.max(0,r-.2):Math.max(0,num(a.innerRadius));band(r,inner,'boss-ring');
+        const r=warning?num(a.radius):num(a.currentRadius),inner=warning?Math.max(0,r-.2):Math.max(0,num(a.innerRadius));if(!a.gaps)band(r,inner,'boss-ring');else{const thick=Math.max(.12,r-inner),mid=(r+inner)/2;for(let i=0;i<48;i++){const angle=i*Math.PI/24;if(Math.abs(Math.sin(angle-(a.angle+a.age*.25)))<Math.sin(.26+Math.PI/48))continue;const d=[Math.sin(angle),0,-Math.cos(angle)],q=add(p,d,mid);puff(q,[Math.max(.01,mid*Math.PI/24),.025,thick],color,warning?.76:.68,1.5,'boss-ring-segment','box',[0,Math.atan2(d[0],d[2]),0],true);}}
       }else if(a.kind==='sweep'){
         const d=unit([num(a.dx),0,num(a.dz,1)]),length=Math.max(0,num(a.length)),width=Math.max(.01,num(a.width)),yaw=Math.atan2(d[0],d[2]),center=add(p,d,length*.5);
         puff(center,[width*2,.022,Math.max(.01,length)],color,warning?.16:.28,1.0,'boss-sweep','box',[0,yaw,0],true);
@@ -38,7 +38,10 @@
         for(const sign of [-1,1]){const side=[center[0]+d[2]*width*sign,center[1]+.002,center[2]-d[0]*width*sign];puff(side,[.045,.025,Math.max(.01,length)],color,.74,1.5,'boss-sweep-edge','box',[0,yaw,0],true);}
       }else if(a.kind==='slam'||a.kind==='rocketZone'){
         const radius=Math.max(0,num(a.radius));if(radius<=0)continue;
+        if(a.burn&&a.active&&a.age-a.tell>(a.kind==='rocketZone'?.35:.22)){puff(p,[radius*2,.06,radius*2],[1,.28,.025],.3,1.8,'boss-burning-floor','cylinder',[0,0,0],true);for(let i=0;i<5;i++){const angle=i*1.2566+num(a.id),r=radius*.6;puff([p[0]+Math.sin(angle)*r,p[1]+.25+Math.sin(time*9+i)*.1,p[2]+Math.cos(angle)*r],[.25,.6,.25],[1,.45,.06],.5,2,'boss-burning-flame','octa',[0,0,0],true);}continue;}
         puff(p,[radius*2,.018,radius*2],color,warning?.09:.22,1.1,'boss-zone','cylinder',[0,0,0],true);band(radius,Math.max(0,radius-.14),'boss-zone-edge');
+        if(warning){const remaining=clamp(1-num(a.age)/Math.max(.001,num(a.tell)),0,1);band(radius*remaining,Math.max(0,radius*remaining-.09),'boss-countdown');puff([p[0],p[1]+4,p[2]],[.4,8,.4],color,.35,1,'boss-column',a.kind==='slam'?'box':'cylinder',[0,0,0],true);}
+        else puff([p[0],p[1]+.25,p[2]],[radius*2,.45,radius*2],color,.35*clamp(1-(num(a.age)-num(a.tell))/.35,0,1),1.6,'boss-zone-flash','cylinder',[0,0,0],true);
       }
     }
 

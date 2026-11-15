@@ -664,6 +664,7 @@
     environment.sunDirection=environment.sunDirection.map(v=>v/sunLength);
     const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
     if(campaign)Object.assign(world,{campaign:true,...(options.campaignVersion===2?{campaignVersion:2}:{}),index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
+    if(campaign&&options.combatVersion===1)world.combatVersion=1;
     if(campaign)world.campaignProfile=campaignProfile(world);
     detailWorld(world,theme,aperture,doorHeight);
     naturalDetails(world,theme);
@@ -1685,7 +1686,7 @@
   function campaignProfile(w){
     if(w.campaignVersion===2){
       const chapter=w.chapter,garrisonScale=[.55,.70,.85,1,1.15,1.30][chapter];
-      return {version:2,garrison:Math.round([120,140,170][w.stage]*garrisonScale),garrisonScale,maxActive:[6,8,10,12,14,16][chapter],grenadiers:[1,3,5,7,9,11][chapter],rocketeers:[0,1,3,5,7,9][chapter],bossHp:[600,850,1200,1550,1900,2400,2900,3400,4000,4650,5300,6050,6850,7700,8600,9600,10800,12000][w.index],trialEnemies:0};
+      return {version:2,garrison:Math.round([120,140,170][w.stage]*garrisonScale),garrisonScale,maxActive:[6,8,10,12,14,16][chapter],grenadiers:[1,3,5,7,9,11][chapter],rocketeers:[0,1,3,5,7,9][chapter],bossHp:(w.combatVersion===1?[250,650,1450,600,1600,1100,1900,3100,2300,3550,3000,4550,3500,4800,3650,5500,4250,6750]:[600,850,1200,1550,1900,2400,2900,3400,4000,4650,5300,6050,6850,7700,8600,9600,10800,12000])[w.index],trialEnemies:0};
     }
     const chapter=w.chapter,percent=[35,45,55,70,85,100][chapter],garrisonScale=percent/100;
     return {version:1,garrison:Math.round([120,140,170][w.stage]*percent/100),garrisonScale,maxActive:[4,5,6,8,10,12][chapter],grenadiers:[0,2,3,5,6,8][chapter],rocketeers:[0,0,0,2,4,6][chapter],bossHpScale:[.25,.32,.45,.62,.8,1][chapter],trialEnemies:[6,9,12,15].includes(w.index)?3:0};
@@ -1834,7 +1835,7 @@
     for(const {enemy:e} of candidates){const weapon=grenades<grenadeGoal&&(grenades<=rockets||rockets===rocketGoal)?'grenade':rockets<rocketGoal?'rocket':null;if(!weapon)break;e.type=1;e.role='assault';e.weapon=weapon;if(weapon==='grenade')grenades++;else rockets++;}
     if(grenades!==grenadeGoal||rockets!==rocketGoal)throw new Error('Insufficient later heavy waves');
     const arena=w.bossArena;
-    for(let i=0;i<6;i++){const a=(i+.5)*TAU/6;w.enemies.push({x:arena.x+FMath.cos(a)*26,y:arena.y,z:arena.z+FMath.sin(a)*26,type:0,zoneId:arena.room,squadId:200+Math.floor(i/3),role:'flanker',bossWave:1+Math.floor(i/3),bossId:target-1,deployed:true});}
+    for(let i=0;i<6;i++){const a=(i+.5)*TAU/6;w.enemies.push({x:arena.x+FMath.cos(a)*26,y:arena.y,z:arena.z+FMath.sin(a)*26,type:w.combatVersion===1&&w.chapter>=2&&i%3===2?1:0,...(w.combatVersion===1&&w.chapter>=2&&i%3===2?{weapon:w.chapter>=4?'rocket':'grenade'}:{}),zoneId:arena.room,squadId:200+Math.floor(i/3),role:'flanker',bossWave:1+Math.floor(i/3),bossId:target-1,deployed:true});}
     w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:w.campaignVersion===2?w.campaignProfile.bossHp:w.campaign?Math.max(30,Math.round([130,180,240][w.stage]*w.campaignProfile.bossHpScale)):[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
     for(const [i,e] of w.enemies.entries())e.drop=e.type===3?false:e.weapon==='rocket'?{weapon:2,amount:1}:e.weapon==='grenade'?{weapon:3,amount:1}:e.type===1?{weapon:1,amount:2}:e.type===2||i%2===0?{weapon:0,amount:4}:false;
     if(w.enemies.length!==target-trialCount)throw new Error('Incorrect finite garrison size');

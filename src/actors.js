@@ -41,13 +41,13 @@
     // A thirty-metre silhouette needs close geometry at a very different distance
     // from a human-sized patrol. The LOD decision follows its projected size.
     const lod=distance/scale<near?0:distance/scale<far?1:2,stun=e.stun>0,charge=e.windup>0?clamp(1-e.windup/(e.windupMax||1),0,1):0;
-    const rich=lod===0&&!canvas&&!low;
+    const rich=lod===0&&!canvas&&!low,tellFamily=giant&&e.windup>0?({'Écrasement':'slam','Onde de choc':'ring','Barrage de roquettes':'rocketZone','Balayage':'sweep','Charge':'slam','Tapis de bombes':'rocketZone','Rayon du cœur':'sweep'}[e.attackLabel]||''):'',tellPose=clamp(1-(e.windup||0)/(e.windupMax||1),0,1);
     const airborne=!!e.airborne;
     const aim=e.attackState==='aim'||e.attackState==='burst'||e.windup>0?1:0,rush=e.attackState==='rush';
     const phase=Number.isFinite(options.phase)?options.phase:time*(e.moveSpeed||0)*4.8/scale+(e.id||0)*.7;
     const blend=stun?0:clamp(options.blend??(e.moveSpeed||0)/1.4,0,1),base=Number.isFinite(e.baseY)?e.baseY:(Number(e.y)||[1.35,1.05,1.6,1.8][type])-[1.35,1.05,1.6,1.8][type];
     const yaw=Number.isFinite(e.yaw)?-e.yaw:0,b=rotation(0,yaw,0),root={p:[e.x||0,base,e.z||0],b,r:angles(b)},out=[];
-    const hurt=clamp((e.hurt||0)*3,0,.45),mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+    const impact=giant?0:clamp((e.hurt||0)/.2,0,1),hurt=clamp((e.hurt||0)*3,0,.45),mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
     const palette={shell:mix([.24,.28,.31],[.61,.54,.43],hurt),steel:[.56,.62,.64],edge:[.34,.39,.42],trim:[.34,.29,.22],dark:[.085,.105,.12],rubber:[.055,.068,.078],glass:[.10,.20,.23]};
     if(giant){
       const scheme=e.bossKind==='siegebreaker'?[[.23,.20,.18],[.37,.29,.22],[.60,.34,.13]]:e.bossKind==='custodian'?[[.43,.46,.43],[.25,.32,.34],[.57,.52,.36]]:[[.25,.29,.25],[.37,.41,.32],[.49,.37,.23]];
@@ -82,7 +82,7 @@
     function heavy(){
       const launcher=e.weapon==='rocket',grenadier=e.weapon==='grenade',armed=launcher||grenadier;
       const bounce=airborne?0:Math.sin(phase*2)*.025*blend,lean=stun?-.10:airborne?.07:rush?.15:.025*blend;
-      const body=frame(root,[0,.9+bounce,0],[-lean,0,stun?Math.sin(time*23)*.035:airborne?0:Math.sin(phase)*.018*blend]);
+      const body=frame(root,[0,.9+bounce,impact*.05],[-lean-impact*.26,0,stun?Math.sin(time*23)*.035:airborne?0:Math.sin(phase)*.018*blend]);
       const head=frame(body,[0,.98,-.035],[.10,0,0]);
       const gun=frame(body,[.23,.43,-.29],[aim?pitch(1.33)+lean:-.23,0,0]);
       const legs=[];
@@ -174,7 +174,7 @@
     }
     function drone(){
       const hover=1.35+Math.sin(time*2.2+(e.id||0))*.045,bank=stun?.18:Math.sin(time*1.5+(e.id||0))*.025+(e.tactic==='flank'?.075:0);
-      const body=frame(root,[0,hover,0],[stun?.16:-blend*.055,0,bank]);
+      const body=frame(root,[0,hover,impact*.05],[(stun?.16:-blend*.055)-impact*.26,0,bank]);
       const hubs=[];for(const side of [-1,1])for(const end of [-1,1])hubs.push([side*.58,0,end*.36]);
       if(lod===2){
         box('drone-hull',[0,0,0],[.72,.60,.82],'shell',body);eye('camera',[0,-.04,-.43],[.23,.13,.04],body);
@@ -211,7 +211,7 @@
       }
     }
     function sentinel(){
-      const fixed={p:root.p,b:identity,r:[0,0,0]},body=frame(root,[0,1.60,0],[stun?-.12:0,0,stun?Math.sin(time*15)*.025:0]);
+      const fixed={p:root.p,b:identity,r:[0,0,0]},body=frame(root,[0,1.60,impact*.05],[(stun?-.12:0)-impact*.26,0,stun?Math.sin(time*15)*.025:0]);
       const recoil=e.attackState==='burst'?Math.max(0,Math.sin(time*37))*.07:0,gun=frame(body,[0,-.10,recoil],[aim?pitch(1.50):-.035,0,0]);
       if(lod===2){
         cyl('turret-foot',[0,.14,0],[1.28,.28,1.28],'dark',fixed);cyl('turret-pivot',[0,.80,0],[.33,1.1,.33],'edge',fixed);
@@ -269,7 +269,7 @@
       }
     }
     function custodian(){
-      const bounce=giant?0:Math.sin(phase*2)*.035*blend,body=frame(root,[0,1.5+bounce,0],giant?[0,0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
+      const bounce=giant?(tellFamily==='ring'?-.12*tellPose:0):Math.sin(phase*2)*.035*blend,body=frame(root,[0,1.5+bounce,0],giant?[0,0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
       const feet=[];for(const side of [-1,1])for(const end of [-1,1]){
         const t=phase+(side===end?0:PI),lift=Math.max(0,Math.cos(t))*.17*blend,stride=Math.sin(t)*.20*blend;
         feet.push({side,end,lift,stride,hip:point(body,[side*.62,-.13,end*.40]),knee:point(root,[side*.89,.77+lift*.4,end*.65+stride*.5]),ankle:point(root,[side*.98,.24+lift,end*.78+stride])});
@@ -277,7 +277,7 @@
       if(lod===2){
         box('custodian-torso',[0,.40,.025],[1.65,1.4,1.2],'shell',body);box('custodian-helmet',[0,1.39,-.08],[1,.5,.75],'dark',body);
         eye('custodian-optic',[0,1.40,-.47],[.67,.13,.04],body);
-        for(const side of [-1,1])box('custodian-cannon-'+side,[side*1.04,.77,-.43],[.40,.44,1.40],'dark',body);
+        for(const side of [-1,1])box('custodian-cannon-'+side,[side*1.04,.77+(tellFamily==='slam'?tellPose*.7:0),-.43],[.40,.44,1.40],tellFamily==='rocketZone'?[.8,.12,.03]:'dark',body);
         cyl('custodian-stance',[0,.30,.03],[2.06,.58,1.85],'edge');return;
       }
       armor('custodian-torso',[0,.40,.025],[1.65,1.4,1.2],'shell',body);
@@ -297,8 +297,8 @@
       }
       for(const side of [-1,1]){
         const recoil=e.attackState==='burst'?Math.max(0,Math.sin(time*31+side))*.12:0;
-        const gun=frame(body,[side*1.04,.78,recoil],[aim?pitch(2.28):-.04,0,0]);
-        armor('custodian-shoulder-'+side,[0,.07,.12],[.58,.58,.74],'trim',gun);
+        const gun=frame(body,[side*1.04,.78,recoil],[tellFamily==='slam'?.95*tellPose:tellFamily==='ring'?-.25*tellPose:aim?pitch(2.28):-.04,0,0]);
+        armor('custodian-shoulder-'+side,[0,.07,.12],[.58,.58,.74],tellFamily==='rocketZone'?[.7,.12,.035]:'trim',gun);
         cyl('custodian-barrel-'+side,[0,0,-.87],[.23,1.05,.23],'steel',gun,[PI/2,0,0]);
         if(lod===0){
           joint('custodian-gun-pivot-'+side,[0,.03,.16],.38,'dark',gun);
@@ -334,7 +334,8 @@
     if(giant){
       const awake=e.bossAwake!==false,open=!!e.weakPointOpen,kind=e.bossKind||'colossus';
       const glow=open?[.20,.90,.80]:kind==='siegebreaker'?[.98,.33,.055]:kind==='custodian'?[.37,.70,.78]:[.89,.61,.20];
-      const energy=awake?(open?.72+.12*Math.sin(time*8):.25+.06*Math.sin(time*2.2)):.055;
+      const energy=awake?(open?.72+.12*Math.sin(time*8):tellFamily==='ring'?.5+.3*Math.sin(time*(5+tellPose*12)):.25+.06*Math.sin(time*2.2)):.055;
+      if(tellFamily==='sweep')piece('titan-sweep-blade','box',[0,2.28,-1.5],[2.8,.08,.22],[1,.52,.09],root,null,5,.8+tellPose*.6);
       // This centre and diameter are the simulation's real, targetable weak point.
       // It stays attached to the torso; gait only animates the articulated supports.
       piece('titan-heart','sphere',[0,1.93,-.90],[.72,.72,.72],glow,root,null,open?4:5,energy);

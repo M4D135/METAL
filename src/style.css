@@ -196,3 +196,11 @@ body.touch #hud{overflow:hidden;overflow:clip}
 .weapon-slot.overheated{border-color:#ff795e}body.touch #left-fire-button::after{content:"";position:absolute;left:5px;right:5px;bottom:4px;height:3px;background:linear-gradient(90deg,#71e1cc var(--left-heat,0%),transparent 0);pointer-events:none}body.touch #left-fire-button.overheated::after{background:#ff795e}
 
 body.touch #arsenal .left-hand-strip{flex-wrap:wrap}body.touch #arsenal .left-heat{flex:0 0 100%}
+
+#crosshair.weak-hit{color:#ffad45;filter:drop-shadow(0 0 3px #ffad45)}#crosshair.kill-hit:after{content:"×";position:absolute;inset:-10px;font:30px/20px Arial;color:#fff;text-align:center}#crosshair.weak-hit:before{border-color:#ffad45!important}
+
+#boss-cue{position:absolute;left:50%;top:calc(50% + 34px);transform:translateX(-50%);display:flex;align-items:center;gap:5px;max-width:240px;padding:3px 6px;background:#101c21df;border:1px solid #ffa74370;border-radius:5px;pointer-events:none;color:#ffd69b;font:10px Arial;z-index:4}#boss-cue[hidden]{display:none}#boss-cue svg{width:28px;height:28px;flex:none;transform:rotate(-90deg)}#boss-cue circle{fill:none;stroke:#8c6244;stroke-width:2}#boss-cue #boss-cue-progress{stroke:#ffad45;stroke-width:3;stroke-dasharray:81.682;stroke-linecap:round}#boss-cue-arrow{position:absolute;left:calc(50% - 5px);top:-15px;transform-origin:50% 26px;font:12px Arial}#hurt-directions{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none;z-index:5}#hurt-directions i{position:absolute;left:-9px;top:-9px;width:18px;height:18px;opacity:0;transform-origin:center}#hurt-directions i:before{content:"";position:absolute;left:0;top:-43px;width:18px;height:10px;border:2px solid #ff7055;border-bottom:0;border-radius:50% 50% 0 0}#hurt-directions i:after{content:"";position:absolute;top:-38px;left:6px;border:3px solid transparent;border-top-color:#ffb79f}body.touch #boss-cue{max-width:205px;font-size:10px;top:calc(50% + 28px)}
+
+#crosshair.weak-hit i,#crosshair.weak-hit b{background:#ffad45!important}#crosshair.weak-hit{border-color:#ffad45!important}
+
+body:not(.touch) #boss-status{top:88px}body:not(.touch)[data-boss=true] .score-status{opacity:0}@media(max-height:540px){body:not(.touch) #boss-status{top:74px}}

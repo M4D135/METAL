@@ -1,0 +1,194 @@
+{
+  "schema": "metal-boss-window-v1",
+  "step": 0.016666666666666666,
+  "window": 3,
+  "postWindow": 2,
+  "aim": "actual core ray, no thermal bypass, real projectiles",
+  "distances": [
+    18,
+    22,
+    26
+  ],
+  "rows": [
+    {
+      "world": 1,
+      "profile": "light",
+      "targetWindows": 6,
+      "damagePerWindow": 38.399999999965075,
+      "hp": 250,
+      "windows": 6.510416666672588,
+      "right": 4,
+      "left": null
+    },
+    {
+      "world": 2,
+      "profile": "heavy",
+      "targetWindows": 6.235294117647059,
+      "damagePerWindow": 106.91112044273905,
+      "hp": 650,
+      "windows": 6.079816555174315,
+      "right": 3,
+      "left": 4
+    },
+    {
+      "world": 3,
+      "profile": "light",
+      "targetWindows": 6.470588235294118,
+      "damagePerWindow": 227.50003674010077,
+      "hp": 1450,
+      "windows": 6.373625344318078,
+      "right": 1,
+      "left": 0
+    },
+    {
+      "world": 4,
+      "profile": "heavy",
+      "targetWindows": 6.705882352941177,
+      "damagePerWindow": 89.36255499165418,
+      "hp": 600,
+      "windows": 6.71422163406178,
+      "right": 3,
+      "left": 4
+    },
+    {
+      "world": 5,
+      "profile": "light",
+      "targetWindows": 6.9411764705882355,
+      "damagePerWindow": 231.13584290703147,
+      "hp": 1600,
+      "windows": 6.922336146036681,
+      "right": 1,
+      "left": 0
+    },
+    {
+      "world": 6,
+      "profile": "heavy",
+      "targetWindows": 7.176470588235294,
+      "damagePerWindow": 150.08755423332332,
+      "hp": 1100,
+      "windows": 7.3290554011557845,
+      "right": 3,
+      "left": 4
+    },
+    {
+      "world": 7,
+      "profile": "light",
+      "targetWindows": 7.411764705882353,
+      "damagePerWindow": 259.4435255078133,
+      "hp": 1900,
+      "windows": 7.32336641001581,
+      "right": 0,
+      "left": 1
+    },
+    {
+      "world": 8,
+      "profile": "heavy",
+      "targetWindows": 7.647058823529411,
+      "damagePerWindow": 403.47786219470436,
+      "hp": 3100,
+      "windows": 7.683197246901363,
+      "right": 2,
+      "left": 4
+    },
+    {
+      "world": 9,
+      "profile": "light",
+      "targetWindows": 7.882352941176471,
+      "damagePerWindow": 292.5000472372194,
+      "hp": 2300,
+      "windows": 7.863246593374686,
+      "right": 0,
+      "left": 1
+    },
+    {
+      "world": 10,
+      "profile": "heavy",
+      "targetWindows": 8.117647058823529,
+      "damagePerWindow": 440.0863737613254,
+      "hp": 3550,
+      "windows": 8.066598312642355,
+      "right": 2,
+      "left": 4
+    },
+    {
+      "world": 11,
+      "profile": "light",
+      "targetWindows": 8.352941176470589,
+      "damagePerWindow": 360.6841206826284,
+      "hp": 3000,
+      "windows": 8.317527243290389,
+      "right": 0,
+      "left": 1
+    },
+    {
+      "world": 12,
+      "profile": "heavy",
+      "targetWindows": 8.588235294117647,
+      "damagePerWindow": 530.8957874185435,
+      "hp": 4550,
+      "windows": 8.570420236566893,
+      "right": 2,
+      "left": 4
+    },
+    {
+      "world": 13,
+      "profile": "light",
+      "targetWindows": 8.823529411764707,
+      "damagePerWindow": 395.36495123480563,
+      "hp": 3500,
+      "windows": 8.85258035409761,
+      "right": 0,
+      "left": 1
+    },
+    {
+      "world": 14,
+      "profile": "heavy",
+      "targetWindows": 9.058823529411764,
+      "damagePerWindow": 529.3775942502762,
+      "hp": 4800,
+      "windows": 9.067251905131979,
+      "right": 2,
+      "left": 4
+    },
+    {
+      "world": 15,
+      "profile": "light",
+      "targetWindows": 9.294117647058822,
+      "damagePerWindow": 393.2500635077231,
+      "hp": 3650,
+      "windows": 9.281625964513841,
+      "right": 0,
+      "left": 1
+    },
+    {
+      "world": 16,
+      "profile": "heavy",
+      "targetWindows": 9.529411764705882,
+      "damagePerWindow": 576.7136047562162,
+      "hp": 5500,
+      "windows": 9.536796001760555,
+      "right": 2,
+      "left": 4
+    },
+    {
+      "world": 17,
+      "profile": "light",
+      "targetWindows": 9.764705882352942,
+      "damagePerWindow": 433.3268141677181,
+      "hp": 4250,
+      "windows": 9.807839859074697,
+      "right": 1,
+      "left": 0
+    },
+    {
+      "world": 18,
+      "profile": "heavy",
+      "targetWindows": 10,
+      "damagePerWindow": 676.3218498914794,
+      "hp": 6750,
+      "windows": 9.98045531292991,
+      "right": 2,
+      "left": 4
+    }
+  ]
+}

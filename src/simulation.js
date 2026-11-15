@@ -78,7 +78,7 @@ function navigationGraph(cells,width,testEdge){
   const BOSS=['bossAwake','bossClock','bossStep','attackLabel','weakPointOpen','weakTimer','bossReleased'];
   const DIRECTOR=['pressure','tension','eventType','eventAge','nextEvent','events','progress','tier','grace','eventX','eventY','eventZ','eventIntensity'];
   const HORROR=['','metallicSlam','blackout','alarm','ambush'];
-  const BOSS_LABELS=['','Veille','Onde de choc','Écrasement','Barrage de roquettes','Balayage','Cœur exposé','Surcharge — renforts'];
+  const BOSS_LABELS=['','Veille','Onde de choc','Écrasement','Barrage de roquettes','Balayage','Cœur exposé','Surcharge — renforts','Charge','Tapis de bombes','Rayon du cœur'];
   const PIPE=['broken','active','age','remaining','hot','warning','damageWait','cycle'];
   const TRAP=['progress','angle','box','hot','warning','damageWait','triggered','triggerAge','cycle','hp','destroyed'];
   const CAMPAIGN_GEAR=[{key:'pistol',weapon:4,index:0,rank:0},{key:'smg',weapon:0,index:6,rank:2},{key:'shotgun',weapon:1,index:9,rank:3},{key:'grenade',weapon:3,index:12,rank:4},{key:'rocket',weapon:2,index:15,rank:5}];
@@ -414,6 +414,7 @@ function navigationGraph(cells,width,testEdge){
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
     if(progression)identity.push(world.progression,world.encounters||[],world.shops||[]);
+    if(world.combatVersion===1)identity.push({combatVersion:1});
     if(world.campaign===true)identity.push({campaign:true,...(bossProgression?{campaignVersion:2}:{}),index:world.index,chapter:world.chapter,trophies:trophyDefs});
     for(const c of JSON.stringify(identity))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
     fingerprint=(fingerprint>>>0).toString(36);
@@ -1028,12 +1029,22 @@ function navigationGraph(cells,width,testEdge){
       return drop&&Number.isInteger(drop.weapon)&&drop.weapon>=0&&drop.weapon<weaponSlots&&(!pistol||drop.weapon!==4&&inventory.weapons[drop.weapon])&&Number.isInteger(drop.amount)&&drop.amount>0?{weapon:drop.weapon,amount:Math.min(drop.amount,[180,36,12,16,0][drop.weapon])}:null;
     }
     function dropLoot(e){
-      const reward=enemyReward(e);if(!reward||s.loot.some(q=>q.sourceEnemy===e.id))return;
+      const reward=enemyReward(e);if(!reward||s.loot.some(q=>q.sourceEnemy===e.id&&q.kind!=='resupply'))return;
       const claimed=bossProgression&&giant(e)&&s.campaign.claimedBossRewards.includes(world.index);
       if(claimed){reward.credits=reward.cores=0;reward.ammo.fill(0);if(armorEnabled)reward.armor=0;}
       // Giant loot lies on an actual reachable foot, not at its elevated torso.
       let x=e.x,z=e.z;if(giant(e)){x+=Math.sin(e.yaw)*scale(e)*.9;z-=Math.cos(e.yaw)*scale(e)*.9;}
       s.loot.push({id:'enemy-'+e.id,sourceEnemy:e.id,kind:giant(e)?'boss':'salvage',...reward,...(bossProgression&&giant(e)?{rewardTaken:claimed}:{}),x,y:groundAt(x,z),z,taken:!!claimed});
+    }
+    function phaseSupplies(e,phase){
+      if(world.combatVersion!==1||!progression)return;
+      const weapons=weaponIds.filter(i=>i!==4&&s.inventory.weapons[i]).sort((a,b)=>s.inventory.ammo[a]/ammoCaps[a]-s.inventory.ammo[b]/ammoCaps[b]||a-b),base=Math.atan2(p.x-e.x,e.z-p.z),r=Math.max(12,radius(e)+2);
+      for(let slot=0;slot<2;slot++){
+        const id='phase-'+e.id+'-'+phase+'-'+slot;if(s.loot.some(q=>q.id===id))continue;
+        let at=null;for(let k=0;k<24;k++){const angle=base+(slot?-1:1)*(.55+k*.19),x=e.x+Math.sin(angle)*r,z=e.z-Math.cos(angle)*r,y=ground(x,z);if(y!==null&&!blocked(x,z,.6,y)&&s.loot.every(q=>Math.hypot(q.x-x,q.z-z)>1.5)){at={x,y,z};break;}}
+        if(!at)continue;const ammo=weaponIds.map(()=>0),weapon=weapons[slot%weapons.length];if(weapon!==undefined)ammo[weapon]=[60,12,4,6,0][weapon];
+        s.loot.push({id,sourceEnemy:e.id,kind:'resupply',phase,slot,credits:0,cores:0,ammo,...(armorEnabled?{armor:15}:{}),...at,taken:!ammo.some(Boolean)&&!armorEnabled});
+      }
     }
     function enemyReward(e,inventory=s.inventory,withArmor=armorEnabled){
       if(!progression)return null;const ammo=weaponIds.map(()=>0),drop=enemyDrop(e,inventory);if(drop)ammo[drop.weapon]=drop.amount;if(giant(e))for(let i=0;i<weaponSlots;i++)ammo[i]=pistol&&!inventory.weapons[i]?0:[24,6,2,3,0][i];
@@ -1203,13 +1214,13 @@ function navigationGraph(cells,width,testEdge){
       else if(kind==='metallicSlam')particles(site.x,d.eventY,site.z,5,6);
     }
     function hurt(amount,difficulty=true,source=null){
-      if(introSafe())return;if(difficulty)amount*=1+s.difficulty*.15+(horror?(world.stage||0)*.035:0);
+      if(introSafe())return false;if(difficulty)amount*=1+s.difficulty*.15+(horror?(world.stage||0)*.035:0);
       if(difficulty&&campaign)amount*=s.adaptation.damageMultiplier;
       amount*=stats.incomingMultiplier;
-      if(!(amount>0)||p.dashing>0||recovery>0||s.dead||s.won)return;
+      if(!(amount>0)||p.dashing>0||recovery>0||s.dead||s.won)return false;
       if(armorEnabled){syncArmor();const absorbed=Math.min(s.armor.points,amount/3);s.armor.points-=absorbed;amount-=absorbed;}
-      p.hp=Math.max(0,p.hp-amount);s.damage=1;s.combo=0;s.comboTime=0;emit('hurt');
-      if(!p.hp){s.dead=true;stopMotion();emit('dead');}
+      p.hp=Math.max(0,p.hp-amount);s.damage=clamp(.35+amount/25,0,1);s.combo=0;s.comboTime=0;emit('hurt',{amount,...(source&&Number.isFinite(source.x)&&Number.isFinite(source.z)?{x:source.x,z:source.z}:{})});
+      if(!p.hp){s.dead=true;stopMotion();emit('dead');}return true;
     }
     function bossPhase(e){
       if(giant(e)){if(e.hp>0&&e.bossAwake)bossPhaseChange(e);return;}
@@ -1221,9 +1232,16 @@ function navigationGraph(cells,width,testEdge){
       if(!alive(e))return;const origin=source||{x:p.x,y:p.y+1.45,z:p.z,credit:true,...(profilesEnabled?{profile:s.activeProfile}:{})};if(profilesEnabled&&e.profileRequired&&(!origin.credit||origin.profile!==e.profileRequired)){if(origin.credit&&profileHintWait<=0){emit('profileBlocked',{required:e.profileRequired,boss:e.id});profileHintWait=1;}return;}if(origin.credit)amount*=(profilesEnabled&&origin.profile!==s.activeProfile?G.FEconomy.stats(s.profiles[origin.profile].economy):stats).damageMultiplier;if(giant(e))amount*=e.weakPointOpen&&weak?3.2:.30;if(e.bossWave)e.bossReleased=true;
       if(bossProgression)e.entryGrace=0;
       if(progression&&enemyEncounter.has(e.id)){e.encounterReleased=true;e.returning=false;e.quietTime=0;const encounter=enemyEncounter.get(e.id);if(encounter.status==='dormant')announceWave(encounter,0);}
-      e.hp=Math.max(0,e.hp-amount);e.hurt=.2;remember(e,origin.x,origin.z,'investigate',7,origin.y);e.thinkWait=0;
+      e.hp=Math.max(0,e.hp-amount);e.hurt=modernMovement?.1+.1*Math.min(1,amount/2):.2;
+      if(giant(e)&&origin.credit)emit(e.weakPointOpen&&weak?'weakHit':'bossArmorHit',{id:e.id,x:e.x,y:e.y,z:e.z});
+      if(modernMovement&&origin.credit&&!giant(e)&&e.hp>0){
+        const heavy=origin.weapon===1||origin.blast,chance=e.type===0?.60:e.type===2?.35:heavy?.15:0,roll=((Math.imul(e.id+1,374761393)^Math.imul(s.shots+1,668265263))>>>0)/4294967296;
+        if(e.windup>0&&roll<chance){e.windup=0;e.burstLeft=0;e.attackState='recover';e.cooldown=Math.max(e.cooldown,.2);emit('enemyPain',{id:e.id,x:e.x,y:e.y,z:e.z});}
+        if(heavy){const dx=e.x-origin.x,dz=e.z-origin.z,d=Math.hypot(dx,dz)||1,k=(origin.blast?.2:.05)*(e.type===1?.4:1);move(e,dx/d*k,dz/d*k,radius(e));}
+      }
+      remember(e,origin.x,origin.z,'investigate',7,origin.y);e.thinkWait=0;
       if(e.hp<=0){
-        if(giant(e)){s.bossAttacks=s.bossAttacks.filter(a=>a.bossId!==e.id);e.weakPointOpen=false;e.weakTimer=0;emit('bossDeath',{id:e.id,x:e.x,y:e.y,z:e.z,scale:scale(e)});for(let i=0;i<12;i++){const angle=i*2.399963,size=scale(e),id=++explosionSerial;s.explosions.push({id,kind:'boss',owner:e.id,x:e.x+Math.cos(angle)*size*.5,y:e.baseY+size*(.35+i*.23),z:e.z+Math.sin(angle)*size*.5,age:-i*.09,life:2.8,radius:size*.56,power:55,seed:id*911});}if(s.explosions.length>24)s.explosions.splice(0,s.explosions.length-24);}
+        if(giant(e)){s.bossAttacks=s.bossAttacks.filter(a=>a.bossId!==e.id);e.weakPointOpen=false;e.weakTimer=0;emit('bossDeath',{id:e.id,x:e.x,y:e.y,z:e.z,scale:scale(e)});for(let i=0;i<12;i++){const angle=i*2.399963,size=scale(e),id=++explosionSerial;s.explosions.push({id,kind:'boss',owner:e.id,x:e.x+Math.cos(angle)*size*.5,y:e.baseY+size*(.35+i*.23),z:e.z+Math.sin(angle)*size*.5,age:-i*.09,life:2.8,radius:size*.56,power:55,seed:id*911});if(!i)emit('explosion',{...s.explosions[s.explosions.length-1]});}if(s.explosions.length>24)s.explosions.splice(0,s.explosions.length-24);}
         s.kills++;dropLoot(e);if(origin.credit){s.combo++;s.comboTime=4;}
         const multiplier=1+Math.min(4,s.combo-1)*.25,points=Math.round([100,150,125,2000][e.type]*multiplier);
         if(origin.credit){s.score+=points;awardProfile(e.type===3?100:10,origin.profile);}emit('kill',{id:e.id,x:e.x,y:e.y,z:e.z,kind:e.type,boss:e.type===3,points:origin.credit?points:0,credited:!!origin.credit});particles(e.x,e.y,e.z,6,e.type===3?32:18);
@@ -1359,7 +1377,7 @@ function navigationGraph(cells,width,testEdge){
           if(exposure*3.2>strength*.30){strength=exposure;weak=true;}
         }
         const amount=(owner==='player'?(bossProgression?damage:8.5):damage*.23)*strength;
-        if(amount>0){connected=true;damageEnemy(e,amount,{x:point[0],y:point[1],z:point[2],credit:owner==='player',profile},weak);if(e.hp>0){e.stun=Math.max(e.stun,.25);e.windup=0;e.burstLeft=0;}}
+        if(amount>0){connected=true;damageEnemy(e,amount,{x:point[0],y:point[1],z:point[2],credit:owner==='player',profile,blast:true},weak);if(e.hp>0){e.stun=Math.max(e.stun,.25);e.windup=0;e.burstLeft=0;}}
       }
       if(shot&&connected){s.hits++;s.hitMarker=.22;emit('hit');}
       damageScenery(point,terrainPower,r,undefined,ignoreId,{owner,profile});syncDestruction();hear(point[0],point[2],34,point[1]);
@@ -1541,7 +1559,7 @@ function navigationGraph(cells,width,testEdge){
         }
       }
       s.projectiles=s.projectiles.filter(q=>q.life>0);
-      for(const q of s.explosions)q.age+=dt;s.explosions=s.explosions.filter(q=>q.age<q.life);
+      for(const q of s.explosions){const before=q.age;q.age+=dt;if(before<0&&q.age>=0)emit('explosion',{...q});}s.explosions=s.explosions.filter(q=>q.age<q.life);
       updateDebris(dt);
     }
     function launchRocket(forward,right,up,origin,assist){
@@ -1580,7 +1598,7 @@ function navigationGraph(cells,width,testEdge){
         const dir=base.map((v,k)=>v+right[k]*a+up[k]*c),n=Math.hypot(...dir);for(let k=0;k<3;k++)dir[k]/=n;
         if(muzzle.blocked){damageScenery(origin,shotgun?5:2,0,muzzle.direction);particles(...origin,5,1);continue;}
         const hit=hitRay(origin,dir,shotgun?24:75,assist),prop=destruction?.raycast?.(origin,dir,hit.distance);if(prop&&prop.distance<hit.distance){hit.distance=prop.distance;hit.victim=null;}
-        if(hit.victim){connected=true;damageEnemy(hit.victim,(shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):handgun?1.2:1)*calibration.damageMultiplier,undefined,hit.weak);particles(...origin.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
+        if(hit.victim){connected=true;damageEnemy(hit.victim,(shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):handgun?1.2:1)*calibration.damageMultiplier,{x:p.x,y:p.y+1.62,z:p.z,credit:true,weapon,...(profilesEnabled?{profile:s.activeProfile}:{})},hit.weak);particles(...origin.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
         else{const point=origin.map((v,k)=>v+dir[k]*hit.distance);particles(...point,5,shotgun?1:3);if(hit.distance<(shotgun?24:75)-.001)damageScenery(point,shotgun?5:2,0,dir);}
       }
       syncDestruction();if(hand==='left')s.leftFlash=1;else s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon,hand,shells});hear(p.x,p.z,shotgun?24:18,p.y);reactToShot();
@@ -1776,7 +1794,7 @@ function navigationGraph(cells,width,testEdge){
       if(visible){
         if(bossProgression)e.entryGrace=0;
         const interval=s.time-e.observedAt;
-        if(e.seen&&e.observedAt>=0&&interval>.01&&interval<.4){e.observedVX=clamp((p.x-e.lastSeenX)/interval,-6,6);e.observedVZ=clamp((p.z-e.lastSeenZ)/interval,-6,6);e.observedVY=clamp((p.y+1.45-e.lastSeenY)/interval,-18,18);}
+        if(e.seen&&e.observedAt>=0&&interval>.01&&interval<.4){e.observedVX=clamp((p.x-e.lastSeenX)/interval,-11,11);e.observedVZ=clamp((p.z-e.lastSeenZ)/interval,-11,11);e.observedVY=clamp((p.y+1.45-e.lastSeenY)/interval,-18,18);}
         else e.observedVX=e.observedVY=e.observedVZ=0;
         e.observedAt=s.time;
       }
@@ -2217,42 +2235,52 @@ function navigationGraph(cells,width,testEdge){
 
     function bossPhaseChange(e){
       const phase=e.hp<=e.maxHp*.34?2:e.hp<=e.maxHp*.67?1:0;if(phase<=e.phase)return;
-      e.phase=phase;e.bossClock=1.8;e.weakTimer=1.2;e.weakPointOpen=true;e.attackLabel='Surcharge — renforts';
+      for(let n=e.phase+1;n<=phase;n++)phaseSupplies(e,n);
+      e.phase=phase;e.bossClock=3.1;e.weakTimer=3;e.weakPointOpen=true;e.attackLabel='Surcharge — renforts';
       s.bossAttacks=s.bossAttacks.filter(a=>a.bossId!==e.id);
       for(const ally of s.enemies)if(alive(ally)&&ally.bossId===e.id&&ally.bossWave<=phase&&!ally.bossReleased){ally.bossReleased=true;ally.sleeping=false;ally.cooldown=Math.max(ally.cooldown,1.6);if(e.hasMemory)remember(ally,e.lastSeenX,e.lastSeenZ,'investigate',7,e.lastSeenY);}
       emit('bossPhase',{id:e.id,phase});emit('bossRoar',{id:e.id,x:e.x,y:e.y,z:e.z,phase});
     }
-    function bossPoint(e,x,z){const a=e.arena,dx=x-a.x,dz=z-a.z,d=Math.hypot(dx,dz),r=a.r-1;if(d>r){x=a.x+dx/d*r;z=a.z+dz/d*r;}return {x,y:groundAt(x,z),z};}
+    function bossPoint(e,x,z){const a=e.arena,r=a.r+1;x=clamp(x,a.x-r,a.x+r);z=clamp(z,a.z-r,a.z+r);return {x,y:groundAt(x,z),z};}
+    function bossMouth(e,a){const target=[a.x,a.y+.24,a.z],heading=Math.atan2(a.x-e.x,e.z-a.z);return {target,mouth:barrel({...e,yaw:heading},...target,a.id%2?-1:1)};}
     function bossAttack(e,kind,point,options={}){
-      const tell=options.tell??(kind==='rocketZone'?1.75:kind==='ring'?1.55:1.45)-e.phase*.1,activeDuration=kind==='rocketZone'?2.8:kind==='ring'?2.3:kind==='sweep'?.55:.22;
+      const tell=options.tell??(kind==='rocketZone'?1.75:kind==='ring'?1.55:1.45)-e.phase*.1,activeDuration=kind==='rocketZone'?.35:kind==='ring'?2.3:kind==='sweep'?.55:.22;
       const angle=options.angle??Math.atan2(e.lastSeenX-e.x,e.z-e.lastSeenZ),a={id:++bossAttackSerial,bossId:e.id,kind,x:point.x,y:point.y,z:point.z,radius:kind==='ring'?e.arena.r-1:kind==='rocketZone'?3.2:kind==='slam'?4.3:0,warning:true,active:false,age:0,tell,activeDuration,duration:tell+activeDuration,currentRadius:0,innerRadius:0,angle,dx:Math.sin(angle),dz:-Math.cos(angle),length:kind==='sweep'?e.arena.r+2:0,width:kind==='sweep'?1.45:0,phase:e.phase,damage:kind==='slam'?30:kind==='ring'?22:kind==='sweep'?26:28,hitPlayer:false,hitEnemies:[],fired:false};
-      s.bossAttacks.push(a);return a;
+      if(world.combatVersion===1){if(world.chapter>=3&&kind==='ring')a.gaps=true;if(world.chapter>=4&&kind==='sweep')a.turn=.65;if(world.chapter>=2&&(kind==='slam'||kind==='rocketZone'))a.burn=3;}
+      if(kind==='rocketZone'){const {target,mouth}=bossMouth(e,a),flight=Math.hypot(...target.map((v,k)=>v-mouth.point[k]))/18;a.tell=Math.max(a.tell,flight+.18);a.duration=a.tell+a.activeDuration;}if(a.burn){a.activeDuration+=a.burn;a.duration=a.tell+a.activeDuration;}s.bossAttacks.push(a);return a;
     }
-    function beginBossAttack(e){
+    function beginBossAttack(e,forced){
       const pattern=e.bossKind==='colossus'?['slam','ring','slam','ring']:e.bossKind==='siegebreaker'?['rocketZone','sweep','rocketZone','sweep']:['ring','rocketZone','sweep','rocketZone'];
-      let kind=pattern[e.bossStep%pattern.length];const scores=neuralScores(e),names=['slam','ring','rocketZone','sweep'];
+      let kind=pattern[e.bossStep%pattern.length];const scores=neuralScores(e),names=['slam','ring','rocketZone','sweep'],history=e.bossTactics.last;
       // Existing attack families, tells and recovery windows remain the hard rules.
       // Every third attack follows the script, so adaptive scoring cannot erase variety.
-      if(scores&&e.seen&&e.bossStep%3!==2){let best=scores[names.indexOf(kind)+4]+.18;for(const candidate of new Set(pattern)){const value=scores[names.indexOf(candidate)+4];if(value>best+1e-5){best=value;kind=candidate;}}}
+      if(scores&&e.seen&&e.bossStep%3!==2){let best=-Infinity;for(const candidate of new Set(pattern)){const value=scores[names.indexOf(candidate)+4]+(candidate===kind?.18:0)-(candidate===history[history.length-1]?.35:0);if(value>best+1e-5){best=value;kind=candidate;}}}
+      let signature=world.combatVersion===1&&e.phase===2&&e.bossStep%4===2?(e.bossKind==='colossus'?'charge':e.bossKind==='siegebreaker'?'carpet':'beam'):null;
+      if(signature)kind=signature==='carpet'?'rocketZone':'sweep';if(forced)kind=forced;if(history.length===2&&history[0]===kind&&history[1]===kind)kind=pattern.find(k=>k!==kind)||'ring';if(signature&&(forced||kind!==(signature==='carpet'?'rocketZone':'sweep')))signature=null;history.push(kind);if(history.length>2)history.shift();
       e.bossStep++;const point=bossPoint(e,e.lastSeenX,e.lastSeenZ),angle=Math.atan2(e.lastSeenX-e.x,e.z-e.lastSeenZ);
       e.aimX=point.x;e.aimY=e.lastSeenY;e.aimZ=point.z;e.yaw=angle;e.weakPointOpen=false;e.weakTimer=0;
       e.attackLabel=kind==='slam'?'Écrasement':kind==='ring'?'Onde de choc':kind==='rocketZone'?'Barrage de roquettes':'Balayage';
-      if(kind==='rocketZone'){
-        const count=2+e.phase,side=[Math.cos(angle),Math.sin(angle)];
+      if(signature&&!forced){
+        if(signature==='carpet'){e.attackLabel='Tapis de bombes';for(let i=0;i<5;i++){const q=bossPoint(e,point.x+Math.sin(angle)*(i-2)*4,point.z-Math.cos(angle)*(i-2)*4),a=bossAttack(e,'rocketZone',q,{tell:1.8+i*.3});a.signature=signature;}}
+        else{e.attackLabel=signature==='charge'?'Charge':'Rayon du cœur';const a=bossAttack(e,'sweep',{x:e.x,y:e.baseY,z:e.z},{tell:1.8,angle});a.signature=signature;a.activeDuration=signature==='charge'?.75:1.7;a.duration=a.tell+a.activeDuration;a.length=signature==='charge'?6+radius(e):e.arena.r+2;a.width=signature==='charge'?radius(e):.8;a.turn=signature==='charge'?0:.4;}
+      }else if(kind==='rocketZone'){
+        const count=2+e.phase+(world.combatVersion===1&&world.chapter>=1?1:0),side=[Math.cos(angle),Math.sin(angle)];
         for(let i=0;i<count;i++){const offset=(i-(count-1)/2)*4.2,q=bossPoint(e,point.x+side[0]*offset,point.z+side[1]*offset);bossAttack(e,kind,q,{tell:1.7+i*.28});}
       }else if(kind==='sweep'){
-        const count=e.phase===2?3:2;
-        for(let i=0;i<count;i++)bossAttack(e,kind,{x:e.x,y:e.baseY,z:e.z},{tell:1.6+i*.42,angle:angle+(i-(count-1)/2)*.38});
+        const count=e.phase===2?3:2,vx=e.observedVX||0,vz=e.observedVZ||0,lateral=vx*Math.cos(angle)+vz*Math.sin(angle),lead=Math.atan2(e.lastSeenX+vx*.3-e.x,e.z-e.lastSeenZ-vz*.3);
+        for(let i=0;i<count;i++)bossAttack(e,kind,{x:e.x,y:e.baseY,z:e.z},{tell:1.6+i*.42,angle:lead+(e.phase===2?(i-1)*.3:i*.3*(Math.sign(lateral)||1))});
       }else{
         bossAttack(e,kind,kind==='ring'?{x:e.x,y:e.baseY,z:e.z}:point);
-        if(e.phase===2&&kind==='ring')bossAttack(e,kind,{x:e.x,y:e.baseY,z:e.z},{tell:2.55});
+        if(e.phase===2&&kind==='ring')bossAttack(e,kind,{x:e.x,y:e.baseY,z:e.z},{tell:3.30});
         if(e.phase===2&&kind==='slam'){const side=[Math.cos(angle),Math.sin(angle)],q=bossPoint(e,point.x+side[0]*5.2,point.z+side[1]*5.2);bossAttack(e,kind,q,{tell:1.85});}
       }
-      const duration=Math.max(...s.bossAttacks.filter(a=>a.bossId===e.id).map(a=>a.duration));e.bossClock=duration+2.6;e.attackState='aim';e.windup=e.windupMax=Math.min(3.5,Math.max(...s.bossAttacks.filter(a=>a.bossId===e.id).map(a=>a.tell)));
+      if(world.combatVersion===1&&world.chapter>=5&&kind==='ring'&&!signature)for(const side of [-1,1])bossAttack(e,'rocketZone',bossPoint(e,point.x+Math.cos(angle)*side*5,point.z+Math.sin(angle)*side*5),{tell:2.2});
+      const duration=Math.max(...s.bossAttacks.filter(a=>a.bossId===e.id).map(a=>a.duration-(a.burn||0)));e.bossClock=Math.max(6.4,duration+2.6);e.attackState='aim';e.windup=e.windupMax=Math.min(3.5,Math.max(...s.bossAttacks.filter(a=>a.bossId===e.id).map(a=>a.tell)));
       emit('bossTell',{id:e.id,kind,label:e.attackLabel,x:e.x,y:e.y,z:e.z,phase:e.phase});
     }
     function tickBoss(e,dt){
-      const arena=e.arena,inArena=arena&&Math.hypot(p.x-arena.x,p.z-arena.z)<arena.r&&Math.abs(p.y-e.baseY)<5;
+      const arena=e.arena,inArena=arena&&(e.bossAwake?Math.abs(p.x-arena.x)<arena.r+1.5&&Math.abs(p.z-arena.z)<arena.r+1.5:Math.hypot(p.x-arena.x,p.z-arena.z)<arena.r)&&Math.abs(p.y-e.baseY)<5;
+      const tactics=e.bossTactics||(e.bossTactics={camp:0,last:[]});tactics.camp=inArena&&Math.hypot(p.x-arena.x,p.z-arena.z)>arena.r-1?Math.min(3,tactics.camp+dt):0;
       e.hurt=Math.max(0,e.hurt-dt);e.stun=0;e.cooldown=Math.max(0,e.cooldown-dt);e.senseWait=Math.max(-.05,e.senseWait-dt);
       if(!e.bossAwake){e.sleeping=true;e.seen=false;e.active=false;if(!inArena)return false;e.bossAwake=true;e.sleeping=false;e.bossClock=1.8;emit('bossRoar',{id:e.id,x:e.x,y:e.y,z:e.z,phase:e.phase});}
       e.sleeping=false;e.bossClock=Math.max(0,e.bossClock-dt*(campaign?s.adaptation.cadenceMultiplier:1));e.weakTimer=Math.max(0,e.weakTimer-dt);e.weakPointOpen=e.weakTimer>0;
@@ -2260,7 +2288,7 @@ function navigationGraph(cells,width,testEdge){
       if(e.senseWait<=0){e.senseWait=.15;perceive(e);if(!inArena)e.seen=false;}
       if(!e.seen&&e.hasMemory&&e.memory<=0){e.hasMemory=false;e.active=false;e.awareness='patrol';}
       bossPhaseChange(e);
-      const attacks=s.bossAttacks.filter(a=>a.bossId===e.id);
+      const attacks=s.bossAttacks.filter(a=>a.bossId===e.id&&a.age<a.duration-(a.burn||0));
       if(attacks.length){const warning=attacks.filter(a=>a.warning);e.windup=warning.length?Math.max(...warning.map(a=>Math.max(0,a.tell-a.age))):0;e.windupMax=Math.max(e.windup,e.windupMax);e.attackState=warning.length?'aim':'burst';return true;}
       e.windup=0;e.attackState='recover';if(e.weakPointOpen)e.attackLabel='Cœur exposé';
       if(e.hasMemory){e.yaw=Math.atan2(e.lastSeenX-e.x,e.z-e.lastSeenZ);e.aimX=e.lastSeenX;e.aimY=e.lastSeenY;e.aimZ=e.lastSeenZ;}
@@ -2268,12 +2296,13 @@ function navigationGraph(cells,width,testEdge){
       // giant never uses infantry nav or squeezes down the entrance bridge.
       if(e.seen&&e.bossClock>0&&!e.weakPointOpen){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz);if(d>radius(e)+8)move(e,dx/d*dt*.8,dz/d*dt*.8,radius(e));}
       e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;
-      if(e.bossClock<=0&&e.hasMemory&&inArena&&(!bossProgression||!e.weakPointOpen))beginBossAttack(e);
+      if(e.bossClock<=0&&inArena&&(e.hasMemory||tactics.camp>=3)&&(!bossProgression||!e.weakPointOpen)){if(tactics.camp>=3){remember(e,p.x,p.z,'investigate',7,p.y+1.45);beginBossAttack(e,'rocketZone');tactics.camp=0;}else beginBossAttack(e);}
       return true;
     }
     function bossZoneContains(a,e,padding=0){
-      const y=feet(e);if(Math.abs(y-a.y)>1.05)return false;
+      const y=feet(e);if(Math.abs(y-a.y)>1.05||(a.kind==='ring'||a.kind==='sweep')&&y>=a.y+.45)return false;
       const dx=e.x-a.x,dz=e.z-a.z,d=Math.hypot(dx,dz);
+      if(a.kind==='ring'&&a.gaps&&Math.abs(Math.sin(Math.atan2(dx,-dz)-(a.angle+a.age*.25)))<Math.sin(.26))return false;
       if(a.kind==='ring')return d>=Math.max(0,a.innerRadius-padding)&&d<=a.currentRadius+padding;
       if(a.kind==='sweep'){const along=clamp(dx*a.dx+dz*a.dz,0,a.length);return Math.hypot(dx-a.dx*along,dz-a.dz*along)<=a.width+padding;}
       return d<=a.radius+padding;
@@ -2282,23 +2311,25 @@ function navigationGraph(cells,width,testEdge){
       const finished=new Set();
       for(const a of s.bossAttacks){
         const e=s.enemies[a.bossId];if(!e||e.hp<=0){a.age=a.duration;finished.add(a.bossId);continue;}
-        a.age+=dt;a.warning=a.age<a.tell;a.active=!a.warning&&a.age<a.duration;
+        const previous=a.age;a.age+=dt;a.warning=a.age<a.tell;a.active=!a.warning&&a.age<a.duration;
+        if(a.turn&&a.active){a.angle+=a.turn*dt;a.dx=Math.sin(a.angle);a.dz=-Math.cos(a.angle);}
+        if(a.signature==='charge'&&a.active)move(e,a.dx*8*dt,a.dz*8*dt,radius(e));
         if(a.kind==='ring'){a.currentRadius=a.warning?0:clamp((a.age-a.tell)/a.activeDuration,0,1)*a.radius;a.innerRadius=Math.max(0,a.currentRadius-1.6);}
-        if(a.active&&!a.fired){
-          a.fired=true;emit('bossImpact',{id:e.id,kind:a.kind,x:a.x,y:a.y,z:a.z,phase:e.phase});
-          if(a.kind==='rocketZone'){
-            const target=[a.x,a.y+.14,a.z];e.aimX=target[0];e.aimY=target[1];e.aimZ=target[2];e.yaw=Math.atan2(target[0]-e.x,e.z-target[2]);const mouth=barrel(e,...target,a.id%2?-1:1);if(!mouth.blocked){const delta=target.map((v,k)=>v-mouth.point[k]),length=Math.hypot(...delta)||1;spawnProjectile('rocket',mouth.point,delta.map(v=>v/length*18),e.id,{blastRadius:a.radius,terrainPower:34,damage:a.damage});}
-          }else if(a.kind==='slam')explode([a.x,a.y+.18,a.z],a.radius,a.damage,24,e.id);
+        if(a.kind==='rocketZone'&&!a.fired){
+          const {target,mouth}=bossMouth(e,a),delta=target.map((v,k)=>v-mouth.point[k]),length=Math.hypot(...delta)||1;
+          if(a.age>=a.tell-length/18){a.fired=true;e.aimX=target[0];e.aimY=target[1];e.aimZ=target[2];e.yaw=Math.atan2(target[0]-e.x,e.z-target[2]);if(!mouth.blocked)spawnProjectile('rocket',mouth.point,delta.map(v=>v/Math.max(dt,a.tell-a.age+dt)),e.id,{blastRadius:a.radius,terrainPower:34,damage:a.damage});}
         }
+        if(previous<a.tell&&a.age>=a.tell){emit('bossImpact',{id:e.id,kind:a.kind,x:a.x,y:a.y,z:a.z,phase:e.phase});if(a.kind!=='rocketZone')a.fired=true;if(a.kind==='slam')explode([a.x,a.y+.18,a.z],a.radius,a.damage,24,e.id);}
+        if(a.burn&&a.active&&a.age>=a.tell+(a.kind==='rocketZone'?.35:.22)&&a.age<a.duration&&bossZoneContains(a,p,.28)&&!p.airborne)hurt(8*dt,true,{x:a.x,y:a.y,z:a.z});
         if(a.active&&(a.kind==='ring'||a.kind==='sweep')){
           const origin=[a.x,a.y+1,a.z];
-          if(!a.hitPlayer&&bossZoneContains(a,p,.28)&&sight(a.x,a.z,p.x,p.z,origin[1],p.y+1)){a.hitPlayer=true;hurt(a.damage);}
+          if(!a.hitPlayer&&bossZoneContains(a,p,.28)&&sight(a.x,a.z,p.x,p.z,origin[1],p.y+1)){a.hitPlayer=!!hurt(a.damage,true,{x:a.x,y:a.y,z:a.z});}
           for(const enemy of nearby(a.x,a.z,a.kind==='ring'?a.currentRadius+2:a.length+2))if(enemy.hp>0&&enemy.id!==a.bossId&&!a.hitEnemies.includes(enemy.id)&&bossZoneContains(a,enemy,.38)&&sight(a.x,a.z,enemy.x,enemy.z,origin[1],enemy.y)){a.hitEnemies.push(enemy.id);damageEnvironment(enemy,a.damage,a.x,a.y+1,a.z);}
         }
-        if(a.age>=a.duration)finished.add(a.bossId);
+        if(previous<a.duration-(a.burn||0)&&a.age>=a.duration-(a.burn||0))finished.add(a.bossId);
       }
       s.bossAttacks=s.bossAttacks.filter(a=>a.age<a.duration);
-      for(const id of finished)if(!s.bossAttacks.some(a=>a.bossId===id)){const e=s.enemies[id];if(e?.hp>0){e.weakTimer=e.bossKind==='colossus'?3:e.bossKind==='siegebreaker'?2.7:2.4;e.weakPointOpen=true;e.attackLabel='Cœur exposé';e.attackState='recover';e.windup=0;e.bossClock=Math.max(e.bossClock,e.weakTimer+.1);}}
+      for(const id of finished)if(!s.bossAttacks.some(a=>a.bossId===id&&a.age<a.duration-(a.burn||0))){const e=s.enemies[id];if(e?.hp>0){e.weakTimer=3;e.weakPointOpen=true;e.attackLabel='Cœur exposé';e.attackState='recover';e.windup=0;e.bossClock=Math.max(e.bossClock,e.weakTimer+.1);}}
     }
     function avoidBossZone(e,dt){
       for(const a of s.bossAttacks){
@@ -2546,7 +2577,7 @@ function navigationGraph(cells,width,testEdge){
       // same routes as a freshly restored world. No actor or gameplay timer moves.
       if(navPending||!graph.ready){pumpNav(Infinity);graph.flush();s.aiStats.navPending=0;}syncArmor();
       invalidateBrain();failedRoutes.clear();approachRoutes.clear();entryComponents.clear();
-      return {version:1,aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
+      return {version:1,...(world.combatVersion===1?{combatVersion:1}:{}),aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
         state:{...pick(s,NUMBERS),difficulty:s.difficulty,director:pick(s.director,DIRECTOR),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
           ...(profilesEnabled?{profiles:exportProfiles()}:{}),
           ...(economyEnabled?{economy:G.FEconomy.copy(s.economy)}:{}),
@@ -2555,7 +2586,7 @@ function navigationGraph(cells,width,testEdge){
           ...(armorEnabled?{armor:{...s.armor},...(!progression?{armorPickupRemaining:s.pickups.map(q=>q.remaining)}:{})}:{}),
           ...(arsenal?{equipment:{...s.equipment},...(thermalSerialized||s.weaponHeat.some(v=>v!==p.heat)||s.weaponOverheated.some(v=>v!==p.overheated)?{weaponHeat:s.weaponHeat.slice(),weaponOverheated:s.weaponOverheated.slice()}:{})}:{}),
           ...(progression?{inventory:exportInventory(),encounters:s.encounters.map(q=>({id:q.id,...pick(q,ENCOUNTER_STATE)})),pickupRemaining:s.pickups.map(q=>q.remaining),loot:s.loot.map(q=>({...q,ammo:q.ammo.slice()}))}:{}),
-          enemies:s.enemies.map(e=>({...pick(e,ENEMY),...pick(e,AI),...pick(e,AI2),...pick(e,AI3),...pick(e,BOSS),...(progression?pick(e,ENCOUNTER_AI):{}),...(bossProgression?{entryGrace:e.entryGrace}:{}),path:e.path.slice()})),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q})),
+          enemies:s.enemies.map(e=>({...pick(e,ENEMY),...pick(e,AI),...pick(e,AI2),...pick(e,AI3),...pick(e,BOSS),...(e.bossTactics?{bossTactics:{camp:e.bossTactics.camp,last:e.bossTactics.last.slice()}}:{}),...(progression?pick(e,ENCOUNTER_AI):{}),...(bossProgression?{entryGrace:e.entryGrace}:{}),path:e.path.slice()})),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q})),
           mechanisms:s.mechanisms.map(m=>m.active),doors:s.doors.map(d=>d.progress),lifts:s.lifts.map(l=>pick(l,['y','target','powered','moving','carrying'])),
           bossAttacks:s.bossAttacks.map(q=>({...q,hitEnemies:q.hitEnemies.slice()})),projectiles:s.projectiles.map(q=>({...q})),pipes:s.pipes.map(q=>pick(q,PIPE)),traps:s.traps.map(q=>pick(q,TRAP)),rubble:s.debris.filter(q=>q.structural).map(rubbleCopy),
           doorDamage:s.doors.map(d=>({hp:d.hp,destroyed:d.destroyed})),mechanismDamage:s.mechanisms.map(m=>({hp:m.shellHp,destroyed:m.destroyed}))},
@@ -2583,6 +2614,7 @@ function navigationGraph(cells,width,testEdge){
         require(progression?data.progressionVersion===1:data.progressionVersion===undefined);
         require(economyEnabled?data.economyVersion===(bossProgression?2:1):data.economyVersion===undefined);
         require(arsenal?data.arsenalVersion===(pistol?2:1):data.arsenalVersion===undefined);
+        require(data.combatVersion===(world.combatVersion===1?1:undefined));
         require(campaign?data.campaignVersion===(bossProgression?2:1):data.campaignVersion===undefined);
         require(armorEnabled?(data.armorVersion===undefined||data.armorVersion===1):data.armorVersion===undefined);
         const economy=economyEnabled?G.FEconomy.copy(a.economy):null;if(economyEnabled)require(economy);else require(a.economy===undefined);
@@ -2747,7 +2779,7 @@ function navigationGraph(cells,width,testEdge){
               planWait:0,patrolIndex:0,searchIndex:0,goalX:e.x,goalZ:e.z,path:[],pathAt:0,stuck:0,moveSpeed:0};
           }
           if(data.aiVersion===2||data.aiVersion===3){
-            require(number(e.lastSeenY,-1000,1000)&&number(e.observedVX,-6,6)&&number(e.observedVZ,-6,6)&&number(e.observedAt,-1,a.time)&&bool(e.sleeping));
+            require(number(e.lastSeenY,-1000,1000)&&number(e.observedVX,-11,11)&&number(e.observedVZ,-11,11)&&number(e.observedAt,-1,a.time)&&bool(e.sleeping));
             Object.assign(ai,pick(e,AI2));
           }else{
             require(AI2.every(key=>e[key]===undefined));
@@ -2762,6 +2794,7 @@ function navigationGraph(cells,width,testEdge){
           let boss;
           if(data.bossVersion===1){require(bool(e.bossAwake)&&number(e.bossClock,0,12)&&integer(e.bossStep,0,1e9)&&BOSS_LABELS.includes(e.attackLabel)&&bool(e.weakPointOpen)&&number(e.weakTimer,0,3)&&e.weakPointOpen===(e.weakTimer>0)&&bool(e.bossReleased));if(!giant(home))require(!e.bossAwake&&e.bossClock===0&&e.bossStep===0&&e.attackLabel===''&&!e.weakPointOpen&&e.weakTimer===0);if(!home.bossWave)require(e.bossReleased);if(giant(home))require(home.arena&&Math.hypot(e.x-home.arena.x,e.z-home.arena.z)<=Math.max(1,home.arena.r-2.1*scale(home)-5)+1e-6);boss=pick(e,BOSS);}
           else{require(BOSS.every(key=>e[key]===undefined)&&!giant(home)&&!home.bossWave);boss={bossAwake:false,bossClock:0,bossStep:0,attackLabel:'',weakPointOpen:false,weakTimer:0,bossReleased:true};}
+          if(e.bossTactics!==undefined){const t=e.bossTactics;require(giant(home)&&t&&number(t.camp,0,3)&&Array.isArray(t.last)&&t.last.length<=2&&t.last.every(k=>['slam','ring','rocketZone','sweep'].includes(k)));boss.bossTactics={camp:t.camp,last:t.last.slice()};}
           return {...home,...pick(e,ENEMY),...ai,...boss,...encounterAI,encounterId:s.enemies[i].encounterId,encounterWave:s.enemies[i].encounterWave,role:s.enemies[i].role,squad:s.enemies[i].squad};
         });
         if(progression){
@@ -2772,9 +2805,17 @@ function navigationGraph(cells,width,testEdge){
             require(pickup>=0);if(state.phase==='sealed')require(!a.pickups[pickup]);
             if(q){const inactive=q.status==='dormant'&&q.wave===-1&&q.pendingWave===-1&&home.waves.every(w=>w.enemyIds.every(id=>!enemies[id].encounterReleased));if(state.phase==='sealed'||state.phase==='grace')require(inactive);else if(state.phase==='trial')require(q.status!=='dormant');else require(inactive||q.status==='cleared');}
           }
-          require(Array.isArray(a.loot)&&a.loot.length<=enemies.length);const sources=new Set();
+          require(Array.isArray(a.loot)&&a.loot.length<=enemies.length+(world.combatVersion===1?4*enemies.filter(giant).length:0));const sources=new Set(),supplyIds=new Set();
           loot=a.loot.map(q=>{
-            require(q&&integer(q.sourceEnemy,0,enemies.length-1)&&!sources.has(q.sourceEnemy));sources.add(q.sourceEnemy);
+            require(q&&integer(q.sourceEnemy,0,enemies.length-1));
+            if(q.kind==='resupply'){
+              const owner=enemies[q.sourceEnemy],armor=armorEnabled&&data.armorVersion===1?q.armor:0;
+              require(world.combatVersion===1&&giant(owner)&&integer(q.phase,1,2)&&q.phase<=owner.phase&&integer(q.slot,0,1)&&q.id==='phase-'+owner.id+'-'+q.phase+'-'+q.slot&&!supplyIds.has(q.id));supplyIds.add(q.id);
+              require(q.credits===0&&q.cores===0&&Array.isArray(q.ammo)&&q.ammo.length===weaponSlots&&weaponIds.every(i=>integer(q.ammo[i],0,[60,12,4,6,0][i]))&&q.ammo.filter(Boolean).length<=1&&number(armor,0,15)&&bool(q.taken)&&q.taken===(!q.ammo.some(Boolean)&&!armor)&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-1000,1000)&&ground(q.x,q.z)!==null&&Math.abs(q.y-ground(q.x,q.z))<.061);
+              require(['rewardIndex','weapon','weaponUpgrade','personalUpgrade','weaponUpgradeLabel','personalUpgradeLabel','rewardTaken'].every(key=>q[key]===undefined));
+              return {...pick(q,['id','sourceEnemy','kind','phase','slot','credits','cores','x','y','z','taken']),ammo:q.ammo.slice(),...(armorEnabled?{armor}:{})};
+            }
+            require(!sources.has(q.sourceEnemy));sources.add(q.sourceEnemy);
             const enemy=enemies[q.sourceEnemy],reward=enemyReward(enemy,inventory,data.armorVersion===1),remainingArmor=armorEnabled&&data.armorVersion===1?q.armor:0;
             if(armorEnabled&&data.armorVersion===1)require(number(remainingArmor,0,reward?.armor||0));else require(q.armor===undefined);
             let bossReward=null;
@@ -2794,6 +2835,10 @@ function navigationGraph(cells,width,testEdge){
             require(q&&integer(q.id,1,t.bossAttackSerial)&&!ids.has(q.id)&&integer(q.bossId,0,enemies.length-1));ids.add(q.id);const owner=enemies[q.bossId];require(giant(owner)&&owner.hp>0&&owner.bossAwake&&['slam','ring','rocketZone','sweep'].includes(q.kind));
             require(number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-1000,1000)&&number(q.radius,0,40)&&bool(q.warning)&&bool(q.active)&&q.warning!==q.active&&number(q.age,0,12)&&number(q.tell,.5,4)&&number(q.activeDuration,.1,6)&&Math.abs(q.duration-q.tell-q.activeDuration)<1e-8&&q.age<q.duration&&q.warning===(q.age<q.tell));
             require(number(q.currentRadius,0,q.radius)&&number(q.innerRadius,0,q.currentRadius)&&number(q.angle,-1e6,1e6)&&number(q.dx,-1,1)&&number(q.dz,-1,1)&&Math.abs(q.dx-Math.sin(q.angle))<1e-7&&Math.abs(q.dz+Math.cos(q.angle))<1e-7&&number(q.length,0,60)&&number(q.width,0,10)&&integer(q.phase,0,2)&&number(q.damage,0,40)&&bool(q.hitPlayer)&&bool(q.fired));
+            if(q.gaps!==undefined)require(world.combatVersion===1&&world.chapter>=3&&q.kind==='ring'&&q.gaps===true);
+            if(q.turn!==undefined)require(world.combatVersion===1&&q.kind==='sweep'&&number(q.turn,0,.65));
+            if(q.burn!==undefined)require(world.combatVersion===1&&world.chapter>=2&&['slam','rocketZone'].includes(q.kind)&&q.burn===3);
+            if(q.signature!==undefined)require(world.combatVersion===1&&q.phase===2&&['charge','carpet','beam'].includes(q.signature)&&q.kind===(q.signature==='carpet'?'rocketZone':'sweep'));
             require(Array.isArray(q.hitEnemies)&&q.hitEnemies.length<=enemies.length&&new Set(q.hitEnemies).size===q.hitEnemies.length&&q.hitEnemies.every(id=>integer(id,0,enemies.length-1)));
             return {...q,hitEnemies:q.hitEnemies.slice()};
           });

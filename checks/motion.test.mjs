@@ -115,3 +115,12 @@ test('Recoil tuning is copied and the rifle alternates its roll without changing
  const tuning={shot:{...recoil.shot}},m=M.create({recoil:tuning});tuning.shot.pitchDegrees=100;m.impulse('shot');assert(m.update(1/38,{}, {},true).pitch<.01);const first=m.view.recoilRoll;for(let i=0;i<60;i++)m.update(1/60,{}, {},true);m.impulse('shot');assert(first*m.update(1/38,{}, {},true).recoilRoll<0);
  const legacy=M.create();legacy.impulse('rocket');assert.equal(legacy.update(.05,{}, {},true).pitch,0);
 });
+
+test('Optional ground steps smooth a forty centimetre rise without affecting simulation or default hosts',()=>{
+ const m=M.create({cameraSteps:true});m.update(0,{}, {groundY:0,grounded:true});m.update(0,{}, {groundY:.4,grounded:true});close(m.view.step,-.4);let previous=.4+m.view.height;
+ for(let i=0;i<12;i++){m.update(1/60,{}, {groundY:.4,grounded:true});const y=.4+m.view.height;assert(Math.abs(y-previous)<.084);previous=y;}assert(Math.abs(m.view.step)<.04);m.update(0,{}, {groundY:10,grounded:true});assert.equal(m.view.step,0);m.reset();assert.equal(m.view.step,0);
+ const legacy=M.create();legacy.update(1/60,{}, {groundY:.4,grounded:true});assert.equal(legacy.view.step,0);
+});
+test('Landing dips are bounded and reduced motion attenuates the impulse without changing the trajectory',()=>{
+ for(const reduced of [false,true]){const m=M.create({cameraSteps:true});m.impulse('land',12);let peak=0;for(let i=0;i<120;i++){m.update(1/120,{}, {groundY:0,grounded:true},!reduced);peak=Math.max(peak,-m.view.height);}assert(peak>(reduced?.023:.079)&&peak<=(reduced?.0241:.0801));assert(Math.abs(m.view.height)<1e-6);}
+});

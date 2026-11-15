@@ -1152,3 +1152,7 @@ test('disposing while a prepared PCM packet is in flight prevents its upload',as
   r.scope.FMusic.warmup=async()=>true;await r.audio.start();const pending=r.audio.prepare(0),before=r.ctx.buffers.length;
   const pcm=r.scope.FAudio.synthesize('pistol',0,22050);r.audio.dispose();release(pcm);assert.equal(await pending,false);assert.equal(r.ctx.buffers.length,before);
 });
+
+test('Boss warning families have distinct timed spectral signatures and retain audible gain in the arena',async()=>{
+ const signatures=[];for(const kind of ['slam','ring','rocketZone','sweep']){const r=rig();await r.audio.start();r.audio.setPlaying(true);const at=r.ctx.sources.length;r.audio.bossTell({kind,level:.6,pan:0});const notes=r.ctx.sources.slice(at).filter(n=>n.kind==='oscillator');assert(notes.length>0);assert(Math.max(...notes.map(effectPeak))>=.06);const signature=notes.map(n=>({start:n.startTime,duration:n.stopTime-n.startTime,frequency:n.frequency.events}));signatures.push(JSON.stringify(signature));if(kind==='rocketZone'){assert(notes.length>=8);assert(notes[1].startTime-notes[0].startTime>notes.at(-1).startTime-notes.at(-2).startTime);}r.audio.dispose();}assert.equal(new Set(signatures).size,4);
+});

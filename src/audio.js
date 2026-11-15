@@ -951,8 +951,14 @@
         },
         bossTell: function (value) {
           var e = effectEvent('bossTell',value,.25); if (!e) return; var g = e.level;
-          tone(92,180,.52,.27*g,'triangle',0,e.pan,1100);tone(370,530,.28,.105*g,'sine',.08,-e.pan*.3);noise(.16,.105*g,720,e.pan,.12,'bandpass');
+          var kind=e.event.kind;if(kind==='slam'){tone(60,110,1.4,.28*g,'triangle',0,e.pan,400);pcm('body',.22*g,e.pan,e.event,.7);}
+          else if(kind==='ring'){tone(110,390,1.3,.27*g,'triangle',0,e.pan,1300);tone(220,780,1.3,.09*g,'sine',0,-e.pan*.3);}
+          else if(kind==='rocketZone'){for(var i=0,t=0;i<12&&t<1.5;i++){tone(650,650,.045,.27*g,'sine',t,e.pan,2200);t+=1/(4+i*.8);}}
+          else{tone(900,1800,1.35,.25*g,'sine',0,e.pan,2600);pcm('swish',.14*g,e.pan,e.event,.8);}
         },
+        weakHit: function(value){var e=effectEvent('weakHit',value,.06);if(e){pcm('impact:metal',.22*e.level,e.pan,e.event,1.4);tone(2600,2100,.08,.15*e.level,'sine',0,e.pan,4000);}},
+        bossArmorHit: function(value){var e=effectEvent('bossArmorHit',value,.09);if(e)pcm('body',.09*e.level,e.pan,e.event,.8);},
+        enemyPain: function(value){var e=effectEvent('enemyPain',value,.12);if(e)pcm('impact:metal',.12*e.level,e.pan,e.event,.9);},
         bossRoar: function (value) {
           var e = effectEvent('bossRoar',value,.6); if (!e) return; var g = e.level;
           pcm('break:metal',.39*g,e.pan,e.event,.74);pcm('steam',.21*g,e.pan,e.event,.8);
@@ -1140,7 +1146,7 @@
       };
       // Priority belongs to a cue, not its waveform. A rocket's click, body
       // and exhaust keep the same reservation and cause one short music dip.
-      var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
+      var urgent = /^(shot|fracture|pulse|rocket|grenade|grenadeLaunch|hurt|bossTell|bossRoar|bossImpact|bossDeath|bossPhase|weakHit|horror|metallicSlam|horrorSting|powerCut|alarm|empty|melee|weaponPickup|trophy|wave|core|win)$/;
       var helpers = /^(start|resume|prepare|set|tick|testMix|cancelTestMix|dispose|graph|requestMusic|releaseMusic)/;
       Object.keys(api).forEach(function (name) {
         if (typeof api[name] !== 'function' || helpers.test(name)) return;

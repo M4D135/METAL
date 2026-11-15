@@ -39,9 +39,9 @@
   }
   function create(options={}){
     const recoil=Object.create(null);for(const [kind,value] of Object.entries(options?.recoil||{}))if(value&&typeof value==='object')recoil[kind]={omega:clamp(finite(value.omega),1,80),velocity:clamp(finite(value.velocity),0,20),pitch:clamp(finite(value.pitchDegrees),0,5)*Math.PI/180,fov:clamp(finite(value.fovDegrees),-5,5),roll:clamp(finite(value.rollDegrees),0,2)*Math.PI/180};
-    let kickOmega=27,shotIndex=0;
+    let kickOmega=27,shotIndex=0,stepY=null,stepOffset=0;
     const springs={};
-    const view={height:0,roll:0,fov:0,pitch:0,recoilFov:0,recoilRoll:0,weapon:{offset:[0,0,0],rotation:[0,0,0],slide:0}};
+    const view={height:0,roll:0,fov:0,step:0,pitch:0,recoilFov:0,recoilRoll:0,weapon:{offset:[0,0,0],rotation:[0,0,0],slide:0}};
     function channel(key){return springs[key]||(springs[key]={x:0,v:0});}
     // Exact critically damped step for a constant target. Stable at any render cadence.
     function damp(key,target,omega,dt){
@@ -60,6 +60,7 @@
       else if(kind==='fracture')channel('kick').v+=3.5;
       else if(kind==='rocket')channel('kick').v+=5.5;
       else if(kind==='blast')channel('blast').v=Math.min(3,channel('blast').v+clamp(finite(amount),0,1)*1.4);
+      else if(kind==='land'&&options.cameraSteps)channel('landing').v-=Math.min(.08,Math.max(0,finite(amount))*.012)*18*Math.E;
       else if(kind==='switch')channel('equip').v-=2.5;
       else if(kind==='hurt')channel('impact').v+=.7;
       else if(kind==='pulse')channel('equip').v-=1.1;
@@ -67,7 +68,7 @@
     }
     function reset(){
       for(const key of Object.keys(springs))delete springs[key];
-      kickOmega=27;shotIndex=0;view.height=view.roll=view.fov=view.pitch=view.recoilFov=view.recoilRoll=0;view.weapon.offset.fill(0);view.weapon.rotation.fill(0);view.weapon.slide=0;
+      kickOmega=27;shotIndex=0;stepY=null;stepOffset=0;view.step=0;view.height=view.roll=view.fov=view.pitch=view.recoilFov=view.recoilRoll=0;view.weapon.offset.fill(0);view.weapon.rotation.fill(0);view.weapon.slide=0;
       return view;
     }
     function update(dt,loc={},signals={},enabled=true){
@@ -101,6 +102,7 @@
         view.height=view.roll=view.fov=0;
         for(const key of ['height','cameraRoll','fov']){const q=channel(key);q.x=q.v=0;}
       }
+      if(options.cameraSteps){const y=Number.isFinite(signals.groundY)?signals.groundY:null,delta=stepY===null||y===null?0:y-stepY;stepOffset*=Math.exp(-14*dt);if(signals.grounded&&Math.abs(delta)<=.45)stepOffset-=delta;else if(!signals.grounded||Math.abs(delta)>.45)stepOffset=0;stepY=y;view.step=enabled?stepOffset:0;view.height+=view.step+damp('landing',0,18,dt)*(enabled?1:.3);}
       const recoilScale=enabled?1:.3;view.pitch=damp('cameraKick',0,kickOmega,dt)*recoilScale;view.recoilFov=damp('kickFov',0,14,dt)*recoilScale;view.recoilRoll=damp('kickRoll',0,kickOmega,dt)*recoilScale;view.fov+=view.recoilFov;view.roll+=view.recoilRoll;
       return view;
     }

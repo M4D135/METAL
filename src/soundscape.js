@@ -8,7 +8,7 @@
   // decor. Dans l'enclos, leur niveau ne peut pas descendre sous 0,6 ; le
   // panoramique et l'occultation restent ceux de la localisation.
   const tells=new Set(['bossTell','bossRoar','bossImpact','bossPhase']);
-  function inArena(sim){const a=sim.state.world&&sim.state.world.bossArena,p=sim.state.player;return !!a&&!!p&&Math.hypot(p.x-a.x,p.z-a.z)<a.r&&Math.abs((p.y||0)-a.y)<5;}
+  function inArena(sim){const a=sim.state.world&&sim.state.world.bossArena,p=sim.state.player;return !!a&&!!p&&Math.abs(p.x-a.x)<a.r+1.5&&Math.abs(p.z-a.z)<a.r+1.5&&Math.abs((p.y||0)-a.y)<5;}
   function create(){
     const cache=new Map();let frameKey='',probes=0,revision='',currentSim=null;
     function reset(){cache.clear();frameKey=revision='';probes=0;currentSim=null;}
@@ -38,6 +38,7 @@
       return {level,pan:clamp((dx*Math.cos(p.yaw)+dz*Math.sin(p.yaw))/Math.max(.5,Math.hypot(dx,dz)),-1,1),occluded,distance};
     }
     function event(sim,e){
+      if(e.name==='hurt')return {...e,level:1,pan:0,occluded:0};
       if(personal.has(e.name)&&(e.owner==='player'||e.actor==='player'||!Number.isFinite(e.x)))return {...e,level:1,pan:0,occluded:0};
       const located={...e,...locate(sim,e,ranges[e.name]||36)};
       if(tells.has(e.name)&&inArena(sim))located.level=Math.max(.6,located.level);
