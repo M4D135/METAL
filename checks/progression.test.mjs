@@ -137,7 +137,8 @@ test('Generation-six movement is faster, normalizes diagonals and agrees at 20â€
     const sim=FSimulation.create(world()),dt=1/hz;
     for(let i=0;i<hz;i++)sim.step(dt,{moveY:1,sprint:true});const forward=-sim.state.player.z;assert(forward>7.2&&forward<7.61);
     for(let i=0;i<hz/2;i++)sim.step(dt,{moveX:1,moveY:-1,sprint:true});
-    for(let i=0;i<hz/4;i++)sim.step(dt);assert(sim.state.locomotion.speed<.005);
+    // The modern stop takes ~249 ms; locomotion reports mean speed over the frame.
+    for(let i=0;i<Math.ceil(hz*.3);i++)sim.step(dt);assert(sim.state.locomotion.speed<.005);
     results.push([sim.state.player.x,sim.state.player.z]);
     const diagonal=FSimulation.create(world());for(let i=0;i<hz;i++)diagonal.step(dt,{moveX:1,moveY:1,sprint:true});assert(Math.abs(Math.hypot(diagonal.state.player.x,diagonal.state.player.z)-forward)<.002);
   }

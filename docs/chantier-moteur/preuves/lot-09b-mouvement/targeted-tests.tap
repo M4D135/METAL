@@ -1,0 +1,1220 @@
+TAP version 13
+# Subtest: Campaign identity distinguishes repeated decor indices and refuses a foreign-world checkpoint atomically
+ok 1 - Campaign identity distinguishes repeated decor indices and refuses a foreign-world checkpoint atomically
+  ---
+  duration_ms: 22.196322
+  ...
+# Subtest: Campaign opt-in preserves the exact historical fingerprint and never silently imports a legacy checkpoint
+ok 2 - Campaign opt-in preserves the exact historical fingerprint and never silently imports a legacy checkpoint
+  ---
+  duration_ms: 11.740503
+  ...
+# Subtest: Five-slot campaign starts with a pistol, keeps both hands distinct and carries a finite loadout between worlds
+ok 3 - Five-slot campaign starts with a pistol, keeps both hands distinct and carries a finite loadout between worlds
+  ---
+  duration_ms: 17.542402
+  ...
+# Subtest: Pistol shots are precise, slower than the SMG and unlimited without serialising Infinity or inventing ammunition
+ok 4 - Pistol shots are precise, slower than the SMG and unlimited without serialising Infinity or inventing ammunition
+  ---
+  duration_ms: 40.670962
+  ...
+# Subtest: Campaign workshops extend capacity safely and cannot sell first discoveries or ammunition for locked weapons
+ok 5 - Campaign workshops extend capacity safely and cannot sell first discoveries or ammunition for locked weapons
+  ---
+  duration_ms: 5.163326
+  ...
+# Subtest: Campaign caches and enemy loot never give locked or pistol ammunition, and saved loot validates against the saved arsenal
+ok 6 - Campaign caches and enemy loot never give locked or pistol ammunition, and saved loot validates against the saved arsenal
+  ---
+  duration_ms: 21.663572
+  ...
+# Subtest: A pistol remains usable in the right hand while the left hand fires its own weapon
+ok 7 - A pistol remains usable in the right hand while the left hand fires its own weapon
+  ---
+  duration_ms: 10.581979
+  ...
+# Subtest: First campaign equipment pickups require the exact calendar world and its unique trophy identity
+ok 8 - First campaign equipment pickups require the exact calendar world and its unique trophy identity
+  ---
+  duration_ms: 79.594121
+  ...
+# Subtest: A trophy grants one discovery, local grace and a real hidden-entry trial that resumes without replaying the sting
+ok 9 - A trophy grants one discovery, local grace and a real hidden-entry trial that resumes without replaying the sting
+  ---
+  duration_ms: 61.330377
+  ...
+# Subtest: Trophy discovery profiles cross worlds, reject inconsistent histories and preserve the old economy profile shape
+ok 10 - Trophy discovery profiles cross worlds, reject inconsistent histories and preserve the old economy profile shape
+  ---
+  duration_ms: 25.441031
+  ...
+# Subtest: Corrupted trophy history, grace and premature trial saves fail atomically while falls still bypass trophy immunity
+ok 11 - Corrupted trophy history, grace and premature trial saves fail atomically while falls still bypass trophy immunity
+  ---
+  duration_ms: 6.110618
+  ...
+# Subtest: Campaign pressure uses both owned quantity and quality, ignores weapon swaps, and multiplies the selected difficulty
+ok 12 - Campaign pressure uses both owned quantity and quality, ignores weapon swaps, and multiplies the selected difficulty
+  ---
+  duration_ms: 22.919824
+  ...
+# Subtest: A missed arsenal reduces boss HP once at entry; later discovery and save recovery never heal or rescale that boss
+ok 13 - A missed arsenal reduces boss HP once at entry; later discovery and save recovery never heal or rescale that boss
+  ---
+  duration_ms: 59.534383
+  ...
+# Subtest: Both boss reinforcement phases respect a pistol-only combat cap and restore during the real boss encounter
+ok 14 - Both boss reinforcement phases respect a pistol-only combat cap and restore during the real boss encounter
+  ---
+  duration_ms: 67.144549
+  ...
+# Subtest: A wave larger than the actual arsenal cap deploys partially, saves, then admits another real guard after a kill
+ok 15 - A wave larger than the actual arsenal cap deploys partially, saves, then admits another real guard after a kill
+  ---
+  duration_ms: 56.170011
+  ...
+# Subtest: Explosive infantry waits for real heavy-weapon ownership while keeping its generated identity
+ok 16 - Explosive infantry waits for real heavy-weapon ownership while keeping its generated identity
+  ---
+  duration_ms: 108.835475
+  ...
+# Subtest: V2 shell starts a free left hand, shows physical boss rewards and resumes claimed upgrades exactly once
+ok 17 - V2 shell starts a free left hand, shows physical boss rewards and resumes claimed upgrades exactly once
+  ---
+  duration_ms: 54.435857
+  ...
+# Subtest: V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world
+ok 18 - V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world
+  ---
+  duration_ms: 34.470487
+  ...
+# Subtest: Victory fanfare begins after the result screen has stopped active gameplay voices
+ok 19 - Victory fanfare begins after the result screen has stopped active gameplay voices
+  ---
+  duration_ms: 15.425546
+  ...
+# Subtest: The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen
+ok 20 - The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen
+  ---
+  duration_ms: 129.291435
+  ...
+# Subtest: A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode
+ok 21 - A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode
+  ---
+  duration_ms: 85.029878
+  ...
+# Subtest: Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly
+ok 22 - Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly
+  ---
+  duration_ms: 57.12492
+  ...
+# Subtest: The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal
+ok 23 - The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal
+  ---
+  duration_ms: 63.36669
+  ...
+# Subtest: Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell
+ok 24 - Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell
+  ---
+  duration_ms: 68.72608
+  ...
+# Subtest: Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered
+ok 25 - Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered
+  ---
+  duration_ms: 50.203505
+  ...
+# Subtest: A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial
+ok 26 - A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial
+  ---
+  duration_ms: 111.21753
+  ...
+# Subtest: Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together
+ok 27 - Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together
+  ---
+  duration_ms: 21.25767
+  ...
+# Subtest: Mouse and touch left inputs fire the paired weapon and Space always dashes
+ok 28 - Mouse and touch left inputs fire the paired weapon and Space always dashes
+  ---
+  duration_ms: 25.00988
+  ...
+# Subtest: Both hands and fourth-calibre ammunition survive sector Continue and entry restart
+ok 29 - Both hands and fourth-calibre ammunition survive sector Continue and entry restart
+  ---
+  duration_ms: 24.408923
+  ...
+# Subtest: Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint
+ok 30 - Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint
+  ---
+  duration_ms: 69.809292
+  ...
+# Subtest: Physical armor pickups update the HUD, retain excess and keep one flat hundred-point capacity
+ok 31 - Physical armor pickups update the HUD, retain excess and keep one flat hundred-point capacity
+  ---
+  duration_ms: 31.797888
+  ...
+# Subtest: The browser shell carries fractional armor through Continue, resume and entry restart without refilling
+ok 32 - The browser shell carries fractional armor through Continue, resume and entry restart without refilling
+  ---
+  duration_ms: 38.601929
+  ...
+# Subtest: The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations
+ok 33 - The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations
+  ---
+  duration_ms: 11.803831
+  ...
+# Subtest: The real arsenal HUD locks missing guns, equips found weapons across substeps and reports spent ammunition
+ok 34 - The real arsenal HUD locks missing guns, equips found weapons across substeps and reports spent ammunition
+  ---
+  duration_ms: 15.893464
+  ...
+# Subtest: Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill
+ok 35 - Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill
+  ---
+  duration_ms: 33.696602
+  ...
+# Subtest: Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue action
+ok 36 - Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue action
+  ---
+  duration_ms: 26.161988
+  ...
+# Subtest: Reserved enemies remain absent from character geometry and animation until physically deployed
+ok 37 - Reserved enemies remain absent from character geometry and animation until physically deployed
+  ---
+  duration_ms: 12.366997
+  ...
+# Subtest: Continue restores a current-generation checkpoint at its relay
+ok 38 - Continue restores a current-generation checkpoint at its relay
+  ---
+  duration_ms: 12.588916
+  ...
+# Subtest: A real fall below a terrace opens the death screen and Continue restores the safe checkpoint
+ok 39 - A real fall below a terrace opens the death screen and Continue restores the safe checkpoint
+  ---
+  duration_ms: 30.499205
+  ...
+# Subtest: Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall
+ok 40 - Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall
+  ---
+  duration_ms: 32.209552
+  ...
+# Subtest: Continue migrates generation 4 to the same sector without losing prior-sector totals
+ok 41 - Continue migrates generation 4 to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 14.773133
+  ...
+# Subtest: Continue migrates generation 3 to the same sector without losing prior-sector totals
+ok 42 - Continue migrates generation 3 to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 12.47194
+  ...
+# Subtest: Continue migrates generation legacy to the same sector without losing prior-sector totals
+ok 43 - Continue migrates generation legacy to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 12.244053
+  ...
+# Subtest: An invalid snapshot restarts its sector and preserves the first migration backup
+ok 44 - An invalid snapshot restarts its sector and preserves the first migration backup
+  ---
+  duration_ms: 12.622724
+  ...
+# Subtest: LOAD-01: an unrecoverable classic point restarts with its exact entry equipment
+ok 45 - LOAD-01: an unrecoverable classic point restarts with its exact entry equipment
+  ---
+  duration_ms: 31.004868
+  ...
+# Subtest: LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment
+ok 46 - LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment
+  ---
+  duration_ms: 33.202443
+  ...
+# Subtest: LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment
+ok 47 - LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment
+  ---
+  duration_ms: 35.182341
+  ...
+# Subtest: LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment
+ok 48 - LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment
+  ---
+  duration_ms: 33.749626
+  ...
+# Subtest: LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoint
+ok 49 - LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoint
+  ---
+  duration_ms: 49.954129
+  ...
+# Subtest: LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy checkpoint
+ok 50 - LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy checkpoint
+  ---
+  duration_ms: 47.30849
+  ...
+# Subtest: LOAD-01: a failed fallback launch never replaces the active rejected checkpoint
+ok 51 - LOAD-01: a failed fallback launch never replaces the active rejected checkpoint
+  ---
+  duration_ms: 32.47403
+  ...
+# Subtest: LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+ok 52 - LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+  ---
+  duration_ms: 30.787508
+  ...
+# Subtest: LOAD-01: generated l:0 rubble restores exactly after three real rocket breaches
+ok 53 - LOAD-01: generated l:0 rubble restores exactly after three real rocket breaches
+  ---
+  duration_ms: 730.577089
+  ...
+# Subtest: LOAD-01: generated c:9 rubble restores exactly after three real rocket breaches
+ok 54 - LOAD-01: generated c:9 rubble restores exactly after three real rocket breaches
+  ---
+  duration_ms: 708.478111
+  ...
+# Subtest: F activates a mechanism once through a multi-substep frame and writes its checkpoint
+ok 55 - F activates a mechanism once through a multi-substep frame and writes its checkpoint
+  ---
+  duration_ms: 15.236107
+  ...
+# Subtest: The contextual button operates a real lift, carries the camera, and saves the arrival
+ok 56 - The contextual button operates a real lift, carries the camera, and saves the arrival
+  ---
+  duration_ms: 27.729439
+  ...
+# Subtest: Options rebind the actual interaction key, persist it, and never start the expedition
+ok 57 - Options rebind the actual interaction key, persist it, and never start the expedition
+  ---
+  duration_ms: 12.632723
+  ...
+# Subtest: Image and mix controls reach the renderer/audio and do not advance a paused simulation
+ok 58 - Image and mix controls reach the renderer/audio and do not advance a paused simulation
+  ---
+  duration_ms: 7.392166
+  ...
+# Subtest: Rupture input launches a physical projectile and sends a traversable breach to the renderer
+ok 59 - Rupture input launches a physical projectile and sends a traversable breach to the renderer
+  ---
+  duration_ms: 50.87491
+  ...
+# Subtest: restoring intact geometry after a breach refreshes rendering even when controller revisions are reused
+ok 60 - restoring intact geometry after a breach refreshes rendering even when controller revisions are reused
+  ---
+  duration_ms: 9.475855
+  ...
+# Subtest: difficulty settings affect the real simulation, persist, and preserve health and campaign state
+ok 61 - difficulty settings affect the real simulation, persist, and preserve health and campaign state
+  ---
+  duration_ms: 10.444011
+  ...
+# Subtest: audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint
+ok 62 - audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint
+  ---
+  duration_ms: 65.313467
+  ...
+# Subtest: audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources
+ok 63 - audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources
+  ---
+  duration_ms: 26.089493
+  ...
+# Subtest: audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout
+ok 64 - audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout
+  ---
+  duration_ms: 27.671983
+  ...
+# Subtest: audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage
+ok 65 - audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage
+  ---
+  duration_ms: 33.10598
+  ...
+# Subtest: audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule
+ok 66 - audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule
+  ---
+  duration_ms: 39.497333
+  ...
+# Subtest: LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+ok 67 - LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+  ---
+  duration_ms: 9.115552
+  ...
+# Subtest: LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+ok 68 - LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+  ---
+  duration_ms: 6.838472
+  ...
+# Subtest: LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+ok 69 - LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 6.547561
+  ...
+# Subtest: LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+ok 70 - LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 6.535545
+  ...
+# Subtest: LOAD-03: finishing the expedition cancels a pending checkpoint write
+ok 71 - LOAD-03: finishing the expedition cancels a pending checkpoint write
+  ---
+  duration_ms: 13.347745
+  ...
+# Subtest: LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+ok 72 - LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+  ---
+  duration_ms: 28.982635
+  ...
+# Subtest: LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+ok 73 - LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+  ---
+  duration_ms: 21.629748
+  ...
+# Subtest: LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+ok 74 - LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+  ---
+  duration_ms: 13.293889
+  ...
+# Subtest: LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+ok 75 - LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+  ---
+  duration_ms: 19.96761
+  ...
+# Subtest: LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+ok 76 - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+  ---
+  duration_ms: 18.515839
+  ...
+# Subtest: LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+ok 77 - LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+  ---
+  duration_ms: 16.640118
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-0
+ok 78 - pre-massive browser Continue, save and Continue again: classic-0
+  ---
+  duration_ms: 1902.096508
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-2
+ok 79 - pre-massive browser Continue, save and Continue again: classic-2
+  ---
+  duration_ms: 2104.347498
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-0
+ok 80 - pre-massive browser Continue, save and Continue again: campaign1-0
+  ---
+  duration_ms: 2071.117488
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-9
+ok 81 - pre-massive browser Continue, save and Continue again: campaign1-9
+  ---
+  duration_ms: 1869.75005
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-17
+ok 82 - pre-massive browser Continue, save and Continue again: campaign1-17
+  ---
+  duration_ms: 2143.963636
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-0
+ok 83 - pre-massive browser Continue, save and Continue again: campaign2-0
+  ---
+  duration_ms: 1781.530489
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-9
+ok 84 - pre-massive browser Continue, save and Continue again: campaign2-9
+  ---
+  duration_ms: 1916.638946
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-17
+ok 85 - pre-massive browser Continue, save and Continue again: campaign2-17
+  ---
+  duration_ms: 2352.698463
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-rubble
+ok 86 - pre-massive browser Continue, save and Continue again: classic-rubble
+  ---
+  duration_ms: 1995.062435
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-rubble
+ok 87 - pre-massive browser Continue, save and Continue again: campaign2-rubble
+  ---
+  duration_ms: 1944.737637
+  ...
+# Subtest: legacy movement and jump-pad path ignore the new jump action over 3,600 steps
+ok 88 - legacy movement and jump-pad path ignore the new jump action over 3,600 steps
+  ---
+  duration_ms: 450.52223
+  ...
+# Subtest: modern ramp, stop and reversal meet the movement targets at 20/60/120 Hz
+ok 89 - modern ramp, stop and reversal meet the movement targets at 20/60/120 Hz
+  ---
+  duration_ms: 134.753272
+  ...
+# Subtest: free jump has 0.961 m apex, 620 ms flight and retains 7.6 m/s horizontal momentum
+ok 90 - free jump has 0.961 m apex, 620 ms flight and retains 7.6 m/s horizontal momentum
+  ---
+  duration_ms: 46.436013
+  ...
+# Subtest: grounded jump buffering creates a save opportunity and keeps its remaining-step momentum
+ok 91 - grounded jump buffering creates a save opportunity and keeps its remaining-step momentum
+  ---
+  duration_ms: 340.960614
+  ...
+# Subtest: coyote time is 100 ms and restoring a checkpoint clears pending jump input
+ok 92 - coyote time is 100 ms and restoring a checkpoint clears pending jump input
+  ---
+  duration_ms: 235.262232
+  ...
+# Subtest: modern fatal falls use launch height, with authored terraces and old impact rules intact
+ok 93 - modern fatal falls use launch height, with authored terraces and old impact rules intact
+  ---
+  duration_ms: 400.472086
+  ...
+# Subtest: standing outdoor boundaries block jumping at any height, and demolition opens the actual breach
+ok 94 - standing outdoor boundaries block jumping at any height, and demolition opens the actual breach
+  ---
+  duration_ms: 52.787239
+  ...
+# Subtest: old checkpoints on the boundary crest can escape, and only the player is clipped
+ok 95 - old checkpoints on the boundary crest can escape, and only the player is clipped
+  ---
+  duration_ms: 145.05746
+  ...
+# Subtest: steps up to 0.42 m are walkable but higher ledges and overhead obstacles block the player
+ok 96 - steps up to 0.42 m are walkable but higher ledges and overhead obstacles block the player
+  ---
+  duration_ms: 128.719662
+  ...
+# Subtest: extended SMG aim assistance belongs to touch, while pad retains the smaller cone
+ok 97 - extended SMG aim assistance belongs to touch, while pad retains the smaller cone
+  ---
+  duration_ms: 128.210863
+  ...
+# Subtest: a dash leaving a ledge keeps its instantaneous speed and remaining invulnerability
+ok 98 - a dash leaving a ledge keeps its instantaneous speed and remaining invulnerability
+  ---
+  duration_ms: 232.653345
+  ...
+# Subtest: a six-second sequence of buffered jumps travels the same distance at 20/60/120 Hz
+ok 99 - a six-second sequence of buffered jumps travels the same distance at 20/60/120 Hz
+  ---
+  duration_ms: 136.908913
+  ...
+# Subtest: The starting arsenal is locked and every discharged weapon consumes finite ammunition exactly once
+ok 100 - The starting arsenal is locked and every discharged weapon consumes finite ammunition exactly once
+  ---
+  duration_ms: 87.722396
+  ...
+# Subtest: Physical weapon racks unlock in order, duplicate racks provide ammunition, and full bags retain their surplus
+ok 101 - Physical weapon racks unlock in order, duplicate racks provide ammunition, and full bags retain their surplus
+  ---
+  duration_ms: 60.615115
+  ...
+# Subtest: Supplies cannot be collected through a thin wall or from another floor
+ok 102 - Supplies cannot be collected through a thin wall or from another floor
+  ---
+  duration_ms: 31.662241
+  ...
+# Subtest: An empty weapon uses a short weak butt strike without heat or projectile; defensive pulse does not replace ammunition
+ok 103 - An empty weapon uses a short weak butt strike without heat or projectile; defensive pulse does not replace ammunition
+  ---
+  duration_ms: 153.004552
+  ...
+# Subtest: Undeployed reservations have no hit volume, perception, pulse, blast or elevator collision
+ok 104 - Undeployed reservations have no hit volume, perception, pulse, blast or elevator collision
+  ---
+  duration_ms: 48.902549
+  ...
+# Subtest: Waves keep stable IDs, wait for real kills, announce their entry and walk continuously after hidden deployment
+ok 105 - Waves keep stable IDs, wait for real kills, announce their entry and walk continuously after hidden deployment
+  ---
+  duration_ms: 121.750981
+  ...
+# Subtest: Looking away never permits a visible spawn, and a destroyed deployment screen leaves reserves waiting
+ok 106 - Looking away never permits a visible spawn, and a destroyed deployment screen leaves reserves waiting
+  ---
+  duration_ms: 68.057442
+  ...
+# Subtest: Global combat budget bounds overlapping encounters and disengaged actors return on foot without despawning
+ok 107 - Global combat budget bounds overlapping encounters and disengaged actors return on foot without despawning
+  ---
+  duration_ms: 65.820905
+  ...
+# Subtest: Inventory, partial caches, pending waves and reservations round-trip atomically without resupply
+ok 108 - Inventory, partial caches, pending waves and reservations round-trip atomically without resupply
+  ---
+  duration_ms: 90.069396
+  ...
+# Subtest: Generation-six movement is faster, normalizes diagonals and agrees at 20–120 Hz through reversal and release
+ok 109 - Generation-six movement is faster, normalizes diagonals and agrees at 20–120 Hz through reversal and release
+  ---
+  duration_ms: 217.449958
+  ...
+# Subtest: Destroyed pipe mouths stop steam, sound triggers and damage immediately while surviving mouths stay anchored
+ok 110 - Destroyed pipe mouths stop steam, sound triggers and damage immediately while surviving mouths stay anchored
+  ---
+  duration_ms: 90.081781
+  ...
+# Subtest: The energetic air profile keeps deterministic pad arcs, midflight inventory saves and swept walls and ceilings
+ok 111 - The energetic air profile keeps deterministic pad arcs, midflight inventory saves and swept walls and ceilings
+  ---
+  duration_ms: 246.12861
+  ...
+# Subtest: A nearby workshop applies purchased stats to real combat without advancing time or refilling upgrade capacity
+ok 112 - A nearby workshop applies purchased stats to real combat without advancing time or refilling upgrade capacity
+  ---
+  duration_ms: 138.389484
+  ...
+# Subtest: Workshop transactions require a live operator and an unobstructed physical workshop
+ok 113 - Workshop transactions require a live operator and an unobstructed physical workshop
+  ---
+  duration_ms: 29.72412
+  ...
+# Subtest: Boss salvage awards its physical credits and core once, keeps ammo overflow and rejects corrupted economy checkpoints
+ok 114 - Boss salvage awards its physical credits and core once, keeps ammo overflow and rejects corrupted economy checkpoints
+  ---
+  duration_ms: 84.823719
+  ...
+# Subtest: Four-slot loadouts migrate old inventories without gifts and enforce distinct owned weapons in each hand
+ok 115 - Four-slot loadouts migrate old inventories without gifts and enforce distinct owned weapons in each hand
+  ---
+  duration_ms: 142.461437
+  ...
+# Subtest: Two hands discharge independently while swapping preserves each weapon cooldown and shared finite ammunition
+ok 116 - Two hands discharge independently while swapping preserves each weapon cooldown and shared finite ammunition
+  ---
+  duration_ms: 60.478284
+  ...
+# Subtest: Hand-specific muzzle paths prevent shooting through an adjacent corner while the unobstructed hand can hit
+ok 117 - Hand-specific muzzle paths prevent shooting through an adjacent corner while the unobstructed hand can hit
+  ---
+  duration_ms: 59.990414
+  ...
+# Subtest: A finite player grenade launches from the selected hand, follows gravity, bounces safely and restores mid-flight
+ok 118 - A finite player grenade launches from the selected hand, follows gravity, bounces safely and restores mid-flight
+  ---
+  duration_ms: 116.989878
+  ...
+# Subtest: A frontal bullet now lands at full strength because nothing absorbs it any more
+ok 119 - A frontal bullet now lands at full strength because nothing absorbs it any more
+  ---
+  duration_ms: 28.498172
+  ...
+# Subtest: The dodge always dashes and keeps its short invulnerability without striking
+ok 120 - The dodge always dashes and keeps its short invulnerability without striking
+  ---
+  duration_ms: 29.507529
+  ...
+# Subtest: Both weapon cooldowns and hand ownership save atomically without free ammunition
+ok 121 - Both weapon cooldowns and hand ownership save atomically without free ammunition
+  ---
+  duration_ms: 108.574564
+  ...
+# Subtest: Grenade racks are physical, an old shield pickup stays inert and the workshop never sells one
+ok 122 - Grenade racks are physical, an old shield pickup stays inert and the workshop never sells one
+  ---
+  duration_ms: 76.239317
+  ...
+# Subtest: Swept movement stops at a thin wall and slides along it, including a large move
+ok 123 - Swept movement stops at a thin wall and slides along it, including a large move
+  ---
+  duration_ms: 12.300645
+  ...
+# Subtest: Spatial collision lookup matches exhaustive disc checks at bucket edges, corners and all body sizes
+ok 124 - Spatial collision lookup matches exhaustive disc checks at bucket edges, corners and all body sizes
+  ---
+  duration_ms: 1901.966762
+  ...
+# Subtest: A very large frame delta cannot teleport the player through a wall
+ok 125 - A very large frame delta cannot teleport the player through a wall
+  ---
+  duration_ms: 10.240108
+  ...
+# Subtest: Ray and weapon hit the near wall, never an enemy behind it
+ok 126 - Ray and weapon hit the near wall, never an enemy behind it
+  ---
+  duration_ms: 5.609388
+  ...
+# Subtest: A shot hits the nearest exposed enemy before a wall and registers a kill once
+ok 127 - A shot hits the nearest exposed enemy before a wall and registers a kill once
+  ---
+  duration_ms: 8.13354
+  ...
+# Subtest: An exposed enemy can be hit above low cover when the actual 3D firing ray is clear
+ok 128 - An exposed enemy can be hit above low cover when the actual 3D firing ray is clear
+  ---
+  duration_ms: 4.166545
+  ...
+# Subtest: Sustained fire overheats; shots remain blocked until the weapon cools
+ok 129 - Sustained fire overheats; shots remain blocked until the weapon cools
+  ---
+  duration_ms: 10.557595
+  ...
+# Subtest: Dash briefly grants immunity and cannot be retriggered during its cooldown
+ok 130 - Dash briefly grants immunity and cannot be retriggered during its cooldown
+  ---
+  duration_ms: 6.145706
+  ...
+# Subtest: A lethal projectile ends the frame before a relay can heal a dead player
+ok 131 - A lethal projectile ends the frame before a relay can heal a dead player
+  ---
+  duration_ms: 4.595696
+  ...
+# Subtest: Normal movement collects three relays before the exit wins, with no repeated events
+ok 132 - Normal movement collects three relays before the exit wins, with no repeated events
+  ---
+  duration_ms: 11.678055
+  ...
+# Subtest: A real generated level can be completed using navigation and ordinary collision-respecting movement
+ok 133 - A real generated level can be completed using navigation and ordinary collision-respecting movement
+  ---
+  duration_ms: 3152.380226
+  ...
+# Subtest: Fracture rewards close range, preserves shot accuracy accounting and has a slower recovery
+ok 134 - Fracture rewards close range, preserves shot accuracy accounting and has a slower recovery
+  ---
+  duration_ms: 14.667661
+  ...
+# Subtest: Pulse immediately enters cooldown, clears nearby projectiles, respects walls and pushes safely
+ok 135 - Pulse immediately enters cooldown, clears nearby projectiles, respects walls and pushes safely
+  ---
+  duration_ms: 4.896015
+  ...
+# Subtest: Turret attacks have a readable windup and a dodgeable locked burst
+ok 136 - Turret attacks have a readable windup and a dodgeable locked burst
+  ---
+  duration_ms: 8.579554
+  ...
+# Subtest: Scouts strafe while heavies telegraph a committed charge that can be sidestepped
+ok 137 - Scouts strafe while heavies telegraph a committed charge that can be sidestepped
+  ---
+  duration_ms: 11.362008
+  ...
+# Subtest: A charging heavy cannot deal contact damage through a thin wall
+ok 138 - A charging heavy cannot deal contact damage through a thin wall
+  ---
+  duration_ms: 6.426345
+  ...
+# Subtest: Boss begins at 30 HP, telegraphs fan attacks and changes phase once at half health
+ok 139 - Boss begins at 30 HP, telegraphs fan attacks and changes phase once at half health
+  ---
+  duration_ms: 10.37342
+  ...
+# Subtest: All relays still leave the exit locked until the boss has been destroyed
+ok 140 - All relays still leave the exit locked until the boss has been destroyed
+  ---
+  duration_ms: 4.180081
+  ...
+# Subtest: Kill chains increase score once and expire without erasing earned points
+ok 141 - Kill chains increase score once and expire without erasing earned points
+  ---
+  duration_ms: 8.387363
+  ...
+# Subtest: Vent phases warn before activation and apply timed damage instead of damage every frame
+ok 142 - Vent phases warn before activation and apply timed damage instead of damage every frame
+  ---
+  duration_ms: 6.844632
+  ...
+# Subtest: Checkpoint round-trip preserves combat, weapon, cooldowns and object references
+ok 143 - Checkpoint round-trip preserves combat, weapon, cooldowns and object references
+  ---
+  duration_ms: 20.879895
+  ...
+# Subtest: Malformed or incompatible checkpoints are rejected atomically
+ok 144 - Malformed or incompatible checkpoints are rejected atomically
+  ---
+  duration_ms: 11.134665
+  ...
+# Subtest: Fresh generated checkpoints round-trip for all three stages, including the boss world
+ok 145 - Fresh generated checkpoints round-trip for all three stages, including the boss world
+  ---
+  duration_ms: 2558.470804
+  ...
+# Subtest: Recovery mode clears immediate projectile danger and grants only temporary unsaved protection
+ok 146 - Recovery mode clears immediate projectile danger and grants only temporary unsaved protection
+  ---
+  duration_ms: 33.988345
+  ...
+# Subtest: Analogue movement retains stick magnitude and diagonals cannot exceed cardinal speed
+ok 147 - Analogue movement retains stick magnitude and diagonals cannot exceed cardinal speed
+  ---
+  duration_ms: 24.480042
+  ...
+# Subtest: Walk, run, reversal and braking give the same travelled route at 20–120 simulation steps per second
+ok 148 - Walk, run, reversal and braking give the same travelled route at 20–120 simulation steps per second
+  ---
+  duration_ms: 25.528295
+  ...
+# Subtest: Acceleration is soft while release and reversal are responsive without mouse aim lag
+ok 149 - Acceleration is soft while release and reversal are responsive without mouse aim lag
+  ---
+  duration_ms: 6.712024
+  ...
+# Subtest: Sprint presentation follows a smooth physical transition instead of the sprint key alone
+ok 150 - Sprint presentation follows a smooth physical transition instead of the sprint key alone
+  ---
+  duration_ms: 5.398221
+  ...
+# Subtest: Pushing a wall produces no fake velocity, stride, sprint or dash animation while sliding remains possible
+ok 151 - Pushing a wall produces no fake velocity, stride, sprint or dash animation while sliding remains possible
+  ---
+  duration_ms: 13.845727
+  ...
+# Subtest: Dash travel is bounded and frame-rate independent with no retained boost or extended immunity
+ok 152 - Dash travel is bounded and frame-rate independent with no retained boost or extended immunity
+  ---
+  duration_ms: 18.494688
+  ...
+# Subtest: Version-one checkpoints restore at rest, including a saved dash, without animation spikes or movement creep
+ok 153 - Version-one checkpoints restore at rest, including a saved dash, without animation spikes or movement creep
+  ---
+  duration_ms: 15.101291
+  ...
+# Subtest: Sight has a field of view and lost contact preserves a last observation instead of following a hidden player
+ok 154 - Sight has a field of view and lost contact preserves a last observation instead of following a hidden player
+  ---
+  duration_ms: 57.698582
+  ...
+# Subtest: Unalerted mobile guards patrol locally and all movement remains on physical walkable ground
+ok 155 - Unalerted mobile guards patrol locally and all movement remains on physical walkable ground
+  ---
+  duration_ms: 17.415539
+  ...
+# Subtest: Actual weapon and pulse noises carry their event position, with shorter hearing through an opaque wall
+ok 156 - Actual weapon and pulse noises carry their event position, with shorter hearing through an opaque wall
+  ---
+  duration_ms: 17.462355
+  ...
+# Subtest: An observer warns nearby allies with known coordinates but a blind relay cannot alert the entire map
+ok 157 - An observer warns nearby allies with known coordinates but a blind relay cannot alert the entire map
+  ---
+  duration_ms: 6.98716
+  ...
+# Subtest: A scout physically takes an alternate route around a solid obstacle to reach a flank
+ok 158 - A scout physically takes an alternate route around a solid obstacle to reach a flank
+  ---
+  duration_ms: 13.716272
+  ...
+# Subtest: A wounded scout reaches real occluding cover, waits, then peeks; the whole tactical sequence survives a checkpoint
+ok 159 - A wounded scout reaches real occluding cover, waits, then peeks; the whole tactical sequence survives a checkpoint
+  ---
+  duration_ms: 53.984579
+  ...
+# Subtest: Squads separate collision-safely and presentation speed measures displacement instead of intentions
+ok 160 - Squads separate collision-safely and presentation speed measures displacement instead of intentions
+  ---
+  duration_ms: 14.258942
+  ...
+# Subtest: Even a committed burst with its barrel against a wall cannot create a projectile behind that wall
+ok 161 - Even a committed burst with its barrel against a wall cannot create a projectile behind that wall
+  ---
+  duration_ms: 5.461596
+  ...
+# Subtest: A locally planned investigation travels the same collision-respecting route at 20–120 steps per second
+ok 162 - A locally planned investigation travels the same collision-respecting route at 20–120 steps per second
+  ---
+  duration_ms: 37.375902
+  ...
+# Subtest: Malformed tactical checkpoints fail atomically while compatible legacy saves import only their stored aim
+ok 163 - Malformed tactical checkpoints fail atomically while compatible legacy saves import only their stored aim
+  ---
+  duration_ms: 20.098794
+  ...
+# Subtest: The Custodian keeps its last-known search inside its arena instead of getting stranded in a service route
+ok 164 - The Custodian keeps its last-known search inside its arena instead of getting stranded in a service route
+  ---
+  duration_ms: 17.312691
+  ...
+# Subtest: Real outdoor geometry supports tactical updates and exact cover checkpoints without invalid enemy positions
+ok 165 - Real outdoor geometry supports tactical updates and exact cover checkpoints without invalid enemy positions
+  ---
+  duration_ms: 1816.97761
+  ...
+# Subtest: Ordinary walking follows the actual ramp smoothly; an unconnected high ledge rejects walking and dash
+ok 166 - Ordinary walking follows the actual ramp smoothly; an unconnected high ledge rejects walking and dash
+  ---
+  duration_ms: 15.095995
+  ...
+# Subtest: Raised architecture collides at body height; terrain intercepts low shots and correctly aimed high shots hit
+ok 167 - Raised architecture collides at body height; terrain intercepts low shots and correctly aimed high shots hit
+  ---
+  duration_ms: 2.365176
+  ...
+# Subtest: F is an edge-triggered interaction, power opens a physical gate, and lifted player cannot collect from another height
+ok 168 - F is an edge-triggered interaction, power opens a physical gate, and lifted player cannot collect from another height
+  ---
+  duration_ms: 9.732125
+  ...
+# Subtest: Lift carries feet continuously, blocks premature exit to a high landing, and can be recalled without a passenger
+ok 169 - Lift carries feet continuously, blocks premature exit to a high landing, and can be recalled without a passenger
+  ---
+  duration_ms: 18.439264
+  ...
+# Subtest: A descending lift stops above a body underneath, then resumes after the obstruction leaves
+ok 170 - A descending lift stops above a body underneath, then resumes after the obstruction leaves
+  ---
+  duration_ms: 11.729175
+  ...
+# Subtest: A lift checkpoint resumes halfway between floors and corrupted mechanism, gate or platform state is rejected atomically
+ok 171 - A lift checkpoint resumes halfway between floors and corrupted mechanism, gate or platform state is rejected atomically
+  ---
+  duration_ms: 12.041605
+  ...
+# Subtest: Relay exit also requires each real mechanism; activation does not retrigger and old worlds remain ungated
+ok 172 - Relay exit also requires each real mechanism; activation does not retrigger and old worlds remain ungated
+  ---
+  duration_ms: 7.764421
+  ...
+# Subtest: Projectiles and hot vents are height-aware, and a lift deck blocks a ray from below
+ok 173 - Projectiles and hot vents are height-aware, and a lift deck blocks a ray from below
+  ---
+  duration_ms: 7.744197
+  ...
+# Subtest: Advanced squads physically assault, flank or suppress from distinct positions
+ok 174 - Advanced squads physically assault, flank or suppress from distinct positions
+  ---
+  duration_ms: 18.539375
+  ...
+# Subtest: Advanced aim leads observed motion, then remains committed when the player changes direction
+ok 175 - Advanced aim leads observed motion, then remains committed when the player changes direction
+  ---
+  duration_ms: 4.65704
+  ...
+# Subtest: An advanced gunner does not shoot through a squad mate and fires after the lane clears
+ok 176 - An advanced gunner does not shoot through a squad mate and fires after the lane clears
+  ---
+  duration_ms: 6.379945
+  ...
+# Subtest: Hundreds of real actors retain positions while distant; local searches obey a fixed per-frame budget
+ok 177 - Hundreds of real actors retain positions while distant; local searches obey a fixed per-frame budget
+  ---
+  duration_ms: 79.760249
+  ...
+# Subtest: Infantry navigates down a genuine ramp without changing floor suddenly or losing its body height
+ok 178 - Infantry navigates down a genuine ramp without changing floor suddenly or losing its body height
+  ---
+  duration_ms: 11.722823
+  ...
+# Subtest: A low gunner observes and attacks a player on the upper floor using an elevated aim and projectile
+ok 179 - A low gunner observes and attacks a player on the upper floor using an elevated aim and projectile
+  ---
+  duration_ms: 7.259126
+  ...
+# Subtest: An ascending occupied platform stops before carrying the player into a low ceiling
+ok 180 - An ascending occupied platform stops before carrying the player into a low ceiling
+  ---
+  duration_ms: 8.264515
+  ...
+# Subtest: Advanced patrol memory does not reveal a hidden player’s new coordinates or velocity
+ok 181 - Advanced patrol memory does not reveal a hidden player’s new coordinates or velocity
+  ---
+  duration_ms: 21.601157
+  ...
+# Subtest: New heavy and Custodian helmets can be hit at visible height from level ground and an upper terrace, with no headshot bonus
+ok 182 - New heavy and Custodian helmets can be hit at visible height from level ground and an upper terrace, with no headshot bonus
+  ---
+  duration_ms: 27.747791
+  ...
+# Subtest: Added helmet volumes preserve raised-floor alignment, nearest victim and opaque wall occlusion
+ok 183 - Added helmet volumes preserve raised-floor alignment, nearest victim and opaque wall occlusion
+  ---
+  duration_ms: 14.628397
+  ...
+# Subtest: Helmet targeting does not enlarge world collision, grant extra health, or alter legacy torso fixtures
+ok 184 - Helmet targeting does not enlarge world collision, grant extra health, or alter legacy torso fixtures
+  ---
+  duration_ms: 12.15095
+  ...
+# Subtest: Advanced heavy rifle and both Custodian cannons emit at their actual nominal mouths; cover stops an offset barrel
+ok 185 - Advanced heavy rifle and both Custodian cannons emit at their actual nominal mouths; cover stops an offset barrel
+  ---
+  duration_ms: 18.999549
+  ...
+# Subtest: An exposed visor sees over chest-high cover while a blocked rifle waits; an ally helmet also blocks the firing lane
+ok 186 - An exposed visor sees over chest-high cover while a blocked rifle waits; an ally helmet also blocks the firing lane
+  ---
+  duration_ms: 7.249959
+  ...
+# Subtest: Barrel-aligned heavy and Custodian attacks can still hit an upper terrace
+ok 187 - Barrel-aligned heavy and Custodian attacks can still hit an upper terrace
+  ---
+  duration_ms: 18.939885
+  ...
+# Subtest: Walking into a jump pad launches a continuous ballistic arc from the actual entry point and lands on its upper terrace
+ok 188 - Walking into a jump pad launches a continuous ballistic arc from the actual entry point and lands on its upper terrace
+  ---
+  duration_ms: 4.306193
+  ...
+# Subtest: Jump-pad trajectories agree at 20–120 Hz and modest air steering changes the physical landing
+ok 189 - Jump-pad trajectories agree at 20–120 Hz and modest air steering changes the physical landing
+  ---
+  duration_ms: 15.90396
+  ...
+# Subtest: A pad flight hits a thin wall and cannot cross a ceiling or a raised elevator deck
+ok 190 - A pad flight hits a thin wall and cannot cross a ceiling or a raised elevator deck
+  ---
+  duration_ms: 11.835479
+  ...
+# Subtest: A stationary pad cannot bounce forever; leaving and returning deliberately rearms it
+ok 191 - A stationary pad cannot bounce forever; leaving and returning deliberately rearms it
+  ---
+  duration_ms: 5.940043
+  ...
+# Subtest: Midair checkpoints preserve momentum and reject invalid aerial state atomically
+ok 192 - Midair checkpoints preserve momentum and reject invalid aerial state atomically
+  ---
+  duration_ms: 9.419519
+  ...
+# Subtest: A mobile sentinel chooses a useful pad, crosses the gap physically and lands without invented player knowledge
+ok 193 - A mobile sentinel chooses a useful pad, crosses the gap physically and lands without invented player knowledge
+  ---
+  duration_ms: 5.622428
+  ...
+# Subtest: New sentinels reposition their firing range while legacy turrets remain fixed
+ok 194 - New sentinels reposition their firing range while legacy turrets remain fixed
+  ---
+  duration_ms: 9.993709
+  ...
+# Subtest: Combat dodge reacts after an observed incoming shot, has a readable delay, and survives a checkpoint
+ok 195 - Combat dodge reacts after an observed incoming shot, has a readable delay, and survives a checkpoint
+  ---
+  duration_ms: 15.951768
+  ...
+# Subtest: Bots estimate vertical motion from visible flight instead of tracking future airborne coordinates
+ok 196 - Bots estimate vertical motion from visible flight instead of tracking future airborne coordinates
+  ---
+  duration_ms: 2.770246
+  ...
+# Subtest: A real rocket opens a traversable wall breach, preserves cover for that blast, and updates AI routes and rays
+ok 197 - A real rocket opens a traversable wall breach, preserves cover for that blast, and updates AI routes and rays
+  ---
+  duration_ms: 47.892249
+  ...
+# Subtest: Repeated Impulse hits retain structural damage across checkpoints; Fracture can break a real prop
+ok 198 - Repeated Impulse hits retain structural damage across checkpoints; Fracture can break a real prop
+  ---
+  duration_ms: 49.542178
+  ...
+# Subtest: A muzzle blocked by a nearby wall produces a visible unarmed dud and never spawns a rocket behind the wall
+ok 199 - A muzzle blocked by a nearby wall produces a visible unarmed dud and never spawns a rocket behind the wall
+  ---
+  duration_ms: 7.808389
+  ...
+# Subtest: An armed rocket self-blast is bounded; opaque cover prevents damage even while scenery breaks
+ok 200 - An armed rocket self-blast is bounded; opaque cover prevents damage even while scenery breaks
+  ---
+  duration_ms: 12.733155
+  ...
+# Subtest: A destroyed gate really opens while a broken required control remains usable for progression and restore
+ok 201 - A destroyed gate really opens while a broken required control remains usable for progression and restore
+  ---
+  duration_ms: 47.489162
+  ...
+# Subtest: A grenadier announces a real ballistic throw, keeps its committed aim and gives enough time to leave the blast
+ok 202 - A grenadier announces a real ballistic throw, keeps its committed aim and gives enough time to leave the blast
+  ---
+  duration_ms: 10.354652
+  ...
+# Subtest: A rocketeer refuses an ally inside the blast area, then launches once the ally leaves
+ok 203 - A rocketeer refuses an ally inside the blast area, then launches once the ally leaves
+  ---
+  duration_ms: 8.261971
+  ...
+# Subtest: Grenade trajectories respect a low ceiling even when the bot repositions for a lower arc
+ok 204 - Grenade trajectories respect a low ceiling even when the bot repositions for a lower arc
+  ---
+  duration_ms: 11.522071
+  ...
+# Subtest: A punctured pipe warns before hot gas, hurts at its actual nozzle and can be escaped or blocked by cover
+ok 205 - A punctured pipe warns before hot gas, hurts at its actual nozzle and can be escaped or blocked by cover
+  ---
+  duration_ms: 19.773179
+  ...
+# Subtest: A pressure plate announces spikes and allows retreat; a press stops at the body instead of clipping through it
+ok 206 - A pressure plate announces spikes and allows retreat; a press stops at the body instead of clipping through it
+  ---
+  duration_ms: 22.540465
+  ...
+# Subtest: A moving blade stops at physical contact and restores its actual stopped pose
+ok 207 - A moving blade stops at physical contact and restores its actual stopped pose
+  ---
+  duration_ms: 12.875491
+  ...
+# Subtest: Destruction checkpoints retain flying explosives and leaking machinery; corrupted changes fail atomically
+ok 208 - Destruction checkpoints retain flying explosives and leaking machinery; corrupted changes fail atomically
+  ---
+  duration_ms: 39.359814
+  ...
+# Subtest: Fallback outdoor substrate never overrides a higher ramp or terrace
+ok 209 - Fallback outdoor substrate never overrides a higher ramp or terrace
+  ---
+  duration_ms: 18.221456
+  ...
+# Subtest: ground() answers exactly like a scan of its 8 m bucket, on floor edges, cell borders and odd values
+ok 210 - ground() answers exactly like a scan of its 8 m bucket, on floor edges, cell borders and odd values
+  ---
+  duration_ms: 1728.444865
+  ...
+# Subtest: ground() follows the floor list and the trap list it reads, including restored traps
+ok 211 - ground() follows the floor list and the trap list it reads, including restored traps
+  ---
+  duration_ms: 25.274743
+  ...
+# Subtest: A real rocket knocks the player off a terrace and falling onto the deep substrate is fatal
+ok 212 - A real rocket knocks the player off a terrace and falling onto the deep substrate is fatal
+  ---
+  duration_ms: 9.579855
+  ...
+# Subtest: The actual three generated arenas cannot strand the player after a blast-sized shove through a destroyed rail
+ok 213 - The actual three generated arenas cannot strand the player after a blast-sized shove through a destroyed rail
+  ---
+  duration_ms: 1490.793121
+  ...
+# Subtest: An already invalid player below terrain dies despite recovery and dash
+ok 214 - An already invalid player below terrain dies despite recovery and dash
+  ---
+  duration_ms: 8.16074
+  ...
+# Subtest: A grounded checkpoint on a collider underneath terrain is rejected without changing the live game
+ok 215 - A grounded checkpoint on a collider underneath terrain is rejected without changing the live game
+  ---
+  duration_ms: 1.690634
+  ...
+# Subtest: Breached ground-level exterior, ordinary lower floors and space beneath raised props stay safe
+ok 216 - Breached ground-level exterior, ordinary lower floors and space beneath raised props stay safe
+  ---
+  duration_ms: 12.997538
+  ...
+# Subtest: Each giant has its real size and health, remains dormant outside the arena, and physically blocks passage
+ok 217 - Each giant has its real size and health, remains dormant outside the arena, and physically blocks passage
+  ---
+  duration_ms: 210.351408
+  ...
+# Subtest: A giant slam announces the exact danger area, can be escaped, and exposes the visible core for stronger aimed damage
+ok 218 - A giant slam announces the exact danger area, can be escaped, and exposes the visible core for stronger aimed damage
+  ---
+  duration_ms: 72.344675
+  ...
+# Subtest: Giant phases release only the six physically preplaced reinforcements, retain IDs, and clamp the entire silhouette to its arena
+ok 219 - Giant phases release only the six physically preplaced reinforcements, retain IDs, and clamp the entire silhouette to its arena
+  ---
+  duration_ms: 90.070085
+  ...
+# Subtest: The three giant scripts produce distinct physical attacks and real cannon rockets instead of damage-only visual effects
+ok 220 - The three giant scripts produce distinct physical attacks and real cannon rockets instead of damage-only visual effects
+  ---
+  duration_ms: 315.277953
+  ...
+# Subtest: Giant helmets, legs and exposed cores are targetable at their scaled positions while opaque walls still occlude them
+ok 221 - Giant helmets, legs and exposed cores are targetable at their scaled positions while opaque walls still occlude them
+  ---
+  duration_ms: 94.271207
+  ...
+# Subtest: A giant encounter restores telegraphs, projectiles, phases and reserves exactly, rejects corrupted scripts and saves its real death
+ok 222 - A giant encounter restores telegraphs, projectiles, phases and reserves exactly, rejects corrupted scripts and saves its real death
+  ---
+  duration_ms: 119.023855
+  ...
+# Subtest: The first-sector entry has ten real seconds of grace, then observable enemies resume normal announced attacks
+ok 223 - The first-sector entry has ten real seconds of grace, then observable enemies resume normal announced attacks
+  ---
+  duration_ms: 18.626607
+  ...
+# Subtest: Difficulty changes real hostile cadence, projectile speed and damage while preserving enemy health and actor count
+ok 224 - Difficulty changes real hostile cadence, projectile speed and damage while preserving enemy health and actor count
+  ---
+  duration_ms: 21.753636
+  ...
+# Subtest: Horror events use fixed physical sites; an ambush follows the audible site without discovering a hidden player
+ok 225 - Horror events use fixed physical sites; an ambush follows the audible site without discovering a hidden player
+  ---
+  duration_ms: 3.755619
+  ...
+# Subtest: Director pressure, difficulty and event timing round-trip exactly and malformed horror saves fail atomically
+ok 226 - Director pressure, difficulty and event timing round-trip exactly and malformed horror saves fail atomically
+  ---
+  duration_ms: 15.002491
+  ...
+# Subtest: A breach changes collision immediately; the walking map follows it locally in bounded batches, and a change beyond a quarter of the grid stays amortised
+ok 227 - A breach changes collision immediately; the walking map follows it locally in bounded batches, and a change beyond a quarter of the grid stays amortised
+  ---
+  duration_ms: 204.478133
+  ...
+# Subtest: After several breaches and a door opening, the walking map and every cached edge at rest equal a full rebuild
+ok 228 - After several breaches and a door opening, the walking map and every cached edge at rest equal a full rebuild
+  ---
+  duration_ms: 88.959417
+  ...
+# Subtest: A door opened by progression updates the walking map beside it as soon as it clears a body, matching a full rebuild at every step
+ok 229 - A door opened by progression updates the walking map beside it as soon as it clears a body, matching a full rebuild at every step
+  ---
+  duration_ms: 264.887265
+  ...
+# Subtest: Route tests and cached edges read the static map only; a moving blade still blocks bodies (SIM-V1)
+ok 230 - Route tests and cached edges read the static map only; a moving blade still blocks bodies (SIM-V1)
+  ---
+  duration_ms: 17.603843
+  ...
+# Subtest: Periodic pipe bursts spare their physical source, but external destruction ends future autonomous bursts
+ok 231 - Periodic pipe bursts spare their physical source, but external destruction ends future autonomous bursts
+  ---
+  duration_ms: 32.057712
+  ...
+# Subtest: a shot severs a real rail which falls, collides, bounces and persists in a coherent settled pose
+ok 232 - a shot severs a real rail which falls, collides, bounces and persists in a coherent settled pose
+  ---
+  duration_ms: 49.969793
+  ...
+# Subtest: persistent wreckage restores exactly in flight and at rest, while corrupt rubble checkpoints fail atomically
+ok 233 - persistent wreckage restores exactly in flight and at rest, while corrupt rubble checkpoints fail atomically
+  ---
+  duration_ms: 57.194648
+  ...
+# Subtest: an actual breached wall keeps substantial rubble after landing without adding player collision blockers
+ok 234 - an actual breached wall keeps substantial rubble after landing without adding player collision blockers
+  ---
+  duration_ms: 35.164933
+  ...
+# Subtest: a destroyed sliding gate becomes actual metal plates, retains its volume, and restores after settling
+ok 235 - a destroyed sliding gate becomes actual metal plates, retains its volume, and restores after settling
+  ---
+  duration_ms: 23.835228
+  ...
+# Subtest: detached hollow hardware lands on its rendered torus instead of hovering on an invisible filled box
+ok 236 - detached hollow hardware lands on its rendered torus instead of hovering on an invisible filled box
+  ---
+  duration_ms: 31.225827
+  ...
+# Subtest: settled wreckage wakes and falls when its real supporting platform is destroyed
+ok 237 - settled wreckage wakes and falls when its real supporting platform is destroyed
+  ---
+  duration_ms: 20.758423
+  ...
+# Subtest: a demolition storm has a finite rubble budget and cannot retire settled wreckage at the player’s feet
+ok 238 - a demolition storm has a finite rubble budget and cannot retire settled wreckage at the player’s feet
+  ---
+  duration_ms: 414.73711
+  ...
+# Subtest: Rubble sleep: a sleeping piece wakes when a revision removes its own support, while other resting pieces keep their exact pose
+ok 239 - Rubble sleep: a sleeping piece wakes when a revision removes its own support, while other resting pieces keep their exact pose
+  ---
+  duration_ms: 23.436334
+  ...
+# Subtest: Rubble sleep: a piece resting on a lift deck is re-checked every step and follows the deck down
+ok 240 - Rubble sleep: a piece resting on a lift deck is re-checked every step and follows the deck down
+  ---
+  duration_ms: 18.650031
+  ...
+# Subtest: Rubble sleep: a sinking floor trap drops the rubble resting on it, as nothing sleeps while a floor trap exists
+ok 241 - Rubble sleep: a sinking floor trap drops the rubble resting on it, as nothing sleeps while a floor trap exists
+  ---
+  duration_ms: 17.949106
+  ...
+# Subtest: Rubble sleep: restored resting rubble is revalidated at its first step, as sleep is never saved
+ok 242 - Rubble sleep: restored resting rubble is revalidated at its first step, as sleep is never saved
+  ---
+  duration_ms: 44.359332
+  ...
+1..242
+# tests 242
+# suites 0
+# pass 242
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 23666.870853
