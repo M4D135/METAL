@@ -1,0 +1,89 @@
+{
+  "schema": "metal-profile-switch-v1",
+  "at": "2026-11-15T08:53:15.257811+00:00",
+  "base_commit": "6381ec2433696a80d657aba4c0e7449c50a4330d",
+  "artifact": {
+    "version": "0.9.2",
+    "html_bytes": 999047,
+    "html_decimal_kb": 999.05,
+    "html_kib": 975.63,
+    "gzip_bytes": 307972,
+    "sha256": "eec89b9c4d4f947b62949e0a34b3097a5831ca9122f84cc4eecf4ba96abbb53f",
+    "external_assets": 0,
+    "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
+    "source_bytes": {
+      "fmath.js": 19961,
+      "passages.js": 10108,
+      "renderer.js": 123940,
+      "profiles.js": 7943,
+      "world.js": 142602,
+      "destruction.js": 30624,
+      "music.js": 28535,
+      "imuse.js": 9844,
+      "audio.js": 62955,
+      "audio-recipes.js": 3255,
+      "soundscape.js": 4402,
+      "economy.js": 11561,
+      "brain.js": 8923,
+      "simulation.js": 237406,
+      "motion.js": 6404,
+      "actors.js": 28298,
+      "effects.js": 19555,
+      "options.js": 9477,
+      "input.js": 17983,
+      "controls.js": 4114,
+      "game.js": 115649
+    }
+  },
+  "sources_sha256": {
+    "src/game.js": "6ec5a2ef5f8459ae763b399c07de199172d577ab96c0f31c01364568d0c100f8",
+    "src/style.css": "bcd83525a6a6c6e5ff2212f30fec275e0f77a89b2ff0a48fcadaf50259e133a6",
+    "src/index.html": "238e92c7e9c437b473f33f1e4a8c495ef048abae55ddc1627c223897a1f40402"
+  },
+  "validation": {
+    "targeted_tests_passed": 81,
+    "targeted_tests_total": 81,
+    "physical_pad_tested": false,
+    "deployed": false,
+    "all_program_complete": false
+  },
+  "files": [
+    {
+      "file": "chrome.json",
+      "sha256": "f5a71a0e26d32f1de6aa4a7e24afbca1add67ef53d8bf8cc9249cc72c16cb2dd"
+    },
+    {
+      "file": "desktop-events.json",
+      "sha256": "b89b28b5ba8f24b70ab461d97af80c556fbb05b1491a5be7f4336042893c8677"
+    },
+    {
+      "file": "chrome-profile-button.mjs",
+      "sha256": "170337ee9df21b60c471e1975fbe70a9038df5b83d312ca3b92d76868d2d100d"
+    },
+    {
+      "file": "desktop-events.mjs",
+      "sha256": "8047834b5a075ab97d0f21b4d0e26f846613a9a52075fa479c6a1b033f728565"
+    },
+    {
+      "file": "desktop-switch.png",
+      "sha256": "76cf032540c800f0b5b76fb397655e05d1255d2af2ae6bfe491c3cbf5750ec0e"
+    },
+    {
+      "file": "mobile-portrait.png",
+      "sha256": "328e8962dd075a896cb3f8d60ba045d2129439023c7eef84a7576ba030ed315f"
+    },
+    {
+      "file": "mobile-landscape.png",
+      "sha256": "f7a2b8acd145c344140a78395da7e92c8dd35224535de964f6b250400d052575"
+    },
+    {
+      "file": "mobile-small.png",
+      "sha256": "052103c19f707176b5ebc5c9541aae95f00e5d6a999dd4b365dd1a8788b66f96"
+    },
+    {
+      "file": "checkpoint-controls.tap.gz",
+      "sha256": "866d219c1ecd7b62807d7b7b8174bfe3d2d40ffd8e32c218dc9e458c55564f93",
+      "raw_sha256": "3a9bb0fe366390993e3198f13c51bcf18367d4647f09b0bb927b5b8db7045d23"
+    }
+  ]
+}
