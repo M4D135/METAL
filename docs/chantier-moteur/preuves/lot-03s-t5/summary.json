@@ -1,0 +1,410 @@
+{
+  "schema": "metal-lot03s-t5-production-proof-v1",
+  "reference": "930c1998f6c22ade094473e63ad6d6ed9e660956",
+  "date": "2026-11-15T07:14:25.012873+00:00",
+  "status": "T5 passes strict <8ms in all 15 unrestricted fresh-process cases; T1/T4/T5 scope complete on this reference",
+  "engineChange": false,
+  "sourceSha256": {
+    "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+    "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+    "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+    "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+    "destruction": "0e14293a3a6f8c83c8495e1a210b4a84e98aa08c7364306f49ea3a28988ac1ad",
+    "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+    "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+    "simulation": "9d01b78472d14eab72c4804fbc3d34c6ab83e9d24bdd99c6f66624cc2f484536"
+  },
+  "node": "24.18.0",
+  "clock": "process.threadCpuUsage user+system; CPU time not browser frame time",
+  "method": {
+    "realm": "main; sourceSha256 equals loadedSha256 for production",
+    "scenario": "seed96, campaignVersion2, species0/1/2, skilled historical driver, GOD, shield0,60 simulated seconds",
+    "paired": "AB/BA per step and reversed first order per pass; 1 full scenario warmup plus5 measured passes per species, both in same process",
+    "cold": "5 fresh processes per species, all15 retained, no pinning, prewarming, profiling, source transform or sample exclusion",
+    "assertions": "per-step canonical state hashes and final snapshot SHA equality for paired runs; cold snapshots identical to paired for each species"
+  },
+  "cold": [
+    {
+      "rep": 0,
+      "species": 0,
+      "cpuMs": 3.945,
+      "wallMs": 4.020235000000014,
+      "step": 658,
+      "cpuBefore": 7,
+      "cpuAfter": 7,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "59d8f3c48b9285062def064193ed886a380965cbc6e1f5a11962d17adeecfcaf",
+      "processWallSeconds": 0.44435834884643555,
+      "receipt": "cold60-0-0.json"
+    },
+    {
+      "rep": 0,
+      "species": 1,
+      "cpuMs": 5.59,
+      "wallMs": 6.105919999999998,
+      "step": 658,
+      "cpuBefore": 7,
+      "cpuAfter": 7,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "e1e82de02948f411ddab1387a65239c7c3d468d754946497b38e57944e830508",
+      "processWallSeconds": 0.5124392509460449,
+      "receipt": "cold60-0-1.json"
+    },
+    {
+      "rep": 0,
+      "species": 2,
+      "cpuMs": 3.001,
+      "wallMs": 2.783633000000009,
+      "step": 654,
+      "cpuBefore": 8,
+      "cpuAfter": 8,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "c2fc1ba8358a424f4d7c6b271bac261d760dcf50d4d600de1e33384502ad662e",
+      "processWallSeconds": 0.49752116203308105,
+      "receipt": "cold60-0-2.json"
+    },
+    {
+      "rep": 1,
+      "species": 0,
+      "cpuMs": 4.673,
+      "wallMs": 4.609847999999971,
+      "step": 658,
+      "cpuBefore": 19,
+      "cpuAfter": 19,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "59d8f3c48b9285062def064193ed886a380965cbc6e1f5a11962d17adeecfcaf",
+      "processWallSeconds": 0.4357259273529053,
+      "receipt": "cold60-1-0.json"
+    },
+    {
+      "rep": 1,
+      "species": 1,
+      "cpuMs": 4.871,
+      "wallMs": 4.572392000000008,
+      "step": 658,
+      "cpuBefore": 19,
+      "cpuAfter": 19,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "e1e82de02948f411ddab1387a65239c7c3d468d754946497b38e57944e830508",
+      "processWallSeconds": 0.4948592185974121,
+      "receipt": "cold60-1-1.json"
+    },
+    {
+      "rep": 1,
+      "species": 2,
+      "cpuMs": 3.001,
+      "wallMs": 2.6568659999999795,
+      "step": 654,
+      "cpuBefore": 5,
+      "cpuAfter": 5,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "c2fc1ba8358a424f4d7c6b271bac261d760dcf50d4d600de1e33384502ad662e",
+      "processWallSeconds": 0.4923408031463623,
+      "receipt": "cold60-1-2.json"
+    },
+    {
+      "rep": 2,
+      "species": 0,
+      "cpuMs": 4,
+      "wallMs": 4.656664000000035,
+      "step": 658,
+      "cpuBefore": 8,
+      "cpuAfter": 8,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "59d8f3c48b9285062def064193ed886a380965cbc6e1f5a11962d17adeecfcaf",
+      "processWallSeconds": 0.45326852798461914,
+      "receipt": "cold60-2-0.json"
+    },
+    {
+      "rep": 2,
+      "species": 1,
+      "cpuMs": 3.985,
+      "wallMs": 4.255882000000014,
+      "step": 658,
+      "cpuBefore": 19,
+      "cpuAfter": 19,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "e1e82de02948f411ddab1387a65239c7c3d468d754946497b38e57944e830508",
+      "processWallSeconds": 0.4960324764251709,
+      "receipt": "cold60-2-1.json"
+    },
+    {
+      "rep": 2,
+      "species": 2,
+      "cpuMs": 2.999,
+      "wallMs": 2.5747390000000223,
+      "step": 654,
+      "cpuBefore": 5,
+      "cpuAfter": 5,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "c2fc1ba8358a424f4d7c6b271bac261d760dcf50d4d600de1e33384502ad662e",
+      "processWallSeconds": 0.4953160285949707,
+      "receipt": "cold60-2-2.json"
+    },
+    {
+      "rep": 3,
+      "species": 0,
+      "cpuMs": 4.682,
+      "wallMs": 4.627079999999978,
+      "step": 658,
+      "cpuBefore": 8,
+      "cpuAfter": 8,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "59d8f3c48b9285062def064193ed886a380965cbc6e1f5a11962d17adeecfcaf",
+      "processWallSeconds": 0.43056702613830566,
+      "receipt": "cold60-3-0.json"
+    },
+    {
+      "rep": 3,
+      "species": 1,
+      "cpuMs": 4.347,
+      "wallMs": 5.1826289999999915,
+      "step": 658,
+      "cpuBefore": 9,
+      "cpuAfter": 9,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "e1e82de02948f411ddab1387a65239c7c3d468d754946497b38e57944e830508",
+      "processWallSeconds": 0.5020074844360352,
+      "receipt": "cold60-3-1.json"
+    },
+    {
+      "rep": 3,
+      "species": 2,
+      "cpuMs": 3.498,
+      "wallMs": 3.223247000000015,
+      "step": 654,
+      "cpuBefore": 16,
+      "cpuAfter": 16,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "c2fc1ba8358a424f4d7c6b271bac261d760dcf50d4d600de1e33384502ad662e",
+      "processWallSeconds": 0.49701905250549316,
+      "receipt": "cold60-3-2.json"
+    },
+    {
+      "rep": 4,
+      "species": 0,
+      "cpuMs": 4.008,
+      "wallMs": 3.9549240000000054,
+      "step": 658,
+      "cpuBefore": 9,
+      "cpuAfter": 9,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "59d8f3c48b9285062def064193ed886a380965cbc6e1f5a11962d17adeecfcaf",
+      "processWallSeconds": 0.4288816452026367,
+      "receipt": "cold60-4-0.json"
+    },
+    {
+      "rep": 4,
+      "species": 1,
+      "cpuMs": 3.779,
+      "wallMs": 4.4409530000000075,
+      "step": 658,
+      "cpuBefore": 16,
+      "cpuAfter": 16,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "e1e82de02948f411ddab1387a65239c7c3d468d754946497b38e57944e830508",
+      "processWallSeconds": 0.4892549514770508,
+      "receipt": "cold60-4-1.json"
+    },
+    {
+      "rep": 4,
+      "species": 2,
+      "cpuMs": 3.194,
+      "wallMs": 2.6990899999999556,
+      "step": 654,
+      "cpuBefore": 7,
+      "cpuAfter": 7,
+      "seconds": 59.999999999997875,
+      "snapshotSha256": "c2fc1ba8358a424f4d7c6b271bac261d760dcf50d4d600de1e33384502ad662e",
+      "processWallSeconds": 0.47086071968078613,
+      "receipt": "cold60-4-2.json"
+    }
+  ],
+  "species": [
+    {
+      "species": 0,
+      "coldCpuMs": [
+        3.945,
+        4.673,
+        4,
+        4.682,
+        4.008
+      ],
+      "coldMedianMs": 4.008,
+      "coldMaxMs": 4.682,
+      "observedProcessors": [
+        7,
+        8,
+        9,
+        19
+      ],
+      "pairedMaxMs": 2.217,
+      "simSeconds": 60,
+      "snapshotSha256": "59d8f3c48b9285062def064193ed886a380965cbc6e1f5a11962d17adeecfcaf"
+    },
+    {
+      "species": 1,
+      "coldCpuMs": [
+        5.59,
+        4.871,
+        3.985,
+        4.347,
+        3.779
+      ],
+      "coldMedianMs": 4.347,
+      "coldMaxMs": 5.59,
+      "observedProcessors": [
+        7,
+        9,
+        16,
+        19
+      ],
+      "pairedMaxMs": 1.998,
+      "simSeconds": 60,
+      "snapshotSha256": "e1e82de02948f411ddab1387a65239c7c3d468d754946497b38e57944e830508"
+    },
+    {
+      "species": 2,
+      "coldCpuMs": [
+        3.001,
+        3.001,
+        2.999,
+        3.498,
+        3.194
+      ],
+      "coldMedianMs": 3.001,
+      "coldMaxMs": 3.498,
+      "observedProcessors": [
+        5,
+        7,
+        8,
+        16
+      ],
+      "pairedMaxMs": 1.148,
+      "simSeconds": 60,
+      "snapshotSha256": "c2fc1ba8358a424f4d7c6b271bac261d760dcf50d4d600de1e33384502ad662e"
+    }
+  ],
+  "aa": {
+    "passes": 18,
+    "pairedSteps": 64800,
+    "allStatesIdentical": true,
+    "firstWarmupMaxMs": 4.688
+  },
+  "counterControl": {
+    "passes": 12,
+    "pairedSteps": 43200,
+    "allStatesIdentical": true,
+    "causalConclusion": "No consistent overhead demonstrated; does not explain historical high values"
+  },
+  "limits": [
+    "All observed first-break processors belonged to the3.9GHz group; E-core2.808GHz coverage is not established",
+    "Historical high values retained; old receipts lacked processor IDs and had concurrent workload, so no exact retrospective causal attribution",
+    "No new engine speedup claimed. CPUthread sample resolution can yield zero in short warm steps; these are retained, not zero-cost claims",
+    "No browser FPS/GPU/absolute worst-case latency guarantee"
+  ],
+  "receipts": {
+    "aa-production60.json": {
+      "rawSha256": "41721e572a3f6880dc7c09d031de098e8125776e3f92ac635d664d095810089b",
+      "compressed": "aa-production60.json.gz",
+      "compressedSha256": "b2809f9f9c8cb79edc0c1530073b9549f29796739a08ead04ab66097d58bd0c4"
+    },
+    "aa-counter60.json": {
+      "rawSha256": "1bb12e8263c0c98d233edfbefef239edd2aff10cde7219a1d5f327476088bbc4",
+      "compressed": "aa-counter60.json.gz",
+      "compressedSha256": "5a5514e9aad5986253975112df75ecfede7c20d91e28622ec7dcecc57bbb9b66"
+    },
+    "cold60-run.json": {
+      "sha256": "8a41c875218b0feda049ad54220db39797aca6bf08b86ecb8c9b6b6fc26f53e4"
+    },
+    "delta-probe-run.json": {
+      "sha256": "9edffd9b33ef6968f80b27b85ee707ca8baca921ae1f349cea665c3138f6b573"
+    },
+    "variants.json": {
+      "sha256": "890f6e0e3988aa1cd070892802902b52de98a2ebfab7605de1335c4ee9adfdb5"
+    },
+    "cold60-0-0.json": {
+      "sha256": "3797c299b1058b7fa5f296af0f29a6f9b41b4cff4bddae8abb42820e52f213f2"
+    },
+    "cold60-0-1.json": {
+      "sha256": "5b0ce6cd688c644497622461535ee1925f56eec6d99858dbddde7a81a08c0658"
+    },
+    "cold60-0-2.json": {
+      "sha256": "de0bb5d8ddacaa8782e76f85a71ee1cbc12a6063db39fd41eddfa42a9fd37e32"
+    },
+    "cold60-1-0.json": {
+      "sha256": "f585f431a59cf22acea110eba0787c610ac8e41d1ca388c8efad341145bde768"
+    },
+    "cold60-1-1.json": {
+      "sha256": "c3edc6bf7673bb41bdd5ef80ddded9745c1a974ae2e71c00086e7d50d883f526"
+    },
+    "cold60-1-2.json": {
+      "sha256": "13379476fdecffeceeaa79ae55fe8698aa381a43d8166caa92cbda06a5853bbb"
+    },
+    "cold60-2-0.json": {
+      "sha256": "197ecc2de9a4871ca8dffd156e2b90deb5aac31abd0ec89cb57fc64bf95c42c1"
+    },
+    "cold60-2-1.json": {
+      "sha256": "4df0bc0df280597fff9fe2b47beeb3dc19f9a08aa0f978e70d28e425a097d3c9"
+    },
+    "cold60-2-2.json": {
+      "sha256": "bf9208f18ceececca74104b509402c32af95166744253a5f76e62ec693ee29ff"
+    },
+    "cold60-3-0.json": {
+      "sha256": "89a32a7eaa6ede55d1c8912ad00d04fd67be2e97ef9214c8f5c448ba90262a4f"
+    },
+    "cold60-3-1.json": {
+      "sha256": "d4bbbe4638bfd2c66de5c7b8395750dba7544f0578163a54446fc7f2f8634c33"
+    },
+    "cold60-3-2.json": {
+      "sha256": "a86112d28afa70daeb29cba1e8b7a848688e2c9fb8768fd5dc6a10aa40b4b824"
+    },
+    "cold60-4-0.json": {
+      "sha256": "41d793a617c3475bd3591a5cd38957d5605e1c63015ddb021f3faccd24f11909"
+    },
+    "cold60-4-1.json": {
+      "sha256": "dba9f294d151e34a48b6c01ed68f0ed1ec9eaf04dcc276fad4977d3fcd54fc2e"
+    },
+    "cold60-4-2.json": {
+      "sha256": "13e7e67b2246a6c656ed2e75f5829a15bd940076e4eb7d1bce559fa953a90a6f"
+    },
+    "paired-load-before.log": {
+      "rawSha256": "d3a478aa9ba673c7bb2ac58ebe1b7f33d6981aeb5cafa4a92efd70f9407c2847",
+      "compressed": "paired-load-before.log.gz",
+      "compressedSha256": "f366f7ae4832feb6019bf3f11e50328fabce87110ea8cbb75e82032a76018a98"
+    },
+    "load-before.log": {
+      "rawSha256": "117db1abe6ee846f0269306a25d1960517bc94d565a42a60a4a0a8cb69b4b2a1",
+      "compressed": "load-before.log.gz",
+      "compressedSha256": "a4b3fc6b5142be6b307fe42263595bf94f4b25ca17b0fb32b00d02471e35ab79"
+    }
+  },
+  "scripts": {
+    "boss-driver.mjs": {
+      "sha256": "93b2a41445bbff8dadaba0b9b4e302e672351dd8b5e8c4a00637fcd37d410b47",
+      "status": "Exact executed script, original Spark import paths retained for audit"
+    },
+    "paired-boss.mjs": {
+      "sha256": "03df2f7cc56010eb227648f7e2a73c42404a601fc7d43f31cf39694a37e43792",
+      "status": "Exact executed script, original Spark import paths retained for audit"
+    },
+    "cold60-production.mjs": {
+      "sha256": "d095648c98d64ad6ba9ce37cac79b17dec0dc10929ff48c6b32c78352b750f1d",
+      "status": "Exact executed script, original Spark import paths retained for audit"
+    },
+    "cold-production.mjs": {
+      "sha256": "a5de3c82c8cbd0c5c682e0d539968ef904080758be7e9f58b2dde4ca849d2663",
+      "status": "Exact executed script, original Spark import paths retained for audit"
+    },
+    "run_cold60.py": {
+      "sha256": "5ee95ac1e96fb1740be7c5bc41d7c4180188d932b5f64884f2f599b2f9ea2eab",
+      "status": "Exact executed script, original Spark import paths retained for audit"
+    },
+    "probe_delta.py": {
+      "sha256": "1098bb6c562aafff9e03b7a272dde9da21f4cd8f7ff3215a9eeb211847c293d9",
+      "status": "Exact executed script, original Spark import paths retained for audit"
+    }
+  },
+  "hardwareTopology": "cpu-topology.json",
+  "diagnosticPrototypeConclusion": "No-freeze-dirty and null-proto-dirty hypotheses did not remove the deoptimization cluster or establish a gain; production API and source unchanged"
+}
