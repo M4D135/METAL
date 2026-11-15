@@ -1,0 +1,39 @@
+{
+  "sourceSha256": "184f99e592a2aef7eeb8bd599f5b389d94ada3355a88aefa06bb3ac5c4f910ab",
+  "formula": {
+    "max": 1,
+    "wrong": 0,
+    "different": 441580,
+    "stats": {
+      "composition": true,
+      "sceneBits": 10,
+      "skyError": null
+    },
+    "error": 0
+  },
+  "fallback": {
+    "max": 1,
+    "wrong": 0,
+    "composition": false,
+    "error": 0
+  },
+  "bloom": {
+    "diff": 0,
+    "max": 0,
+    "error": 0
+  },
+  "extra": {
+    "rgba8": {
+      "max": 1,
+      "changed": 32205,
+      "bits": 8,
+      "error": 0
+    },
+    "dither": {
+      "max": 1,
+      "changed": 109908,
+      "bits": 10,
+      "error": 0
+    }
+  }
+}

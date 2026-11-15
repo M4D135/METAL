@@ -1,0 +1,19 @@
+✔ tout import relatif d un banc tools/proof pointe sur un fichier committé (3.290237ms)
+✔ tout chemin de banc ou de doc cité par une preuve du lot 05 existe (1.360399ms)
+✔ tout banc qui écrit un fichier importe bien writeFileSync (0.854031ms)
+✔ une preuve qui publie un chiffre d alloc-image.mjs donne médiane et intervalle (1.501295ms)
+✔ les bancs de coût à deux racines mesurent en lockstep et publient un contrôle (0.177856ms)
+✔ le contrôle sommeEtapes du profil « au-delà » rend compte du total (0.125952ms)
+✔ toutes les pistes écartées de l« au-delà » sont chiffrées (0.132752ms)
+✔ les deux bancs exigés par les preuves T3 et T9 sont bien dans le dépôt (0.066832ms)
+✔ le constructeur renvoie toujours les mêmes clés, dans le même ordre (1.255503ms)
+✔ les valeurs par défaut se lisent exactement comme un champ absent (0.09456ms)
+✔ aucun producteur n'ajoute de clé au littéral canonique (1801.99245ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1964.272276

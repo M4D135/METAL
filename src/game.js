@@ -183,8 +183,8 @@
     }
     $('gyro-mode').value=prefs.gyroMode;$('gyro-hint').textContent=host.gyro?'Gyroscope actif.':'Facultatif · activation depuis ce menu, si le navigateur le permet.';
     $('render-scale').value=String(prefs.renderScale);renderer?.setRenderScale?.(prefs.renderScale);
-    $('fps-limit').value=String(prefs.fpsLimit);cadenceHint();$('fps-counter').hidden=!prefs.showFps;$('scanlines').hidden=!prefs.crt;$('vignette').hidden=!prefs.vignette;
-    $('crosshair').style.scale=String(prefs.crosshairScale);canvas.style.filter=prefs.brightness===1?'none':'brightness('+prefs.brightness+')';
+    $('fps-limit').value=String(prefs.fpsLimit);cadenceHint();$('fps-counter').hidden=!prefs.showFps;$('scanlines').hidden=!prefs.crt;$('vignette').hidden=renderer?.stats.backend==='webgl2'||!prefs.vignette;$('damage').hidden=renderer?.stats.backend==='webgl2';
+    $('crosshair').style.scale=String(prefs.crosshairScale);canvas.style.filter=renderer?.stats.backend==='webgl2'||prefs.brightness===1?'none':'brightness('+prefs.brightness+')';
     $('interact-key').textContent=bindingLabel('interact');
     for(const [id,key,mul] of [['pad-yaw','padYaw',1],['pad-pitch','padPitch',1],['pad-dead','padDead',100],['pad-curve','padCurve',100],['pad-vibration','padVibration',100],['touch-accel','touchAccel',100],['gyro-sensitivity','gyroSensitivity',100]]){$(id+'-setting').value=String(Math.round(prefs[key]*mul));$(id+'-value').textContent=String(Math.round(prefs[key]*mul));}
     for(const [id,key] of [['pad-invert','padInvertY'],['pad-assist','padAssist'],['pad-swap','padSwapSticks'],['touch-assist','touchAssist'],['portrait-fov','portraitFov']]){$(id+'-toggle').setAttribute('aria-pressed',String(prefs[key]));$(id+'-toggle').querySelector('strong').textContent=prefs[key]?'Oui':'Non';}
@@ -983,7 +983,7 @@
     if(mode==='menu'||mode==='options'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=(world.spawn.y||0)+1.72;}
     camera.overlayFov=camera.fov;if(touch&&prefs.portraitFov)camera.fov=FTouch.fovFor(innerWidth/innerHeight,camera.fov);
     renderPartner(camera);
-    renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,shadows:prefs.shadows,bloom:prefs.bloom,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
+    renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,brightness:prefs.brightness,vignette:prefs.vignette,shadows:prefs.shadows,bloom:prefs.bloom,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
     sceneDirty=false;
     }
     frameTasks.pump(FSchedule.budget(framePacer.period*framePacer.stride,performance.now()-frameStart));
@@ -1169,7 +1169,7 @@
   canvas.addEventListener('webglcontextrestored',()=>{sceneDirty=true;});
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   try{
-    renderer=FRender.create(canvas,{resolution:'native',renderScale:prefs.renderScale,onBudget:()=>{if(prefs.fpsLimit===-1&&autoCadence===60)cadencePending=30;}});renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
+    renderer=FRender.create(canvas,{composition:true,dither:true,resolution:'native',renderScale:prefs.renderScale,onBudget:()=>{if(prefs.fpsLimit===-1&&autoCadence===60)cadencePending=30;}});renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
     savedRun=readSave();refreshContinue();
     if(preparationJobs.mode==='main')load(0);
     else prepareWorld(0,seed).then(()=>{if(!sim&&!preparationSerial&&titleScreen()){load(0);settings();}}).catch(error=>{console.error('METAL world preparation:',error);});

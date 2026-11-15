@@ -12,7 +12,7 @@ const CONSTS = ('TEXTURE_2D FRAMEBUFFER ARRAY_BUFFER DEPTH_TEST CULL_FACE TRIANG
   'COLOR_ATTACHMENT0 CLAMP_TO_EDGE BLEND VERTEX_SHADER UNSIGNED_SHORT UNSIGNED_INT TEXTURE_WRAP_T ' +
   'TEXTURE_WRAP_S TEXTURE_MIN_FILTER TEXTURE_MAG_FILTER SRC_ALPHA ONE_MINUS_SRC_ALPHA LINK_STATUS ' +
   'LEQUAL FRAGMENT_SHADER DEPTH_COMPONENT COLOR_BUFFER_BIT BACK COMPILE_STATUS STREAM_DRAW ' +
-  'DEPTH_COMPONENT16 FRAMEBUFFER_COMPLETE MAX_RENDERBUFFER_SIZE MAX_TEXTURE_SIZE').split(' ');
+  'DEPTH_COMPONENT16 FRAMEBUFFER_COMPLETE MAX_RENDERBUFFER_SIZE MAX_TEXTURE_SIZE RGB10_A2 UNSIGNED_INT_2_10_10_10_REV ONE').split(' ');
 
 const TYPED = new Set(['Float32Array','Uint16Array','Uint32Array','Uint8Array','Int32Array','Float64Array','Uint8ClampedArray']);
 
@@ -50,7 +50,7 @@ export function makeGL(recorder, {reuse = false} = {}) {
     'getProgramInfoLog getProgramParameter getShaderInfoLog getShaderParameter getUniformLocation isContextLost ' +
     'linkProgram polygonOffset readBuffer readPixels renderbufferStorage shaderSource texImage2D texParameteri ' +
     'texSubImage2D uniform1f uniform1fv uniform1i uniform2f uniform2i uniform3f uniform3fv uniform4f ' +
-    'uniformMatrix4fv useProgram vertexAttribDivisor vertexAttribPointer viewport').split(' ');
+    'uniformMatrix4fv useProgram vertexAttribDivisor vertexAttribPointer viewport uniform4fv blendFuncSeparate').split(' ');
   for (const name of NAMES) {
     gl[name] = (...args) => {
       recorder.record(name, args, gl);
