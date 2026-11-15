@@ -61,7 +61,12 @@
   }
   function audioGate(){
     const audibleScene=mode==='playing'||['dead','cleared','complete'].includes(mode)||titleScreen()&&audio.stats?.titlePlaying;
-    audio.setMuted(muted||document.hidden||!windowFocused||!audibleScene);
+    const gated=muted||document.hidden||!windowFocused||!audibleScene;
+    audio.setMuted(gated);
+    // MIX-V4 : quand rien n'est audible — menu sans musique de titre, pause,
+    // onglet cache, fenetre sans focus, son coupe — le contexte audio s'endort
+    // apres 1,5 s et ne coute plus rien. Le reveil est la promesse de resume().
+    audio.setIdle?.(gated);
   }
   function activateTitle(){
     if(!wantsTitle()||!titleReady||audio.stats?.preview||audio.stats?.titlePlaying)return;

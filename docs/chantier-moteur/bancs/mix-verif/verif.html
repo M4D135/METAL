@@ -39,6 +39,25 @@
       out.marks = marks; out.stats = R.stats; out.params = R.params; out.seconds = R.seconds;
       const L = R.buffer.getChannelData(0), per = []; for (let m = 0; m < reps; m++) { const a = Math.round((K0 / HZ + m * 30) * sr), b = Math.round((K0 / HZ + (m + 1) * 30) * sr); per.push([M.r2(M.dB(M.rmsRange(L, a, b))), M.r3(M.peakRange(L, a, b))]); } out.rmsPeakPer30s = per;
     }
+    if (job === 'idle') { // MIX-V4 : le contexte reel s'endort au repos et se reveille
+      (0, eval)(SRC.audio); if (SRC.recipes) (0, eval)(SRC.recipes);
+      const audio = FAudio.create(window.MetalAudio && typeof window.MetalAudio.options === 'function' ? window.MetalAudio.options() : {});
+      await audio.start(); audio.setPlaying(true); audio.tick();
+      const g = audio.graph(), ctx = g && g.master && g.master.context;
+      if (!ctx) throw new Error('pas de contexte expose par api.graph()');
+      out.jeu = {state: ctx.state, idle: audio.stats.idle, voices: audio.stats.voices};
+      audio.setMuted(false); audio.setIdle(true);
+      await new Promise(r => setTimeout(r, +(Q.get('wait') || 2000)));
+      out.repos = {state: ctx.state, idle: audio.stats.idle};
+      const t0 = performance.now();
+      audio.setIdle(false);
+      await Promise.resolve(ctx.resume()).catch(() => {});
+      out.reveil = {state: ctx.state, idle: audio.stats.idle, ms: Math.round(performance.now() - t0)};
+      // un repos interrompu avant l'echeance ne doit jamais suspendre
+      audio.setIdle(true); await new Promise(r => setTimeout(r, +(Q.get('short') || 800))); audio.setIdle(false);
+      out.interrompu = {state: ctx.state, idle: audio.stats.idle};
+      audio.dispose();
+    }
     if (job === 'stress') { // MIX-06 : 18 tireurs (tirs ennemis de la scène b triplés, panoramiques décalés), recettes actuelles et doomish
       out.rows = []; const sc = scenes.b, frames = sc.frames.map(f => ({...f, c: f.c.slice()}));
       sc.frames.forEach((f, i) => { for (const c of f.c) if (c[0] === 'enemyShot') for (const [dk, dp] of [[1, .5], [2, -.5]]) { const o = Object.assign({}, c[1], {pan: Math.max(-1, Math.min(1, (c[1].pan || 0) + dp)), seed: ((c[1].seed || 0) + dk * 7919) >>> 0}); if (frames[i + dk]) frames[i + dk].c.push(['enemyShot', o]); } });

@@ -15,6 +15,10 @@ const cmd = ['--headless=new', '--disable-background-networking', '--disable-com
   '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--metrics-recording-only',
   '--disable-domain-reliability', '--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions',
   '--no-sandbox', '--disable-dev-shm-usage', '--user-data-dir=' + profile, '--allow-file-access-from-files',
+  // MIX-V4 : job=idle mesure un vrai AudioContext, qui sans geste utilisateur reste
+  // suspendu par la politique d'autoplay. Reserve a ce job (MIX_AUDIO=1), les
+  // rendus hors ligne n'en ont pas besoin et ne changent pas de comportement.
+  ...(process.env.MIX_AUDIO || /job=idle/.test(page || '') ? ['--autoplay-policy=no-user-gesture-required'] : []),
   '--mute-audio', '--enable-logging=stderr', '--log-level=0', '--window-size=800,600',
   'file://' + join(resolve(dir), page)];
 const p = spawn('google-chrome', cmd, {stdio: ['ignore', 'ignore', 'pipe']});

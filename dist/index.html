@@ -5050,7 +5050,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
       // 220 ms, the SMG burst only 180 ms, so automatic fire lets the music
       // back between rounds instead of burying it for a whole magazine.
       var DUCK_HOLD = {fracture: .22, rocket: .22, grenade: .22, grenadeLaunch: .22, shot: .18};
-      var stats = {voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,makeupDb:0,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
+      var stats = {idle:false,voices:0,peakVoices:0,fxSkipped:0,stolenVoices:0,duckGain:MUSIC_GAIN,preview:false,titlePlaying:false,outputCeiling:1,makeupDb:0,pcmBuffers:0,pcmBytes:0,pcmReady:false,windGain:0,machineryGain:0,steamGain:0};
       function remember(node) { persistent.push(node); return node; }
       function random() {
         noiseSeed = (Math.imul(noiseSeed, 1664525) + 1013904223) | 0;
@@ -5490,8 +5490,25 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           ctx = null;
         }
       }
+      // MIX-V4 : au repos, le contexte audio ne doit plus rien couter. Apres 1,5 s
+      // sans rien a dire — le temps que les queues trainantes s'eteignent —, on le
+      // suspend ; le reveil est la promesse de resume(), asynchrone par nature.
+      // Ni start() ni testMix() ne laissent le contexte endormi.
+      var idle = false, idleTimer = null;
+      function clearIdle() { if (idleTimer !== null) { clearTimeout(idleTimer); idleTimer = null; } }
+      function setIdle(value) {
+        var next = !!value;
+        if (!next) { clearIdle(); if (idle) { idle = false; stats.idle = false; resume(); } return; }
+        if (idle || idleTimer !== null) return;
+        idle = true; stats.idle = true;
+        idleTimer = setTimeout(function () {
+          idleTimer = null;
+          if (idle && !disposed && !offline && ctx) { try { ctx.suspend().catch(function () {}); } catch (_) {} }
+        }, 1500);
+      }
       function resume() {
         initialize();
+        clearIdle(); idle = false; stats.idle = false;
         if (!ctx || disposed || offline) return Promise.resolve();
         if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
           try { return ctx.resume().catch(function () {}); } catch (_) {}
@@ -5629,6 +5646,7 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
           return ctx ? {master: master, limiter: limiter, guard: guard, effects: effects, ambience: ambience, musicBus: musicBus} : null;
         },
         tick: tick,
+        setIdle: setIdle,
         testMix: testMix,
         cancelTestMix: cancelTestMix,
         materialImpact: function(value){materialCue('impact',value);},
@@ -9506,7 +9524,12 @@ body.touch .sector-progress{min-width:126px;max-width:145px;gap:6px;margin-top:9
   }
   function audioGate(){
     const audibleScene=mode==='playing'||['dead','cleared','complete'].includes(mode)||titleScreen()&&audio.stats?.titlePlaying;
-    audio.setMuted(muted||document.hidden||!windowFocused||!audibleScene);
+    const gated=muted||document.hidden||!windowFocused||!audibleScene;
+    audio.setMuted(gated);
+    // MIX-V4 : quand rien n'est audible — menu sans musique de titre, pause,
+    // onglet cache, fenetre sans focus, son coupe — le contexte audio s'endort
+    // apres 1,5 s et ne coute plus rien. Le reveil est la promesse de resume().
+    audio.setIdle?.(gated);
   }
   function activateTitle(){
     if(!wantsTitle()||!titleReady||audio.stats?.preview||audio.stats?.titlePlaying)return;

@@ -34,6 +34,7 @@ class Context{
   createBufferSource(){return this.scheduled('source');}
   advance(seconds){this.currentTime+=seconds;for(const n of this.sources){const natural=n.kind==='source'&&!n.loop?n.startTime+Math.max(0,(n.buffer?.duration||0)-n.offset)/n.playbackRate.value:Infinity;if(!n.ended&&Math.min(n.stopTime,natural)<=this.currentTime){n.ended=true;n.onended?.();}}}
   resume(){this.resumes++;this.state='running';return Promise.resolve();}
+  suspend(){this.suspends=(this.suspends||0)+1;this.state='suspended';return Promise.resolve();}
   close(){this.closes++;this.state='closed';return Promise.resolve();}
 }
 // recipes: METAL's table (src/audio-recipes.js) passed as game.js does; options: any other create() argument.
@@ -1012,5 +1013,27 @@ test('l annonce du boss abat la musique a 0,38 quel que soit son niveau : fixed 
   r.ctx.advance(1.5);r.audio.tick();
   r.audio.hurt({level:1,pan:0});const blessureDessus=r.audio.stats.duckGain;
   assert(blessureDessus<blessureLoin-1e-9,'un cue sans fixed reste proportionnel au volume des effets : '+blessureLoin+' puis '+blessureDessus);
+  r.audio.dispose();
+});
+
+// MIX-V4 (lot 11b T10) : au repos, le contexte ne coute plus rien.
+test('au repos le contexte se suspend apres 1,5 s, et se reveille a la demande, par start() comme par testMix (MIX-V4)',async()=>{
+  const r=rig();await r.audio.start();r.audio.setPlaying(true);r.ctx.advance(.1);
+  assert.equal(r.ctx.state,'running','en jeu, le contexte tourne');
+  r.audio.setIdle(true);
+  assert.equal(r.ctx.state,'running','la suspension attend 1,5 s que les queues trainantes s eteignent');
+  r.advanceTimers(1.6);
+  assert.equal(r.ctx.state,'suspended','apres 1,5 s de repos, le contexte est suspendu');
+  assert.equal(r.audio.stats.idle,true,'len statistique le dit');
+  const resumes=r.ctx.resumes;
+  r.audio.setIdle(false);
+  assert.equal(r.ctx.state,'running','setIdle(false) reveille le contexte');
+  assert.equal(r.ctx.resumes,resumes+1,'et le reveil passe par la promesse de resume()');
+  assert.equal(r.audio.stats.idle,false);
+  r.audio.setIdle(true);r.advanceTimers(1);r.audio.setIdle(false);r.advanceTimers(3);
+  assert.equal(r.ctx.state,'running','un repos interrompu avant l echeance ne suspend jamais');
+  r.audio.setIdle(true);r.advanceTimers(1.6);assert.equal(r.ctx.state,'suspended','deuxieme endormissement');
+  await r.audio.start();assert.equal(r.ctx.state,'running','start() ne laisse jamais le contexte endormi');
+  await r.audio.testMix({});assert.equal(r.ctx.state,'running','testMix() non plus');
   r.audio.dispose();
 });
