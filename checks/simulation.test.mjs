@@ -2026,9 +2026,10 @@ test('A breach changes collision immediately; the walking map follows it locally
   sim.move(sim.state.player, 0, -10); assert(sim.state.player.z < -9.8, 'Physical passage must not wait for the advisory navigation queue');
   const restored = FSimulation.create(world); assert.equal(restored.restore(sim.snapshot()), true);
   assert.deepEqual(restored.nav.cells, sim.nav.cells, 'The local walking map must equal the full rebuild of a restored checkpoint');
-  // A wall across a smaller level: the marked area exceeds a quarter of the grid, which is queued again as a whole.
+  // A wall across a smaller level: its unique AABB + margins covers 234/806 cells (>25%).
+  // The old .18 m wall only reached 182/806; summing old/new fragment boxes had counted it twice.
   const wide = demolitionFixture({ bounds: { minX: -10, maxX: 10, minZ: -12, maxZ: 12 }, walkable: [{ x: 0, z: 0, w: 20, d: 24, y: 0 }],
-    colliders: [{ minX: -10, maxX: 10, minY: 0, maxY: 4, minZ: -8.09, maxZ: -7.91, mesh: 0 }], meshes: [{ shape: 'box', p: [0, 2, -8], s: [20, 4, .18], r: [0, 0, 0], mat: 3 }] });
+    colliders: [{ minX: -10, maxX: 10, minY: 0, maxY: 4, minZ: -8.9, maxZ: -7.1, mesh: 0 }], meshes: [{ shape: 'box', p: [0, 2, -8], s: [20, 4, 1.8], r: [0, 0, 0], mat: 3 }] });
   const amortised = FSimulation.create(wide); assert(amortised.nav.cells.length > 768); amortised.step(.01, { weapon: 2, fire: true });
   for (let i = 0; i < 50 && !amortised.state.aiStats.navPending; i++) { amortised.step(.01); assert(amortised.state.aiStats.navUpdates <= 768); }
   assert(amortised.state.aiStats.navPending > 0, 'Large-area maintenance must actually be amortised'); assert.equal(amortised.blocked(0, -8), false);

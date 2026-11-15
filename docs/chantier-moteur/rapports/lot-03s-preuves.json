@@ -1,0 +1,463 @@
+{
+  "schema": "metal-lot03s-evidence-v1",
+  "date": "2026-11-15T01:22:17.074764+00:00",
+  "base": "c28ebda3f12e612370d8b8b6e1de63f7c667e77c",
+  "status": "T1/T4 validated; T5 <8ms not achieved; development continues",
+  "sourceSha256": {
+    "a": {
+      "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+      "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+      "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+      "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+      "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+      "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+      "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+      "simulation": "5162efdd99d37b0c3bbabf0c7e9526e8be37625f4cd227cd09a4fa5a755a38b3"
+    },
+    "b": {
+      "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+      "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+      "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+      "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+      "destruction": "0e14293a3a6f8c83c8495e1a210b4a84e98aa08c7364306f49ea3a28988ac1ad",
+      "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+      "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+      "simulation": "9d01b78472d14eab72c4804fbc3d34c6ab83e9d24bdd99c6f66624cc2f484536"
+    }
+  },
+  "revisionCost": {
+    "impacts": 450,
+    "aMeanCpuUs": 3600.571111111111,
+    "bMeanCpuUs": 1164.5044444444445,
+    "pairedMedianRatio": 0.33377792597532513,
+    "aMeanRenderUs": 0.7020755555661,
+    "bMeanRenderUs": 657.9348422222112,
+    "aMeanRenderCpuUs": 0,
+    "bMeanRenderCpuUs": 635.2155555555555,
+    "aMeanTotalCpuUs": 3600.571111111111,
+    "bMeanTotalCpuUs": 1799.72,
+    "pairedMedianTotalCpuRatio": 0.5002498750624688
+  },
+  "ab2": {
+    "t1": {
+      "identical": true,
+      "stableA": true,
+      "stableB": true,
+      "firstDifference": null,
+      "timing": {
+        "a": {
+          "samples": 9000,
+          "totalUs": 4482595,
+          "meanUs": 498.0661111111111,
+          "medianUs": 338,
+          "p95Us": 1270,
+          "p99Us": 3198,
+          "maxUs": 34788
+        },
+        "b": {
+          "samples": 9000,
+          "totalUs": 4597351,
+          "meanUs": 510.81677777777776,
+          "medianUs": 353,
+          "p95Us": 1423,
+          "p99Us": 3281,
+          "maxUs": 26904
+        },
+        "medianPairedRatio": 1.0319148936170213,
+        "pairedSamples": 9000,
+        "excludedQuantizedPairs": 0,
+        "totalRatio": 1.025600349797383
+      },
+      "method": {
+        "realm": "main",
+        "clock": "process.cpuUsage per sim.step; user + system microseconds",
+        "dt": 0.016666666666666666,
+        "seed": 96,
+        "weapon": 2,
+        "requestedSteps": 1800,
+        "warmupPasses": 1,
+        "measuredPasses": 5,
+        "pairing": "AB then BA at each step; first order also reverses with the pass number. Each side has independent module closures, window, world, brain and simulation.",
+        "warmup": "Full first scenario passes are retained as raw evidence and excluded from every timing aggregate.",
+        "ratio": "B/A median of paired per-step CPU values where both sides meet minCpuUs; total ratio is reported separately.",
+        "minCpuUs": 5,
+        "counters": "Separate untimed instrumented A/B replay, verified against the matching uninstrumented variant.",
+        "limits": "Node process CPU includes GC/JIT; does not prove browser frame time, GPU speed or device FPS. FNV32 is a regression signal, not a collision-free proof; final snapshots also use SHA-256."
+      },
+      "variants": {
+        "a": {
+          "root": "/home/m4d135/metal-chantier/voies/sim2/.relais/codex03s-20261115/base",
+          "sourceSha256": {
+            "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+            "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+            "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+            "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+            "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+            "simulation": "5162efdd99d37b0c3bbabf0c7e9526e8be37625f4cd227cd09a4fa5a755a38b3"
+          },
+          "loadedSha256": {
+            "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+            "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+            "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+            "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+            "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+            "simulation": "5162efdd99d37b0c3bbabf0c7e9526e8be37625f4cd227cd09a4fa5a755a38b3"
+          }
+        },
+        "b": {
+          "root": "/home/m4d135/metal-chantier/voies/sim2/.relais/codex03s-20261115/t1-only",
+          "sourceSha256": {
+            "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+            "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+            "destruction": "0e14293a3a6f8c83c8495e1a210b4a84e98aa08c7364306f49ea3a28988ac1ad",
+            "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+            "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+            "simulation": "5162efdd99d37b0c3bbabf0c7e9526e8be37625f4cd227cd09a4fa5a755a38b3"
+          },
+          "loadedSha256": {
+            "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+            "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+            "destruction": "0e14293a3a6f8c83c8495e1a210b4a84e98aa08c7364306f49ea3a28988ac1ad",
+            "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+            "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+            "simulation": "5162efdd99d37b0c3bbabf0c7e9526e8be37625f4cd227cd09a4fa5a755a38b3"
+          }
+        }
+      }
+    },
+    "integrated": {
+      "identical": false,
+      "stableA": true,
+      "stableB": true,
+      "firstDifference": 92,
+      "timing": {
+        "a": {
+          "samples": 9000,
+          "totalUs": 4331258,
+          "meanUs": 481.2508888888889,
+          "medianUs": 302,
+          "p95Us": 1225,
+          "p99Us": 3381,
+          "maxUs": 53584
+        },
+        "b": {
+          "samples": 9000,
+          "totalUs": 4064102,
+          "meanUs": 451.5668888888889,
+          "medianUs": 306,
+          "p95Us": 1241,
+          "p99Us": 3133,
+          "maxUs": 29697
+        },
+        "medianPairedRatio": 1.0101522842639594,
+        "pairedSamples": 9000,
+        "excludedQuantizedPairs": 0,
+        "totalRatio": 0.9383190749662107
+      },
+      "method": {
+        "realm": "main",
+        "clock": "process.cpuUsage per sim.step; user + system microseconds",
+        "dt": 0.016666666666666666,
+        "seed": 96,
+        "weapon": 2,
+        "requestedSteps": 1800,
+        "warmupPasses": 1,
+        "measuredPasses": 5,
+        "pairing": "AB then BA at each step; first order also reverses with the pass number. Each side has independent module closures, window, world, brain and simulation.",
+        "warmup": "Full first scenario passes are retained as raw evidence and excluded from every timing aggregate.",
+        "ratio": "B/A median of paired per-step CPU values where both sides meet minCpuUs; total ratio is reported separately.",
+        "minCpuUs": 5,
+        "counters": "Separate untimed instrumented A/B replay, verified against the matching uninstrumented variant.",
+        "limits": "Node process CPU includes GC/JIT; does not prove browser frame time, GPU speed or device FPS. FNV32 is a regression signal, not a collision-free proof; final snapshots also use SHA-256."
+      },
+      "variants": {
+        "a": {
+          "root": "/home/m4d135/metal-chantier/voies/sim2/.relais/codex03s-20261115/base",
+          "sourceSha256": {
+            "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+            "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+            "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+            "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+            "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+            "simulation": "5162efdd99d37b0c3bbabf0c7e9526e8be37625f4cd227cd09a4fa5a755a38b3"
+          },
+          "loadedSha256": {
+            "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+            "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+            "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+            "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+            "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+            "simulation": "5162efdd99d37b0c3bbabf0c7e9526e8be37625f4cd227cd09a4fa5a755a38b3"
+          }
+        },
+        "b": {
+          "root": "/home/m4d135/metal-chantier/voies/sim2",
+          "sourceSha256": {
+            "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+            "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+            "destruction": "0e14293a3a6f8c83c8495e1a210b4a84e98aa08c7364306f49ea3a28988ac1ad",
+            "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+            "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+            "simulation": "9d01b78472d14eab72c4804fbc3d34c6ab83e9d24bdd99c6f66624cc2f484536"
+          },
+          "loadedSha256": {
+            "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+            "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+            "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+            "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+            "destruction": "0e14293a3a6f8c83c8495e1a210b4a84e98aa08c7364306f49ea3a28988ac1ad",
+            "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+            "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+            "simulation": "9d01b78472d14eab72c4804fbc3d34c6ab83e9d24bdd99c6f66624cc2f484536"
+          }
+        }
+      }
+    }
+  },
+  "fight": [
+    {
+      "index": 0,
+      "clock": "threadCpuUsage",
+      "node": "24.18.0",
+      "firstBreakStep": 658,
+      "aFirstBreakMs": [
+        22.606,
+        16.24,
+        15.979,
+        20.001,
+        8.423
+      ],
+      "bFirstBreakMs": [
+        14,
+        4,
+        4.688,
+        13.791,
+        12.638
+      ],
+      "aMedianMs": 16.24,
+      "bMedianMs": 12.638,
+      "bMaxMs": 14,
+      "passUnder8Ms": false,
+      "sameDuration": true,
+      "simSeconds": [
+        59.999999999997875,
+        59.999999999997875,
+        59.999999999997875,
+        59.999999999997875,
+        59.999999999997875
+      ],
+      "pumpSteps": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "pumpPerMinute": [
+        1.0000000000000353,
+        1.0000000000000353,
+        1.0000000000000353,
+        1.0000000000000353,
+        1.0000000000000353
+      ],
+      "edgeWipes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "index": 1,
+      "clock": "threadCpuUsage",
+      "node": "24.18.0",
+      "firstBreakStep": 658,
+      "aFirstBreakMs": [
+        7.555,
+        17.989,
+        19.907,
+        17.94,
+        7.811
+      ],
+      "bFirstBreakMs": [
+        12.972,
+        3.928,
+        13.857,
+        9.966,
+        10.838
+      ],
+      "aMedianMs": 17.94,
+      "bMedianMs": 10.838,
+      "bMaxMs": 13.857,
+      "passUnder8Ms": false,
+      "sameDuration": true,
+      "simSeconds": [
+        59.999999999997875,
+        59.999999999997875,
+        59.999999999997875,
+        59.999999999997875,
+        59.999999999997875
+      ],
+      "pumpSteps": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "pumpPerMinute": [
+        2.0000000000000706,
+        2.0000000000000706,
+        2.0000000000000706,
+        2.0000000000000706,
+        2.0000000000000706
+      ],
+      "edgeWipes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "index": 2,
+      "clock": "threadCpuUsage",
+      "node": "24.18.0",
+      "firstBreakStep": 654,
+      "aFirstBreakMs": [
+        18.73,
+        21.177,
+        6.682,
+        7.001,
+        7.001
+      ],
+      "bFirstBreakMs": [
+        4.999,
+        3.04,
+        3.001,
+        3.002,
+        3.999
+      ],
+      "aMedianMs": 7.001,
+      "bMedianMs": 3.04,
+      "bMaxMs": 4.999,
+      "passUnder8Ms": true,
+      "sameDuration": true,
+      "simSeconds": [
+        59.999999999997875,
+        59.999999999997875,
+        59.999999999997875,
+        59.999999999997875,
+        59.999999999997875
+      ],
+      "pumpSteps": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "pumpPerMinute": [
+        1.0000000000000353,
+        1.0000000000000353,
+        1.0000000000000353,
+        1.0000000000000353,
+        1.0000000000000353
+      ],
+      "edgeWipes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "proofDirectory": "/home/m4d135/metal-chantier/voies/sim2/.relais/codex03s-20261115",
+  "tests": {
+    "npm": {
+      "pass": 816,
+      "fail": 0,
+      "log": "npm-test.log"
+    },
+    "contracts": {
+      "pass": 10,
+      "fail": 0,
+      "log": "delta-tests.log"
+    },
+    "buildCheck": "build-check-final.log",
+    "build": "build.log"
+  },
+  "limits": [
+    "Spark concurrent npm in another lane observed; wall latency is not CPU",
+    "Boss pairs are distinct fresh processes, rep0 excluded preliminary runs do not warm JIT of subsequent processes",
+    "Thread CPU figures use Node24.18; AB2 uses Node22.11 process CPU; do not mix them",
+    "Phase wrappers report inclusive wall time and overlap; not acceptance timing"
+  ],
+  "receipts": {
+    "fight-2-2-b.json": "fb508e3e5feef0d6de28b84a89076f38f320f4b02f67554ce1d62bf80c2345ce",
+    "fight-3-0-a.json": "e2ade2cfe4a2c9ebc15250691b45295198b8a22a32bc3556d9971991f03336f2",
+    "fight-3-2-a.json": "88188b7cfb8849102c261ea731573c3b15af777be1456aaeed3a1338e262452d",
+    "phases-1-bounded.json": "8145f21027ea57fa6d400066350dadb1cf35456fb0ace1375913dc75f17643dc",
+    "fight-4-1-a.json": "e229f1452ca2bd50b00bc88481da1d8a0623828d590b32a8a264cda3b568270e",
+    "phases-0-production.json": "f13cf9995914b7ad631d867a4b8470e8c8dc41cfab76f72062a1659ee20cad17",
+    "fight-2-1-b.json": "bed2fac9ceb8ae663b40df1ba1e4859788e807f29e506cefce0d2119e8df78a2",
+    "fight-3-0-b.json": "03ebf23787af1bedfbe2a366bf7123f199c048324799460075910490b0305424",
+    "fight-5-2-b.json": "c59a159425c707fae26a9507c2f8a14f1eb090d70cb58714505f7b1b0d49ecf0",
+    "fight-3-1-b.json": "bbb34e19c50b9a13602ffd8da4f0b8e737514bc8cb714218b7944abe790f5368",
+    "fight-3-1-a.json": "141df2f58475cb1895dacc2cf9a28c02ef6874533536a8a7682b9d8d5d657e43",
+    "phases-2-production.json": "fb097df6d9cc1462534fd962a9451abe6d7bf1605ca78cc185310b4170da13f7",
+    "ab2-t1.json": "f32bd9b81674b68b7c40e79ca386653c73a92a5b3685ea9bd88533319bebc03b",
+    "fight-4-0-a.json": "e57fd713cb6fb02aaa20e6db468eea03c57f1ca283def23b65bba28e6a48b719",
+    "fight-0-1-b.json": "ae6f9c9f305da378145a2397bbf93fda60d82b3855e9b11336350b94e59d3a24",
+    "bench-run-thread.json": "c7f720018ae77ab763fc2aa38968f44d9900b0e91790a727554252c5e4818915",
+    "fight-0-0-a.json": "cb2b5eebe0f919804ec38e699fb41dccf871d1c2806c2c234a20fd04123d14a4",
+    "fight-4-1-b.json": "d17d99bfc78ed6332e376cafd70a71c01dfc4d2b13ad334cdaab1d1df7d61cdb",
+    "revision-cost-thread.json": "3c7cbe1be287118abe111cbe29c1592ef92d0ea12e51dae2ccb3fac60533d358",
+    "fight-2-0-a.json": "7039cc73c850ed673b96f27d9fb30c97de45b91c6a67fe0d11340c61a54fc235",
+    "phases-1-production.json": "6c4be9e3d2cf12ab9920676c2a44fbf28827ee69015d6aec3ce47cbe83550981",
+    "fight-1-2-a.json": "f63613db1b60a1d461db9808db08302908d4579a4ad088365e8eb9fc18b66821",
+    "fight-0-2-b.json": "e1a144836eb4ccb9cab7ce47ba73c4b36599d649bc39233e93b47ab878aaf93d",
+    "fight-5-2-a.json": "057c08c803b971bd25a59c39a4e7e69af9c838fa2524ec6d156cef129c1602d4",
+    "no-sleep-2.json": "760f665d5d419fb3546fbfb9b57263f0fbdf639bdbac7e1d566189688c74d158",
+    "fight-4-2-b.json": "b54fff05e1112923cce8e720d3f82294e9f50103a2ede56d2be3315f5d44bad0",
+    "ab2-integrated.json": "63137fd88ef6d789753dd7edad9b00a6b7e1e98dd210e688315b5c67ed63722a",
+    "fight-2-1-a.json": "6e855e6e7e01a20c21ecb3ec1d0f18b141ec38ce228f388619710afd3e929c3f",
+    "fight-5-0-a.json": "505c8ef259eec10cf2ef3572718b073a3f1fea1322dc06dbd9d37c7a3b2567a7",
+    "fight-1-2-b.json": "809b08ff12384fbbe2db110dd2ef43310e9fa1c057dec31778e5122f51fcea28",
+    "fight-0-2-a.json": "4f8e65e1b386b1b51807121e873f54090a58bab5480a83e9e519e73e67398780",
+    "fight-1-0-a.json": "f32744c354158d86c2c9e53ae994290a40b22f3dab66765c18a1142448844ffa",
+    "phases-0-bounded.json": "7240a6585a3fef5715fed7ed4d34d9cc377c4f949928bc6a09f00feb479df611",
+    "fight-1-1-b.json": "d16f5b7a9e41feae2c0465047a242f536063d6bfabb88f7362eb24e18f1eac33",
+    "fight-2-0-b.json": "6c3b8aa2a0bf50c25864cecb9d37710c0743bb2e218fec792974fc8065d4eb26",
+    "fight-0-0-b.json": "5e07ef067d45232bfba8f153d32439e47c7f500abbc4209b0f9da806ebd777cd",
+    "fight-3-2-b.json": "33f07b53900d19f7bb2f340535f9640f3c022e1ff183df53d9585273a23a7f52",
+    "phases-2-bounded.json": "ae20a14f6207f482c9bea2a69f0209593cdcf12a16ce620ea281d13f06a90730",
+    "fight-4-2-a.json": "953c8cdfb7610cc837ceab2bdf07f491a551526eebf156a9f301fff888932cb7",
+    "fight-5-1-a.json": "4a9a4ae66752c9747552c99d6fdd6e1e071afd8463cdea5e6b65b6a448245fd3",
+    "fight-5-1-b.json": "16eff2afade3dee34532aba9f093be68a5521e52ef58af494e59dde7f9009046",
+    "fight-1-1-a.json": "8dbc8e5cade39c1ebe21203e87f25f598f8b89e284e718682c34af276269c67e",
+    "fight-1-0-b.json": "2f62e4296f3af601cfaa12b8f02871018e8bf46332214ee54e5f2f5e5dcb89f9",
+    "fight-2-2-a.json": "1235a794a975ca66fddd36727a80ef0664134678959503b4a023c203cc4efa60",
+    "revision-cost.json": "e870491b23a449f839e868b57d77f8b4de3b0dcd677fdcdf0b05fd752cfae2b6",
+    "fight-4-0-b.json": "e02b2d23767bd30ad46adea2ecbf6fe9e30a34b2e3915acf9c65b40508c1ac48",
+    "fight-5-0-b.json": "cd7566dc40b0dc8c6da59a2f688919c5bc396aca4627403f962918d6852ce6bd",
+    "fight-0-1-a.json": "40d05e2ec8fecb811a3e3b51088bf94b0695e2f8329282120ce0dc1067f3c88d"
+  }
+}
