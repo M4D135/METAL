@@ -1,0 +1,320 @@
+TAP version 13
+# Subtest: game actor bounds enclose every detailed pose, flying supports and telegraphs
+ok 1 - game actor bounds enclose every detailed pose, flying supports and telegraphs
+  ---
+  duration_ms: 97.418897
+  ...
+# Subtest: GPU rejection cannot enter any actual camera, lamp, torch or sun clip volume
+ok 2 - GPU rejection cannot enter any actual camera, lamp, torch or sun clip volume
+  ---
+  duration_ms: 1723.058459
+  ...
+# Subtest: GPU camera-edge sweeps preserve actors during turns, zoom and vertical travel
+ok 3 - GPU camera-edge sweeps preserve actors during turns, zoom and vertical travel
+  ---
+  duration_ms: 166.538972
+  ...
+# Subtest: software filtering preserves the exact draw command sequence and shadow ranking
+ok 4 - software filtering preserves the exact draw command sequence and shadow ranking
+  ---
+  duration_ms: 557.351217
+  ...
+# Subtest: sparse software scenes preserve potential casters and reset after world changes
+ok 5 - sparse software scenes preserve potential casters and reset after world changes
+  ---
+  duration_ms: 13.448505
+  ...
+# Subtest: un ramassage derrière la caméra nest pas modélisé et le rayon de garde couvre les plus grands
+ok 6 - un ramassage derrière la caméra nest pas modélisé et le rayon de garde couvre les plus grands
+  ---
+  duration_ms: 14.202697
+  ...
+# Subtest: A 17.7 ms simulation step still stops sprint and dash at a thin wall
+ok 7 - A 17.7 ms simulation step still stops sprint and dash at a thin wall
+  ---
+  duration_ms: 48.5845
+  ...
+# Subtest: Every first-person part stays in front of the near plane and each hand keeps its own side of the sight
+ok 8 - Every first-person part stays in front of the near plane and each hand keeps its own side of the sight
+  ---
+  duration_ms: 340.566334
+  ...
+# Subtest: Both hands stay clear of the crosshair on every phone and desktop frame
+ok 9 - Both hands stay clear of the crosshair on every phone and desktop frame
+  ---
+  duration_ms: 174.877257
+  ...
+# Subtest: Equipping or changing the left-hand weapon never moves the right-hand gun or its muzzle assembly
+ok 10 - Equipping or changing the left-hand weapon never moves the right-hand gun or its muzzle assembly
+  ---
+  duration_ms: 125.663172
+  ...
+# Subtest: T-F01 exports et forme
+ok 11 - T-F01 exports et forme
+  ---
+  duration_ms: 1.306019
+  ...
+# Subtest: T-F02 validation
+ok 12 - T-F02 validation
+  ---
+  duration_ms: 0.962059
+  ...
+# Subtest: T-F03 état initial
+ok 13 - T-F03 état initial
+  ---
+  duration_ms: 1.153447
+  ...
+# Subtest: T-F04 première image
+ok 14 - T-F04 première image
+  ---
+  duration_ms: 0.114733
+  ...
+# Subtest: T-F05 60 Hz exact : un pas par image, verrouillage à l image 9
+ok 15 - T-F05 60 Hz exact : un pas par image, verrouillage à l image 9
+  ---
+  duration_ms: 2.852497
+  ...
+# Subtest: T-F06 horodatages 60 Hz grossiers
+ok 16 - T-F06 horodatages 60 Hz grossiers
+  ---
+  duration_ms: 27.410661
+  ...
+# Subtest: T-F07 59,94 Hz : une seule image à 2 pas, dilatation voulue
+ok 17 - T-F07 59,94 Hz : une seule image à 2 pas, dilatation voulue
+  ---
+  duration_ms: 83.63568
+  ...
+# Subtest: T-F08 écrans rapides, 10 minutes
+ok 18 - T-F08 écrans rapides, 10 minutes
+  ---
+  duration_ms: 1290.800382
+  ...
+# Subtest: T-F09 30 Hz
+ok 19 - T-F09 30 Hz
+  ---
+  duration_ms: 32.497542
+  ...
+# Subtest: T-F10 50 Hz
+ok 20 - T-F10 50 Hz
+  ---
+  duration_ms: 70.493268
+  ...
+# Subtest: T-F11 gigue de ±2 ms à 60 Hz
+ok 21 - T-F11 gigue de ±2 ms à 60 Hz
+  ---
+  duration_ms: 72.180174
+  ...
+# Subtest: T-F12 conservation sur les 21 motifs
+ok 22 - T-F12 conservation sur les 21 motifs
+  ---
+  duration_ms: 4839.577065
+  ...
+# Subtest: T-F13 écart borné
+ok 23 - T-F13 écart borné
+  ---
+  duration_ms: 2779.985349
+  ...
+# Subtest: T-F14 images longues
+ok 24 - T-F14 images longues
+  ---
+  duration_ms: 68.187432
+  ...
+# Subtest: T-F15 arrêt anticipé
+ok 25 - T-F15 arrêt anticipé
+  ---
+  duration_ms: 0.739088
+  ...
+# Subtest: T-F16 mode plan
+ok 26 - T-F16 mode plan
+  ---
+  duration_ms: 17.69544
+  ...
+# Subtest: T-F17 exception dans le rappel
+ok 27 - T-F17 exception dans le rappel
+  ---
+  duration_ms: 0.259594
+  ...
+# Subtest: T-F18 observe
+ok 28 - T-F18 observe
+  ---
+  duration_ms: 0.27545
+  ...
+# Subtest: T-F19 reset
+ok 29 - T-F19 reset
+  ---
+  duration_ms: 0.392359
+  ...
+# Subtest: T-F20 resetPeriod
+ok 30 - T-F20 resetPeriod
+  ---
+  duration_ms: 0.384055
+  ...
+# Subtest: T-F21 horodatages invalides
+ok 31 - T-F21 horodatages invalides
+  ---
+  duration_ms: 0.10843
+  ...
+# Subtest: T-F22 changement d écran
+ok 32 - T-F22 changement d écran
+  ---
+  duration_ms: 221.325884
+  ...
+# Subtest: T-F23 hz:120 sur un écran à 60 Hz
+ok 33 - T-F23 hz:120 sur un écran à 60 Hz
+  ---
+  duration_ms: 0.837485
+  ...
+# Subtest: T-F24 déterminisme et source
+ok 34 - T-F24 déterminisme et source
+  ---
+  duration_ms: 57.59283
+  ...
+# Subtest: T-F25 régularité
+ok 35 - T-F25 régularité
+  ---
+  duration_ms: 1058.40118
+  ...
+# Subtest: T-F26 aim : mêmes opérations que le pas de simulation
+ok 36 - T-F26 aim : mêmes opérations que le pas de simulation
+  ---
+  duration_ms: 7.225188
+  ...
+# Subtest: T-F27 track : interpolation, chemin court, seuil de 2 m, taille
+ok 37 - T-F27 track : interpolation, chemin court, seuil de 2 m, taille
+  ---
+  duration_ms: 36.591959
+  ...
+# Subtest: T-F28 table de référence
+ok 38 - T-F28 table de référence
+  ---
+  duration_ms: 2455.272796
+  ...
+# Subtest: S01 ordre
+ok 39 - S01 ordre
+  ---
+  duration_ms: 0.916716
+  ...
+# Subtest: S02 budget
+ok 40 - S02 budget
+  ---
+  duration_ms: 0.661313
+  ...
+# Subtest: S03 tâche longue seule
+ok 41 - S03 tâche longue seule
+  ---
+  duration_ms: 0.111822
+  ...
+# Subtest: S04 vieillissement
+ok 42 - S04 vieillissement
+  ---
+  duration_ms: 1.823607
+  ...
+# Subtest: S05 rappel
+ok 43 - S05 rappel
+  ---
+  duration_ms: 0.114557
+  ...
+# Subtest: S06 remplacement
+ok 44 - S06 remplacement
+  ---
+  duration_ms: 0.127709
+  ...
+# Subtest: S07 cancel
+ok 45 - S07 cancel
+  ---
+  duration_ms: 0.18734
+  ...
+# Subtest: S08 flush, file image
+ok 46 - S08 flush, file image
+  ---
+  duration_ms: 0.114238
+  ...
+# Subtest: S09 budget nul
+ok 47 - S09 budget nul
+  ---
+  duration_ms: 0.483461
+  ...
+# Subtest: S10 échéance
+ok 48 - S10 échéance
+  ---
+  duration_ms: 0.424839
+  ...
+# Subtest: S11 découpage déterministe
+ok 49 - S11 découpage déterministe
+  ---
+  duration_ms: 0.411639
+  ...
+# Subtest: S12 priorités sim
+ok 50 - S12 priorités sim
+  ---
+  duration_ms: 0.091214
+  ...
+# Subtest: S13 tâche sans travail
+ok 51 - S13 tâche sans travail
+  ---
+  duration_ms: 0.068815
+  ...
+# Subtest: S14 déterminisme de la file sim
+ok 52 - S14 déterminisme de la file sim
+  ---
+  duration_ms: 1.675435
+  ...
+# Subtest: S15 retours invalides
+ok 53 - S15 retours invalides
+  ---
+  duration_ms: 0.500885
+  ...
+# Subtest: S16 exception
+ok 54 - S16 exception
+  ---
+  duration_ms: 0.165085
+  ...
+# Subtest: S17 budget
+ok 55 - S17 budget
+  ---
+  duration_ms: 0.079183
+  ...
+# Subtest: S18 flush sim et garde
+ok 56 - S18 flush sim et garde
+  ---
+  duration_ms: 109.767713
+  ...
+# Subtest: S19 ajout pendant pump
+ok 57 - S19 ajout pendant pump
+  ---
+  duration_ms: 0.205675
+  ...
+# Subtest: S20 sans horloge et validation
+ok 58 - S20 sans horloge et validation
+  ---
+  duration_ms: 0.354024
+  ...
+# Subtest: S21 coût lissé et vieillissement des sautées
+ok 59 - S21 coût lissé et vieillissement des sautées
+  ---
+  duration_ms: 0.060751
+  ...
+# Subtest: S22 source
+ok 60 - S22 source
+  ---
+  duration_ms: 0.19006
+  ...
+# Subtest: render interpolation keeps live state unchanged and reuses mirrors
+ok 61 - render interpolation keeps live state unchanged and reuses mirrors
+  ---
+  duration_ms: 0.659362
+  ...
+# Subtest: teleports, replacement identity and reset never interpolate from stale positions
+ok 62 - teleports, replacement identity and reset never interpolate from stale positions
+  ---
+  duration_ms: 0.175692
+  ...
+1..62
+# tests 62
+# suites 0
+# pass 62
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13232.722989

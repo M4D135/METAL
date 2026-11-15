@@ -14,6 +14,8 @@
   const audio=FAudio.create(window.MetalAudio?.options?.()),soundscape=FSoundscape.create(),motion=FMotion.create(),leftMotion=FMotion.create(),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
   let renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
+  const frameTasks=FSchedule.create({now:()=>performance.now()});
+  const fixedLoop=FLoop.create({hz:60,maxSteps:5}),poseView=FLoop.view({single:['player'],many:['enemies','bullets','projectiles']});let renderState=null,aimShownX=0,aimShownY=0;
   const framePacer=FOptions.createFrameGate();let cadenceHintAt=0;
   let runStats=emptyStats(),checkpoint=null,savedRun=null,refusedSave=null,selectedWeapon=0,stageEntryLoadout=null,currentShopId=null,saveAvailable=true,checkpointPending=false,lastFootstep=0,outdoorMix=0;
   const weaponNames=['Mitraillette','Double pompe','Lance-roquettes','Lance-grenades','Pistolet'],ammoNames=['balles','cartouches','roquettes','grenades','balles'];
@@ -257,7 +259,7 @@
       saveCheckpoint();
     }else{runStats=emptyStats();selectedWeapon=0;load(0,96,undefined,true,2,false,true);start(world.campaign?'Nouvelle expédition. Dix-huit mondes vous attendent.':'Nouvelle expédition. Trois secteurs vous attendent.');saveCheckpoint();}
   }
-  function clearInput(){controls.clear();touchControls.clear();paintStick();padState={};jumpQueued=switchProfileQueued=false;touchJump=null;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
+  function clearInput(){fixedLoop.reset();fixedLoop.observe(performance.now());aimShownX=aimShownY=0;poseView.clear();renderState=null;controls.clear();touchControls.clear();paintStick();padState={};jumpQueued=switchProfileQueued=false;touchJump=null;input.jump=input.jumpHeld=input.switchProfile=false;keys.clear();mouseFire=mouseLeftFire=touchFire=touchLeftFire=false;input.fire=input.fireLeft=false;clearFireIntents();++pointerRequestSerial;pointerLockWanted=false;captureMouseButton=null;wheelDistance=wheelDirection=0;wheelAt=-Infinity;dragLook=moveTouch=null;stick.x=stick.y=lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=false;$('move-stick').style.transform='';}
   function setMode(value){
     audio.cancelTestMix?.();
     last=performance.now();perfStart=0;perfFrames=0;
@@ -363,7 +365,7 @@
         checkpointDue=true;
         toast(e.count===3?(!systemsReady()?'Trois relais en ligne. Activez les commandes restantes.':sim.state.bossAlive?'Trois relais en ligne. Neutralisez le gardien.':'Trois relais en ligne. Rejoignez la sortie.'):'Relais '+e.count+' / 3 · intégrité restaurée · point de reprise',3.2);
       }
-      if(e.name==='profileSwitch'){selectedWeapon=sim.state.weapon;clearFireIntents();motion.impulse('switch');leftMotion.impulse('switch');audio.switchWeapon?.();toast(e.to==='light'?'LÉGER · maintenir le saut pour voler':'LOURD · explosifs pour ouvrir les passages',2.5);checkpointDue=true;}
+      if(e.name==='profileSwitch'){poseView.clear();selectedWeapon=sim.state.weapon;clearFireIntents();motion.impulse('switch');leftMotion.impulse('switch');audio.switchWeapon?.();toast(e.to==='light'?'LÉGER · maintenir le saut pour voler':'LOURD · explosifs pour ouvrir les passages',2.5);checkpointDue=true;}
       if(e.name==='profileLevel'){toast((e.profile==='light'?'LÉGER':'LOURD')+' · NIVEAU '+e.level+' · +75 CR',3);checkpointDue=true;}
       if(e.name==='profileBlocked')toast('GARDIEN · profil '+(e.required==='light'?'LÉGER':'LOURD')+' requis',2);
       if(e.name==='mechanism'){checkpointDue=true;const a=sim.state.mechanisms?.find(a=>a.id===e.id);toast((a?.name||'Commande')+' · alimentation rétablie · point de reprise',3.2);}
@@ -572,7 +574,7 @@
     }
   }
   function models(t,playing,camera){
-    const out=[],s=sim.state,p=s.player;machinery(out,t);ambience(out,t);systems(out,t);
+    const out=[],s=renderState||sim.state,p=s.player;machinery(out,t);ambience(out,t);systems(out,t);
     if(window.FEffects)out.push(...FEffects.build(s,world,camera,{quality,backend:renderer.stats.backend}));
     // All registered machines remain in the simulation; distance only reduces model detail.
     // Match the renderer's whole approach transition conservatively. The renderer
@@ -878,7 +880,7 @@
     }
   }
   function frame(now){
-    requestAnimationFrame(frame);pollControls(now);const present=FOptions.frameGate(framePacer,now,prefs.fpsLimit);
+    const frameStart=performance.now();requestAnimationFrame(frame);pollControls(now);const present=FOptions.frameGate(framePacer,now,prefs.fpsLimit);
     if((mode==='options'||mode==='paused')&&optionsTab==='image'&&now-cadenceHintAt>=500){cadenceHintAt=now;cadenceHint();}
     if(!present)return;
     const frameMs=Math.max(0,now-last),dt=clamp(frameMs/1000,0,.12);last=now;clock+=dt;
@@ -891,23 +893,22 @@
       const touchState=touchControls.sample(dt),gyroState=host.sampleGyro(dt,touch&&(prefs.gyroMode==='on'||prefs.gyroMode==='aim'&&touchControls.aiming),prefs.gyroSensitivity);
       input.moveX=Number(held('right'))-Number(held('left'));
       input.moveY=Number(held('forward'))-Number(held('back'));
-      input.lookX=lookDX+(Number(held('turnRight'))-Number(held('turnLeft')))*dt*1.9;input.lookY=lookDY;touchState.lookX+=gyroState.lookX;touchState.lookY+=gyroState.lookY*(prefs.invertY?-1:1);
+      lookDX+=(Number(held('turnRight'))-Number(held('turnLeft')))*dt*1.9+touchState.lookX+gyroState.lookX+(padState.lookX||0);
+      lookDY+=touchState.lookY+gyroState.lookY*(prefs.invertY?-1:1)+(padState.lookY||0);
+      touchState.lookX=touchState.lookY=padState.lookX=padState.lookY=0;
+      input.lookX=lookDX;input.lookY=lookDY;
+      dashQueued||=padState.dash;pulseQueued||=padState.pulse;meleeQueued||=padState.melee;interactQueued||=padState.interact;
       const fireHeld=mouseFire||touchState.fire||held('fire')||padState.fire,fireLeftHeld=mouseLeftFire||touchState.fireLeft||held('fireLeft')||padState.fireLeft;
-      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=selectedWeapon;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump')||touchJump!==null;input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(MetalControls.merge(input,touchState),padState));input.assist=touch&&prefs.touchAssist||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch&&prefs.touchAssist;
-      signals.lookYaw=dt>0?input.lookX/dt:0;signals.lookPitch=dt>0?input.lookY/dt:0;signals.firing=input.fire;
-      lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=jumpQueued=switchProfileQueued=false;
-      // STAB-V1: tolerate timestamp rounding and 59.94 Hz until the fixed-step loop lands.
-      // Each part stays below 17.7 ms; precision noise must not double the work at 60 Hz.
-      const steps=Math.max(1,Math.ceil(dt*60-.06)),part=dt/steps;
-      for(let i=0;i<steps;i++){
-        sim.step(part,input);input.lookX=input.lookY=0;input.dash=input.pulse=input.melee=input.interact=input.jump=input.switchProfile=false;
-        events();
-        if(mode!=='playing')break;
-        // A short press is offered once per frame until fired or expired. Held
-        // automatic fire and held guard still reach every simulation substep.
-        input.fire=fireHeld;input.fireLeft=fireLeftHeld;
-        input.weapon=selectedWeapon;
-      }
+      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=undefined;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump')||touchJump!==null;input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(MetalControls.merge(input,touchState),padState));input.assist=touch&&prefs.touchAssist||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch&&prefs.touchAssist;
+      signals.lookYaw=dt>0?(lookDX-aimShownX)/dt:0;signals.lookPitch=dt>0?(lookDY-aimShownY)/dt:0;signals.firing=input.fire;
+      fixedLoop.advance(now,part=>{
+        poseView.capture(sim.state);sim.step(part,input);input.lookX=input.lookY=0;
+        input.dash=input.pulse=input.melee=input.interact=input.jump=input.switchProfile=false;
+        lookDX=lookDY=0;dashQueued=pulseQueued=meleeQueued=interactQueued=jumpQueued=switchProfileQueued=false;
+        events();if(mode!=='playing'||loadoutOpen)return false;
+        input.fire=fireHeld;input.fireLeft=fireLeftHeld;input.weapon=undefined;
+      });
+      aimShownX=lookDX;aimShownY=lookDY;
       const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI),outside=isOutdoors(sim.state.player.x,sim.state.player.z);
       outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
       const localSound=soundscape.sample(sim),motor=localSound.machinery,steam=localSound.steam;
@@ -926,17 +927,20 @@
       encounterTime-=dt;if(encounterTime<=0)$('encounter').classList.remove('visible');
       hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.09;}
       $('crosshair').classList.toggle('hit',sim.state.hitMarker>0);$('damage').style.opacity=String(sim.state.damage*.45);
-    }else{$('damage').style.opacity='0';if(titleScreen()){activateTitle();audio.tick(dt);}}
+    }else{fixedLoop.reset();poseView.clear();$('damage').style.opacity='0';if(titleScreen()){activateTitle();audio.tick(dt);}}
     boundaryFlash=Math.max(0,boundaryFlash-dt);$('crosshair').classList.toggle('boundary-contact',boundaryFlash>0);
     controls.flush(now,mode==='playing'&&!document.hidden&&windowFocused);
     syncDestruction();
-    const p=sim.state.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
+    renderState=poseView.render(sim.state,mode==='playing'&&!loadoutOpen?fixedLoop.frame.alpha:1);
+    const p=renderState.player,isPlay=mode==='playing'||mode==='paused',t=mode==='menu'?clock:sim.state.time;
+    if(mode==='playing'&&!loadoutOpen){const aim=FLoop.aim(sim.state.player.yaw,sim.state.player.pitch,lookDX,lookDY,-1.2,1.2);p.yaw=aim.yaw;p.pitch=aim.pitch;}
     signals.time=t;const view=motion.update(mode==='playing'?dt:0,sim.state.locomotion||{},signals,softMotion);leftMotion.update(mode==='playing'?dt:0,sim.state.locomotion||{},{...signals,firing:input.fireLeft},softMotion);
     const camera={pos:[p.x,(p.y||0)+1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch,roll:isPlay?view.roll:0,fov:prefs.fov+(isPlay?view.fov:0)};
     if(mode==='menu'||mode==='options'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=(world.spawn.y||0)+1.72;}
     camera.overlayFov=camera.fov;if(touch&&prefs.portraitFov)camera.fov=FTouch.fovFor(innerWidth/innerHeight,camera.fov);
     renderPartner(camera);
     renderer.draw(camera,models(t,isPlay,camera),{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,shadows:prefs.shadows,bloom:prefs.bloom,horror:sim.state.director,adaptive:mode==='playing'&&(!prefs.fpsLimit||prefs.fpsLimit>=60)&&document.hasFocus()});
+    frameTasks.pump(FSchedule.budget(framePacer.period*framePacer.stride,performance.now()-frameStart));
     // Count completed frame intervals in real time, with a stable readout at most twice/s.
     if(!perfStart){perfStart=now;perfFrames=0;}else perfFrames++;
     if(now-perfStart>=750){

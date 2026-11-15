@@ -105,5 +105,21 @@
       get size(){return map.size;}
     };
   }
-  G.FLoop={create,aim,track};
+  // Reusable render mirrors. Histories are keyed by object identity, so newly
+  // spawned/replaced bodies never inherit another body's previous position.
+  function view({single=[],many=[]}={}){
+    let previous=new WeakMap(),mirrors=new WeakMap();const result={},lists=Object.fromEntries(many.map(key=>[key,[]]));
+    function save(e){let q=previous.get(e);if(!q)previous.set(e,q=new Float64Array(5));q[0]=e.x;q[1]=e.y||0;q[2]=e.z;q[3]=e.yaw||0;q[4]=e.baseY||0;}
+    function body(e,alpha,angles){let q=mirrors.get(e);if(!q)mirrors.set(e,q={});Object.assign(q,e);const before=previous.get(e);if(!before)return q;
+      const dx=e.x-before[0],dy=(e.y||0)-before[1],dz=e.z-before[2];if(dx*dx+dy*dy+dz*dz>4)return q;
+      q.x=before[0]+dx*alpha;q.y=before[1]+dy*alpha;q.z=before[2]+dz*alpha;
+      if(e.baseY!==undefined)q.baseY=before[4]+(e.baseY-before[4])*alpha;
+      if(angles&&e.yaw!==undefined){const delta=e.yaw-before[3];q.yaw=before[3]+(delta-TAU*Math.round(delta/TAU))*alpha;}return q;
+    }
+    return {capture(state){for(const key of single)save(state[key]);for(const key of Object.keys(lists))for(const e of state[key]||[])save(e);},
+      render(state,alpha=1){alpha=Math.max(0,Math.min(1,alpha));Object.assign(result,state);for(const key of single)result[key]=body(state[key],alpha,false);
+        for(const [key,list] of Object.entries(lists)){const source=state[key]||[];list.length=source.length;for(let i=0;i<source.length;i++)list[i]=body(source[i],alpha,true);result[key]=list;}return result;},
+      clear(){previous=new WeakMap();mirrors=new WeakMap();for(const list of Object.values(lists))list.length=0;}};
+  }
+  G.FLoop={create,aim,track,view};
 })(typeof window!=='undefined'?window:globalThis);

@@ -1,0 +1,80 @@
+TAP version 13
+# Subtest: LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+ok 1 - LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+  ---
+  duration_ms: 38.011183
+  ...
+# Subtest: LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+ok 2 - LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+  ---
+  duration_ms: 11.731445
+  ...
+# Subtest: LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+ok 3 - LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 11.925937
+  ...
+# Subtest: LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+ok 4 - LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 10.169737
+  ...
+# Subtest: LOAD-03: finishing the expedition cancels a pending checkpoint write
+ok 5 - LOAD-03: finishing the expedition cancels a pending checkpoint write
+  ---
+  duration_ms: 31.332967
+  ...
+# Subtest: LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+ok 6 - LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+  ---
+  duration_ms: 49.069171
+  ...
+# Subtest: LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+ok 7 - LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+  ---
+  duration_ms: 50.445158
+  ...
+# Subtest: LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+ok 8 - LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+  ---
+  duration_ms: 27.575134
+  ...
+# Subtest: LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+ok 9 - LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+  ---
+  duration_ms: 19.158733
+  ...
+# Subtest: LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+ok 10 - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+  ---
+  duration_ms: 30.586585
+  ...
+# Subtest: LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+ok 11 - LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+  ---
+  duration_ms: 28.755699
+  ...
+# Subtest: Fixed browser loop preserves simulation state across 60, 75, 120 and 144 Hz
+ok 12 - Fixed browser loop preserves simulation state across 60, 75, 120 and 144 Hz
+  ---
+  duration_ms: 250.615955
+  ...
+# Subtest: A zero-step browser frame shows mouse aim and retains action edges until consumed once
+ok 13 - A zero-step browser frame shows mouse aim and retains action edges until consumed once
+  ---
+  duration_ms: 13.443567
+  ...
+# Subtest: Browser catch-up is bounded and pausing discards elapsed menu time
+ok 14 - Browser catch-up is bounded and pausing discards elapsed menu time
+  ---
+  duration_ms: 13.235459
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 707.347684

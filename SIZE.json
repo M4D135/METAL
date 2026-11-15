@@ -1,10 +1,10 @@
 {
   "version": "0.9.2",
-  "html_bytes": 1014664,
-  "html_decimal_kb": 1014.66,
-  "html_kib": 990.88,
-  "gzip_bytes": 313057,
-  "sha256": "3eb2cdd6129040a9c5f483eabc3f08bc7e0ffebc08bf744000357d110c6813f3",
+  "html_bytes": 1027351,
+  "html_decimal_kb": 1027.35,
+  "html_kib": 1003.27,
+  "gzip_bytes": 317297,
+  "sha256": "cb7483ada989c970cd6a8463d3e792c64a24a659668d9770512296048ebb24c9",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
@@ -28,8 +28,10 @@
     "options.js": 9669,
     "input.js": 17991,
     "controls.js": 4128,
+    "loop.js": 7685,
+    "schedule.js": 4221,
     "touch.js": 3698,
     "host.js": 2713,
-    "game.js": 117032
+    "game.js": 117807
   }
 }

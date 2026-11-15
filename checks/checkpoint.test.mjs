@@ -8,7 +8,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'profiles', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'touch', 'host', 'game'].map(name =>
+const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'profiles', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'loop', 'schedule', 'touch', 'host', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -60,10 +60,10 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   };
   if (runtime.idle !== false) context.requestIdleCallback = (callback, options) => idle.push({ callback, options, mode: element('body').dataset.state || 'menu' });
   context.window = context; vm.createContext(context);
-  for (const name of ['profiles', 'destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'touch', 'host']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
+  for (const name of ['profiles', 'destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'loop', 'schedule', 'touch', 'host']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
   if(runtime.brain){vm.runInContext(sources.brain, context, {filename:'brain.js'});const createBrain=context.FBrain.create;context.FBrain.create=options=>{const brain=createBrain(options);brains.push(brain);return brain;};}
   const create = context.FSimulation.create;
-  context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); return sim; };
+  context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); if(runtime.step){const step=sim.step;sim.step=(dt,input)=>{runtime.step(dt,input,sim);return step(dt,input);};} return sim; };
   vm.runInContext(sources.game, context, { filename: 'game.js' });
   assert.deepEqual(errors, [], 'Browser shell initialization must succeed');
   return { memory, element, simulations, context, frames, sounds, worlds, brains, simulationOptions, writes, idle, runIdle,
@@ -316,13 +316,13 @@ test('Mouse and touch left inputs fire the paired weapon and R always dashes',()
   const loaded=sim.state.inventory.ammo[1];app.element('world').emit('mousedown',{button:2});app.frame(100);
   assert(sim.state.inventory.ammo[1]<loaded,'the right mouse fires the paired left weapon');
   const overlays=app.frames.at(-1).meshes.filter(m=>m.overlay);assert(overlays.length>50);for(const mesh of overlays)assert(mesh.p.concat(mesh.s,mesh.r).every(Number.isFinite));
-  app.emit('mouseup',{button:2});const afterMouse=sim.state.inventory.ammo[1];for(let i=0;i<8;i++)app.frame(100);
+  app.emit('mouseup',{button:2});const afterMouse=sim.state.inventory.ammo[1];for(let i=0;i<60;i++)app.frame(1000/60);
   assert.equal(sim.state.inventory.ammo[1],afterMouse,'a released mouse never keeps firing');
   app.key('KeyR');app.frame(100);app.key('KeyR',false);assert(sim.state.player.dash>0,'R always dashes, whatever the left hand holds');
   assert.equal(app.sounds.some(q=>q.name==='shieldBash'),false);
   app.element('left-fire-button').emit('pointerdown',{pointerId:8,clientX:100,clientY:100,pointerType:'touch'});app.frame(100);
   assert(sim.state.inventory.ammo[1]<afterMouse,'the touch left button fires the paired weapon');
-  app.emit('lostpointercapture',{pointerId:8});const afterTouch=sim.state.inventory.ammo[1];for(let i=0;i<8;i++)app.frame(100);
+  app.emit('lostpointercapture',{pointerId:8});const afterTouch=sim.state.inventory.ammo[1];for(let i=0;i<60;i++)app.frame(1000/60);
   assert.equal(sim.state.inventory.ammo[1],afterTouch,'a released touch button never keeps firing');
 });
 
@@ -404,7 +404,7 @@ test('The real arsenal HUD locks missing guns, equips found weapons across subst
   app.key('Enter');app.frame(100);app.key('Enter',false);app.frame(100);
   assert.equal(sim.state.inventory.ammo[1],7);assert.equal(app.element('ammo-count').textContent,'07');assert.equal(app.element('slot-ammo-1').textContent,'7');
   app.element('weapon-switch').click();assert.equal(sim.state.weapon,0,'Cycling skips the undiscovered launcher');
-  for(let i=0;i<6;i++)app.frame(100); // Let the Fracture discharge recovery finish.
+  for(let i=0;i<60;i++)app.frame(1000/60); // Let the Fracture discharge recovery finish at 60 Hz.
   app.key('KeyV');app.frame(100);app.key('KeyV',false);assert(app.sounds.some(q=>q.name==='melee'));
 });
 
@@ -666,7 +666,7 @@ test('The contextual button operates a real lift, carries the camera, and saves 
   assert.equal(app.element('interact-button').disabled, false);
   assert.match(app.element('interaction-label').textContent, /Monter/);
   app.element('interact-button').click();
-  for (let i = 0; i < 23; i++) app.frame(100);
+  for (let i = 0; i < 150; i++) app.frame(1000/60);
   assert.ok(Math.abs(sim.state.player.y - 3.2) < 1e-8);
   assert.equal(app.sounds.filter(s => s.name === 'liftStart').length, 1);
   assert.equal(app.sounds.filter(s => s.name === 'liftStop').length, 1);
@@ -991,4 +991,24 @@ for(const entry of preMassiveManifest.cases)test('pre-massive browser Continue, 
   for(const field of ['player','inventory','enemies','cores','pickups','traps','pipes','campaign'])assert.deepEqual(restored.state[field],stored.checkpoint.state[field],field+' after resave');
   assert.equal(again.memory.get(key),JSON.stringify(stored));assert.equal(again.memory.has(key+'-refuse'),false);
   for(const s of app.simulations)s.dispose();for(const s of again.simulations)s.dispose();
+});
+
+test('Fixed browser loop preserves simulation state across 60, 75, 120 and 144 Hz',()=>{
+ const points=[];
+ for(const hz of [60,75,120,144]){
+  const steps=[],app=harness(null,{},world,{step:(dt,input)=>steps.push({dt,...input})});app.element('start').click();app.key('KeyW');
+  for(let i=0;i<hz*2;i++)app.frame(1000/hz);
+  assert.equal(steps.length,120,hz+' Hz');for(const step of steps)assert.equal(step.dt,1/60);
+  points.push(JSON.stringify(app.simulations.at(-1).snapshot()));
+ }
+ for(const point of points)assert.equal(point,points[0]);
+});
+test('A zero-step browser frame shows mouse aim and retains action edges until consumed once',()=>{
+ const steps=[],app=harness(null,{},world,{step:(dt,input)=>steps.push({dt,...input})});app.element('start').click();app.frame(1);const sim=app.simulations.at(-1),before=steps.length,yaw=sim.state.player.yaw;
+ app.emitDocument('mousemove',{movementX:10,movementY:-5});app.key('KeyV');app.key('KeyV',false);app.frame(1);
+ assert.equal(steps.length,before);assert.equal(sim.state.player.yaw,yaw);assert(Math.abs(app.frames.at(-1).camera.yaw-yaw-.022)<1e-10);
+ app.frame(20);assert.equal(steps.filter(i=>i.melee).length,1);assert(Math.abs(sim.state.player.yaw-yaw-.022)<1e-10);app.frame(20);assert.equal(steps.filter(i=>i.melee).length,1);
+});
+test('Browser catch-up is bounded and pausing discards elapsed menu time',()=>{
+ const steps=[],app=harness(null,{},world,{step:(dt,input)=>steps.push({dt,...input})});app.element('start').click();app.frame(1000);assert.equal(steps.length,5);app.key('KeyP');app.key('KeyP',false);app.frame(60000);assert.equal(steps.length,5);app.element('resume').click();app.frame(1000/60);assert.equal(steps.length,6);
 });
