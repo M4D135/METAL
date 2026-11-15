@@ -1,0 +1,1595 @@
+{
+  "schema": "metal-lot03s-first-difference-v1",
+  "method": "One untimed alternating A/B replay, maximum 94 steps, stopped on first stateDigest difference. Live enemies captured before snapshot drains nav work. No benchmark claim.",
+  "variants": {
+    "a": {
+      "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+      "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+      "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+      "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+      "destruction": "53f8baf14748aab75bd998fdd3837f71de673b9885ed6dde706fbabb380bd5fd",
+      "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+      "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+      "simulation": "5162efdd99d37b0c3bbabf0c7e9526e8be37625f4cd227cd09a4fa5a755a38b3"
+    },
+    "b": {
+      "fmath": "bb001302bd2d57239c86183615c921563cf21f0490d67eef42586d1fc3457c9f",
+      "renderer": "11460253bae6487d6623bd8224204ebe5fa546ca2bdd565e8a09938240944874",
+      "passages": "9ea582ebc45e8237f668d8848f9ef662ba5b947aa6a9e31f592991bb056b32e4",
+      "world": "a5202c7095ef4f3014ce9a4f537868f6f2b193dd71e8f290997ceeef18a94211",
+      "destruction": "0e14293a3a6f8c83c8495e1a210b4a84e98aa08c7364306f49ea3a28988ac1ad",
+      "economy": "0aa0faf912ed806750357ad870f692cbe49530feac46421da37df26339c51863",
+      "brain": "598175891738fbdef6788d2d5e0eee89e279a472837a49e4966ca19e0de7bcf9",
+      "simulation": "9d01b78472d14eab72c4804fbc3d34c6ab83e9d24bdd99c6f66624cc2f484536"
+    }
+  },
+  "firstDifference": 92,
+  "hashes": [
+    "1355c290",
+    "9654766b"
+  ],
+  "liveEnemyDifferences": [
+    {
+      "path": "$.0.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.1.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.1.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.2.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.2.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.3.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.3.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.4.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.5.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.6.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.7.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.9.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.10.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.11.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.12.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.13.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.14.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.15.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.17.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.18.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.19.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.20.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.21.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.22.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.23.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.25.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.26.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.27.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.28.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.29.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.30.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.31.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.33.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.33.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.34.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.34.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.35.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.35.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.36.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.36.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.37.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.38.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.39.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.41.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.42.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.43.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.44.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.45.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.46.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.47.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.49.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.50.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.51.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.52.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.53.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.54.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.55.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.57.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.58.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.59.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.60.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.61.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.62.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.63.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.65.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.66.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.67.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.68.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.69.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.70.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.71.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.73.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.74.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.75.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.76.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.77.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.78.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.79.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.81.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.82.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.83.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.84.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.85.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.86.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.87.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.89.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.90.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.91.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.92.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.93.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.94.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.95.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.97.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.98.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.99.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.100.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.101.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.102.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.103.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.105.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.106.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.107.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.108.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.109.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.110.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.111.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.113.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.114.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.115.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.116.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.117.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.118.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.119.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.121.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.122.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.123.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.124.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.125.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.126.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.127.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.129.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.130.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.131.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.132.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.133.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.134.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.135.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.137.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.138.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.139.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.140.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.141.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.142.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.143.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.145.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.146.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.147.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.148.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.149.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.150.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.151.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.153.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.154.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.155.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.156.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.157.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.158.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.159.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.161.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.162.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.163.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.164.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.165.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.166.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.167.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.169.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    }
+  ],
+  "snapshotDifferences": [
+    {
+      "path": "$.state.enemies.0.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.state.enemies.1.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.1.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.state.enemies.2.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.2.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.state.enemies.3.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.3.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.state.enemies.4.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.5.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.6.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.7.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.9.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.10.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.11.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.12.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.13.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.14.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.15.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.17.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.18.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.19.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.20.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.21.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.22.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.23.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.25.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.26.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.27.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.28.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.29.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.30.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.31.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.33.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.33.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.state.enemies.34.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.34.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.state.enemies.35.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.35.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.state.enemies.36.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.36.planWait",
+      "a": -0.016666666666666666,
+      "b": -0.05
+    },
+    {
+      "path": "$.state.enemies.37.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.38.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.39.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.41.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.42.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.43.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.44.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.45.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.46.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.47.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.49.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.50.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.51.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.52.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.53.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.54.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.55.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.57.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.58.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.59.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.60.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.61.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.62.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.63.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.65.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.66.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.67.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.68.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.69.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.70.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.71.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.73.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.74.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.75.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.76.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.77.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.78.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.79.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.81.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.82.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.83.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.84.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.85.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.86.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.87.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.89.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.90.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.91.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.92.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.93.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.94.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.95.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.97.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.98.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.99.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.100.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.101.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.102.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.103.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.105.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.106.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.107.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.108.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.109.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.110.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.111.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.113.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.114.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.115.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.116.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.117.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.118.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.119.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.121.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.122.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.123.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.124.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.125.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.126.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.127.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.129.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.130.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.131.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.132.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.133.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.134.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.135.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.137.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.138.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.139.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.140.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.141.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.142.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.143.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.145.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.146.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.147.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.148.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.149.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.150.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.151.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.153.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.154.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.155.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.156.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.157.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.158.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.159.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.161.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.162.thinkWait",
+      "a": 0.12,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.163.thinkWait",
+      "a": 0.18,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.164.thinkWait",
+      "a": 0.24,
+      "b": 0
+    },
+    {
+      "path": "$.state.enemies.165.thinkWait",
+      "a": 0.3,
+      "b": 0.09
+    },
+    {
+      "path": "$.state.enemies.166.thinkWait",
+      "a": 0.36,
+      "b": 0.18
+    },
+    {
+      "path": "$.state.enemies.167.thinkWait",
+      "a": 0.42,
+      "b": 0.27
+    },
+    {
+      "path": "$.state.enemies.169.thinkWait",
+      "a": 0.06,
+      "b": 0.09
+    }
+  ]
+}

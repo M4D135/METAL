@@ -261,7 +261,7 @@
     const brainAdvice=new Map();
     if(brain)Object.assign(s.aiStats,{neuralBatches:0,neuralApplied:0,neuralDiscarded:0,neuralBackend:'cpu'});
     let solids=destruction?.colliders||world.colliders;
-    const b=world.bounds,trapBoxes=[];let bossAttackSerial=0,explosionSerial=0,projectileSerial=0,rubbleSerial=0,terrainDirty=false,seenDestructionRevision=destruction?.revision||0;
+    const b=world.bounds,trapBoxes=[];let bossAttackSerial=0,explosionSerial=0,projectileSerial=0,rubbleSerial=0,terrainDirty=false,seenDestructionToken=destruction?.delta().token;
     const doorBoxes=s.doors.map(d=>({minX:d.x-d.w/2,maxX:d.x+d.w/2,minZ:d.z-d.d/2,maxZ:d.z+d.d/2,minY:0,maxY:0}));
     let navDirty=false,routeBudget=Infinity,routeSearches=0,routeDeferred=0;
     // Local nav invalidation (SIM-01): [minX,maxX,minZ,maxZ] of what changed since the last refresh.
@@ -312,30 +312,20 @@
       solidStamp=new Uint32Array(solids.length);solidSerial=0;
     }
     function syncDestruction(){
-      if(!destruction||seenDestructionRevision===destruction.revision)return;
-      navDiff(solids,destruction.colliders);solids=destruction.colliders;seenDestructionRevision=destruction.revision;s.destructionRevision++;rebuildCollision();navDirty=terrainDirty=true;unsupportedBodies();
+      if(!destruction)return;
+      const change=destruction.delta(seenDestructionToken);if(change.token===seenDestructionToken)return;
+      seenDestructionToken=change.token;s.destructionRevision++;
+      const solid=change.colliders;
+      if(change.full||solid.added.length||solid.removed.length){
+        // Collision geometry is authoritative immediately, even while navigation
+        // waits for its next deterministic slice. Render offsets alone are ignored.
+        solids=destruction.colliders;rebuildCollision();terrainDirty=true;unsupportedBodies();
+        navMark(change.full||!solid.dirtyAABB?b:solid.dirtyAABB);
+        navDirty=true;
+      }
       for(const m of s.mechanisms)if(!destruction.isAlive(m.destructibleId)){m.shellHp=0;activateMechanism(m,true);}
       for(const t of s.traps)if(!destruction.isAlive(t.destructibleId)){t.hp=0;t.destroyed=true;t.box=null;t.hot=t.warning=false;}
       for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}
-    }
-    // SIM-01: multiset diff by exact bounds (all navigation reads) of two collider revisions,
-    // a new array each time. The revision delta of lot 03 replaces it.
-    const navF64=new Float64Array(6),navU32=new Uint32Array(navF64.buffer);
-    function navHash(q){
-      navF64[0]=q.minX;navF64[1]=q.maxX;navF64[2]=q.minY;navF64[3]=q.maxY;navF64[4]=q.minZ;navF64[5]=q.maxZ;
-      let h=2166136261;for(let k=0;k<12;k++)h=Math.imul(h^navU32[k],16777619);return h|0;
-    }
-    function navDiff(before,after){
-      if(!advanced)return;
-      if(before===after){navMark(b);return;}// Mutated in place: changes cannot be told apart.
-      const pool=new Map();
-      for(const q of before){const h=navHash(q),list=pool.get(h);if(list)list.push(q);else pool.set(h,[q]);}
-      for(const q of after){
-        const list=pool.get(navHash(q));let at=-1;
-        if(list)for(let j=0;j<list.length;j++){const o=list[j];if(o.minX===q.minX&&o.maxX===q.maxX&&o.minY===q.minY&&o.maxY===q.maxY&&o.minZ===q.minZ&&o.maxZ===q.maxZ){at=j;break;}}
-        if(at>=0){list[at]=list[list.length-1];list.pop();}else navMark(q);
-      }
-      for(const list of pool.values())for(const q of list)navMark(q);
     }
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
@@ -1164,7 +1154,7 @@
       return height;
     }
     // Sleep (SIM-03): a resting piece whose own support is the floor or a static collider is
-    // skipped while seenDestructionRevision stays the same. Exact: that support only changes
+    // skipped while seenDestructionToken stays the same. Exact: that support only changes
     // with a revision (the floors are fixed, solids is replaced by syncDestruction), a resting
     // piece does not move, and doors, traps and lifts can only add support. A floor trap moves
     // ground() itself, so nothing sleeps while one is listed. Any future moving support able
@@ -1207,10 +1197,10 @@
       dfX0=dfX1=NaN;
       for(const q of s.debris){
         q.age=Math.min(1e7,q.age+dt);q.impactWait=Math.max(0,(q.impactWait||0)-dt);if(!q.structural&&q.age>=q.life||dt<=0)continue;
-        if(q.resting&&sleepy&&debrisSleep.get(q)===seenDestructionRevision)continue;
+        if(q.resting&&sleepy&&debrisSleep.get(q)===seenDestructionToken)continue;
         q.rotation=q.rotation||[0,0,0];q.angularVelocity=q.angularVelocity||[0,0,0];q.settleTime=q.settleTime||0;
         let h=debrisHalf(q),boxes=debrisBoxes(q,h,Math.hypot(q.vx,q.vz)*dt+.1,dynamic);
-        if(q.resting){if(Number.isFinite(debrisSupport(q,h,boxes))){if(sleepy&&debrisStaticSupport(q,h,boxes))debrisSleep.set(q,seenDestructionRevision);continue;}q.resting=false;q.settleTime=0;debrisSleep.delete(q);}
+        if(q.resting){if(Number.isFinite(debrisSupport(q,h,boxes))){if(sleepy&&debrisStaticSupport(q,h,boxes))debrisSleep.set(q,seenDestructionToken);continue;}q.resting=false;q.settleTime=0;debrisSleep.delete(q);}
         const count=Math.max(1,Math.ceil(dt/.0125)),step=dt/count;
         for(let i=0;i<count&&!q.resting;i++){
           h=debrisHalf(q);
@@ -1576,33 +1566,53 @@
     }
     function navEnqueue(i){if(!navQueued[i]){navQueued[i]=1;navQueue[navTail]=i;navTail=(navTail+1)%nav.length;navPending++;}}
     const navWindow=new Int32Array(4);
-    function navReach(k){// Cells within 1.2 m (+1e-6) of rectangle k, per axis.
+    function navReach(k){// Dirty cells use the 1 m largest-agent margin; cached edges also include a neighbouring cell (0.8 m).
       const ax=navRects[k],bx=navRects[k+1],az=navRects[k+2],bz=navRects[k+3];
       if(!(ax<=bx&&az<=bz&&Number.isFinite(ax+bx+az+bz)))return Infinity;
-      navWindow[0]=clamp(Math.floor((ax-1.2-1e-6-b.minX)/cell),0,nx-1);navWindow[1]=clamp(Math.ceil((bx+1.2+1e-6-b.minX)/cell),0,nx-1);
-      navWindow[2]=clamp(Math.floor((az-1.2-1e-6-b.minZ)/cell),0,nz-1);navWindow[3]=clamp(Math.ceil((bz+1.2+1e-6-b.minZ)/cell),0,nz-1);
+      navWindow[0]=clamp(Math.floor((ax-1.8-1e-6-b.minX)/cell),0,nx-1);navWindow[1]=clamp(Math.ceil((bx+1.8+1e-6-b.minX)/cell),0,nx-1);
+      navWindow[2]=clamp(Math.floor((az-1.8-1e-6-b.minZ)/cell),0,nz-1);navWindow[3]=clamp(Math.ceil((bz+1.8+1e-6-b.minZ)/cell),0,nz-1);
       return (navWindow[1]-navWindow[0]+1)*(navWindow[3]-navWindow[2]+1);
     }
-    function navInvalidate(){
+    function pathTouches(e,k){
+      const loX=navRects[k]-1,hiX=navRects[k+1]+1,loZ=navRects[k+2]-1,hiZ=navRects[k+3]+1;
+      let x=e.x,z=e.z;
+      function crosses(tx,tz){
+        let enter=0,leave=1;const dx=tx-x,dz=tz-z;
+        for(const [at,d,lo,hi] of [[x,dx,loX,hiX],[z,dz,loZ,hiZ]]){
+          if(Math.abs(d)<1e-12){if(at<lo||at>hi)return false;}
+          else{let a=(lo-at)/d,b=(hi-at)/d;if(a>b){const q=a;a=b;b=q;}enter=Math.max(enter,a);leave=Math.min(leave,b);if(enter>leave)return false;}
+        }
+        return true;
+      }
+      // Routes are string-pulled: endpoints outside the box can still cross it.
+      for(let j=e.pathAt;j<e.path.length;j++){const [tx,tz]=coord(e.path[j]);if(crosses(tx,tz))return true;x=tx;z=tz;}
+      return crosses(e.goalX,e.goalZ);
+    }
+    function navInvalidate(resetPaths=false){
       // Colliders/rays change at once; the advisory grid follows through the amortised queue.
-      // A cell (r=.4) only changes within .4 m of a mark, a cached edge (.8 m swept at r=.4)
-      // within 1.2 m of its source cell. Past a quarter of the grid (BOSS-08), all is redone.
+      // One metre covers the largest agent; one extra cell covers cached edges.
+      // Past a quarter of the grid (BOSS-08), all is redone.
       let reach=0;for(let k=0;k<navRects.length&&reach*4<=nav.length;k+=4)reach+=navReach(k);
-      if(reach*4>nav.length){for(let i=0;i<nav.length;i++)navEnqueue(i);edgeKnown.fill(0);edgeOpen.fill(0);}
+      const global=reach*4>nav.length;
+      if(global){for(let i=0;i<nav.length;i++)navEnqueue(i);edgeKnown.fill(0);edgeOpen.fill(0);}
       else for(let k=0;k<navRects.length;k+=4){
-        const ax=navRects[k]-.4-1e-6,bx=navRects[k+1]+.4+1e-6,az=navRects[k+2]-.4-1e-6,bz=navRects[k+3]+.4+1e-6;navReach(k);
+        const ax=navRects[k]-1-1e-6,bx=navRects[k+1]+1+1e-6,az=navRects[k+2]-1-1e-6,bz=navRects[k+3]+1+1e-6;navReach(k);
         for(let iz=navWindow[2];iz<=navWindow[3];iz++)for(let ix=navWindow[0];ix<=navWindow[1];ix++){
           const i=iz*nx+ix,x=b.minX+ix*cell,z=b.minZ+iz*cell;edgeKnown[i]=0;edgeOpen[i]=0;
           if(x>=ax&&x<=bx&&z>=az&&z<=bz)navEnqueue(i);
         }
       }
+      if(resetPaths)for(const e of s.enemies){
+        let touched=global;for(let k=0;!touched&&k<navRects.length;k+=4)touched=pathTouches(e,k);
+        if(touched){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
+      }
       navRects.length=0;
     }
     function refreshNav(reset=true){
-      // A gameplay change re-plans every route; restore and simple worlds rebuild at once.
-      if(advanced&&reset)navInvalidate();
+      // Gameplay changes re-plan only intersecting routes; restore and simple worlds rebuild at once.
+      if(advanced&&reset)navInvalidate(true);
       else{navRects.length=0;navHead=navTail=navPending=0;navQueued.fill(0);for(let i=0;i<nav.length;i++){const [x,z]=coord(i);nav[i]=blocked(x,z,.4,ground(x,z),doorBoxes,solids,noTraps)?0:1;}edgeKnown.fill(0);edgeOpen.fill(0);}
-      if(reset)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
+      if(reset&&!advanced)for(const e of s.enemies){e.path=[];e.pathAt=0;e.planWait=0;e.thinkWait=advanced?(e.id%8)*.06:0;}
       if(!advanced)rebuildNav();
     }
     function nearestNode(x,z,r){
@@ -2428,13 +2438,13 @@
         if(arsenal){s.equipment={right:equipment.right,left:equipment.left};for(let i=0;i<weaponSlots;i++)weaponWait[i]=savedWeaponWait[i];s.leftFlash=0;}
         invalidateBrain();
         s.cores=world.cores.map((c,i)=>({...c,taken:a.cores[i]}));s.pickups=world.pickups.map((c,i)=>({...c,taken:a.pickups[i],remaining:pickupRemaining?pickupRemaining[i]:armorRemaining?armorRemaining[i]:Math.max(0,Math.floor(c.amount||0))}));if(encounters)for(let i=0;i<encounters.length;i++)Object.assign(s.encounters[i],encounters[i]);
-        giants=s.enemies.filter(giant);destruction=candidate;solids=savedSolids;seenDestructionRevision=destruction?.revision||0;s.destructionRevision++;trapStates=s.traps;trapBoxes.length=0;trapBoxes.push(...savedTrapBoxes);rebuildCollision();
+        giants=s.enemies.filter(giant);destruction=candidate;solids=savedSolids;seenDestructionToken=destruction?.delta().token;s.destructionRevision++;trapStates=s.traps;trapBoxes.length=0;trapBoxes.push(...savedTrapBoxes);rebuildCollision();
         bossAttackSerial=t.bossAttackSerial||0;explosionSerial=t.explosionSerial||0;projectileSerial=t.projectileSerial||0;rubbleSerial=t.rubbleSerial||0;s.explosions=[];s.debris=rubble;debrisSleep=new WeakMap();
         s.events=[];s.particles=[];for(const j of s.jumpPads)j.flash=0;s.pulseVisual=0;s.flash=0;s.damage=0;s.hitMarker=0;s.moving=0;s.threat=0;
         fireWait=t.fireWait;navWait=t.navWait;hazardWait=t.hazardWait;encounterWait=t.encounterWait||0;emptyWait=t.emptyWait||0;recovery=0;interactHeld=false;stopMotion(true);
         Object.assign(s.aiStats,{awake:enemies.filter(e=>alive(e)&&!e.sleeping).length,dormant:enemies.filter(e=>alive(e)&&e.sleeping).length,alive:enemies.filter(e=>e.hp>0).length,pathSearches:0,pathDeferred:0});if(progression)encounterCounts();
         if(options?.recover===true&&!s.dead&&!s.won){recovery=1.4;s.bullets=s.bullets.filter(q=>Math.hypot(q.x-p.x,q.z-p.z)>=2.4);}
-        updateDoorBoxes();refreshNav(false);rebuildNeighbors();updateHazards(false);return true;
+        updateDoorBoxes();navDirty=terrainDirty=false;refreshNav(false);rebuildNeighbors();updateHazards(false);return true;
       }catch(_){return false;}
     }
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);

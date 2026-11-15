@@ -119,7 +119,7 @@
   }
   function create(world){
     const originalMeshes=world.meshes||[],originalColliders=world.colliders||[],groups=new Map(),meshOwner=new Map(),states=new Map(),leaked=new Set();
-    let meshes=originalMeshes.slice(),colliders=originalColliders.map(c=>({...c})),lights=(world.lights||[]).slice(),revision=0;
+    let meshes=null,colliders=[],lights=(world.lights||[]).slice(),revision=0,token=Object.freeze({}),previousToken=null,lastDelta=null,emptyDelta=null;
     const definitions=world.destructibles||originalMeshes.map((m,i)=>m.ground||m.terrain?null:{id:'mesh-'+i,kind:'prop',strength:5,meshes:[i],colliders:originalColliders.flatMap((c,j)=>c.mesh===i?[j]:[])}).filter(Boolean);
     const foliage=originalMeshes.some(m=>m.shape==='foliage')?sharedFoliage():null;
     const entries=originalMeshes.map((mesh,source)=>({mesh,source,bounds:bounds(mesh),rotation:rotation(mesh.r),triangles:mesh.shape==='foliage'?foliage:null}));
@@ -156,27 +156,77 @@
       const attached=record?.cuts.length&&g.colliders.length&&g.kind!=='roof'?active.filter(e=>e.solid||solids.some(q=>Math.hypot(Math.max(q.bounds.minX-e.bounds.maxX,0,e.bounds.minX-q.bounds.maxX),Math.max(q.bounds.minY-e.bounds.maxY,0,e.bounds.minY-q.bounds.maxY),Math.max(q.bounds.minZ-e.bounds.maxZ,0,e.bounds.minZ-q.bounds.maxZ))<.4)):active;
       return {active:attached,solids};
     }
-    const renderSlots=new Array(originalMeshes.length),firstIndex=new Uint32Array(originalMeshes.length),claimed=new Set(definitions.flatMap(d=>d.colliders||[]));
-    function rebuild(next=states){
-      const output=[],boxes=[];
-      for(const g of groups.values()){
-        const record=next.get(g.id),count=record?.cuts.length||0,removed=!!record?.removed;
-        if(g.cacheRecord===record&&g.cacheCount===count&&g.cacheRemoved===removed)continue;
-        const built=compile(g,record);g.active=built.active;g.solids=built.solids;g.cacheRecord=record;g.cacheCount=count;g.cacheRemoved=removed;
-        for(const i of g.meshes)renderSlots[i]=[];
-        for(const e of g.active)renderSlots[e.source].push(e);
-      }
-      // Preserve original mesh ordering, including coplanar decorative surfaces.
-      // Only a changed original mesh is replaced by its local surviving pieces.
-      for(let i=0;i<originalMeshes.length;i++){
-        const id=meshOwner.get(i);firstIndex[i]=output.length;
-        if(!id){output.push(originalMeshes[i]);continue;}
-        for(const e of renderSlots[i]||[]){const index=output.length;output.push(e.mesh);if(e.solid)boxes.push({...e.solid.bounds,mesh:index,destructibleId:id});}
-      }
-      for(let i=0;i<originalColliders.length;i++)if(!claimed.has(i)){const c=originalColliders[i];boxes.push({...c,mesh:firstIndex[c.mesh]});}
-      meshes=output;colliders=boxes;lights=(world.lights||[]).filter(l=>!next.get(String(l.destructibleId))?.removed);
+    const renderSlots=entries.map(e=>[e]),firstIndex=new Uint32Array(originalMeshes.length),claimed=new Set(definitions.flatMap(d=>d.colliders||[]));
+    const solidSources=Array.from(new Set(Array.from(groups.values()).flatMap(g=>g.colliders.map(i=>originalColliders[i].mesh)))).filter(i=>entries[i]).sort((a,b)=>a-b);
+    for(let i=0;i<firstIndex.length;i++)firstIndex[i]=i;
+    const unclaimed=originalColliders.flatMap((c,i)=>claimed.has(i)?[]:[{source:c.mesh,box:{...c}}]);
+    const sameBox=(a,b)=>KEYS.every(k=>a[k]===b[k]);
+    const frozen=a=>Object.freeze(a);
+    function dirtyOf(removed,added,getBounds){
+      if(!removed.length&&!added.length)return null;
+      const out={minX:Infinity,maxX:-Infinity,minY:Infinity,maxY:-Infinity,minZ:Infinity,maxZ:-Infinity};
+      for(const item of [...removed,...added]){const q=getBounds(item);if(!q||!KEYS.every(k=>finite(q[k])))return null;for(const k of KEYS)out[k]=k.startsWith('min')?Math.min(out[k],q[k]):Math.max(out[k],q[k]);}
+      return frozen(out);
     }
-    rebuild();
+    function renderMeshes(){
+      if(meshes===null){meshes=[];for(const slot of renderSlots)for(const e of slot)meshes.push(e.mesh);}
+      return meshes;
+    }
+    function publish(change,full=false){
+      previousToken=token;token=frozen({});
+      const {added,removed,solidAdded,solidRemoved}=change;
+      lastDelta=frozen({token,revision,full,added:frozen(full?renderMeshes().slice():added),removed:frozen(removed),dirtyAABB:full?null:dirtyOf(removed,added,bounds),
+        colliders:frozen({added:frozen(full?colliders.slice():solidAdded),removed:frozen(solidRemoved),dirtyAABB:full?null:dirtyOf(solidRemoved,solidAdded,q=>q)})});
+      emptyDelta=frozen({token,revision,full:false,added:frozen([]),removed:frozen([]),dirtyAABB:null,colliders:frozen({added:frozen([]),removed:frozen([]),dirtyAABB:null})});
+    }
+    // A token is runtime-only and opaque. A saved numeric revision cannot prove
+    // continuity: restore may keep or rewind it. Several readers share the delta.
+    function delta(since){
+      if(since===token)return emptyDelta;
+      if(since===previousToken&&lastDelta)return lastDelta;
+      return frozen({token,revision,full:true,added:frozen(renderMeshes().slice()),removed:frozen([]),dirtyAABB:null,
+        colliders:frozen({added:frozen(colliders.slice()),removed:frozen([]),dirtyAABB:null})});
+    }
+    function rebuild(next=states,changed=null){
+      const added=[],removed=[],solidAdded=[],solidRemoved=[];let first=originalMeshes.length,visual=false;
+      for(const g of changed||groups.values()){
+        const record=next.get(g.id),cuts=record?.cuts||[],count=cuts.length,removedGroup=!!record?.removed;
+        if(g.cacheCount===count&&g.cacheRemoved===removedGroup&&(!count||cuts.every((c,i)=>c===g.cacheCuts[i])))continue;
+        const built=g.pendingBuilt&&g.pendingRecord===record?g.pendingBuilt:compile(g,record);g.pendingRecord=g.pendingBuilt=null;
+        const bySource=new Map();for(const i of g.meshes)bySource.set(i,[]);
+        for(const fresh of built.active){
+          const old=renderSlots[fresh.source]||[],used=bySource.get(fresh.source);
+          const kept=old.find(e=>!used.includes(e)&&!!e.solid===!!fresh.solid&&(e.mesh===fresh.mesh||e.mesh.fragment&&fresh.mesh.fragment&&sameBox(e.bounds,fresh.bounds)));
+          const e=kept||fresh;
+          if(e.solid&&!e.collider)e.collider={...e.solid.bounds,mesh:0,destructibleId:g.id};
+          used.push(e);
+        }
+        for(const i of g.meshes){
+          const before=renderSlots[i],after=bySource.get(i);
+          for(const e of before)if(!after.includes(e)){removed.push(e.mesh);if(e.collider)solidRemoved.push(e.collider);}
+          for(const e of after)if(!before.includes(e)){added.push(e.mesh);if(e.collider)solidAdded.push(e.collider);}
+          if(before.length!==after.length||before.some((e,k)=>e!==after[k])){renderSlots[i]=after;first=Math.min(first,i);visual=true;}
+        }
+        g.active=built.active;g.solids=built.solids;g.cacheCuts=cuts;g.cacheCount=count;g.cacheRemoved=removedGroup;
+      }
+      if(visual){
+        let offset=first?firstIndex[first-1]+renderSlots[first-1].length:0;
+        for(let i=first;i<renderSlots.length;i++){firstIndex[i]=offset;offset+=renderSlots[i].length;}
+        meshes=null;
+      }
+      // collider.mesh is a render-list offset, not collision geometry. It may
+      // change on a retained box after an earlier decorative slot is shortened.
+      // Such an offset change never appears in the numerical collision delta.
+      if(visual||!lastDelta){
+        const boxes=[];
+        for(const i of solidSources){const slot=renderSlots[i];for(let k=0;k<slot.length;k++){const e=slot[k];if(e.collider){e.collider.mesh=firstIndex[i]+k;boxes.push(e.collider);}}}
+        for(const {source,box} of unclaimed){box.mesh=firstIndex[source];boxes.push(box);}
+        if(boxes.length!==colliders.length||boxes.some((q,i)=>q!==colliders[i]))colliders=boxes;
+      }
+      lights=(world.lights||[]).filter(l=>!next.get(String(l.destructibleId))?.removed);
+      return {added,removed,solidAdded,solidRemoved};
+    }
+    publish(rebuild(),true);
     function raycast(origin,direction,maxDistance=100){
       if(!validPoint(origin)||!validPoint(direction)||!finite(maxDistance)||maxDistance<=0)return null;
       const length=Math.hypot(...direction);if(length<EPS)return null;const dir=direction.map(v=>v/length),end=origin.map((v,i)=>v+dir[i]*Math.min(300,maxDistance));
@@ -232,7 +282,7 @@
       const reach={minX:point[0]-radius,maxX:point[0]+radius,minY:point[1]-radius,maxY:point[1]+radius,minZ:point[2]-radius,maxZ:point[2]+radius};
       let targets=query(reach).filter(g=>g.id!==String(ignoreId)&&isAlive(g.id)&&g.active.some(e=>distance(point,e.bounds)<=radius));
       if(bullet)targets=targets.sort((a,b)=>Math.min(...a.active.map(e=>distance(point,e.bounds)))-Math.min(...b.active.map(e=>distance(point,e.bounds)))).slice(0,1);
-      const touched=[];
+      const touched=[],changedGroups=new Set();
       for(const g of targets){
         const nearest=g.active.reduce((best,e)=>!best||distance(point,e.bounds)<distance(point,best.bounds)?e:best,null),d=distance(point,nearest.bounds),impact=[Math.max(nearest.bounds.minX,Math.min(point[0],nearest.bounds.maxX)),Math.max(nearest.bounds.minY,Math.min(point[1],nearest.bounds.maxY)),Math.max(nearest.bounds.minZ,Math.min(point[2],nearest.bounds.maxZ))],amount=power*(bullet?1:Math.pow(Math.max(0,1-d/radius),.45));if(amount<=.02)continue;
         const old=states.get(g.id)||{damage:0,cuts:[],removed:false},record={...old,cuts:old.cuts.slice(),damage:old.damage+amount},event={x:impact[0],y:impact[1],z:impact[2],sourceId:g.id,material:materialOf(nearest.mesh),power:amount,seed:nearest.source*977+(revision+1)*911};
@@ -251,7 +301,7 @@
         if(built.solids.length>MAX_PARTS||record.cuts.length>MAX_CUTS||!built.active.length||g.colliders.length&&(!built.solids.length||remains<g.originalVolume*.035))record.removed=true;
         if(record.removed){record.cuts=[];built={active:[],solids:[]};result.collapsed.push(g.id);}
         // A grazing explosion must not create a fake revision or damage hole.
-        if(record.removed||remains<before-EPS||built.active.length!==g.active.length||record.cuts.length){removedGeometry(g,g.active,built.active,impact,amount,direction,fallen);states.set(g.id,record);result.changed=true;touched.push(g.id);g.active=built.active;g.solids=built.solids;result.events.push({name:'materialBreak',...event});}
+        if(record.removed||remains<before-EPS||built.active.length!==g.active.length||record.cuts.length){removedGeometry(g,g.active,built.active,impact,amount,direction,fallen);states.set(g.id,record);result.changed=true;touched.push(g.id);changedGroups.add(g);g.pendingRecord=record;g.pendingBuilt=built;g.active=built.active;g.solids=built.solids;result.events.push({name:'materialBreak',...event});}
         for(const p of world.pipes||[])if(p.destructibleId===g.id&&!leaked.has(p.id)){leaked.add(p.id);result.pipeLeaks.push(p.id);}
       }
       if(result.changed){
@@ -259,17 +309,17 @@
           const supports=roof.supports.map(id=>groups.get(String(id))).filter(Boolean),original=supports.reduce((v,g)=>v+g.originalVolume,0),remaining=supports.reduce((v,g)=>v+g.solids.reduce((n,q)=>n+volume(q.bounds),0),0);
           if(original>0&&remaining/original<(roof.supportRatio||.38)){
             const point=[(roof.bounds.minX+roof.bounds.maxX)/2,roof.bounds.minY,(roof.bounds.minZ+roof.bounds.maxZ)/2];removedGeometry(roof,roof.active,[],point,45,undefined,fallen);
-            states.set(roof.id,{damage:0,cuts:[],removed:true});roof.active=[];roof.solids=[];result.collapsed.push(roof.id);
-            for(const id of roof.dependents||[]){const g=groups.get(id);if(g&&isAlive(id)){removedGeometry(g,g.active,[],point,45,undefined,fallen);states.set(id,{damage:0,cuts:[],removed:true});g.active=[];g.solids=[];result.collapsed.push(id);}}
+            states.set(roof.id,{damage:0,cuts:[],removed:true});changedGroups.add(roof);roof.active=[];roof.solids=[];result.collapsed.push(roof.id);
+            for(const id of roof.dependents||[]){const g=groups.get(id);if(g&&isAlive(id)){removedGeometry(g,g.active,[],point,45,undefined,fallen);states.set(id,{damage:0,cuts:[],removed:true});changedGroups.add(g);g.active=[];g.solids=[];result.collapsed.push(id);}}
             result.events.push({name:'materialBreak',x:point[0],y:point[1],z:point[2],sourceId:roof.id,material:materialOf(entries[roof.meshes[0]].mesh),power:45,seed:roof.meshes[0]*977+(revision+1)*911});
           }
         }
         // Collapse only a locally over-fragmented body; never erase unrelated
         // scenery to meet a global budget or emit blocking cosmetic debris.
         let total=Array.from(groups.values()).reduce((n,g)=>n+g.solids.length,0),limit=Math.max(512,originalColliders.length+384);
-        for(const id of touched)if(total>limit){const g=groups.get(id);total-=g.solids.length;removedGeometry(g,g.active,[],point,power,direction,fallen);states.set(id,{damage:0,cuts:[],removed:true});g.active=[];g.solids=[];if(!result.collapsed.includes(id))result.collapsed.push(id);}
+        for(const id of touched)if(total>limit){const g=groups.get(id);total-=g.solids.length;removedGeometry(g,g.active,[],point,power,direction,fallen);states.set(id,{damage:0,cuts:[],removed:true});changedGroups.add(g);g.active=[];g.solids=[];if(!result.collapsed.includes(id))result.collapsed.push(id);}
         result.debris=[...fallingDebris(fallen),...result.debris].slice(0,MAX_DEBRIS);
-        rebuild();revision++;result.revision=revision;
+        const change=rebuild(states,changedGroups);revision++;publish(change);result.revision=revision;
       }
       return result;
     }
@@ -288,9 +338,9 @@
       if(total>Math.max(512,originalColliders.length+384))return false;
       // Validation finishes before any live array or state is replaced.
       states.clear();for(const [id,s] of next)states.set(id,s);leaked.clear();for(const id of nextLeaks)leaked.add(id);
-      rebuild();revision=options.exactRevision?value.revision:Math.max(revision+1,value.revision);return true;
+      const change=rebuild();revision=options.exactRevision?value.revision:Math.max(revision+1,value.revision);publish(change,true);return true;
     }
-    return {get meshes(){return meshes;},get colliders(){return colliders;},get lights(){return lights;},get revision(){return revision;},isAlive,raycast,
+    return {get meshes(){return renderMeshes();},delta,get colliders(){return colliders;},get lights(){return lights;},get revision(){return revision;},isAlive,raycast,
       hit:(point,power,direction)=>damage(point,.22,power,true,undefined,validPoint(direction)?direction:undefined),blast:(point,radius,power,ignoreId)=>damage(point,radius,power,false,ignoreId),snapshot,restore};
   }
   G.FDestruction={create};

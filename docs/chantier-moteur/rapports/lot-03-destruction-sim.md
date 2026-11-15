@@ -1,0 +1,50 @@
+# Lot 03s — destruction et navigation
+
+Palier T1/T4 validé, **lot 03s non terminé : T5 reste à optimiser**. Base c28ebda3f12e612370d8b8b6e1de63f7c667e77c, branche codex/lot-03s-20261115. Rendu T2/T3 et FImuse hors périmètre. Version 0.9.2, formats de sauvegarde, RNG et ordre géométrique conservés.
+
+## Contrat runtime
+
+`destruction.delta(cursor)` retourne `{token, revision, full, added, removed, dirtyAABB, colliders:{added,removed,dirtyAABB}}`. `token` est un objet opaque, uniquement runtime ; `revision` reste le compteur historique sauvegardé. Un nombre, un curseur étranger/absent ou une révision sautée force `full:true`. Deux lecteurs du précédent token reçoivent le même delta sans consommation ; le token courant donne un delta vide. Toute restauration réussie change le token, même à révision égale ou reculée ; une restauration invalide reste atomique. Conteneurs figés, objets vivants référencés non figés.
+
+Les groupes modifiés seuls sont compilés ; les fragments géométriquement identiques conservent leurs objets. L'ordre reste celui des sources puis des fragments. La liste de rendu est aplatie à la demande. Les boîtes inchangées gardent leur identité : seul leur offset `collider.mesh` peut évoluer après retrait d'un décor précédent ; cet offset n'est pas un changement géométrique pour la navigation.
+
+La simulation consomme le delta commun. Une casse sans changement solide ne refait ni seaux ni nav. Les cellules sales ont une marge de 1 m, les arêtes une cellule voisine supplémentaire. Seuls les chemins qui traversent la boîte sont réinitialisés, y compris un segment dont les deux extrémités sont dehors. Une zone inconnue/full ou >25% impose le repli global. Collisions immédiatement actualisées ; pompe bornée à 768 cellules.
+
+## Validation fonctionnelle
+
+- `npm test` : 816/816, zéro échec ; world et build-check PASS. Les 4 nouveaux contrats nav, ajoutés pendant cette exécution, ont ensuite passé avec les 6 contrats destruction : 10/10. Le script npm final contient les deux fichiers.
+- Build 0.9.2 : HTML 888930 octets, gzip 274305, aucun asset externe. SHA256 `8ec3b0cb55c6909675e8448a5ebbfe1b21bab3c38de975b712cdc25794ba4260`. Contrôle du nouvel artefact PASS.
+- Contrats : curseurs multiples/étrangers/numériques/sautés, restore égale/reculée/invalide, identités et offsets, dégâts sans révision, chemins traversants/distant, décor sans invalidation, zone inconnue, checkpoint cohérent.
+- `checks/simulation.test.mjs`, test « After several breaches and a door opening… » : deux explosions, porte, pompe terminée, cellules et toutes arêtes connues égales au recalcul complet ; restauration identique. Assertions conservées.
+- Fixture >25% corrigée, sans assouplir les assertions : ancienne paroi .18 m = 182/806 cellules (22,58%), artificiellement comptée plusieurs fois par l'ancien diff ; paroi 1,8 m = 234/806 (29,03%), 768 mises à jour et 38 en attente, passage et checkpoint validés.
+- Revue indépendante : 280 opérations hit/blast/restore sur huit séquences, mêmes meshes/colliders/lights/snapshots/payloads que la base.
+
+## Mesures appariées
+
+Reçus détaillés et SHA dans [lot-03s-preuves.json](lot-03s-preuves.json), journaux publics sous `.relais/codex03s-20261115/`. Spark sous charge concurrente (autre npm observé) ; ces mesures ne prouvent ni FPS ni latence navigateur.
+
+Destruction directe, Node24.18, domaine principal, CPU du thread : 450 impacts mesurés, cinq passes AB/BA après une passe initiale, égalité exacte après chaque impact. **Total blast + matérialisation meshes : 3600,57 → 1799,72 µs en moyenne ; ratio médian apparié 0,50025**. Côté candidat, blast 1164,50 µs et getter 635,22 µs. Le travail déplacé vers le getter est compté ; le gain du seul blast n'est pas le gain net. Les échantillons très courts restent soumis à la résolution de l'horloge.
+
+AB2 canonique, Node22.11, CPU processus, legacy-s2/arme2/1800 pas, cinq paires alternées et un échauffement :
+- T1 isolé : `identical=true`, stabilité A/B et six passes identiques. Ratio CPU total 1,0256, médiane appariée 1,0319 : le microgain ne devient pas un gain de toute la boucle dans ce scénario.
+- T1/T4 : A/B stables, divergence déterministe au pas92 sur les six passes ; qualité T4 autorise les chemins ennemis différents. Ratio CPU total0,9383 mais médiane appariée1,0102 : pas de gain uniforme annoncé. Le rejeu indépendant au pas 92 attribue exactement le premier écart à 8 planWait et 148 thinkWait préservés : aucune position, HP, chemin ni destruction différente à cet instant. Reçu : lot-03s-premier-ecart.json, SHA256 41a10703ee494c656787027e061b3b6ea758728eae4102283e8aefd1e7a48444.
+
+Combats production, Node24.18, CPU thread, 60 s, GOD, seed96, pilote skilled, cinq paires par espèce alternant l'ordre A/B. Chaque combat est un processus neuf ; les runs préliminaires exclus ne chauffent pas les processus suivants. Toutes les paires ont la même durée réelle de60s. `edgeWipes=0`, pompe1/2/1 pas par minute sur espèces0/1/2, donc <40.
+
+| Espèce | Première casse | Médiane base | Médiane candidat | Maximum candidat | <8 ms aux5 mesures |
+|---|---:|---:|---:|---:|---|
+| 0 | pas658, 10,967s |16,240ms|12,638ms|14,000ms|non|
+| 1 | pas658, 10,967s |17,940ms|10,838ms|13,857ms|non|
+| 2 | pas654, 10,900s |7,001ms|3,040ms|4,999ms|oui|
+
+## T5 restant
+
+Le décalage de refreshNav a été essayé puis retiré : un checkpoint pris avant l'invalidation différée donnait une nav différente de sa restauration. Aucun nouveau champ save, ni flush supplémentaire de chemins dans snapshot, n'a été introduit pour masquer ce défaut. Le repro reste couvert.
+
+Les phases instrumentées (temps muraux inclusifs, non additionnables) indiquent encore damageScenery 2,35–9,53ms, nouveaux débris 0,75–1,41ms ; pumpNav est négligeable au pas de première casse. Les diagnostics BOUNDED et NO_SLEEP restent hors source et hors acceptation. Le filtre solide et le sommeil statique existaient déjà dans la base ; les anciennes sondes SOLIDONLY/SLEEP ne constituent pas de nouvelles optimisations. Désactiver le sommeil sur espèce2 ne réduit pas un coût significatif de cette première casse. Profil CPU du pas658 espèces0/1 demandé pour poursuivre ; aucun préchauffage artificiel ajouté.
+
+## Reproduction
+
+`tools/proof/lot03s/revision-cost.mjs <base> <candidat> <sortie.json>` mesure blast, getter et total CPU. `tools/proof/lot03s/run.py --base <archive-c28> --candidate <clone> --out <dossier> --node <Node24>` reproduit la série threadCPU, les cinq paires/espèce et les diagnostics. Le pilote de combat vient du banc historique, mais charge les modules courants via `tools/realm-loader.mjs` (FMath/FPassages compris), sans VM de performance ni bouclier réintroduit.
+
+AB2 : `node tools/ab2.mjs <base> <candidat> --scenario legacy-s2 --weapon 2 --steps 1800 --reps 5 --warmups 1 --no-counters --out <reçu>`. Pour T1 isolé, copie source archivée de la base avec le seul destruction.js candidat. Aucune worktree créée, aucun push/service.
