@@ -1,0 +1,26 @@
+[
+ {
+  "stage": 0,
+  "avant": "50d88a07744be3d2",
+  "apres": "50d88a07744be3d2",
+  "identique": true
+ },
+ {
+  "stage": 1,
+  "avant": "c12b06dab600fbc3",
+  "apres": "c12b06dab600fbc3",
+  "identique": true
+ },
+ {
+  "stage": 2,
+  "avant": "738adaa5a8460e6f",
+  "apres": "738adaa5a8460e6f",
+  "identique": true
+ },
+ {
+  "stage": "title",
+  "avant": "88dfafde9f335f64",
+  "apres": "88dfafde9f335f64",
+  "identique": true
+ }
+]

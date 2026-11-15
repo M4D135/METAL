@@ -19,6 +19,10 @@
   let instrumentBank=null,titleBank=null,percussionBank=null,tensionSample=null;
   const modules=new Map(),clamp=(x,a,b)=>max(a,min(b,x)),stageOf=x=>x==='title'?'title':clamp(floor(Number(x)||0),0,2),songOf=x=>x==='title'?TITLE_SONG:SONGS[x];
   const period=midi=>PERIODS[clamp(round(midi)-36,0,35)];
+  // MIX-10 : le module sans graine joue les 8 positions ecrites ; un module varie
+  // ajoute VARIATION_CYCLES cycles de 6 positions. 5 cycles portent la boucle de
+  // 271 s (170 bpm) a 461 s (100 bpm), la plage que l'audit annoncait.
+  const VARIATION_CYCLES = 5, BASE_POSITIONS = 8, LOOP_POSITIONS = BASE_POSITIONS * (1 + VARIATION_CYCLES);
   function random(seed){return ()=>{seed=(imul(seed,1664525)+1013904223)|0;return (seed>>>0)/2147483648-1;};}
   function pcm(data,peak=.84){
     let peakValue=0;for(const v of data)peakValue=max(peakValue,abs(v));
@@ -137,11 +141,11 @@
     for(let i=0;i<out.length;i++)out[i]=tanh(out[i]*1.15)*min(1,(out.length-i)/110);
     return pcm(out,.89);
   }
-  function compose(stage,samples){
+  function compose(stage,samples,seed){
     const song=SONGS[stage],patterns=Array.from({length:6},()=>new Uint8Array(1024));
     // Four-bar phrases: opening impact, riff, answer, breakdown, climax, turn.
     // The third channel leaves holes for the rhythm section, then answers it.
-    const orders=stage===0?[0,1,2,1,3,1,4,5]:stage===1?[0,1,2,1,3,4,1,5]:[0,1,2,3,1,4,2,5];
+    const orders=stage===0?[0,1,2,1,3,1,4,5]:stage===1?[0,1,2,1,3,4,1,5]:[0,1,2,3,1,4,2,5],base=orders.slice();
     function put(pattern,row,channel,sample,midi,effect=0,param=0){
       const pitch=midi===null?0:period(midi),at=(row*4+channel)*4,p=patterns[pattern];
       p[at]=(sample&240)|(pitch>>8);p[at+1]=pitch&255;p[at+2]=((sample&15)<<4)|effect;p[at+3]=param;
@@ -193,6 +197,37 @@
     for(let p=0;p<patterns.length;p++){
       patterns[p][2]=(patterns[p][2]&240)|15;patterns[p][3]=6;
       patterns[p][14]=(patterns[p][14]&240)|15;patterns[p][15]=song.bpm;
+    }
+    // MIX-10 (lot 11b T7) : la boucle ne se rejoue plus a l'identique. Le premier
+    // cycle reste l'arrangement ecrit ; les cycles suivants viennent d'une graine,
+    // et seulement quand une graine est donnee. Sans graine, ce bloc ne s'execute
+    // pas et le module rendu est octet pour octet celui d'aujourd'hui.
+    if (seed !== undefined) {
+      const rnd = random((seed | 0) * 7919 + stage + 1), pick = n => floor((rnd() + 1) * .5 * n) % n;
+      for (let c = 0; c < VARIATION_CYCLES; c++) {
+        // deux positions echangees parmi 1 a 5 : l'entree et la chute restent ancrees
+        const o = base.slice(), i = 1 + pick(5), j = 1 + pick(5); [o[i], o[j]] = [o[j], o[i]];
+        for (const b of o) {
+          const q = patterns[b].slice();
+          // MIX-V3 : une fois sur deux, les motifs 1 a 4 echangent deux mesures
+          // (blocs de 16 lignes) sur les canaux 0 a 2, ceux des guitares.
+          if (b >= 1 && b <= 4 && !pick(2)) {
+            const r1 = pick(4) * 16, r2 = pick(4) * 16;
+            if (r1 !== r2) for (let row = 0; row < 16; row++) for (let byte = 0; byte < 12; byte++) {
+              const a = (r1 + row) * 16 + byte, z = (r2 + row) * 16 + byte, t = q[a]; q[a] = q[z]; q[z] = t;
+            }
+          }
+          // MIX-10 : la batterie prend une caisse par mesure dans la famille, et le
+          // 3e canal se tait une fois sur trois sur sa reponse, jamais sur la rupture.
+          const mute = b !== 3 && !pick(3);
+          for (let row = 0; row < 64; row++) {
+            const d = row * 16 + 12, l = row * 16 + 8, k = (q[d + 2] >> 4) - 7;
+            if (row % 16 === 0 && q[d + 1]) q[d + 2] = (7 + (k < 3 ? pick(3) : k === 6 ? 6 - 4 * pick(2) : k) << 4) | 12;
+            if (mute && (q[l] & 15 | q[l + 1])) { q[l] = q[l + 1] = q[l + 3] = 0; q[l + 2] = 12; }
+          }
+          orders.push(patterns.push(q) - 1);
+        }
+      }
     }
     return {title:song.moduleTitle,patterns,orders,samples};
   }
@@ -306,7 +341,7 @@
     preparing.set(stage,task);preparation=task.catch(()=>{});
     task.then(()=>preparing.delete(stage),()=>preparing.delete(stage));return task;
   }
-  function moduleSteps(stage){
+  function moduleSteps(stage,seed){
     // LOAD-13: the expensive phases of a module — drum kit, compose, serialize,
     // decode — are separate resumable sub-tasks, so warmup can yield between them
     // and a loading screen paints inside the budget. The kit is itself cut per
@@ -315,7 +350,7 @@
     // fine-grained list warmup walks; kit/compose/serialize/decode stay the
     // coarse API moduleFor uses, and run exactly the same calls in order.
     // Running them back to back is exactly what moduleFor always did.
-    stage=stageOf(stage);if(modules.has(stage))return null;
+    stage=stageOf(stage);const key=seed===undefined?stage:stage+'/'+seed;if(modules.has(key))return null;
     const title=stage==='title',song=songOf(stage),built={title,samples:Array.from({length:6},(_,i)=>title&&i<3?titleInstrument(i):instrument(i)),score:null,bytes:null};
     const kitPhases=[];
     for(const [i,kind] of ['kick','snare','hat','open','crash','tom','ride'].entries())kitPhases.push(function kitDrum(){
@@ -328,9 +363,13 @@
       built.samples.push(tensionSample);
       if(title)built.samples.push(titleInstrument(3),titleInstrument(4));
     });
-    const composePhase=function(){built.score=title?composeTitle(built.samples):compose(stage,built.samples);};
+    const composePhase=function(){built.score=title?composeTitle(built.samples):compose(stage,built.samples,seed);};
     const serializePhase=function(){built.bytes=serialize(built.score);};
-    const decodePhase=function(){if(!modules.has(stage))modules.set(stage,decode(built.bytes));};
+    const decodePhase=function(){if(modules.has(key))return;
+      // un seul module varie par morceau en memoire (225 a 300 Ko) : on evicte les
+      // graines precedentes du meme morceau, jamais le module sans graine.
+      if(key!==stage)for(const k of modules.keys())if(k!==stage&&String(k).indexOf(stage+'/')===0)modules.delete(k);
+      modules.set(key,decode(built.bytes));};
     return {
       kit(){for(const phase of kitPhases)phase();},
       compose(){composePhase();},
@@ -339,16 +378,16 @@
       phases:kitPhases.concat([composePhase,serializePhase,decodePhase])
     };
   }
-  function moduleFor(stage){
+  function moduleFor(stage,seed){
     stage=stageOf(stage);
-    const steps=moduleSteps(stage);
+    const steps=moduleSteps(stage,seed);
     if(steps){steps.kit();steps.compose();steps.serialize();steps.decode();}
-    return modules.get(stage);
+    return modules.get(seed===undefined?stage:stage+'/'+seed);
   }
-  function getModule(stage){return moduleFor(stage).bytes.slice();}
-  function getTrack(stage){stage=stageOf(stage);const song=songOf(stage);return {title:song.title,bpm:song.bpm,style:song.style,duration:(stage==='title'?TITLE_ORDERS.length*960:7680)/song.bpm,channels:4};}
+  function getModule(stage,seed){return moduleFor(stage,seed).bytes.slice();}
+  function getTrack(stage,seed){stage=stageOf(stage);const song=songOf(stage);return {title:song.title,bpm:song.bpm,style:song.style,duration:(stage==='title'?TITLE_ORDERS.length*960:(seed===undefined?BASE_POSITIONS:LOOP_POSITIONS)*960)/song.bpm,channels:4};}
   function create(ctx,output){
-    let stage=0,threat=0,volume=.4,playing=false,disposed=false,module=null,order=0,row=0,nextTime=null,bpm=125,speed=6;
+    let stage=0,seed,threat=0,volume=.4,playing=false,disposed=false,module=null,order=0,row=0,nextTime=null,bpm=125,speed=6;
     const voices=new Set(),buffers=new Map(),nodes=[],tracks=[],stats={activeVoices:0,peakVoices:0,scheduledRows:0,scheduledNotes:0,resyncs:0,playing:false,stage:0,order:0,row:0,tempo:100};
     const events=Array.from({length:4},()=>({sample:0,pitch:0,effect:0,param:0}));
     const ready=!!(ctx&&output&&ctx.createBuffer&&ctx.createBufferSource&&ctx.createGain),remember=n=>(nodes.push(n),n);
@@ -374,7 +413,7 @@
     }
     function mix(){if(!ready||disposed)return;const now=ctx.currentTime,levels=stage==='title'?[.86,.72,.52,.93]:[.94+threat*.04,.78,.30+threat*.22,.95+threat*.08];tracks.forEach((t,i)=>t.gain.gain.setTargetAtTime(levels[i],now,.07));}
     function level(){if(!master||disposed)return;const now=ctx.currentTime;master.gain.cancelScheduledValues(now);master.gain.setTargetAtTime(playing?volume:0,now,.012);}
-    function load(){if(module)return;module=moduleFor(stage);bpm=module.bpm;speed=module.speed;stats.tempo=bpm;}
+    function load(){if(module)return;module=moduleFor(stage,seed);bpm=module.bpm;speed=module.speed;stats.tempo=bpm;}
     function buffer(sample,whichStage=stage){
       const key=(whichStage==='title'?3:whichStage)*32+sample;if(buffers.has(key))return buffers.get(key);
       const score=whichStage===stage&&module?module:moduleFor(whichStage),data=score.samples[sample-1].pcm,b=ctx.createBuffer(1,data.length,RATE),channel=b.getChannelData(0);for(let i=0;i<data.length;i++)channel[i]=data[i]/128;
@@ -421,7 +460,7 @@
     }
     mix();
     return {
-      setStage(value){const next=stageOf(value);if(disposed||next===stage)return;stopAll();stage=next;stats.stage=stage;module=null;order=row=0;nextTime=null;mix();},
+      setStage(value,nextSeed){const next=stageOf(value);if(disposed||next===stage&&nextSeed===seed)return;stopAll();stage=next;seed=nextSeed;stats.stage=stage;module=null;order=row=0;nextTime=null;mix();},
       setThreat(value){const next=clamp(Number(value)||0,0,1);if(disposed||abs(next-threat)<.01)return;threat=next;mix();},
       setVolume(value){if(disposed)return;const next=clamp(Number(value)||0,0,1);if(next===volume)return;volume=next;if(!volume){stopAll();nextTime=null;row=floor(row/16)*16;}level();},
       setPlaying(value){if(disposed||playing===!!value)return;playing=!!value;stats.playing=playing;if(!playing){stopAll();row=floor(row/16)*16;}nextTime=null;level();},

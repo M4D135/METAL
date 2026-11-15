@@ -250,7 +250,10 @@
       var bank = Object.create(null), motors = [], ambientDuckUntil = 0, variation = 0, warming = null, warmTimer = null, warmResolve = null;
       var mix = {master:1,music:.45,effects:1,ambience:1};
       var persistent = [], voices = new Set(), noiseSeed = 0x96f3, fxLast = Object.create(null), targets = new WeakMap();
-      var priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
+      // MIX-10 : la graine du morceau, donnee par le jeu, varie la boucle. Sans
+      // elle (aucun setStage avec graine), FMusic recoit undefined et joue
+      // l'arrangement ecrit, octet pour octet comme avant.
+      var musicSeed, priority = 2, cue = '', cueLevel = 1, cueDucked = false, duckUntil = 0, duckDepth = 1, preview = null, previewSerial = 0, api;
       var MUSIC_GAIN = .56, EFFECTS_GAIN = .9, AMBIENCE_GAIN = .7;
       // FEEL-07: how long each weapon cue holds the soundtrack down before the
       // 180 ms release. The heavy reports (pump shell, rocket, grenade) hold
@@ -339,7 +342,7 @@
         if (!music) return;
         // The title is a score selection, never an environmental stage or a
         // running simulation. Keep stage numeric for wind/room calculations.
-        music.setStage(titlePlaying ? 'title' : stage);
+        music.setStage(titlePlaying ? 'title' : stage, titlePlaying ? undefined : musicSeed);
         music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65));
         music.setPlaying(playing || titlePlaying);
       }
@@ -814,7 +817,7 @@
         },
         setThreat: function (value) { threat = Math.max(0, Math.min(1, Number(value) || 0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
         setPressure: function (value) { pressure = Math.max(0,Math.min(1,Number(value)||0)); if (music) music.setThreat(titlePlaying ? 0 : Math.max(threat,pressure*.65)); },
-        setStage: function (value) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); syncMusic(); },
+        setStage: function (value, valueSeed) { cancelTestMix(); stage = Math.max(0, Math.min(2, Math.floor(Number(value) || 0))); if (arguments.length > 1) musicSeed = Number.isFinite(valueSeed) ? valueSeed | 0 : undefined; pressure = 0; steam = 0; machinery = 0; updateSteam();updateMachinery(); syncMusic(); },
         setPlaying: function (value) { cancelTestMix(); playing = !!value;if(playing){titlePlaying=false;if(ctx)warmBank(false);} updateSteam();updateMachinery(); syncMusic(); if (!playing && ctx && airVolume) {approach(airVolume.gain,0,ctx.currentTime,.018);stats.windGain=0;for(var entry of Array.from(voices)){try{entry.source.stop();}catch(_){}clean(entry);}} },
         setMix: function (value) {
           for (var key in mix) if (Number.isFinite(value && value[key])) mix[key] = Math.max(0, Math.min(1, value[key]));

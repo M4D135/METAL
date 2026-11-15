@@ -232,3 +232,30 @@ test('sixty seconds of music fade every note cut before its natural end to silen
   }
   assert(cut>0,'des notes sont réellement coupées par la suivante, sinon le test est vide, eu '+cut);
 });
+
+// MIX-10 et MIX-V3 (lot 11b T7) : la boucle varie par graine, jamais a l'identique.
+test('une graine allonge la boucle au-dela de 240 s sans repeter une fenetre de 4 positions, et le module sans graine reste octet pour octet l arrangement ecrit (MIX-10, MIX-V3)',()=>{
+  for(let stage=0;stage<3;stage++){
+    const ecrit=parse(Music.getModule(stage)),g=parse(Music.getModule(stage,96));
+    assert.equal(ecrit.order.length,8,'sans graine, les huit positions ecrites');
+    assert.notEqual(bytesHash(g.bytes),bytesHash(ecrit.bytes),'une graine change le module');
+    assert.equal(bytesHash(Music.getModule(stage,96)),bytesHash(g.bytes),'la meme graine rend le meme module, deux appels de suite');
+    assert.notEqual(bytesHash(Music.getModule(stage,7)),bytesHash(g.bytes),'deux graines rendent deux modules differents');
+    assert(g.order.length>=48,'la boucle variee compte '+g.order.length+' positions');
+    const track=Music.getTrack(stage,96);
+    assert(Math.abs(track.duration-g.order.length*64*15/track.bpm)<1e-9,'la duree annoncee est la duree jouee');
+    assert(track.duration>=240,'boucle de '+track.duration.toFixed(1)+' s au tempo '+track.bpm+', cible 240 s');
+    const ph=[];for(let p=0;p<=Math.max(...g.order);p++)ph.push(bytesHash(g.bytes.slice(1084+p*1024,1084+(p+1)*1024)));
+    const seq=g.order.map(p=>ph[p]),vues=new Map();
+    for(let i=0;i+4<=seq.length;i++){const k=seq.slice(i,i+4).join();assert(!vues.has(k),'fenetre de quatre positions consecutives repetee a la position '+i);vues.set(k,i);}
+    const guitares=new Set();
+    for(let p=0;p<=Math.max(...g.order);p++)guitares.add(bytesHash(g.bytes.slice(1084+p*1024,1084+p*1024+768)));
+    assert(guitares.size>=12,'au moins douze contenus de guitare distincts (canaux 0 a 2), mesure '+guitares.size);
+  }
+  const muet=rig(),varie=rig();
+  muet.music.setStage(0);varie.music.setStage(0,96);
+  muet.music.setPlaying(true);varie.music.setPlaying(true);
+  run(muet,8);run(varie,8);
+  assert(muet.music.stats.scheduledNotes>0&&varie.music.stats.scheduledNotes>0,'les deux se jouent');
+  assert.equal(varie.music.stats.resyncs,0,'la graine ne provoque aucun resynchronisation');
+});
