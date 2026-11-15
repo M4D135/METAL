@@ -1,0 +1,130 @@
+{
+ "commentaire": "Avant T8 : nombre de classes cachees distinctes par liste dynamique (240 images x 3 mondes).",
+ "mondes": [
+  {
+   "monde": "camp:17",
+   "maillages": 58062,
+   "classes": 9,
+   "signatures": [
+    {
+     "champs": 6,
+     "maillages": 16386
+    },
+    {
+     "champs": 7,
+     "maillages": 14107
+    },
+    {
+     "champs": 8,
+     "maillages": 240
+    },
+    {
+     "champs": 8,
+     "maillages": 4101
+    },
+    {
+     "champs": 7,
+     "maillages": 785
+    },
+    {
+     "champs": 10,
+     "maillages": 9387
+    },
+    {
+     "champs": 8,
+     "maillages": 6701
+    },
+    {
+     "champs": 9,
+     "maillages": 5395
+    },
+    {
+     "champs": 11,
+     "maillages": 960
+    }
+   ]
+  },
+  {
+   "monde": "camp:6",
+   "maillages": 67875,
+   "classes": 9,
+   "signatures": [
+    {
+     "champs": 6,
+     "maillages": 21662
+    },
+    {
+     "champs": 7,
+     "maillages": 17699
+    },
+    {
+     "champs": 8,
+     "maillages": 240
+    },
+    {
+     "champs": 8,
+     "maillages": 4284
+    },
+    {
+     "champs": 10,
+     "maillages": 10421
+    },
+    {
+     "champs": 8,
+     "maillages": 6701
+    },
+    {
+     "champs": 9,
+     "maillages": 5395
+    },
+    {
+     "champs": 11,
+     "maillages": 960
+    },
+    {
+     "champs": 7,
+     "maillages": 513
+    }
+   ]
+  },
+  {
+   "monde": "legacy:0",
+   "maillages": 69162,
+   "classes": 8,
+   "signatures": [
+    {
+     "champs": 6,
+     "maillages": 22324
+    },
+    {
+     "champs": 7,
+     "maillages": 21047
+    },
+    {
+     "champs": 8,
+     "maillages": 240
+    },
+    {
+     "champs": 8,
+     "maillages": 4241
+    },
+    {
+     "champs": 10,
+     "maillages": 10421
+    },
+    {
+     "champs": 8,
+     "maillages": 5261
+    },
+    {
+     "champs": 9,
+     "maillages": 5395
+    },
+    {
+     "champs": 7,
+     "maillages": 233
+    }
+   ]
+  }
+ ]
+}

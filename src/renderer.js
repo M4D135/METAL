@@ -12,6 +12,8 @@
   layout(location=5) in vec4 iColor;
   uniform mat4 uViewProjection;
   uniform vec2 uWindTime;
+  uniform vec3 uCullCentre;
+  uniform vec3 uCullRange;
   out vec3 vWorld;
   out vec3 vNormal;
   out vec3 vSurface;
@@ -40,12 +42,18 @@
     vEmission=iScale.w;
     vOverlay=mod(iRotation.w,2.);
     vOutdoor=mod(floor(iRotation.w*.5),2.);
-    vObject=floor(iRotation.w*.25);
+    vObject=mod(floor(iRotation.w*.25),2.);
     vSurface=vObject>.5?aPosition*iScale.xyz:vWorld;
     vLocal=aPosition;
     vSurfaceNormal=vObject>.5?normalize(aNormal/max(abs(iScale.xyz),vec3(.0001))):vNormal;
     vColor=iColor;
-    gl_Position=uViewProjection*vec4(vWorld,1.);
+    vec4 clip=uViewProjection*vec4(vWorld,1.);
+    int niveau=int(floor(iRotation.w*.125));
+    if(niveau>=1){
+      float range=niveau==1?uCullRange.x:(niveau==2?uCullRange.y:uCullRange.z);
+      if(distance(uCullCentre,iPosition.xyz)>range+.5*length(iScale.xyz))clip=vec4(2.,2.,2.,1.);
+    }
+    gl_Position=clip;
   }`;
 
   const FRAG = `#version 300 es
@@ -560,8 +568,16 @@
   function foliageTriangles(){return FOLIAGE.triangles;}
   const names = ['box','sphere','cylinder','octa','ring','bevel','foliage'];
   function geometry(low) {
-    const data=[], indices=[], ranges={};
-    function vertex(p,n) {const i=data.length/6;data.push(...p,...n);return i;}
+    const data=[], indices=[], ranges={}, seen=new Map();
+    // DRAW-11 : un sommet (position + normale) n'est écrit qu'une fois. La clé est la
+    // représentation exacte des six flottants, donc deux triangles voisins partagent le même
+    // indice au bit près ; les coutures de sphère et d'anneau gardent leurs doublons (sin(2π)
+    // n'est pas exactement 0), sans conséquence sur l'image.
+    function vertex(p,n) {
+      const key=p[0]+','+p[1]+','+p[2]+'|'+n[0]+','+n[1]+','+n[2];
+      const found=seen.get(key);if(found!==undefined)return found;
+      const i=data.length/6;data.push(...p,...n);seen.set(key,i);return i;
+    }
     function triangle(p0,p1,p2,n0,n1,n2) {
       const a=[p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]],b=[p2[0]-p0[0],p2[1]-p0[1],p2[2]-p0[2]];
       const cross=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -649,10 +665,42 @@
     // A direction can contain negative horizontal coordinates; colours cannot.
     const sun=Array.isArray(value.sunDirection)&&value.sunDirection.length>=3?value.sunDirection.slice(0,3).map((x,i)=>Number.isFinite(x)?x:[.4,.8,.3][i]):[.4,.8,.3];
     sun[1]=Math.max(.12,sun[1]);const sunLength=Math.hypot(...sun)||1;
-    return {...value,skyTop:color(value.skyTop,[.22,.39,.51]),skyBottom:color(value.skyBottom,[.65,.72,.66]),fog:color(value.fog,[.35,.43,.42]),sunDirection:sun.map(x=>x/sunLength),sunColor:color(value.sunColor,[1,.86,.62]),ambient:color(value.ambient,[.24,.29,.27]),wind:Number.isFinite(value.wind)?Math.max(0,Math.min(2,value.wind)):.6,fogDensity:Number.isFinite(value.fogDensity)?Math.max(.001,value.fogDensity):.011,outdoorZones:value.outdoorZones||[]};
+    const zones=value.outdoorZones||[];
+    return {...value,skyTop:color(value.skyTop,[.22,.39,.51]),skyBottom:color(value.skyBottom,[.65,.72,.66]),fog:color(value.fog,[.35,.43,.42]),sunDirection:sun.map(x=>x/sunLength),sunColor:color(value.sunColor,[1,.86,.62]),ambient:color(value.ambient,[.24,.29,.27]),wind:Number.isFinite(value.wind)?Math.max(0,Math.min(2,value.wind)):.6,fogDensity:Number.isFinite(value.fogDensity)?Math.max(.001,value.fogDensity):.011,outdoorZones:zones,outdoorRaster:outdoorRaster(zones)};
+  }
+  const OUTDOOR_CELL=2,OUTDOOR_CELLS_MAX=1<<20;
+  function outdoorRaster(zones) {
+    if(!zones.length)return null;
+    let minX=Infinity,minZ=Infinity,maxX=-Infinity,maxZ=-Infinity;
+    for(const zone of zones){
+      if(!(zone.w>0)||!(zone.d>0))return null;
+      const hw=zone.w*.5+.08,hd=zone.d*.5+.08;
+      if(zone.x-hw<minX)minX=zone.x-hw;if(zone.x+hw>maxX)maxX=zone.x+hw;
+      if(zone.z-hd<minZ)minZ=zone.z-hd;if(zone.z+hd>maxZ)maxZ=zone.z+hd;
+    }
+    if(!Number.isFinite(minX))return null;
+    const x0=Math.floor(minX/OUTDOOR_CELL)*OUTDOOR_CELL-OUTDOOR_CELL,z0=Math.floor(minZ/OUTDOOR_CELL)*OUTDOOR_CELL-OUTDOOR_CELL;
+    const nx=Math.ceil((maxX-x0)/OUTDOOR_CELL)+1,nz=Math.ceil((maxZ-z0)/OUTDOOR_CELL)+1;
+    if(!(nx>0&&nz>0)||nx*nz>OUTDOOR_CELLS_MAX)return null;
+    const grid=new Uint8Array(nx*nz);
+    for(const zone of zones){
+      const hw=zone.w*.5+.08,hd=zone.d*.5+.08;
+      const ax=Math.max(0,Math.floor((zone.x-hw-x0)/OUTDOOR_CELL)),bx=Math.min(nx-1,Math.floor((zone.x+hw-x0)/OUTDOOR_CELL));
+      const az=Math.max(0,Math.floor((zone.z-hd-z0)/OUTDOOR_CELL)),bz=Math.min(nz-1,Math.floor((zone.z+hd-z0)/OUTDOOR_CELL));
+      for(let x=ax;x<=bx;x++)for(let z=az;z<=bz;z++)grid[x*nz+z]=1;
+    }
+    return {grid,nx,nz,x0,z0};
   }
   function outdoorAt(p,environment){
-    return !!environment&&environment.outdoorZones.some(zone=>Math.abs(p[0]-zone.x)<=zone.w*.5+.08&&Math.abs(p[2]-zone.z)<=zone.d*.5+.08);
+    if(!environment)return false;
+    const zones=environment.outdoorZones,raster=environment.outdoorRaster;
+    if(raster){
+      const cx=Math.floor((p[0]-raster.x0)/OUTDOOR_CELL),cz=Math.floor((p[2]-raster.z0)/OUTDOOR_CELL);
+      if(cx<0||cz<0||cx>=raster.nx||cz>=raster.nz)return false;
+      if(!raster.grid[cx*raster.nz+cz])return false;
+    }
+    for(let i=0;i<zones.length;i++){const zone=zones[i];if(Math.abs(p[0]-zone.x)<=zone.w*.5+.08&&Math.abs(p[2]-zone.z)<=zone.d*.5+.08)return true;}
+    return false;
   }
   function transientLights(value,eye,limit){
     if(!Array.isArray(value))return [];
@@ -675,37 +723,45 @@
     const object=mesh.overlay||mesh.surface==='object'||objects&&mesh.surface!=='architecture';
     return (mesh.overlay?1:0)+(outdoorMesh(mesh,environment)?2:0)+(object?4:0);
   }
-  function pack(meshes,environment,objects=false) {
-    const grouped=names.map(()=>[]);
-    for(const mesh of meshes||[]) {
-      const i=names.indexOf(mesh.shape||'box');
-      if(i>=0) grouped[i].push(mesh);
-    }
-    const count=grouped.reduce((n,g)=>n+g.length,0),values=new Float32Array(count*16),groups=[];
-    let offset=0;
-    for(let i=0;i<names.length;i++) {
-      const list=grouped[i];
-      if(list.length) groups.push({name:names[i],offset:offset*4,count:list.length});
-      for(const mesh of list) {
-        const p=mesh.p||[0,0,0],s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
-        values.set([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment,objects),c[0],c[1],c[2],mesh.color?1:0],offset);
-        offset+=16;
-      }
-    }
-    return {values,groups};
+  const SHAPE={box:0,sphere:1,cylinder:2,octa:3,ring:4,bevel:5,foliage:6},ZERO3=[0,0,0],ONE3=[1,1,1],GREY3=[.5,.5,.5];
+  function scratchRows(){return {data:new Float32Array(0),counts:new Int32Array(7),starts:new Int32Array(7),codes:new Int8Array(0)};}
+  function rowsFor(scratch,count) {
+    if(scratch.data.length<count*16){let n=scratch.data.length/16||16;while(n<count)n*=2;scratch.data=new Float32Array(n*16);}
+    if(scratch.codes.length<count){let n=scratch.codes.length||64;while(n<count)n*=2;scratch.codes=new Int8Array(n);}
+    return scratch.data;
   }
-  function packEffects(meshes,environment,eye){
+  function pack(meshes,environment,objects=false,scratch=null) {
+    const list=meshes||[];if(!scratch)scratch=scratchRows();
+    if(scratch.codes.length<list.length)rowsFor(scratch,list.length);
+    const counts=scratch.counts,starts=scratch.starts;counts.fill(0);let count=0;
+    for(let k=0;k<list.length;k++){const code=SHAPE[list[k].shape||'box'],c=code===undefined?-1:code;scratch.codes[k]=c;if(c>=0){counts[c]++;count++;}}
+    const data=rowsFor(scratch,count),groups=[];let offset=0;
+    for(let i=0;i<7;i++){starts[i]=offset;if(counts[i])groups.push({name:names[i],offset:offset*64,count:counts[i]});offset+=counts[i];}
+    for(let k=0;k<list.length;k++){
+      const c=scratch.codes[k];if(c<0)continue;
+      const mesh=list[k],j=(starts[c]++)*16,p=mesh.p||ZERO3,s=mesh.s||ONE3,r=mesh.r||ZERO3,col=mesh.color;
+      data[j]=p[0];data[j+1]=p[1];data[j+2]=p[2];data[j+3]=mesh.mat||0;data[j+4]=s[0];data[j+5]=s[1];data[j+6]=s[2];data[j+7]=mesh.emissive||0;
+      data[j+8]=r[0];data[j+9]=r[1];data[j+10]=r[2];data[j+11]=surfaceFlags(mesh,environment,objects);
+      if(col){data[j+12]=col[0];data[j+13]=col[1];data[j+14]=col[2];data[j+15]=1;}else{data[j+12]=0;data[j+13]=0;data[j+14]=0;data[j+15]=0;}
+    }
+    return {values:data.subarray(0,count*16),groups};
+  }
+  function packEffects(meshes,environment,eye,scratch){
     const distance=m=>(m.p[0]-eye[0])**2+(m.p[1]-eye[1])**2+(m.p[2]-eye[2])**2;
     const list=meshes.filter(m=>names.includes(m.shape||'sphere')&&m.alpha>.003).slice().sort((a,b)=>distance(b)-distance(a));
-    const values=new Float32Array(list.length*16),groups=[];let offset=0;
+    if(!scratch)scratch=scratchRows();
+    const values=rowsFor(scratch,list.length),groups=[];let offset=0;
     for(const mesh of list){
       const name=mesh.shape||'sphere',last=groups[groups.length-1];
       if(last&&last.name===name)last.count++;else groups.push({name,offset:offset*4,count:1});
-      const p=mesh.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[.5,.5,.5];
+      const p=mesh.p,s=mesh.s||ONE3,r=mesh.r||ZERO3,c=mesh.color||GREY3,j=offset;
       const material=mesh.shape==='ring'&&Number.isFinite(mesh.innerRatio)?20+Math.min(.999,Math.max(0,mesh.innerRatio)):mesh.fxPriority==='hazard'?16:mesh.fxFire?14:mesh.fxSmoke?15:mesh.fxSpark?17:7;
-      values.set([p[0],p[1],p[2],material,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment,true),c[0],c[1],c[2],Math.min(1,Math.max(0,mesh.alpha))],offset);offset+=16;
+      values[j]=p[0];values[j+1]=p[1];values[j+2]=p[2];values[j+3]=material;values[j+4]=s[0];values[j+5]=s[1];values[j+6]=s[2];values[j+7]=mesh.emissive||0;
+      values[j+8]=r[0];values[j+9]=r[1];values[j+10]=r[2];values[j+11]=surfaceFlags(mesh,environment,true);
+      values[j+12]=c[0];values[j+13]=c[1];values[j+14]=c[2];values[j+15]=Math.min(1,Math.max(0,mesh.alpha));
+      offset+=16;
     }
-    return {values,groups};
+    return {values:values.subarray(0,offset),groups};
   }
 
   function multiply(a,b,out) {
@@ -771,35 +827,53 @@
       // Destruction replaces changed meshes; retained immutable meshes keep
       // their instance rows and expensive Canvas face/lighting caches.
       const retained=previous&&previous.byMesh.get(mesh),e=retained||metadata(mesh),key=Math.floor(e.p[0]/8)+','+Math.floor(e.p[2]/8),map=levels[e.detail];
-      if(!map.has(key))map.set(key,[]);map.get(key).push(e);maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
+      let cell=map.get(key);
+      if(!cell){cell={list:[],sumY:0,minY:Infinity,maxY:-Infinity};map.set(key,cell);}
+      cell.list.push(e);cell.sumY+=e.p[1];if(e.p[1]<cell.minY)cell.minY=e.p[1];if(e.p[1]>cell.maxY)cell.maxY=e.p[1];
+      maxRadius[e.detail]=Math.max(maxRadius[e.detail],e.radius);
       if(!retained){const p=e.p,s=mesh.s||[1,1,1],r=mesh.r||[0,0,0],c=mesh.color||[0,0,0];
-        e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment),c[0],c[1],c[2],mesh.color?1:0]);}
-      entries.push(e);byMesh.set(mesh,e);
+        e.row=new Float32Array([p[0],p[1],p[2],mesh.mat||0,s[0],s[1],s[2],mesh.emissive||0,r[0],r[1],r[2],surfaceFlags(mesh,environment)+(e.detail+1)*8,c[0],c[1],c[2],mesh.color?1:0]);}
+      e.order=entries.length;entries.push(e);byMesh.set(mesh,e);
     }
-    function query(eye,ranges){
-      const result=[];
+    function query(eye,ranges,out,frustum){
+      const result=out||[];result.length=0;
       for(let level=0;level<3;level++){
         const range=ranges[level];if(!(range>0))continue;
         const radius=range+maxRadius[level];
         for(let x=Math.floor((eye[0]-radius)/8);x<=Math.floor((eye[0]+radius)/8);x++)for(let z=Math.floor((eye[2]-radius)/8);z<=Math.floor((eye[2]+radius)/8);z++){
-          const bucket=levels[level].get(x+','+z);if(!bucket)continue;
-          for(const e of bucket){const d=(e.p[0]-eye[0])**2+(e.p[1]-eye[1])**2+(e.p[2]-eye[2])**2;if(d<=(range+e.radius)**2)result.push(e);}
+          const cell=levels[level].get(x+','+z);if(!cell)continue;
+          // DRAW-08 : une cellule de 8 m est englobée par une sphère centrée sur la hauteur
+          // moyenne de ses entrées. Le test est exactement celui de visible(), donc une cellule
+          // rejetée ne peut contenir aucune entrée que le test par entrée aurait gardée.
+          if(frustum){
+            const count=cell.list.length,cy=cell.sumY/count,half=Math.max(cy-cell.minY,cell.maxY-cy);
+            if(!visibleSphere(x*8+4,cy,z*8+4,5.656854249492381+half+maxRadius[level],eye,frustum.axes,frustum.horizontal,frustum.vertical,frustum.far))continue;
+          }
+          for(const e of cell.list){const d=(e.p[0]-eye[0])**2+(e.p[1]-eye[1])**2+(e.p[2]-eye[2])**2;if(d<=(range+e.radius)**2)result.push(e);}
         }
       }
       return result;
     }
     return {entries,query,byMesh};
   }
+  function visibleSphere(cx,cy,cz,r,eye,axes,horizontal,vertical,far){
+    const x=cx-eye[0],y=cy-eye[1],d=cz-eye[2],f=axes.forward,right=axes.right,up=axes.up;
+    const z=x*f[0]+y*f[1]+d*f[2];
+    return z+r>.04&&z-r<far&&Math.abs(x*right[0]+y*right[1]+d*right[2])<=z*horizontal+r*Math.sqrt(1+horizontal*horizontal)&&Math.abs(x*up[0]+y*up[1]+d*up[2])<=z*vertical+r*Math.sqrt(1+vertical*vertical);
+  }
   function visible(e,eye,axes,horizontal,vertical,far){
     const x=e.p[0]-eye[0],y=e.p[1]-eye[1],d=e.p[2]-eye[2],f=axes.forward,right=axes.right,up=axes.up;
     const z=x*f[0]+y*f[1]+d*f[2],r=e.radius;
     return z+r>.04&&z-r<far&&Math.abs(x*right[0]+y*right[1]+d*right[2])<=z*horizontal+r*Math.sqrt(1+horizontal*horizontal)&&Math.abs(x*up[0]+y*up[1]+d*up[2])<=z*vertical+r*Math.sqrt(1+vertical*vertical);
   }
-  function packIndexed(entries){
-    const buckets=names.map(()=>[]);for(const e of entries){const i=names.indexOf(e.mesh.shape||'box');if(i>=0)buckets[i].push(e);}
-    const values=new Float32Array(entries.length*16),groups=[];let offset=0;
-    for(let i=0;i<names.length;i++)if(buckets[i].length){groups.push({name:names[i],offset:offset*4,count:buckets[i].length});for(const e of buckets[i]){values.set(e.row,offset);offset+=16;}}
-    return {values,groups};
+  function packIndexed(entries,scratch){
+    if(!scratch)scratch=scratchRows();
+    const counts=scratch.counts,starts=scratch.starts;counts.fill(0);let count=0;
+    for(const e of entries){if(e.shapeCode===undefined)e.shapeCode=SHAPE[e.mesh.shape||'box']===undefined?-1:SHAPE[e.mesh.shape||'box'];if(e.shapeCode>=0){counts[e.shapeCode]++;count++;}}
+    const data=rowsFor(scratch,count),groups=[];let offset=0;
+    for(let i=0;i<7;i++){starts[i]=offset;if(counts[i])groups.push({name:names[i],offset:offset*64,count:counts[i]});offset+=counts[i];}
+    for(const e of entries)if(e.shapeCode>=0)data.set(e.row,(starts[e.shapeCode]++)*16);
+    return {values:data.subarray(0,count*16),groups};
   }
 
   function skyColor(values,scale=1){return 'rgb('+values.map(v=>Math.round(Math.pow(Math.max(0,v*scale)/(Math.max(0,v*scale)+.76),.4545)*255)).join(',')+')';}
@@ -847,6 +921,11 @@
     if(!ctx) throw new Error('Le rendu graphique est indisponible dans ce navigateur.');
     const base={},coarseBase={},palette=[[.105,.135,.15],[.36,.18,.065],[.13,.16,.17],[.57,.58,.54],[.025,.74,.77],[1,.42,.06],[.68,.055,.025],[.065,.075,.085],[.16,.21,.075],[.32,.31,.27],[.18,.10,.04],[.105,.255,.055],[.035,.12,.15]];
     const stats={backend:'canvas2d',webglVersion:0,drawCalls:0,triangles:0,instances:0,contextLost:false,bloom:false,shadows:false};
+    // Couleurs de nuance mémoïsées : 'rgb(r,g,b)' ne dépend que de (r,g,b).
+    const shadeCache=new Map();
+    // Tampons de sommets réutilisés d'une face à l'autre (rien n'est retenu ici :
+    // les écrans conservés viennent de project(), jamais de ces tampons).
+    const vertexScratch=[],projectScratch=[],faceScratch=[];
     let world=spatialIndex([]),lights=[],environment=null,quality='auto',disposed=false,vignette=null,shadowGeometry=new WeakMap(),explicitGround=false,staticCasterPlan=null,worldRevision=0;
     const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
     const subtract=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
@@ -986,9 +1065,10 @@
       stats.renderScale=1;stats.pixelRatio=ratio;stats.width=width;stats.height=height;
       return {width,height,ratio};
     }
-    function clip(points,depth,greater){
-      const result=[];let previous=points[points.length-1],prevInside=greater?previous[2]>=depth:previous[2]<=depth;
-      for(const p of points){
+    function clip(points,depth,greater,limit){
+      const end=limit===undefined?points.length:limit,result=[];let previous=points[end-1],prevInside=greater?previous[2]>=depth:previous[2]<=depth;
+      for(let index=0;index<end;index++){
+        const p=points[index];
         const inside=greater?p[2]>=depth:p[2]<=depth;
         if(inside!==prevInside){const t=(depth-previous[2])/(p[2]-previous[2]);result.push([previous[0]+(p[0]-previous[0])*t,previous[1]+(p[1]-previous[1])*t,depth]);}
         if(inside)result.push(p);previous=p;prevInside=inside;
@@ -1012,6 +1092,7 @@
       const fov=Math.max(40,Math.min(110,camera.fov||75))*Math.PI/180,tan=Math.tan(fov*.5),focal=height/(2*tan),horizontal=tan*width/height;
       const near=.065,far=softwareDistance(quality,environment,eye);stats.viewDistance=far;
       const toCamera=v=>{const x=v[0]-eye[0],y=v[1]-eye[1],z=v[2]-eye[2];return [x*right[0]+y*right[1]+z*right[2],x*up[0]+y*up[1]+z*up[2],x*forward[0]+y*forward[1]+z*forward[2]];};
+      const toCameraInto=(x,y,z,out)=>{const dx=x-eye[0],dy=y-eye[1],dz=z-eye[2];out[0]=dx*right[0]+dy*right[1]+dz*right[2];out[1]=dx*up[0]+dy*up[1]+dz*up[2];out[2]=dx*forward[0]+dy*forward[1]+dz*forward[2];};
       const project=v=>[width*.5+v[0]*focal/v[2],height*.5-v[1]*focal/v[2]];
       function projectPolygon(points){
         let transformed=points.map(toCamera);if(transformed.length<3||transformed.every(v=>v[2]<near)||transformed.every(v=>v[2]>far))return [];
@@ -1032,24 +1113,38 @@
         if(!inView(object.p,object.radius))return;
         stats.instances++;
         const phase=t*.85+object.p[0]*.37+object.p[2]*.21,bend=object.sway&&environment?environment.wind*.055:0;
-        const vertices=object.vertices.map(v=>{if(!bend)return toCamera(v);const weight=Math.max(0,Math.min(1,(v[1]-object.p[1])/Math.max(.01,object.s[1])+.5));return toCamera([v[0]+Math.sin(phase)*bend*weight,v[1],v[2]+Math.cos(phase*.73)*bend*.6*weight]);});
-        const projected=vertices.map(v=>v[2]>=near&&v[2]<=far?project(v):null);
+        const source=object.vertices,vertexCount=source.length,originY=object.p[1],objectHeight=Math.max(.01,object.s[1]);
+        while(vertexScratch.length<vertexCount)vertexScratch.push([0,0,0]);
+        while(projectScratch.length<vertexCount)projectScratch.push(null);
+        const bendX=Math.sin(phase)*bend,bendZ=Math.cos(phase*.73)*bend*.6;
+        for(let i=0;i<vertexCount;i++){
+          const v=source[i],slot=vertexScratch[i];
+          if(bend){const weight=Math.max(0,Math.min(1,(v[1]-originY)/objectHeight+.5));toCameraInto(v[0]+bendX*weight,v[1],v[2]+bendZ*weight,slot);}
+          else toCameraInto(v[0],v[1],v[2],slot);
+          const depth=vertexScratch[i][2];projectScratch[i]=depth>=near&&depth<=far?project(vertexScratch[i]):null;
+        }
         for(const face of object.faces){
           if(dot(face.n,subtract(eye,face.center))<=.00001)continue;
-          let points=face.indices.map(i=>vertices[i]),clipped=false;
-          if(points.every(v=>v[2]<near)||points.every(v=>v[2]>far))continue;
-          if(points.some(v=>v[2]<near)){points=clip(points,near,true);clipped=true;}
-          if(points.length<3)continue;
-          if(points.some(v=>v[2]>far)){points=clip(points,far,false);clipped=true;}
-          if(points.length<3)continue;
-          const screen=clipped?points.map(project):face.indices.map(i=>projected[i]);
-          if(screen.every(v=>v[0]<-2)||screen.every(v=>v[0]>width+2)||screen.every(v=>v[1]<-2)||screen.every(v=>v[1]>height+2))continue;
-          const depth=points.reduce((sum,v)=>sum+v[2],0)/points.length;
-          (face.overlay?overlays:face.ground?grounds:faces).push({face,screen,depth,bounds:screenBounds(screen)});
+          const indices=face.indices,indexCount=indices.length;
+          let allNear=true,allFar=true;
+          for(let i=0;i<indexCount;i++){const depth=vertexScratch[indices[i]][2];if(depth>=near)allNear=false;if(depth<=far)allFar=false;}
+          if(allNear||allFar)continue;
+          let points=faceScratch,count=indexCount,clipped=false,anyNear=false,anyFar=false;
+          for(let i=0;i<indexCount;i++){const v=vertexScratch[indices[i]];faceScratch[i]=v;if(v[2]<near)anyNear=true;if(v[2]>far)anyFar=true;}
+          if(anyNear){points=clip(points,near,true,count);count=points.length;clipped=true;if(count<3)continue;}
+          if(anyFar){points=clip(points,far,false,count);count=points.length;clipped=true;if(count<3)continue;}
+          const screen=[];
+          if(clipped)for(let i=0;i<count;i++)screen.push(project(points[i]));
+          else for(let i=0;i<indexCount;i++)screen.push(projectScratch[indices[i]]);
+          let offLeft=true,offRight=true,offTop=true,offBottom=true;
+          for(let i=0;i<screen.length;i++){const v=screen[i];if(v[0]>=-2)offLeft=false;if(v[0]<=width+2)offRight=false;if(v[1]>=-2)offTop=false;if(v[1]<=height+2)offBottom=false;}
+          if(offLeft||offRight||offTop||offBottom)continue;
+          let sum=0;for(let i=0;i<count;i++)sum+=points[i][2];
+          (face.overlay?overlays:face.ground?grounds:faces).push({face,screen,depth:sum/count,bounds:screenBounds(screen),ground:face.ground===true,plane:face.plane,n0:face.n[0],n1:face.n[1],n2:face.n[2]});
         }
       }
       const ranges=detailRanges(quality,true),tiers=[[],[],[]];if(environment)ranges[0]=far;let staticVisible=0;
-      for(const e of world.query(eye,ranges))if(visible(e,eye,axes,horizontal,tan,far)){
+      for(const e of world.query(eye,ranges,null,{axes,horizontal,vertical:tan,far}))if(visible(e,eye,axes,horizontal,tan,far)){
         const delta=subtract(e.p,eye),distance=Math.hypot(...delta),pixelRadius=e.radius*focal/Math.max(.2,dot(delta,forward));
         if(e.detail>0&&pixelRadius<(e.detail===2?2.1:1.0))continue;
         tiers[e.detail].push({e,pixelRadius,score:distance/(1+Math.min(e.radius,3)*.32)});
@@ -1158,14 +1253,20 @@
           });
         }
         const fog=face.overlay?0:Math.min(.9,1-Math.exp(-distance*(face.outdoor?environment.fogDensity:.027))),fogColor=face.outdoor?environment.fog:[.009,.018,.024];
-        const rgb=lit.map((value,k)=>{
-          let color=face.color[k]*(value*face.grain+face.emission*1.55*(.94+.06*Math.sin(t*2.2+face.center[1]*3)));
+        const flicker=.94+.06*Math.sin(t*2.2+face.center[1]*3),flickerFire=.72+.28*Math.sin(face.center[0]*5.3+face.center[1]*7.1-face.center[2]*3.7-t*11.),keep=1-fog;
+        let red=0,green=0,blue=0;
+        for(let k=0;k<3;k++){
+          let color=face.color[k]*(lit[k]*face.grain+face.emission*1.55*flicker);
           if(reflection)color+=reflection[k];
-          if(face.fxFire)color*=.72+.28*Math.sin(face.center[0]*5.3+face.center[1]*7.1-face.center[2]*3.7-t*11.);
-          color=color*(1-fog)+fogColor[k]*fog;
-          return Math.round(Math.pow(Math.max(0,color)/(Math.max(0,color)+.76),.4545)*255);
-        });
-        return 'rgb('+rgb.join(',')+')';
+          if(face.fxFire)color*=flickerFire;
+          color=color*keep+fogColor[k]*fog;
+          const value=Math.round(Math.pow(Math.max(0,color)/(Math.max(0,color)+.76),.4545)*255);
+          if(k===0)red=value;else if(k===1)green=value;else blue=value;
+        }
+        const shadeKey=(red<<16)|(green<<8)|blue,memoized=shadeCache.get(shadeKey);
+        if(memoized!==undefined)return memoized;
+        if(shadeCache.size>8192)shadeCache.clear();
+        const shadeText='rgb('+red+','+green+','+blue+')';shadeCache.set(shadeKey,shadeText);return shadeText;
       }
       function line(a,b){
         let va=toCamera(a),vb=toCamera(b);
@@ -1174,9 +1275,9 @@
           const aInside=depth===near?va[2]>=depth:va[2]<=depth,bInside=depth===near?vb[2]>=depth:vb[2]<=depth;
           if(aInside!==bInside){const fraction=(depth-va[2])/(vb[2]-va[2]),hit=va.map((x,k)=>x+(vb[k]-x)*fraction);if(!aInside)va=hit;else vb=hit;}
         }
-        const a2=project(va),b2=project(vb);ctx.moveTo(...a2);ctx.lineTo(...b2);
+        const a2=project(va),b2=project(vb);ctx.moveTo(a2[0],a2[1]);ctx.lineTo(b2[0],b2[1]);
       }
-      function polygonPath(points){ctx.moveTo(...points[0]);for(let i=1;i<points.length;i++)ctx.lineTo(...points[i]);ctx.closePath();}
+      function polygonPath(points){ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.closePath();}
       function maskGround(item){
         let saved=false;
         // Large ground polygons must still be painted first (their mean depth
@@ -1189,9 +1290,10 @@
           // hundreds of clips for embedded roots/stone and thin trail inlays.
           // Multi-level regions (lift shafts) keep full plane occlusion.
           if(item.face.fixedLight&&item.face.region&&regionPlanes.get(item.face.region)?.size===1&&receiver.regions.has(item.face.region))continue;
-          const distances=item.face.points.map(p=>dot(receiver.n,p)-receiver.plane);
-          if(Math.min(...distances)>=-.002)continue;
-          const crossing=Math.max(...distances)>-.002,eyeFloor=dot(receiver.n,eye)-receiver.plane,eyeFace=dot(item.face.n,eye)-item.face.plane;
+          const points=item.face.points,pointCount=points.length;let lowest=Infinity,highest=-Infinity;
+          for(let i=0;i<pointCount;i++){const height=dot(receiver.n,points[i])-receiver.plane;if(height<lowest)lowest=height;if(height>highest)highest=height;}
+          if(lowest>=-.002)continue;
+          const crossing=highest>-.002,eyeFloor=dot(receiver.n,eye)-receiver.plane,eyeFace=dot(item.face.n,eye)-item.face.plane;
           // On this face, the intersection of the two 3D planes is a screen
           // line. Extend that line across the receiver instead of clipping at
           // actor edges, where antialiased clip boundaries would leave a halo.
@@ -1207,7 +1309,7 @@
         return saved;
       }
       function paint(list){
-        list.sort((a,b)=>a.face.ground&&b.face.ground&&dot(a.face.n,b.face.n)>.99999&&Math.abs(a.face.plane-b.face.plane)<.05?a.face.plane-b.face.plane:b.depth-a.depth);
+        list.sort((a,b)=>a.ground&&b.ground&&a.n0*b.n0+a.n1*b.n1+a.n2*b.n2>.99999&&Math.abs(a.plane-b.plane)<.05?a.plane-b.plane:b.depth-a.depth);
         for(const item of list){
           const {face,screen,depth}=item,masked=!face.overlay&&maskGround(item);ctx.beginPath();polygonPath(screen);
           if(face.fx){const v=subtract(eye,face.center);ctx.globalAlpha=face.alpha*(face.fxHazard?1:Math.pow(Math.max(0,dot(face.n,v)/(Math.hypot(...v)||1)),.65));}
@@ -1272,17 +1374,43 @@
     return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter};
   }
 
-  function create(canvas) {
+  function create(canvas,options={}) {
     const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
     if(!gl) return createSoftware(canvas);
+    // Marges du cache de vue : 'auto' (défaut) suit la vitesse, un objet {distance,angle}
+    // les fixe (en mètres et en radians), 0 force un culling exact reconstruit à chaque image.
+    const marginOption=options.cullMargin===undefined?'auto':options.cullMargin;
+    const exactMargin=marginOption===0,fixedMargin=marginOption&&typeof marginOption==='object'?marginOption:null;
+    const motion={time:null,x:0,y:0,z:0,fx:0,fy:0,fz:0,speed:0,turn:0};
+    function trackMotion(eye,forward,time){
+      const dt=motion.time===null?0:Math.max(0,Math.min(.1,time-motion.time));
+      motion.time=time;
+      if(dt>0){
+        const speed=Math.hypot(eye[0]-motion.x,eye[1]-motion.y,eye[2]-motion.z)/dt;
+        const cosine=Math.max(-1,Math.min(1,forward[0]*motion.fx+forward[1]*motion.fy+forward[2]*motion.fz));
+        const turn=Math.acos(cosine)/dt,blend=1-Math.exp(-dt/.25);
+        motion.speed+=(speed-motion.speed)*blend;motion.turn+=(turn-motion.turn)*blend;
+      }
+      motion.x=eye[0];motion.y=eye[1];motion.z=eye[2];motion.fx=forward[0];motion.fy=forward[1];motion.fz=forward[2];
+    }
+    function margins(demiDiag){
+      if(exactMargin)return {distance:0,tilt:0};
+      if(fixedMargin)return {distance:Number.isFinite(fixedMargin.distance)?fixedMargin.distance:VIEW_MARGIN,tilt:Number.isFinite(fixedMargin.angle)?fixedMargin.angle:VIEW_TILT};
+      const distance=Math.max(1,Math.min(16,motion.speed*.15)),tilt=Math.min(demiDiag*.5,Math.max(4*Math.PI/180,Math.min(12*Math.PI/180,motion.turn*.1)));
+      return {distance,tilt};
+    }
     const source=geometry(),view=new Float32Array(16),projection=new Float32Array(16),vp=new Float32Array(16);
     const shadowView=new Float32Array(16),shadowProjection=new Float32Array(16),shadowMatrix=new Float32Array(16),shadowMatrices=new Float32Array(48);
     const lightPositions=new Float32Array(36),lightColors=new Float32Array(36),lightRanges=new Float32Array(12);
     const stats={drawCalls:0,triangles:0,instances:0,contextLost:false,webglVersion:2,backend:'webgl2',bloom:false,shadows:false};
-    let program,depthProgram,postProgram,skyProgram,fxProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer,uniforms,postUniforms,skyUniforms,fxUniforms,depthMatrix,depthWind;
+    let program,depthProgram,postProgram,skyProgram,fxProgram,vao,postVao,vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer,uniforms,postUniforms,skyUniforms,fxUniforms,depthMatrix,depthWind,depthCullCentre,depthCullRange;
     let post=null,shadowTarget=null,whiteTexture=null,targetKey='',shadowKey='',shadowLight=null;
     let world=[],worldIndex=spatialIndex([]),lights=[],environment=null,worldBatch=pack([]),quality='auto',disposed=false,worldRevision=0;
-    let staticCaches=[],lampCasters=[],actorLightPlan=null;
+    let staticCaches=[],lampCasters=[],actorLightPlan=null,viewCache=null,torchCache=null,sunCache=null,indexRevision=0,selectionGen=0;
+    const cacheStats={viewFrames:0,viewRebuilds:0,torchRebuilds:0,sunRebuilds:0,marginDistance:1,marginAngle:8};
+    let guardMargin={distance:1,tilt:8*Math.PI/180};
+    const sunCasterOut=[],SHADOW_RANGES=[32,18,0],VIEW_MARGIN=1,VIEW_TILT=8*Math.PI/180,SUN_GRID=4,SUN_PAD=1.74*SUN_GRID;
+    const capacity=new Map(),dynamicRows=scratchRows(),overlayRows=scratchRows(),fxRows=scratchRows();
     const governor=resolutionGovernor();let autoScale=1;
 
     function compile(type,code) {
@@ -1335,12 +1463,14 @@
       stats.bloom=!!post;stats.shadows=!!shadowTarget;
     }
     function initialize() {
+      capacity.clear();
       program=link(VERT,FRAG);depthProgram=link(VERT,DEPTH_FRAG);postProgram=link(POST_VERT,POST_FRAG);skyProgram=link(POST_VERT,SKY_FRAG);fxProgram=link(FX_VERT,FX_FRAG);
-      uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightRange','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uSkyTop','uSkyBottom','uEnvironment']) uniforms[name]=gl.getUniformLocation(program,name);
+      uniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uForward','uLightPosition','uLightColor','uLightRange','uLightCount','uResolution','uEffects','uShadowMap','uShadowMatrix','uShadowSettings','uTorchPosition','uSunDirection','uSunColor','uAmbient','uFogColor','uSkyTop','uSkyBottom','uEnvironment','uCullCentre','uCullRange']) uniforms[name]=gl.getUniformLocation(program,name);
       postUniforms={};for(const name of ['uScene','uBloom','uTexel','uPass'])postUniforms[name]=gl.getUniformLocation(postProgram,name);
       skyUniforms={};for(const name of ['uSkyRight','uSkyUp','uSkyForward','uSkyTop','uSkyBottom','uSkyFog','uSunDirection','uSunColor','uSkyFov','uSkyMotion'])skyUniforms[name]=gl.getUniformLocation(skyProgram,name);
       fxUniforms={};for(const name of ['uViewProjection','uWindTime','uEye','uAmbient','uFogColor','uEnvironment','uTime'])fxUniforms[name]=gl.getUniformLocation(fxProgram,name);
       depthMatrix=gl.getUniformLocation(depthProgram,'uViewProjection');depthWind=gl.getUniformLocation(depthProgram,'uWindTime');
+      depthCullCentre=gl.getUniformLocation(depthProgram,'uCullCentre');depthCullRange=gl.getUniformLocation(depthProgram,'uCullRange');
       vao=gl.createVertexArray();gl.bindVertexArray(vao);
       vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,source.vertices,gl.STATIC_DRAW);
       gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);
@@ -1364,11 +1494,11 @@
 
     function setWorld(meshes,points,atmosphere) {
       environment=environmentInfo(atmosphere);world=meshes||[];worldIndex=spatialIndex(world,environment);lights=points||[];worldBatch=pack([]);shadowLight=null;actorLightPlan=null;stats.staticTotal=world.length;stats.biome=environment?environment.biome:null;
-      worldRevision=0;stats.worldRevision=0;
-      lampCasters=[];for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);}
+      worldRevision=0;stats.worldRevision=0;indexRevision++;viewCache=torchCache=sunCache=null;
+      lampCasters=[];for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);cache.gen=undefined;}
       governor.reset();autoScale=1;
       if(stats.contextLost||disposed) return;
-      gl.bindBuffer(gl.ARRAY_BUFFER,worldBuffer);gl.bufferData(gl.ARRAY_BUFFER,worldBatch.values,gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER,worldBuffer);capacity.delete(worldBuffer);uploadRows(worldBuffer,worldBatch.values,gl.STATIC_DRAW);
     }
     function updateWorld(meshes,revision,points){
       if(disposed||revision===worldRevision)return false;
@@ -1376,8 +1506,8 @@
       world=meshes||[];worldIndex=spatialIndex(world,environment,worldIndex);worldBatch=pack([]);
       // Every depth view must stop referencing removed walls immediately. GPU
       // storage is reused; only the affected instance lists upload next draw.
-      lampCasters=[];actorLightPlan=null;for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);}
-      worldRevision=revision===undefined?worldRevision+1:revision;stats.worldRevision=worldRevision;stats.staticTotal=world.length;
+      lampCasters=[];actorLightPlan=null;for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);cache.gen=undefined;}
+      worldRevision=revision===undefined?worldRevision+1:revision;stats.worldRevision=worldRevision;stats.staticTotal=world.length;indexRevision++;viewCache=torchCache=sunCache=null;
       return true;
     }
     function resize(next) {
@@ -1394,10 +1524,15 @@
       gl.viewport(0,0,width,height);
       return {width,height,ratio};
     }
+    function uploadRows(buffer,values,usage){
+      let cap=capacity.get(buffer)||0;
+      if(values.byteLength>cap){cap=Math.max(65536,values.byteLength,cap*2);gl.bufferData(gl.ARRAY_BUFFER,cap,usage||gl.DYNAMIC_DRAW);capacity.set(buffer,cap);}
+      gl.bufferSubData(gl.ARRAY_BUFFER,0,values);stats.uploadBytes+=values.byteLength;
+    }
     function renderBatch(batch,buffer,upload,shadowPass=false) {
       if(!batch.groups.length) return;
       gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
-      if(upload){gl.bufferData(gl.ARRAY_BUFFER,batch.values,gl.DYNAMIC_DRAW);stats.uploadBytes+=batch.values.byteLength;}
+      if(upload)uploadRows(buffer,batch.values);
       for(const group of batch.groups) {
         for(let i=2;i<6;i++) gl.vertexAttribPointer(i,4,gl.FLOAT,false,64,group.offset+(i-2)*16);
         const shape=source.ranges[group.name];
@@ -1405,14 +1540,45 @@
         stats.drawCalls++;stats.triangles+=shape.count/3*group.count;if(!shadowPass)stats.instances+=group.count;
       }
     }
-    function renderStatic(entries,slot,shadow=false){
+    function cached(e,origin,forward,demiDiag,k,margin,tilt,near,far){
+      const dx=e.p[0]-origin[0],dy=e.p[1]-origin[1],dz=e.p[2]-origin[2],r=e.radius+margin,dist=Math.hypot(dx,dy,dz);
+      if(dist>r+far)return false;
+      if(dist<r+near+margin)return true;
+      const c=(dx*forward[0]+dy*forward[1]+dz*forward[2])/dist;
+      return c>=Math.cos(demiDiag+tilt+Math.asin(Math.min(1,r*k/dist)));
+    }
+    // Sélection de garde : un sur-ensemble reconstruit seulement quand la caméra sort de la
+    // marge (D mètres, θ radians) ou quand le monde, le cadrage ou la portée changent.
+    function selectionCache(previous,revision,origin,axes,horizontal,vertical,far,ranges,near,margin,tilt){
+      if(previous&&previous.revision===revision&&previous.horizontal===horizontal&&previous.vertical===vertical&&previous.far>=far
+        &&previous.ranges[0]>=ranges[0]&&previous.ranges[1]>=ranges[1]&&previous.ranges[2]>=ranges[2]
+        &&Math.hypot(origin[0]-previous.origin[0],origin[1]-previous.origin[1],origin[2]-previous.origin[2])<=previous.margin
+        &&axes.forward[0]*previous.forward[0]+axes.forward[1]*previous.forward[1]+axes.forward[2]*previous.forward[2]>=Math.cos(previous.tilt))return previous;
+      const demiDiag=Math.atan(Math.hypot(horizontal,vertical)),k=Math.hypot(1,horizontal,vertical);
+      // Un niveau à portée nulle doit rester exclu : ajouter la marge le ferait revenir dans la requête.
+      // Pas de plafond sur la taille du sur-ensemble : le réduire ferait disparaître des objets
+      // visibles. Le sur-ensemble reste côté processeur, le GPU ne reçoit que la sélection exacte.
+      const query0=[ranges[0]>0?ranges[0]+margin:0,ranges[1]>0?ranges[1]+margin:0,ranges[2]>0?ranges[2]+margin:0],candidates=worldIndex.query(origin,query0),entries=[];
+      for(let i=0;i<candidates.length;i++){const e=candidates[i];if(cached(e,origin,axes.forward,demiDiag,k,margin,tilt,near,far))entries.push(e);}
+      // Pas de tri par index ici : le balayage de l'index spatial est deja deterministe et
+      // stable tant que le cache est valide. Trier les casters d'ombre changerait l'ordre
+      // d'emission et quelques pixels sur les faces coplanaires (preuve Chrome : ecart
+      // 16/255 sur 30 pixels des scenarios camp17-a, camp17-b, camp6-a, legacy0-b).
+      entries.gen=++selectionGen;
+      return {revision,origin:[origin[0],origin[1],origin[2]],forward:[axes.forward[0],axes.forward[1],axes.forward[2]],horizontal,vertical,far,ranges:query0,margin,tilt,entries};
+    }
+    function renderStatic(entries,slot,shadow=false,reuse=false){
       const cache=staticCaches[slot];
-      const same=cache.entries.length===entries.length&&entries.every((entry,i)=>entry===cache.entries[i]);
-      if(!same){cache.entries=entries;cache.batch=packIndexed(entries);}
+      // A matching 32-bit selection hash is only a fast filter, not identity.
+      // Distinct lists of equal length can collide (e.g. orders [1,63] and [2,32]).
+      const same=cache.entries===entries||cache.entries.length===entries.length
+        &&(entries.gen===undefined||cache.gen===entries.gen&&cache.count===entries.count)
+        &&entries.every((entry,i)=>entry===cache.entries[i]);
+      if(!same){cache.entries=reuse?entries.slice():entries;cache.gen=entries.gen;cache.count=entries.count;cache.batch=packIndexed(entries,cache.rows||(cache.rows=scratchRows()));}
       renderBatch(cache.batch,cache.buffer,!same,shadow);
     }
     function renderEffects(meshes,eye,time){
-      const batch=packEffects(meshes,environment,eye);stats.fxInstances+=batch.values.length/16;if(!batch.groups.length)return;
+      const batch=packEffects(meshes,environment,eye,fxRows);stats.fxInstances+=batch.values.length/16;if(!batch.groups.length)return;
       gl.useProgram(fxProgram);gl.uniformMatrix4fv(fxUniforms.uViewProjection,false,vp);gl.uniform2f(fxUniforms.uWindTime,0,time);
       gl.uniform3fv(fxUniforms.uEye,eye);gl.uniform3fv(fxUniforms.uAmbient,environment?environment.ambient:[.12,.15,.16]);
       gl.uniform3fv(fxUniforms.uFogColor,environment?environment.fog:[.009,.018,.024]);gl.uniform2f(fxUniforms.uEnvironment,environment?1:0,environment?environment.fogDensity:.018);gl.uniform1f(fxUniforms.uTime,time);
@@ -1433,8 +1599,21 @@
       const tangent=1/f;
       const previous=lampCasters[slot];
       const stable=!torchAxes&&previous&&previous.light===light&&previous.p.every((v,k)=>v===p[k]);
-      const casters=stable?previous.entries:worldIndex.query(p,[32,18,0]).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));
-      if(!torchAxes&&!stable)lampCasters[slot]={light,p:p.slice(),entries:casters};
+      let casters;
+      if(stable)casters=previous.entries;
+      else if(torchAxes){
+        const before=torchCache,guard=torchCache=selectionCache(torchCache,indexRevision,p,shadowAxes,tangent,tangent,32,SHADOW_RANGES,.08,guardMargin.distance,guardMargin.tilt);
+        if(guard!==before)cacheStats.torchRebuilds++;
+        casters=[];let hash=0;
+        for(let i=0;i<guard.entries.length;i++){
+          const e=guard.entries[i],limit=SHADOW_RANGES[e.detail]+e.radius,dx=e.p[0]-p[0],dy=e.p[1]-p[1],dz=e.p[2]-p[2];
+          if(dx*dx+dy*dy+dz*dz>limit*limit||!visible(e,p,shadowAxes,tangent,tangent,32))continue;
+          casters.push(e);hash=(hash*31+e.order)|0;
+        }
+        casters.gen=hash;casters.count=casters.length;
+      }
+      else{casters=worldIndex.query(p,SHADOW_RANGES,null,{axes:shadowAxes,horizontal:tangent,vertical:tangent,far:32}).filter(e=>visible(e,p,shadowAxes,tangent,tangent,32));lampCasters[slot]={light,p:p.slice(),entries:casters};}
+      gl.uniform3fv(depthCullCentre,p);gl.uniform3fv(depthCullRange,SHADOW_RANGES);
       renderStatic(casters,slot+1,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
     function sunShadowPass(eye,axes,dynamicBatch,time){
@@ -1451,11 +1630,21 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.viewport(shadowTarget.size,0,shadowTarget.size,shadowTarget.size);
       gl.useProgram(depthProgram);gl.bindVertexArray(vao);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.1,2);
       gl.uniformMatrix4fv(depthMatrix,false,shadowMatrix);gl.uniform2f(depthWind,environment.wind,time);
-      const casters=worldIndex.query(center,[extent+24,26,0]).filter(e=>{
-        const d=e.p.map((v,k)=>v-p[k]),along=a=>d[0]*a[0]+d[1]*a[1]+d[2]*a[2],z=along(fw);
-        return Math.abs(along(r))<extent+e.radius&&Math.abs(along(u))<extent+e.radius&&z+e.radius>near&&z-e.radius<far;
-      });
-      renderStatic(casters,2,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
+      const sunRanges=[extent+24,26,0],sunGrid=Math.max(SUN_GRID,Math.min(16,guardMargin.distance*2)),grid=[Math.round(center[0]/sunGrid),Math.round(center[1]/sunGrid),Math.round(center[2]/sunGrid)];
+      if(!sunCache||sunCache.revision!==indexRevision||sunCache.extent!==extent||sunCache.grid[0]!==grid[0]||sunCache.grid[1]!==grid[1]||sunCache.grid[2]!==grid[2])
+        {const pad=1.74*sunGrid;sunCache={revision:indexRevision,extent,grid,candidates:worldIndex.query(center,[sunRanges[0]+pad,sunRanges[1]+pad,0])};cacheStats.sunRebuilds++;}
+      const candidates=sunCache.candidates;
+      const px=p[0],py=p[1],pz=p[2],rx=r[0],ry=r[1],rz=r[2],ux=u[0],uy=u[1],uz=u[2],fwx=fw[0],fwy=fw[1],fwz=fw[2];
+      sunCasterOut.length=0;
+      let sunHash=0;
+      for(let i=0;i<candidates.length;i++){
+        const e=candidates[i],dx=e.p[0]-px,dy=e.p[1]-py,dz=e.p[2]-pz,radius=e.radius,z=dx*fwx+dy*fwy+dz*fwz;
+        const sx=e.p[0]-center[0],sy=e.p[1]-center[1],sz=e.p[2]-center[2],limit=sunRanges[e.detail]+radius,sq=sx*sx+sy*sy+sz*sz;
+        if(sq<=limit*limit&&Math.abs(dx*rx+dy*ry+dz*rz)<extent+radius&&Math.abs(dx*ux+dy*uy+dz*uz)<extent+radius&&z+radius>near&&z-radius<far){sunCasterOut.push(e);sunHash=(sunHash*31+e.order)|0;}
+      }
+      sunCasterOut.gen=sunHash;sunCasterOut.count=sunCasterOut.length;
+      gl.uniform3fv(depthCullCentre,center);gl.uniform3fv(depthCullRange,sunRanges);
+      renderStatic(sunCasterOut,2,true,true);renderBatch(dynamicBatch,dynamicBuffer,false,true);gl.disable(gl.POLYGON_OFFSET_FILL);
     }
     function skyPass(axes,f,time){
       gl.disable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.bindVertexArray(postVao);gl.useProgram(skyProgram);
@@ -1542,9 +1731,21 @@
       projection.fill(0);projection[0]=f/(canvas.width/canvas.height);projection[5]=f;projection[10]=(far+near)/(near-far);projection[11]=-1;projection[14]=2*far*near/(near-far);
       multiply(projection,view,vp);
       const ranges=detailRanges(quality);ranges[0]=extendedDistance(ranges[0],environment,eye);stats.viewDistance=ranges[0];
-      const candidates=worldIndex.query(eye,ranges);
-      const shown=candidates.filter(e=>visible(e,eye,axes,canvas.width/canvas.height/f,1/f,ranges[0]));
-      stats.staticVisible=shown.length;stats.staticCulled=world.length-shown.length;
+      const horizontal=canvas.width/canvas.height/f,vertical=1/f;
+      cacheStats.viewFrames++;
+      trackMotion(eye,axes.forward,t);
+      guardMargin=margins(Math.atan(Math.hypot(horizontal,vertical)));
+      cacheStats.marginDistance=+guardMargin.distance.toFixed(2);cacheStats.marginAngle=+(guardMargin.tilt*180/Math.PI).toFixed(2);
+      const previousView=viewCache,guard=viewCache=selectionCache(viewCache,indexRevision,eye,axes,horizontal,vertical,ranges[0],ranges,near,guardMargin.distance,guardMargin.tilt);
+      if(guard!==previousView)cacheStats.viewRebuilds++;
+      const shown=[];let viewHash=0;
+      for(let i=0;i<guard.entries.length;i++){
+        const e=guard.entries[i],limit=ranges[e.detail]+e.radius,dx=e.p[0]-eye[0],dy=e.p[1]-eye[1],dz=e.p[2]-eye[2];
+        if(dx*dx+dy*dy+dz*dz>limit*limit||!visible(e,eye,axes,horizontal,vertical,ranges[0]))continue;
+        shown.push(e);viewHash=(viewHash*31+e.order)|0;
+      }
+      shown.gen=viewHash;shown.count=shown.length;
+      stats.staticVisible=shown.length;stats.staticSuperset=guard.entries.length;stats.staticCulled=world.length-shown.length;stats.cache=cacheStats;
       const planned=actorLightPlan&&actorLightPlan.previous===shadowLight&&eye.every((v,k)=>v===actorLightPlan.eye[k])?actorLightPlan.plan:lightPlan(eye);actorLightPlan=null;
       const {sorted,distanceTo,chosen,shadowLights}=planned;shadowLight=chosen;
       const transient=transientLights(fx.lights,eye,quality==='low'?2:3);stats.dynamicLights=transient.length;
@@ -1553,12 +1754,12 @@
       lightPositions.fill(0);lightColors.fill(0);lightRanges.fill(0);
       selected.forEach(({light},i)=>{lightPositions.set(light.p,i*3);lightRanges[i]=light.range||0;const c=light.color||[1,1,1],power=(light.power===undefined?1:light.power)*(blackout?.get(light)??1);lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});
       const ordinary=[],overlay=[],particles=[],overlayParticles=[];for(const mesh of dynamic||[]) (mesh.overlay?(mesh.fx?overlayParticles:overlay):mesh.fx?particles:ordinary).push(mesh);
-      const dynamicBatch=pack(ordinary,environment,true);
+      const dynamicBatch=pack(ordinary,environment,true,dynamicRows);
       const torchPosition=eye.map((v,i)=>v+right[i]*.16-up[i]*.08);
       stats.drawCalls=0;stats.triangles=0;stats.instances=0;stats.bloom=!!post&&fx.bloom!==false;stats.shadows=!!shadowTarget&&fx.shadows!==false;stats.shadowMaps=stats.shadows?shadowLights.length+1+(environment?1:0):0;stats.shadowMode=environment?'sun-atlas':'atlas';
       stats.uploadBytes=0;stats.fxInstances=0;
       // Animated instances are shared unchanged by every depth and colour pass.
-      if(dynamicBatch.values.length){gl.bindBuffer(gl.ARRAY_BUFFER,dynamicBuffer);gl.bufferData(gl.ARRAY_BUFFER,dynamicBatch.values,gl.DYNAMIC_DRAW);stats.uploadBytes+=dynamicBatch.values.byteLength;}
+      if(dynamicBatch.values.length){gl.bindBuffer(gl.ARRAY_BUFFER,dynamicBuffer);uploadRows(dynamicBuffer,dynamicBatch.values);}
       if(stats.shadows){
         gl.bindFramebuffer(gl.FRAMEBUFFER,shadowTarget.framebuffer);gl.clear(gl.DEPTH_BUFFER_BIT);
         shadowLights.forEach((light,i)=>shadowPass(light,dynamicBatch,i,null,t));if(environment)sunShadowPass(eye,axes,dynamicBatch,t);shadowPass({p:torchPosition},dynamicBatch,2,axes,t);
@@ -1573,12 +1774,13 @@
       gl.uniform2f(uniforms.uResolution,canvas.width,canvas.height);gl.uniform4f(uniforms.uEffects,t,fx.flash||0,fx.damage||0,Math.max(0,Math.min(1,fx.pulse||0)));
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,stats.shadows?shadowTarget.texture:whiteTexture);gl.uniform1i(uniforms.uShadowMap,2);
       gl.uniformMatrix4fv(uniforms.uShadowMatrix,false,shadowMatrices);gl.uniform4f(uniforms.uShadowSettings,stats.shadows?shadowLights.length:0,shadowTarget?1/(shadowTarget.size*2):1,stats.shadows?1:0,stats.shadows&&environment?1:0);gl.uniform3fv(uniforms.uTorchPosition,torchPosition);
+      gl.uniform3fv(uniforms.uCullCentre,eye);gl.uniform3fv(uniforms.uCullRange,ranges);
       renderStatic(shown,0);
       renderBatch(dynamicBatch,dynamicBuffer,false);
       if(particles.length)renderEffects(particles,eye,t);
       if(overlay.length||overlayParticles.length) {
         if(blackout){selected.forEach(({light},i)=>{const c=light.color||[1,1,1],power=light.power===undefined?1:light.power;lightColors.set([c[0]*power,c[1]*power,c[2]*power],i*3);});gl.uniform3fv(uniforms.uLightColor,lightColors);}
-        gl.clear(gl.DEPTH_BUFFER_BIT);if(overlay.length)renderBatch(pack(overlay,environment,true),overlayBuffer,true);
+        gl.clear(gl.DEPTH_BUFFER_BIT);if(overlay.length)renderBatch(pack(overlay,environment,true,overlayRows),overlayBuffer,true);
         if(overlayParticles.length)renderEffects(overlayParticles,eye,t);
       }
       if(stats.bloom)postPass();
@@ -1591,10 +1793,24 @@
       canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
       for(const buffer of [vbo,ibo,worldBuffer,dynamicBuffer,overlayBuffer,fxBuffer]) gl.deleteBuffer(buffer);
       for(const cache of staticCaches.slice(1))gl.deleteBuffer(cache.buffer);
+      capacity.clear();
       freePost();deleteTarget(shadowTarget);gl.deleteTexture(whiteTexture);
       gl.deleteVertexArray(vao);gl.deleteVertexArray(postVao);gl.deleteProgram(program);gl.deleteProgram(depthProgram);gl.deleteProgram(postProgram);gl.deleteProgram(skyProgram);gl.deleteProgram(fxProgram);
     }
     return {setWorld,updateWorld,draw,resize,dispose,stats,actorFilter};
   }
+  // Constructeur unique de maillage dynamique (RESTE-03) : même littéral, même ordre,
+  // tous les champs lus par le moteur sont présents dès la création. Les producteurs
+  // affectent ensuite des valeurs, ils n'ajoutent jamais de clé, pour que toutes les
+  // listes dynamiques partagent une seule classe cachée. Les valeurs par défaut sont
+  // neutres : elles reproduisent exactement la lecture d'un champ absent.
+  function mesh(shape,p,s,mat,r=[0,0,0],emissive=0){
+    return {shape,p,s,mat,r,emissive,color:undefined,surface:undefined,overlay:false,fx:false,
+      alpha:undefined,additive:undefined,outdoor:undefined,actorPart:undefined,actorLod:0,
+      actorScale:undefined,structural:false,debrisId:undefined,sourceId:undefined,material:undefined,
+      effectPart:'',fxFire:false,fxSmoke:false,fxSpark:false,fxPriority:undefined,ground:undefined,
+      innerRatio:undefined,region:undefined};
+  }
   window.FRender={create,foliageTriangles};
+  window.FRender.mesh=mesh;
 })();

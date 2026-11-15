@@ -1,0 +1,36 @@
+{
+ "tache": "T17 [RCPU-11] FActors.build : matrices scratch et pool de maillages",
+ "base": ".relais/avant-t16 = commit T15 (39dc8c0)",
+ "rapportAT11": "les matrices scratch (Float64Array du module, produits écrits en place) étaient déjà en place depuis T11 ; T17 ajoute le réservoir de maillages par ennemi",
+ "banc": "node tools/proof/lot05/actors-cost.mjs <base>,<tete> 40 — FActors.build apparié (4 types x 3 distances x 6 poses), un réservoir par cas comme en jeu, 40 passages de chauffe exclus, FRender chargé depuis la racine de chaque côté",
+ "resultats": {
+  "temps": {"baseP50Ms": 0.0172, "teteP50Ms": 0.01365, "baseP95Ms": 0.12774, "teteP95Ms": 0.09875, "ratioP50": 0.7935, "ratioP95": 0.773, "ratioParPaire": 0.8919},
+  "octets": {"baseKoParBuild": 21.45, "teteKoParBuild": 2.39, "ratio": 0.1114, "maillagesParBuild": 40.5},
+  "identite": "sorties identiques 72/72 (isDeepStrictEqual)",
+  "imageComplete": {
+   "outils": "node tools/proof/lot05/alloc-models.mjs <racine> 400 <monde> (models() seul, tas vidé, 150 images de chauffe)",
+   "camp6": {"baseKoParImage": 70.7, "teteKoParImage": 2.5, "maillagesParImage": 292},
+   "camp17": {"baseKoParImage": 49.3, "teteKoParImage": 35.8, "maillagesParImage": 260},
+   "reserve": "la sonde d'image complète (alloc-image.mjs) est trop instable pour être citée : 72,5 -> 83,7 Ko (camp:6) et 97,8 -> 73,1 Ko (camp:17) entre deux exécutions, le tas vivant de la dernière image dominant la mesure"
+  }
+ },
+ "annonceFiche": "Gain estimé -30 à -40 % sur FActors.build (15-20 µs/image en tour, 40-60 µs en combat boss) ; la partie matrices scratch avait déjà rendu 0,779 de ratio en T11",
+ "mesure": "-20,7 % de p50 et -22,7 % de p95 en plus de T11 (ratio par paire 0,892), et surtout -88,9 % d'octets alloués par build (21,45 -> 2,39 Ko). Au niveau de models(), l'allocation tombe de 70,7 à 2,5 Ko/image à camp:6, où les maillages d'acteurs dominent.",
+ "implementation": [
+  "src/renderer.js : mesh() devient meshInto(o,...) + mesh(...) = meshInto({},...) ; les 28 champs sont écrits dans le même ordre, la classe cachée reste unique",
+  "src/actors.js : options.pool (tableau par ennemi) — piece() recycle le maillage de son rang et réécrit la position dans son tableau p via pointInto ; le réservoir est tronqué à la fin de build",
+  "src/actors.js : dans la branche géant, l'échelle est appliquée en place sur p (le tableau appartient au maillage) ; s reste recréé car il vient du producteur",
+  "src/game.js : actorMeshes=new Map() (déclaré dans la tranche chargée par le harnais de preuve), réservoir par e.id, supprimé quand l'ennemi est écarté, vidé au reset de rencontre"
+ ],
+ "gardeFous": [
+  "le réservoir est optionnel : les tests (checks/actors.test.mjs, actor-visibility, armor, first-person) appellent build sans pool et ignorent donc la modification — 53/53",
+  "aucun consommateur ne garde les maillages d'une image à l'autre : pack() en fait une copie, et le cache d'ombres du repli ne mémorise jamais un maillage dynamique (src/renderer.js:1146, commentaire « reused dynamic meshes may have moved »)",
+  "les maillages d'un ennemi ne sont partagés qu'avec lui-même : un réservoir par e.id"
+ ],
+ "verification": {
+  "fluxGL": "stream et contenu des tampons identiques sur camp:17, camp:6 et legacy:0 (200 images, mêmes sha256 qu'avant la tâche, draws et instances égaux)",
+  "pixels": "Chrome/SwiftShader 14/14 identiques, écart nul, mondes, caméras, moments, téléphone et repli Canvas 2D inclus (pixels.json)",
+  "tests": "actors, actor-visibility, armor, first-person, effects : 53/53 ; npm test 519/519"
+ },
+ "taille": "dist/index.html 869 538 -> 871 114 octets (+1 576 ; la fiche prévoyait une taille neutre)"
+}

@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
-const scope={window:{}};vm.runInNewContext(readFileSync(new URL('../src/effects.js',import.meta.url),'utf8'),scope);
+import {FRenderMesh} from './mesh-fixture.mjs';
+const scope={window:{FRender:{mesh:FRenderMesh}}};vm.runInNewContext(readFileSync(new URL('../src/effects.js',import.meta.url),'utf8'),scope);
 const Effects=scope.window.FEffects,camera={pos:[0,1.62,5],yaw:0,pitch:0,fov:74};
 const geometryScope={window:{}};vm.runInNewContext(readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8').replace('window.FRender={create,foliageTriangles};','window.FRender={create,foliageTriangles,geometry,pack};'),geometryScope);
 const geometry=geometryScope.window.FRender.geometry(),pack=geometryScope.window.FRender.pack,plain=v=>JSON.parse(JSON.stringify(v));

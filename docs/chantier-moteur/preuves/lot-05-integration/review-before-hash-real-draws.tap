@@ -1,0 +1,142 @@
+TAP version 13
+# Subtest: le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres false)
+ok 1 - le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres false)
+  ---
+  duration_ms: 76.96017
+  ...
+# Subtest: le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres true)
+ok 2 - le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres true)
+  ---
+  duration_ms: 93.109629
+  ...
+# Subtest: le cache temporel de vue est réellement réutilisé pendant la visite
+ok 3 - le cache temporel de vue est réellement réutilisé pendant la visite
+  ---
+  duration_ms: 12.364349
+  ...
+# Subtest: une modification du monde invalide immédiatement la sélection de garde
+ok 4 - une modification du monde invalide immédiatement la sélection de garde
+  ---
+  duration_ms: 5.791705
+  ...
+# Subtest: deux sélections différentes de même hash et même taille actualisent les instances GPU
+not ok 5 - deux sélections différentes de même hash et même taille actualisent les instances GPU
+  ---
+  duration_ms: 11.406387
+  location: '/home/m4d135/metal-chantier/integration/checks/renderer-view-cache.test.mjs:90:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    le second point de vue doit dessiner ses propres maillages
+    + actual - expected ... Lines skipped
+    
+      [
+        {
+          count: 2,
+          values: [
+    +       -20,
+    -       20,
+            1.600000023841858,
+            -6,
+    ...
+            0,
+            0,
+    +       -18,
+    -       22,
+            1.600000023841858,
+    ...
+          ]
+        }
+      ]
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0:
+      values:
+        0: 20
+        1: 1.600000023841858
+        2: -6
+        3: 3
+        4: 1
+        5: 1
+        6: 1
+        7: 0
+        8: 0
+        9: 0
+        10: 0
+        11: 8
+        12: 0
+        13: 0
+        14: 0
+        15: 0
+        16: 22
+        17: 1.600000023841858
+        18: -7
+        19: 3
+        20: 1
+        21: 1
+        22: 1
+        23: 0
+        24: 0
+        25: 0
+        26: 0
+        27: 8
+        28: 0
+        29: 0
+        30: 0
+        31: 0
+      count: 2
+  actual:
+    0:
+      values:
+        0: -20
+        1: 1.600000023841858
+        2: -6
+        3: 3
+        4: 1
+        5: 1
+        6: 1
+        7: 0
+        8: 0
+        9: 0
+        10: 0
+        11: 8
+        12: 0
+        13: 0
+        14: 0
+        15: 0
+        16: -18
+        17: 1.600000023841858
+        18: -7
+        19: 3
+        20: 1
+        21: 1
+        22: 1
+        23: 0
+        24: 0
+        25: 0
+        26: 0
+        27: 8
+        28: 0
+        29: 0
+        30: 0
+        31: 0
+      count: 2
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/m4d135/metal-chantier/integration/checks/renderer-view-cache.test.mjs:108:10)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 4
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 239.034807

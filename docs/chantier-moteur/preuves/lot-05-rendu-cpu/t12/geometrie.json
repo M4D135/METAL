@@ -1,0 +1,16 @@
+{
+ "tache": "T12 [DRAW-11] géométrie : sommets partagés par Map",
+ "banc": "node tools/proof/lot05/geometry-sonde.mjs <racine> — FRender.geometry(low) chargé dans le processus principal, trois qualités",
+ "base": ".relais/avant-t12 = commit T11 (b3bfcb2)",
+ "sommets": {
+  "high": {"avant": 2328, "apres": 596, "tamponAvantOctets": 55872, "tamponApresOctets": 14304, "ratio": 0.2561},
+  "low1": {"avant": 1032, "apres": 338, "tamponAvantOctets": 24768, "tamponApresOctets": 8112, "ratio": 0.3275},
+  "low2": {"avant": 648, "apres": 188, "tamponAvantOctets": 15552, "tamponApresOctets": 4512, "ratio": 0.2901}
+ },
+ "indices": "inchangés (2328, 1032, 648) et plages par forme inchangées : seule la table de sommets rétrécit",
+ "annonceFiche": "2 328 -> 597 sommets, tampon 55,9 -> 14,3 Ko ; temps GPU M5 -0,35 ms [-0,75 ; +0,20], non significatif",
+ "mesure": "596 sommets et 14 304 octets en qualité haute, soit la prédiction de la fiche (597 / 14,3 Ko) à un sommet de couture près. Aucun chiffre de temps n'est annoncé comme acquis par la fiche (0 ms mesuré sur M5) : la contre-vérification classe DRAW-11 en « confirmé, P2 », gain réel = -74 % d'exécutions du shader de sommets pour les formes lisses, utile sur GPU limités en sommets.",
+ "image": "pixels Chrome/SwiftShader 14/14 identiques, écart nul (pixels.json) — mêmes mondes, caméras, moments, format téléphone et repli Canvas 2D",
+ "gardeFou": "la clé de la Map est la représentation exacte des six flottants (p|n) ; les coutures de sphère et d'anneau gardent leurs doublons car sin(2π) n'est pas exactement 0 ; le flux GL enregistre un tampon de sommets plus petit, c'est la seule différence de la trace",
+ "tests": "checks/renderer-destruction, renderer-view-cache, renderer-cull-margin, renderer-detail-flags, renderer-sun-filter, effects, destruction : 55/55 ; npm test 519/519"
+}

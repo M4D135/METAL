@@ -1,0 +1,50 @@
+{
+ "commentaire": "Base = commit T4 (088f2c6), tete = T5 (culling des ramassages). 200 images pilotees par monde : aucun ramassage visible nest perdu, sinon le flux et le contenu divergeraient.",
+ "mondes": [
+  {
+   "monde": "camp:6",
+   "base": {
+    "flux": "c71a8b3fa7964d95932717cb9ca516d143d5575764815f10e202806f54f34028",
+    "contenu": "e49fea7612ef0430f2b8b69d4d1619e5ce6611e8098bb7cc771a2074c1b401b8",
+    "instances": 961630
+   },
+   "tete": {
+    "flux": "f01f2069aa1f4d083485d1f48b337b68fe0a3178d6fa2dc4d1ab5e8ebb07e201",
+    "contenu": "bea6d518f0d120378bd9a14f949fc0485cbee72771c1232ca240ce850272cd56",
+    "instances": 937982
+   },
+   "fluxIdentique": false,
+   "contenuIdentique": false
+  },
+  {
+   "monde": "camp:17",
+   "base": {
+    "flux": "c5741bfeaa9bf3a1d28414e31107b62a78d3a660fc80195f34c2f9517194374b",
+    "contenu": "a3c6bf4f5a363537ee3920164b0d7086e8ba104907d2b1380a6b8dee210b0621",
+    "instances": 910467
+   },
+   "tete": {
+    "flux": "a9b77162b60c9f7fa6ba25e07ae286d36728ab4cd3d28b0b526e4a8d1c33ace4",
+    "contenu": "1c588799f803ee72ff76e94a35701b3062f7bc9f1dedb098da3cc840539cda57",
+    "instances": 899943
+   },
+   "fluxIdentique": false,
+   "contenuIdentique": false
+  },
+  {
+   "monde": "legacy:0",
+   "base": {
+    "flux": "8f3b47a0c0b8625eab64acd482a97153a63c6650a93418e5371a2706c2e9ea93",
+    "contenu": "a5ffc17c280c0aa905f3b065b7bb69271ea82c5f5afa144548a1c91e7bae1e83",
+    "instances": 991786
+   },
+   "tete": {
+    "flux": "4ffd2ae75084f49fca07de51a679ca58574e0cdf30a050bc2684e6213e0739c6",
+    "contenu": "6df41c853cc52ab6aaaff14c724bd47835d70e5501adcfc02bb558345cc6c9b5",
+    "instances": 957914
+   },
+   "fluxIdentique": false,
+   "contenuIdentique": false
+  }
+ ]
+}

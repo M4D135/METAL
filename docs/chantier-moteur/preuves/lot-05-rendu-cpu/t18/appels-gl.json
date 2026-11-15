@@ -1,0 +1,26 @@
+{
+ "tache": "T18 [DRAW-04] mesure des appels GL et correction de l'estimation",
+ "base": ".relais/avant-t16 = commit T15 (39dc8c0), code inchangé : tâche de mesure et de documentation",
+ "outils": "node tools/proof/lot05/glcalls.mjs <racine> 600 <monde> auto — comptage par nom via le faux contexte de tools/proof/render-scene.mjs ; un appel d'état est redondant quand il répète le dernier appel de même nom avec les mêmes arguments (téléversements et dessins exclus)",
+ "resultats": {
+  "camp17": {"appelsParImage": 446.8, "drawsParImage": 67.69, "appelsParDraw": 6.6, "redondantsParImage": 20.7, "partRedondante": 0.0464,
+   "haut": [{"nom": "vertexAttribPointer", "parImage": 253.18}, {"nom": "drawElementsInstanced", "parImage": 63.3}, {"nom": "uniform3fv", "parImage": 34.65}, {"nom": "enable", "parImage": 15.95}, {"nom": "uniform2f", "parImage": 14.3}, {"nom": "bindBuffer", "parImage": 12.65}, {"nom": "useProgram", "parImage": 9.9}]},
+  "camp6": {"appelsParImage": 420.2, "drawsParImage": 63.02, "appelsParDraw": 6.67, "redondantsParImage": 19.5, "partRedondante": 0.0464}
+ },
+ "confrontationAudit": {
+  "plageAnnoncee": "409 à 454 appels GL par image",
+  "mesure": "446,8 (camp:17) et 420,2 (camp:6) : dans la plage",
+  "redondants": "l'audit parlait de 50 appels redondants pour 2 µs ; mesuré 20,7 et 19,5 (4,6 % des appels) avec la définition « même nom, mêmes arguments que le dernier appel de ce nom », en excluant les téléversements et les dessins",
+  "repartition": "253,18 vertexAttribPointer par image = 57 % de tous les appels, exactement 4 par dessin (src/renderer.js:1521, attributs 2 à 5) ; vient ensuite drawElementsInstanced (63,3), puis uniform3fv (34,65)"
+ },
+ "estimationsCorrigees": [
+  "coût d'un appel : l'audit donne 0,03 à 0,10 µs sur ANGLE Metal (M5), soit 30 µs pour 447 appels — 0,2 % d'une image à 16,7 ms. Ces µs/appel viennent du profil M5 de l'audit et ne sont PAS redémontrables ici",
+  "VAO par groupe : 2,87 µs contre 2,67 µs pour quatre pointeurs sur ANGLE Metal, soit un gain nul à négatif — c'est la valeur par défaut de la fiche, appliquée en T16 (abandon)",
+  "UBO : 1,3 µs/image, sans intérêt tant que le nombre de groupes ne baisse pas",
+  "l'estimation initiale de RCPU-10 (0,1 à 0,3 ms) est corrigée d'un facteur dix par DRAW-04 : 10 à 15 µs de fil principal, et environ 0,2 ms de processus GPU pour les quelque 60 groupes, incompressible sans réduire le nombre de groupes",
+  "le filtrage d'états (cache des états GL) n'est pas entrepris : l'audit ne le juge utile qu'en passant avec DRAW-01 et DRAW-03, tous deux abandonnés sur mesures"
+ ],
+ "limiteHonnete": "cette machine (DGX Spark, sans réseau) ne peut pas redémontrer les µs/appel : Chrome n'y tourne qu'en SwiftShader (rasteriseur processeur), sans ANGLE Metal ni ANGLE D3D11. Les compteurs d'appels sont mesurés exactement, les microsecondes par appel restent celles de l'audit sur M5, et la relance de out/glcost.html sur un appareil réel (Metal, puis david-pc en D3D11) reste à faire.",
+ "qualite": "identique — aucun fichier src/ modifié par cette tâche",
+ "tests": "npm test 519/519 (exécuté sur le code T19, inchangé depuis)"
+}

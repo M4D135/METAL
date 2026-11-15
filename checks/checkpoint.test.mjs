@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
 const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'game'].map(name =>
@@ -55,7 +56,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
     document: { body: element('body'), getElementById: element, addEventListener: (name, callback) => documentListeners.set(name, [...(documentListeners.get(name) || []), callback]), hasFocus: () => true, exitPointerLock() { this.pointerLockElement = null; } },
     localStorage: { getItem: name => memory.get(name) ?? null, setItem: (name, value) => { const write = { name, value: String(value), mode: idleMode ?? (element('body').dataset.state || 'menu') }; runtime.beforeWrite?.(write); memory.set(name, write.value); writes.push(write); }, removeItem: name => memory.delete(name) },
     FWorld: { create: createWorld }, FAudio: { create: () => new Proxy({}, { get: (_, name) => (...args) => { runtime.audioCall?.(name,args); sounds.push({ name, args }); } }) },
-    FRender: { ...runtime.geometry, create: () => ({ stats: { backend: 'test' }, resize: noop, setWorld: (meshes, lights) => worlds.push({ meshes, lights, initial:true }), updateWorld: (meshes, revision, lights) => worlds.push({meshes,revision,lights}), draw: (camera, meshes, effects) => frames.push({ camera, meshes, effects }) }) },
+    FRender: { mesh: FRenderMesh, ...runtime.geometry, create: () => ({ stats: { backend: 'test' }, resize: noop, setWorld: (meshes, lights) => worlds.push({ meshes, lights, initial:true }), updateWorld: (meshes, revision, lights) => worlds.push({meshes,revision,lights}), draw: (camera, meshes, effects) => frames.push({ camera, meshes, effects }) }) },
   };
   if (runtime.idle !== false) context.requestIdleCallback = (callback, options) => idle.push({ callback, options, mode: element('body').dataset.state || 'menu' });
   context.window = context; vm.createContext(context);

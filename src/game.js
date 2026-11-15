@@ -370,7 +370,7 @@
     selectedWeapon=sim.state.weapon;
     if(checkpointDue||checkpointPending&&!sim.state.player.airborne)saveCheckpoint();
   }
-  const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>({shape,p,s,mat,r,emissive});
+  const m=(shape,p,s,mat,r=[0,0,0],emissive=0)=>FRender.mesh(shape,p,s,mat,r,emissive);
   function renderShop(message){
     const shop=(world.shops||[]).find(q=>q.id===currentShopId),offers=sim.shopOffers?.(currentShopId),profile=sim.state.economy,stats=sim.stats||{maxHp:100};
     $('shop-title').textContent=shop?.name||'Atelier';$('shop-credits').textContent=String(profile?.credits||0);$('shop-cores').textContent=String(profile?.cores||0);
@@ -579,7 +579,11 @@
       }
       if(e.stun>0)out.push(m('ring',[e.x,base+[2,2.25,2.35,3.35][e.type]*scale,e.z],[1.05*scale,.055*scale,1.05*scale],4,[.15,t*2,0],.6));
     }
-    for(const c of [...s.pickups,...(s.loot||[])])if(supplyVisible(c)&&nearby(c.x,c.z))supplyModel(out,c,t);
+    for(const c of [...s.pickups,...(s.loot||[])]){if(!supplyVisible(c)||!nearby(c.x,c.z))continue;
+      // Le rayon couvre la plus haute récompense (0,76 m) et le socle le plus large (1,2 m).
+      if(!actorVisible(c.x,(c.y||0)+.5,c.z,1.6))continue;
+      supplyModel(out,c,t);
+    }
     for(const trophy of world.trophies||[]){
       const state=s.campaign?.trophies.find(q=>q.id===trophy.id);if(!state||!nearby(trophy.x,trophy.z)||state.phase==='complete')continue;
       const acquiring=state.phase==='grace',r=acquiring?1.2+(1-state.timer/(trophy.grace||3))*.5:1.22;

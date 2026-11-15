@@ -1,0 +1,36 @@
+{
+ "monde": "camp:6",
+ "frames": 400,
+ "repetitionsParExecution": 5,
+ "note": "models() est la portion concernée par RESTE-02 (FMotion.place et mount sans allocation). Machine partagée : trois exécutions indépendantes, ratio retenu = médiane.",
+ "executions": [
+  {
+   "execution": 0,
+   "charge": 6.45,
+   "baseModeles": 0.58,
+   "teteModeles": 0.424,
+   "ratioModeles": 0.731,
+   "baseDraw": 2.703,
+   "teteDraw": 2.526
+  },
+  {
+   "execution": 1,
+   "charge": 6.33,
+   "baseModeles": 0.481,
+   "teteModeles": 0.362,
+   "ratioModeles": 0.7526,
+   "baseDraw": 2.396,
+   "teteDraw": 2.396
+  },
+  {
+   "execution": 2,
+   "charge": 6.55,
+   "baseModeles": 0.511,
+   "teteModeles": 0.398,
+   "ratioModeles": 0.7789,
+   "baseDraw": 2.438,
+   "teteDraw": 2.513
+  }
+ ],
+ "ratioModelesRetenu": 0.7526
+}

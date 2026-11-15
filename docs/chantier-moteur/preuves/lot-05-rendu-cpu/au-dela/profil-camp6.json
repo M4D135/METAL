@@ -1,0 +1,21 @@
+{
+ "banc": "node tools/proof/lot05/phase-cost.mjs <racine> <images> <monde> <qualite>",
+ "racine": "/home/m4d135/metal-chantier/voies/render",
+ "monde": "camp:6",
+ "qualite": "auto",
+ "images": 300,
+ "node": "v24.18.0",
+ "msParImage": {
+  "vue": 0.497,
+  "dynamique": 0.099,
+  "lumieres": 0.162,
+  "ombres": 2.018,
+  "statique": 0.623,
+  "effets": 0.127,
+  "post": 0.028,
+  "sommeEtapes": 3.554,
+  "total": 3.581
+ },
+ "controle": {"sommeEtapesSurTotal": 0.992, "ombresSurTotal": 0.564},
+ "note": "Régénéré au tour 2 : le banc additionnait `out` APRÈS y avoir inséré `total`, donc comptait le total deux fois (6,331 pour 3,181 dans la version commitée). `sommeEtapes` est maintenant calculé avant d'ajouter `total` et doit rester à ~1 de `total`. Les microsecondes absolues dépendent de la charge de la machine partagée (le contre-vérificateur mesure ombres 2,268 pour un total 4,183) ; ce qui se reproduit est la répartition : le bloc d'ombres fait 56,4 % ici, 54,2 % mesuré par le contre-vérificateur."
+}

@@ -1,0 +1,36 @@
+{
+ "objet": "les trois pistes évaluées puis écartées de l'étape « au-delà », avec leurs mesures",
+ "profil": "node tools/proof/lot05/phase-cost.mjs . 300 <monde> auto — voir profil-camp17.json et profil-camp6.json (régénérés au tour 2, contrôle sommeEtapes corrigé)",
+ "poste_dominant": {"etape": "ombres (3 passes)", "part_du_dessin": "54,6 % (camp:17) et 56,4 % (camp:6)", "camp17_msParImage": 2.555, "camp6_msParImage": 2.018, "dessin_complet_camp17": 4.681, "dessin_complet_camp6": 3.581},
+ "pistes": [
+  {
+   "nom": "pré-filtre par cellule dans selectionCache (vue et torche)",
+   "verdict": "écartée",
+   "raison": "le sur-ensemble est réutilisé tant que la caméra reste dans la marge ; filtrer à la construction avec le frustum de cette image ferait disparaître un objet que le filtre exact d'une image suivante, dans la marge, aurait gardé (même risque que l'étape 3 de DRAW-08, coupée par la fiche).",
+   "mesure": {"images": 300, "reconstructions_de_vue": 44, "part_reconstructions": 0.1467, "marge_distance_m": 1.03, "marge_angle_degres": 7.41, "monde": "camp:17", "gain_borne": "14,7 % des images seulement"},
+   "reproduction": "makeScene('.', {world:['camp',17], seed:96, quality:'auto'}) puis 300 images, compteurs renderer.stats.cache",
+   "correction_apportee": "le rapport annonçait « 0,029 m de distance » pour la marge : la valeur mesurée est 1,03 m (le plancher de l'adaptatif est 1 m). 0,029 était le coût de l'étape « post » en ms/image, recopié au mauvais endroit."
+  },
+  {
+   "nom": "réutilisation du jeu de projeteurs du soleil entre deux images",
+   "verdict": "écartée",
+   "raison": "le jeu est recalculé chaque image sur sunCache.candidates ; le réutiliser par pas de quantification introduirait une ombre portée avec une image de retard, explicitement refusée par la fiche (apparition retardée).",
+   "mesure": {
+    "banc": "node tools/proof/lot05/sun-filter-cost.mjs <racine> 300 <monde> auto 5 — instrumentation 'sun-sonde' (coût du filtre) puis prototype 'sun-reutilise' en lockstep (ordre inversé à chaque image, contrôle même racine publié)",
+    "camp17": {"msFiltreParImage": 0.0655, "partFiltreDansDraw": 0.0547, "candidatsExaminesParImage": 2896.6, "projeteursRetenusParImage": 1747.5, "imagesOuLeJeuChange": 277, "partImagesPerimees": 0.9264, "ratioCorrige": 0.8267, "ratioBrut": 0.7733, "ratioControle": 0.9354, "ratioParPaire": 0.8935},
+    "camp6": {"msFiltreParImage": 0.054, "partFiltreDansDraw": 0.0489, "candidatsExaminesParImage": 2917.9, "projeteursRetenusParImage": 1800.1, "imagesOuLeJeuChange": 288, "partImagesPerimees": 0.9632, "ratioCorrige": 0.6827, "ratioBrut": 0.6906, "ratioControle": 1.0115, "ratioParPaire": 0.8291},
+    "interpretation": "le filtre lui-même coûte 0,054 à 0,066 ms par image, soit 4,9 % à 5,5 % de draw() : c'est le plafond de ce que la piste peut faire gagner « à elle seule ». Le prototype complet affiche davantage (corrigé 0,68 à 0,83) parce que réutiliser le même tableau fait aussi toucher le cache de slots de renderStatic : une partie du gain mesuré vient de là, pas du filtre. En regard, le jeu obtenu change d'une image à l'autre sur 92,6 % (camp:17) à 96,3 % (camp:6) des images : un jeu réutilisé serait périmé neuf fois sur dix, ce qui est exactement l'apparition retardée que la fiche refuse. La piste est donc écartée sur le garde-fou de la fiche, chiffres à l'appui.",
+    "garde_fou": "fiche T1/RCPU-03 et DRAW-08 : aucune apparition retardée ; le filtre des projeteurs doit porter sur l'image courante."
+   }
+  },
+  {
+   "nom": "moins d'appels GL dans les passes d'ombre (VAO)",
+   "verdict": "écartée",
+   "raison": "mesuré en T16 : supprimer 190 appels par image ne déplace pas la mesure (ratio 1,16 à camp:17, 0,98 à camp:6, du bruit) ; l'audit corrige le gain à 10-15 µs et la fiche fixe la valeur par défaut à « ne pas implémenter pour le gain de temps ».",
+   "mesure": {"vertexAttribPointerParImage": 253.18, "appelsGLParImage": 446.8, "parDessin": 4},
+   "reproduction": "node tools/proof/lot05/glcalls.mjs <racine> 600 camp:17 auto ; variante : tools/render/lot05-instrument.mjs, variante 't16-sonde'"
+  }
+ ],
+ "piste_ouverte_non_traitee": "répartition réelle du bloc d'ombres entre sélection des projeteurs, packIndexed et draws par passe : exige un vrai GPU (Metal ou D3D11), hors de portée sur cette machine (SwiftShader, sans réseau). Appartient au lot rendu/GPU.",
+ "relais": "OpenCode, modèle local du Spark"
+}

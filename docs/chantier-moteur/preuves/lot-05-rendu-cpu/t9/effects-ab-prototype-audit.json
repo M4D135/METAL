@@ -1,0 +1,14 @@
+{
+ "banc": "node tools/proof/lot05/effects-ab.mjs <racine> 3000 camp:17 — compare le bloc debris de la racine au prototype de l'audit (bloc `fast` colle dans le banc), sur le monde et la simulation reels, ordre alterne image par image",
+ "role": "PREUVE D'EQUIVALENCE D'ECRITURE uniquement : isDeepStrictEqual image par image. Ce banc ne mesure PAS un gain : ses deux colonnes ne sont pas une paire base/tete, et ses chiffres absolus dependent de l'execution. Le gain de T9 est mesure par effects-ab.json (banc apparie effects-ab2.mjs).",
+ "executions": [
+  {"racine": ".relais/t8 = 9c5b1bc (avant T9)", "identical": "3000 / 3000",
+   "original": {"mean": 0.281, "p50": 0.258, "p95": 0.503, "p99": 0.698, "max": 13.201},
+   "prototype_audit": {"mean": 0.182, "p50": 0.149, "p95": 0.371, "p99": 0.564, "max": 11.399}},
+  {"racine": ".relais/t9 = 5d1f74d (code T9)", "identical": "3000 / 3000",
+   "original": {"mean": 0.173, "p50": 0.168, "p95": 0.353, "p99": 0.522, "max": 4.254},
+   "prototype_audit": {"mean": 0.167, "p50": 0.158, "p95": 0.354, "p99": 0.504, "max": 3.166}}
+ ],
+ "note": "Scène sans traceur GL (makeScene …, record:false) : le traceur sérialisait chaque argument d'appel et noyait la mesure sous ses propres allocations.",
+ "conclusion": "Sur les deux racines, le bloc de la racine et le prototype de l'audit produisent des sorties profondement identiques sur 3000 images : le code d'avant T9, le bloc T9 et le prototype de l'audit sont trois ecritures du meme resultat. Le banc etait casse au tour 1 (import d'un harness.mjs jamais committé) ; il est rejoue ici depuis que tools/proof/lot05/gc-bench.mjs et effects-ab.mjs sont branchés sur tools/proof/render-scene.mjs."
+}

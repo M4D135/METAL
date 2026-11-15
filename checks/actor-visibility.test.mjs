@@ -7,7 +7,8 @@ import {test} from 'node:test';
 
 const rendererSource=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
 const actorSource=readFileSync(new URL('../src/actors.js',import.meta.url),'utf8');
-const actorContext={window:{}};vm.runInNewContext(actorSource,actorContext);
+import {FRenderMesh} from './mesh-fixture.mjs';
+const actorContext={window:{FRender:{mesh:FRenderMesh}}};vm.runInNewContext(actorSource,actorContext);
 const build=actorContext.window.FActors.build,HEIGHT=[1.35,1.05,1.6,1.8];
 const environment={biome:'woodland',sunDirection:[-.48,.78,.36],wind:0,outdoorZones:[{x:0,z:0,w:200,d:200}]};
 const lights=[{p:[-6,7,0],color:[.4,.8,1],power:12},{p:[15,8,-9],color:[1,.5,.2],power:10},{p:[3,4,20],color:[.4,1,.7],power:8}];
@@ -125,4 +126,34 @@ test('sparse software scenes preserve potential casters and reset after world ch
   assert.equal(r.actorFilter(camera,{shadows:false})(0,1.6,30,3.5),false);
   assert.equal(r.actorFilter(camera)(NaN,1,2,3),true,'uncertain bounds must be retained');
   r.resize('low');assert.equal(r.actorFilter(camera)(0,1.6,30,3.5),false);
+});
+
+test('un ramassage derrière la caméra nest pas modélisé et le rayon de garde couvre les plus grands',()=>{
+  const gameSource=readFileSync(new URL('../src/game.js',import.meta.url),'utf8');
+  assert.match(gameSource,/actorVisible\(c\.x,\(c\.y\|\|0\)\+\.5,c\.z,1\.6\)/,'la boucle des ramassages doit appliquer le filtre acteur');
+  const {renderer:r}=gpu();r.setWorld([],[],null);r.resize('auto');
+  const camera={pos:[0,1.62,0],yaw:0,pitch:0,fov:74},fx={time:1,shadows:false,adaptive:false};
+  const keep=r.actorFilter(camera,fx);
+  assert.equal(keep(0,.5,-12,1.6),true,'un ramassage devant la caméra doit rester modélisé');
+  assert.equal(keep(0,.5,12,1.6),false,'un ramassage derrière la caméra ne doit plus être modélisé');
+  // Pires branches mesurées dans supplyModel : socle de 1,2 m au sol et récompense à 0,76 m.
+  const centre=[0,.5,0];
+  for(const p of [[.6,.055,.6],[.56,.76+.28,.56],[-.6,.055,-.6]])assert(Math.hypot(p[0]-centre[0],p[1]-centre[1],p[2]-centre[2])<1.6,'ramassage hors du rayon de garde');
+  // Aucune branche rejetée ne doit pouvoir entrer dans un volume de passe réel.
+  const {renderer:culler,matrices}=gpu();culler.setWorld([],[],null);culler.resize('auto');
+  let rejects=0;
+  for(const yaw of [0,.6,Math.PI/2,Math.PI])for(const pos of [[0,1.62,0],[6,4.2,-9],[-11,1.62,7]]){
+    const cam={pos,yaw,pitch:.1,fov:74},passFx={time:2,shadows:true,adaptive:false};
+    const keep=culler.actorFilter(cam,passFx);matrices.length=0;culler.draw(cam,[],passFx);assert(matrices.length>0);
+    for(let i=0;i<60;i++){
+      const x=((i*53)%97)-48,z=((i*29)%97)-48,y=(i%4)*.4;
+      if(keep(x,y+.5,z,1.6))continue;
+      rejects++;
+      for(const branche of [[x,y+.055,z],[x,y+.76,z]]){
+        const m=box(branche,[1.2,.56,1.2]);
+        for(const matrix of matrices)assert(clipOutside(corners(m),matrix),'ramassage rejeté entre dans une passe ' + yaw + '/' + pos + '/' + i);
+      }
+    }
+  }
+  assert(rejects>200,'la couverture doit rejeter une population réelle de ramassages');
 });

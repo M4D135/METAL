@@ -17,7 +17,8 @@ function gpu(){
       if(name==='getUniformLocation')return {program:args[0],name:args[1]};
       if(name==='getShaderParameter'||name==='getProgramParameter')return true;if(name==='checkFramebufferStatus')return 36053;
       if(name==='bindBuffer'&&args[0]==='ARRAY_BUFFER')bound=args[1];
-      if(name==='bufferData'&&args[0]==='ARRAY_BUFFER')buffers.set(bound,Array.from(args[1]));
+      if(name==='bufferData'&&args[0]==='ARRAY_BUFFER'&&ArrayBuffer.isView(args[1]))buffers.set(bound,Array.from(args[1]));
+      if(name==='bufferSubData'&&args[0]==='ARRAY_BUFFER'){const target=buffers.get(bound)||[],source=Array.from(args[2]),start=args[1]/4;for(let i=0;i<source.length;i++)target[start+i]=source[i];buffers.set(bound,target);}
       if(name==='useProgram')currentProgram=args[0];if(name==='bindFramebuffer')framebuffer=args[1];
       if(name==='vertexAttribPointer'&&args[0]===2)instanceOffset=args[5]/4;
       if(name.startsWith('uniform'))uniforms.set(args[0].name,ArrayBuffer.isView(args.at(-1))?Array.from(args.at(-1)):args.slice(1));
@@ -38,11 +39,11 @@ const isWall=row=>row[0]===0&&Math.abs(row[1]-1.6)<1e-5&&row[2]===-4&&row[4]===5
 test('a destruction revision replaces every colour/depth instance cache and retains lights/environment',()=>{
   const g=gpu(),r=g.renderer,environment={biome:'woodland',outdoorZones:[{x:0,z:0,w:100,d:100}],sunDirection:[-.4,.8,.3]};r.setWorld(original,lights,environment);r.resize('auto');r.draw(camera,[],fx);assert(rows(g.draws).some(isWall));
   const lightPositions=g.uniforms.get('uLightPosition'),fog=g.uniforms.get('uFogColor'),resources=g.calls.filter(c=>c.name.startsWith('create')).length;
-  g.calls.length=0;g.draws.length=0;assert.equal(r.updateWorld(broken,1),true);assert.equal(r.stats.worldRevision,1);assert.equal(r.stats.staticTotal,4);assert(!g.calls.some(c=>c.name.startsWith('create')||c.name==='bufferData'),'revision is lazy and reuses GPU allocations');
+  g.calls.length=0;g.draws.length=0;assert.equal(r.updateWorld(broken,1),true);assert.equal(r.stats.worldRevision,1);assert.equal(r.stats.staticTotal,4);assert(!g.calls.some(c=>c.name.startsWith('create')||c.name==='bufferData'||c.name==='bufferSubData'),'revision is lazy and reuses GPU allocations');
   r.draw(camera,[],fx);assert(!rows(g.draws).some(isWall),'removed wall cannot survive in any cached shadow view');assert(rows(g.draws).some(row=>row[0]===-1.75));assert.equal(r.stats.shadowMaps,3);
   assert.deepEqual(g.uniforms.get('uLightPosition'),lightPositions);assert.deepEqual(g.uniforms.get('uFogColor'),fog);
   const before=g.calls.length;assert.equal(r.updateWorld(broken,1),false);assert.equal(g.calls.length,before);
-  g.calls.length=0;r.draw(camera,[],fx);assert(!g.calls.some(c=>c.name==='bufferData'),'unchanged static revision/frame uploads no instance rows');
+  g.calls.length=0;r.draw(camera,[],fx);assert(!g.calls.some(c=>c.name==='bufferData'||c.name==='bufferSubData'),'unchanged static revision/frame uploads no instance rows');
   assert(resources>0);r.dispose();
 });
 
@@ -97,7 +98,7 @@ test('blackouts dim only real nearby lamp contributions, preserve shadow geometr
   const g=gpu(),r=g.renderer,lamps=[lights[0],{p:[30,6,-20],color:[.3,.7,1],power:9}],horror={eventType:'blackout',eventX:-2,eventY:5,eventZ:1,eventIntensity:1,eventAge:.2};
   r.setWorld(original,lamps);r.resize('auto');r.draw(camera,[],fx);const ordinary=g.uniforms.get('uLightColor').slice(),shadow=g.uniforms.get('uShadowMatrix').slice();
   g.calls.length=0;r.draw(camera,[],{...fx,horror});const dim=g.uniforms.get('uLightColor');assert.equal(r.stats.blackoutLights,1);assert(dim[0]>ordinary[0]*.2&&dim[0]<ordinary[0]*.3);assert.deepEqual(dim.slice(3),ordinary.slice(3));
-  assert.deepEqual(g.uniforms.get('uShadowMatrix'),shadow);assert(!g.calls.some(c=>c.name==='bufferData'||c.name.startsWith('create')),'a short blackout must not rebuild geometry or resources');
+  assert.deepEqual(g.uniforms.get('uShadowMatrix'),shadow);assert(!g.calls.some(c=>c.name==='bufferData'||c.name==='bufferSubData'||c.name.startsWith('create')),'a short blackout must not rebuild geometry or resources');
   r.draw(camera,[],{...fx,horror:{...horror,eventAge:1.21}});assert.deepEqual(g.uniforms.get('uLightColor'),ordinary);assert.equal(r.stats.blackoutLights,0);
   const a=software();a.renderer.setWorld(original,lamps);a.renderer.resize('auto');a.renderer.draw(camera,[],fx);a.calls.length=0;a.renderer.draw(camera,[],fx);const baseline=JSON.stringify(a.calls);
   a.calls.length=0;a.renderer.draw(camera,[],{...fx,horror});assert.notEqual(JSON.stringify(a.calls),baseline,'Canvas also dims the actual cached local lighting');
@@ -154,7 +155,7 @@ test('transient lights are local, bounded and never reassign existing shadow slo
   assert.equal(r.stats.dynamicLights,3);assert.equal(g.uniforms.get('uLightCount')[0],12);assert.equal(g.uniforms.get('uLightRange').filter(v=>v>0).length,3);
   assert(g.uniforms.get('uLightPosition').every(Number.isFinite));assert.deepEqual(g.uniforms.get('uLightPosition').slice(0,6),first);
   assert.deepEqual(g.uniforms.get('uShadowMatrix'),shadow);assert.equal(r.stats.shadowMaps,maps);
-  assert(!g.calls.some(c=>c.name==='bufferData'||c.name.startsWith('create')),'moving light parameters need no new meshes, buffers or atlas');
+  assert(!g.calls.some(c=>c.name==='bufferData'||c.name==='bufferSubData'||c.name.startsWith('create')),'moving light parameters need no new meshes, buffers or atlas');
   r.draw(camera,[],fx);assert.equal(r.stats.dynamicLights,0);assert(g.uniforms.get('uLightRange').every(v=>v===0),'expired flames cannot leave phantom lighting');
   r.resize('low');r.draw(camera,[],{...fx,lights:flashes});assert.equal(r.stats.dynamicLights,2);assert.equal(g.uniforms.get('uLightCount')[0],6);r.dispose();
 });

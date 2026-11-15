@@ -1,0 +1,74 @@
+{
+ "commentaire": "Base = commit T2 (4a91ea9), tete = T3. Le digest de contenu relit les lignes reellement presentes dans le tampon d instances a chaque dessin : il est independant de la strategie de televersement (bufferData ou bufferSubData).",
+ "mondes": [
+  {
+   "monde": "camp:17",
+   "base": {
+    "stream": "5eb297031051fa59918ae6059943c4cc9b82f3ea4f3afdc91af3a8a0c5e90bc2",
+    "contenu": "a3c6bf4f5a363537ee3920164b0d7086e8ba104907d2b1380a6b8dee210b0621",
+    "octets": 44346224,
+    "televersements": 1188
+   },
+   "tete": {
+    "stream": "c5741bfeaa9bf3a1d28414e31107b62a78d3a660fc80195f34c2f9517194374b",
+    "contenu": "a3c6bf4f5a363537ee3920164b0d7086e8ba104907d2b1380a6b8dee210b0621",
+    "octets": 60528,
+    "televersements": 10,
+    "sousTeleversements": 1185,
+    "octetsSous": 44285696
+   },
+   "streamIdentique": false,
+   "contenuIdentique": true,
+   "frames": 200,
+   "appels": 85045,
+   "dessins": 11807,
+   "instances": 910467
+  },
+  {
+   "monde": "camp:6",
+   "base": {
+    "stream": "632d781fcc0dbc1461ff433411567884103f97ffce61601f980cbb52e1fab5e3",
+    "contenu": "e49fea7612ef0430f2b8b69d4d1619e5ce6611e8098bb7cc771a2074c1b401b8",
+    "octets": 46578864,
+    "televersements": 1195
+   },
+   "tete": {
+    "stream": "c71a8b3fa7964d95932717cb9ca516d143d5575764815f10e202806f54f34028",
+    "contenu": "e49fea7612ef0430f2b8b69d4d1619e5ce6611e8098bb7cc771a2074c1b401b8",
+    "octets": 60528,
+    "televersements": 11,
+    "sousTeleversements": 1192,
+    "octetsSous": 46518336
+   },
+   "streamIdentique": false,
+   "contenuIdentique": true,
+   "frames": 200,
+   "appels": 83067,
+   "dessins": 11410,
+   "instances": 961630
+  },
+  {
+   "monde": "legacy:0",
+   "base": {
+    "stream": "99e5f6ff9604e973de65be5f1b27b9a380b4f3c74915e0ad8e68f41b0f3ce3bc",
+    "contenu": "a5ffc17c280c0aa905f3b065b7bb69271ea82c5f5afa144548a1c91e7bae1e83",
+    "octets": 47154864,
+    "televersements": 997
+   },
+   "tete": {
+    "stream": "8f3b47a0c0b8625eab64acd482a97153a63c6650a93418e5371a2706c2e9ea93",
+    "contenu": "a5ffc17c280c0aa905f3b065b7bb69271ea82c5f5afa144548a1c91e7bae1e83",
+    "octets": 60528,
+    "televersements": 10,
+    "sousTeleversements": 994,
+    "octetsSous": 47094336
+   },
+   "streamIdentique": false,
+   "contenuIdentique": true,
+   "frames": 200,
+   "appels": 75804,
+   "dessins": 10597,
+   "instances": 991786
+  }
+ ]
+}

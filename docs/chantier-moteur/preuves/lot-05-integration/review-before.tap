@@ -1,0 +1,77 @@
+TAP version 13
+# Subtest: mount et place restent bit à bit identiques sur 10 000 poses à graine fixe
+ok 1 - mount et place restent bit à bit identiques sur 10 000 poses à graine fixe
+  ---
+  duration_ms: 88.224218
+  ...
+# Subtest: la mémo par repère ne change pas le résultat quand rx varie
+ok 2 - la mémo par repère ne change pas le résultat quand rx varie
+  ---
+  duration_ms: 8.50912
+  ...
+# Subtest: un repère fabriqué à la main sans champs de mémo fonctionne
+ok 3 - un repère fabriqué à la main sans champs de mémo fonctionne
+  ---
+  duration_ms: 0.123327
+  ...
+# Subtest: place invalide sa mémo lorsque les axes du repère changent, même à rx constant
+not ok 4 - place invalide sa mémo lorsque les axes du repère changent, même à rx constant
+  ---
+  duration_ms: 0.572492
+  location: '/home/m4d135/metal-chantier/integration/checks/motion-place.test.mjs:85:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    axes remplacés
+    + actual - expected
+    
+    + '{"p":[0.6752425851046139,2.270666035232447,3.813186644530033],"r":[0.29999999999999993,0,0]}'
+    - '{"p":[0.6752425851046139,2.270666035232447,3.813186644530033],"r":[0.5604577192803162,-0.6639169084211425,-0.2537040897342408]}'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '{"p":[0.6752425851046139,2.270666035232447,3.813186644530033],"r":[0.5604577192803162,-0.6639169084211425,-0.2537040897342408]}'
+  actual: '{"p":[0.6752425851046139,2.270666035232447,3.813186644530033],"r":[0.29999999999999993,0,0]}'
+  operator: 'strictEqual'
+  stack: |-
+    same (file:///home/m4d135/metal-chantier/integration/checks/motion-place.test.mjs:44:38)
+    TestContext.<anonymous> (file:///home/m4d135/metal-chantier/integration/checks/motion-place.test.mjs:90:3)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres false)
+ok 5 - le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres false)
+  ---
+  duration_ms: 53.354479
+  ...
+# Subtest: le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres true)
+ok 6 - le cache temporel de vue rend exactement les mêmes instances avec et sans cache (ombres true)
+  ---
+  duration_ms: 74.067876
+  ...
+# Subtest: le cache temporel de vue est réellement réutilisé pendant la visite
+ok 7 - le cache temporel de vue est réellement réutilisé pendant la visite
+  ---
+  duration_ms: 11.546601
+  ...
+# Subtest: une modification du monde invalide immédiatement la sélection de garde
+ok 8 - une modification du monde invalide immédiatement la sélection de garde
+  ---
+  duration_ms: 8.432081
+  ...
+# Subtest: deux sélections différentes de même hash et même taille actualisent les instances GPU
+ok 9 - deux sélections différentes de même hash et même taille actualisent les instances GPU
+  ---
+  duration_ms: 10.785183
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 8
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 212.018504

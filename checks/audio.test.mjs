@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root=new URL('../',import.meta.url);
 const source=Object.fromEntries(['music','audio','audio-recipes','soundscape','economy','destruction','effects','simulation','motion','actors','options','game'].map(name=>
@@ -425,7 +426,7 @@ function shell({touch=false,settings:storedSettings,recipes=false}={}){
     navigator:{maxTouchPoints:touch?5:0},location:{search:''},matchMedia:query=>({matches:touch&&query==='(pointer: coarse)'}),requestAnimationFrame:fn=>{frames.push(fn);},addEventListener:(name,fn,options)=>register(listeners,name,fn,options),
     document:{body:element('body'),hidden:false,getElementById:element,createElement:tag=>element(tag+elements.size),addEventListener:(name,fn,options)=>register(documentListeners,name,fn,options),hasFocus:()=>focused},
     localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)},FWorld:{create:world},
-    FRender:{create:()=>({stats:{backend:'test'},resize:noop,setWorld:noop,draw:noop})}});
+    FRender:{create:()=>({stats:{backend:'test'},resize:noop,setWorld:noop,draw:noop}),mesh:FRenderMesh}});
   // The shell receives the same observed real audio instance as the direct API tests.
   // With recipes, game.js's own create() argument builds that instance.
   const createAudio=r.scope.FAudio.create;r.scope.FAudio.create=recipes?options=>{r.createOptions=options;return r.audio=createAudio(options);}:()=>r.audio;

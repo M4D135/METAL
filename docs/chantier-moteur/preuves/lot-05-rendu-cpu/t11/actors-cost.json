@@ -1,0 +1,31 @@
+{
+ "tache": "T11 [RESTE-08] FActors.build : calcul scalaire sans map ni spread",
+ "banc": "node tools/proof/lot05/actors-cost.mjs <base>,<tete> 300 — FActors.build apparié, 72 cas (4 types x 3 distances x 6 poses), ordre alterné, 40 passages de chauffe exclus ; Node 24.18, Spark",
+ "base": ".relais/avant-t11 = commit T9 (5d1f74d)",
+ "identite": {
+  "sorties": "72 / 72 identiques (isDeepStrictEqual)",
+  "scene": "tools/proof/render-proof.mjs --mode stream, 200 images pilotes x 3 mondes : streamSha256 et contentSha256 identiques entre base et tete (camp:17 a9b77162…/1c588799…, camp:6 f01f2069…/bea6d518…, legacy:0 4ffd2ae7…/6df41c85…)"
+ },
+ "temps": {
+  "base": {"p50Ms": 0.01474, "p95Ms": 0.15427},
+  "tete": {"p50Ms": 0.01147, "p95Ms": 0.12072},
+  "ratioP50": 0.7785, "ratioP95": 0.7825, "ratioParPaire": 0.8047,
+  "annonceFiche": "-30 à -40 % de temps", "verdict": "reproduit au-dessus de la moitié de l'annonce (-22 % mesuré, seuil d'abandon -15 %)"
+ },
+ "allocations": {
+  "base": {"koParBuild": 22.06, "maillagesParBuild": 40.5},
+  "tete": {"koParBuild": 20.37, "maillagesParBuild": 40.5},
+  "ratioOctets": 0.9234,
+  "annonceFiche": "-50 % d'allocations (-90 Ko/image)",
+  "verdict": "non atteint (-7,7 %). Le reste de l'octet par build est le maillage lui-même (objet de 28 champs) et ses trois tableaux p, s, r : 40,5 maillages x ~400 octets, soit ~16 Ko sur 20,4. Les retirer relève de RESTE-01 (T14, écrivain d'instances), pas de RESTE-08."
+ },
+ "fait": [
+  "rotation et product ont une version « vers tampon » (rotationTo, productTo) qui écrit dans des Float64Array privés du module (MAT, MAT2, MAT3) ; les cadres conservés (root.b, frame().b) restent des tableaux frais",
+  "angles est décomposé en anglesTo qui écrit trois scalaires dans EUL ; la version publique ne fait qu'une copie de trois valeurs",
+  "limb est entièrement scalaire (ddx, ddy, ddz, yx, yy, yz, rx, ry, rz, dot, sx, sy, sz, xx, xy, xz, produit vectoriel en scalaires) et Math.hypot(dx,dy,dz) remplace Math.hypot(...dy) ; la regex d'empatement est sortie de la boucle",
+  "les intermédiaires par maillage sont passés de 4 tableaux (rotation, product, angles, point) à 1 (r) pour piece avec rotation explicite, et de 8 tableaux à 2 (p, r) pour limb"
+ ],
+ "nonFait": [
+  "point (4) de la fiche, remonter piece/box/armor/cyl/ring/eye au niveau module avec contexte explicite : non réalisé. Cinq closures et un contexte sont recréés par build, soit moins de 0,5 Ko sur 20,4 Ko (moins de 2,5 % de la mesure visée), pour 300 sites d'appel à réécrire dans un fichier où les tests d'articulation comparent les poses au bit près. Le risque ne couvre pas le gain."
+ ]
+}

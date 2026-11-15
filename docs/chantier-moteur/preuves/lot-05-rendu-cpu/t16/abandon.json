@@ -1,0 +1,25 @@
+{
+ "tache": "T16 [RCPU-10] VAO par couple (tampon, forme)",
+ "verdict": "abandonné pour ce lot — rien de commité",
+ "annonceFiche": "Gain borné : 0,1 à 0,3 ms sur M5 (mesuré DRAW-04) ; un seul bindVertexArray remplace les 4 vertexAttribPointer par groupe",
+ "contreVerification": "DRAW-04 — confirmé, priorité P3, gain corrigé : « Au mieux 10 à 15 µs de fil principal par image ; environ 0,2 ms de processus GPU pour les quelque 60 groupes, incompressible sans réduire le nombre de groupes »",
+ "decisionFiche": "ligne 171 : « relancer out/glcost.html sur david-pc (ANGLE D3D11) avant toute décision VAO pour Windows — valeur par défaut : ne pas implémenter les VAO pour le gain de temps (mesuré nul sur Metal) »",
+ "regleAppliquee": "le gain annoncé (0,1 à 0,3 ms) est déjà corrigé par la fiche à 10-15 µs, soit plus de dix fois moins ; la simulation ne montre aucun effet mesurable ; la décision par défaut de la fiche est de ne pas implémenter",
+ "mesuresAppels": {
+  "outils": "node tools/proof/lot05/glcalls.mjs <racine> 600 <monde> auto — comptage par nom via le faux contexte de tools/proof/render-scene.mjs ; un appel d'état est redondant quand il répète le dernier appel de même nom avec les mêmes arguments (téléversements et dessins exclus)",
+  "camp17": {"appelsParImage": 446.8, "vertexAttribPointerParImage": 253.18, "drawsParImage": 67.69, "appelsParDraw": 6.6, "redondantsParImage": 20.7, "partRedondante": 0.0464},
+  "camp6": {"appelsParImage": 420.2, "vertexAttribPointerParImage": 253.18, "drawsParImage": 63.02, "appelsParDraw": 6.67, "redondantsParImage": 19.5, "partRedondante": 0.0464},
+  "lecture": "253 appels vertexAttribPointer par image, soit 57 % de tous les appels GL et exactement 4 par dessin (src/renderer.js:1521, attributs 2 à 5). La premise de T16 est donc juste sur les compteurs : le nombre d'appels baisserait de 446,8 à environ 257."
+ },
+ "mesureCout": {
+  "protocole": "sonde tools/render/lot05-instrument.mjs (variante 't16-sonde') : la boucle de quatre pointeurs par groupe est réduite à un seul appel (190 appels GL supprimés par image), puis node tools/proof/render-proof.mjs .relais/avant-t16,. --mode cost --frames 400 --reps 5",
+  "camp17": {"baseTotalP50Ms": 2.914, "sondeTotalP50Ms": 3.38, "ratio": 1.1599},
+  "camp6": {"baseTotalP50Ms": 3.348, "sondeTotalP50Ms": 3.297, "ratio": 0.9848},
+  "lecture": "supprimer 190 des 446 appels par image ne déplace pas la mesure : le signe du ratio change selon le monde (+16 % / -1,5 %), ce qui est du bruit. Si ces appels coûtaient plus de 150 µs (5 % des 3 ms de draw+models), l'écart serait visible. Le coût est donc sous le plancher de la simulation, cohérent avec les 10-15 µs mesurés par l'audit sur M5."
+ },
+ "impossibilites": [
+  "aucun Metal ni ANGLE D3D11 sur cette machine (DGX Spark, Chrome en SwiftShader, sans réseau) : le µs/appel du pilote cible ne peut pas être redémarré ici, et la fiche conditionne toute décision VAO à cette mesure",
+  "le mock de checks/renderer-destruction.test.mjs:21 déduit instanceOffset de vertexAttribPointer(2,…) : passer aux VAO impose de réécrire l'infrastructure de test du rendu, risque payé d'avance pour un gain non démontré"
+ ],
+ "consequence": "les 253 pointeurs par image restent en place et sont documentés dans le rapport comme premier poste d'appels. La piste n'est pas fermée : elle attend la relance de out/glcost.html sur un appareil réel (Metal puis david-pc/ANGLE D3D11), comme l'exige la fiche."
+}

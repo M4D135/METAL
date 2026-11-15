@@ -1,0 +1,35 @@
+{
+ "banc": "pack() seul, image par image, ordre alterné (2 passages de chauffe exclus)",
+ "world": "camp:6",
+ "seed": 96,
+ "frames": 300,
+ "reps": 5,
+ "warmup": 120,
+ "skip": 60,
+ "node": "v24.18.0",
+ "maillagesParImage": [
+  380.35,
+  380.35
+ ],
+ "runs": [
+  {
+   "racine": "base",
+   "medianeMs": 0.08072,
+   "moyenneMs": 0.14494,
+   "p05": 0.03226,
+   "p95": 0.36709,
+   "n": 1500
+  },
+  {
+   "racine": "tete",
+   "medianeMs": 0.07853,
+   "moyenneMs": 0.13188,
+   "p05": 0.03059,
+   "p95": 0.34139,
+   "n": 1500
+  }
+ ],
+ "ratioMediane": 0.9728,
+ "ratioParPaire": 0.9343
+}
+

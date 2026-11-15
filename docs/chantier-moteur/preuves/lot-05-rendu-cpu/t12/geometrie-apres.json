@@ -1,0 +1,50 @@
+{
+ "racine": "/home/m4d135/metal-chantier/voies/render",
+ "qualites": {
+  "1": {
+   "sommets": 338,
+   "octetsTamponSommets": 8112,
+   "indices": 1032,
+   "octetsTamponIndices": 2064,
+   "parForme": {
+    "box": 36,
+    "sphere": 240,
+    "foliage": 216,
+    "cylinder": 96,
+    "octa": 24,
+    "ring": 288,
+    "bevel": 132
+   }
+  },
+  "2": {
+   "sommets": 188,
+   "octetsTamponSommets": 4512,
+   "indices": 648,
+   "octetsTamponIndices": 1296,
+   "parForme": {
+    "box": 36,
+    "sphere": 108,
+    "foliage": 216,
+    "cylinder": 72,
+    "octa": 24,
+    "ring": 192,
+    "bevel": 36
+   }
+  },
+  "false": {
+   "sommets": 596,
+   "octetsTamponSommets": 14304,
+   "indices": 2328,
+   "octetsTamponIndices": 4656,
+   "parForme": {
+    "box": 36,
+    "sphere": 864,
+    "foliage": 216,
+    "cylinder": 192,
+    "octa": 24,
+    "ring": 864,
+    "bevel": 132
+   }
+  }
+ }
+}

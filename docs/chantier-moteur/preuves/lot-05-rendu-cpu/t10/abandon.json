@@ -1,0 +1,16 @@
+{
+ "tache": "T10 [RESTE-07] cache des gravats au repos et sélection K-meilleurs",
+ "verdict": "abandonné — rien de commité",
+ "annonceFiche": "gain de -50 à -70 % de FEffects.build EN PLUS de RCPU-06 (T9)",
+ "regleAppliquee": "un gain annoncé qui se reproduit à moins de la moitié (ici moins de -25 %) : abandon, raison chiffrée",
+ "banc": "node tools/proof/lot05/effects-ab2.mjs <base>,<tete> <images> <monde> — FEffects.build apparié, même état et même caméra, ordre alterné, 120 images de chauffe exclues ; Node 24.18, Spark",
+ "base": ".relais/avant-t10 = commit T9 (5d1f74d)",
+ "populationDebris": {"camp:17": {"maxTotal": 150, "maxAuRepos": 122, "moyenneTotal": 114.6, "moyenneAuRepos": 90.8}, "camp:6": {"maxTotal": 159, "maxAuRepos": 129, "moyenneTotal": 104.5, "moyenneAuRepos": 85.9}},
+ "mesures": [
+  {"variante": "WeakMap + sélection par seaux (Map de groupes à clé numérique, tri seulement des groupes utiles)", "monde": "camp:17", "images": 3000, "identiques": "3000 / 3000", "p50Base": 0.1457, "p50Tete": 0.1558, "ratioP50": 1.069, "ratioP95": 1.0503, "ratioParPaire": 1.0315},
+  {"variante": "WeakMap seule (sélection T9 conservée)", "monde": "camp:17", "images": 3000, "identiques": "3000 / 3000", "p50Base": 0.2085, "p50Tete": 0.2339, "ratioP50": 1.1217, "ratioP95": 1.0476, "ratioParPaire": 1.0937},
+  {"variante": "WeakMap seule (sélection T9 conservée)", "monde": "camp:6", "images": 2000, "identiques": "2000 / 2000", "p50Base": 0.1578, "p50Tete": 0.1573, "ratioP50": 0.997, "ratioP95": 1.0299, "ratioParPaire": 1.0038}
+ ],
+ "lecture": "Les deux écritures rendent un résultat identique (isDeepStrictEqual sur 2000 et 3000 images), mais aucune ne dépasse le coût du code T9 : le cache ajoute une lookup WeakMap par pièce (91 gravats au repos en moyenne) pour économiser un Math.hypot, trois clamp et un num, et la sélection par seaux ajoute un Map, des lookups et un Array.from().sort() par image. A 115 gravats par image, le tri complet coute moins cher que le partitionnement en seaux. La boucle gravats n'est plus le poste dominant de FEffects.build après T9 (p50 0,145 ms pour tout build, particules et lumières comprises) : le -50 % restant annoncé n'a pas de place où se réaliser.",
+ "consequence": "src/effects.js reste au code T9 ; aucun commit T10. La fiche garde RESTE-07 comme non réalisé."
+}

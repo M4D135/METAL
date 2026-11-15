@@ -1,0 +1,25 @@
+{
+ "tache": "T13 [DRAW-03] table d'instances statiques en texture RGBA32F",
+ "verdict": "abandonné — rien de commité",
+ "annonceFiche": "octets envoyés -97 % en taille (calculé) ; temps : quelques dizaines de µs sur M5 ; preuve exigée « temps GPU non positif » ; repli demandé par David : instanceTable:false par défaut",
+ "contreVerification": "plausible, priorité P3 : « l'essentiel du gain CPU étant déjà pris par RCPU-01 et RCPU-04 »",
+ "regleAppliquee": "un gain annoncé qui se reproduit à moins de la moitié : abandon, raison chiffrée",
+ "mesures": {
+  "outils": "node tools/proof/lot05/row-churn.mjs <racine> <images> <monde> — lignes d'instances dynamiques reconstituées par FRender.pack sur la liste réelle de chaque image, comparées à l'image précédente (16 flottants par ligne) ; tools/proof/render-proof.mjs --mode stream pour les octets téléversés",
+  "statique": {
+   "constate": "60 528 octets téléversés en 10 appels bufferData sur 200 images (camp:17), puis 0 octet par image hors révision de monde : le téléversement statique est déjà amorti par T3 (RCPU-04, upload par capacité) et T4 (RCPU-01, cache temporel)",
+   "conclusion": "la cible « octets statiques sous 10 Ko/image » est déjà à 0 Ko/image en régime établi : la face statique de DRAW-03 n'a plus rien à gagner"
+  },
+  "dynamique": {
+   "camp17": {"lignesParImage": 251.8, "partModifieeParImage": 0.7747, "octetsParImage": 16116},
+   "camp6": {"lignesParImage": 301.9, "partModifieeParImage": 0.7867, "octetsParImage": 19324},
+   "conclusion": "77,5 % et 78,7 % des lignes changent à chaque image (acteurs qui marchent, particules, machinery). Le « texSubImage2D des seules lignes touchées » de DRAW-03 devrait re-téléverser ~78 % de la table chaque image : pour atteindre la moitié du -97 % annoncé il faudrait une churn sous ~52 %, mesurée à 78 %."
+  }
+ },
+ "surcoutsConstatesOuPrevus": [
+  "non prototypé (fiche) : 4 texelFetch par sommet, coût inconnu sur GPU mobiles — justement l'appareil cible de la décision « instanceTable:false »",
+  "un programme et un uniforme de plus : compilation 79-111 ms à surveiller (fiche)",
+  "limite 65 536 statiques en Uint16, second chemin de shader à entretenir et à prouver à chaque lot, livré éteint par défaut"
+ ],
+ "consequence": "le chemin reste le tampon d'instances de RCPU-04 (T3), déjà mesuré : 44,3 Mo -> 60 Ko téléversés à l'installation du monde. La piste est notée dans le rapport pour une reprise éventuelle sur un appareil cible réel (GPU mobile), avec la churn mesurée ici comme garde-fou."
+}

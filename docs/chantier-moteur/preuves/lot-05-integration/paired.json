@@ -1,0 +1,74 @@
+{
+ "mode": "cost",
+ "world": "camp:17",
+ "seed": 96,
+ "quality": "auto",
+ "canvas2d": false,
+ "frames": 600,
+ "reps": 5,
+ "warmup": 120,
+ "skip": 60,
+ "node": "v22.11.0",
+ "appariement": "images alternées, ordre inversé à chaque image",
+ "cost": [
+  {
+   "root": "/home/m4d135/work/codex-metal-finish-20261115/base930",
+   "drawP50": 5.667,
+   "drawP95": 19.407,
+   "drawP99": 32.6,
+   "drawMean": 7.6356,
+   "modelsP50": 1.568,
+   "modelsMean": 2.4271,
+   "totalP50": 7.479
+  },
+  {
+   "root": "/home/m4d135/metal-chantier/integration",
+   "drawP50": 3.636,
+   "drawP95": 14.848,
+   "drawP99": 21.132,
+   "drawMean": 5.1491,
+   "modelsP50": 1.124,
+   "modelsMean": 1.7079,
+   "totalP50": 4.995
+  }
+ ],
+ "ratio": {
+  "drawP50": 0.6416,
+  "drawMean": 0.6744,
+  "modelsP50": 0.7168,
+  "totalP50": 0.6679
+ },
+ "controle": {
+  "racine": "/home/m4d135/work/codex-metal-finish-20261115/base930",
+  "A": {
+   "drawP50": 5.485,
+   "drawP95": 17.992,
+   "drawP99": 29.547,
+   "drawMean": 7.4081,
+   "modelsP50": 1.468,
+   "modelsMean": 2.0898,
+   "totalP50": 7.15
+  },
+  "B": {
+   "drawP50": 5.501,
+   "drawP95": 18.117,
+   "drawP99": 31.042,
+   "drawMean": 7.5412,
+   "modelsP50": 1.494,
+   "modelsMean": 2.2519,
+   "totalP50": 7.275
+  },
+  "ratio": {
+   "drawP50": 1.0029,
+   "drawMean": 1.018,
+   "modelsP50": 1.0177,
+   "totalP50": 1.0175
+  }
+ },
+ "ratioCorrige": {
+  "drawP50": 0.6397,
+  "drawMean": 0.6625,
+  "modelsP50": 0.7043,
+  "totalP50": 0.6564
+ }
+}

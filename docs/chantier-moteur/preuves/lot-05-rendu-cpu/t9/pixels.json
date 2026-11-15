@@ -1,0 +1,552 @@
+{
+ "base": ".relais/avant-t9",
+ "head": ".",
+ "chrome": {
+  "protocolVersion": "1.3",
+  "product": "Chrome/151.0.7922.137",
+  "revision": "@8f5d36bc16f57115aeeff34baf4ad6aa964d509c",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+  "jsVersion": "15.1.206.17"
+ },
+ "scenarios": [
+  {
+   "id": "camp17-a",
+   "scenario": {
+    "id": "camp17-a",
+    "seed": 96,
+    "world": 17,
+    "campaign": true,
+    "camera": 0,
+    "width": 1280,
+    "height": 720
+   },
+   "shaBase": "dcb6cfaa0fa21c2079c7c23532d42597d82f8fff31d3bc1dfa671d4fd002c84f",
+   "shaHead": "dcb6cfaa0fa21c2079c7c23532d42597d82f8fff31d3bc1dfa671d4fd002c84f",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 45,
+    "triangles": 127592,
+    "instances": 1492,
+    "staticVisible": 1453,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 45,
+    "triangles": 127592,
+    "instances": 1492,
+    "staticVisible": 1453,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "camp17-b",
+   "scenario": {
+    "id": "camp17-b",
+    "seed": 96,
+    "world": 17,
+    "campaign": true,
+    "camera": 2,
+    "width": 1280,
+    "height": 720,
+    "dx": 18,
+    "dz": -12
+   },
+   "shaBase": "7e3dedaef19494bf2865570997e483f7c432ef93820b14c4ae17c71ea5f58df5",
+   "shaHead": "7e3dedaef19494bf2865570997e483f7c432ef93820b14c4ae17c71ea5f58df5",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 46,
+    "triangles": 112928,
+    "instances": 1220,
+    "staticVisible": 1181,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 46,
+    "triangles": 112928,
+    "instances": 1220,
+    "staticVisible": 1181,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "camp17-c",
+   "scenario": {
+    "id": "camp17-c",
+    "seed": 96,
+    "world": 17,
+    "campaign": true,
+    "camera": 4,
+    "width": 1280,
+    "height": 720,
+    "dx": -30,
+    "dz": 24
+   },
+   "shaBase": "e03c0d41ba9cc4a8b59b1ca713c74fee641a8b8666b347d9ff6811e4f84c11d7",
+   "shaHead": "e03c0d41ba9cc4a8b59b1ca713c74fee641a8b8666b347d9ff6811e4f84c11d7",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 34,
+    "triangles": 39180,
+    "instances": 39,
+    "staticVisible": 0,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 34,
+    "triangles": 39180,
+    "instances": 39,
+    "staticVisible": 0,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "camp6-a",
+   "scenario": {
+    "id": "camp6-a",
+    "seed": 96,
+    "world": 6,
+    "campaign": true,
+    "camera": 1,
+    "width": 1024,
+    "height": 640
+   },
+   "shaBase": "9280a00f18f5813b2e0d5c28a0edb4b27683f731a0adfa1d71865ae6eb05d12e",
+   "shaHead": "9280a00f18f5813b2e0d5c28a0edb4b27683f731a0adfa1d71865ae6eb05d12e",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 45,
+    "triangles": 109628,
+    "instances": 1484,
+    "staticVisible": 1445,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 45,
+    "triangles": 109628,
+    "instances": 1484,
+    "staticVisible": 1445,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "camp6-b",
+   "scenario": {
+    "id": "camp6-b",
+    "seed": 96,
+    "world": 6,
+    "campaign": true,
+    "camera": 3,
+    "width": 1024,
+    "height": 640,
+    "dx": 12,
+    "dz": 9
+   },
+   "shaBase": "4155e78aa81186632595ee41a68eb25f20f3f2e5c24dae32c00b671c83e4d89d",
+   "shaHead": "4155e78aa81186632595ee41a68eb25f20f3f2e5c24dae32c00b671c83e4d89d",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 40,
+    "triangles": 69248,
+    "instances": 160,
+    "staticVisible": 121,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 40,
+    "triangles": 69248,
+    "instances": 160,
+    "staticVisible": 121,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "legacy0-a",
+   "scenario": {
+    "id": "legacy0-a",
+    "seed": 96,
+    "world": 0,
+    "campaign": false,
+    "camera": 0,
+    "width": 1024,
+    "height": 640
+   },
+   "shaBase": "ed28892d43e349ff23df095cb147daf107c0a8dbb68da91f49c4098007c5c7b8",
+   "shaHead": "ed28892d43e349ff23df095cb147daf107c0a8dbb68da91f49c4098007c5c7b8",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 45,
+    "triangles": 111356,
+    "instances": 1389,
+    "staticVisible": 1350,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 45,
+    "triangles": 111356,
+    "instances": 1389,
+    "staticVisible": 1350,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "legacy0-b",
+   "scenario": {
+    "id": "legacy0-b",
+    "seed": 96,
+    "world": 0,
+    "campaign": false,
+    "camera": 5,
+    "width": 1024,
+    "height": 640,
+    "dx": -14,
+    "dz": 7
+   },
+   "shaBase": "2d1cc050148b67775c8b721b126ab13deaa845ac962650dd0775e5a8069a75b6",
+   "shaHead": "2d1cc050148b67775c8b721b126ab13deaa845ac962650dd0775e5a8069a75b6",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 44,
+    "triangles": 89364,
+    "instances": 662,
+    "staticVisible": 623,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 44,
+    "triangles": 89364,
+    "instances": 662,
+    "staticVisible": 623,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "camp17-low",
+   "scenario": {
+    "id": "camp17-low",
+    "seed": 96,
+    "world": 17,
+    "campaign": true,
+    "camera": 1,
+    "width": 800,
+    "height": 480,
+    "quality": "low"
+   },
+   "shaBase": "dd8282f1dc0e3a1dcbb8c24057415afe001018ca9c463384d62d428e141efe75",
+   "shaHead": "dd8282f1dc0e3a1dcbb8c24057415afe001018ca9c463384d62d428e141efe75",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 18,
+    "triangles": 26136,
+    "instances": 863,
+    "staticVisible": 824,
+    "shadowMaps": 0,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 18,
+    "triangles": 26136,
+    "instances": 863,
+    "staticVisible": 824,
+    "shadowMaps": 0,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "camp17-high",
+   "scenario": {
+    "id": "camp17-high",
+    "seed": 96,
+    "world": 17,
+    "campaign": true,
+    "camera": 3,
+    "width": 800,
+    "height": 480,
+    "quality": "high"
+   },
+   "shaBase": "cb6cb958bc354d99be29b6e8c22c2d29477c9f68e5fa3332d8ebfc2c7e40e5a7",
+   "shaHead": "cb6cb958bc354d99be29b6e8c22c2d29477c9f68e5fa3332d8ebfc2c7e40e5a7",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 44,
+    "triangles": 105612,
+    "instances": 406,
+    "staticVisible": 367,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 44,
+    "triangles": 105612,
+    "instances": 406,
+    "staticVisible": 367,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "camp17-noshadow",
+   "scenario": {
+    "id": "camp17-noshadow",
+    "seed": 96,
+    "world": 17,
+    "campaign": true,
+    "camera": 2,
+    "width": 800,
+    "height": 480,
+    "shadows": false,
+    "bloom": false
+   },
+   "shaBase": "6971dd2abe65b48111025b2dd9f9c541080f5cc1a5f3773acabe8144c93d542d",
+   "shaHead": "6971dd2abe65b48111025b2dd9f9c541080f5cc1a5f3773acabe8144c93d542d",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 17,
+    "triangles": 31252,
+    "instances": 896,
+    "staticVisible": 857,
+    "shadowMaps": 0,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 17,
+    "triangles": 31252,
+    "instances": 896,
+    "staticVisible": 857,
+    "shadowMaps": 0,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "telephone",
+   "scenario": {
+    "id": "telephone",
+    "seed": 96,
+    "world": 17,
+    "campaign": true,
+    "camera": 1,
+    "width": 390,
+    "height": 844,
+    "dx": 6,
+    "dz": 6
+   },
+   "shaBase": "ef8e8755b5439ed7692ce601db1fcb267a353062abc0addc5288a88db08db6c3",
+   "shaHead": "ef8e8755b5439ed7692ce601db1fcb267a353062abc0addc5288a88db08db6c3",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 46,
+    "triangles": 99344,
+    "instances": 898,
+    "staticVisible": 859,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 46,
+    "triangles": 99344,
+    "instances": 898,
+    "staticVisible": 859,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "telephone-grand",
+   "scenario": {
+    "id": "telephone-grand",
+    "seed": 96,
+    "world": 6,
+    "campaign": true,
+    "camera": 4,
+    "width": 390,
+    "height": 844
+   },
+   "shaBase": "73288ee1eb56534c0a003bb24e2f57b1e3f352bf49489cad0d96bd34b4511bd1",
+   "shaHead": "73288ee1eb56534c0a003bb24e2f57b1e3f352bf49489cad0d96bd34b4511bd1",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 41,
+    "triangles": 76880,
+    "instances": 133,
+    "staticVisible": 94,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   },
+   "statsHead": {
+    "drawCalls": 41,
+    "triangles": 76880,
+    "instances": 133,
+    "staticVisible": 94,
+    "shadowMaps": 3,
+    "backend": "webgl2"
+   }
+  },
+  {
+   "id": "canvas2d",
+   "scenario": {
+    "id": "canvas2d",
+    "seed": 96,
+    "world": 17,
+    "campaign": true,
+    "camera": 0,
+    "width": 640,
+    "height": 400,
+    "backend": "canvas2d"
+   },
+   "shaBase": "94ca706bc1c08babac3b66223298095698621f5ddaac675c79baf5fb7678d32b",
+   "shaHead": "94ca706bc1c08babac3b66223298095698621f5ddaac675c79baf5fb7678d32b",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 2153,
+    "triangles": 3447,
+    "instances": 508,
+    "staticVisible": 485,
+    "backend": "canvas2d"
+   },
+   "statsHead": {
+    "drawCalls": 2153,
+    "triangles": 3447,
+    "instances": 508,
+    "staticVisible": 485,
+    "backend": "canvas2d"
+   }
+  },
+  {
+   "id": "canvas2d-telephone",
+   "scenario": {
+    "id": "canvas2d-telephone",
+    "seed": 96,
+    "world": 6,
+    "campaign": true,
+    "camera": 2,
+    "width": 390,
+    "height": 844,
+    "backend": "canvas2d"
+   },
+   "shaBase": "3ea0c8bd9c0b249ed040171099521aba8e563328768f69ba0bb9fb4efb91dd26",
+   "shaHead": "3ea0c8bd9c0b249ed040171099521aba8e563328768f69ba0bb9fb4efb91dd26",
+   "identical": true,
+   "differentPixels": 0,
+   "differentRatio": 0,
+   "maxChannelDelta": 0,
+   "meanAbsDeltaRgb": 0,
+   "psnrDb": null,
+   "verdict": "identical",
+   "statsBase": {
+    "drawCalls": 700,
+    "triangles": 1118,
+    "instances": 174,
+    "staticVisible": 161,
+    "backend": "canvas2d"
+   },
+   "statsHead": {
+    "drawCalls": 700,
+    "triangles": 1118,
+    "instances": 174,
+    "staticVisible": 161,
+    "backend": "canvas2d"
+   }
+  }
+ ],
+ "identical": true,
+ "worst": 0,
+ "environment": {
+  "webgl2": true,
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+  "fmath": true,
+  "fworld": true,
+  "frender": true
+ }
+}

@@ -1,0 +1,24 @@
+{
+ "banc": "node --allow-natives-syntax tools/proof/lot05/mesh-shape.mjs <racine> <images> <monde>",
+ "racine": "/home/m4d135/metal-chantier/voies/render/.relais/t7",
+ "monde": "camp:17",
+ "images": 120,
+ "node": "v24.18.0",
+ "maillagesObserves": 29150,
+ "enRepresentationRapide": 29150,
+ "partRepresentationRapide": 1,
+ "avecCleAjouteeApresCreation": 29150,
+ "formes": 6,
+ "formesListe": [
+  "bevel",
+  "box",
+  "cylinder",
+  "octa",
+  "ring",
+  "sphere"
+ ],
+ "formesDeClassesCachees": 30,
+ "pairesCompareesALaReference": 29149,
+ "memesClassesCachees": 8266,
+ "partMemeClasseCachee": 0.2836
+}

@@ -1,0 +1,62 @@
+{
+ "commentaire": "Base = commit T3 (7f1d558), tete = T4 (cache temporel a marge). 200 images pilotees par monde. Le cache ne change ni le flux GL ni le contenu des tampons d instances.",
+ "mondes": [
+  {
+   "monde": "camp:17",
+   "base": {
+    "flux": "c5741bfeaa9bf3a1d28414e31107b62a78d3a660fc80195f34c2f9517194374b",
+    "contenu": "a3c6bf4f5a363537ee3920164b0d7086e8ba104907d2b1380a6b8dee210b0621",
+    "appels": 85052,
+    "dessins": 11807,
+    "instances": 910467
+   },
+   "tete": {
+    "flux": "c5741bfeaa9bf3a1d28414e31107b62a78d3a660fc80195f34c2f9517194374b",
+    "contenu": "a3c6bf4f5a363537ee3920164b0d7086e8ba104907d2b1380a6b8dee210b0621",
+    "appels": 85052,
+    "dessins": 11807,
+    "instances": 910467
+   },
+   "fluxIdentique": true,
+   "contenuIdentique": true
+  },
+  {
+   "monde": "camp:6",
+   "base": {
+    "flux": "c71a8b3fa7964d95932717cb9ca516d143d5575764815f10e202806f54f34028",
+    "contenu": "e49fea7612ef0430f2b8b69d4d1619e5ce6611e8098bb7cc771a2074c1b401b8",
+    "appels": 83075,
+    "dessins": 11410,
+    "instances": 961630
+   },
+   "tete": {
+    "flux": "c71a8b3fa7964d95932717cb9ca516d143d5575764815f10e202806f54f34028",
+    "contenu": "e49fea7612ef0430f2b8b69d4d1619e5ce6611e8098bb7cc771a2074c1b401b8",
+    "appels": 83075,
+    "dessins": 11410,
+    "instances": 961630
+   },
+   "fluxIdentique": true,
+   "contenuIdentique": true
+  },
+  {
+   "monde": "legacy:0",
+   "base": {
+    "flux": "8f3b47a0c0b8625eab64acd482a97153a63c6650a93418e5371a2706c2e9ea93",
+    "contenu": "a5ffc17c280c0aa905f3b065b7bb69271ea82c5f5afa144548a1c91e7bae1e83",
+    "appels": 75811,
+    "dessins": 10597,
+    "instances": 991786
+   },
+   "tete": {
+    "flux": "8f3b47a0c0b8625eab64acd482a97153a63c6650a93418e5371a2706c2e9ea93",
+    "contenu": "a5ffc17c280c0aa905f3b065b7bb69271ea82c5f5afa144548a1c91e7bae1e83",
+    "appels": 75811,
+    "dessins": 10597,
+    "instances": 991786
+   },
+   "fluxIdentique": true,
+   "contenuIdentique": true
+  }
+ ]
+}

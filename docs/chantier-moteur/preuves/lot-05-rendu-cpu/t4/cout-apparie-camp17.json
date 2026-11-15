@@ -1,0 +1,58 @@
+{
+ "monde": "camp:17",
+ "frames": 400,
+ "repetitionsParExecution": 5,
+ "note": "Machine partagée : tests d un autre hébergement en parallèle (charge 5,7 à 7,5 sur 20 cœurs). Six exécutions indépendantes de la comparaison appariée alternée ; le ratio retenu est la médiane des six ratios de drawP50.",
+ "executions": [
+  {
+   "execution": 0,
+   "charge": 6.33,
+   "base": 3.148,
+   "tete": 2.545,
+   "ratio": 0.8084,
+   "ratioMoyenne": 0.8802
+  },
+  {
+   "execution": 1,
+   "charge": 5.99,
+   "base": 2.8,
+   "tete": 2.513,
+   "ratio": 0.8975,
+   "ratioMoyenne": 0.927
+  },
+  {
+   "execution": 2,
+   "charge": 5.69,
+   "base": 2.634,
+   "tete": 2.332,
+   "ratio": 0.8853,
+   "ratioMoyenne": 0.9594
+  },
+  {
+   "execution": 3,
+   "charge": 6.9,
+   "base": 2.974,
+   "tete": 2.764,
+   "ratio": 0.9294,
+   "ratioMoyenne": 0.9861
+  },
+  {
+   "execution": 4,
+   "charge": 7.09,
+   "base": 2.739,
+   "tete": 2.559,
+   "ratio": 0.9343,
+   "ratioMoyenne": 1.0069
+  },
+  {
+   "execution": 5,
+   "charge": 7.5,
+   "base": 3.226,
+   "tete": 2.648,
+   "ratio": 0.8208,
+   "ratioMoyenne": 0.896
+  }
+ ],
+ "ratioRetenu": 0.8914,
+ "teteToujoursInferieureALaBaseSur": "6 sur 6"
+}

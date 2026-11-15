@@ -1,0 +1,26 @@
+{
+ "tache": "T19 [DRAW-08] test de champ par cellule dans la requête de vue",
+ "base": ".relais/avant-t19 = commit T17 (2f311a3)",
+ "implementation": [
+  "spatialIndex range les cellules en objets {list,sumY,minY,maxY} au lieu de tableaux bruts",
+  "query(eye,ranges,out,frustum) : quand un frustum est fourni, la cellule est englobée par une sphère de centre (x*8+4, hauteur moyenne, z*8+4) et de rayon 4√2 + demi-hauteur + rayon maximal du niveau, testée par visibleSphere() avant de toucher les entrées",
+  "visibleSphere() reprend exactement l'expression de visible(), donc une cellule rejetée ne peut contenir aucune entrée que le test par entrée aurait gardée",
+  "deux appelants passent un frustum : la requête principale du repli Canvas 2D (même frustum que le visible() qui suit) et la requête des projeteurs d'ombre de lampe (shadowAxes, tangent, 32)"
+ ],
+ "non_fait_justifie": "la requête du chemin WebGL (selectionCache, src/renderer.js:1545) construit un SUR-ENSEMBLE temporel validé par marge d'angle et de translation : y appliquer visible() à la construction permettrait de rejeter une entrée que le filtre exact d'une image ultérieure, dans la marge autorisée, aurait gardée — apparition tardive d'un objet. Elle n'est donc pas filtrée à la cellule, et la grille dense de RCPU-05 reste à coupler plus tard.",
+ "sonde": {
+  "outils": "node tools/proof/lot05/cell-sonde.mjs <racine> 300 <monde> auto, avec la variante instrumentée tools/render/lot05-instrument.mjs (variante 't19-sonde') (compteurs de cellules et d'entrées)",
+  "camp6": {"cellulesTesteesParImage": 164.4, "cellulesRejeteesParImage": 62.7, "partCellulesRejetees": 0.3811, "entreesToucheesParImage": 4140.9, "entreesEviteesParImage": 1547.3, "partEntreesEvitees": 0.3737},
+  "camp17": {"partCellulesRejetees": 0.3744, "partEntreesEvitees": 0.3924},
+  "legacy0": {"partCellulesRejetees": 0.3806, "partEntreesEvitees": 0.3804}
+ },
+ "annonceFiche": "DRAW-08, priorité P3 : « Étape 1 : environ deux tiers des tests par entrée évités, mais seulement sur les images où la liste est recalculée »",
+ "mesure": "37 à 39 % des entrées touchées évitées (38 % des cellules rejetées), soit un peu plus de la moitié de l'estimation : au-dessus du seuil d'abandon d'un demi-gain, la tâche est gardée. Le temps gagné est mesuré sur le seul chemin où le test s'applique : dessin Canvas 2D p50 33,19 -> 32,56 ms (ratio 0,981).",
+ "verification": {
+  "listes": "flux GL et contenu des tampons identiques sur camp:17, camp:6, legacy:0 (200 images, mêmes sha256, draws et instances égaux) ; flux d'appels ctx du repli identique sur 300 images",
+  "pixels": "Chrome/SwiftShader 14/14 identiques, écart nul (pixels.json)",
+  "tests": "npm test 519/519"
+ },
+ "gardeFou": "la sphère couvre la hauteur réelle (demi-hauteur prise comme max(cy-minY, maxY-cy), jamais la demi-amplitude quand la moyenne n'est pas au centre) ; les cellules vides ne sont pas testées ; aucune requête dont le filtre diffère du visible() utilisé n'a reçu de frustum",
+ "taille": "dist/index.html 871 114 -> 872 395 octets (+1 281)"
+}

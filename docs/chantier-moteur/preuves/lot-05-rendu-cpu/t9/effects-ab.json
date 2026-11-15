@@ -1,0 +1,17 @@
+{
+ "banc": "node tools/proof/lot05/effects-ab2.mjs .relais/t8,.relais/t9 1200 camp:17 — FEffects.build apparié : même monde, même état, même caméra, les deux versions exécutées sur la MEME image, ordre inversé à chaque image, 120 images de chauffe exclues",
+ "attendu": "fiche T9 [RCPU-06] : p50 0,272 -> 0,186 ms (ratio 0,684), sorties identiques (isDeepStrictEqual)",
+ "base": ".relais/t8 = 9c5b1bc (avant T9, deux tris + Set de clés en chaînes)",
+ "tete": ".relais/t9 = 5d1f74d (tri unique + partition stable par groupe)",
+ "node": "v24.18.0",
+ "executions": [
+  {"ratioP50": 0.6467, "ratioParPaire": 0.7186, "A_p50": 0.2827, "B_p50": 0.1828, "identiques": "1200 / 1200"},
+  {"ratioP50": 0.7512, "ratioParPaire": 0.7940, "A_p50": 0.2295, "B_p50": 0.1724, "identiques": "1200 / 1200"},
+  {"ratioP50": 0.6650, "ratioParPaire": 0.7281, "A_p50": 0.2591, "B_p50": 0.1723, "identiques": "1200 / 1200"}
+ ],
+ "mediane": {"ratioP50": 0.6650, "ratioParPaire": 0.7281, "intervalleRatioP50": [0.6467, 0.7512]},
+ "identiques": "1200 / 1200 sur les trois exécutions",
+ "debrisMax": 150,
+ "gain": "FEffects.build p50 0,259 -> 0,172 ms à l'exécution médiane, ratio apparié 0,665 ; la fiche annonçait 0,684, le gain se reproduit",
+ "note": "Publié à la place du comparatif non apparié du tour 1, qui comparait les p50 de deux exécutions séparées de effects-ab.mjs (0,284 et 0,144) sans appariement image par image. Scène sans traceur GL (makeScene …, record:false) : le traceur, qui sérialisait chaque argument d'appel, ajoutait un bruit d'allocation supérieur au mesuré. À 200 images le ratio tombe à 0,99 (démarrage JIT et débris encore rares) : le banc exige 1200 images au moins, comme ici. L'équivalence d'écriture avec le prototype de l'audit est gardée à part dans effects-ab-prototype-audit.json : ce n'est pas une mesure de gain."
+}
