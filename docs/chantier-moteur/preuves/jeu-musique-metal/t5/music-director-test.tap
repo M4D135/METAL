@@ -1,0 +1,64 @@
+TAP version 13
+# Subtest: une secteur calme ne demande aucune pièce
+ok 1 - une secteur calme ne demande aucune pièce
+  ---
+  duration_ms: 2.759168
+  type: 'test'
+  ...
+# Subtest: le combat est demandé dès que lalerte monte, sans attendre
+ok 2 - le combat est demandé dès que lalerte monte, sans attendre
+  ---
+  duration_ms: 1.363544
+  type: 'test'
+  ...
+# Subtest: lalerte qui oscille autour du seuil ne fait pas claquer la musique
+ok 3 - lalerte qui oscille autour du seuil ne fait pas claquer la musique
+  ---
+  duration_ms: 4.746404
+  type: 'test'
+  ...
+# Subtest: le colosse et la victoire sont urgents et ne respectent pas le temps de séjour
+ok 4 - le colosse et la victoire sont urgents et ne respectent pas le temps de séjour
+  ---
+  duration_ms: 0.414109
+  type: 'test'
+  ...
+# Subtest: un changement trop rapide est refusé puis accepté, sans horloge interne
+ok 5 - un changement trop rapide est refusé puis accepté, sans horloge interne
+  ---
+  duration_ms: 3.271965
+  type: 'test'
+  ...
+# Subtest: la mort rend le thème du secteur et la reprise du secteur repart à zéro
+ok 6 - la mort rend le thème du secteur et la reprise du secteur repart à zéro
+  ---
+  duration_ms: 0.357694
+  type: 'test'
+  ...
+# Subtest: la pression du directeur déclenche le combat même sans ennemi visible
+ok 7 - la pression du directeur déclenche le combat même sans ennemi visible
+  ---
+  duration_ms: 0.350222
+  type: 'test'
+  ...
+# Subtest: la même suite détats donne exactement les mêmes demandes
+ok 8 - la même suite détats donne exactement les mêmes demandes
+  ---
+  duration_ms: 2.7008
+  type: 'test'
+  ...
+# Subtest: aucune horloge, aucun aléa, aucun audio dans le chef dorchestre
+ok 9 - aucune horloge, aucun aléa, aucun audio dans le chef dorchestre
+  ---
+  duration_ms: 0.643196
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 47.0602

@@ -1,0 +1,331 @@
+TAP version 13
+# Subtest: original PCM has bounded peaks, quiet tails and distinct material and weapon signatures
+ok 1 - original PCM has bounded peaks, quiet tails and distinct material and weapon signatures
+  ---
+  duration_ms: 392.083558
+  ...
+# Subtest: METAL weapon recipes are seeded, denser reports under their own caps and pass every waveform rule on both variants (FEEL-06)
+ok 2 - METAL weapon recipes are seeded, denser reports under their own caps and pass every waveform rule on both variants (FEEL-06)
+  ---
+  duration_ms: 253.871247
+  ...
+# Subtest: a recipe table replaces only its own buffers, falls back on bad output, and no table keeps the v0.2 bank bit for bit (MIX-01)
+ok 3 - a recipe table replaces only its own buffers, falls back on bad output, and no table keeps the v0.2 bank bit for bit (MIX-01)
+  ---
+  duration_ms: 1852.48583
+  ...
+# Subtest: the 240 ms METAL SMG overlaps two voices at 8 shots/s and leaves the 32/40/48 ceilings and stealing rules unchanged (MIX-06)
+ok 4 - the 240 ms METAL SMG overlaps two voices at 8 shots/s and leaves the 32/40/48 ceilings and stealing rules unchanged (MIX-06)
+  ---
+  duration_ms: 625.341197
+  ...
+# Subtest: a hit confirms with the METAL 2.8 and 4.1 kHz tick at level .30, one source, rising a semitone per consecutive hit (FEEL-07)
+ok 5 - a hit confirms with the METAL 2.8 and 4.1 kHz tick at level .30, one source, rising a semitone per consecutive hit (FEEL-07)
+  ---
+  duration_ms: 626.093897
+  ...
+# Subtest: a kill confirms with the METAL 90 to 50 Hz thunk and a 3.2 kHz tick at level .45 in one source (FEEL-07)
+ok 6 - a kill confirms with the METAL 90 to 50 Hz thunk and a 3.2 kHz tick at level .45 in one source (FEEL-07)
+  ---
+  duration_ms: 623.979049
+  ...
+# Subtest: METAL confirmation recipes obey every waveform rule on both variants and stay out of the effect bank (FEEL-07)
+ok 7 - METAL confirmation recipes obey every waveform rule on both variants and stay out of the effect bank (FEEL-07)
+  ---
+  duration_ms: 97.42318
+  ...
+# Subtest: without the METAL extras, hit and kill keep the v0.2 cues and the bank stays the 64-buffer v0.2 bank (FEEL-07 default)
+ok 8 - without the METAL extras, hit and kill keep the v0.2 cues and the bank stays the 64-buffer v0.2 bank (FEEL-07 default)
+  ---
+  duration_ms: 1163.336943
+  ...
+# Subtest: empty rooms have no tonal bed, exterior wind has gaps, and every environmental layer silences on pause
+ok 9 - empty rooms have no tonal bed, exterior wind has gaps, and every environmental layer silences on pause
+  ---
+  duration_ms: 430.160798
+  ...
+# Subtest: nearby machinery and steam are spatial, occluded, source-dependent and controlled by ambience
+ok 10 - nearby machinery and steam are spatial, occluded, source-dependent and controlled by ambience
+  ---
+  duration_ms: 431.693909
+  ...
+# Subtest: steady ambience is automated once per change and every wind cut can be undone at the same instant (LOOP-14)
+ok 11 - steady ambience is automated once per change and every wind cut can be undone at the same instant (LOOP-14)
+  ---
+  duration_ms: 435.969813
+  ...
+# Subtest: material collisions use their real material, energy and occlusion without allocating combat buffers
+ok 12 - material collisions use their real material, energy and occlusion without allocating combat buffers
+  ---
+  duration_ms: 431.154857
+  ...
+# Subtest: effect preparation yields in bounded batches and disposal cancels its pending work
+ok 13 - effect preparation yields in bounded batches and disposal cancels its pending work
+  ---
+  duration_ms: 24.308067
+  ...
+# Subtest: effect preparation slices on a time budget instead of an effect count and rebuilds the same bank bit for bit (LOAD-13)
+ok 14 - effect preparation slices on a time budget instead of an effect count and rebuilds the same bank bit for bit (LOAD-13)
+  ---
+  duration_ms: 1101.137236
+  ...
+# Subtest: every effect renders the same bytes whatever the build order and the prepared bank is exactly those renders (MIX-09)
+ok 15 - every effect renders the same bytes whatever the build order and the prepared bank is exactly those renders (MIX-09)
+  ---
+  duration_ms: 997.541734
+  ...
+# Subtest: pre-start settings reach the tracker and independent buses through one lazily created context
+ok 16 - pre-start settings reach the tracker and independent buses through one lazily created context
+  ---
+  duration_ms: 548.015775
+  ...
+# Subtest: distant salvos reserve player voices and never starve the independent tracker
+ok 17 - distant salvos reserve player voices and never starve the independent tracker
+  ---
+  duration_ms: 541.694029
+  ...
+# Subtest: global mute, music mute, pause and sector changes retain independent transport semantics
+ok 18 - global mute, music mute, pause and sector changes retain independent transport semantics
+  ---
+  duration_ms: 586.507087
+  ...
+# Subtest: audio interruption, panner fallback, disposal and unavailable audio remain safe
+ok 19 - audio interruption, panner fallback, disposal and unavailable audio remain safe
+  ---
+  duration_ms: 657.469065
+  ...
+# Subtest: final output guard preserves ordinary samples and bounds any finite overload before the destination
+ok 20 - final output guard preserves ordinary samples and bounds any finite overload before the destination
+  ---
+  duration_ms: 30.786885
+  ...
+# Subtest: explosion/boss storms stay bounded and continuous steam follows actual play state with one source
+ok 21 - explosion/boss storms stay bounded and continuous steam follows actual play state with one source
+  ---
+  duration_ms: 579.413077
+  ...
+# Subtest: horror pressure reuses ambience and the MOD mix while spatial cues remain bounded and pause-safe
+ok 22 - horror pressure reuses ambience and the MOD mix while spatial cues remain bounded and pause-safe
+  ---
+  duration_ms: 546.993866
+  ...
+# Subtest: actual game menus, pause, focus loss, volume controls and MOD export drive the real transport
+ok 23 - actual game menus, pause, focus loss, volume controls and MOD export drive the real transport
+  ---
+  duration_ms: 852.907909
+  ...
+# Subtest: actual sector completion silences the old score and starts each next sector at its encoded tempo
+ok 24 - actual sector completion silences the old score and starts each next sector at its encoded tempo
+  ---
+  duration_ms: 906.702794
+  ...
+# Subtest: important effects duck only the music bus and preserve explicit silent sliders
+ok 25 - important effects duck only the music bus and preserve explicit silent sliders
+  ---
+  duration_ms: 548.603187
+  ...
+# Subtest: two-second menu audition owns one bounded timer, uses the real mix and returns to silence
+ok 26 - two-second menu audition owns one bounded timer, uses the real mix and returns to silence
+  ---
+  duration_ms: 544.034837
+  ...
+# Subtest: audition cancellation, in-flight resume, mute and zero volumes cannot leak sound or timers
+ok 27 - audition cancellation, in-flight resume, mute and zero volumes cannot leak sound or timers
+  ---
+  duration_ms: 546.560915
+  ...
+# Subtest: new arsenal cues are distinct, bounded and survive distant salvo saturation
+ok 28 - new arsenal cues are distinct, bounded and survive distant salvo saturation
+  ---
+  duration_ms: 428.760661
+  ...
+# Subtest: device unlock is cheap and loading prepares future instrument buffers without changing play state
+ok 29 - device unlock is cheap and loading prepares future instrument buffers without changing play state
+  ---
+  duration_ms: 619.480545
+  ...
+# Subtest: title preparation opens no device, then plays music alone without building the world effects bank
+ok 30 - title preparation opens no device, then plays music alone without building the world effects bank
+  ---
+  duration_ms: 552.19307
+  ...
+# Subtest: a title audition returns to the title and releases every transient when cancelled or finished
+ok 31 - a title audition returns to the title and releases every transient when cancelled or finished
+  ---
+  duration_ms: 518.779899
+  ...
+# Subtest: mouse, touch and keyboard gestures unlock the title once without advancing the world
+ok 32 - mouse, touch and keyboard gestures unlock the title once without advancing the world
+  ---
+  duration_ms: 1106.425059
+  ...
+# Subtest: title mute and zero sliders are respected, while hidden tabs and blur never resume combat
+ok 33 - title mute and zero sliders are respected, while hidden tabs and blur never resume combat
+  ---
+  duration_ms: 1163.439379
+  ...
+# Subtest: shared title preparation cannot restart music after launch, mute, hiding or focus loss
+ok 34 - shared title preparation cannot restart music after launch, mute, hiding or focus loss
+  ---
+  duration_ms: 1851.568189
+  ...
+# Subtest: a blocked audio resume remains retryable by a new user gesture
+ok 35 - a blocked audio resume remains retryable by a new user gesture
+  ---
+  duration_ms: 394.470927
+  ...
+# Subtest: a world prepared while hidden or unfocused waits for explicit resume before combat
+ok 36 - a world prepared while hidden or unfocused waits for explicit resume before combat
+  ---
+  duration_ms: 1579.123467
+  ...
+# Subtest: explosions have bounded crack/body/debris tails, scale with power and preserve the player reserve
+ok 37 - explosions have bounded crack/body/debris tails, scale with power and preserve the player reserve
+  ---
+  duration_ms: 1251.498312
+  ...
+# Subtest: simultaneous hands keep independent firing transients, stereo placement and cooldowns
+ok 38 - simultaneous hands keep independent firing transients, stereo placement and cooldowns
+  ---
+  duration_ms: 434.293499
+  ...
+# Subtest: campaign pistol has its own short synthesized report and preserves independent hand timing and silent states
+ok 39 - campaign pistol has its own short synthesized report and preserves independent hand timing and silent states
+  ---
+  duration_ms: 425.196075
+  ...
+# Subtest: melee, mechanism, ammunition and grenade cues stay short, deduplicated and silent outside play
+ok 40 - melee, mechanism, ammunition and grenade cues stay short, deduplicated and silent outside play
+  ---
+  duration_ms: 468.961384
+  ...
+# Subtest: a grenade launch and a real melee hit keep the player reservation during an explosion storm
+ok 41 - a grenade launch and a real melee hit keep the player reservation during an explosion storm
+  ---
+  duration_ms: 554.2824
+  ...
+# Subtest: trophy discovery has one bounded metal sting, survives a busy mix and stays silent when paused or muted
+ok 42 - trophy discovery has one bounded metal sting, survives a busy mix and stays silent when paused or muted
+  ---
+  duration_ms: 407.358299
+  ...
+# Subtest: actual menu audition survives live volume sliders and stops on explicit mute or navigation
+ok 43 - actual menu audition survives live volume sliders and stops on explicit mute or navigation
+  ---
+  duration_ms: 836.895227
+  ...
+# Subtest: no shield cue survives in the audio API, the ducking table or the local source tracker
+ok 44 - no shield cue survives in the audio API, the ducking table or the local source tracker
+  ---
+  duration_ms: 406.580578
+  ...
+# Subtest: the game creates FAudio with the METAL recipe table and its own audition plays the 0.24 s SMG report
+ok 45 - the game creates FAudio with the METAL recipe table and its own audition plays the 0.24 s SMG report
+  ---
+  duration_ms: 1016.348031
+  ...
+# Subtest: a game recipe renders bit for bit the same PCM whether the engine cuts it into blocks or not
+ok 46 - a game recipe renders bit for bit the same PCM whether the engine cuts it into blocks or not
+  ---
+  duration_ms: 1258.973672
+  ...
+# Subtest: the preparation scheduler never runs past its 8 ms slice on the clock it reads
+ok 47 - the preparation scheduler never runs past its 8 ms slice on the clock it reads
+  ---
+  duration_ms: 596.44547
+  ...
+# Subtest: the prepared bank equals the direct synthesis for every name, recipe-backed names included
+ok 48 - the prepared bank equals the direct synthesis for every name, recipe-backed names included
+  ---
+  duration_ms: 914.557155
+  ...
+# Subtest: FEEL-07 fige les quatre réglages décidés : compresseur maître, maintien du duck, voix ennemie, envoi écho
+ok 49 - FEEL-07 fige les quatre réglages décidés : compresseur maître, maintien du duck, voix ennemie, envoi écho
+  ---
+  duration_ms: 1188.166691
+  ...
+# Subtest: un contexte hors ligne injecte tient pour disponible, nest jamais ouvert, relance ni ferme, et api.graph() rend les six noeuds (MIX-11)
+ok 50 - un contexte hors ligne injecte tient pour disponible, nest jamais ouvert, relance ni ferme, et api.graph() rend les six noeuds (MIX-11)
+  ---
+  duration_ms: 1155.513245
+  ...
+# Subtest: FAudio.makeupDb rend le rattrapage automatique du compresseur aux quatre couples mesurés, et chain level:"fixe" le compense après le compresseur (MIX-02)
+ok 51 - FAudio.makeupDb rend le rattrapage automatique du compresseur aux quatre couples mesurés, et chain level:"fixe" le compense après le compresseur (MIX-02)
+  ---
+  duration_ms: 72.752833
+  ...
+# Subtest: le duck de la musique est proportionnel au volume des effets et reste identique bit à bit à effets = 1 (MIX-V2)
+ok 52 - le duck de la musique est proportionnel au volume des effets et reste identique bit à bit à effets = 1 (MIX-V2)
+  ---
+  duration_ms: 561.470682
+  ...
+# Subtest: duck.classes remplace profondeur et tenue cue par cue, et sans l'option le duck est exactement celui d'aujourd'hui (MIX-V1)
+ok 53 - duck.classes remplace profondeur et tenue cue par cue, et sans l'option le duck est exactement celui d'aujourd'hui (MIX-V1)
+  ---
+  duration_ms: 1569.136365
+  ...
+# Subtest: le préréglage Doom de METAL passe par chain et weaponGain : limiteur −9/6/8 sans compensation, rapports du joueur ×1,41, ennemis inchangés (MIX-04)
+ok 54 - le préréglage Doom de METAL passe par chain et weaponGain : limiteur −9/6/8 sans compensation, rapports du joueur ×1,41, ennemis inchangés (MIX-04)
+  ---
+  duration_ms: 1339.76398
+  ...
+# Subtest: une boucle d ambiance au repos est debranchee de son filtre, sans etre arrete, et se rebranche (MIX-07)
+ok 55 - une boucle d ambiance au repos est debranchee de son filtre, sans etre arrete, et se rebranche (MIX-07)
+  ---
+  duration_ms: 495.078641
+  ...
+# Subtest: l annonce du boss abat la musique a 0,38 quel que soit son niveau : fixed ignore cueLevel (MIX-05)
+ok 56 - l annonce du boss abat la musique a 0,38 quel que soit son niveau : fixed ignore cueLevel (MIX-05)
+  ---
+  duration_ms: 707.107027
+  ...
+# Subtest: au repos le contexte se suspend apres 1,5 s, et se reveille a la demande, par start() comme par testMix (MIX-V4)
+ok 57 - au repos le contexte se suspend apres 1,5 s, et se reveille a la demande, par start() comme par testMix (MIX-V4)
+  ---
+  duration_ms: 531.75741
+  ...
+# Subtest: un évènement de jeu prend la musique du secteur, la garde, et la lui rend
+ok 58 - un évènement de jeu prend la musique du secteur, la garde, et la lui rend
+  ---
+  duration_ms: 663.496488
+  ...
+# Subtest: laccueil et la pause gardent la main sur la musique adaptative
+not ok 59 - laccueil et la pause gardent la main sur la musique adaptative
+  ---
+  duration_ms: 687.164739
+  location: '/home/m4d135/metal-chantier/voies/finition/checks/audio.test.mjs:1071:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    la demande faite en pause est honorée à la reprise
+
+    '0' !== 'calm'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'calm'
+  actual: '0'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/m4d135/metal-chantier/voies/finition/checks/audio.test.mjs:1087:10)
+    async Test.run (node:internal/test_runner/test:935:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: sans audio ni FImuse, la demande de musique reste sans danger
+ok 60 - sans audio ni FImuse, la demande de musique reste sans danger
+  ---
+  duration_ms: 670.514409
+  ...
+# Subtest: la simulation amène la meute, le colosse et lacier tenu
+ok 61 - la simulation amène la meute, le colosse et lacier tenu
+  ---
+  duration_ms: 1662.629757
+  ...
+1..61
+# tests 61
+# suites 0
+# pass 60
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 44665.026749

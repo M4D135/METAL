@@ -1,0 +1,659 @@
+TAP version 13
+# file:///home/m4d135/metal-chantier/voies/finition/checks/audio.test.mjs:1137
+# SyntaxError: Unexpected end of input
+#     at compileSourceTextModule (node:internal/modules/esm/utils:340:16)
+#     at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:102:18)
+#     at \#translate (node:internal/modules/esm/loader:433:12)
+#     at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:480:27)
+#     at async ModuleJob._link (node:internal/modules/esm/module_job:112:19)
+# Node.js v22.11.0
+# Subtest: checks/audio.test.mjs
+not ok 1 - checks/audio.test.mjs
+  ---
+  duration_ms: 42.78294
+  location: '/home/m4d135/metal-chantier/voies/finition/checks/audio.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: V2 shell starts a free left hand, shows physical boss rewards and resumes claimed upgrades exactly once
+ok 2 - V2 shell starts a free left hand, shows physical boss rewards and resumes claimed upgrades exactly once
+  ---
+  duration_ms: 92.736789
+  ...
+# Subtest: V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world
+ok 3 - V1 continuation keeps its route, and a new expedition always selects V2 despite a cached legacy world
+  ---
+  duration_ms: 51.499694
+  ...
+# Subtest: Victory fanfare begins after the result screen has stopped active gameplay voices
+ok 4 - Victory fanfare begins after the result screen has stopped active gameplay voices
+  ---
+  duration_ms: 26.504417
+  ...
+# Subtest: The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen
+ok 5 - The campaign shell advances through eighteen worlds, saves index and finishes only after world eighteen
+  ---
+  duration_ms: 189.624236
+  ...
+# Subtest: A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode
+ok 6 - A campaign checkpoint resumes its exact world while historical saves retain the three-sector mode
+  ---
+  duration_ms: 135.350403
+  ...
+# Subtest: Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly
+ok 7 - Campaign save envelopes reject mismatched biome indices and out-of-range worlds cleanly
+  ---
+  duration_ms: 96.855607
+  ...
+# Subtest: The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal
+ok 8 - The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal
+  ---
+  duration_ms: 108.325605
+  ...
+# Subtest: Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell
+ok 9 - Five-slot loadouts preserve exact ownership and finite pistol state across Continue and a new browser shell
+  ---
+  duration_ms: 116.067389
+  ...
+# Subtest: Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered
+ok 10 - Campaign ammunition stays absent from the scene and pickup hint until its actual weapon is discovered
+  ---
+  duration_ms: 84.436577
+  ...
+# Subtest: A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial
+ok 11 - A real trophy discovery announces once, checkpoints grace, restores quietly and releases its physical trial
+  ---
+  duration_ms: 201.481447
+  ...
+# Subtest: Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together
+ok 12 - Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together
+  ---
+  duration_ms: 46.059076
+  ...
+# Subtest: Mouse and touch left inputs fire the paired weapon and R always dashes
+ok 13 - Mouse and touch left inputs fire the paired weapon and R always dashes
+  ---
+  duration_ms: 110.338678
+  ...
+# Subtest: Both hands and fourth-calibre ammunition survive sector Continue and entry restart
+ok 14 - Both hands and fourth-calibre ammunition survive sector Continue and entry restart
+  ---
+  duration_ms: 47.455211
+  ...
+# Subtest: Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint
+ok 15 - Malformed entry equipment cannot prevent resuming an otherwise valid four-weapon checkpoint
+  ---
+  duration_ms: 124.833087
+  ...
+# Subtest: Physical armor pickups update the HUD, retain excess and keep one flat hundred-point capacity
+ok 16 - Physical armor pickups update the HUD, retain excess and keep one flat hundred-point capacity
+  ---
+  duration_ms: 57.838144
+  ...
+# Subtest: The browser shell carries fractional armor through Continue, resume and entry restart without refilling
+ok 17 - The browser shell carries fractional armor through Continue, resume and entry restart without refilling
+  ---
+  duration_ms: 68.109782
+  ...
+# Subtest: The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations
+ok 18 - The AI menu persists the real CPU/WebNN preference, reports actual fallback and shares one brain across simulations
+  ---
+  duration_ms: 23.449096
+  ...
+# Subtest: The real arsenal HUD locks missing guns, equips found weapons across substeps and reports spent ammunition
+ok 19 - The real arsenal HUD locks missing guns, equips found weapons across substeps and reports spent ammunition
+  ---
+  duration_ms: 58.983992
+  ...
+# Subtest: Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill
+ok 20 - Physical shop UI pauses combat, purchases atomically, saves upgrades and resumes without free refill
+  ---
+  duration_ms: 64.63504
+  ...
+# Subtest: Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue action
+ok 21 - Completing a sector transfers exact ammunition, ownership, credits and upgrades through the browser Continue action
+  ---
+  duration_ms: 49.937065
+  ...
+# Subtest: Reserved enemies remain absent from character geometry and animation until physically deployed
+ok 22 - Reserved enemies remain absent from character geometry and animation until physically deployed
+  ---
+  duration_ms: 25.536889
+  ...
+# Subtest: Continue restores a current-generation checkpoint at its relay
+ok 23 - Continue restores a current-generation checkpoint at its relay
+  ---
+  duration_ms: 24.80939
+  ...
+# Subtest: A real fall below a terrace opens the death screen and Continue restores the safe checkpoint
+ok 24 - A real fall below a terrace opens the death screen and Continue restores the safe checkpoint
+  ---
+  duration_ms: 62.425887
+  ...
+# Subtest: Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall
+ok 25 - Collecting a relay in flight cannot overwrite a safe checkpoint with a fatal fall
+  ---
+  duration_ms: 53.945068
+  ...
+# Subtest: Continue migrates generation 4 to the same sector without losing prior-sector totals
+ok 26 - Continue migrates generation 4 to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 27.635321
+  ...
+# Subtest: Continue migrates generation 3 to the same sector without losing prior-sector totals
+ok 27 - Continue migrates generation 3 to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 21.123112
+  ...
+# Subtest: Continue migrates generation legacy to the same sector without losing prior-sector totals
+ok 28 - Continue migrates generation legacy to the same sector without losing prior-sector totals
+  ---
+  duration_ms: 27.084525
+  ...
+# Subtest: An invalid snapshot restarts its sector and preserves the first migration backup
+ok 29 - An invalid snapshot restarts its sector and preserves the first migration backup
+  ---
+  duration_ms: 18.023774
+  ...
+# Subtest: LOAD-01: an unrecoverable classic point restarts with its exact entry equipment
+ok 30 - LOAD-01: an unrecoverable classic point restarts with its exact entry equipment
+  ---
+  duration_ms: 65.381993
+  ...
+# Subtest: LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment
+ok 31 - LOAD-01: an unrecoverable campaign point restarts with its exact entry equipment
+  ---
+  duration_ms: 61.419734
+  ...
+# Subtest: LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment
+ok 32 - LOAD-01: an unrecoverable campaign-v2 point restarts with its exact entry equipment
+  ---
+  duration_ms: 59.165431
+  ...
+# Subtest: LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment
+ok 33 - LOAD-01: an unrecoverable legacy point restarts with its exact entry equipment
+  ---
+  duration_ms: 54.817926
+  ...
+# Subtest: LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoint
+ok 34 - LOAD-01: a rubble-only bad-size refusal preserves progression and destruction through a copied legacy checkpoint
+  ---
+  duration_ms: 99.245062
+  ...
+# Subtest: LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy checkpoint
+ok 35 - LOAD-01: a rubble-only missing-version refusal preserves progression and destruction through a copied legacy checkpoint
+  ---
+  duration_ms: 90.672852
+  ...
+# Subtest: LOAD-01: a failed fallback launch never replaces the active rejected checkpoint
+ok 36 - LOAD-01: a failed fallback launch never replaces the active rejected checkpoint
+  ---
+  duration_ms: 52.971619
+  ...
+# Subtest: LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+ok 37 - LOAD-01: a failed refused-slot write cannot erase the old active point on a later checkpoint
+  ---
+  duration_ms: 61.313431
+  ...
+# Subtest: LOAD-01: generated l:0 rubble restores exactly after three real rocket breaches
+ok 38 - LOAD-01: generated l:0 rubble restores exactly after three real rocket breaches
+  ---
+  duration_ms: 1881.521458
+  ...
+# Subtest: LOAD-01: generated c:9 rubble restores exactly after three real rocket breaches
+ok 39 - LOAD-01: generated c:9 rubble restores exactly after three real rocket breaches
+  ---
+  duration_ms: 1764.59818
+  ...
+# Subtest: F activates a mechanism once through a multi-substep frame and writes its checkpoint
+ok 40 - F activates a mechanism once through a multi-substep frame and writes its checkpoint
+  ---
+  duration_ms: 24.708415
+  ...
+# Subtest: The contextual button operates a real lift, carries the camera, and saves the arrival
+ok 41 - The contextual button operates a real lift, carries the camera, and saves the arrival
+  ---
+  duration_ms: 104.815616
+  ...
+# Subtest: Options rebind the actual interaction key, persist it, and never start the expedition
+ok 42 - Options rebind the actual interaction key, persist it, and never start the expedition
+  ---
+  duration_ms: 26.490066
+  ...
+# Subtest: Image and mix controls reach the renderer/audio and do not advance a paused simulation
+ok 43 - Image and mix controls reach the renderer/audio and do not advance a paused simulation
+  ---
+  duration_ms: 17.848464
+  ...
+# Subtest: Rupture input launches a physical projectile and sends a traversable breach to the renderer
+ok 44 - Rupture input launches a physical projectile and sends a traversable breach to the renderer
+  ---
+  duration_ms: 106.512404
+  ...
+# Subtest: restoring intact geometry after a breach refreshes rendering even when controller revisions are reused
+ok 45 - restoring intact geometry after a breach refreshes rendering even when controller revisions are reused
+  ---
+  duration_ms: 24.024643
+  ...
+# Subtest: difficulty settings affect the real simulation, persist, and preserve health and campaign state
+ok 46 - difficulty settings affect the real simulation, persist, and preserve health and campaign state
+  ---
+  duration_ms: 23.156153
+  ...
+# Subtest: audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint
+ok 47 - audit: an older four-slot entry cannot block a healthy five-slot campaign checkpoint
+  ---
+  duration_ms: 109.30232
+  ...
+# Subtest: audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources
+ok 48 - audit: a campaign entry cannot block a healthy classic checkpoint or replace its resources
+  ---
+  duration_ms: 39.515332
+  ...
+# Subtest: audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout
+ok 49 - audit: a classic three-slot entry migrates without gifts and remains the exact restart loadout
+  ---
+  duration_ms: 45.080189
+  ...
+# Subtest: audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage
+ok 50 - audit: checkpoint inventory slots inconsistent with its campaign envelope are refused without touching storage
+  ---
+  duration_ms: 57.876737
+  ...
+# Subtest: audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule
+ok 51 - audit: weapon hints follow campaign and classic mode, custom fifth binding and the real first trophy schedule
+  ---
+  duration_ms: 66.01399
+  ...
+# Subtest: LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+ok 52 - LOAD-03: a checkpoint snapshot stays in its frame while JSON and storage wait for one idle write
+  ---
+  duration_ms: 12.2746
+  ...
+# Subtest: LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+ok 53 - LOAD-03: two checkpoints taken in one frame share a single idle write of the latest point
+  ---
+  duration_ms: 8.081078
+  ...
+# Subtest: LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+ok 54 - LOAD-03: pagehide writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 13.332528
+  ...
+# Subtest: LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+ok 55 - LOAD-03: visibilitychange writes a pending checkpoint synchronously and only once
+  ---
+  duration_ms: 12.378535
+  ...
+# Subtest: LOAD-03: finishing the expedition cancels a pending checkpoint write
+ok 56 - LOAD-03: finishing the expedition cancels a pending checkpoint write
+  ---
+  duration_ms: 29.452877
+  ...
+# Subtest: LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+ok 57 - LOAD-03: the deferred write preserves the refused slot immediately before replacing the active point
+  ---
+  duration_ms: 54.185051
+  ...
+# Subtest: LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+ok 58 - LOAD-03: a failed deferred write keeps the session point and reports that it is not stored
+  ---
+  duration_ms: 33.316577
+  ...
+# Subtest: LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+ok 59 - LOAD-03: no checkpoint snapshot is taken in flight, not even when the page hides
+  ---
+  duration_ms: 27.287981
+  ...
+# Subtest: LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+ok 60 - LOAD-03: without requestIdleCallback the write leaves the frame through a zero-delay timer
+  ---
+  duration_ms: 31.809084
+  ...
+# Subtest: LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+ok 61 - LOAD-03: Continue writes a pending point before it reads or replaces the save slots
+  ---
+  duration_ms: 32.554039
+  ...
+# Subtest: LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+ok 62 - LOAD-03: a deferred point keeps the state of its snapshot frame while traps move on
+  ---
+  duration_ms: 37.901792
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-0
+ok 63 - pre-massive browser Continue, save and Continue again: classic-0
+  ---
+  duration_ms: 3552.797736
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-2
+ok 64 - pre-massive browser Continue, save and Continue again: classic-2
+  ---
+  duration_ms: 3751.151477
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-0
+ok 65 - pre-massive browser Continue, save and Continue again: campaign1-0
+  ---
+  duration_ms: 2913.96441
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-9
+ok 66 - pre-massive browser Continue, save and Continue again: campaign1-9
+  ---
+  duration_ms: 3424.116654
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign1-17
+ok 67 - pre-massive browser Continue, save and Continue again: campaign1-17
+  ---
+  duration_ms: 3962.057388
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-0
+ok 68 - pre-massive browser Continue, save and Continue again: campaign2-0
+  ---
+  duration_ms: 3728.72119
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-9
+ok 69 - pre-massive browser Continue, save and Continue again: campaign2-9
+  ---
+  duration_ms: 3735.756911
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-17
+ok 70 - pre-massive browser Continue, save and Continue again: campaign2-17
+  ---
+  duration_ms: 4247.819918
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: classic-rubble
+ok 71 - pre-massive browser Continue, save and Continue again: classic-rubble
+  ---
+  duration_ms: 3839.733144
+  ...
+# Subtest: pre-massive browser Continue, save and Continue again: campaign2-rubble
+ok 72 - pre-massive browser Continue, save and Continue again: campaign2-rubble
+  ---
+  duration_ms: 3485.400059
+  ...
+# Subtest: Fixed browser loop preserves simulation state across 60, 75, 120 and 144 Hz
+ok 73 - Fixed browser loop preserves simulation state across 60, 75, 120 and 144 Hz
+  ---
+  duration_ms: 369.020738
+  ...
+# Subtest: A zero-step browser frame shows mouse aim and retains action edges until consumed once
+ok 74 - A zero-step browser frame shows mouse aim and retains action edges until consumed once
+  ---
+  duration_ms: 14.797224
+  ...
+# Subtest: Browser catch-up is bounded and pausing discards elapsed menu time
+ok 75 - Browser catch-up is bounded and pausing discards elapsed menu time
+  ---
+  duration_ms: 15.175877
+  ...
+# Subtest: the director is a deterministic function of requests and bar calls
+ok 76 - the director is a deterministic function of requests and bar calls
+  ---
+  duration_ms: 1.706564
+  ...
+# Subtest: the brick uses no clock, no randomness, no timer and no host content
+ok 77 - the brick uses no clock, no randomness, no timer and no host content
+  ---
+  duration_ms: 0.116383
+  ...
+# Subtest: vertical layers follow the intensity and only move on a bar boundary
+ok 78 - vertical layers follow the intensity and only move on a bar boundary
+  ---
+  duration_ms: 0.29715
+  ...
+# Subtest: a requested cue finishes its segment, plays the written join, then enters the target
+ok 79 - a requested cue finishes its segment, plays the written join, then enters the target
+  ---
+  duration_ms: 1.459542
+  ...
+# Subtest: an urgent request still finishes the bar in progress, never cuts it
+ok 80 - an urgent request still finishes the bar in progress, never cuts it
+  ---
+  duration_ms: 0.135999
+  ...
+# Subtest: a multi-bar join keeps its written length and is not cut short
+ok 81 - a multi-bar join keeps its written length and is not cut short
+  ---
+  duration_ms: 0.106175
+  ...
+# Subtest: the same event never restarts the music from bar zero
+ok 82 - the same event never restarts the music from bar zero
+  ---
+  duration_ms: 0.274462
+  ...
+# Subtest: a request already queued is not queued twice and a newer request still wins
+ok 83 - a request already queued is not queued twice and a newer request still wins
+  ---
+  duration_ms: 0.238206
+  ...
+# Subtest: a request made during a join is honoured at the end of that join
+ok 84 - a request made during a join is honoured at the end of that join
+  ---
+  duration_ms: 0.523276
+  ...
+# Subtest: without a written join the change still waits for the segment end
+ok 85 - without a written join the change still waits for the segment end
+  ---
+  duration_ms: 0.451213
+  ...
+# Subtest: segments walk the declared order and loop without a gap
+ok 86 - segments walk the declared order and loop without a gap
+  ---
+  duration_ms: 0.138927
+  ...
+# Subtest: intensity is quantized so a noisy signal cannot flap a layer every frame
+ok 87 - intensity is quantized so a noisy signal cannot flap a layer every frame
+  ---
+  duration_ms: 0.091392
+  ...
+# Subtest: descriptors are validated before anything can run
+ok 88 - descriptors are validated before anything can run
+  ---
+  duration_ms: 0.260542
+  ...
+# Subtest: an unknown cue is refused and counted, and reset puts the transport back
+ok 89 - an unknown cue is refused and counted, and reset puts the transport back
+  ---
+  duration_ms: 0.086527
+  ...
+# Subtest: stats expose the transport for the frame-budget bench
+ok 90 - stats expose the transport for the frame-budget bench
+  ---
+  duration_ms: 0.071759
+  ...
+# Subtest: empty cue descriptors fail explicitly before starting the transport
+ok 91 - empty cue descriptors fail explicitly before starting the transport
+  ---
+  duration_ms: 0.054256
+  ...
+# Subtest: the director owns segment bars, layer arrays and transition descriptors after create
+ok 92 - the director owns segment bars, layer arrays and transition descriptors after create
+  ---
+  duration_ms: 0.123135
+  ...
+# Subtest: segment and transition bar counts are finite positive integers
+ok 93 - segment and transition bar counts are finite positive integers
+  ---
+  duration_ms: 0.570492
+  ...
+# Subtest: une secteur calme ne demande aucune pièce
+ok 94 - une secteur calme ne demande aucune pièce
+  ---
+  duration_ms: 4.172018
+  ...
+# Subtest: le combat est demandé dès que lalerte monte, sans attendre
+ok 95 - le combat est demandé dès que lalerte monte, sans attendre
+  ---
+  duration_ms: 2.373327
+  ...
+# Subtest: lalerte qui oscille autour du seuil ne fait pas claquer la musique
+ok 96 - lalerte qui oscille autour du seuil ne fait pas claquer la musique
+  ---
+  duration_ms: 5.886485
+  ...
+# Subtest: le colosse et la victoire sont urgents et ne respectent pas le temps de séjour
+ok 97 - le colosse et la victoire sont urgents et ne respectent pas le temps de séjour
+  ---
+  duration_ms: 0.625835
+  ...
+# Subtest: un changement trop rapide est refusé puis accepté, sans horloge interne
+ok 98 - un changement trop rapide est refusé puis accepté, sans horloge interne
+  ---
+  duration_ms: 4.348865
+  ...
+# Subtest: la mort rend le thème du secteur et la reprise du secteur repart à zéro
+ok 99 - la mort rend le thème du secteur et la reprise du secteur repart à zéro
+  ---
+  duration_ms: 0.539052
+  ...
+# Subtest: la pression du directeur déclenche le combat même sans ennemi visible
+ok 100 - la pression du directeur déclenche le combat même sans ennemi visible
+  ---
+  duration_ms: 0.59918
+  ...
+# Subtest: la même suite détats donne exactement les mêmes demandes
+ok 101 - la même suite détats donne exactement les mêmes demandes
+  ---
+  duration_ms: 3.886676
+  ...
+# Subtest: aucune horloge, aucun aléa, aucun audio dans le chef dorchestre
+ok 102 - aucune horloge, aucun aléa, aucun audio dans le chef dorchestre
+  ---
+  duration_ms: 0.885434
+  ...
+# Subtest: three deterministic, complete ProTracker MODs contain original PCM and evolving scores
+ok 103 - three deterministic, complete ProTracker MODs contain original PCM and evolving scores
+  ---
+  duration_ms: 197.8596
+  ...
+# Subtest: playback reads the exported note periods and the exact signed eight-bit sample data
+ok 104 - playback reads the exported note periods and the exact signed eight-bit sample data
+  ---
+  duration_ms: 3.234296
+  ...
+# Subtest: tracker advances at encoded tempo through multiple patterns and keeps a bounded voice budget
+ok 105 - tracker advances at encoded tempo through multiple patterns and keeps a bounded voice budget
+  ---
+  duration_ms: 12.885619
+  ...
+# Subtest: pause cancels already scheduled notes, resumes on a bar, and does not touch shared context or SFX
+ok 106 - pause cancels already scheduled notes, resumes on a bar, and does not touch shared context or SFX
+  ---
+  duration_ms: 0.380509
+  ...
+# Subtest: late frames resynchronize without an unbounded catch-up burst
+ok 107 - late frames resynchronize without an unbounded catch-up burst
+  ---
+  duration_ms: 0.437789
+  ...
+# Subtest: volume, threat, stage changes and unavailable audio respect lifecycle ownership
+ok 108 - volume, threat, stage changes and unavailable audio respect lifecycle ownership
+  ---
+  duration_ms: 1.104776
+  ...
+# Subtest: public track metadata matches the playable MOD, without loading audio or exposing mutable settings
+ok 109 - public track metadata matches the playable MOD, without loading audio or exposing mutable settings
+  ---
+  duration_ms: 2.385423
+  ...
+# Subtest: arrangements contain genuine stop/drop sections and substantial rhythm guitar sustain
+ok 110 - arrangements contain genuine stop/drop sections and substantial rhythm guitar sustain
+  ---
+  duration_ms: 6.240755
+  ...
+# Subtest: warmup yields between instruments, shares pending work and opens no audio device
+ok 111 - warmup yields between instruments, shares pending work and opens no audio device
+  ---
+  duration_ms: 100.321247
+  ...
+# Subtest: preparing future AudioBuffers never switches the score and avoids first-use buffer work in combat
+ok 112 - preparing future AudioBuffers never switches the score and avoids first-use buffer work in combat
+  ---
+  duration_ms: 11.845003
+  ...
+# Subtest: melodic harmony uses thirds belonging to its dark mode, not arbitrary parallel intervals
+ok 113 - melodic harmony uses thirds belonging to its dark mode, not arbitrary parallel intervals
+  ---
+  duration_ms: 0.709435
+  ...
+# Subtest: the original title thrash starts immediately, evolves for a full loop and leaves the three world scores unchanged
+ok 114 - the original title thrash starts immediately, evolves for a full loop and leaves the three world scores unchanged
+  ---
+  duration_ms: 138.643162
+  ...
+# Subtest: title preparation and playback reuse a separate bank, loop and switch cleanly back to every world
+ok 115 - title preparation and playback reuse a separate bank, loop and switch cleanly back to every world
+  ---
+  duration_ms: 20.205262
+  ...
+# Subtest: title warmup is shared, yields its instrument work and needs no audio device
+ok 116 - title warmup is shared, yields its instrument work and needs no audio device
+  ---
+  duration_ms: 121.353095
+  ...
+# Subtest: sixty seconds of music fade every note cut before its natural end to silence (no click)
+ok 117 - sixty seconds of music fade every note cut before its natural end to silence (no click)
+  ---
+  duration_ms: 4.903805
+  ...
+# Subtest: une graine allonge la boucle au-dela de 240 s sans repeter une fenetre de 4 positions, et le module sans graine reste octet pour octet l arrangement ecrit (MIX-10, MIX-V3)
+ok 118 - une graine allonge la boucle au-dela de 240 s sans repeter une fenetre de 4 positions, et le module sans graine reste octet pour octet l arrangement ecrit (MIX-10, MIX-V3)
+  ---
+  duration_ms: 65.121339
+  ...
+# Subtest: eight adaptive cues join the three worlds and the welcome theme without touching them
+ok 119 - eight adaptive cues join the three worlds and the welcome theme without touching them
+  ---
+  duration_ms: 1296.043383
+  ...
+# Subtest: adaptive scores write real played parts on all five tracks
+ok 120 - adaptive scores write real played parts on all five tracks
+  ---
+  duration_ms: 7.260348
+  ...
+# Subtest: announcement percussion and cue guitars are fresh bipolar waves without a dc offset
+ok 121 - announcement percussion and cue guitars are fresh bipolar waves without a dc offset
+  ---
+  duration_ms: 148.193911
+  ...
+# Subtest: vertical layers enter and leave on the bar as intensity moves (plain director)
+ok 122 - vertical layers enter and leave on the bar as intensity moves (plain director)
+  ---
+  duration_ms: 169.932907
+  ...
+# Subtest: vertical layers enter and leave on the bar as intensity moves (adaptive director)
+ok 123 - vertical layers enter and leave on the bar as intensity moves (adaptive director)
+  ---
+  duration_ms: 27.963032
+  ...
+# Subtest: an event never interrupts the running bar and never restarts the same cue (plain director)
+ok 124 - an event never interrupts the running bar and never restarts the same cue (plain director)
+  ---
+  duration_ms: 52.382071
+  ...
+# Subtest: an event never interrupts the running bar and never restarts the same cue (adaptive director)
+ok 125 - an event never interrupts the running bar and never restarts the same cue (adaptive director)
+  ---
+  duration_ms: 49.395021
+  ...
+# Subtest: warming a cue yields between synthesis phases and opens no audio device
+ok 126 - warming a cue yields between synthesis phases and opens no audio device
+  ---
+  duration_ms: 134.170604
+  ...
+# Subtest: the adaptive director stays optional: music.js alone still walks the worlds
+ok 127 - the adaptive director stays optional: music.js alone still walks the worlds
+  ---
+  duration_ms: 25.847782
+  ...
+1..127
+# tests 127
+# suites 0
+# pass 126
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 44513.461116

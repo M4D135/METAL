@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root=new URL('../',import.meta.url);
-const source=Object.fromEntries(['music','audio','audio-recipes','soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls','loop','schedule','touch','jobs','tasks','host','game'].map(name=>
+const source=Object.fromEntries(['music','audio','audio-recipes','music-director','soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls','loop','schedule','touch','jobs','tasks','host','game'].map(name=>
   [name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 class Param{
   constructor(value=0){this.value=value;this.events=[];}
@@ -432,7 +432,7 @@ function shell({touch=false,settings:storedSettings,recipes=false}={}){
   // The shell receives the same observed real audio instance as the direct API tests.
   // With recipes, game.js's own create() argument builds that instance.
   const createAudio=r.scope.FAudio.create;r.scope.FAudio.create=recipes?options=>{r.createOptions=options;return r.audio=createAudio(options);}:()=>r.audio;
-  for(const name of ['soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls','loop','schedule','touch','jobs','tasks','host'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
+  for(const name of ['music-director','soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls','loop','schedule','touch','jobs','tasks','host'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
   const create=r.scope.FSimulation.create;r.scope.FSimulation.create=value=>{const sim=create(value);simulations.push(sim);return sim;};
   vm.runInContext(source.game,r.scope,{filename:'game.js'});assert.deepEqual(errors,[],'game must initialize without an audio or DOM exception');
   return Object.assign(r,{element,listeners,documentListeners,simulations,downloads,blobs,timers,memory,gesture(name='pointerup',event={}){emit(listeners,name,{type:name,target:element('body'),isTrusted:true,button:0,preventDefault:noop,...event});},visibility(visible){r.scope.document.hidden=!visible;emit(documentListeners,'visibilitychange',{});},focus(){focused=true;emit(listeners,'focus',{});},blur(){focused=false;emit(listeners,'blur',{});},frame(ms=40){now+=ms;if(r.ctx)r.advanceTimers(ms/1000);const batch=frames;frames=[];for(const fn of batch)fn(now);},async flush(){for(let i=0;i<12;i++){await Promise.resolve();this.frame(10);}},async ready(){for(let i=0;i<40;i++){this.frame();await Promise.resolve();await Promise.resolve();if(this.mode()!=='loading')return;}throw new Error('loading did not finish');},mode:()=>element('body').dataset.state||'menu'});
@@ -1037,4 +1037,101 @@ test('au repos le contexte se suspend apres 1,5 s, et se reveille a la demande, 
   await r.audio.start();assert.equal(r.ctx.state,'running','start() ne laisse jamais le contexte endormi');
   await r.audio.testMix({});assert.equal(r.ctx.state,'running','testMix() non plus');
   r.audio.dispose();
+});
+// ---------------------------------------------------------------------------
+// MUS-03/MUS-04 — branchement du mixeur : un évènement de la simulation prend
+// la musique, la garde tant que la situation dure, et la rend au thème du
+// secteur. Le transport n'est jamais interrompu par l'appelant.
+// ---------------------------------------------------------------------------
+const IMUSE=readFileSync(new URL('src/imuse.js',root),'utf8');
+function pump(r,frames){for(let f=0;f<frames;f++){r.audio.tick();r.ctx.advance(1/60);}}
+test('un évènement de jeu prend la musique du secteur, la garde, et la lui rend',async()=>{
+  const r=rig();vm.runInContext(IMUSE,r.scope,{filename:'imuse.js'});
+  await r.audio.start();r.audio.setPlaying(true);r.audio.setMix({music:1});r.audio.tick();
+  assert.equal(r.tracker.stats.cue,'0','le thème du secteur joue par défaut');
+  assert.equal(r.audio.requestMusic('combat',{key:'spawn-1',urgent:true}),true);
+  assert.equal(r.audio.stats.musicCue,'combat');
+  const rows=r.tracker.stats.scheduledRows;
+  pump(r,900);
+  assert.equal(r.tracker.stats.cue,'combat','la pièce demandée est atteinte');
+  assert(r.tracker.stats.scheduledRows>rows+100,'le transport na jamais été coupé par la demande');
+  // syncMusic tourne à chaque image : il ne doit pas arracher la pièce en cours.
+  r.audio.setThreat(.8);r.audio.setPressure(.4);pump(r,300);
+  assert.equal(r.tracker.stats.cue,'combat','le thème du secteur ne reprend pas la main tout seul');
+  assert.equal(r.audio.requestMusic('nope'),false,'une pièce inconnue est refusée, sans retour au monde 0');
+  assert.equal(r.tracker.stats.cue,'combat');
+  assert.equal(r.audio.requestMusic('combat',{key:'spawn-1'}),false,'le même évènement ne relance rien');
+  assert.equal(r.audio.releaseMusic(),true);
+  pump(r,900);
+  assert.equal(r.tracker.stats.cue,'0','le thème du secteur revient, à la mesure suivante');
+  r.audio.setStage(2);pump(r,300);
+  assert.equal(r.tracker.stats.cue,'2');assert.equal(r.tracker.stats.tempo,145);
+  r.audio.dispose();
+});
+test('laccueil et la pause gardent la main sur la musique adaptative',async()=>{
+  const r=rig();vm.runInContext(IMUSE,r.scope,{filename:'imuse.js'});
+  await r.audio.start();r.audio.setPlaying(true);r.audio.tick();
+  assert.equal(r.audio.requestMusic('boss',{key:'boss-1',urgent:true}),true);
+  pump(r,600);assert.equal(r.tracker.stats.cue,'boss');
+  r.audio.setTitlePlaying(true);pump(r,300);
+  assert.equal(r.tracker.stats.cue,'title','laccueil thrash de la 0.8.1 reprend la main');
+  assert.equal(r.audio.stats.musicCue,'','laccueil efface la pièce en cours');
+  assert.equal(r.audio.requestMusic('combat'),false,'pendant laccueil un évènement de jeu ne prend pas la musique');
+  r.audio.setPlaying(true);pump(r,600);
+  assert.equal(r.tracker.stats.cue,'0','une nouvelle partie repart sur le thème du secteur');
+  r.audio.setPlaying(false);pump(r,60);
+  const held=r.tracker.stats.scheduledRows;
+  assert.equal(r.audio.requestMusic('calm',{key:'quiet'}),true);
+  pump(r,120);assert.equal(r.tracker.stats.scheduledRows,held,'en pause la musique ne progresse pas');
+  r.audio.setPlaying(true);assert.equal(r.tracker.stats.cue,'0','la reprise conserve la transition en attente');pump(r,900);
+  assert.equal(r.tracker.stats.cue,'calm','la demande faite en pause est honorée à la reprise');
+  r.audio.dispose();
+});
+test('sans audio ni FImuse, la demande de musique reste sans danger',async()=>{
+  const silent=rig({unavailable:true});await silent.audio.start();
+  assert.equal(silent.audio.requestMusic('combat',{key:'spawn'}),false);
+  assert.equal(silent.audio.releaseMusic(),false,'sans audio il ny a rien à libérer');
+  silent.audio.setStage(1);silent.audio.dispose();
+  const r=rig();await r.audio.start();r.audio.setPlaying(true);r.audio.tick();
+  assert.equal(r.scope.FImuse,undefined,'le mixeur fonctionne avec le seul transport de repli');
+  assert.equal(r.audio.requestMusic('thrash1',{key:'run'}),true);
+  pump(r,900);assert.equal(r.tracker.stats.cue,'thrash1');
+  assert(r.tracker.stats.scheduledNotes>50,'les pièces adaptatives jouent aussi sans FImuse');
+  r.audio.dispose();
+});
+
+// ---------------------------------------------------------------------------
+// MUS-04 — la simulation amène la meute, le colosse et lacier tenu : une
+// alerte qui monte demande la meute, le colosse éveille prend la main, la
+// victoire l'emporte, et le thème du secteur revient quand le calme dure. Le
+// jeu ne coupe jamais le transport lui-même : il demande, FImuse finit la
+// mesure, joue la jointure écrite, puis entre sur la pièce cible.
+// ---------------------------------------------------------------------------
+test('la simulation amène la meute, le colosse et lacier tenu',async()=>{
+  const app=shell();app.element('start').click();await app.ready();app.frame();
+  assert.equal(app.audio.stats.musicCue,'','à lentrée du secteur, le thème du secteur joue');
+  assert.equal(app.tracker.stats.cue,'0');
+  const sim=app.simulations.at(-1),step=sim.step.bind(sim);
+  // Le test n'altère pas la simulation : il force seulement l'observable que
+  // le jeu lit chaque image, exactement comme le ferait une vraie meute.
+  let forced={threat:0,director:{pressure:0}};
+  sim.step=(dt,input)=>{step(dt,input);Object.assign(sim.state,forced);};
+  const run=frames=>{for(let f=0;f<frames;f++)app.frame();};
+  // Une pièce demandée est atteinte au plus tard après la mesure en cours, le
+  // segment entamé et la jointure écrite : quatre mesures au tempo le plus
+  // rapide du répertoire, largement couvert par les images ci-dessous.
+  const enter=(cue,frames)=>{
+    run(frames);
+    assert.equal(app.audio.stats.musicCue,cue,'le jeu a demandé « '+cue+' »');
+    assert.equal(app.tracker.stats.cue,cue,'le transport joue « '+cue+' »');
+  };
+  forced={threat:1,director:{pressure:0}};enter('combat',260);
+  assert(app.tracker.stats.scheduledNotes>0,'la meute joue réellement des notes');
+  assert(app.tracker.stats.layers.split(',').includes('announce'),'à pleine alerte, les percussions dannonce entrent');
+  forced={threat:.6,bossAlive:true,director:{pressure:0}};enter('boss',300);
+  forced={threat:.6,director:{pressure:0}};enter('combat',300);
+  forced={threat:0,director:{pressure:0}};enter('calm',900);
+  forced={threat:0,director:{pressure:0},won:true};enter('victory',300);
+  assert(app.tracker.stats.scheduledNotes>0,'le transport na jamais été coupé par un changement de pièce');
+  app.audio.dispose();
 });

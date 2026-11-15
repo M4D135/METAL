@@ -1,10 +1,10 @@
 {
   "version": "0.9.2",
-  "html_bytes": 1051605,
-  "html_decimal_kb": 1051.61,
-  "html_kib": 1026.96,
-  "gzip_bytes": 326101,
-  "sha256": "65d10f04bce97d011a64223ae02b68b5845073a0ed053d7b6224815202eb8fce",
+  "html_bytes": 1085589,
+  "html_decimal_kb": 1085.59,
+  "html_kib": 1060.15,
+  "gzip_bytes": 335676,
+  "sha256": "920d3ff6bef2a5ff401f15cea9cc388f733adf66d55a470dc4cd0d693c61d75e",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
@@ -14,9 +14,10 @@
     "profiles.js": 7943,
     "world.js": 142602,
     "destruction.js": 30624,
-    "music.js": 31692,
-    "imuse.js": 9844,
-    "audio.js": 71961,
+    "music.js": 58741,
+    "imuse.js": 10260,
+    "music-director.js": 3908,
+    "audio.js": 73613,
     "audio-recipes.js": 4897,
     "soundscape.js": 4991,
     "economy.js": 11561,
@@ -34,6 +35,6 @@
     "jobs.js": 5829,
     "tasks.js": 559,
     "host.js": 2713,
-    "game.js": 119550
+    "game.js": 120442
   }
 }

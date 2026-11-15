@@ -259,3 +259,170 @@ test('une graine allonge la boucle au-dela de 240 s sans repeter une fenetre de 
   assert(muet.music.stats.scheduledNotes>0&&varie.music.stats.scheduledNotes>0,'les deux se jouent');
   assert.equal(varie.music.stats.resyncs,0,'la graine ne provoque aucun resynchronisation');
 });
+// ---------------------------------------------------------------------------
+// MUS-02 — adaptive repertoire: fast thrash, heavy doom, vertical layers and
+// written horizontal joins. The three historical modules and the thrash
+// welcome theme are untouched, byte for byte (hashes checked above); every
+// assertion below covers content added beside them.
+// ---------------------------------------------------------------------------
+const CUE_IDS=Music.cueIds();
+const CUE_ROWS=64,CUE_TRACKS=5;
+const imuseSource=fs.readFileSync(new URL('../src/imuse.js',import.meta.url),'utf8');
+// Two players: the shipped one with FImuse, and music.js alone with its plain
+// fallback transport. Behaviour that both must guarantee is checked on both.
+const adaptiveScope={};vm.runInNewContext(imuseSource,adaptiveScope);vm.runInNewContext(source,adaptiveScope);
+const plainScope={};vm.runInNewContext(source,plainScope);
+function crig(mode){
+  const scope=mode==='adaptive'?adaptiveScope:plainScope;
+  const ctx=new Context(),output=ctx.createGain();
+  return {ctx,output,music:scope.FMusic.create(ctx,output)};
+}
+function cueParse(id){
+  const bytes=Music.getModule(id);
+  assert.equal(bytes.length%(CUE_ROWS*CUE_TRACKS*4),0,'a cue pattern is 64 rows of five tracks');
+  const patterns=bytes.length/(CUE_ROWS*CUE_TRACKS*4),events=[];
+  for(let p=0;p<patterns;p++)for(let row=0;row<CUE_ROWS;row++)for(let track=0;track<CUE_TRACKS;track++){
+    const at=(p*CUE_ROWS+row)*CUE_TRACKS*4+track*4,a=bytes[at],c=bytes[at+2];
+    events.push({p,row,track,sample:(a&240)|(c>>4),period:((a&15)<<8)|bytes[at+1],effect:c&15,param:bytes[at+3]});
+  }
+  return {bytes,patterns,events};
+}
+test('eight adaptive cues join the three worlds and the welcome theme without touching them',async()=>{
+  await Promise.all(CUE_IDS.map(id=>Music.warmup(id)));
+  assert.equal(CUE_IDS.slice().sort().join(','),'boss,calm,combat,doom1,doom2,thrash1,thrash2,victory');
+  const titles=CUE_IDS.map(id=>Music.getTrack(id).title);
+  assert.equal(new Set(titles).size,8,'every cue has its own title');
+  assert.equal(new Set(CUE_IDS.map(id=>bytesHash(Music.getModule(id)))).size,8,'every cue has its own score');
+  const fast=CUE_IDS.filter(id=>/thrash/i.test(Music.getTrack(id).style)),slow=['doom1','doom2'];
+  assert(fast.length>=3,'at least three thrash cues, got '+fast.join(','));
+  assert(fast.every(id=>Music.getTrack(id).bpm>=180),'thrash is fast: '+fast.map(id=>Music.getTrack(id).bpm).join(', '));
+  assert(slow.every(id=>Music.getTrack(id).bpm<=70),'doom is heavy and slow: '+slow.map(id=>Music.getTrack(id).bpm).join(', '));
+  assert(Music.getTrack('calm').bpm<Music.getTrack('doom1').bpm+20,'the idle bed stays in the same slow family');
+  for(const id of CUE_IDS){
+    const track=Music.getTrack(id);
+    assert.equal(track.channels,CUE_TRACKS,'five tracks: rhythm, bass, lead, drums, announcement');
+    assert(track.title.length>3&&track.style.length>3&&track.duration>0);
+    assert(Music.isCue(id)&&!Music.isCue(id+'x'));
+    const fresh={};vm.runInNewContext(source,fresh);
+    assert.equal(bytesHash(fresh.FMusic.getModule(id)),bytesHash(Music.getModule(id)),'synthesis is deterministic across sessions for '+id);
+  }
+  for(const legacy of ['0','1','2','title'])assert.equal(Music.isCue(legacy),false,'the historical keys stay plain stages');
+  const copy=Music.getModule(CUE_IDS[0]);copy.fill(0);
+  assert.equal(bytesHash(Music.getModule(CUE_IDS[0])),bytesHash(Music.getModule(CUE_IDS[0])),'export must not mutate playback state');
+});
+test('adaptive scores write real played parts on all five tracks',async()=>{
+  await Promise.all(CUE_IDS.map(id=>Music.warmup(id)));
+  const parse=id=>cueParse(id);
+  const density=id=>{const s=parse(id);return s.events.filter(e=>e.track===0&&e.period).length/s.patterns;};
+  const fast=CUE_IDS.filter(id=>Music.getTrack(id).bpm>=180),slow=['doom1','doom2'];
+  const mean=list=>list.reduce((n,id)=>n+density(id),0)/list.length;
+  assert(mean(fast)>mean(slow)*2,'thrash picking is far denser than doom: '+mean(fast).toFixed(1)+' against '+mean(slow).toFixed(1));
+  for(const id of CUE_IDS){
+    const {events,patterns}=parse(id),bpm=Music.getTrack(id).bpm,desc=Music.cueDescriptor(id);
+    assert(patterns>=5,'a cue holds its own forms plus written joins, got '+patterns);
+    assert(['tfill','troll','tbridge'].every(t=>desc.segments[t]),'three written joins are offered');
+    assert(Object.keys(desc.segments).length>=desc.order.length+3,'joins sit beside the forms');
+    assert(events.some(e=>e.track===3&&e.sample>=7&&e.sample<=14),'a played drum bar on the fourth track');
+    assert(events.some(e=>e.track===4&&e.sample>=16&&e.sample<=23),'played announcement percussion on the fifth track');
+    assert(events.some(e=>e.track===1&&e.period),'a bass line');
+    assert(events.some(e=>e.track===2&&e.period),'a lead line');
+    assert(events.some(e=>e.track===0&&e.period&&e.sample>=24&&e.sample<=27),'its own picked guitar, not the historical bank');
+    assert(events.every(e=>e.sample<=31),'every note references a generated instrument');
+    assert(events.filter(e=>e.effect===15&&e.param===bpm).length>=patterns,'the encoded tempo is present in every pattern');
+    assert(events.filter(e=>e.period).every(e=>e.period>=113&&e.period<=856),'periods stay in the playable range');
+  }
+});
+test('announcement percussion and cue guitars are fresh bipolar waves without a dc offset',async()=>{
+  await Music.warmup('combat');
+  const r=crig('adaptive');assert.equal(r.music.prepare('combat'),true);
+  assert(r.ctx.buffers.length>10,'the announcement kit and the cue guitars are uploaded, got '+r.ctx.buffers.length);
+  for(const b of r.ctx.buffers){
+    const data=b.getChannelData(0);
+    assert(data.some(v=>v<0)&&data.some(v=>v>0),'every synthesized wave is bipolar');
+    assert(Math.abs(data.reduce((n,v)=>n+v,0)/data.length)<.035,'no dc offset in a synthesized wave');
+  }
+  r.music.dispose();
+});
+for(const mode of ['plain','adaptive'])test(`vertical layers enter and leave on the bar as intensity moves (${mode} director)`,async()=>{
+  await Promise.all(['combat','boss','calm'].map(id=>Music.warmup(id)));
+  const r=crig(mode);r.music.setVolume(1);r.music.setPlaying(true);
+  assert.equal(r.music.setCue('combat',{key:'spawn'}),true);
+  r.music.setThreat(0);run(r,3);
+  const quiet=r.music.stats.layers.split(',');
+  assert(!quiet.includes('announce'),'at zero intensity the announcement kit stays closed');
+  assert(quiet.includes('rhythm')&&quiet.includes('drums'),'the floor of the piece keeps playing at zero intensity');
+  r.music.setThreat(1);run(r,12);
+  const loud=r.music.stats.layers.split(',');
+  assert(loud.includes('announce')&&loud.includes('lead'),'at full intensity the lead and the announcement enter');
+  const gains=r.ctx.nodes.filter(n=>n.kind==='gain'),pans=r.ctx.nodes.filter(n=>n.kind==='pan');
+  const faders=gains.filter(n=>pans.some(p=>n.connections.includes(p)));
+  assert.equal(faders.length,CUE_TRACKS,'one fader per track');
+  const gates=faders.reduce((list,f)=>list.concat(gains.filter(g=>g.connections.includes(f))),[]);
+  assert.equal(gates.length,CUE_TRACKS,'one layer gate per track, between the note envelope and the fader');
+  const moved=gates.filter(g=>g.gain.events.some(e=>e[0]==='target'&&e[1]===0)&&g.gain.events.some(e=>e[0]==='target'&&e[1]===1));
+  assert(moved.length>=2,'at least two layers really closed then reopened, got '+moved.length);
+  // A gate is commanded exactly once per bar, immediately before that bar is
+  // scheduled: never mid-note, never on an event arriving between two bars.
+  const rows=r.music.stats.scheduledRows,starts=gates[0].gain.events.filter(e=>e[0]==='target').length;
+  assert(starts>=Math.floor(rows/16)-1&&starts<=Math.ceil(rows/16)+1,'a layer moves once per bar, never mid-bar: '+starts+' moves for '+rows+' rows');
+  for(const g of gates)assert.equal(g.gain.events.filter(e=>e[0]==='target').length,starts,'all five gates move together on the bar line');
+  r.music.dispose();
+});
+for(const mode of ['plain','adaptive'])test(`an event never interrupts the running bar and never restarts the same cue (${mode} director)`,async()=>{
+  await Promise.all(['combat','boss','calm'].map(id=>Music.warmup(id)));
+  const r=crig(mode);r.music.setVolume(1);r.music.setThreat(1);r.music.setPlaying(true);
+  assert.equal(r.music.setCue('combat',{key:'spawn'}),true);
+  run(r,1);
+  const rows=r.music.stats.scheduledRows,sources=r.ctx.sources.length;
+  assert.equal(r.music.setCue('combat',{key:'spawn'}),false,'the same event does not restart the cue');
+  assert.equal(r.music.setCue('nope',{key:'x'}),false,'an unknown piece is refused instead of falling back to world 0');
+  assert.equal(r.music.setCue('boss',{key:'colossus'}),true);
+  run(r,1);
+  assert(r.music.stats.scheduledRows>rows&&r.ctx.sources.length>sources,'and the transport keeps playing meanwhile');
+  const joins=[];
+  for(let f=0;f<1400;f++){r.music.tick();r.ctx.advance(1/60);const t=r.music.stats.transition;if(!joins.length||joins[joins.length-1]!==t)joins.push(t);}
+  if(mode==='adaptive')assert(joins.some(t=>t==='fill'||t==='roll'||t==='bridge'),'a written join is played between the two pieces: '+joins.join('>'));
+  assert.equal(r.music.stats.cue,'boss','the target is reached');
+  assert(r.music.stats.scheduledNotes>0);
+  assert.equal(r.music.setCue('boss',{key:'colossus'}),false,'and the visit is remembered: the same event does not retrigger it');
+  r.music.dispose();
+});
+test('warming a cue yields between synthesis phases and opens no audio device',async()=>{
+  let yields=0,contexts=0;
+  const cold={setTimeout:fn=>{yields++;queueMicrotask(fn);},AudioContext:class{constructor(){contexts++;}}};
+  vm.runInNewContext(source,cold);
+  const first=cold.FMusic.warmup('boss');
+  assert.equal(first,cold.FMusic.warmup('boss'),'concurrent requests share one synthesis');
+  const meta=await first;
+  assert(yields>=20,'the synthesis is cut into loading-screen sized tasks, got '+yields);
+  assert.equal(contexts,0,'warming never opens an audio device');
+  assert.equal(meta.bytes,cold.FMusic.getModule('boss').length);
+  assert.equal(meta.bpm,152);assert.equal(meta.channels,5);
+  const before=yields;await cold.FMusic.warmup('boss');
+  assert.equal(yields,before,'an already prepared cue replays nothing');
+});
+test('the adaptive director stays optional: music.js alone still walks the worlds',()=>{
+  const ctx=new Context(),music=plainScope.FMusic.create(ctx,ctx.createGain());
+  music.setStage(1);music.setVolume(1);music.setPlaying(true);
+  for(let f=0;f<300;f++){music.tick();ctx.advance(1/60);}
+  assert(music.stats.scheduledNotes>60,'the plain tracker works without FImuse, got '+music.stats.scheduledNotes);
+  assert.equal(music.stats.tempo,170);
+  const seen=new Set();for(let f=0;f<1800;f++){music.tick();ctx.advance(1/60);seen.add(music.cueState().segment);}
+  assert(seen.size>1,'the plain transport still walks the form, not one segment forever: '+[...seen].join(','));
+  music.dispose();
+});
+
+
+test('seeded arrangements remain complete under the adaptive transport and have accurate durations',()=>{
+  const table=Music.descriptorTable(96);
+  for(const key of ['0','1','2'])assert.equal(table[key].order.length,48);
+  for(const id of Music.cueIds()){
+    const d=Music.cueDescriptor(id),bars=d.order.reduce((n,key)=>n+d.segments[key].bars,0);
+    assert.equal(Music.getTrack(id).duration,bars*4*60/d.bpm);
+  }
+  for(const mode of ['adaptive','plain']){
+    const r=crig(mode);r.music.setStage(0,96);r.music.setPlaying(true);
+    run(r,85);assert(r.music.stats.order>=6,'the seeded later cycle is reached: '+r.music.stats.order);
+    assert.equal(r.music.stats.resyncs,0);r.music.dispose();
+  }
+});
