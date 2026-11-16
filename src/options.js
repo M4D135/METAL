@@ -1,7 +1,7 @@
 /* FERRO — persistent preferences and conflict-free keyboard bindings. */
 (function(){
   'use strict';
-  const actions=[['forward','Avancer',['KeyW','KeyZ','ArrowUp']],['back','Reculer',['KeyS','ArrowDown']],['left','À gauche',['KeyA','KeyQ']],['right','À droite',['KeyD']],['turnLeft','Tourner à gauche',['ArrowLeft']],['turnRight','Tourner à droite',['ArrowRight']],['fire','Tirer · main droite',['Enter']],['fireLeft','Tirer · main gauche',['KeyG']],['leftHand','Changer la main gauche',['KeyX']],['sprint','Courir / boost',['ShiftLeft','ShiftRight']],['jump','Sauter / monter',['Space']],['dash','Esquive / descendre',['KeyR']],['pulse','Onde défensive',['KeyE']],['melee','Coup de crosse',['KeyV']],['interact','Interagir',['KeyF']],['weapon1','Mitraillette',['Digit1']],['weapon2','Double pompe',['Digit2']],['weapon3','Lance-roquettes',['Digit3']],['weapon4','Lance-grenades',['Digit4']],['weapon5','Pistolet',['Digit5']],['map','Carte',['KeyM']],['view','Vue 1re / 3e personne',['KeyC']],['pause','Pause',['KeyP']],['weaponNext','Arme suivante',['KeyN']],['switchProfile','Changer de personnage',['KeyT']]];
+  const actions=[['forward','Avancer',['KeyW','KeyZ','ArrowUp']],['back','Reculer',['KeyS','ArrowDown']],['left','À gauche',['KeyA','KeyQ']],['right','À droite',['KeyD']],['turnLeft','Tourner à gauche',['ArrowLeft']],['turnRight','Tourner à droite',['ArrowRight']],['fire','Tirer · main droite',['Enter']],['fireLeft','Tirer · main gauche',['KeyG']],['leftHand','Changer la main gauche',['KeyX']],['sprint','Courir / boost',['ShiftLeft','ShiftRight']],['jump','Sauter / monter',['Space']],['dash','Esquive / descendre',['KeyC']],['pulse','Onde défensive',['KeyE']],['melee','Coup de crosse',['KeyV']],['interact','Interagir',['KeyF']],['weapon1','Mitraillette',['Digit1']],['weapon2','Double pompe',['Digit2']],['weapon3','Lance-roquettes',['Digit3']],['weapon4','Lance-grenades',['Digit4']],['weapon5','Pistolet',['Digit5']],['map','Carte',['KeyM']],['view','Vue 1re / 3e personne',['KeyR']],['pause','Pause',['KeyP']],['weaponNext','Arme suivante',['KeyN']],['switchProfile','Changer de personnage',['KeyT']]];
   const padNames=['A','B','X','Y','LB','RB','LT','RT','Back','Start','L3','R3','Up','Down','Left','Right'];
   // Layout 2 (David, 16/11/2026): LB runs or boosts, L3 is the defensive wave,
   // Y changes character, RB the weapon and R3 the first/third person view.
@@ -27,13 +27,13 @@
     if([1,.85,.75,.66,.5].includes(v.renderScale))out.renderScale=v.renderScale;
     if([0,1,2].includes(v.difficulty))out.difficulty=v.difficulty;
     const bindings=v.bindings&&typeof v.bindings==='object'?{...v.bindings}:null;
-    // C now toggles the view, as in BITUME. Migrate the former default left trigger binding.
+    // R toggles the view (swapped with C, 0.12.5). Migrate the former default left trigger binding.
     if(bindings&&!bindings.view&&!bindings.descend&&JSON.stringify(bindings.fireLeft)===JSON.stringify(['KeyC'])){const used=new Set(Object.entries(bindings).filter(([id])=>id!=='fireLeft').flatMap(([,codes])=>Array.isArray(codes)?codes:[]));bindings.fireLeft=[['KeyG','KeyH','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>k!=='KeyC'&&!used.has(k))||'KeyG'];}
     if(bindings&&v.bindingsVersion!==2&&!bindings.jump&&JSON.stringify(bindings.dash)===JSON.stringify(['Space'])){const used=new Set(Object.entries(bindings).filter(([k])=>k!=='dash').flatMap(([,a])=>Array.isArray(a)?a:[]));bindings.dash=[['KeyR','KeyG','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>!used.has(k))||'KeyR'];}
     if(bindings){
       const candidate={},seen=new Set();let valid=true;
       const added=['view','melee','fireLeft','leftHand','weapon4','weapon5','jump','weaponNext','switchProfile'],used=new Set(actions.flatMap(([id])=>Array.isArray(bindings[id])?bindings[id]:added.includes(id)?[]:out.bindings[id]));
-      for(const id of added)if(bindings[id]===undefined){const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:id==='view'?['KeyC','KeyY','KeyB','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];const key=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(key=>!used.has(key));if(key){out.bindings[id]=[key];used.add(key);}}
+      for(const id of added)if(bindings[id]===undefined){const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:id==='view'?['KeyR','KeyY','KeyB','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];const key=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(key=>!used.has(key));if(key){out.bindings[id]=[key];used.add(key);}}
       for(const [id] of actions){
         const codes=bindings[id]??out.bindings[id];
         if(!Array.isArray(codes)||codes.length<1||codes.length>3){valid=false;break;}
