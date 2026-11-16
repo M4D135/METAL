@@ -15,10 +15,10 @@ test('Older preferences migrate while new controls have safe bounded values',()=
   assert.equal(v.aiAcceleration,'cpu');assert.equal(options.normalize({aiAcceleration:'auto'}).aiAcceleration,'auto');assert.equal(options.normalize({aiAcceleration:'cpu'}).aiAcceleration,'cpu');assert.equal(options.normalize({aiAcceleration:'npu-active'}).aiAcceleration,'cpu');
 });
 test('Rebinding changes the real input map, preserves other actions and survives JSON storage',()=>{
-  const a=options.defaults(),r=options.assign(a.bindings,'interact','KeyG');assert.equal(r.ok,true);
+  const a=options.defaults(),r=options.assign(a.bindings,'interact','KeyH');assert.equal(r.ok,true);
   const stored=options.normalize(JSON.parse(JSON.stringify({...a,bindings:r.bindings})));
-  assert.equal(options.matches(stored.bindings,'interact','KeyG'),true);assert.equal(options.matches(stored.bindings,'interact','KeyF'),false);
-  assert.equal(options.down(stored.bindings,new Set(['KeyG']),'interact'),true);assert.equal(options.matches(stored.bindings,'pulse','KeyE'),true);
+  assert.equal(options.matches(stored.bindings,'interact','KeyH'),true);assert.equal(options.matches(stored.bindings,'interact','KeyF'),false);
+  assert.equal(options.down(stored.bindings,new Set(['KeyH']),'interact'),true);assert.equal(options.matches(stored.bindings,'pulse','KeyE'),true);
 });
 test('Conflicts and reserved keys never silently disable another action',()=>{
   const a=options.defaults(),original=JSON.stringify(a);
@@ -28,7 +28,7 @@ test('Conflicts and reserved keys never silently disable another action',()=>{
   assert.equal(options.normalize(tampered).bindings.fire[0],'Enter');
 });
 test('Adding melee preserves an existing custom V binding and finds a free default key',()=>{
-  const old=options.defaults();for(const id of ['melee','fireLeft','leftHand','weapon4'])delete old.bindings[id];old.bindings.interact=['KeyV'];old.bindings.fire=['KeyC'];
+  const old=options.defaults();for(const id of ['descend','melee','fireLeft','leftHand','weapon4'])delete old.bindings[id];old.bindings.interact=['KeyV'];old.bindings.fire=['KeyC'];
   const v=options.normalize(JSON.parse(JSON.stringify(old)));
   assert.deepEqual(Array.from(v.bindings.interact),['KeyV']);assert.deepEqual(Array.from(v.bindings.fire),['KeyC']);
   assert.deepEqual(Array.from(v.bindings.melee),['KeyB']);

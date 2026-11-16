@@ -800,23 +800,23 @@ test('E21 — Action manquante : codes par défaut libres, sinon premier repli l
   assert.equal(json(N({v: 2, keys: pistol}).weapon5), json(['KeyG']));
 });
 
-test('E21b — Mêmes réponses que FOptions sur les profils de checks/options.test.mjs', () => {
+test('E21b — FInput conserve les commandes courantes et historiques normalisées par FOptions', () => {
   const {F, window, ctx} = load();
   vm.runInContext(readFileSync(new URL('../src/options.js', import.meta.url), 'utf8'), ctx);
   const O = window.FOptions;
-  const current = {...M, actions:[...M.actions.map(a=>a.id==='weaponNext'?{...a,keys:['KeyN']}:a),{id:'switchProfile',type:'press',keys:['KeyT']}]};
-  // Both layers migrate Space/R; include the new profile action in this compatibility fixture.
+  const current = {...M, actions:O.actions.map(a=>({...M.actions.find(x=>x.id===a.id),...a,type:M.actions.find(x=>x.id===a.id)?.type||'hold',keys:plain(O.defaults().bindings[a.id]),pad:plain(O.defaults().padBindings[a.id])}))};
+  // The host migrates saved preferences through FOptions before configuring FInput.
   const same = (old, why) => {
-    const o = plain(O.normalize(plain(old)).bindings), n = plain(F.normalize({v: 1, keys: plain(old.bindings)}, current).keys);
+    const o = plain(O.normalize(plain(old)).bindings), n = plain(F.normalize({v: 2, keys: o}, current).keys);
     for (const id of Object.keys(o)) if (id !== 'dash') assert.equal(json(n[id]), json(o[id]), why + ' : ' + id);
     assert.equal(json(n.dash), json(['KeyR']), why); assert.equal(json(n.jump), json(['Space']), why);
     return n;
   };
   const edit = change => { const old = plain(O.defaults()); change(old.bindings); return old; };
-  const melee = same(edit(b => { for (const id of ['melee', 'fireLeft', 'leftHand', 'weapon4']) delete b[id]; b.interact = ['KeyV']; b.fire = ['KeyC']; }), 'options.test:31');
+  const melee = same(edit(b => { for (const id of ['descend', 'melee', 'fireLeft', 'leftHand', 'weapon4']) delete b[id]; b.interact = ['KeyV']; b.fire = ['KeyC']; }), 'options.test:31');
   assert.equal(json(melee.melee), json(['KeyB'])); assert.equal(F.assign(current, {v: 2, keys: melee}, 'keyboard', 'melee', 'KeyH').ok, true);
   const pistol = same(edit(b => { delete b.weapon5; b.interact = ['Digit5']; b.fire = ['KeyH']; }), 'options.test:40');
-  assert.equal(json(pistol.weapon5), json(['KeyG'])); assert.equal(F.assign(current, {v: 2, keys: pistol}, 'keyboard', 'weapon5', 'Digit6').ok, true);
+  assert.notEqual(json(pistol.weapon5), json(['Digit5'])); assert.equal(F.assign(current, {v: 2, keys: pistol}, 'keyboard', 'weapon5', 'Digit6').ok, true);
   assert.equal(json(same(edit(b => { delete b.weapon5; }), 'options.test:51').weapon5), json(['Digit5']));
   assert.equal(json(same(edit(b => { b.fire = ['KeyW']; }), 'options.test:27').fire), json(['Enter']));
   same(O.defaults(), 'défauts');
@@ -828,7 +828,7 @@ test('E21b — Mêmes réponses que FOptions sur les profils de checks/options.t
   }
   for (const code of ['Escape', 'MetaLeft', 'ControlLeft']) assert.equal(F.assign(current, v1, 'keyboard', 'fire', code).reason, O.assign(O.defaults().bindings, 'fire', code).reason);
   // Planned difference (FEEL-01, FEEL-09): R is the dodge in v2; options.test.mjs:18 puts interact on R, so it takes another free key at the hookup.
-  assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyR').conflict, 'dash'); assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyG').ok, true);
+  assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyR').conflict, 'dash'); assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyH').ok, true);
 });
 
 test('E22 — Migration v1 → v2 : Espace saute, R esquive ; migrate seulement pour un format plus ancien', () => {

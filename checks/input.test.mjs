@@ -75,7 +75,7 @@ function shell({touch=false,settings={},bufferMs,requestLock,pointerLockAvailabl
 
 function tap(app,kind='mouse',left=false){
   if(kind==='mouse'){app.mouse(left?2:0);app.mouse(left?2:0,false);}
-  else if(kind==='key'){const code=left?'KeyC':'Enter';app.key(code);app.key(code,false);}
+  else if(kind==='key'){const code=left?'KeyG':'Enter';app.key(code);app.key(code,false);}
   else{const button=app.element(left?'left-fire-button':'fire-button');button.emit('pointerdown',{pointerId:left?2:1,pointerType:'touch'});button.emit('pointerup',{pointerId:left?2:1,pointerType:'touch'});button.emit('lostpointercapture',{pointerId:left?2:1,pointerType:'touch'});}
 }
 
@@ -138,7 +138,7 @@ test('An expired press and key repeat cannot schedule a delayed shot; the buffer
 
 test('A right-hand shot cannot consume a buffered left-hand shot',()=>{
   const app=shell();app.element('left-hand-setting').value='0';app.element('left-hand-setting').emit('change');
-  app.key('KeyC');app.frame(10);app.key('KeyC',false);assert.equal(app.sim.state.shots,1);
+  app.key('KeyG');app.frame(10);app.key('KeyG',false);assert.equal(app.sim.state.shots,1);
   tap(app,'mouse',true);tap(app,'mouse');app.frame(1000/60);assert.equal(app.sim.state.shots,2);
   for(let i=0;i<8;i++)app.frame(1000/60);
   assert.equal(app.sim.state.shots,3);assert.equal(app.sounds.filter(s=>s.name==='shot'&&s.args[0]?.hand==='left').length,2);
@@ -187,8 +187,8 @@ test('The left-hand trigger stays a held action and is never latched as a firear
   const app=shell();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
   assert.equal(app.sim.state.equipment.left,1);assert.equal(app.sim.state.shield,undefined,'the left hand no longer holds a guard');
   tap(app,'key',true);app.frame(20);assert.equal(app.sim.state.shots,1,'one tap fires exactly once');assert.equal(app.sim.state.inventory.ammo[1],34,'the shotgun spends its two shells');
-  app.key('KeyC');for(let i=0;i<90;i++)app.frame(20);assert(app.sim.state.shots>1,'a held trigger keeps firing');
-  app.key('KeyC',false);const held=app.sim.state.shots;for(let i=0;i<90;i++)app.frame(20);assert.equal(app.sim.state.shots,held,'a released trigger never keeps firing');
+  app.key('KeyG');for(let i=0;i<90;i++)app.frame(20);assert(app.sim.state.shots>1,'a held trigger keeps firing');
+  app.key('KeyG',false);const held=app.sim.state.shots;for(let i=0;i<90;i++)app.frame(20);assert.equal(app.sim.state.shots,held,'a released trigger never keeps firing');
 });
 
 test('Thirty small wheel events cross the threshold only once and respect the 150 ms cooldown',()=>{

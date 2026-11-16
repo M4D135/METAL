@@ -11,6 +11,20 @@ function rig(stored={}){
   const press=(p,n,v)=>{const j=w.FInput.PAD_BUTTONS.indexOf(n);p.buttons[j]={value:v,pressed:v>.5};};
   return {w,pads,prefs,c,make,press,tick(dt=1/60){const f=c.frame(dt),s=c.step();return {f,s};}};
 }
+test('C/Space and A/Cross, B/Round provide held flight controls without repeating heavy dodge',()=>{
+ const r=rig(),pad=r.make();r.pads.push(pad);r.tick();
+ assert.equal(r.w.FOptions.down(r.prefs.bindings,new Set(['KeyC']),'descend'),true);
+ assert.equal(r.w.FOptions.down(r.prefs.bindings,new Set(['Space']),'jump'),true);
+ r.press(pad,'A',1);r.press(pad,'B',1);
+ let q=r.tick().s;assert(q.jump&&q.descendHeld&&q.dash);
+ q=r.tick().s;assert(q.jump&&q.descendHeld);assert.equal(q.dash,false);
+ r.c.clear();q=r.tick().s;assert.equal(q.descendHeld,false);assert.equal(q.jump,false);
+ r.press(pad,'B',0);r.press(pad,'A',0);r.tick();r.press(pad,'B',1);assert(r.tick().s.descendHeld);
+});
+test('former default left fire moves off C without resetting custom bindings',()=>{
+ const r=rig(),old=plain(r.prefs);delete old.bindings.descend;old.bindings.fireLeft=['KeyC'];old.bindings.interact=['KeyH'];
+ const migrated=r.w.FOptions.normalize(old);assert.deepEqual(plain(migrated.bindings.descend),['KeyC']);assert.deepEqual(plain(migrated.bindings.fireLeft),['KeyG']);assert.deepEqual(plain(migrated.bindings.interact),['KeyH']);
+});
 test('MASTER tuning, first connected pad, full analog magnitude and bounded curves',()=>{
   const r=rig(),a=r.make(0),b=r.make(1,'DualSense');r.pads.push(a,b);r.press(b,'A',1);assert.equal(r.tick().s.jump,false,'second pad cannot inject actions');
   a.axes=[.07,0,.07,0];let q=r.tick();assert.equal(q.s.moveX,0);assert.equal(q.s.lookX,0);
@@ -43,8 +57,8 @@ test('Old Space dodge migrates to jump without stealing a custom R binding',()=>
 });
 test('Merged host and pad preserve strongest move, add look, and retain every held action',()=>{
   const r=rig(),m=r.w.MetalControls.merge;
-  const a=m({moveX:1,moveY:0,lookX:.2,lookY:-.1,fire:true,jumpHeld:true},{moveX:.5,moveY:.5,lookX:.3,lookY:.2,fireLeft:true,switchProfile:true});
-  assert.deepEqual(plain(a),{moveX:1,moveY:0,lookX:.5,lookY:.1,fire:true,jumpHeld:true,fireLeft:true,sprint:false,dash:false,pulse:false,melee:false,interact:false,switchProfile:true});
+  const a=m({moveX:1,moveY:0,lookX:.2,lookY:-.1,fire:true,jumpHeld:true},{moveX:.5,moveY:.5,lookX:.3,lookY:.2,fireLeft:true,switchProfile:true,descendHeld:false});
+  assert.deepEqual(plain(a),{moveX:1,moveY:0,lookX:.5,lookY:.1,fire:true,jumpHeld:true,fireLeft:true,sprint:false,dash:false,pulse:false,melee:false,interact:false,switchProfile:true,descendHeld:false});
   assert.equal(m({moveX:0,moveY:.2},{moveX:.6,moveY:.8}).moveY,.8);
 });
 test('Menu focus excludes disabled, hidden ancestors and zero rectangles; range sends input',()=>{

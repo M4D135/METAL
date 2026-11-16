@@ -8,7 +8,11 @@ const data=readFileSync(resolve(root,'dist/index.html')),html=data.toString('utf
 assert.equal(data.length,report.html_bytes,'Size report must match build');
 assert.equal(createHash('sha256').update(data).digest('hex'),report.sha256,'Size report SHA must match distributed file');
 assert.ok(!/<(?:script|img|audio|video|link)\b[^>]*(?:src|href)\s*=\s*["'](?:https?:|\/\/)/i.test(html),'No external runtime assets');
-assert.ok(!/\b(?:fetch\s*\(|XMLHttpRequest|WebSocket\s*\(|import\s*\(|@import)/.test(html),'No network-loaded code or assets');
+// The pinned SDK retains upstream unreachable loaders. Its factory always supplies
+// embedded wasmBinary; real initialization without fetch/XHR is tested in FERRO.
+const sdkBlock=/<script[^>]*data-module="ferro\/physx-runtime.js"[^>]*>[\s\S]*?<\/script>/g;
+assert.equal([...html.matchAll(sdkBlock)].length,1,'exactly one embedded WASM runtime');
+assert.ok(!/\b(?:fetch\s*\(|XMLHttpRequest|WebSocket\s*\(|import\s*\(|@import)/.test(html.replace(sdkBlock,'')),'No host network-loaded code or assets');
 assert.ok(!html.includes('/*__CODE__*/')&&!html.includes('/*__STYLE__*/'),'No unresolved build placeholders');
 assert.ok(html.includes('FMath')&&html.includes('FPassages')&&html.includes('FSoundscape')&&html.includes('FSky')&&html.includes('FGPUProfile')&&html.includes('FSimulation')&&html.includes('FRender')&&html.includes('FAudio')&&html.includes('FMotion')&&html.includes('FActors')&&html.includes('FMusic')&&html.includes('FOptions')&&html.includes('FDestruction')&&html.includes('FEffects')&&html.includes('FEconomy')&&html.includes('FBrain'),'Bundled modules must be present');
 const fmathAt=html.indexOf('G.FMath=Object.freeze('),worldReadsAt=html.indexOf('const FMath = window.FMath;');

@@ -7,7 +7,7 @@ function create(settings={}){
   const pointers=new Map(),roles=new Map();
   function clear(){pointers.clear();roles.clear();dx=dy=speed=0;}
   function begin(role,id,x,y,radius=56){
-    if(!['move','look','fire','fireLeft','jump'].includes(role)||!Number.isFinite(id)||roles.has(role)||pointers.has(id)||!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(radius))return false;
+    if(!['move','look','fire','fireLeft','jump','descend'].includes(role)||!Number.isFinite(id)||roles.has(role)||pointers.has(id)||!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(radius))return false;
     const p={role,id,x,y,startX:x,startY:y,cx:x,cy:y,radius:Math.max(32,Math.min(96,radius)),aiming:role==='look',run:false,mx:0,my:0};
     pointers.set(id,p);roles.set(role,p);return true;
   }
@@ -29,7 +29,7 @@ function create(settings={}){
     const seconds=Math.max(.008,Math.min(.05,Number.isFinite(dt)?dt:1/60));
     speed+=(Math.hypot(dx,dy)/seconds-speed)*.5;
     const t=Math.max(0,Math.min(1,(speed-400)/1800)),gain=1+2.2*t*t*(3-2*t)*(tune.touchAccel??1),scale=.004*(tune.sensitivity??1)*gain;
-    const p=roles.get('move'),out={moveX:p?.mx||0,moveY:p?.my||0,sprint:!!p?.run,lookX:dx*scale,lookY:-dy*scale*(tune.invertY?-1:1),fire:roles.has('fire'),fireLeft:roles.has('fireLeft'),jumpHeld:roles.has('jump')};
+    const p=roles.get('move'),out={moveX:p?.mx||0,moveY:p?.my||0,sprint:!!p?.run,lookX:dx*scale,lookY:-dy*scale*(tune.invertY?-1:1),fire:roles.has('fire'),fireLeft:roles.has('fireLeft'),jumpHeld:roles.has('jump'),descendHeld:roles.has('descend')};
     dx=dy=0;return out;
   }
   return {begin,move,end,sample,clear,configure(value){tune=normalize(value);},has:id=>pointers.has(id),role:id=>pointers.get(id)?.role,get aiming(){return ['look','fire','fireLeft'].some(r=>roles.has(r));},get stick(){const p=roles.get('move');return p?{x:p.cx,y:p.cy,dx:p.mx*p.radius,dy:-p.my*p.radius,radius:p.radius,run:p.run}:null;}};

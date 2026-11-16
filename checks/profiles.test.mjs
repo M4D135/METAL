@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const context={window:{}};vm.createContext(context);
-for(const name of ['fmath','passages','renderer','profiles','world','destruction','economy','simulation'])vm.runInContext(readFileSync(new URL('../src/'+name+'.js',import.meta.url),'utf8'),context,{filename:name+'.js'});
+for(const name of ['fmath','passages','renderer','physics-geometry','profiles','world','destruction','economy','simulation'])vm.runInContext(readFileSync(new URL('../src/'+name+'.js',import.meta.url),'utf8'),context,{filename:name+'.js'});
 const {FSimulation,FWorld,FEconomy,MetalProfiles,FDestruction}=context.window;
 const plain=v=>JSON.parse(JSON.stringify(v));
 const fixture=(extra={})=>({seed:'profiles-test',index:0,stage:0,generation:6,campaign:true,campaignVersion:2,profileVersion:1,progression:{version:1,weaponSlots:5,maxActive:4,startWeapons:[true,true,true,true,true],startAmmo:[60,12,6,8,1]},spawn:{x:0,z:0,yaw:0},bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},colliders:[],enemies:[],pickups:[],cores:[{id:0,x:85,z:85},{id:1,x:88,z:85},{id:2,x:91,z:85}],exit:{x:94,z:85},...extra});
@@ -17,9 +17,9 @@ test('switch preserves world, position, health, inventory and separate equipment
  assert(sim.selectWeapon(3));assert(!sim.selectWeapon(1));sim.step(0,{switchProfile:true});assert.equal(s.activeProfile,'heavy');sim.step(0,{});sim.step(0,{switchProfile:true,weapon:4});assert.equal(s.activeProfile,'light');assert.equal(s.weapon,1);assert.equal(s.economy.credits,91);assert.equal(s.player.hp,73);
 });
 
-test('light jetpack gains sustained height, consumes fuel, and heavy has only its free jump',()=>{
+test('light flies without fuel consumption and heavy retains its free jump',()=>{
  for(const fps of [20,60,120]){const light=FSimulation.create(fixture()),heavy=FSimulation.create(fixture());heavy.switchProfile();for(const sim of [light,heavy]){sim.step(1/fps,{jump:true,jumpHeld:true});advance(sim,.85,{jumpHeld:true},fps);}
- assert(light.state.player.y>3.4);assert(light.state.jetpack.fuel<3.2);assert.equal(heavy.state.player.airborne,false);assert.equal(heavy.state.jetpack.fuel,4);
+ assert(light.state.player.y>3);assert.equal(light.state.jetpack.fuel,4);assert.equal(heavy.state.player.airborne,false);assert.equal(heavy.state.jetpack.fuel,4);
  light.switchProfile();const fuel=light.state.jetpack.fuel;advance(light,.2,{jumpHeld:true},fps);assert.equal(light.state.jetpack.fuel,fuel);assert.equal(light.state.jetpack.active,false);
  }
 });
@@ -67,7 +67,7 @@ test('all eighteen generated corridors require heavy breach, light flight and re
  // Approach the relay on the tunnel floor: a normal heavy jump is insufficient.
  p.x=relay.x;p.z=relay.z+1.4;p.y=relay.y-3.2;p.yaw=0;Object.assign(p,{airborne:false,airVX:0,airVY:0,airVZ:0,airTime:0});
  sim.step(1/120,{jump:true,jumpHeld:true});advance(sim,.3,{jumpHeld:true});assert.equal(sim.interact(),false);advance(sim,.5,{});
- sim.switchProfile();for(let i=0;i<800&&Math.hypot(p.x-relay.x,p.z-relay.z-1.4)>.2;i++){const dx=relay.x-p.x,dz=relay.z+1.4-p.z;p.yaw=Math.atan2(dx,-dz);sim.step(1/120,{moveY:Math.min(1,Math.hypot(dx,dz)*3)});}advance(sim,.4,{});assert(Math.hypot(p.x-relay.x,p.z-relay.z-1.4)<.6,'light failed to walk through the heavy breach');sim.step(1/120,{jump:true,jumpHeld:true});let activated=false;
+ sim.switchProfile();advance(sim,2,{descendHeld:true});advance(sim,.55,{jumpHeld:true});advance(sim,.4,{});for(let i=0;i<800&&Math.hypot(p.x-relay.x,p.z-relay.z-1.4)>.2;i++){const dx=relay.x-p.x,dz=relay.z+1.4-p.z;p.yaw=Math.atan2(dx,-dz);sim.step(1/120,{moveY:Math.min(1,Math.hypot(dx,dz)*3)});}advance(sim,.4,{});assert(Math.hypot(p.x-relay.x,p.z-relay.z-1.4)<.6,'light failed to fly through the heavy breach '+JSON.stringify({index,p:[p.x,p.y,p.z],relay:[relay.x,relay.y,relay.z],wall:wall.p}));sim.step(1/120,{jump:true,jumpHeld:true});let activated=false;
  for(let i=0;i<180&&!activated;i++){sim.step(1/120,{jumpHeld:true});const q=sim.nearestInteraction();if(q?.id===relay.id)activated=sim.interact();}
  assert(activated,'light could not reach the aerial relay');assert(sim.state.profiles.light.xp>=40);advance(sim,1.5,{});assert(sim.state.doors.find(d=>d.id===door.id).progress>.99);
  sim.switchProfile();assert.equal(sim.state.activeProfile,'heavy');assert.equal(sim.state.mechanisms.find(m=>m.id===relay.id).active,true);

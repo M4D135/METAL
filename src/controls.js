@@ -1,11 +1,11 @@
 /* METAL — FPS mapping and feedback. FInput owns devices; simulation receives values only. */
 (function(G){
   'use strict';
-  const holds=new Set(['forward','back','left','right','turnLeft','turnRight','fire','fireLeft','sprint','jump']);
+  const holds=new Set(['forward','back','left','right','turnLeft','turnRight','fire','fireLeft','sprint','jump','dash','descend']);
   function create(prefs,{device='keyboard',getGamepads}={}){
     const actions=G.FOptions.actions.map(a=>({...a,type:holds.has(a.id)?'hold':'press',keys:[],pad:[]}));
     const input=G.FInput.create({actions,sticks:{move:{type:'move',pad:'LS',run:'sprint'},look:{type:'look',pad:'RS'}},device,getGamepads,singlePad:true,menu:true,moveCurve:true,releaseAfterClear:true});
-    let settings=prefs,pending=null,lastEffect=-Infinity,gesture=false;
+    let settings=prefs,pending=null,lastEffect=-Infinity,gesture=false,dashHeld=false;
     function configure(p){
       settings=p;input.configure({v:1,keys:Object.fromEntries(actions.map(a=>[a.id,[]])),pad:p.padBindings,tune:{padYaw:p.padYaw,padPitch:p.padPitch,padDead:p.padDead,moveDead:p.padDead,padCurve:p.padCurve,padInvertY:p.padInvertY,padVibration:p.padVibration,swapSticks:p.padSwapSticks}});
       if(!p.padVibration){pending=null;input.clear();}
@@ -21,8 +21,8 @@
       label(id){return input.device==='gamepad'?input.label(id,'gamepad'):(settings.bindings[id]||[]).map(G.FOptions.keyName).join(' / ');},
       padLabel(id){return input.label(id,'gamepad');},
       frame(dt){const f=input.frame(dt);if(f.device==='gamepad'&&(f.pressed.length||f.nav?.direction||f.nav?.adjust))gesture=true;return f;},
-      step:()=>input.step(),capture:device=>input.capture(device),
-      clear(){pending=null;input.clear();},
+      step(){const q=input.step(),held=!!q.dash;q.descendHeld=held||!!q.descend;q.dash=held&&!dashHeld;dashHeld=held;return q;},capture:device=>input.capture(device),
+      clear(){pending=null;dashHeld=false;input.clear();},
       flush(now,playing){
         if(!playing||input.device!=='gamepad'||!gesture){pending=null;return false;}
         if(!pending||now-lastEffect<40)return false;
@@ -50,7 +50,9 @@
     if((pad.moveX||0)**2+(pad.moveY||0)**2>(host.moveX||0)**2+(host.moveY||0)**2){out.moveX=pad.moveX;out.moveY=pad.moveY;}
     out.lookX=(host.lookX||0)+(pad.lookX||0);out.lookY=(host.lookY||0)+(pad.lookY||0);
     for(const k of ['fire','fireLeft','sprint','dash','pulse','melee','interact','switchProfile'])out[k]=!!(host[k]||pad[k]);
-    out.jumpHeld=!!(host.jumpHeld||pad.jumpHeld||pad.jump);return out;
+    out.jumpHeld=!!(host.jumpHeld||pad.jumpHeld||pad.jump);
+    out.descendHeld=!!(host.descendHeld||pad.descendHeld||pad.descend);
+    return out;
   }
   G.MetalControls={create,merge};
 })(typeof window!=='undefined'?window:globalThis);

@@ -735,6 +735,7 @@ function navigationGraph(cells,width,testEdge){
       locomotion.distance+=distance;locomotion.stridePhase=(locomotion.stridePhase+distance/(2.4+.5*locomotion.sprintBlend)*Math.PI*2)%(Math.PI*2);
     }
     function locomote(dt,input){
+      if(profilesEnabled&&s.activeProfile==='light')return fly(dt,input);
       if(modernMovement)return modernLocomote(dt,input);
       if(p.airborne){
         const x=p.x,z=p.z;airMove(p,dt,input);if(s.dead)return;
@@ -805,6 +806,44 @@ function navigationGraph(cells,width,testEdge){
       locomotion.distance+=travel;
       locomotion.stridePhase=(locomotion.stridePhase+travel/(2.4+.5*locomotion.sprintBlend)*Math.PI*2)%(Math.PI*2);
       if(!travel){locomotion.vx=locomotion.vz=locomotion.speed=locomotion.forward=locomotion.strafe=0;}
+    }
+    // The light robot is a hovering craft. Air velocities are part of the
+    // existing checkpoint format, including inertia during a profile switch.
+    function fly(dt,input){
+      if(!(dt>0))return;
+      p.airborne=true;p.airTime=0;p.padId=null;p.dashing=0;jumpBuffer=coyote=0;
+      if(!clipEscape||!boundaryAt(p.x,p.z))clipEscape=false;
+      const sx=p.x,sy=p.y,sz=p.z,cy=Math.cos(p.yaw),sn=Math.sin(p.yaw),cp=Math.cos(p.pitch),sp=Math.sin(p.pitch);
+      const mx=Number.isFinite(input.moveX)?input.moveX:0,my=Number.isFinite(input.moveY)?input.moveY:0;
+      let wx=cy*mx+sn*cp*my,wy=sp*my+(input.jumpHeld?1:0)-(input.descendHeld?1:0),wz=sn*mx-cy*cp*my;
+      const length=Math.hypot(wx,wy,wz);if(length>1){wx/=length;wy/=length;wz/=length;}
+      let remaining=dt,collided=false;s.jetpack.active=false;jetSoundWait=Math.max(0,jetSoundWait-dt);
+      while(remaining>1e-10){
+        const h=Math.min(remaining,1/120),boost=!!input.sprint&&length>.002&&s.jetpack.fuel>0;
+        const powered=boost?Math.min(h,s.jetpack.fuel):0,speed=motionProfile.walk+(motionProfile.sprint-motionProfile.walk)*powered/h;
+        if(boost){s.jetpack.fuel=Math.max(0,s.jetpack.fuel-powered);if(s.jetpack.fuel<1e-10)s.jetpack.fuel=0;s.jetpack.recharge=.4;s.jetpack.active=true;}
+        else{s.jetpack.recharge=Math.max(0,s.jetpack.recharge-h);if(!s.jetpack.recharge)s.jetpack.fuel=Math.min(s.jetpack.capacity,s.jetpack.fuel+h*1.25);}
+        const decay=Math.exp(-12*h),area=(1-decay)/12,velocity=[p.airVX,p.airVY,p.airVZ],wish=[wx*speed,wy*speed,wz*speed];
+        const delta=wish.map((v,k)=>v*h+(velocity[k]-v)*area);
+        for(let k=0;k<3;k++)velocity[k]=wish[k]+(velocity[k]-wish[k])*decay;
+        const old=[p.x,p.y,p.z],next=old.map((v,k)=>v+delta[k]);
+        if(G.FPhysicsGeometry){
+          const boxes=[...localSolids(p.x,p.z),...doorBoxes,...trapBoxes];
+          for(const l of s.lifts)boxes.push({minX:l.x-l.w/2,maxX:l.x+l.w/2,minY:l.y-.22,maxY:l.y,minZ:l.z-l.d/2,maxZ:l.z+l.d/2});
+          const from=[p.x,p.y+.9,p.z],to=[next[0],next[1]+.9,next[2]],q=G.FPhysicsGeometry.clampBox(from,to,[.28,.9,.28],boxes,{skin:.001},{});
+          next[0]=q.x;next[1]=q.y-.9;next[2]=q.z;collided||=q.hit;
+        }
+        if(next[1]<p.y){const floor=landingAt(p.x,p.z,p.y,.28);if(next[1]<floor)next[1]=floor;}
+        else if(next[1]>p.y)for(const list of [localSolids(p.x,p.z),doorBoxes,trapBoxes])for(const q of list)if(q.minY>=p.y+1.8-1e-7&&q.minY<next[1]+1.8&&discBox(p.x,p.z,.28,q))next[1]=Math.min(next[1],q.minY-1.8);
+        if(!actorBlocked(p,p.x,p.z,.28,next[1])&&!rigid?.blocked(p,p.x,p.z,.28,next[1]))putHeight(p,next[1]);
+        if(ground(next[0],p.z)<=p.y+.02&&!blocked(next[0],p.z,.28,p.y)&&!actorBlocked(p,next[0],p.z,.28,p.y))p.x=next[0];
+        if(ground(p.x,next[2])<=p.y+.02&&!blocked(p.x,next[2],.28,p.y)&&!actorBlocked(p,p.x,next[2],.28,p.y))p.z=next[2];
+        const actual=[p.x,p.y,p.z];for(let k=0;k<3;k++){if(Math.abs(actual[k]-old[k]-delta[k])>1e-7){velocity[k]=0;collided=true;}if(Math.abs(velocity[k])<1e-7)velocity[k]=0;}
+        [p.airVX,p.airVY,p.airVZ]=velocity;remaining-=h;
+      }
+      if(s.jetpack.active&&jetSoundWait<=0){emit('jetpack',{active:true,power:1,x:p.x,y:p.y,z:p.z});jetSoundWait=.12;}
+      velocityX=p.airVX;velocityZ=p.airVZ;const vx=(p.x-sx)/dt,vy=(p.y-sy)/dt,vz=(p.z-sz)/dt;
+      Object.assign(locomotion,{vx,vz,speed:Math.hypot(vx,vy,vz),forward:sn*vx-cy*vz,strafe:cy*vx+sn*vz,moveBlend:0,sprintBlend:s.jetpack.active?1:0,dashBlend:0,accelForward:0,accelStrafe:0,blocked:collided,stridePhase:0});s.moving=locomotion.speed;
     }
     function rayCells(o,d,far,visit){
       // Amanatides-Woo walk over collisionBuckets cells in XZ. visit(cell) returns the current bound.
@@ -2453,11 +2492,20 @@ function navigationGraph(cells,width,testEdge){
       updateBrain(dt);
     }
 
-    function trapShape(t,progress){
+    const trapAnchors=new Map();
+    function trapShape(t,progress,legacy=false){
       if(t.destroyed)return null;
       let x=t.x,y=t.y,z=t.z,h=t.h||.3;
-      if(t.kind==='blade'){const offset=-(t.travel||1.65)*Math.cos(progress*Math.PI*2);if(t.axis==='z')z+=offset;else x+=offset;}
-      else if(t.kind==='press')y+=(t.travel||2.6)*(1-progress);
+      if(!legacy&&t.kind==='press'&&G.FPhysicsGeometry){
+        // Keep the full press stroke clear of authored walls (including the
+        // later profile gate). Repair its mount along the corridor, once; its
+        // dimensions and the rendered/rigid-body pose remain identical.
+        let anchor=trapAnchors.get(t.id);
+        if(!anchor){const travel=t.travel??2.6,axis=t.axis==='z'?2:0,center=[x,y+(travel+h)/2,z];anchor=G.FPhysicsGeometry.clampBox(center,center,[t.w/2,(travel+h)/2,t.d/2],world.colliders,{axis,skin:.002},{});trapAnchors.set(t.id,anchor);}
+        x=anchor.x;z=anchor.z;
+      }
+      if(t.kind==='blade'){const offset=-(t.travel??1.65)*Math.cos(progress*Math.PI*2);if(t.axis==='z')z+=offset;else x+=offset;}
+      else if(t.kind==='press')y+=(t.travel??2.6)*(1-progress);
       else if(t.kind==='spikes'){h*=progress;if(h<.02)return null;}
       else return null;
       return {minX:x-t.w/2,maxX:x+t.w/2,minY:y,maxY:y+h,minZ:z-t.d/2,maxZ:z+t.d/2};
@@ -2465,8 +2513,19 @@ function navigationGraph(cells,width,testEdge){
     function bodyTouches(e,q,margin=0){const y=feet(e),r=(e===p?.28:radius(e))+margin;return q&&q.maxY>y+.06&&q.minY<y+1.8&&discBox(e.x,e.z,r,q);}
     function damageEnvironment(e,amount,x,y,z){if(e===p)hurt(amount,true,world.combatVersion===1?{x,y,z}:null);else damageEnemy(e,amount*.18,{x,y,z,credit:false});}
     function trapPose(t,desired,actors){
-      const target=trapShape(t,desired),previous=t.box||trapShape(t,t.progress),contacts=[];
+      const target=trapShape(t,desired),previous=t.box||trapShape(t,t.kind==='blade'?.25:t.progress),contacts=[];
       if(!target)return {progress:desired,box:null,contacts};
+      if(previous&&G.FPhysicsGeometry&&(t.kind==='blade'||t.kind==='press')){
+        const axes=['X','Y','Z'],axis=t.kind==='press'?1:t.axis==='z'?2:0;
+        const from=axes.map(k=>(previous['min'+k]+previous['max'+k])/2),to=axes.map(k=>(target['min'+k]+target['max'+k])/2),half=axes.map(k=>(target['max'+k]-target['min'+k])/2);
+        if(t.kind==='press'){from[0]=to[0];from[2]=to[2];}
+        // Old checkpoints may start a wheel inside a wall. Its authored rail
+        // centre is the recovery anchor, so it is not pushed outside the level.
+        if(t.kind==='blade'&&solids.some(b=>axes.every(k=>previous['max'+k]>b['min'+k]+1e-9&&previous['min'+k]<b['max'+k]-1e-9)))from[axis]=axis===0?t.x:t.z;
+        const q=G.FPhysicsGeometry.clampBox(from,to,half,solids,{axis,skin:.001},{}),value=[q.x,q.y,q.z][axis],a=axes[axis];
+        target['min'+a]=value-half[axis];target['max'+a]=value+half[axis];
+        if(t.kind==='press')desired=(t.travel??2.6)>0?clamp(1-(target.minY-t.y)/(t.travel??2.6),0,1):0;
+      }
       if(t.kind==='press'&&previous&&target.minY<previous.minY){
         for(const e of actors)if(e.hp>0&&discBox(e.x,e.z,e===p?.28:radius(e),target)&&feet(e)<previous.minY-.01&&feet(e)+1.8>target.minY){target.minY=Math.max(target.minY,feet(e)+1.8);contacts.push(e);}
         target.maxY=target.minY+(t.h||.65);desired=clamp(1-(target.minY-t.y)/(t.travel||2.6),0,1);
@@ -2572,7 +2631,7 @@ function navigationGraph(cells,width,testEdge){
         if(input.jump&&!jumpWasPressed)jumpBuffer=.12;
         jumpWasPressed=!!input.jump;
       }
-      rigid?.carry(p,dt);locomote(dt,input);
+      if(!(profilesEnabled&&s.activeProfile==='light'))rigid?.carry(p,dt);locomote(dt,input);
       if(modernMovement)jumpBuffer=Math.max(0,jumpBuffer-dt);
       if(checkPlayerBounds())return;checkPad(p);
       if(input.melee)melee();
@@ -2737,7 +2796,7 @@ function navigationGraph(cells,width,testEdge){
           require(Array.isArray(a.pipes)&&a.pipes.length===pipes.length&&Array.isArray(a.traps)&&a.traps.length===traps.length);
           pipes=pipes.map((q,i)=>{const v=a.pipes[i],delay=Math.max(.65,Number(q.delay)||1),duration=Math.max(.5,Number(q.duration)||7);require(v&&bool(v.broken)&&bool(v.active)&&bool(v.warning)&&bool(v.hot)&&number(v.age,0,delay+duration+1)&&number(v.remaining,0,delay+duration)&&number(v.damageWait,0,.55)&&integer(v.cycle,-1,1e7));if(candidate&&q.destructibleId)require(v.broken===!pipeAnchored(q,candidate));require(!v.broken||!v.active&&!v.hot&&!v.warning&&v.remaining===0);require(!v.hot||v.active&&v.age>=delay&&v.age<delay+duration);require(!v.warning||v.active&&v.age<delay);return {...q,...pick(v,PIPE)};});
           traps=traps.map((q,i)=>{const v=a.traps[i];require(v&&number(v.progress,0,1)&&number(v.angle,0,Math.PI*2+1e-6)&&number(v.damageWait,0,.55)&&bool(v.hot)&&bool(v.warning)&&bool(v.triggered)&&number(v.triggerAge,0,20)&&integer(v.cycle,-1,1e7)&&number(v.hp,0,18)&&bool(v.destroyed)&&v.destroyed===(v.hp===0));const result={...q,...pick(v,TRAP)};if(candidate&&q.destructibleId&&!candidate.isAlive(q.destructibleId))require(v.destroyed);
-            if(v.box!==null){require(v.box&&['minX','maxX','minY','maxY','minZ','maxZ'].every(k=>number(v.box[k],-1000,1000)));const expected=trapShape(result,v.progress);require(expected&&!v.destroyed);for(const axis of ['X','Y','Z'])require(Math.abs(v.box['max'+axis]-v.box['min'+axis]-(expected['max'+axis]-expected['min'+axis]))<1e-6);if(q.kind==='blade'){const axis=q.axis==='z'?'Z':'X',other=axis==='X'?'Z':'X',center=(v.box['min'+axis]+v.box['max'+axis])/2;require(Math.abs(center-(axis==='X'?q.x:q.z))<=(q.travel||1.65)+1e-6&&Math.abs(v.box.minY-expected.minY)<1e-6&&Math.abs(v.box['min'+other]-expected['min'+other])<1e-6);}else for(const k of ['minX','minY','minZ'])require(Math.abs(v.box[k]-expected[k])<1e-6);if(q.kind==='blade'||q.kind==='press')savedTrapBoxes.push(v.box);}
+            if(v.box!==null){require(v.box&&['minX','maxX','minY','maxY','minZ','maxZ'].every(k=>number(v.box[k],-1000,1000)));const expected=trapShape(result,v.progress);require(expected&&!v.destroyed);for(const axis of ['X','Y','Z'])require(Math.abs(v.box['max'+axis]-v.box['min'+axis]-(expected['max'+axis]-expected['min'+axis]))<1e-6);if(q.kind==='blade'){const axis=q.axis==='z'?'Z':'X',other=axis==='X'?'Z':'X',center=(v.box['min'+axis]+v.box['max'+axis])/2;require(Math.abs(center-(axis==='X'?q.x:q.z))<=(q.travel||1.65)+1e-6&&Math.abs(v.box.minY-expected.minY)<1e-6&&Math.abs(v.box['min'+other]-expected['min'+other])<1e-6);}else {const legacy=trapShape(result,v.progress,true);require(['minX','minY','minZ'].every(k=>Math.abs(v.box[k]-expected[k])<1e-6)||q.kind==='press'&&['minX','minY','minZ'].every(k=>Math.abs(v.box[k]-legacy[k])<1e-6));}if(q.kind==='blade'||q.kind==='press')savedTrapBoxes.push(v.box);}
             else require(v.destroyed||q.kind==='spikes'&&v.progress<.02/(q.h||.3)||q.kind==='floor');return result;});
           require(Array.isArray(a.projectiles)&&a.projectiles.length<=48&&integer(t.explosionSerial,0,1e9)&&integer(t.projectileSerial,0,1e9));const ids=new Set();
           projectiles=a.projectiles.map(q=>{

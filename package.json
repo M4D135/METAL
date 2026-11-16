@@ -1,8 +1,8 @@
 {
   "name": "ferro-procedural-fps",
-  "version": "0.9.2",
+  "version": "0.10.0",
   "private": true,
-  "description": "METAL — procedural FPS: boss weapon drops, eighteen harder worlds, persistent destruction and spatial procedural sound.",
+  "description": "METAL \u2014 procedural FPS: boss weapon drops, eighteen harder worlds, persistent destruction and spatial procedural sound.",
   "scripts": {
     "build": "python3 tools/build.py",
     "render-check": "node tools/render/self-check.mjs",

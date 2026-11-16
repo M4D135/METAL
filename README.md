@@ -94,7 +94,7 @@ Les munitions des quatre armes trouvées sont **finies** : une balle, une ou deu
 
 Vous pouvez équiper **deux armes différentes**, une dans chaque main, ou laisser la main gauche libre. Chaque arme conserve sa cadence, et les armes partagent la chaleur : changer d’emplacement ne contourne pas une surchauffe ou un délai de tir. Les réserves appartiennent au type de munition, sans duplication au changement de main. Les deux montages possèdent leur propre recul amorti, leurs pièces, prises, viseurs et canons.
 
-Le bouclier est sorti du jeu : plus d’énergie, plus de garde qui bloque les tirs, plus de coup de bouclier, plus de ramassage, plus de jauge ni de son. Un dégât qui était bloqué fait maintenant mal normalement. Ce qui reste défensif : **Espace esquive** et donne une courte invulnérabilité, **V frappe à la crosse**, **E déclenche l’onde** sans rien équiper. Le ramassage qui ouvrait chaque monde est devenu un rack de munitions de mitraillette au même endroit.
+Le bouclier est sorti du jeu : plus d’énergie, plus de garde qui bloque les tirs, plus de coup de bouclier, plus de ramassage, plus de jauge ni de son. Un dégât qui était bloqué fait maintenant mal normalement. Ce qui reste défensif : **R esquive** et donne une courte invulnérabilité, **V frappe à la crosse**, **E déclenche l’onde** sans rien équiper. Le ramassage qui ouvrait chaque monde est devenu un rack de munitions de mitraillette au même endroit.
 
 L’onde reste défensive : ses dégâts sont faibles contre les machines ordinaires et n’entament pas le colosse en mode Survie. Le coup de crosse permet de récupérer des ressources sur une machine proche même à zéro munition. Les projectiles et le souffle respectent les couverts, y compris le trajet entre le regard et la bouche de chaque arme.
 
@@ -103,10 +103,13 @@ L’onde reste défensive : ses dégâts sont faibles contre les machines ordina
 | Déplacement | ZQSD / WASD | Joystick gauche |
 | Visée | Souris ; glisser si capture indisponible ; flèches pour tourner | Glisser à droite |
 | Tir main droite | Clic gauche / Entrée | Grand cercle |
-| Tir main gauche | Clic droit / C | Bouton TIR G |
+| Tir main gauche | Clic droit / G | Bouton TIR G |
 | Équipement main gauche | X, ou choix explicite dans le HUD | Bouton main gauche / choix du HUD |
-| Course | Maj | — |
-| Esquive | Espace | Bouton esquive |
+| Course / boost du léger | Maj | Joystick en butée |
+| Saut du lourd / montée du léger | Espace | Saut / Monter |
+| Descente du léger | C | Descendre |
+| Esquive du lourd | R | Bouton esquive |
+| Changer de personnage | T | Bouton de profil |
 | Onde de choc | E | Bouton anneaux |
 | Coup de crosse | V | Bouton Crosse |
 | Commande / ascenseur / atelier | F | Bouton contextuel |
@@ -114,7 +117,7 @@ L’onde reste défensive : ses dégâts sont faibles contre les machines ordina
 | Carte | M | Bouton carte |
 | Pause | Échap / P | Bouton pause |
 
-Les touches sont personnalisables. La marche, la course, l’esquive et le contrôle aérien sont plus rapides qu’en 0.5, avec accélération et freinage amortis ; il n’existe toujours pas de saut libre sur une touche. **Les FPS restent visibles par défaut**, en haut à droite. Le HUD adapte ses emplacements aux seules armes trouvées en campagne, avec ∞ pour le pistolet ; il montre l’équipement gauche, les réserves et plafonds, la vague locale, la chaleur, la santé maximale, le blindage, les crédits et les noyaux, en plus des objectifs, de l’altitude et du boss.
+À la manette : stick gauche pour se déplacer, stick droit pour viser, A/Croix pour sauter ou monter, B/Rond pour esquiver avec le lourd ou descendre avec le léger, L3 pour courir/booster et RB/R1 pour changer de personnage. Les commandes restent personnalisables. La marche, la course, l’esquive et le contrôle aérien sont plus rapides qu’en 0.5, avec accélération et freinage amortis ; le lourd saute avec Espace. Le léger reste le petit vaisseau existant : il vole dans la direction visée, se maintient en altitude sans gravité, monte avec Espace et descend avec C. Seul son boost consomme du carburant. La caméra du léger n'a ni démarche ni bruit de pas. **Les FPS restent visibles par défaut**, en haut à droite. Le HUD adapte ses emplacements aux seules armes trouvées en campagne, avec ∞ pour le pistolet ; il montre l’équipement gauche, les réserves et plafonds, la vague locale, la chaleur, la santé maximale, le blindage, les crédits et les noyaux, en plus des objectifs, de l’altitude et du boss.
 
 ## Armure à ramasser
 

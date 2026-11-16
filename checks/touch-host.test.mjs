@@ -4,6 +4,12 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const c={};vm.createContext(c);for(const m of ['touch','host','input'])vm.runInContext(readFileSync(new URL('../src/'+m+'.js',import.meta.url),'utf8'),c);
 const {FTouch:T,FHost:H,FInput:I}=c;
+test('flight ascent and descent are independent held touch controls and clear on cancellation',()=>{
+ const t=T.create();assert(t.begin('jump',1,10,10));assert(t.begin('descend',2,20,10));
+ assert(t.sample(1/60).jumpHeld);assert(t.sample(1/60).descendHeld);
+ t.end(2);assert(!t.sample(1/60).descendHeld);assert(t.sample(1/60).jumpHeld);
+ t.clear();assert(!t.sample(1/60).jumpHeld);assert(!t.sample(1/60).descendHeld);
+});
 test('pointer ownership, invalid input, cancellation and independent held actions',()=>{
  const t=T.create();for(const args of [['unknown',1,0,0],['move',NaN,0,0],['move',1,0,0,NaN]])assert.equal(t.begin(...args),false);
  assert(t.begin('move',1,50,50));assert.equal(t.begin('move',2,60,60),false);assert(t.begin('fire',2,200,50));assert.equal(t.begin('look',2,0,0),false);

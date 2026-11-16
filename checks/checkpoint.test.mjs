@@ -685,11 +685,11 @@ test('Options rebind the actual interaction key, persist it, and never start the
   assert.equal(app.element('body').dataset.state,'options');assert.equal(app.simulations.at(-1).state.elapsed,0);
   app.element('tab-controls').click();app.element('bind-interact').click();app.key('KeyE');
   assert.match(app.element('binding-status').textContent,/Déjà utilisée/);
-  app.key('KeyG');assert.equal(JSON.parse(app.memory.get('ferro-settings')).bindings.interact[0],'KeyG');
+  app.key('KeyH');assert.equal(JSON.parse(app.memory.get('ferro-settings')).bindings.interact[0],'KeyH');
   app.element('resume').click();app.element('start').click();app.key('KeyF');app.frame(100);app.key('KeyF',false);
   assert.equal(app.simulations.at(-1).state.mechanisms[0].active,false,'Old key must no longer activate');
-  app.key('KeyG');app.frame(100);app.key('KeyG',false);
-  assert.equal(app.simulations.at(-1).state.mechanisms[0].active,true);assert.equal(app.element('interact-key').textContent,'G');
+  app.key('KeyH');app.frame(100);app.key('KeyH',false);
+  assert.equal(app.simulations.at(-1).state.mechanisms[0].active,true);assert.equal(app.element('interact-key').textContent,'H');
 });
 
 test('Image and mix controls reach the renderer/audio and do not advance a paused simulation', () => {
