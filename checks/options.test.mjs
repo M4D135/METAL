@@ -179,3 +179,10 @@ test('The game starts in first person, accepts only first or third person, and s
   assert.equal(options.defaults().controlsHint,true);assert.equal(options.normalize({controlsHint:false}).controlsHint,false);assert.equal(options.normalize({controlsHint:'no'}).controlsHint,true);
   assert.deepEqual(plainPad(options.defaults().bindings.view),['KeyC']);
 });
+test('Music is quieter by default and the former default level migrates once; chosen levels stay',()=>{
+  const d=options.defaults();assert.equal(d.musicVolume,.25);assert.equal(d.effectsVolume,1);assert.equal(d.mixVersion,2);
+  assert.equal(options.normalize({musicVolume:.45}).musicVolume,.25,'old default moves to the new one');
+  assert.equal(options.normalize({musicVolume:.6}).musicVolume,.6,'a personal level stays');
+  assert.equal(options.normalize({musicVolume:.45,mixVersion:2}).musicVolume,.45,'a level chosen after the change stays');
+  const saved={musicVolume:.45};options.normalize(saved);assert.equal(saved.musicVolume,.45,'the stored object is not modified');
+});
