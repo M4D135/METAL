@@ -1,0 +1,50 @@
+{
+  "game": "metal",
+  "repository": "/Users/david/Documents/Codex/2026-11-15/no/work/ferro-reference-metal",
+  "root": "/Users/david/Documents/Codex/2026-11-15/no/work/ferro-reference-metal",
+  "baseCommit": "3a4b067e55a0934af54e054b48fda3bb501964e1",
+  "engineCommit": "781230ad4032ffa41ad5f477a7a3ce8338669a95",
+  "version": "0.3.1",
+  "changedModuleIds": [
+    "render",
+    "webgpu",
+    "backends",
+    "host"
+  ],
+  "moduleCount": 32,
+  "buildScript": "tools/build.py",
+  "html": "dist/index.html",
+  "testGlob": "checks/*.test.mjs",
+  "previousPreparedCommit": "c0434430ada599888f9aea41c89fbdebca54abe3",
+  "changedModuleIdsSincePreparation": [
+    "render",
+    "webgpu"
+  ],
+  "date": "2026-11-16T08:26:38.134497+00:00",
+  "state": "prepared-local",
+  "moduleHashesMatchReference": true,
+  "nodeVersion": "v24.18.0",
+  "testCommand": "node --test --test-concurrency=2 checks/build.test.mjs checks/effects.test.mjs checks/first-person.test.mjs checks/render-view.test.mjs checks/renderer-*.test.mjs checks/surface.test.mjs",
+  "node": {
+    "tests": 63,
+    "pass": 63,
+    "fail": 0,
+    "todo": 0
+  },
+  "testScope": "Targeted renderer/build/host integration checks after the two renderer modules changed. Previous full game suite is recorded in docs/ferro-031/.",
+  "canonicalNodeQualification": {
+    "source": "M4D135/FERRO/docs/performance-031/validation.json",
+    "engineCommit": "781230ad4032ffa41ad5f477a7a3ce8338669a95",
+    "tests": 97,
+    "pass": 96,
+    "fail": 0,
+    "todo": 1,
+    "runBy": "EMPRISE pilot thread"
+  },
+  "adaptersChanged": false,
+  "gpuTestsRun": false,
+  "pushed": false,
+  "deployed": false,
+  "buildBytes": 1468619,
+  "buildSha256": "f7d58f2c8053e681dfe9fec25ce866eab3e082212d2e6ed03a7e70a7a43e43f0"
+}

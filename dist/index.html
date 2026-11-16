@@ -3591,8 +3591,12 @@ G.FSceneReflections={create,shader};
     function drawChunks(accept,shadow=false){let objects=0,count=0;for(const c of chunks.values())if(accept(c)){renderBatch(c.batch,c.buffer,false,shadow);objects+=c.entries.length;count++;}if(shadow){stats.shadowChunks=count;stats.shadowStatic=objects;}else{stats.visibleChunks=count;stats.staticVisible=objects;stats.staticCulled=world.length-objects;}return count;}
     function setWorld(meshes,points,atmosphere,setOptions) {
       const partition=partitionState=partitionWorld(meshes);environment=environmentInfo(atmosphere);world=partition.world;worldIndex=spatialIndex(world,environment,undefined,setOptions);backgroundIndex=spatialIndex(partition.background,environment,undefined,setOptions);lights=points||[];worldBatch=pack([]);shadowLight=null;actorLightPlan=null;stats.staticTotal=world.length+backgroundIndex.entries.length;stats.biome=environment?environment.biome:null;
-      worldRevision=0;stats.worldRevision=0;indexRevision++;viewCache=torchCache=sunCache=null;for(const c of chunks.values())gl.deleteBuffer(c.buffer);chunks.clear();
+      worldRevision=0;stats.worldRevision=0;indexRevision++;viewCache=torchCache=sunCache=null;for(const c of chunks.values())gl.deleteBuffer(c.buffer);chunks.clear();chunkState.index=null;chunkState.epoch=0;
       lampCasters=[];for(const cache of staticCaches){cache.entries=[];cache.batch=pack([]);}
+      // A scene can be detached during loading without another draw. Release
+      // last-frame mesh references while retaining compiled GPU resources.
+      ordinary.length=overlay.length=particles.length=overlayParticles.length=0;packFx([],null,[0,0,0]);
+      pdrLots.length=0;for(const slot of pdrSlots)if(slot){slot.lot=null;slot.version=NaN;}probeBatch=null;probeKey='';
       governor.reset();autoScale=1;
       if(stats.contextLost||disposed) return;
       gl.bindBuffer(gl.ARRAY_BUFFER,worldBuffer);gl.bufferData(gl.ARRAY_BUFFER,worldBatch.values,gl.STATIC_DRAW);
@@ -16657,7 +16661,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.9.2',simHash:'021a26ce4cb214d0f2844e2404ad46fe8915fbd683ac357ac1dc02dcf44d9908',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.9.2',simHash:'1f69dc56a5d229a075e1a09313baefdf316c546aa392fbc36aba909d02febbe2',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){
