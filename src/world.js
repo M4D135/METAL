@@ -665,6 +665,9 @@
     const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
     if(campaign)Object.assign(world,{campaign:true,...(options.campaignVersion===2?{campaignVersion:2}:{}),index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
     if(campaign&&options.combatVersion===1)world.combatVersion=1;
+    // Hordes, humanoid machines, liveries and extra ammunition (16/11/2026):
+    // opt-in, so that earlier saves regenerate exactly the same worlds.
+    if(campaign&&options.campaignVersion===2&&options.hordeVersion===1)world.hordeVersion=1;
     if(campaign)world.campaignProfile=campaignProfile(world);
     detailWorld(world,theme,aperture,doorHeight);
     naturalDetails(world,theme);
@@ -676,7 +679,7 @@
     suppliesWorld(world);
     populate(world);
     armoryWorld(world);
-    if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);}
+    if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);hordeWorld(world);}
     polishTrees(world);
     demolitionMetadata(world,options?.legacyTraps===true);
     if(options?.profiles===true){if(!MetalProfiles)throw new Error("Load profiles.js before creating a class expedition");MetalProfiles.world(world);}
@@ -1661,9 +1664,10 @@
     for(const side of [-1,1])for(const dz of [-20,20]){
       const candidates=[];for(const x of [22,20.5,23.5,21])for(const z of [dz,dz-1.4,dz+1.4,dz-2.8,dz+2.8])candidates.push({x:arena.x+side*x,z:arena.z+z});
       const key=(side<0?'w':'e')+(dz<0?'n':'s');
-      place(arena,'ammo',0,[36,44,52][w.stage],candidates,'boss-cells-'+key);
-      place(arena,'ammo',1,[6,8,10][w.stage],candidates,'boss-shells-'+key);
-      place(arena,'ammo',2,3,candidates,'boss-rockets-'+key);
+      const more=w.hordeVersion===1?2:1;
+      place(arena,'ammo',0,[36,44,52][w.stage]*more,candidates,'boss-cells-'+key);
+      place(arena,'ammo',1,[6,8,10][w.stage]*more,candidates,'boss-shells-'+key);
+      place(arena,'ammo',2,3*more,candidates,'boss-rockets-'+key);
     }
   }
   // The additional equipment occupies clear tiles after the original supply
@@ -1681,7 +1685,7 @@
     const shop=w.shops[1];add(middle,'weapon',4,'grenade-launcher',[{x:shop.x+2.1,z:shop.z},{x:shop.x-2.1,z:shop.z},{x:shop.x,z:shop.z+2.1}]);
     add(late,'ammo',4,'grenades-late');
     const outer=[];for(const x of [-22,-20.5,-23.5])for(const z of [-17.2,-15.8,17.2,15.8])outer.push({x:arena.x+x,z:arena.z+z});
-    add(arena,'ammo',4,'grenades-boss',outer);
+    add(arena,'ammo',w.hordeVersion===1?8:4,'grenades-boss',outer);
   }
   function campaignProfile(w){
     if(w.campaignVersion===2){
@@ -1781,6 +1785,47 @@
   }
   // Armor reserves are real nonblocking pickups. The shell draws their cases
   // and markers; placing them last preserves all existing supplies and trials.
+  // Serious Sam style horde (David, 16/11/2026). Once the largest deep room is
+  // cleared, machines pour in wave after wave from all of its entries:
+  // screaming kamikazes, liquid-metal blades and endoskeleton gunners. Large
+  // ammunition caches wait in that room, and at the guardian arena's gate.
+  function hordeWorld(w){
+    if(w.hordeVersion!==1)return;
+    const depths=roomDepths(w),chapter=w.chapter,arena=w.rooms.find(r=>r.bossArena);
+    const room=w.rooms.filter(r=>r.id&&!r.bossArena&&depths.get(r.id)>=2&&w.encounters.some(q=>q.zoneId===r.id&&!q.requiresTrophy)&&(w.encounterBays.find(b=>b.zoneId===r.id)?.spawnEntries.length||0)>=4).sort((a,b)=>b.w*b.d-a.w*a.d||a.id-b.id)[0];
+    if(!room)return;
+    const bay=w.encounterBays.find(b=>b.zoneId===room.id),base=w.encounters.find(q=>q.zoneId===room.id&&!q.requiresTrophy),homes=bay.reserveEntries||bay.spawnEntries,id='horde-'+room.id;
+    const tail=w.enemies.splice(w.enemies.findIndex(e=>e.boss)),first=w.enemies.length,waves=[],count=3+(chapter>=2?1:0)+(chapter>=4?1:0);
+    for(let wave=0;wave<count;wave++){
+      const roster=[...Array(5+chapter+2*wave).fill('kamikaze'),...Array(1+Math.floor(chapter/2)+Math.floor(wave/2)).fill('endo'),...Array(wave?1+Math.floor(chapter/3):0).fill('blade')],ids=[];
+      for(const [j,variant] of roster.entries()){
+        const home=homes[(j*3+wave)%homes.length];ids.push(w.enemies.length);
+        w.enemies.push({x:home.x,y:home.y,z:home.z,type:1,variant,...(chapter?{livery:chapter}:{}),zoneId:room.id,squadId:5000+wave,encounterId:id,wave,deployed:false,horde:true,role:variant==='blade'?'flanker':variant==='endo'&&j%2?'suppressor':'assault',yaw:FMath.atan2(room.x-home.x,home.z-room.z),drop:variant==='endo'?{weapon:0,amount:8}:variant==='blade'?{weapon:1,amount:3}:false});
+      }
+      waves.push({enemyIds:ids});
+    }
+    const shift=w.enemies.length-first;
+    for(const q of w.encounters)for(const v of q.waves)v.enemyIds=v.enemyIds.map(i=>i>=first?i+shift:i);
+    w.enemies.push(...tail);const bossId=w.enemies.findIndex(e=>e.boss);for(const e of w.enemies)if(e.bossWave)e.bossId=bossId;
+    // The horde pours in along the room's own walls as well as through its
+    // natural entries, so it never waits on a door the machines cannot open.
+    const edge=[];for(let u=-.5;u<=.5001;u+=1/8)for(const [x,z] of [[room.x+u*(room.w-3),room.z-room.d/2+1.5],[room.x+u*(room.w-3),room.z+room.d/2-1.5],[room.x-room.w/2+1.5,room.z+u*(room.d-3)],[room.x+room.w/2-1.5,room.z+u*(room.d-3)]]){const y=floorHeight(w,x,z);if(y!==null&&Math.abs(y-room.y)<.05&&safeSupply(w,x,z,.6)&&edge.every(q=>FMath.hypot2(q.x-x,q.z-z)>3)&&w.pickups.every(q=>FMath.hypot2(q.x-x,q.z-z)>1.5))edge.push({x,y,z,travel:0});}
+    w.encounters.push({id,label:'Déferlante',horde:true,after:base.id,zoneId:room.id,trigger:{...base.trigger},leashRadius:Math.max(60,base.leashRadius||38),maxActive:[12,14,16,18,20,22][chapter],waveGap:3,naturalEntries:true,spawnEntries:[...edge,...bay.spawnEntries.map(q=>({...q}))],waves});
+    w.campaignProfile.garrison=w.enemies.length;w.campaignProfile.horde={room:room.id,waves:count,enemies:waves.reduce((n,q)=>n+q.enemyIds.length,0)};
+    // Ammunition: two full caches in the horde room, one at the arena gate.
+    const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.shops.map(q=>q.terminal),...w.doors,...w.lifts.flatMap(l=>[l,l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(q=>[q,q.target]),...w.encounters.flatMap(q=>q.spawnEntries),...w.enemies.filter(e=>e.deployed!==false)];
+    const drop=(r,label,items,anchors)=>{
+      for(const [weapon,amount] of items){
+        const point=anchors.find(q=>Math.abs(q.x-r.x)<r.w/2-1&&Math.abs(q.z-r.z)<r.d/2-1&&Math.abs(floorHeight(w,q.x,q.z)-r.y)<.01&&safeSupply(w,q.x,q.z,.6)&&reserved.every(a=>FMath.hypot2(q.x-a.x,q.z-a.z)>1.5)&&w.pickups.every(a=>FMath.hypot2(q.x-a.x,q.z-a.z)>1.2));
+        if(!point)continue;w.pickups.push({id:'cache-'+label+'-'+weapon,kind:'ammo',weapon,amount,x:point.x,y:r.y,z:point.z,zoneId:r.id});
+      }
+    };
+    const near=(x,z,radius)=>{const out=[];for(let ring=0;ring<=radius;ring+=1.4)for(let a=0;a<16;a++)out.push({x:x+FMath.cos(a*TAU/16)*ring,z:z+FMath.sin(a*TAU/16)*ring});return out;};
+    const load=[[0,150],[1,24],[2,6],[3,8]];
+    drop(room,'horde-a',load,near(room.x,room.z,7));drop(room,'horde-b',load,near(room.x+room.w/4,room.z-room.d/4,6));
+    const gate=w.corridors.find(c=>c.arenaPath);
+    if(gate&&arena){const dx=gate.x-arena.x,dz=gate.z-arena.z,l=FMath.hypot2(dx,dz)||1;drop(arena,'gate',load,near(arena.x+dx/l*21,arena.z+dz/l*21,5));}
+  }
   function campaignArmor(w){
     const arena=w.rooms.find(r=>r.bossArena),middle=w.shops[1],plans=[
       {id:'armor-start',amount:25,room:w.rooms[0],anchor:w.spawn},
@@ -1839,6 +1884,15 @@
     w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:w.campaignVersion===2?w.campaignProfile.bossHp:w.campaign?Math.max(30,Math.round([130,180,240][w.stage]*w.campaignProfile.bossHpScale)):[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
     for(const [i,e] of w.enemies.entries())e.drop=e.type===3?false:e.weapon==='rocket'?{weapon:2,amount:1}:e.weapon==='grenade'?{weapon:3,amount:1}:e.type===1?{weapon:1,amount:2}:e.type===2||i%2===0?{weapon:0,amount:4}:false;
     if(w.enemies.length!==target-trialCount)throw new Error('Incorrect finite garrison size');
+    if(w.hordeVersion===1){
+      // Varied looks: half of the gunners are chrome endoskeletons; guardians
+      // alternate between the robot giant, a giant endoskeleton and liquid metal.
+      for(const [i,e] of w.enemies.entries())if(e.type===1&&(i+w.index)%2===0)e.variant='endo';
+      const boss=w.enemies[w.enemies.length-1],look=['','endo','liquid'][w.index%3];
+      if(look){boss.bossLook=look;boss.bossName=look==='endo'?['L’Ossature de chrome','L’Ossature d’acier','L’Ossature primordiale'][w.stage]:['Le Vif-Argent','Le Mercure hurlant','Le Métal liquide'][w.stage];}
+      // Each chapter dresses its machines in its own livery.
+      for(const e of w.enemies)if(!e.boss&&w.chapter)e.livery=w.chapter;
+    }
   }
   function isWalkable(world, x, z, radius) {
     const r = radius === undefined ? 0.35 : radius;

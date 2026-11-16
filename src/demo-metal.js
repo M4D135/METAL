@@ -9,7 +9,7 @@
   }
   // Short scenes that open on a fight (David, 16/11/2026): assaults drop the
   // heavy into a guarded room, boss scenes start at the arena gate.
-  function scenes(seed=96,bench=false){const list=[{index:12,boss:true,maxSeconds:100},{index:7,assault:true,maxSeconds:70},{index:17,boss:true,maxSeconds:100},{index:13,assault:true,maxSeconds:70},{index:4,boss:true,maxSeconds:100},{index:11,boss:true,maxSeconds:100}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
+  function scenes(seed=96,bench=false){const list=[{index:4,boss:true,maxSeconds:100},{index:7,assault:true,maxSeconds:80},{index:17,boss:true,maxSeconds:100},{index:13,assault:true,maxSeconds:80},{index:12,boss:true,maxSeconds:100},{index:11,boss:true,maxSeconds:100}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
   function active(scene){return scene.boss?(scene.index%2?'heavy':'light'):'heavy';}
   // A spot where the player's body fits, scanned around a room centre.
   function freeSpot(source,x,y,z){

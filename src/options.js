@@ -8,10 +8,10 @@
   const padDefaults={fire:['RT'],fireLeft:['LT'],sprint:['LB'],jump:['A'],dash:['B'],pulse:['L3'],interact:['X'],weaponNext:['RB'],switchProfile:['Y'],view:['R3'],weapon1:['Up'],weapon2:['Right'],weapon3:['Down'],weapon4:['Left'],map:['Back'],pause:['Start']};
   const padLayout1={sprint:['L3'],pulse:['LB'],melee:['R3'],weaponNext:['Y'],switchProfile:['RB']};
   const allowed=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space|Enter|Backspace|Tab)$/.test(code);
-  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,view:'first',controlsHint:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.25,effectsVolume:1,ambienceVolume:1,mixVersion:2,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:2,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
+  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,view:'first',controlsHint:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,autoTune:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.25,effectsVolume:1,ambienceVolume:1,mixVersion:2,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:2,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
   function normalize(raw,touch){
     const out=defaults(touch),v=raw&&typeof raw==='object'?raw:{};
-    for(const id of ['demo','demoWake','muted','softMotion','controlsHint','invertY','systemPointerAcceleration','shadows','bloom','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks','touchAssist','portraitFov'])if(typeof v[id]==='boolean')out[id]=v[id];
+    for(const id of ['demo','demoWake','muted','softMotion','controlsHint','invertY','systemPointerAcceleration','shadows','bloom','autoTune','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks','touchAssist','portraitFov'])if(typeof v[id]==='boolean')out[id]=v[id];
     if([5,10,30,60].includes(v.demoDelay))out.demoDelay=v.demoDelay;
     if(['off','probe','screen'].includes(v.reflections))out.reflections=v.reflections;
     if(['first','third'].includes(v.view))out.view=v.view;
@@ -21,6 +21,7 @@
     // Mix 2: the former default music level (.45) becomes the quieter default;
     // any other saved level is the player's own choice and stays.
     if(v.mixVersion!==2&&v.musicVolume===.45)out.musicVolume=defaults(touch).musicVolume;
+    if(v.perfVersion===1)out.perfVersion=1;
     if(['off','aim','on'].includes(v.gyroMode))out.gyroMode=v.gyroMode;
     if([-1,0,30,60,120,144].includes(v.fpsLimit))out.fpsLimit=v.fpsLimit;
     if([1,.85,.75,.66,.5].includes(v.renderScale))out.renderScale=v.renderScale;

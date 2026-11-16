@@ -15,6 +15,7 @@
   // réellement stockées dans un maillage — p, s, r — sont des tableaux frais.
   const MAT=new Float64Array(9),MAT2=new Float64Array(9),MAT3=new Float64Array(9),EUL=new Float64Array(3);
   const LIMB_INSET=/(?:thigh|shin|upper-arm|forearm)/;
+  const LIVERIES=[null,[[.45,.38,.27],[.31,.27,.21],[.66,.46,.17]],[[.64,.66,.68],[.40,.43,.47],[.16,.46,.62]],[[.40,.19,.13],[.28,.20,.17],[.72,.55,.24]],[[.12,.13,.14],[.21,.22,.24],[.88,.42,.08]],[[.23,.32,.19],[.17,.22,.15],[.76,.70,.20]]];
   function rotationTo(o,x,y,z){
     const a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);
     o[0]=e*c;o[1]=e*d*b-f*a;o[2]=e*d*a+f*b;o[3]=f*c;o[4]=f*d*b+e*a;o[5]=f*d*a-e*b;o[6]=-d;o[7]=c*b;o[8]=c*a;return o;
@@ -54,6 +55,10 @@
       const scheme=e.bossKind==='siegebreaker'?[[.23,.20,.18],[.37,.29,.22],[.60,.34,.13]]:e.bossKind==='custodian'?[[.43,.46,.43],[.25,.32,.34],[.57,.52,.36]]:[[.25,.29,.25],[.37,.41,.32],[.49,.37,.23]];
       palette.shell=mix(scheme[0],[.66,.49,.30],hurt);palette.edge=scheme[1];palette.trim=scheme[2];
     }
+    // Chapter liveries for the machines (David, 16/11/2026): desert, arctic,
+    // rust, black and toxic. The guardians keep their own schemes.
+    const livery=!giant&&Number.isInteger(e.livery)?LIVERIES[e.livery]:null;
+    if(livery){palette.shell=mix(livery[0],[.61,.54,.43],hurt);palette.edge=livery[1];palette.trim=livery[2];}
     // The playable heavy reuses this frame with its own livery and visor.
     if(options.palette)for(const key of Object.keys(palette))if(Array.isArray(options.palette[key]))palette[key]=options.palette[key];
     const peaceful=e.awareness==='patrol',scanning=e.awareness==='search'||e.awareness==='investigate';
@@ -334,7 +339,135 @@
         limb('detail-custodian-jacket-'+i,upper,upper.map((v,k)=>v+(lower[k]-v)*.55),.14,.14,'trim','cylinder');
       }
     }
-    if(type===0)drone();else if(type===1)heavy();else if(type===2)sentinel();else custodian();
+    // Humanoid machines (David, 16/11/2026): parametric bodies from EMPRISE,
+    // posed joint by joint. 'endo' is a chrome endoskeleton gunner, 'blade' a
+    // liquid-metal runner, 'kamikaze' a headless bomber. Giants ('endo',
+    // 'liquid') stand hunched so that the simulation's weak point sits in the
+    // chest, with guns on the shoulders where the simulation fires from.
+    function humanoid(kind){
+      const H=G.MetalHumanoids,P=H.parts,V=H.pivots,k=giant?1.9:1,K=v=>v*k,bulk=giant?2:1,T=v=>K(v)*bulk,hs=giant?1.3:1,id=e.id||0;
+      const endo=kind==='endo',bomber=kind==='kamikaze',chrome=kind==='blade'||kind==='liquid',engaged=e.awareness==='engage'||!!e.active;
+      const shine=chrome?.05*Math.sin(time*2.7+id*1.3):0;
+      const skin={metal:chrome?[.70+shine,.75+shine,.80+shine]:endo?[.55,.57,.60]:[.19,.20,.21],joint:chrome?[.58,.63,.68]:endo?[.09,.095,.10]:[.10,.085,.07],accent:bomber?[.42,.17,.06]:endo?[.30,.31,.34]:[.86,.89,.93]};
+      if(hurt>0)for(const key of ['metal','accent'])skin[key]=mix(skin[key],[.95,.55,.25],hurt*.6);
+      const running=bomber||kind==='blade'&&engaged||rush,amount=airborne?0:clamp(blend*(running?1.35:1),0,1.5);
+      const crouch=giant&&tellFamily==='ring'?tellPose:0,drop=(giant?.17:0)+crouch*.12;
+      const L=H.gait(phase,amount,drop),R=H.gait(phase+PI,amount,drop),swing=Math.sin(phase)*(running?.6:.25)*blend;
+      const hipY=V.hip+(airborne?-.04:L.bodyY);
+      const lean=stun?-.12:(giant?.30:0)+(running?.24:.05)*blend+(rush?.10:0)+crouch*.15,twist=giant&&tellFamily==='sweep'?.55*Math.sin(PI*tellPose):0;
+      const hips=frame(root,[0,K(hipY),impact*.05],[0,0,stun?Math.sin(time*23)*.04:0]);
+      const chest=frame(hips,[0,K(V.waist-V.hip),0],[-lean-impact*.22,twist,airborne?0:Math.sin(phase)*.03*blend]);
+      const put=(name,part,f,pivot,color,widen=1,grow=1)=>piece(name,part.shape,[K(part.centre[0]-pivot[0])*grow,K(part.centre[1]-pivot[1])*grow,K(part.centre[2]-pivot[2])*grow],[K(part.size[0]*widen)*grow,K(part.size[1])*grow,K(part.size[2]*widen)*grow],color,f);
+      const ball=(name,p,d,color,f,mat=0,glow=0)=>piece(name,'sphere',p,[T(d),T(d),T(d)],color,f,null,mat,glow);
+      const widen=giant?1.2:1,simple=lod===2;
+      // Legs: one gait for every look; the endoskeleton shows bare struts.
+      for(const side of [-1,1]){
+        const i=side<0?0:1,g=side<0?L:R,lp=V.leg(side),kp=V.knee(side),ap=V.ankle(side);
+        const th=frame(hips,[K(lp[0]),0,0],[airborne?.55:g.hip,0,0]),sh=frame(th,[0,K(kp[1]-lp[1]),0],[airborne?-.95:g.knee,0,0]),ft=frame(sh,[0,K(ap[1]-kp[1]),0],[airborne?.3:g.ankle,0,0]);
+        if(simple){limb('hum-leg-'+side,point(th,[0,0,0]),point(ft,[0,0,0]),T(.15),T(.16),endo?skin.joint:skin.metal,'box');box('hum-foot-'+side,[0,K(-.07),K(-.05)],[T(.12),K(.13),K(.25)],skin.joint,ft);continue;}
+        if(endo){
+          cyl('endo-thigh-'+side,[0,K(-.225),0],[T(.065),K(.43),T(.065)],skin.metal,th);
+          cyl('endo-thigh-piston-'+side,[K(side*.05)*bulk,K(-.21),K(.05)*bulk],[T(.032),K(.30),T(.032)],skin.joint,th);
+          ball('endo-hip-'+side,[0,0,0],.11,skin.joint,th);ball('endo-knee-'+side,[0,K(-.45),0],.10,skin.joint,th);
+          for(const dx of [-.026,.026])cyl('endo-shin-'+side+(dx>0?'-b':'-a'),[K(dx)*bulk,K(-.19),0],[T(.034),K(.37),T(.034)],skin.metal,sh);
+          armor('endo-foot-'+side,[0,K(-.075),K(-.055)],[T(.11),K(.07)*bulk,K(.25)*(giant?1.4:1)],skin.metal,ft);
+          if(lod===0)box('endo-toe-'+side,[0,K(-.11),K(-.19)*(giant?1.4:1)],[T(.10),K(.035)*bulk,K(.06)],skin.joint,ft);
+        }else{put('hum-thigh-'+side,P.thigh[i],th,lp,skin.metal,giant?1.15:1);put('hum-shin-'+side,P.shin[i],sh,kp,skin.metal,giant?1.15:1);put('hum-foot-'+side,P.foot[i],ft,ap,bomber?skin.joint:skin.metal,giant?1.2:1);}
+      }
+      // Torso and head.
+      const neck=frame(chest,[0,K(V.neck-V.waist),0],[(giant?.30:0)+(aim?clamp(pitch(1.7)*.6,-.4,.4):bomber?0:.05),0,0]),H2=v=>K(v)*hs;
+      if(simple){
+        box('hum-torso',[0,K(.25),0],[K(.42*widen),K(.50),K(.28*widen)],endo?skin.joint:skin.metal,chest);
+        if(!bomber)ball('hum-head',[0,H2(.17),H2(-.01)],.23*hs/bulk,skin.metal,neck);
+        if(endo||bomber)eye('hum-eye',bomber?[0,K(.02),0]:[0,H2(.20),H2(-.11)],[H2(.12),H2(.03),H2(.03)],bomber?chest:neck);
+      }else if(endo){
+        armor('endo-pelvis',[0,K(-.02),0],[K(.34*widen),T(.13),K(.20*widen)],skin.metal,hips);
+        cyl('endo-spine',[0,K(.22),K(.07)],[T(.05),K(.46),T(.05)],skin.joint,chest);
+        for(let j=0;j<4;j++)ring('endo-rib-'+j,[0,K(.17+.075*j),K(.01)],[K((.40-.025*j)*widen),T(.035),K((.27-.012*j)*widen)],skin.metal,chest);
+        box('endo-sternum',[0,K(.27),K(-.125)*widen],[T(.05),K(.25),T(.03)],skin.metal,chest);
+        if(!giant)ball('endo-core',[0,K(.28),K(.01)],.11,signal,chest,signalMat,emission+.35);
+        for(const side of [-1,1])limb('endo-clavicle-'+side,point(chest,[0,K(.41),K(-.02)]),point(chest,[K(side*.235),K(.395),0]),T(.045),T(.045),skin.metal,'cylinder',chest.b);
+        put('endo-skull',P.skull,neck,[0,V.neck,0],skin.metal,1,hs);
+        for(const side of [-1,1])piece('endo-eye-'+side,'sphere',[H2(side*.038),H2(.20),H2(-.083)],[H2(.028),H2(.022),H2(.016)],[1,.07,.03],neck,null,6,.95+.4*charge);
+        box('endo-jaw',[0,H2(.088),H2(-.045)],[H2(.105),H2(.034),H2(.085)],skin.metal,neck);
+        if(lod===0){box('endo-teeth',[0,H2(.112),H2(-.083)],[H2(.078),H2(.022),H2(.012)],[.80,.80,.76],neck);for(const side of [-1,1])cyl('endo-neck-'+side,[K(side*.032)*bulk,K(.43),K(.015)],[T(.026),K(.12),T(.026)],skin.joint,chest);for(let j=0;j<4;j++)box('endo-vertebra-'+j,[0,K(.04+.1*j),K(.10)],[T(.075),K(.034),T(.06)],skin.metal,chest);}
+      }else{
+        put('hum-pelvis',P.pelvis,hips,[0,V.hip,0],bomber?skin.joint:skin.metal,widen);
+        put('hum-torso',P.torso,chest,[0,V.waist,0],skin.metal,widen);
+        if(bomber){
+          // Headless: a smouldering neck socket instead of a head.
+          cyl('kamikaze-neck',[0,K(.47),0],[K(.11),K(.07),K(.10)],skin.joint,chest);
+          piece('kamikaze-socket','sphere',[0,K(.51),0],[K(.07),K(.04),K(.07)],[1,.36,.06],chest,null,5,.55+.35*Math.abs(Math.sin(time*17+id)));
+          if(lod===0)for(let j=0;j<3;j++)piece('kamikaze-spark-'+j,'sphere',[K(.05*Math.sin(time*9+j*2.1+id)),K(.56+.05*((time*3+j*.33+id*.1)%1)),K(.05*Math.cos(time*7+j))],[K(.022),K(.022),K(.022)],[1,.62,.15],chest,null,5,.9);
+          box('kamikaze-harness',[0,K(.22),K(-.13)],[K(.34),K(.06),K(.04)],skin.accent,chest);
+        }else put('hum-face',P.face,neck,[0,V.neck,0],skin.metal,1,hs);
+      }
+      // Arms: the gunner holds its weapon with both hands; the others swing,
+      // raise a blade, carry two charges, or brace for a giant's attack.
+      if(endo&&!giant){
+        const gun=frame(hips,[.23,1.33-hipY,-.29],[aim?pitch(1.33):-.25,0,0]),launcher=e.weapon==='rocket',grenadier=e.weapon==='grenade';
+        for(const side of [-1,1]){
+          const s=point(chest,[side*.235,1.43-V.waist,0]),h=point(gun,side>0?[.03,-.14,.12]:[-.18,-.07,-.31]),d=h.map((v,j)=>v-s[j]),length=Math.hypot(...d)||1,reach=Math.min(length,.49),along=reach/2,rise=Math.sqrt(Math.max(0,.245*.245-along*along));
+          const dir=d.map(v=>v/length),pole=[side*.6,-.8,.2],dot=pole[0]*dir[0]+pole[1]*dir[1]+pole[2]*dir[2],off=pole.map((v,j)=>v-dir[j]*dot),n=Math.hypot(...off)||1,elbow=s.map((v,j)=>v+dir[j]*along+off[j]/n*rise);
+          if(simple){limb('hum-arm-'+side,s,h,.09,.09,skin.joint,'box');continue;}
+          const world={p:[0,0,0],b:identity,r:[0,0,0]};
+          ball('endo-shoulder-'+side,s,.10,skin.joint,world);
+          limb('endo-upper-arm-'+side,s,elbow,.055,.055,skin.metal,'cylinder');
+          ball('endo-elbow-'+side,elbow,.08,skin.joint,world);
+          limb('endo-forearm-'+side,elbow,h,.05,.065,skin.metal,'cylinder');
+          if(lod===0)limb('endo-forearm-rod-'+side,elbow.map((v,j)=>v+(j===1?-.03:0)),h.map((v,j)=>v+(j===1?-.03:0)),.022,.022,skin.joint,'cylinder');
+          box('endo-hand-'+side,side>0?[.03,-.14,.12]:[-.18,-.07,-.31],[.08,.11,.12],skin.joint,gun);
+        }
+        if(launcher){cyl('rocket-launcher',[0,.045,-.43],[.30,1.08,.30],skin.accent,gun,[PI/2,0,0]);box('launcher-grip',[0,-.17,-.13],[.12,.25,.17],skin.joint,gun);if(!simple)ring('launcher-rear',[0,.045,.13],[.34,.08,.34],skin.metal,gun,[PI/2,0,0]);}
+        else{box('rifle-receiver',[0,.015,-.14],grenadier?[.28,.25,.58]:[.17,.19,.55],skin.joint,gun);cyl('rifle-barrel',[0,.045,-.67],grenadier?[.22,.58,.22]:[.09,.58,.09],skin.metal,gun,[PI/2,0,0]);if(!simple){box('plasma-coil',[0,.13,-.42],[.11,.06,.40],signal,gun);if(grenadier)cyl('grenade-drum',[.09,-.15,-.20],[.34,.30,.34],skin.accent,gun,[0,0,PI/2]);}}
+        if(!simple)cyl('rifle-muzzle',[0,.045,-.97],launcher?[.36,.08,.36]:grenadier?[.28,.08,.28]:[.15,.08,.15],skin.joint,gun,[PI/2,0,0]);
+        return;
+      }
+      const blades=kind==='blade'&&engaged||kind==='liquid'&&giant&&tellFamily==='sweep';
+      for(const side of [-1,1]){
+        const i=side<0?0:1,sp=V.shoulder(side),ep=V.elbow(side),wp=V.wrist(side);
+        let angle=side<0?-swing:swing,bend=running?.55:.15,spread=giant?.22:.06;
+        if(bomber){angle=1.85+.12*Math.sin(phase*2+side);bend=.35;spread=.10;}
+        else if(kind==='blade'&&side>0&&e.windup>0){angle=.3+2.4*charge;bend=.5;}
+        else if(kind==='blade'&&e.attackState==='recover'&&side>0){angle=.25;bend=.05;}
+        if(giant){
+          angle+=.35;bend+=.35;
+          if(tellFamily==='slam'){angle=angle+(2.75-angle)*tellPose;bend=.25+.3*tellPose;}
+          else if(tellFamily==='rocketZone'){angle=angle+(1.2-angle)*tellPose;}
+          else if(tellFamily==='sweep'&&side>0){spread=.2+1.25*tellPose;angle=.4;}
+          else if(crouch){spread=.22+.5*crouch;}
+        }
+        const upper=frame(chest,[K(sp[0])*widen,K(sp[1]-V.waist),K(sp[2])],[angle,0,side*spread]),fore=frame(upper,[K(ep[0]-sp[0]),K(ep[1]-sp[1]),K(ep[2]-sp[2])],[bend,0,0]),wrist=frame(fore,[K(wp[0]-ep[0]),K(wp[1]-ep[1]),K(wp[2]-ep[2])],[0,0,0]);
+        if(simple){limb('hum-arm-'+side,point(upper,[0,0,0]),point(wrist,[0,0,0]),T(.11),T(.11),skin.metal,'box');}
+        else if(endo){
+          ball('endo-shoulder-'+side,[0,0,0],.10,skin.joint,upper);cyl('endo-upper-arm-'+side,[0,K(-.12),0],[T(.055),K(.24),T(.055)],skin.metal,upper);
+          ball('endo-elbow-'+side,[0,0,0],.08,skin.joint,fore);for(const dx of [-.02,.02])cyl('endo-forearm-'+side+(dx>0?'-b':'-a'),[K(dx)*bulk,K(-.115),0],[T(.03),K(.235),T(.03)],skin.metal,fore);
+          put('endo-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
+        }else{put('hum-upper-'+side,P.upper[i],upper,sp,skin.metal,giant?1.15:1);put('hum-fore-'+side,P.fore[i],fore,ep,skin.metal,giant?1.1:1);}
+        if(simple)continue;
+        if(blades)piece('liquid-blade-'+side,'octa',[0,K(-.38),K(-.01)],[K(.11),K(.86),K(.04)],skin.accent,wrist,null,0,.08);
+        else if(!endo)put('hum-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
+        if(bomber){
+          piece('kamikaze-bomb-'+side,'sphere',[0,K(-.17),K(-.07)],[K(.30),K(.30),K(.30)],[.075,.08,.085],wrist);
+          ring('kamikaze-bomb-band-'+side,[0,K(-.17),K(-.07)],[K(.31),K(.05),K(.31)],skin.accent,wrist);
+          piece('kamikaze-fuse-'+side,'sphere',[0,K(-.02),K(-.07)],[K(.05),K(.05),K(.05)],[1,.12,.04],wrist,null,6,(Math.sin(time*(rush?22:9)+side)>0?1.2:.25));
+        }
+      }
+      // Giant looks: guns on the shoulders where the simulation fires from,
+      // and a mount holding the exposed heart to the chest.
+      if(giant){
+        cyl('titan-core-mount',[0,1.93,-.52],[.52,.56,.52],skin.joint,root,[PI/2,0,0]);
+        for(const side of [-1,1]){
+          const up=tellFamily==='rocketZone'?-.75*tellPose:0,mount=frame(root,[side*1.04,2.28,0],[aim?pitch(2.28):up-.08,0,0]);
+          box('titan-gun-yoke-'+side,[-side*.36,.02,.10],[.62,.30,.46],skin.joint,mount);
+          cyl('titan-gun-'+side,[0,0,-.74],[.32,1.48,.32],chrome?skin.metal:'steel',mount,[PI/2,0,0]);
+          ring('titan-gun-rim-'+side,[0,0,-1.46],[.42,.10,.42],skin.joint,mount,[PI/2,0,0]);
+          if(lod<2)piece('titan-gun-glow-'+side,'cylinder',[0,0,-1.50],[.20,.03,.20],signal,mount,[PI/2,0,0],signalMat,emission+.3*charge);
+        }
+      }
+    }
+    const humanLook=G.MetalHumanoids&&!canvas?(giant?(e.bossLook==='endo'||e.bossLook==='liquid'?e.bossLook:''):type===1&&(e.variant==='endo'||e.variant==='blade'||e.variant==='kamikaze')?e.variant:''):'';
+    if(humanLook)humanoid(humanLook);else if(type===0)drone();else if(type===1)heavy();else if(type===2)sentinel();else custodian();
     if(giant){
       const awake=e.bossAwake!==false,open=!!e.weakPointOpen,kind=e.bossKind||'colossus';
       const glow=open?[.20,.90,.80]:kind==='siegebreaker'?[.98,.33,.055]:kind==='custodian'?[.37,.70,.78]:[.89,.61,.20];
@@ -347,7 +480,7 @@
         const a=j*TAU/6,r=open?.51:.27;
         armor('titan-heart-shutter-'+j,[Math.cos(a)*r,1.93+Math.sin(a)*r,-1.035],[.22,.28,.10],'edge',root,[open?.20:0,0,a-PI/2]);
       }
-      if(lod<2){
+      if(lod<2&&!humanLook){
         for(const side of [-1,1]){
           armor('titan-shoulder-buttress-'+side,[side*.83,2.30,.12],[.33,.91,.64],'edge',root,[0,0,-side*.12]);
           box('titan-cheek-'+side,[side*.45,2.86,-.43],[.13,.41,.18],'trim',root,[0,0,-side*.09]);
@@ -367,7 +500,7 @@
         }
         if(kind==='custodian')ring('titan-halo',[0,2.60,.77],[1.22,.11,1.22],'trim',root,[PI/2,0,0]);
       }
-      if(lod===0){
+      if(lod===0&&!humanLook){
         for(const side of [-1,1]){
           for(let j=0;j<3;j++){
             box('titan-rib-'+side+'-'+j,[side*.69,1.66+j*.19,-.60],[.21,.075,.14],'steel',root,[0,0,side*.17]);

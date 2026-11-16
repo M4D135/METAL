@@ -242,7 +242,7 @@ body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes])
   <canvas id="world" tabindex="0" aria-label="METAL — vue du champ de bataille"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.11.3">V0.11.3</b></span></div>
+    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.0">V0.12.0</b></span></div>
     <div class="intro-content">
       <h1>METAL</h1>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
@@ -280,7 +280,7 @@ body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes])
         <section id="pane-image" role="tabpanel" aria-labelledby="tab-image" hidden><p class="option-section-label">AFFICHAGE</p><h3>Votre terrain de jeu.</h3><div class="option-grid">
           <button class="option-toggle" id="quality-toggle">Détail <strong>Auto</strong></button><label class="option-row" for="render-scale"><span>Échelle 3D</span><select id="render-scale"><option value="1">100 % · native</option><option value="0.85">85 %</option><option value="0.75">75 %</option><option value="0.66">66 %</option><option value="0.5">50 %</option></select></label><label class="option-row" for="fps-limit"><span>Cadence visée</span><select id="fps-limit" aria-describedby="fps-effective"><option value="-1">Auto · 60 / 30 FPS</option><option value="0">Sans limite</option><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="120">120 FPS</option><option value="144">144 FPS</option></select></label><p class="option-hint" id="fps-effective" role="status" style="grid-column:1/-1;margin:0">Mesure de la cadence de l’écran…</p>
           <label class="option-slider" for="fov-setting"><span>Champ de vision <output id="fov-value">74°</output></span><input id="fov-setting" type="range" min="60" max="110" step="1"></label><label class="option-slider" for="brightness-setting"><span>Luminosité <output id="brightness-value">100 %</output></span><input id="brightness-setting" type="range" min="70" max="140" step="5"></label>
-          <button class="option-toggle" id="shadows-toggle">Ombres <strong>Activées</strong></button><label class="option-row" for="reflections"><span>Reflets</span><select id="reflections"><option value="off">Éteints</option><option value="probe">Scène locale</option><option value="screen">Scène locale + écran</option></select></label><button class="option-toggle" id="bloom-toggle">Éclat lumineux <strong>Activé</strong></button><button class="option-toggle" id="fps-toggle">Compteur FPS <strong>Visible</strong></button><button class="option-toggle" id="crt-toggle">Filtre écran rétro <strong>Désactivé</strong></button><button class="option-toggle" id="vignette-toggle">Ombre de visière <strong>Activée</strong></button><button class="option-toggle" id="motion-toggle">Mouvements de caméra <strong>Doux</strong></button>
+          <button class="option-toggle" id="shadows-toggle">Ombres <strong>Activées</strong></button><label class="option-row" for="reflections"><span>Reflets</span><select id="reflections"><option value="off">Éteints</option><option value="probe">Scène locale</option><option value="screen">Scène locale + écran</option></select></label><button class="option-toggle" id="bloom-toggle">Éclat lumineux <strong>Activé</strong></button><button class="option-toggle" id="autotune-toggle">Allègement automatique <strong>Activé</strong></button><button class="option-toggle" id="fps-toggle">Compteur FPS <strong>Visible</strong></button><button class="option-toggle" id="crt-toggle">Filtre écran rétro <strong>Désactivé</strong></button><button class="option-toggle" id="vignette-toggle">Ombre de visière <strong>Activée</strong></button><button class="option-toggle" id="motion-toggle">Mouvements de caméra <strong>Doux</strong></button>
         </div><p class="option-hint" id="graphics-hint">Auto ajuste la résolution à la fluidité. Les réglages sont appliqués immédiatement.</p><button id="reset-image" class="text-button">RÉTABLIR L’IMAGE PAR DÉFAUT</button></section>
         <section id="pane-audio" role="tabpanel" aria-labelledby="tab-audio" hidden><p class="option-section-label">MIXAGE</p><h3>Du métal dans les circuits.</h3><button class="option-toggle" id="sound-toggle">Son <strong>Activé</strong></button><div class="option-grid audio-sliders">
           <label class="option-slider" for="master-setting"><span>Volume général <output id="master-value">100 %</output></span><input id="master-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="music-setting"><span>Musique MOD <output id="music-value">45 %</output></span><input id="music-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="effects-setting"><span>Armes et impacts <output id="effects-value">100 %</output></span><input id="effects-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="ambience-setting"><span>Ambiances <output id="ambience-value">100 %</output></span><input id="ambience-setting" type="range" min="0" max="100" step="5"></label>
@@ -58171,6 +58171,9 @@ G.FSceneReflections={create,shader};
     const world={ seed, stage, generation:6, topologyId:layout.id, title: theme.title, meshes, lights, colliders, rooms, corridors, connections, spawn, exit, cores, enemies, pickups, machinery, hazards, trees, outdoorBoundaries, environment, bounds, mechanisms, doors, lifts, jumpPads, walkable:rooms.map(({x,z,w,d,y})=>({x,z,w,d,y,slopeX:0,slopeZ:0})).concat(surfaces) };
     if(campaign)Object.assign(world,{campaign:true,...(options.campaignVersion===2?{campaignVersion:2}:{}),index,chapter:Math.floor(index/3),chapterTitle:['L’Éveil des forges','La Garde de fer','La Chasse mécanique','Les Forges brisées','La Fournaise','Le Dernier signal'][Math.floor(index/3)]});
     if(campaign&&options.combatVersion===1)world.combatVersion=1;
+    // Hordes, humanoid machines, liveries and extra ammunition (16/11/2026):
+    // opt-in, so that earlier saves regenerate exactly the same worlds.
+    if(campaign&&options.campaignVersion===2&&options.hordeVersion===1)world.hordeVersion=1;
     if(campaign)world.campaignProfile=campaignProfile(world);
     detailWorld(world,theme,aperture,doorHeight);
     naturalDetails(world,theme);
@@ -58182,7 +58185,7 @@ G.FSceneReflections={create,shader};
     suppliesWorld(world);
     populate(world);
     armoryWorld(world);
-    if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);}
+    if(campaign){campaignArmory(world);campaignTrophies(world,theme);campaignArmor(world);hordeWorld(world);}
     polishTrees(world);
     demolitionMetadata(world,options?.legacyTraps===true);
     if(options?.profiles===true){if(!MetalProfiles)throw new Error("Load profiles.js before creating a class expedition");MetalProfiles.world(world);}
@@ -59167,9 +59170,10 @@ G.FSceneReflections={create,shader};
     for(const side of [-1,1])for(const dz of [-20,20]){
       const candidates=[];for(const x of [22,20.5,23.5,21])for(const z of [dz,dz-1.4,dz+1.4,dz-2.8,dz+2.8])candidates.push({x:arena.x+side*x,z:arena.z+z});
       const key=(side<0?'w':'e')+(dz<0?'n':'s');
-      place(arena,'ammo',0,[36,44,52][w.stage],candidates,'boss-cells-'+key);
-      place(arena,'ammo',1,[6,8,10][w.stage],candidates,'boss-shells-'+key);
-      place(arena,'ammo',2,3,candidates,'boss-rockets-'+key);
+      const more=w.hordeVersion===1?2:1;
+      place(arena,'ammo',0,[36,44,52][w.stage]*more,candidates,'boss-cells-'+key);
+      place(arena,'ammo',1,[6,8,10][w.stage]*more,candidates,'boss-shells-'+key);
+      place(arena,'ammo',2,3*more,candidates,'boss-rockets-'+key);
     }
   }
   // The additional equipment occupies clear tiles after the original supply
@@ -59187,7 +59191,7 @@ G.FSceneReflections={create,shader};
     const shop=w.shops[1];add(middle,'weapon',4,'grenade-launcher',[{x:shop.x+2.1,z:shop.z},{x:shop.x-2.1,z:shop.z},{x:shop.x,z:shop.z+2.1}]);
     add(late,'ammo',4,'grenades-late');
     const outer=[];for(const x of [-22,-20.5,-23.5])for(const z of [-17.2,-15.8,17.2,15.8])outer.push({x:arena.x+x,z:arena.z+z});
-    add(arena,'ammo',4,'grenades-boss',outer);
+    add(arena,'ammo',w.hordeVersion===1?8:4,'grenades-boss',outer);
   }
   function campaignProfile(w){
     if(w.campaignVersion===2){
@@ -59287,6 +59291,47 @@ G.FSceneReflections={create,shader};
   }
   // Armor reserves are real nonblocking pickups. The shell draws their cases
   // and markers; placing them last preserves all existing supplies and trials.
+  // Serious Sam style horde (David, 16/11/2026). Once the largest deep room is
+  // cleared, machines pour in wave after wave from all of its entries:
+  // screaming kamikazes, liquid-metal blades and endoskeleton gunners. Large
+  // ammunition caches wait in that room, and at the guardian arena's gate.
+  function hordeWorld(w){
+    if(w.hordeVersion!==1)return;
+    const depths=roomDepths(w),chapter=w.chapter,arena=w.rooms.find(r=>r.bossArena);
+    const room=w.rooms.filter(r=>r.id&&!r.bossArena&&depths.get(r.id)>=2&&w.encounters.some(q=>q.zoneId===r.id&&!q.requiresTrophy)&&(w.encounterBays.find(b=>b.zoneId===r.id)?.spawnEntries.length||0)>=4).sort((a,b)=>b.w*b.d-a.w*a.d||a.id-b.id)[0];
+    if(!room)return;
+    const bay=w.encounterBays.find(b=>b.zoneId===room.id),base=w.encounters.find(q=>q.zoneId===room.id&&!q.requiresTrophy),homes=bay.reserveEntries||bay.spawnEntries,id='horde-'+room.id;
+    const tail=w.enemies.splice(w.enemies.findIndex(e=>e.boss)),first=w.enemies.length,waves=[],count=3+(chapter>=2?1:0)+(chapter>=4?1:0);
+    for(let wave=0;wave<count;wave++){
+      const roster=[...Array(5+chapter+2*wave).fill('kamikaze'),...Array(1+Math.floor(chapter/2)+Math.floor(wave/2)).fill('endo'),...Array(wave?1+Math.floor(chapter/3):0).fill('blade')],ids=[];
+      for(const [j,variant] of roster.entries()){
+        const home=homes[(j*3+wave)%homes.length];ids.push(w.enemies.length);
+        w.enemies.push({x:home.x,y:home.y,z:home.z,type:1,variant,...(chapter?{livery:chapter}:{}),zoneId:room.id,squadId:5000+wave,encounterId:id,wave,deployed:false,horde:true,role:variant==='blade'?'flanker':variant==='endo'&&j%2?'suppressor':'assault',yaw:FMath.atan2(room.x-home.x,home.z-room.z),drop:variant==='endo'?{weapon:0,amount:8}:variant==='blade'?{weapon:1,amount:3}:false});
+      }
+      waves.push({enemyIds:ids});
+    }
+    const shift=w.enemies.length-first;
+    for(const q of w.encounters)for(const v of q.waves)v.enemyIds=v.enemyIds.map(i=>i>=first?i+shift:i);
+    w.enemies.push(...tail);const bossId=w.enemies.findIndex(e=>e.boss);for(const e of w.enemies)if(e.bossWave)e.bossId=bossId;
+    // The horde pours in along the room's own walls as well as through its
+    // natural entries, so it never waits on a door the machines cannot open.
+    const edge=[];for(let u=-.5;u<=.5001;u+=1/8)for(const [x,z] of [[room.x+u*(room.w-3),room.z-room.d/2+1.5],[room.x+u*(room.w-3),room.z+room.d/2-1.5],[room.x-room.w/2+1.5,room.z+u*(room.d-3)],[room.x+room.w/2-1.5,room.z+u*(room.d-3)]]){const y=floorHeight(w,x,z);if(y!==null&&Math.abs(y-room.y)<.05&&safeSupply(w,x,z,.6)&&edge.every(q=>FMath.hypot2(q.x-x,q.z-z)>3)&&w.pickups.every(q=>FMath.hypot2(q.x-x,q.z-z)>1.5))edge.push({x,y,z,travel:0});}
+    w.encounters.push({id,label:'Déferlante',horde:true,after:base.id,zoneId:room.id,trigger:{...base.trigger},leashRadius:Math.max(60,base.leashRadius||38),maxActive:[12,14,16,18,20,22][chapter],waveGap:3,naturalEntries:true,spawnEntries:[...edge,...bay.spawnEntries.map(q=>({...q}))],waves});
+    w.campaignProfile.garrison=w.enemies.length;w.campaignProfile.horde={room:room.id,waves:count,enemies:waves.reduce((n,q)=>n+q.enemyIds.length,0)};
+    // Ammunition: two full caches in the horde room, one at the arena gate.
+    const reserved=[w.spawn,w.exit,...w.cores,...w.mechanisms,...w.shops,...w.shops.map(q=>q.terminal),...w.doors,...w.lifts.flatMap(l=>[l,l.lowerCall,l.upperCall]),...w.jumpPads.flatMap(q=>[q,q.target]),...w.encounters.flatMap(q=>q.spawnEntries),...w.enemies.filter(e=>e.deployed!==false)];
+    const drop=(r,label,items,anchors)=>{
+      for(const [weapon,amount] of items){
+        const point=anchors.find(q=>Math.abs(q.x-r.x)<r.w/2-1&&Math.abs(q.z-r.z)<r.d/2-1&&Math.abs(floorHeight(w,q.x,q.z)-r.y)<.01&&safeSupply(w,q.x,q.z,.6)&&reserved.every(a=>FMath.hypot2(q.x-a.x,q.z-a.z)>1.5)&&w.pickups.every(a=>FMath.hypot2(q.x-a.x,q.z-a.z)>1.2));
+        if(!point)continue;w.pickups.push({id:'cache-'+label+'-'+weapon,kind:'ammo',weapon,amount,x:point.x,y:r.y,z:point.z,zoneId:r.id});
+      }
+    };
+    const near=(x,z,radius)=>{const out=[];for(let ring=0;ring<=radius;ring+=1.4)for(let a=0;a<16;a++)out.push({x:x+FMath.cos(a*TAU/16)*ring,z:z+FMath.sin(a*TAU/16)*ring});return out;};
+    const load=[[0,150],[1,24],[2,6],[3,8]];
+    drop(room,'horde-a',load,near(room.x,room.z,7));drop(room,'horde-b',load,near(room.x+room.w/4,room.z-room.d/4,6));
+    const gate=w.corridors.find(c=>c.arenaPath);
+    if(gate&&arena){const dx=gate.x-arena.x,dz=gate.z-arena.z,l=FMath.hypot2(dx,dz)||1;drop(arena,'gate',load,near(arena.x+dx/l*21,arena.z+dz/l*21,5));}
+  }
   function campaignArmor(w){
     const arena=w.rooms.find(r=>r.bossArena),middle=w.shops[1],plans=[
       {id:'armor-start',amount:25,room:w.rooms[0],anchor:w.spawn},
@@ -59345,6 +59390,15 @@ G.FSceneReflections={create,shader};
     w.enemies.push({x:arena.x,y:arena.y,z:arena.z,type:3,boss:true,bossScale:[5.4,7.2,9][w.stage],bossKind:['colossus','siegebreaker','custodian'][w.stage],bossName:['Le Colosse de Fer','Le Brise-siège','Le Veilleur primordial'][w.stage],maxHp:w.campaignVersion===2?w.campaignProfile.bossHp:w.campaign?Math.max(30,Math.round([130,180,240][w.stage]*w.campaignProfile.bossHpScale)):[130,180,240][w.stage],arena:{...arena},zoneId:arena.room,squadId:100,role:'assault',deployed:true});
     for(const [i,e] of w.enemies.entries())e.drop=e.type===3?false:e.weapon==='rocket'?{weapon:2,amount:1}:e.weapon==='grenade'?{weapon:3,amount:1}:e.type===1?{weapon:1,amount:2}:e.type===2||i%2===0?{weapon:0,amount:4}:false;
     if(w.enemies.length!==target-trialCount)throw new Error('Incorrect finite garrison size');
+    if(w.hordeVersion===1){
+      // Varied looks: half of the gunners are chrome endoskeletons; guardians
+      // alternate between the robot giant, a giant endoskeleton and liquid metal.
+      for(const [i,e] of w.enemies.entries())if(e.type===1&&(i+w.index)%2===0)e.variant='endo';
+      const boss=w.enemies[w.enemies.length-1],look=['','endo','liquid'][w.index%3];
+      if(look){boss.bossLook=look;boss.bossName=look==='endo'?['L’Ossature de chrome','L’Ossature d’acier','L’Ossature primordiale'][w.stage]:['Le Vif-Argent','Le Mercure hurlant','Le Métal liquide'][w.stage];}
+      // Each chapter dresses its machines in its own livery.
+      for(const e of w.enemies)if(!e.boss&&w.chapter)e.livery=w.chapter;
+    }
   }
   function isWalkable(world, x, z, radius) {
     const r = radius === undefined ? 0.35 : radius;
@@ -61159,7 +61213,7 @@ function create(world,solids,host={}){
   function rubble(q){if(rub.has(q.id))return;q.size=q.size.map(v=>Math.min(4,Math.max(.04,v)));q.mass=clamp(q.mass,3,120);add({kind:'rubble',shape:'box',rubbleId:q.id,size:q.size.map(v=>Math.min(4,Math.max(.04,v))),pos:[q.x,q.y,q.z],rotation:q.rotation,mass:clamp(q.mass,3,120),material:q.material==='stone'||q.material==='wood'||q.material==='glass'?q.material:'metal',mat:q.mat,color:q.color,velocity:[q.vx,q.vy,q.vz],angularVelocity:q.angularVelocity},q.resting);}
   function rubblePose(q){const a=rub.get(q.id);if(!a||!phys.valid(a.handle))return false;phys.pose(a.handle,1,pose);phys.sample(a.handle,sample);F.quatToEuler(pose[3],pose[4],pose[5],pose[6],rotation);q.x=pose[0];q.y=pose[1];q.z=pose[2];q.vx=sample[6];q.vy=sample[7];q.vz=sample[8];for(let k=0;k<3;k++){q.rotation[k]=rotation[k];q.angularVelocity[k]=sample[9+k];}q.resting=phys.isAsleep(a.handle);return true;}
   function wreck(enemy,source){
-    if(!G.FActors)return;const giant=enemy.bossScale>1,meshes=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}).filter(m=>m.shape!=='ring').sort((a,b)=>b.s[0]*b.s[1]*b.s[2]-a.s[0]*a.s[1]*a.s[2]).slice(0,giant?20:8);
+    if(!G.FActors)return;const giant=enemy.bossScale>1,meshes=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}).filter(m=>m.shape!=='ring').sort((a,b)=>b.s[0]*b.s[1]*b.s[2]-a.s[0]*a.s[1]*a.s[2]).slice(0,giant?20:enemy.horde?3:5);
     const count=rows.filter(q=>q.kind==='wreck').length;let excess=count+meshes.length-48;for(const q of rows.slice())if(excess>0&&q.kind==='wreck'&&phys.isAsleep(q.handle)){remove(q);excess--;}
     let space=48-rows.filter(q=>q.kind==='wreck').length;
     const pieces=[];for(const m of meshes){if(space--<=0)break;const dx=m.p[0]-source.x,dz=m.p[2]-source.z,d=Math.hypot(dx,dz)||1,size=m.s.map(v=>Math.min(3,Math.max(.04,v))),q=add({kind:'wreck',shape:m.shape,size,pos:m.p,rotation:m.r,mass:clamp(size[0]*size[1]*size[2]*65,3,120),material:'metal',mat:m.mat,color:m.color,velocity:[dx/d*3,1+(space%3)*.3,dz/d*3],angularVelocity:[1+(space%3),.4,space%2?-2:2]});if(q){pieces.push(q);if(source.credit){q.credit=s.time;q.profile=source.profile||s.activeProfile||null;}}}
@@ -63655,6 +63709,63 @@ G.MetalPhysics={create,props};
   window.MetalAudio = {recipes: recipes, extras: extras, options: function () { return {recipes: recipes, extras: extras, duck: {classes: duckClasses}, weaponGain: weaponGain, chain: chain}; }};
 }());
 </script>
+<script data-module="metal-voices.js" data-role="page">/* METAL — procedural voices of the humanoid machines (David, 16/11/2026): the
+   kamikaze's howl and the liquid blade's ring. Synthesised with Web Audio into
+   the effects bus of FAudio; no recorded sound. */
+(function(G){'use strict';
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function attach(audio){
+    if(!audio||typeof audio.graph!=='function'||audio.kamikazeScream)return audio;
+    let live=0,shaper=null;
+    function bus(){const g=audio.graph();return g&&g.effects&&g.effects.context?g.effects:null;}
+    function grit(ctx){
+      if(shaper&&shaper.context===ctx)return shaper;
+      shaper=ctx.createWaveShaper();const curve=new Float32Array(1024);
+      for(let i=0;i<curve.length;i++){const x=i/511.5-1;curve[i]=Math.tanh(x*3.2)*.9;}
+      shaper.curve=curve;return shaper;
+    }
+    function output(ctx,target,level,pan,end){
+      const gain=ctx.createGain(),panner=ctx.createStereoPanner?ctx.createStereoPanner():null;
+      gain.gain.value=0;if(panner){panner.pan.value=clamp(Number(pan)||0,-1,1);gain.connect(panner);panner.connect(target);}else gain.connect(target);
+      return {gain,stop(){try{gain.disconnect();panner&&panner.disconnect();}catch(_){}},end};
+    }
+    // A machine howl: two detuned saws with vibrato through the formants of
+    // an open vowel, a breath of noise and a soft drive. At most three at once.
+    audio.kamikazeScream=function(event){
+      const target=bus();if(!target||live>=3)return;const ctx=target.context,now=ctx.currentTime,seed=((event&&event.id)||0)*.6180339;
+      const level=clamp(Number(event&&event.level)||0,0,1)*.42;if(level<.01)return;
+      const length=1.35+(seed%1)*.5,base=270+(seed*97%1)*70,out=output(ctx,target,level,event&&event.pan);
+      out.gain.gain.setValueAtTime(0,now);out.gain.gain.linearRampToValueAtTime(level,now+.07);out.gain.gain.setValueAtTime(level,now+length-.32);out.gain.gain.exponentialRampToValueAtTime(.0005,now+length);
+      const drive=ctx.createGain();drive.gain.value=.7;const shape=grit(ctx),post=ctx.createGain();post.gain.value=.55;drive.connect(shape);shape.connect(post);
+      const formants=[[760,6,1],[1180,8,.62],[2650,11,.26]].map(([f,q,g])=>{const b=ctx.createBiquadFilter(),a=ctx.createGain();b.type='bandpass';b.frequency.value=f;b.Q.value=q;a.gain.value=g;post.connect(b);b.connect(a);a.connect(out.gain);return [b,a];});
+      const sources=[];
+      for(const detune of [-8,9]){
+        const o=ctx.createOscillator();o.type='sawtooth';o.detune.value=detune;
+        o.frequency.setValueAtTime(base,now);o.frequency.linearRampToValueAtTime(base*1.28,now+.35);o.frequency.linearRampToValueAtTime(base*1.18,now+length);
+        const lfo=ctx.createOscillator(),depth=ctx.createGain();lfo.frequency.value=6.5+(seed*13%1)*2;depth.gain.value=base*.045;lfo.connect(depth);depth.connect(o.frequency);
+        o.connect(drive);o.start(now);o.stop(now+length+.05);lfo.start(now);lfo.stop(now+length+.05);sources.push(o,lfo);
+      }
+      const frames=Math.ceil(ctx.sampleRate*length),buffer=ctx.createBuffer(1,frames,ctx.sampleRate),data=buffer.getChannelData(0);let s=(seed*1e6|0)||7;
+      for(let i=0;i<frames;i++){s=(s*1103515245+12345)>>>0;data[i]=(s/4294967296*2-1)*.35;}
+      const breath=ctx.createBufferSource(),air=ctx.createBiquadFilter();breath.buffer=buffer;air.type='bandpass';air.frequency.value=1600;air.Q.value=1.2;breath.connect(air);air.connect(post);breath.start(now);sources.push(breath);
+      live++;let done=false;const finish=()=>{if(done)return;done=true;live=Math.max(0,live-1);setTimeout(()=>{out.stop();for(const [b,a] of formants){try{b.disconnect();a.disconnect();}catch(_){}}try{drive.disconnect();post.disconnect();air.disconnect();}catch(_){}},60);};
+      sources[0].onended=finish;
+    };
+    // The liquid blade: a bright, falling metallic ring over a short swish.
+    audio.bladeStrike=function(event){
+      const target=bus();if(!target)return;const ctx=target.context,now=ctx.currentTime,level=clamp(Number(event&&event.level)||0,0,1)*.5;if(level<.01)return;
+      const out=output(ctx,target,level,event&&event.pan);out.gain.gain.setValueAtTime(level,now);out.gain.gain.exponentialRampToValueAtTime(.0005,now+.42);
+      for(const [f,g] of [[2960,.5],[4420,.3],[6180,.18]]){const o=ctx.createOscillator(),a=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(f,now);o.frequency.exponentialRampToValueAtTime(f*.82,now+.4);a.gain.value=g;o.connect(a);a.connect(out.gain);o.start(now);o.stop(now+.43);o.onended=()=>{try{a.disconnect();}catch(_){}};}
+      const frames=Math.ceil(ctx.sampleRate*.16),buffer=ctx.createBuffer(1,frames,ctx.sampleRate),data=buffer.getChannelData(0);let s=12345;
+      for(let i=0;i<frames;i++){s=(s*1103515245+12345)>>>0;data[i]=(s/4294967296*2-1)*(1-i/frames);}
+      const swish=ctx.createBufferSource(),hp=ctx.createBiquadFilter();swish.buffer=buffer;hp.type='highpass';hp.frequency.value=2400;swish.connect(hp);hp.connect(out.gain);swish.start(now);
+      swish.onended=()=>setTimeout(()=>{out.stop();try{hp.disconnect();}catch(_){}},450);
+    };
+    return audio;
+  }
+  G.MetalVoices={attach};
+})(typeof window!=='undefined'?window:globalThis);
+</script>
 <script data-module="soundscape.js" data-role="page">/* METAL — local acoustic sources, independent of Web Audio and the renderer. */
 (function(G){
   'use strict';
@@ -64046,7 +64157,9 @@ function navigationGraph(cells,width,testEdge){
   const ENCOUNTER_STATE=['status','wave','pendingWave','timer'];
   const ENCOUNTER_STATUS=['dormant','warning','waiting','active','cleared'];
   const present=e=>e.deployed!==false,alive=e=>e.hp>0&&present(e);
-  const giant=e=>e.type===3&&Number(e.bossScale)>1,scale=e=>giant(e)?e.bossScale:1,bodyHeight=e=>giant(e)?3.18*scale(e):1.8,health=e=>giant(e)?Math.max(30,Math.min(1000,Number(e.maxHp)||130)):HP[e.type];
+  const giant=e=>e.type===3&&Number(e.bossScale)>1,scale=e=>giant(e)?e.bossScale:1,bodyHeight=e=>giant(e)?3.18*scale(e):1.8,health=e=>giant(e)?Math.max(30,Math.min(1000,Number(e.maxHp)||130)):e.variant==='kamikaze'?2:e.variant==='blade'?7:HP[e.type];
+  // Humanoid chasers (David, 16/11/2026): a screaming bomber and a liquid-metal blade.
+  const chaser=e=>e.type===1&&(e.variant==='kamikaze'||e.variant==='blade');
   const BOSS=['bossAwake','bossClock','bossStep','attackLabel','weakPointOpen','weakTimer','bossReleased'];
   const DIRECTOR=['pressure','tension','eventType','eventAge','nextEvent','events','progress','tier','grace','eventX','eventY','eventZ','eventIntensity'];
   const HORROR=['','metallicSlam','blackout','alarm','ambush'];
@@ -64114,7 +64227,70 @@ function navigationGraph(cells,width,testEdge){
     const h=[debrisExtent(q.shape,m0*sx,m1*sy,m2*sz),debrisExtent(q.shape,m3*sx,m4*sy,m5*sz),debrisExtent(q.shape,m6*sx,m7*sy,m8*sz)];
     debrisExtentCache.set(q,{r,size:q.size,shape:q.shape,h});return h;
   }
+  // Destruction leaves the broken object as a few large pieces that the
+  // physics engine drops and settles, without a cloud of chips (David,
+  // 16/11/2026). The engine halves big meshes into tiles: the tiles of one
+  // mesh are joined again, then every object keeps at most PER_OBJECT pieces
+  // of about CHUNK metres, never over the 4 m rigid-body limit.
+  const WRECK={PER_OBJECT:5,PER_EVENT:16,MIN_OBJECTS:24,CHUNK:2.6,LIMIT:4,DENSITY:{metal:65,stone:28,wood:8,glass:25,dirt:12}};
+  function wreckAxes(r){const [x,y,z]=r||[0,0,0],a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);return [[e*c,f*c,-d],[e*d*b-f*a,f*d*b+e*a,c*b],[e*d*a+f*b,f*d*a-e*b,c*a]];}
+  function wreckVolume(q){return q.size[0]*q.size[1]*q.size[2]*({sphere:Math.PI/6,cylinder:Math.PI/4,octa:1/6,foliage:.55}[q.shape]||1);}
+  function wreckMass(q){return clamp(wreckVolume(q)*(WRECK.DENSITY[q.material]||28),.035,160);}
+  function wreckPiece(q){const p=q.p||[q.x,q.y,q.z],size=Array.isArray(q.size)?q.size.slice():[q.size,q.size,q.size];return [...p,...size].every(Number.isFinite)&&size.every(v=>v>0)?{...q,p:p.slice(),size,rotation:(q.rotation||[0,0,0]).slice(),velocity:(q.velocity||[q.vx||0,q.vy||0,q.vz||0]).slice()}:null;}
+  // Two tiles join when they share shape, material and rotation, match on two
+  // axes and touch face to face along the third.
+  function wreckJoin(a,b){
+    if(a.shape!==b.shape||a.mat!==b.mat||a.material!==b.material||String(a.color)!==String(b.color)||a.rotation.some((v,k)=>Math.abs(v-b.rotation[k])>1e-7))return null;
+    const axes=wreckAxes(a.rotation),d=b.p.map((v,k)=>v-a.p[k]);
+    for(let k=0;k<3;k++){
+      if(a.shape==='cylinder'&&k!==1||!['box','bevel','cylinder'].includes(a.shape))continue;
+      if(![0,1,2].every(j=>j===k||Math.abs(a.size[j]-b.size[j])<1e-6))continue;
+      const along=d[0]*axes[k][0]+d[1]*axes[k][1]+d[2]*axes[k][2],gap=(a.size[k]+b.size[k])/2;
+      if(Math.abs(Math.abs(along)-gap)>1e-5||Math.hypot(d[0]-axes[k][0]*along,d[1]-axes[k][1]*along,d[2]-axes[k][2]*along)>1e-5)continue;
+      const wa=a.size[k],wb=b.size[k],w=wa+wb,size=a.size.slice();size[k]=w;
+      return {...a,size,p:a.p.map((v,j)=>(v*wa+b.p[j]*wb)/w),velocity:a.velocity.map((v,j)=>(v*wa+b.velocity[j]*wb)/w)};
+    }
+    return null;
+  }
+  // Cuts one piece into a grid of chunks: cells stay under the rigid-body
+  // limit, then get finer toward CHUNK while the object stays within budget.
+  function wreckChunks(q,budget){
+    const split=[0,1,2].map(k=>q.shape==='cylinder'?k===1:['box','bevel'].includes(q.shape)),counts=q.size.map((v,k)=>split[k]?Math.max(1,Math.ceil(v/WRECK.LIMIT-1e-9)):1);
+    for(;;){let best=-1,length=WRECK.CHUNK;for(let k=0;k<3;k++)if(split[k]&&q.size[k]/counts[k]>length){length=q.size[k]/counts[k];best=k;}if(best<0||counts[0]*counts[1]*counts[2]/counts[best]*(counts[best]+1)>budget)break;counts[best]++;}
+    const total=counts[0]*counts[1]*counts[2];if(total===1)return [q];
+    const axes=wreckAxes(q.rotation),part=q.size.map((v,k)=>v/counts[k]),out=[];
+    for(let i=0;i<total;i++){
+      const grid=[i%counts[0],Math.floor(i/counts[0])%counts[1],Math.floor(i/(counts[0]*counts[1]))],local=grid.map((g,k)=>((g+.5)/counts[k]-.5)*q.size[k]);
+      const offset=[0,1,2].map(j=>axes[0][j]*local[0]+axes[1][j]*local[1]+axes[2][j]*local[2]),reach=Math.hypot(...offset)||1;
+      // Chunks drift apart a little; the physics does the rest.
+      out.push({...q,size:part.slice(),p:q.p.map((v,j)=>v+offset[j]),velocity:q.velocity.map((v,j)=>v+offset[j]/reach*.55),angularVelocity:(q.angularVelocity||[.6,.3,.9]).map((v,k)=>v*(1+.35*Math.sin(i*2.399963+k))),seed:((q.seed||0)+i*131)>>>0});
+    }
+    return out;
+  }
+  function wreckage(list){
+    const objects=new Map(),out=[];
+    for(const raw of list||[]){if(raw?.structural!==true)continue;const q=wreckPiece(raw);if(!q)continue;const key=String(q.sourceId);if(!objects.has(key))objects.set(key,[]);objects.get(key).push(q);}
+    const plans=[];
+    for(const tiles of objects.values()){
+      let pieces=tiles.slice(),joined=true;
+      while(joined){joined=false;for(let i=0;i<pieces.length&&!joined;i++)for(let j=i+1;j<pieces.length;j++){const m=wreckJoin(pieces[i],pieces[j]);if(m){pieces.splice(j,1);pieces[i]=m;joined=true;break;}}}
+      pieces.sort((a,b)=>wreckVolume(b)-wreckVolume(a));pieces=pieces.slice(0,WRECK.PER_OBJECT);
+      // The largest part is always kept whole or cut under the limit; smaller
+      // parts that no longer fit the object's budget become dust.
+      let spare=WRECK.PER_OBJECT-pieces.length,used=0;const chunks=[];
+      for(const q of pieces){const parts=wreckChunks(q,1+spare);if(used&&used+parts.length>WRECK.PER_OBJECT)continue;spare=Math.max(0,spare-(parts.length-1));used+=parts.length;chunks.push(...parts);}
+      for(const q of chunks){q.mass=wreckMass(q);q.fragmented=true;}
+      chunks.sort((a,b)=>wreckVolume(b)-wreckVolume(a));plans.push(chunks);
+    }
+    plans.sort((a,b)=>wreckVolume(b[0])-wreckVolume(a[0]));
+    // Every broken object shows at least its largest piece.
+    for(const plan of plans.slice(0,WRECK.MIN_OBJECTS))out.push(plan[0]);
+    for(let round=1;out.length<WRECK.PER_EVENT;round++){let added=false;for(const plan of plans)if(plan[round]&&out.length<WRECK.PER_EVENT){out.push(plan[round]);added=true;}if(!added)break;}
+    return out;
+  }
   function create(world,options={}) {
+    // Generous ammunition at every boss phase in horde worlds (David, 16/11/2026).
+    const hordes=world.hordeVersion===1,PHASE_SLOTS=hordes?4:2,PHASE_AMMO=hordes?[120,24,8,12,0]:[60,12,4,6,0];
     const rigidEnabled=!!(G.FPhysics&&G.MetalPhysics&&(world.combatVersion===1||options.rigidBodies===true)&&options.rigidBodies!==false);let rigid=null;
     const floors=world.walkable||[],advanced=!!world.combat||world.generation>=5,horror=!!world.horrorSites?.length||world.director?.enabled===true;
     const progression=world.progression?.version===1,economyEnabled=progression&&!!G.FEconomy,nominalCombat=clamp(world.progression?.maxActive||[8,10,12][world.stage||0],2,16);
@@ -64391,7 +64567,7 @@ function navigationGraph(cells,width,testEdge){
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
     if(progression)identity.push(world.progression,world.encounters||[],world.shops||[]);
-    if(world.combatVersion===1)identity.push({combatVersion:1});if(rigidEnabled)identity.push({rigidBodiesVersion:1});
+    if(world.combatVersion===1)identity.push({combatVersion:1});if(hordes)identity.push({hordeVersion:1});if(rigidEnabled)identity.push({rigidBodiesVersion:1});
     if(world.campaign===true)identity.push({campaign:true,...(bossProgression?{campaignVersion:2}:{}),index:world.index,chapter:world.chapter,trophies:trophyDefs});
     for(const c of JSON.stringify(identity))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
     fingerprint=(fingerprint>>>0).toString(36);
@@ -65068,10 +65244,10 @@ function navigationGraph(cells,width,testEdge){
     function phaseSupplies(e,phase){
       if(world.combatVersion!==1||!progression)return;
       const weapons=weaponIds.filter(i=>i!==4&&s.inventory.weapons[i]).sort((a,b)=>s.inventory.ammo[a]/ammoCaps[a]-s.inventory.ammo[b]/ammoCaps[b]||a-b),base=Math.atan2(p.x-e.x,e.z-p.z),r=Math.max(12,radius(e)+2);
-      for(let slot=0;slot<2;slot++){
+      for(let slot=0;slot<PHASE_SLOTS;slot++){
         const id='phase-'+e.id+'-'+phase+'-'+slot;if(s.loot.some(q=>q.id===id))continue;
-        let at=null;for(let k=0;k<24;k++){const angle=base+(slot?-1:1)*(.55+k*.19),x=e.x+Math.sin(angle)*r,z=e.z-Math.cos(angle)*r,y=ground(x,z);if(y!==null&&!blocked(x,z,.6,y)&&s.loot.every(q=>Math.hypot(q.x-x,q.z-z)>1.5)){at={x,y,z};break;}}
-        if(!at)continue;const ammo=weaponIds.map(()=>0),weapon=weapons[slot%weapons.length];if(weapon!==undefined)ammo[weapon]=[60,12,4,6,0][weapon];
+        let at=null;for(let k=0;k<24;k++){const angle=base+(slot%2?-1:1)*(.55+Math.floor(slot/2)*.6+k*.19),x=e.x+Math.sin(angle)*r,z=e.z-Math.cos(angle)*r,y=ground(x,z);if(y!==null&&!blocked(x,z,.6,y)&&s.loot.every(q=>Math.hypot(q.x-x,q.z-z)>1.5)){at={x,y,z};break;}}
+        if(!at)continue;const ammo=weaponIds.map(()=>0),weapon=weapons[slot%weapons.length];if(weapon!==undefined)ammo[weapon]=PHASE_AMMO[weapon];
         s.loot.push({id,sourceEnemy:e.id,kind:'resupply',phase,slot,credits:0,cores:0,ammo,...(armorEnabled?{armor:15}:{}),...at,taken:!ammo.some(Boolean)&&!armorEnabled});
       }
     }
@@ -65093,14 +65269,18 @@ function navigationGraph(cells,width,testEdge){
     }
     function safeEntry(e,entry,encounter,budgeted=false){
       const y=entry.y??ground(entry.x,entry.z),r=radius(e);
-      if(Math.hypot(entry.x-p.x,entry.z-p.z)<10||!Number.isFinite(y)||Math.abs(ground(entry.x,entry.z)-y)>.08||blocked(entry.x,entry.z,r,y)||actorBlocked(e,entry.x,entry.z,r,y))return false;
+      if(Math.hypot(entry.x-p.x,entry.z-p.z)<(encounter.horde?8:10)||!Number.isFinite(y)||Math.abs(ground(entry.x,entry.z)-y)>.08||blocked(entry.x,entry.z,r,y)||actorBlocked(e,entry.x,entry.z,r,y))return false;
       if(s.enemies.some(a=>a!==e&&alive(a)&&Math.abs(a.baseY-y)<2.2&&Math.hypot(a.x-entry.x,a.z-entry.z)<radius(a)+r+.55))return false;
       // Orientation is deliberately irrelevant: turning the camera must never
       // make a visible reservation eligible. Every silhouette sample needs cover.
       const origin=[p.x,p.y+1.62,p.z];
       const yaw=Math.atan2(encounter.trigger.x-entry.x,entry.z-encounter.trigger.z),sn=Math.sin(yaw),cs=Math.cos(yaw),samples=[[0,0],[-.9,0],[.9,0],[0,-.9],[0,.9],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65]];
-      if(e.type===1&&barrel({...e,x:entry.x,z:entry.z,baseY:y,yaw},encounter.trigger.x,(encounter.trigger.y||0)+1.45,encounter.trigger.z).blocked)return false;
-      if(e.type===1)samples.push([sn*1.5, -cs*1.5]);
+      // Runners carry no gun: only gunners need a clear barrel at the entry.
+      const gunner=e.type===1&&!chaser(e);
+      if(gunner&&barrel({...e,x:entry.x,z:entry.z,baseY:y,yaw},encounter.trigger.x,(encounter.trigger.y||0)+1.45,encounter.trigger.z).blocked)return false;
+      if(gunner)samples.push([sn*1.5, -cs*1.5]);
+      // A horde may pour in within sight, but never at the player's side.
+      if(encounter.horde&&Math.hypot(entry.x-p.x,entry.z-p.z)>=9)return true;
       for(const h of [1.1,.2,2.15])for(const [dx,dz] of samples){
         if(budgeted){if(spawnRays>=64)return false;spawnRays++;}
         const delta=[entry.x+dx-origin[0],y+h-origin[1],entry.z+dz-origin[2]],d=Math.hypot(...delta);
@@ -65129,6 +65309,7 @@ function navigationGraph(cells,width,testEdge){
         encounterWait=.2;let probes=8;
         for(const q of s.encounters){
           if(campaign&&q.requiresTrophy&&trophyState(q.requiresTrophy)?.phase!=='trial')continue;
+          if(q.after&&encounterMap.get(q.after)?.status!=='cleared')continue;
           let remainingCount=0;for(const id of idsFor(q))if(s.enemies[id].hp>0)remainingCount++;
           if(!remainingCount){if(q.status!=='cleared'){q.status='cleared';q.wave=q.waves.length-1;q.pendingWave=-1;q.timer=0;emit('encounterClear',{id:q.id,label:q.label||'Zone sécurisée'});}continue;}
           if(q.status==='dormant'&&inEncounter(q))announceWave(q,0);
@@ -65138,13 +65319,14 @@ function navigationGraph(cells,width,testEdge){
           const wave=q.waves[q.pendingWave].enemyIds.map(id=>s.enemies[id]).filter(e=>e.hp>0),need=wave.filter(e=>!e.encounterReleased);
           let engagedCount=0,local=0;
           for(const e of s.enemies)if(alive(e)&&!giant(e)&&e.encounterReleased&&!e.returning&&(!e.bossWave||e.bossReleased)&&(Math.hypot(e.x-p.x,e.z-p.z)<48||bossProgression&&e.entryGrace>0)){engagedCount++;if(enemyEncounter.get(e.id)===q)local++;}
-          let slots=campaign?Math.min(maxCombat-engagedCount,(q.maxActive||6)-local):Infinity;
-          if(campaign?slots<=0:engagedCount+need.length>maxCombat||local+need.length>(q.maxActive||6))continue;
+          let slots=q.horde?(q.maxActive||16)-local:campaign?Math.min(maxCombat-engagedCount,(q.maxActive||6)-local):Infinity;
+          if(q.horde?slots<=0:campaign?slots<=0:engagedCount+need.length>maxCombat||local+need.length>(q.maxActive||6))continue;
           // A crowded front cannot accumulate new waves while the player rushes
           // through adjacent triggers. Existing bodies always remain physical.
           let nearbyCount=0;
           for(const e of s.enemies)if(alive(e)&&!giant(e)&&(!e.bossWave||e.bossReleased)&&Math.hypot(e.x-p.x,e.z-p.z)<24&&!wave.includes(e))nearbyCount++;
-          if(campaign)slots=Math.min(slots,maxCombat-nearbyCount-wave.filter(e=>present(e)&&e.encounterReleased).length);
+          if(q.horde){}
+          else if(campaign)slots=Math.min(slots,maxCombat-nearbyCount-wave.filter(e=>present(e)&&e.encounterReleased).length);
           else if(nearbyCount+need.filter(e=>!present(e)).length>maxCombat)continue;
           for(const e of wave){
             if(campaign&&e.encounterReleased)continue;
@@ -65168,6 +65350,7 @@ function navigationGraph(cells,width,testEdge){
               }
               if(!entry)continue;
               e.x=entry.x;e.z=entry.z;putHeight(e,entry.y??groundAt(e.x,e.z));e.yaw=Math.atan2(q.trigger.x-e.x,e.z-q.trigger.z);e.deployed=true;e.deployAge=0;clearEvidence(e);Object.assign(e,freshAir());probes=0;
+              if(q.horde)emit('hordeSpawn',{id:e.id,x:e.x,y:e.baseY,z:e.z,variant:e.variant});
               if(approachPath!==null){let length=0,previous=[entry.x,entry.z];for(const i of approachPath){const point=coord(i);length+=Math.hypot(point[0]-previous[0],point[1]-previous[1]);previous=point;}length+=Math.hypot(q.trigger.x-previous[0],q.trigger.z-previous[1]);e.entryGrace=clamp(Math.max(length,entry.travel||0)/1.6+6,8,60);}
             }
             if(!e.encounterReleased){e.encounterReleased=true;e.returning=false;e.quietTime=0;e.cooldown=Math.max(e.cooldown,1.35);remember(e,q.trigger.x,q.trigger.z,'investigate',7,(q.trigger.y||0)+1.45);if(campaign)slots--;}
@@ -65197,10 +65380,10 @@ function navigationGraph(cells,width,testEdge){
       selectLocals.fill(0);
       let selectedCount=0;
       for(let i=0;i<candidateCount;i++){
-        if(selectedCount>=maxCombat)break;
-        const e=s.enemies[selectOrder[i]],ei=enemyEncounterIndex[e.id];
+        const e=s.enemies[selectOrder[i]],ei=enemyEncounterIndex[e.id],horde=ei>=0&&s.encounters[ei].horde===true;
+        if(!horde&&selectedCount>=maxCombat)continue;
         if(ei>=0){const limit=s.encounters[ei].maxActive||6;if(selectLocals[ei]>=limit)continue;selectLocals[ei]++;}
-        selectChosen[e.id]=1;selectedCount++;
+        selectChosen[e.id]=1;if(!horde)selectedCount++;
       }
       for(const e of s.enemies)if(!giant(e)){
         const enabled=selectChosen[e.id]===1;if(e.combatEnabled&&!enabled&&alive(e)&&enemyEncounter.has(e.id)){e.returning=true;clearEvidence(e);}
@@ -65257,6 +65440,34 @@ function navigationGraph(cells,width,testEdge){
         e.phase=1;e.cooldown=Math.min(e.cooldown,.65);emit('bossPhase',{id:e.id,phase:1});particles(e.x,e.y,e.z,6,24);
       }
     }
+    // A kamikaze sprints at the player screaming and blows up on contact; a
+    // blade runner closes in and slashes after a short, visible wind-up. Both
+    // steer straight when the way is clear and follow the navigation otherwise.
+    function chase(e,dt,d){
+      if(!e.hasMemory||introSafe())return false;
+      const kamikaze=e.variant==='kamikaze',level=Math.abs(e.baseY-p.y)<1.2,seen=e.seen&&level;
+      if(kamikaze&&e.attackState!=='rush')emit('kamikazeScream',{id:e.id,x:e.x,y:e.y,z:e.z});
+      e.attackState='rush';e.tactic='advance';
+      if(kamikaze&&seen&&d<1.65&&sight(e.x,e.z,p.x,p.z,e.y,p.y+1.2)){damageEnemy(e,e.hp,{x:e.x,y:e.y,z:e.z,credit:false});return true;}
+      if(!kamikaze){
+        if(e.windup>0){
+          e.windup=Math.max(0,e.windup-dt);e.yaw=Math.atan2(p.x-e.x,e.z-p.z);
+          if(!e.windup){e.cooldown=1.05;e.attackState='recover';if(seen&&d<2.3&&sight(e.x,e.z,p.x,p.z,e.y,p.y+1.2)){hurt(13,true,{x:e.x,y:e.y,z:e.z});emit('bladeStrike',{id:e.id,x:e.x,y:e.y,z:e.z});}}
+          return true;
+        }
+        if(seen&&d<1.9&&e.cooldown<=0){e.windupMax=e.windup=.38;e.attackState='aim';return true;}
+        if(e.cooldown>.55){e.attackState='recover';return true;}
+      }
+      const tx=seen?p.x:e.lastSeenX,tz=seen?p.z:e.lastSeenZ;
+      if(Math.hypot(tx-e.x,tz-e.z)>.4&&segmentFree(e.x,e.z,tx,tz,radius(e))){
+        const l=Math.hypot(tx-e.x,tz-e.z),step=Math.min(l-.3,(kamikaze?6.1:4.7)*dt);e.yaw=Math.atan2(tx-e.x,e.z-tz);e.path=[];e.pathAt=0;e.goalX=tx;e.goalZ=tz;
+        if(step>0)move(e,(tx-e.x)/l*step,(tz-e.z)/l*step,radius(e));
+        return true;
+      }
+      if(e.planWait<=0&&!goal(e,tx,tz,'advance',.6))e.planWait=.4;
+      if(e.pathAt<e.path.length){const q=coord(e.path[e.pathAt]);e.yaw=Math.atan2(q[0]-e.x,e.z-q[1]);}
+      navigate(e,dt);return true;
+    }
     function damageEnemy(e,amount,source,weak=false){
       if(!alive(e))return;const origin=source||{x:p.x,y:p.y+1.45,z:p.z,credit:true,...(profilesEnabled?{profile:s.activeProfile}:{})};if(profilesEnabled&&e.profileRequired&&(!origin.credit||origin.profile!==e.profileRequired)){if(origin.credit&&profileHintWait<=0){emit('profileBlocked',{required:e.profileRequired,boss:e.id});profileHintWait=1;}return;}if(origin.credit)amount*=(profilesEnabled&&origin.profile!==s.activeProfile?G.FEconomy.stats(s.profiles[origin.profile].economy):stats).damageMultiplier;if(giant(e))amount*=e.weakPointOpen&&weak?3.2:.30;if(e.bossWave)e.bossReleased=true;
       if(bossProgression)e.entryGrace=0;
@@ -65273,6 +65484,7 @@ function navigationGraph(cells,width,testEdge){
         rigid?.wreck(e,origin);
         if(giant(e)){s.bossAttacks=s.bossAttacks.filter(a=>a.bossId!==e.id);e.weakPointOpen=false;e.weakTimer=0;emit('bossDeath',{id:e.id,x:e.x,y:e.y,z:e.z,scale:scale(e)});for(let i=0;i<12;i++){const angle=i*2.399963,size=scale(e),id=++explosionSerial;s.explosions.push({id,kind:'boss',owner:e.id,x:e.x+Math.cos(angle)*size*.5,y:e.baseY+size*(.35+i*.23),z:e.z+Math.sin(angle)*size*.5,age:-i*.09,life:2.8,radius:size*.56,power:55,seed:id*911});if(!i)emit('explosion',{...s.explosions[s.explosions.length-1]});}if(s.explosions.length>24)s.explosions.splice(0,s.explosions.length-24);}
         s.kills++;dropLoot(e);if(origin.credit){s.combo++;s.comboTime=4;}
+        if(e.variant==='kamikaze')explode([e.x,e.baseY+1.1,e.z],4.4,origin.credit?18:34,12,origin.credit?'player':e.id,false,-1,undefined,'blast',origin.credit?origin.profile:undefined);
         const multiplier=1+Math.min(4,s.combo-1)*.25,points=Math.round([100,150,125,2000][e.type]*multiplier);
         if(origin.credit){s.score+=points;awardProfile(e.type===3?100:10,origin.profile);}emit('kill',{id:e.id,x:e.x,y:e.y,z:e.z,kind:e.type,boss:e.type===3,points:origin.credit?points:0,credited:!!origin.credit});particles(e.x,e.y,e.z,6,e.type===3?32:18);
         if(origin.credit&&s.combo>1)emit('combo',{count:s.combo,multiplier});
@@ -65333,12 +65545,6 @@ function navigationGraph(cells,width,testEdge){
       const pos=q.p||[q.x,q.y,q.z],size=Array.isArray(q.size)?q.size.slice():[q.size,q.size,q.size];
       if(pos.length!==3||!pos.every(Number.isFinite)||size.length!==3||!size.every(n=>Number.isFinite(n)&&n>0&&n<=64))return;
       const structural=q.structural===true;
-      // A broken wall must not be replaced by one upright wall-sized rigid body.
-      // Keep a bounded set of real fragments; the fine missing material is dust.
-      if(rigid&&structural&&!q.fragmented&&size.some(v=>v>1.2)){
-        const counts=size.map(v=>Math.min(3,Math.ceil(v/1.2))),total=counts[0]*counts[1]*counts[2],count=Math.min(12,total),part=size.map((v,k)=>Math.min(k===1?.8:1.2,v/counts[k]));
-        for(let n=0;n<count;n++){const i=Math.floor((n+.5)*total/count),grid=[i%counts[0],Math.floor(i/counts[0])%counts[1],Math.floor(i/(counts[0]*counts[1]))],point=pos.map((v,k)=>v+((grid[k]+.5)/counts[k]-.5)*size[k]);appendDebris({...q,p:point,size:part,fragmented:true,mass:(q.mass||size[0]*size[1]*size[2]*28)/total});}return;
-      }
       if(structural){
         const existing=s.debris.filter(q=>q.structural);
         if(existing.length>=MAX_RUBBLE){
@@ -65357,7 +65563,8 @@ function navigationGraph(cells,width,testEdge){
     function sceneryResult(result,point,power){
       if(!result)return;
       for(const id of result.pipeLeaks||[]){const q=s.pipes.find(q=>q.id===id);if(q)leakPipe(q);}
-      for(const q of (result.debris||[]).slice(0,48))appendDebris(q);
+      for(const q of wreckage(result.debris))appendDebris(q);
+      if(!result.changed){const chip=(result.debris||[]).find(q=>q&&q.structural!==true&&!q.dust);if(chip)appendDebris(chip);}
       for(const e of result.events||[])if(e.name==='materialImpact'||e.name==='materialBreak')emit(e.name,e);
       if(result.changed&&!result.events?.length)emit('creak',{x:point[0],y:point[1],z:point[2],power});
     }
@@ -66256,7 +66463,7 @@ function navigationGraph(cells,width,testEdge){
     function navigate(e,dt){
       if(e.airborne)return;
       if(e.type===2&&!advanced||e.tactic==='hold')return;
-      const speed=e.returning?1.8:!e.hasMemory?(e.type===0?.72:.55):advanced?[e.role==='assault'?2.4:e.role==='flanker'?2.25:1.8,1.7,1.8,e.phase?1.05:.8][e.type]:[1.65,1.05,0,e.phase?.85:.65][e.type];
+      const speed=e.returning?1.8:!e.hasMemory?(e.type===0?.72:.55):chaser(e)?(e.variant==='kamikaze'?6.1:4.7):advanced?[e.role==='assault'?2.4:e.role==='flanker'?2.25:1.8,1.7,1.8,e.phase?1.05:.8][e.type]:[1.65,1.05,0,e.phase?.85:.65][e.type];
       let budget=speed*dt,segments=0;
       const ox=e.x,oz=e.z;
       while(budget>1e-8&&segments++<8){
@@ -66451,6 +66658,7 @@ function navigationGraph(cells,width,testEdge){
             e.tactic='advance';e.attackState='idle';e.yaw=Math.atan2(e.goalX-e.x,e.z-e.goalZ);navigate(e,dt);continue;
           }
         }
+        if(chaser(e)&&chase(e,dt,d))continue;
         if(e.rushTime>0){
           e.attackState='rush';e.rushTime=Math.max(0,e.rushTime-dt);move(e,e.rushX*7.3*dt,e.rushZ*7.3*dt,.38);
           if(!e.rushHit&&Math.abs(e.baseY-p.y)<.9&&Math.hypot(e.x-p.x,e.z-p.z)<.9&&sight(e.x,e.z,p.x,p.z,e.y,p.y+1.2)){e.rushHit=true;hurt(16,true,{x:e.x,y:e.y,z:e.z});}
@@ -66674,7 +66882,7 @@ function navigationGraph(cells,width,testEdge){
       // same routes as a freshly restored world. No actor or gameplay timer moves.
       if(navPending||!graph.ready){pumpNav(Infinity);graph.flush();s.aiStats.navPending=0;}syncArmor();
       invalidateBrain();failedRoutes.clear();approachRoutes.clear();entryComponents.clear();
-      return {version:rigid?2:1,...(rigid?{rigidBodies:rigid.snapshot()}:{}),...(world.combatVersion===1||rigidEnabled?{motion:{version:1,velocityX,velocityZ,dashAge,dashX,dashZ,jumpBuffer,coyote,jumpWasPressed,clipFeedbackWait,clipEscape,profileWasPressed,jetSoundWait,profileHintWait,interactHeld,recovery}}:{}),...(world.combatVersion===1?{combatVersion:1}:{}),aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
+      return {version:rigid?2:1,...(rigid?{rigidBodies:rigid.snapshot()}:{}),...(world.combatVersion===1||rigidEnabled?{motion:{version:1,velocityX,velocityZ,dashAge,dashX,dashZ,jumpBuffer,coyote,jumpWasPressed,clipFeedbackWait,clipEscape,profileWasPressed,jetSoundWait,profileHintWait,interactHeld,recovery}}:{}),...(world.combatVersion===1?{combatVersion:1}:{}),...(hordes?{hordeVersion:1}:{}),aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
         state:{...pick(s,NUMBERS),difficulty:s.difficulty,director:pick(s.director,DIRECTOR),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
           ...(profilesEnabled?{profiles:exportProfiles()}:{}),
           ...(economyEnabled?{economy:G.FEconomy.copy(s.economy)}:{}),
@@ -66712,7 +66920,7 @@ function navigationGraph(cells,width,testEdge){
         require(progression?data.progressionVersion===1:data.progressionVersion===undefined);
         require(economyEnabled?data.economyVersion===(bossProgression?2:1):data.economyVersion===undefined);
         require(arsenal?data.arsenalVersion===(pistol?2:1):data.arsenalVersion===undefined);
-        require(data.combatVersion===(world.combatVersion===1?1:undefined));
+        require(data.combatVersion===(world.combatVersion===1?1:undefined));require(data.hordeVersion===(hordes?1:undefined));
         require(campaign?data.campaignVersion===(bossProgression?2:1):data.campaignVersion===undefined);
         require(armorEnabled?(data.armorVersion===undefined||data.armorVersion===1):data.armorVersion===undefined);
         const economy=economyEnabled?G.FEconomy.copy(a.economy):null;if(economyEnabled)require(economy);else require(a.economy===undefined);
@@ -66904,13 +67112,13 @@ function navigationGraph(cells,width,testEdge){
             require(pickup>=0);if(state.phase==='sealed')require(!a.pickups[pickup]);
             if(q){const inactive=q.status==='dormant'&&q.wave===-1&&q.pendingWave===-1&&home.waves.every(w=>w.enemyIds.every(id=>!enemies[id].encounterReleased));if(state.phase==='sealed'||state.phase==='grace')require(inactive);else if(state.phase==='trial')require(q.status!=='dormant');else require(inactive||q.status==='cleared');}
           }
-          require(Array.isArray(a.loot)&&a.loot.length<=enemies.length+(world.combatVersion===1?4*enemies.filter(giant).length:0));const sources=new Set(),supplyIds=new Set();
+          require(Array.isArray(a.loot)&&a.loot.length<=enemies.length+(world.combatVersion===1?2*PHASE_SLOTS*enemies.filter(giant).length:0));const sources=new Set(),supplyIds=new Set();
           loot=a.loot.map(q=>{
             require(q&&integer(q.sourceEnemy,0,enemies.length-1));
             if(q.kind==='resupply'){
               const owner=enemies[q.sourceEnemy],armor=armorEnabled&&data.armorVersion===1?q.armor:0;
-              require(world.combatVersion===1&&giant(owner)&&integer(q.phase,1,2)&&q.phase<=owner.phase&&integer(q.slot,0,1)&&q.id==='phase-'+owner.id+'-'+q.phase+'-'+q.slot&&!supplyIds.has(q.id));supplyIds.add(q.id);
-              require(q.credits===0&&q.cores===0&&Array.isArray(q.ammo)&&q.ammo.length===weaponSlots&&weaponIds.every(i=>integer(q.ammo[i],0,[60,12,4,6,0][i]))&&q.ammo.filter(Boolean).length<=1&&number(armor,0,15)&&bool(q.taken)&&q.taken===(!q.ammo.some(Boolean)&&!armor)&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-1000,1000)&&ground(q.x,q.z)!==null&&Math.abs(q.y-ground(q.x,q.z))<.061);
+              require(world.combatVersion===1&&giant(owner)&&integer(q.phase,1,2)&&q.phase<=owner.phase&&integer(q.slot,0,PHASE_SLOTS-1)&&q.id==='phase-'+owner.id+'-'+q.phase+'-'+q.slot&&!supplyIds.has(q.id));supplyIds.add(q.id);
+              require(q.credits===0&&q.cores===0&&Array.isArray(q.ammo)&&q.ammo.length===weaponSlots&&weaponIds.every(i=>integer(q.ammo[i],0,PHASE_AMMO[i]))&&q.ammo.filter(Boolean).length<=1&&number(armor,0,15)&&bool(q.taken)&&q.taken===(!q.ammo.some(Boolean)&&!armor)&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-1000,1000)&&ground(q.x,q.z)!==null&&Math.abs(q.y-ground(q.x,q.z))<.061);
               require(['rewardIndex','weapon','weaponUpgrade','personalUpgrade','weaponUpgradeLabel','personalUpgradeLabel','rewardTaken'].every(key=>q[key]===undefined));
               return {...pick(q,['id','sourceEnemy','kind','phase','slot','credits','cores','x','y','z','taken']),ammo:q.ammo.slice(),...(armorEnabled?{armor}:{})};
             }
@@ -66976,7 +67184,7 @@ function navigationGraph(cells,width,testEdge){
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
     return {state:s,get destruction(){return destruction;},get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
-  G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor};
+  G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor,wreckage};
 })(typeof window!=='undefined'?window:globalThis);
 </script>
 <script data-module="motion.js" data-role="page">/* FERRO — damped presentation. Aim and collision state are never modified here. */
@@ -67093,6 +67301,93 @@ function navigationGraph(cells,width,testEdge){
   G.FMotion={create,basis,mount,place};
 })(typeof window!=='undefined'?window:globalThis);
 </script>
+<script data-module="humanoids.js" data-role="page">/* METAL — original procedural humanoid machines (David, 16/11/2026): a chrome
+   endoskeleton, a liquid-metal runner and a headless bomber. Their bodies are
+   generated at runtime from the parametric human of EMPRISE (same author):
+   no imported model, texture or capture. Each body part is one rigid free
+   shape attached to a joint; FActors poses them. */
+(function(G){'use strict';
+  const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a));return t*t*(3-2*t);};
+  const mesh=()=>({positions:[],indices:[]});
+  function vertex(m,p){m.positions.push(p);return m.positions.length-1;}
+  // EMPRISE: shape-preserving cubic interpolation of [y, rx, rz, cz…] rows.
+  function profile(y,rows){
+    if(y<=rows[0][0])return rows[0].slice(1);let i=1;while(i<rows.length-1&&y>rows[i][0])i++;
+    const a=rows[i-1],b=rows[i],h=b[0]-a[0],t=clamp((y-a[0])/h),slope=(j,k)=>{if(j===0)return (rows[1][k]-rows[0][k])/(rows[1][0]-rows[0][0]);if(j===rows.length-1)return (rows[j][k]-rows[j-1][k])/(rows[j][0]-rows[j-1][0]);const h0=rows[j][0]-rows[j-1][0],h1=rows[j+1][0]-rows[j][0],d0=(rows[j][k]-rows[j-1][k])/h0,d1=(rows[j+1][k]-rows[j][k])/h1;if(d0*d1<=0)return 0;return 3*(h0+h1)/((2*h1+h0)/d0+(h1+2*h0)/d1);};
+    return a.slice(1).map((v,k)=>{k++;const n=(2*t*t*t-3*t*t+1)*v+(t*t*t-2*t*t+t)*h*slope(i-1,k)+(-2*t*t*t+3*t*t)*b[k]+(t*t*t-t*t)*h*slope(i,k);return clamp(n,Math.min(v,b[k]),Math.max(v,b[k]));});
+  }
+  function surface(m,{bottom,top,rows,sides,point,cap=true}){
+    const start=m.positions.length;
+    for(let j=0;j<=rows;j++){const y=bottom+(top-bottom)*j/rows;for(let i=0;i<sides;i++)vertex(m,point(y,i*Math.PI*2/sides));}
+    for(let j=0;j<rows;j++)for(let i=0;i<sides;i++){const a=start+j*sides+i,b=a+sides,c=start+j*sides+(i+1)%sides,d=c+sides;m.indices.push(a,b,c,c,b,d);}
+    if(cap)for(const [j,flip] of [[0,true],[rows,false]]){const p=[0,0,0];for(let i=0;i<sides;i++)for(let k=0;k<3;k++)p[k]+=m.positions[start+j*sides+i][k]/sides;const centre=vertex(m,p);for(let i=0;i<sides;i++){const a=start+j*sides+i,b=start+j*sides+(i+1)%sides;m.indices.push(centre,...(flip?[a,b]:[b,a]));}}
+  }
+  function ellipsoid(m,centre,radii,{rows=6,sides=10,tilt=0}={}){
+    const start=m.positions.length,ct=Math.cos(tilt),st=Math.sin(tilt);
+    for(let j=0;j<=rows;j++)for(let i=0;i<sides;i++){const v=j*Math.PI/rows,u=i*Math.PI*2/sides,x=radii[0]*Math.sin(v)*Math.cos(u),y=radii[1]*Math.cos(v),z=radii[2]*Math.sin(v)*Math.sin(u);vertex(m,[centre[0]+ct*x-st*y,centre[1]+st*x+ct*y,centre[2]+z]);}
+    for(let j=0;j<rows;j++)for(let i=0;i<sides;i++){const a=start+j*sides+i,b=a+sides,c=start+j*sides+(i+1)%sides,d=c+sides;if(j>0)m.indices.push(a,d,b);if(j<rows-1)m.indices.push(a,c,d);}
+  }
+  const g=(x,y,cx,cy,sx,sy)=>Math.exp(-(((x-cx)/sx)**2+((y-cy)/sy)**2));
+  const HEAD=[[1.525,.028,.028,.018],[1.55,.057,.049,.026],[1.585,.079,.066,.021],[1.625,.091,.080,.008],[1.67,.095,.086,0],[1.71,.093,.083,-.002],[1.75,.092,.078,-.007],[1.79,.080,.067,-.012],[1.815,.055,.047,-.015],[1.827,.006,.006,-.015]];
+  // A human face (liquid metal) or a bare skull with deep sockets and cheekbones (endoskeleton).
+  function head(skull){
+    const m=mesh();
+    surface(m,{bottom:1.525,top:1.827,rows:18,sides:24,point(y,a){
+      const [rx,rz,cz]=profile(y,HEAD),x=rx*Math.cos(a),front=Math.max(0,Math.sin(a))**6;let z=cz+rz*Math.sin(a);
+      z+=front*(skull?-.006*g(x,y,0,1.669,.016,.024)-.017*g(x,y,-.038,1.700,.019,.015)-.017*g(x,y,.038,1.700,.019,.015)+.010*g(x,y,-.060,1.662,.020,.014)+.010*g(x,y,.060,1.662,.020,.014)+.006*g(x,y,0,1.615,.040,.010)
+        :.023*g(x,y,0,1.669,.022,.030)+.010*g(x,y,0,1.703,.015,.042)+.008*g(x,y,-.054,1.660,.026,.023)+.008*g(x,y,.054,1.660,.026,.023)-.010*g(x,y,-.038,1.703,.021,.013)-.010*g(x,y,.038,1.703,.021,.013)+.009*g(x,y,0,1.611,.036,.008)-.003*g(x,y,0,1.617,.040,.003));
+      return [x*(skull?1-.08*smooth(1.58,1.64,y)*(1-smooth(1.64,1.68,y)):1),y,z];}});
+    if(!skull)for(const side of [-1,1])ellipsoid(m,[side*.097,1.669,-.008],[.014,.034,.020],{rows:4,sides:8});
+    surface(m,{bottom:1.465,top:1.555,rows:3,sides:12,point(y,a){const rx=(skull?.036:.053)+smooth(1.51,1.555,y)*.009;return [rx*Math.cos(a),y,.004+(skull?.034:.050)*Math.sin(a)];}});
+    return m;
+  }
+  const SHIRT=[[1.035,.195,.140],[1.11,.197,.145],[1.24,.207,.150],[1.36,.219,.143],[1.43,.216,.122],[1.475,.150,.088],[1.495,.077,.066],[1.512,.070,.064],[1.532,.067,.061]];
+  function torso(){const m=mesh();surface(m,{bottom:1.035,top:1.532,rows:12,sides:18,point(y,a){const [rx,rz]=profile(y,SHIRT);return [rx*Math.cos(a),y-.018*smooth(1.475,1.532,y)*Math.max(0,Math.sin(a))**2,rz*Math.sin(a)];}});return m;}
+  function pelvis(){const m=mesh();surface(m,{bottom:.86,top:1.045,rows:5,sides:18,point(y,a){const [rx,rz]=profile(y,[[.86,.150,.104],[.95,.185,.127],[1.045,.196,.141]]);return [rx*Math.cos(a),y,rz*Math.sin(a)];}});return m;}
+  const ARM=[[.955,.045,.049],[1.04,.053,.058],[1.12,.058,.063],[1.19,.057,.062],[1.30,.069,.076],[1.40,.070,.076],[1.43,.061,.068],[1.465,.036,.043],[1.485,.012,.018]];
+  function armPoint(side){return (y,a)=>{const [rx,rz]=profile(y,ARM),t=clamp((1.43-y)/.24),lower=clamp((1.19-y)/.24),cx=side*(y>1.43?.235-.085*smooth(1.43,1.485,y):y<1.19?.255+.005*lower:.235+.020*t),cz=.015*lower;return [cx+rx*Math.cos(a),y-.026*smooth(1.27,1.43,y)*Math.max(0,side*Math.cos(a))**2,cz+rz*Math.sin(a)];};}
+  function upperArm(side){const m=mesh();surface(m,{bottom:1.165,top:1.485,rows:10,sides:10,point:armPoint(side)});return m;}
+  function foreArm(side){const m=mesh();surface(m,{bottom:.955,top:1.235,rows:8,sides:10,point:armPoint(side)});return m;}
+  function hand(side){
+    const m=mesh(),lengths=[.045,.057,.054,.043],offsets=[-.027,-.009,.010,.027];
+    ellipsoid(m,[side*.26,.910,.015],[.042,.057,.024],{rows:6,sides:10});
+    for(let f=0;f<4;f++)ellipsoid(m,[side*(.26+offsets[f]),.861-lengths[f]/2,.018],[.0095,lengths[f]/2+.009,.0105],{rows:4,sides:6});
+    ellipsoid(m,[side*.216,.900,.026],[.012,.030,.014],{tilt:side*.42,rows:5,sides:6});return m;
+  }
+  const LEG=[[.145,.058,.065],[.29,.072,.082],[.45,.078,.086],[.54,.080,.088],[.72,.096,.107],[.88,.103,.115],[1.0,.102,.119]];
+  const legPoint=side=>(y,a)=>{const [rx,rz]=profile(y,LEG);return [side*.105+rx*Math.cos(a),y,rz*Math.sin(a)];};
+  function thigh(side){const m=mesh();surface(m,{bottom:.50,top:1.0,rows:10,sides:12,point:legPoint(side)});return m;}
+  function shin(side){const m=mesh();surface(m,{bottom:.145,top:.56,rows:9,sides:12,point:legPoint(side)});return m;}
+  function foot(side){const m=mesh();surface(m,{bottom:.005,top:.15,rows:5,sides:12,point(y,a){const [rx,rz,cz]=profile(y,[[.005,.052,.110,.027],[.020,.059,.126,.035],[.052,.060,.124,.032],[.088,.055,.105,.023],[.115,.047,.071,.010],[.15,.041,.052,0]]);return [side*.105+rx*Math.cos(a)*(1-.08*Math.max(0,Math.sin(a))),y,cz+rz*Math.sin(a)];}});return m;}
+  // EMPRISE models face +z; METAL faces -z. Mirror z, keep the winding outward,
+  // smooth the normals and fit the triangles to the unit cube of a free shape.
+  function shape(name,m){
+    const p=m.positions.map(q=>[q[0],q[1],-q[2]]),n=p.map(()=>[0,0,0]),tri=[];
+    for(let i=0;i<m.indices.length;i+=3){const ids=[m.indices[i],m.indices[i+2],m.indices[i+1]],[a,b,c]=ids.map(j=>p[j]),u=b.map((v,k)=>v-a[k]),v=c.map((w,k)=>w-a[k]),f=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];for(const j of ids)for(let k=0;k<3;k++)n[j][k]+=f[k];tri.push(ids);}
+    const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];for(const q of p)for(let k=0;k<3;k++){lo[k]=Math.min(lo[k],q[k]);hi[k]=Math.max(hi[k],q[k]);}
+    const centre=lo.map((v,k)=>(v+hi[k])/2),size=lo.map((v,k)=>Math.max(1e-4,hi[k]-v)),unit=v=>{const l=Math.hypot(...v);return l>1e-10?v.map(x=>x/l):[0,1,0];};
+    const triangles=tri.map(ids=>[...ids.map(j=>p[j].map((v,k)=>(v-centre[k])/size[k])),...ids.map(j=>unit(unit(n[j]).map((v,k)=>v*size[k])))]);
+    const id='metal-hum-'+name;let registered=false;
+    if(G.FRender&&typeof G.FRender.forme==='function'){try{G.FRender.forme(id,triangles);registered=true;}catch(error){registered=false;}}
+    return {shape:id,centre,size,triangles:triangles.length,registered};
+  }
+  const sides=f=>[f(-1),f(1)];
+  const parts={face:shape('face',head(false)),skull:shape('skull',head(true)),torso:shape('torso',torso()),pelvis:shape('pelvis',pelvis()),
+    upper:sides(s=>shape('upper-'+s,upperArm(s))),fore:sides(s=>shape('fore-'+s,foreArm(s))),hand:sides(s=>shape('hand-'+s,hand(s))),
+    thigh:sides(s=>shape('thigh-'+s,thigh(s))),shin:sides(s=>shape('shin-'+s,shin(s))),foot:sides(s=>shape('foot-'+s,foot(s)))};
+  // Joint pivots in METAL space (front -z); side -1 is the left of the body.
+  const pivots={hip:.97,waist:1.035,neck:1.50,shoulder:s=>[s*.235,1.43,0],elbow:s=>[s*.255,1.19,-.015],wrist:s=>[s*.26,.955,-.015],leg:s=>[s*.105,.97,0],knee:s=>[s*.105,.52,0],ankle:s=>[s*.105,.145,0]};
+  // EMPRISE gait: two-joint leg inverse kinematics along a smooth step cycle.
+  const GAIT=Object.freeze({duty:.52,stride:.30,lift:.09,drop:.072,thigh:.45,shin:.375,ankleY:.145});
+  // crouch lowers the hips (body units): the same solve bends the knees.
+  function gait(phase,amount=1,crouch=0){
+    amount=clamp(amount,0,1.6);const q=GAIT,u=((phase/(Math.PI*2))%1+1)%1,s=u<q.duty?0:(u-q.duty)/(1-q.duty),swing=u>=q.duty,t=s*s*(3-2*s),z=q.stride*amount*(swing?-1+2*t:1-2*u/q.duty),lift=swing?q.lift*amount*Math.sin(Math.PI*s)**2:0,bodyY=-q.drop*Math.min(1,amount)+.003*amount*Math.cos(phase*2)-clamp(crouch,0,.3),dy=.97+bodyY-q.ankleY-lift,d=Math.max(.05,Math.min(q.thigh+q.shin-.00001,Math.hypot(dy,z))),knee=-Math.acos(clamp((d*d-q.thigh*q.thigh-q.shin*q.shin)/(2*q.thigh*q.shin),-1,1)),hip=Math.atan2(z,dy)+Math.acos(clamp((q.thigh*q.thigh+d*d-q.shin*q.shin)/(2*q.thigh*d),-1,1));
+    return {hip,knee,ankle:-hip-knee,bodyY,lift,z,stance:!swing};
+  }
+  const triangles=Object.values(parts).flat().reduce((n,q)=>n+q.triangles,0);
+  G.MetalHumanoids=Object.freeze({parts,pivots,gait,triangles,registered:Object.values(parts).flat().every(q=>q.registered),provenance:'EMPRISE parametric human, original runtime code'});
+})(typeof window!=='undefined'?window:globalThis);
+</script>
 <script data-module="actors.js" data-role="page">/* FERRO — original articulated mechanical actors. No models or textures imported. */
 (function (G) {
   'use strict';
@@ -67110,6 +67405,7 @@ function navigationGraph(cells,width,testEdge){
   // réellement stockées dans un maillage — p, s, r — sont des tableaux frais.
   const MAT=new Float64Array(9),MAT2=new Float64Array(9),MAT3=new Float64Array(9),EUL=new Float64Array(3);
   const LIMB_INSET=/(?:thigh|shin|upper-arm|forearm)/;
+  const LIVERIES=[null,[[.45,.38,.27],[.31,.27,.21],[.66,.46,.17]],[[.64,.66,.68],[.40,.43,.47],[.16,.46,.62]],[[.40,.19,.13],[.28,.20,.17],[.72,.55,.24]],[[.12,.13,.14],[.21,.22,.24],[.88,.42,.08]],[[.23,.32,.19],[.17,.22,.15],[.76,.70,.20]]];
   function rotationTo(o,x,y,z){
     const a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);
     o[0]=e*c;o[1]=e*d*b-f*a;o[2]=e*d*a+f*b;o[3]=f*c;o[4]=f*d*b+e*a;o[5]=f*d*a-e*b;o[6]=-d;o[7]=c*b;o[8]=c*a;return o;
@@ -67149,6 +67445,10 @@ function navigationGraph(cells,width,testEdge){
       const scheme=e.bossKind==='siegebreaker'?[[.23,.20,.18],[.37,.29,.22],[.60,.34,.13]]:e.bossKind==='custodian'?[[.43,.46,.43],[.25,.32,.34],[.57,.52,.36]]:[[.25,.29,.25],[.37,.41,.32],[.49,.37,.23]];
       palette.shell=mix(scheme[0],[.66,.49,.30],hurt);palette.edge=scheme[1];palette.trim=scheme[2];
     }
+    // Chapter liveries for the machines (David, 16/11/2026): desert, arctic,
+    // rust, black and toxic. The guardians keep their own schemes.
+    const livery=!giant&&Number.isInteger(e.livery)?LIVERIES[e.livery]:null;
+    if(livery){palette.shell=mix(livery[0],[.61,.54,.43],hurt);palette.edge=livery[1];palette.trim=livery[2];}
     // The playable heavy reuses this frame with its own livery and visor.
     if(options.palette)for(const key of Object.keys(palette))if(Array.isArray(options.palette[key]))palette[key]=options.palette[key];
     const peaceful=e.awareness==='patrol',scanning=e.awareness==='search'||e.awareness==='investigate';
@@ -67429,7 +67729,135 @@ function navigationGraph(cells,width,testEdge){
         limb('detail-custodian-jacket-'+i,upper,upper.map((v,k)=>v+(lower[k]-v)*.55),.14,.14,'trim','cylinder');
       }
     }
-    if(type===0)drone();else if(type===1)heavy();else if(type===2)sentinel();else custodian();
+    // Humanoid machines (David, 16/11/2026): parametric bodies from EMPRISE,
+    // posed joint by joint. 'endo' is a chrome endoskeleton gunner, 'blade' a
+    // liquid-metal runner, 'kamikaze' a headless bomber. Giants ('endo',
+    // 'liquid') stand hunched so that the simulation's weak point sits in the
+    // chest, with guns on the shoulders where the simulation fires from.
+    function humanoid(kind){
+      const H=G.MetalHumanoids,P=H.parts,V=H.pivots,k=giant?1.9:1,K=v=>v*k,bulk=giant?2:1,T=v=>K(v)*bulk,hs=giant?1.3:1,id=e.id||0;
+      const endo=kind==='endo',bomber=kind==='kamikaze',chrome=kind==='blade'||kind==='liquid',engaged=e.awareness==='engage'||!!e.active;
+      const shine=chrome?.05*Math.sin(time*2.7+id*1.3):0;
+      const skin={metal:chrome?[.70+shine,.75+shine,.80+shine]:endo?[.55,.57,.60]:[.19,.20,.21],joint:chrome?[.58,.63,.68]:endo?[.09,.095,.10]:[.10,.085,.07],accent:bomber?[.42,.17,.06]:endo?[.30,.31,.34]:[.86,.89,.93]};
+      if(hurt>0)for(const key of ['metal','accent'])skin[key]=mix(skin[key],[.95,.55,.25],hurt*.6);
+      const running=bomber||kind==='blade'&&engaged||rush,amount=airborne?0:clamp(blend*(running?1.35:1),0,1.5);
+      const crouch=giant&&tellFamily==='ring'?tellPose:0,drop=(giant?.17:0)+crouch*.12;
+      const L=H.gait(phase,amount,drop),R=H.gait(phase+PI,amount,drop),swing=Math.sin(phase)*(running?.6:.25)*blend;
+      const hipY=V.hip+(airborne?-.04:L.bodyY);
+      const lean=stun?-.12:(giant?.30:0)+(running?.24:.05)*blend+(rush?.10:0)+crouch*.15,twist=giant&&tellFamily==='sweep'?.55*Math.sin(PI*tellPose):0;
+      const hips=frame(root,[0,K(hipY),impact*.05],[0,0,stun?Math.sin(time*23)*.04:0]);
+      const chest=frame(hips,[0,K(V.waist-V.hip),0],[-lean-impact*.22,twist,airborne?0:Math.sin(phase)*.03*blend]);
+      const put=(name,part,f,pivot,color,widen=1,grow=1)=>piece(name,part.shape,[K(part.centre[0]-pivot[0])*grow,K(part.centre[1]-pivot[1])*grow,K(part.centre[2]-pivot[2])*grow],[K(part.size[0]*widen)*grow,K(part.size[1])*grow,K(part.size[2]*widen)*grow],color,f);
+      const ball=(name,p,d,color,f,mat=0,glow=0)=>piece(name,'sphere',p,[T(d),T(d),T(d)],color,f,null,mat,glow);
+      const widen=giant?1.2:1,simple=lod===2;
+      // Legs: one gait for every look; the endoskeleton shows bare struts.
+      for(const side of [-1,1]){
+        const i=side<0?0:1,g=side<0?L:R,lp=V.leg(side),kp=V.knee(side),ap=V.ankle(side);
+        const th=frame(hips,[K(lp[0]),0,0],[airborne?.55:g.hip,0,0]),sh=frame(th,[0,K(kp[1]-lp[1]),0],[airborne?-.95:g.knee,0,0]),ft=frame(sh,[0,K(ap[1]-kp[1]),0],[airborne?.3:g.ankle,0,0]);
+        if(simple){limb('hum-leg-'+side,point(th,[0,0,0]),point(ft,[0,0,0]),T(.15),T(.16),endo?skin.joint:skin.metal,'box');box('hum-foot-'+side,[0,K(-.07),K(-.05)],[T(.12),K(.13),K(.25)],skin.joint,ft);continue;}
+        if(endo){
+          cyl('endo-thigh-'+side,[0,K(-.225),0],[T(.065),K(.43),T(.065)],skin.metal,th);
+          cyl('endo-thigh-piston-'+side,[K(side*.05)*bulk,K(-.21),K(.05)*bulk],[T(.032),K(.30),T(.032)],skin.joint,th);
+          ball('endo-hip-'+side,[0,0,0],.11,skin.joint,th);ball('endo-knee-'+side,[0,K(-.45),0],.10,skin.joint,th);
+          for(const dx of [-.026,.026])cyl('endo-shin-'+side+(dx>0?'-b':'-a'),[K(dx)*bulk,K(-.19),0],[T(.034),K(.37),T(.034)],skin.metal,sh);
+          armor('endo-foot-'+side,[0,K(-.075),K(-.055)],[T(.11),K(.07)*bulk,K(.25)*(giant?1.4:1)],skin.metal,ft);
+          if(lod===0)box('endo-toe-'+side,[0,K(-.11),K(-.19)*(giant?1.4:1)],[T(.10),K(.035)*bulk,K(.06)],skin.joint,ft);
+        }else{put('hum-thigh-'+side,P.thigh[i],th,lp,skin.metal,giant?1.15:1);put('hum-shin-'+side,P.shin[i],sh,kp,skin.metal,giant?1.15:1);put('hum-foot-'+side,P.foot[i],ft,ap,bomber?skin.joint:skin.metal,giant?1.2:1);}
+      }
+      // Torso and head.
+      const neck=frame(chest,[0,K(V.neck-V.waist),0],[(giant?.30:0)+(aim?clamp(pitch(1.7)*.6,-.4,.4):bomber?0:.05),0,0]),H2=v=>K(v)*hs;
+      if(simple){
+        box('hum-torso',[0,K(.25),0],[K(.42*widen),K(.50),K(.28*widen)],endo?skin.joint:skin.metal,chest);
+        if(!bomber)ball('hum-head',[0,H2(.17),H2(-.01)],.23*hs/bulk,skin.metal,neck);
+        if(endo||bomber)eye('hum-eye',bomber?[0,K(.02),0]:[0,H2(.20),H2(-.11)],[H2(.12),H2(.03),H2(.03)],bomber?chest:neck);
+      }else if(endo){
+        armor('endo-pelvis',[0,K(-.02),0],[K(.34*widen),T(.13),K(.20*widen)],skin.metal,hips);
+        cyl('endo-spine',[0,K(.22),K(.07)],[T(.05),K(.46),T(.05)],skin.joint,chest);
+        for(let j=0;j<4;j++)ring('endo-rib-'+j,[0,K(.17+.075*j),K(.01)],[K((.40-.025*j)*widen),T(.035),K((.27-.012*j)*widen)],skin.metal,chest);
+        box('endo-sternum',[0,K(.27),K(-.125)*widen],[T(.05),K(.25),T(.03)],skin.metal,chest);
+        if(!giant)ball('endo-core',[0,K(.28),K(.01)],.11,signal,chest,signalMat,emission+.35);
+        for(const side of [-1,1])limb('endo-clavicle-'+side,point(chest,[0,K(.41),K(-.02)]),point(chest,[K(side*.235),K(.395),0]),T(.045),T(.045),skin.metal,'cylinder',chest.b);
+        put('endo-skull',P.skull,neck,[0,V.neck,0],skin.metal,1,hs);
+        for(const side of [-1,1])piece('endo-eye-'+side,'sphere',[H2(side*.038),H2(.20),H2(-.083)],[H2(.028),H2(.022),H2(.016)],[1,.07,.03],neck,null,6,.95+.4*charge);
+        box('endo-jaw',[0,H2(.088),H2(-.045)],[H2(.105),H2(.034),H2(.085)],skin.metal,neck);
+        if(lod===0){box('endo-teeth',[0,H2(.112),H2(-.083)],[H2(.078),H2(.022),H2(.012)],[.80,.80,.76],neck);for(const side of [-1,1])cyl('endo-neck-'+side,[K(side*.032)*bulk,K(.43),K(.015)],[T(.026),K(.12),T(.026)],skin.joint,chest);for(let j=0;j<4;j++)box('endo-vertebra-'+j,[0,K(.04+.1*j),K(.10)],[T(.075),K(.034),T(.06)],skin.metal,chest);}
+      }else{
+        put('hum-pelvis',P.pelvis,hips,[0,V.hip,0],bomber?skin.joint:skin.metal,widen);
+        put('hum-torso',P.torso,chest,[0,V.waist,0],skin.metal,widen);
+        if(bomber){
+          // Headless: a smouldering neck socket instead of a head.
+          cyl('kamikaze-neck',[0,K(.47),0],[K(.11),K(.07),K(.10)],skin.joint,chest);
+          piece('kamikaze-socket','sphere',[0,K(.51),0],[K(.07),K(.04),K(.07)],[1,.36,.06],chest,null,5,.55+.35*Math.abs(Math.sin(time*17+id)));
+          if(lod===0)for(let j=0;j<3;j++)piece('kamikaze-spark-'+j,'sphere',[K(.05*Math.sin(time*9+j*2.1+id)),K(.56+.05*((time*3+j*.33+id*.1)%1)),K(.05*Math.cos(time*7+j))],[K(.022),K(.022),K(.022)],[1,.62,.15],chest,null,5,.9);
+          box('kamikaze-harness',[0,K(.22),K(-.13)],[K(.34),K(.06),K(.04)],skin.accent,chest);
+        }else put('hum-face',P.face,neck,[0,V.neck,0],skin.metal,1,hs);
+      }
+      // Arms: the gunner holds its weapon with both hands; the others swing,
+      // raise a blade, carry two charges, or brace for a giant's attack.
+      if(endo&&!giant){
+        const gun=frame(hips,[.23,1.33-hipY,-.29],[aim?pitch(1.33):-.25,0,0]),launcher=e.weapon==='rocket',grenadier=e.weapon==='grenade';
+        for(const side of [-1,1]){
+          const s=point(chest,[side*.235,1.43-V.waist,0]),h=point(gun,side>0?[.03,-.14,.12]:[-.18,-.07,-.31]),d=h.map((v,j)=>v-s[j]),length=Math.hypot(...d)||1,reach=Math.min(length,.49),along=reach/2,rise=Math.sqrt(Math.max(0,.245*.245-along*along));
+          const dir=d.map(v=>v/length),pole=[side*.6,-.8,.2],dot=pole[0]*dir[0]+pole[1]*dir[1]+pole[2]*dir[2],off=pole.map((v,j)=>v-dir[j]*dot),n=Math.hypot(...off)||1,elbow=s.map((v,j)=>v+dir[j]*along+off[j]/n*rise);
+          if(simple){limb('hum-arm-'+side,s,h,.09,.09,skin.joint,'box');continue;}
+          const world={p:[0,0,0],b:identity,r:[0,0,0]};
+          ball('endo-shoulder-'+side,s,.10,skin.joint,world);
+          limb('endo-upper-arm-'+side,s,elbow,.055,.055,skin.metal,'cylinder');
+          ball('endo-elbow-'+side,elbow,.08,skin.joint,world);
+          limb('endo-forearm-'+side,elbow,h,.05,.065,skin.metal,'cylinder');
+          if(lod===0)limb('endo-forearm-rod-'+side,elbow.map((v,j)=>v+(j===1?-.03:0)),h.map((v,j)=>v+(j===1?-.03:0)),.022,.022,skin.joint,'cylinder');
+          box('endo-hand-'+side,side>0?[.03,-.14,.12]:[-.18,-.07,-.31],[.08,.11,.12],skin.joint,gun);
+        }
+        if(launcher){cyl('rocket-launcher',[0,.045,-.43],[.30,1.08,.30],skin.accent,gun,[PI/2,0,0]);box('launcher-grip',[0,-.17,-.13],[.12,.25,.17],skin.joint,gun);if(!simple)ring('launcher-rear',[0,.045,.13],[.34,.08,.34],skin.metal,gun,[PI/2,0,0]);}
+        else{box('rifle-receiver',[0,.015,-.14],grenadier?[.28,.25,.58]:[.17,.19,.55],skin.joint,gun);cyl('rifle-barrel',[0,.045,-.67],grenadier?[.22,.58,.22]:[.09,.58,.09],skin.metal,gun,[PI/2,0,0]);if(!simple){box('plasma-coil',[0,.13,-.42],[.11,.06,.40],signal,gun);if(grenadier)cyl('grenade-drum',[.09,-.15,-.20],[.34,.30,.34],skin.accent,gun,[0,0,PI/2]);}}
+        if(!simple)cyl('rifle-muzzle',[0,.045,-.97],launcher?[.36,.08,.36]:grenadier?[.28,.08,.28]:[.15,.08,.15],skin.joint,gun,[PI/2,0,0]);
+        return;
+      }
+      const blades=kind==='blade'&&engaged||kind==='liquid'&&giant&&tellFamily==='sweep';
+      for(const side of [-1,1]){
+        const i=side<0?0:1,sp=V.shoulder(side),ep=V.elbow(side),wp=V.wrist(side);
+        let angle=side<0?-swing:swing,bend=running?.55:.15,spread=giant?.22:.06;
+        if(bomber){angle=1.85+.12*Math.sin(phase*2+side);bend=.35;spread=.10;}
+        else if(kind==='blade'&&side>0&&e.windup>0){angle=.3+2.4*charge;bend=.5;}
+        else if(kind==='blade'&&e.attackState==='recover'&&side>0){angle=.25;bend=.05;}
+        if(giant){
+          angle+=.35;bend+=.35;
+          if(tellFamily==='slam'){angle=angle+(2.75-angle)*tellPose;bend=.25+.3*tellPose;}
+          else if(tellFamily==='rocketZone'){angle=angle+(1.2-angle)*tellPose;}
+          else if(tellFamily==='sweep'&&side>0){spread=.2+1.25*tellPose;angle=.4;}
+          else if(crouch){spread=.22+.5*crouch;}
+        }
+        const upper=frame(chest,[K(sp[0])*widen,K(sp[1]-V.waist),K(sp[2])],[angle,0,side*spread]),fore=frame(upper,[K(ep[0]-sp[0]),K(ep[1]-sp[1]),K(ep[2]-sp[2])],[bend,0,0]),wrist=frame(fore,[K(wp[0]-ep[0]),K(wp[1]-ep[1]),K(wp[2]-ep[2])],[0,0,0]);
+        if(simple){limb('hum-arm-'+side,point(upper,[0,0,0]),point(wrist,[0,0,0]),T(.11),T(.11),skin.metal,'box');}
+        else if(endo){
+          ball('endo-shoulder-'+side,[0,0,0],.10,skin.joint,upper);cyl('endo-upper-arm-'+side,[0,K(-.12),0],[T(.055),K(.24),T(.055)],skin.metal,upper);
+          ball('endo-elbow-'+side,[0,0,0],.08,skin.joint,fore);for(const dx of [-.02,.02])cyl('endo-forearm-'+side+(dx>0?'-b':'-a'),[K(dx)*bulk,K(-.115),0],[T(.03),K(.235),T(.03)],skin.metal,fore);
+          put('endo-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
+        }else{put('hum-upper-'+side,P.upper[i],upper,sp,skin.metal,giant?1.15:1);put('hum-fore-'+side,P.fore[i],fore,ep,skin.metal,giant?1.1:1);}
+        if(simple)continue;
+        if(blades)piece('liquid-blade-'+side,'octa',[0,K(-.38),K(-.01)],[K(.11),K(.86),K(.04)],skin.accent,wrist,null,0,.08);
+        else if(!endo)put('hum-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
+        if(bomber){
+          piece('kamikaze-bomb-'+side,'sphere',[0,K(-.17),K(-.07)],[K(.30),K(.30),K(.30)],[.075,.08,.085],wrist);
+          ring('kamikaze-bomb-band-'+side,[0,K(-.17),K(-.07)],[K(.31),K(.05),K(.31)],skin.accent,wrist);
+          piece('kamikaze-fuse-'+side,'sphere',[0,K(-.02),K(-.07)],[K(.05),K(.05),K(.05)],[1,.12,.04],wrist,null,6,(Math.sin(time*(rush?22:9)+side)>0?1.2:.25));
+        }
+      }
+      // Giant looks: guns on the shoulders where the simulation fires from,
+      // and a mount holding the exposed heart to the chest.
+      if(giant){
+        cyl('titan-core-mount',[0,1.93,-.52],[.52,.56,.52],skin.joint,root,[PI/2,0,0]);
+        for(const side of [-1,1]){
+          const up=tellFamily==='rocketZone'?-.75*tellPose:0,mount=frame(root,[side*1.04,2.28,0],[aim?pitch(2.28):up-.08,0,0]);
+          box('titan-gun-yoke-'+side,[-side*.36,.02,.10],[.62,.30,.46],skin.joint,mount);
+          cyl('titan-gun-'+side,[0,0,-.74],[.32,1.48,.32],chrome?skin.metal:'steel',mount,[PI/2,0,0]);
+          ring('titan-gun-rim-'+side,[0,0,-1.46],[.42,.10,.42],skin.joint,mount,[PI/2,0,0]);
+          if(lod<2)piece('titan-gun-glow-'+side,'cylinder',[0,0,-1.50],[.20,.03,.20],signal,mount,[PI/2,0,0],signalMat,emission+.3*charge);
+        }
+      }
+    }
+    const humanLook=G.MetalHumanoids&&!canvas?(giant?(e.bossLook==='endo'||e.bossLook==='liquid'?e.bossLook:''):type===1&&(e.variant==='endo'||e.variant==='blade'||e.variant==='kamikaze')?e.variant:''):'';
+    if(humanLook)humanoid(humanLook);else if(type===0)drone();else if(type===1)heavy();else if(type===2)sentinel();else custodian();
     if(giant){
       const awake=e.bossAwake!==false,open=!!e.weakPointOpen,kind=e.bossKind||'colossus';
       const glow=open?[.20,.90,.80]:kind==='siegebreaker'?[.98,.33,.055]:kind==='custodian'?[.37,.70,.78]:[.89,.61,.20];
@@ -67442,7 +67870,7 @@ function navigationGraph(cells,width,testEdge){
         const a=j*TAU/6,r=open?.51:.27;
         armor('titan-heart-shutter-'+j,[Math.cos(a)*r,1.93+Math.sin(a)*r,-1.035],[.22,.28,.10],'edge',root,[open?.20:0,0,a-PI/2]);
       }
-      if(lod<2){
+      if(lod<2&&!humanLook){
         for(const side of [-1,1]){
           armor('titan-shoulder-buttress-'+side,[side*.83,2.30,.12],[.33,.91,.64],'edge',root,[0,0,-side*.12]);
           box('titan-cheek-'+side,[side*.45,2.86,-.43],[.13,.41,.18],'trim',root,[0,0,-side*.09]);
@@ -67462,7 +67890,7 @@ function navigationGraph(cells,width,testEdge){
         }
         if(kind==='custodian')ring('titan-halo',[0,2.60,.77],[1.22,.11,1.22],'trim',root,[PI/2,0,0]);
       }
-      if(lod===0){
+      if(lod===0&&!humanLook){
         for(const side of [-1,1]){
           for(let j=0;j<3;j++){
             box('titan-rib-'+side+'-'+j,[side*.69,1.66+j*.19,-.60],[.21,.075,.14],'steel',root,[0,0,side*.17]);
@@ -67833,10 +68261,10 @@ function navigationGraph(cells,width,testEdge){
   const padDefaults={fire:['RT'],fireLeft:['LT'],sprint:['LB'],jump:['A'],dash:['B'],pulse:['L3'],interact:['X'],weaponNext:['RB'],switchProfile:['Y'],view:['R3'],weapon1:['Up'],weapon2:['Right'],weapon3:['Down'],weapon4:['Left'],map:['Back'],pause:['Start']};
   const padLayout1={sprint:['L3'],pulse:['LB'],melee:['R3'],weaponNext:['Y'],switchProfile:['RB']};
   const allowed=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space|Enter|Backspace|Tab)$/.test(code);
-  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,view:'first',controlsHint:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.25,effectsVolume:1,ambienceVolume:1,mixVersion:2,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:2,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
+  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,view:'first',controlsHint:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,autoTune:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.25,effectsVolume:1,ambienceVolume:1,mixVersion:2,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:2,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
   function normalize(raw,touch){
     const out=defaults(touch),v=raw&&typeof raw==='object'?raw:{};
-    for(const id of ['demo','demoWake','muted','softMotion','controlsHint','invertY','systemPointerAcceleration','shadows','bloom','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks','touchAssist','portraitFov'])if(typeof v[id]==='boolean')out[id]=v[id];
+    for(const id of ['demo','demoWake','muted','softMotion','controlsHint','invertY','systemPointerAcceleration','shadows','bloom','autoTune','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks','touchAssist','portraitFov'])if(typeof v[id]==='boolean')out[id]=v[id];
     if([5,10,30,60].includes(v.demoDelay))out.demoDelay=v.demoDelay;
     if(['off','probe','screen'].includes(v.reflections))out.reflections=v.reflections;
     if(['first','third'].includes(v.view))out.view=v.view;
@@ -67846,6 +68274,7 @@ function navigationGraph(cells,width,testEdge){
     // Mix 2: the former default music level (.45) becomes the quieter default;
     // any other saved level is the player's own choice and stays.
     if(v.mixVersion!==2&&v.musicVolume===.45)out.musicVolume=defaults(touch).musicVolume;
+    if(v.perfVersion===1)out.perfVersion=1;
     if(['off','aim','on'].includes(v.gyroMode))out.gyroMode=v.gyroMode;
     if([-1,0,30,60,120,144].includes(v.fpsLimit))out.fpsLimit=v.fpsLimit;
     if([1,.85,.75,.66,.5].includes(v.renderScale))out.renderScale=v.renderScale;
@@ -67947,6 +68376,53 @@ function navigationGraph(cells,width,testEdge){
   }
   window.FOptions={cadenceChoice:(p95,previous=60)=>!Number.isFinite(p95)||p95>(previous===30?9:11.7)?30:60,defaults,normalize,assign,assignPad,padNames,keyName,createFrameGate,frameGate,fireBufferMs:150,actions:actions.map(([id,label])=>({id,label})),down:(bindings,keys,id)=>(bindings[id]||[]).some(code=>keys.has(code)),matches:(bindings,id,code)=>(bindings[id]||[]).includes(code)};
 })();
+</script>
+<script data-module="perf.js" data-role="page">/* METAL — modest computers (David, 16/11/2026). A first-launch preset chosen
+   from the graphics chip, then a governor that switches costly effects off
+   one by one when the frame rate stays low during play. The native
+   resolution is never lowered automatically (David, 14/11/2026). */
+(function(G){'use strict';
+  // Integrated, old or software graphics; and clearly discrete ones.
+  const LOW=/swiftshader|llvmpipe|softpipe|software|microsoft basic|intel(\(r\))? (hd|uhd)( graphics)?\b|\bgma\b|mali-(t|g[1-5]\d\b)|adreno( \(tm\))? [3-5]\d\d|powervr|radeon(\(tm\))? r[2-7]\b|vega [3-8] graphics|geforce (gt [1-7]\d\d|[2-9]\d\dm?\b|mx1\d0)/i;
+  const HIGH=/\brtx\b|gtx (9[78]0|10[6-8]0|16[5-6]0)|radeon rx|radeon pro|apple m[1-4] (pro|max|ultra)|quadro|titan/i;
+  function tier(info){
+    const name=String(info&&info.name||''),cores=Number(info&&info.cores)||4,memory=Number(info&&info.memory)||8;
+    if(LOW.test(name)||cores<=2||memory<=2)return 'low';
+    if(HIGH.test(name)&&cores>=6)return 'high';
+    return 'mid';
+  }
+  function probe(gl,nav){
+    let name='';
+    try{const ext=gl&&gl.getExtension&&gl.getExtension('WEBGL_debug_renderer_info');name=String(ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl&&gl.getParameter?gl.getParameter(gl.RENDERER):'');}catch(_){name='';}
+    const info={name,cores:Number(nav&&nav.hardwareConcurrency)||0,memory:Number(nav&&nav.deviceMemory)||0};
+    return {...info,tier:tier(info)};
+  }
+  // Applied once, on the first launch of this version; later choices stay.
+  const PRESETS={low:{quality:'low',reflections:'off',shadows:false,bloom:false},mid:{},high:{}};
+  function preset(prefs,info){
+    if(!prefs||prefs.perfVersion===1)return null;
+    const level=info&&PRESETS[info.tier]?info.tier:'mid',changes=PRESETS[level];
+    Object.assign(prefs,changes,{perfVersion:1});return {tier:level,changes:Object.keys(changes)};
+  }
+  // Cheapest visible loss first on integrated graphics.
+  const STEPS=[{key:'reflections',value:'off',label:'reflets coupés'},{key:'shadows',value:false,label:'ombres coupées'},{key:'bloom',value:false,label:'éclat lumineux coupé'},{key:'quality',value:'low',label:'détails en économie'}];
+  // Fed with the measured frame rate about every 0.75 s. Six low readings in
+  // a row (≈ 4.5 s under 83 % of the cadence) take one step, then it waits.
+  function governor(){
+    let slow=0,wait=0;
+    return {
+      sample(fps,{cadence=60,playing=false,prefs}={}){
+        if(!playing||!prefs||prefs.autoTune===false||!(fps>0)){slow=0;return null;}
+        if(wait>0){wait--;return null;}
+        if(fps<Math.max(20,cadence*.83))slow++;else slow=Math.max(0,slow-2);
+        if(slow<6)return null;
+        slow=0;wait=8;return STEPS.find(q=>prefs[q.key]!==q.value)||null;
+      },
+      reset(){slow=0;wait=0;}
+    };
+  }
+  G.MetalPerf={tier,probe,preset,governor,STEPS,PRESETS};
+})(typeof window!=='undefined'?window:globalThis);
 </script>
 <script data-module="input.js" data-role="page">/* FERRO input. Contract: docs/chantier-moteur/modules/entrees.md */
 (function(G){
@@ -69334,7 +69810,7 @@ G.FPilot={create:createPilot};
   }
   // Short scenes that open on a fight (David, 16/11/2026): assaults drop the
   // heavy into a guarded room, boss scenes start at the arena gate.
-  function scenes(seed=96,bench=false){const list=[{index:12,boss:true,maxSeconds:100},{index:7,assault:true,maxSeconds:70},{index:17,boss:true,maxSeconds:100},{index:13,assault:true,maxSeconds:70},{index:4,boss:true,maxSeconds:100},{index:11,boss:true,maxSeconds:100}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
+  function scenes(seed=96,bench=false){const list=[{index:4,boss:true,maxSeconds:100},{index:7,assault:true,maxSeconds:80},{index:17,boss:true,maxSeconds:100},{index:13,assault:true,maxSeconds:80},{index:12,boss:true,maxSeconds:100},{index:11,boss:true,maxSeconds:100}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
   function active(scene){return scene.boss?(scene.index%2?'heavy':'light'):'heavy';}
   // A spot where the player's body fits, scanned around a room centre.
   function freeSpot(source,x,y,z){
@@ -69424,13 +69900,15 @@ G.FPilot={create:createPilot};
   const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0,weakFlash=0,killFlash=0,freezeUntil=0;const hurtDirections=[],impactMarks=[];let deflectUntil=0,deflectCount=0,deflectWindow=0,deflectHints=0;
   const recoil={shot:{omega:38,velocity:1.9*38/27,pitchDegrees:.35,rollDegrees:.6},pistol:{omega:30,velocity:1.45*30/27,pitchDegrees:.6},fracture:{omega:18,velocity:3.5*18/27,pitchDegrees:2,fovDegrees:-1.8},rocket:{omega:14,velocity:5.5*14/27,pitchDegrees:2.6,fovDegrees:-2.5},grenade:{omega:16,velocity:4.2*16/27,pitchDegrees:1.2}};
   const audio=FAudio.create({...window.MetalAudio?.options?.(),asyncPrepare:preparationJobs.mode!=='main',preparePCM:(name,variant)=>preparationJobs.mode==='main'?null:preparationJobs.request('fx',{name,variant}).then(r=>r.pcm)}),soundscape=FSoundscape.create(),motion=FMotion.create({recoil,cameraSteps:true}),leftMotion=FMotion.create({recoil,cameraSteps:true}),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
+  // Procedural voices of the humanoid machines (kamikaze howl, blade ring).
+  window.MetalVoices?.attach(audio);
   // MUS-04 : l'état de la simulation choisit la pièce, le mixeur la joue. Le
   // chef d'orchestre ne joue rien lui-même et reste muet sans le module.
   const musicDirector=window.FMusicDirector?window.FMusicDirector.create({host:{
     request:(cue,meta)=>typeof audio.requestMusic==='function'?audio.requestMusic(cue,meta):false,
     release:()=>typeof audio.releaseMusic==='function'?audio.releaseMusic():false
   }}):null;
-  let sceneDirty=true,renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,combatMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
+  let sceneDirty=true,renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,combatMode=true,hordeMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const frameTasks=FSchedule.create({now:()=>performance.now()});
   const fixedLoop=FLoop.create({hz:60,maxSteps:5}),poseView=FLoop.view({single:['player'],many:['enemies','bullets','projectiles']});let renderState=null,aimShownX=0,aimShownY=0;
@@ -69490,9 +69968,11 @@ G.FPilot={create:createPilot};
     }
     return environment;
   }
-  function worldSpec(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode){
-    const key=(combat?'combat1:':'')+(profiles?'profiles1:':'')+(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
-    let options=campaign?{campaign:true,campaignVersion:revision,...(profiles?{profiles:true}:{}),...(combat?{combatVersion:1}:{})}:undefined;
+  function worldSpec(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode,horde=hordeMode){
+    // Hordes are an opt-in world revision recorded in the save (16/11/2026).
+    horde=horde&&campaign&&revision===2&&profiles&&combat&&!legacyTraps;
+    const key=(horde?'horde1:':'')+(combat?'combat1:':'')+(profiles?'profiles1:':'')+(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
+    let options=campaign?{campaign:true,campaignVersion:revision,...(profiles?{profiles:true}:{}),...(combat?{combatVersion:1}:{}),...(horde?{hordeVersion:1}:{})}:undefined;
     if(legacyTraps)options={...options,legacyTraps:true};return {key,seed:worldSeed,index:n,options};
   }
   function cacheWorld(key,value){worldCache.set(key,value);while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);return value;}
@@ -69610,7 +70090,7 @@ G.FPilot={create:createPilot};
     $('demo-toggle').setAttribute('aria-pressed',String(prefs.demo));$('demo-toggle').querySelector('strong').textContent=prefs.demo?'Activée':'Désactivée';$('demo-delay').value=String(prefs.demoDelay);
     $('difficulty-setting').value=String(prefs.difficulty);$('difficulty-hint').textContent=['Standard · apprenez à lire les attaques ; la pression monte avec les secteurs et les objectifs.','Brutal · des machines plus agressives, des tirs plus rapprochés et moins de répit.','Cauchemar · des attaques plus rapides, des impacts plus durs et une forte pression.'][prefs.difficulty];brainStatus();
     $('motion-toggle').querySelector('strong').textContent=softMotion?'Doux':'Désactivés';renderView();
-    for(const [id,key,on,off] of [['shadows','shadows','Activées','Désactivées'],['bloom','bloom','Activé','Désactivé'],['fps','showFps','Visible','Masqué'],['crt','crt','Activé','Désactivé'],['vignette','vignette','Activée','Désactivée'],['invert','invertY','Oui','Non'],['pointer-acceleration','systemPointerAcceleration','Activée','Désactivée']]){const el=$(id+'-toggle');el.querySelector('strong').textContent=prefs[key]?on:off;el.setAttribute('aria-pressed',String(prefs[key]));}
+    for(const [id,key,on,off] of [['shadows','shadows','Activées','Désactivées'],['bloom','bloom','Activé','Désactivé'],['autotune','autoTune','Activé','Désactivé'],['fps','showFps','Visible','Masqué'],['crt','crt','Activé','Désactivé'],['vignette','vignette','Activée','Désactivée'],['invert','invertY','Oui','Non'],['pointer-acceleration','systemPointerAcceleration','Activée','Désactivée']]){const el=$(id+'-toggle');el.querySelector('strong').textContent=prefs[key]?on:off;el.setAttribute('aria-pressed',String(prefs[key]));}
     for(const [id,key,multiplier,suffix] of [['fov','fov',1,'°'],['brightness','brightness',100,' %'],['sensitivity','sensitivity',100,' ×'],['crosshair','crosshairScale',100,' %'],['master','masterVolume',100,' %'],['music','musicVolume',100,' %'],['effects','effectsVolume',100,' %'],['ambience','ambienceVolume',100,' %']]){
       $(id+'-setting').value=String(Math.round(prefs[key]*multiplier));$(id+'-value').textContent=(id==='sensitivity'?prefs[key].toFixed(2).replace('.',','):Math.round(prefs[key]*multiplier))+suffix;
     }
@@ -69653,6 +70133,7 @@ G.FPilot={create:createPilot};
     const campaign=v.version===3,state=v.checkpoint?.state;
     if(v.profiles!==undefined&&v.profiles!==1||v.profiles===1&&(!campaign||v.campaignRevision!==2||v.checkpoint?.profileVersion!==1)||v.profiles===undefined&&v.checkpoint?.profileVersion!==undefined)return false;
     if(v.combatVersion!==undefined&&(v.combatVersion!==1||!campaign||v.checkpoint?.combatVersion!==1)||v.combatVersion===undefined&&v.checkpoint?.combatVersion!==undefined)return false;
+    if(v.hordeVersion!==undefined&&(v.hordeVersion!==1||v.combatVersion!==1||v.checkpoint?.hordeVersion!==1)||v.hordeVersion===undefined&&v.checkpoint?.hordeVersion!==undefined)return false;
     const fits=inventory=>!Array.isArray(inventory?.weapons)||(campaign?inventory.weapons.length===5:[3,4].includes(inventory.weapons.length));
     if(!fits(state?.inventory)||!campaign&&(state?.campaign!==undefined||v.checkpoint?.campaignVersion!==undefined))return false;
     return Number.isInteger(v.seed)&&v.seed>=0&&v.seed<=0xffffffff&&v.checkpoint&&v.runStats&&Object.keys(emptyStats()).every(k=>Number.isFinite(v.runStats[k])&&v.runStats[k]>=0&&v.runStats[k]<1e9);
@@ -69690,7 +70171,7 @@ G.FPilot={create:createPilot};
     if(!force&&sim.state.aiStats?.navPending>0){if(checkpointWaitAt<0)checkpointWaitAt=sim.state.time;if(sim.state.time-checkpointWaitAt<1.5){checkpointPending=true;return;}}
     checkpointPending=false;checkpointWaitAt=-1;
     checkpoint=sim.snapshot();
-    savedRun={version:world.campaign?3:2,...(world.combatVersion?{combatVersion:1}:{}),...(world.profileVersion?{profiles:world.profileVersion}:{}),...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
+    savedRun={version:world.campaign?3:2,...(world.combatVersion?{combatVersion:1}:{}),...(world.hordeVersion?{hordeVersion:1}:{}),...(world.profileVersion?{profiles:world.profileVersion}:{}),...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
     queueSave(savedRun);
     refreshContinue();
   }
@@ -69702,7 +70183,7 @@ G.FPilot={create:createPilot};
     renderHUD();return true;
   }
   function restoreRun(v){
-    if(!validSave(v))return false;
+    if(!validSave(v))return false;hordeMode=v.hordeVersion===1;
     if(sim?.state.dead&&world.seed===v.seed&&stage===savedIndex(v)&&sim.restore(v.checkpoint,{recover:true})){if(deferLaunch)renderLoadPending=true;else syncDestruction();return acceptRestoredRun(v);}
     load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1,v.combatVersion===1,null,{rigidBodies:!!v.checkpoint?.rigidBodies});
     if((v.generation||3)!==(world.generation||3))return false;
@@ -69718,7 +70199,7 @@ G.FPilot={create:createPilot};
     return false;
   }
   function resumeSaved(v){
-    writeSave();
+    writeSave();hordeMode=v?.hordeVersion===1;
     if(restoreRun(v)){start('Signal retrouvé. Reprise au dernier point enregistré.');return;}
     if(validSave(v)){
       // Preserve each refused source before any replacement, even when storage fails temporarily.
@@ -69750,13 +70231,13 @@ G.FPilot={create:createPilot};
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
   function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode,prepared=null,simulationOptions={}){
-    checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;deflectUntil=0;
+    checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;hordeFlashes.length=0;deflectUntil=0;
     campaignMode=asCampaign;campaignRevision=revision;profileMode=profiles&&asCampaign&&revision===2;combatMode=combat&&asCampaign&&revision===2;stage=n;if(newSeed!==undefined)seed=newSeed;world=prepared||cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps,profileMode,combatMode);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale
     // 3/4/5-slot entry cannot block restoration of a healthy checkpoint.
     const carry=entry&&(entry.inventory.weapons.length===slots||slots===4&&entry.inventory.weapons.length===3)?entry:null;
-    sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),armorSystem:true,...(brain?{brain}:{}),...(demoQuery.get('record')==='1'?{brain:null}:{}),...simulationOptions});attachReplay({seed,index:n,options:{campaign:asCampaign,campaignVersion:revision,legacyTraps,profiles:profileMode,combatVersion:combatMode?1:undefined},loadout:carry,simulationOptions:{armorSystem:true,...simulationOptions}});sim.setDifficulty?.(prefs.difficulty);
+    sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),armorSystem:true,...(brain?{brain}:{}),...(demoQuery.get('record')==='1'?{brain:null}:{}),...simulationOptions});attachReplay({seed,index:n,options:{campaign:asCampaign,campaignVersion:revision,legacyTraps,profiles:profileMode,combatVersion:combatMode?1:undefined,hordeVersion:world.hordeVersion===1?1:undefined},loadout:carry,simulationOptions:{armorSystem:true,...simulationOptions}});sim.setDifficulty?.(prefs.difficulty);
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderLoadPending=true;if(!deferLaunch)loadRender();
@@ -69800,14 +70281,14 @@ G.FPilot={create:createPilot};
     titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode(document.hidden||!windowFocused?'paused':'playing');if(mode==='playing'){lock();canvas.focus({preventScroll:true});}
     toast(message||(world.profileVersion?(sim.state.activeProfile==='light'?'Drone LÉGER · vol à plat, '+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre. '+bindingLabel('switchProfile')+' : revenir au LOURD.':(stage===0?'Vous êtes le LOURD · récupérez le lance-grenades près du départ. ':'LOURD · les explosifs ouvrent les brèches. ')+bindingLabel('switchProfile')+' : piloter le drone LÉGER, qui vole à plat ('+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre).'):world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
-  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2,false,true,true);saveCheckpoint();start();}
+  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;hordeMode=true;load(0,newSeed,undefined,true,2,false,true,true);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode,plan={}){
     if(!window.FMusic?.warmup){action();return;}
     const ticket=++preparationSerial;titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent=(asCampaign?'MONDE ':'SECTEUR ')+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
     try{
       // Two animation frames show the preparation screen before any substantial work.
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      await Promise.all([prepareWorld(nextStage,plan.seed??seed,asCampaign,plan.revision??campaignRevision,false,plan.profiles??profileMode,plan.combat??combatMode),FMusic.warmup(nextStage%3,plan.seed??seed),brain?.prepare()]);await audio.prepare?.(nextStage%3,plan.seed??seed);await audio.prepareCues?.(window.FMusic?.cueIds?.()||[]);brainStatus();if(ticket!==preparationSerial)return;
+      await Promise.all([prepareWorld(nextStage,plan.seed??seed,asCampaign,plan.revision??campaignRevision,false,plan.profiles??profileMode,plan.combat??combatMode,plan.horde??hordeMode),FMusic.warmup(nextStage%3,plan.seed??seed),brain?.prepare()]);await audio.prepare?.(nextStage%3,plan.seed??seed);await audio.prepareCues?.(window.FMusic?.cueIds?.()||[]);brainStatus();if(ticket!==preparationSerial)return;
       $('loading-detail').textContent='Assemblage du territoire et de la simulation…';$('loading-bar').style.width='76%';
       await new Promise(resolve=>requestAnimationFrame(resolve));if(ticket!==preparationSerial)return;
       deferLaunch=true;pendingStart=null;try{action();}finally{deferLaunch=false;}
@@ -69843,6 +70324,7 @@ G.FPilot={create:createPilot};
       if(mode==='playing')controls.event(e,sim.state.player);
       if(e.name==='materialImpact'&&e.deflected){const t=sim.state.time;deflectUntil=t+.14;if(e.normal){impactMarks.push({source:e.sourceId,until:t+20,p:[e.x,e.y,e.z].map((v,k)=>v+e.normal[k]*.012),size:e.normal.map(v=>v?.018:.07)});if(impactMarks.length>32)impactMarks.shift();}if(t-deflectWindow>2.5){deflectWindow=t;deflectCount=0;}if(++deflectCount===4&&deflectHints<2&&mode==='playing'){deflectHints++;toast(sim.state.activeProfile==='light'?'Structure blindée · passez au lourd pour ouvrir une brèche.':'Structure blindée · utilisez une grenade ou une roquette.',3);}}
       if(e.name==='materialBreak')for(let k=impactMarks.length-1;k>=0;k--)if(impactMarks[k].source===e.sourceId)impactMarks.splice(k,1);
+      if(e.name==='hordeSpawn'){hordeFlashes.push({x:e.x,y:e.y||0,z:e.z,t:sim.state.time});if(hordeFlashes.length>24)hordeFlashes.shift();}
       if(e.name==='boundaryContact')boundaryFlash=.15;if(e.name==='weakHit')weakFlash=.3;if(e.name==='hurt'&&Number.isFinite(e.x)&&Number.isFinite(e.z)){hurtDirections.push({angle:Math.atan2(e.x-sim.state.player.x,sim.state.player.z-e.z),life:.6});if(hurtDirections.length>4)hurtDirections.shift();}if(e.name==='kill'&&e.credited)killFlash=.3;
       // shots is shared by both hands: consume only the hand that really fired.
       if(e.name==='shot'||e.name==='fracture'||(e.name==='rocket'||e.name==='grenadeLaunch')&&e.owner==='player'){
@@ -70090,6 +70572,8 @@ G.FPilot={create:createPilot};
       out.push(m('cylinder',[c.x,(c.y||0)+.13,c.z],[.95,.26,.95],0),m('ring',[c.x,(c.y||0)+.29,c.z],[1.15,.1,1.15],c.taken?0:5));
       if(!c.taken){const y=(c.y||0)+1.22+Math.sin(t*2+c.id)*.13;out.push(m('octa',[c.x,y,c.z],[.55,.85,.55],5,[0,t*.7,0],1.8),m('ring',[c.x,y,c.z],[1.2,1.2,1.2],4,[Math.PI/2,0,t*.35],1.2));}
     }
+    // A horde arrival: a short column of light and a ring on the floor.
+    for(const f of hordeFlashes){const age=s.time-f.t;if(age<0||age>.7||!nearby(f.x,f.z))continue;const k=1-age/.7;out.push(m('cylinder',[f.x,f.y+1.2,f.z],[.9*k+.2,2.4,.9*k+.2],5,[0,0,0],1.6*k),m('ring',[f.x,f.y+.06,f.z],[1+age*4,.06,1+age*4],5,[0,0,0],1.2*k));}
     for(const e of s.enemies){
       const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1,giant=scale>1;
       if(e.deployed===false||e.hp<=0||!nearby(e.x,e.z,e.type===3?4.5*scale:2))continue;
@@ -70256,6 +70740,8 @@ G.FPilot={create:createPilot};
   }
   // Same model range as the renderer approach; shared with the partner marker.
   function drawRange(longView){return longView?100:renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);}
+  // Horde arrivals drawn by models() for a moment (see hordeSpawn).
+  const hordeFlashes=[];
   function renderHUD(){
     const profile=sim.state.activeProfile,jet=sim.state.jetpack,profileButton=$('profile-button');profileButton.hidden=!profile;
     $('jump-button').textContent=profile==='light'?'MONTER':'SAUT';$('jump-button').setAttribute('aria-label',profile==='light'?'Monter en vol':'Sauter');
@@ -70415,16 +70901,16 @@ G.FPilot={create:createPilot};
   function demoMix(on){audio.setMix?.({master:prefs.masterVolume*(on?.35:1),music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});}
   function demoStop(){
     ++demoSerial;demoRunner?.dispose();demoRunner=null;demoPilot=null;demoCamera=null;demoCache.clear();
-    if(demoPrevious){const title=demoPrevious.title;if(title){$('sector-number').textContent=title.sector;$('sector-title').textContent=title.heading;$('mission-summary').innerHTML=title.summary;document.body.dataset.stage=title.stage;document.body.dataset.campaign=title.campaign;}({stage,seed,campaignMode,campaignRevision,profileMode,combatMode,runStats,checkpoint,selectedWeapon,stageEntryLoadout}=demoPrevious);demoPrevious=null;checkpointPending=false;checkpointWaitAt=-1;}
+    if(demoPrevious){const title=demoPrevious.title;if(title){$('sector-number').textContent=title.sector;$('sector-title').textContent=title.heading;$('mission-summary').innerHTML=title.summary;document.body.dataset.stage=title.stage;document.body.dataset.campaign=title.campaign;}({stage,seed,campaignMode,campaignRevision,profileMode,combatMode,hordeMode,runStats,checkpoint,selectedWeapon,stageEntryLoadout}=demoPrevious);demoPrevious=null;checkpointPending=false;checkpointWaitAt=-1;}
     $('demo-banner').hidden=true;document.body.classList.remove('demo-loading');demoMix(false);if(mode==='demo')setMode('menu');
   }
   async function demoStart(){
     if(mode!=='menu'||!window.MetalDemo||!window.FPilot)return false;
-    demoRequested=false;flushCheckpoint();demoPrevious={stage,seed,campaignMode,campaignRevision,profileMode,combatMode,runStats,checkpoint,selectedWeapon,stageEntryLoadout,title:{sector:$('sector-number').textContent,heading:$('sector-title').textContent,summary:$('mission-summary').innerHTML,stage:document.body.dataset.stage,campaign:document.body.dataset.campaign}};checkpointPending=false;demoElapsed=0;const ticket=++demoSerial;
+    demoRequested=false;flushCheckpoint();demoPrevious={stage,seed,campaignMode,campaignRevision,profileMode,combatMode,hordeMode,runStats,checkpoint,selectedWeapon,stageEntryLoadout,title:{sector:$('sector-number').textContent,heading:$('sector-title').textContent,summary:$('mission-summary').innerHTML,stage:document.body.dataset.stage,campaign:document.body.dataset.campaign}};checkpointPending=false;demoElapsed=0;const ticket=++demoSerial;
     sim?.dispose?.();setMode('demo');$('demo-banner').hidden=false;demoMix(true);
     demoBench=benchSeconds?{seconds:0,steps:0,frames:[],stepMs:[],drawMs:[],scenes:[],started:performance.now()}:null;
     const scenes=MetalDemo.scenes(96,!!benchSeconds);
-    const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,prepare:!scene.boss,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
+    const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,prepare:!scene.boss,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1,hordeVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
     demoRunner=FDemo.runner({scenes,stallSeconds:50,onError:error=>console.error('METAL demo:',error),onStop:()=>demoAttract?.stop('error'),open:async scene=>{
       document.body.classList.add('demo-loading');const raw=await prepare(scene);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(ticket!==demoSerial)return null;
       const prepared=MetalDemo.world(raw,scene),carry=MetalDemo.loadout(scene.index,MetalDemo.active?.(scene)??(scene.boss&&scene.index%2?'heavy':'light'));
@@ -70444,7 +70930,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.11.3',simHash:'90bf1db6b1f3224eba3b88877c7fbcb10ac953c4dd1bd7187ae6ddc2e1d8a4bd',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.12.0',simHash:'e14cc9c86abfa689590d399984c1115f312ae22b3659051e9f64d8e93953b387',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){
@@ -70527,8 +71013,16 @@ G.FPilot={create:createPilot};
     if(now-perfStart>=750){
       const fps=Math.round(perfFrames*1000/(now-perfStart));
       document.body.dataset.fps=String(fps);$('fps-counter').textContent=fps+' FPS';
+      const step=perfGovernor?.sample(fps,{cadence:cadenceLimit()||60,playing:mode==='playing'&&!document.hidden,prefs});if(step)lighten(step);
       perfStart=now;perfFrames=0;
     }
+  }
+  // Modest computers: one effect off at a time while the frame rate stays
+  // low in play; the native resolution is never lowered (David, 14/11/2026).
+  const perfGovernor=window.MetalPerf?.governor();
+  function lighten(step){
+    if(step.key==='quality'){quality='low';renderer.resize(quality);}else prefs[step.key]=step.value;
+    settings();toast('Fluidité : '+step.label+' · Options › Image',3.2);
   }
   // Displayed motion only: eased machine headings, stepped turns, the
   // third-person legs of the heavy and mechanism levers. Shared by play and demo.
@@ -70569,16 +71063,17 @@ G.FPilot={create:createPilot};
     selectedWeapon=sim.state.weapon;clearFireIntents();leftMotion.impulse('switch');audio.switchWeapon?.();renderHUD();
   }
   $('loading-cancel').addEventListener('click',()=>{preparationSerial++;deferLaunch=false;pendingStart=null;setMode('menu');});
-  $('start').addEventListener('click',()=>{const nextSeed=savedRun?(Date.now()>>>0)%1000000:seed;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true});});
-  $('resume-expedition').addEventListener('click',()=>preparePlay(savedIndex(savedRun),()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1}));
+  $('start').addEventListener('click',()=>{const nextSeed=savedRun?(Date.now()>>>0)%1000000:seed;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true,horde:true});});
+  $('resume-expedition').addEventListener('click',()=>preparePlay(savedIndex(savedRun),()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1,horde:savedRun?.hordeVersion===1}));
   $('intro-options').addEventListener('click',()=>setMode('options'));
   $('pause-button').addEventListener('click',togglePause);$('resume').addEventListener('click',togglePause);
   $('restart').addEventListener('click',()=>preparePlay(stage,()=>{load(stage,undefined,stageEntryLoadout);saveCheckpoint();start('Nouvelle tentative. Équipement et crédits de l’entrée du secteur restaurés.');}));
   $('continue').addEventListener('click',()=>{
     if(mode==='dead'){
-      preparePlay(savedRun?savedIndex(savedRun):stage,()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1});return;
+      preparePlay(savedRun?savedIndex(savedRun):stage,()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1,horde:savedRun?.hordeVersion===1});return;
     }
-    if(mode==='complete'){const nextSeed=(Date.now()>>>0)%1000000;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true});return;}
+    if(mode==='complete'){const nextSeed=(Date.now()>>>0)%1000000;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true,horde:true});return;}
+    if(campaignMode&&campaignRevision===2&&profileMode&&combatMode)hordeMode=true;
     const nextStage=stage+1,loadout=heavyFirst(sim.exportLoadout?.()||sim.exportInventory?.());preparePlay(nextStage,()=>{load(nextStage,undefined,loadout);saveCheckpoint();start();});
   });
   $('back-menu').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
@@ -70595,7 +71090,7 @@ G.FPilot={create:createPilot};
   $('motion-toggle').addEventListener('click',()=>{softMotion=!softMotion;settings();});
   const tabs=['game','image','audio','controls'];
   for(const id of tabs){$('tab-'+id).addEventListener('click',()=>selectTab(id));$('tab-'+id).addEventListener('keydown',e=>{let next=tabs.indexOf(id);if(e.code==='ArrowRight')next=(next+1)%4;else if(e.code==='ArrowLeft')next=(next+3)%4;else if(e.code==='Home')next=0;else if(e.code==='End')next=3;else return;e.preventDefault();selectTab(tabs[next],true);});}
-  for(const [id,key] of [['demo','demo'],['shadows','shadows'],['bloom','bloom'],['fps','showFps'],['crt','crt'],['vignette','vignette'],['invert','invertY'],['pointer-acceleration','systemPointerAcceleration']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
+  for(const [id,key] of [['demo','demo'],['shadows','shadows'],['bloom','bloom'],['autotune','autoTune'],['fps','showFps'],['crt','crt'],['vignette','vignette'],['invert','invertY'],['pointer-acceleration','systemPointerAcceleration']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
   for(const [id,key,divisor] of [['fov','fov',1],['brightness','brightness',100],['sensitivity','sensitivity',100],['crosshair','crosshairScale',100],['master','masterVolume',100],['music','musicVolume',100],['effects','effectsVolume',100],['ambience','ambienceVolume',100]])$(id+'-setting').addEventListener('input',()=>{prefs[key]=Number($(id+'-setting').value)/divisor;settings();});
   for(const [id,key,mul] of [['pad-yaw','padYaw',1],['pad-pitch','padPitch',1],['pad-dead','padDead',100],['pad-curve','padCurve',100],['pad-vibration','padVibration',100],['touch-accel','touchAccel',100],['gyro-sensitivity','gyroSensitivity',100]])$(id+'-setting').addEventListener('input',()=>{prefs[key]=Number($(id+'-setting').value)/mul;settings();});
   for(const [id,key] of [['pad-invert','padInvertY'],['pad-assist','padAssist'],['pad-swap','padSwapSticks'],['touch-assist','touchAssist'],['portrait-fov','portraitFov']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
@@ -70732,6 +71227,8 @@ G.FPilot={create:createPilot};
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   try{
     renderer=FRender.create(canvas,{sceneReflections:true,advancedSky:true,composition:true,dither:true,resolution:'native',renderScale:prefs.renderScale,onBudget:()=>{if(prefs.fpsLimit===-1&&autoCadence===60)cadencePending=30;}});renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
+    // First launch: lighter defaults on integrated or software graphics.
+    {const info=window.MetalPerf?.probe(renderer.gl,navigator),applied=info&&MetalPerf.preset(prefs,info);if(info)document.body.dataset.gpuTier=info.tier;if(applied){if(prefs.quality!==quality){quality=prefs.quality;renderer.resize(quality);}settings();if(applied.changes.length)toast('Réglages adaptés à cet ordinateur : image allégée · Options › Image',4);}}
     savedRun=readSave();refreshContinue();
     if(preparationJobs.mode==='main')load(0);
     else prepareWorld(0,seed).then(()=>{if(!sim&&!preparationSerial&&titleScreen()){load(0);settings();}}).catch(error=>{console.error('METAL world preparation:',error);});

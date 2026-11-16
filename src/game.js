@@ -29,13 +29,15 @@
   const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0,weakFlash=0,killFlash=0,freezeUntil=0;const hurtDirections=[],impactMarks=[];let deflectUntil=0,deflectCount=0,deflectWindow=0,deflectHints=0;
   const recoil={shot:{omega:38,velocity:1.9*38/27,pitchDegrees:.35,rollDegrees:.6},pistol:{omega:30,velocity:1.45*30/27,pitchDegrees:.6},fracture:{omega:18,velocity:3.5*18/27,pitchDegrees:2,fovDegrees:-1.8},rocket:{omega:14,velocity:5.5*14/27,pitchDegrees:2.6,fovDegrees:-2.5},grenade:{omega:16,velocity:4.2*16/27,pitchDegrees:1.2}};
   const audio=FAudio.create({...window.MetalAudio?.options?.(),asyncPrepare:preparationJobs.mode!=='main',preparePCM:(name,variant)=>preparationJobs.mode==='main'?null:preparationJobs.request('fx',{name,variant}).then(r=>r.pcm)}),soundscape=FSoundscape.create(),motion=FMotion.create({recoil,cameraSteps:true}),leftMotion=FMotion.create({recoil,cameraSteps:true}),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
+  // Procedural voices of the humanoid machines (kamikaze howl, blade ring).
+  window.MetalVoices?.attach(audio);
   // MUS-04 : l'état de la simulation choisit la pièce, le mixeur la joue. Le
   // chef d'orchestre ne joue rien lui-même et reste muet sans le module.
   const musicDirector=window.FMusicDirector?window.FMusicDirector.create({host:{
     request:(cue,meta)=>typeof audio.requestMusic==='function'?audio.requestMusic(cue,meta):false,
     release:()=>typeof audio.releaseMusic==='function'?audio.releaseMusic():false
   }}):null;
-  let sceneDirty=true,renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,combatMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
+  let sceneDirty=true,renderer,world,sim,stage=0,seed=96,campaignMode=true,campaignRevision=2,profileMode=true,combatMode=true,hordeMode=true,mode='menu',last=performance.now(),clock=0,hudWait=0,toastTime=0,encounterTime=0,wasLocked=false,perfStart=0,perfFrames=0,renderRevision=-1,renderToken=null;
   const emptyStats=()=>({time:0,kills:0,shots:0,hits:0,score:0});
   const frameTasks=FSchedule.create({now:()=>performance.now()});
   const fixedLoop=FLoop.create({hz:60,maxSteps:5}),poseView=FLoop.view({single:['player'],many:['enemies','bullets','projectiles']});let renderState=null,aimShownX=0,aimShownY=0;
@@ -95,9 +97,11 @@
     }
     return environment;
   }
-  function worldSpec(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode){
-    const key=(combat?'combat1:':'')+(profiles?'profiles1:':'')+(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
-    let options=campaign?{campaign:true,campaignVersion:revision,...(profiles?{profiles:true}:{}),...(combat?{combatVersion:1}:{})}:undefined;
+  function worldSpec(n,worldSeed,campaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode,horde=hordeMode){
+    // Hordes are an opt-in world revision recorded in the save (16/11/2026).
+    horde=horde&&campaign&&revision===2&&profiles&&combat&&!legacyTraps;
+    const key=(horde?'horde1:':'')+(combat?'combat1:':'')+(profiles?'profiles1:':'')+(legacyTraps?'pre-massive:':'')+(campaign?'campaign'+revision+':':'classic:')+worldSeed+':'+n;
+    let options=campaign?{campaign:true,campaignVersion:revision,...(profiles?{profiles:true}:{}),...(combat?{combatVersion:1}:{}),...(horde?{hordeVersion:1}:{})}:undefined;
     if(legacyTraps)options={...options,legacyTraps:true};return {key,seed:worldSeed,index:n,options};
   }
   function cacheWorld(key,value){worldCache.set(key,value);while(worldCache.size>2)worldCache.delete(worldCache.keys().next().value);return value;}
@@ -215,7 +219,7 @@
     $('demo-toggle').setAttribute('aria-pressed',String(prefs.demo));$('demo-toggle').querySelector('strong').textContent=prefs.demo?'Activée':'Désactivée';$('demo-delay').value=String(prefs.demoDelay);
     $('difficulty-setting').value=String(prefs.difficulty);$('difficulty-hint').textContent=['Standard · apprenez à lire les attaques ; la pression monte avec les secteurs et les objectifs.','Brutal · des machines plus agressives, des tirs plus rapprochés et moins de répit.','Cauchemar · des attaques plus rapides, des impacts plus durs et une forte pression.'][prefs.difficulty];brainStatus();
     $('motion-toggle').querySelector('strong').textContent=softMotion?'Doux':'Désactivés';renderView();
-    for(const [id,key,on,off] of [['shadows','shadows','Activées','Désactivées'],['bloom','bloom','Activé','Désactivé'],['fps','showFps','Visible','Masqué'],['crt','crt','Activé','Désactivé'],['vignette','vignette','Activée','Désactivée'],['invert','invertY','Oui','Non'],['pointer-acceleration','systemPointerAcceleration','Activée','Désactivée']]){const el=$(id+'-toggle');el.querySelector('strong').textContent=prefs[key]?on:off;el.setAttribute('aria-pressed',String(prefs[key]));}
+    for(const [id,key,on,off] of [['shadows','shadows','Activées','Désactivées'],['bloom','bloom','Activé','Désactivé'],['autotune','autoTune','Activé','Désactivé'],['fps','showFps','Visible','Masqué'],['crt','crt','Activé','Désactivé'],['vignette','vignette','Activée','Désactivée'],['invert','invertY','Oui','Non'],['pointer-acceleration','systemPointerAcceleration','Activée','Désactivée']]){const el=$(id+'-toggle');el.querySelector('strong').textContent=prefs[key]?on:off;el.setAttribute('aria-pressed',String(prefs[key]));}
     for(const [id,key,multiplier,suffix] of [['fov','fov',1,'°'],['brightness','brightness',100,' %'],['sensitivity','sensitivity',100,' ×'],['crosshair','crosshairScale',100,' %'],['master','masterVolume',100,' %'],['music','musicVolume',100,' %'],['effects','effectsVolume',100,' %'],['ambience','ambienceVolume',100,' %']]){
       $(id+'-setting').value=String(Math.round(prefs[key]*multiplier));$(id+'-value').textContent=(id==='sensitivity'?prefs[key].toFixed(2).replace('.',','):Math.round(prefs[key]*multiplier))+suffix;
     }
@@ -258,6 +262,7 @@
     const campaign=v.version===3,state=v.checkpoint?.state;
     if(v.profiles!==undefined&&v.profiles!==1||v.profiles===1&&(!campaign||v.campaignRevision!==2||v.checkpoint?.profileVersion!==1)||v.profiles===undefined&&v.checkpoint?.profileVersion!==undefined)return false;
     if(v.combatVersion!==undefined&&(v.combatVersion!==1||!campaign||v.checkpoint?.combatVersion!==1)||v.combatVersion===undefined&&v.checkpoint?.combatVersion!==undefined)return false;
+    if(v.hordeVersion!==undefined&&(v.hordeVersion!==1||v.combatVersion!==1||v.checkpoint?.hordeVersion!==1)||v.hordeVersion===undefined&&v.checkpoint?.hordeVersion!==undefined)return false;
     const fits=inventory=>!Array.isArray(inventory?.weapons)||(campaign?inventory.weapons.length===5:[3,4].includes(inventory.weapons.length));
     if(!fits(state?.inventory)||!campaign&&(state?.campaign!==undefined||v.checkpoint?.campaignVersion!==undefined))return false;
     return Number.isInteger(v.seed)&&v.seed>=0&&v.seed<=0xffffffff&&v.checkpoint&&v.runStats&&Object.keys(emptyStats()).every(k=>Number.isFinite(v.runStats[k])&&v.runStats[k]>=0&&v.runStats[k]<1e9);
@@ -295,7 +300,7 @@
     if(!force&&sim.state.aiStats?.navPending>0){if(checkpointWaitAt<0)checkpointWaitAt=sim.state.time;if(sim.state.time-checkpointWaitAt<1.5){checkpointPending=true;return;}}
     checkpointPending=false;checkpointWaitAt=-1;
     checkpoint=sim.snapshot();
-    savedRun={version:world.campaign?3:2,...(world.combatVersion?{combatVersion:1}:{}),...(world.profileVersion?{profiles:world.profileVersion}:{}),...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
+    savedRun={version:world.campaign?3:2,...(world.combatVersion?{combatVersion:1}:{}),...(world.hordeVersion?{hordeVersion:1}:{}),...(world.profileVersion?{profiles:world.profileVersion}:{}),...(world.campaign?{campaign:true,index:stage,...(world.campaignVersion===2?{campaignRevision:2}:{})}:{}),generation:world.generation||3,seed,stage:world.campaign?world.stage:stage,runStats:{...runStats},entryLoadout:copyLoadout(stageEntryLoadout),checkpoint};
     queueSave(savedRun);
     refreshContinue();
   }
@@ -307,7 +312,7 @@
     renderHUD();return true;
   }
   function restoreRun(v){
-    if(!validSave(v))return false;
+    if(!validSave(v))return false;hordeMode=v.hordeVersion===1;
     if(sim?.state.dead&&world.seed===v.seed&&stage===savedIndex(v)&&sim.restore(v.checkpoint,{recover:true})){if(deferLaunch)renderLoadPending=true;else syncDestruction();return acceptRestoredRun(v);}
     load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1,v.combatVersion===1,null,{rigidBodies:!!v.checkpoint?.rigidBodies});
     if((v.generation||3)!==(world.generation||3))return false;
@@ -323,7 +328,7 @@
     return false;
   }
   function resumeSaved(v){
-    writeSave();
+    writeSave();hordeMode=v?.hordeVersion===1;
     if(restoreRun(v)){start('Signal retrouvé. Reprise au dernier point enregistré.');return;}
     if(validSave(v)){
       // Preserve each refused source before any replacement, even when storage fails temporarily.
@@ -355,13 +360,13 @@
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
   function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode,prepared=null,simulationOptions={}){
-    checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;deflectUntil=0;
+    checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;hordeFlashes.length=0;deflectUntil=0;
     campaignMode=asCampaign;campaignRevision=revision;profileMode=profiles&&asCampaign&&revision===2;combatMode=combat&&asCampaign&&revision===2;stage=n;if(newSeed!==undefined)seed=newSeed;world=prepared||cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps,profileMode,combatMode);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale
     // 3/4/5-slot entry cannot block restoration of a healthy checkpoint.
     const carry=entry&&(entry.inventory.weapons.length===slots||slots===4&&entry.inventory.weapons.length===3)?entry:null;
-    sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),armorSystem:true,...(brain?{brain}:{}),...(demoQuery.get('record')==='1'?{brain:null}:{}),...simulationOptions});attachReplay({seed,index:n,options:{campaign:asCampaign,campaignVersion:revision,legacyTraps,profiles:profileMode,combatVersion:combatMode?1:undefined},loadout:carry,simulationOptions:{armorSystem:true,...simulationOptions}});sim.setDifficulty?.(prefs.difficulty);
+    sim?.dispose?.();sim=FSimulation.create(world,{...(carry||{}),armorSystem:true,...(brain?{brain}:{}),...(demoQuery.get('record')==='1'?{brain:null}:{}),...simulationOptions});attachReplay({seed,index:n,options:{campaign:asCampaign,campaignVersion:revision,legacyTraps,profiles:profileMode,combatVersion:combatMode?1:undefined,hordeVersion:world.hordeVersion===1?1:undefined},loadout:carry,simulationOptions:{armorSystem:true,...simulationOptions}});sim.setDifficulty?.(prefs.difficulty);
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderLoadPending=true;if(!deferLaunch)loadRender();
@@ -405,14 +410,14 @@
     titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode(document.hidden||!windowFocused?'paused':'playing');if(mode==='playing'){lock();canvas.focus({preventScroll:true});}
     toast(message||(world.profileVersion?(sim.state.activeProfile==='light'?'Drone LÉGER · vol à plat, '+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre. '+bindingLabel('switchProfile')+' : revenir au LOURD.':(stage===0?'Vous êtes le LOURD · récupérez le lance-grenades près du départ. ':'LOURD · les explosifs ouvrent les brèches. ')+bindingLabel('switchProfile')+' : piloter le drone LÉGER, qui vole à plat ('+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre).'):world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
-  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2,false,true,true);saveCheckpoint();start();}
+  function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;hordeMode=true;load(0,newSeed,undefined,true,2,false,true,true);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode,plan={}){
     if(!window.FMusic?.warmup){action();return;}
     const ticket=++preparationSerial;titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode('loading');$('loading-stage').textContent=(asCampaign?'MONDE ':'SECTEUR ')+String(nextStage+1).padStart(2,'0');$('loading-detail').textContent='Préparation des instruments et des réserves…';$('loading-bar').style.width='18%';
     try{
       // Two animation frames show the preparation screen before any substantial work.
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      await Promise.all([prepareWorld(nextStage,plan.seed??seed,asCampaign,plan.revision??campaignRevision,false,plan.profiles??profileMode,plan.combat??combatMode),FMusic.warmup(nextStage%3,plan.seed??seed),brain?.prepare()]);await audio.prepare?.(nextStage%3,plan.seed??seed);await audio.prepareCues?.(window.FMusic?.cueIds?.()||[]);brainStatus();if(ticket!==preparationSerial)return;
+      await Promise.all([prepareWorld(nextStage,plan.seed??seed,asCampaign,plan.revision??campaignRevision,false,plan.profiles??profileMode,plan.combat??combatMode,plan.horde??hordeMode),FMusic.warmup(nextStage%3,plan.seed??seed),brain?.prepare()]);await audio.prepare?.(nextStage%3,plan.seed??seed);await audio.prepareCues?.(window.FMusic?.cueIds?.()||[]);brainStatus();if(ticket!==preparationSerial)return;
       $('loading-detail').textContent='Assemblage du territoire et de la simulation…';$('loading-bar').style.width='76%';
       await new Promise(resolve=>requestAnimationFrame(resolve));if(ticket!==preparationSerial)return;
       deferLaunch=true;pendingStart=null;try{action();}finally{deferLaunch=false;}
@@ -448,6 +453,7 @@
       if(mode==='playing')controls.event(e,sim.state.player);
       if(e.name==='materialImpact'&&e.deflected){const t=sim.state.time;deflectUntil=t+.14;if(e.normal){impactMarks.push({source:e.sourceId,until:t+20,p:[e.x,e.y,e.z].map((v,k)=>v+e.normal[k]*.012),size:e.normal.map(v=>v?.018:.07)});if(impactMarks.length>32)impactMarks.shift();}if(t-deflectWindow>2.5){deflectWindow=t;deflectCount=0;}if(++deflectCount===4&&deflectHints<2&&mode==='playing'){deflectHints++;toast(sim.state.activeProfile==='light'?'Structure blindée · passez au lourd pour ouvrir une brèche.':'Structure blindée · utilisez une grenade ou une roquette.',3);}}
       if(e.name==='materialBreak')for(let k=impactMarks.length-1;k>=0;k--)if(impactMarks[k].source===e.sourceId)impactMarks.splice(k,1);
+      if(e.name==='hordeSpawn'){hordeFlashes.push({x:e.x,y:e.y||0,z:e.z,t:sim.state.time});if(hordeFlashes.length>24)hordeFlashes.shift();}
       if(e.name==='boundaryContact')boundaryFlash=.15;if(e.name==='weakHit')weakFlash=.3;if(e.name==='hurt'&&Number.isFinite(e.x)&&Number.isFinite(e.z)){hurtDirections.push({angle:Math.atan2(e.x-sim.state.player.x,sim.state.player.z-e.z),life:.6});if(hurtDirections.length>4)hurtDirections.shift();}if(e.name==='kill'&&e.credited)killFlash=.3;
       // shots is shared by both hands: consume only the hand that really fired.
       if(e.name==='shot'||e.name==='fracture'||(e.name==='rocket'||e.name==='grenadeLaunch')&&e.owner==='player'){
@@ -695,6 +701,8 @@
       out.push(m('cylinder',[c.x,(c.y||0)+.13,c.z],[.95,.26,.95],0),m('ring',[c.x,(c.y||0)+.29,c.z],[1.15,.1,1.15],c.taken?0:5));
       if(!c.taken){const y=(c.y||0)+1.22+Math.sin(t*2+c.id)*.13;out.push(m('octa',[c.x,y,c.z],[.55,.85,.55],5,[0,t*.7,0],1.8),m('ring',[c.x,y,c.z],[1.2,1.2,1.2],4,[Math.PI/2,0,t*.35],1.2));}
     }
+    // A horde arrival: a short column of light and a ring on the floor.
+    for(const f of hordeFlashes){const age=s.time-f.t;if(age<0||age>.7||!nearby(f.x,f.z))continue;const k=1-age/.7;out.push(m('cylinder',[f.x,f.y+1.2,f.z],[.9*k+.2,2.4,.9*k+.2],5,[0,0,0],1.6*k),m('ring',[f.x,f.y+.06,f.z],[1+age*4,.06,1+age*4],5,[0,0,0],1.2*k));}
     for(const e of s.enemies){
       const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1,giant=scale>1;
       if(e.deployed===false||e.hp<=0||!nearby(e.x,e.z,e.type===3?4.5*scale:2))continue;
@@ -861,6 +869,8 @@
   }
   // Same model range as the renderer approach; shared with the partner marker.
   function drawRange(longView){return longView?100:renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);}
+  // Horde arrivals drawn by models() for a moment (see hordeSpawn).
+  const hordeFlashes=[];
   function renderHUD(){
     const profile=sim.state.activeProfile,jet=sim.state.jetpack,profileButton=$('profile-button');profileButton.hidden=!profile;
     $('jump-button').textContent=profile==='light'?'MONTER':'SAUT';$('jump-button').setAttribute('aria-label',profile==='light'?'Monter en vol':'Sauter');
@@ -1020,16 +1030,16 @@
   function demoMix(on){audio.setMix?.({master:prefs.masterVolume*(on?.35:1),music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});}
   function demoStop(){
     ++demoSerial;demoRunner?.dispose();demoRunner=null;demoPilot=null;demoCamera=null;demoCache.clear();
-    if(demoPrevious){const title=demoPrevious.title;if(title){$('sector-number').textContent=title.sector;$('sector-title').textContent=title.heading;$('mission-summary').innerHTML=title.summary;document.body.dataset.stage=title.stage;document.body.dataset.campaign=title.campaign;}({stage,seed,campaignMode,campaignRevision,profileMode,combatMode,runStats,checkpoint,selectedWeapon,stageEntryLoadout}=demoPrevious);demoPrevious=null;checkpointPending=false;checkpointWaitAt=-1;}
+    if(demoPrevious){const title=demoPrevious.title;if(title){$('sector-number').textContent=title.sector;$('sector-title').textContent=title.heading;$('mission-summary').innerHTML=title.summary;document.body.dataset.stage=title.stage;document.body.dataset.campaign=title.campaign;}({stage,seed,campaignMode,campaignRevision,profileMode,combatMode,hordeMode,runStats,checkpoint,selectedWeapon,stageEntryLoadout}=demoPrevious);demoPrevious=null;checkpointPending=false;checkpointWaitAt=-1;}
     $('demo-banner').hidden=true;document.body.classList.remove('demo-loading');demoMix(false);if(mode==='demo')setMode('menu');
   }
   async function demoStart(){
     if(mode!=='menu'||!window.MetalDemo||!window.FPilot)return false;
-    demoRequested=false;flushCheckpoint();demoPrevious={stage,seed,campaignMode,campaignRevision,profileMode,combatMode,runStats,checkpoint,selectedWeapon,stageEntryLoadout,title:{sector:$('sector-number').textContent,heading:$('sector-title').textContent,summary:$('mission-summary').innerHTML,stage:document.body.dataset.stage,campaign:document.body.dataset.campaign}};checkpointPending=false;demoElapsed=0;const ticket=++demoSerial;
+    demoRequested=false;flushCheckpoint();demoPrevious={stage,seed,campaignMode,campaignRevision,profileMode,combatMode,hordeMode,runStats,checkpoint,selectedWeapon,stageEntryLoadout,title:{sector:$('sector-number').textContent,heading:$('sector-title').textContent,summary:$('mission-summary').innerHTML,stage:document.body.dataset.stage,campaign:document.body.dataset.campaign}};checkpointPending=false;demoElapsed=0;const ticket=++demoSerial;
     sim?.dispose?.();setMode('demo');$('demo-banner').hidden=false;demoMix(true);
     demoBench=benchSeconds?{seconds:0,steps:0,frames:[],stepMs:[],drawMs:[],scenes:[],started:performance.now()}:null;
     const scenes=MetalDemo.scenes(96,!!benchSeconds);
-    const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,prepare:!scene.boss,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
+    const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,prepare:!scene.boss,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1,hordeVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
     demoRunner=FDemo.runner({scenes,stallSeconds:50,onError:error=>console.error('METAL demo:',error),onStop:()=>demoAttract?.stop('error'),open:async scene=>{
       document.body.classList.add('demo-loading');const raw=await prepare(scene);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(ticket!==demoSerial)return null;
       const prepared=MetalDemo.world(raw,scene),carry=MetalDemo.loadout(scene.index,MetalDemo.active?.(scene)??(scene.boss&&scene.index%2?'heavy':'light'));
@@ -1132,8 +1142,16 @@
     if(now-perfStart>=750){
       const fps=Math.round(perfFrames*1000/(now-perfStart));
       document.body.dataset.fps=String(fps);$('fps-counter').textContent=fps+' FPS';
+      const step=perfGovernor?.sample(fps,{cadence:cadenceLimit()||60,playing:mode==='playing'&&!document.hidden,prefs});if(step)lighten(step);
       perfStart=now;perfFrames=0;
     }
+  }
+  // Modest computers: one effect off at a time while the frame rate stays
+  // low in play; the native resolution is never lowered (David, 14/11/2026).
+  const perfGovernor=window.MetalPerf?.governor();
+  function lighten(step){
+    if(step.key==='quality'){quality='low';renderer.resize(quality);}else prefs[step.key]=step.value;
+    settings();toast('Fluidité : '+step.label+' · Options › Image',3.2);
   }
   // Displayed motion only: eased machine headings, stepped turns, the
   // third-person legs of the heavy and mechanism levers. Shared by play and demo.
@@ -1174,16 +1192,17 @@
     selectedWeapon=sim.state.weapon;clearFireIntents();leftMotion.impulse('switch');audio.switchWeapon?.();renderHUD();
   }
   $('loading-cancel').addEventListener('click',()=>{preparationSerial++;deferLaunch=false;pendingStart=null;setMode('menu');});
-  $('start').addEventListener('click',()=>{const nextSeed=savedRun?(Date.now()>>>0)%1000000:seed;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true});});
-  $('resume-expedition').addEventListener('click',()=>preparePlay(savedIndex(savedRun),()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1}));
+  $('start').addEventListener('click',()=>{const nextSeed=savedRun?(Date.now()>>>0)%1000000:seed;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true,horde:true});});
+  $('resume-expedition').addEventListener('click',()=>preparePlay(savedIndex(savedRun),()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1,horde:savedRun?.hordeVersion===1}));
   $('intro-options').addEventListener('click',()=>setMode('options'));
   $('pause-button').addEventListener('click',togglePause);$('resume').addEventListener('click',togglePause);
   $('restart').addEventListener('click',()=>preparePlay(stage,()=>{load(stage,undefined,stageEntryLoadout);saveCheckpoint();start('Nouvelle tentative. Équipement et crédits de l’entrée du secteur restaurés.');}));
   $('continue').addEventListener('click',()=>{
     if(mode==='dead'){
-      preparePlay(savedRun?savedIndex(savedRun):stage,()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1});return;
+      preparePlay(savedRun?savedIndex(savedRun):stage,()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1,horde:savedRun?.hordeVersion===1});return;
     }
-    if(mode==='complete'){const nextSeed=(Date.now()>>>0)%1000000;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true});return;}
+    if(mode==='complete'){const nextSeed=(Date.now()>>>0)%1000000;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true,horde:true});return;}
+    if(campaignMode&&campaignRevision===2&&profileMode&&combatMode)hordeMode=true;
     const nextStage=stage+1,loadout=heavyFirst(sim.exportLoadout?.()||sim.exportInventory?.());preparePlay(nextStage,()=>{load(nextStage,undefined,loadout);saveCheckpoint();start();});
   });
   $('back-menu').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
@@ -1200,7 +1219,7 @@
   $('motion-toggle').addEventListener('click',()=>{softMotion=!softMotion;settings();});
   const tabs=['game','image','audio','controls'];
   for(const id of tabs){$('tab-'+id).addEventListener('click',()=>selectTab(id));$('tab-'+id).addEventListener('keydown',e=>{let next=tabs.indexOf(id);if(e.code==='ArrowRight')next=(next+1)%4;else if(e.code==='ArrowLeft')next=(next+3)%4;else if(e.code==='Home')next=0;else if(e.code==='End')next=3;else return;e.preventDefault();selectTab(tabs[next],true);});}
-  for(const [id,key] of [['demo','demo'],['shadows','shadows'],['bloom','bloom'],['fps','showFps'],['crt','crt'],['vignette','vignette'],['invert','invertY'],['pointer-acceleration','systemPointerAcceleration']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
+  for(const [id,key] of [['demo','demo'],['shadows','shadows'],['bloom','bloom'],['autotune','autoTune'],['fps','showFps'],['crt','crt'],['vignette','vignette'],['invert','invertY'],['pointer-acceleration','systemPointerAcceleration']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
   for(const [id,key,divisor] of [['fov','fov',1],['brightness','brightness',100],['sensitivity','sensitivity',100],['crosshair','crosshairScale',100],['master','masterVolume',100],['music','musicVolume',100],['effects','effectsVolume',100],['ambience','ambienceVolume',100]])$(id+'-setting').addEventListener('input',()=>{prefs[key]=Number($(id+'-setting').value)/divisor;settings();});
   for(const [id,key,mul] of [['pad-yaw','padYaw',1],['pad-pitch','padPitch',1],['pad-dead','padDead',100],['pad-curve','padCurve',100],['pad-vibration','padVibration',100],['touch-accel','touchAccel',100],['gyro-sensitivity','gyroSensitivity',100]])$(id+'-setting').addEventListener('input',()=>{prefs[key]=Number($(id+'-setting').value)/mul;settings();});
   for(const [id,key] of [['pad-invert','padInvertY'],['pad-assist','padAssist'],['pad-swap','padSwapSticks'],['touch-assist','touchAssist'],['portrait-fov','portraitFov']])$(id+'-toggle').addEventListener('click',()=>{prefs[key]=!prefs[key];settings();});
@@ -1337,6 +1356,8 @@
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   try{
     renderer=FRender.create(canvas,{sceneReflections:true,advancedSky:true,composition:true,dither:true,resolution:'native',renderScale:prefs.renderScale,onBudget:()=>{if(prefs.fpsLimit===-1&&autoCadence===60)cadencePending=30;}});renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
+    // First launch: lighter defaults on integrated or software graphics.
+    {const info=window.MetalPerf?.probe(renderer.gl,navigator),applied=info&&MetalPerf.preset(prefs,info);if(info)document.body.dataset.gpuTier=info.tier;if(applied){if(prefs.quality!==quality){quality=prefs.quality;renderer.resize(quality);}settings();if(applied.changes.length)toast('Réglages adaptés à cet ordinateur : image allégée · Options › Image',4);}}
     savedRun=readSave();refreshContinue();
     if(preparationJobs.mode==='main')load(0);
     else prepareWorld(0,seed).then(()=>{if(!sim&&!preparationSerial&&titleScreen()){load(0);settings();}}).catch(error=>{console.error('METAL world preparation:',error);});

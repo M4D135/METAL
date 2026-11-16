@@ -74,7 +74,9 @@ function navigationGraph(cells,width,testEdge){
   const ENCOUNTER_STATE=['status','wave','pendingWave','timer'];
   const ENCOUNTER_STATUS=['dormant','warning','waiting','active','cleared'];
   const present=e=>e.deployed!==false,alive=e=>e.hp>0&&present(e);
-  const giant=e=>e.type===3&&Number(e.bossScale)>1,scale=e=>giant(e)?e.bossScale:1,bodyHeight=e=>giant(e)?3.18*scale(e):1.8,health=e=>giant(e)?Math.max(30,Math.min(1000,Number(e.maxHp)||130)):HP[e.type];
+  const giant=e=>e.type===3&&Number(e.bossScale)>1,scale=e=>giant(e)?e.bossScale:1,bodyHeight=e=>giant(e)?3.18*scale(e):1.8,health=e=>giant(e)?Math.max(30,Math.min(1000,Number(e.maxHp)||130)):e.variant==='kamikaze'?2:e.variant==='blade'?7:HP[e.type];
+  // Humanoid chasers (David, 16/11/2026): a screaming bomber and a liquid-metal blade.
+  const chaser=e=>e.type===1&&(e.variant==='kamikaze'||e.variant==='blade');
   const BOSS=['bossAwake','bossClock','bossStep','attackLabel','weakPointOpen','weakTimer','bossReleased'];
   const DIRECTOR=['pressure','tension','eventType','eventAge','nextEvent','events','progress','tier','grace','eventX','eventY','eventZ','eventIntensity'];
   const HORROR=['','metallicSlam','blackout','alarm','ambush'];
@@ -142,7 +144,70 @@ function navigationGraph(cells,width,testEdge){
     const h=[debrisExtent(q.shape,m0*sx,m1*sy,m2*sz),debrisExtent(q.shape,m3*sx,m4*sy,m5*sz),debrisExtent(q.shape,m6*sx,m7*sy,m8*sz)];
     debrisExtentCache.set(q,{r,size:q.size,shape:q.shape,h});return h;
   }
+  // Destruction leaves the broken object as a few large pieces that the
+  // physics engine drops and settles, without a cloud of chips (David,
+  // 16/11/2026). The engine halves big meshes into tiles: the tiles of one
+  // mesh are joined again, then every object keeps at most PER_OBJECT pieces
+  // of about CHUNK metres, never over the 4 m rigid-body limit.
+  const WRECK={PER_OBJECT:5,PER_EVENT:16,MIN_OBJECTS:24,CHUNK:2.6,LIMIT:4,DENSITY:{metal:65,stone:28,wood:8,glass:25,dirt:12}};
+  function wreckAxes(r){const [x,y,z]=r||[0,0,0],a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);return [[e*c,f*c,-d],[e*d*b-f*a,f*d*b+e*a,c*b],[e*d*a+f*b,f*d*a-e*b,c*a]];}
+  function wreckVolume(q){return q.size[0]*q.size[1]*q.size[2]*({sphere:Math.PI/6,cylinder:Math.PI/4,octa:1/6,foliage:.55}[q.shape]||1);}
+  function wreckMass(q){return clamp(wreckVolume(q)*(WRECK.DENSITY[q.material]||28),.035,160);}
+  function wreckPiece(q){const p=q.p||[q.x,q.y,q.z],size=Array.isArray(q.size)?q.size.slice():[q.size,q.size,q.size];return [...p,...size].every(Number.isFinite)&&size.every(v=>v>0)?{...q,p:p.slice(),size,rotation:(q.rotation||[0,0,0]).slice(),velocity:(q.velocity||[q.vx||0,q.vy||0,q.vz||0]).slice()}:null;}
+  // Two tiles join when they share shape, material and rotation, match on two
+  // axes and touch face to face along the third.
+  function wreckJoin(a,b){
+    if(a.shape!==b.shape||a.mat!==b.mat||a.material!==b.material||String(a.color)!==String(b.color)||a.rotation.some((v,k)=>Math.abs(v-b.rotation[k])>1e-7))return null;
+    const axes=wreckAxes(a.rotation),d=b.p.map((v,k)=>v-a.p[k]);
+    for(let k=0;k<3;k++){
+      if(a.shape==='cylinder'&&k!==1||!['box','bevel','cylinder'].includes(a.shape))continue;
+      if(![0,1,2].every(j=>j===k||Math.abs(a.size[j]-b.size[j])<1e-6))continue;
+      const along=d[0]*axes[k][0]+d[1]*axes[k][1]+d[2]*axes[k][2],gap=(a.size[k]+b.size[k])/2;
+      if(Math.abs(Math.abs(along)-gap)>1e-5||Math.hypot(d[0]-axes[k][0]*along,d[1]-axes[k][1]*along,d[2]-axes[k][2]*along)>1e-5)continue;
+      const wa=a.size[k],wb=b.size[k],w=wa+wb,size=a.size.slice();size[k]=w;
+      return {...a,size,p:a.p.map((v,j)=>(v*wa+b.p[j]*wb)/w),velocity:a.velocity.map((v,j)=>(v*wa+b.velocity[j]*wb)/w)};
+    }
+    return null;
+  }
+  // Cuts one piece into a grid of chunks: cells stay under the rigid-body
+  // limit, then get finer toward CHUNK while the object stays within budget.
+  function wreckChunks(q,budget){
+    const split=[0,1,2].map(k=>q.shape==='cylinder'?k===1:['box','bevel'].includes(q.shape)),counts=q.size.map((v,k)=>split[k]?Math.max(1,Math.ceil(v/WRECK.LIMIT-1e-9)):1);
+    for(;;){let best=-1,length=WRECK.CHUNK;for(let k=0;k<3;k++)if(split[k]&&q.size[k]/counts[k]>length){length=q.size[k]/counts[k];best=k;}if(best<0||counts[0]*counts[1]*counts[2]/counts[best]*(counts[best]+1)>budget)break;counts[best]++;}
+    const total=counts[0]*counts[1]*counts[2];if(total===1)return [q];
+    const axes=wreckAxes(q.rotation),part=q.size.map((v,k)=>v/counts[k]),out=[];
+    for(let i=0;i<total;i++){
+      const grid=[i%counts[0],Math.floor(i/counts[0])%counts[1],Math.floor(i/(counts[0]*counts[1]))],local=grid.map((g,k)=>((g+.5)/counts[k]-.5)*q.size[k]);
+      const offset=[0,1,2].map(j=>axes[0][j]*local[0]+axes[1][j]*local[1]+axes[2][j]*local[2]),reach=Math.hypot(...offset)||1;
+      // Chunks drift apart a little; the physics does the rest.
+      out.push({...q,size:part.slice(),p:q.p.map((v,j)=>v+offset[j]),velocity:q.velocity.map((v,j)=>v+offset[j]/reach*.55),angularVelocity:(q.angularVelocity||[.6,.3,.9]).map((v,k)=>v*(1+.35*Math.sin(i*2.399963+k))),seed:((q.seed||0)+i*131)>>>0});
+    }
+    return out;
+  }
+  function wreckage(list){
+    const objects=new Map(),out=[];
+    for(const raw of list||[]){if(raw?.structural!==true)continue;const q=wreckPiece(raw);if(!q)continue;const key=String(q.sourceId);if(!objects.has(key))objects.set(key,[]);objects.get(key).push(q);}
+    const plans=[];
+    for(const tiles of objects.values()){
+      let pieces=tiles.slice(),joined=true;
+      while(joined){joined=false;for(let i=0;i<pieces.length&&!joined;i++)for(let j=i+1;j<pieces.length;j++){const m=wreckJoin(pieces[i],pieces[j]);if(m){pieces.splice(j,1);pieces[i]=m;joined=true;break;}}}
+      pieces.sort((a,b)=>wreckVolume(b)-wreckVolume(a));pieces=pieces.slice(0,WRECK.PER_OBJECT);
+      // The largest part is always kept whole or cut under the limit; smaller
+      // parts that no longer fit the object's budget become dust.
+      let spare=WRECK.PER_OBJECT-pieces.length,used=0;const chunks=[];
+      for(const q of pieces){const parts=wreckChunks(q,1+spare);if(used&&used+parts.length>WRECK.PER_OBJECT)continue;spare=Math.max(0,spare-(parts.length-1));used+=parts.length;chunks.push(...parts);}
+      for(const q of chunks){q.mass=wreckMass(q);q.fragmented=true;}
+      chunks.sort((a,b)=>wreckVolume(b)-wreckVolume(a));plans.push(chunks);
+    }
+    plans.sort((a,b)=>wreckVolume(b[0])-wreckVolume(a[0]));
+    // Every broken object shows at least its largest piece.
+    for(const plan of plans.slice(0,WRECK.MIN_OBJECTS))out.push(plan[0]);
+    for(let round=1;out.length<WRECK.PER_EVENT;round++){let added=false;for(const plan of plans)if(plan[round]&&out.length<WRECK.PER_EVENT){out.push(plan[round]);added=true;}if(!added)break;}
+    return out;
+  }
   function create(world,options={}) {
+    // Generous ammunition at every boss phase in horde worlds (David, 16/11/2026).
+    const hordes=world.hordeVersion===1,PHASE_SLOTS=hordes?4:2,PHASE_AMMO=hordes?[120,24,8,12,0]:[60,12,4,6,0];
     const rigidEnabled=!!(G.FPhysics&&G.MetalPhysics&&(world.combatVersion===1||options.rigidBodies===true)&&options.rigidBodies!==false);let rigid=null;
     const floors=world.walkable||[],advanced=!!world.combat||world.generation>=5,horror=!!world.horrorSites?.length||world.director?.enabled===true;
     const progression=world.progression?.version===1,economyEnabled=progression&&!!G.FEconomy,nominalCombat=clamp(world.progression?.maxActive||[8,10,12][world.stage||0],2,16);
@@ -419,7 +484,7 @@ function navigationGraph(cells,width,testEdge){
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
     if(progression)identity.push(world.progression,world.encounters||[],world.shops||[]);
-    if(world.combatVersion===1)identity.push({combatVersion:1});if(rigidEnabled)identity.push({rigidBodiesVersion:1});
+    if(world.combatVersion===1)identity.push({combatVersion:1});if(hordes)identity.push({hordeVersion:1});if(rigidEnabled)identity.push({rigidBodiesVersion:1});
     if(world.campaign===true)identity.push({campaign:true,...(bossProgression?{campaignVersion:2}:{}),index:world.index,chapter:world.chapter,trophies:trophyDefs});
     for(const c of JSON.stringify(identity))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
     fingerprint=(fingerprint>>>0).toString(36);
@@ -1096,10 +1161,10 @@ function navigationGraph(cells,width,testEdge){
     function phaseSupplies(e,phase){
       if(world.combatVersion!==1||!progression)return;
       const weapons=weaponIds.filter(i=>i!==4&&s.inventory.weapons[i]).sort((a,b)=>s.inventory.ammo[a]/ammoCaps[a]-s.inventory.ammo[b]/ammoCaps[b]||a-b),base=Math.atan2(p.x-e.x,e.z-p.z),r=Math.max(12,radius(e)+2);
-      for(let slot=0;slot<2;slot++){
+      for(let slot=0;slot<PHASE_SLOTS;slot++){
         const id='phase-'+e.id+'-'+phase+'-'+slot;if(s.loot.some(q=>q.id===id))continue;
-        let at=null;for(let k=0;k<24;k++){const angle=base+(slot?-1:1)*(.55+k*.19),x=e.x+Math.sin(angle)*r,z=e.z-Math.cos(angle)*r,y=ground(x,z);if(y!==null&&!blocked(x,z,.6,y)&&s.loot.every(q=>Math.hypot(q.x-x,q.z-z)>1.5)){at={x,y,z};break;}}
-        if(!at)continue;const ammo=weaponIds.map(()=>0),weapon=weapons[slot%weapons.length];if(weapon!==undefined)ammo[weapon]=[60,12,4,6,0][weapon];
+        let at=null;for(let k=0;k<24;k++){const angle=base+(slot%2?-1:1)*(.55+Math.floor(slot/2)*.6+k*.19),x=e.x+Math.sin(angle)*r,z=e.z-Math.cos(angle)*r,y=ground(x,z);if(y!==null&&!blocked(x,z,.6,y)&&s.loot.every(q=>Math.hypot(q.x-x,q.z-z)>1.5)){at={x,y,z};break;}}
+        if(!at)continue;const ammo=weaponIds.map(()=>0),weapon=weapons[slot%weapons.length];if(weapon!==undefined)ammo[weapon]=PHASE_AMMO[weapon];
         s.loot.push({id,sourceEnemy:e.id,kind:'resupply',phase,slot,credits:0,cores:0,ammo,...(armorEnabled?{armor:15}:{}),...at,taken:!ammo.some(Boolean)&&!armorEnabled});
       }
     }
@@ -1121,14 +1186,18 @@ function navigationGraph(cells,width,testEdge){
     }
     function safeEntry(e,entry,encounter,budgeted=false){
       const y=entry.y??ground(entry.x,entry.z),r=radius(e);
-      if(Math.hypot(entry.x-p.x,entry.z-p.z)<10||!Number.isFinite(y)||Math.abs(ground(entry.x,entry.z)-y)>.08||blocked(entry.x,entry.z,r,y)||actorBlocked(e,entry.x,entry.z,r,y))return false;
+      if(Math.hypot(entry.x-p.x,entry.z-p.z)<(encounter.horde?8:10)||!Number.isFinite(y)||Math.abs(ground(entry.x,entry.z)-y)>.08||blocked(entry.x,entry.z,r,y)||actorBlocked(e,entry.x,entry.z,r,y))return false;
       if(s.enemies.some(a=>a!==e&&alive(a)&&Math.abs(a.baseY-y)<2.2&&Math.hypot(a.x-entry.x,a.z-entry.z)<radius(a)+r+.55))return false;
       // Orientation is deliberately irrelevant: turning the camera must never
       // make a visible reservation eligible. Every silhouette sample needs cover.
       const origin=[p.x,p.y+1.62,p.z];
       const yaw=Math.atan2(encounter.trigger.x-entry.x,entry.z-encounter.trigger.z),sn=Math.sin(yaw),cs=Math.cos(yaw),samples=[[0,0],[-.9,0],[.9,0],[0,-.9],[0,.9],[-.65,-.65],[-.65,.65],[.65,-.65],[.65,.65]];
-      if(e.type===1&&barrel({...e,x:entry.x,z:entry.z,baseY:y,yaw},encounter.trigger.x,(encounter.trigger.y||0)+1.45,encounter.trigger.z).blocked)return false;
-      if(e.type===1)samples.push([sn*1.5, -cs*1.5]);
+      // Runners carry no gun: only gunners need a clear barrel at the entry.
+      const gunner=e.type===1&&!chaser(e);
+      if(gunner&&barrel({...e,x:entry.x,z:entry.z,baseY:y,yaw},encounter.trigger.x,(encounter.trigger.y||0)+1.45,encounter.trigger.z).blocked)return false;
+      if(gunner)samples.push([sn*1.5, -cs*1.5]);
+      // A horde may pour in within sight, but never at the player's side.
+      if(encounter.horde&&Math.hypot(entry.x-p.x,entry.z-p.z)>=9)return true;
       for(const h of [1.1,.2,2.15])for(const [dx,dz] of samples){
         if(budgeted){if(spawnRays>=64)return false;spawnRays++;}
         const delta=[entry.x+dx-origin[0],y+h-origin[1],entry.z+dz-origin[2]],d=Math.hypot(...delta);
@@ -1157,6 +1226,7 @@ function navigationGraph(cells,width,testEdge){
         encounterWait=.2;let probes=8;
         for(const q of s.encounters){
           if(campaign&&q.requiresTrophy&&trophyState(q.requiresTrophy)?.phase!=='trial')continue;
+          if(q.after&&encounterMap.get(q.after)?.status!=='cleared')continue;
           let remainingCount=0;for(const id of idsFor(q))if(s.enemies[id].hp>0)remainingCount++;
           if(!remainingCount){if(q.status!=='cleared'){q.status='cleared';q.wave=q.waves.length-1;q.pendingWave=-1;q.timer=0;emit('encounterClear',{id:q.id,label:q.label||'Zone sécurisée'});}continue;}
           if(q.status==='dormant'&&inEncounter(q))announceWave(q,0);
@@ -1166,13 +1236,14 @@ function navigationGraph(cells,width,testEdge){
           const wave=q.waves[q.pendingWave].enemyIds.map(id=>s.enemies[id]).filter(e=>e.hp>0),need=wave.filter(e=>!e.encounterReleased);
           let engagedCount=0,local=0;
           for(const e of s.enemies)if(alive(e)&&!giant(e)&&e.encounterReleased&&!e.returning&&(!e.bossWave||e.bossReleased)&&(Math.hypot(e.x-p.x,e.z-p.z)<48||bossProgression&&e.entryGrace>0)){engagedCount++;if(enemyEncounter.get(e.id)===q)local++;}
-          let slots=campaign?Math.min(maxCombat-engagedCount,(q.maxActive||6)-local):Infinity;
-          if(campaign?slots<=0:engagedCount+need.length>maxCombat||local+need.length>(q.maxActive||6))continue;
+          let slots=q.horde?(q.maxActive||16)-local:campaign?Math.min(maxCombat-engagedCount,(q.maxActive||6)-local):Infinity;
+          if(q.horde?slots<=0:campaign?slots<=0:engagedCount+need.length>maxCombat||local+need.length>(q.maxActive||6))continue;
           // A crowded front cannot accumulate new waves while the player rushes
           // through adjacent triggers. Existing bodies always remain physical.
           let nearbyCount=0;
           for(const e of s.enemies)if(alive(e)&&!giant(e)&&(!e.bossWave||e.bossReleased)&&Math.hypot(e.x-p.x,e.z-p.z)<24&&!wave.includes(e))nearbyCount++;
-          if(campaign)slots=Math.min(slots,maxCombat-nearbyCount-wave.filter(e=>present(e)&&e.encounterReleased).length);
+          if(q.horde){}
+          else if(campaign)slots=Math.min(slots,maxCombat-nearbyCount-wave.filter(e=>present(e)&&e.encounterReleased).length);
           else if(nearbyCount+need.filter(e=>!present(e)).length>maxCombat)continue;
           for(const e of wave){
             if(campaign&&e.encounterReleased)continue;
@@ -1196,6 +1267,7 @@ function navigationGraph(cells,width,testEdge){
               }
               if(!entry)continue;
               e.x=entry.x;e.z=entry.z;putHeight(e,entry.y??groundAt(e.x,e.z));e.yaw=Math.atan2(q.trigger.x-e.x,e.z-q.trigger.z);e.deployed=true;e.deployAge=0;clearEvidence(e);Object.assign(e,freshAir());probes=0;
+              if(q.horde)emit('hordeSpawn',{id:e.id,x:e.x,y:e.baseY,z:e.z,variant:e.variant});
               if(approachPath!==null){let length=0,previous=[entry.x,entry.z];for(const i of approachPath){const point=coord(i);length+=Math.hypot(point[0]-previous[0],point[1]-previous[1]);previous=point;}length+=Math.hypot(q.trigger.x-previous[0],q.trigger.z-previous[1]);e.entryGrace=clamp(Math.max(length,entry.travel||0)/1.6+6,8,60);}
             }
             if(!e.encounterReleased){e.encounterReleased=true;e.returning=false;e.quietTime=0;e.cooldown=Math.max(e.cooldown,1.35);remember(e,q.trigger.x,q.trigger.z,'investigate',7,(q.trigger.y||0)+1.45);if(campaign)slots--;}
@@ -1225,10 +1297,10 @@ function navigationGraph(cells,width,testEdge){
       selectLocals.fill(0);
       let selectedCount=0;
       for(let i=0;i<candidateCount;i++){
-        if(selectedCount>=maxCombat)break;
-        const e=s.enemies[selectOrder[i]],ei=enemyEncounterIndex[e.id];
+        const e=s.enemies[selectOrder[i]],ei=enemyEncounterIndex[e.id],horde=ei>=0&&s.encounters[ei].horde===true;
+        if(!horde&&selectedCount>=maxCombat)continue;
         if(ei>=0){const limit=s.encounters[ei].maxActive||6;if(selectLocals[ei]>=limit)continue;selectLocals[ei]++;}
-        selectChosen[e.id]=1;selectedCount++;
+        selectChosen[e.id]=1;if(!horde)selectedCount++;
       }
       for(const e of s.enemies)if(!giant(e)){
         const enabled=selectChosen[e.id]===1;if(e.combatEnabled&&!enabled&&alive(e)&&enemyEncounter.has(e.id)){e.returning=true;clearEvidence(e);}
@@ -1285,6 +1357,34 @@ function navigationGraph(cells,width,testEdge){
         e.phase=1;e.cooldown=Math.min(e.cooldown,.65);emit('bossPhase',{id:e.id,phase:1});particles(e.x,e.y,e.z,6,24);
       }
     }
+    // A kamikaze sprints at the player screaming and blows up on contact; a
+    // blade runner closes in and slashes after a short, visible wind-up. Both
+    // steer straight when the way is clear and follow the navigation otherwise.
+    function chase(e,dt,d){
+      if(!e.hasMemory||introSafe())return false;
+      const kamikaze=e.variant==='kamikaze',level=Math.abs(e.baseY-p.y)<1.2,seen=e.seen&&level;
+      if(kamikaze&&e.attackState!=='rush')emit('kamikazeScream',{id:e.id,x:e.x,y:e.y,z:e.z});
+      e.attackState='rush';e.tactic='advance';
+      if(kamikaze&&seen&&d<1.65&&sight(e.x,e.z,p.x,p.z,e.y,p.y+1.2)){damageEnemy(e,e.hp,{x:e.x,y:e.y,z:e.z,credit:false});return true;}
+      if(!kamikaze){
+        if(e.windup>0){
+          e.windup=Math.max(0,e.windup-dt);e.yaw=Math.atan2(p.x-e.x,e.z-p.z);
+          if(!e.windup){e.cooldown=1.05;e.attackState='recover';if(seen&&d<2.3&&sight(e.x,e.z,p.x,p.z,e.y,p.y+1.2)){hurt(13,true,{x:e.x,y:e.y,z:e.z});emit('bladeStrike',{id:e.id,x:e.x,y:e.y,z:e.z});}}
+          return true;
+        }
+        if(seen&&d<1.9&&e.cooldown<=0){e.windupMax=e.windup=.38;e.attackState='aim';return true;}
+        if(e.cooldown>.55){e.attackState='recover';return true;}
+      }
+      const tx=seen?p.x:e.lastSeenX,tz=seen?p.z:e.lastSeenZ;
+      if(Math.hypot(tx-e.x,tz-e.z)>.4&&segmentFree(e.x,e.z,tx,tz,radius(e))){
+        const l=Math.hypot(tx-e.x,tz-e.z),step=Math.min(l-.3,(kamikaze?6.1:4.7)*dt);e.yaw=Math.atan2(tx-e.x,e.z-tz);e.path=[];e.pathAt=0;e.goalX=tx;e.goalZ=tz;
+        if(step>0)move(e,(tx-e.x)/l*step,(tz-e.z)/l*step,radius(e));
+        return true;
+      }
+      if(e.planWait<=0&&!goal(e,tx,tz,'advance',.6))e.planWait=.4;
+      if(e.pathAt<e.path.length){const q=coord(e.path[e.pathAt]);e.yaw=Math.atan2(q[0]-e.x,e.z-q[1]);}
+      navigate(e,dt);return true;
+    }
     function damageEnemy(e,amount,source,weak=false){
       if(!alive(e))return;const origin=source||{x:p.x,y:p.y+1.45,z:p.z,credit:true,...(profilesEnabled?{profile:s.activeProfile}:{})};if(profilesEnabled&&e.profileRequired&&(!origin.credit||origin.profile!==e.profileRequired)){if(origin.credit&&profileHintWait<=0){emit('profileBlocked',{required:e.profileRequired,boss:e.id});profileHintWait=1;}return;}if(origin.credit)amount*=(profilesEnabled&&origin.profile!==s.activeProfile?G.FEconomy.stats(s.profiles[origin.profile].economy):stats).damageMultiplier;if(giant(e))amount*=e.weakPointOpen&&weak?3.2:.30;if(e.bossWave)e.bossReleased=true;
       if(bossProgression)e.entryGrace=0;
@@ -1301,6 +1401,7 @@ function navigationGraph(cells,width,testEdge){
         rigid?.wreck(e,origin);
         if(giant(e)){s.bossAttacks=s.bossAttacks.filter(a=>a.bossId!==e.id);e.weakPointOpen=false;e.weakTimer=0;emit('bossDeath',{id:e.id,x:e.x,y:e.y,z:e.z,scale:scale(e)});for(let i=0;i<12;i++){const angle=i*2.399963,size=scale(e),id=++explosionSerial;s.explosions.push({id,kind:'boss',owner:e.id,x:e.x+Math.cos(angle)*size*.5,y:e.baseY+size*(.35+i*.23),z:e.z+Math.sin(angle)*size*.5,age:-i*.09,life:2.8,radius:size*.56,power:55,seed:id*911});if(!i)emit('explosion',{...s.explosions[s.explosions.length-1]});}if(s.explosions.length>24)s.explosions.splice(0,s.explosions.length-24);}
         s.kills++;dropLoot(e);if(origin.credit){s.combo++;s.comboTime=4;}
+        if(e.variant==='kamikaze')explode([e.x,e.baseY+1.1,e.z],4.4,origin.credit?18:34,12,origin.credit?'player':e.id,false,-1,undefined,'blast',origin.credit?origin.profile:undefined);
         const multiplier=1+Math.min(4,s.combo-1)*.25,points=Math.round([100,150,125,2000][e.type]*multiplier);
         if(origin.credit){s.score+=points;awardProfile(e.type===3?100:10,origin.profile);}emit('kill',{id:e.id,x:e.x,y:e.y,z:e.z,kind:e.type,boss:e.type===3,points:origin.credit?points:0,credited:!!origin.credit});particles(e.x,e.y,e.z,6,e.type===3?32:18);
         if(origin.credit&&s.combo>1)emit('combo',{count:s.combo,multiplier});
@@ -1361,12 +1462,6 @@ function navigationGraph(cells,width,testEdge){
       const pos=q.p||[q.x,q.y,q.z],size=Array.isArray(q.size)?q.size.slice():[q.size,q.size,q.size];
       if(pos.length!==3||!pos.every(Number.isFinite)||size.length!==3||!size.every(n=>Number.isFinite(n)&&n>0&&n<=64))return;
       const structural=q.structural===true;
-      // A broken wall must not be replaced by one upright wall-sized rigid body.
-      // Keep a bounded set of real fragments; the fine missing material is dust.
-      if(rigid&&structural&&!q.fragmented&&size.some(v=>v>1.2)){
-        const counts=size.map(v=>Math.min(3,Math.ceil(v/1.2))),total=counts[0]*counts[1]*counts[2],count=Math.min(12,total),part=size.map((v,k)=>Math.min(k===1?.8:1.2,v/counts[k]));
-        for(let n=0;n<count;n++){const i=Math.floor((n+.5)*total/count),grid=[i%counts[0],Math.floor(i/counts[0])%counts[1],Math.floor(i/(counts[0]*counts[1]))],point=pos.map((v,k)=>v+((grid[k]+.5)/counts[k]-.5)*size[k]);appendDebris({...q,p:point,size:part,fragmented:true,mass:(q.mass||size[0]*size[1]*size[2]*28)/total});}return;
-      }
       if(structural){
         const existing=s.debris.filter(q=>q.structural);
         if(existing.length>=MAX_RUBBLE){
@@ -1385,7 +1480,8 @@ function navigationGraph(cells,width,testEdge){
     function sceneryResult(result,point,power){
       if(!result)return;
       for(const id of result.pipeLeaks||[]){const q=s.pipes.find(q=>q.id===id);if(q)leakPipe(q);}
-      for(const q of (result.debris||[]).slice(0,48))appendDebris(q);
+      for(const q of wreckage(result.debris))appendDebris(q);
+      if(!result.changed){const chip=(result.debris||[]).find(q=>q&&q.structural!==true&&!q.dust);if(chip)appendDebris(chip);}
       for(const e of result.events||[])if(e.name==='materialImpact'||e.name==='materialBreak')emit(e.name,e);
       if(result.changed&&!result.events?.length)emit('creak',{x:point[0],y:point[1],z:point[2],power});
     }
@@ -2284,7 +2380,7 @@ function navigationGraph(cells,width,testEdge){
     function navigate(e,dt){
       if(e.airborne)return;
       if(e.type===2&&!advanced||e.tactic==='hold')return;
-      const speed=e.returning?1.8:!e.hasMemory?(e.type===0?.72:.55):advanced?[e.role==='assault'?2.4:e.role==='flanker'?2.25:1.8,1.7,1.8,e.phase?1.05:.8][e.type]:[1.65,1.05,0,e.phase?.85:.65][e.type];
+      const speed=e.returning?1.8:!e.hasMemory?(e.type===0?.72:.55):chaser(e)?(e.variant==='kamikaze'?6.1:4.7):advanced?[e.role==='assault'?2.4:e.role==='flanker'?2.25:1.8,1.7,1.8,e.phase?1.05:.8][e.type]:[1.65,1.05,0,e.phase?.85:.65][e.type];
       let budget=speed*dt,segments=0;
       const ox=e.x,oz=e.z;
       while(budget>1e-8&&segments++<8){
@@ -2479,6 +2575,7 @@ function navigationGraph(cells,width,testEdge){
             e.tactic='advance';e.attackState='idle';e.yaw=Math.atan2(e.goalX-e.x,e.z-e.goalZ);navigate(e,dt);continue;
           }
         }
+        if(chaser(e)&&chase(e,dt,d))continue;
         if(e.rushTime>0){
           e.attackState='rush';e.rushTime=Math.max(0,e.rushTime-dt);move(e,e.rushX*7.3*dt,e.rushZ*7.3*dt,.38);
           if(!e.rushHit&&Math.abs(e.baseY-p.y)<.9&&Math.hypot(e.x-p.x,e.z-p.z)<.9&&sight(e.x,e.z,p.x,p.z,e.y,p.y+1.2)){e.rushHit=true;hurt(16,true,{x:e.x,y:e.y,z:e.z});}
@@ -2702,7 +2799,7 @@ function navigationGraph(cells,width,testEdge){
       // same routes as a freshly restored world. No actor or gameplay timer moves.
       if(navPending||!graph.ready){pumpNav(Infinity);graph.flush();s.aiStats.navPending=0;}syncArmor();
       invalidateBrain();failedRoutes.clear();approachRoutes.clear();entryComponents.clear();
-      return {version:rigid?2:1,...(rigid?{rigidBodies:rigid.snapshot()}:{}),...(world.combatVersion===1||rigidEnabled?{motion:{version:1,velocityX,velocityZ,dashAge,dashX,dashZ,jumpBuffer,coyote,jumpWasPressed,clipFeedbackWait,clipEscape,profileWasPressed,jetSoundWait,profileHintWait,interactHeld,recovery}}:{}),...(world.combatVersion===1?{combatVersion:1}:{}),aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
+      return {version:rigid?2:1,...(rigid?{rigidBodies:rigid.snapshot()}:{}),...(world.combatVersion===1||rigidEnabled?{motion:{version:1,velocityX,velocityZ,dashAge,dashX,dashZ,jumpBuffer,coyote,jumpWasPressed,clipFeedbackWait,clipEscape,profileWasPressed,jetSoundWait,profileHintWait,interactHeld,recovery}}:{}),...(world.combatVersion===1?{combatVersion:1}:{}),...(hordes?{hordeVersion:1}:{}),aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
         state:{...pick(s,NUMBERS),difficulty:s.difficulty,director:pick(s.director,DIRECTOR),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
           ...(profilesEnabled?{profiles:exportProfiles()}:{}),
           ...(economyEnabled?{economy:G.FEconomy.copy(s.economy)}:{}),
@@ -2740,7 +2837,7 @@ function navigationGraph(cells,width,testEdge){
         require(progression?data.progressionVersion===1:data.progressionVersion===undefined);
         require(economyEnabled?data.economyVersion===(bossProgression?2:1):data.economyVersion===undefined);
         require(arsenal?data.arsenalVersion===(pistol?2:1):data.arsenalVersion===undefined);
-        require(data.combatVersion===(world.combatVersion===1?1:undefined));
+        require(data.combatVersion===(world.combatVersion===1?1:undefined));require(data.hordeVersion===(hordes?1:undefined));
         require(campaign?data.campaignVersion===(bossProgression?2:1):data.campaignVersion===undefined);
         require(armorEnabled?(data.armorVersion===undefined||data.armorVersion===1):data.armorVersion===undefined);
         const economy=economyEnabled?G.FEconomy.copy(a.economy):null;if(economyEnabled)require(economy);else require(a.economy===undefined);
@@ -2932,13 +3029,13 @@ function navigationGraph(cells,width,testEdge){
             require(pickup>=0);if(state.phase==='sealed')require(!a.pickups[pickup]);
             if(q){const inactive=q.status==='dormant'&&q.wave===-1&&q.pendingWave===-1&&home.waves.every(w=>w.enemyIds.every(id=>!enemies[id].encounterReleased));if(state.phase==='sealed'||state.phase==='grace')require(inactive);else if(state.phase==='trial')require(q.status!=='dormant');else require(inactive||q.status==='cleared');}
           }
-          require(Array.isArray(a.loot)&&a.loot.length<=enemies.length+(world.combatVersion===1?4*enemies.filter(giant).length:0));const sources=new Set(),supplyIds=new Set();
+          require(Array.isArray(a.loot)&&a.loot.length<=enemies.length+(world.combatVersion===1?2*PHASE_SLOTS*enemies.filter(giant).length:0));const sources=new Set(),supplyIds=new Set();
           loot=a.loot.map(q=>{
             require(q&&integer(q.sourceEnemy,0,enemies.length-1));
             if(q.kind==='resupply'){
               const owner=enemies[q.sourceEnemy],armor=armorEnabled&&data.armorVersion===1?q.armor:0;
-              require(world.combatVersion===1&&giant(owner)&&integer(q.phase,1,2)&&q.phase<=owner.phase&&integer(q.slot,0,1)&&q.id==='phase-'+owner.id+'-'+q.phase+'-'+q.slot&&!supplyIds.has(q.id));supplyIds.add(q.id);
-              require(q.credits===0&&q.cores===0&&Array.isArray(q.ammo)&&q.ammo.length===weaponSlots&&weaponIds.every(i=>integer(q.ammo[i],0,[60,12,4,6,0][i]))&&q.ammo.filter(Boolean).length<=1&&number(armor,0,15)&&bool(q.taken)&&q.taken===(!q.ammo.some(Boolean)&&!armor)&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-1000,1000)&&ground(q.x,q.z)!==null&&Math.abs(q.y-ground(q.x,q.z))<.061);
+              require(world.combatVersion===1&&giant(owner)&&integer(q.phase,1,2)&&q.phase<=owner.phase&&integer(q.slot,0,PHASE_SLOTS-1)&&q.id==='phase-'+owner.id+'-'+q.phase+'-'+q.slot&&!supplyIds.has(q.id));supplyIds.add(q.id);
+              require(q.credits===0&&q.cores===0&&Array.isArray(q.ammo)&&q.ammo.length===weaponSlots&&weaponIds.every(i=>integer(q.ammo[i],0,PHASE_AMMO[i]))&&q.ammo.filter(Boolean).length<=1&&number(armor,0,15)&&bool(q.taken)&&q.taken===(!q.ammo.some(Boolean)&&!armor)&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-1000,1000)&&ground(q.x,q.z)!==null&&Math.abs(q.y-ground(q.x,q.z))<.061);
               require(['rewardIndex','weapon','weaponUpgrade','personalUpgrade','weaponUpgradeLabel','personalUpgradeLabel','rewardTaken'].every(key=>q[key]===undefined));
               return {...pick(q,['id','sourceEnemy','kind','phase','slot','credits','cores','x','y','z','taken']),ammo:q.ammo.slice(),...(armorEnabled?{armor}:{})};
             }
@@ -3004,5 +3101,5 @@ function navigationGraph(cells,width,testEdge){
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
     return {state:s,get destruction(){return destruction;},get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
-  G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor};
+  G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor,wreckage};
 })(typeof window!=='undefined'?window:globalThis);
