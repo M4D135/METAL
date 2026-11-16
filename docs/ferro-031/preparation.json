@@ -1,0 +1,40 @@
+{
+  "game": "metal",
+  "repository": "/Users/david/Documents/Codex/2026-11-15/no/work/ferro-reference-metal",
+  "root": "/Users/david/Documents/Codex/2026-11-15/no/work/ferro-reference-metal",
+  "baseCommit": "3a4b067e55a0934af54e054b48fda3bb501964e1",
+  "engineCommit": "54007b174a327e97513cb0b4dc7b0f941ffc19e2",
+  "version": "0.3.1",
+  "changedModuleIds": [
+    "render",
+    "webgpu",
+    "backends",
+    "host"
+  ],
+  "moduleCount": 32,
+  "buildScript": "tools/build.py",
+  "html": "dist/index.html",
+  "testGlob": "checks/*.test.mjs",
+  "date": "2026-11-16T07:59:43.086083+00:00",
+  "state": "prepared-local",
+  "nodeVersion": "v24.18.0",
+  "testCommand": [
+    "node",
+    "--test",
+    "--test-concurrency=2",
+    "checks/*.test.mjs"
+  ],
+  "node": {
+    "tests": 1232,
+    "pass": 1231,
+    "fail": 0,
+    "todo": 1
+  },
+  "moduleHashesMatchReference": true,
+  "adaptersChanged": false,
+  "gpuTestsRun": false,
+  "pushed": false,
+  "deployed": false,
+  "buildBytes": 1468199,
+  "buildSha256": "a6c6ddd08de6fe00e89ba27001bfe4076f94ce7148a4a7e8e6baa14be86987bd"
+}
