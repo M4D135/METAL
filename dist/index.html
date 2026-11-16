@@ -66309,7 +66309,7 @@ function navigationGraph(cells,width,testEdge){
       let signature=world.combatVersion===1&&e.phase===2&&e.bossStep%4===2?(e.bossKind==='colossus'?'charge':e.bossKind==='siegebreaker'?'carpet':'beam'):null;
       if(signature)kind=signature==='carpet'?'rocketZone':'sweep';if(forced)kind=forced;if(history.length===2&&history[0]===kind&&history[1]===kind)kind=pattern.find(k=>k!==kind)||'ring';if(signature&&(forced||kind!==(signature==='carpet'?'rocketZone':'sweep')))signature=null;history.push(kind);if(history.length>2)history.shift();
       e.bossStep++;const point=bossPoint(e,e.lastSeenX,e.lastSeenZ),angle=Math.atan2(e.lastSeenX-e.x,e.z-e.lastSeenZ);
-      e.aimX=point.x;e.aimY=e.lastSeenY;e.aimZ=point.z;e.yaw=angle;e.weakPointOpen=false;e.weakTimer=0;
+      e.aimX=point.x;e.aimY=e.lastSeenY;e.aimZ=point.z;e.weakPointOpen=false;e.weakTimer=0;
       e.attackLabel=kind==='slam'?'Écrasement':kind==='ring'?'Onde de choc':kind==='rocketZone'?'Barrage de roquettes':'Balayage';
       if(signature&&!forced){
         if(signature==='carpet'){e.attackLabel='Tapis de bombes';for(let i=0;i<5;i++){const q=bossPoint(e,point.x+Math.sin(angle)*(i-2)*4,point.z-Math.cos(angle)*(i-2)*4),a=bossAttack(e,'rocketZone',q,{tell:1.8+i*.3});a.signature=signature;}}
@@ -66339,13 +66339,19 @@ function navigationGraph(cells,width,testEdge){
       if(e.senseWait<=0){e.senseWait=.15;perceive(e);if(!inArena)e.seen=false;}
       if(!e.seen&&e.hasMemory&&e.memory<=0){e.hasMemory=false;e.active=false;e.awareness='patrol';}
       bossPhaseChange(e);
+      // BOSS-12: a giant turns toward its aim at 60 deg/s (90 in phase 2). Its
+      // silhouette and weak point never jump, and circling it is a real dodge.
+      if(Math.hypot(e.aimX-e.x,e.aimZ-e.z)>.5){const want=Math.atan2(e.aimX-e.x,e.z-e.aimZ),delta=Math.atan2(Math.sin(want-e.yaw),Math.cos(want-e.yaw)),rate=(e.phase===2?1.57:1.05)*dt;if(Math.abs(delta)>1e-9){e.yaw+=clamp(delta,-rate,rate);e.yaw=Math.atan2(Math.sin(e.yaw),Math.cos(e.yaw));}}
       const attacks=s.bossAttacks.filter(a=>a.bossId===e.id&&a.age<a.duration-(a.burn||0));
       if(attacks.length){const warning=attacks.filter(a=>a.warning);e.windup=warning.length?Math.max(...warning.map(a=>Math.max(0,a.tell-a.age))):0;e.windupMax=Math.max(e.windup,e.windupMax);e.attackState=warning.length?'aim':'burst';return true;}
       e.windup=0;e.attackState='recover';if(e.weakPointOpen)e.attackLabel='Cœur exposé';
-      if(e.hasMemory){e.yaw=Math.atan2(e.lastSeenX-e.x,e.z-e.lastSeenZ);e.aimX=e.lastSeenX;e.aimY=e.lastSeenY;e.aimZ=e.lastSeenZ;}
+      if(e.hasMemory){e.aimX=e.lastSeenX;e.aimY=e.lastSeenY;e.aimZ=e.lastSeenZ;}
       // The entire articulated silhouette remains inside the cleared arena. A
       // giant never uses infantry nav or squeezes down the entrance bridge.
-      if(e.seen&&e.bossClock>0&&!e.weakPointOpen){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz);if(d>radius(e)+8)move(e,dx/d*dt*.8,dz/d*dt*.8,radius(e));}
+      // BOSS-12: a heavy walk between attacks closes in and backs away from a
+      // player at its feet. Each 0.9 s of the shared clock while it really
+      // moves is a step the player feels.
+      if(e.seen&&e.bossClock>0&&!e.weakPointOpen){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz)||1,dir=d>radius(e)+8?1:d<radius(e)+2?-1:0;if(dir){const x0=e.x,z0=e.z;move(e,dx/d*dt*1.2*dir,dz/d*dt*1.2*dir,radius(e));if(Math.hypot(e.x-x0,e.z-z0)>1e-6&&Math.floor(s.time/.9)!==Math.floor((s.time-dt)/.9))emit('bossStep',{id:e.id,x:e.x,y:e.baseY,z:e.z,impact:10,material:'metal'});}}
       e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;
       if(e.bossClock<=0&&inArena&&(e.hasMemory||tactics.camp>=3)&&(!bossProgression||!e.weakPointOpen)){if(tactics.camp>=3){remember(e,p.x,p.z,'investigate',7,p.y+1.45);beginBossAttack(e,'rocketZone');tactics.camp=0;}else beginBossAttack(e);}
       return true;
@@ -66368,7 +66374,7 @@ function navigationGraph(cells,width,testEdge){
         if(a.kind==='ring'){a.currentRadius=a.warning?0:clamp((a.age-a.tell)/a.activeDuration,0,1)*a.radius;a.innerRadius=Math.max(0,a.currentRadius-1.6);}
         if(a.kind==='rocketZone'&&!a.fired){
           const {target,mouth}=bossMouth(e,a),delta=target.map((v,k)=>v-mouth.point[k]),length=Math.hypot(...delta)||1;
-          if(a.age>=a.tell-length/18){a.fired=true;e.aimX=target[0];e.aimY=target[1];e.aimZ=target[2];e.yaw=Math.atan2(target[0]-e.x,e.z-target[2]);if(!mouth.blocked)spawnProjectile('rocket',mouth.point,delta.map(v=>v/Math.max(dt,a.tell-a.age+dt)),e.id,{blastRadius:a.radius,terrainPower:34,damage:a.damage});}
+          if(a.age>=a.tell-length/18){a.fired=true;e.aimX=target[0];e.aimY=target[1];e.aimZ=target[2];if(!mouth.blocked)spawnProjectile('rocket',mouth.point,delta.map(v=>v/Math.max(dt,a.tell-a.age+dt)),e.id,{blastRadius:a.radius,terrainPower:34,damage:a.damage});}
         }
         if(previous<a.tell&&a.age>=a.tell){emit('bossImpact',{id:e.id,kind:a.kind,x:a.x,y:a.y,z:a.z,phase:e.phase});if(a.kind!=='rocketZone')a.fired=true;if(a.kind==='slam')explode([a.x,a.y+.18,a.z],a.radius,a.damage,24,e.id);}
         if(a.burn&&a.active&&a.age>=a.tell+(a.kind==='rocketZone'?.35:.22)&&a.age<a.duration&&bossZoneContains(a,p,.28)&&!p.airborne)hurt(8*dt,true,{x:a.x,y:a.y,z:a.z});
@@ -67131,7 +67137,8 @@ function navigationGraph(cells,width,testEdge){
     const aim=e.attackState==='aim'||e.attackState==='burst'||e.windup>0?1:0,rush=e.attackState==='rush';
     const phase=Number.isFinite(options.phase)?options.phase:time*(e.moveSpeed||0)*4.8/scale+(e.id||0)*.7;
     const blend=stun?0:clamp(options.blend??(e.moveSpeed||0)/1.4,0,1),base=Number.isFinite(e.baseY)?e.baseY:(Number(e.y)||[1.35,1.05,1.6,1.8][type])-[1.35,1.05,1.6,1.8][type];
-    const yaw=Number.isFinite(e.yaw)?-e.yaw:0,b=rotation(0,yaw,0),root={p:[e.x||0,base,e.z||0],b,r:angles(b)},out=[];
+    // options.yaw: displayed heading, eased by the host; the simulation keeps its own.
+    const yaw=Number.isFinite(options.yaw)?-options.yaw:Number.isFinite(e.yaw)?-e.yaw:0,b=rotation(0,yaw,0),root={p:[e.x||0,base,e.z||0],b,r:angles(b)},out=[];
     const impact=giant?0:clamp((e.hurt||0)/.2,0,1),hurt=clamp((e.hurt||0)*3,0,.45),mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
     const palette={shell:mix([.24,.28,.31],[.61,.54,.43],hurt),steel:[.56,.62,.64],edge:[.34,.39,.42],trim:[.34,.29,.22],dark:[.085,.105,.12],rubber:[.055,.068,.078],glass:[.10,.20,.23]};
     if(giant){
@@ -67172,11 +67179,11 @@ function navigationGraph(cells,width,testEdge){
       const body=frame(root,[0,.9+bounce,impact*.05],[-lean-impact*.26,0,stun?Math.sin(time*23)*.035:airborne?0:Math.sin(phase)*.018*blend]);
       const head=frame(body,[0,.98,-.035],[.10,0,0]);
       const gun=frame(body,[.23,.43,-.29],[aim?pitch(1.33)+lean:-.23,0,0]);
-      const legs=[];
+      const legRoot=Number.isFinite(options.legYaw)&&options.legYaw?frame(root,[0,0,0],[0,-options.legYaw,0]):root,legs=[];
       for(const side of [-1,1]){
         const t=phase+(side<0?0:PI),lift=airborne?.18+.15*clamp(((e.airVY||0)+10)/22,0,1):Math.max(0,Math.cos(t))*.16*blend,stride=airborne?.12+side*.035:Math.sin(t)*.29*blend*(rush?1.25:1);
-        const hip=point(body,[side*.25,-.025,0]),ankle=point(root,[side*.27,.23+lift,stride+.015]);
-        const kneeY=airborne?.68:.49+lift*.4,kneeZ=airborne?-.25:stride*.52-.095,knee=point(root,[side*.28,kneeY,kneeZ]);
+        const hip=point(body,[side*.25,-.025,0]),ankle=point(legRoot,[side*.27,.23+lift,stride+.015]);
+        const kneeY=airborne?.68:.49+lift*.4,kneeZ=airborne?-.25:stride*.52-.095,knee=point(legRoot,[side*.28,kneeY,kneeZ]);
         legs.push({side,hip,knee,ankle,lift,stride,kneeY,kneeZ});
       }
       if(lod===2){
@@ -67209,11 +67216,11 @@ function navigationGraph(cells,width,testEdge){
           limb('thigh-'+l.side,l.hip,l.knee,.31,.34,'shell');
           limb('shin-'+l.side,l.knee,l.ankle,.26,.29,'edge');
           joint('hip-'+l.side,[l.side*.25,-.025,0],.25,'steel',body);
-          joint('knee-'+l.side,[l.side*.28,l.kneeY,l.kneeZ],.265,'steel');
-          box('knee-plate-'+l.side,[l.side*.28,l.kneeY+.01,l.kneeZ-.163],[.25,.25,.075],'trim');
-          limb('leg-piston-'+l.side,point(root,[l.side*.37,.73,l.stride*.20+.12]),point(root,[l.side*.37,.27+l.lift,l.stride+.12]),.065,.065,'steel','cylinder');
+          joint('knee-'+l.side,[l.side*.28,l.kneeY,l.kneeZ],.265,'steel',legRoot);
+          box('knee-plate-'+l.side,[l.side*.28,l.kneeY+.01,l.kneeZ-.163],[.25,.25,.075],'trim',legRoot);
+          limb('leg-piston-'+l.side,point(legRoot,[l.side*.37,.73,l.stride*.20+.12]),point(legRoot,[l.side*.37,.27+l.lift,l.stride+.12]),.065,.065,'steel','cylinder');
         }
-        box('boot-'+l.side,[l.side*.27,.11+l.lift,l.stride-.07],[.34,.22,.51],'rubber');
+        box('boot-'+l.side,[l.side*.27,.11+l.lift,l.stride-.07],[.34,.22,.51],'rubber',legRoot);
       }
       if(launcher){
         cyl('launcher-tube',[0,.045,-.43],[.32,1.08,.32],'shell',gun,[PI/2,0,0]);
@@ -67356,7 +67363,8 @@ function navigationGraph(cells,width,testEdge){
       }
     }
     function custodian(){
-      const bounce=giant?(tellFamily==='ring'?-.12*tellPose:0):Math.sin(phase*2)*.035*blend,body=frame(root,[0,1.5+bounce,0],giant?[0,0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
+      // A sweep is announced by the whole upper body winding up, never by a detached bar.
+      const bounce=giant?(tellFamily==='ring'?-.12*tellPose:0):Math.sin(phase*2)*.035*blend,body=frame(root,[0,1.5+bounce,0],giant?[0,tellFamily==='sweep'?.42*tellPose:0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
       const feet=[];for(const side of [-1,1])for(const end of [-1,1]){
         const t=phase+(side===end?0:PI),lift=Math.max(0,Math.cos(t))*.17*blend,stride=Math.sin(t)*.20*blend;
         feet.push({side,end,lift,stride,hip:point(body,[side*.62,-.13,end*.40]),knee:point(root,[side*.89,.77+lift*.4,end*.65+stride*.5]),ankle:point(root,[side*.98,.24+lift,end*.78+stride])});
@@ -67364,7 +67372,7 @@ function navigationGraph(cells,width,testEdge){
       if(lod===2){
         box('custodian-torso',[0,.40,.025],[1.65,1.4,1.2],'shell',body);box('custodian-helmet',[0,1.39,-.08],[1,.5,.75],'dark',body);
         eye('custodian-optic',[0,1.40,-.47],[.67,.13,.04],body);
-        for(const side of [-1,1])box('custodian-cannon-'+side,[side*1.04,.77+(tellFamily==='slam'?tellPose*.7:0),-.43],[.40,.44,1.40],tellFamily==='rocketZone'?[.8,.12,.03]:'dark',body);
+        for(const side of [-1,1])box('custodian-cannon-'+side,[side*1.04,.77+(tellFamily==='slam'?tellPose*.7:0),-.43],[.40,.44,1.40],tellFamily==='rocketZone'?[.8,.12,.03]:tellFamily==='sweep'?[1,.52,.09]:'dark',body);
         cyl('custodian-stance',[0,.30,.03],[2.06,.58,1.85],'edge');return;
       }
       armor('custodian-torso',[0,.40,.025],[1.65,1.4,1.2],'shell',body);
@@ -67385,7 +67393,7 @@ function navigationGraph(cells,width,testEdge){
       for(const side of [-1,1]){
         const recoil=e.attackState==='burst'?Math.max(0,Math.sin(time*31+side))*.12:0;
         const gun=frame(body,[side*1.04,.78,recoil],[tellFamily==='slam'?.95*tellPose:tellFamily==='ring'?-.25*tellPose:aim?pitch(2.28):-.04,0,0]);
-        armor('custodian-shoulder-'+side,[0,.07,.12],[.58,.58,.74],tellFamily==='rocketZone'?[.7,.12,.035]:'trim',gun);
+        armor('custodian-shoulder-'+side,[0,.07,.12],[.58,.58,.74],tellFamily==='rocketZone'?[.7,.12,.035]:tellFamily==='sweep'?[1,.52,.09]:'trim',gun);
         cyl('custodian-barrel-'+side,[0,0,-.87],[.23,1.05,.23],'steel',gun,[PI/2,0,0]);
         if(lod===0){
           joint('custodian-gun-pivot-'+side,[0,.03,.16],.38,'dark',gun);
@@ -67422,7 +67430,6 @@ function navigationGraph(cells,width,testEdge){
       const awake=e.bossAwake!==false,open=!!e.weakPointOpen,kind=e.bossKind||'colossus';
       const glow=open?[.20,.90,.80]:kind==='siegebreaker'?[.98,.33,.055]:kind==='custodian'?[.37,.70,.78]:[.89,.61,.20];
       const energy=awake?(open?.72+.12*Math.sin(time*8):tellFamily==='ring'?.5+.3*Math.sin(time*(5+tellPose*12)):.25+.06*Math.sin(time*2.2)):.055;
-      if(tellFamily==='sweep')piece('titan-sweep-blade','box',[0,2.28,-1.5],[2.8,.08,.22],[1,.52,.09],root,null,5,.8+tellPose*.6);
       // This centre and diameter are the simulation's real, targetable weak point.
       // It stays attached to the torso; gait only animates the articulated supports.
       piece('titan-heart','sphere',[0,1.93,-.90],[.72,.72,.72],glow,root,null,open?4:5,energy);
@@ -67499,7 +67506,7 @@ function navigationGraph(cells,width,testEdge){
     const yaw=finite(p.yaw),pitch=clamp(finite(p.pitch),-1.2,1.2),reach=30,weapon=o.weapon===2?'rocket':o.weapon===3?'grenade':undefined;
     const eye=finite(p.y)+1.62,aim={x:finite(p.x)+Math.sin(yaw)*Math.cos(pitch)*reach,y:eye+Math.sin(pitch)*reach,z:finite(p.z)-Math.cos(yaw)*Math.cos(pitch)*reach};
     const actor={id:-2,type:1,x:finite(p.x),z:finite(p.z),baseY:finite(p.y),y:finite(p.y)+1.05,yaw,hp:1,moveSpeed:finite(o.speed),airborne:!!p.airborne,airVY:finite(p.airVY),attackState:'aim',aimX:aim.x,aimY:aim.y,aimZ:aim.z,weapon,awareness:'patrol'};
-    const out=G.FActors.build(actor,{time:finite(o.time),phase:finite(o.phase),blend:clamp(finite(o.blend),0,1),distance:finite(o.distance,3),quality:o.quality,backend:o.backend,palette:HEAVY.palette,signal:HEAVY.signal});
+    const out=G.FActors.build(actor,{time:finite(o.time),phase:finite(o.phase),blend:clamp(finite(o.blend),0,1),distance:finite(o.distance,3),quality:o.quality,backend:o.backend,palette:HEAVY.palette,signal:HEAVY.signal,legYaw:finite(o.legYaw)});
     for(const m of out)m.playerAvatar='heavy';
     if(finite(o.flash)>.2){
       // The flash sits at the end of the barrel FActors places on the gun frame.
@@ -68175,6 +68182,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
         else if(e.name==='trap'&&distance()<10)queue(.65,.4,180);
         else if(e.name==='boundaryContact')queue(.04,.06,35);
         else if(e.name==='land'||e.name==='landing')queue(.25,.15,90);
+        else if(e.name==='bossStep'){const v=.35*Math.max(0,1-distance()/30);if(v)queue(v,v*.4,110);}
         else if(e.name==='jetpack')queue(.06,.12,55);
         else if(e.name==='profileSwitch'||e.name==='profileChanged'||e.name==='switchProfile')queue(.28,.45,120);
       }
@@ -69363,7 +69371,7 @@ G.FPilot={create:createPilot};
   const preparationJobs=FJobs.create({environment:window,handlers:MetalTasks.jobs,bootstrap:'FJobs.serve(MetalTasks.jobs);',forceMain:new URLSearchParams(location.search).get('jobs')==='main'});
   addEventListener('pagehide',()=>preparationJobs.dispose());
   window.FMusic?.setPreparer?.((value,seed)=>preparationJobs.mode==='main'?null:preparationJobs.request('music',{stage:value,seed}).then(r=>r.prepared));
-  const followCamera=MetalCamera.create();followCamera.reset(prefs.view==='third');
+  const followCamera=MetalCamera.create(),avatarGait={legYaw:0,back:false};followCamera.reset(prefs.view==='third');
   // Distance to the first machine on the firing ray: the third-person camera
   // then centres the crosshair on what the shot will really hit.
   function aimRange(o,d,far){
@@ -69808,10 +69816,11 @@ G.FPilot={create:createPilot};
       if(e.twin)leftMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
       if(e.name==='rocket'||e.name==='grenadeLaunch'){if(e.owner==='player')handMotion.impulse(e.name==='grenadeLaunch'?'grenade':'rocket');}
       else if(e.name==='land'){if(e.actor==='player'&&sim.state.activeProfile!=='light'){motion.impulse('land',e.impact);leftMotion.impulse('land',e.impact);}}
+      else if(e.name==='bossStep'){const p=sim.state.player,amount=.25*clamp(1-Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z)/25,0,1);if(amount>0){motion.impulse('blast',amount);leftMotion.impulse('blast',amount);}}
       else if(e.name==='bossImpact'||e.name==='bossDeath'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z),amount=(e.name==='bossDeath'?1:e.kind==='ring'?.4:.8)*clamp(1-d/40,0,1);motion.impulse('blast',amount);leftMotion.impulse('blast',amount);if(e.name==='bossDeath')freezeUntil=performance.now()+120;}
       else if(e.name==='explosion'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.y??p.y)-p.y,(e.z??p.z)-p.z);motion.impulse('blast',clamp(1-d/14,0,1));leftMotion.impulse('blast',clamp(1-d/14,0,1));}
       else handMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
-      const sound=e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
+      const sound=e.name==='bossStep'?'land':e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
       if(e.name!=='win'&&typeof audio[sound]==='function'&&!((e.name==='weaponPickup'||e.name==='lootPickup')&&trophyIds.has(e.id))){
         const mix=soundscape.event(sim,e);if(mix.level>.0001)audio[sound](mix);
       }
@@ -70049,7 +70058,7 @@ G.FPilot={create:createPilot};
       if(e.deployed===false||e.hp<=0||!nearby(e.x,e.z,e.type===3?4.5*scale:2))continue;
       if(!actorVisible(e.x,(e.baseY||0)+1.6*scale,e.z,e.type===3?4.5*scale:3.5))continue;
       const pose=actorMotion.get(e.id),distance=Math.hypot(e.x-p.x,e.z-p.z),base=e.baseY||0;
-      out.push(...FActors.build(e,{time:t,phase:pose?.phase,blend:pose?.blend,distance,quality,backend:renderer.stats.backend}));
+      out.push(...FActors.build(e,{time:t,phase:pose?.phase,blend:pose?.blend,yaw:giant?undefined:pose?.yaw,distance,quality,backend:renderer.stats.backend}));
       if(e.windup>0&&!giant){
         const charge=1-e.windup/(e.windupMax||1),heading=Number.isFinite(e.yaw)?e.yaw:0,r=(e.type===3?2.2:.8)*(1.3-charge*.3);
         out.push(m('ring',[e.x,base+.07,e.z],[r*2,.08,r*2],5,[0,0,0],.5+charge));
@@ -70095,7 +70104,7 @@ G.FPilot={create:createPilot};
       const character=(id,pose,live)=>{
         const distance=Math.hypot(pose.x-camera.pos[0],(pose.y||0)+1.4-camera.pos[1],pose.z-camera.pos[2]),weapon=live?s.weapon:s.profiles[id]?.weapon;
         if(id==='light')out.push(...MetalAvatars.drone(pose,{time:t,weapon,forward:live?loc.forward:0,strafe:live?loc.strafe:0,boosting:live&&!!s.jetpack?.active,flash:live?Math.max(s.flash||0,s.leftFlash||0):0,quality,backend,seed:live?0:2.1}));
-        else out.push(...MetalAvatars.heavy(pose,{time:t,weapon,speed:live?loc.speed:0,phase:live?loc.stridePhase:0,blend:live?loc.moveBlend:0,distance,flash:live?s.flash:0,quality,backend}));
+        else out.push(...MetalAvatars.heavy(pose,{time:t,weapon,speed:live?loc.speed:0,phase:live?(avatarGait.back?-1:1)*(loc.stridePhase||0):0,blend:live?loc.moveBlend:0,legYaw:live?avatarGait.legYaw:0,distance,flash:live?s.flash:0,quality,backend}));
       };
       if(thirdPerson)character(active,p,true);
       if(parked&&nearby(parked.x,parked.z))character(other,parked,false);
@@ -70398,7 +70407,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.11.0',simHash:'772d869cda1f550ed7d388b666195f4b1cfbd62a69f2619e6a23ea0df6fd268c',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.11.0',simHash:'90bf1db6b1f3224eba3b88877c7fbcb10ac953c4dd1bd7187ae6ddc2e1d8a4bd',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){
@@ -70437,6 +70446,9 @@ G.FPilot={create:createPilot};
       });
       aimShownX=lookDX;aimShownY=lookDY;
       const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI),outside=isOutdoors(sim.state.player.x,sim.state.player.z);
+      // Third-person legs follow the movement while the torso keeps the aim;
+      // walking backwards reverses the stride instead of moonwalking.
+      {const f=loc?.forward||0,st=loc?.strafe||0,theta=Math.atan2(st,f),moving=Math.hypot(f,st)>.4&&sim.state.activeProfile!=='light',back=moving&&Math.abs(theta)>Math.PI/2+.15,want=moving?clamp(back?theta-Math.sign(theta)*Math.PI:theta,-1.1,1.1):0;avatarGait.legYaw+=(want-avatarGait.legYaw)*(1-Math.exp(-dt*10));avatarGait.back=back;}
       outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
       const localSound=soundscape.sample(sim),motor=localSound.machinery,steam=localSound.steam;
       audio.setMachinery?.(motor.level,motor.pan,motor.kind,motor.occluded);
@@ -70446,8 +70458,15 @@ G.FPilot={create:createPilot};
       lastFootstep=footstep;
       for(const e of sim.state.enemies){
         const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1;
-        if(e.deployed===false||e.hp<=0||(e.type!==1&&e.type!==2&&e.type!==3)||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);continue;}
-        const pose=actorMotion.get(e.id)||{phase:e.id*.7,blend:0};pose.phase=(pose.phase+(e.moveSpeed||0)*dt*4.8/scale)%(Math.PI*2);pose.blend+=(Math.min(1,(e.moveSpeed||0)/.9)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);
+        if(e.deployed===false||e.hp<=0||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);continue;}
+        const yaw=Number.isFinite(e.yaw)?e.yaw:0,giant=scale>1,pose=actorMotion.get(e.id)||{phase:e.id*.7,blend:0,yaw,last:yaw};
+        // Machines turn fast but never snap. A giant keeps the simulation's own
+        // rate-limited heading, which carries its real weak point.
+        if(giant)pose.yaw=yaw;else{const delta=Math.atan2(Math.sin(yaw-pose.yaw),Math.cos(yaw-pose.yaw)),limit=[7,6,5,5][e.type]*dt;pose.yaw+=clamp(delta*(1-Math.exp(-dt*16)),-limit,limit);}
+        const turn=dt>0?Math.abs(Math.atan2(Math.sin(pose.yaw-pose.last),Math.cos(pose.yaw-pose.last)))/dt:0,speed=e.moveSpeed||0;pose.last=pose.yaw;
+        // A turn on the spot is stepped: the gait advances with the rotation.
+        pose.phase=(pose.phase+(speed*4.8/scale+turn*(giant?1.6:.8))*dt)%(Math.PI*2);
+        pose.blend+=(Math.max(Math.min(1,speed/.9),Math.min(1,turn*(giant?1.4:.35))*.55)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);
       }
       for(const a of sim.state.mechanisms||[]){const value=systemMotion.get(a.id)??0;systemMotion.set(a.id,value+(Number(a.active)-value)*(1-Math.exp(-dt*4)));}
       toastTime-=dt;if(toastTime<=0)$('toast').classList.remove('visible');

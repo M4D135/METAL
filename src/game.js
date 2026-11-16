@@ -13,7 +13,7 @@
   const preparationJobs=FJobs.create({environment:window,handlers:MetalTasks.jobs,bootstrap:'FJobs.serve(MetalTasks.jobs);',forceMain:new URLSearchParams(location.search).get('jobs')==='main'});
   addEventListener('pagehide',()=>preparationJobs.dispose());
   window.FMusic?.setPreparer?.((value,seed)=>preparationJobs.mode==='main'?null:preparationJobs.request('music',{stage:value,seed}).then(r=>r.prepared));
-  const followCamera=MetalCamera.create();followCamera.reset(prefs.view==='third');
+  const followCamera=MetalCamera.create(),avatarGait={legYaw:0,back:false};followCamera.reset(prefs.view==='third');
   // Distance to the first machine on the firing ray: the third-person camera
   // then centres the crosshair on what the shot will really hit.
   function aimRange(o,d,far){
@@ -458,10 +458,11 @@
       if(e.twin)leftMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
       if(e.name==='rocket'||e.name==='grenadeLaunch'){if(e.owner==='player')handMotion.impulse(e.name==='grenadeLaunch'?'grenade':'rocket');}
       else if(e.name==='land'){if(e.actor==='player'&&sim.state.activeProfile!=='light'){motion.impulse('land',e.impact);leftMotion.impulse('land',e.impact);}}
+      else if(e.name==='bossStep'){const p=sim.state.player,amount=.25*clamp(1-Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z)/25,0,1);if(amount>0){motion.impulse('blast',amount);leftMotion.impulse('blast',amount);}}
       else if(e.name==='bossImpact'||e.name==='bossDeath'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z),amount=(e.name==='bossDeath'?1:e.kind==='ring'?.4:.8)*clamp(1-d/40,0,1);motion.impulse('blast',amount);leftMotion.impulse('blast',amount);if(e.name==='bossDeath')freezeUntil=performance.now()+120;}
       else if(e.name==='explosion'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.y??p.y)-p.y,(e.z??p.z)-p.z);motion.impulse('blast',clamp(1-d/14,0,1));leftMotion.impulse('blast',clamp(1-d/14,0,1));}
       else handMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
-      const sound=e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
+      const sound=e.name==='bossStep'?'land':e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
       if(e.name!=='win'&&typeof audio[sound]==='function'&&!((e.name==='weaponPickup'||e.name==='lootPickup')&&trophyIds.has(e.id))){
         const mix=soundscape.event(sim,e);if(mix.level>.0001)audio[sound](mix);
       }
@@ -699,7 +700,7 @@
       if(e.deployed===false||e.hp<=0||!nearby(e.x,e.z,e.type===3?4.5*scale:2))continue;
       if(!actorVisible(e.x,(e.baseY||0)+1.6*scale,e.z,e.type===3?4.5*scale:3.5))continue;
       const pose=actorMotion.get(e.id),distance=Math.hypot(e.x-p.x,e.z-p.z),base=e.baseY||0;
-      out.push(...FActors.build(e,{time:t,phase:pose?.phase,blend:pose?.blend,distance,quality,backend:renderer.stats.backend}));
+      out.push(...FActors.build(e,{time:t,phase:pose?.phase,blend:pose?.blend,yaw:giant?undefined:pose?.yaw,distance,quality,backend:renderer.stats.backend}));
       if(e.windup>0&&!giant){
         const charge=1-e.windup/(e.windupMax||1),heading=Number.isFinite(e.yaw)?e.yaw:0,r=(e.type===3?2.2:.8)*(1.3-charge*.3);
         out.push(m('ring',[e.x,base+.07,e.z],[r*2,.08,r*2],5,[0,0,0],.5+charge));
@@ -745,7 +746,7 @@
       const character=(id,pose,live)=>{
         const distance=Math.hypot(pose.x-camera.pos[0],(pose.y||0)+1.4-camera.pos[1],pose.z-camera.pos[2]),weapon=live?s.weapon:s.profiles[id]?.weapon;
         if(id==='light')out.push(...MetalAvatars.drone(pose,{time:t,weapon,forward:live?loc.forward:0,strafe:live?loc.strafe:0,boosting:live&&!!s.jetpack?.active,flash:live?Math.max(s.flash||0,s.leftFlash||0):0,quality,backend,seed:live?0:2.1}));
-        else out.push(...MetalAvatars.heavy(pose,{time:t,weapon,speed:live?loc.speed:0,phase:live?loc.stridePhase:0,blend:live?loc.moveBlend:0,distance,flash:live?s.flash:0,quality,backend}));
+        else out.push(...MetalAvatars.heavy(pose,{time:t,weapon,speed:live?loc.speed:0,phase:live?(avatarGait.back?-1:1)*(loc.stridePhase||0):0,blend:live?loc.moveBlend:0,legYaw:live?avatarGait.legYaw:0,distance,flash:live?s.flash:0,quality,backend}));
       };
       if(thirdPerson)character(active,p,true);
       if(parked&&nearby(parked.x,parked.z))character(other,parked,false);
@@ -1087,6 +1088,9 @@
       });
       aimShownX=lookDX;aimShownY=lookDY;
       const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI),outside=isOutdoors(sim.state.player.x,sim.state.player.z);
+      // Third-person legs follow the movement while the torso keeps the aim;
+      // walking backwards reverses the stride instead of moonwalking.
+      {const f=loc?.forward||0,st=loc?.strafe||0,theta=Math.atan2(st,f),moving=Math.hypot(f,st)>.4&&sim.state.activeProfile!=='light',back=moving&&Math.abs(theta)>Math.PI/2+.15,want=moving?clamp(back?theta-Math.sign(theta)*Math.PI:theta,-1.1,1.1):0;avatarGait.legYaw+=(want-avatarGait.legYaw)*(1-Math.exp(-dt*10));avatarGait.back=back;}
       outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
       const localSound=soundscape.sample(sim),motor=localSound.machinery,steam=localSound.steam;
       audio.setMachinery?.(motor.level,motor.pan,motor.kind,motor.occluded);
@@ -1096,8 +1100,15 @@
       lastFootstep=footstep;
       for(const e of sim.state.enemies){
         const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1;
-        if(e.deployed===false||e.hp<=0||(e.type!==1&&e.type!==2&&e.type!==3)||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);continue;}
-        const pose=actorMotion.get(e.id)||{phase:e.id*.7,blend:0};pose.phase=(pose.phase+(e.moveSpeed||0)*dt*4.8/scale)%(Math.PI*2);pose.blend+=(Math.min(1,(e.moveSpeed||0)/.9)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);
+        if(e.deployed===false||e.hp<=0||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);continue;}
+        const yaw=Number.isFinite(e.yaw)?e.yaw:0,giant=scale>1,pose=actorMotion.get(e.id)||{phase:e.id*.7,blend:0,yaw,last:yaw};
+        // Machines turn fast but never snap. A giant keeps the simulation's own
+        // rate-limited heading, which carries its real weak point.
+        if(giant)pose.yaw=yaw;else{const delta=Math.atan2(Math.sin(yaw-pose.yaw),Math.cos(yaw-pose.yaw)),limit=[7,6,5,5][e.type]*dt;pose.yaw+=clamp(delta*(1-Math.exp(-dt*16)),-limit,limit);}
+        const turn=dt>0?Math.abs(Math.atan2(Math.sin(pose.yaw-pose.last),Math.cos(pose.yaw-pose.last)))/dt:0,speed=e.moveSpeed||0;pose.last=pose.yaw;
+        // A turn on the spot is stepped: the gait advances with the rotation.
+        pose.phase=(pose.phase+(speed*4.8/scale+turn*(giant?1.6:.8))*dt)%(Math.PI*2);
+        pose.blend+=(Math.max(Math.min(1,speed/.9),Math.min(1,turn*(giant?1.4:.35))*.55)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);
       }
       for(const a of sim.state.mechanisms||[]){const value=systemMotion.get(a.id)??0;systemMotion.set(a.id,value+(Number(a.active)-value)*(1-Math.exp(-dt*4)));}
       toastTime-=dt;if(toastTime<=0)$('toast').classList.remove('visible');

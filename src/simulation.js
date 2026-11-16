@@ -2341,7 +2341,7 @@ function navigationGraph(cells,width,testEdge){
       let signature=world.combatVersion===1&&e.phase===2&&e.bossStep%4===2?(e.bossKind==='colossus'?'charge':e.bossKind==='siegebreaker'?'carpet':'beam'):null;
       if(signature)kind=signature==='carpet'?'rocketZone':'sweep';if(forced)kind=forced;if(history.length===2&&history[0]===kind&&history[1]===kind)kind=pattern.find(k=>k!==kind)||'ring';if(signature&&(forced||kind!==(signature==='carpet'?'rocketZone':'sweep')))signature=null;history.push(kind);if(history.length>2)history.shift();
       e.bossStep++;const point=bossPoint(e,e.lastSeenX,e.lastSeenZ),angle=Math.atan2(e.lastSeenX-e.x,e.z-e.lastSeenZ);
-      e.aimX=point.x;e.aimY=e.lastSeenY;e.aimZ=point.z;e.yaw=angle;e.weakPointOpen=false;e.weakTimer=0;
+      e.aimX=point.x;e.aimY=e.lastSeenY;e.aimZ=point.z;e.weakPointOpen=false;e.weakTimer=0;
       e.attackLabel=kind==='slam'?'Écrasement':kind==='ring'?'Onde de choc':kind==='rocketZone'?'Barrage de roquettes':'Balayage';
       if(signature&&!forced){
         if(signature==='carpet'){e.attackLabel='Tapis de bombes';for(let i=0;i<5;i++){const q=bossPoint(e,point.x+Math.sin(angle)*(i-2)*4,point.z-Math.cos(angle)*(i-2)*4),a=bossAttack(e,'rocketZone',q,{tell:1.8+i*.3});a.signature=signature;}}
@@ -2371,13 +2371,19 @@ function navigationGraph(cells,width,testEdge){
       if(e.senseWait<=0){e.senseWait=.15;perceive(e);if(!inArena)e.seen=false;}
       if(!e.seen&&e.hasMemory&&e.memory<=0){e.hasMemory=false;e.active=false;e.awareness='patrol';}
       bossPhaseChange(e);
+      // BOSS-12: a giant turns toward its aim at 60 deg/s (90 in phase 2). Its
+      // silhouette and weak point never jump, and circling it is a real dodge.
+      if(Math.hypot(e.aimX-e.x,e.aimZ-e.z)>.5){const want=Math.atan2(e.aimX-e.x,e.z-e.aimZ),delta=Math.atan2(Math.sin(want-e.yaw),Math.cos(want-e.yaw)),rate=(e.phase===2?1.57:1.05)*dt;if(Math.abs(delta)>1e-9){e.yaw+=clamp(delta,-rate,rate);e.yaw=Math.atan2(Math.sin(e.yaw),Math.cos(e.yaw));}}
       const attacks=s.bossAttacks.filter(a=>a.bossId===e.id&&a.age<a.duration-(a.burn||0));
       if(attacks.length){const warning=attacks.filter(a=>a.warning);e.windup=warning.length?Math.max(...warning.map(a=>Math.max(0,a.tell-a.age))):0;e.windupMax=Math.max(e.windup,e.windupMax);e.attackState=warning.length?'aim':'burst';return true;}
       e.windup=0;e.attackState='recover';if(e.weakPointOpen)e.attackLabel='Cœur exposé';
-      if(e.hasMemory){e.yaw=Math.atan2(e.lastSeenX-e.x,e.z-e.lastSeenZ);e.aimX=e.lastSeenX;e.aimY=e.lastSeenY;e.aimZ=e.lastSeenZ;}
+      if(e.hasMemory){e.aimX=e.lastSeenX;e.aimY=e.lastSeenY;e.aimZ=e.lastSeenZ;}
       // The entire articulated silhouette remains inside the cleared arena. A
       // giant never uses infantry nav or squeezes down the entrance bridge.
-      if(e.seen&&e.bossClock>0&&!e.weakPointOpen){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz);if(d>radius(e)+8)move(e,dx/d*dt*.8,dz/d*dt*.8,radius(e));}
+      // BOSS-12: a heavy walk between attacks closes in and backs away from a
+      // player at its feet. Each 0.9 s of the shared clock while it really
+      // moves is a step the player feels.
+      if(e.seen&&e.bossClock>0&&!e.weakPointOpen){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz)||1,dir=d>radius(e)+8?1:d<radius(e)+2?-1:0;if(dir){const x0=e.x,z0=e.z;move(e,dx/d*dt*1.2*dir,dz/d*dt*1.2*dir,radius(e));if(Math.hypot(e.x-x0,e.z-z0)>1e-6&&Math.floor(s.time/.9)!==Math.floor((s.time-dt)/.9))emit('bossStep',{id:e.id,x:e.x,y:e.baseY,z:e.z,impact:10,material:'metal'});}}
       e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;
       if(e.bossClock<=0&&inArena&&(e.hasMemory||tactics.camp>=3)&&(!bossProgression||!e.weakPointOpen)){if(tactics.camp>=3){remember(e,p.x,p.z,'investigate',7,p.y+1.45);beginBossAttack(e,'rocketZone');tactics.camp=0;}else beginBossAttack(e);}
       return true;
@@ -2400,7 +2406,7 @@ function navigationGraph(cells,width,testEdge){
         if(a.kind==='ring'){a.currentRadius=a.warning?0:clamp((a.age-a.tell)/a.activeDuration,0,1)*a.radius;a.innerRadius=Math.max(0,a.currentRadius-1.6);}
         if(a.kind==='rocketZone'&&!a.fired){
           const {target,mouth}=bossMouth(e,a),delta=target.map((v,k)=>v-mouth.point[k]),length=Math.hypot(...delta)||1;
-          if(a.age>=a.tell-length/18){a.fired=true;e.aimX=target[0];e.aimY=target[1];e.aimZ=target[2];e.yaw=Math.atan2(target[0]-e.x,e.z-target[2]);if(!mouth.blocked)spawnProjectile('rocket',mouth.point,delta.map(v=>v/Math.max(dt,a.tell-a.age+dt)),e.id,{blastRadius:a.radius,terrainPower:34,damage:a.damage});}
+          if(a.age>=a.tell-length/18){a.fired=true;e.aimX=target[0];e.aimY=target[1];e.aimZ=target[2];if(!mouth.blocked)spawnProjectile('rocket',mouth.point,delta.map(v=>v/Math.max(dt,a.tell-a.age+dt)),e.id,{blastRadius:a.radius,terrainPower:34,damage:a.damage});}
         }
         if(previous<a.tell&&a.age>=a.tell){emit('bossImpact',{id:e.id,kind:a.kind,x:a.x,y:a.y,z:a.z,phase:e.phase});if(a.kind!=='rocketZone')a.fired=true;if(a.kind==='slam')explode([a.x,a.y+.18,a.z],a.radius,a.damage,24,e.id);}
         if(a.burn&&a.active&&a.age>=a.tell+(a.kind==='rocketZone'?.35:.22)&&a.age<a.duration&&bossZoneContains(a,p,.28)&&!p.airborne)hurt(8*dt,true,{x:a.x,y:a.y,z:a.z});

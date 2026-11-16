@@ -38,6 +38,7 @@
         else if(e.name==='trap'&&distance()<10)queue(.65,.4,180);
         else if(e.name==='boundaryContact')queue(.04,.06,35);
         else if(e.name==='land'||e.name==='landing')queue(.25,.15,90);
+        else if(e.name==='bossStep'){const v=.35*Math.max(0,1-distance()/30);if(v)queue(v,v*.4,110);}
         else if(e.name==='jetpack')queue(.06,.12,55);
         else if(e.name==='profileSwitch'||e.name==='profileChanged'||e.name==='switchProfile')queue(.28,.45,120);
       }

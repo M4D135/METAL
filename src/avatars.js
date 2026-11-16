@@ -21,7 +21,7 @@
     const yaw=finite(p.yaw),pitch=clamp(finite(p.pitch),-1.2,1.2),reach=30,weapon=o.weapon===2?'rocket':o.weapon===3?'grenade':undefined;
     const eye=finite(p.y)+1.62,aim={x:finite(p.x)+Math.sin(yaw)*Math.cos(pitch)*reach,y:eye+Math.sin(pitch)*reach,z:finite(p.z)-Math.cos(yaw)*Math.cos(pitch)*reach};
     const actor={id:-2,type:1,x:finite(p.x),z:finite(p.z),baseY:finite(p.y),y:finite(p.y)+1.05,yaw,hp:1,moveSpeed:finite(o.speed),airborne:!!p.airborne,airVY:finite(p.airVY),attackState:'aim',aimX:aim.x,aimY:aim.y,aimZ:aim.z,weapon,awareness:'patrol'};
-    const out=G.FActors.build(actor,{time:finite(o.time),phase:finite(o.phase),blend:clamp(finite(o.blend),0,1),distance:finite(o.distance,3),quality:o.quality,backend:o.backend,palette:HEAVY.palette,signal:HEAVY.signal});
+    const out=G.FActors.build(actor,{time:finite(o.time),phase:finite(o.phase),blend:clamp(finite(o.blend),0,1),distance:finite(o.distance,3),quality:o.quality,backend:o.backend,palette:HEAVY.palette,signal:HEAVY.signal,legYaw:finite(o.legYaw)});
     for(const m of out)m.playerAvatar='heavy';
     if(finite(o.flash)>.2){
       // The flash sits at the end of the barrel FActors places on the gun frame.
