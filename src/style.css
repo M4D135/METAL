@@ -223,3 +223,5 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
 #controls-hint span{font-size:9px;text-transform:uppercase;white-space:nowrap}
 #controls-hint[hidden],body.touch #controls-hint{display:none}body[data-boss=true] #controls-hint{opacity:.28}
 @media(max-height:640px),(max-width:760px){#controls-hint{display:none}}
+/* Title screen without music information (David, 16/11/2026); the music itself is unchanged. */
+#intro-audio[hidden]{display:none}
