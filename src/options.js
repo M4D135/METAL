@@ -1,16 +1,20 @@
 /* FERRO — persistent preferences and conflict-free keyboard bindings. */
 (function(){
   'use strict';
-  const actions=[['forward','Avancer',['KeyW','KeyZ','ArrowUp']],['back','Reculer',['KeyS','ArrowDown']],['left','À gauche',['KeyA','KeyQ']],['right','À droite',['KeyD']],['turnLeft','Tourner à gauche',['ArrowLeft']],['turnRight','Tourner à droite',['ArrowRight']],['fire','Tirer · main droite',['Enter']],['fireLeft','Tirer · main gauche',['KeyG']],['leftHand','Changer la main gauche',['KeyX']],['sprint','Courir / boost',['ShiftLeft','ShiftRight']],['jump','Sauter / monter',['Space']],['descend','Vol : descendre',['KeyC']],['dash','Esquive / descendre',['KeyR']],['pulse','Onde défensive',['KeyE']],['melee','Coup de crosse',['KeyV']],['interact','Interagir',['KeyF']],['weapon1','Mitraillette',['Digit1']],['weapon2','Double pompe',['Digit2']],['weapon3','Lance-roquettes',['Digit3']],['weapon4','Lance-grenades',['Digit4']],['weapon5','Pistolet',['Digit5']],['map','Carte',['KeyM']],['pause','Pause',['KeyP']],['weaponNext','Arme suivante',['KeyN']],['switchProfile','Changer de profil',['KeyT']]];
+  const actions=[['forward','Avancer',['KeyW','KeyZ','ArrowUp']],['back','Reculer',['KeyS','ArrowDown']],['left','À gauche',['KeyA','KeyQ']],['right','À droite',['KeyD']],['turnLeft','Tourner à gauche',['ArrowLeft']],['turnRight','Tourner à droite',['ArrowRight']],['fire','Tirer · main droite',['Enter']],['fireLeft','Tirer · main gauche',['KeyG']],['leftHand','Changer la main gauche',['KeyX']],['sprint','Courir / boost',['ShiftLeft','ShiftRight']],['jump','Sauter / monter',['Space']],['dash','Esquive / descendre',['KeyR']],['pulse','Onde défensive',['KeyE']],['melee','Coup de crosse',['KeyV']],['interact','Interagir',['KeyF']],['weapon1','Mitraillette',['Digit1']],['weapon2','Double pompe',['Digit2']],['weapon3','Lance-roquettes',['Digit3']],['weapon4','Lance-grenades',['Digit4']],['weapon5','Pistolet',['Digit5']],['map','Carte',['KeyM']],['view','Vue 1re / 3e personne',['KeyC']],['pause','Pause',['KeyP']],['weaponNext','Arme suivante',['KeyN']],['switchProfile','Changer de personnage',['KeyT']]];
   const padNames=['A','B','X','Y','LB','RB','LT','RT','Back','Start','L3','R3','Up','Down','Left','Right'];
-  const padDefaults={fire:['RT'],fireLeft:['LT'],sprint:['L3'],jump:['A'],dash:['B'],pulse:['LB'],melee:['R3'],interact:['X'],weaponNext:['Y'],switchProfile:['RB'],weapon1:['Up'],weapon2:['Right'],weapon3:['Down'],weapon4:['Left'],map:['Back'],pause:['Start']};
+  // Layout 2 (David, 16/11/2026): LB runs or boosts, L3 is the defensive wave,
+  // Y changes character, RB the weapon and R3 the first/third person view.
+  const padDefaults={fire:['RT'],fireLeft:['LT'],sprint:['LB'],jump:['A'],dash:['B'],pulse:['L3'],interact:['X'],weaponNext:['RB'],switchProfile:['Y'],view:['R3'],weapon1:['Up'],weapon2:['Right'],weapon3:['Down'],weapon4:['Left'],map:['Back'],pause:['Start']};
+  const padLayout1={sprint:['L3'],pulse:['LB'],melee:['R3'],weaponNext:['Y'],switchProfile:['RB']};
   const allowed=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space|Enter|Backspace|Tab)$/.test(code);
-  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.45,effectsVolume:1,ambienceVolume:1,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:1,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
+  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,view:'first',controlsHint:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.45,effectsVolume:1,ambienceVolume:1,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:2,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
   function normalize(raw,touch){
     const out=defaults(touch),v=raw&&typeof raw==='object'?raw:{};
-    for(const id of ['demo','demoWake','muted','softMotion','invertY','systemPointerAcceleration','shadows','bloom','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks','touchAssist','portraitFov'])if(typeof v[id]==='boolean')out[id]=v[id];
+    for(const id of ['demo','demoWake','muted','softMotion','controlsHint','invertY','systemPointerAcceleration','shadows','bloom','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks','touchAssist','portraitFov'])if(typeof v[id]==='boolean')out[id]=v[id];
     if([5,10,30,60].includes(v.demoDelay))out.demoDelay=v.demoDelay;
     if(['off','probe','screen'].includes(v.reflections))out.reflections=v.reflections;
+    if(['first','third'].includes(v.view))out.view=v.view;
     if(['auto','low','high'].includes(v.quality))out.quality=v.quality;
     if(['auto','cpu'].includes(v.aiAcceleration))out.aiAcceleration=v.aiAcceleration;
     for(const [id,min,max] of [['fov',60,110],['brightness',.7,1.4],['sensitivity',.25,3],['crosshairScale',.75,1.5],['masterVolume',0,1],['musicVolume',0,1],['effectsVolume',0,1],['ambienceVolume',0,1],['padYaw',60,600],['padPitch',40,400],['padDead',0,.4],['padCurve',1,3],['padVibration',0,1],['touchAccel',0,1],['gyroSensitivity',.5,2]])if(typeof v[id]==='number'&&Number.isFinite(v[id]))out[id]=Math.max(min,Math.min(max,v[id]));
@@ -19,13 +23,13 @@
     if([1,.85,.75,.66,.5].includes(v.renderScale))out.renderScale=v.renderScale;
     if([0,1,2].includes(v.difficulty))out.difficulty=v.difficulty;
     const bindings=v.bindings&&typeof v.bindings==='object'?{...v.bindings}:null;
-    // C now controls descent. Migrate the former default left trigger binding.
-    if(bindings&&!bindings.descend&&JSON.stringify(bindings.fireLeft)===JSON.stringify(['KeyC'])){const used=new Set(Object.entries(bindings).filter(([id])=>id!=='fireLeft').flatMap(([,codes])=>Array.isArray(codes)?codes:[]));bindings.fireLeft=[['KeyG','KeyH','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>k!=='KeyC'&&!used.has(k))||'KeyG'];}
+    // C now toggles the view, as in BITUME. Migrate the former default left trigger binding.
+    if(bindings&&!bindings.view&&!bindings.descend&&JSON.stringify(bindings.fireLeft)===JSON.stringify(['KeyC'])){const used=new Set(Object.entries(bindings).filter(([id])=>id!=='fireLeft').flatMap(([,codes])=>Array.isArray(codes)?codes:[]));bindings.fireLeft=[['KeyG','KeyH','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>k!=='KeyC'&&!used.has(k))||'KeyG'];}
     if(bindings&&v.bindingsVersion!==2&&!bindings.jump&&JSON.stringify(bindings.dash)===JSON.stringify(['Space'])){const used=new Set(Object.entries(bindings).filter(([k])=>k!=='dash').flatMap(([,a])=>Array.isArray(a)?a:[]));bindings.dash=[['KeyR','KeyG','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>!used.has(k))||'KeyR'];}
     if(bindings){
       const candidate={},seen=new Set();let valid=true;
-      const added=['descend','melee','fireLeft','leftHand','weapon4','weapon5','jump','weaponNext','switchProfile'],used=new Set(actions.flatMap(([id])=>Array.isArray(bindings[id])?bindings[id]:added.includes(id)?[]:out.bindings[id]));
-      for(const id of added)if(bindings[id]===undefined){const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];const key=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(key=>!used.has(key));if(key){out.bindings[id]=[key];used.add(key);}}
+      const added=['view','melee','fireLeft','leftHand','weapon4','weapon5','jump','weaponNext','switchProfile'],used=new Set(actions.flatMap(([id])=>Array.isArray(bindings[id])?bindings[id]:added.includes(id)?[]:out.bindings[id]));
+      for(const id of added)if(bindings[id]===undefined){const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:id==='view'?['KeyC','KeyY','KeyB','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];const key=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(key=>!used.has(key));if(key){out.bindings[id]=[key];used.add(key);}}
       for(const [id] of actions){
         const codes=bindings[id]??out.bindings[id];
         if(!Array.isArray(codes)||codes.length<1||codes.length>3){valid=false;break;}
@@ -37,7 +41,18 @@
     if(v.padBindings&&typeof v.padBindings==='object'){
       const used=new Set(),candidate={};let valid=true;
       for(const [id] of actions)if(Object.prototype.hasOwnProperty.call(v.padBindings,id)){const a=v.padBindings[id];if(!Array.isArray(a)||a.length>2){valid=false;break;}for(const n of a){if(!padNames.includes(n)||used.has(n))valid=false;used.add(n);}}
-      if(valid){for(const [id] of actions)candidate[id]=Object.prototype.hasOwnProperty.call(v.padBindings,id)?v.padBindings[id].slice():out.padBindings[id].filter(n=>!used.has(n)&&used.add(n));out.padBindings=candidate;}
+      if(valid){
+        for(const [id] of actions)candidate[id]=Object.prototype.hasOwnProperty.call(v.padBindings,id)?v.padBindings[id].slice():out.padBindings[id].filter(n=>!used.has(n)&&used.add(n));
+        // Saved layout 1 tables: move only the buttons still at their former
+        // default to layout 2; personal choices keep their buttons.
+        if(v.padVersion!==2){
+          const moved=['sprint','pulse','melee','weaponNext','switchProfile','view'].filter(id=>id==='view'?!Object.prototype.hasOwnProperty.call(v.padBindings,id)||!candidate[id].length:JSON.stringify(candidate[id])===JSON.stringify(padLayout1[id]));
+          for(const id of moved)candidate[id]=[];
+          const taken=new Set(Object.values(candidate).flat());
+          for(const id of moved)candidate[id]=(padDefaults[id]||[]).filter(n=>!taken.has(n)&&taken.add(n));
+        }
+        out.padBindings=candidate;
+      }
     }
     return out;
   }

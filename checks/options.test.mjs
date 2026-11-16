@@ -28,7 +28,7 @@ test('Conflicts and reserved keys never silently disable another action',()=>{
   assert.equal(options.normalize(tampered).bindings.fire[0],'Enter');
 });
 test('Adding melee preserves an existing custom V binding and finds a free default key',()=>{
-  const old=options.defaults();for(const id of ['descend','melee','fireLeft','leftHand','weapon4'])delete old.bindings[id];old.bindings.interact=['KeyV'];old.bindings.fire=['KeyC'];
+  const old=options.defaults();for(const id of ['view','melee','fireLeft','leftHand','weapon4'])delete old.bindings[id];old.bindings.interact=['KeyV'];old.bindings.fire=['KeyC'];
   const v=options.normalize(JSON.parse(JSON.stringify(old)));
   assert.deepEqual(Array.from(v.bindings.interact),['KeyV']);assert.deepEqual(Array.from(v.bindings.fire),['KeyC']);
   assert.deepEqual(Array.from(v.bindings.melee),['KeyB']);
@@ -150,4 +150,32 @@ test('native scale and stable automatic cadence have bounded independent prefere
   assert.equal(options.normalize({fpsLimit:144}).fpsLimit,144);assert.equal(options.normalize({fpsLimit:0}).fpsLimit,0);
   assert.equal(options.cadenceChoice(10,60),60);assert.equal(options.cadenceChoice(12,60),30);
   assert.equal(options.cadenceChoice(10,30),30);assert.equal(options.cadenceChoice(8,30),60);assert.equal(options.cadenceChoice(undefined),30);
+});
+
+const plainPad=v=>JSON.parse(JSON.stringify(v));
+test('Pad layout 2: LB runs, L3 waves, Y changes character, RB the weapon and R3 the view',()=>{
+  const d=plainPad(options.defaults());
+  assert.equal(d.padVersion,2);
+  for(const [id,button] of Object.entries({fire:'RT',fireLeft:'LT',sprint:'LB',jump:'A',dash:'B',pulse:'L3',interact:'X',weaponNext:'RB',switchProfile:'Y',view:'R3',map:'Back',pause:'Start'}))assert.deepEqual(d.padBindings[id],[button],id);
+  assert.deepEqual(d.padBindings.melee,[],'R3 now switches the view; melee stays remappable');
+  assert.deepEqual(plainPad(options.normalize(d).padBindings),d.padBindings,'layout 2 is stable');
+});
+test('Saved layout 1 tables move only the buttons still at their former defaults',()=>{
+  const old=plainPad(options.defaults());old.padVersion=1;delete old.padBindings.view;
+  Object.assign(old.padBindings,{sprint:['L3'],pulse:['LB'],melee:['R3'],weaponNext:['Y'],switchProfile:['RB']});
+  const moved=plainPad(options.normalize(old));
+  assert.deepEqual(moved.padBindings,plainPad(options.defaults()).padBindings);assert.equal(moved.padVersion,2);
+  // A personal pulse on the cross and melee on B are kept; free defaults still arrive.
+  const custom=plainPad(old);Object.assign(custom.padBindings,{pulse:['Up'],weapon1:[],melee:['L3'],sprint:[]});
+  const kept=plainPad(options.normalize(custom)).padBindings;
+  assert.deepEqual(kept.pulse,['Up']);assert.deepEqual(kept.melee,['L3']);assert.deepEqual(kept.sprint,[],'a cleared action stays cleared');
+  assert.deepEqual(kept.switchProfile,['Y']);assert.deepEqual(kept.weaponNext,['RB']);assert.deepEqual(kept.view,['R3']);
+  const used=Object.values(kept).flat();assert.equal(new Set(used).size,used.length,'no button is assigned twice');
+});
+test('The game starts in first person, accepts only first or third person, and shows the controls legend by default',()=>{
+  assert.equal(options.defaults().view,'first');
+  assert.equal(options.normalize({view:'third'}).view,'third');
+  for(const value of ['back','3',1,null])assert.equal(options.normalize({view:value}).view,'first');
+  assert.equal(options.defaults().controlsHint,true);assert.equal(options.normalize({controlsHint:false}).controlsHint,false);assert.equal(options.normalize({controlsHint:'no'}).controlsHint,true);
+  assert.deepEqual(plainPad(options.defaults().bindings.view),['KeyC']);
 });

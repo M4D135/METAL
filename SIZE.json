@@ -1,10 +1,10 @@
 {
-  "version": "0.10.0",
-  "html_bytes": 13558248,
-  "html_decimal_kb": 13558.25,
-  "html_kib": 13240.48,
-  "gzip_bytes": 3174201,
-  "sha256": "24daea8259ac901d50784952092abce19b22054e06ae8f3aa1c1dd983cdcc2b4",
+  "version": "0.11.0",
+  "html_bytes": 13581698,
+  "html_decimal_kb": 13581.7,
+  "html_kib": 13263.38,
+  "gzip_bytes": 3181828,
+  "sha256": "692d4090d479890059000157ad12c6d2c2da7ae2f7dcd3e57afca7e82cc04ee1",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
@@ -18,7 +18,7 @@
     "gpu-profile.js": 2548,
     "reflections.js": 11548,
     "renderer.js": 209041,
-    "profiles.js": 8488,
+    "profiles.js": 8677,
     "world.js": 142916,
     "destruction.js": 42672,
     "physics-geometry.js": 19455,
@@ -32,13 +32,15 @@
     "soundscape.js": 5077,
     "economy.js": 11561,
     "brain.js": 8923,
-    "simulation.js": 278017,
+    "simulation.js": 279605,
     "motion.js": 8452,
-    "actors.js": 29087,
+    "actors.js": 29374,
+    "avatars.js": 6809,
     "effects.js": 20784,
-    "options.js": 10622,
+    "options.js": 11744,
     "input.js": 17991,
-    "controls.js": 4352,
+    "controls.js": 4342,
+    "camera.js": 3553,
     "loop.js": 7685,
     "schedule.js": 4221,
     "touch.js": 3741,
@@ -49,6 +51,6 @@
     "pilot.js": 22068,
     "demo-metal.js": 3405,
     "replay-metal.js": 2188,
-    "game.js": 140812
+    "game.js": 149170
   }
 }

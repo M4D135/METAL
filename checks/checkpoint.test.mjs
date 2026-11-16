@@ -8,7 +8,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'profiles', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'loop', 'schedule', 'touch', 'jobs', 'tasks', 'host', 'game'].map(name =>
+const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'profiles', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'avatars', 'effects', 'soundscape', 'options', 'input', 'controls', 'camera', 'loop', 'schedule', 'touch', 'jobs', 'tasks', 'host', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -60,7 +60,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   };
   if (runtime.idle !== false) context.requestIdleCallback = (callback, options) => idle.push({ callback, options, mode: element('body').dataset.state || 'menu' });
   context.window = context; vm.createContext(context);
-  for (const name of ['profiles', 'destruction', 'economy', 'simulation', 'motion', 'actors', 'effects', 'soundscape', 'options', 'input', 'controls', 'loop', 'schedule', 'touch', 'jobs', 'tasks', 'host']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
+  for (const name of ['profiles', 'destruction', 'economy', 'simulation', 'motion', 'actors', 'avatars', 'effects', 'soundscape', 'options', 'input', 'controls', 'camera', 'loop', 'schedule', 'touch', 'jobs', 'tasks', 'host']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
   if(runtime.brain){vm.runInContext(sources.brain, context, {filename:'brain.js'});const createBrain=context.FBrain.create;context.FBrain.create=options=>{const brain=createBrain(options);brains.push(brain);return brain;};}
   const create = context.FSimulation.create;
   context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); if(runtime.step){const step=sim.step;sim.step=(dt,input)=>{runtime.step(dt,input,sim);return step(dt,input);};} return sim; };
@@ -201,7 +201,7 @@ test('Campaign save envelopes reject mismatched biome indices and out-of-range w
 });
 
 test('The campaign pistol HUD, keyboard, wheel, touch button and left hand use the real five-slot arsenal', () => {
-  const app = harness(null, {}, campaignShellWorld); app.element('start').click(); app.frame(100);
+  const app = harness(null, {'ferro-settings':JSON.stringify({view:'first'})}, campaignShellWorld); app.element('start').click(); app.frame(100);
   let sim = app.simulations.at(-1);
   assert.equal(sim.state.weapon, 4); assert.equal(app.element('weapon-label').textContent, 'PISTOLET');
   assert.equal(app.element('ammo-count').textContent, '∞'); assert.equal(app.element('slot-ammo-4').textContent, '∞');
@@ -293,7 +293,7 @@ test('A real trophy discovery announces once, checkpoints grace, restores quietl
 });
 
 test('Four real weapon pickups feed the HUD and both mouse buttons fire independently while held together',()=>{
-  const app=harness(null,{},arsenalWorld);app.element('start').click();app.frame(100);
+  const app=harness(null,{'ferro-settings':JSON.stringify({view:'first'})},arsenalWorld);app.element('start').click();app.frame(100);
   assert.equal(app.element('arsenal-count').textContent,'1 / 4');assert.equal(app.element('weapon-slot-3').disabled,true);
   const sim=collectArsenal(app);assert.equal(app.element('arsenal-count').textContent,'4 / 4');assert.equal(sim.state.inventory.shield,undefined);
   app.element('weapon-slot-0').click();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
@@ -310,7 +310,7 @@ test('Four real weapon pickups feed the HUD and both mouse buttons fire independ
 });
 
 test('Mouse and touch left inputs fire the paired weapon and R always dashes',()=>{
-  const app=harness(null,{},arsenalWorld);app.element('start').click();const sim=collectArsenal(app);
+  const app=harness(null,{'ferro-settings':JSON.stringify({view:'first'})},arsenalWorld);app.element('start').click();const sim=collectArsenal(app);
   app.element('weapon-slot-0').click();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
   assert.equal(sim.state.equipment.left,1);assert.equal(app.element('left-hand-status').textContent,'CLIC DROIT · TIR');
   const loaded=sim.state.inventory.ammo[1];app.element('world').emit('mousedown',{button:2});app.frame(100);
@@ -439,7 +439,7 @@ test('Completing a sector transfers exact ammunition, ownership, credits and upg
 
 test('Reserved enemies remain absent from character geometry and animation until physically deployed',()=>{
   const make=(seed,stage)=>({...survivalWorld(seed,stage),enemies:[{x:0,y:0,z:-8,type:2,deployed:false}],encounters:[{id:'future',trigger:{x:14,y:0,z:14,w:3,d:3},maxActive:4,spawnEntries:[{x:0,y:0,z:-8}],waves:[{enemyIds:[0]}]}]});
-  const app=harness(null,{},make),build=app.context.FActors.build,drawn=[];app.context.FActors.build=(enemy,options)=>{drawn.push(enemy.id);return build(enemy,options);};
+  const app=harness(null,{},make),build=app.context.FActors.build,drawn=[];app.context.FActors.build=(enemy,options)=>{if(enemy.id>=0)drawn.push(enemy.id);return build(enemy,options);};
   app.element('start').click();for(let i=0;i<3;i++)app.frame(100);
   assert.equal(app.simulations.at(-1).state.enemies[0].deployed,false);assert.deepEqual(drawn,[]);
 });
@@ -1004,7 +1004,7 @@ test('Fixed browser loop preserves simulation state across 60, 75, 120 and 144 H
  for(const point of points)assert.equal(point,points[0]);
 });
 test('A zero-step browser frame shows mouse aim and retains action edges until consumed once',()=>{
- const steps=[],app=harness(null,{'ferro-settings':JSON.stringify({fpsLimit:0})},world,{step:(dt,input)=>steps.push({dt,...input})});app.element('start').click();app.frame(1);const sim=app.simulations.at(-1),before=steps.length,yaw=sim.state.player.yaw;
+ const steps=[],app=harness(null,{'ferro-settings':JSON.stringify({fpsLimit:0,view:'first'})},world,{step:(dt,input)=>steps.push({dt,...input})});app.element('start').click();app.frame(1);const sim=app.simulations.at(-1),before=steps.length,yaw=sim.state.player.yaw;
  app.emitDocument('mousemove',{movementX:10,movementY:-5});app.key('KeyV');app.key('KeyV',false);app.frame(1);
  assert.equal(steps.length,before);assert.equal(sim.state.player.yaw,yaw);assert(Math.abs(app.frames.at(-1).camera.yaw-yaw-.022)<1e-10);
  app.frame(20);assert.equal(steps.filter(i=>i.melee).length,1);assert(Math.abs(sim.state.player.yaw-yaw-.022)<1e-10);app.frame(20);assert.equal(steps.filter(i=>i.melee).length,1);
@@ -1018,4 +1018,45 @@ for(const release of ['ready','deadline','pagehide'])test(`navigation maintenanc
  sim.state.player.x=6;app.frame(100);assert.equal(sim.state.relays,1);assert.equal(shots.length,0,'navigation still has pending work');
  if(release==='ready'){busy=false;app.frame(100);}else if(release==='pagehide')app.emit('pagehide');else for(let i=0;i<30&&!shots.length;i++)app.frame(100);
  assert.equal(shots.length,1);app.runIdle();assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays,1);
+});
+
+test('First person is the default view; C or the 1P/3P button shows the hero in third person, and the choice is saved',()=>{
+  const app=harness(null,{},world);app.element('start').click();app.frame(100);
+  let frame=app.frames.at(-1);assert(frame.meshes.filter(m=>m.overlay).length>25,'the hand-held weapon in first person');assert(!frame.meshes.some(m=>m.playerAvatar));
+  assert.equal(app.element('view-button').textContent,'1P');
+  app.key('KeyC');app.key('KeyC',false);for(let i=0;i<20;i++)app.frame(1000/60);frame=app.frames.at(-1);
+  assert.equal(app.element('view-button').textContent,'3P');assert.equal(frame.meshes.filter(m=>m.overlay).length,0,'no first-person weapon in third person');
+  assert(frame.meshes.some(m=>m.playerAvatar==='heavy'),'the hero is visible');
+  const p=app.simulations.at(-1).state.player;assert(Math.hypot(frame.camera.pos[0]-p.x,frame.camera.pos[2]-p.z)>2,'the camera follows from behind');
+  assert.equal(JSON.parse(app.memory.get('ferro-settings')).view,'third','the choice is saved');
+  app.element('view-button').click();for(let i=0;i<20;i++)app.frame(1000/60);assert.equal(app.element('view-button').textContent,'1P');assert(!app.frames.at(-1).meshes.some(m=>m.playerAvatar));
+});
+test('A discreet legend shows the real bindings of the character in control and can be hidden',()=>{
+  const app=harness(null,{},world);app.element('start').click();app.frame(100);
+  const legend=app.element('controls-hint');assert.equal(legend.hidden,false);
+  for(const text of ['ZQSD/WASD · Souris','Clic · Clic droit','<kbd>Espace · R</kbd>','<kbd>Maj</kbd>','<kbd>T</kbd><span>drone léger','<kbd>C</kbd><span>vue'])assert(legend.innerHTML.includes(text),text+' in '+legend.innerHTML);
+  app.element('controls-hint-toggle').click();assert.equal(legend.hidden,true);assert.equal(JSON.parse(app.memory.get('ferro-settings')).controlsHint,false);
+  app.element('controls-hint-toggle').click();assert.equal(legend.hidden,false);
+});
+function classShellWorld(seed,index,options){
+  const value=campaignShellWorld(seed,index,{...options,campaign:true});
+  return {...value,campaignVersion:2,generation:6,profileVersion:1,trophies:[],pickups:[],shops:[],walkable:[{x:0,y:0,z:0,w:40,d:40}],
+    progression:{...value.progression,startWeapons:[true,true,true,true,true],startAmmo:[60,12,6,8,1]}};
+}
+test('The character left behind, heavy or drone, stays whole where it was left; its marker only finds it out of sight',()=>{
+  const app=harness(null,{},classShellWorld);app.element('start').click();app.frame(100);const sim=app.simulations.at(-1),s=sim.state;
+  assert.equal(s.activeProfile,'heavy','the expedition starts with the heavy');
+  const light=()=>app.frames.at(-1).meshes.filter(m=>m.playerAvatar==='light'),heavy=()=>app.frames.at(-1).meshes.filter(m=>m.playerAvatar==='heavy');
+  assert(light().length>20,'the drone waits above the heavy, whole');assert.equal(heavy().length,0,'first person: no own body');
+  const centre=meshes=>meshes.reduce((c,m)=>c.map((v,k)=>v+m.p[k]/meshes.length),[0,0,0]),parked=s.profiles.light.position;
+  assert(Math.hypot(centre(light())[0]-parked.x,centre(light())[2]-parked.z)<.5);
+  // Walk away facing the drone: model on screen, no marker over it.
+  sim.move(s.player,0,8);s.player.yaw=0;s.player.pitch=0;app.frame(1000/60);app.frame(1000/60);
+  assert(light().length>20);assert.equal(app.element('partner-marker').hidden,true,'a visible model needs no marker');
+  // Turned away: the model is behind the camera and the marker shows the way.
+  s.player.yaw=Math.PI;app.frame(1000/60);app.frame(1000/60);assert.equal(app.element('partner-marker').hidden,false);
+  // Fly the drone away: the heavy now waits whole where he stood.
+  app.key('KeyT');app.key('KeyT',false);for(let i=0;i<10;i++)app.frame(1000/60);assert.equal(s.activeProfile,'light');
+  const stand=s.profiles.heavy.position;assert(heavy().length>20,'the parked heavy is drawn whole');
+  assert(Math.hypot(centre(heavy())[0]-stand.x,centre(heavy())[2]-stand.z)<1);
 });

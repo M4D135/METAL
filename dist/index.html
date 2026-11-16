@@ -222,6 +222,15 @@ body:not(.touch) .hud-bottom{grid-template-columns:minmax(145px,1fr) minmax(250p
 body:not(.touch) #arsenal{grid-column:auto;order:0}body:not(.touch) #arsenal .weapon-slot{min-height:58px;padding:5px;grid-template-rows:26px auto}body:not(.touch) #arsenal .weapon-slot svg{height:26px;width:45px}body:not(.touch) #arsenal .slot-name{font-size:7px}body:not(.touch) #arsenal .left-hand-strip{padding:5px 7px}body:not(.touch) .vital{padding:10px 12px}body:not(.touch) .vital strong{font-size:40px}body:not(.touch) .ammo-readout>strong{font-size:38px}
 @media(max-width:740px){body:not(.touch) .hud-bottom{grid-template-columns:1fr 1fr}body:not(.touch) #arsenal{grid-column:1/-1;order:-1;max-width:360px;justify-self:center}}
 body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-height:4.5em;overflow:hidden}
+
+/* First/third person view switch (David, 16/11/2026). */
+.view-button{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink)}body.touch .top-buttons .view-button{font-size:10px}
+/* Discreet in-game controls legend (David, 16/11/2026). */
+#controls-hint{position:absolute;left:max(28px,env(safe-area-inset-left));top:50%;transform:translateY(-30%);display:grid;grid-template-columns:auto auto;align-items:center;gap:5px 9px;max-width:290px;color:#e6e7dc;opacity:.5;pointer-events:none;text-shadow:0 1px 2px #000c;font-size:10px;letter-spacing:.05em}
+#controls-hint kbd{justify-self:end;font:inherit;font-weight:700;color:#eef6d2;padding:1px 5px;border:1px solid #c0d2bf3d;border-radius:3px;background:#0d191766;white-space:nowrap}
+#controls-hint span{font-size:9px;text-transform:uppercase;white-space:nowrap}
+#controls-hint[hidden],body.touch #controls-hint{display:none}body[data-boss=true] #controls-hint{opacity:.28}
+@media(max-height:640px),(max-width:760px){#controls-hint{display:none}}
 </style>
 </head>
 <body data-state="menu">
@@ -229,7 +238,7 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
   <canvas id="world" tabindex="0" aria-label="METAL — vue du champ de bataille"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.10.0">V0.10.0</b></span></div>
+    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.11.0">V0.11.0</b></span></div>
     <div class="intro-content">
       <h1>METAL</h1>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
@@ -238,7 +247,7 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
     <div class="intro-bottom"><span id="intro-controls">ZQSD / WASD · Souris · Clic pour tirer</span><div class="intro-settings"><button id="intro-options" class="text-button">OPTIONS</button><div id="intro-audio" class="intro-audio"><span class="intro-score">FURIE D’ACIER <i aria-hidden="true">/</i> 212 BPM</span><button id="intro-sound" class="text-button" aria-pressed="false" aria-describedby="intro-music-status">ÉCOUTER LE THRASH</button><span id="intro-music-status" role="status" aria-live="polite">Cliquez ou touchez pour écouter</span></div></div></div>
   </section>
   <div id="hud" hidden>
-    <header class="hud-top"><div class="sector-tag"><span class="logo-small">M/</span><div><span id="sector-number">MONDE 01 / 18</span><strong id="sector-title">Sas d’accès</strong></div></div><div class="top-buttons"><button id="profile-button" class="profile-control" aria-label="Passer au personnage lourd" hidden><span class="profile-current"><b id="profile-active-label">LÉGER</b><span id="profile-resource">JETPACK</span></span><strong id="profile-action">Passer au lourd</strong><kbd id="profile-shortcut">T</kbd></button><output id="fps-counter" class="fps-counter" title="Images par seconde" aria-label="Images par seconde" aria-live="off">— FPS</output><button id="loadout-toggle" class="icon-button" aria-label="Afficher ou masquer l’arsenal" aria-expanded="false">ARMES</button><button id="map-button" class="icon-button" title="Carte (M)" aria-label="Afficher ou masquer la carte"><span class="map-icon" aria-hidden="true"></span></button><button id="pause-button" class="icon-button" title="Pause (Échap)" aria-label="Mettre en pause"><span class="pause-icon" aria-hidden="true"></span></button></div></header>
+    <header class="hud-top"><div class="sector-tag"><span class="logo-small">M/</span><div><span id="sector-number">MONDE 01 / 18</span><strong id="sector-title">Sas d’accès</strong></div></div><div class="top-buttons"><button id="profile-button" class="profile-control" aria-label="Passer au personnage lourd" hidden><span class="profile-current"><b id="profile-active-label">LÉGER</b><span id="profile-resource">JETPACK</span></span><strong id="profile-action">Passer au lourd</strong><kbd id="profile-shortcut">T</kbd></button><output id="fps-counter" class="fps-counter" title="Images par seconde" aria-label="Images par seconde" aria-live="off">— FPS</output><button id="loadout-toggle" class="icon-button" aria-label="Afficher ou masquer l’arsenal" aria-expanded="false">ARMES</button><button id="view-button" class="icon-button view-button" title="Vue 1re / 3e personne (C)" aria-label="Changer de vue">1P</button><button id="map-button" class="icon-button" title="Carte (M)" aria-label="Afficher ou masquer la carte"><span class="map-icon" aria-hidden="true"></span></button><button id="pause-button" class="icon-button" title="Pause (Échap)" aria-label="Mettre en pause"><span class="pause-icon" aria-hidden="true"></span></button></div></header>
     <div class="score-status"><span id="combo">SIGNAL STABLE</span><strong id="score">00000</strong><span class="stat-label">SCORE</span></div>
     <div class="objective"><span id="objective-label">RÉTABLIR L’ALIMENTATION</span><div id="relays" title="Relais synchronisés"><i></i><i></i><i></i><span id="relay-count">0 / 3</span></div><div class="sector-progress"><span>COMMANDES <b id="mechanism-count">0 / 3</b></span><span>MACHINES <b id="enemy-count">0 / 120</b></span></div></div>
     <div id="wave-status" hidden><span id="wave-label"></span><strong id="wave-count"></strong><span id="wave-detail"></span></div>
@@ -256,7 +265,7 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
       <nav id="arsenal" aria-label="Armes de l’arsenal"><div class="arsenal-heading"><span>ARSENAL <b id="arsenal-count">1 / 4</b></span><span class="wallet"><b id="wallet-credits">0</b> CR <i></i><b id="wallet-cores">0</b> NOYAUX</span></div><div class="weapon-slots" id="weapon-slots"><button id="weapon-slot-0" class="weapon-slot selected" aria-label="MITRAILLETTE" aria-pressed="true"><kbd id="slot-key-0">1</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-0">D</span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M7 18h34v-3h15v9H41v5H26l-4 12h-8l3-12H7z"/><path d="M13 20h24m-6-5v-4h5v4m-18 17h6"/></svg><span class="slot-name">MITRAILLETTE</span><strong id="slot-ammo-0">48</strong></button><button id="weapon-slot-1" class="weapon-slot locked" aria-label="DOUBLE POMPE" aria-pressed="false" disabled><kbd id="slot-key-1">2</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-1"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M5 17h28v-3h25v7H34v4h24v7H27l-4 10h-8l2-10H5z"/><path d="M9 20h19m9-2h17m-17 10h17"/></svg><span class="slot-name">DOUBLE POMPE</span><strong id="slot-ammo-1">À TROUVER</strong></button><button id="weapon-slot-2" class="weapon-slot locked" aria-label="ROQUETTES" aria-pressed="false" disabled><kbd id="slot-key-2">3</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-2"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M6 16h49v16H6zM3 14h5v20H3zm51 0h6v20h-6zM26 32h8v10h-8zM35 11h11v5H35z"/><path d="M13 20h34m-34 7h20"/></svg><span class="slot-name">ROQUETTES</span><strong id="slot-ammo-2">À TROUVER</strong></button><button id="weapon-slot-3" class="weapon-slot locked" aria-label="GRENADES" aria-pressed="false" disabled><kbd id="slot-key-3">4</kbd><span class="slot-lock" aria-hidden="true"></span><span class="slot-hand" id="slot-hand-3"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M5 17h21l4-5h26v10H43v7H29l-4 11h-9l2-10H5z"/><circle cx="33" cy="26" r="11"/><path d="M31 18h4m-9 7h5m6 0h5m-11 8h4M43 16h11"/></svg><span class="slot-name">GRENADES</span><strong id="slot-ammo-3">À TROUVER</strong></button><button id="weapon-slot-4" class="weapon-slot" aria-label="PISTOLET" aria-pressed="false" hidden><kbd id="slot-key-4">5</kbd><span class="slot-hand" id="slot-hand-4"></span><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M9 12h42l5 4v8H32l-7 18H14l5-18H9z"/><path d="M14 16h35M37 19h13M20 29h8M39 12V8h5v4"/></svg><span class="slot-name">PISTOLET</span><strong id="slot-ammo-4">∞</strong></button></div><div class="left-hand-strip"><label for="left-hand-setting"><kbd id="left-hand-key">X</kbd> MAIN GAUCHE</label><select id="left-hand-setting" aria-label="Équipement de la main gauche"><option value="none">Libre</option><option id="left-option-0" value="0" disabled>Mitraillette</option><option id="left-option-1" value="1" disabled>Double pompe</option><option id="left-option-2" value="2" disabled>Lance-roquettes</option><option id="left-option-3" value="3" disabled>Lance-grenades</option><option id="left-option-4" value="4" disabled hidden>Pistolet</option></select><strong id="left-hand-stock">LIBRE</strong><span id="left-hand-status">X · CHANGER</span><span id="left-heat" class="left-heat" role="progressbar" aria-label="Chaleur de la main gauche" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><i id="left-heat-bar"></i></span></div></nav>
       <div class="weapon-status" id="weapon-readout"><span class="equipped-label">MAIN DROITE</span><button id="weapon-switch" title="Changer d’arme trouvée (1 à 5, molette)" aria-label="Changer d’arme"><span id="weapon-label">IMPULSE</span><span class="swap-icon" aria-hidden="true"></span></button><div class="ammo-readout"><strong id="ammo-count">48</strong><span><b id="ammo-cap">/ 180</b><small id="ammo-unit">CELLULES</small></span></div><div class="heat-caption"><span id="heat-status">CHALEUR</span></div><div class="bar"><i id="heat-bar"></i></div><div class="ability-strip"><span id="dash-label">ESPACE · ESQUIVE PRÊTE</span><span id="pulse-label">E · ONDE PRÊTE</span><span id="melee-label">V · CROSSE</span></div></div>
     </footer>
-    <div id="partner-marker" hidden></div><div id="touch-controls"><button id="jump-button" aria-label="Monter en vol avec le léger ; sauter avec le lourd">MONTER</button><div id="move-zone" aria-label="Joystick de déplacement"><span id="move-stick"></span></div><span class="touch-move-label">DÉPLACER</span><button id="dash-button" aria-label="Esquiver"><span class="dash-icon"></span></button><button id="pulse-button" aria-label="Onde de choc"><span class="pulse-icon"></span></button><button id="left-fire-button" aria-label="Tirer avec la main gauche" disabled><span id="left-fire-label">TIR G</span></button><button id="melee-button" aria-label="Coup de crosse"><span aria-hidden="true">CROSSE</span></button><button id="fire-button" aria-label="Tirer"><span></span></button><span class="touch-look-label">GLISSER POUR VISER</span></div>
+    <div id="controls-hint" aria-hidden="true"></div><div id="partner-marker" hidden></div><div id="touch-controls"><button id="jump-button" aria-label="Monter en vol avec le léger ; sauter avec le lourd">MONTER</button><div id="move-zone" aria-label="Joystick de déplacement"><span id="move-stick"></span></div><span class="touch-move-label">DÉPLACER</span><button id="dash-button" aria-label="Esquiver"><span class="dash-icon"></span></button><button id="pulse-button" aria-label="Onde de choc"><span class="pulse-icon"></span></button><button id="left-fire-button" aria-label="Tirer avec la main gauche" disabled><span id="left-fire-label">TIR G</span></button><button id="melee-button" aria-label="Coup de crosse"><span aria-hidden="true">CROSSE</span></button><button id="fire-button" aria-label="Tirer"><span></span></button><span class="touch-look-label">GLISSER POUR VISER</span></div>
   </div>
   <section id="pause" class="screen modal-screen" hidden aria-labelledby="pause-title"><div class="panel options-shell">
     <header class="options-heading"><div><p class="eyebrow" id="pause-kicker">SIGNAL EN ATTENTE</p><h2 id="pause-title">Réglages de terrain.</h2></div><span class="options-edition">METAL / 08<br>ARSENAL</span></header>
@@ -272,7 +281,7 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
         <section id="pane-audio" role="tabpanel" aria-labelledby="tab-audio" hidden><p class="option-section-label">MIXAGE</p><h3>Du métal dans les circuits.</h3><button class="option-toggle" id="sound-toggle">Son <strong>Activé</strong></button><div class="option-grid audio-sliders">
           <label class="option-slider" for="master-setting"><span>Volume général <output id="master-value">100 %</output></span><input id="master-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="music-setting"><span>Musique MOD <output id="music-value">45 %</output></span><input id="music-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="effects-setting"><span>Armes et impacts <output id="effects-value">100 %</output></span><input id="effects-setting" type="range" min="0" max="100" step="5"></label><label class="option-slider" for="ambience-setting"><span>Ambiances <output id="ambience-value">100 %</output></span><input id="ambience-setting" type="range" min="0" max="100" step="5"></label>
         </div><div class="tracker-card"><span class="tracker-badge">MOD / 4 CANAUX</span><strong id="music-title">Furie d’acier · 212 BPM</strong><p>Un accueil thrash metal à 212 BPM : riffs rapides, double grosse caisse et breaks. Trois autres compositions accompagnent les mondes. Instruments et morceaux entièrement synthétisés.</p><button id="export-mod" class="text-button">EXPORTER LE MOD DU TITRE ↓</button></div><div class="menu-actions audio-actions"><button id="test-audio" class="secondary">TESTER TIRS ET AMBIANCES</button><button id="reset-audio" class="text-button">RÉTABLIR LE MIX RECOMMANDÉ</button></div><p id="audio-status" class="option-hint" role="status">Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.</p></section>
-        <section id="pane-controls" role="tabpanel" aria-labelledby="tab-controls" hidden><p class="option-section-label">VISÉE & DÉPLACEMENT</p><h3>À votre main.</h3><div class="option-grid"><label class="option-slider" for="sensitivity-setting"><span>Sensibilité <output id="sensitivity-value">1,00 ×</output></span><input id="sensitivity-setting" type="range" min="25" max="300" step="5"></label><button class="option-toggle" id="invert-toggle">Axe vertical inversé <strong>Non</strong></button><button class="option-toggle" id="pointer-acceleration-toggle" aria-describedby="pointer-acceleration-hint">Accélération du système <strong>Désactivée</strong></button><label class="option-slider" for="crosshair-setting"><span>Taille du viseur <output id="crosshair-value">100 %</output></span><input id="crosshair-setting" type="range" min="75" max="150" step="5"></label></div><p class="option-hint" id="pointer-acceleration-hint">Désactivée : visée directe si le navigateur le permet. Activée : conserve l’accélération habituelle de votre souris.</p><h3>Écran tactile</h3><div class="option-grid"><label class="option-slider" for="touch-accel-setting"><span>Accélération de visée (%) <output id="touch-accel-value"></output></span><input id="touch-accel-setting" type="range" min="0" max="100" step="5"></label><button class="option-toggle" id="touch-assist-toggle">Aide à la visée <strong>Oui</strong></button><button class="option-toggle" id="portrait-fov-toggle">Vue élargie en portrait <strong>Oui</strong></button><label class="option-select" for="gyro-mode">Gyroscope<select id="gyro-mode"><option value="off">Désactivé</option><option value="aim">Pendant la visée</option><option value="on">Toujours en jeu</option></select></label><label class="option-slider" for="gyro-sensitivity-setting"><span>Sensibilité gyroscope (%) <output id="gyro-sensitivity-value"></output></span><input id="gyro-sensitivity-setting" type="range" min="50" max="200" step="5"></label><button class="option-toggle" id="immersive-button">Passer en plein écran</button></div><p class="option-hint" id="gyro-hint"></p><h3>Manette</h3><p id="pad-status" class="option-hint" role="status">Branchez une manette, puis appuyez sur un bouton.</p><div class="option-grid"><label class="option-slider" for="pad-yaw-setting"><span>Vitesse horizontale (°/s) <output id="pad-yaw-value"></output></span><input id="pad-yaw-setting" type="range" min="60" max="600" step="10"></label><label class="option-slider" for="pad-pitch-setting"><span>Vitesse verticale (°/s) <output id="pad-pitch-value"></output></span><input id="pad-pitch-setting" type="range" min="40" max="400" step="10"></label><label class="option-slider" for="pad-dead-setting"><span>Zone morte (%) <output id="pad-dead-value"></output></span><input id="pad-dead-setting" type="range" min="0" max="40" step="1"></label><label class="option-slider" for="pad-curve-setting"><span>Courbe (×100) <output id="pad-curve-value"></output></span><input id="pad-curve-setting" type="range" min="100" max="300" step="5"></label><label class="option-slider" for="pad-vibration-setting"><span>Vibrations (%) <output id="pad-vibration-value"></output></span><input id="pad-vibration-setting" type="range" min="0" max="100" step="5"></label><button class="option-toggle" id="pad-invert-toggle">Visée verticale inversée <strong>Non</strong></button><button class="option-toggle" id="pad-assist-toggle">Aide à la visée <strong>Non</strong></button><button class="option-toggle" id="pad-swap-toggle">Échanger les sticks <strong>Non</strong></button></div><p class="option-hint">Croix ou stick : naviguer · A : valider · B : retour · LB/RB : onglets, ou réglage du curseur sélectionné · gâchettes : régler. Les colonnes ci-dessous indiquent clavier puis manette. Sélectionnez un bouton pour le réaffecter.</p><p class="option-hint" id="binding-status" role="status">Cliquez sur une touche pour la modifier. Échap annule. Le clic gauche et la molette restent disponibles.</p><div id="key-bindings" class="binding-grid"></div><button id="reset-controls" class="text-button">RÉTABLIR LES COMMANDES PAR DÉFAUT</button></section>
+        <section id="pane-controls" role="tabpanel" aria-labelledby="tab-controls" hidden><p class="option-section-label">VISÉE & DÉPLACEMENT</p><h3>À votre main.</h3><div class="option-grid"><button class="option-toggle" id="view-toggle" aria-pressed="false">Vue <strong>1re personne</strong></button><button class="option-toggle" id="controls-hint-toggle" aria-pressed="true">Aide des commandes en jeu <strong>Affichée</strong></button><label class="option-slider" for="sensitivity-setting"><span>Sensibilité <output id="sensitivity-value">1,00 ×</output></span><input id="sensitivity-setting" type="range" min="25" max="300" step="5"></label><button class="option-toggle" id="invert-toggle">Axe vertical inversé <strong>Non</strong></button><button class="option-toggle" id="pointer-acceleration-toggle" aria-describedby="pointer-acceleration-hint">Accélération du système <strong>Désactivée</strong></button><label class="option-slider" for="crosshair-setting"><span>Taille du viseur <output id="crosshair-value">100 %</output></span><input id="crosshair-setting" type="range" min="75" max="150" step="5"></label></div><p class="option-hint" id="pointer-acceleration-hint">Désactivée : visée directe si le navigateur le permet. Activée : conserve l’accélération habituelle de votre souris.</p><h3>Écran tactile</h3><div class="option-grid"><label class="option-slider" for="touch-accel-setting"><span>Accélération de visée (%) <output id="touch-accel-value"></output></span><input id="touch-accel-setting" type="range" min="0" max="100" step="5"></label><button class="option-toggle" id="touch-assist-toggle">Aide à la visée <strong>Oui</strong></button><button class="option-toggle" id="portrait-fov-toggle">Vue élargie en portrait <strong>Oui</strong></button><label class="option-select" for="gyro-mode">Gyroscope<select id="gyro-mode"><option value="off">Désactivé</option><option value="aim">Pendant la visée</option><option value="on">Toujours en jeu</option></select></label><label class="option-slider" for="gyro-sensitivity-setting"><span>Sensibilité gyroscope (%) <output id="gyro-sensitivity-value"></output></span><input id="gyro-sensitivity-setting" type="range" min="50" max="200" step="5"></label><button class="option-toggle" id="immersive-button">Passer en plein écran</button></div><p class="option-hint" id="gyro-hint"></p><h3>Manette</h3><p id="pad-status" class="option-hint" role="status">Branchez une manette, puis appuyez sur un bouton.</p><div class="option-grid"><label class="option-slider" for="pad-yaw-setting"><span>Vitesse horizontale (°/s) <output id="pad-yaw-value"></output></span><input id="pad-yaw-setting" type="range" min="60" max="600" step="10"></label><label class="option-slider" for="pad-pitch-setting"><span>Vitesse verticale (°/s) <output id="pad-pitch-value"></output></span><input id="pad-pitch-setting" type="range" min="40" max="400" step="10"></label><label class="option-slider" for="pad-dead-setting"><span>Zone morte (%) <output id="pad-dead-value"></output></span><input id="pad-dead-setting" type="range" min="0" max="40" step="1"></label><label class="option-slider" for="pad-curve-setting"><span>Courbe (×100) <output id="pad-curve-value"></output></span><input id="pad-curve-setting" type="range" min="100" max="300" step="5"></label><label class="option-slider" for="pad-vibration-setting"><span>Vibrations (%) <output id="pad-vibration-value"></output></span><input id="pad-vibration-setting" type="range" min="0" max="100" step="5"></label><button class="option-toggle" id="pad-invert-toggle">Visée verticale inversée <strong>Non</strong></button><button class="option-toggle" id="pad-assist-toggle">Aide à la visée <strong>Non</strong></button><button class="option-toggle" id="pad-swap-toggle">Échanger les sticks <strong>Non</strong></button></div><p class="option-hint">Croix ou stick : naviguer · A : valider · B : retour · LB/RB : onglets, ou réglage du curseur sélectionné · gâchettes : régler. Les colonnes ci-dessous indiquent clavier puis manette. Sélectionnez un bouton pour le réaffecter.</p><p class="option-hint" id="binding-status" role="status">Cliquez sur une touche pour la modifier. Échap annule. Le clic gauche et la molette restent disponibles.</p><div id="key-bindings" class="binding-grid"></div><button id="reset-controls" class="text-button">RÉTABLIR LES COMMANDES PAR DÉFAUT</button></section>
       </div>
     </div><footer class="options-footer"><span>Réglages enregistrés sur cet appareil.</span><button id="resume" class="primary">Reprendre <span class="arrow-icon" aria-hidden="true"></span></button></footer>
   </div></section>
@@ -57404,8 +57413,10 @@ G.FSceneReflections={create,shader};
   const names=['light','heavy'],weapons={light:[4,1,0],heavy:[4,3,2]};
   const level=xp=>1+Math.min(19,Math.floor(Math.sqrt(xp/100)));
   const capacity=xp=>4+.2*(level(xp)-1);
-  function fresh(economy){
-    return {version:1,active:'light',classes:Object.fromEntries(names.map(id=>[id,{xp:0,weapon:4,left:null,position:null,economy:G.FEconomy.campaign(economy||G.FEconomy.fresh())}])),jetpack:{fuel:4,recharge:0}};
+  // New expeditions start with the heavy (David, 16/11/2026): the walking
+  // character is the hero; the light drone is his flying assistant.
+  function fresh(economy,active='heavy'){
+    return {version:1,active:names.includes(active)?active:'heavy',classes:Object.fromEntries(names.map(id=>[id,{xp:0,weapon:4,left:null,position:null,economy:G.FEconomy.campaign(economy||G.FEconomy.fresh())}])),jetpack:{fuel:4,recharge:0}};
   }
   function copy(value){
     if(!value||value.version!==1||!names.includes(value.active)||!value.classes)return null;
@@ -64262,7 +64273,11 @@ function navigationGraph(cells,width,testEdge){
       doors:(world.doors||[]).map(d=>({...d,progress:d.requires===undefined?1:0,open:d.requires===undefined,hp:18,destroyed:false})),
       lifts:(world.lifts||[]).map(l=>({...l,y:l.minY,target:l.minY,powered:l.requires===undefined,moving:false,carrying:false})),
       aiStats:{awake:0,dormant:0,reserve:0,combat:0,combatCap:maxCombat,alive:world.enemies.length,pathSearches:0,pathDeferred:0}};
-    if(profilesEnabled){for(const id of G.MetalProfiles.names)initialProfiles.classes[id].position=G.MetalProfiles.position(p);s.activeProfile=initialProfiles.active;s.profiles=initialProfiles.classes;s.jetpack={...initialProfiles.jetpack,capacity:G.MetalProfiles.capacity(initialProfiles.classes.light.xp),active:false};s.economy=s.profiles[s.activeProfile].economy;}
+    if(profilesEnabled){for(const id of G.MetalProfiles.names)initialProfiles.classes[id].position=G.MetalProfiles.position(p);
+      // The parked drone waits above the heavy's head, never inside his body,
+      // up to one metre below any ceiling over the spawn.
+      if(initialProfiles.active==='heavy'){let lift=1;for(const c of world.colliders||[])if(c.minY>=p.y+1.8-1e-7&&c.minY<p.y+lift+1.8&&p.x+.28>c.minX&&p.x-.28<c.maxX&&p.z+.28>c.minZ&&p.z-.28<c.maxZ)lift=Math.max(0,c.minY-1.8-p.y);if(lift>0)Object.assign(initialProfiles.classes.light.position,{y:p.y+lift,airborne:true});}
+      s.activeProfile=initialProfiles.active;s.profiles=initialProfiles.classes;s.jetpack={...initialProfiles.jetpack,capacity:G.MetalProfiles.capacity(initialProfiles.classes.light.xp),active:false};s.economy=s.profiles[s.activeProfile].economy;}
     const encounterMap=new Map(s.encounters.map(q=>[q.id,q])),enemyEncounter=new Map();
     // SIM-06: encounter index per enemy, same last-wins order as the map above.
     const enemyEncounterIndex=new Int32Array(s.enemies.length).fill(-1);
@@ -64764,20 +64779,22 @@ function navigationGraph(cells,width,testEdge){
       locomotion.stridePhase=(locomotion.stridePhase+travel/(2.4+.5*locomotion.sprintBlend)*Math.PI*2)%(Math.PI*2);
       if(!travel){locomotion.vx=locomotion.vz=locomotion.speed=locomotion.forward=locomotion.strafe=0;}
     }
-    // The light robot is a hovering craft. Air velocities are part of the
-    // existing checkpoint format, including inertia during a profile switch.
+    // The light robot is a drone (David, 16/11/2026): the sticks move it level,
+    // like the walking heavy, while jump and dodge climb and descend. Air
+    // velocities are part of the checkpoint format, including inertia during a
+    // profile switch. Boost spends the tank and nearly doubles the speed.
     function fly(dt,input){
       if(!(dt>0))return;
       p.airborne=true;p.airTime=0;p.padId=null;p.dashing=0;jumpBuffer=coyote=0;
       if(!clipEscape||!boundaryAt(p.x,p.z))clipEscape=false;
-      const sx=p.x,sy=p.y,sz=p.z,cy=Math.cos(p.yaw),sn=Math.sin(p.yaw),cp=Math.cos(p.pitch),sp=Math.sin(p.pitch);
+      const sx=p.x,sy=p.y,sz=p.z,cy=Math.cos(p.yaw),sn=Math.sin(p.yaw);
       const mx=Number.isFinite(input.moveX)?input.moveX:0,my=Number.isFinite(input.moveY)?input.moveY:0;
-      let wx=cy*mx+sn*cp*my,wy=sp*my+(input.jumpHeld?1:0)-(input.descendHeld?1:0),wz=sn*mx-cy*cp*my;
-      const length=Math.hypot(wx,wy,wz);if(length>1){wx/=length;wy/=length;wz/=length;}
+      let wx=cy*mx+sn*my,wz=sn*mx-cy*my;const flat=Math.hypot(wx,wz);if(flat>1){wx/=flat;wz/=flat;}
+      const wy=(input.jumpHeld?1:0)-(input.descendHeld?1:0),length=Math.hypot(wx,wy,wz),boostSpeed=motionProfile.walk*1.8;
       let remaining=dt,collided=false;s.jetpack.active=false;jetSoundWait=Math.max(0,jetSoundWait-dt);
       while(remaining>1e-10){
         const h=Math.min(remaining,1/120),boost=!!input.sprint&&length>.002&&s.jetpack.fuel>0;
-        const powered=boost?Math.min(h,s.jetpack.fuel):0,speed=motionProfile.walk+(motionProfile.sprint-motionProfile.walk)*powered/h;
+        const powered=boost?Math.min(h,s.jetpack.fuel):0,speed=motionProfile.walk+(boostSpeed-motionProfile.walk)*powered/h;
         if(boost){s.jetpack.fuel=Math.max(0,s.jetpack.fuel-powered);if(s.jetpack.fuel<1e-10)s.jetpack.fuel=0;s.jetpack.recharge=.4;s.jetpack.active=true;}
         else{s.jetpack.recharge=Math.max(0,s.jetpack.recharge-h);if(!s.jetpack.recharge)s.jetpack.fuel=Math.min(s.jetpack.capacity,s.jetpack.fuel+h*1.25);}
         const decay=Math.exp(-12*h),area=(1-decay)/12,velocity=[p.airVX,p.airVY,p.airVZ],wish=[wx*speed,wy*speed,wz*speed];
@@ -64926,7 +64943,7 @@ function navigationGraph(cells,width,testEdge){
       if(!profilesEnabled||s.dead||s.won)return false;
       exportProfiles();const from=s.activeProfile,to=from==='light'?'heavy':'light',next=s.profiles[to];
       const healthRatio=p.hp/s.maxHp;s.activeProfile=to;s.economy=next.economy;stats=G.FEconomy.stats(s.economy);s.maxHp=stats.maxHp;p.hp=Math.min(s.maxHp,healthRatio*s.maxHp);
-      s.weapon=s.equipment.right=s.inventory.weapons[next.weapon]?next.weapon:4;s.equipment.left=next.left!==null&&s.inventory.weapons[next.left]?next.left:null;
+      s.weapon=s.equipment.right=s.inventory.weapons[next.weapon]?next.weapon:4;s.equipment.left=to!=='light'&&next.left!==null&&s.inventory.weapons[next.left]?next.left:null;
       Object.assign(p,next.position);stopMotion(true);jumpBuffer=coyote=0;jumpWasPressed=false;p.dashing=0;clipEscape=boundaryAt(p.x,p.z);s.jetpack.active=false;mirrorHeat();emit('profileSwitch',{from,to,x:p.x,y:p.y,z:p.z});return true;
     }
     function exportInventory(){return {weapons:s.inventory.weapons.slice(),ammo:s.inventory.ammo.slice()};}
@@ -64948,9 +64965,11 @@ function navigationGraph(cells,width,testEdge){
       refreshAdaptation();
       emit('purchase',{id,itemId,label:result.item?.label||itemId,cost:{...result.cost}});return result;
     }
-    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id))return false;if(arsenal){if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;mirrorHeat();syncArmor();return true;}
+    // The light drone carries twin cannons of one weapon: it has no left hand.
+    function twinMounted(){return profilesEnabled&&s.activeProfile==='light';}
+    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id))return false;if(arsenal){if(twinMounted())s.equipment.left=null;else if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;mirrorHeat();syncArmor();return true;}
     function selectLeftWeapon(id){
-      if(!arsenal||s.dead||s.won)return false;
+      if(!arsenal||s.dead||s.won||id!==null&&twinMounted())return false;
       if(id!==null&&(!Number.isInteger(id)||id<0||id>=weaponSlots||!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id)))return false;
       if(id===s.weapon){if(!Number.isInteger(s.equipment.left))return false;s.weapon=s.equipment.right=s.equipment.left;}
       s.equipment.left=id;mirrorHeat();syncArmor();return true;
@@ -65616,15 +65635,22 @@ function navigationGraph(cells,width,testEdge){
         if(hand==='left')s.leftFlash=1;else s.flash=1;s.shots++;hear(p.x,p.z,30,p.y);reactToShot();return true;
       }
       let connected=false;
-      for(let i=0;i<(shotgun?7*shells:1);i++){
-        const pellet=i%7,angle=(pellet-1)*Math.PI/3+s.shots*.71+(i>=7?.29:0),spread=pellet?.088:0,a=Math.cos(angle)*spread,c=Math.sin(angle)*spread;
-        const dir=base.map((v,k)=>v+right[k]*a+up[k]*c),n=Math.hypot(...dir);for(let k=0;k<3;k++)dir[k]/=n;
-        if(muzzle.blocked){damageScenery(origin,shotgun?5:2,0,muzzle.direction);particles(...origin,5,1);continue;}
-        const hit=hitRay(origin,dir,shotgun?24:75,assist),prop=destruction?.raycast?.(origin,dir,hit.distance);if(prop&&prop.distance<hit.distance){hit.distance=prop.distance;hit.victim=null;}
-        if(hit.victim){connected=true;damageEnemy(hit.victim,(shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):handgun?1.2:1)*calibration.damageMultiplier,{x:p.x,y:p.y+1.62,z:p.z,credit:true,weapon,...(profilesEnabled?{profile:s.activeProfile}:{})},hit.weak);particles(...origin.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
-        else{const point=origin.map((v,k)=>v+dir[k]*hit.distance);particles(...point,5,shotgun?1:3);if(hit.distance<(shotgun?24:75)-.001)damageScenery(point,shotgun?5:2,0,dir);}
+      // Twin cannons (David, 16/11/2026): the light drone fires its weapon from
+      // both mounts at once, each carrying 60 % of a single shot, for one
+      // round of ammunition and heat.
+      const twin=twinMounted()&&hand==='right',share=twin?.6:1;
+      for(let mount=0;mount<(twin?2:1);mount++){
+        const gun=mount?playerMuzzle(eye,forward,right,up,'left',0):muzzle,from=gun.point,way=mount?aim.map((v,k)=>v-from[k]):toward,span=mount?Math.hypot(...way)||1:length,aimed=mount?way.map(v=>v/span):base;
+        for(let i=0;i<(shotgun?7*shells:1);i++){
+          const pellet=i%7,angle=(pellet-1)*Math.PI/3+s.shots*.71+(i>=7?.29:0)+mount*.53,spread=pellet?.088:0,a=Math.cos(angle)*spread,c=Math.sin(angle)*spread;
+          const dir=aimed.map((v,k)=>v+right[k]*a+up[k]*c),n=Math.hypot(...dir);for(let k=0;k<3;k++)dir[k]/=n;
+          if(gun.blocked){damageScenery(from,shotgun?5:2,0,gun.direction);particles(...from,5,1);continue;}
+          const hit=hitRay(from,dir,shotgun?24:75,assist),prop=destruction?.raycast?.(from,dir,hit.distance);if(prop&&prop.distance<hit.distance){hit.distance=prop.distance;hit.victim=null;}
+          if(hit.victim){connected=true;damageEnemy(hit.victim,(shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):handgun?1.2:1)*share*calibration.damageMultiplier,{x:p.x,y:p.y+1.62,z:p.z,credit:true,weapon,...(profilesEnabled?{profile:s.activeProfile}:{})},hit.weak);particles(...from.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
+          else{const point=from.map((v,k)=>v+dir[k]*hit.distance);particles(...point,5,shotgun?1:3);if(hit.distance<(shotgun?24:75)-.001)damageScenery(point,shotgun?5:2,0,dir);}
+        }
       }
-      syncDestruction();if(hand==='left')s.leftFlash=1;else s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon,hand,shells});hear(p.x,p.z,shotgun?24:18,p.y);reactToShot();
+      syncDestruction();if(twin)s.flash=s.leftFlash=1;else if(hand==='left')s.leftFlash=1;else s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon,hand,shells,...(twin?{twin:true}:{})});hear(p.x,p.z,shotgun?24:18,p.y);reactToShot();
       if(connected){s.hits++;s.hitMarker=.18;emit('hit');}return true;
     }
     function fire(assist=false,hand='right'){
@@ -66565,6 +66591,8 @@ function navigationGraph(cells,width,testEdge){
     }
     function step(dt,input={}){
       dt=Number.isFinite(dt)?clamp(dt,0,.05):0;if(s.won||s.dead||checkPlayerBounds())return;
+      // Both triggers fire the drone's twin cannons.
+      if(input.fireLeft&&twinMounted())input={...input,fire:true,fireLeft:false};
       stepEventStart=s.events.length;if(arsenal&&dt>0)thermalSerialized=true;syncArmor();
       s.time+=dt;s.elapsed+=dt;fireWait=Math.max(0,fireWait-dt);emptyWait=Math.max(0,emptyWait-dt);navWait-=dt;hazardWait=Math.max(0,hazardWait-dt);recovery=Math.max(0,recovery-dt);
       if(arsenal){for(let i=0;i<weaponSlots;i++){const before=weaponWait[i],held=input.fire&&i===(Number.isInteger(input.weapon)?input.weapon:s.weapon)||input.fireLeft&&i===s.equipment.left;weaponCarry[i]=held&&before>0&&before<=dt+1e-9?Math.max(0,dt-before):0;weaponWait[i]=Math.max(0,before-dt);if(weaponWait[i]<1e-9)weaponWait[i]=0;}s.leftFlash=Math.max(0,s.leftFlash-dt*9);}
@@ -67110,9 +67138,11 @@ function navigationGraph(cells,width,testEdge){
       const scheme=e.bossKind==='siegebreaker'?[[.23,.20,.18],[.37,.29,.22],[.60,.34,.13]]:e.bossKind==='custodian'?[[.43,.46,.43],[.25,.32,.34],[.57,.52,.36]]:[[.25,.29,.25],[.37,.41,.32],[.49,.37,.23]];
       palette.shell=mix(scheme[0],[.66,.49,.30],hurt);palette.edge=scheme[1];palette.trim=scheme[2];
     }
+    // The playable heavy reuses this frame with its own livery and visor.
+    if(options.palette)for(const key of Object.keys(palette))if(Array.isArray(options.palette[key]))palette[key]=options.palette[key];
     const peaceful=e.awareness==='patrol',scanning=e.awareness==='search'||e.awareness==='investigate';
-    const signal=stun||peaceful?[.20,.67,.70]:charge||scanning?[.86,.49,.14]:[.80,.20,.075];
-    const emission=stun?.20+.08*Math.sin(time*9):.28+charge*.45,signalMat=stun||peaceful?4:charge||scanning?5:6;
+    const signal=Array.isArray(options.signal)?options.signal:stun||peaceful?[.20,.67,.70]:charge||scanning?[.86,.49,.14]:[.80,.20,.075];
+    const emission=stun?.20+.08*Math.sin(time*9):.28+charge*.45,signalMat=Array.isArray(options.signal)?4:stun||peaceful?4:charge||scanning?5:6;
     function piece(name,shape,p,s,skin='shell',f=root,r=null,mat=0,emissive=0){
       const color=Array.isArray(skin)?skin:palette[skin],rot=r?angles(productTo(MAT2,f.b,rotationTo(MAT,r[0],r[1],r[2]))):f.r;
       const m=G.FRender.mesh(shape,point(f,p),s,mat,rot,emissive);m.color=color;m.surface='object';m.actorPart=name;m.actorLod=lod;out.push(m);return m;
@@ -67446,6 +67476,94 @@ function navigationGraph(cells,width,testEdge){
   G.FActors={build};
 })(typeof window!=='undefined'?window:globalThis);
 </script>
+<script data-module="avatars.js" data-role="page">/* METAL — the two playable characters seen from outside: the heavy hero and
+ * his light drone with twin cannons. Procedural primitives only. */
+(function(G){
+  'use strict';
+  const PI=Math.PI,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),finite=(v,d=0)=>Number.isFinite(v)?v:d;
+  // Renderer order is Rz * Ry * Rx, as in actors.js.
+  function rotation(x=0,y=0,z=0){
+    const a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);
+    return [e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a];
+  }
+  function product(a,b){const c=new Array(9);for(let r=0;r<3;r++)for(let k=0;k<3;k++)c[r*3+k]=a[r*3]*b[k]+a[r*3+1]*b[k+3]+a[r*3+2]*b[k+6];return c;}
+  function angles(m){const y=Math.asin(clamp(-m[6],-1,1)),c=Math.cos(y);return Math.abs(c)>1e-6?[Math.atan2(m[7],m[8]),y,Math.atan2(m[3],m[0])]:[Math.atan2(-m[5],m[4]),y,0];}
+  function point(f,p){const a=f.b;return [f.p[0]+a[0]*p[0]+a[1]*p[1]+a[2]*p[2],f.p[1]+a[3]*p[0]+a[4]*p[1]+a[5]*p[2],f.p[2]+a[6]*p[0]+a[7]*p[1]+a[8]*p[2]];}
+  function frame(parent,p,r=[0,0,0]){const b=product(parent.b,rotation(r[0],r[1],r[2]));return {p:point(parent,p),b,r:angles(b)};}
+  function root(x,y,z,yaw){const b=rotation(0,-yaw,0);return {p:[x,y,z],b,r:angles(b)};}
+
+  // Bronze armour, orange trim and an acid visor: never mistaken for a machine.
+  const HEAVY={palette:{shell:[.44,.37,.26],edge:[.31,.32,.29],trim:[.92,.52,.16],steel:[.63,.64,.58],dark:[.10,.10,.09]},signal:[.80,.98,.34]};
+  function heavy(p,o={}){
+    if(!G.FActors)return [];
+    const yaw=finite(p.yaw),pitch=clamp(finite(p.pitch),-1.2,1.2),reach=30,weapon=o.weapon===2?'rocket':o.weapon===3?'grenade':undefined;
+    const eye=finite(p.y)+1.62,aim={x:finite(p.x)+Math.sin(yaw)*Math.cos(pitch)*reach,y:eye+Math.sin(pitch)*reach,z:finite(p.z)-Math.cos(yaw)*Math.cos(pitch)*reach};
+    const actor={id:-2,type:1,x:finite(p.x),z:finite(p.z),baseY:finite(p.y),y:finite(p.y)+1.05,yaw,hp:1,moveSpeed:finite(o.speed),airborne:!!p.airborne,airVY:finite(p.airVY),attackState:'aim',aimX:aim.x,aimY:aim.y,aimZ:aim.z,weapon,awareness:'patrol'};
+    const out=G.FActors.build(actor,{time:finite(o.time),phase:finite(o.phase),blend:clamp(finite(o.blend),0,1),distance:finite(o.distance,3),quality:o.quality,backend:o.backend,palette:HEAVY.palette,signal:HEAVY.signal});
+    for(const m of out)m.playerAvatar='heavy';
+    if(finite(o.flash)>.2){
+      // The flash sits at the end of the barrel FActors places on the gun frame.
+      const body=root(finite(p.x),finite(p.y),finite(p.z),yaw),gun=frame(frame(body,[0,.9,0]),[.23,.43,-.29],[pitch,0,0]),length=weapon==='rocket'?-1.02:-1.05;
+      const flash=G.FRender.mesh('octa',point(gun,[0,.045,length]),[.20+o.flash*.12,.20+o.flash*.12,.34+o.flash*.3],5,gun.r,2.4);flash.surface='object';flash.color=[1,.62,.22];flash.playerAvatar='heavy';out.push(flash);
+    }
+    return out;
+  }
+
+  // The light drone: ducted rotors, a cyan sensor and twin cannons whose
+  // barrels follow the weapon it carries (0 SMG, 1 pump, 4 pistol).
+  const DRONE={shell:[.66,.70,.70],edge:[.36,.41,.43],dark:[.09,.11,.12],steel:[.58,.62,.63],glow:[.44,.90,.80],boost:[.55,1,.92]};
+  function drone(p,o={}){
+    const out=[],time=finite(o.time),yaw=finite(p.yaw),pitch=clamp(finite(p.pitch),-1.2,1.2),forward=clamp(finite(o.forward)/9,-1,1),strafe=clamp(finite(o.strafe)/9,-1,1);
+    const bob=Math.sin(time*2.4+finite(o.seed))*.035,tilt=-forward*.22,bank=-strafe*.26,boosting=!!o.boosting,quality=o.quality||'auto',rich=quality!=='low'&&o.backend!=='canvas2d';
+    const base=root(finite(p.x),finite(p.y)+1.42+bob,finite(p.z),yaw),body=frame(base,[0,0,0],[tilt,0,bank]);
+    function part(shape,f,at,size,color,mat=0,turn=null,glow=0){
+      const r=turn?angles(product(f.b,rotation(turn[0],turn[1],turn[2]))):f.r,m=G.FRender.mesh(shape,point(f,at),size,mat,r,glow);
+      m.color=color;m.surface='object';m.playerAvatar='light';out.push(m);return m;
+    }
+    part('bevel',body,[0,0,0],[.56,.22,.66],DRONE.shell);
+    part('bevel',body,[0,.13,.04],[.40,.09,.44],DRONE.edge);
+    part('box',body,[0,-.13,.06],[.26,.08,.40],DRONE.dark,7);
+    part('cylinder',body,[0,-.02,-.34],[.18,.07,.18],DRONE.glow,4,[PI/2,0,0],1.1);
+    part('ring',body,[0,-.02,-.35],[.24,.05,.24],DRONE.steel,1,[PI/2,0,0]);
+    for(const side of [-1,1])part('box',body,[side*.205,.115,-.18],[.035,.02,.20],DRONE.glow,4,null,.8);
+    for(const [i,[x,z]] of [[-.46,-.30],[.46,-.30],[-.46,.32],[.46,.32]].entries()){
+      part('box',body,[x*.5,.02,z*.5],[Math.hypot(x,z)*.85,.05,.07],DRONE.edge,1,[0,-Math.atan2(z,x),0]);
+      part('ring',body,[x,.04,z],[.40,.08,.40],DRONE.shell);
+      part('cylinder',body,[x,.03,z],[.09,.10,.09],DRONE.dark,7);
+      if(rich)for(let k=0;k<2;k++)part('box',body,[x,.075,z],[.34,.012,.045],DRONE.steel,1,[0,time*(i%2?-36:36)+i*.7+k*PI/2,0]);
+    }
+    // Thrusters brighten with the boost and leave a short cyan flame.
+    for(const side of [-1,1]){
+      part('box',body,[side*.15,.0,.35],[.13,.09,.05],boosting?DRONE.boost:DRONE.glow,4,null,boosting?2.2:.55);
+      if(boosting)part('octa',body,[side*.15,0,.52+Math.sin(time*40+side)*.03],[.09,.09,.30],DRONE.boost,4,null,2.6);
+    }
+    // Twin cannons: same weapon on both mounts, aimed with the view.
+    const weapon=Number.isInteger(o.weapon)?o.weapon:4,aim=pitch-tilt,flash=finite(o.flash);
+    for(const side of [-1,1]){
+      part('box',body,[side*.30,-.06,-.06],[.10,.08,.16],DRONE.edge,1);
+      const gun=frame(body,[side*.36,-.11,-.08],[aim,0,0]);
+      if(weapon===1){
+        part('bevel',gun,[0,0,-.06],[.17,.12,.30],DRONE.dark);
+        for(const x of [-.038,.038]){part('cylinder',gun,[x,.005,-.36],[.07,.40,.07],DRONE.steel,1,[PI/2,0,0]);part('ring',gun,[x,.005,-.55],[.085,.025,.085],DRONE.dark,7,[PI/2,0,0]);}
+      }else if(weapon===0){
+        part('bevel',gun,[0,0,-.08],[.12,.12,.36],DRONE.dark);
+        part('box',gun,[0,-.10,-.04],[.08,.12,.10],DRONE.edge,1);
+        part('cylinder',gun,[0,.01,-.46],[.06,.50,.06],DRONE.steel,1,[PI/2,0,0]);
+        for(let j=0;j<3;j++)part('ring',gun,[0,.01,-.30-j*.11],[.10,.03,.10],DRONE.dark,7,[PI/2,0,0]);
+      }else{
+        part('bevel',gun,[0,0,-.08],[.11,.11,.30],DRONE.dark);
+        part('cylinder',gun,[0,.01,-.36],[.075,.32,.075],DRONE.steel,1,[PI/2,0,0]);
+        part('ring',gun,[0,.01,-.52],[.10,.03,.10],DRONE.dark,7,[PI/2,0,0]);
+      }
+      part('box',gun,[0,.065,-.12],[.02,.02,.16],DRONE.glow,4,null,.7);
+      if(flash>.2){const tip=weapon===0?-.74:weapon===1?-.60:-.56;part('octa',gun,[0,.01,tip],[.10+flash*.07,.10+flash*.07,.16+flash*.18],[1,.72,.32],5,null,2.6);}
+    }
+    if(rich)part('ring',base,[0,-.30,0],[.36,.012,.36],DRONE.glow,4,null,.45+(boosting?.6:0));
+    return out;
+  }
+  G.MetalAvatars={heavy,drone,palettes:{heavy:HEAVY,drone:DRONE}};
+})(typeof window!=='undefined'?window:globalThis);
+</script>
 <script data-module="effects.js" data-role="page">/* FERRO — procedural destruction FX. Simulation owns every hazardous pose/time. */
 (function(G){
   'use strict';
@@ -67697,16 +67815,20 @@ function navigationGraph(cells,width,testEdge){
 <script data-module="options.js" data-role="page">/* FERRO — persistent preferences and conflict-free keyboard bindings. */
 (function(){
   'use strict';
-  const actions=[['forward','Avancer',['KeyW','KeyZ','ArrowUp']],['back','Reculer',['KeyS','ArrowDown']],['left','À gauche',['KeyA','KeyQ']],['right','À droite',['KeyD']],['turnLeft','Tourner à gauche',['ArrowLeft']],['turnRight','Tourner à droite',['ArrowRight']],['fire','Tirer · main droite',['Enter']],['fireLeft','Tirer · main gauche',['KeyG']],['leftHand','Changer la main gauche',['KeyX']],['sprint','Courir / boost',['ShiftLeft','ShiftRight']],['jump','Sauter / monter',['Space']],['descend','Vol : descendre',['KeyC']],['dash','Esquive / descendre',['KeyR']],['pulse','Onde défensive',['KeyE']],['melee','Coup de crosse',['KeyV']],['interact','Interagir',['KeyF']],['weapon1','Mitraillette',['Digit1']],['weapon2','Double pompe',['Digit2']],['weapon3','Lance-roquettes',['Digit3']],['weapon4','Lance-grenades',['Digit4']],['weapon5','Pistolet',['Digit5']],['map','Carte',['KeyM']],['pause','Pause',['KeyP']],['weaponNext','Arme suivante',['KeyN']],['switchProfile','Changer de profil',['KeyT']]];
+  const actions=[['forward','Avancer',['KeyW','KeyZ','ArrowUp']],['back','Reculer',['KeyS','ArrowDown']],['left','À gauche',['KeyA','KeyQ']],['right','À droite',['KeyD']],['turnLeft','Tourner à gauche',['ArrowLeft']],['turnRight','Tourner à droite',['ArrowRight']],['fire','Tirer · main droite',['Enter']],['fireLeft','Tirer · main gauche',['KeyG']],['leftHand','Changer la main gauche',['KeyX']],['sprint','Courir / boost',['ShiftLeft','ShiftRight']],['jump','Sauter / monter',['Space']],['dash','Esquive / descendre',['KeyR']],['pulse','Onde défensive',['KeyE']],['melee','Coup de crosse',['KeyV']],['interact','Interagir',['KeyF']],['weapon1','Mitraillette',['Digit1']],['weapon2','Double pompe',['Digit2']],['weapon3','Lance-roquettes',['Digit3']],['weapon4','Lance-grenades',['Digit4']],['weapon5','Pistolet',['Digit5']],['map','Carte',['KeyM']],['view','Vue 1re / 3e personne',['KeyC']],['pause','Pause',['KeyP']],['weaponNext','Arme suivante',['KeyN']],['switchProfile','Changer de personnage',['KeyT']]];
   const padNames=['A','B','X','Y','LB','RB','LT','RT','Back','Start','L3','R3','Up','Down','Left','Right'];
-  const padDefaults={fire:['RT'],fireLeft:['LT'],sprint:['L3'],jump:['A'],dash:['B'],pulse:['LB'],melee:['R3'],interact:['X'],weaponNext:['Y'],switchProfile:['RB'],weapon1:['Up'],weapon2:['Right'],weapon3:['Down'],weapon4:['Left'],map:['Back'],pause:['Start']};
+  // Layout 2 (David, 16/11/2026): LB runs or boosts, L3 is the defensive wave,
+  // Y changes character, RB the weapon and R3 the first/third person view.
+  const padDefaults={fire:['RT'],fireLeft:['LT'],sprint:['LB'],jump:['A'],dash:['B'],pulse:['L3'],interact:['X'],weaponNext:['RB'],switchProfile:['Y'],view:['R3'],weapon1:['Up'],weapon2:['Right'],weapon3:['Down'],weapon4:['Left'],map:['Back'],pause:['Start']};
+  const padLayout1={sprint:['L3'],pulse:['LB'],melee:['R3'],weaponNext:['Y'],switchProfile:['RB']};
   const allowed=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space|Enter|Backspace|Tab)$/.test(code);
-  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.45,effectsVolume:1,ambienceVolume:1,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:1,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
+  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,view:'first',controlsHint:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.45,effectsVolume:1,ambienceVolume:1,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:2,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
   function normalize(raw,touch){
     const out=defaults(touch),v=raw&&typeof raw==='object'?raw:{};
-    for(const id of ['demo','demoWake','muted','softMotion','invertY','systemPointerAcceleration','shadows','bloom','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks','touchAssist','portraitFov'])if(typeof v[id]==='boolean')out[id]=v[id];
+    for(const id of ['demo','demoWake','muted','softMotion','controlsHint','invertY','systemPointerAcceleration','shadows','bloom','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks','touchAssist','portraitFov'])if(typeof v[id]==='boolean')out[id]=v[id];
     if([5,10,30,60].includes(v.demoDelay))out.demoDelay=v.demoDelay;
     if(['off','probe','screen'].includes(v.reflections))out.reflections=v.reflections;
+    if(['first','third'].includes(v.view))out.view=v.view;
     if(['auto','low','high'].includes(v.quality))out.quality=v.quality;
     if(['auto','cpu'].includes(v.aiAcceleration))out.aiAcceleration=v.aiAcceleration;
     for(const [id,min,max] of [['fov',60,110],['brightness',.7,1.4],['sensitivity',.25,3],['crosshairScale',.75,1.5],['masterVolume',0,1],['musicVolume',0,1],['effectsVolume',0,1],['ambienceVolume',0,1],['padYaw',60,600],['padPitch',40,400],['padDead',0,.4],['padCurve',1,3],['padVibration',0,1],['touchAccel',0,1],['gyroSensitivity',.5,2]])if(typeof v[id]==='number'&&Number.isFinite(v[id]))out[id]=Math.max(min,Math.min(max,v[id]));
@@ -67715,13 +67837,13 @@ function navigationGraph(cells,width,testEdge){
     if([1,.85,.75,.66,.5].includes(v.renderScale))out.renderScale=v.renderScale;
     if([0,1,2].includes(v.difficulty))out.difficulty=v.difficulty;
     const bindings=v.bindings&&typeof v.bindings==='object'?{...v.bindings}:null;
-    // C now controls descent. Migrate the former default left trigger binding.
-    if(bindings&&!bindings.descend&&JSON.stringify(bindings.fireLeft)===JSON.stringify(['KeyC'])){const used=new Set(Object.entries(bindings).filter(([id])=>id!=='fireLeft').flatMap(([,codes])=>Array.isArray(codes)?codes:[]));bindings.fireLeft=[['KeyG','KeyH','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>k!=='KeyC'&&!used.has(k))||'KeyG'];}
+    // C now toggles the view, as in BITUME. Migrate the former default left trigger binding.
+    if(bindings&&!bindings.view&&!bindings.descend&&JSON.stringify(bindings.fireLeft)===JSON.stringify(['KeyC'])){const used=new Set(Object.entries(bindings).filter(([id])=>id!=='fireLeft').flatMap(([,codes])=>Array.isArray(codes)?codes:[]));bindings.fireLeft=[['KeyG','KeyH','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>k!=='KeyC'&&!used.has(k))||'KeyG'];}
     if(bindings&&v.bindingsVersion!==2&&!bindings.jump&&JSON.stringify(bindings.dash)===JSON.stringify(['Space'])){const used=new Set(Object.entries(bindings).filter(([k])=>k!=='dash').flatMap(([,a])=>Array.isArray(a)?a:[]));bindings.dash=[['KeyR','KeyG','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>!used.has(k))||'KeyR'];}
     if(bindings){
       const candidate={},seen=new Set();let valid=true;
-      const added=['descend','melee','fireLeft','leftHand','weapon4','weapon5','jump','weaponNext','switchProfile'],used=new Set(actions.flatMap(([id])=>Array.isArray(bindings[id])?bindings[id]:added.includes(id)?[]:out.bindings[id]));
-      for(const id of added)if(bindings[id]===undefined){const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];const key=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(key=>!used.has(key));if(key){out.bindings[id]=[key];used.add(key);}}
+      const added=['view','melee','fireLeft','leftHand','weapon4','weapon5','jump','weaponNext','switchProfile'],used=new Set(actions.flatMap(([id])=>Array.isArray(bindings[id])?bindings[id]:added.includes(id)?[]:out.bindings[id]));
+      for(const id of added)if(bindings[id]===undefined){const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:id==='view'?['KeyC','KeyY','KeyB','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];const key=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(key=>!used.has(key));if(key){out.bindings[id]=[key];used.add(key);}}
       for(const [id] of actions){
         const codes=bindings[id]??out.bindings[id];
         if(!Array.isArray(codes)||codes.length<1||codes.length>3){valid=false;break;}
@@ -67733,7 +67855,18 @@ function navigationGraph(cells,width,testEdge){
     if(v.padBindings&&typeof v.padBindings==='object'){
       const used=new Set(),candidate={};let valid=true;
       for(const [id] of actions)if(Object.prototype.hasOwnProperty.call(v.padBindings,id)){const a=v.padBindings[id];if(!Array.isArray(a)||a.length>2){valid=false;break;}for(const n of a){if(!padNames.includes(n)||used.has(n))valid=false;used.add(n);}}
-      if(valid){for(const [id] of actions)candidate[id]=Object.prototype.hasOwnProperty.call(v.padBindings,id)?v.padBindings[id].slice():out.padBindings[id].filter(n=>!used.has(n)&&used.add(n));out.padBindings=candidate;}
+      if(valid){
+        for(const [id] of actions)candidate[id]=Object.prototype.hasOwnProperty.call(v.padBindings,id)?v.padBindings[id].slice():out.padBindings[id].filter(n=>!used.has(n)&&used.add(n));
+        // Saved layout 1 tables: move only the buttons still at their former
+        // default to layout 2; personal choices keep their buttons.
+        if(v.padVersion!==2){
+          const moved=['sprint','pulse','melee','weaponNext','switchProfile','view'].filter(id=>id==='view'?!Object.prototype.hasOwnProperty.call(v.padBindings,id)||!candidate[id].length:JSON.stringify(candidate[id])===JSON.stringify(padLayout1[id]));
+          for(const id of moved)candidate[id]=[];
+          const taken=new Set(Object.values(candidate).flat());
+          for(const id of moved)candidate[id]=(padDefaults[id]||[]).filter(n=>!taken.has(n)&&taken.add(n));
+        }
+        out.padBindings=candidate;
+      }
     }
     return out;
   }
@@ -68005,7 +68138,7 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
 <script data-module="controls.js" data-role="page">/* METAL — FPS mapping and feedback. FInput owns devices; simulation receives values only. */
 (function(G){
   'use strict';
-  const holds=new Set(['forward','back','left','right','turnLeft','turnRight','fire','fireLeft','sprint','jump','dash','descend']);
+  const holds=new Set(['forward','back','left','right','turnLeft','turnRight','fire','fireLeft','sprint','jump','dash']);
   function create(prefs,{device='keyboard',getGamepads}={}){
     const actions=G.FOptions.actions.map(a=>({...a,type:holds.has(a.id)?'hold':'press',keys:[],pad:[]}));
     const input=G.FInput.create({actions,sticks:{move:{type:'move',pad:'LS',run:'sprint'},look:{type:'look',pad:'RS'}},device,getGamepads,singlePad:true,menu:true,moveCurve:true,releaseAfterClear:true});
@@ -68059,6 +68192,56 @@ G.FInput={version:1,PAD_BUTTONS,TUNE,create,defaults,normalize,assign,unbind,key
     return out;
   }
   G.MetalControls={create,merge};
+})(typeof window!=='undefined'?window:globalThis);
+</script>
+<script data-module="camera.js" data-role="page">/* METAL — first/third person follow camera with a swept clearance.
+ * Same principle as EMPRISE: the body hides when a wall pushes the camera
+ * against it, and the third-person view looks at the point the firing ray
+ * really reaches, so the crosshair keeps its meaning. No simulation state. */
+(function(G){
+  'use strict';
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  // Heavy: over the right shoulder. Light drone: straight behind and above it.
+  const RIGS={heavy:{distance:3.2,shoulder:.8,height:.55},light:{distance:2.7,shoulder:0,height:.55}};
+  const EYE=1.62,VISIBLE=.75,PROBE=.18;
+  function create(){
+    let mode=0,distance=0,range=20,visible=false;
+    function set(third){mode=third?1:0;}
+    function reset(third){mode=third?1:0;distance=mode?RIGS.heavy.distance:0;range=20;visible=false;}
+    // ray(origin, unit direction, far) returns the free distance. ground(x,z)
+    // and actorRange(origin, direction, far) are optional.
+    function frame(player,ray,dt,{profile='heavy',ground,actorRange}={}){
+      const rig=RIGS[profile]||RIGS.heavy,want=mode*rig.distance,step=1-Math.exp(-Math.max(0,dt)*12);
+      distance+=(want-distance)*step;if(Math.abs(want-distance)<.004)distance=want;
+      const yaw=Number(player.yaw)||0,pitch=clamp(Number(player.pitch)||0,-1.2,1.2),cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+      const origin=[player.x,(player.y||0)+EYE,player.z],forward=[sy*cp,sp,-cy*cp],back=forward.map(v=>-v),right=[cy,0,sy];
+      let safe=distance;
+      if(distance>.05)for(const [x,y] of [[0,0],[-.16,0],[.16,0],[0,-.16],[0,.16]]){
+        const o=[origin[0]+right[0]*x,origin[1]+y,origin[2]+right[2]*x],free=ray(o,back,distance+PROBE);
+        if(Number.isFinite(free))safe=Math.min(safe,Math.max(0,free-PROBE));
+      }
+      // A small hysteresis keeps the body from blinking along a wall.
+      visible=visible?safe>VISIBLE-.1:safe>VISIBLE+.1;
+      const pos=origin.map((v,k)=>v+back[k]*safe);let viewYaw=yaw,viewPitch=pitch;
+      if(visible){
+        // The shoulder offset never moves the firing ray: only the eye moves.
+        const lift=[right[0]*rig.shoulder,rig.height,right[2]*rig.shoulder],length=Math.hypot(...lift);
+        if(length>1e-6){const unit=lift.map(v=>v/length),free=ray(pos,unit,length+PROBE),reach=Number.isFinite(free)?clamp(free-PROBE,0,length):length;for(let k=0;k<3;k++)pos[k]+=unit[k]*reach;}
+        const floor=typeof ground==='function'?ground(pos[0],pos[2]):NaN;
+        if(Number.isFinite(floor)&&floor<origin[1]&&pos[1]<floor+.3)pos[1]=floor+.3;
+        let reach=ray(origin,forward,120);if(!Number.isFinite(reach))reach=120;
+        const actor=typeof actorRange==='function'?actorRange(origin,forward,reach):Infinity;if(Number.isFinite(actor))reach=Math.min(reach,actor);
+        // Near targets keep a small parallax; abrupt depth changes are eased so
+        // the camera does not swing when the crosshair crosses an edge.
+        range+=(clamp(reach,5,120)-range)*(1-Math.exp(-Math.max(0,dt)*14));
+        const target=origin.map((v,k)=>v+forward[k]*range),delta=target.map((v,k)=>v-pos[k]);
+        viewYaw=Math.atan2(delta[0],-delta[2]);viewPitch=Math.atan2(delta[1],Math.hypot(delta[0],delta[2]));
+      }
+      return {pos,yaw:viewYaw,pitch:viewPitch,thirdPerson:visible,distance,clearance:safe,range};
+    }
+    return {set,reset,frame,get third(){return mode===1;},get distance(){return distance;},get thirdPerson(){return visible;}};
+  }
+  G.MetalCamera={create,rigs:RIGS};
 })(typeof window!=='undefined'?window:globalThis);
 </script>
 <script data-module="loop.js" data-role="page">/* FERRO — fixed-step loop: accumulator, display-period lock, bounded catch-up, render interpolation. Reads no clock. */
@@ -69180,6 +69363,19 @@ G.FPilot={create:createPilot};
   const preparationJobs=FJobs.create({environment:window,handlers:MetalTasks.jobs,bootstrap:'FJobs.serve(MetalTasks.jobs);',forceMain:new URLSearchParams(location.search).get('jobs')==='main'});
   addEventListener('pagehide',()=>preparationJobs.dispose());
   window.FMusic?.setPreparer?.((value,seed)=>preparationJobs.mode==='main'?null:preparationJobs.request('music',{stage:value,seed}).then(r=>r.prepared));
+  const followCamera=MetalCamera.create();followCamera.reset(prefs.view==='third');
+  // Distance to the first machine on the firing ray: the third-person camera
+  // then centres the crosshair on what the shot will really hit.
+  function aimRange(o,d,far){
+    let best=far;
+    for(const e of sim.state.enemies){
+      if(e.hp<=0||e.deployed===false)continue;
+      const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1,r=(e.type===3?1.15:.67)*scale,cx=e.x-o[0],cy=(e.y||0)-o[1],cz=e.z-o[2],along=cx*d[0]+cy*d[1]+cz*d[2];
+      if(along<=0||along-r>best)continue;
+      const miss=cx*cx+cy*cy+cz*cz-along*along;if(miss<r*r){const hit=along-Math.sqrt(r*r-miss);if(hit>0&&hit<best)best=hit;}
+    }
+    return best;
+  }
   const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0,weakFlash=0,killFlash=0,freezeUntil=0;const hurtDirections=[],impactMarks=[];let deflectUntil=0,deflectCount=0,deflectWindow=0,deflectHints=0;
   const recoil={shot:{omega:38,velocity:1.9*38/27,pitchDegrees:.35,rollDegrees:.6},pistol:{omega:30,velocity:1.45*30/27,pitchDegrees:.6},fracture:{omega:18,velocity:3.5*18/27,pitchDegrees:2,fovDegrees:-1.8},rocket:{omega:14,velocity:5.5*14/27,pitchDegrees:2.6,fovDegrees:-2.5},grenade:{omega:16,velocity:4.2*16/27,pitchDegrees:1.2}};
   const audio=FAudio.create({...window.MetalAudio?.options?.(),asyncPrepare:preparationJobs.mode!=='main',preparePCM:(name,variant)=>preparationJobs.mode==='main'?null:preparationJobs.request('fx',{name,variant}).then(r=>r.pcm)}),soundscape=FSoundscape.create(),motion=FMotion.create({recoil,cameraSteps:true}),leftMotion=FMotion.create({recoil,cameraSteps:true}),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
@@ -69228,6 +69424,13 @@ G.FPilot={create:createPilot};
     const armor=value.armor===undefined?null:FSimulation.copyArmor?.(value.armor,100);if(value.armor!==undefined&&!armor)return null;
     if(profiles&&(!MetalProfiles.owns(profiles,inventory)||JSON.stringify(profiles.classes[profiles.active].economy)!==JSON.stringify(economy)))return null;
     return {...(profiles?{profiles}:{}),inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
+  }
+  // Each world starts with the heavy hero (David, 16/11/2026); his drone waits above him.
+  function heavyFirst(value){
+    const q=copyLoadout(value);if(!q?.profiles||q.profiles.active!=='light')return q||value;
+    const heavy=q.profiles.classes.heavy;q.profiles.active='heavy';q.economy=FEconomy.copy(heavy.economy);
+    if(q.equipment)q.equipment={right:heavy.weapon,left:heavy.left};
+    return copyLoadout(q)||value;
   }
   const skyEnvironments=new WeakMap();
   function skyEnvironment(w){
@@ -69314,13 +69517,28 @@ G.FPilot={create:createPilot};
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
   function bindingLabel(id){return controls.label(id);}
-  function activeDevice(device){const previousTouch=touch;controls.use(device);touch=forceTouch||device==='touch';if(touch&&!previousTouch)$('radar-wrap').hidden=true;if(!touch&&previousTouch){touchControls.clear();paintStick();}document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch&&prefs.touchAssist||device==='gamepad'&&prefs.padAssist;}
+  function activeDevice(device){const previousTouch=touch,previousDevice=controls.device;controls.use(device);touch=forceTouch||device==='touch';if(touch&&!previousTouch)$('radar-wrap').hidden=true;if(!touch&&previousTouch){touchControls.clear();paintStick();}document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch&&prefs.touchAssist||device==='gamepad'&&prefs.padAssist;if(previousDevice!==controls.device||previousTouch!==touch)controlsLegend();}
   function controlHints(){
-    if(touch){$('interact-key').textContent='';$('intro-controls').textContent='À gauche : déplacer · À droite : viser';$('help-text').textContent='Glissez à gauche pour déplacer ; poussez plus loin pour courir. Glissez à droite ou sur TIR pour viser. Maintenez SAUT pour le jetpack du léger. Le bouton LÉGER / LOURD change de personnage. ARMES ouvre l’arsenal ; la carte est accessible en haut.';return;}
+    if(touch){$('interact-key').textContent='';$('intro-controls').textContent='À gauche : déplacer · À droite : viser';$('help-text').textContent='Glissez à gauche pour déplacer ; poussez plus loin pour courir ou pour le boost du drone. Glissez à droite ou sur TIR pour viser. Le drone léger vole à plat : MONTER et DESCENDRE règlent l’altitude. Le bouton LOURD / LÉGER change de personnage, VUE passe en vue à la première ou à la troisième personne. ARMES ouvre l’arsenal ; la carte est accessible en haut.';return;}
     $('interact-key').textContent=bindingLabel('interact');
     $('intro-controls').textContent=controls.device==='gamepad'?'LS déplacer · RS viser · '+bindingLabel('fire')+' tirer · '+bindingLabel('jump')+' sauter':'Clavier, manette ou écran tactile';
-    $('help-text').textContent=controls.device==='gamepad'?'LS : déplacement · RS : visée · '+['fire','fireLeft','jump','dash','melee','interact','weaponNext','switchProfile','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · '):'ZQSD / WASD : déplacer · Souris : viser · '+['fire','jump','dash','melee','interact','switchProfile','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · ');
-    if(sim?.state.activeProfile==='light')$('help-text').textContent+=' · VOL : viser puis avancer · '+bindingLabel('jump')+' monter · '+bindingLabel(controls.device==='gamepad'?'dash':'descend')+' descendre · '+bindingLabel('sprint')+' boost';
+    $('help-text').textContent=controls.device==='gamepad'?'LS : déplacement · RS : visée · '+['fire','fireLeft','sprint','jump','dash','pulse','interact','weaponNext','switchProfile','view','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · '):'ZQSD / WASD : déplacer · Souris : viser · '+['fire','sprint','jump','dash','melee','interact','switchProfile','view','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · ');
+    if(sim?.state.activeProfile==='light')$('help-text').textContent+=' · DRONE : vol à plat · '+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre · '+bindingLabel('sprint')+' boost · tir des deux canons';
+    controlsLegend();
+  }
+  // Discreet in-game legend (David, 16/11/2026): the actual bindings of the
+  // device in use, for the character in control. Touch has labelled buttons.
+  function controlsLegend(){
+    const node=$('controls-hint'),pad=controls.device==='gamepad',drone=sim?.state.activeProfile==='light';
+    node.hidden=touch||!prefs.controlsHint;if(node.hidden)return;
+    const key=id=>pad?bindingLabel(id):FOptions.keyName(prefs.bindings[id]?.[0]||'').replace(/^(Maj|Ctrl) [GD]$/,'$1');
+    const defaults=['forward','left','back','right'].every(id=>JSON.stringify(prefs.bindings[id])===JSON.stringify(FOptions.defaults().bindings[id]));
+    const move=pad?'LS':defaults?'ZQSD/WASD':['forward','left','back','right'].map(key).join(''),aim=pad?'RS':'Souris';
+    const fire=pad?key('fire'):'Clic',left=pad?key('fireLeft'):'Clic droit';
+    const rows=drone?[[move+' · '+aim,'voler · viser'],[fire,'tirer · 2 canons'],[key('jump')+' · '+key('dash'),'monter · descendre'],[key('sprint'),'boost'],[key('interact'),'interagir'],[key('switchProfile'),'lourd'],[key('view'),'vue 1re / 3e']]
+      :[[move+' · '+aim,'déplacer · viser'],[fire+' · '+left,'tirer · main gauche'],[key('jump')+' · '+key('dash'),'sauter · esquiver'],[key('sprint'),'courir'],[key('pulse'),'onde'],[key('interact'),'interagir'],...(pad?[[key('weaponNext'),'arme suivante']]:[]),[key('switchProfile'),'drone léger'],[key('view'),'vue 1re / 3e']];
+    const text=rows.filter(([k])=>k&&k!=='—').map(([k,label])=>'<kbd>'+k+'</kbd><span>'+label+'</span>').join('');
+    if(node.dataset.text!==text){node.innerHTML=text;node.dataset.text=text;}
   }
   function weaponHint(){const keys=Array.from({length:world?.campaign?5:4},(_,i)=>bindingLabel('weapon'+(i+1)));$('weapon-switch').title='Armes : '+keys.join(' / ')+' ou molette';}
   function renderBindings(){
@@ -69346,7 +69564,7 @@ G.FPilot={create:createPilot};
     $('quality-toggle').querySelector('strong').textContent={auto:'Auto',low:'Économie',high:'Haute'}[quality];
     $('demo-toggle').setAttribute('aria-pressed',String(prefs.demo));$('demo-toggle').querySelector('strong').textContent=prefs.demo?'Activée':'Désactivée';$('demo-delay').value=String(prefs.demoDelay);
     $('difficulty-setting').value=String(prefs.difficulty);$('difficulty-hint').textContent=['Standard · apprenez à lire les attaques ; la pression monte avec les secteurs et les objectifs.','Brutal · des machines plus agressives, des tirs plus rapprochés et moins de répit.','Cauchemar · des attaques plus rapides, des impacts plus durs et une forte pression.'][prefs.difficulty];brainStatus();
-    $('motion-toggle').querySelector('strong').textContent=softMotion?'Doux':'Désactivés';
+    $('motion-toggle').querySelector('strong').textContent=softMotion?'Doux':'Désactivés';renderView();
     for(const [id,key,on,off] of [['shadows','shadows','Activées','Désactivées'],['bloom','bloom','Activé','Désactivé'],['fps','showFps','Visible','Masqué'],['crt','crt','Activé','Désactivé'],['vignette','vignette','Activée','Désactivée'],['invert','invertY','Oui','Non'],['pointer-acceleration','systemPointerAcceleration','Activée','Désactivée']]){const el=$(id+'-toggle');el.querySelector('strong').textContent=prefs[key]?on:off;el.setAttribute('aria-pressed',String(prefs[key]));}
     for(const [id,key,multiplier,suffix] of [['fov','fov',1,'°'],['brightness','brightness',100,' %'],['sensitivity','sensitivity',100,' ×'],['crosshair','crosshairScale',100,' %'],['master','masterVolume',100,' %'],['music','musicVolume',100,' %'],['effects','effectsVolume',100,' %'],['ambience','ambienceVolume',100,' %']]){
       $(id+'-setting').value=String(Math.round(prefs[key]*multiplier));$(id+'-value').textContent=(id==='sensitivity'?prefs[key].toFixed(2).replace('.',','):Math.round(prefs[key]*multiplier))+suffix;
@@ -69367,6 +69585,17 @@ G.FPilot={create:createPilot};
     const silent=[['musicVolume','Musique coupée'],['effectsVolume','Effets coupés'],['ambienceVolume','Ambiances coupées']].filter(([key])=>prefs[key]===0).map(([,label])=>label);
     $('audio-status').textContent=muted||prefs.masterVolume===0?'Son coupé. Activez le son et le volume général pour écouter.':silent.length?silent.join(' · ')+'. Réglez les curseurs pour les entendre.':'Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.';
     document.body.classList.toggle('low-motion',!softMotion);audio.setMix?.({master:prefs.masterVolume,music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});audioGate();syncTitle();saveSettings();renderBindings();
+  }
+  // First or third person, for both characters (David, 16/11/2026).
+  function renderView(){
+    const third=prefs.view==='third';followCamera.set(third);
+    $('controls-hint-toggle').querySelector('strong').textContent=prefs.controlsHint?'Affichée':'Masquée';$('controls-hint-toggle').setAttribute('aria-pressed',String(prefs.controlsHint));
+    $('view-toggle').querySelector('strong').textContent=third?'3e personne':'1re personne';$('view-toggle').setAttribute('aria-pressed',String(third));
+    $('view-button').textContent=third?'3P':'1P';$('view-button').setAttribute('aria-label','Vue à la '+(third?'troisième':'première')+' personne. Changer de vue.');$('view-button').title='Vue 1re / 3e personne'+(touch?'':' ('+bindingLabel('view')+')');
+  }
+  function toggleView(){
+    prefs.view=prefs.view==='third'?'first':'third';renderView();saveSettings();sceneDirty=true;
+    if(mode==='playing')toast(prefs.view==='third'?'VUE À LA TROISIÈME PERSONNE':'VUE À LA PREMIÈRE PERSONNE',1.4);
   }
   function toast(message,seconds=2.8){$('toast').textContent=message;$('toast').classList.add('visible');toastTime=seconds;}
   function encounter(name,caption){$('encounter-name').textContent=name;$('encounter-caption').textContent=caption;$('encounter').classList.add('visible');encounterTime=4.2;}
@@ -69486,14 +69715,14 @@ G.FPilot={create:createPilot};
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderLoadPending=true;if(!deferLaunch)loadRender();
-    motion.reset();leftMotion.reset();lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
+    motion.reset();leftMotion.reset();followCamera.reset(prefs.view==='third');lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
     soundscape.reset();audio.setStage?.(world.stage, seed);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);musicDirector?.reset();
     $('music-title').textContent=trackLabel();
     $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaignVersion===2?(stage<6?'Équipement '+(stage+1)+' / 6':'Assaut '+(stage-5)+' / 12')+' · ':world.campaign?world.chapterTitle+' · ':'')+world.title;
     $('mission-summary').innerHTML=world.campaignVersion===2?'<span><b>6</b> ÉQUIPEMENT</span><span><b>12</b> ASSAUT</span><span><b>18</b> MONDES</span>':world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';
-    if(world.profileVersion)$('mission-summary').innerHTML='<span><b>LÉGER</b> JETPACK · RELAIS AÉRIENS</span><span><b>LOURD</b> BRÈCHES · EXPLOSIFS</span><span><b>2</b> PROGRESSIONS</span>';
+    if(world.profileVersion)$('mission-summary').innerHTML='<span><b>LOURD</b> BRÈCHES · EXPLOSIFS</span><span><b>LÉGER</b> DRONE · RELAIS AÉRIENS</span><span><b>2</b> PROGRESSIONS</span>';
     $('restart').textContent=world.campaign?'RECOMMENCER CE MONDE':'RECOMMENCER CE SECTEUR';
-    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=touch;hudWait=0;renderHUD();weaponHint();
+    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=touch;hudWait=0;renderHUD();weaponHint();controlsLegend();
   }
   function loadRender(){renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,skyEnvironment(world));renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;renderToken=sim.destruction?.delta?.().token;renderLoadPending=false;}
   function syncDestruction(){
@@ -69524,7 +69753,7 @@ G.FPilot={create:createPilot};
   function start(message){
     if(deferLaunch){pendingStart={message};return;}
     titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode(document.hidden||!windowFocused?'paused':'playing');if(mode==='playing'){lock();canvas.focus({preventScroll:true});}
-    toast(message||(world.profileVersion?'Deux profils · '+bindingLabel('switchProfile')+' : changer. Léger : maintenir le saut pour voler. Lourd : récupérer le lance-grenades près du départ.':world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
+    toast(message||(world.profileVersion?(sim.state.activeProfile==='light'?'Drone LÉGER · vol à plat, '+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre. '+bindingLabel('switchProfile')+' : revenir au LOURD.':(stage===0?'Vous êtes le LOURD · récupérez le lance-grenades près du départ. ':'LOURD · les explosifs ouvrent les brèches. ')+bindingLabel('switchProfile')+' : piloter le drone LÉGER, qui vole à plat ('+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre).'):world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
   function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2,false,true,true);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode,plan={}){
@@ -69575,6 +69804,8 @@ G.FPilot={create:createPilot};
         if(e.hand==='left')fireLeftPressed=false;else firePressed=false;
       }
       const handMotion=e.hand==='left'?leftMotion:motion;
+      // The drone's twin cannons recoil together.
+      if(e.twin)leftMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
       if(e.name==='rocket'||e.name==='grenadeLaunch'){if(e.owner==='player')handMotion.impulse(e.name==='grenadeLaunch'?'grenade':'rocket');}
       else if(e.name==='land'){if(e.actor==='player'&&sim.state.activeProfile!=='light'){motion.impulse('land',e.impact);leftMotion.impulse('land',e.impact);}}
       else if(e.name==='bossImpact'||e.name==='bossDeath'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z),amount=(e.name==='bossDeath'?1:e.kind==='ring'?.4:.8)*clamp(1-d/40,0,1);motion.impulse('blast',amount);leftMotion.impulse('blast',amount);if(e.name==='bossDeath')freezeUntil=performance.now()+120;}
@@ -69589,7 +69820,7 @@ G.FPilot={create:createPilot};
         checkpointDue=true;
         toast(e.count===3?(!systemsReady()?'Trois relais en ligne. Activez les commandes restantes.':sim.state.bossAlive?'Trois relais en ligne. Neutralisez le gardien.':'Trois relais en ligne. Rejoignez la sortie.'):'Relais '+e.count+' / 3 · intégrité restaurée · point de reprise',3.2);
       }
-      if(e.name==='profileSwitch'){poseView.clear();selectedWeapon=sim.state.weapon;clearFireIntents();motion.reset();leftMotion.reset();controlHints();motion.impulse('switch');leftMotion.impulse('switch');audio.switchWeapon?.();toast(e.to==='light'?'LÉGER · '+bindingLabel('jump')+' monter · '+bindingLabel(controls.device==='gamepad'?'dash':'descend')+' descendre':'LOURD · explosifs pour ouvrir les passages',2.5);checkpointDue=true;}
+      if(e.name==='profileSwitch'){poseView.clear();selectedWeapon=sim.state.weapon;clearFireIntents();motion.reset();leftMotion.reset();controlHints();motion.impulse('switch');leftMotion.impulse('switch');audio.switchWeapon?.();toast(e.to==='light'?'DRONE LÉGER · '+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre · '+bindingLabel('sprint')+' boost':'LOURD · explosifs pour ouvrir les passages',2.5);checkpointDue=true;}
       if(e.name==='profileLevel'){toast((e.profile==='light'?'LÉGER':'LOURD')+' · NIVEAU '+e.level+' · +75 CR',3);checkpointDue=true;}
       if(e.name==='profileBlocked')toast('GARDIEN · profil '+(e.required==='light'?'LÉGER':'LOURD')+' requis',2);
       if(e.name==='mechanism'){checkpointDue=true;const a=sim.state.mechanisms?.find(a=>a.id===e.id);toast((a?.name||'Commande')+' · alimentation rétablie · point de reprise',3.2);}
@@ -69797,7 +70028,7 @@ G.FPilot={create:createPilot};
       part(weapon===2?'octa':'cylinder',[side*.13,weapon===2?.35:.255,-.025],[.085,weapon===2?.09:.045,.085],mat,0,.45);
     }
   }
-  function models(t,playing,camera){
+  function models(t,playing,camera,thirdPerson=false){
     const out=[],s=renderState||sim.state,p=s.player;sim.rigid?.models(out,camera,fixedLoop.frame.alpha);machinery(out,t);ambience(out,t);systems(out,t);
     for(let i=impactMarks.length-1;i>=0;i--){const q=impactMarks[i];if(q.until<s.time){impactMarks.splice(i,1);continue;}out.push({...m('box',q.p,q.size,2),color:[.06,.07,.08]});}
     if(window.FEffects)out.push(...FEffects.build(s,world,camera,{quality,backend:renderer.stats.backend}));
@@ -69805,7 +70036,7 @@ G.FPilot={create:createPilot};
     // Match the renderer's whole approach transition conservatively. The renderer
     // still chooses the actual range; this early filter must never shorten it.
     const longView=(world.environment?.longViewZones||[]).some(a=>Math.abs(p.x-a.x)<=a.w/2+35&&Math.abs(p.z-a.z)<=a.d/2+35);
-    const range=longView?100:renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);
+    const range=drawRange(longView);
     const nearby=(x,z,r=3)=>(x-p.x)**2+(z-p.z)**2<(range+r)**2;
     const actorVisible=renderer.actorFilter?.(camera,{shadows:prefs.shadows,reflections:prefs.reflections})||(()=>true);
     for(const c of s.cores){
@@ -69857,8 +70088,21 @@ G.FPilot={create:createPilot};
       out.push(m('ring',[p.x,(p.y||0)+.16,p.z],[r*2,.13,r*2],4,[0,0,0],1.7*(1-progress)));
       if(progress<.65)out.push(m('ring',[p.x,(p.y||0)+.7,p.z],[r*1.7,.08,r*1.7],4,[0,0,0],.8));
     }
-    if(playing){
-      const left=s.equipment?.left??null,paired=left!==null;
+    // Both characters exist in the world: the active one is seen from outside
+    // in third person, and the parked partner waits where it was left.
+    if(playing&&s.profiles){
+      const active=s.activeProfile==='light'?'light':'heavy',other=active==='light'?'heavy':'light',parked=s.profiles[other]?.position,loc=s.locomotion||{},backend=renderer.stats.backend;
+      const character=(id,pose,live)=>{
+        const distance=Math.hypot(pose.x-camera.pos[0],(pose.y||0)+1.4-camera.pos[1],pose.z-camera.pos[2]),weapon=live?s.weapon:s.profiles[id]?.weapon;
+        if(id==='light')out.push(...MetalAvatars.drone(pose,{time:t,weapon,forward:live?loc.forward:0,strafe:live?loc.strafe:0,boosting:live&&!!s.jetpack?.active,flash:live?Math.max(s.flash||0,s.leftFlash||0):0,quality,backend,seed:live?0:2.1}));
+        else out.push(...MetalAvatars.heavy(pose,{time:t,weapon,speed:live?loc.speed:0,phase:live?loc.stridePhase:0,blend:live?loc.moveBlend:0,distance,flash:live?s.flash:0,quality,backend}));
+      };
+      if(thirdPerson)character(active,p,true);
+      if(parked&&nearby(parked.x,parked.z))character(other,parked,false);
+    }else if(playing&&thirdPerson)out.push(...MetalAvatars.heavy(p,{time:t,weapon:s.weapon,speed:s.locomotion?.speed,phase:s.locomotion?.stridePhase,blend:s.locomotion?.moveBlend,distance:3,flash:s.flash,quality,backend:renderer.stats.backend}));
+    if(playing&&!thirdPerson){
+      // The drone carries the same weapon on two mounts and has no hands.
+      const twin=s.activeProfile==='light',left=twin?null:s.equipment?.left??null,paired=twin||left!==null;
       function drawGun(weapon,hand){
       const fracture=weapon===1,rocket=weapon===2,grenade=weapon===3,pistol=weapon===4,pose=(hand<0?leftMotion:motion).view.weapon,slide=pose.slide,flash=hand<0?(s.leftFlash||0):s.flash;
       const grip=FMotion.mount(camera,[hand*.255*Math.min(1,Math.max(.45,(innerWidth/innerHeight)/1.2))+pose.offset[0]*hand,(paired?-.34:-.30)+pose.offset[1],(paired?-.70:-.62)+pose.offset[2]],[pose.rotation[0],pose.rotation[1]*hand,pose.rotation[2]*hand]);
@@ -69867,12 +70111,17 @@ G.FPilot={create:createPilot};
         if(color)a.color=color;else if(mat===0)a.color=[.16,.19,.21];else if(mat===1)a.color=[.37,.35,.28];
         out.push(a);
       }
+      if(twin){
+        // Cannon pylon and cyan strip of the drone mount instead of a glove.
+        gun('bevel',0,.17,.12,[.11,.11,.26],0,0,0,[.62,.67,.68]);gun('box',0,.235,.10,[.025,.015,.20],4,0,.8,[.44,.9,.8]);
+      }else{
       gun('bevel',0,-.09,.12,[.15,.24,.16],7,-.2);
       // A gloved grip and its wrist remain attached to the complete, damped weapon assembly.
       gun('bevel',.013,-.2,.21,[.17,.11,.21],7,-.2);gun('box',.013,-.16,.2,[.18,.025,.18],0,-.2);
       gun('bevel',.018,-.27,.30,[.15,.17,.24],0,-.25,0,[.26,.28,.23]);
       for(let j=0;j<4;j++)gun('box',0,-.035-j*.031,.205,[.16,.023,.042],7,-.2);
       gun('box',-.087,-.07,.15,[.04,.09,.09],7,-.5);
+      }
       if(pistol){
         // Compact slide, exposed barrel, serrations and sights share the hand frame.
         const bolt=slide*1.4;
@@ -69955,10 +70204,12 @@ G.FPilot={create:createPilot};
       for(let j=0;j<3;j++)gun('box',rocket?.165:fracture?.143:pistol?.078:.108,-.045,.1-j*.037,[.014,.016,.023],p.overheated?6:j/3<p.heat?5:0,0,j/3<p.heat?.6:0);
       }
       drawGun(s.weapon,1);
-      if(Number.isInteger(left))drawGun(left,-1);
+      if(twin)drawGun(s.weapon,-1);else if(Number.isInteger(left))drawGun(left,-1);
     }
     return out;
   }
+  // Same model range as the renderer approach; shared with the partner marker.
+  function drawRange(longView){return longView?100:renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);}
   function renderHUD(){
     const profile=sim.state.activeProfile,jet=sim.state.jetpack,profileButton=$('profile-button');profileButton.hidden=!profile;
     $('jump-button').textContent=profile==='light'?'MONTER':'SAUT';$('jump-button').setAttribute('aria-label',profile==='light'?'Monter en vol':'Sauter');
@@ -69978,7 +70229,7 @@ G.FPilot={create:createPilot};
     if(armor){$('armor-points').textContent=String(Math.ceil(armor.points));$('armor-cap').textContent='/ '+armor.capacity;$('armor-bar').style.width=clamp(armor.points/armor.capacity*100,0,100)+'%';$('armor-pool').title='Plaques à ramasser · absorbe un tiers des dégâts · blindage passif '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';$('armor-pool').setAttribute('aria-label','Armure : '+Math.ceil(armor.points)+' sur '+armor.capacity);document.body.dataset.armor=String(Math.ceil(armor.points));}
     $('wallet-credits').textContent=String(s.economy?.credits||0);$('wallet-cores').textContent=String(s.economy?.cores||0);
     $('heat-bar').style.width='100%';$('heat-bar').style.transform='scaleX('+p.heat+')';$('heat-bar').style.background=p.overheated?'#ff795e':s.weapon===2?'#ee8d5d':s.weapon===1?'#e8ad66':'#6ce5d2';
-    const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0,weaponName=profile==='heavy'&&s.weapon===4?'Pistolet automatique':weaponNames[s.weapon];$('weapon-label').textContent=weaponName.toUpperCase()+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
+    const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0,weaponName=profile==='heavy'&&s.weapon===4?'Pistolet automatique':weaponNames[s.weapon];$('weapon-label').textContent=weaponName.toUpperCase()+(profile==='light'?' ×2':'')+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
     const inventory=s.inventory,owned=(inventory?.weapons||[true,true,true]).map((has,i)=>has&&(!profile||MetalProfiles.allowed(profile,i))),ammo=inventory?.ammo?.[s.weapon],limited=!!world.progression,infinite=world.campaign&&s.weapon===4;
     $('ammo-count').textContent=infinite?'∞':limited?String(ammo??0).padStart(2,'0'):'—';$('ammo-unit').textContent=ammoNames[s.weapon].toUpperCase();$('ammo-cap').textContent=infinite?'ILLIMITÉES':limited?'/ '+sim.ammoCaps[s.weapon]:'RÉSERVE';
     $('weapon-readout').classList.toggle('empty',!infinite&&limited&&ammo===0);$('heat-status').textContent=p.overheated?'REFROIDISSEMENT':!infinite&&limited&&ammo===0?'RÉSERVE ÉPUISÉE':p.heat>=.75?'SURCHAUFFE PROCHE':'CHALEUR';
@@ -69989,18 +70240,18 @@ G.FPilot={create:createPilot};
     $('weapon-slots').style.gridTemplateColumns='repeat('+(world.campaign?Math.max(1,owned.filter(Boolean).length):4)+',minmax(0,1fr))';
     for(let i=0;i<5;i++){
       const slot=$('weapon-slot-'+i),unlimited=world.campaign&&i===4;slot.hidden=i>=owned.length||!!world.campaign&&!owned[i];slot.disabled=!owned[i];slot.classList.toggle('locked',!owned[i]);slot.classList.toggle('selected',i===s.weapon);slot.classList.toggle('overheated',!!s.weaponOverheated?.[i]);slot.setAttribute('aria-pressed',String(i===s.weapon));
-      slot.dataset.hand=i===s.weapon?'right':i===left?'left':'';$('slot-hand-'+i).textContent=i===s.weapon?'D':i===left?'G':'';
+      slot.dataset.hand=i===s.weapon?'right':i===left?'left':'';$('slot-hand-'+i).textContent=i===s.weapon?(profile==='light'?'×2':'D'):i===left?'G':'';
       slot.setAttribute('aria-label',weaponNames[i]+(owned[i]?(unlimited?' · munitions illimitées':limited?' · '+inventory.ammo[i]+' '+ammoNames[i]:'')+(i===s.weapon?' · main droite':i===left?' · main gauche':''):' · à trouver'));
       $('slot-ammo-'+i).textContent=owned[i]?(unlimited?'∞':limited?String(inventory.ammo[i]):'PRÊTE'):'À TROUVER';$('slot-key-'+i).textContent=FOptions.keyName(prefs.bindings['weapon'+(i+1)]?.[0]||'Digit'+(i+1));
       $('left-option-'+i).disabled=!owned[i]||i===s.weapon;$('left-option-'+i).hidden=slot.hidden;
     }
-    $('left-hand-setting').disabled=!sim.selectLeftWeapon;$('left-hand-setting').value=left===null?'none':String(left);
-    $('left-hand-key').textContent=FOptions.keyName(prefs.bindings.leftHand[0]);$('left-hand-stock').textContent=world.campaign&&left===4?'∞ BALLES':Number.isInteger(left)?String(inventory.ammo[left])+' '+ammoNames[left]:'LIBRE';
-    $('left-hand-status').textContent=leftHot?'REFROIDISSEMENT':leftHeat>=.75?'SURCHAUFFE PROCHE':left!==null?(touch?'TIR G · MAINTENIR':'CLIC DROIT · TIR'):(touch?'CHOISISSEZ UN ÉQUIPEMENT':'X · CHANGER');
-    $('left-fire-button').disabled=left===null;$('left-fire-button').setAttribute('aria-label','Tirer avec la main gauche'+(leftHot?' — refroidissement':''));$('left-fire-label').textContent='TIR G';
+    $('left-hand-setting').disabled=!sim.selectLeftWeapon||profile==='light';$('left-hand-setting').value=left===null?'none':String(left);
+    $('left-hand-key').textContent=FOptions.keyName(prefs.bindings.leftHand[0]);$('left-hand-stock').textContent=profile==='light'?'CANONS JUMEAUX':world.campaign&&left===4?'∞ BALLES':Number.isInteger(left)?String(inventory.ammo[left])+' '+ammoNames[left]:'LIBRE';
+    $('left-hand-status').textContent=profile==='light'?'LES DEUX CANONS TIRENT ENSEMBLE':leftHot?'REFROIDISSEMENT':leftHeat>=.75?'SURCHAUFFE PROCHE':left!==null?(touch?'TIR G · MAINTENIR':'CLIC DROIT · TIR'):(touch?'CHOISISSEZ UN ÉQUIPEMENT':'X · CHANGER');
+    $('left-fire-button').disabled=left===null&&profile!=='light';$('left-fire-button').setAttribute('aria-label',profile==='light'?'Tirer avec les deux canons':'Tirer avec la main gauche'+(leftHot?' — refroidissement':''));$('left-fire-label').textContent='TIR G';
     $('dash-button').setAttribute('aria-label',profile==='light'?'Descendre en vol':'Esquiver');const dashIcon=$('dash-button').firstElementChild;if(dashIcon)dashIcon.textContent=profile==='light'?'↓':'';
     $('melee-label').textContent=FOptions.keyName(prefs.bindings.melee[0]).toUpperCase()+' · CROSSE';
-    $('dash-label').textContent=profile==='light'?bindingLabel('jump')+' ↑ · '+bindingLabel(controls.device==='gamepad'?'dash':'descend')+' ↓ · '+bindingLabel('sprint')+' BOOST':p.dash>0?'ESQUIVE · '+p.dash.toFixed(1)+' s':FOptions.keyName(prefs.bindings.dash[0]).toUpperCase()+' · ESQUIVE PRÊTE';$('dash-button').style.opacity=profile!=='light'&&p.dash>0?'.35':'1';
+    $('dash-label').textContent=profile==='light'?bindingLabel('jump')+' ↑ · '+bindingLabel('dash')+' ↓ · '+bindingLabel('sprint')+' BOOST':p.dash>0?'ESQUIVE · '+p.dash.toFixed(1)+' s':FOptions.keyName(prefs.bindings.dash[0]).toUpperCase()+' · ESQUIVE PRÊTE';$('dash-button').style.opacity=profile!=='light'&&p.dash>0?'.35':'1';
     const pulse=p.pulseCooldown||0;$('pulse-label').textContent=pulse>0?'ONDE · '+pulse.toFixed(1)+' s':FOptions.keyName(prefs.bindings.pulse[0]).toUpperCase()+' · ONDE PRÊTE';$('pulse-button').style.opacity=pulse>0?'.35':'1';
     $('relay-count').textContent=s.relays+' / 3';$('relays').querySelectorAll('i').forEach((el,i)=>el.classList.toggle('on',i<s.relays));
     const required=(s.mechanisms||[]).filter(a=>a.required),activated=required.filter(a=>a.active).length,operational=activated===required.length;
@@ -70049,7 +70300,12 @@ G.FPilot={create:createPilot};
     const node=$('partner-marker'),s=sim.state,id=s.activeProfile==='light'?'heavy':'light',other=s.profiles?.[id]?.position;
     node.hidden=!other||mode!=='playing'||loadoutOpen;if(node.hidden)return;
     const q=MetalProfiles.marker({x:camera.pos[0],y:camera.pos[1]-1.62,z:camera.pos[2],yaw:camera.yaw,pitch:camera.pitch},other,{width:document.documentElement?.clientWidth||innerWidth,height:document.documentElement?.clientHeight||innerHeight,fov:camera.fov});
-    node.hidden=q.distance<1.5;if(node.hidden)return;
+    // The parked heavy or drone is drawn whole where it was left (David,
+    // 16/11/2026): the marker only helps to find it off screen, out of the
+    // drawing range or behind a wall.
+    const centre=[other.x,(other.y||0)+(id==='light'?1.42:1.1),other.z],toward=centre.map((v,k)=>v-camera.pos[k]),length=Math.hypot(...toward)||1;
+    const seen=!q.offscreen&&Math.hypot(other.x-s.player.x,other.z-s.player.z)<drawRange(false)&&sim.ray(camera.pos,toward.map(v=>v/length),length)>=length-.6;
+    node.hidden=seen||q.distance<1.5;if(node.hidden)return;
     node.style.left=q.x+'px';node.style.top=q.y+'px';node.dataset.profile=id;node.dataset.offscreen=String(q.offscreen);
     node.textContent=q.direction+' '+(id==='light'?'LÉGER':'LOURD')+' · '+Math.round(q.distance)+' m'+(Math.abs(q.height)>1.5?' · '+(q.height>0?'↑':'↓')+Math.round(Math.abs(q.height))+' m':'');
     node.setAttribute('aria-label',(id==='light'?'Personnage léger':'Personnage lourd')+' en attente à '+Math.round(q.distance)+' mètres');
@@ -70094,7 +70350,7 @@ G.FPilot={create:createPilot};
     if(mode==='playing'){
       if(f.pressed.includes('jump'))jumpQueued=true;if(f.pressed.includes('switchProfile'))switchProfileQueued=true;
       if(f.pressed.includes('fire'))pressFire();if(f.pressed.includes('fireLeft'))pressFire(true);
-      if(f.pressed.includes('weaponNext'))switchWeapon();if(f.pressed.includes('leftHand'))switchLeft();
+      if(f.pressed.includes('weaponNext'))switchWeapon();if(f.pressed.includes('leftHand'))switchLeft();if(f.pressed.includes('view'))toggleView();
       for(let i=0;i<5;i++)if(f.pressed.includes('weapon'+(i+1)))switchWeapon(i);
       if(f.pressed.includes('map')){$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();}
     }else{
@@ -70142,7 +70398,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.10.0',simHash:'a59972d6e9284501b0f199e312f2a4c9d4a712aecced1148de944ab7d859c767',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.11.0',simHash:'772d869cda1f550ed7d388b666195f4b1cfbd62a69f2619e6a23ea0df6fd268c',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){
@@ -70170,7 +70426,7 @@ G.FPilot={create:createPilot};
       input.lookX=lookDX;input.lookY=lookDY;
       dashQueued||=padState.dash;pulseQueued||=padState.pulse;meleeQueued||=padState.melee;interactQueued||=padState.interact;
       const fireHeld=mouseFire||touchState.fire||held('fire')||padState.fire,fireLeftHeld=mouseLeftFire||touchState.fireLeft||held('fireLeft')||padState.fireLeft;
-      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=undefined;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump')||touchJump!==null;input.descendHeld=held('descend')||touchDescend!==null;input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(MetalControls.merge(input,touchState),padState));input.assist=touch&&prefs.touchAssist||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch&&prefs.touchAssist;
+      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=undefined;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump')||touchJump!==null;input.descendHeld=held('dash')||touchDescend!==null;input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(MetalControls.merge(input,touchState),padState));input.assist=touch&&prefs.touchAssist||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch&&prefs.touchAssist;
       signals.lookYaw=dt>0?(lookDX-aimShownX)/dt:0;signals.lookPitch=dt>0?(lookDY-aimShownY)/dt:0;signals.firing=input.fire;
       fixedLoop.advance(now,part=>{
         poseView.capture(sim.state);sim.step(part,input);musicDirector?.update(sim.state,part);input.lookX=input.lookY=0;
@@ -70208,15 +70464,18 @@ G.FPilot={create:createPilot};
     renderState=poseView.render(sim.state,(mode==='demo'||mode==='playing'&&!loadoutOpen)?fixedLoop.frame.alpha:1);
     const p=renderState.player,isPlay=mode==='playing'||mode==='paused'||mode==='demo',t=mode==='menu'?clock:sim.state.time;
     if(mode==='playing'&&!loadoutOpen){const aim=FLoop.aim(sim.state.player.yaw,sim.state.player.pitch,lookDX,lookDY,-1.2,1.2);p.yaw=aim.yaw;p.pitch=aim.pitch;}
-    signals.time=t;signals.flying=sim.state.activeProfile==='light';signals.groundY=p.y;signals.grounded=!signals.flying&&!sim.state.player.airborne;signals.heat=sim.state.weaponHeat?.[sim.state.weapon]??sim.state.player.heat;const view=motion.update(mode==='playing'||mode==='demo'?dt:0,sim.state.locomotion||{},signals,softMotion),leftView=leftMotion.update(mode==='playing'||mode==='demo'?dt:0,sim.state.locomotion||{},{...signals,firing:input.fireLeft,heat:sim.state.weaponHeat?.[sim.state.equipment?.left]||0},softMotion);
+    signals.time=t;signals.flying=sim.state.activeProfile==='light';signals.groundY=p.y;signals.grounded=!signals.flying&&!sim.state.player.airborne;signals.heat=sim.state.weaponHeat?.[sim.state.weapon]??sim.state.player.heat;const twin=sim.state.activeProfile==='light',view=motion.update(mode==='playing'||mode==='demo'?dt:0,sim.state.locomotion||{},signals,softMotion),leftView=leftMotion.update(mode==='playing'||mode==='demo'?dt:0,sim.state.locomotion||{},twin?{...signals,firing:input.fire||input.fireLeft}:{...signals,firing:input.fireLeft,heat:sim.state.weaponHeat?.[sim.state.equipment?.left]||0},softMotion);
     const recoilPitch=isPlay?view.pitch+leftView.pitch:0;
     const camera={pos:[p.x,(p.y||0)+1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch+recoilPitch,roll:isPlay?view.roll+leftView.recoilRoll:0,fov:prefs.fov+(isPlay?view.fov+leftView.recoilFov:0)};
     if(mode==='menu'||mode==='options'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=(world.spawn.y||0)+1.72;}
     if(mode==='demo'&&demoCamera){const shot=demoCamera.update(dt,camera);demoShot=shot.shot;Object.assign(camera,shot.pose);}
+    // Third person: the camera leaves the eye; the firing ray does not.
+    const follow=mode==='playing'||mode==='paused'?followCamera.frame(p,(o,d,far)=>sim.ray(o,d,far),mode==='playing'?dt:0,{profile:twin?'light':'heavy',ground:(x,z)=>sim.ground?.(x,z),actorRange:aimRange}):null,third=!!follow?.thirdPerson;
+    if(third){camera.pos=follow.pos;camera.yaw=follow.yaw;camera.pitch=follow.pitch;camera.roll=0;camera.fov=prefs.fov;}
     camera.overlayFov=camera.fov;if(touch&&prefs.portraitFov)camera.fov=FTouch.fovFor(innerWidth/innerHeight,camera.fov);
-    const aimOffset=canvas.clientHeight*.5*Math.tan(recoilPitch)/Math.tan(clamp(camera.fov,40,110)*Math.PI/360);$('crosshair').style.marginTop=(aimOffset*Math.cos(camera.roll)).toFixed(2)+'px';$('crosshair').style.marginLeft=(-aimOffset*Math.sin(camera.roll)).toFixed(2)+'px';
+    const aimOffset=third?0:canvas.clientHeight*.5*Math.tan(recoilPitch)/Math.tan(clamp(camera.fov,40,110)*Math.PI/360);$('crosshair').style.marginTop=(aimOffset*Math.cos(camera.roll)).toFixed(2)+'px';$('crosshair').style.marginLeft=(-aimOffset*Math.sin(camera.roll)).toFixed(2)+'px';
     renderPartner(camera);
-    const drawing=demoBench?performance.now():0,drawModels=models(t,isPlay&&(mode!=='demo'||demoShot==='eyes'),camera);if(mode==='demo'&&demoShot!=='eyes')drawModels.push(...FActors.build({id:-1,type:sim.state.activeProfile==='heavy'?1:0,x:p.x,z:p.z,baseY:p.y,y:p.y+1.35,yaw:p.yaw,hp:p.hp,moveSpeed:sim.state.moving,awareness:'patrol'},{time:t,quality,backend:renderer.stats.backend}));
+    const drawing=demoBench?performance.now():0,drawModels=models(t,isPlay&&(mode!=='demo'||demoShot==='eyes'),camera,third);if(mode==='demo'&&demoShot!=='eyes'){const loc=sim.state.locomotion||{};drawModels.push(...(twin?MetalAvatars.drone(p,{time:t,weapon:sim.state.weapon,forward:loc.forward,strafe:loc.strafe,boosting:!!sim.state.jetpack?.active,flash:sim.state.flash,quality,backend:renderer.stats.backend}):MetalAvatars.heavy(p,{time:t,weapon:sim.state.weapon,speed:loc.speed,phase:loc.stridePhase,blend:loc.moveBlend,distance:6,flash:sim.state.flash,quality,backend:renderer.stats.backend})));}
     renderer.draw(camera,drawModels,{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,brightness:prefs.brightness,vignette:prefs.vignette,shadows:prefs.shadows,bloom:prefs.bloom,reflections:prefs.reflections,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
     if(demoBench)demoBench.drawMs.push(performance.now()-drawing);
     sceneDirty=false;
@@ -70258,7 +70517,7 @@ G.FPilot={create:createPilot};
       preparePlay(savedRun?savedIndex(savedRun):stage,()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1});return;
     }
     if(mode==='complete'){const nextSeed=(Date.now()>>>0)%1000000;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true});return;}
-    const nextStage=stage+1,loadout=sim.exportLoadout?.()||sim.exportInventory?.();preparePlay(nextStage,()=>{load(nextStage,undefined,loadout);saveCheckpoint();start();});
+    const nextStage=stage+1,loadout=heavyFirst(sim.exportLoadout?.()||sim.exportInventory?.());preparePlay(nextStage,()=>{load(nextStage,undefined,loadout);saveCheckpoint();start();});
   });
   $('back-menu').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
   $('pause-main').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
@@ -70283,7 +70542,7 @@ G.FPilot={create:createPilot};
   $('reflections').addEventListener('change',()=>{prefs.reflections=$('reflections').value;settings();});
   $('fps-limit').addEventListener('change',()=>{prefs.fpsLimit=Number($('fps-limit').value);settings();});
   $('reset-image').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['quality','softMotion','fov','brightness','shadows','bloom','reflections','showFps','crt','vignette','fpsLimit','renderScale'])prefs[key]=d[key];quality=prefs.quality;softMotion=prefs.softMotion;renderer.resize(quality);settings();});
-  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','bindings','bindingsVersion','padBindings','padVersion','padYaw','padPitch','padDead','padCurve','padInvertY','padAssist','padVibration','padSwapSticks'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
+  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','view','controlsHint','bindings','bindingsVersion','padBindings','padVersion','padYaw','padPitch','padDead','padCurve','padInvertY','padAssist','padVibration','padSwapSticks'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
   $('reset-audio').addEventListener('click',()=>{audio.cancelTestMix?.();const d=FOptions.defaults(touch);for(const key of ['masterVolume','musicVolume','effectsVolume','ambienceVolume'])prefs[key]=d[key];muted=false;settings();$('audio-status').textContent='Mix recommandé rétabli. Testez les tirs et les ambiances.';});
   $('test-audio').addEventListener('click',async()=>{
     if(audio.stats?.preview){audio.cancelTestMix?.();activateTitle();$('audio-status').textContent='Test audio arrêté.';return;}
@@ -70300,6 +70559,9 @@ G.FPilot={create:createPilot};
   });
   $('loadout-toggle').addEventListener('click',()=>{if(mode!=='playing')return;loadoutOpen=!loadoutOpen;sceneDirty=true;clearInput();document.body.classList.toggle('loadout-open',loadoutOpen);$('loadout-toggle').setAttribute('aria-expanded',String(loadoutOpen));});
   $('map-button').addEventListener('click',()=>{$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();});
+  $('view-button').addEventListener('click',()=>{toggleView();if(mode==='playing')canvas.focus({preventScroll:true});});
+  $('view-toggle').addEventListener('click',toggleView);
+  $('controls-hint-toggle').addEventListener('click',()=>{prefs.controlsHint=!prefs.controlsHint;settings();});
   $('weapon-switch').addEventListener('click',()=>switchWeapon());
   for(let i=0;i<5;i++)$('weapon-slot-'+i).addEventListener('click',()=>switchWeapon(i));
   $('left-hand-setting').addEventListener('change',()=>{const value=$('left-hand-setting').value;switchLeft(value==='none'?null:Number(value));canvas.focus({preventScroll:true});});
@@ -70325,6 +70587,7 @@ G.FPilot={create:createPilot};
     if(!e.repeat){if(match('fire'))pressFire();if(match('fireLeft'))pressFire(true);}
     if(!e.repeat)for(let i=0;i<5;i++)if(match('weapon'+(i+1)))switchWeapon(i);
     if(match('leftHand')&&!e.repeat)switchLeft();
+    if(match('view')&&!e.repeat)toggleView();
     if(match('map')&&!e.repeat){$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();}
   });
   addEventListener('keyup',e=>keys.delete(e.code));

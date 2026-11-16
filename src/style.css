@@ -214,3 +214,12 @@ body:not(.touch) .hud-bottom{grid-template-columns:minmax(145px,1fr) minmax(250p
 body:not(.touch) #arsenal{grid-column:auto;order:0}body:not(.touch) #arsenal .weapon-slot{min-height:58px;padding:5px;grid-template-rows:26px auto}body:not(.touch) #arsenal .weapon-slot svg{height:26px;width:45px}body:not(.touch) #arsenal .slot-name{font-size:7px}body:not(.touch) #arsenal .left-hand-strip{padding:5px 7px}body:not(.touch) .vital{padding:10px 12px}body:not(.touch) .vital strong{font-size:40px}body:not(.touch) .ammo-readout>strong{font-size:38px}
 @media(max-width:740px){body:not(.touch) .hud-bottom{grid-template-columns:1fr 1fr}body:not(.touch) #arsenal{grid-column:1/-1;order:-1;max-width:360px;justify-self:center}}
 body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-height:4.5em;overflow:hidden}
+
+/* First/third person view switch (David, 16/11/2026). */
+.view-button{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink)}body.touch .top-buttons .view-button{font-size:10px}
+/* Discreet in-game controls legend (David, 16/11/2026). */
+#controls-hint{position:absolute;left:max(28px,env(safe-area-inset-left));top:50%;transform:translateY(-30%);display:grid;grid-template-columns:auto auto;align-items:center;gap:5px 9px;max-width:290px;color:#e6e7dc;opacity:.5;pointer-events:none;text-shadow:0 1px 2px #000c;font-size:10px;letter-spacing:.05em}
+#controls-hint kbd{justify-self:end;font:inherit;font-weight:700;color:#eef6d2;padding:1px 5px;border:1px solid #c0d2bf3d;border-radius:3px;background:#0d191766;white-space:nowrap}
+#controls-hint span{font-size:9px;text-transform:uppercase;white-space:nowrap}
+#controls-hint[hidden],body.touch #controls-hint{display:none}body[data-boss=true] #controls-hint{opacity:.28}
+@media(max-height:640px),(max-width:760px){#controls-hint{display:none}}

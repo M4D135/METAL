@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root=new URL('../',import.meta.url);
-const source=Object.fromEntries(['music','audio','audio-recipes','music-director','soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls','loop','schedule','touch','jobs','tasks','host','game'].map(name=>
+const source=Object.fromEntries(['music','audio','audio-recipes','music-director','soundscape','economy','destruction','effects','simulation','motion','actors','avatars','options','input','controls','camera','loop','schedule','touch','jobs','tasks','host','game'].map(name=>
   [name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 class Param{
   constructor(value=0){this.value=value;this.events=[];}
@@ -432,7 +432,7 @@ function shell({touch=false,settings:storedSettings,recipes=false}={}){
   // The shell receives the same observed real audio instance as the direct API tests.
   // With recipes, game.js's own create() argument builds that instance.
   const createAudio=r.scope.FAudio.create;r.scope.FAudio.create=recipes?options=>{r.createOptions=options;return r.audio=createAudio(options);}:()=>r.audio;
-  for(const name of ['music-director','soundscape','economy','destruction','effects','simulation','motion','actors','options','input','controls','loop','schedule','touch','jobs','tasks','host'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
+  for(const name of ['music-director','soundscape','economy','destruction','effects','simulation','motion','actors','avatars','options','input','controls','camera','loop','schedule','touch','jobs','tasks','host'])vm.runInContext(source[name],r.scope,{filename:name+'.js'});
   const create=r.scope.FSimulation.create;r.scope.FSimulation.create=value=>{const sim=create(value);simulations.push(sim);return sim;};
   vm.runInContext(source.game,r.scope,{filename:'game.js'});assert.deepEqual(errors,[],'game must initialize without an audio or DOM exception');
   return Object.assign(r,{element,listeners,documentListeners,simulations,downloads,blobs,timers,memory,gesture(name='pointerup',event={}){emit(listeners,name,{type:name,target:element('body'),isTrusted:true,button:0,preventDefault:noop,...event});},visibility(visible){r.scope.document.hidden=!visible;emit(documentListeners,'visibilitychange',{});},focus(){focused=true;emit(listeners,'focus',{});},blur(){focused=false;emit(listeners,'blur',{});},frame(ms=40){now+=ms;if(r.ctx)r.advanceTimers(ms/1000);const batch=frames;frames=[];for(const fn of batch)fn(now);},async flush(){for(let i=0;i<12;i++){await Promise.resolve();this.frame(10);}},async ready(){for(let i=0;i<40;i++){this.frame();await Promise.resolve();await Promise.resolve();if(this.mode()!=='loading')return;}throw new Error('loading did not finish');},mode:()=>element('body').dataset.state||'menu'});

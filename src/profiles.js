@@ -5,8 +5,10 @@
   const names=['light','heavy'],weapons={light:[4,1,0],heavy:[4,3,2]};
   const level=xp=>1+Math.min(19,Math.floor(Math.sqrt(xp/100)));
   const capacity=xp=>4+.2*(level(xp)-1);
-  function fresh(economy){
-    return {version:1,active:'light',classes:Object.fromEntries(names.map(id=>[id,{xp:0,weapon:4,left:null,position:null,economy:G.FEconomy.campaign(economy||G.FEconomy.fresh())}])),jetpack:{fuel:4,recharge:0}};
+  // New expeditions start with the heavy (David, 16/11/2026): the walking
+  // character is the hero; the light drone is his flying assistant.
+  function fresh(economy,active='heavy'){
+    return {version:1,active:names.includes(active)?active:'heavy',classes:Object.fromEntries(names.map(id=>[id,{xp:0,weapon:4,left:null,position:null,economy:G.FEconomy.campaign(economy||G.FEconomy.fresh())}])),jetpack:{fuel:4,recharge:0}};
   }
   function copy(value){
     if(!value||value.version!==1||!names.includes(value.active)||!value.classes)return null;

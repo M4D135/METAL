@@ -305,7 +305,11 @@ function navigationGraph(cells,width,testEdge){
       doors:(world.doors||[]).map(d=>({...d,progress:d.requires===undefined?1:0,open:d.requires===undefined,hp:18,destroyed:false})),
       lifts:(world.lifts||[]).map(l=>({...l,y:l.minY,target:l.minY,powered:l.requires===undefined,moving:false,carrying:false})),
       aiStats:{awake:0,dormant:0,reserve:0,combat:0,combatCap:maxCombat,alive:world.enemies.length,pathSearches:0,pathDeferred:0}};
-    if(profilesEnabled){for(const id of G.MetalProfiles.names)initialProfiles.classes[id].position=G.MetalProfiles.position(p);s.activeProfile=initialProfiles.active;s.profiles=initialProfiles.classes;s.jetpack={...initialProfiles.jetpack,capacity:G.MetalProfiles.capacity(initialProfiles.classes.light.xp),active:false};s.economy=s.profiles[s.activeProfile].economy;}
+    if(profilesEnabled){for(const id of G.MetalProfiles.names)initialProfiles.classes[id].position=G.MetalProfiles.position(p);
+      // The parked drone waits above the heavy's head, never inside his body,
+      // up to one metre below any ceiling over the spawn.
+      if(initialProfiles.active==='heavy'){let lift=1;for(const c of world.colliders||[])if(c.minY>=p.y+1.8-1e-7&&c.minY<p.y+lift+1.8&&p.x+.28>c.minX&&p.x-.28<c.maxX&&p.z+.28>c.minZ&&p.z-.28<c.maxZ)lift=Math.max(0,c.minY-1.8-p.y);if(lift>0)Object.assign(initialProfiles.classes.light.position,{y:p.y+lift,airborne:true});}
+      s.activeProfile=initialProfiles.active;s.profiles=initialProfiles.classes;s.jetpack={...initialProfiles.jetpack,capacity:G.MetalProfiles.capacity(initialProfiles.classes.light.xp),active:false};s.economy=s.profiles[s.activeProfile].economy;}
     const encounterMap=new Map(s.encounters.map(q=>[q.id,q])),enemyEncounter=new Map();
     // SIM-06: encounter index per enemy, same last-wins order as the map above.
     const enemyEncounterIndex=new Int32Array(s.enemies.length).fill(-1);
@@ -807,20 +811,22 @@ function navigationGraph(cells,width,testEdge){
       locomotion.stridePhase=(locomotion.stridePhase+travel/(2.4+.5*locomotion.sprintBlend)*Math.PI*2)%(Math.PI*2);
       if(!travel){locomotion.vx=locomotion.vz=locomotion.speed=locomotion.forward=locomotion.strafe=0;}
     }
-    // The light robot is a hovering craft. Air velocities are part of the
-    // existing checkpoint format, including inertia during a profile switch.
+    // The light robot is a drone (David, 16/11/2026): the sticks move it level,
+    // like the walking heavy, while jump and dodge climb and descend. Air
+    // velocities are part of the checkpoint format, including inertia during a
+    // profile switch. Boost spends the tank and nearly doubles the speed.
     function fly(dt,input){
       if(!(dt>0))return;
       p.airborne=true;p.airTime=0;p.padId=null;p.dashing=0;jumpBuffer=coyote=0;
       if(!clipEscape||!boundaryAt(p.x,p.z))clipEscape=false;
-      const sx=p.x,sy=p.y,sz=p.z,cy=Math.cos(p.yaw),sn=Math.sin(p.yaw),cp=Math.cos(p.pitch),sp=Math.sin(p.pitch);
+      const sx=p.x,sy=p.y,sz=p.z,cy=Math.cos(p.yaw),sn=Math.sin(p.yaw);
       const mx=Number.isFinite(input.moveX)?input.moveX:0,my=Number.isFinite(input.moveY)?input.moveY:0;
-      let wx=cy*mx+sn*cp*my,wy=sp*my+(input.jumpHeld?1:0)-(input.descendHeld?1:0),wz=sn*mx-cy*cp*my;
-      const length=Math.hypot(wx,wy,wz);if(length>1){wx/=length;wy/=length;wz/=length;}
+      let wx=cy*mx+sn*my,wz=sn*mx-cy*my;const flat=Math.hypot(wx,wz);if(flat>1){wx/=flat;wz/=flat;}
+      const wy=(input.jumpHeld?1:0)-(input.descendHeld?1:0),length=Math.hypot(wx,wy,wz),boostSpeed=motionProfile.walk*1.8;
       let remaining=dt,collided=false;s.jetpack.active=false;jetSoundWait=Math.max(0,jetSoundWait-dt);
       while(remaining>1e-10){
         const h=Math.min(remaining,1/120),boost=!!input.sprint&&length>.002&&s.jetpack.fuel>0;
-        const powered=boost?Math.min(h,s.jetpack.fuel):0,speed=motionProfile.walk+(motionProfile.sprint-motionProfile.walk)*powered/h;
+        const powered=boost?Math.min(h,s.jetpack.fuel):0,speed=motionProfile.walk+(boostSpeed-motionProfile.walk)*powered/h;
         if(boost){s.jetpack.fuel=Math.max(0,s.jetpack.fuel-powered);if(s.jetpack.fuel<1e-10)s.jetpack.fuel=0;s.jetpack.recharge=.4;s.jetpack.active=true;}
         else{s.jetpack.recharge=Math.max(0,s.jetpack.recharge-h);if(!s.jetpack.recharge)s.jetpack.fuel=Math.min(s.jetpack.capacity,s.jetpack.fuel+h*1.25);}
         const decay=Math.exp(-12*h),area=(1-decay)/12,velocity=[p.airVX,p.airVY,p.airVZ],wish=[wx*speed,wy*speed,wz*speed];
@@ -969,7 +975,7 @@ function navigationGraph(cells,width,testEdge){
       if(!profilesEnabled||s.dead||s.won)return false;
       exportProfiles();const from=s.activeProfile,to=from==='light'?'heavy':'light',next=s.profiles[to];
       const healthRatio=p.hp/s.maxHp;s.activeProfile=to;s.economy=next.economy;stats=G.FEconomy.stats(s.economy);s.maxHp=stats.maxHp;p.hp=Math.min(s.maxHp,healthRatio*s.maxHp);
-      s.weapon=s.equipment.right=s.inventory.weapons[next.weapon]?next.weapon:4;s.equipment.left=next.left!==null&&s.inventory.weapons[next.left]?next.left:null;
+      s.weapon=s.equipment.right=s.inventory.weapons[next.weapon]?next.weapon:4;s.equipment.left=to!=='light'&&next.left!==null&&s.inventory.weapons[next.left]?next.left:null;
       Object.assign(p,next.position);stopMotion(true);jumpBuffer=coyote=0;jumpWasPressed=false;p.dashing=0;clipEscape=boundaryAt(p.x,p.z);s.jetpack.active=false;mirrorHeat();emit('profileSwitch',{from,to,x:p.x,y:p.y,z:p.z});return true;
     }
     function exportInventory(){return {weapons:s.inventory.weapons.slice(),ammo:s.inventory.ammo.slice()};}
@@ -991,9 +997,11 @@ function navigationGraph(cells,width,testEdge){
       refreshAdaptation();
       emit('purchase',{id,itemId,label:result.item?.label||itemId,cost:{...result.cost}});return result;
     }
-    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id))return false;if(arsenal){if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;mirrorHeat();syncArmor();return true;}
+    // The light drone carries twin cannons of one weapon: it has no left hand.
+    function twinMounted(){return profilesEnabled&&s.activeProfile==='light';}
+    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id))return false;if(arsenal){if(twinMounted())s.equipment.left=null;else if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;mirrorHeat();syncArmor();return true;}
     function selectLeftWeapon(id){
-      if(!arsenal||s.dead||s.won)return false;
+      if(!arsenal||s.dead||s.won||id!==null&&twinMounted())return false;
       if(id!==null&&(!Number.isInteger(id)||id<0||id>=weaponSlots||!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id)))return false;
       if(id===s.weapon){if(!Number.isInteger(s.equipment.left))return false;s.weapon=s.equipment.right=s.equipment.left;}
       s.equipment.left=id;mirrorHeat();syncArmor();return true;
@@ -1659,15 +1667,22 @@ function navigationGraph(cells,width,testEdge){
         if(hand==='left')s.leftFlash=1;else s.flash=1;s.shots++;hear(p.x,p.z,30,p.y);reactToShot();return true;
       }
       let connected=false;
-      for(let i=0;i<(shotgun?7*shells:1);i++){
-        const pellet=i%7,angle=(pellet-1)*Math.PI/3+s.shots*.71+(i>=7?.29:0),spread=pellet?.088:0,a=Math.cos(angle)*spread,c=Math.sin(angle)*spread;
-        const dir=base.map((v,k)=>v+right[k]*a+up[k]*c),n=Math.hypot(...dir);for(let k=0;k<3;k++)dir[k]/=n;
-        if(muzzle.blocked){damageScenery(origin,shotgun?5:2,0,muzzle.direction);particles(...origin,5,1);continue;}
-        const hit=hitRay(origin,dir,shotgun?24:75,assist),prop=destruction?.raycast?.(origin,dir,hit.distance);if(prop&&prop.distance<hit.distance){hit.distance=prop.distance;hit.victim=null;}
-        if(hit.victim){connected=true;damageEnemy(hit.victim,(shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):handgun?1.2:1)*calibration.damageMultiplier,{x:p.x,y:p.y+1.62,z:p.z,credit:true,weapon,...(profilesEnabled?{profile:s.activeProfile}:{})},hit.weak);particles(...origin.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
-        else{const point=origin.map((v,k)=>v+dir[k]*hit.distance);particles(...point,5,shotgun?1:3);if(hit.distance<(shotgun?24:75)-.001)damageScenery(point,shotgun?5:2,0,dir);}
+      // Twin cannons (David, 16/11/2026): the light drone fires its weapon from
+      // both mounts at once, each carrying 60 % of a single shot, for one
+      // round of ammunition and heat.
+      const twin=twinMounted()&&hand==='right',share=twin?.6:1;
+      for(let mount=0;mount<(twin?2:1);mount++){
+        const gun=mount?playerMuzzle(eye,forward,right,up,'left',0):muzzle,from=gun.point,way=mount?aim.map((v,k)=>v-from[k]):toward,span=mount?Math.hypot(...way)||1:length,aimed=mount?way.map(v=>v/span):base;
+        for(let i=0;i<(shotgun?7*shells:1);i++){
+          const pellet=i%7,angle=(pellet-1)*Math.PI/3+s.shots*.71+(i>=7?.29:0)+mount*.53,spread=pellet?.088:0,a=Math.cos(angle)*spread,c=Math.sin(angle)*spread;
+          const dir=aimed.map((v,k)=>v+right[k]*a+up[k]*c),n=Math.hypot(...dir);for(let k=0;k<3;k++)dir[k]/=n;
+          if(gun.blocked){damageScenery(from,shotgun?5:2,0,gun.direction);particles(...from,5,1);continue;}
+          const hit=hitRay(from,dir,shotgun?24:75,assist),prop=destruction?.raycast?.(from,dir,hit.distance);if(prop&&prop.distance<hit.distance){hit.distance=prop.distance;hit.victim=null;}
+          if(hit.victim){connected=true;damageEnemy(hit.victim,(shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):handgun?1.2:1)*share*calibration.damageMultiplier,{x:p.x,y:p.y+1.62,z:p.z,credit:true,weapon,...(profilesEnabled?{profile:s.activeProfile}:{})},hit.weak);particles(...from.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
+          else{const point=from.map((v,k)=>v+dir[k]*hit.distance);particles(...point,5,shotgun?1:3);if(hit.distance<(shotgun?24:75)-.001)damageScenery(point,shotgun?5:2,0,dir);}
+        }
       }
-      syncDestruction();if(hand==='left')s.leftFlash=1;else s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon,hand,shells});hear(p.x,p.z,shotgun?24:18,p.y);reactToShot();
+      syncDestruction();if(twin)s.flash=s.leftFlash=1;else if(hand==='left')s.leftFlash=1;else s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon,hand,shells,...(twin?{twin:true}:{})});hear(p.x,p.z,shotgun?24:18,p.y);reactToShot();
       if(connected){s.hits++;s.hitMarker=.18;emit('hit');}return true;
     }
     function fire(assist=false,hand='right'){
@@ -2608,6 +2623,8 @@ function navigationGraph(cells,width,testEdge){
     }
     function step(dt,input={}){
       dt=Number.isFinite(dt)?clamp(dt,0,.05):0;if(s.won||s.dead||checkPlayerBounds())return;
+      // Both triggers fire the drone's twin cannons.
+      if(input.fireLeft&&twinMounted())input={...input,fire:true,fireLeft:false};
       stepEventStart=s.events.length;if(arsenal&&dt>0)thermalSerialized=true;syncArmor();
       s.time+=dt;s.elapsed+=dt;fireWait=Math.max(0,fireWait-dt);emptyWait=Math.max(0,emptyWait-dt);navWait-=dt;hazardWait=Math.max(0,hazardWait-dt);recovery=Math.max(0,recovery-dt);
       if(arsenal){for(let i=0;i<weaponSlots;i++){const before=weaponWait[i],held=input.fire&&i===(Number.isInteger(input.weapon)?input.weapon:s.weapon)||input.fireLeft&&i===s.equipment.left;weaponCarry[i]=held&&before>0&&before<=dt+1e-9?Math.max(0,dt-before):0;weaponWait[i]=Math.max(0,before-dt);if(weaponWait[i]<1e-9)weaponWait[i]=0;}s.leftFlash=Math.max(0,s.leftFlash-dt*9);}

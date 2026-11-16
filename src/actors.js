@@ -53,9 +53,11 @@
       const scheme=e.bossKind==='siegebreaker'?[[.23,.20,.18],[.37,.29,.22],[.60,.34,.13]]:e.bossKind==='custodian'?[[.43,.46,.43],[.25,.32,.34],[.57,.52,.36]]:[[.25,.29,.25],[.37,.41,.32],[.49,.37,.23]];
       palette.shell=mix(scheme[0],[.66,.49,.30],hurt);palette.edge=scheme[1];palette.trim=scheme[2];
     }
+    // The playable heavy reuses this frame with its own livery and visor.
+    if(options.palette)for(const key of Object.keys(palette))if(Array.isArray(options.palette[key]))palette[key]=options.palette[key];
     const peaceful=e.awareness==='patrol',scanning=e.awareness==='search'||e.awareness==='investigate';
-    const signal=stun||peaceful?[.20,.67,.70]:charge||scanning?[.86,.49,.14]:[.80,.20,.075];
-    const emission=stun?.20+.08*Math.sin(time*9):.28+charge*.45,signalMat=stun||peaceful?4:charge||scanning?5:6;
+    const signal=Array.isArray(options.signal)?options.signal:stun||peaceful?[.20,.67,.70]:charge||scanning?[.86,.49,.14]:[.80,.20,.075];
+    const emission=stun?.20+.08*Math.sin(time*9):.28+charge*.45,signalMat=Array.isArray(options.signal)?4:stun||peaceful?4:charge||scanning?5:6;
     function piece(name,shape,p,s,skin='shell',f=root,r=null,mat=0,emissive=0){
       const color=Array.isArray(skin)?skin:palette[skin],rot=r?angles(productTo(MAT2,f.b,rotationTo(MAT,r[0],r[1],r[2]))):f.r;
       const m=G.FRender.mesh(shape,point(f,p),s,mat,rot,emissive);m.color=color;m.surface='object';m.actorPart=name;m.actorLod=lod;out.push(m);return m;

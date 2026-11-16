@@ -13,6 +13,19 @@
   const preparationJobs=FJobs.create({environment:window,handlers:MetalTasks.jobs,bootstrap:'FJobs.serve(MetalTasks.jobs);',forceMain:new URLSearchParams(location.search).get('jobs')==='main'});
   addEventListener('pagehide',()=>preparationJobs.dispose());
   window.FMusic?.setPreparer?.((value,seed)=>preparationJobs.mode==='main'?null:preparationJobs.request('music',{stage:value,seed}).then(r=>r.prepared));
+  const followCamera=MetalCamera.create();followCamera.reset(prefs.view==='third');
+  // Distance to the first machine on the firing ray: the third-person camera
+  // then centres the crosshair on what the shot will really hit.
+  function aimRange(o,d,far){
+    let best=far;
+    for(const e of sim.state.enemies){
+      if(e.hp<=0||e.deployed===false)continue;
+      const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1,r=(e.type===3?1.15:.67)*scale,cx=e.x-o[0],cy=(e.y||0)-o[1],cz=e.z-o[2],along=cx*d[0]+cy*d[1]+cz*d[2];
+      if(along<=0||along-r>best)continue;
+      const miss=cx*cx+cy*cy+cz*cz-along*along;if(miss<r*r){const hit=along-Math.sqrt(r*r-miss);if(hit>0&&hit<best)best=hit;}
+    }
+    return best;
+  }
   const controls=MetalControls.create(prefs,{device:touch?'touch':'keyboard'});let padLast=performance.now(),padState={},jumpQueued=false,switchProfileQueued=false,touchJump=null,loadoutOpen=false,boundaryFlash=0,weakFlash=0,killFlash=0,freezeUntil=0;const hurtDirections=[],impactMarks=[];let deflectUntil=0,deflectCount=0,deflectWindow=0,deflectHints=0;
   const recoil={shot:{omega:38,velocity:1.9*38/27,pitchDegrees:.35,rollDegrees:.6},pistol:{omega:30,velocity:1.45*30/27,pitchDegrees:.6},fracture:{omega:18,velocity:3.5*18/27,pitchDegrees:2,fovDegrees:-1.8},rocket:{omega:14,velocity:5.5*14/27,pitchDegrees:2.6,fovDegrees:-2.5},grenade:{omega:16,velocity:4.2*16/27,pitchDegrees:1.2}};
   const audio=FAudio.create({...window.MetalAudio?.options?.(),asyncPrepare:preparationJobs.mode!=='main',preparePCM:(name,variant)=>preparationJobs.mode==='main'?null:preparationJobs.request('fx',{name,variant}).then(r=>r.pcm)}),soundscape=FSoundscape.create(),motion=FMotion.create({recoil,cameraSteps:true}),leftMotion=FMotion.create({recoil,cameraSteps:true}),brain=window.FBrain?.create({mode:prefs.aiAcceleration}),SAVE_KEY='ferro-expedition-v2';
@@ -61,6 +74,13 @@
     const armor=value.armor===undefined?null:FSimulation.copyArmor?.(value.armor,100);if(value.armor!==undefined&&!armor)return null;
     if(profiles&&(!MetalProfiles.owns(profiles,inventory)||JSON.stringify(profiles.classes[profiles.active].economy)!==JSON.stringify(economy)))return null;
     return {...(profiles?{profiles}:{}),inventory:{weapons:inventory.weapons.slice(),ammo:inventory.ammo.slice()},...(economy?{economy}:{}),...(equipment?{equipment}:{}),...(campaign?{campaign}:{}),...(armor?{armor}:{})};
+  }
+  // Each world starts with the heavy hero (David, 16/11/2026); his drone waits above him.
+  function heavyFirst(value){
+    const q=copyLoadout(value);if(!q?.profiles||q.profiles.active!=='light')return q||value;
+    const heavy=q.profiles.classes.heavy;q.profiles.active='heavy';q.economy=FEconomy.copy(heavy.economy);
+    if(q.equipment)q.equipment={right:heavy.weapon,left:heavy.left};
+    return copyLoadout(q)||value;
   }
   const skyEnvironments=new WeakMap();
   function skyEnvironment(w){
@@ -147,13 +167,28 @@
   function brainStatus(){const status=brain?.status;$('ai-setting').value=prefs.aiAcceleration;$('ai-status').textContent=status?.label||'Décisions tactiques locales · traitement CPU.';}
   function saveSettings(){try{localStorage.setItem('ferro-settings',JSON.stringify(prefs));}catch{}}
   function bindingLabel(id){return controls.label(id);}
-  function activeDevice(device){const previousTouch=touch;controls.use(device);touch=forceTouch||device==='touch';if(touch&&!previousTouch)$('radar-wrap').hidden=true;if(!touch&&previousTouch){touchControls.clear();paintStick();}document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch&&prefs.touchAssist||device==='gamepad'&&prefs.padAssist;}
+  function activeDevice(device){const previousTouch=touch,previousDevice=controls.device;controls.use(device);touch=forceTouch||device==='touch';if(touch&&!previousTouch)$('radar-wrap').hidden=true;if(!touch&&previousTouch){touchControls.clear();paintStick();}document.body.classList.toggle('touch',touch);document.body.classList.toggle('pad',device==='gamepad');input.assist=touch&&prefs.touchAssist||device==='gamepad'&&prefs.padAssist;if(previousDevice!==controls.device||previousTouch!==touch)controlsLegend();}
   function controlHints(){
-    if(touch){$('interact-key').textContent='';$('intro-controls').textContent='À gauche : déplacer · À droite : viser';$('help-text').textContent='Glissez à gauche pour déplacer ; poussez plus loin pour courir. Glissez à droite ou sur TIR pour viser. Maintenez SAUT pour le jetpack du léger. Le bouton LÉGER / LOURD change de personnage. ARMES ouvre l’arsenal ; la carte est accessible en haut.';return;}
+    if(touch){$('interact-key').textContent='';$('intro-controls').textContent='À gauche : déplacer · À droite : viser';$('help-text').textContent='Glissez à gauche pour déplacer ; poussez plus loin pour courir ou pour le boost du drone. Glissez à droite ou sur TIR pour viser. Le drone léger vole à plat : MONTER et DESCENDRE règlent l’altitude. Le bouton LOURD / LÉGER change de personnage, VUE passe en vue à la première ou à la troisième personne. ARMES ouvre l’arsenal ; la carte est accessible en haut.';return;}
     $('interact-key').textContent=bindingLabel('interact');
     $('intro-controls').textContent=controls.device==='gamepad'?'LS déplacer · RS viser · '+bindingLabel('fire')+' tirer · '+bindingLabel('jump')+' sauter':'Clavier, manette ou écran tactile';
-    $('help-text').textContent=controls.device==='gamepad'?'LS : déplacement · RS : visée · '+['fire','fireLeft','jump','dash','melee','interact','weaponNext','switchProfile','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · '):'ZQSD / WASD : déplacer · Souris : viser · '+['fire','jump','dash','melee','interact','switchProfile','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · ');
-    if(sim?.state.activeProfile==='light')$('help-text').textContent+=' · VOL : viser puis avancer · '+bindingLabel('jump')+' monter · '+bindingLabel(controls.device==='gamepad'?'dash':'descend')+' descendre · '+bindingLabel('sprint')+' boost';
+    $('help-text').textContent=controls.device==='gamepad'?'LS : déplacement · RS : visée · '+['fire','fireLeft','sprint','jump','dash','pulse','interact','weaponNext','switchProfile','view','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · '):'ZQSD / WASD : déplacer · Souris : viser · '+['fire','sprint','jump','dash','melee','interact','switchProfile','view','map','pause'].map(id=>bindingLabel(id)+' : '+FOptions.actions.find(a=>a.id===id).label).join(' · ');
+    if(sim?.state.activeProfile==='light')$('help-text').textContent+=' · DRONE : vol à plat · '+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre · '+bindingLabel('sprint')+' boost · tir des deux canons';
+    controlsLegend();
+  }
+  // Discreet in-game legend (David, 16/11/2026): the actual bindings of the
+  // device in use, for the character in control. Touch has labelled buttons.
+  function controlsLegend(){
+    const node=$('controls-hint'),pad=controls.device==='gamepad',drone=sim?.state.activeProfile==='light';
+    node.hidden=touch||!prefs.controlsHint;if(node.hidden)return;
+    const key=id=>pad?bindingLabel(id):FOptions.keyName(prefs.bindings[id]?.[0]||'').replace(/^(Maj|Ctrl) [GD]$/,'$1');
+    const defaults=['forward','left','back','right'].every(id=>JSON.stringify(prefs.bindings[id])===JSON.stringify(FOptions.defaults().bindings[id]));
+    const move=pad?'LS':defaults?'ZQSD/WASD':['forward','left','back','right'].map(key).join(''),aim=pad?'RS':'Souris';
+    const fire=pad?key('fire'):'Clic',left=pad?key('fireLeft'):'Clic droit';
+    const rows=drone?[[move+' · '+aim,'voler · viser'],[fire,'tirer · 2 canons'],[key('jump')+' · '+key('dash'),'monter · descendre'],[key('sprint'),'boost'],[key('interact'),'interagir'],[key('switchProfile'),'lourd'],[key('view'),'vue 1re / 3e']]
+      :[[move+' · '+aim,'déplacer · viser'],[fire+' · '+left,'tirer · main gauche'],[key('jump')+' · '+key('dash'),'sauter · esquiver'],[key('sprint'),'courir'],[key('pulse'),'onde'],[key('interact'),'interagir'],...(pad?[[key('weaponNext'),'arme suivante']]:[]),[key('switchProfile'),'drone léger'],[key('view'),'vue 1re / 3e']];
+    const text=rows.filter(([k])=>k&&k!=='—').map(([k,label])=>'<kbd>'+k+'</kbd><span>'+label+'</span>').join('');
+    if(node.dataset.text!==text){node.innerHTML=text;node.dataset.text=text;}
   }
   function weaponHint(){const keys=Array.from({length:world?.campaign?5:4},(_,i)=>bindingLabel('weapon'+(i+1)));$('weapon-switch').title='Armes : '+keys.join(' / ')+' ou molette';}
   function renderBindings(){
@@ -179,7 +214,7 @@
     $('quality-toggle').querySelector('strong').textContent={auto:'Auto',low:'Économie',high:'Haute'}[quality];
     $('demo-toggle').setAttribute('aria-pressed',String(prefs.demo));$('demo-toggle').querySelector('strong').textContent=prefs.demo?'Activée':'Désactivée';$('demo-delay').value=String(prefs.demoDelay);
     $('difficulty-setting').value=String(prefs.difficulty);$('difficulty-hint').textContent=['Standard · apprenez à lire les attaques ; la pression monte avec les secteurs et les objectifs.','Brutal · des machines plus agressives, des tirs plus rapprochés et moins de répit.','Cauchemar · des attaques plus rapides, des impacts plus durs et une forte pression.'][prefs.difficulty];brainStatus();
-    $('motion-toggle').querySelector('strong').textContent=softMotion?'Doux':'Désactivés';
+    $('motion-toggle').querySelector('strong').textContent=softMotion?'Doux':'Désactivés';renderView();
     for(const [id,key,on,off] of [['shadows','shadows','Activées','Désactivées'],['bloom','bloom','Activé','Désactivé'],['fps','showFps','Visible','Masqué'],['crt','crt','Activé','Désactivé'],['vignette','vignette','Activée','Désactivée'],['invert','invertY','Oui','Non'],['pointer-acceleration','systemPointerAcceleration','Activée','Désactivée']]){const el=$(id+'-toggle');el.querySelector('strong').textContent=prefs[key]?on:off;el.setAttribute('aria-pressed',String(prefs[key]));}
     for(const [id,key,multiplier,suffix] of [['fov','fov',1,'°'],['brightness','brightness',100,' %'],['sensitivity','sensitivity',100,' ×'],['crosshair','crosshairScale',100,' %'],['master','masterVolume',100,' %'],['music','musicVolume',100,' %'],['effects','effectsVolume',100,' %'],['ambience','ambienceVolume',100,' %']]){
       $(id+'-setting').value=String(Math.round(prefs[key]*multiplier));$(id+'-value').textContent=(id==='sensitivity'?prefs[key].toFixed(2).replace('.',','):Math.round(prefs[key]*multiplier))+suffix;
@@ -200,6 +235,17 @@
     const silent=[['musicVolume','Musique coupée'],['effectsVolume','Effets coupés'],['ambienceVolume','Ambiances coupées']].filter(([key])=>prefs[key]===0).map(([,label])=>label);
     $('audio-status').textContent=muted||prefs.masterVolume===0?'Son coupé. Activez le son et le volume général pour écouter.':silent.length?silent.join(' · ')+'. Réglez les curseurs pour les entendre.':'Les tirs et impacts passent devant la musique. Les ambiances restent spatialisées.';
     document.body.classList.toggle('low-motion',!softMotion);audio.setMix?.({master:prefs.masterVolume,music:prefs.musicVolume,effects:prefs.effectsVolume,ambience:prefs.ambienceVolume});audioGate();syncTitle();saveSettings();renderBindings();
+  }
+  // First or third person, for both characters (David, 16/11/2026).
+  function renderView(){
+    const third=prefs.view==='third';followCamera.set(third);
+    $('controls-hint-toggle').querySelector('strong').textContent=prefs.controlsHint?'Affichée':'Masquée';$('controls-hint-toggle').setAttribute('aria-pressed',String(prefs.controlsHint));
+    $('view-toggle').querySelector('strong').textContent=third?'3e personne':'1re personne';$('view-toggle').setAttribute('aria-pressed',String(third));
+    $('view-button').textContent=third?'3P':'1P';$('view-button').setAttribute('aria-label','Vue à la '+(third?'troisième':'première')+' personne. Changer de vue.');$('view-button').title='Vue 1re / 3e personne'+(touch?'':' ('+bindingLabel('view')+')');
+  }
+  function toggleView(){
+    prefs.view=prefs.view==='third'?'first':'third';renderView();saveSettings();sceneDirty=true;
+    if(mode==='playing')toast(prefs.view==='third'?'VUE À LA TROISIÈME PERSONNE':'VUE À LA PREMIÈRE PERSONNE',1.4);
   }
   function toast(message,seconds=2.8){$('toast').textContent=message;$('toast').classList.add('visible');toastTime=seconds;}
   function encounter(name,caption){$('encounter-name').textContent=name;$('encounter-caption').textContent=caption;$('encounter').classList.add('visible');encounterTime=4.2;}
@@ -319,14 +365,14 @@
     if(sim.selectWeapon)sim.selectWeapon(carry?.equipment?.right??selectedWeapon);else sim.state.weapon=selectedWeapon;
     selectedWeapon=sim.state.weapon;stageEntryLoadout=copyLoadout(sim.exportLoadout?.()||sim.exportInventory?.());
     renderLoadPending=true;if(!deferLaunch)loadRender();
-    motion.reset();leftMotion.reset();lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
+    motion.reset();leftMotion.reset();followCamera.reset(prefs.view==='third');lastFootstep=0;actorMotion.clear();systemMotion.clear();encounterTime=0;$('encounter').classList.remove('visible');outdoorMix=isOutdoors(sim.state.player.x,sim.state.player.z)?1:0;
     soundscape.reset();audio.setStage?.(world.stage, seed);audio.setEnvironment?.(world.environment,outdoorMix);audio.setMachinery?.(0);audio.setSteam?.(0);musicDirector?.reset();
     $('music-title').textContent=trackLabel();
     $('sector-number').textContent=(world.campaign?'MONDE ':'SECTEUR ')+String(stage+1).padStart(2,'0')+(world.campaign?' / 18':' / 03');$('sector-title').textContent=(world.campaignVersion===2?(stage<6?'Équipement '+(stage+1)+' / 6':'Assaut '+(stage-5)+' / 12')+' · ':world.campaign?world.chapterTitle+' · ':'')+world.title;
     $('mission-summary').innerHTML=world.campaignVersion===2?'<span><b>6</b> ÉQUIPEMENT</span><span><b>12</b> ASSAUT</span><span><b>18</b> MONDES</span>':world.campaign?'<span><b>18</b> MONDES</span><span><b>6</b> CHAPITRES</span><span><b>100 %</b> PROCÉDURAL</span>':'<span><b>430</b> MACHINES</span><span><b>3</b> COLOSSES</span><span><b>6</b> ASCENSEURS</span>';
-    if(world.profileVersion)$('mission-summary').innerHTML='<span><b>LÉGER</b> JETPACK · RELAIS AÉRIENS</span><span><b>LOURD</b> BRÈCHES · EXPLOSIFS</span><span><b>2</b> PROGRESSIONS</span>';
+    if(world.profileVersion)$('mission-summary').innerHTML='<span><b>LOURD</b> BRÈCHES · EXPLOSIFS</span><span><b>LÉGER</b> DRONE · RELAIS AÉRIENS</span><span><b>2</b> PROGRESSIONS</span>';
     $('restart').textContent=world.campaign?'RECOMMENCER CE MONDE':'RECOMMENCER CE SECTEUR';
-    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=touch;hudWait=0;renderHUD();weaponHint();
+    document.body.dataset.stage=String(stage+1);document.body.dataset.campaign=String(!!world.campaign);$('radar-wrap').hidden=touch;hudWait=0;renderHUD();weaponHint();controlsLegend();
   }
   function loadRender(){renderer.setWorld(sim.destruction?.meshes||world.meshes,sim.destruction?.lights||world.lights,skyEnvironment(world));renderRevision=sim.state.destructionRevision??sim.destruction?.revision??-1;renderToken=sim.destruction?.delta?.().token;renderLoadPending=false;}
   function syncDestruction(){
@@ -357,7 +403,7 @@
   function start(message){
     if(deferLaunch){pendingStart={message};return;}
     titleGesture=true;titleBlocked=false;audio.start();audio.resume();setMode(document.hidden||!windowFocused?'paused':'playing');if(mode==='playing'){lock();canvas.focus({preventScroll:true});}
-    toast(message||(world.profileVersion?'Deux profils · '+bindingLabel('switchProfile')+' : changer. Léger : maintenir le saut pour voler. Lourd : récupérer le lance-grenades près du départ.':world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
+    toast(message||(world.profileVersion?(sim.state.activeProfile==='light'?'Drone LÉGER · vol à plat, '+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre. '+bindingLabel('switchProfile')+' : revenir au LOURD.':(stage===0?'Vous êtes le LOURD · récupérez le lance-grenades près du départ. ':'LOURD · les explosifs ouvrent les brèches. ')+bindingLabel('switchProfile')+' : piloter le drone LÉGER, qui vole à plat ('+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre).'):world.campaignVersion===2&&stage===0?'Pistolet en main droite · clic pour tirer. Le premier boss laisse le double pompe.':world.campaign&&stage===0?'Pistolet équipé · munitions illimitées. Clic : tirer ; premier trophée au monde 7.':world.campaign?'CHAPITRE '+(world.chapter+1)+' · '+world.chapterTitle+' — monde '+(stage+1)+' / 18. Explorez, équipez-vous et neutralisez le colosse.':stage===0?'Mitraillette équipée. Ramassez munitions et armes ; les machines arrivent par vagues.':stage===1?'Votre arsenal vous suit. Cherchez les réserves avant de déclencher les renforts.':'Gardez des munitions pour le Veilleur. Les réserves de l’arène sont limitées.'),5.5);
   }
   function newRun(newSeed){runStats=emptyStats();selectedWeapon=0;load(0,newSeed,undefined,true,2,false,true,true);saveCheckpoint();start();}
   async function preparePlay(nextStage,action,asCampaign=campaignMode,plan={}){
@@ -408,6 +454,8 @@
         if(e.hand==='left')fireLeftPressed=false;else firePressed=false;
       }
       const handMotion=e.hand==='left'?leftMotion:motion;
+      // The drone's twin cannons recoil together.
+      if(e.twin)leftMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
       if(e.name==='rocket'||e.name==='grenadeLaunch'){if(e.owner==='player')handMotion.impulse(e.name==='grenadeLaunch'?'grenade':'rocket');}
       else if(e.name==='land'){if(e.actor==='player'&&sim.state.activeProfile!=='light'){motion.impulse('land',e.impact);leftMotion.impulse('land',e.impact);}}
       else if(e.name==='bossImpact'||e.name==='bossDeath'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z),amount=(e.name==='bossDeath'?1:e.kind==='ring'?.4:.8)*clamp(1-d/40,0,1);motion.impulse('blast',amount);leftMotion.impulse('blast',amount);if(e.name==='bossDeath')freezeUntil=performance.now()+120;}
@@ -422,7 +470,7 @@
         checkpointDue=true;
         toast(e.count===3?(!systemsReady()?'Trois relais en ligne. Activez les commandes restantes.':sim.state.bossAlive?'Trois relais en ligne. Neutralisez le gardien.':'Trois relais en ligne. Rejoignez la sortie.'):'Relais '+e.count+' / 3 · intégrité restaurée · point de reprise',3.2);
       }
-      if(e.name==='profileSwitch'){poseView.clear();selectedWeapon=sim.state.weapon;clearFireIntents();motion.reset();leftMotion.reset();controlHints();motion.impulse('switch');leftMotion.impulse('switch');audio.switchWeapon?.();toast(e.to==='light'?'LÉGER · '+bindingLabel('jump')+' monter · '+bindingLabel(controls.device==='gamepad'?'dash':'descend')+' descendre':'LOURD · explosifs pour ouvrir les passages',2.5);checkpointDue=true;}
+      if(e.name==='profileSwitch'){poseView.clear();selectedWeapon=sim.state.weapon;clearFireIntents();motion.reset();leftMotion.reset();controlHints();motion.impulse('switch');leftMotion.impulse('switch');audio.switchWeapon?.();toast(e.to==='light'?'DRONE LÉGER · '+bindingLabel('jump')+' monter · '+bindingLabel('dash')+' descendre · '+bindingLabel('sprint')+' boost':'LOURD · explosifs pour ouvrir les passages',2.5);checkpointDue=true;}
       if(e.name==='profileLevel'){toast((e.profile==='light'?'LÉGER':'LOURD')+' · NIVEAU '+e.level+' · +75 CR',3);checkpointDue=true;}
       if(e.name==='profileBlocked')toast('GARDIEN · profil '+(e.required==='light'?'LÉGER':'LOURD')+' requis',2);
       if(e.name==='mechanism'){checkpointDue=true;const a=sim.state.mechanisms?.find(a=>a.id===e.id);toast((a?.name||'Commande')+' · alimentation rétablie · point de reprise',3.2);}
@@ -630,7 +678,7 @@
       part(weapon===2?'octa':'cylinder',[side*.13,weapon===2?.35:.255,-.025],[.085,weapon===2?.09:.045,.085],mat,0,.45);
     }
   }
-  function models(t,playing,camera){
+  function models(t,playing,camera,thirdPerson=false){
     const out=[],s=renderState||sim.state,p=s.player;sim.rigid?.models(out,camera,fixedLoop.frame.alpha);machinery(out,t);ambience(out,t);systems(out,t);
     for(let i=impactMarks.length-1;i>=0;i--){const q=impactMarks[i];if(q.until<s.time){impactMarks.splice(i,1);continue;}out.push({...m('box',q.p,q.size,2),color:[.06,.07,.08]});}
     if(window.FEffects)out.push(...FEffects.build(s,world,camera,{quality,backend:renderer.stats.backend}));
@@ -638,7 +686,7 @@
     // Match the renderer's whole approach transition conservatively. The renderer
     // still chooses the actual range; this early filter must never shorten it.
     const longView=(world.environment?.longViewZones||[]).some(a=>Math.abs(p.x-a.x)<=a.w/2+35&&Math.abs(p.z-a.z)<=a.d/2+35);
-    const range=longView?100:renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);
+    const range=drawRange(longView);
     const nearby=(x,z,r=3)=>(x-p.x)**2+(z-p.z)**2<(range+r)**2;
     const actorVisible=renderer.actorFilter?.(camera,{shadows:prefs.shadows,reflections:prefs.reflections})||(()=>true);
     for(const c of s.cores){
@@ -690,8 +738,21 @@
       out.push(m('ring',[p.x,(p.y||0)+.16,p.z],[r*2,.13,r*2],4,[0,0,0],1.7*(1-progress)));
       if(progress<.65)out.push(m('ring',[p.x,(p.y||0)+.7,p.z],[r*1.7,.08,r*1.7],4,[0,0,0],.8));
     }
-    if(playing){
-      const left=s.equipment?.left??null,paired=left!==null;
+    // Both characters exist in the world: the active one is seen from outside
+    // in third person, and the parked partner waits where it was left.
+    if(playing&&s.profiles){
+      const active=s.activeProfile==='light'?'light':'heavy',other=active==='light'?'heavy':'light',parked=s.profiles[other]?.position,loc=s.locomotion||{},backend=renderer.stats.backend;
+      const character=(id,pose,live)=>{
+        const distance=Math.hypot(pose.x-camera.pos[0],(pose.y||0)+1.4-camera.pos[1],pose.z-camera.pos[2]),weapon=live?s.weapon:s.profiles[id]?.weapon;
+        if(id==='light')out.push(...MetalAvatars.drone(pose,{time:t,weapon,forward:live?loc.forward:0,strafe:live?loc.strafe:0,boosting:live&&!!s.jetpack?.active,flash:live?Math.max(s.flash||0,s.leftFlash||0):0,quality,backend,seed:live?0:2.1}));
+        else out.push(...MetalAvatars.heavy(pose,{time:t,weapon,speed:live?loc.speed:0,phase:live?loc.stridePhase:0,blend:live?loc.moveBlend:0,distance,flash:live?s.flash:0,quality,backend}));
+      };
+      if(thirdPerson)character(active,p,true);
+      if(parked&&nearby(parked.x,parked.z))character(other,parked,false);
+    }else if(playing&&thirdPerson)out.push(...MetalAvatars.heavy(p,{time:t,weapon:s.weapon,speed:s.locomotion?.speed,phase:s.locomotion?.stridePhase,blend:s.locomotion?.moveBlend,distance:3,flash:s.flash,quality,backend:renderer.stats.backend}));
+    if(playing&&!thirdPerson){
+      // The drone carries the same weapon on two mounts and has no hands.
+      const twin=s.activeProfile==='light',left=twin?null:s.equipment?.left??null,paired=twin||left!==null;
       function drawGun(weapon,hand){
       const fracture=weapon===1,rocket=weapon===2,grenade=weapon===3,pistol=weapon===4,pose=(hand<0?leftMotion:motion).view.weapon,slide=pose.slide,flash=hand<0?(s.leftFlash||0):s.flash;
       const grip=FMotion.mount(camera,[hand*.255*Math.min(1,Math.max(.45,(innerWidth/innerHeight)/1.2))+pose.offset[0]*hand,(paired?-.34:-.30)+pose.offset[1],(paired?-.70:-.62)+pose.offset[2]],[pose.rotation[0],pose.rotation[1]*hand,pose.rotation[2]*hand]);
@@ -700,12 +761,17 @@
         if(color)a.color=color;else if(mat===0)a.color=[.16,.19,.21];else if(mat===1)a.color=[.37,.35,.28];
         out.push(a);
       }
+      if(twin){
+        // Cannon pylon and cyan strip of the drone mount instead of a glove.
+        gun('bevel',0,.17,.12,[.11,.11,.26],0,0,0,[.62,.67,.68]);gun('box',0,.235,.10,[.025,.015,.20],4,0,.8,[.44,.9,.8]);
+      }else{
       gun('bevel',0,-.09,.12,[.15,.24,.16],7,-.2);
       // A gloved grip and its wrist remain attached to the complete, damped weapon assembly.
       gun('bevel',.013,-.2,.21,[.17,.11,.21],7,-.2);gun('box',.013,-.16,.2,[.18,.025,.18],0,-.2);
       gun('bevel',.018,-.27,.30,[.15,.17,.24],0,-.25,0,[.26,.28,.23]);
       for(let j=0;j<4;j++)gun('box',0,-.035-j*.031,.205,[.16,.023,.042],7,-.2);
       gun('box',-.087,-.07,.15,[.04,.09,.09],7,-.5);
+      }
       if(pistol){
         // Compact slide, exposed barrel, serrations and sights share the hand frame.
         const bolt=slide*1.4;
@@ -788,10 +854,12 @@
       for(let j=0;j<3;j++)gun('box',rocket?.165:fracture?.143:pistol?.078:.108,-.045,.1-j*.037,[.014,.016,.023],p.overheated?6:j/3<p.heat?5:0,0,j/3<p.heat?.6:0);
       }
       drawGun(s.weapon,1);
-      if(Number.isInteger(left))drawGun(left,-1);
+      if(twin)drawGun(s.weapon,-1);else if(Number.isInteger(left))drawGun(left,-1);
     }
     return out;
   }
+  // Same model range as the renderer approach; shared with the partner marker.
+  function drawRange(longView){return longView?100:renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);}
   function renderHUD(){
     const profile=sim.state.activeProfile,jet=sim.state.jetpack,profileButton=$('profile-button');profileButton.hidden=!profile;
     $('jump-button').textContent=profile==='light'?'MONTER':'SAUT';$('jump-button').setAttribute('aria-label',profile==='light'?'Monter en vol':'Sauter');
@@ -811,7 +879,7 @@
     if(armor){$('armor-points').textContent=String(Math.ceil(armor.points));$('armor-cap').textContent='/ '+armor.capacity;$('armor-bar').style.width=clamp(armor.points/armor.capacity*100,0,100)+'%';$('armor-pool').title='Plaques à ramasser · absorbe un tiers des dégâts · blindage passif '+Math.round((1-(stats.incomingMultiplier??1))*100)+' %';$('armor-pool').setAttribute('aria-label','Armure : '+Math.ceil(armor.points)+' sur '+armor.capacity);document.body.dataset.armor=String(Math.ceil(armor.points));}
     $('wallet-credits').textContent=String(s.economy?.credits||0);$('wallet-cores').textContent=String(s.economy?.cores||0);
     $('heat-bar').style.width='100%';$('heat-bar').style.transform='scaleX('+p.heat+')';$('heat-bar').style.background=p.overheated?'#ff795e':s.weapon===2?'#ee8d5d':s.weapon===1?'#e8ad66':'#6ce5d2';
-    const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0,weaponName=profile==='heavy'&&s.weapon===4?'Pistolet automatique':weaponNames[s.weapon];$('weapon-label').textContent=weaponName.toUpperCase()+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
+    const weaponRank=s.economy?.weaponUpgrades?.[s.weapon]||0,weaponName=profile==='heavy'&&s.weapon===4?'Pistolet automatique':weaponNames[s.weapon];$('weapon-label').textContent=weaponName.toUpperCase()+(profile==='light'?' ×2':'')+(weaponRank?' · R'+weaponRank:'');$('weapon-switch').setAttribute('aria-label','Arme actuelle : '+weaponNames[s.weapon]+'. Changer d’arme.');
     const inventory=s.inventory,owned=(inventory?.weapons||[true,true,true]).map((has,i)=>has&&(!profile||MetalProfiles.allowed(profile,i))),ammo=inventory?.ammo?.[s.weapon],limited=!!world.progression,infinite=world.campaign&&s.weapon===4;
     $('ammo-count').textContent=infinite?'∞':limited?String(ammo??0).padStart(2,'0'):'—';$('ammo-unit').textContent=ammoNames[s.weapon].toUpperCase();$('ammo-cap').textContent=infinite?'ILLIMITÉES':limited?'/ '+sim.ammoCaps[s.weapon]:'RÉSERVE';
     $('weapon-readout').classList.toggle('empty',!infinite&&limited&&ammo===0);$('heat-status').textContent=p.overheated?'REFROIDISSEMENT':!infinite&&limited&&ammo===0?'RÉSERVE ÉPUISÉE':p.heat>=.75?'SURCHAUFFE PROCHE':'CHALEUR';
@@ -822,18 +890,18 @@
     $('weapon-slots').style.gridTemplateColumns='repeat('+(world.campaign?Math.max(1,owned.filter(Boolean).length):4)+',minmax(0,1fr))';
     for(let i=0;i<5;i++){
       const slot=$('weapon-slot-'+i),unlimited=world.campaign&&i===4;slot.hidden=i>=owned.length||!!world.campaign&&!owned[i];slot.disabled=!owned[i];slot.classList.toggle('locked',!owned[i]);slot.classList.toggle('selected',i===s.weapon);slot.classList.toggle('overheated',!!s.weaponOverheated?.[i]);slot.setAttribute('aria-pressed',String(i===s.weapon));
-      slot.dataset.hand=i===s.weapon?'right':i===left?'left':'';$('slot-hand-'+i).textContent=i===s.weapon?'D':i===left?'G':'';
+      slot.dataset.hand=i===s.weapon?'right':i===left?'left':'';$('slot-hand-'+i).textContent=i===s.weapon?(profile==='light'?'×2':'D'):i===left?'G':'';
       slot.setAttribute('aria-label',weaponNames[i]+(owned[i]?(unlimited?' · munitions illimitées':limited?' · '+inventory.ammo[i]+' '+ammoNames[i]:'')+(i===s.weapon?' · main droite':i===left?' · main gauche':''):' · à trouver'));
       $('slot-ammo-'+i).textContent=owned[i]?(unlimited?'∞':limited?String(inventory.ammo[i]):'PRÊTE'):'À TROUVER';$('slot-key-'+i).textContent=FOptions.keyName(prefs.bindings['weapon'+(i+1)]?.[0]||'Digit'+(i+1));
       $('left-option-'+i).disabled=!owned[i]||i===s.weapon;$('left-option-'+i).hidden=slot.hidden;
     }
-    $('left-hand-setting').disabled=!sim.selectLeftWeapon;$('left-hand-setting').value=left===null?'none':String(left);
-    $('left-hand-key').textContent=FOptions.keyName(prefs.bindings.leftHand[0]);$('left-hand-stock').textContent=world.campaign&&left===4?'∞ BALLES':Number.isInteger(left)?String(inventory.ammo[left])+' '+ammoNames[left]:'LIBRE';
-    $('left-hand-status').textContent=leftHot?'REFROIDISSEMENT':leftHeat>=.75?'SURCHAUFFE PROCHE':left!==null?(touch?'TIR G · MAINTENIR':'CLIC DROIT · TIR'):(touch?'CHOISISSEZ UN ÉQUIPEMENT':'X · CHANGER');
-    $('left-fire-button').disabled=left===null;$('left-fire-button').setAttribute('aria-label','Tirer avec la main gauche'+(leftHot?' — refroidissement':''));$('left-fire-label').textContent='TIR G';
+    $('left-hand-setting').disabled=!sim.selectLeftWeapon||profile==='light';$('left-hand-setting').value=left===null?'none':String(left);
+    $('left-hand-key').textContent=FOptions.keyName(prefs.bindings.leftHand[0]);$('left-hand-stock').textContent=profile==='light'?'CANONS JUMEAUX':world.campaign&&left===4?'∞ BALLES':Number.isInteger(left)?String(inventory.ammo[left])+' '+ammoNames[left]:'LIBRE';
+    $('left-hand-status').textContent=profile==='light'?'LES DEUX CANONS TIRENT ENSEMBLE':leftHot?'REFROIDISSEMENT':leftHeat>=.75?'SURCHAUFFE PROCHE':left!==null?(touch?'TIR G · MAINTENIR':'CLIC DROIT · TIR'):(touch?'CHOISISSEZ UN ÉQUIPEMENT':'X · CHANGER');
+    $('left-fire-button').disabled=left===null&&profile!=='light';$('left-fire-button').setAttribute('aria-label',profile==='light'?'Tirer avec les deux canons':'Tirer avec la main gauche'+(leftHot?' — refroidissement':''));$('left-fire-label').textContent='TIR G';
     $('dash-button').setAttribute('aria-label',profile==='light'?'Descendre en vol':'Esquiver');const dashIcon=$('dash-button').firstElementChild;if(dashIcon)dashIcon.textContent=profile==='light'?'↓':'';
     $('melee-label').textContent=FOptions.keyName(prefs.bindings.melee[0]).toUpperCase()+' · CROSSE';
-    $('dash-label').textContent=profile==='light'?bindingLabel('jump')+' ↑ · '+bindingLabel(controls.device==='gamepad'?'dash':'descend')+' ↓ · '+bindingLabel('sprint')+' BOOST':p.dash>0?'ESQUIVE · '+p.dash.toFixed(1)+' s':FOptions.keyName(prefs.bindings.dash[0]).toUpperCase()+' · ESQUIVE PRÊTE';$('dash-button').style.opacity=profile!=='light'&&p.dash>0?'.35':'1';
+    $('dash-label').textContent=profile==='light'?bindingLabel('jump')+' ↑ · '+bindingLabel('dash')+' ↓ · '+bindingLabel('sprint')+' BOOST':p.dash>0?'ESQUIVE · '+p.dash.toFixed(1)+' s':FOptions.keyName(prefs.bindings.dash[0]).toUpperCase()+' · ESQUIVE PRÊTE';$('dash-button').style.opacity=profile!=='light'&&p.dash>0?'.35':'1';
     const pulse=p.pulseCooldown||0;$('pulse-label').textContent=pulse>0?'ONDE · '+pulse.toFixed(1)+' s':FOptions.keyName(prefs.bindings.pulse[0]).toUpperCase()+' · ONDE PRÊTE';$('pulse-button').style.opacity=pulse>0?'.35':'1';
     $('relay-count').textContent=s.relays+' / 3';$('relays').querySelectorAll('i').forEach((el,i)=>el.classList.toggle('on',i<s.relays));
     const required=(s.mechanisms||[]).filter(a=>a.required),activated=required.filter(a=>a.active).length,operational=activated===required.length;
@@ -882,7 +950,12 @@
     const node=$('partner-marker'),s=sim.state,id=s.activeProfile==='light'?'heavy':'light',other=s.profiles?.[id]?.position;
     node.hidden=!other||mode!=='playing'||loadoutOpen;if(node.hidden)return;
     const q=MetalProfiles.marker({x:camera.pos[0],y:camera.pos[1]-1.62,z:camera.pos[2],yaw:camera.yaw,pitch:camera.pitch},other,{width:document.documentElement?.clientWidth||innerWidth,height:document.documentElement?.clientHeight||innerHeight,fov:camera.fov});
-    node.hidden=q.distance<1.5;if(node.hidden)return;
+    // The parked heavy or drone is drawn whole where it was left (David,
+    // 16/11/2026): the marker only helps to find it off screen, out of the
+    // drawing range or behind a wall.
+    const centre=[other.x,(other.y||0)+(id==='light'?1.42:1.1),other.z],toward=centre.map((v,k)=>v-camera.pos[k]),length=Math.hypot(...toward)||1;
+    const seen=!q.offscreen&&Math.hypot(other.x-s.player.x,other.z-s.player.z)<drawRange(false)&&sim.ray(camera.pos,toward.map(v=>v/length),length)>=length-.6;
+    node.hidden=seen||q.distance<1.5;if(node.hidden)return;
     node.style.left=q.x+'px';node.style.top=q.y+'px';node.dataset.profile=id;node.dataset.offscreen=String(q.offscreen);
     node.textContent=q.direction+' '+(id==='light'?'LÉGER':'LOURD')+' · '+Math.round(q.distance)+' m'+(Math.abs(q.height)>1.5?' · '+(q.height>0?'↑':'↓')+Math.round(Math.abs(q.height))+' m':'');
     node.setAttribute('aria-label',(id==='light'?'Personnage léger':'Personnage lourd')+' en attente à '+Math.round(q.distance)+' mètres');
@@ -927,7 +1000,7 @@
     if(mode==='playing'){
       if(f.pressed.includes('jump'))jumpQueued=true;if(f.pressed.includes('switchProfile'))switchProfileQueued=true;
       if(f.pressed.includes('fire'))pressFire();if(f.pressed.includes('fireLeft'))pressFire(true);
-      if(f.pressed.includes('weaponNext'))switchWeapon();if(f.pressed.includes('leftHand'))switchLeft();
+      if(f.pressed.includes('weaponNext'))switchWeapon();if(f.pressed.includes('leftHand'))switchLeft();if(f.pressed.includes('view'))toggleView();
       for(let i=0;i<5;i++)if(f.pressed.includes('weapon'+(i+1)))switchWeapon(i);
       if(f.pressed.includes('map')){$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();}
     }else{
@@ -1003,7 +1076,7 @@
       input.lookX=lookDX;input.lookY=lookDY;
       dashQueued||=padState.dash;pulseQueued||=padState.pulse;meleeQueued||=padState.melee;interactQueued||=padState.interact;
       const fireHeld=mouseFire||touchState.fire||held('fire')||padState.fire,fireLeftHeld=mouseLeftFire||touchState.fireLeft||held('fireLeft')||padState.fireLeft;
-      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=undefined;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump')||touchJump!==null;input.descendHeld=held('descend')||touchDescend!==null;input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(MetalControls.merge(input,touchState),padState));input.assist=touch&&prefs.touchAssist||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch&&prefs.touchAssist;
+      expireFireIntents(now);input.fire=fireHeld||firePressed;input.fireLeft=fireLeftHeld||fireLeftPressed;input.dash=dashQueued;input.pulse=pulseQueued;input.melee=meleeQueued;input.interact=interactQueued;input.weapon=undefined;input.sprint=held('sprint');input.jump=jumpQueued;input.jumpHeld=held('jump')||touchJump!==null;input.descendHeld=held('dash')||touchDescend!==null;input.switchProfile=switchProfileQueued;Object.assign(input,MetalControls.merge(MetalControls.merge(input,touchState),padState));input.assist=touch&&prefs.touchAssist||controls.device==='gamepad'&&prefs.padAssist;input.touchAssist=touch&&prefs.touchAssist;
       signals.lookYaw=dt>0?(lookDX-aimShownX)/dt:0;signals.lookPitch=dt>0?(lookDY-aimShownY)/dt:0;signals.firing=input.fire;
       fixedLoop.advance(now,part=>{
         poseView.capture(sim.state);sim.step(part,input);musicDirector?.update(sim.state,part);input.lookX=input.lookY=0;
@@ -1041,15 +1114,18 @@
     renderState=poseView.render(sim.state,(mode==='demo'||mode==='playing'&&!loadoutOpen)?fixedLoop.frame.alpha:1);
     const p=renderState.player,isPlay=mode==='playing'||mode==='paused'||mode==='demo',t=mode==='menu'?clock:sim.state.time;
     if(mode==='playing'&&!loadoutOpen){const aim=FLoop.aim(sim.state.player.yaw,sim.state.player.pitch,lookDX,lookDY,-1.2,1.2);p.yaw=aim.yaw;p.pitch=aim.pitch;}
-    signals.time=t;signals.flying=sim.state.activeProfile==='light';signals.groundY=p.y;signals.grounded=!signals.flying&&!sim.state.player.airborne;signals.heat=sim.state.weaponHeat?.[sim.state.weapon]??sim.state.player.heat;const view=motion.update(mode==='playing'||mode==='demo'?dt:0,sim.state.locomotion||{},signals,softMotion),leftView=leftMotion.update(mode==='playing'||mode==='demo'?dt:0,sim.state.locomotion||{},{...signals,firing:input.fireLeft,heat:sim.state.weaponHeat?.[sim.state.equipment?.left]||0},softMotion);
+    signals.time=t;signals.flying=sim.state.activeProfile==='light';signals.groundY=p.y;signals.grounded=!signals.flying&&!sim.state.player.airborne;signals.heat=sim.state.weaponHeat?.[sim.state.weapon]??sim.state.player.heat;const twin=sim.state.activeProfile==='light',view=motion.update(mode==='playing'||mode==='demo'?dt:0,sim.state.locomotion||{},signals,softMotion),leftView=leftMotion.update(mode==='playing'||mode==='demo'?dt:0,sim.state.locomotion||{},twin?{...signals,firing:input.fire||input.fireLeft}:{...signals,firing:input.fireLeft,heat:sim.state.weaponHeat?.[sim.state.equipment?.left]||0},softMotion);
     const recoilPitch=isPlay?view.pitch+leftView.pitch:0;
     const camera={pos:[p.x,(p.y||0)+1.62+(isPlay?view.height:0),p.z],yaw:p.yaw,pitch:p.pitch+recoilPitch,roll:isPlay?view.roll+leftView.recoilRoll:0,fov:prefs.fov+(isPlay?view.fov+leftView.recoilFov:0)};
     if(mode==='menu'||mode==='options'){camera.yaw=world.spawn.yaw+.38+(softMotion?Math.sin(clock*.13)*.11:0);camera.pitch=.02;camera.pos[1]=(world.spawn.y||0)+1.72;}
     if(mode==='demo'&&demoCamera){const shot=demoCamera.update(dt,camera);demoShot=shot.shot;Object.assign(camera,shot.pose);}
+    // Third person: the camera leaves the eye; the firing ray does not.
+    const follow=mode==='playing'||mode==='paused'?followCamera.frame(p,(o,d,far)=>sim.ray(o,d,far),mode==='playing'?dt:0,{profile:twin?'light':'heavy',ground:(x,z)=>sim.ground?.(x,z),actorRange:aimRange}):null,third=!!follow?.thirdPerson;
+    if(third){camera.pos=follow.pos;camera.yaw=follow.yaw;camera.pitch=follow.pitch;camera.roll=0;camera.fov=prefs.fov;}
     camera.overlayFov=camera.fov;if(touch&&prefs.portraitFov)camera.fov=FTouch.fovFor(innerWidth/innerHeight,camera.fov);
-    const aimOffset=canvas.clientHeight*.5*Math.tan(recoilPitch)/Math.tan(clamp(camera.fov,40,110)*Math.PI/360);$('crosshair').style.marginTop=(aimOffset*Math.cos(camera.roll)).toFixed(2)+'px';$('crosshair').style.marginLeft=(-aimOffset*Math.sin(camera.roll)).toFixed(2)+'px';
+    const aimOffset=third?0:canvas.clientHeight*.5*Math.tan(recoilPitch)/Math.tan(clamp(camera.fov,40,110)*Math.PI/360);$('crosshair').style.marginTop=(aimOffset*Math.cos(camera.roll)).toFixed(2)+'px';$('crosshair').style.marginLeft=(-aimOffset*Math.sin(camera.roll)).toFixed(2)+'px';
     renderPartner(camera);
-    const drawing=demoBench?performance.now():0,drawModels=models(t,isPlay&&(mode!=='demo'||demoShot==='eyes'),camera);if(mode==='demo'&&demoShot!=='eyes')drawModels.push(...FActors.build({id:-1,type:sim.state.activeProfile==='heavy'?1:0,x:p.x,z:p.z,baseY:p.y,y:p.y+1.35,yaw:p.yaw,hp:p.hp,moveSpeed:sim.state.moving,awareness:'patrol'},{time:t,quality,backend:renderer.stats.backend}));
+    const drawing=demoBench?performance.now():0,drawModels=models(t,isPlay&&(mode!=='demo'||demoShot==='eyes'),camera,third);if(mode==='demo'&&demoShot!=='eyes'){const loc=sim.state.locomotion||{};drawModels.push(...(twin?MetalAvatars.drone(p,{time:t,weapon:sim.state.weapon,forward:loc.forward,strafe:loc.strafe,boosting:!!sim.state.jetpack?.active,flash:sim.state.flash,quality,backend:renderer.stats.backend}):MetalAvatars.heavy(p,{time:t,weapon:sim.state.weapon,speed:loc.speed,phase:loc.stridePhase,blend:loc.moveBlend,distance:6,flash:sim.state.flash,quality,backend:renderer.stats.backend})));}
     renderer.draw(camera,drawModels,{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,brightness:prefs.brightness,vignette:prefs.vignette,shadows:prefs.shadows,bloom:prefs.bloom,reflections:prefs.reflections,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
     if(demoBench)demoBench.drawMs.push(performance.now()-drawing);
     sceneDirty=false;
@@ -1091,7 +1167,7 @@
       preparePlay(savedRun?savedIndex(savedRun):stage,()=>resumeSaved(savedRun),savedRun?.version===3,{seed:savedRun?.seed,revision:savedRun?.campaignRevision||1,profiles:savedRun?.profiles===1,combat:savedRun?.combatVersion===1});return;
     }
     if(mode==='complete'){const nextSeed=(Date.now()>>>0)%1000000;preparePlay(0,()=>newRun(nextSeed),true,{seed:nextSeed,revision:2,profiles:true,combat:true});return;}
-    const nextStage=stage+1,loadout=sim.exportLoadout?.()||sim.exportInventory?.();preparePlay(nextStage,()=>{load(nextStage,undefined,loadout);saveCheckpoint();start();});
+    const nextStage=stage+1,loadout=heavyFirst(sim.exportLoadout?.()||sim.exportInventory?.());preparePlay(nextStage,()=>{load(nextStage,undefined,loadout);saveCheckpoint();start();});
   });
   $('back-menu').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
   $('pause-main').addEventListener('click',()=>{load(0);setMode('menu');refreshContinue();});
@@ -1116,7 +1192,7 @@
   $('reflections').addEventListener('change',()=>{prefs.reflections=$('reflections').value;settings();});
   $('fps-limit').addEventListener('change',()=>{prefs.fpsLimit=Number($('fps-limit').value);settings();});
   $('reset-image').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['quality','softMotion','fov','brightness','shadows','bloom','reflections','showFps','crt','vignette','fpsLimit','renderScale'])prefs[key]=d[key];quality=prefs.quality;softMotion=prefs.softMotion;renderer.resize(quality);settings();});
-  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','bindings','bindingsVersion','padBindings','padVersion','padYaw','padPitch','padDead','padCurve','padInvertY','padAssist','padVibration','padSwapSticks'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
+  $('reset-controls').addEventListener('click',()=>{const d=FOptions.defaults(touch);for(const key of ['sensitivity','invertY','systemPointerAcceleration','crosshairScale','view','controlsHint','bindings','bindingsVersion','padBindings','padVersion','padYaw','padPitch','padDead','padCurve','padInvertY','padAssist','padVibration','padSwapSticks'])prefs[key]=d[key];bindingAction=null;settings();$('binding-status').textContent='Commandes par défaut rétablies.';});
   $('reset-audio').addEventListener('click',()=>{audio.cancelTestMix?.();const d=FOptions.defaults(touch);for(const key of ['masterVolume','musicVolume','effectsVolume','ambienceVolume'])prefs[key]=d[key];muted=false;settings();$('audio-status').textContent='Mix recommandé rétabli. Testez les tirs et les ambiances.';});
   $('test-audio').addEventListener('click',async()=>{
     if(audio.stats?.preview){audio.cancelTestMix?.();activateTitle();$('audio-status').textContent='Test audio arrêté.';return;}
@@ -1133,6 +1209,9 @@
   });
   $('loadout-toggle').addEventListener('click',()=>{if(mode!=='playing')return;loadoutOpen=!loadoutOpen;sceneDirty=true;clearInput();document.body.classList.toggle('loadout-open',loadoutOpen);$('loadout-toggle').setAttribute('aria-expanded',String(loadoutOpen));});
   $('map-button').addEventListener('click',()=>{$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();});
+  $('view-button').addEventListener('click',()=>{toggleView();if(mode==='playing')canvas.focus({preventScroll:true});});
+  $('view-toggle').addEventListener('click',toggleView);
+  $('controls-hint-toggle').addEventListener('click',()=>{prefs.controlsHint=!prefs.controlsHint;settings();});
   $('weapon-switch').addEventListener('click',()=>switchWeapon());
   for(let i=0;i<5;i++)$('weapon-slot-'+i).addEventListener('click',()=>switchWeapon(i));
   $('left-hand-setting').addEventListener('change',()=>{const value=$('left-hand-setting').value;switchLeft(value==='none'?null:Number(value));canvas.focus({preventScroll:true});});
@@ -1158,6 +1237,7 @@
     if(!e.repeat){if(match('fire'))pressFire();if(match('fireLeft'))pressFire(true);}
     if(!e.repeat)for(let i=0;i<5;i++)if(match('weapon'+(i+1)))switchWeapon(i);
     if(match('leftHand')&&!e.repeat)switchLeft();
+    if(match('view')&&!e.repeat)toggleView();
     if(match('map')&&!e.repeat){$('radar-wrap').hidden=!$('radar-wrap').hidden;drawRadar();}
   });
   addEventListener('keyup',e=>keys.delete(e.code));

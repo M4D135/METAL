@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root=new URL('../',import.meta.url);
-const modules=['destruction','economy','simulation','motion','actors','effects','soundscape','options','input','controls','loop','schedule','touch','jobs','tasks','host','game'];
+const modules=['destruction','economy','simulation','motion','actors','avatars','effects','soundscape','options','input','controls','camera','loop','schedule','touch','jobs','tasks','host','game'];
 const sources=Object.fromEntries(modules.map(name=>[name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 const noop=()=>{};
 
@@ -83,7 +83,7 @@ function simulatedPad(){return {index:0,id:'Xbox simulated',connected:true,mappi
 function padButton(p,index,value){p.buttons[index]={value,pressed:value>.5};}
 test('Gamepad reaches real simulation, jump/profile fronts are single-use across substeps',()=>{
   const pad=simulatedPad(),app=shell({gamepads:[pad]});app.frame();const shots=app.sim.state.shots;
-  padButton(pad,7,1);padButton(pad,0,1);padButton(pad,5,1);pad.axes[0]=.7;app.steps.length=0;app.frame(60);
+  padButton(pad,7,1);padButton(pad,0,1);padButton(pad,3,1);pad.axes[0]=.7;app.steps.length=0;app.frame(60);
   assert(app.sim.state.shots>shots);assert(app.steps.length>=3);
   assert.equal(app.steps.filter(q=>q.input.jump).length,1);assert.equal(app.steps.filter(q=>q.input.switchProfile).length,1);
   assert(app.steps.every(q=>q.input.jumpHeld));assert(app.steps.every(q=>q.input.moveX>0));assert(app.steps.every(q=>q.input.assist&&q.input.touchAssist===false));

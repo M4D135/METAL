@@ -11,9 +11,10 @@ function rig(stored={}){
   const press=(p,n,v)=>{const j=w.FInput.PAD_BUTTONS.indexOf(n);p.buttons[j]={value:v,pressed:v>.5};};
   return {w,pads,prefs,c,make,press,tick(dt=1/60){const f=c.frame(dt),s=c.step();return {f,s};}};
 }
-test('C/Space and A/Cross, B/Round provide held flight controls without repeating heavy dodge',()=>{
+test('Space/R and A/Cross, B/Round provide held flight controls without repeating heavy dodge; C switches the view',()=>{
  const r=rig(),pad=r.make();r.pads.push(pad);r.tick();
- assert.equal(r.w.FOptions.down(r.prefs.bindings,new Set(['KeyC']),'descend'),true);
+ assert.equal(r.w.FOptions.down(r.prefs.bindings,new Set(['KeyR']),'dash'),true);
+ assert.equal(r.w.FOptions.down(r.prefs.bindings,new Set(['KeyC']),'view'),true);
  assert.equal(r.w.FOptions.down(r.prefs.bindings,new Set(['Space']),'jump'),true);
  r.press(pad,'A',1);r.press(pad,'B',1);
  let q=r.tick().s;assert(q.jump&&q.descendHeld&&q.dash);
@@ -22,8 +23,8 @@ test('C/Space and A/Cross, B/Round provide held flight controls without repeatin
  r.press(pad,'B',0);r.press(pad,'A',0);r.tick();r.press(pad,'B',1);assert(r.tick().s.descendHeld);
 });
 test('former default left fire moves off C without resetting custom bindings',()=>{
- const r=rig(),old=plain(r.prefs);delete old.bindings.descend;old.bindings.fireLeft=['KeyC'];old.bindings.interact=['KeyH'];
- const migrated=r.w.FOptions.normalize(old);assert.deepEqual(plain(migrated.bindings.descend),['KeyC']);assert.deepEqual(plain(migrated.bindings.fireLeft),['KeyG']);assert.deepEqual(plain(migrated.bindings.interact),['KeyH']);
+ const r=rig(),old=plain(r.prefs);delete old.bindings.view;old.bindings.fireLeft=['KeyC'];old.bindings.interact=['KeyH'];
+ const migrated=r.w.FOptions.normalize(old);assert.deepEqual(plain(migrated.bindings.view),['KeyC']);assert.deepEqual(plain(migrated.bindings.fireLeft),['KeyG']);assert.deepEqual(plain(migrated.bindings.interact),['KeyH']);
 });
 test('MASTER tuning, first connected pad, full analog magnitude and bounded curves',()=>{
   const r=rig(),a=r.make(0),b=r.make(1,'DualSense');r.pads.push(a,b);r.press(b,'A',1);assert.equal(r.tick().s.jump,false,'second pad cannot inject actions');

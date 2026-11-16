@@ -5,7 +5,7 @@ import gzip, hashlib, json
 ROOT=Path(__file__).resolve().parents[1]
 import subprocess,sys
 subprocess.run([sys.executable,str(ROOT/'tools/check-ferro-lock.py'),str(ROOT)],check=True)
-modules=['ferro/engine.js','ferro/physx-runtime.js','ferro/physx.js','fmath.js','passages.js','surface.js','skies.js','gpu-profile.js','reflections.js','renderer.js','profiles.js','world.js','destruction.js','physics-geometry.js','physics.js','metal-physics.js','music.js','imuse.js','music-director.js','audio.js','audio-recipes.js','soundscape.js','economy.js','brain.js','simulation.js','motion.js','actors.js','effects.js','options.js','input.js','controls.js','loop.js','schedule.js','touch.js','jobs.js','tasks.js','host.js','demo.js','pilot.js','demo-metal.js','replay-metal.js','game.js']
+modules=['ferro/engine.js','ferro/physx-runtime.js','ferro/physx.js','fmath.js','passages.js','surface.js','skies.js','gpu-profile.js','reflections.js','renderer.js','profiles.js','world.js','destruction.js','physics-geometry.js','physics.js','metal-physics.js','music.js','imuse.js','music-director.js','audio.js','audio-recipes.js','soundscape.js','economy.js','brain.js','simulation.js','motion.js','actors.js','avatars.js','effects.js','options.js','input.js','controls.js','camera.js','loop.js','schedule.js','touch.js','jobs.js','tasks.js','host.js','demo.js','pilot.js','demo-metal.js','replay-metal.js','game.js']
 sim_hash=hashlib.sha256(b''.join((ROOT/'src'/n).read_bytes() for n in json.loads((ROOT/'tools/simulation-modules.json').read_text()))).hexdigest()
 css=(ROOT/'src/style.css').read_text()
 code='\n;\n'.join((ROOT/'src'/name).read_text() for name in modules)

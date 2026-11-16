@@ -6,11 +6,25 @@
 
 **Campagne Arsenal.** Départ au pistolet, armes et améliorations laissées par les boss, premier tiers consacré à l’équipement, douze mondes supplémentaires avec l’arsenal complet. Les grands panneaux-obstacles ajoutés devant les renforts sont supprimés de la nouvelle campagne. Les débris conservent leur forme, tombent et restent au sol. Les bruitages et les ambiances sont reconstruits avec des sons procéduraux distincts et des sources locales. Les clés de sauvegarde historiques `ferro-*` sont conservées.
 
+## Le lourd et son drone — 0.11.0, 16 novembre 2026
+
+Décisions de David du 16 novembre 2026, appliquées aux nouvelles expéditions :
+
+- **On commence avec le lourd, en vue à la première personne.** Chaque nouveau monde repart sur le lourd ; son drone léger attend un mètre au-dessus de sa tête, jamais dans son corps (moins sous un plafond bas).
+- **Le léger est un drone piloté comme le lourd.** Les sticks le déplacent à plat, quelle que soit l’inclinaison de la visée ; **A/Croix monte, B/Rond descend** (Espace et R au clavier). Le boost (LB ou Maj) vaut 1,8 fois la vitesse et consomme le réservoir ; le vol de base reste illimité.
+- **Deux canons jumeaux.** Le drone porte la même arme sur deux supports : chaque tir part des deux canons à 60 % des dégâts chacun (1,2 fois un tir simple), pour une seule munition et une seule montée de chaleur. Les deux gâchettes tirent ; le drone n’a pas de main gauche. La pompe et la mitraillette gagnées restent ses armes.
+- **Vue 1re / 3e personne pour les deux personnages** : C au clavier, R3 à la manette, bouton 1P / 3P en haut de l’écran ou réglage dans les commandes ; le choix est enregistré. En troisième personne, la caméra suit le lourd par-dessus l’épaule droite et le drone par l’arrière ; elle se rapproche devant un mur et repasse à la première personne si elle n’a plus la place. Le viseur reste sur le point réellement atteint par le tir.
+- **Le personnage laissé en attente reste visible en entier** (lourd ou drone), à l’endroit exact où on l’a quitté. Son repère ne s’affiche plus que s’il est hors de l’écran, trop loin ou derrière un mur.
+- **Aide des commandes discrète** à gauche de l’écran, selon l’appareil (clavier ou manette, avec les glyphes Xbox ou PlayStation) et le personnage en main ; elle se masque dans les commandes. Elle est cachée sur écran tactile et sur les écrans bas ou étroits.
+- **Manette, disposition 2** : RT tir, LT main gauche (ou tir des deux canons), A saut / montée, B esquive / descente, **LB course / boost**, **L3 onde**, X interagir, **RB arme suivante**, **Y changer de personnage**, **R3 vue**, croix pour les armes, Vue pour la carte, Menu pour la pause. Les boutons laissés à l’ancienne place par défaut migrent ; les choix personnels sont conservés. Le coup de crosse n’a plus de bouton par défaut à la manette mais reste réassignable.
+
+Les anciennes sauvegardes gardent leur personnage actif et leurs positions. Vérifications : `npm test` (dont `checks/camera.test.mjs`, `checks/flight.test.mjs`) et captures dans Chrome sur le Mac ; aucune manette réelle n’a été branchée pour cette version (bancs avec manette simulée).
+
 ## Finition du 15 novembre 2026
 
 Complément physique : collisions continues de capsule, raccords du décor sans accroche, objets tournés et appuis physiques ; les reprises précédentes conservent leur géométrie. [Contrôles et API](docs/chantier-moteur/rapports/physique-geometrie-20261115.md).
 
-Les nouvelles expéditions proposent deux personnages à positions distinctes : **léger** (pistolet, pompe, mitraillette et jetpack) et **lourd** (pistolet automatique, grenades et roquettes). Chaque personnage garde sa progression. **T au clavier, RB à la manette ou le bouton « Passer au lourd / léger »** change de personnage. Maintenir Espace ou A fait voler le léger. Le repère du partenaire indique sa direction, sa distance et son étage. Les brèches, relais aériens et exigences des boss rendent leur coopération obligatoire.
+Les nouvelles expéditions proposent deux personnages à positions distinctes : **lourd** (pistolet automatique, grenades et roquettes), avec lequel on commence, et **léger**, son drone (pistolet, pompe et mitraillette en canons jumeaux, vol et boost). Chaque personnage garde sa progression. **T au clavier, Y à la manette ou le bouton « Passer au lourd / léger »** change de personnage (RB avant la 0.11.0). Le personnage laissé en attente reste visible où on l’a quitté ; son repère indique sa direction, sa distance et son étage quand il est hors de vue. Les brèches, relais aériens et exigences des boss rendent leur coopération obligatoire.
 
 Sur téléphone, les actions occupent les coins, l’ATH est compact et le bouton ARMES ouvre l’équipement en suspendant le combat. Le bouton de tir permet aussi de viser en glissant ; le manche virtuel peut se déplacer sous le doigt et déclencher la course. Les commandes et menus à la manette restent reconfigurables.
 
@@ -105,10 +119,10 @@ L’onde reste défensive : ses dégâts sont faibles contre les machines ordina
 | Tir main droite | Clic gauche / Entrée | Grand cercle |
 | Tir main gauche | Clic droit / G | Bouton TIR G |
 | Équipement main gauche | X, ou choix explicite dans le HUD | Bouton main gauche / choix du HUD |
-| Course / boost du léger | Maj | Joystick en butée |
-| Saut du lourd / montée du léger | Espace | Saut / Monter |
-| Descente du léger | C | Descendre |
-| Esquive du lourd | R | Bouton esquive |
+| Course du lourd / boost du drone | Maj | Joystick en butée |
+| Saut du lourd / montée du drone | Espace | Saut / Monter |
+| Esquive du lourd / descente du drone | R | Bouton esquive / Descendre |
+| Vue 1re / 3e personne | C | Bouton 1P / 3P |
 | Changer de personnage | T | Bouton de profil |
 | Onde de choc | E | Bouton anneaux |
 | Coup de crosse | V | Bouton Crosse |
@@ -117,7 +131,7 @@ L’onde reste défensive : ses dégâts sont faibles contre les machines ordina
 | Carte | M | Bouton carte |
 | Pause | Échap / P | Bouton pause |
 
-À la manette : stick gauche pour se déplacer, stick droit pour viser, A/Croix pour sauter ou monter, B/Rond pour esquiver avec le lourd ou descendre avec le léger, L3 pour courir/booster et RB/R1 pour changer de personnage. Les commandes restent personnalisables. La marche, la course, l’esquive et le contrôle aérien sont plus rapides qu’en 0.5, avec accélération et freinage amortis ; le lourd saute avec Espace. Le léger reste le petit vaisseau existant : il vole dans la direction visée, se maintient en altitude sans gravité, monte avec Espace et descend avec C. Seul son boost consomme du carburant. La caméra du léger n'a ni démarche ni bruit de pas. **Les FPS restent visibles par défaut**, en haut à droite. Le HUD adapte ses emplacements aux seules armes trouvées en campagne, avec ∞ pour le pistolet ; il montre l’équipement gauche, les réserves et plafonds, la vague locale, la chaleur, la santé maximale, le blindage, les crédits et les noyaux, en plus des objectifs, de l’altitude et du boss.
+À la manette : stick gauche pour se déplacer, stick droit pour viser, RT pour tirer, LT pour la main gauche, A/Croix pour sauter ou monter, B/Rond pour esquiver avec le lourd ou descendre avec le drone, LB/L1 pour courir ou booster, L3 pour l’onde, Y/Triangle pour changer de personnage, RB/R1 pour l’arme suivante et R3 pour la vue. Les commandes restent personnalisables. La marche, la course, l’esquive et le contrôle aérien sont plus rapides qu’en 0.5, avec accélération et freinage amortis ; le lourd saute avec Espace. Le drone léger se pilote comme le lourd : il se déplace à plat, se maintient en altitude sans gravité, monte avec Espace et descend avec R. Seul son boost consomme du carburant. La caméra du drone n’a ni démarche ni bruit de pas. **Les FPS restent visibles par défaut**, en haut à droite. Le HUD adapte ses emplacements aux seules armes trouvées en campagne, avec ∞ pour le pistolet ; il montre l’équipement gauche, les réserves et plafonds, la vague locale, la chaleur, la santé maximale, le blindage, les crédits et les noyaux, en plus des objectifs, de l’altitude et du boss.
 
 ## Armure à ramasser
 

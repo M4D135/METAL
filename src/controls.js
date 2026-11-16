@@ -1,7 +1,7 @@
 /* METAL — FPS mapping and feedback. FInput owns devices; simulation receives values only. */
 (function(G){
   'use strict';
-  const holds=new Set(['forward','back','left','right','turnLeft','turnRight','fire','fireLeft','sprint','jump','dash','descend']);
+  const holds=new Set(['forward','back','left','right','turnLeft','turnRight','fire','fireLeft','sprint','jump','dash']);
   function create(prefs,{device='keyboard',getGamepads}={}){
     const actions=G.FOptions.actions.map(a=>({...a,type:holds.has(a.id)?'hold':'press',keys:[],pad:[]}));
     const input=G.FInput.create({actions,sticks:{move:{type:'move',pad:'LS',run:'sprint'},look:{type:'look',pad:'RS'}},device,getGamepads,singlePad:true,menu:true,moveCurve:true,releaseAfterClear:true});

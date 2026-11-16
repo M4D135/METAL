@@ -813,7 +813,7 @@ test('E21b — FInput conserve les commandes courantes et historiques normalisé
     return n;
   };
   const edit = change => { const old = plain(O.defaults()); change(old.bindings); return old; };
-  const melee = same(edit(b => { for (const id of ['descend', 'melee', 'fireLeft', 'leftHand', 'weapon4']) delete b[id]; b.interact = ['KeyV']; b.fire = ['KeyC']; }), 'options.test:31');
+  const melee = same(edit(b => { for (const id of ['view', 'melee', 'fireLeft', 'leftHand', 'weapon4']) delete b[id]; b.interact = ['KeyV']; b.fire = ['KeyC']; }), 'options.test:31');
   assert.equal(json(melee.melee), json(['KeyB'])); assert.equal(F.assign(current, {v: 2, keys: melee}, 'keyboard', 'melee', 'KeyH').ok, true);
   const pistol = same(edit(b => { delete b.weapon5; b.interact = ['Digit5']; b.fire = ['KeyH']; }), 'options.test:40');
   assert.notEqual(json(pistol.weapon5), json(['Digit5'])); assert.equal(F.assign(current, {v: 2, keys: pistol}, 'keyboard', 'weapon5', 'Digit6').ok, true);
