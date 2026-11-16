@@ -466,10 +466,11 @@
       if(e.name==='rocket'||e.name==='grenadeLaunch'){if(e.owner==='player')handMotion.impulse(e.name==='grenadeLaunch'?'grenade':'rocket');}
       else if(e.name==='land'){if(e.actor==='player'&&sim.state.activeProfile!=='light'){motion.impulse('land',e.impact);leftMotion.impulse('land',e.impact);}}
       else if(e.name==='bossStep'){const p=sim.state.player,amount=.25*clamp(1-Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z)/25,0,1);if(amount>0){motion.impulse('blast',amount);leftMotion.impulse('blast',amount);}}
+      else if(e.name==='jointBreak'){motion.impulse('blast',.7);leftMotion.impulse('blast',.7);toast('ARTICULATION BRISÉE',1.8);}
       else if(e.name==='bossImpact'||e.name==='bossDeath'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z),amount=(e.name==='bossDeath'?1:e.kind==='ring'?.4:.8)*clamp(1-d/40,0,1);motion.impulse('blast',amount);leftMotion.impulse('blast',amount);if(e.name==='bossDeath')freezeUntil=performance.now()+120;}
       else if(e.name==='explosion'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.y??p.y)-p.y,(e.z??p.z)-p.z);motion.impulse('blast',clamp(1-d/14,0,1));leftMotion.impulse('blast',clamp(1-d/14,0,1));}
       else handMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
-      const sound=e.name==='bossStep'?'land':e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
+      const sound=e.name==='bossStep'?'land':e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name==='jointBreak'?'bossImpact':e.name;
       if(e.name!=='win'&&typeof audio[sound]==='function'&&!((e.name==='weaponPickup'||e.name==='lootPickup')&&trophyIds.has(e.id))){
         const mix=soundscape.event(sim,e);if(mix.level>.0001)audio[sound](mix);
       }
@@ -941,16 +942,17 @@
     const bossReward=pendingBossReward();$('objective-label').textContent=bossReward?'RÉCUPÉRER LE BUTIN DU BOSS':!operational?'ACTIVER LES COMMANDES':s.relays===3?(s.bossAlive?'NEUTRALISER LE GARDIEN':'REJOINDRE LA SORTIE'):'RÉCUPÉRER LES RELAIS';
     const encounters=(s.encounters||[]).filter(c=>c.status!=='dormant'&&Math.hypot((c.trigger?.x??0)-p.x,(c.trigger?.z??0)-p.z)<(c.leashRadius||38)+10).sort((a,b)=>Number(a.status==='cleared')-Number(b.status==='cleared')||Math.hypot(a.trigger.x-p.x,a.trigger.z-p.z)-Math.hypot(b.trigger.x-p.x,b.trigger.z-p.z)),current=encounters[0];
     $('wave-status').hidden=!current;$('wave-status').dataset.state=current?.status||'';
-    if(current){$('wave-label').textContent=current.label||'ZONE DE COMBAT';$('wave-count').textContent=current.status==='cleared'?'ZONE SÉCURISÉE':'VAGUE '+(Math.max(current.wave,current.pendingWave)+1)+' / '+current.waves.length;$('wave-detail').textContent=current.status==='cleared'?'RÉCUPÉREZ LES RÉSERVES':current.status==='warning'?'RENFORTS EN APPROCHE':current.status==='waiting'?'SURVEILLEZ LES ACCÈS':current.active+' CONTACT'+(current.active===1?'':'S')+' ACTIF'+(current.active===1?'':'S');}
+    if(current){$('wave-label').textContent=current.label||'ZONE DE COMBAT';$('wave-count').textContent=current.status==='cleared'?'ZONE SÉCURISÉE':'VAGUE '+(Math.max(current.wave,current.pendingWave)+1)+' / '+current.waves.length;$('wave-detail').textContent=current.status==='cleared'?'RÉCUPÉREZ LES RÉSERVES':current.status==='warning'?'RENFORTS EN APPROCHE':current.status==='waiting'?'SURVEILLEZ LES ACCÈS':current.horde?current.remaining+' MACHINE'+(current.remaining===1?'':'S')+' RESTANTE'+(current.remaining===1?'':'S'):current.active+' CONTACT'+(current.active===1?'':'S')+' ACTIF'+(current.active===1?'':'S');}
     const trophyGrace=s.campaign?.trophies.find(q=>q.phase==='grace');
     if(trophyGrace){$('wave-status').hidden=false;$('wave-status').dataset.state='trophy';$('wave-label').textContent='TROPHÉE ACQUIS';$('wave-count').textContent='ÉPREUVE DANS '+Math.max(1,Math.ceil(trophyGrace.timer))+' S';$('wave-detail').textContent='PRÉPAREZ VOTRE NOUVEL ÉQUIPEMENT';}
     $('score').textContent=String(Math.round(runStats.score+(s.score||0))).padStart(5,'0');$('combo').textContent=s.combo>1?'SÉRIE × '+s.combo:'SIGNAL STABLE';$('combo').classList.toggle('active',s.combo>1);
     const boss=s.enemies.find(e=>e.type===3&&e.hp>0),bossVisible=!!boss&&(boss.bossScale>1?boss.bossAwake&&(Math.hypot(boss.x-p.x,boss.z-p.z)<120):boss.active||boss.hp<boss.maxHp||Math.hypot(boss.x-p.x,boss.z-p.z)<22);
     $('boss-status').hidden=!bossVisible;document.body.dataset.boss=String(bossVisible);
     if(bossVisible){
-      $('boss-bar').style.width=boss.hp/boss.maxHp*100+'%';$('boss-name').textContent=boss.bossName||'LE GARDIEN';$('boss-health').textContent=Math.ceil(boss.hp)+' / '+boss.maxHp+' PV';
-      $('boss-phase').textContent=boss.weakPointOpen?'CŒUR EXPOSÉ · '+Math.max(0,boss.weakTimer||0).toFixed(1)+' S':'PHASE '+((boss.phase||0)+1)+(boss.bossScale>1?' / 3':'');
-      $('boss-attack').textContent=boss.weakPointOpen?'VISEZ LE CŒUR LUMINEUX':boss.attackLabel||'DÉFENSE ACTIVE';$('boss-status').classList.toggle('vulnerable',!!boss.weakPointOpen);
+      const joints=Array.isArray(boss.joints)?boss.joints.filter(v=>v>0).length:-1;
+      $('boss-bar').style.width=boss.hp/boss.maxHp*100+'%';$('boss-name').textContent=boss.bossName||'LE GARDIEN';$('boss-health').textContent=Math.ceil(boss.hp)+' / '+boss.maxHp+' PV'+(joints>=0?' · '+joints+'/4 ARTICULATIONS':'');
+      $('boss-phase').textContent=boss.weakPointOpen?(joints>=0?'ARTICULATIONS EXPOSÉES · ':'CŒUR EXPOSÉ · ')+Math.max(0,boss.weakTimer||0).toFixed(1)+' S':'PHASE '+((boss.phase||0)+1)+(boss.bossScale>1?' / 3':'');
+      $('boss-attack').textContent=boss.weakPointOpen?(joints<0?'VISEZ LE CŒUR LUMINEUX':joints?'VISEZ LES ARTICULATIONS LUMINEUSES':'ACHEVEZ LE CŒUR À NU'):boss.attackLabel||'DÉFENSE ACTIVE';$('boss-status').classList.toggle('vulnerable',!!boss.weakPointOpen);
     }
     const tell=(s.bossAttacks||[]).filter(a=>a.warning).sort((a,b)=>(a.tell-a.age)-(b.tell-b.age))[0];$('boss-cue').hidden=!bossVisible||!tell;
     if(tell){const remaining=Math.max(0,tell.tell-tell.age),jump=tell.kind==='ring'||tell.kind==='sweep';$('boss-cue-text').textContent=(jump?'↑ SAUT / ESQUIVE':'↗ SORTIR DE LA ZONE')+' · '+remaining.toFixed(1)+' s';$('boss-cue-progress').style.strokeDashoffset=String(81.682*(1-remaining/tell.tell));const angle=Math.atan2(tell.x-p.x,p.z-tell.z)-p.yaw;$('boss-cue-arrow').style.transform='rotate('+angle+'rad)';$('boss-cue').dataset.kind=tell.kind;}

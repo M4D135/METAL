@@ -9,7 +9,7 @@
   }
   // Short scenes that open on a fight (David, 16/11/2026): assaults drop the
   // heavy into a guarded room, boss scenes start at the arena gate.
-  function scenes(seed=96,bench=false){const list=[{index:4,boss:true,maxSeconds:100},{index:7,assault:true,maxSeconds:80},{index:17,boss:true,maxSeconds:100},{index:13,assault:true,maxSeconds:80},{index:12,boss:true,maxSeconds:100},{index:11,boss:true,maxSeconds:100}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
+  function scenes(seed=96,bench=false){const list=[{index:4,boss:true,maxSeconds:100},{index:7,assault:true,horde:true,maxSeconds:80},{index:17,boss:true,maxSeconds:100},{index:13,assault:true,maxSeconds:80},{index:12,boss:true,maxSeconds:100},{index:11,boss:true,maxSeconds:100}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
   function active(scene){return scene.boss?(scene.index%2?'heavy':'light'):'heavy';}
   // A spot where the player's body fits, scanned around a room centre.
   function freeSpot(source,x,y,z){
@@ -22,7 +22,9 @@
     if(!scene.assault)return source;
     // The most guarded encounter whose room has room for the player.
     const fights=(source.encounters||[]).filter(q=>q.trigger&&q.waves?.length).map(q=>({q,count:q.waves.reduce((n,w)=>n+w.enemyIds.length,0)})).sort((a,b)=>b.count-a.count);
-    for(const {q} of fights){const t=q.trigger,y=t.y||0,spot=freeSpot(source,t.x,y,t.z);if(spot){const s=source.spawn;return {...source,spawn:{x:spot.x,y,z:spot.z,yaw:Math.atan2(t.x-s.x,s.z-t.z)}};}}
+    // A horde scene starts the room's horde at once, alongside its guards.
+    const encounters=scene.horde?(source.encounters||[]).map(q=>q.horde?{...q,after:undefined}:q):source.encounters;
+    for(const {q} of fights){const t=q.trigger,y=t.y||0,spot=freeSpot(source,t.x,y,t.z);if(spot){const s=source.spawn;return {...source,encounters,spawn:{x:spot.x,y,z:spot.z,yaw:Math.atan2(t.x-s.x,s.z-t.z)}};}}
     return source;
   }
   function progress(sim,pilot){const s=sim.state,b=s.enemies.find(e=>e.bossScale>1);return [pilot.goalKey,pilot.distanceProgress,s.relays,s.kills,s.mechanisms.filter(m=>m.active).length,b?Math.ceil(30*b.hp/b.maxHp):0,s.activeProfile].join('|');}

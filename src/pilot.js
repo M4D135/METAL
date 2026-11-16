@@ -133,7 +133,8 @@ function createPilot(sim,world,opt={}){
     for(const e of s.enemies)if(e.hp>0&&e.deployed!==false&&Math.hypot(e.x-p.x,e.z-p.z)<14)nearCount++;
     if(tg){
       const giant=tg===B;let ax=tg.x,az=tg.z,ay;
-      if(giant){if(tg.weakPointOpen){ax=tg.x+Math.sin(tg.yaw)*.9*tg.bossScale;az=tg.z-Math.cos(tg.yaw)*.9*tg.bossScale;ay=tg.baseY+1.93*tg.bossScale;}else ay=tg.baseY+2*tg.bossScale;}
+      // Exposed: the nearest weak point the simulation offers (joint or heart).
+      if(giant){const q=tg.weakPointOpen&&sim.weakPoints?sim.weakPoints(tg).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0]:null;if(q){ax=q.x;az=q.z;ay=q.y;}else if(tg.weakPointOpen){ax=tg.x+Math.sin(tg.yaw)*.9*tg.bossScale;az=tg.z-Math.cos(tg.yaw)*.9*tg.bossScale;ay=tg.baseY+1.93*tg.bossScale;}else ay=tg.baseY+2*tg.bossScale;}
       else ay=(tg.baseY??0)+HEIGHT[tg.type]*.62;
       const dx=ax-p.x,dz=az-p.z;dT=Math.hypot(dx,dz);
       // tremblement déterministe de la main, borné, pour une visée crédible

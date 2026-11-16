@@ -77,10 +77,14 @@ function navigationGraph(cells,width,testEdge){
   const giant=e=>e.type===3&&Number(e.bossScale)>1,scale=e=>giant(e)?e.bossScale:1,bodyHeight=e=>giant(e)?3.18*scale(e):1.8,health=e=>giant(e)?Math.max(30,Math.min(1000,Number(e.maxHp)||130)):e.variant==='kamikaze'?2:e.variant==='blade'?7:HP[e.type];
   // Humanoid chasers (David, 16/11/2026): a screaming bomber and a liquid-metal blade.
   const chaser=e=>e.type===1&&(e.variant==='kamikaze'||e.variant==='blade');
-  const BOSS=['bossAwake','bossClock','bossStep','attackLabel','weakPointOpen','weakTimer','bossReleased'];
+  const BOSS=['bossAwake','bossClock','bossStep','attackLabel','weakPointOpen','weakTimer','bossReleased','joints'];
+  // Guardian joints in horde worlds (David, 16/11/2026): shoulders then hips,
+  // left before right, in the giant's frame before scaling. Humanoid giants
+  // stand hunched; the robot's joints are its gun pivots and front hips.
+  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15;
   const DIRECTOR=['pressure','tension','eventType','eventAge','nextEvent','events','progress','tier','grace','eventX','eventY','eventZ','eventIntensity'];
   const HORROR=['','metallicSlam','blackout','alarm','ambush'];
-  const BOSS_LABELS=['','Veille','Onde de choc','Écrasement','Barrage de roquettes','Balayage','Cœur exposé','Surcharge — renforts','Charge','Tapis de bombes','Rayon du cœur'];
+  const BOSS_LABELS=['','Veille','Onde de choc','Écrasement','Barrage de roquettes','Balayage','Cœur exposé','Surcharge — renforts','Charge','Tapis de bombes','Rayon du cœur','Articulations exposées'];
   const PIPE=['broken','active','age','remaining','hot','warning','damageWait','cycle'];
   const TRAP=['progress','angle','box','hot','warning','damageWait','triggered','triggerAge','cycle','hp','destroyed'];
   const CAMPAIGN_GEAR=[{key:'pistol',weapon:4,index:0,rank:0},{key:'smg',weapon:0,index:6,rank:2},{key:'shotgun',weapon:1,index:9,rank:3},{key:'grenade',weapon:3,index:12,rank:4},{key:'rocket',weapon:2,index:15,rank:5}];
@@ -208,6 +212,12 @@ function navigationGraph(cells,width,testEdge){
   function create(world,options={}) {
     // Generous ammunition at every boss phase in horde worlds (David, 16/11/2026).
     const hordes=world.hordeVersion===1,PHASE_SLOTS=hordes?4:2,PHASE_AMMO=hordes?[120,24,8,12,0]:[60,12,4,6,0];
+    // In horde worlds a guardian's weak points are four small joints instead of
+    // one large heart. Each holds about a fifth of its health in hits taken
+    // while exposed; breaking one adds a heavy blow, drops the limb and costs
+    // the giant a gun's salvo or a leg's pace. With all four broken, the chest
+    // core stays bare and the giant can no longer attack or walk.
+    const jointed=e=>hordes&&giant(e)&&Array.isArray(e.joints),jointMax=(e,factor)=>Math.max(1,Math.round(actorHealth(e,factor)*.19)),broken=(e,i)=>jointed(e)&&e.joints[i]<=0;
     const rigidEnabled=!!(G.FPhysics&&G.MetalPhysics&&(world.combatVersion===1||options.rigidBodies===true)&&options.rigidBodies!==false);let rigid=null;
     const floors=world.walkable||[],advanced=!!world.combat||world.generation>=5,horror=!!world.horrorSites?.length||world.director?.enabled===true;
     const progression=world.progression?.version===1,economyEnabled=progression&&!!G.FEconomy,nominalCombat=clamp(world.progression?.maxActive||[8,10,12][world.stage||0],2,16);
@@ -359,7 +369,7 @@ function navigationGraph(cells,width,testEdge){
         goalX:e.x,goalZ:e.z,path:[],pathAt:0,stuck:0,moveSpeed:0,
         lastSeenY:(e.y??groundAt(e.x,e.z))+1.45,observedVX:0,observedVZ:0,observedAt:-1,sleeping:false,observedVY:0,dodgeWait:0,dodgeDelay:0,dodgeTime:0,dodgeX:0,dodgeZ:0,
         deployed:!progression||e.deployed!==false,combatEnabled:!progression||e.encounterId===undefined,encounterReleased:!progression||e.encounterId===undefined,returning:false,deployAge:!progression||e.deployed!==false?2:0,quietTime:0,...(bossProgression?{entryGrace:0}:{}),
-        ...freshAir(),bossAwake:false,bossClock:0,bossStep:0,attackLabel:giant(e)?'Veille':'',weakPointOpen:false,weakTimer:0,bossReleased:!e.bossWave,squad:e.squadId??Math.floor(i/4),role:e.role||(e.type===1?'assault':e.type===2?'suppressor':i%3===0?'flanker':i%3===1?'assault':'suppressor')})),
+        ...freshAir(),bossAwake:false,bossClock:0,bossStep:0,attackLabel:giant(e)?'Veille':'',weakPointOpen:false,weakTimer:0,bossReleased:!e.bossWave,...(hordes&&giant(e)?{joints:[0,0,0,0].fill(jointMax(e))}:{}),squad:e.squadId??Math.floor(i/4),role:e.role||(e.type===1?'assault':e.type===2?'suppressor':i%3===0?'flanker':i%3===1?'assault':'suppressor')})),
       cores:world.cores.map(c=>({...c,taken:false})),pickups:world.pickups.map(c=>({...c,taken:false,remaining:Math.max(0,Math.floor(c.amount||0))})),
       hazards:(world.hazards||[]).map(h=>({...h,hot:false,warning:false})),
       jumpPads:(world.jumpPads||[]).map(j=>({...j,flash:0})),
@@ -1389,6 +1399,10 @@ function navigationGraph(cells,width,testEdge){
       if(!alive(e))return;const origin=source||{x:p.x,y:p.y+1.45,z:p.z,credit:true,...(profilesEnabled?{profile:s.activeProfile}:{})};if(profilesEnabled&&e.profileRequired&&(!origin.credit||origin.profile!==e.profileRequired)){if(origin.credit&&profileHintWait<=0){emit('profileBlocked',{required:e.profileRequired,boss:e.id});profileHintWait=1;}return;}if(origin.credit)amount*=(profilesEnabled&&origin.profile!==s.activeProfile?G.FEconomy.stats(s.profiles[origin.profile].economy):stats).damageMultiplier;if(giant(e))amount*=e.weakPointOpen&&weak?3.2:.30;if(e.bossWave)e.bossReleased=true;
       if(bossProgression)e.entryGrace=0;
       if(progression&&enemyEncounter.has(e.id)){e.encounterReleased=true;e.returning=false;e.quietTime=0;const encounter=enemyEncounter.get(e.id);if(encounter.status==='dormant')announceWave(encounter,0);}
+      if(jointed(e)&&e.weakPointOpen&&typeof weak==='number'&&e.joints[weak-1]>0){
+        const i=weak-1;e.joints[i]=Math.max(0,e.joints[i]-amount);
+        if(e.joints[i]===0){amount+=actorHealth(e)*.06;const q=weakPoints({...e,joints:e.joints.map((v,k)=>k===i?1:0)})[0];emit('jointBreak',{id:e.id,joint:i,x:q.x,y:q.y,z:q.z,scale:scale(e)});rigid?.limb?.(e,i,origin);if(e.joints.every(v=>v<=0)){e.weakTimer=3;e.weakPointOpen=true;}}
+      }
       e.hp=Math.max(0,e.hp-amount);e.hurt=modernMovement?.1+.1*Math.min(1,amount/2):.2;
       if(giant(e)&&origin.credit)emit(e.weakPointOpen&&weak?'weakHit':'bossArmorHit',{id:e.id,x:e.x,y:e.y,z:e.z});
       if(modernMovement&&origin.credit&&!giant(e)&&e.hp>0){
@@ -1409,15 +1423,28 @@ function navigationGraph(cells,width,testEdge){
       }else bossPhase(e);
     }
 
+    // The targets a guardian currently offers, in world space: its unbroken
+    // joints, or its heart (the chest core once every joint is gone).
+    function weakPoints(e){
+      if(!giant(e))return [];const size=scale(e),sn=Math.sin(e.yaw),cs=Math.cos(e.yaw),place=(q,r,joint)=>({x:e.x+(cs*q[0]-sn*q[2])*size,y:e.baseY+q[1]*size,z:e.z+(sn*q[0]+cs*q[2])*size,r:r*size,joint});
+      if(!jointed(e))return [place([0,1.93,-.9],.36,-1)];
+      const set=e.bossLook?JOINTS_HUMAN:JOINTS_ROBOT,out=[];for(let i=0;i<4;i++)if(e.joints[i]>0)out.push(place(set[i],JOINT_R,i));
+      if(!out.length)out.push(place([0,1.93,-.9],.2,-1));return out;
+    }
     function giantHit(e,o,d,far,padding=0){
       const size=scale(e),cs=Math.cos(e.yaw),sn=Math.sin(e.yaw),ox=o[0]-e.x,oz=o[2]-e.z;
       const origin=[(cs*ox+sn*oz)/size,(o[1]-e.baseY)/size,(-sn*ox+cs*oz)/size],dir=[(cs*d[0]+sn*d[2])/size,d[1]/size,(-sn*d[0]+cs*d[2])/size];
       let distance=far,weak=false;
-      const boxes=[[-.825,.825,1.2,2.6,-.575,.625],[-.5,.5,2.64,3.14,-.455,.295],[-.605,.605,1.495,2.365,-.70,-.54]];
-      for(const side of [-1,1])for(const end of [-1,1])boxes.push([side*.86-.28,side*.86+.28,.03,1.45,end*.68-.34,end*.68+.34]);
+      // Humanoid giants: hunched torso, head, two legs and two shoulder guns;
+      // a broken limb no longer stops a shot.
+      const boxes=e.bossLook?[[-.5,.5,1.55,2.62,-.5,.3],[-.33,.33,2.55,3.2,-.62,.05]]:[[-.825,.825,1.2,2.6,-.575,.625],[-.5,.5,2.64,3.14,-.455,.295],[-.605,.605,1.495,2.365,-.70,-.54]];
+      if(e.bossLook)for(const side of [-1,1]){if(!broken(e,side<0?2:3))boxes.push([side*.2-.2,side*.2+.2,.03,1.5,-.35,.25]);if(!broken(e,side<0?0:1))boxes.push([side*1.04-.24,side*1.04+.24,2.1,2.46,-1.5,.3]);}
+      else for(const side of [-1,1])for(const end of [-1,1])if(end>0||!broken(e,side<0?2:3))boxes.push([side*.86-.28,side*.86+.28,.03,1.45,end*.68-.34,end*.68+.34]);
       for(const box of boxes){const q=box.map((v,i)=>v+(i%2?padding:-padding)/size);let lo=0,hi=distance;for(let k=0;k<3;k++){if(Math.abs(dir[k])<1e-9){if(origin[k]<q[k*2]||origin[k]>q[k*2+1]){hi=-1;break;}}else{let a=(q[k*2]-origin[k])/dir[k],b=(q[k*2+1]-origin[k])/dir[k];if(a>b)[a,b]=[b,a];lo=Math.max(lo,a);hi=Math.min(hi,b);if(hi<lo)break;}}if(hi>=lo&&lo>=0&&lo<distance)distance=lo;}
-      const center=[e.x+sn*.9*size,e.baseY+1.93*size,e.z-cs*.9*size],delta=center.map((v,k)=>v-o[k]),along=delta.reduce((n,v,k)=>n+v*d[k],0),off=delta.reduce((n,v)=>n+v*v,0)-along*along,r=.36*size+padding;
-      if(along>=0&&off<=r*r){const hit=Math.max(0,along-Math.sqrt(Math.max(0,r*r-off)));if(hit<distance){distance=hit;weak=true;}}
+      for(const q of weakPoints(e)){
+        const delta=[q.x-o[0],q.y-o[1],q.z-o[2]],along=delta.reduce((n,v,k)=>n+v*d[k],0),off=delta.reduce((n,v)=>n+v*v,0)-along*along,r=q.r+padding;
+        if(along>=0&&off<=r*r){const hit=Math.max(0,along-Math.sqrt(Math.max(0,r*r-off)));if(hit<distance){distance=hit;weak=q.joint>=0?q.joint+1:true;}}
+      }
       return {distance,weak};
     }
     function hitRay(origin,dir,far,assist){
@@ -1534,8 +1561,8 @@ function navigationGraph(cells,width,testEdge){
         const d=Math.max(0,Math.hypot(e.x-point[0],e.y-point[1],e.z-point[2])-(giant(e)?1.15*scale(e):0));
         let strength=d<r?Math.max(0,1-d/r)*blastExposure(point,e.x,e.y,e.z):0,weak=e.id===weakId;
         if(bossProgression&&owner==='player'&&giant(e)&&e.weakPointOpen){
-          const size=scale(e),core=[e.x+Math.sin(e.yaw)*.9*size,e.baseY+1.93*size,e.z-Math.cos(e.yaw)*.9*size],distance=Math.max(0,Math.hypot(...core.map((v,k)=>v-point[k]))-.36*size),exposure=distance<r?(1-distance/r)*blastExposure(point,...core):0;
-          if(exposure*3.2>strength*.30){strength=exposure;weak=true;}
+          for(const q of weakPoints(e)){const distance=Math.max(0,Math.hypot(q.x-point[0],q.y-point[1],q.z-point[2])-q.r),exposure=distance<r?(1-distance/r)*blastExposure(point,q.x,q.y,q.z):0;
+          if(exposure*3.2>strength*.30){strength=exposure;weak=q.joint>=0?q.joint+1:true;}}
         }
         const amount=(owner==='player'?(bossProgression?damage:8.5):damage*.23)*strength;
         if(amount>0){connected=true;damageEnemy(e,amount,{x:point[0],y:point[1],z:point[2],credit:owner==='player',profile,blast:true},weak);if(e.hp>0){e.stun=Math.max(e.stun,.25);e.windup=0;e.burstLeft=0;}}
@@ -2443,10 +2470,10 @@ function navigationGraph(cells,width,testEdge){
         if(signature==='carpet'){e.attackLabel='Tapis de bombes';for(let i=0;i<5;i++){const q=bossPoint(e,point.x+Math.sin(angle)*(i-2)*4,point.z-Math.cos(angle)*(i-2)*4),a=bossAttack(e,'rocketZone',q,{tell:1.8+i*.3});a.signature=signature;}}
         else{e.attackLabel=signature==='charge'?'Charge':'Rayon du cœur';const a=bossAttack(e,'sweep',{x:e.x,y:e.baseY,z:e.z},{tell:1.8,angle});a.signature=signature;a.activeDuration=signature==='charge'?.75:1.7;a.duration=a.tell+a.activeDuration;a.length=signature==='charge'?6+radius(e):e.arena.r+2;a.width=signature==='charge'?radius(e):.8;a.turn=signature==='charge'?0:.4;}
       }else if(kind==='rocketZone'){
-        const count=2+e.phase+(world.combatVersion===1&&world.chapter>=1?1:0),side=[Math.cos(angle),Math.sin(angle)];
+        const count=Math.max(1,2+e.phase+(world.combatVersion===1&&world.chapter>=1?1:0)-(jointed(e)?(e.joints[0]<=0)+(e.joints[1]<=0):0)),side=[Math.cos(angle),Math.sin(angle)];
         for(let i=0;i<count;i++){const offset=(i-(count-1)/2)*4.2,q=bossPoint(e,point.x+side[0]*offset,point.z+side[1]*offset);bossAttack(e,kind,q,{tell:1.7+i*.28});}
       }else if(kind==='sweep'){
-        const count=e.phase===2?3:2,vx=e.observedVX||0,vz=e.observedVZ||0,lateral=vx*Math.cos(angle)+vz*Math.sin(angle),lead=Math.atan2(e.lastSeenX+vx*.3-e.x,e.z-e.lastSeenZ-vz*.3);
+        const count=Math.max(1,(e.phase===2?3:2)-(jointed(e)?(e.joints[0]<=0)+(e.joints[1]<=0):0)),vx=e.observedVX||0,vz=e.observedVZ||0,lateral=vx*Math.cos(angle)+vz*Math.sin(angle),lead=Math.atan2(e.lastSeenX+vx*.3-e.x,e.z-e.lastSeenZ-vz*.3);
         for(let i=0;i<count;i++)bossAttack(e,kind,{x:e.x,y:e.baseY,z:e.z},{tell:1.6+i*.42,angle:lead+(e.phase===2?(i-1)*.3:i*.3*(Math.sign(lateral)||1))});
       }else{
         bossAttack(e,kind,kind==='ring'?{x:e.x,y:e.baseY,z:e.z}:point);
@@ -2472,14 +2499,15 @@ function navigationGraph(cells,width,testEdge){
       if(Math.hypot(e.aimX-e.x,e.aimZ-e.z)>.5){const want=Math.atan2(e.aimX-e.x,e.z-e.aimZ),delta=Math.atan2(Math.sin(want-e.yaw),Math.cos(want-e.yaw)),rate=(e.phase===2?1.57:1.05)*dt;if(Math.abs(delta)>1e-9){e.yaw+=clamp(delta,-rate,rate);e.yaw=Math.atan2(Math.sin(e.yaw),Math.cos(e.yaw));}}
       const attacks=s.bossAttacks.filter(a=>a.bossId===e.id&&a.age<a.duration-(a.burn||0));
       if(attacks.length){const warning=attacks.filter(a=>a.warning);e.windup=warning.length?Math.max(...warning.map(a=>Math.max(0,a.tell-a.age))):0;e.windupMax=Math.max(e.windup,e.windupMax);e.attackState=warning.length?'aim':'burst';return true;}
-      e.windup=0;e.attackState='recover';if(e.weakPointOpen)e.attackLabel='Cœur exposé';
+      if(jointed(e)&&e.joints.every(v=>v<=0)){e.weakTimer=3;e.weakPointOpen=true;}
+      e.windup=0;e.attackState='recover';if(e.weakPointOpen)e.attackLabel=jointed(e)?'Articulations exposées':'Cœur exposé';
       if(e.hasMemory){e.aimX=e.lastSeenX;e.aimY=e.lastSeenY;e.aimZ=e.lastSeenZ;}
       // The entire articulated silhouette remains inside the cleared arena. A
       // giant never uses infantry nav or squeezes down the entrance bridge.
       // BOSS-12: a heavy walk between attacks closes in and backs away from a
       // player at its feet. Each 0.9 s of the shared clock while it really
       // moves is a step the player feels.
-      if(e.seen&&e.bossClock>0&&!e.weakPointOpen){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz)||1,dir=d>radius(e)+8?1:d<radius(e)+2?-1:0;if(dir){const x0=e.x,z0=e.z;move(e,dx/d*dt*1.2*dir,dz/d*dt*1.2*dir,radius(e));if(Math.hypot(e.x-x0,e.z-z0)>1e-6&&Math.floor(s.time/.9)!==Math.floor((s.time-dt)/.9))emit('bossStep',{id:e.id,x:e.x,y:e.baseY,z:e.z,impact:10,material:'metal'});}}
+      if(e.seen&&e.bossClock>0&&!e.weakPointOpen){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz)||1,dir=d>radius(e)+8?1:d<radius(e)+2?-1:0;if(dir){const x0=e.x,z0=e.z,limp=jointed(e)?Math.max(.3,1-.45*((e.joints[2]<=0)+(e.joints[3]<=0))):1;move(e,dx/d*dt*1.2*dir*limp,dz/d*dt*1.2*dir*limp,radius(e));if(Math.hypot(e.x-x0,e.z-z0)>1e-6&&Math.floor(s.time/.9)!==Math.floor((s.time-dt)/.9))emit('bossStep',{id:e.id,x:e.x,y:e.baseY,z:e.z,impact:10,material:'metal'});}}
       e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;
       if(e.bossClock<=0&&inArena&&(e.hasMemory||tactics.camp>=3)&&(!bossProgression||!e.weakPointOpen)){if(tactics.camp>=3){remember(e,p.x,p.z,'investigate',7,p.y+1.45);beginBossAttack(e,'rocketZone');tactics.camp=0;}else beginBossAttack(e);}
       return true;
@@ -2514,7 +2542,7 @@ function navigationGraph(cells,width,testEdge){
         if(previous<a.duration-(a.burn||0)&&a.age>=a.duration-(a.burn||0))finished.add(a.bossId);
       }
       s.bossAttacks=s.bossAttacks.filter(a=>a.age<a.duration);
-      for(const id of finished)if(!s.bossAttacks.some(a=>a.bossId===id&&a.age<a.duration-(a.burn||0))){const e=s.enemies[id];if(e?.hp>0){e.weakTimer=3;e.weakPointOpen=true;e.attackLabel='Cœur exposé';e.attackState='recover';e.windup=0;e.bossClock=Math.max(e.bossClock,e.weakTimer+.1);}}
+      for(const id of finished)if(!s.bossAttacks.some(a=>a.bossId===id&&a.age<a.duration-(a.burn||0))){const e=s.enemies[id];if(e?.hp>0){e.weakTimer=3;e.weakPointOpen=true;e.attackLabel=jointed(e)?'Articulations exposées':'Cœur exposé';e.attackState='recover';e.windup=0;e.bossClock=Math.max(e.bossClock,e.weakTimer+.1);}}
     }
     function avoidBossZone(e,dt){
       for(const a of s.bossAttacks){
@@ -2808,7 +2836,7 @@ function navigationGraph(cells,width,testEdge){
           ...(armorEnabled?{armor:{...s.armor},...(!progression?{armorPickupRemaining:s.pickups.map(q=>q.remaining)}:{})}:{}),
           ...(arsenal?{equipment:{...s.equipment},...(thermalSerialized||s.weaponHeat.some(v=>v!==p.heat)||s.weaponOverheated.some(v=>v!==p.overheated)?{weaponHeat:s.weaponHeat.slice(),weaponOverheated:s.weaponOverheated.slice()}:{})}:{}),
           ...(progression?{inventory:exportInventory(),encounters:s.encounters.map(q=>({id:q.id,...pick(q,ENCOUNTER_STATE)})),pickupRemaining:s.pickups.map(q=>q.remaining),loot:s.loot.map(q=>({...q,ammo:q.ammo.slice()}))}:{}),
-          enemies:s.enemies.map(e=>({...pick(e,ENEMY),...pick(e,AI),...pick(e,AI2),...pick(e,AI3),...pick(e,BOSS),...(e.bossTactics?{bossTactics:{camp:e.bossTactics.camp,last:e.bossTactics.last.slice()}}:{}),...(progression?pick(e,ENCOUNTER_AI):{}),...(bossProgression?{entryGrace:e.entryGrace}:{}),path:e.path.slice()})),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q})),
+          enemies:s.enemies.map(e=>({...pick(e,ENEMY),...pick(e,AI),...pick(e,AI2),...pick(e,AI3),...pick(e,BOSS),...(e.joints?{joints:e.joints.slice()}:{}),...(e.bossTactics?{bossTactics:{camp:e.bossTactics.camp,last:e.bossTactics.last.slice()}}:{}),...(progression?pick(e,ENCOUNTER_AI):{}),...(bossProgression?{entryGrace:e.entryGrace}:{}),path:e.path.slice()})),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q})),
           mechanisms:s.mechanisms.map(m=>m.active),doors:s.doors.map(d=>d.progress),lifts:s.lifts.map(l=>pick(l,['y','target','powered','moving','carrying'])),
           bossAttacks:s.bossAttacks.map(q=>({...q,hitEnemies:q.hitEnemies.slice()})),projectiles:s.projectiles.map(q=>({...q})),pipes:s.pipes.map(q=>pick(q,PIPE)),traps:s.traps.map(q=>pick(q,TRAP)),rubble:s.debris.filter(q=>q.structural).map(rubbleCopy),
           doorDamage:s.doors.map(d=>({hp:d.hp,destroyed:d.destroyed})),mechanismDamage:s.mechanisms.map(m=>({hp:m.shellHp,destroyed:m.destroyed}))},
@@ -3016,7 +3044,7 @@ function navigationGraph(cells,width,testEdge){
             require(AI3.every(key=>e[key]===undefined));Object.assign(ai,{observedVY:0,dodgeWait:0,dodgeDelay:0,dodgeTime:0,dodgeX:0,dodgeZ:0});
           }
           let boss;
-          if(data.bossVersion===1){require(bool(e.bossAwake)&&number(e.bossClock,0,12)&&integer(e.bossStep,0,1e9)&&BOSS_LABELS.includes(e.attackLabel)&&bool(e.weakPointOpen)&&number(e.weakTimer,0,3)&&e.weakPointOpen===(e.weakTimer>0)&&bool(e.bossReleased));if(!giant(home))require(!e.bossAwake&&e.bossClock===0&&e.bossStep===0&&e.attackLabel===''&&!e.weakPointOpen&&e.weakTimer===0);if(!home.bossWave)require(e.bossReleased);if(giant(home))require(home.arena&&Math.hypot(e.x-home.arena.x,e.z-home.arena.z)<=Math.max(1,home.arena.r-2.1*scale(home)-5)+1e-6);boss=pick(e,BOSS);}
+          if(data.bossVersion===1){require(bool(e.bossAwake)&&number(e.bossClock,0,12)&&integer(e.bossStep,0,1e9)&&BOSS_LABELS.includes(e.attackLabel)&&bool(e.weakPointOpen)&&number(e.weakTimer,0,3)&&e.weakPointOpen===(e.weakTimer>0)&&bool(e.bossReleased));if(!giant(home))require(!e.bossAwake&&e.bossClock===0&&e.bossStep===0&&e.attackLabel===''&&!e.weakPointOpen&&e.weakTimer===0);if(!home.bossWave)require(e.bossReleased);if(giant(home))require(home.arena&&Math.hypot(e.x-home.arena.x,e.z-home.arena.z)<=Math.max(1,home.arena.r-2.1*scale(home)-5)+1e-6);if(hordes&&giant(home))require(Array.isArray(e.joints)&&e.joints.length===4&&e.joints.every(v=>number(v,0,jointMax(home,savedBossFactor))));else require(e.joints===undefined);boss=pick(e,BOSS);if(boss.joints)boss.joints=boss.joints.slice();}
           else{require(BOSS.every(key=>e[key]===undefined)&&!giant(home)&&!home.bossWave);boss={bossAwake:false,bossClock:0,bossStep:0,attackLabel:'',weakPointOpen:false,weakTimer:0,bossReleased:true};}
           if(e.bossTactics!==undefined){const t=e.bossTactics;require(giant(home)&&t&&number(t.camp,0,3)&&Array.isArray(t.last)&&t.last.length<=2&&t.last.every(k=>['slam','ring','rocketZone','sweep'].includes(k)));boss.bossTactics={camp:t.camp,last:t.last.slice()};}
           return {...home,...pick(e,ENEMY),...ai,...boss,...encounterAI,encounterId:s.enemies[i].encounterId,encounterWave:s.enemies[i].encounterWave,role:s.enemies[i].role,squad:s.enemies[i].squad};
@@ -3099,7 +3127,7 @@ function navigationGraph(cells,width,testEdge){
     if(rigidEnabled)rigid=G.MetalPhysics.create(world,solids,{state:s,emit,explode,blocked,hurt,damageEnemy,navMark});
     if(baked){graph.adopt(baked);navEpoch=baked.epoch;if(rigid)s.aiStats.navPending=0;}else{if(rigid)refreshNav(false);graph.flush();}clipEscape=boundaryAt(p.x,p.z);
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
-    return {state:s,get destruction(){return destruction;},get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
+    return {state:s,get destruction(){return destruction;},weakPoints,get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
   G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor,wreckage};
 })(typeof window!=='undefined'?window:globalThis);

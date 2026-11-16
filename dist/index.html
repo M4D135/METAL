@@ -242,7 +242,7 @@ body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes])
   <canvas id="world" tabindex="0" aria-label="METAL — vue du champ de bataille"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.1">V0.12.1</b></span></div>
+    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.2">V0.12.2</b></span></div>
     <div class="intro-content">
       <h1>METAL</h1>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
@@ -61157,7 +61157,7 @@ function props(world,solids){
   }return out;
 }
 function create(world,solids,host={}){
-  const F=G.FPhysics,s=host.state,options={bounded:true,geometry:!!G.FPhysicsGeometry&&host.geometry!==false,bounds:world.bounds,capacity:384,maxStatics:Math.max(4096,solids.length+(world.walkable||[]).length+128),maxContacts:8192,maxJoints:24,ground:(world.walkable||[]).length?null:0,massMin:3,massMax:150};
+  const F=G.FPhysics,s=host.state,options={bounded:true,geometry:!!G.FPhysicsGeometry&&host.geometry!==false,bounds:world.bounds,capacity:384,maxStatics:Math.max(4096,solids.length+(world.walkable||[]).length+128),maxContacts:8192,maxJoints:world.hordeVersion===1?96:24,ground:(world.walkable||[]).length?null:0,massMin:3,massMax:150};
   let phys=F.create(options),rows=[],systems=[],proxies=[],rigs=[],player=0,serial=0,tick=0,dirty=false,latestSolids=solids;
   const impactAt=new Float64Array((world.enemies?.length||0)+1).fill(-1000),energyBefore=new Float64Array(4096);
   const navMap=new Map(),navBoxes=[],navPending=new Map();
@@ -61240,6 +61240,23 @@ function create(world,solids,host={}){
     if(gun)body(gun,6,[1.5,.4,-1]);
     return true;
   }
+  // A guardian's broken joint drops its limb (David, 16/11/2026): every part
+  // of that arm, with its shoulder gun, or of that leg falls at its true size
+  // as rigid bodies welded together, and stays on the arena floor.
+  function limbParts(enemy,joint){
+    const side=joint%2?1:-1,arm=joint<2,human=!!enemy.bossLook,leg=side<0?0:2;
+    const names=arm?(human?['hum-upper-','hum-fore-','hum-hand-','hum-arm-','endo-shoulder-','endo-upper-arm-','endo-elbow-','endo-hand-','liquid-blade-','titan-gun-','titan-gun-yoke-','titan-gun-rim-'].map(n=>n+side).concat(['endo-forearm-'+side+'-a','endo-forearm-'+side+'-b']):['custodian-shoulder-','custodian-barrel-','custodian-cannon-','custodian-gun-pivot-','custodian-receiver-','custodian-muzzle-','custodian-ammo-'].map(n=>n+side))
+      :(human?['hum-thigh-','hum-shin-','hum-foot-','hum-leg-','endo-thigh-','endo-thigh-piston-','endo-hip-','endo-knee-','endo-foot-','endo-toe-'].map(n=>n+side).concat(['endo-shin-'+side+'-a','endo-shin-'+side+'-b']):['custodian-leg-','custodian-hip-','custodian-thigh-','custodian-knee-','custodian-shin-','custodian-piston-','custodian-boot-'].map(n=>n+leg));
+    const size=enemy.bossScale||1,whole={...enemy,hp:1,hurt:0,joints:Array.isArray(enemy.joints)?enemy.joints.map((v,k)=>k===joint?1:v):undefined};
+    return G.FActors.build(whole,{quality:'low',distance:size*20,time:s.time}).filter(m=>names.includes(m.actorPart));
+  }
+  function limb(enemy,joint,source){
+    if(!G.FActors)return;const parts=limbParts(enemy,joint).sort((a,b)=>b.s[0]*b.s[1]*b.s[2]-a.s[0]*a.s[1]*a.s[2]).slice(0,10);if(!parts.length)return;
+    let excess=rows.filter(q=>q.kind==='limb').length+parts.length-48;for(const q of rows.slice())if(excess>0&&q.kind==='limb'&&phys.isAsleep(q.handle)){remove(q);excess--;}
+    const centre=parts[0].p,dx=centre[0]-enemy.x,dz=centre[2]-enemy.z,d=Math.hypot(dx,dz)||1,push=[dx/d*2.6,1.2,dz/d*2.6],made=[];
+    for(const m of parts){const size=m.s.map(v=>Math.min(24,Math.max(.05,v))),q=add({kind:'limb',shape:m.shape,body:'box',size,pos:m.p,rotation:m.r,mass:clamp(size[0]*size[1]*size[2]*90,20,4000),material:'metal',mat:clamp(Math.round(m.mat||0),0,19),color:m.color,velocity:push,angularVelocity:[dz/d*.5,0,-dx/d*.5],group:RAGDOLL,mask:65535^RAGDOLL});if(q){made.push(q);if(source?.credit){q.credit=s.time;q.profile=source.profile||null;}}}
+    for(let i=1;i<made.length;i++){const a=phys.body(made[0].handle),b=phys.body(made[i].handle);try{phys.addJoint({type:'weld',a:a.handle,b:b.handle,worldAnchor:b.pos.slice()});}catch(_){break;}}
+  }
   function wreck(enemy,source){
     if(!G.FActors)return;if(!(enemy.bossScale>1)&&ragdoll(enemy,source))return;const giant=enemy.bossScale>1,meshes=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}).filter(m=>m.shape!=='ring').sort((a,b)=>b.s[0]*b.s[1]*b.s[2]-a.s[0]*a.s[1]*a.s[2]).slice(0,giant?20:enemy.horde?3:5);
     const count=rows.filter(q=>q.kind==='wreck').length;let excess=count+meshes.length-48;for(const q of rows.slice())if(excess>0&&q.kind==='wreck'&&phys.isAsleep(q.handle)){remove(q);excess--;}
@@ -61292,14 +61309,14 @@ function create(world,solids,host={}){
   function restore(value){
     if(!value||value.version!==1||!Number.isInteger(value.serial)||value.serial<0||!Array.isArray(value.rows)||value.rows.length>384||!Array.isArray(value.systems)||JSON.stringify(value.systems)!==JSON.stringify(systems)||value.player!==player||!Array.isArray(value.rigs)||JSON.stringify(value.rigs)!==JSON.stringify(rigs)||!Array.isArray(value.proxies)||value.proxies.length!==proxies.length||!value.proxies.every((q,i)=>q.handle===proxies[i].handle&&Number.isInteger(q.enemy)&&q.enemy>=-1&&q.enemy<(world.enemies?.length||0))||!Array.isArray(value.impacts)||value.impacts.length!==impactAt.length||!value.impacts.every(v=>Number.isFinite(v)&&v>=-1000&&v<=1e9))throw Error('Invalid rigid bodies');
     const next=F.create({...options,geometry:typeof value.physics?.fp==='string'&&value.physics.fp.endsWith('/G1')});next.setStatics(latestSolids,world.walkable||[]);next.restore(value.physics);const handles=new Set(),ids=new Set(),rubbleIds=new Set(),projectileIds=new Set(),reserved=new Set([player,...systems.map(q=>q.handle),...proxies.map(q=>q.handle)]);for(const h of reserved)if(h&&(!next.sample(h,sample)||!(sample[16]&4)))throw Error('Invalid physical actor');
-    for(const q of value.rows){if(!q||!Number.isInteger(q.id)||q.id<1||q.id>value.serial||ids.has(q.id)||handles.has(q.handle)||reserved.has(q.handle)||!next.valid(q.handle)||!['prop','barrel','rubble','wreck','grenade'].includes(q.kind)||!['box','bevel','sphere','octa','cylinder','capsule'].includes(q.shape)||!Array.isArray(q.size)||q.size.length!==3||!q.size.every(v=>Number.isFinite(v)&&v>0&&v<=4)||!Number.isFinite(q.hp)||q.hp<0||q.hp>10||!Number.isFinite(q.fuse)||q.fuse<-.1&&q.fuse!==-1||q.fuse>.36||!Number.isFinite(q.credit)||!['light','heavy',null].includes(q.profile))throw Error('Invalid physical metadata');if(!Number.isInteger(q.mat)||q.mat<0||q.mat>12||q.color!==undefined&&(!Array.isArray(q.color)||q.color.length!==3||!q.color.every(v=>Number.isFinite(v)&&v>=0&&v<=2)))throw Error('Invalid physical appearance');
+    for(const q of value.rows){if(!q||!Number.isInteger(q.id)||q.id<1||q.id>value.serial||ids.has(q.id)||handles.has(q.handle)||reserved.has(q.handle)||!next.valid(q.handle)||!['prop','barrel','rubble','wreck','grenade','limb'].includes(q.kind)||!(['box','bevel','sphere','octa','cylinder','capsule','ring'].includes(q.shape)||q.kind==='limb'&&/^metal-hum-[a-z0-9-]+$/.test(q.shape))||!Array.isArray(q.size)||q.size.length!==3||!q.size.every(v=>Number.isFinite(v)&&v>0&&v<=(q.kind==='limb'?24:4))||!Number.isFinite(q.hp)||q.hp<0||q.hp>10||!Number.isFinite(q.fuse)||q.fuse<-.1&&q.fuse!==-1||q.fuse>.36||!Number.isFinite(q.credit)||!['light','heavy',null].includes(q.profile))throw Error('Invalid physical metadata');if(!Number.isInteger(q.mat)||q.mat<0||q.mat>(q.kind==='limb'?19:12)||q.color!==undefined&&(!Array.isArray(q.color)||q.color.length!==3||!q.color.every(v=>Number.isFinite(v)&&v>=0&&v<=2)))throw Error('Invalid physical appearance');
       if(q.kind==='rubble'){if(!Number.isInteger(q.rubbleId)||q.rubbleId<1||rubbleIds.has(q.rubbleId))throw Error('Invalid rubble reference');rubbleIds.add(q.rubbleId);}else if(q.rubbleId!==null)throw Error('Unexpected rubble reference');
       if(q.kind==='grenade'){if(!Number.isInteger(q.projectileId)||q.projectileId<1||projectileIds.has(q.projectileId))throw Error('Invalid projectile reference');projectileIds.add(q.projectileId);}else if(q.projectileId!==null)throw Error('Unexpected projectile reference');
       next.sample(q.handle,sample);if(sample[16]&4)throw Error('Dynamic prop is kinematic');handles.add(q.handle);ids.add(q.id);}
     const nav=value.navigation;if(!nav||!Array.isArray(nav.boxes)||!Array.isArray(nav.pending)||nav.boxes.length>384||nav.pending.length>384)throw Error('Invalid physical navigation');const navValid=q=>q&&Number.isInteger(q.handle)&&q.handle>0&&[q.minX,q.maxX,q.minY,q.maxY,q.minZ,q.maxZ].every(Number.isFinite)&&q.minX<=q.maxX&&q.minY<=q.maxY&&q.minZ<=q.maxZ&&(q.cost===0||q.cost===3)&&typeof q.barrel==='boolean';if(!nav.boxes.every(navValid)||!nav.pending.every(q=>Array.isArray(q)&&q.length===2&&Number.isInteger(q[0])&&q[0]>0&&(q[1]===null||navValid(q[1])&&q[1].handle===q[0])))throw Error('Invalid physical navigation boxes');
     if(next.stats.bodies!==handles.size+systems.length+proxies.length+(player?1:0))throw Error('Unmapped bodies');phys=next;proxies=copy(value.proxies);impactAt.set(value.impacts);serial=value.serial;rows=copy(value.rows);byHandle.clear();rub.clear();for(const q of rows){byHandle.set(q.handle,q);if(q.rubbleId!==null)rub.set(q.rubbleId,q);}dirty=false;navMap.clear();navPending.clear();for(const q of nav.boxes)navMap.set(q.handle,copy(q));for(const [h,q] of nav.pending)navPending.set(h,copy(q));navBoxes.length=0;navBoxes.push(...navMap.values());
   }
-  return {get physics(){return phys;},get rows(){return rows;},navigationCost,navigationSegment,get navigationBoxes(){return navBoxes;},grenade,grenadePose,removeGrenade,obstacle:(x,z,r,y,height)=>blocked(null,x,z,r,y,height),blocked,carry,support,shoot,blast,rubble,rubblePose,wreck,step,models,snapshot,restore,hash:()=>phys.hash(),ray:(o,d,far)=>phys.ray(o,d,far,hit,10),digestInto(mix){mix(phys.hash());mix(rows);mix(impactAt);mix(navBoxes);for(const [h,q] of navPending){mix(h);mix(q);}},setSolids(value,area){latestSolids=value;phys.updateStatics(value,world.walkable||[],area);dirty=false;},removeRubble(id){const q=rub.get(id);if(q)remove(q);}};
+  return {limb,get physics(){return phys;},get rows(){return rows;},navigationCost,navigationSegment,get navigationBoxes(){return navBoxes;},grenade,grenadePose,removeGrenade,obstacle:(x,z,r,y,height)=>blocked(null,x,z,r,y,height),blocked,carry,support,shoot,blast,rubble,rubblePose,wreck,step,models,snapshot,restore,hash:()=>phys.hash(),ray:(o,d,far)=>phys.ray(o,d,far,hit,10),digestInto(mix){mix(phys.hash());mix(rows);mix(impactAt);mix(navBoxes);for(const [h,q] of navPending){mix(h);mix(q);}},setSolids(value,area){latestSolids=value;phys.updateStatics(value,world.walkable||[],area);dirty=false;},removeRubble(id){const q=rub.get(id);if(q)remove(q);}};
 }
 G.MetalPhysics={create,props};
 })(typeof window!=='undefined'?window:globalThis);
@@ -64188,10 +64205,14 @@ function navigationGraph(cells,width,testEdge){
   const giant=e=>e.type===3&&Number(e.bossScale)>1,scale=e=>giant(e)?e.bossScale:1,bodyHeight=e=>giant(e)?3.18*scale(e):1.8,health=e=>giant(e)?Math.max(30,Math.min(1000,Number(e.maxHp)||130)):e.variant==='kamikaze'?2:e.variant==='blade'?7:HP[e.type];
   // Humanoid chasers (David, 16/11/2026): a screaming bomber and a liquid-metal blade.
   const chaser=e=>e.type===1&&(e.variant==='kamikaze'||e.variant==='blade');
-  const BOSS=['bossAwake','bossClock','bossStep','attackLabel','weakPointOpen','weakTimer','bossReleased'];
+  const BOSS=['bossAwake','bossClock','bossStep','attackLabel','weakPointOpen','weakTimer','bossReleased','joints'];
+  // Guardian joints in horde worlds (David, 16/11/2026): shoulders then hips,
+  // left before right, in the giant's frame before scaling. Humanoid giants
+  // stand hunched; the robot's joints are its gun pivots and front hips.
+  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15;
   const DIRECTOR=['pressure','tension','eventType','eventAge','nextEvent','events','progress','tier','grace','eventX','eventY','eventZ','eventIntensity'];
   const HORROR=['','metallicSlam','blackout','alarm','ambush'];
-  const BOSS_LABELS=['','Veille','Onde de choc','Écrasement','Barrage de roquettes','Balayage','Cœur exposé','Surcharge — renforts','Charge','Tapis de bombes','Rayon du cœur'];
+  const BOSS_LABELS=['','Veille','Onde de choc','Écrasement','Barrage de roquettes','Balayage','Cœur exposé','Surcharge — renforts','Charge','Tapis de bombes','Rayon du cœur','Articulations exposées'];
   const PIPE=['broken','active','age','remaining','hot','warning','damageWait','cycle'];
   const TRAP=['progress','angle','box','hot','warning','damageWait','triggered','triggerAge','cycle','hp','destroyed'];
   const CAMPAIGN_GEAR=[{key:'pistol',weapon:4,index:0,rank:0},{key:'smg',weapon:0,index:6,rank:2},{key:'shotgun',weapon:1,index:9,rank:3},{key:'grenade',weapon:3,index:12,rank:4},{key:'rocket',weapon:2,index:15,rank:5}];
@@ -64319,6 +64340,12 @@ function navigationGraph(cells,width,testEdge){
   function create(world,options={}) {
     // Generous ammunition at every boss phase in horde worlds (David, 16/11/2026).
     const hordes=world.hordeVersion===1,PHASE_SLOTS=hordes?4:2,PHASE_AMMO=hordes?[120,24,8,12,0]:[60,12,4,6,0];
+    // In horde worlds a guardian's weak points are four small joints instead of
+    // one large heart. Each holds about a fifth of its health in hits taken
+    // while exposed; breaking one adds a heavy blow, drops the limb and costs
+    // the giant a gun's salvo or a leg's pace. With all four broken, the chest
+    // core stays bare and the giant can no longer attack or walk.
+    const jointed=e=>hordes&&giant(e)&&Array.isArray(e.joints),jointMax=(e,factor)=>Math.max(1,Math.round(actorHealth(e,factor)*.19)),broken=(e,i)=>jointed(e)&&e.joints[i]<=0;
     const rigidEnabled=!!(G.FPhysics&&G.MetalPhysics&&(world.combatVersion===1||options.rigidBodies===true)&&options.rigidBodies!==false);let rigid=null;
     const floors=world.walkable||[],advanced=!!world.combat||world.generation>=5,horror=!!world.horrorSites?.length||world.director?.enabled===true;
     const progression=world.progression?.version===1,economyEnabled=progression&&!!G.FEconomy,nominalCombat=clamp(world.progression?.maxActive||[8,10,12][world.stage||0],2,16);
@@ -64470,7 +64497,7 @@ function navigationGraph(cells,width,testEdge){
         goalX:e.x,goalZ:e.z,path:[],pathAt:0,stuck:0,moveSpeed:0,
         lastSeenY:(e.y??groundAt(e.x,e.z))+1.45,observedVX:0,observedVZ:0,observedAt:-1,sleeping:false,observedVY:0,dodgeWait:0,dodgeDelay:0,dodgeTime:0,dodgeX:0,dodgeZ:0,
         deployed:!progression||e.deployed!==false,combatEnabled:!progression||e.encounterId===undefined,encounterReleased:!progression||e.encounterId===undefined,returning:false,deployAge:!progression||e.deployed!==false?2:0,quietTime:0,...(bossProgression?{entryGrace:0}:{}),
-        ...freshAir(),bossAwake:false,bossClock:0,bossStep:0,attackLabel:giant(e)?'Veille':'',weakPointOpen:false,weakTimer:0,bossReleased:!e.bossWave,squad:e.squadId??Math.floor(i/4),role:e.role||(e.type===1?'assault':e.type===2?'suppressor':i%3===0?'flanker':i%3===1?'assault':'suppressor')})),
+        ...freshAir(),bossAwake:false,bossClock:0,bossStep:0,attackLabel:giant(e)?'Veille':'',weakPointOpen:false,weakTimer:0,bossReleased:!e.bossWave,...(hordes&&giant(e)?{joints:[0,0,0,0].fill(jointMax(e))}:{}),squad:e.squadId??Math.floor(i/4),role:e.role||(e.type===1?'assault':e.type===2?'suppressor':i%3===0?'flanker':i%3===1?'assault':'suppressor')})),
       cores:world.cores.map(c=>({...c,taken:false})),pickups:world.pickups.map(c=>({...c,taken:false,remaining:Math.max(0,Math.floor(c.amount||0))})),
       hazards:(world.hazards||[]).map(h=>({...h,hot:false,warning:false})),
       jumpPads:(world.jumpPads||[]).map(j=>({...j,flash:0})),
@@ -65500,6 +65527,10 @@ function navigationGraph(cells,width,testEdge){
       if(!alive(e))return;const origin=source||{x:p.x,y:p.y+1.45,z:p.z,credit:true,...(profilesEnabled?{profile:s.activeProfile}:{})};if(profilesEnabled&&e.profileRequired&&(!origin.credit||origin.profile!==e.profileRequired)){if(origin.credit&&profileHintWait<=0){emit('profileBlocked',{required:e.profileRequired,boss:e.id});profileHintWait=1;}return;}if(origin.credit)amount*=(profilesEnabled&&origin.profile!==s.activeProfile?G.FEconomy.stats(s.profiles[origin.profile].economy):stats).damageMultiplier;if(giant(e))amount*=e.weakPointOpen&&weak?3.2:.30;if(e.bossWave)e.bossReleased=true;
       if(bossProgression)e.entryGrace=0;
       if(progression&&enemyEncounter.has(e.id)){e.encounterReleased=true;e.returning=false;e.quietTime=0;const encounter=enemyEncounter.get(e.id);if(encounter.status==='dormant')announceWave(encounter,0);}
+      if(jointed(e)&&e.weakPointOpen&&typeof weak==='number'&&e.joints[weak-1]>0){
+        const i=weak-1;e.joints[i]=Math.max(0,e.joints[i]-amount);
+        if(e.joints[i]===0){amount+=actorHealth(e)*.06;const q=weakPoints({...e,joints:e.joints.map((v,k)=>k===i?1:0)})[0];emit('jointBreak',{id:e.id,joint:i,x:q.x,y:q.y,z:q.z,scale:scale(e)});rigid?.limb?.(e,i,origin);if(e.joints.every(v=>v<=0)){e.weakTimer=3;e.weakPointOpen=true;}}
+      }
       e.hp=Math.max(0,e.hp-amount);e.hurt=modernMovement?.1+.1*Math.min(1,amount/2):.2;
       if(giant(e)&&origin.credit)emit(e.weakPointOpen&&weak?'weakHit':'bossArmorHit',{id:e.id,x:e.x,y:e.y,z:e.z});
       if(modernMovement&&origin.credit&&!giant(e)&&e.hp>0){
@@ -65520,15 +65551,28 @@ function navigationGraph(cells,width,testEdge){
       }else bossPhase(e);
     }
 
+    // The targets a guardian currently offers, in world space: its unbroken
+    // joints, or its heart (the chest core once every joint is gone).
+    function weakPoints(e){
+      if(!giant(e))return [];const size=scale(e),sn=Math.sin(e.yaw),cs=Math.cos(e.yaw),place=(q,r,joint)=>({x:e.x+(cs*q[0]-sn*q[2])*size,y:e.baseY+q[1]*size,z:e.z+(sn*q[0]+cs*q[2])*size,r:r*size,joint});
+      if(!jointed(e))return [place([0,1.93,-.9],.36,-1)];
+      const set=e.bossLook?JOINTS_HUMAN:JOINTS_ROBOT,out=[];for(let i=0;i<4;i++)if(e.joints[i]>0)out.push(place(set[i],JOINT_R,i));
+      if(!out.length)out.push(place([0,1.93,-.9],.2,-1));return out;
+    }
     function giantHit(e,o,d,far,padding=0){
       const size=scale(e),cs=Math.cos(e.yaw),sn=Math.sin(e.yaw),ox=o[0]-e.x,oz=o[2]-e.z;
       const origin=[(cs*ox+sn*oz)/size,(o[1]-e.baseY)/size,(-sn*ox+cs*oz)/size],dir=[(cs*d[0]+sn*d[2])/size,d[1]/size,(-sn*d[0]+cs*d[2])/size];
       let distance=far,weak=false;
-      const boxes=[[-.825,.825,1.2,2.6,-.575,.625],[-.5,.5,2.64,3.14,-.455,.295],[-.605,.605,1.495,2.365,-.70,-.54]];
-      for(const side of [-1,1])for(const end of [-1,1])boxes.push([side*.86-.28,side*.86+.28,.03,1.45,end*.68-.34,end*.68+.34]);
+      // Humanoid giants: hunched torso, head, two legs and two shoulder guns;
+      // a broken limb no longer stops a shot.
+      const boxes=e.bossLook?[[-.5,.5,1.55,2.62,-.5,.3],[-.33,.33,2.55,3.2,-.62,.05]]:[[-.825,.825,1.2,2.6,-.575,.625],[-.5,.5,2.64,3.14,-.455,.295],[-.605,.605,1.495,2.365,-.70,-.54]];
+      if(e.bossLook)for(const side of [-1,1]){if(!broken(e,side<0?2:3))boxes.push([side*.2-.2,side*.2+.2,.03,1.5,-.35,.25]);if(!broken(e,side<0?0:1))boxes.push([side*1.04-.24,side*1.04+.24,2.1,2.46,-1.5,.3]);}
+      else for(const side of [-1,1])for(const end of [-1,1])if(end>0||!broken(e,side<0?2:3))boxes.push([side*.86-.28,side*.86+.28,.03,1.45,end*.68-.34,end*.68+.34]);
       for(const box of boxes){const q=box.map((v,i)=>v+(i%2?padding:-padding)/size);let lo=0,hi=distance;for(let k=0;k<3;k++){if(Math.abs(dir[k])<1e-9){if(origin[k]<q[k*2]||origin[k]>q[k*2+1]){hi=-1;break;}}else{let a=(q[k*2]-origin[k])/dir[k],b=(q[k*2+1]-origin[k])/dir[k];if(a>b)[a,b]=[b,a];lo=Math.max(lo,a);hi=Math.min(hi,b);if(hi<lo)break;}}if(hi>=lo&&lo>=0&&lo<distance)distance=lo;}
-      const center=[e.x+sn*.9*size,e.baseY+1.93*size,e.z-cs*.9*size],delta=center.map((v,k)=>v-o[k]),along=delta.reduce((n,v,k)=>n+v*d[k],0),off=delta.reduce((n,v)=>n+v*v,0)-along*along,r=.36*size+padding;
-      if(along>=0&&off<=r*r){const hit=Math.max(0,along-Math.sqrt(Math.max(0,r*r-off)));if(hit<distance){distance=hit;weak=true;}}
+      for(const q of weakPoints(e)){
+        const delta=[q.x-o[0],q.y-o[1],q.z-o[2]],along=delta.reduce((n,v,k)=>n+v*d[k],0),off=delta.reduce((n,v)=>n+v*v,0)-along*along,r=q.r+padding;
+        if(along>=0&&off<=r*r){const hit=Math.max(0,along-Math.sqrt(Math.max(0,r*r-off)));if(hit<distance){distance=hit;weak=q.joint>=0?q.joint+1:true;}}
+      }
       return {distance,weak};
     }
     function hitRay(origin,dir,far,assist){
@@ -65645,8 +65689,8 @@ function navigationGraph(cells,width,testEdge){
         const d=Math.max(0,Math.hypot(e.x-point[0],e.y-point[1],e.z-point[2])-(giant(e)?1.15*scale(e):0));
         let strength=d<r?Math.max(0,1-d/r)*blastExposure(point,e.x,e.y,e.z):0,weak=e.id===weakId;
         if(bossProgression&&owner==='player'&&giant(e)&&e.weakPointOpen){
-          const size=scale(e),core=[e.x+Math.sin(e.yaw)*.9*size,e.baseY+1.93*size,e.z-Math.cos(e.yaw)*.9*size],distance=Math.max(0,Math.hypot(...core.map((v,k)=>v-point[k]))-.36*size),exposure=distance<r?(1-distance/r)*blastExposure(point,...core):0;
-          if(exposure*3.2>strength*.30){strength=exposure;weak=true;}
+          for(const q of weakPoints(e)){const distance=Math.max(0,Math.hypot(q.x-point[0],q.y-point[1],q.z-point[2])-q.r),exposure=distance<r?(1-distance/r)*blastExposure(point,q.x,q.y,q.z):0;
+          if(exposure*3.2>strength*.30){strength=exposure;weak=q.joint>=0?q.joint+1:true;}}
         }
         const amount=(owner==='player'?(bossProgression?damage:8.5):damage*.23)*strength;
         if(amount>0){connected=true;damageEnemy(e,amount,{x:point[0],y:point[1],z:point[2],credit:owner==='player',profile,blast:true},weak);if(e.hp>0){e.stun=Math.max(e.stun,.25);e.windup=0;e.burstLeft=0;}}
@@ -66554,10 +66598,10 @@ function navigationGraph(cells,width,testEdge){
         if(signature==='carpet'){e.attackLabel='Tapis de bombes';for(let i=0;i<5;i++){const q=bossPoint(e,point.x+Math.sin(angle)*(i-2)*4,point.z-Math.cos(angle)*(i-2)*4),a=bossAttack(e,'rocketZone',q,{tell:1.8+i*.3});a.signature=signature;}}
         else{e.attackLabel=signature==='charge'?'Charge':'Rayon du cœur';const a=bossAttack(e,'sweep',{x:e.x,y:e.baseY,z:e.z},{tell:1.8,angle});a.signature=signature;a.activeDuration=signature==='charge'?.75:1.7;a.duration=a.tell+a.activeDuration;a.length=signature==='charge'?6+radius(e):e.arena.r+2;a.width=signature==='charge'?radius(e):.8;a.turn=signature==='charge'?0:.4;}
       }else if(kind==='rocketZone'){
-        const count=2+e.phase+(world.combatVersion===1&&world.chapter>=1?1:0),side=[Math.cos(angle),Math.sin(angle)];
+        const count=Math.max(1,2+e.phase+(world.combatVersion===1&&world.chapter>=1?1:0)-(jointed(e)?(e.joints[0]<=0)+(e.joints[1]<=0):0)),side=[Math.cos(angle),Math.sin(angle)];
         for(let i=0;i<count;i++){const offset=(i-(count-1)/2)*4.2,q=bossPoint(e,point.x+side[0]*offset,point.z+side[1]*offset);bossAttack(e,kind,q,{tell:1.7+i*.28});}
       }else if(kind==='sweep'){
-        const count=e.phase===2?3:2,vx=e.observedVX||0,vz=e.observedVZ||0,lateral=vx*Math.cos(angle)+vz*Math.sin(angle),lead=Math.atan2(e.lastSeenX+vx*.3-e.x,e.z-e.lastSeenZ-vz*.3);
+        const count=Math.max(1,(e.phase===2?3:2)-(jointed(e)?(e.joints[0]<=0)+(e.joints[1]<=0):0)),vx=e.observedVX||0,vz=e.observedVZ||0,lateral=vx*Math.cos(angle)+vz*Math.sin(angle),lead=Math.atan2(e.lastSeenX+vx*.3-e.x,e.z-e.lastSeenZ-vz*.3);
         for(let i=0;i<count;i++)bossAttack(e,kind,{x:e.x,y:e.baseY,z:e.z},{tell:1.6+i*.42,angle:lead+(e.phase===2?(i-1)*.3:i*.3*(Math.sign(lateral)||1))});
       }else{
         bossAttack(e,kind,kind==='ring'?{x:e.x,y:e.baseY,z:e.z}:point);
@@ -66583,14 +66627,15 @@ function navigationGraph(cells,width,testEdge){
       if(Math.hypot(e.aimX-e.x,e.aimZ-e.z)>.5){const want=Math.atan2(e.aimX-e.x,e.z-e.aimZ),delta=Math.atan2(Math.sin(want-e.yaw),Math.cos(want-e.yaw)),rate=(e.phase===2?1.57:1.05)*dt;if(Math.abs(delta)>1e-9){e.yaw+=clamp(delta,-rate,rate);e.yaw=Math.atan2(Math.sin(e.yaw),Math.cos(e.yaw));}}
       const attacks=s.bossAttacks.filter(a=>a.bossId===e.id&&a.age<a.duration-(a.burn||0));
       if(attacks.length){const warning=attacks.filter(a=>a.warning);e.windup=warning.length?Math.max(...warning.map(a=>Math.max(0,a.tell-a.age))):0;e.windupMax=Math.max(e.windup,e.windupMax);e.attackState=warning.length?'aim':'burst';return true;}
-      e.windup=0;e.attackState='recover';if(e.weakPointOpen)e.attackLabel='Cœur exposé';
+      if(jointed(e)&&e.joints.every(v=>v<=0)){e.weakTimer=3;e.weakPointOpen=true;}
+      e.windup=0;e.attackState='recover';if(e.weakPointOpen)e.attackLabel=jointed(e)?'Articulations exposées':'Cœur exposé';
       if(e.hasMemory){e.aimX=e.lastSeenX;e.aimY=e.lastSeenY;e.aimZ=e.lastSeenZ;}
       // The entire articulated silhouette remains inside the cleared arena. A
       // giant never uses infantry nav or squeezes down the entrance bridge.
       // BOSS-12: a heavy walk between attacks closes in and backs away from a
       // player at its feet. Each 0.9 s of the shared clock while it really
       // moves is a step the player feels.
-      if(e.seen&&e.bossClock>0&&!e.weakPointOpen){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz)||1,dir=d>radius(e)+8?1:d<radius(e)+2?-1:0;if(dir){const x0=e.x,z0=e.z;move(e,dx/d*dt*1.2*dir,dz/d*dt*1.2*dir,radius(e));if(Math.hypot(e.x-x0,e.z-z0)>1e-6&&Math.floor(s.time/.9)!==Math.floor((s.time-dt)/.9))emit('bossStep',{id:e.id,x:e.x,y:e.baseY,z:e.z,impact:10,material:'metal'});}}
+      if(e.seen&&e.bossClock>0&&!e.weakPointOpen){const dx=e.lastSeenX-e.x,dz=e.lastSeenZ-e.z,d=Math.hypot(dx,dz)||1,dir=d>radius(e)+8?1:d<radius(e)+2?-1:0;if(dir){const x0=e.x,z0=e.z,limp=jointed(e)?Math.max(.3,1-.45*((e.joints[2]<=0)+(e.joints[3]<=0))):1;move(e,dx/d*dt*1.2*dir*limp,dz/d*dt*1.2*dir*limp,radius(e));if(Math.hypot(e.x-x0,e.z-z0)>1e-6&&Math.floor(s.time/.9)!==Math.floor((s.time-dt)/.9))emit('bossStep',{id:e.id,x:e.x,y:e.baseY,z:e.z,impact:10,material:'metal'});}}
       e.goalX=e.x;e.goalZ=e.z;e.path=[];e.pathAt=0;
       if(e.bossClock<=0&&inArena&&(e.hasMemory||tactics.camp>=3)&&(!bossProgression||!e.weakPointOpen)){if(tactics.camp>=3){remember(e,p.x,p.z,'investigate',7,p.y+1.45);beginBossAttack(e,'rocketZone');tactics.camp=0;}else beginBossAttack(e);}
       return true;
@@ -66625,7 +66670,7 @@ function navigationGraph(cells,width,testEdge){
         if(previous<a.duration-(a.burn||0)&&a.age>=a.duration-(a.burn||0))finished.add(a.bossId);
       }
       s.bossAttacks=s.bossAttacks.filter(a=>a.age<a.duration);
-      for(const id of finished)if(!s.bossAttacks.some(a=>a.bossId===id&&a.age<a.duration-(a.burn||0))){const e=s.enemies[id];if(e?.hp>0){e.weakTimer=3;e.weakPointOpen=true;e.attackLabel='Cœur exposé';e.attackState='recover';e.windup=0;e.bossClock=Math.max(e.bossClock,e.weakTimer+.1);}}
+      for(const id of finished)if(!s.bossAttacks.some(a=>a.bossId===id&&a.age<a.duration-(a.burn||0))){const e=s.enemies[id];if(e?.hp>0){e.weakTimer=3;e.weakPointOpen=true;e.attackLabel=jointed(e)?'Articulations exposées':'Cœur exposé';e.attackState='recover';e.windup=0;e.bossClock=Math.max(e.bossClock,e.weakTimer+.1);}}
     }
     function avoidBossZone(e,dt){
       for(const a of s.bossAttacks){
@@ -66919,7 +66964,7 @@ function navigationGraph(cells,width,testEdge){
           ...(armorEnabled?{armor:{...s.armor},...(!progression?{armorPickupRemaining:s.pickups.map(q=>q.remaining)}:{})}:{}),
           ...(arsenal?{equipment:{...s.equipment},...(thermalSerialized||s.weaponHeat.some(v=>v!==p.heat)||s.weaponOverheated.some(v=>v!==p.overheated)?{weaponHeat:s.weaponHeat.slice(),weaponOverheated:s.weaponOverheated.slice()}:{})}:{}),
           ...(progression?{inventory:exportInventory(),encounters:s.encounters.map(q=>({id:q.id,...pick(q,ENCOUNTER_STATE)})),pickupRemaining:s.pickups.map(q=>q.remaining),loot:s.loot.map(q=>({...q,ammo:q.ammo.slice()}))}:{}),
-          enemies:s.enemies.map(e=>({...pick(e,ENEMY),...pick(e,AI),...pick(e,AI2),...pick(e,AI3),...pick(e,BOSS),...(e.bossTactics?{bossTactics:{camp:e.bossTactics.camp,last:e.bossTactics.last.slice()}}:{}),...(progression?pick(e,ENCOUNTER_AI):{}),...(bossProgression?{entryGrace:e.entryGrace}:{}),path:e.path.slice()})),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q})),
+          enemies:s.enemies.map(e=>({...pick(e,ENEMY),...pick(e,AI),...pick(e,AI2),...pick(e,AI3),...pick(e,BOSS),...(e.joints?{joints:e.joints.slice()}:{}),...(e.bossTactics?{bossTactics:{camp:e.bossTactics.camp,last:e.bossTactics.last.slice()}}:{}),...(progression?pick(e,ENCOUNTER_AI):{}),...(bossProgression?{entryGrace:e.entryGrace}:{}),path:e.path.slice()})),cores:s.cores.map(c=>c.taken),pickups:s.pickups.map(c=>c.taken),bullets:s.bullets.map(q=>({...q})),
           mechanisms:s.mechanisms.map(m=>m.active),doors:s.doors.map(d=>d.progress),lifts:s.lifts.map(l=>pick(l,['y','target','powered','moving','carrying'])),
           bossAttacks:s.bossAttacks.map(q=>({...q,hitEnemies:q.hitEnemies.slice()})),projectiles:s.projectiles.map(q=>({...q})),pipes:s.pipes.map(q=>pick(q,PIPE)),traps:s.traps.map(q=>pick(q,TRAP)),rubble:s.debris.filter(q=>q.structural).map(rubbleCopy),
           doorDamage:s.doors.map(d=>({hp:d.hp,destroyed:d.destroyed})),mechanismDamage:s.mechanisms.map(m=>({hp:m.shellHp,destroyed:m.destroyed}))},
@@ -67127,7 +67172,7 @@ function navigationGraph(cells,width,testEdge){
             require(AI3.every(key=>e[key]===undefined));Object.assign(ai,{observedVY:0,dodgeWait:0,dodgeDelay:0,dodgeTime:0,dodgeX:0,dodgeZ:0});
           }
           let boss;
-          if(data.bossVersion===1){require(bool(e.bossAwake)&&number(e.bossClock,0,12)&&integer(e.bossStep,0,1e9)&&BOSS_LABELS.includes(e.attackLabel)&&bool(e.weakPointOpen)&&number(e.weakTimer,0,3)&&e.weakPointOpen===(e.weakTimer>0)&&bool(e.bossReleased));if(!giant(home))require(!e.bossAwake&&e.bossClock===0&&e.bossStep===0&&e.attackLabel===''&&!e.weakPointOpen&&e.weakTimer===0);if(!home.bossWave)require(e.bossReleased);if(giant(home))require(home.arena&&Math.hypot(e.x-home.arena.x,e.z-home.arena.z)<=Math.max(1,home.arena.r-2.1*scale(home)-5)+1e-6);boss=pick(e,BOSS);}
+          if(data.bossVersion===1){require(bool(e.bossAwake)&&number(e.bossClock,0,12)&&integer(e.bossStep,0,1e9)&&BOSS_LABELS.includes(e.attackLabel)&&bool(e.weakPointOpen)&&number(e.weakTimer,0,3)&&e.weakPointOpen===(e.weakTimer>0)&&bool(e.bossReleased));if(!giant(home))require(!e.bossAwake&&e.bossClock===0&&e.bossStep===0&&e.attackLabel===''&&!e.weakPointOpen&&e.weakTimer===0);if(!home.bossWave)require(e.bossReleased);if(giant(home))require(home.arena&&Math.hypot(e.x-home.arena.x,e.z-home.arena.z)<=Math.max(1,home.arena.r-2.1*scale(home)-5)+1e-6);if(hordes&&giant(home))require(Array.isArray(e.joints)&&e.joints.length===4&&e.joints.every(v=>number(v,0,jointMax(home,savedBossFactor))));else require(e.joints===undefined);boss=pick(e,BOSS);if(boss.joints)boss.joints=boss.joints.slice();}
           else{require(BOSS.every(key=>e[key]===undefined)&&!giant(home)&&!home.bossWave);boss={bossAwake:false,bossClock:0,bossStep:0,attackLabel:'',weakPointOpen:false,weakTimer:0,bossReleased:true};}
           if(e.bossTactics!==undefined){const t=e.bossTactics;require(giant(home)&&t&&number(t.camp,0,3)&&Array.isArray(t.last)&&t.last.length<=2&&t.last.every(k=>['slam','ring','rocketZone','sweep'].includes(k)));boss.bossTactics={camp:t.camp,last:t.last.slice()};}
           return {...home,...pick(e,ENEMY),...ai,...boss,...encounterAI,encounterId:s.enemies[i].encounterId,encounterWave:s.enemies[i].encounterWave,role:s.enemies[i].role,squad:s.enemies[i].squad};
@@ -67210,7 +67255,7 @@ function navigationGraph(cells,width,testEdge){
     if(rigidEnabled)rigid=G.MetalPhysics.create(world,solids,{state:s,emit,explode,blocked,hurt,damageEnemy,navMark});
     if(baked){graph.adopt(baked);navEpoch=baked.epoch;if(rigid)s.aiStats.navPending=0;}else{if(rigid)refreshNav(false);graph.flush();}clipEscape=boundaryAt(p.x,p.z);
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
-    return {state:s,get destruction(){return destruction;},get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
+    return {state:s,get destruction(){return destruction;},weakPoints,get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
   G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor,wreckage};
 })(typeof window!=='undefined'?window:globalThis);
@@ -67433,6 +67478,8 @@ function navigationGraph(cells,width,testEdge){
   // réellement stockées dans un maillage — p, s, r — sont des tableaux frais.
   const MAT=new Float64Array(9),MAT2=new Float64Array(9),MAT3=new Float64Array(9),EUL=new Float64Array(3);
   const LIMB_INSET=/(?:thigh|shin|upper-arm|forearm)/;
+  // Guardian joints in horde worlds, as in simulation.js (giant frame before scaling).
+  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15;
   const LIVERIES=[null,[[.45,.38,.27],[.31,.27,.21],[.66,.46,.17]],[[.64,.66,.68],[.40,.43,.47],[.16,.46,.62]],[[.40,.19,.13],[.28,.20,.17],[.72,.55,.24]],[[.12,.13,.14],[.21,.22,.24],[.88,.42,.08]],[[.23,.32,.19],[.17,.22,.15],[.76,.70,.20]]];
   function rotationTo(o,x,y,z){
     const a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);
@@ -67699,13 +67746,14 @@ function navigationGraph(cells,width,testEdge){
       // A sweep is announced by the whole upper body winding up, never by a detached bar.
       const bounce=giant?(tellFamily==='ring'?-.12*tellPose:0):Math.sin(phase*2)*.035*blend,body=frame(root,[0,1.5+bounce,0],giant?[0,tellFamily==='sweep'?.42*tellPose:0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
       const feet=[];for(const side of [-1,1])for(const end of [-1,1]){
+        if(end<0&&Array.isArray(e.joints)&&e.joints[side<0?2:3]<=0){piece('custodian-stump-'+side+'','sphere',[side*.62,-.13,-.40],[.22,.22,.22],[1,.45,.1],body,null,5,.8+.3*Math.sin(time*13));continue;}
         const t=phase+(side===end?0:PI),lift=Math.max(0,Math.cos(t))*.17*blend,stride=Math.sin(t)*.20*blend;
         feet.push({side,end,lift,stride,hip:point(body,[side*.62,-.13,end*.40]),knee:point(root,[side*.89,.77+lift*.4,end*.65+stride*.5]),ankle:point(root,[side*.98,.24+lift,end*.78+stride])});
       }
       if(lod===2){
         box('custodian-torso',[0,.40,.025],[1.65,1.4,1.2],'shell',body);box('custodian-helmet',[0,1.39,-.08],[1,.5,.75],'dark',body);
         eye('custodian-optic',[0,1.40,-.47],[.67,.13,.04],body);
-        for(const side of [-1,1])box('custodian-cannon-'+side,[side*1.04,.77+(tellFamily==='slam'?tellPose*.7:0),-.43],[.40,.44,1.40],tellFamily==='rocketZone'?[.8,.12,.03]:tellFamily==='sweep'?[1,.52,.09]:'dark',body);
+        for(const side of [-1,1])if(!(Array.isArray(e.joints)&&e.joints[side<0?0:1]<=0))box('custodian-cannon-'+side,[side*1.04,.77+(tellFamily==='slam'?tellPose*.7:0),-.43],[.40,.44,1.40],tellFamily==='rocketZone'?[.8,.12,.03]:tellFamily==='sweep'?[1,.52,.09]:'dark',body);
         cyl('custodian-stance',[0,.30,.03],[2.06,.58,1.85],'edge');return;
       }
       armor('custodian-torso',[0,.40,.025],[1.65,1.4,1.2],'shell',body);
@@ -67724,6 +67772,7 @@ function navigationGraph(cells,width,testEdge){
         box('custodian-boot-'+i,[l.side*.98,.12+l.lift,l.end*.78+l.stride-.04],[.43,.24,.59],'rubber');
       }
       for(const side of [-1,1]){
+        if(Array.isArray(e.joints)&&e.joints[side<0?0:1]<=0){piece('custodian-stump-arm-'+side+'','sphere',[side*1.04,.78,0],[.22,.22,.22],[1,.45,.1],body,null,5,.8+.3*Math.sin(time*13));continue;}
         const recoil=e.attackState==='burst'?Math.max(0,Math.sin(time*31+side))*.12:0;
         const gun=frame(body,[side*1.04,.78,recoil],[tellFamily==='slam'?.95*tellPose:tellFamily==='ring'?-.25*tellPose:aim?pitch(2.28):-.04,0,0]);
         armor('custodian-shoulder-'+side,[0,.07,.12],[.58,.58,.74],tellFamily==='rocketZone'?[.7,.12,.035]:tellFamily==='sweep'?[1,.52,.09]:'trim',gun);
@@ -67791,6 +67840,7 @@ function navigationGraph(cells,width,testEdge){
       // Legs: one gait for every look; the endoskeleton shows bare struts.
       for(const side of [-1,1]){
         const i=side<0?0:1,g=side<0?L:R,lp=V.leg(side),kp=V.knee(side),ap=V.ankle(side);
+        if(Array.isArray(e.joints)&&e.joints[side<0?2:3]<=0){piece('hum-stump-leg-'+side+'','sphere',[K(lp[0]),0,0],[K(.22),K(.22),K(.22)],[1,.45,.1],hips,null,5,.8+.3*Math.sin(time*13));continue;}
         const th=frame(hips,[K(lp[0]),0,0],[airborne?.55:g.hip,0,0]),sh=frame(th,[0,K(kp[1]-lp[1]),0],[airborne?-.95:g.knee,0,0]),ft=frame(sh,[0,K(ap[1]-kp[1]),0],[airborne?.3:g.ankle,0,0]);
         if(simple){limb('hum-leg-'+side,point(th,[0,0,0]),point(ft,[0,0,0]),T(.15),T(.16),endo?skin.joint:skin.metal,'box');box('hum-foot-'+side,[0,K(-.07),K(-.05)],[T(.12),K(.13),K(.25)],skin.joint,ft);continue;}
         if(endo){
@@ -67815,8 +67865,8 @@ function navigationGraph(cells,width,testEdge){
         box('endo-sternum',[0,K(.27),K(-.125)*widen],[T(.05),K(.25),T(.03)],skin.metal,chest);
         if(!giant)ball('endo-core',[0,K(.28),K(.01)],.11,signal,chest,signalMat,emission+.35);
         for(const side of [-1,1])limb('endo-clavicle-'+side,point(chest,[0,K(.41),K(-.02)]),point(chest,[K(side*.235),K(.395),0]),T(.045),T(.045),skin.metal,'cylinder',chest.b);
-        put('endo-skull',P.skull,neck,[0,V.neck,0],skin.metal,1,hs);
-        for(const side of [-1,1])piece('endo-eye-'+side,'sphere',[H2(side*.038),H2(.20),H2(-.083)],[H2(.028),H2(.022),H2(.016)],[1,.07,.03],neck,null,6,.95+.4*charge);
+        if(lod===0)put('endo-skull',P.skull,neck,[0,V.neck,0],skin.metal,1,hs);else ball('endo-skull',[0,H2(.16),H2(-.01)],.2*hs/bulk,skin.metal,neck);
+        for(const side of [-1,1])piece('endo-eye-'+side,'sphere',[H2(side*.038),H2(.20),H2(lod===0?-.083:-.1)],[H2(.028),H2(.022),H2(.016)],[1,.07,.03],neck,null,6,.95+.4*charge);
         box('endo-jaw',[0,H2(.088),H2(-.045)],[H2(.105),H2(.034),H2(.085)],skin.metal,neck);
         if(lod===0){box('endo-teeth',[0,H2(.112),H2(-.083)],[H2(.078),H2(.022),H2(.012)],[.80,.80,.76],neck);for(const side of [-1,1])cyl('endo-neck-'+side,[K(side*.032)*bulk,K(.43),K(.015)],[T(.026),K(.12),T(.026)],skin.joint,chest);for(let j=0;j<4;j++)box('endo-vertebra-'+j,[0,K(.04+.1*j),K(.10)],[T(.075),K(.034),T(.06)],skin.metal,chest);}
       }else{
@@ -67828,7 +67878,7 @@ function navigationGraph(cells,width,testEdge){
           piece('kamikaze-socket','sphere',[0,K(.51),0],[K(.07),K(.04),K(.07)],[1,.36,.06],chest,null,5,.55+.35*Math.abs(Math.sin(time*17+id)));
           if(lod===0)for(let j=0;j<3;j++)piece('kamikaze-spark-'+j,'sphere',[K(.05*Math.sin(time*9+j*2.1+id)),K(.56+.05*((time*3+j*.33+id*.1)%1)),K(.05*Math.cos(time*7+j))],[K(.022),K(.022),K(.022)],[1,.62,.15],chest,null,5,.9);
           box('kamikaze-harness',[0,K(.22),K(-.13)],[K(.34),K(.06),K(.04)],skin.accent,chest);
-        }else put('hum-face',P.face,neck,[0,V.neck,0],skin.metal,1,hs);
+        }else if(lod===0)put('hum-face',P.face,neck,[0,V.neck,0],skin.metal,1,hs);else ball('hum-head',[0,H2(.17),H2(-.01)],.23*hs/bulk,skin.metal,neck);
       }
       // Arms: the gunner holds its weapon with both hands; the others swing,
       // raise a blade, carry two charges, or brace for a giant's attack.
@@ -67854,6 +67904,7 @@ function navigationGraph(cells,width,testEdge){
       const blades=kind==='blade'&&engaged||kind==='liquid'&&giant&&tellFamily==='sweep';
       for(const side of [-1,1]){
         const i=side<0?0:1,sp=V.shoulder(side),ep=V.elbow(side),wp=V.wrist(side);
+        if(Array.isArray(e.joints)&&e.joints[side<0?0:1]<=0){piece('hum-stump-arm-'+side+'','sphere',[K(sp[0])*widen,K(sp[1]-V.waist),K(sp[2])],[K(.22),K(.22),K(.22)],[1,.45,.1],chest,null,5,.8+.3*Math.sin(time*13));continue;}
         let angle=side<0?-swing:swing,bend=running?.55:.15,spread=giant?.22:.06;
         if(bomber){angle=1.85+.12*Math.sin(phase*2+side);bend=.35;spread=.10;}
         else if(kind==='blade'&&side>0&&e.windup>0){angle=.3+2.4*charge;bend=.5;}
@@ -67870,11 +67921,11 @@ function navigationGraph(cells,width,testEdge){
         else if(endo){
           ball('endo-shoulder-'+side,[0,0,0],.10,skin.joint,upper);cyl('endo-upper-arm-'+side,[0,K(-.12),0],[T(.055),K(.24),T(.055)],skin.metal,upper);
           ball('endo-elbow-'+side,[0,0,0],.08,skin.joint,fore);for(const dx of [-.02,.02])cyl('endo-forearm-'+side+(dx>0?'-b':'-a'),[K(dx)*bulk,K(-.115),0],[T(.03),K(.235),T(.03)],skin.metal,fore);
-          put('endo-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
+          if(lod===0)put('endo-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);else box('endo-hand-'+side,[0,K(-.07),0],[T(.08),K(.13),T(.05)],skin.metal,wrist);
         }else{put('hum-upper-'+side,P.upper[i],upper,sp,skin.metal,giant?1.15:1);put('hum-fore-'+side,P.fore[i],fore,ep,skin.metal,giant?1.1:1);}
         if(simple)continue;
         if(blades)piece('liquid-blade-'+side,'octa',[0,K(-.38),K(-.01)],[K(.11),K(.86),K(.04)],skin.accent,wrist,null,matFor(skin.accent),.08);
-        else if(!endo)put('hum-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
+        else if(!endo){if(lod===0)put('hum-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);else box('hum-hand-'+side,[0,K(-.07),0],[T(.08),K(.14),T(.05)],skin.metal,wrist);}
         if(bomber){
           piece('kamikaze-bomb-'+side,'sphere',[0,K(-.17),K(-.07)],[K(.30),K(.30),K(.30)],[.075,.08,.085],wrist);
           ring('kamikaze-bomb-band-'+side,[0,K(-.17),K(-.07)],[K(.31),K(.05),K(.31)],skin.accent,wrist);
@@ -67884,8 +67935,9 @@ function navigationGraph(cells,width,testEdge){
       // Giant looks: guns on the shoulders where the simulation fires from,
       // and a mount holding the exposed heart to the chest.
       if(giant){
-        cyl('titan-core-mount',[0,1.93,-.52],[.52,.56,.52],skin.joint,root,[PI/2,0,0]);
+        if(!Array.isArray(e.joints))cyl('titan-core-mount',[0,1.93,-.52],[.52,.56,.52],skin.joint,root,[PI/2,0,0]);
         for(const side of [-1,1]){
+          if(Array.isArray(e.joints)&&e.joints[side<0?0:1]<=0)continue;
           const up=tellFamily==='rocketZone'?-.75*tellPose:0,mount=frame(root,[side*1.04,2.28,0],[aim?pitch(2.28):up-.08,0,0]);
           box('titan-gun-yoke-'+side,[-side*.36,.02,.10],[.62,.30,.46],skin.joint,mount);
           cyl('titan-gun-'+side,[0,0,-.74],[.32,1.48,.32],chrome?skin.metal:'steel',mount,[PI/2,0,0]);
@@ -67902,11 +67954,22 @@ function navigationGraph(cells,width,testEdge){
       const energy=awake?(open?.72+.12*Math.sin(time*8):tellFamily==='ring'?.5+.3*Math.sin(time*(5+tellPose*12)):.25+.06*Math.sin(time*2.2)):.055;
       // This centre and diameter are the simulation's real, targetable weak point.
       // It stays attached to the torso; gait only animates the articulated supports.
+      if(Array.isArray(e.joints)){
+        // Horde worlds: four small joints are the targets; the bare chest core
+        // appears once they are all broken.
+        const J=humanLook?JOINTS_HUMAN:JOINTS_ROBOT;
+        if(e.joints.every(v=>v<=0))piece('titan-heart','sphere',[0,1.93,-.90],[.4,.4,.4],[.20,.90,.80],root,null,4,energy);
+        else for(let i=0;i<4;i++)if(e.joints[i]>0){
+          piece('titan-joint-'+i,'sphere',J[i],[JOINT_R*2,JOINT_R*2,JOINT_R*2],glow,root,null,open?4:5,energy);
+          ring('titan-joint-collar-'+i,[J[i][0],J[i][1],J[i][2]+.04],[.42,.06,.42],'trim',root,[PI/2,0,0]);
+        }
+      }else{
       piece('titan-heart','sphere',[0,1.93,-.90],[.72,.72,.72],glow,root,null,open?4:5,energy);
       ring('titan-heart-collar',[0,1.93,-.79],[.94,.15,.94],'trim',root,[PI/2,0,0]);
       for(let j=0;j<6;j++){
         const a=j*TAU/6,r=open?.51:.27;
         armor('titan-heart-shutter-'+j,[Math.cos(a)*r,1.93+Math.sin(a)*r,-1.035],[.22,.28,.10],'edge',root,[open?.20:0,0,a-PI/2]);
+      }
       }
       if(lod<2&&!humanLook){
         for(const side of [-1,1]){
@@ -67937,7 +68000,7 @@ function navigationGraph(cells,width,testEdge){
           for(let j=0;j<3;j++)box('titan-back-vent-'+side+'-'+j,[side*.26,1.72+j*.26,.98],[.25,.10,.12],'dark');
           piece('titan-reactor-seal-'+side,'box',[side*.46,2.29,.99],[.035,.39,.025],glow,root,null,5,energy*.55);
         }
-        if(rich)for(let j=0;j<4;j++){
+        if(rich&&!Array.isArray(e.joints))for(let j=0;j<4;j++){
           const a=j*PI/2+PI/4;
           cyl('detail-reactor-coupling-'+j,[Math.cos(a)*.52,1.93+Math.sin(a)*.52,-.875],[.09,.06,.09],'steel',root,[PI/2,0,0]);
         }
@@ -69737,7 +69800,8 @@ function createPilot(sim,world,opt={}){
     for(const e of s.enemies)if(e.hp>0&&e.deployed!==false&&Math.hypot(e.x-p.x,e.z-p.z)<14)nearCount++;
     if(tg){
       const giant=tg===B;let ax=tg.x,az=tg.z,ay;
-      if(giant){if(tg.weakPointOpen){ax=tg.x+Math.sin(tg.yaw)*.9*tg.bossScale;az=tg.z-Math.cos(tg.yaw)*.9*tg.bossScale;ay=tg.baseY+1.93*tg.bossScale;}else ay=tg.baseY+2*tg.bossScale;}
+      // Exposed: the nearest weak point the simulation offers (joint or heart).
+      if(giant){const q=tg.weakPointOpen&&sim.weakPoints?sim.weakPoints(tg).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0]:null;if(q){ax=q.x;az=q.z;ay=q.y;}else if(tg.weakPointOpen){ax=tg.x+Math.sin(tg.yaw)*.9*tg.bossScale;az=tg.z-Math.cos(tg.yaw)*.9*tg.bossScale;ay=tg.baseY+1.93*tg.bossScale;}else ay=tg.baseY+2*tg.bossScale;}
       else ay=(tg.baseY??0)+HEIGHT[tg.type]*.62;
       const dx=ax-p.x,dz=az-p.z;dT=Math.hypot(dx,dz);
       // tremblement déterministe de la main, borné, pour une visée crédible
@@ -69848,7 +69912,7 @@ G.FPilot={create:createPilot};
   }
   // Short scenes that open on a fight (David, 16/11/2026): assaults drop the
   // heavy into a guarded room, boss scenes start at the arena gate.
-  function scenes(seed=96,bench=false){const list=[{index:4,boss:true,maxSeconds:100},{index:7,assault:true,maxSeconds:80},{index:17,boss:true,maxSeconds:100},{index:13,assault:true,maxSeconds:80},{index:12,boss:true,maxSeconds:100},{index:11,boss:true,maxSeconds:100}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
+  function scenes(seed=96,bench=false){const list=[{index:4,boss:true,maxSeconds:100},{index:7,assault:true,horde:true,maxSeconds:80},{index:17,boss:true,maxSeconds:100},{index:13,assault:true,maxSeconds:80},{index:12,boss:true,maxSeconds:100},{index:11,boss:true,maxSeconds:100}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
   function active(scene){return scene.boss?(scene.index%2?'heavy':'light'):'heavy';}
   // A spot where the player's body fits, scanned around a room centre.
   function freeSpot(source,x,y,z){
@@ -69861,7 +69925,9 @@ G.FPilot={create:createPilot};
     if(!scene.assault)return source;
     // The most guarded encounter whose room has room for the player.
     const fights=(source.encounters||[]).filter(q=>q.trigger&&q.waves?.length).map(q=>({q,count:q.waves.reduce((n,w)=>n+w.enemyIds.length,0)})).sort((a,b)=>b.count-a.count);
-    for(const {q} of fights){const t=q.trigger,y=t.y||0,spot=freeSpot(source,t.x,y,t.z);if(spot){const s=source.spawn;return {...source,spawn:{x:spot.x,y,z:spot.z,yaw:Math.atan2(t.x-s.x,s.z-t.z)}};}}
+    // A horde scene starts the room's horde at once, alongside its guards.
+    const encounters=scene.horde?(source.encounters||[]).map(q=>q.horde?{...q,after:undefined}:q):source.encounters;
+    for(const {q} of fights){const t=q.trigger,y=t.y||0,spot=freeSpot(source,t.x,y,t.z);if(spot){const s=source.spawn;return {...source,encounters,spawn:{x:spot.x,y,z:spot.z,yaw:Math.atan2(t.x-s.x,s.z-t.z)}};}}
     return source;
   }
   function progress(sim,pilot){const s=sim.state,b=s.enemies.find(e=>e.bossScale>1);return [pilot.goalKey,pilot.distanceProgress,s.relays,s.kills,s.mechanisms.filter(m=>m.active).length,b?Math.ceil(30*b.hp/b.maxHp):0,s.activeProfile].join('|');}
@@ -70375,10 +70441,11 @@ G.FPilot={create:createPilot};
       if(e.name==='rocket'||e.name==='grenadeLaunch'){if(e.owner==='player')handMotion.impulse(e.name==='grenadeLaunch'?'grenade':'rocket');}
       else if(e.name==='land'){if(e.actor==='player'&&sim.state.activeProfile!=='light'){motion.impulse('land',e.impact);leftMotion.impulse('land',e.impact);}}
       else if(e.name==='bossStep'){const p=sim.state.player,amount=.25*clamp(1-Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z)/25,0,1);if(amount>0){motion.impulse('blast',amount);leftMotion.impulse('blast',amount);}}
+      else if(e.name==='jointBreak'){motion.impulse('blast',.7);leftMotion.impulse('blast',.7);toast('ARTICULATION BRISÉE',1.8);}
       else if(e.name==='bossImpact'||e.name==='bossDeath'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.z??p.z)-p.z),amount=(e.name==='bossDeath'?1:e.kind==='ring'?.4:.8)*clamp(1-d/40,0,1);motion.impulse('blast',amount);leftMotion.impulse('blast',amount);if(e.name==='bossDeath')freezeUntil=performance.now()+120;}
       else if(e.name==='explosion'){const p=sim.state.player,d=Math.hypot((e.x??p.x)-p.x,(e.y??p.y)-p.y,(e.z??p.z)-p.z);motion.impulse('blast',clamp(1-d/14,0,1));leftMotion.impulse('blast',clamp(1-d/14,0,1));}
       else handMotion.impulse(e.name==='shot'&&e.weapon===4?'pistol':e.name);
-      const sound=e.name==='bossStep'?'land':e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name;
+      const sound=e.name==='bossStep'?'land':e.name==='bossReward'?'weaponPickup':e.name==='waveStart'?'wave':e.name==='armorPickup'?'ammoPickup':e.name==='lootPickup'?(e.boss?'weaponPickup':'ammoPickup'):e.name==='jointBreak'?'bossImpact':e.name;
       if(e.name!=='win'&&typeof audio[sound]==='function'&&!((e.name==='weaponPickup'||e.name==='lootPickup')&&trophyIds.has(e.id))){
         const mix=soundscape.event(sim,e);if(mix.level>.0001)audio[sound](mix);
       }
@@ -70850,16 +70917,17 @@ G.FPilot={create:createPilot};
     const bossReward=pendingBossReward();$('objective-label').textContent=bossReward?'RÉCUPÉRER LE BUTIN DU BOSS':!operational?'ACTIVER LES COMMANDES':s.relays===3?(s.bossAlive?'NEUTRALISER LE GARDIEN':'REJOINDRE LA SORTIE'):'RÉCUPÉRER LES RELAIS';
     const encounters=(s.encounters||[]).filter(c=>c.status!=='dormant'&&Math.hypot((c.trigger?.x??0)-p.x,(c.trigger?.z??0)-p.z)<(c.leashRadius||38)+10).sort((a,b)=>Number(a.status==='cleared')-Number(b.status==='cleared')||Math.hypot(a.trigger.x-p.x,a.trigger.z-p.z)-Math.hypot(b.trigger.x-p.x,b.trigger.z-p.z)),current=encounters[0];
     $('wave-status').hidden=!current;$('wave-status').dataset.state=current?.status||'';
-    if(current){$('wave-label').textContent=current.label||'ZONE DE COMBAT';$('wave-count').textContent=current.status==='cleared'?'ZONE SÉCURISÉE':'VAGUE '+(Math.max(current.wave,current.pendingWave)+1)+' / '+current.waves.length;$('wave-detail').textContent=current.status==='cleared'?'RÉCUPÉREZ LES RÉSERVES':current.status==='warning'?'RENFORTS EN APPROCHE':current.status==='waiting'?'SURVEILLEZ LES ACCÈS':current.active+' CONTACT'+(current.active===1?'':'S')+' ACTIF'+(current.active===1?'':'S');}
+    if(current){$('wave-label').textContent=current.label||'ZONE DE COMBAT';$('wave-count').textContent=current.status==='cleared'?'ZONE SÉCURISÉE':'VAGUE '+(Math.max(current.wave,current.pendingWave)+1)+' / '+current.waves.length;$('wave-detail').textContent=current.status==='cleared'?'RÉCUPÉREZ LES RÉSERVES':current.status==='warning'?'RENFORTS EN APPROCHE':current.status==='waiting'?'SURVEILLEZ LES ACCÈS':current.horde?current.remaining+' MACHINE'+(current.remaining===1?'':'S')+' RESTANTE'+(current.remaining===1?'':'S'):current.active+' CONTACT'+(current.active===1?'':'S')+' ACTIF'+(current.active===1?'':'S');}
     const trophyGrace=s.campaign?.trophies.find(q=>q.phase==='grace');
     if(trophyGrace){$('wave-status').hidden=false;$('wave-status').dataset.state='trophy';$('wave-label').textContent='TROPHÉE ACQUIS';$('wave-count').textContent='ÉPREUVE DANS '+Math.max(1,Math.ceil(trophyGrace.timer))+' S';$('wave-detail').textContent='PRÉPAREZ VOTRE NOUVEL ÉQUIPEMENT';}
     $('score').textContent=String(Math.round(runStats.score+(s.score||0))).padStart(5,'0');$('combo').textContent=s.combo>1?'SÉRIE × '+s.combo:'SIGNAL STABLE';$('combo').classList.toggle('active',s.combo>1);
     const boss=s.enemies.find(e=>e.type===3&&e.hp>0),bossVisible=!!boss&&(boss.bossScale>1?boss.bossAwake&&(Math.hypot(boss.x-p.x,boss.z-p.z)<120):boss.active||boss.hp<boss.maxHp||Math.hypot(boss.x-p.x,boss.z-p.z)<22);
     $('boss-status').hidden=!bossVisible;document.body.dataset.boss=String(bossVisible);
     if(bossVisible){
-      $('boss-bar').style.width=boss.hp/boss.maxHp*100+'%';$('boss-name').textContent=boss.bossName||'LE GARDIEN';$('boss-health').textContent=Math.ceil(boss.hp)+' / '+boss.maxHp+' PV';
-      $('boss-phase').textContent=boss.weakPointOpen?'CŒUR EXPOSÉ · '+Math.max(0,boss.weakTimer||0).toFixed(1)+' S':'PHASE '+((boss.phase||0)+1)+(boss.bossScale>1?' / 3':'');
-      $('boss-attack').textContent=boss.weakPointOpen?'VISEZ LE CŒUR LUMINEUX':boss.attackLabel||'DÉFENSE ACTIVE';$('boss-status').classList.toggle('vulnerable',!!boss.weakPointOpen);
+      const joints=Array.isArray(boss.joints)?boss.joints.filter(v=>v>0).length:-1;
+      $('boss-bar').style.width=boss.hp/boss.maxHp*100+'%';$('boss-name').textContent=boss.bossName||'LE GARDIEN';$('boss-health').textContent=Math.ceil(boss.hp)+' / '+boss.maxHp+' PV'+(joints>=0?' · '+joints+'/4 ARTICULATIONS':'');
+      $('boss-phase').textContent=boss.weakPointOpen?(joints>=0?'ARTICULATIONS EXPOSÉES · ':'CŒUR EXPOSÉ · ')+Math.max(0,boss.weakTimer||0).toFixed(1)+' S':'PHASE '+((boss.phase||0)+1)+(boss.bossScale>1?' / 3':'');
+      $('boss-attack').textContent=boss.weakPointOpen?(joints<0?'VISEZ LE CŒUR LUMINEUX':joints?'VISEZ LES ARTICULATIONS LUMINEUSES':'ACHEVEZ LE CŒUR À NU'):boss.attackLabel||'DÉFENSE ACTIVE';$('boss-status').classList.toggle('vulnerable',!!boss.weakPointOpen);
     }
     const tell=(s.bossAttacks||[]).filter(a=>a.warning).sort((a,b)=>(a.tell-a.age)-(b.tell-b.age))[0];$('boss-cue').hidden=!bossVisible||!tell;
     if(tell){const remaining=Math.max(0,tell.tell-tell.age),jump=tell.kind==='ring'||tell.kind==='sweep';$('boss-cue-text').textContent=(jump?'↑ SAUT / ESQUIVE':'↗ SORTIR DE LA ZONE')+' · '+remaining.toFixed(1)+' s';$('boss-cue-progress').style.strokeDashoffset=String(81.682*(1-remaining/tell.tell));const angle=Math.atan2(tell.x-p.x,p.z-tell.z)-p.yaw;$('boss-cue-arrow').style.transform='rotate('+angle+'rad)';$('boss-cue').dataset.kind=tell.kind;}
@@ -70989,7 +71057,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.12.1',simHash:'736457e558b0bd625cb3b22643c1ca5c2d281293036ba9d8c8a2d1838b4d4ef1',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.12.2',simHash:'b3ef8564a4607a9f07c3f54429145a09746f47126d44e25c23281171c078ff7e',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){
