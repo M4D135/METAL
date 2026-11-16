@@ -1,10 +1,10 @@
 {
-  "version": "0.11.2",
-  "html_bytes": 13584816,
-  "html_decimal_kb": 13584.82,
-  "html_kib": 13266.42,
-  "gzip_bytes": 3183036,
-  "sha256": "289414c0555009a18f94a5cd0a3fec41e83dd56d1466da40c2c79c3b413a6e9a",
+  "version": "0.11.3",
+  "html_bytes": 13588369,
+  "html_decimal_kb": 13588.37,
+  "html_kib": 13269.89,
+  "gzip_bytes": 3184396,
+  "sha256": "11461b7e463af7629cd4618cf58e677df963df046adc08eeeea733a18b0b49aa",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
@@ -49,8 +49,8 @@
     "host.js": 2713,
     "demo.js": 28562,
     "pilot.js": 22068,
-    "demo-metal.js": 3405,
+    "demo-metal.js": 6923,
     "replay-metal.js": 2188,
-    "game.js": 150675
+    "game.js": 150532
   }
 }

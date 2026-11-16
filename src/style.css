@@ -225,3 +225,5 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
 @media(max-height:640px),(max-width:760px){#controls-hint{display:none}}
 /* Title screen without music information (David, 16/11/2026); the music itself is unchanged. */
 #intro-audio[hidden]{display:none}
+/* Attract demo: no legend, and no crosshair in the cinematic shots. */
+body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes]) #crosshair{display:none}

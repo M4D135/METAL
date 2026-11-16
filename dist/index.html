@@ -233,6 +233,8 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
 @media(max-height:640px),(max-width:760px){#controls-hint{display:none}}
 /* Title screen without music information (David, 16/11/2026); the music itself is unchanged. */
 #intro-audio[hidden]{display:none}
+/* Attract demo: no legend, and no crosshair in the cinematic shots. */
+body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes]) #crosshair{display:none}
 </style>
 </head>
 <body data-state="menu">
@@ -240,7 +242,7 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
   <canvas id="world" tabindex="0" aria-label="METAL — vue du champ de bataille"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.11.2">V0.11.2</b></span></div>
+    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.11.3">V0.11.3</b></span></div>
     <div class="intro-content">
       <h1>METAL</h1>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
@@ -69330,20 +69332,50 @@ G.FPilot={create:createPilot};
     profiles.active=active;const ammo=P.ammoCaps(profiles.classes).map((v,i)=>weapons[i]?v:0);
     return {profiles,inventory:{weapons,ammo},economy:profiles.classes[active].economy,equipment:{right:4,left:null},campaign:{version:2,claimedBossRewards:Array.from({length:index},(_,i)=>i),discovered:[['pistol',4],['smg',0],['shotgun',1],['grenade',3],['rocket',2]].filter(([,i])=>weapons[i]).map(([name])=>name)}};
   }
-  function scenes(seed=96,bench=false){const list=[{index:6,maxSeconds:240},{index:12,boss:true,maxSeconds:120},{index:15,maxSeconds:240},{index:1,maxSeconds:240},{index:4,boss:true,maxSeconds:120},{index:11,boss:true,maxSeconds:120}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
-  function world(source,scene){if(!scene.boss)return source;const a=source.bossArena;return {...source,spawn:{x:a.x-24,y:a.y,z:a.z+.3,yaw:Math.PI/2}};}
+  // Short scenes that open on a fight (David, 16/11/2026): assaults drop the
+  // heavy into a guarded room, boss scenes start at the arena gate.
+  function scenes(seed=96,bench=false){const list=[{index:12,boss:true,maxSeconds:100},{index:7,assault:true,maxSeconds:70},{index:17,boss:true,maxSeconds:100},{index:13,assault:true,maxSeconds:70},{index:4,boss:true,maxSeconds:100},{index:11,boss:true,maxSeconds:100}];if(bench)return [{index:0,maxSeconds:60},{index:6,maxSeconds:60},{index:12,boss:true,maxSeconds:60}].map((q,i)=>({...q,id:'bench-'+i,seed}));return list.map((q,i)=>({...q,id:'scene-'+i,seed}));}
+  function active(scene){return scene.boss?(scene.index%2?'heavy':'light'):'heavy';}
+  // A spot where the player's body fits, scanned around a room centre.
+  function freeSpot(source,x,y,z){
+    const solid=(px,pz)=>(source.colliders||[]).some(c=>px+.35>c.minX&&px-.35<c.maxX&&pz+.35>c.minZ&&pz-.35<c.maxZ&&y+1.8>c.minY&&y+.05<c.maxY);
+    for(const r of [0,2,3.5,5])for(let k=0;k<(r?8:1);k++){const a=k*Math.PI/4,px=x+Math.cos(a)*r,pz=z+Math.sin(a)*r;if(!solid(px,pz))return {x:px,z:pz};}
+    return null;
+  }
+  function world(source,scene){
+    if(scene.boss){const a=source.bossArena;return {...source,spawn:{x:a.x-24,y:a.y,z:a.z+.3,yaw:Math.PI/2}};}
+    if(!scene.assault)return source;
+    // The most guarded encounter whose room has room for the player.
+    const fights=(source.encounters||[]).filter(q=>q.trigger&&q.waves?.length).map(q=>({q,count:q.waves.reduce((n,w)=>n+w.enemyIds.length,0)})).sort((a,b)=>b.count-a.count);
+    for(const {q} of fights){const t=q.trigger,y=t.y||0,spot=freeSpot(source,t.x,y,t.z);if(spot){const s=source.spawn;return {...source,spawn:{x:spot.x,y,z:spot.z,yaw:Math.atan2(t.x-s.x,s.z-t.z)}};}}
+    return source;
+  }
   function progress(sim,pilot){const s=sim.state,b=s.enemies.find(e=>e.bossScale>1);return [pilot.goalKey,pilot.distanceProgress,s.relays,s.kills,s.mechanisms.filter(m=>m.active).length,b?Math.ceil(30*b.hp/b.maxHp):0,s.activeProfile].join('|');}
   function camera(sim,seed){
     const p=sim.state.player,b=()=>sim.state.enemies.find(e=>e.hp>0&&e.bossScale>1),look=(out,pos,to)=>{G.FDemo.lookAt(pos,to,out);out.pos=pos;out.roll=0;out.fov=74;};
+    const drone=()=>sim.state.activeProfile==='light',body=()=>[p.x,p.y+(drone()?1.45:1.3),p.z];
+    // The nearest machine in combat, for shots that frame both sides of a fight.
+    const foe=()=>{let best=null,d=30;for(const e of sim.state.enemies){if(e.hp<=0||e.deployed===false||e.bossScale>1||!(e.active||e.awareness==='engage'))continue;const q=Math.hypot(e.x-p.x,e.z-p.z);if(q<d){d=q;best=e;}}return best;};
+    const fighting=()=>!!foe()||!!b()?.bossAwake;
     const d=G.FDemo.director({seed,shots:[
-      {id:'eyes',weight:60,duration:[12,25],pose(c,t,target,o){Object.assign(o,c.eyes);o.pos=c.eyes.pos.slice();}},
-      {id:'watch',weight:15,duration:[6,9],transition:'fly',pose(c,t,target,o){look(o,[p.x-6,p.y+4,p.z+7],[p.x,p.y+1.4,p.z]);}},
-      {id:'guardian',weight:()=>b()?.bossAwake?40:0,valid:()=>!!b()?.bossAwake,duration:[6,10],transition:'fly',pose(c,t,target,o){const e=b(),a=sim.state.time*.08;look(o,[e.x+Math.sin(a)*26,e.baseY+8,e.z+Math.cos(a)*26],[e.x,e.baseY+e.bossScale*1.6,e.z]);}},
+      {id:'eyes',weight:()=>fighting()?14:22,duration:[4,7],pose(c,t,target,o){Object.assign(o,c.eyes);o.pos=c.eyes.pos.slice();}},
+      // Third person, over the heavy's shoulder or behind the drone.
+      {id:'chase',weight:34,duration:[6,10],pose(c,t,target,o){const y=p.yaw,s=Math.sin(y),k=Math.cos(y),side=drone()?0:.8,back=drone()?3:3.4,eye=[p.x,p.y+1.62,p.z];look(o,[eye[0]-s*back+k*side,eye[1]+.6,eye[2]+k*back+s*side],[eye[0]+s*24,eye[1]+Math.sin(p.pitch)*24,eye[2]-k*24]);}},
+      {id:'orbit',weight:()=>fighting()?22:10,duration:[5,8],transition:'fly',pose(c,t,target,o){const a=sim.state.time*.32+seed,r=7.5,q=body();look(o,[q[0]+Math.sin(a)*r,q[1]+2.6,q[2]+Math.cos(a)*r],q);}},
+      // Side view of the exchange of fire between the player and a machine.
+      {id:'action',weight:()=>foe()?40:0,valid:()=>!!foe(),duration:[4,7],pose(c,t,target,o){const e=foe()||p,q=body(),m=[(q[0]+e.x)/2,(q[1]+(e.y||q[1]))/2,(q[2]+e.z)/2],dx=e.x-q[0],dz=e.z-q[2],l=Math.hypot(dx,dz)||1,span=Math.max(7,l*.9);look(o,[m[0]-dz/l*span,m[1]+3.2,m[2]+dx/l*span],m);}},
+      {id:'drone',weight:()=>drone()?24:0,valid:drone,duration:[4,6],pose(c,t,target,o){const y=p.yaw,q=body();look(o,[q[0]+Math.sin(y)*5.5+Math.cos(y)*1.4,q[1]-.4,q[2]-Math.cos(y)*5.5+Math.sin(y)*1.4],q);}},
+      {id:'watch',weight:6,duration:[5,7],transition:'fly',pose(c,t,target,o){look(o,[p.x-6,p.y+4,p.z+7],[p.x,p.y+1.4,p.z]);}},
+      {id:'guardian',weight:()=>b()?.bossAwake?30:0,valid:()=>!!b()?.bossAwake,duration:[5,8],transition:'fly',pose(c,t,target,o){const e=b(),a=sim.state.time*.08;look(o,[e.x+Math.sin(a)*26,e.baseY+8,e.z+Math.cos(a)*26],[e.x,e.baseY+e.bossScale*1.6,e.z]);}},
+      // Low angle from the player's side: the giant towers over the frame.
+      {id:'colossus',weight:()=>b()?.bossAwake?32:0,valid:()=>!!b()?.bossAwake,duration:[4,7],pose(c,t,target,o){const e=b(),dx=p.x-e.x,dz=p.z-e.z,l=Math.hypot(dx,dz)||1,r=Math.min(l+4,1.5*e.bossScale+14);look(o,[e.x+dx/l*r+dz/l*3,e.baseY+.6,e.z+dz/l*r-dx/l*3],[e.x,e.baseY+e.bossScale*1.9,e.z]);}},
       {id:'arrival',weight:100,valid:()=>sim.state.time<4,duration:[4,4],pose(c,t,target,o){look(o,[p.x-4,p.y+6,p.z+9],[p.x,p.y+1.4,p.z]);}}
     ]});
-    return {update(dt,eyes){const frame=d.update(dt,{eyes}),pose=frame.pose;if(frame.shot!=='eyes'){const from=[p.x,p.y+1.4,p.z],delta=pose.pos.map((v,i)=>v-from[i]),len=Math.hypot(...delta);if(len>.01){const dir=delta.map(v=>v/len),reach=Math.max(0,sim.ray(from,dir,len)-.3);if(reach<.8)return {shot:'eyes',pose:eyes};if(reach<len)pose.pos=from.map((v,i)=>v+dir[i]*reach);}}return {shot:frame.shot,pose};},reset:()=>d.reset(seed)};
+    const close={pos:[0,0,0],yaw:0,pitch:0,roll:0,fov:74};
+    function fit(pose){const from=[p.x,p.y+1.4,p.z],delta=pose.pos.map((v,i)=>v-from[i]),len=Math.hypot(...delta);if(len<=.01)return true;const dir=delta.map(v=>v/len),reach=Math.max(0,sim.ray(from,dir,len)-.3);if(reach<.8)return false;if(reach<len)pose.pos=from.map((v,i)=>v+dir[i]*reach);return true;}
+    return {update(dt,eyes){const frame=d.update(dt,{eyes}),pose=frame.pose;if(frame.shot==='eyes'||fit(pose))return {shot:frame.shot,pose};const y=p.yaw,s=Math.sin(y),k=Math.cos(y),eye=[p.x,p.y+1.62,p.z];look(close,[eye[0]-s*1.7+k*.5,eye[1]+.45,eye[2]+k*1.7+s*.5],[eye[0]+s*20,eye[1],eye[2]-k*20]);return fit(close)?{shot:'chase',pose:close}:{shot:'eyes',pose:eyes};},reset:()=>d.reset(seed)};
   }
-  G.MetalDemo={loadout,scenes,world,progress,camera};
+  G.MetalDemo={loadout,scenes,world,progress,camera,active};
 })(typeof window!=='undefined'?window:globalThis);
 </script>
 <script data-module="replay-metal.js" data-role="page">/* METAL — exact input stream with dated out-of-band commands. Opt-in only. */
@@ -70395,7 +70427,7 @@ G.FPilot={create:createPilot};
     const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,prepare:!scene.boss,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
     demoRunner=FDemo.runner({scenes,stallSeconds:50,onError:error=>console.error('METAL demo:',error),onStop:()=>demoAttract?.stop('error'),open:async scene=>{
       document.body.classList.add('demo-loading');const raw=await prepare(scene);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(ticket!==demoSerial)return null;
-      const prepared=MetalDemo.world(raw,scene),carry=MetalDemo.loadout(scene.index,scene.boss&&scene.index%2?'heavy':'light');
+      const prepared=MetalDemo.world(raw,scene),carry=MetalDemo.loadout(scene.index,MetalDemo.active?.(scene)??(scene.boss&&scene.index%2?'heavy':'light'));
       load(scene.index,scene.seed,carry,true,2,false,true,true,prepared,{brain:null});sim.setDifficulty(0);demoPilot=FPilot.create(sim,world,{seed:scene.seed});demoCamera=MetalDemo.camera(sim,scene.seed);demoShot='eyes';const current=sim,pilot=demoPilot,point=current.snapshot();
       const benchScene=demoBench?{id:scene.id,step:demoBench.steps}:null;if(benchScene)demoBench.scenes.push(benchScene);$('demo-banner').textContent='DÉMO · MONDE '+(scene.index+1)+' · Touchez ou appuyez pour revenir';document.body.classList.remove('demo-loading');fixedLoop.reset();fixedLoop.observe(performance.now());
       const next=scenes[(scenes.indexOf(scene)+1)%scenes.length];prepare(next).catch(()=>{});
@@ -70412,7 +70444,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.11.2',simHash:'90bf1db6b1f3224eba3b88877c7fbcb10ac953c4dd1bd7187ae6ddc2e1d8a4bd',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.11.3',simHash:'90bf1db6b1f3224eba3b88877c7fbcb10ac953c4dd1bd7187ae6ddc2e1d8a4bd',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){
@@ -70425,7 +70457,7 @@ G.FPilot={create:createPilot};
     const signals={time:sim.state.time,lookYaw:0,lookPitch:0,firing:false};
     if(mode==='demo'){
       if(!demoRunner?.waiting)fixedLoop.advance(now,part=>{demoRunner?.step(part);demoElapsed+=part;return mode==='demo'&&!demoRunner?.waiting;});else fixedLoop.reset();
-      audio.tick(dt);audio.setThreat(sim.state.threat||0);hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.1;}signals.firing=input.fire;
+      animateActors(dt);audio.tick(dt);audio.setThreat(sim.state.threat||0);hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.1;}signals.firing=input.fire;
       if(demoBench){demoBench.frames.push(frameMs);if(demoBench.seconds>=benchSeconds)demoFinishBench();}
       if(touch&&demoElapsed>=600){demoHold=true;demoAttract?.stop('mobile-limit');}
     }else if(mode==='playing'&&!loadoutOpen){
@@ -70451,9 +70483,6 @@ G.FPilot={create:createPilot};
       });
       aimShownX=lookDX;aimShownY=lookDY;
       const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI),outside=isOutdoors(sim.state.player.x,sim.state.player.z);
-      // Third-person legs follow the movement while the torso keeps the aim;
-      // walking backwards reverses the stride instead of moonwalking.
-      {const f=loc?.forward||0,st=loc?.strafe||0,theta=Math.atan2(st,f),moving=Math.hypot(f,st)>.4&&sim.state.activeProfile!=='light',back=moving&&Math.abs(theta)>Math.PI/2+.15,want=moving?clamp(back?theta-Math.sign(theta)*Math.PI:theta,-1.1,1.1):0;avatarGait.legYaw+=(want-avatarGait.legYaw)*(1-Math.exp(-dt*10));avatarGait.back=back;}
       outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
       const localSound=soundscape.sample(sim),motor=localSound.machinery,steam=localSound.steam;
       audio.setMachinery?.(motor.level,motor.pan,motor.kind,motor.occluded);
@@ -70461,19 +70490,7 @@ G.FPilot={create:createPilot};
       audio.setThreat(sim.state.threat||0);audio.setPressure?.(sim.state.director?.pressure||0);audio.tick(dt);
       if(mode==='playing'&&sim.state.activeProfile!=='light'&&!sim.state.player.airborne&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving,{outdoor:outside,biome:world.environment?.biome});
       lastFootstep=footstep;
-      for(const e of sim.state.enemies){
-        const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1;
-        if(e.deployed===false||e.hp<=0||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);continue;}
-        const yaw=Number.isFinite(e.yaw)?e.yaw:0,giant=scale>1,pose=actorMotion.get(e.id)||{phase:e.id*.7,blend:0,yaw,last:yaw};
-        // Machines turn fast but never snap. A giant keeps the simulation's own
-        // rate-limited heading, which carries its real weak point.
-        if(giant)pose.yaw=yaw;else{const delta=Math.atan2(Math.sin(yaw-pose.yaw),Math.cos(yaw-pose.yaw)),limit=[7,6,5,5][e.type]*dt;pose.yaw+=clamp(delta*(1-Math.exp(-dt*16)),-limit,limit);}
-        const turn=dt>0?Math.abs(Math.atan2(Math.sin(pose.yaw-pose.last),Math.cos(pose.yaw-pose.last)))/dt:0,speed=e.moveSpeed||0;pose.last=pose.yaw;
-        // A turn on the spot is stepped: the gait advances with the rotation.
-        pose.phase=(pose.phase+(speed*4.8/scale+turn*(giant?1.6:.8))*dt)%(Math.PI*2);
-        pose.blend+=(Math.max(Math.min(1,speed/.9),Math.min(1,turn*(giant?1.4:.35))*.55)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);
-      }
-      for(const a of sim.state.mechanisms||[]){const value=systemMotion.get(a.id)??0;systemMotion.set(a.id,value+(Number(a.active)-value)*(1-Math.exp(-dt*4)));}
+      animateActors(dt);
       toastTime-=dt;if(toastTime<=0)$('toast').classList.remove('visible');
       encounterTime-=dt;if(encounterTime<=0)$('encounter').classList.remove('visible');
       hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.09;}
@@ -70499,7 +70516,7 @@ G.FPilot={create:createPilot};
     camera.overlayFov=camera.fov;if(touch&&prefs.portraitFov)camera.fov=FTouch.fovFor(innerWidth/innerHeight,camera.fov);
     const aimOffset=third?0:canvas.clientHeight*.5*Math.tan(recoilPitch)/Math.tan(clamp(camera.fov,40,110)*Math.PI/360);$('crosshair').style.marginTop=(aimOffset*Math.cos(camera.roll)).toFixed(2)+'px';$('crosshair').style.marginLeft=(-aimOffset*Math.sin(camera.roll)).toFixed(2)+'px';
     renderPartner(camera);
-    const drawing=demoBench?performance.now():0,drawModels=models(t,isPlay&&(mode!=='demo'||demoShot==='eyes'),camera,third);if(mode==='demo'&&demoShot!=='eyes'){const loc=sim.state.locomotion||{};drawModels.push(...(twin?MetalAvatars.drone(p,{time:t,weapon:sim.state.weapon,forward:loc.forward,strafe:loc.strafe,boosting:!!sim.state.jetpack?.active,flash:sim.state.flash,quality,backend:renderer.stats.backend}):MetalAvatars.heavy(p,{time:t,weapon:sim.state.weapon,speed:loc.speed,phase:loc.stridePhase,blend:loc.moveBlend,distance:6,flash:sim.state.flash,quality,backend:renderer.stats.backend})));}
+    const external=mode==='demo'&&demoShot!=='eyes',drawing=demoBench?performance.now():0,drawModels=models(t,isPlay,camera,third||external);document.body.dataset.shot=mode==='demo'?demoShot:'';
     renderer.draw(camera,drawModels,{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,brightness:prefs.brightness,vignette:prefs.vignette,shadows:prefs.shadows,bloom:prefs.bloom,reflections:prefs.reflections,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
     if(demoBench)demoBench.drawMs.push(performance.now()-drawing);
     sceneDirty=false;
@@ -70512,6 +70529,27 @@ G.FPilot={create:createPilot};
       document.body.dataset.fps=String(fps);$('fps-counter').textContent=fps+' FPS';
       perfStart=now;perfFrames=0;
     }
+  }
+  // Displayed motion only: eased machine headings, stepped turns, the
+  // third-person legs of the heavy and mechanism levers. Shared by play and demo.
+  function animateActors(dt){
+    const loc=sim.state.locomotion;
+    // Third-person legs follow the movement while the torso keeps the aim;
+    // walking backwards reverses the stride instead of moonwalking.
+    {const f=loc?.forward||0,st=loc?.strafe||0,theta=Math.atan2(st,f),moving=Math.hypot(f,st)>.4&&sim.state.activeProfile!=='light',back=moving&&Math.abs(theta)>Math.PI/2+.15,want=moving?clamp(back?theta-Math.sign(theta)*Math.PI:theta,-1.1,1.1):0;avatarGait.legYaw+=(want-avatarGait.legYaw)*(1-Math.exp(-dt*10));avatarGait.back=back;}
+    for(const e of sim.state.enemies){
+      const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1;
+      if(e.deployed===false||e.hp<=0||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);continue;}
+      const yaw=Number.isFinite(e.yaw)?e.yaw:0,giant=scale>1,pose=actorMotion.get(e.id)||{phase:e.id*.7,blend:0,yaw,last:yaw};
+      // Machines turn fast but never snap. A giant keeps the simulation's own
+      // rate-limited heading, which carries its real weak point.
+      if(giant)pose.yaw=yaw;else{const delta=Math.atan2(Math.sin(yaw-pose.yaw),Math.cos(yaw-pose.yaw)),limit=[7,6,5,5][e.type]*dt;pose.yaw+=clamp(delta*(1-Math.exp(-dt*16)),-limit,limit);}
+      const turn=dt>0?Math.abs(Math.atan2(Math.sin(pose.yaw-pose.last),Math.cos(pose.yaw-pose.last)))/dt:0,speed=e.moveSpeed||0;pose.last=pose.yaw;
+      // A turn on the spot is stepped: the gait advances with the rotation.
+      pose.phase=(pose.phase+(speed*4.8/scale+turn*(giant?1.6:.8))*dt)%(Math.PI*2);
+      pose.blend+=(Math.max(Math.min(1,speed/.9),Math.min(1,turn*(giant?1.4:.35))*.55)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);
+    }
+    for(const a of sim.state.mechanisms||[]){const value=systemMotion.get(a.id)??0;systemMotion.set(a.id,value+(Number(a.active)-value)*(1-Math.exp(-dt*4)));}
   }
   function togglePause(){if(mode==='playing')setMode('paused');else if(mode==='options')setMode('menu');else if(mode==='paused'||mode==='shop'){audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});}}
   function switchWeapon(value,direction=1){

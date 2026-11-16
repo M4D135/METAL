@@ -1032,7 +1032,7 @@
     const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,prepare:!scene.boss,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
     demoRunner=FDemo.runner({scenes,stallSeconds:50,onError:error=>console.error('METAL demo:',error),onStop:()=>demoAttract?.stop('error'),open:async scene=>{
       document.body.classList.add('demo-loading');const raw=await prepare(scene);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(ticket!==demoSerial)return null;
-      const prepared=MetalDemo.world(raw,scene),carry=MetalDemo.loadout(scene.index,scene.boss&&scene.index%2?'heavy':'light');
+      const prepared=MetalDemo.world(raw,scene),carry=MetalDemo.loadout(scene.index,MetalDemo.active?.(scene)??(scene.boss&&scene.index%2?'heavy':'light'));
       load(scene.index,scene.seed,carry,true,2,false,true,true,prepared,{brain:null});sim.setDifficulty(0);demoPilot=FPilot.create(sim,world,{seed:scene.seed});demoCamera=MetalDemo.camera(sim,scene.seed);demoShot='eyes';const current=sim,pilot=demoPilot,point=current.snapshot();
       const benchScene=demoBench?{id:scene.id,step:demoBench.steps}:null;if(benchScene)demoBench.scenes.push(benchScene);$('demo-banner').textContent='DÉMO · MONDE '+(scene.index+1)+' · Touchez ou appuyez pour revenir';document.body.classList.remove('demo-loading');fixedLoop.reset();fixedLoop.observe(performance.now());
       const next=scenes[(scenes.indexOf(scene)+1)%scenes.length];prepare(next).catch(()=>{});
@@ -1062,7 +1062,7 @@
     const signals={time:sim.state.time,lookYaw:0,lookPitch:0,firing:false};
     if(mode==='demo'){
       if(!demoRunner?.waiting)fixedLoop.advance(now,part=>{demoRunner?.step(part);demoElapsed+=part;return mode==='demo'&&!demoRunner?.waiting;});else fixedLoop.reset();
-      audio.tick(dt);audio.setThreat(sim.state.threat||0);hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.1;}signals.firing=input.fire;
+      animateActors(dt);audio.tick(dt);audio.setThreat(sim.state.threat||0);hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.1;}signals.firing=input.fire;
       if(demoBench){demoBench.frames.push(frameMs);if(demoBench.seconds>=benchSeconds)demoFinishBench();}
       if(touch&&demoElapsed>=600){demoHold=true;demoAttract?.stop('mobile-limit');}
     }else if(mode==='playing'&&!loadoutOpen){
@@ -1088,9 +1088,6 @@
       });
       aimShownX=lookDX;aimShownY=lookDY;
       const loc=sim.state.locomotion,footstep=Math.floor((loc?.stridePhase||0)/Math.PI),outside=isOutdoors(sim.state.player.x,sim.state.player.z);
-      // Third-person legs follow the movement while the torso keeps the aim;
-      // walking backwards reverses the stride instead of moonwalking.
-      {const f=loc?.forward||0,st=loc?.strafe||0,theta=Math.atan2(st,f),moving=Math.hypot(f,st)>.4&&sim.state.activeProfile!=='light',back=moving&&Math.abs(theta)>Math.PI/2+.15,want=moving?clamp(back?theta-Math.sign(theta)*Math.PI:theta,-1.1,1.1):0;avatarGait.legYaw+=(want-avatarGait.legYaw)*(1-Math.exp(-dt*10));avatarGait.back=back;}
       outdoorMix+=(Number(outside)-outdoorMix)*(1-Math.exp(-dt*3));audio.setEnvironment?.(world.environment,outdoorMix);
       const localSound=soundscape.sample(sim),motor=localSound.machinery,steam=localSound.steam;
       audio.setMachinery?.(motor.level,motor.pan,motor.kind,motor.occluded);
@@ -1098,19 +1095,7 @@
       audio.setThreat(sim.state.threat||0);audio.setPressure?.(sim.state.director?.pressure||0);audio.tick(dt);
       if(mode==='playing'&&sim.state.activeProfile!=='light'&&!sim.state.player.airborne&&footstep!==lastFootstep&&sim.state.moving>.5&&(loc?.dashBlend||0)<.3)audio.step(sim.state.moving,{outdoor:outside,biome:world.environment?.biome});
       lastFootstep=footstep;
-      for(const e of sim.state.enemies){
-        const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1;
-        if(e.deployed===false||e.hp<=0||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);continue;}
-        const yaw=Number.isFinite(e.yaw)?e.yaw:0,giant=scale>1,pose=actorMotion.get(e.id)||{phase:e.id*.7,blend:0,yaw,last:yaw};
-        // Machines turn fast but never snap. A giant keeps the simulation's own
-        // rate-limited heading, which carries its real weak point.
-        if(giant)pose.yaw=yaw;else{const delta=Math.atan2(Math.sin(yaw-pose.yaw),Math.cos(yaw-pose.yaw)),limit=[7,6,5,5][e.type]*dt;pose.yaw+=clamp(delta*(1-Math.exp(-dt*16)),-limit,limit);}
-        const turn=dt>0?Math.abs(Math.atan2(Math.sin(pose.yaw-pose.last),Math.cos(pose.yaw-pose.last)))/dt:0,speed=e.moveSpeed||0;pose.last=pose.yaw;
-        // A turn on the spot is stepped: the gait advances with the rotation.
-        pose.phase=(pose.phase+(speed*4.8/scale+turn*(giant?1.6:.8))*dt)%(Math.PI*2);
-        pose.blend+=(Math.max(Math.min(1,speed/.9),Math.min(1,turn*(giant?1.4:.35))*.55)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);
-      }
-      for(const a of sim.state.mechanisms||[]){const value=systemMotion.get(a.id)??0;systemMotion.set(a.id,value+(Number(a.active)-value)*(1-Math.exp(-dt*4)));}
+      animateActors(dt);
       toastTime-=dt;if(toastTime<=0)$('toast').classList.remove('visible');
       encounterTime-=dt;if(encounterTime<=0)$('encounter').classList.remove('visible');
       hudWait-=dt;if(hudWait<=0){renderHUD();hudWait=.09;}
@@ -1136,7 +1121,7 @@
     camera.overlayFov=camera.fov;if(touch&&prefs.portraitFov)camera.fov=FTouch.fovFor(innerWidth/innerHeight,camera.fov);
     const aimOffset=third?0:canvas.clientHeight*.5*Math.tan(recoilPitch)/Math.tan(clamp(camera.fov,40,110)*Math.PI/360);$('crosshair').style.marginTop=(aimOffset*Math.cos(camera.roll)).toFixed(2)+'px';$('crosshair').style.marginLeft=(-aimOffset*Math.sin(camera.roll)).toFixed(2)+'px';
     renderPartner(camera);
-    const drawing=demoBench?performance.now():0,drawModels=models(t,isPlay&&(mode!=='demo'||demoShot==='eyes'),camera,third);if(mode==='demo'&&demoShot!=='eyes'){const loc=sim.state.locomotion||{};drawModels.push(...(twin?MetalAvatars.drone(p,{time:t,weapon:sim.state.weapon,forward:loc.forward,strafe:loc.strafe,boosting:!!sim.state.jetpack?.active,flash:sim.state.flash,quality,backend:renderer.stats.backend}):MetalAvatars.heavy(p,{time:t,weapon:sim.state.weapon,speed:loc.speed,phase:loc.stridePhase,blend:loc.moveBlend,distance:6,flash:sim.state.flash,quality,backend:renderer.stats.backend})));}
+    const external=mode==='demo'&&demoShot!=='eyes',drawing=demoBench?performance.now():0,drawModels=models(t,isPlay,camera,third||external);document.body.dataset.shot=mode==='demo'?demoShot:'';
     renderer.draw(camera,drawModels,{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,brightness:prefs.brightness,vignette:prefs.vignette,shadows:prefs.shadows,bloom:prefs.bloom,reflections:prefs.reflections,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
     if(demoBench)demoBench.drawMs.push(performance.now()-drawing);
     sceneDirty=false;
@@ -1149,6 +1134,27 @@
       document.body.dataset.fps=String(fps);$('fps-counter').textContent=fps+' FPS';
       perfStart=now;perfFrames=0;
     }
+  }
+  // Displayed motion only: eased machine headings, stepped turns, the
+  // third-person legs of the heavy and mechanism levers. Shared by play and demo.
+  function animateActors(dt){
+    const loc=sim.state.locomotion;
+    // Third-person legs follow the movement while the torso keeps the aim;
+    // walking backwards reverses the stride instead of moonwalking.
+    {const f=loc?.forward||0,st=loc?.strafe||0,theta=Math.atan2(st,f),moving=Math.hypot(f,st)>.4&&sim.state.activeProfile!=='light',back=moving&&Math.abs(theta)>Math.PI/2+.15,want=moving?clamp(back?theta-Math.sign(theta)*Math.PI:theta,-1.1,1.1):0;avatarGait.legYaw+=(want-avatarGait.legYaw)*(1-Math.exp(-dt*10));avatarGait.back=back;}
+    for(const e of sim.state.enemies){
+      const scale=e.type===3?Math.max(1,Number(e.bossScale)||1):1;
+      if(e.deployed===false||e.hp<=0||(e.x-sim.state.player.x)**2+(e.z-sim.state.player.z)**2>(scale>1?140:40)**2){actorMotion.delete(e.id);continue;}
+      const yaw=Number.isFinite(e.yaw)?e.yaw:0,giant=scale>1,pose=actorMotion.get(e.id)||{phase:e.id*.7,blend:0,yaw,last:yaw};
+      // Machines turn fast but never snap. A giant keeps the simulation's own
+      // rate-limited heading, which carries its real weak point.
+      if(giant)pose.yaw=yaw;else{const delta=Math.atan2(Math.sin(yaw-pose.yaw),Math.cos(yaw-pose.yaw)),limit=[7,6,5,5][e.type]*dt;pose.yaw+=clamp(delta*(1-Math.exp(-dt*16)),-limit,limit);}
+      const turn=dt>0?Math.abs(Math.atan2(Math.sin(pose.yaw-pose.last),Math.cos(pose.yaw-pose.last)))/dt:0,speed=e.moveSpeed||0;pose.last=pose.yaw;
+      // A turn on the spot is stepped: the gait advances with the rotation.
+      pose.phase=(pose.phase+(speed*4.8/scale+turn*(giant?1.6:.8))*dt)%(Math.PI*2);
+      pose.blend+=(Math.max(Math.min(1,speed/.9),Math.min(1,turn*(giant?1.4:.35))*.55)-pose.blend)*(1-Math.exp(-dt*15));actorMotion.set(e.id,pose);
+    }
+    for(const a of sim.state.mechanisms||[]){const value=systemMotion.get(a.id)??0;systemMotion.set(a.id,value+(Number(a.active)-value)*(1-Math.exp(-dt*4)));}
   }
   function togglePause(){if(mode==='playing')setMode('paused');else if(mode==='options')setMode('menu');else if(mode==='paused'||mode==='shop'){audio.resume();setMode('playing');lock();canvas.focus({preventScroll:true});}}
   function switchWeapon(value,direction=1){
