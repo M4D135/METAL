@@ -231,10 +231,7 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
   <section id="intro" class="screen">
     <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.9.2">V0.9.2</b></span></div>
     <div class="intro-content">
-      <p class="eyebrow"><span class="dot"></span> MACHINES. RUINES. COLOSSES.</p>
       <h1>METAL</h1>
-      <p class="tagline">Du métal dans les veines.</p>
-      <p class="intro-copy">Éventrez les forteresses. Abattez les colosses.<br>Écoutez le métal hurler. Et ce qui rôde entre deux riffs.</p>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
       <div class="intro-meta"><span>18 MONDES</span><i></i><span>6 CHAPITRES</span><i></i><span>100 % PROCÉDURAL</span></div>
     </div>
@@ -290,7 +287,7 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
 (function(G){'use strict';
  const names={passages:'FPassages',tacticalNetwork:'FBrain',loop:'FLoop',scheduler:'FSchedule',jobs:'FJobs',demo:'FDemo',surface:'FSurface',gpuProfile:'FGPUProfile',skies:'FSky',reflections:'FSceneReflections',render:'FRender',backends:'FRenderBackends',physics:'FPhysics',physicsGeometry:'FPhysicsGeometry',geometry:'FGeometry',vehicleDynamics:'FVehicleDynamics',navigation:'FNavigation',crowd:'FCrowd',crowdWebGPU:'FCrowdWebGPU',materials:'FMaterials',destruction:'FDestruction',input:'FInput',audio:'FAudio',motion:'FMotion',effects:'FEffects',recipes:'FRecipes',math:'FMath',music:'FMusic',musicTransitions:'FImuse'};
  function requireModule(name){const module=G[names[name]];if(!module)throw new Error('FERRO : module '+name+' non chargé.');return module;}
- const api={version:'0.3.1',apiVersion:1,
+ const api={version:'0.3.2',apiVersion:1,
   capabilities(){return Object.fromEntries(Object.entries(names).map(([name,key])=>[name,!!G[key]]));},
   require:requireModule,
   async createRenderer(canvas,options={}){const materials=options.materials||requireModule('materials').create();if(!materials.layers.length)await materials.load();return requireModule('backends').create(canvas,{...options,materials});},
@@ -2400,13 +2397,18 @@ G.FSceneReflections={create,shader};
     if(!Array.isArray(value))return [];
     const valid=[];
     for(const source of value.slice(0,16)){
-      if(!source||!Array.isArray(source.p)||source.p.length!==3||!source.p.every(Number.isFinite)||!Number.isFinite(source.power)||source.power<=0||!Number.isFinite(source.range)||source.range<=0)continue;
+      if(!source||!Array.isArray(source.p)||source.p.length!==3||!source.p.every(Number.isFinite)||!Number.isFinite(source.power)||source.power<0||!Number.isFinite(source.range)||source.range<=0)continue;
+      // A flashing emitter may reserve its rank using a nominal peak power.
+      // Its actual emitted power still reaches the shader unchanged (including
+      // zero), so a beacon cannot switch unrelated steady lamps on and off.
+      const selectionPower=Number.isFinite(source.selectionPower)&&source.selectionPower>0?Math.min(64,source.selectionPower):0;
+      if(source.power===0&&!selectionPower)continue;
       const range=Math.min(48,source.range),power=Math.min(64,source.power),p=source.p;
       const distance=(p[0]-eye[0])**2+(p[1]-eye[1])**2+(p[2]-eye[2])**2;
       if(distance>(180+range)**2)continue;
       const color=Array.isArray(source.color)&&source.color.length===3?source.color.map(v=>Number.isFinite(v)?Math.max(0,Math.min(3,v)):0):[1,.42,.09];
       if(!color.some(v=>v>0))continue;
-      valid.push({p,color,power,range,dir:source.dir,cone:source.cone,score:power/(1+distance*.1)});
+      valid.push({p,color,power,range,dir:source.dir,cone:source.cone,score:Math.max(power,selectionPower)/(1+distance*.1)});
     }
     return valid.sort((a,b)=>b.score-a.score).slice(0,limit);
   }
@@ -16661,7 +16663,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.9.2',simHash:'1f69dc56a5d229a075e1a09313baefdf316c546aa392fbc36aba909d02febbe2',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.9.2',simHash:'ae4e2f7d1989d96defec90f517443bca0e347a195ca679599aa882029298f11a',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){
