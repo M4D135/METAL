@@ -242,7 +242,7 @@ body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes])
   <canvas id="world" tabindex="0" aria-label="METAL — vue du champ de bataille"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.0">V0.12.0</b></span></div>
+    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.1">V0.12.1</b></span></div>
     <div class="intro-content">
       <h1>METAL</h1>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
@@ -61165,8 +61165,8 @@ function create(world,solids,host={}){
   const capsuleFrom=new Float64Array(3),capsuleDelta=new Float64Array(3),capsuleHit={},capsuleOptions={radius:.28,height:1.8,mask:10,statics:false,skin:.001};
   phys.setStatics(solids,world.walkable||[]);
   function add(def,asleep=false){
-    const size=def.size,shape=def.shape==='capsule'?'capsule':def.shape==='sphere'?'sphere':'box';
-    const h=phys.addBody({shape,size,pos:def.pos,rot:def.rotation||[0,0,0],...(shape!=='box'?{radius:size[0]/2,height:size[1]}:{}),mass:def.mass,material:def.material,group:def.group??2,...(def.restitution!==undefined?{restitution:def.restitution}:{}),vel:def.velocity||[0,0,0],ang:def.angularVelocity||[0,0,0],asleep});if(h<0)return null;
+    const size=def.size,shape=def.body||(def.shape==='capsule'?'capsule':def.shape==='sphere'?'sphere':'box');
+    const h=phys.addBody({shape,size,pos:def.pos,rot:def.rotation||[0,0,0],...(shape!=='box'?{radius:def.radius??size[0]/2,height:def.height??size[1]}:{}),mass:def.mass,material:def.material,group:def.group??2,...(def.mask!==undefined?{mask:def.mask}:{}),...(def.restitution!==undefined?{restitution:def.restitution}:{}),vel:def.velocity||[0,0,0],ang:def.angularVelocity||[0,0,0],asleep});if(h<0)return null;
     const q={id:++serial,handle:h,kind:def.kind,shape:def.shape,size:size.slice(),mat:def.mat??0,color:def.color?.slice(),rubbleId:def.rubbleId??null,projectileId:def.projectileId??null,hp:def.hp||0,fuse:-1,credit:-1000,profile:null};rows.push(q);byHandle.set(h,q);if(q.rubbleId!==null)rub.set(q.rubbleId,q);return q;
   }
   for(const q of props(world,solids))add(q,true);
@@ -61210,10 +61210,38 @@ function create(world,solids,host={}){
     const n=query(point[0],point[1]-radius,point[2],radius,2*radius);
     for(let j=0;j<n;j++){const q=byHandle.get(near[j]);if(!q)continue;phys.sample(q.handle,sample);const d=Math.hypot(sample[12]-point[0],sample[13]-point[1],sample[14]-point[2]);if(d>radius)continue;if(credit){q.credit=s?.time||0;q.profile=profile||s?.activeProfile||null;}if(q.kind==='barrel'){q.hp=Math.max(0,q.hp-power*(1-d/radius));if(!q.hp&&q.fuse<0)q.fuse=.15+q.id%5*.05;}}
   }
-  function rubble(q){if(rub.has(q.id))return;q.size=q.size.map(v=>Math.min(4,Math.max(.04,v)));q.mass=clamp(q.mass,3,120);add({kind:'rubble',shape:'box',rubbleId:q.id,size:q.size.map(v=>Math.min(4,Math.max(.04,v))),pos:[q.x,q.y,q.z],rotation:q.rotation,mass:clamp(q.mass,3,120),material:q.material==='stone'||q.material==='wood'||q.material==='glass'?q.material:'metal',mat:q.mat,color:q.color,velocity:[q.vx,q.vy,q.vz],angularVelocity:q.angularVelocity},q.resting);}
+  // Rubble rolls like its shape (David, 16/11/2026): trunks and pipes are
+  // capsules along their axis, foliage and balls are spheres, the rest boxes.
+  function rubbleBody(q){const s=q.size;if(q.shape==='cylinder'&&s[1]>=Math.min(s[0],s[2])){const radius=Math.min(s[0],s[2])/2;return {body:'capsule',radius,height:Math.max(s[1],2*radius)};}if(q.shape==='sphere'||q.shape==='foliage')return {body:'sphere',radius:Math.max(.02,(s[0]+s[1]+s[2])/6)};return {};}
+  function rubble(q){if(rub.has(q.id))return;q.size=q.size.map(v=>Math.min(4,Math.max(.04,v)));q.mass=clamp(q.mass,3,120);add({kind:'rubble',shape:'box',...rubbleBody(q),rubbleId:q.id,size:q.size.map(v=>Math.min(4,Math.max(.04,v))),pos:[q.x,q.y,q.z],rotation:q.rotation,mass:clamp(q.mass,3,120),material:q.material==='stone'||q.material==='wood'||q.material==='glass'?q.material:'metal',mat:q.mat,color:q.color,velocity:[q.vx,q.vy,q.vz],angularVelocity:q.angularVelocity},q.resting);}
   function rubblePose(q){const a=rub.get(q.id);if(!a||!phys.valid(a.handle))return false;phys.pose(a.handle,1,pose);phys.sample(a.handle,sample);F.quatToEuler(pose[3],pose[4],pose[5],pose[6],rotation);q.x=pose[0];q.y=pose[1];q.z=pose[2];q.vx=sample[6];q.vy=sample[7];q.vz=sample[8];for(let k=0;k<3;k++){q.rotation[k]=rotation[k];q.angularVelocity[k]=sample[9+k];}q.resting=phys.isAsleep(a.handle);return true;}
+  // Humanoid machines fall as jointed bodies (David, 16/11/2026): torso,
+  // head, arms and legs held by limited ball joints at the neck, shoulders
+  // and hips, which a hard blow can tear apart. Their parts do not collide
+  // with each other (group 64); the gun drops on its own.
+  const RAGDOLL=64;
+  function ragdoll(enemy,source){
+    if(enemy.type!==1||!['endo','blade','kamikaze'].includes(enemy.variant))return false;
+    const parts=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}),pick=name=>parts.find(m=>m.actorPart===name),torso=pick('hum-torso');if(!torso)return false;
+    const limbs=['hum-head','hum-arm--1','hum-arm-1','hum-leg--1','hum-leg-1'].map(pick).filter(Boolean),gun=enemy.horde?null:parts.filter(m=>/^(rifle-receiver|rocket-launcher)$/.test(m.actorPart))[0]||null,need=1+limbs.length+(gun?1:0);
+    let excess=rows.filter(q=>q.kind==='wreck').length+need-48;for(const q of rows.slice())if(excess>0&&q.kind==='wreck'&&phys.isAsleep(q.handle)){remove(q);excess--;}if(excess>0)return true;
+    const dx=enemy.x-source.x,dz=enemy.z-source.z,d=Math.hypot(dx,dz)||1,push=[dx/d*2.4,1.1,dz/d*2.4];
+    // A kamikaze's own charges scatter its parts instead of folding them.
+    const blown=enemy.variant==='kamikaze',middle=torso.p,scatter=m=>{const v=m.p.map((x,i)=>x-middle[i]),l=Math.hypot(v[0],v[2])||1;return [v[0]/l*5.5+push[0],3.2+Math.max(0,v[1])*2,v[2]/l*5.5+push[2]];};
+    const body=(m,mass,spin)=>{const size=m.s.map(v=>Math.min(3,Math.max(.04,v))),q=add({kind:'wreck',shape:m.shape==='sphere'?'sphere':'box',size,pos:m.p,rotation:m.r,mass,material:'metal',mat:m.mat,color:m.color,velocity:blown&&m!==torso?scatter(m):push,angularVelocity:blown?[4,2,-3]:spin,group:RAGDOLL,mask:65535^RAGDOLL});if(q&&source.credit){q.credit=s.time;q.profile=source.profile||s.activeProfile||null;}return q;};
+    const core=body(torso,24,[push[2]*.6,.3,-push[0]*.6]);if(!core)return true;const centre=phys.body(core.handle).pos;
+    for(const m of limbs){
+      const q=body(m,m.shape==='sphere'?4:7,[0,0,0]);if(!q)continue;
+      // The joint sits at the end of the part nearest the torso.
+      const [x,y,z]=m.r,a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),e=Math.sin(y),f=Math.cos(z),g=Math.sin(z),axis=[f*e*b-g*a,g*e*b+f*a,c*b],half=m.shape==='sphere'?m.s[1]/2:m.s[1]/2;
+      const ends=m.shape==='sphere'?[[m.p[0],m.p[1]-half,m.p[2]]]:[-1,1].map(k=>m.p.map((v,i)=>v+axis[i]*half*k)),anchor=ends.sort((u,v)=>Math.hypot(u[0]-centre[0],u[1]-centre[1],u[2]-centre[2])-Math.hypot(v[0]-centre[0],v[1]-centre[1],v[2]-centre[2]))[0];
+      if(!blown)phys.addJoint({type:'ball',a:core.handle,b:q.handle,worldAnchor:anchor,limit:m.shape==='sphere'?.6:1.25,breakImpulse:40});
+    }
+    if(gun)body(gun,6,[1.5,.4,-1]);
+    return true;
+  }
   function wreck(enemy,source){
-    if(!G.FActors)return;const giant=enemy.bossScale>1,meshes=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}).filter(m=>m.shape!=='ring').sort((a,b)=>b.s[0]*b.s[1]*b.s[2]-a.s[0]*a.s[1]*a.s[2]).slice(0,giant?20:enemy.horde?3:5);
+    if(!G.FActors)return;if(!(enemy.bossScale>1)&&ragdoll(enemy,source))return;const giant=enemy.bossScale>1,meshes=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}).filter(m=>m.shape!=='ring').sort((a,b)=>b.s[0]*b.s[1]*b.s[2]-a.s[0]*a.s[1]*a.s[2]).slice(0,giant?20:enemy.horde?3:5);
     const count=rows.filter(q=>q.kind==='wreck').length;let excess=count+meshes.length-48;for(const q of rows.slice())if(excess>0&&q.kind==='wreck'&&phys.isAsleep(q.handle)){remove(q);excess--;}
     let space=48-rows.filter(q=>q.kind==='wreck').length;
     const pieces=[];for(const m of meshes){if(space--<=0)break;const dx=m.p[0]-source.x,dz=m.p[2]-source.z,d=Math.hypot(dx,dz)||1,size=m.s.map(v=>Math.min(3,Math.max(.04,v))),q=add({kind:'wreck',shape:m.shape,size,pos:m.p,rotation:m.r,mass:clamp(size[0]*size[1]*size[2]*65,3,120),material:'metal',mat:m.mat,color:m.color,velocity:[dx/d*3,1+(space%3)*.3,dz/d*3],angularVelocity:[1+(space%3),.4,space%2?-2:2]});if(q){pieces.push(q);if(source.credit){q.credit=s.time;q.profile=source.profile||s.activeProfile||null;}}}
@@ -67463,7 +67491,8 @@ function navigationGraph(cells,width,testEdge){
     const cyl=(n,p,s,skin='steel',f=root,r=null)=>piece(n,'cylinder',p,s,skin,f,r,skin==='rubber'?7:0);
     const ring=(n,p,s,skin='edge',f=root,r=null)=>piece(n,'ring',p,s,skin,f,r);
     const eye=(n,p,s,f=root,r=null,shape='box')=>piece(n,shape,p,s,signal,f,r,signalMat,emission);
-    function limb(name,a,c,width,depth,skin='edge',shape='box',reference=root.b){
+    function limb(name,a,c,width,depth,skin='edge',shape='box',reference=root.b){return limbPiece(name,a,c,width,depth,skin,shape,reference);}
+    function limbPiece(name,a,c,width,depth,skin='edge',shape='box',reference=root.b){
       const ddx=c[0]-a[0],ddy=c[1]-a[1],ddz=c[2]-a[2],length=Math.hypot(ddx,ddy,ddz);
       if(length<.0001)return;
       const yx=ddx/length,yy=ddy/length,yz=ddz/length;
@@ -67738,8 +67767,17 @@ function navigationGraph(cells,width,testEdge){
       const H=G.MetalHumanoids,P=H.parts,V=H.pivots,k=giant?1.9:1,K=v=>v*k,bulk=giant?2:1,T=v=>K(v)*bulk,hs=giant?1.3:1,id=e.id||0;
       const endo=kind==='endo',bomber=kind==='kamikaze',chrome=kind==='blade'||kind==='liquid',engaged=e.awareness==='engage'||!!e.active;
       const shine=chrome?.05*Math.sin(time*2.7+id*1.3):0;
-      const skin={metal:chrome?[.70+shine,.75+shine,.80+shine]:endo?[.55,.57,.60]:[.19,.20,.21],joint:chrome?[.58,.63,.68]:endo?[.09,.095,.10]:[.10,.085,.07],accent:bomber?[.42,.17,.06]:endo?[.30,.31,.34]:[.86,.89,.93]};
+      const skin={metal:chrome?[.50+shine,.54+shine,.59+shine]:endo?[.46,.48,.51]:[.19,.20,.21],joint:chrome?[.42,.46,.51]:endo?[.09,.095,.10]:[.10,.085,.07],accent:bomber?[.42,.17,.06]:endo?[.30,.31,.34]:[.66,.70,.75]};
       if(hurt>0)for(const key of ['metal','accent'])skin[key]=mix(skin[key],[.95,.55,.25],hurt*.6);
+      // Polished metal (material 19, low roughness) catches the scene's
+      // reflections: mirror chrome for liquid metal, bright bone for the
+      // endoskeleton. Joints, the bomber and far bodies stay brushed steel.
+      const shiny=(chrome||endo)&&lod<2?19:0,matFor=color=>color===skin.metal||chrome&&color===skin.accent||chrome&&color===skin.joint?shiny:0;
+      const box=(n,p,s,color,f=root,r=null)=>piece(n,'box',p,s,color,f,r,matFor(color));
+      const armor=(n,p,s,color,f=root,r=null)=>piece(n,lod===0?'bevel':'box',p,s,color,f,r,matFor(color));
+      const cyl=(n,p,s,color,f=root,r=null)=>piece(n,'cylinder',p,s,color,f,r,matFor(color));
+      const ring=(n,p,s,color,f=root,r=null)=>piece(n,'ring',p,s,color,f,r,matFor(color));
+      const limb=(n,a,c,width,depth,color,shape,reference)=>{const m=limbPiece(n,a,c,width,depth,color,shape,reference);if(m)m.mat=matFor(color);return m;};
       const running=bomber||kind==='blade'&&engaged||rush,amount=airborne?0:clamp(blend*(running?1.35:1),0,1.5);
       const crouch=giant&&tellFamily==='ring'?tellPose:0,drop=(giant?.17:0)+crouch*.12;
       const L=H.gait(phase,amount,drop),R=H.gait(phase+PI,amount,drop),swing=Math.sin(phase)*(running?.6:.25)*blend;
@@ -67747,8 +67785,8 @@ function navigationGraph(cells,width,testEdge){
       const lean=stun?-.12:(giant?.30:0)+(running?.24:.05)*blend+(rush?.10:0)+crouch*.15,twist=giant&&tellFamily==='sweep'?.55*Math.sin(PI*tellPose):0;
       const hips=frame(root,[0,K(hipY),impact*.05],[0,0,stun?Math.sin(time*23)*.04:0]);
       const chest=frame(hips,[0,K(V.waist-V.hip),0],[-lean-impact*.22,twist,airborne?0:Math.sin(phase)*.03*blend]);
-      const put=(name,part,f,pivot,color,widen=1,grow=1)=>piece(name,part.shape,[K(part.centre[0]-pivot[0])*grow,K(part.centre[1]-pivot[1])*grow,K(part.centre[2]-pivot[2])*grow],[K(part.size[0]*widen)*grow,K(part.size[1])*grow,K(part.size[2]*widen)*grow],color,f);
-      const ball=(name,p,d,color,f,mat=0,glow=0)=>piece(name,'sphere',p,[T(d),T(d),T(d)],color,f,null,mat,glow);
+      const put=(name,part,f,pivot,color,widen=1,grow=1)=>piece(name,part.shape,[K(part.centre[0]-pivot[0])*grow,K(part.centre[1]-pivot[1])*grow,K(part.centre[2]-pivot[2])*grow],[K(part.size[0]*widen)*grow,K(part.size[1])*grow,K(part.size[2]*widen)*grow],color,f,null,matFor(color));
+      const ball=(name,p,d,color,f,mat=matFor(color),glow=0)=>piece(name,'sphere',p,[T(d),T(d),T(d)],color,f,null,mat,glow);
       const widen=giant?1.2:1,simple=lod===2;
       // Legs: one gait for every look; the endoskeleton shows bare struts.
       for(const side of [-1,1]){
@@ -67835,7 +67873,7 @@ function navigationGraph(cells,width,testEdge){
           put('endo-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
         }else{put('hum-upper-'+side,P.upper[i],upper,sp,skin.metal,giant?1.15:1);put('hum-fore-'+side,P.fore[i],fore,ep,skin.metal,giant?1.1:1);}
         if(simple)continue;
-        if(blades)piece('liquid-blade-'+side,'octa',[0,K(-.38),K(-.01)],[K(.11),K(.86),K(.04)],skin.accent,wrist,null,0,.08);
+        if(blades)piece('liquid-blade-'+side,'octa',[0,K(-.38),K(-.01)],[K(.11),K(.86),K(.04)],skin.accent,wrist,null,matFor(skin.accent),.08);
         else if(!endo)put('hum-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
         if(bomber){
           piece('kamikaze-bomb-'+side,'sphere',[0,K(-.17),K(-.07)],[K(.30),K(.30),K(.30)],[.075,.08,.085],wrist);
@@ -70231,7 +70269,7 @@ G.FPilot={create:createPilot};
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
   function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode,prepared=null,simulationOptions={}){
-    checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;hordeFlashes.length=0;deflectUntil=0;
+    checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;hordeFlashes.length=0;bursts.length=0;deflectUntil=0;
     campaignMode=asCampaign;campaignRevision=revision;profileMode=profiles&&asCampaign&&revision===2;combatMode=combat&&asCampaign&&revision===2;stage=n;if(newSeed!==undefined)seed=newSeed;world=prepared||cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps,profileMode,combatMode);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale
@@ -70325,6 +70363,7 @@ G.FPilot={create:createPilot};
       if(e.name==='materialImpact'&&e.deflected){const t=sim.state.time;deflectUntil=t+.14;if(e.normal){impactMarks.push({source:e.sourceId,until:t+20,p:[e.x,e.y,e.z].map((v,k)=>v+e.normal[k]*.012),size:e.normal.map(v=>v?.018:.07)});if(impactMarks.length>32)impactMarks.shift();}if(t-deflectWindow>2.5){deflectWindow=t;deflectCount=0;}if(++deflectCount===4&&deflectHints<2&&mode==='playing'){deflectHints++;toast(sim.state.activeProfile==='light'?'Structure blindée · passez au lourd pour ouvrir une brèche.':'Structure blindée · utilisez une grenade ou une roquette.',3);}}
       if(e.name==='materialBreak')for(let k=impactMarks.length-1;k>=0;k--)if(impactMarks[k].source===e.sourceId)impactMarks.splice(k,1);
       if(e.name==='hordeSpawn'){hordeFlashes.push({x:e.x,y:e.y||0,z:e.z,t:sim.state.time});if(hordeFlashes.length>24)hordeFlashes.shift();}
+      if((e.name==='materialBreak'||e.name==='materialImpact'&&!e.deflected)&&[e.x,e.y,e.z].every(Number.isFinite)){bursts.push({x:e.x,y:e.y,z:e.z,t:sim.state.time,material:e.material||'stone',power:Math.min(60,Number(e.power)||8),big:e.name==='materialBreak',seed:(Number(e.seed)||bursts.length)%997});if(bursts.length>32)bursts.shift();}
       if(e.name==='boundaryContact')boundaryFlash=.15;if(e.name==='weakHit')weakFlash=.3;if(e.name==='hurt'&&Number.isFinite(e.x)&&Number.isFinite(e.z)){hurtDirections.push({angle:Math.atan2(e.x-sim.state.player.x,sim.state.player.z-e.z),life:.6});if(hurtDirections.length>4)hurtDirections.shift();}if(e.name==='kill'&&e.credited)killFlash=.3;
       // shots is shared by both hands: consume only the hand that really fired.
       if(e.name==='shot'||e.name==='fracture'||(e.name==='rocket'||e.name==='grenadeLaunch')&&e.owner==='player'){
@@ -70572,6 +70611,7 @@ G.FPilot={create:createPilot};
       out.push(m('cylinder',[c.x,(c.y||0)+.13,c.z],[.95,.26,.95],0),m('ring',[c.x,(c.y||0)+.29,c.z],[1.15,.1,1.15],c.taken?0:5));
       if(!c.taken){const y=(c.y||0)+1.22+Math.sin(t*2+c.id)*.13;out.push(m('octa',[c.x,y,c.z],[.55,.85,.55],5,[0,t*.7,0],1.8),m('ring',[c.x,y,c.z],[1.2,1.2,1.2],4,[Math.PI/2,0,t*.35],1.2));}
     }
+    burstModels(out,s.time,nearby);
     // A horde arrival: a short column of light and a ring on the floor.
     for(const f of hordeFlashes){const age=s.time-f.t;if(age<0||age>.7||!nearby(f.x,f.z))continue;const k=1-age/.7;out.push(m('cylinder',[f.x,f.y+1.2,f.z],[.9*k+.2,2.4,.9*k+.2],5,[0,0,0],1.6*k),m('ring',[f.x,f.y+.06,f.z],[1+age*4,.06,1+age*4],5,[0,0,0],1.2*k));}
     for(const e of s.enemies){
@@ -70742,6 +70782,25 @@ G.FPilot={create:createPilot};
   function drawRange(longView){return longView?100:renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);}
   // Horde arrivals drawn by models() for a moment (see hordeSpawn).
   const hordeFlashes=[];
+  // Breaks raise a cloud of dust coloured by the material, which hides the
+  // material that became dust rather than pieces; bullets on metal throw
+  // sparks (David, 16/11/2026). Display only, never simulated.
+  const bursts=[],DUST={stone:[.56,.53,.48],wood:[.43,.34,.23],metal:[.30,.31,.33],glass:[.70,.76,.80],dirt:[.42,.35,.26]};
+  function burstModels(out,now,near){
+    let budget=quality==='low'?28:64;
+    for(const b of bursts){
+      const age=now-b.t;if(age<0||!near(b.x,b.z))continue;
+      const color=DUST[b.material]||DUST.stone,hash=k=>{const v=Math.sin(b.seed*12.9898+k*78.233)*43758.5453;return v-Math.floor(v);};
+      if(b.big&&age<2.4){
+        const count=quality==='low'?3:5,k=age/2.4,size=(.9+Math.min(2.2,b.power/20))*(.55+k*1.1);
+        for(let i=0;i<count&&budget>0;i++,budget--){const a=hash(i)*Math.PI*2,r=size*.45*(.4+hash(i+9)),m=FRender.mesh('sphere',[b.x+Math.cos(a)*r,b.y-.3+k*1.4+hash(i+3)*.4,b.z+Math.sin(a)*r],[size*(.7+hash(i+5)*.5),size*(.55+hash(i+7)*.3),size*(.7+hash(i+6)*.5)],7,[0,a,0],0);m.color=color;m.fx=true;m.fxSmoke=true;m.alpha=.34*(1-k)*(1-k);m.effectPart='break-dust';out.push(m);}
+      }
+      if(b.material==='metal'&&age<.32){
+        const count=b.big?7:4,k=age/.32;
+        for(let i=0;i<count&&budget>0;i++,budget--){const a=hash(i+11)*Math.PI*2,up=.4+hash(i+13)*1.2,speed=3+hash(i+17)*4,d=speed*age,m=FRender.mesh('box',[b.x+Math.cos(a)*d,b.y+up*d-4.5*age*age,b.z+Math.sin(a)*d],[.025,.025,.11],5,[up*.7,-a+Math.PI/2,0],2.2*(1-k));m.color=[1,.62,.2];m.fx=true;m.fxSpark=true;m.alpha=.95*(1-k);m.effectPart='impact-spark';out.push(m);}
+      }
+    }
+  }
   function renderHUD(){
     const profile=sim.state.activeProfile,jet=sim.state.jetpack,profileButton=$('profile-button');profileButton.hidden=!profile;
     $('jump-button').textContent=profile==='light'?'MONTER':'SAUT';$('jump-button').setAttribute('aria-label',profile==='light'?'Monter en vol':'Sauter');
@@ -70930,7 +70989,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.12.0',simHash:'e14cc9c86abfa689590d399984c1115f312ae22b3659051e9f64d8e93953b387',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.12.1',simHash:'736457e558b0bd625cb3b22643c1ca5c2d281293036ba9d8c8a2d1838b4d4ef1',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){

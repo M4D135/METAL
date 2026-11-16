@@ -360,7 +360,7 @@
     if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
   }
   function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode,prepared=null,simulationOptions={}){
-    checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;hordeFlashes.length=0;deflectUntil=0;
+    checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;hordeFlashes.length=0;bursts.length=0;deflectUntil=0;
     campaignMode=asCampaign;campaignRevision=revision;profileMode=profiles&&asCampaign&&revision===2;combatMode=combat&&asCampaign&&revision===2;stage=n;if(newSeed!==undefined)seed=newSeed;world=prepared||cachedWorld(stage,seed,campaignMode,campaignRevision,legacyTraps,profileMode,combatMode);
     const entry=copyLoadout(loadout),slots=world.progression?.version===1&&(world.progression.weaponSlots===4||world.campaign===true&&world.progression.weaponSlots===5)?world.progression.weaponSlots:3;
     // Optional entry metadata must fit the actual generated arsenal. A stale
@@ -454,6 +454,7 @@
       if(e.name==='materialImpact'&&e.deflected){const t=sim.state.time;deflectUntil=t+.14;if(e.normal){impactMarks.push({source:e.sourceId,until:t+20,p:[e.x,e.y,e.z].map((v,k)=>v+e.normal[k]*.012),size:e.normal.map(v=>v?.018:.07)});if(impactMarks.length>32)impactMarks.shift();}if(t-deflectWindow>2.5){deflectWindow=t;deflectCount=0;}if(++deflectCount===4&&deflectHints<2&&mode==='playing'){deflectHints++;toast(sim.state.activeProfile==='light'?'Structure blindée · passez au lourd pour ouvrir une brèche.':'Structure blindée · utilisez une grenade ou une roquette.',3);}}
       if(e.name==='materialBreak')for(let k=impactMarks.length-1;k>=0;k--)if(impactMarks[k].source===e.sourceId)impactMarks.splice(k,1);
       if(e.name==='hordeSpawn'){hordeFlashes.push({x:e.x,y:e.y||0,z:e.z,t:sim.state.time});if(hordeFlashes.length>24)hordeFlashes.shift();}
+      if((e.name==='materialBreak'||e.name==='materialImpact'&&!e.deflected)&&[e.x,e.y,e.z].every(Number.isFinite)){bursts.push({x:e.x,y:e.y,z:e.z,t:sim.state.time,material:e.material||'stone',power:Math.min(60,Number(e.power)||8),big:e.name==='materialBreak',seed:(Number(e.seed)||bursts.length)%997});if(bursts.length>32)bursts.shift();}
       if(e.name==='boundaryContact')boundaryFlash=.15;if(e.name==='weakHit')weakFlash=.3;if(e.name==='hurt'&&Number.isFinite(e.x)&&Number.isFinite(e.z)){hurtDirections.push({angle:Math.atan2(e.x-sim.state.player.x,sim.state.player.z-e.z),life:.6});if(hurtDirections.length>4)hurtDirections.shift();}if(e.name==='kill'&&e.credited)killFlash=.3;
       // shots is shared by both hands: consume only the hand that really fired.
       if(e.name==='shot'||e.name==='fracture'||(e.name==='rocket'||e.name==='grenadeLaunch')&&e.owner==='player'){
@@ -701,6 +702,7 @@
       out.push(m('cylinder',[c.x,(c.y||0)+.13,c.z],[.95,.26,.95],0),m('ring',[c.x,(c.y||0)+.29,c.z],[1.15,.1,1.15],c.taken?0:5));
       if(!c.taken){const y=(c.y||0)+1.22+Math.sin(t*2+c.id)*.13;out.push(m('octa',[c.x,y,c.z],[.55,.85,.55],5,[0,t*.7,0],1.8),m('ring',[c.x,y,c.z],[1.2,1.2,1.2],4,[Math.PI/2,0,t*.35],1.2));}
     }
+    burstModels(out,s.time,nearby);
     // A horde arrival: a short column of light and a ring on the floor.
     for(const f of hordeFlashes){const age=s.time-f.t;if(age<0||age>.7||!nearby(f.x,f.z))continue;const k=1-age/.7;out.push(m('cylinder',[f.x,f.y+1.2,f.z],[.9*k+.2,2.4,.9*k+.2],5,[0,0,0],1.6*k),m('ring',[f.x,f.y+.06,f.z],[1+age*4,.06,1+age*4],5,[0,0,0],1.2*k));}
     for(const e of s.enemies){
@@ -871,6 +873,25 @@
   function drawRange(longView){return longView?100:renderer.stats.backend==='canvas2d'?(quality==='high'?55:quality==='low'?32:44):(quality==='high'?90:quality==='low'?54:70);}
   // Horde arrivals drawn by models() for a moment (see hordeSpawn).
   const hordeFlashes=[];
+  // Breaks raise a cloud of dust coloured by the material, which hides the
+  // material that became dust rather than pieces; bullets on metal throw
+  // sparks (David, 16/11/2026). Display only, never simulated.
+  const bursts=[],DUST={stone:[.56,.53,.48],wood:[.43,.34,.23],metal:[.30,.31,.33],glass:[.70,.76,.80],dirt:[.42,.35,.26]};
+  function burstModels(out,now,near){
+    let budget=quality==='low'?28:64;
+    for(const b of bursts){
+      const age=now-b.t;if(age<0||!near(b.x,b.z))continue;
+      const color=DUST[b.material]||DUST.stone,hash=k=>{const v=Math.sin(b.seed*12.9898+k*78.233)*43758.5453;return v-Math.floor(v);};
+      if(b.big&&age<2.4){
+        const count=quality==='low'?3:5,k=age/2.4,size=(.9+Math.min(2.2,b.power/20))*(.55+k*1.1);
+        for(let i=0;i<count&&budget>0;i++,budget--){const a=hash(i)*Math.PI*2,r=size*.45*(.4+hash(i+9)),m=FRender.mesh('sphere',[b.x+Math.cos(a)*r,b.y-.3+k*1.4+hash(i+3)*.4,b.z+Math.sin(a)*r],[size*(.7+hash(i+5)*.5),size*(.55+hash(i+7)*.3),size*(.7+hash(i+6)*.5)],7,[0,a,0],0);m.color=color;m.fx=true;m.fxSmoke=true;m.alpha=.34*(1-k)*(1-k);m.effectPart='break-dust';out.push(m);}
+      }
+      if(b.material==='metal'&&age<.32){
+        const count=b.big?7:4,k=age/.32;
+        for(let i=0;i<count&&budget>0;i++,budget--){const a=hash(i+11)*Math.PI*2,up=.4+hash(i+13)*1.2,speed=3+hash(i+17)*4,d=speed*age,m=FRender.mesh('box',[b.x+Math.cos(a)*d,b.y+up*d-4.5*age*age,b.z+Math.sin(a)*d],[.025,.025,.11],5,[up*.7,-a+Math.PI/2,0],2.2*(1-k));m.color=[1,.62,.2];m.fx=true;m.fxSpark=true;m.alpha=.95*(1-k);m.effectPart='impact-spark';out.push(m);}
+      }
+    }
+  }
   function renderHUD(){
     const profile=sim.state.activeProfile,jet=sim.state.jetpack,profileButton=$('profile-button');profileButton.hidden=!profile;
     $('jump-button').textContent=profile==='light'?'MONTER':'SAUT';$('jump-button').setAttribute('aria-label',profile==='light'?'Monter en vol':'Sauter');

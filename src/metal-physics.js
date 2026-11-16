@@ -26,8 +26,8 @@ function create(world,solids,host={}){
   const capsuleFrom=new Float64Array(3),capsuleDelta=new Float64Array(3),capsuleHit={},capsuleOptions={radius:.28,height:1.8,mask:10,statics:false,skin:.001};
   phys.setStatics(solids,world.walkable||[]);
   function add(def,asleep=false){
-    const size=def.size,shape=def.shape==='capsule'?'capsule':def.shape==='sphere'?'sphere':'box';
-    const h=phys.addBody({shape,size,pos:def.pos,rot:def.rotation||[0,0,0],...(shape!=='box'?{radius:size[0]/2,height:size[1]}:{}),mass:def.mass,material:def.material,group:def.group??2,...(def.restitution!==undefined?{restitution:def.restitution}:{}),vel:def.velocity||[0,0,0],ang:def.angularVelocity||[0,0,0],asleep});if(h<0)return null;
+    const size=def.size,shape=def.body||(def.shape==='capsule'?'capsule':def.shape==='sphere'?'sphere':'box');
+    const h=phys.addBody({shape,size,pos:def.pos,rot:def.rotation||[0,0,0],...(shape!=='box'?{radius:def.radius??size[0]/2,height:def.height??size[1]}:{}),mass:def.mass,material:def.material,group:def.group??2,...(def.mask!==undefined?{mask:def.mask}:{}),...(def.restitution!==undefined?{restitution:def.restitution}:{}),vel:def.velocity||[0,0,0],ang:def.angularVelocity||[0,0,0],asleep});if(h<0)return null;
     const q={id:++serial,handle:h,kind:def.kind,shape:def.shape,size:size.slice(),mat:def.mat??0,color:def.color?.slice(),rubbleId:def.rubbleId??null,projectileId:def.projectileId??null,hp:def.hp||0,fuse:-1,credit:-1000,profile:null};rows.push(q);byHandle.set(h,q);if(q.rubbleId!==null)rub.set(q.rubbleId,q);return q;
   }
   for(const q of props(world,solids))add(q,true);
@@ -71,10 +71,38 @@ function create(world,solids,host={}){
     const n=query(point[0],point[1]-radius,point[2],radius,2*radius);
     for(let j=0;j<n;j++){const q=byHandle.get(near[j]);if(!q)continue;phys.sample(q.handle,sample);const d=Math.hypot(sample[12]-point[0],sample[13]-point[1],sample[14]-point[2]);if(d>radius)continue;if(credit){q.credit=s?.time||0;q.profile=profile||s?.activeProfile||null;}if(q.kind==='barrel'){q.hp=Math.max(0,q.hp-power*(1-d/radius));if(!q.hp&&q.fuse<0)q.fuse=.15+q.id%5*.05;}}
   }
-  function rubble(q){if(rub.has(q.id))return;q.size=q.size.map(v=>Math.min(4,Math.max(.04,v)));q.mass=clamp(q.mass,3,120);add({kind:'rubble',shape:'box',rubbleId:q.id,size:q.size.map(v=>Math.min(4,Math.max(.04,v))),pos:[q.x,q.y,q.z],rotation:q.rotation,mass:clamp(q.mass,3,120),material:q.material==='stone'||q.material==='wood'||q.material==='glass'?q.material:'metal',mat:q.mat,color:q.color,velocity:[q.vx,q.vy,q.vz],angularVelocity:q.angularVelocity},q.resting);}
+  // Rubble rolls like its shape (David, 16/11/2026): trunks and pipes are
+  // capsules along their axis, foliage and balls are spheres, the rest boxes.
+  function rubbleBody(q){const s=q.size;if(q.shape==='cylinder'&&s[1]>=Math.min(s[0],s[2])){const radius=Math.min(s[0],s[2])/2;return {body:'capsule',radius,height:Math.max(s[1],2*radius)};}if(q.shape==='sphere'||q.shape==='foliage')return {body:'sphere',radius:Math.max(.02,(s[0]+s[1]+s[2])/6)};return {};}
+  function rubble(q){if(rub.has(q.id))return;q.size=q.size.map(v=>Math.min(4,Math.max(.04,v)));q.mass=clamp(q.mass,3,120);add({kind:'rubble',shape:'box',...rubbleBody(q),rubbleId:q.id,size:q.size.map(v=>Math.min(4,Math.max(.04,v))),pos:[q.x,q.y,q.z],rotation:q.rotation,mass:clamp(q.mass,3,120),material:q.material==='stone'||q.material==='wood'||q.material==='glass'?q.material:'metal',mat:q.mat,color:q.color,velocity:[q.vx,q.vy,q.vz],angularVelocity:q.angularVelocity},q.resting);}
   function rubblePose(q){const a=rub.get(q.id);if(!a||!phys.valid(a.handle))return false;phys.pose(a.handle,1,pose);phys.sample(a.handle,sample);F.quatToEuler(pose[3],pose[4],pose[5],pose[6],rotation);q.x=pose[0];q.y=pose[1];q.z=pose[2];q.vx=sample[6];q.vy=sample[7];q.vz=sample[8];for(let k=0;k<3;k++){q.rotation[k]=rotation[k];q.angularVelocity[k]=sample[9+k];}q.resting=phys.isAsleep(a.handle);return true;}
+  // Humanoid machines fall as jointed bodies (David, 16/11/2026): torso,
+  // head, arms and legs held by limited ball joints at the neck, shoulders
+  // and hips, which a hard blow can tear apart. Their parts do not collide
+  // with each other (group 64); the gun drops on its own.
+  const RAGDOLL=64;
+  function ragdoll(enemy,source){
+    if(enemy.type!==1||!['endo','blade','kamikaze'].includes(enemy.variant))return false;
+    const parts=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}),pick=name=>parts.find(m=>m.actorPart===name),torso=pick('hum-torso');if(!torso)return false;
+    const limbs=['hum-head','hum-arm--1','hum-arm-1','hum-leg--1','hum-leg-1'].map(pick).filter(Boolean),gun=enemy.horde?null:parts.filter(m=>/^(rifle-receiver|rocket-launcher)$/.test(m.actorPart))[0]||null,need=1+limbs.length+(gun?1:0);
+    let excess=rows.filter(q=>q.kind==='wreck').length+need-48;for(const q of rows.slice())if(excess>0&&q.kind==='wreck'&&phys.isAsleep(q.handle)){remove(q);excess--;}if(excess>0)return true;
+    const dx=enemy.x-source.x,dz=enemy.z-source.z,d=Math.hypot(dx,dz)||1,push=[dx/d*2.4,1.1,dz/d*2.4];
+    // A kamikaze's own charges scatter its parts instead of folding them.
+    const blown=enemy.variant==='kamikaze',middle=torso.p,scatter=m=>{const v=m.p.map((x,i)=>x-middle[i]),l=Math.hypot(v[0],v[2])||1;return [v[0]/l*5.5+push[0],3.2+Math.max(0,v[1])*2,v[2]/l*5.5+push[2]];};
+    const body=(m,mass,spin)=>{const size=m.s.map(v=>Math.min(3,Math.max(.04,v))),q=add({kind:'wreck',shape:m.shape==='sphere'?'sphere':'box',size,pos:m.p,rotation:m.r,mass,material:'metal',mat:m.mat,color:m.color,velocity:blown&&m!==torso?scatter(m):push,angularVelocity:blown?[4,2,-3]:spin,group:RAGDOLL,mask:65535^RAGDOLL});if(q&&source.credit){q.credit=s.time;q.profile=source.profile||s.activeProfile||null;}return q;};
+    const core=body(torso,24,[push[2]*.6,.3,-push[0]*.6]);if(!core)return true;const centre=phys.body(core.handle).pos;
+    for(const m of limbs){
+      const q=body(m,m.shape==='sphere'?4:7,[0,0,0]);if(!q)continue;
+      // The joint sits at the end of the part nearest the torso.
+      const [x,y,z]=m.r,a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),e=Math.sin(y),f=Math.cos(z),g=Math.sin(z),axis=[f*e*b-g*a,g*e*b+f*a,c*b],half=m.shape==='sphere'?m.s[1]/2:m.s[1]/2;
+      const ends=m.shape==='sphere'?[[m.p[0],m.p[1]-half,m.p[2]]]:[-1,1].map(k=>m.p.map((v,i)=>v+axis[i]*half*k)),anchor=ends.sort((u,v)=>Math.hypot(u[0]-centre[0],u[1]-centre[1],u[2]-centre[2])-Math.hypot(v[0]-centre[0],v[1]-centre[1],v[2]-centre[2]))[0];
+      if(!blown)phys.addJoint({type:'ball',a:core.handle,b:q.handle,worldAnchor:anchor,limit:m.shape==='sphere'?.6:1.25,breakImpulse:40});
+    }
+    if(gun)body(gun,6,[1.5,.4,-1]);
+    return true;
+  }
   function wreck(enemy,source){
-    if(!G.FActors)return;const giant=enemy.bossScale>1,meshes=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}).filter(m=>m.shape!=='ring').sort((a,b)=>b.s[0]*b.s[1]*b.s[2]-a.s[0]*a.s[1]*a.s[2]).slice(0,giant?20:enemy.horde?3:5);
+    if(!G.FActors)return;if(!(enemy.bossScale>1)&&ragdoll(enemy,source))return;const giant=enemy.bossScale>1,meshes=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}).filter(m=>m.shape!=='ring').sort((a,b)=>b.s[0]*b.s[1]*b.s[2]-a.s[0]*a.s[1]*a.s[2]).slice(0,giant?20:enemy.horde?3:5);
     const count=rows.filter(q=>q.kind==='wreck').length;let excess=count+meshes.length-48;for(const q of rows.slice())if(excess>0&&q.kind==='wreck'&&phys.isAsleep(q.handle)){remove(q);excess--;}
     let space=48-rows.filter(q=>q.kind==='wreck').length;
     const pieces=[];for(const m of meshes){if(space--<=0)break;const dx=m.p[0]-source.x,dz=m.p[2]-source.z,d=Math.hypot(dx,dz)||1,size=m.s.map(v=>Math.min(3,Math.max(.04,v))),q=add({kind:'wreck',shape:m.shape,size,pos:m.p,rotation:m.r,mass:clamp(size[0]*size[1]*size[2]*65,3,120),material:'metal',mat:m.mat,color:m.color,velocity:[dx/d*3,1+(space%3)*.3,dz/d*3],angularVelocity:[1+(space%3),.4,space%2?-2:2]});if(q){pieces.push(q);if(source.credit){q.credit=s.time;q.profile=source.profile||s.activeProfile||null;}}}

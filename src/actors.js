@@ -73,7 +73,8 @@
     const cyl=(n,p,s,skin='steel',f=root,r=null)=>piece(n,'cylinder',p,s,skin,f,r,skin==='rubber'?7:0);
     const ring=(n,p,s,skin='edge',f=root,r=null)=>piece(n,'ring',p,s,skin,f,r);
     const eye=(n,p,s,f=root,r=null,shape='box')=>piece(n,shape,p,s,signal,f,r,signalMat,emission);
-    function limb(name,a,c,width,depth,skin='edge',shape='box',reference=root.b){
+    function limb(name,a,c,width,depth,skin='edge',shape='box',reference=root.b){return limbPiece(name,a,c,width,depth,skin,shape,reference);}
+    function limbPiece(name,a,c,width,depth,skin='edge',shape='box',reference=root.b){
       const ddx=c[0]-a[0],ddy=c[1]-a[1],ddz=c[2]-a[2],length=Math.hypot(ddx,ddy,ddz);
       if(length<.0001)return;
       const yx=ddx/length,yy=ddy/length,yz=ddz/length;
@@ -348,8 +349,17 @@
       const H=G.MetalHumanoids,P=H.parts,V=H.pivots,k=giant?1.9:1,K=v=>v*k,bulk=giant?2:1,T=v=>K(v)*bulk,hs=giant?1.3:1,id=e.id||0;
       const endo=kind==='endo',bomber=kind==='kamikaze',chrome=kind==='blade'||kind==='liquid',engaged=e.awareness==='engage'||!!e.active;
       const shine=chrome?.05*Math.sin(time*2.7+id*1.3):0;
-      const skin={metal:chrome?[.70+shine,.75+shine,.80+shine]:endo?[.55,.57,.60]:[.19,.20,.21],joint:chrome?[.58,.63,.68]:endo?[.09,.095,.10]:[.10,.085,.07],accent:bomber?[.42,.17,.06]:endo?[.30,.31,.34]:[.86,.89,.93]};
+      const skin={metal:chrome?[.50+shine,.54+shine,.59+shine]:endo?[.46,.48,.51]:[.19,.20,.21],joint:chrome?[.42,.46,.51]:endo?[.09,.095,.10]:[.10,.085,.07],accent:bomber?[.42,.17,.06]:endo?[.30,.31,.34]:[.66,.70,.75]};
       if(hurt>0)for(const key of ['metal','accent'])skin[key]=mix(skin[key],[.95,.55,.25],hurt*.6);
+      // Polished metal (material 19, low roughness) catches the scene's
+      // reflections: mirror chrome for liquid metal, bright bone for the
+      // endoskeleton. Joints, the bomber and far bodies stay brushed steel.
+      const shiny=(chrome||endo)&&lod<2?19:0,matFor=color=>color===skin.metal||chrome&&color===skin.accent||chrome&&color===skin.joint?shiny:0;
+      const box=(n,p,s,color,f=root,r=null)=>piece(n,'box',p,s,color,f,r,matFor(color));
+      const armor=(n,p,s,color,f=root,r=null)=>piece(n,lod===0?'bevel':'box',p,s,color,f,r,matFor(color));
+      const cyl=(n,p,s,color,f=root,r=null)=>piece(n,'cylinder',p,s,color,f,r,matFor(color));
+      const ring=(n,p,s,color,f=root,r=null)=>piece(n,'ring',p,s,color,f,r,matFor(color));
+      const limb=(n,a,c,width,depth,color,shape,reference)=>{const m=limbPiece(n,a,c,width,depth,color,shape,reference);if(m)m.mat=matFor(color);return m;};
       const running=bomber||kind==='blade'&&engaged||rush,amount=airborne?0:clamp(blend*(running?1.35:1),0,1.5);
       const crouch=giant&&tellFamily==='ring'?tellPose:0,drop=(giant?.17:0)+crouch*.12;
       const L=H.gait(phase,amount,drop),R=H.gait(phase+PI,amount,drop),swing=Math.sin(phase)*(running?.6:.25)*blend;
@@ -357,8 +367,8 @@
       const lean=stun?-.12:(giant?.30:0)+(running?.24:.05)*blend+(rush?.10:0)+crouch*.15,twist=giant&&tellFamily==='sweep'?.55*Math.sin(PI*tellPose):0;
       const hips=frame(root,[0,K(hipY),impact*.05],[0,0,stun?Math.sin(time*23)*.04:0]);
       const chest=frame(hips,[0,K(V.waist-V.hip),0],[-lean-impact*.22,twist,airborne?0:Math.sin(phase)*.03*blend]);
-      const put=(name,part,f,pivot,color,widen=1,grow=1)=>piece(name,part.shape,[K(part.centre[0]-pivot[0])*grow,K(part.centre[1]-pivot[1])*grow,K(part.centre[2]-pivot[2])*grow],[K(part.size[0]*widen)*grow,K(part.size[1])*grow,K(part.size[2]*widen)*grow],color,f);
-      const ball=(name,p,d,color,f,mat=0,glow=0)=>piece(name,'sphere',p,[T(d),T(d),T(d)],color,f,null,mat,glow);
+      const put=(name,part,f,pivot,color,widen=1,grow=1)=>piece(name,part.shape,[K(part.centre[0]-pivot[0])*grow,K(part.centre[1]-pivot[1])*grow,K(part.centre[2]-pivot[2])*grow],[K(part.size[0]*widen)*grow,K(part.size[1])*grow,K(part.size[2]*widen)*grow],color,f,null,matFor(color));
+      const ball=(name,p,d,color,f,mat=matFor(color),glow=0)=>piece(name,'sphere',p,[T(d),T(d),T(d)],color,f,null,mat,glow);
       const widen=giant?1.2:1,simple=lod===2;
       // Legs: one gait for every look; the endoskeleton shows bare struts.
       for(const side of [-1,1]){
@@ -445,7 +455,7 @@
           put('endo-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
         }else{put('hum-upper-'+side,P.upper[i],upper,sp,skin.metal,giant?1.15:1);put('hum-fore-'+side,P.fore[i],fore,ep,skin.metal,giant?1.1:1);}
         if(simple)continue;
-        if(blades)piece('liquid-blade-'+side,'octa',[0,K(-.38),K(-.01)],[K(.11),K(.86),K(.04)],skin.accent,wrist,null,0,.08);
+        if(blades)piece('liquid-blade-'+side,'octa',[0,K(-.38),K(-.01)],[K(.11),K(.86),K(.04)],skin.accent,wrist,null,matFor(skin.accent),.08);
         else if(!endo)put('hum-hand-'+side,P.hand[i],wrist,wp,skin.metal,1,giant?1.3:1);
         if(bomber){
           piece('kamikaze-bomb-'+side,'sphere',[0,K(-.17),K(-.07)],[K(.30),K(.30),K(.30)],[.075,.08,.085],wrist);

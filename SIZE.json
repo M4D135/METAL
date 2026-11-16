@@ -1,10 +1,10 @@
 {
-  "version": "0.12.0",
-  "html_bytes": 13636309,
-  "html_decimal_kb": 13636.31,
-  "html_kib": 13316.71,
-  "gzip_bytes": 3201201,
-  "sha256": "d90d0e96bb29b0381ee2a6df175c476dd3c89337450a2d81de8bde176cec67ee",
+  "version": "0.12.1",
+  "html_bytes": 13642819,
+  "html_decimal_kb": 13642.82,
+  "html_kib": 13323.07,
+  "gzip_bytes": 3203529,
+  "sha256": "6eb30372200e8b2bbcf13f3f8c37fc3b088fc5692a0451872c0d3d9f03284392",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
@@ -23,7 +23,7 @@
     "destruction.js": 42672,
     "physics-geometry.js": 19455,
     "physics.js": 81287,
-    "metal-physics.js": 24336,
+    "metal-physics.js": 27732,
     "music.js": 61763,
     "imuse.js": 10260,
     "music-director.js": 3908,
@@ -36,7 +36,7 @@
     "simulation.js": 288381,
     "motion.js": 8452,
     "humanoids.js": 10175,
-    "actors.js": 42752,
+    "actors.js": 43855,
     "avatars.js": 6833,
     "effects.js": 20784,
     "options.js": 12063,
@@ -54,6 +54,6 @@
     "pilot.js": 22068,
     "demo-metal.js": 6923,
     "replay-metal.js": 2188,
-    "game.js": 153129
+    "game.js": 155140
   }
 }
