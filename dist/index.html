@@ -242,7 +242,7 @@ body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes])
   <canvas id="world" tabindex="0" aria-label="METAL — vue du champ de bataille"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.3">V0.12.3</b></span></div>
+    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.4">V0.12.4</b></span></div>
     <div class="intro-content">
       <h1>METAL</h1>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
@@ -64803,6 +64803,8 @@ function navigationGraph(cells,width,testEdge){
       if(!modernMovement)return false;
       if(profilesEnabled)for(const door of s.doors)if(door.profileProtected&&door.progress<.99&&Math.abs(x-door.x)<door.w/2+r&&Math.abs(z-door.z)<door.d/2+r)return true;
       if(!clipIds.size)return false;
+      // Light drone profile may fly everywhere; only clip heavy and other profiles
+      if(s.activeProfile==='light')return false;
       for(const q of localSolids(x,z))if(clipIds.has(String(q.destructibleId))&&q.minY<y+1.8&&q.maxX-q.minX>=.12&&q.maxZ-q.minZ>=.12&&discBox(x,z,r,q))return true;
       return false;
     }
@@ -71058,7 +71060,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.12.3',simHash:'63521c7784c11ba3587f6a229c5b71bdcfa58f99b320880b716953fa0a39b687',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.12.4',simHash:'2c9bec33550c6b64d6d790d2d75cf640802ff893fa2031c9c9caea5d286e970c',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){

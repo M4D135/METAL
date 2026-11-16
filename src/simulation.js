@@ -675,6 +675,8 @@ function navigationGraph(cells,width,testEdge){
       if(!modernMovement)return false;
       if(profilesEnabled)for(const door of s.doors)if(door.profileProtected&&door.progress<.99&&Math.abs(x-door.x)<door.w/2+r&&Math.abs(z-door.z)<door.d/2+r)return true;
       if(!clipIds.size)return false;
+      // Light drone profile may fly everywhere; only clip heavy and other profiles
+      if(s.activeProfile==='light')return false;
       for(const q of localSolids(x,z))if(clipIds.has(String(q.destructibleId))&&q.minY<y+1.8&&q.maxX-q.minX>=.12&&q.maxZ-q.minZ>=.12&&discBox(x,z,r,q))return true;
       return false;
     }
