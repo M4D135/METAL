@@ -78,7 +78,7 @@
   const GAIT=Object.freeze({duty:.52,stride:.30,lift:.09,drop:.072,thigh:.45,shin:.375,ankleY:.145});
   // crouch lowers the hips (body units): the same solve bends the knees.
   function gait(phase,amount=1,crouch=0){
-    amount=clamp(amount,0,1.6);const q=GAIT,u=((phase/(Math.PI*2))%1+1)%1,s=u<q.duty?0:(u-q.duty)/(1-q.duty),swing=u>=q.duty,t=s*s*(3-2*s),z=q.stride*amount*(swing?-1+2*t:1-2*u/q.duty),lift=swing?q.lift*amount*Math.sin(Math.PI*s)**2:0,bodyY=-q.drop*Math.min(1,amount)+.003*amount*Math.cos(phase*2)-clamp(crouch,0,.3),dy=.97+bodyY-q.ankleY-lift,d=Math.max(.05,Math.min(q.thigh+q.shin-.00001,Math.hypot(dy,z))),knee=-Math.acos(clamp((d*d-q.thigh*q.thigh-q.shin*q.shin)/(2*q.thigh*q.shin),-1,1)),hip=Math.atan2(z,dy)+Math.acos(clamp((q.thigh*q.thigh+d*d-q.shin*q.shin)/(2*q.thigh*d),-1,1));
+    amount=clamp(amount,0,1.6);const q=GAIT,u=((phase/(Math.PI*2))%1+1)%1,s=u<q.duty?0:(u-q.duty)/(1-q.duty),swing=u>=q.duty,t=s*s*(3-2*s),z=q.stride*amount*(swing?-1+2*t:1-2*u/q.duty),lift=swing?q.lift*amount*Math.sin(Math.PI*s)**2:0,bodyY=-q.drop*Math.min(1,amount)+.003*amount*Math.cos(phase*2)-clamp(crouch,0,.6),dy=.97+bodyY-q.ankleY-lift,d=Math.max(.05,Math.min(q.thigh+q.shin-.00001,Math.hypot(dy,z))),knee=-Math.acos(clamp((d*d-q.thigh*q.thigh-q.shin*q.shin)/(2*q.thigh*q.shin),-1,1)),hip=Math.atan2(z,dy)+Math.acos(clamp((q.thigh*q.thigh+d*d-q.shin*q.shin)/(2*q.thigh*d),-1,1));
     return {hip,knee,ankle:-hip-knee,bodyY,lift,z,stance:!swing};
   }
   const triangles=Object.values(parts).flat().reduce((n,q)=>n+q.triangles,0);

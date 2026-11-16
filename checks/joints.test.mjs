@@ -52,3 +52,10 @@ test('With every joint gone, the chest core is the last target and always bare',
   const points=sim.weakPoints(e);assert.equal(points.length,1);assert.equal(points[0].joint,-1);assert(Math.abs(points[0].r-.2*5.4)<1e-9);
   assert(e.weakPointOpen,'the core stays bare');steps(sim,240);assert.equal(sim.state.bossAttacks.length,0,'a giant without limbs no longer attacks');
 });
+
+test('A humanoid giant that lost its legs sinks to the floor, and its targets sink with it',()=>{
+  const sim=S.create(world({bossLook:'endo'}),{rigidBodies:true});steps(sim,1);const e=sim.state.enemies[0],standing=sim.weakPoints(e)[0].y;
+  e.joints=[e.joints[0],e.joints[1],0,0];const low=sim.weakPoints(e)[0].y;assert(Math.abs(standing-low-.95*5.4)<1e-6,'targets sink '+(standing-low));
+  const meshes=A.build(e,{time:1,distance:40,quality:'high',backend:'webgl2'}),joint=meshes.find(m=>m.actorPart==='titan-joint-0');assert(Math.abs(joint.p[1]-low)<1e-6,'drawn where it is hit');
+  assert(!meshes.some(m=>/^(hum|endo)-(thigh|shin|foot|leg)/.test(m.actorPart)),'no legs left');
+});

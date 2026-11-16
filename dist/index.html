@@ -242,7 +242,7 @@ body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes])
   <canvas id="world" tabindex="0" aria-label="METAL — vue du champ de bataille"></canvas>
   <div id="vignette"></div><div id="damage"></div><div id="scanlines"></div>
   <section id="intro" class="screen">
-    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.2">V0.12.2</b></span></div>
+    <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.3">V0.12.3</b></span></div>
     <div class="intro-content">
       <h1>METAL</h1>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
@@ -64209,7 +64209,7 @@ function navigationGraph(cells,width,testEdge){
   // Guardian joints in horde worlds (David, 16/11/2026): shoulders then hips,
   // left before right, in the giant's frame before scaling. Humanoid giants
   // stand hunched; the robot's joints are its gun pivots and front hips.
-  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15;
+  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15,HIP_DROP_HUMAN=[0,.30,.95],HIP_DROP_ROBOT=[0,0,0];
   const DIRECTOR=['pressure','tension','eventType','eventAge','nextEvent','events','progress','tier','grace','eventX','eventY','eventZ','eventIntensity'];
   const HORROR=['','metallicSlam','blackout','alarm','ambush'];
   const BOSS_LABELS=['','Veille','Onde de choc','Écrasement','Barrage de roquettes','Balayage','Cœur exposé','Surcharge — renforts','Charge','Tapis de bombes','Rayon du cœur','Articulations exposées'];
@@ -64345,7 +64345,7 @@ function navigationGraph(cells,width,testEdge){
     // while exposed; breaking one adds a heavy blow, drops the limb and costs
     // the giant a gun's salvo or a leg's pace. With all four broken, the chest
     // core stays bare and the giant can no longer attack or walk.
-    const jointed=e=>hordes&&giant(e)&&Array.isArray(e.joints),jointMax=(e,factor)=>Math.max(1,Math.round(actorHealth(e,factor)*.19)),broken=(e,i)=>jointed(e)&&e.joints[i]<=0;
+    const jointed=e=>hordes&&giant(e)&&Array.isArray(e.joints),hipDrop=e=>jointed(e)?(e.bossLook?HIP_DROP_HUMAN:HIP_DROP_ROBOT)[(e.joints[2]<=0)+(e.joints[3]<=0)]:0,jointMax=(e,factor)=>Math.max(1,Math.round(actorHealth(e,factor)*.19)),broken=(e,i)=>jointed(e)&&e.joints[i]<=0;
     const rigidEnabled=!!(G.FPhysics&&G.MetalPhysics&&(world.combatVersion===1||options.rigidBodies===true)&&options.rigidBodies!==false);let rigid=null;
     const floors=world.walkable||[],advanced=!!world.combat||world.generation>=5,horror=!!world.horrorSites?.length||world.director?.enabled===true;
     const progression=world.progression?.version===1,economyEnabled=progression&&!!G.FEconomy,nominalCombat=clamp(world.progression?.maxActive||[8,10,12][world.stage||0],2,16);
@@ -65554,14 +65554,14 @@ function navigationGraph(cells,width,testEdge){
     // The targets a guardian currently offers, in world space: its unbroken
     // joints, or its heart (the chest core once every joint is gone).
     function weakPoints(e){
-      if(!giant(e))return [];const size=scale(e),sn=Math.sin(e.yaw),cs=Math.cos(e.yaw),place=(q,r,joint)=>({x:e.x+(cs*q[0]-sn*q[2])*size,y:e.baseY+q[1]*size,z:e.z+(sn*q[0]+cs*q[2])*size,r:r*size,joint});
+      if(!giant(e))return [];const size=scale(e),sn=Math.sin(e.yaw),cs=Math.cos(e.yaw),drop=hipDrop(e),place=(q,r,joint)=>({x:e.x+(cs*q[0]-sn*q[2])*size,y:e.baseY+(q[1]-drop)*size,z:e.z+(sn*q[0]+cs*q[2])*size,r:r*size,joint});
       if(!jointed(e))return [place([0,1.93,-.9],.36,-1)];
       const set=e.bossLook?JOINTS_HUMAN:JOINTS_ROBOT,out=[];for(let i=0;i<4;i++)if(e.joints[i]>0)out.push(place(set[i],JOINT_R,i));
       if(!out.length)out.push(place([0,1.93,-.9],.2,-1));return out;
     }
     function giantHit(e,o,d,far,padding=0){
       const size=scale(e),cs=Math.cos(e.yaw),sn=Math.sin(e.yaw),ox=o[0]-e.x,oz=o[2]-e.z;
-      const origin=[(cs*ox+sn*oz)/size,(o[1]-e.baseY)/size,(-sn*ox+cs*oz)/size],dir=[(cs*d[0]+sn*d[2])/size,d[1]/size,(-sn*d[0]+cs*d[2])/size];
+      const origin=[(cs*ox+sn*oz)/size,(o[1]-e.baseY)/size+hipDrop(e),(-sn*ox+cs*oz)/size],dir=[(cs*d[0]+sn*d[2])/size,d[1]/size,(-sn*d[0]+cs*d[2])/size];
       let distance=far,weak=false;
       // Humanoid giants: hunched torso, head, two legs and two shoulder guns;
       // a broken limb no longer stops a shot.
@@ -67454,7 +67454,7 @@ function navigationGraph(cells,width,testEdge){
   const GAIT=Object.freeze({duty:.52,stride:.30,lift:.09,drop:.072,thigh:.45,shin:.375,ankleY:.145});
   // crouch lowers the hips (body units): the same solve bends the knees.
   function gait(phase,amount=1,crouch=0){
-    amount=clamp(amount,0,1.6);const q=GAIT,u=((phase/(Math.PI*2))%1+1)%1,s=u<q.duty?0:(u-q.duty)/(1-q.duty),swing=u>=q.duty,t=s*s*(3-2*s),z=q.stride*amount*(swing?-1+2*t:1-2*u/q.duty),lift=swing?q.lift*amount*Math.sin(Math.PI*s)**2:0,bodyY=-q.drop*Math.min(1,amount)+.003*amount*Math.cos(phase*2)-clamp(crouch,0,.3),dy=.97+bodyY-q.ankleY-lift,d=Math.max(.05,Math.min(q.thigh+q.shin-.00001,Math.hypot(dy,z))),knee=-Math.acos(clamp((d*d-q.thigh*q.thigh-q.shin*q.shin)/(2*q.thigh*q.shin),-1,1)),hip=Math.atan2(z,dy)+Math.acos(clamp((q.thigh*q.thigh+d*d-q.shin*q.shin)/(2*q.thigh*d),-1,1));
+    amount=clamp(amount,0,1.6);const q=GAIT,u=((phase/(Math.PI*2))%1+1)%1,s=u<q.duty?0:(u-q.duty)/(1-q.duty),swing=u>=q.duty,t=s*s*(3-2*s),z=q.stride*amount*(swing?-1+2*t:1-2*u/q.duty),lift=swing?q.lift*amount*Math.sin(Math.PI*s)**2:0,bodyY=-q.drop*Math.min(1,amount)+.003*amount*Math.cos(phase*2)-clamp(crouch,0,.6),dy=.97+bodyY-q.ankleY-lift,d=Math.max(.05,Math.min(q.thigh+q.shin-.00001,Math.hypot(dy,z))),knee=-Math.acos(clamp((d*d-q.thigh*q.thigh-q.shin*q.shin)/(2*q.thigh*q.shin),-1,1)),hip=Math.atan2(z,dy)+Math.acos(clamp((q.thigh*q.thigh+d*d-q.shin*q.shin)/(2*q.thigh*d),-1,1));
     return {hip,knee,ankle:-hip-knee,bodyY,lift,z,stance:!swing};
   }
   const triangles=Object.values(parts).flat().reduce((n,q)=>n+q.triangles,0);
@@ -67479,7 +67479,7 @@ function navigationGraph(cells,width,testEdge){
   const MAT=new Float64Array(9),MAT2=new Float64Array(9),MAT3=new Float64Array(9),EUL=new Float64Array(3);
   const LIMB_INSET=/(?:thigh|shin|upper-arm|forearm)/;
   // Guardian joints in horde worlds, as in simulation.js (giant frame before scaling).
-  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15;
+  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15,HIP_DROP_HUMAN=[0,.30,.95],HIP_DROP_ROBOT=[0,0,0];
   const LIVERIES=[null,[[.45,.38,.27],[.31,.27,.21],[.66,.46,.17]],[[.64,.66,.68],[.40,.43,.47],[.16,.46,.62]],[[.40,.19,.13],[.28,.20,.17],[.72,.55,.24]],[[.12,.13,.14],[.21,.22,.24],[.88,.42,.08]],[[.23,.32,.19],[.17,.22,.15],[.76,.70,.20]]];
   function rotationTo(o,x,y,z){
     const a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);
@@ -67744,7 +67744,7 @@ function navigationGraph(cells,width,testEdge){
     }
     function custodian(){
       // A sweep is announced by the whole upper body winding up, never by a detached bar.
-      const bounce=giant?(tellFamily==='ring'?-.12*tellPose:0):Math.sin(phase*2)*.035*blend,body=frame(root,[0,1.5+bounce,0],giant?[0,tellFamily==='sweep'?.42*tellPose:0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
+      const lost=Array.isArray(e.joints)?(e.joints[2]<=0)+(e.joints[3]<=0):0,bounce=(giant?(tellFamily==='ring'?-.12*tellPose:0):Math.sin(phase*2)*.035*blend)-HIP_DROP_ROBOT[lost],body=frame(root,[0,1.5+bounce,0],giant?[0,tellFamily==='sweep'?.42*tellPose:0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
       const feet=[];for(const side of [-1,1])for(const end of [-1,1]){
         if(end<0&&Array.isArray(e.joints)&&e.joints[side<0?2:3]<=0){piece('custodian-stump-'+side+'','sphere',[side*.62,-.13,-.40],[.22,.22,.22],[1,.45,.1],body,null,5,.8+.3*Math.sin(time*13));continue;}
         const t=phase+(side===end?0:PI),lift=Math.max(0,Math.cos(t))*.17*blend,stride=Math.sin(t)*.20*blend;
@@ -67828,7 +67828,7 @@ function navigationGraph(cells,width,testEdge){
       const ring=(n,p,s,color,f=root,r=null)=>piece(n,'ring',p,s,color,f,r,matFor(color));
       const limb=(n,a,c,width,depth,color,shape,reference)=>{const m=limbPiece(n,a,c,width,depth,color,shape,reference);if(m)m.mat=matFor(color);return m;};
       const running=bomber||kind==='blade'&&engaged||rush,amount=airborne?0:clamp(blend*(running?1.35:1),0,1.5);
-      const crouch=giant&&tellFamily==='ring'?tellPose:0,drop=(giant?.17:0)+crouch*.12;
+      const lost=Array.isArray(e.joints)?(e.joints[2]<=0)+(e.joints[3]<=0):0,crouch=giant&&tellFamily==='ring'?tellPose:0,drop=(giant?.17:0)+crouch*.12+HIP_DROP_HUMAN[lost]/k;
       const L=H.gait(phase,amount,drop),R=H.gait(phase+PI,amount,drop),swing=Math.sin(phase)*(running?.6:.25)*blend;
       const hipY=V.hip+(airborne?-.04:L.bodyY);
       const lean=stun?-.12:(giant?.30:0)+(running?.24:.05)*blend+(rush?.10:0)+crouch*.15,twist=giant&&tellFamily==='sweep'?.55*Math.sin(PI*tellPose):0;
@@ -67938,7 +67938,7 @@ function navigationGraph(cells,width,testEdge){
         if(!Array.isArray(e.joints))cyl('titan-core-mount',[0,1.93,-.52],[.52,.56,.52],skin.joint,root,[PI/2,0,0]);
         for(const side of [-1,1]){
           if(Array.isArray(e.joints)&&e.joints[side<0?0:1]<=0)continue;
-          const up=tellFamily==='rocketZone'?-.75*tellPose:0,mount=frame(root,[side*1.04,2.28,0],[aim?pitch(2.28):up-.08,0,0]);
+          const up=tellFamily==='rocketZone'?-.75*tellPose:0,mount=frame(root,[side*1.04,2.28-HIP_DROP_HUMAN[lost],0],[aim?pitch(2.28):up-.08,0,0]);
           box('titan-gun-yoke-'+side,[-side*.36,.02,.10],[.62,.30,.46],skin.joint,mount);
           cyl('titan-gun-'+side,[0,0,-.74],[.32,1.48,.32],chrome?skin.metal:'steel',mount,[PI/2,0,0]);
           ring('titan-gun-rim-'+side,[0,0,-1.46],[.42,.10,.42],skin.joint,mount,[PI/2,0,0]);
@@ -67958,10 +67958,11 @@ function navigationGraph(cells,width,testEdge){
         // Horde worlds: four small joints are the targets; the bare chest core
         // appears once they are all broken.
         const J=humanLook?JOINTS_HUMAN:JOINTS_ROBOT;
-        if(e.joints.every(v=>v<=0))piece('titan-heart','sphere',[0,1.93,-.90],[.4,.4,.4],[.20,.90,.80],root,null,4,energy);
+        const sink=(humanLook?HIP_DROP_HUMAN:HIP_DROP_ROBOT)[(e.joints[2]<=0)+(e.joints[3]<=0)];
+        if(e.joints.every(v=>v<=0))piece('titan-heart','sphere',[0,1.93-sink,-.90],[.4,.4,.4],[.20,.90,.80],root,null,4,energy);
         else for(let i=0;i<4;i++)if(e.joints[i]>0){
-          piece('titan-joint-'+i,'sphere',J[i],[JOINT_R*2,JOINT_R*2,JOINT_R*2],glow,root,null,open?4:5,energy);
-          ring('titan-joint-collar-'+i,[J[i][0],J[i][1],J[i][2]+.04],[.42,.06,.42],'trim',root,[PI/2,0,0]);
+          piece('titan-joint-'+i,'sphere',[J[i][0],J[i][1]-sink,J[i][2]],[JOINT_R*2,JOINT_R*2,JOINT_R*2],glow,root,null,open?4:5,energy);
+          ring('titan-joint-collar-'+i,[J[i][0],J[i][1]-sink,J[i][2]+.04],[.42,.06,.42],'trim',root,[PI/2,0,0]);
         }
       }else{
       piece('titan-heart','sphere',[0,1.93,-.90],[.72,.72,.72],glow,root,null,open?4:5,energy);
@@ -71057,7 +71058,7 @@ G.FPilot={create:createPilot};
   function attachReplay(scene){
     replaySession?.detach();replaySession=null;
     if(demoQuery.get('record')!=='1'||mode==='demo'||mode==='menu'||!window.MetalReplay)return;
-    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.12.2',simHash:'b3ef8564a4607a9f07c3f54429145a09746f47126d44e25c23281171c078ff7e',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
+    replaySession=MetalReplay.attach(sim,{recorder:replayStream,scene,header:{gameVersion:'0.12.3',simHash:'63521c7784c11ba3587f6a229c5b71bdcfa58f99b320880b716953fa0a39b687',simVersion:{format:1},engine:'cpu',checksumEvery:600}});replayStream=replaySession.recorder;$('export-replay').hidden=false;
   }
   $('export-replay').addEventListener('click',()=>{if(!replaySession)return;const data=replaySession.end();replaySession=replayStream=null;const url=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'})),a=document.createElement('a');a.href=url;a.download='METAL-rejeu.fdm';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export-replay').hidden=true;});
   function frame(now){

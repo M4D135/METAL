@@ -81,7 +81,7 @@ function navigationGraph(cells,width,testEdge){
   // Guardian joints in horde worlds (David, 16/11/2026): shoulders then hips,
   // left before right, in the giant's frame before scaling. Humanoid giants
   // stand hunched; the robot's joints are its gun pivots and front hips.
-  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15;
+  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15,HIP_DROP_HUMAN=[0,.30,.95],HIP_DROP_ROBOT=[0,0,0];
   const DIRECTOR=['pressure','tension','eventType','eventAge','nextEvent','events','progress','tier','grace','eventX','eventY','eventZ','eventIntensity'];
   const HORROR=['','metallicSlam','blackout','alarm','ambush'];
   const BOSS_LABELS=['','Veille','Onde de choc','Écrasement','Barrage de roquettes','Balayage','Cœur exposé','Surcharge — renforts','Charge','Tapis de bombes','Rayon du cœur','Articulations exposées'];
@@ -217,7 +217,7 @@ function navigationGraph(cells,width,testEdge){
     // while exposed; breaking one adds a heavy blow, drops the limb and costs
     // the giant a gun's salvo or a leg's pace. With all four broken, the chest
     // core stays bare and the giant can no longer attack or walk.
-    const jointed=e=>hordes&&giant(e)&&Array.isArray(e.joints),jointMax=(e,factor)=>Math.max(1,Math.round(actorHealth(e,factor)*.19)),broken=(e,i)=>jointed(e)&&e.joints[i]<=0;
+    const jointed=e=>hordes&&giant(e)&&Array.isArray(e.joints),hipDrop=e=>jointed(e)?(e.bossLook?HIP_DROP_HUMAN:HIP_DROP_ROBOT)[(e.joints[2]<=0)+(e.joints[3]<=0)]:0,jointMax=(e,factor)=>Math.max(1,Math.round(actorHealth(e,factor)*.19)),broken=(e,i)=>jointed(e)&&e.joints[i]<=0;
     const rigidEnabled=!!(G.FPhysics&&G.MetalPhysics&&(world.combatVersion===1||options.rigidBodies===true)&&options.rigidBodies!==false);let rigid=null;
     const floors=world.walkable||[],advanced=!!world.combat||world.generation>=5,horror=!!world.horrorSites?.length||world.director?.enabled===true;
     const progression=world.progression?.version===1,economyEnabled=progression&&!!G.FEconomy,nominalCombat=clamp(world.progression?.maxActive||[8,10,12][world.stage||0],2,16);
@@ -1426,14 +1426,14 @@ function navigationGraph(cells,width,testEdge){
     // The targets a guardian currently offers, in world space: its unbroken
     // joints, or its heart (the chest core once every joint is gone).
     function weakPoints(e){
-      if(!giant(e))return [];const size=scale(e),sn=Math.sin(e.yaw),cs=Math.cos(e.yaw),place=(q,r,joint)=>({x:e.x+(cs*q[0]-sn*q[2])*size,y:e.baseY+q[1]*size,z:e.z+(sn*q[0]+cs*q[2])*size,r:r*size,joint});
+      if(!giant(e))return [];const size=scale(e),sn=Math.sin(e.yaw),cs=Math.cos(e.yaw),drop=hipDrop(e),place=(q,r,joint)=>({x:e.x+(cs*q[0]-sn*q[2])*size,y:e.baseY+(q[1]-drop)*size,z:e.z+(sn*q[0]+cs*q[2])*size,r:r*size,joint});
       if(!jointed(e))return [place([0,1.93,-.9],.36,-1)];
       const set=e.bossLook?JOINTS_HUMAN:JOINTS_ROBOT,out=[];for(let i=0;i<4;i++)if(e.joints[i]>0)out.push(place(set[i],JOINT_R,i));
       if(!out.length)out.push(place([0,1.93,-.9],.2,-1));return out;
     }
     function giantHit(e,o,d,far,padding=0){
       const size=scale(e),cs=Math.cos(e.yaw),sn=Math.sin(e.yaw),ox=o[0]-e.x,oz=o[2]-e.z;
-      const origin=[(cs*ox+sn*oz)/size,(o[1]-e.baseY)/size,(-sn*ox+cs*oz)/size],dir=[(cs*d[0]+sn*d[2])/size,d[1]/size,(-sn*d[0]+cs*d[2])/size];
+      const origin=[(cs*ox+sn*oz)/size,(o[1]-e.baseY)/size+hipDrop(e),(-sn*ox+cs*oz)/size],dir=[(cs*d[0]+sn*d[2])/size,d[1]/size,(-sn*d[0]+cs*d[2])/size];
       let distance=far,weak=false;
       // Humanoid giants: hunched torso, head, two legs and two shoulder guns;
       // a broken limb no longer stops a shot.

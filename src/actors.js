@@ -16,7 +16,7 @@
   const MAT=new Float64Array(9),MAT2=new Float64Array(9),MAT3=new Float64Array(9),EUL=new Float64Array(3);
   const LIMB_INSET=/(?:thigh|shin|upper-arm|forearm)/;
   // Guardian joints in horde worlds, as in simulation.js (giant frame before scaling).
-  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15;
+  const JOINTS_HUMAN=[[-.62,2.36,-.30],[.62,2.36,-.30],[-.28,1.45,-.45],[.28,1.45,-.45]],JOINTS_ROBOT=[[-1.36,2.31,.05],[1.36,2.31,.05],[-.62,1.37,-.62],[.62,1.37,-.62]],JOINT_R=.15,HIP_DROP_HUMAN=[0,.30,.95],HIP_DROP_ROBOT=[0,0,0];
   const LIVERIES=[null,[[.45,.38,.27],[.31,.27,.21],[.66,.46,.17]],[[.64,.66,.68],[.40,.43,.47],[.16,.46,.62]],[[.40,.19,.13],[.28,.20,.17],[.72,.55,.24]],[[.12,.13,.14],[.21,.22,.24],[.88,.42,.08]],[[.23,.32,.19],[.17,.22,.15],[.76,.70,.20]]];
   function rotationTo(o,x,y,z){
     const a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);
@@ -281,7 +281,7 @@
     }
     function custodian(){
       // A sweep is announced by the whole upper body winding up, never by a detached bar.
-      const bounce=giant?(tellFamily==='ring'?-.12*tellPose:0):Math.sin(phase*2)*.035*blend,body=frame(root,[0,1.5+bounce,0],giant?[0,tellFamily==='sweep'?.42*tellPose:0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
+      const lost=Array.isArray(e.joints)?(e.joints[2]<=0)+(e.joints[3]<=0):0,bounce=(giant?(tellFamily==='ring'?-.12*tellPose:0):Math.sin(phase*2)*.035*blend)-HIP_DROP_ROBOT[lost],body=frame(root,[0,1.5+bounce,0],giant?[0,tellFamily==='sweep'?.42*tellPose:0,0]:[stun?.075:rush?-.085:0,0,stun?Math.sin(time*19)*.023:0]);
       const feet=[];for(const side of [-1,1])for(const end of [-1,1]){
         if(end<0&&Array.isArray(e.joints)&&e.joints[side<0?2:3]<=0){piece('custodian-stump-'+side+'','sphere',[side*.62,-.13,-.40],[.22,.22,.22],[1,.45,.1],body,null,5,.8+.3*Math.sin(time*13));continue;}
         const t=phase+(side===end?0:PI),lift=Math.max(0,Math.cos(t))*.17*blend,stride=Math.sin(t)*.20*blend;
@@ -365,7 +365,7 @@
       const ring=(n,p,s,color,f=root,r=null)=>piece(n,'ring',p,s,color,f,r,matFor(color));
       const limb=(n,a,c,width,depth,color,shape,reference)=>{const m=limbPiece(n,a,c,width,depth,color,shape,reference);if(m)m.mat=matFor(color);return m;};
       const running=bomber||kind==='blade'&&engaged||rush,amount=airborne?0:clamp(blend*(running?1.35:1),0,1.5);
-      const crouch=giant&&tellFamily==='ring'?tellPose:0,drop=(giant?.17:0)+crouch*.12;
+      const lost=Array.isArray(e.joints)?(e.joints[2]<=0)+(e.joints[3]<=0):0,crouch=giant&&tellFamily==='ring'?tellPose:0,drop=(giant?.17:0)+crouch*.12+HIP_DROP_HUMAN[lost]/k;
       const L=H.gait(phase,amount,drop),R=H.gait(phase+PI,amount,drop),swing=Math.sin(phase)*(running?.6:.25)*blend;
       const hipY=V.hip+(airborne?-.04:L.bodyY);
       const lean=stun?-.12:(giant?.30:0)+(running?.24:.05)*blend+(rush?.10:0)+crouch*.15,twist=giant&&tellFamily==='sweep'?.55*Math.sin(PI*tellPose):0;
@@ -475,7 +475,7 @@
         if(!Array.isArray(e.joints))cyl('titan-core-mount',[0,1.93,-.52],[.52,.56,.52],skin.joint,root,[PI/2,0,0]);
         for(const side of [-1,1]){
           if(Array.isArray(e.joints)&&e.joints[side<0?0:1]<=0)continue;
-          const up=tellFamily==='rocketZone'?-.75*tellPose:0,mount=frame(root,[side*1.04,2.28,0],[aim?pitch(2.28):up-.08,0,0]);
+          const up=tellFamily==='rocketZone'?-.75*tellPose:0,mount=frame(root,[side*1.04,2.28-HIP_DROP_HUMAN[lost],0],[aim?pitch(2.28):up-.08,0,0]);
           box('titan-gun-yoke-'+side,[-side*.36,.02,.10],[.62,.30,.46],skin.joint,mount);
           cyl('titan-gun-'+side,[0,0,-.74],[.32,1.48,.32],chrome?skin.metal:'steel',mount,[PI/2,0,0]);
           ring('titan-gun-rim-'+side,[0,0,-1.46],[.42,.10,.42],skin.joint,mount,[PI/2,0,0]);
@@ -495,10 +495,11 @@
         // Horde worlds: four small joints are the targets; the bare chest core
         // appears once they are all broken.
         const J=humanLook?JOINTS_HUMAN:JOINTS_ROBOT;
-        if(e.joints.every(v=>v<=0))piece('titan-heart','sphere',[0,1.93,-.90],[.4,.4,.4],[.20,.90,.80],root,null,4,energy);
+        const sink=(humanLook?HIP_DROP_HUMAN:HIP_DROP_ROBOT)[(e.joints[2]<=0)+(e.joints[3]<=0)];
+        if(e.joints.every(v=>v<=0))piece('titan-heart','sphere',[0,1.93-sink,-.90],[.4,.4,.4],[.20,.90,.80],root,null,4,energy);
         else for(let i=0;i<4;i++)if(e.joints[i]>0){
-          piece('titan-joint-'+i,'sphere',J[i],[JOINT_R*2,JOINT_R*2,JOINT_R*2],glow,root,null,open?4:5,energy);
-          ring('titan-joint-collar-'+i,[J[i][0],J[i][1],J[i][2]+.04],[.42,.06,.42],'trim',root,[PI/2,0,0]);
+          piece('titan-joint-'+i,'sphere',[J[i][0],J[i][1]-sink,J[i][2]],[JOINT_R*2,JOINT_R*2,JOINT_R*2],glow,root,null,open?4:5,energy);
+          ring('titan-joint-collar-'+i,[J[i][0],J[i][1]-sink,J[i][2]+.04],[.42,.06,.42],'trim',root,[PI/2,0,0]);
         }
       }else{
       piece('titan-heart','sphere',[0,1.93,-.90],[.72,.72,.72],glow,root,null,open?4:5,energy);
