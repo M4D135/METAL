@@ -6,27 +6,17 @@ import vm from 'node:vm';
 // Expose the production index only inside this test VM, without widening FRender.
 const source=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
 const scope={window:{}};vm.runInNewContext(source.replace('window.FRender={create,foliageTriangles};','window.FRender={create,foliageTriangles,spatialIndex};'),scope);
-const build=scope.window.FRender.spatialIndex;
+const build=scope.window.FRender.shared.spatialIndex;
 const box=(id,x,y,z,detail=0,size=1)=>({id,p:[x,y,z],s:[size,size,size],shape:'box',detail});
 const ids=list=>Array.from(list,e=>e.mesh.id);
 
-// Frozen pre-03r query contract: cell order is detail, x, z, insertion order.
-// This deliberately uses the old Map/string implementation as an independent oracle.
+// FERRO wide-world contract: detail, oversized objects, then x/z cells and insertion order.
+// The independent oracle also checks exact optional frustum rejection.
 function reference(meshes,eye,ranges,frustum){
-  const levels=[new Map(),new Map(),new Map()],radii=[0,0,0],result=[];
-  for(const mesh of meshes){const p=mesh.p||[0,0,0],radius=Math.hypot(...(mesh.s||[1,1,1]))*.5,detail=Math.max(0,Math.min(2,Math.floor(mesh.detail||0))),key=Math.floor(p[0]/8)+','+Math.floor(p[2]/8);let cell=levels[detail].get(key);
-    if(!cell){cell={list:[],sumY:0,minY:Infinity,maxY:-Infinity};levels[detail].set(key,cell);}cell.list.push({mesh,p,radius});cell.sumY+=p[1];cell.minY=Math.min(cell.minY,p[1]);cell.maxY=Math.max(cell.maxY,p[1]);radii[detail]=Math.max(radii[detail],radius);
-  }
-  for(let level=0;level<3;level++){const range=ranges[level];if(!(range>0))continue;const r=range+radii[level];
-    for(let x=Math.floor((eye[0]-r)/8);x<=Math.floor((eye[0]+r)/8);x++)for(let z=Math.floor((eye[2]-r)/8);z<=Math.floor((eye[2]+r)/8);z++){
-      const cell=levels[level].get(x+','+z);if(!cell)continue;
-      if(frustum){const cy=cell.sumY/cell.list.length,sr=5.656854249492381+Math.max(cy-cell.minY,cell.maxY-cy)+radii[level],v=[x*8+4-eye[0],cy-eye[1],z*8+4-eye[2]],dot=a=>v[0]*a[0]+v[1]*a[1]+v[2]*a[2],depth=dot(frustum.axes.forward),h=frustum.horizontal,t=frustum.vertical;
-        if(!(depth+sr>.04&&depth-sr<frustum.far&&Math.abs(dot(frustum.axes.right))<=depth*h+sr*Math.sqrt(1+h*h)&&Math.abs(dot(frustum.axes.up))<=depth*t+sr*Math.sqrt(1+t*t)))continue;
-      }
-      for(const e of cell.list)if((e.p[0]-eye[0])**2+(e.p[1]-eye[1])**2+(e.p[2]-eye[2])**2<=(range+e.radius)**2)result.push(e.mesh.id);
-    }
-  }
-  return result;
+  const entries=meshes.map((mesh,ordinal)=>({mesh,ordinal,p:mesh.p||[0,0,0],radius:Math.hypot(...(mesh.s||[1,1,1]))*.5,detail:Math.max(0,Math.min(2,Math.floor(mesh.detail||0)))}));
+  return entries.filter(e=>{const range=ranges[e.detail];if(!(range>0)||Math.hypot(...e.p.map((v,k)=>v-eye[k]))>range+e.radius)return false;
+    if(frustum){const v=e.p.map((x,k)=>x-eye[k]),dot=a=>v.reduce((n,x,k)=>n+x*a[k],0),z=dot(frustum.axes.forward),r=e.radius,h=frustum.horizontal,t=frustum.vertical;if(!(z+r>.04&&z-r<frustum.far&&Math.abs(dot(frustum.axes.right))<=z*h+r*Math.sqrt(1+h*h)&&Math.abs(dot(frustum.axes.up))<=z*t+r*Math.sqrt(1+t*t)))return false;}return true;
+  }).sort((a,b)=>a.detail-b.detail||Number(b.radius>32)-Number(a.radius>32)||(a.radius>32?a.ordinal-b.ordinal:Math.floor(a.p[0]/8)-Math.floor(b.p[0]/8)||Math.floor(a.p[2]/8)-Math.floor(b.p[2]/8)||a.ordinal-b.ordinal)).map(e=>e.mesh.id);
 }
 
 test('incremental queries preserve the old cell order and fresh rebuild results through destruction, moves and reorderings',()=>{
@@ -46,8 +36,8 @@ test('incremental queries preserve the old cell order and fresh rebuild results 
 
 test('only affected cells rebuild and unchanged metadata survives with stable instance rows',()=>{
   const a=box('a',1,2,1),b=box('b',25,2,25),c=box('c',26,3,26),meshes=[a,b,c];let index=build(meshes);const entry=index.byMesh.get(a),row=entry.row;
-  index=build([a,c],null,index);assert.equal(index.full,false);assert.equal(index.changedCells,1);assert.equal(index.byMesh.get(a),entry);assert.equal(entry.row,row);assert.equal(index.byMesh.get(b),undefined);
-  index=build([a,c],null,index);assert.equal(index.changedCells,0);assert.equal(index.changes.length,0);
+  index=build([a,c],null,index);assert.equal(index.delta.full,false);assert.equal(index.delta.removed.length,1);assert.equal(index.delta.added.length,0);assert.equal(index.byMesh.get(a),entry);assert.equal(entry.row,row);assert.equal(index.byMesh.get(b),undefined);
+  index=build([a,c],null,index);assert.equal(index.delta.added.length+index.delta.removed.length+index.delta.changed.length,0);
 });
 
 test('negative boundaries, large radii, moved identities and the four-cell overflow fallback stay exact',()=>{
@@ -55,11 +45,11 @@ test('negative boundaries, large radii, moved identities and the four-cell overf
   assert.deepEqual(ids(index.query([20,2,8],[1,0,0])),reference(meshes,[20,2,8],[1,0,0]));
   a.p=[16,9,-16];a.s=[6,6,6];a.detail=2;meshes=[b,a];index=build(meshes,null,index);
   assert.deepEqual(ids(index.query([0,3,0],[40,0,40])),reference(meshes,[0,3,0],[40,0,40]));assert.equal(index.byMesh.get(a).row[0],16);
-  meshes.push(box('outside',400,2,-400));index=build(meshes,null,index);assert.equal(index.full,true);assert.deepEqual(ids(index.query([400,2,-400],[2,0,0])),['outside']);
+  meshes.push(box('outside',400,2,-400));index=build(meshes,null,index);assert.equal(index.delta.full,false);assert.deepEqual(ids(index.query([400,2,-400],[2,0,0])),['outside']);
 });
 
 test('extreme extents use a bounded sparse fallback without losing query order',()=>{
-  const meshes=[box('left',-1000000,0,-1000000),box('right',1000000,0,1000000)];const index=build(meshes);assert.equal(index.dense,false);assert.deepEqual(ids(index.query([1000000,0,1000000],[5,0,0])),['right']);
+  const meshes=[box('left',-1000000,0,-1000000),box('right',1000000,0,1000000)];const index=build(meshes);assert.equal(index.entries.length,2);assert.deepEqual(ids(index.query([1000000,0,1000000],[5,0,0])),['right']);
 });
 
 

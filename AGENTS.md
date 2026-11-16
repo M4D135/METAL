@@ -9,3 +9,10 @@
 - Les actifs, shaders, personnages et sources sont originaux ; ne pas recopier le contenu de `.kkrieger`.
 - Conserver les identités et permissions des hébergements existants. Ne pas remplacer ou modifier un autre projet de l'utilisateur.
 - Documenter honnêtement ce qui a été testé dans le navigateur, en simulation, et ce qui nécessite encore un appareil réel.
+
+
+## Décision de David — 16 novembre 2026
+
+Aucun plafond de taille du code, du moteur ou des builds. Cette décision remplace les anciens budgets en octets ci-dessus. Le contenu graphique et sonore reste entièrement procédural. Mesurer les tailles et les performances, sans réduire les fonctionnalités pour respecter une limite de fichier.
+
+Les modules listés dans `FERRO.lock.json` sont désormais des copies exactes de la référence `EMPRISE/src/ferro`. Cette décision remplace les anciennes consignes de retouche locale du moteur : corriger la référence et propager une version qualifiée ; conserver les adaptations du jeu hors de ces modules.

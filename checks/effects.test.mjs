@@ -7,11 +7,11 @@ import {FRenderMesh} from './mesh-fixture.mjs';
 const scope={window:{FRender:{mesh:FRenderMesh}}};vm.runInNewContext(readFileSync(new URL('../src/effects.js',import.meta.url),'utf8'),scope);
 const Effects=scope.window.FEffects,camera={pos:[0,1.62,5],yaw:0,pitch:0,fov:74};
 const geometryScope={window:{}};vm.runInNewContext(readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8').replace('window.FRender={create,foliageTriangles};','window.FRender={create,foliageTriangles,geometry,pack};'),geometryScope);
-const geometry=geometryScope.window.FRender.geometry(),pack=geometryScope.window.FRender.pack,plain=v=>JSON.parse(JSON.stringify(v));
+const geometry=geometryScope.window.FRender.shared.geometry(),pack=geometryScope.window.FRender.shared.pack,plain=v=>JSON.parse(JSON.stringify(v));
 function freeze(v){if(v&&typeof v==='object'){Object.freeze(v);for(const x of Object.values(v))freeze(x);}return v;}
 function vertices(m){
   const range=geometry.ranges[m.shape],out=[],[rx,ry,rz]=m.r||[0,0,0],c=[rx,ry,rz].map(Math.cos),s=[rx,ry,rz].map(Math.sin),indices=new Set();
-  for(let j=range.offset/2;j<range.offset/2+range.count;j++)indices.add(geometry.indices[j]);
+  for(let j=range.offset/geometry.indices.BYTES_PER_ELEMENT;j<range.offset/geometry.indices.BYTES_PER_ELEMENT+range.count;j++)indices.add(geometry.indices[j]);
   for(const i of indices){let x=geometry.vertices[i*6]*m.s[0],y=geometry.vertices[i*6+1]*m.s[1],z=geometry.vertices[i*6+2]*m.s[2];[y,z]=[c[0]*y-s[0]*z,s[0]*y+c[0]*z];[x,z]=[c[1]*x+s[1]*z,-s[1]*x+c[1]*z];out.push([c[2]*x-s[2]*y+m.p[0],s[2]*x+c[2]*y+m.p[1],z+m.p[2]]);}
   return out;
 }

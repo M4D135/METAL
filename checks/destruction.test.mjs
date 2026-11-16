@@ -185,7 +185,7 @@ test('a long decorative fence fractures only the struck rail and keeps its unrel
 });
 
 test('whole detached primitives keep their source shape, tint, orientation and geometric volume',()=>{
-  const mesh={shape:'cylinder',p:[2,3,-1],s:[.32,4.8,.32],r:[.28,.61,-.35],mat:10,color:[.36,.23,.10]},world=deepFreeze({seed:18,meshes:[mesh],colliders:[],destructibles:[{id:'branch',kind:'tree',strength:1,meshes:[0],colliders:[]}]}),d=FDestruction.create(world),hit=d.hit([2,3,-1],4,[1,0,0]);
+  const mesh={shape:'cylinder',p:[2,3,-1],s:[.32,4.8,.32],r:[.28,.61,-.35],mat:10,color:[.36,.23,.10]},world=deepFreeze({seed:18,meshes:[mesh],colliders:[],destructibles:[{id:'branch',kind:'tree',strength:1,meshes:[0],colliders:[]}]}),d=FDestruction.create(world,{fragmentation:'source'}),hit=d.hit([2,3,-1],4,[1,0,0]);
   const chunks=hit.debris.filter(q=>q.structural);assert(chunks.length>=2);assert(chunks.every(q=>q.shape==='cylinder'&&q.material==='wood'&&q.sourceId==='branch'));
   for(const q of chunks){assert.deepEqual(Array.from(q.rotation),mesh.r);assert.deepEqual(Array.from(q.color),mesh.color);assert(q.angularVelocity.every(Number.isFinite));}
   assert(Math.abs(chunks.reduce((n,q)=>n+q.size.reduce((v,x)=>v*x,1),0)-mesh.s.reduce((v,x)=>v*x,1))<1e-8);

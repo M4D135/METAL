@@ -282,6 +282,12 @@
       for(let k=0;k<boxes.length;k++){
         const b=boxes[k],name='boxes['+k+']';
         if(!b||typeof b!=='object')wrong(where,name+' must be an object');
+        // RADE: retain urban box orientation instead of filling its enclosing AABB.
+        if(b.center||b.half||b.rotation){
+          if(!Array.isArray(b.center)||b.center.length!==3||!b.center.every(finite)||!Array.isArray(b.half)||b.half.length!==3||!b.half.every(v=>finite(v)&&v>0)||!Array.isArray(b.rotation)||b.rotation.length!==9||!b.rotation.every(finite))wrong(where,name+' invalid oriented box');
+          const r=b.rotation;for(let i=0;i<3;i++)for(let j=i;j<3;j++){let dot=0;for(let k=0;k<3;k++)dot+=r[k*3+i]*r[k*3+j];if(Math.abs(dot-(i===j?1:0))>1e-5)wrong(where,name+' rotation must be orthonormal');}
+          obb(s++,b.center,b.half,r,...surface(b,name));continue;
+        }
         for(const a of ['X','Y','Z']){
           if(!finite(b['min'+a])||!finite(b['max'+a]))wrong(where,name+'.min'+a+' and max'+a+' must be finite numbers');
           if(!(b['min'+a]<=b['max'+a]))wrong(where,name+' needs min'+a+' <= max'+a);
@@ -432,13 +438,29 @@
       out.handle=hit;out.distance=near;out.x=hit?ox+dx*near:ox;out.y=hit?oy+dy*near:oy;out.z=hit?oz+dz*near:oz;out.nx=nx;out.ny=ny;out.nz=nz;return out;
     }
     function sample(h,out){const i=slot(h);if(!i)return false;const b=i*6,p=i*3;for(let k=0;k<6;k++){out[k]=BB[b+k];out[6+k]=V[b+k];}out[12]=P[p];out[13]=P[p+1];out[14]=P[p+2];out[15]=IM[i]>0?1/IM[i]:Infinity;out[16]=FL[i];out[17]=MAT[i];return true;}
-    function body(h){
+    // Plain description of a body (tests, debugging; allocates). size = collision size (bounding box of a round body in
+    // its frame), realSize = given size; radius and height as given (null for a box, height null for a sphere).
+    function body(h){return bodyInto(h);}
+    // Optional caller-owned snapshot storage. No internal typed-array view is
+    // exposed; repeated reads reuse only this output and its six plain vectors.
+    // Callers retaining a pose across another read must keep their own output.
+    function bodyInto(h,out){
       const i=slot(h);if(!i)return null;
-      const p=i*3,v=i*6,f=FL[i],part=(A,k,n)=>Array.from(A.subarray(k,k+n));
-      return {handle:h,shape:SHAPES[SH[i]],size:[2*H[p],2*H[p+1],2*H[p+2]],radius:SH[i]?HR[p]:null,height:SH[i]===2?2*HR[p+1]:null,realSize:[2*HR[p],2*HR[p+1],2*HR[p+2]],
-        pos:part(P,p,3),quat:part(Q,i*4,4),vel:part(V,v,3),ang:part(V,v+3,3),mass:f&KINEMATIC?Infinity:Math.min(Math.max(MO[i],C.massMin),C.massMax),originalMass:MO[i],material:MAT[i],
-        friction:FR[i],restitution:RE[i],group:GRP[i],mask:MSK[i],kinematic:(f&KINEMATIC)!==0,asleep:(f&ASLEEP)!==0,pending:(f&PENDING)!==0,
-        lost:(f&LOST)!==0,hard:(f&HARD)!==0};
+      if(!out)out={};
+      const p=i*3,v=i*6,q=i*4,f=FL[i];
+      // Preserve body()'s property order as well as every numeric value: saved
+      // descriptions and deterministic JSON evidence remain byte-for-byte equal.
+      out.handle=h;out.shape=SHAPES[SH[i]];
+      const size=out.size||(out.size=[0,0,0]);size[0]=2*H[p];size[1]=2*H[p+1];size[2]=2*H[p+2];
+      out.radius=SH[i]?HR[p]:null;out.height=SH[i]===2?2*HR[p+1]:null;
+      const realSize=out.realSize||(out.realSize=[0,0,0]);realSize[0]=2*HR[p];realSize[1]=2*HR[p+1];realSize[2]=2*HR[p+2];
+      const pos=out.pos||(out.pos=[0,0,0]);pos[0]=P[p];pos[1]=P[p+1];pos[2]=P[p+2];
+      const quat=out.quat||(out.quat=[0,0,0,0]);quat[0]=Q[q];quat[1]=Q[q+1];quat[2]=Q[q+2];quat[3]=Q[q+3];
+      const vel=out.vel||(out.vel=[0,0,0]);vel[0]=V[v];vel[1]=V[v+1];vel[2]=V[v+2];
+      const ang=out.ang||(out.ang=[0,0,0]);ang[0]=V[v+3];ang[1]=V[v+4];ang[2]=V[v+5];
+      out.mass=f&KINEMATIC?Infinity:Math.min(Math.max(MO[i],C.massMin),C.massMax);out.originalMass=MO[i];out.material=MAT[i];
+      out.friction=FR[i];out.restitution=RE[i];out.group=GRP[i];out.mask=MSK[i];out.kinematic=(f&KINEMATIC)!==0;out.asleep=(f&ASLEEP)!==0;out.pending=(f&PENDING)!==0;
+      out.lost=(f&LOST)!==0;out.hard=(f&HARD)!==0;return out;
     }
     function pose(h,alpha,out){
       const i=slot(h);if(!i)return null;
@@ -1017,7 +1039,7 @@
       return (h>>>0).toString(16).padStart(8,'0');
     }
 
-    const w={config:C,fingerprint:fp,staticsHash:'',stats,events,joints,addJoint,removeJoint,validJoint:h=>jointSlot(h)>0,phaseMs:PH,setStatics,updateStatics:setStatics,addBody,removeBody,teleport,queryBox,wakeBox,ray,sample,valid,isAsleep,isLost,body,
+    const w={config:C,fingerprint:fp,staticsHash:'',stats,events,joints,addJoint,removeJoint,validJoint:h=>jointSlot(h)>0,phaseMs:PH,setStatics,updateStatics:setStatics,addBody,removeBody,teleport,queryBox,wakeBox,ray,sample,valid,isAsleep,isLost,body,bodyInto,
       impulse,setVelocity,setKinematic,blast,pose,matrix,step,snapshot,restore,hash};
     if(geometry)geometryApi=G.FPhysicsGeometry.attach(w,{P,H,HR,R,BB,SH,FL,GRP,GEN,V,count:()=>top});
     setStatics([],[]);

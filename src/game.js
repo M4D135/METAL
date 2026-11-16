@@ -1239,7 +1239,7 @@
   canvas.addEventListener('webglcontextrestored',()=>{sceneDirty=true;});
   canvas.addEventListener('webglcontextlost',()=>{if(mode==='playing')setMode('paused');});
   try{
-    renderer=FRender.create(canvas,{composition:true,dither:true,resolution:'native',renderScale:prefs.renderScale,onBudget:()=>{if(prefs.fpsLimit===-1&&autoCadence===60)cadencePending=30;}});renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
+    renderer=FRender.create(canvas,{sceneReflections:true,advancedSky:true,composition:true,dither:true,resolution:'native',renderScale:prefs.renderScale,onBudget:()=>{if(prefs.fpsLimit===-1&&autoCadence===60)cadencePending=30;}});renderer.resize(quality);document.body.dataset.renderer=renderer.stats.backend||'webgl2';
     savedRun=readSave();refreshContinue();
     if(preparationJobs.mode==='main')load(0);
     else prepareWorld(0,seed).then(()=>{if(!sim&&!preparationSerial&&titleScreen()){load(0);settings();}}).catch(error=>{console.error('METAL world preparation:',error);});

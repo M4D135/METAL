@@ -6,7 +6,7 @@ import {existsSync, readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
 
-const CONSTS = ('TEXTURE_2D FRAMEBUFFER ARRAY_BUFFER DEPTH_TEST CULL_FACE TRIANGLES STATIC_DRAW ' +
+const CONSTS = ('MAX_SAMPLES TEXTURE3 TEXTURE4 TEXTURE5 TEXTURE6 TEXTURE7 TEXTURE_2D_ARRAY SRGB8_ALPHA8 LINEAR_MIPMAP_LINEAR REPEAT COLOR COLOR_ATTACHMENT1 READ_FRAMEBUFFER DRAW_FRAMEBUFFER ' + 'TEXTURE_2D FRAMEBUFFER ARRAY_BUFFER DEPTH_TEST CULL_FACE TRIANGLES STATIC_DRAW ' +
   'RENDERBUFFER POLYGON_OFFSET_FILL TEXTURE0 TEXTURE1 TEXTURE2 FLOAT DEPTH_BUFFER_BIT UNSIGNED_BYTE ' +
   'RGBA8 RGBA NONE NEAREST LINEAR ELEMENT_ARRAY_BUFFER DYNAMIC_DRAW DEPTH_COMPONENT24 DEPTH_ATTACHMENT ' +
   'COLOR_ATTACHMENT0 CLAMP_TO_EDGE BLEND VERTEX_SHADER UNSIGNED_SHORT UNSIGNED_INT TEXTURE_WRAP_T ' +
@@ -41,7 +41,7 @@ export function makeGL(recorder, {reuse = false} = {}) {
   const obj = kind => ({__glid: ++serial, kind});
   const pool = new Map(), locations = new Map();
   const reused = (kind, key) => { let o = pool.get(key); if (!o) { o = obj(kind); pool.set(key, o); } return o; };
-  const NAMES = ('activeTexture attachShader bindBuffer bindFramebuffer bindRenderbuffer bindTexture ' +
+  const NAMES = ('renderbufferStorageMultisample texStorage3D texSubImage3D generateMipmap texParameterf disableVertexAttribArray vertexAttrib4f drawElements uniform2fv clearBufferfv blitFramebuffer ' + 'activeTexture attachShader bindBuffer bindFramebuffer bindRenderbuffer bindTexture ' +
     'bindVertexArray blendFunc bufferData bufferSubData checkFramebufferStatus clear clearColor compileShader ' +
     'createBuffer createFramebuffer createProgram createRenderbuffer createShader createTexture ' +
     'createVertexArray cullFace deleteBuffer deleteFramebuffer deleteProgram deleteRenderbuffer deleteShader ' +

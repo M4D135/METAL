@@ -135,7 +135,7 @@ test('foliage is one immutable closed crown shared with exact raycasts and every
     for(const draw of leaves){
       assert.equal(draw.indexCount,216);
       const actual=[];
-      for(let j=draw.indexOffset/2;j<draw.indexOffset/2+draw.indexCount;j+=3){
+      for(let j=draw.indexOffset/indexData.BYTES_PER_ELEMENT;j<draw.indexOffset/indexData.BYTES_PER_ELEMENT+draw.indexCount;j+=3){
         const triangle=[];for(let k=0;k<3;k++){const at=indexData[j+k]*6;triangle.push(Array.from(vertexData.slice(at,at+3)).join(','));assert(Math.abs(Math.hypot(...vertexData.slice(at+3,at+6))-1)<1e-5);}
         actual.push(triangle.sort().join('|'));
       }
@@ -152,12 +152,12 @@ test('transient lights are local, bounded and never reassign existing shadow slo
   const flashes=Array.from({length:10},(_,i)=>({p:[i,1,-3],color:[1,.4,.08],power:30,range:14}));
   flashes.unshift({p:[NaN,2,0],power:30,range:12},{p:[0,2,0],power:Infinity,range:12});
   g.calls.length=0;r.draw(camera,[],{...fx,lights:flashes});
-  assert.equal(r.stats.dynamicLights,3);assert.equal(g.uniforms.get('uLightCount')[0],12);assert.equal(g.uniforms.get('uLightRange').filter(v=>v>0).length,3);
+  assert.equal(r.stats.dynamicLights,8);assert.equal(g.uniforms.get('uLightCount')[0],12);assert.equal(g.uniforms.get('uLightRange').filter(v=>v>0).length,8);
   assert(g.uniforms.get('uLightPosition').every(Number.isFinite));assert.deepEqual(g.uniforms.get('uLightPosition').slice(0,6),first);
   assert.deepEqual(g.uniforms.get('uShadowMatrix'),shadow);assert.equal(r.stats.shadowMaps,maps);
   assert(!g.calls.some(c=>c.name==='bufferData'||c.name==='bufferSubData'||c.name.startsWith('create')),'moving light parameters need no new meshes, buffers or atlas');
   r.draw(camera,[],fx);assert.equal(r.stats.dynamicLights,0);assert(g.uniforms.get('uLightRange').every(v=>v===0),'expired flames cannot leave phantom lighting');
-  r.resize('low');r.draw(camera,[],{...fx,lights:flashes});assert.equal(r.stats.dynamicLights,2);assert.equal(g.uniforms.get('uLightCount')[0],6);r.dispose();
+  r.resize('low');r.draw(camera,[],{...fx,lights:flashes});assert.equal(r.stats.dynamicLights,4);assert.equal(g.uniforms.get('uLightCount')[0],6);r.dispose();
 });
 
 test('Canvas transient lighting reaches cached surfaces and expires outside its real range',()=>{

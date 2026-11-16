@@ -190,7 +190,7 @@ function navigationGraph(cells,width,testEdge){
     const initialArmorCap=100,initialArmor=armorEnabled?copyArmor(options.armor===undefined?{version:1,points:0}:options.armor,200):null;
     if(armorEnabled&&!initialArmor)throw new Error('Invalid armor');
     if(initialArmor)initialArmor.points=Math.min(initialArmor.points,initialArmorCap);
-    let destruction=G.FDestruction?.create(world,destructionRules)||null,trapStates=[];
+    let destruction=G.FDestruction?.create(world,{...destructionRules,fragmentation:'source'})||null,trapStates=[];
     // Static height rectangles share a small spatial index. Breach updates never
     // invalidate terrain, so path probes no longer rescan the entire landscape.
     const floorGX=Math.floor(world.bounds.minX/8),floorGZ=Math.floor(world.bounds.minZ/8),floorGW=Math.floor(world.bounds.maxX/8)-floorGX+1,floorGD=Math.floor(world.bounds.maxZ/8)-floorGZ+1;
@@ -2703,7 +2703,7 @@ function navigationGraph(cells,width,testEdge){
         }else require(a.armor===undefined&&a.armorPickupRemaining===undefined);
         let difficulty=0,director={...s.director};
         if(data.directorVersion===1){const d=a.director;require(integer(a.difficulty,0,2)&&d&&number(d.pressure,0,1)&&number(d.tension,0,1)&&HORROR.includes(d.eventType)&&number(d.eventAge,0,1e7)&&number(d.nextEvent,0,1e7)&&integer(d.events,0,1e9)&&number(d.progress,0,1)&&integer(d.tier,0,6)&&number(d.grace,0,10)&&number(d.eventX,b.minX,b.maxX)&&number(d.eventZ,b.minZ,b.maxZ)&&number(d.eventY,-1000,1000)&&number(d.eventIntensity,0,1));difficulty=a.difficulty;director=pick(d,DIRECTOR);}else require(a.difficulty===undefined&&a.director===undefined&&!horror);
-        let candidate=G.FDestruction?.create(world,destructionRules)||null;
+        let candidate=G.FDestruction?.create(world,{...destructionRules,fragmentation:'source'})||null;
         if(data.destructionVersion===1){require(candidate?candidate.restore(data.destruction,{exactRevision:true}):data.destruction===null);}else require(data.destruction===undefined);
         const savedSolids=candidate?.colliders||world.colliders;
         require(number(a.time,0,1e7)&&number(a.elapsed,0,1e7));

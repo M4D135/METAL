@@ -35,10 +35,10 @@ export function primitivePoints(root=new URL('../src/',import.meta.url)) {
   const context={window:{}};vm.createContext(context);
   const source=readFileSync(new URL('renderer.js',root),'utf8').replace('window.FRender={create,foliageTriangles};','window.FRender={create,foliageTriangles,geometry};');
   vm.runInContext(source,context,{filename:'renderer.js'});
-  const g=context.window.FRender.geometry(false),result={};
+  const g=context.window.FRender.shared.geometry(false),result={};
   for(const [name,range] of Object.entries(g.ranges)){
     const seen=new Map();
-    for(let j=range.offset/2;j<range.offset/2+range.count;j++){
+    for(let j=range.offset/g.indices.BYTES_PER_ELEMENT;j<range.offset/g.indices.BYTES_PER_ELEMENT+range.count;j++){
       const i=g.indices[j]*6,p=Array.from(g.vertices.slice(i,i+3));seen.set(p.join(','),p);
     }
     result[name]=Array.from(seen.values());

@@ -6,7 +6,7 @@
    hasard, ni ordre d'itération dépendant de l'environnement. */
 (function () {
   'use strict';
-  const FMath = window.FMath;
+  const FMath = (typeof window!=='undefined'?window:globalThis).FMath;
   const FPassages = {};
 
   // Grille d'occupation d'un corps de rayon `radius` et de hauteur `height`.
@@ -184,5 +184,5 @@
     return [...used].sort((a, b) => a - b);
   };
 
-  window.FPassages = FPassages;
+  (typeof window!=='undefined'?window:globalThis).FPassages = FPassages;
 }());

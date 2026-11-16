@@ -36,16 +36,14 @@ const meshes=[{shape:'box',p:[0,-.1,0],s:[400,.2,400],mat:2,ground:true}];
 for(let i=0;i<3;i++)for(let d=0;d<3;d++)meshes.push({shape:'box',p:[i*4,1.5,0],s:[2,3,2],mat:3,detail:d});
 const camera={pos:[0,1.6,14],yaw:0,pitch:-.05,fov:74};
 
-test('les lignes statiques portent le niveau de détail, les lignes dynamiques restent à zéro',()=>{
+test('le CPU filtre les niveaux statiques et garde les instances dynamiques',()=>{
   const g=gpu(),r=g.renderer;
   r.setWorld(meshes,[],environment);r.resize('auto');
   r.draw(camera,[],{time:1,shadows:false,bloom:false});
   const statiques=g.rows.filter(row=>row[1]>=1&&row[1]<=3&&Math.abs(row[2])<1e-9);
   assert(statiques.length>0,'les boîtes statiques doivent être dessinées');
-  const niveaux=new Set(statiques.map(row=>Math.floor(row[11]/8)));
-  assert(niveaux.has(1)&&niveaux.has(2)&&niveaux.has(3),'les trois niveaux doivent être encodés (détail+1)');
-  const drapeaux=new Set(statiques.map(row=>row[11]%8));
-  assert(drapeaux.size===1,'les bits de drapeaux ne doivent pas être touchés par l encodage du niveau');
+  assert.equal(statiques.length,8,'the farthest detail-2 box is culled before upload');
+  assert(statiques.every(row=>row[11]<8),'surface bits are reserved for material/overlay flags in FERRO');
   g.rows.length=0;
   const dynamique=[{shape:'box',p:[0,1,0],s:[1,1,1],mat:3,detail:2},{shape:'sphere',p:[1,1,0],s:[1,1,1],mat:4,detail:1}];
   r.draw(camera,dynamique,{time:1,shadows:false,bloom:false});
