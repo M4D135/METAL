@@ -235,9 +235,9 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
 #intro-audio[hidden]{display:none}
 /* Attract demo: no legend, and no crosshair in the cinematic shots. */
 body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes]) #crosshair{display:none}
-/* m4d135 : signature de l'écran titre (menu) */
-.brand-symbol{display:none}.m4d-signature{display:inline-flex;align-items:center;gap:.5em;text-transform:none;opacity:.75;transition:opacity .2s}.m4d-signature:hover,.m4d-signature:focus-visible{opacity:1}.m4d-signature svg{width:1.3em;height:1.3em;margin:-.15em 0;flex:none}
-.brand-top .m4d-signature{margin-left:auto;margin-right:0}
+
+.brand-symbol{display:none}
+
 </style>
 </head>
 <body data-state="menu">
@@ -247,7 +247,7 @@ body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes])
   <section id="intro" class="screen">
     <div class="brand-top"><span class="brand-symbol">M</span><span>METAL<span class="small">FPS PROCÉDURAL</span></span><span class="edition">08 / ARSENAL <b class="game-version" aria-label="Version 0.12.1">V0.12.1</b></span></div>
     <div class="intro-content">
-      <h1>METAL</h1><span class="m4d-pied"><a id="m4d-zip" class="m4d-zip" href="#" hidden data-nom="METAL" data-titre="METAL" data-resume="Procedural FPS · 18 mondes · 6 chapitres · 100% procédural" title="Le jeu complet en une seule page HTML, jouable hors ligne">TÉLÉCHARGER <b data-m4d-version></b> · ZIP</a><a class="m4d-signature" href="https://github.com/M4D135" target="_blank" rel="noopener" title="m4d135 sur GitHub"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle cx="32" cy="32" r="32" fill="#b7492a"/></svg>m4d135</a></span>
+      <h1>METAL</h1><span class="m4d-pied">m4d135</span></span>
       <div class="intro-actions"><button id="start" class="primary">Lancer l’assaut <span class="arrow-icon" aria-hidden="true"></span></button><button id="resume-expedition" class="secondary" hidden>Continuer l’expédition <span id="save-label"></span></button></div>
       <div class="intro-meta"><span>18 MONDES</span><i></i><span>6 CHAPITRES</span><i></i><span>100 % PROCÉDURAL</span></div>
     </div>
