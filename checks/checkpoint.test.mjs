@@ -1055,6 +1055,8 @@ test('The character left behind, heavy or drone, stays whole where it was left; 
   assert.equal(s.activeProfile,'heavy','the expedition starts with the heavy');
   const light=()=>app.frames.at(-1).meshes.filter(m=>m.playerAvatar==='light'),heavy=()=>app.frames.at(-1).meshes.filter(m=>m.playerAvatar==='heavy');
   assert(light().length>20,'the drone waits above the heavy, whole');assert.equal(heavy().length,0,'first person: no own body');
+  const shield=()=>app.frames.at(-1).meshes.filter(m=>m.supportPart==='parked-shield');
+  assert(shield().length===1&&shield()[0].shape==='sphere'&&shield()[0].alpha>0&&shield()[0].alpha<1,'the parked drone is protected by a transparent round shield');
   const centre=meshes=>meshes.reduce((c,m)=>c.map((v,k)=>v+m.p[k]/meshes.length),[0,0,0]),parked=s.profiles.light.position;
   assert(Math.hypot(centre(light())[0]-parked.x,centre(light())[2]-parked.z)<.5);
   // Walk away facing the drone: model on screen, no marker over it.
@@ -1065,5 +1067,6 @@ test('The character left behind, heavy or drone, stays whole where it was left; 
   // Fly the drone away: the heavy now waits whole where he stood.
   app.key('KeyT');app.key('KeyT',false);for(let i=0;i<10;i++)app.frame(1000/60);assert.equal(s.activeProfile,'light');
   const stand=s.profiles.heavy.position;assert(heavy().length>20,'the parked heavy is drawn whole');
+  assert(shield().length===1&&shield()[0].shape==='sphere'&&shield()[0].alpha>0&&shield()[0].alpha<1,'the parked heavy is protected by a transparent round shield');
   assert(Math.hypot(centre(heavy())[0]-stand.x,centre(heavy())[2]-stand.z)<1);
 });

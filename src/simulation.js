@@ -394,7 +394,7 @@ function navigationGraph(cells,width,testEdge){
       // The parked drone waits above the heavy's head, never inside his body,
       // up to one metre below any ceiling over the spawn.
       if(initialProfiles.active==='heavy'){let lift=1;for(const c of world.colliders||[])if(c.minY>=p.y+1.8-1e-7&&c.minY<p.y+lift+1.8&&p.x+.28>c.minX&&p.x-.28<c.maxX&&p.z+.28>c.minZ&&p.z-.28<c.maxZ)lift=Math.max(0,c.minY-1.8-p.y);if(lift>0)Object.assign(initialProfiles.classes.light.position,{y:p.y+lift,airborne:true});}
-      s.activeProfile=initialProfiles.active;s.profiles=initialProfiles.classes;s.jetpack={...initialProfiles.jetpack,capacity:G.MetalProfiles.capacity(initialProfiles.classes.light.xp),active:false};s.economy=s.profiles[s.activeProfile].economy;}
+      s.activeProfile=initialProfiles.active;s.profiles=initialProfiles.classes;s.jetpack={...initialProfiles.jetpack,capacity:G.MetalProfiles.capacity(initialProfiles.classes.light.xp),active:false};s.economy=s.profiles[s.activeProfile].economy;s.parkedShield=parkedShieldState();}
     const encounterMap=new Map(s.encounters.map(q=>[q.id,q])),enemyEncounter=new Map();
     // SIM-06: encounter index per enemy, same last-wins order as the map above.
     const enemyEncounterIndex=new Int32Array(s.enemies.length).fill(-1);
@@ -1084,13 +1084,19 @@ function navigationGraph(cells,width,testEdge){
       s.jetpack.capacity=G.MetalProfiles.capacity(s.profiles.light.xp);
       if(G.MetalProfiles.level(profile.xp)!==old){if(id===s.activeProfile)profile.economy=s.economy;profile.economy.credits=Math.min(1000000000,profile.economy.credits+75*(G.MetalProfiles.level(profile.xp)-old));emit('profileLevel',{profile:id,level:G.MetalProfiles.level(profile.xp)});}
     }
+    function parkedShieldState(){
+      if(!profilesEnabled)return null;
+      const other=s.activeProfile==='light'?'heavy':'light';
+      return {profile:other,invincible:true};
+    }
+    function invulnerable(id=s.activeProfile){return profilesEnabled&&id!==s.activeProfile;}
     function switchProfile(){
       if(!profilesEnabled||s.dead||s.won)return false;
       cancelSupportAction();
       exportProfiles();const from=s.activeProfile,to=from==='light'?'heavy':'light',next=s.profiles[to];
       const healthRatio=p.hp/s.maxHp;s.activeProfile=to;s.economy=next.economy;stats=G.FEconomy.stats(s.economy);s.maxHp=stats.maxHp;p.hp=Math.min(s.maxHp,healthRatio*s.maxHp);
       s.weapon=s.equipment.right=s.inventory.weapons[next.weapon]?next.weapon:4;s.equipment.left=to!=='light'&&next.left!==null&&s.inventory.weapons[next.left]?next.left:null;
-      Object.assign(p,next.position);stopMotion(true);jumpBuffer=coyote=0;jumpWasPressed=false;p.dashing=0;clipEscape=boundaryAt(p.x,p.z);s.jetpack.active=false;mirrorHeat();emit('profileSwitch',{from,to,x:p.x,y:p.y,z:p.z});return true;
+      Object.assign(p,next.position);stopMotion(true);jumpBuffer=coyote=0;jumpWasPressed=false;p.dashing=0;clipEscape=boundaryAt(p.x,p.z);s.jetpack.active=false;mirrorHeat();s.parkedShield=parkedShieldState();emit('profileSwitch',{from,to,x:p.x,y:p.y,z:p.z});return true;
     }
     function exportInventory(){return {weapons:s.inventory.weapons.slice(),ammo:s.inventory.ammo.slice()};}
     function exportCampaign(){return {version:s.campaign.version,discovered:s.campaign.discovered.slice(),...(bossProgression?{claimedBossRewards:s.campaign.claimedBossRewards.slice()}:{})};}
@@ -3169,7 +3175,7 @@ function navigationGraph(cells,width,testEdge){
           return bullet;
         });
         rigid=savedRigid;if(supportDrone)s.support=savedSupport;Object.assign(p,pick(v,PLAYER));Object.assign(s,pick(a,NUMBERS),{difficulty,director,economy,inventory,loot,won:a.won,dead:a.dead,bossAlive:a.bossAlive,enemies,bullets,mechanisms,doors,lifts,pipes,traps,projectiles,bossAttacks});stats=savedStats;ammoCaps=savedCaps;s.maxHp=stats.maxHp;
-        if(profilesEnabled){s.activeProfile=profiles.active;s.profiles=profiles.classes;s.profiles[s.activeProfile].economy=s.economy;s.jetpack={...profiles.jetpack,capacity:G.MetalProfiles.capacity(profiles.classes.light.xp),active:false};profileWasPressed=false;jetSoundWait=profileHintWait=0;}
+        if(profilesEnabled){s.activeProfile=profiles.active;s.profiles=profiles.classes;s.profiles[s.activeProfile].economy=s.economy;s.jetpack={...profiles.jetpack,capacity:G.MetalProfiles.capacity(profiles.classes.light.xp),active:false};s.parkedShield=parkedShieldState();profileWasPressed=false;jetSoundWait=profileHintWait=0;}
         if(campaign){s.campaign=campaignState;s.adaptation=adaptation;maxCombat=savedCombat;bossHpFactor=savedBossFactor;adaptationKey=campaignArsenalKey(inventory);}
         if(armorEnabled)s.armor=armor;
         if(arsenal){s.equipment={right:equipment.right,left:equipment.left};for(let i=0;i<weaponSlots;i++)weaponWait[i]=savedWeaponWait[i];s.weaponHeat=savedHeat;s.weaponOverheated=savedOverheated;thermalSerialized=savedThermalFormat;weaponCarry.fill(0);mirrorHeat();s.leftFlash=0;}
@@ -3187,7 +3193,7 @@ function navigationGraph(cells,width,testEdge){
     if(rigidEnabled)rigid=G.MetalPhysics.create(world,solids,{state:s,emit,explode,blocked,hurt,damageEnemy,navMark});
     if(baked){graph.adopt(baked);navEpoch=baked.epoch;if(rigid)s.aiStats.navPending=0;}else{if(rigid)refreshNav(false);graph.flush();}clipEscape=boundaryAt(p.x,p.z);
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
-    return {state:s,get destruction(){return destruction;},weakPoints,get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,cancelSupportAction,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
+    return {state:s,get destruction(){return destruction;},weakPoints,get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,invulnerable,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,cancelSupportAction,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
   G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor,wreckage};
 })(typeof window!=='undefined'?window:globalThis);

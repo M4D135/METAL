@@ -764,6 +764,11 @@
         const distance=Math.hypot(pose.x-camera.pos[0],(pose.y||0)+1.4-camera.pos[1],pose.z-camera.pos[2]),weapon=live?s.weapon:s.profiles[id]?.weapon;
         if(id==='light')out.push(...MetalAvatars.drone(pose,{time:t,weapon,forward:live?loc.forward:0,strafe:live?loc.strafe:0,boosting:live&&!!s.jetpack?.active,flash:live?Math.max(s.flash||0,s.leftFlash||0):0,quality,backend,seed:live?0:2.1}));
         else out.push(...MetalAvatars.heavy(pose,{time:t,weapon,speed:live?loc.speed:0,phase:live?(avatarGait.back?-1:1)*(loc.stridePhase||0):0,blend:live?loc.moveBlend:0,legYaw:live?avatarGait.legYaw:0,distance,flash:live?s.flash:0,quality,backend}));
+        if(!live&&s.parkedShield?.profile===id&&s.parkedShield.invincible){
+          const shield=m('sphere',[pose.x,(pose.y||0)+.95,pose.z],[1.28,1.52,1.28],4,[0,0,0],.18);
+          shield.color=id==='light'?[.44,.88,.8]:[1,.71,.43];shield.fx=true;shield.overlay=true;shield.surface='object';
+          shield.alpha=.34+.12*Math.sin(t*3.2);shield.supportPart='parked-shield';out.push(shield);
+        }
       };
       if(thirdPerson)character(active,p,true);
       if(parked&&nearby(parked.x,parked.z))character(other,parked,false);
