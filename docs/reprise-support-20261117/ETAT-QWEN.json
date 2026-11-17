@@ -43,7 +43,9 @@
     "L'aide clavier se masque, se réaffiche et persiste après rechargement.",
     "Les trois viewport testés ne sont pas défilables pendant le jeu.",
     "L'overlay développeur affiche des compteurs séparés et laisse le GPU à null/N/D.",
-    "Le banc A/B CPU est apparié, avec échauffement, répétitions alternées, médianes et dispersion."
+    "Le banc A/B CPU est apparié, avec échauffement, répétitions alternées, médianes et dispersion.",
+    "Le rendu est validé 55/55 sur SwiftShader, NVIDIA GB10 et Apple M5.",
+    "Les soaks démo et boss n'ont signalé ni erreur, ni mort, ni arrêt bloqué."
   ],
   "testsExecuted": [
     {
@@ -123,6 +125,41 @@
       "gzipBytes": 3217340,
       "sha256": "65fc54fecac5ef2a8528c93bfa2e8fb061e7b8c205cc4b84d82f3c5b04910ca1",
       "externalAssets": 0
+    },
+    {
+      "name": "render-check mac apple",
+      "command": "npm run render-check",
+      "host": "Mac",
+      "checks": 55,
+      "passed": 55,
+      "failed": 0,
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)"
+    },
+    {
+      "name": "demo-soak 900s",
+      "command": "node --expose-gc tools/demo-soak.mjs 900 /tmp/opencode/metal/demo-soak-900.json",
+      "scenes": 29,
+      "steps": 54000,
+      "deaths": 0,
+      "stalls": 0,
+      "errors": 0,
+      "stepP50Ms": 1.640705000005255,
+      "stepP99Ms": 2.9086740000002465,
+      "heapStartBytes": 26452352,
+      "heapEndBytes": 36508232
+    },
+    {
+      "name": "boss-soak 300s",
+      "command": "BOSS_ONLY=1 node --expose-gc tools/demo-soak.mjs 300 /tmp/opencode/metal/demo-soak-boss.json",
+      "scenes": 5,
+      "steps": 18000,
+      "bossKills": 4,
+      "deaths": 0,
+      "stalls": 0,
+      "errors": 0,
+      "stepP50Ms": 2.093281000001298,
+      "stepP99Ms": 7.4122280000010505,
+      "stepMaxMs": 40.315795000000435
     }
   ],
   "nextTests": [

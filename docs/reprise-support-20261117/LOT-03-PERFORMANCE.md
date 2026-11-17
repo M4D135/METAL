@@ -30,4 +30,7 @@ Module(s), tests, traces brutes, comparaison honnête et limites. Ne pas transfo
 - Rapport brut : `docs/reprise-support-20261117/ab-budgets-latest.json` et le fichier daté du 17/11/2026.
 - Mesure Spark Node 24.18, Linux arm64, 5 répétitions de 12 s, baseline = tête de branche `9476657`, chantier = correction courante : médiane `0,1749 ms/pas` contre `0,1730 ms/pas`, soit `-1,09 %` de temps CPU de simulation. Ce n'est pas une mesure de FPS matériel.
 - `npm run render-check` sur Spark : 55/55 en SwiftShader, puis 55/55 avec `--angle vulkan` sur ANGLE/NVIDIA GB10. Rapport : `docs/reprise-support-20261117/render-spark-vulkan.json`.
+- `npm run render-check` sur Mac : 55/55 avec `--use-angle=metal` sur ANGLE/Apple M5.
+- Soak démo Spark : 900 s, 29 scènes, 54 000 pas, 0 mort, 0 arrêt bloqué, 0 erreur ; `p50` simulation `1,64 ms`, `p99` `2,91 ms`, tas suivi de `26,45 MiB` à `36,51 MiB` avec GC périodique.
+- Soak boss Spark : 300 s, 5 scènes boss, 4 boss tués, 0 mort, 0 arrêt bloqué, 0 erreur ; `p99` simulation `7,41 ms`, `max` `40,32 ms`.
 - Limites : le banc A/B reste un mesure CPU Node ; le GPU matériel est validé en rendu et absence d'erreur, pas en FPS GPU horodaté. Pas de banc apparié WebGL sur GPU Apple, pas de téléphone ni manette physique.
