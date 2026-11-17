@@ -26,4 +26,6 @@ Le checkpoint 0.12.9 se construit mais possède un échec connu de continuation 
 - Suite npm complète sur Spark : 1396 tests annoncés, 1395 réussites, 0 échec, 0 annulé, 0 ignoré.
 - Navigateur : Chrome headless 151.0.7922.137, SwiftShader/WebGL2, 0 erreur console, captures et rapport JSON produits.
 - A/B CPU : `-1,09 %` médian de temps de simulation contre la tête de branche, sans annonce de FPS matériel.
-- Publication : branche poussée via le Mac, puis déploiement sur l'hébergement existant uniquement après vérification des empreintes. `main` n'est pas modifié tant que la fusion qualifiée n'est pas explicitement validée.
+- Publication : branche et `main` poussés via le Mac sur `de2828ec1d08fbb2b1ed060c56585c986496eaea`. Contrôle Mac : Node v24.18.0, build identique, npm test 1396 tests, 1395 réussites, 0 échec.
+- Déploiement : `fps.estrasse.fr` basculé atomiquement sur `/home/ddd/apps/fps/releases/de2828ec1d08fbb2b1ed060c56585c986496eaea`. URL servie : 13 685 006 octets, SHA-256 `74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22`, `Version 0.12.9`.
+- Retour arrière disponible : l'ancienne release `/home/ddd/apps/fps/releases/b82379b` reste en place.

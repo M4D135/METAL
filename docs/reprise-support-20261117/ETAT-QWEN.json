@@ -6,6 +6,26 @@
   "baseCommit": "94766578610fe700df8ac3c1c911882c5e53b695",
   "publishedBase": "351f2ccda91f0ba3c0f962316e714e9d7c20e8ac",
   "activeLot": "04 integration",
+  "publication": {
+    "status": "published",
+    "mainCommit": "de2828ec1d08fbb2b1ed060c56585c986496eaea",
+    "branchCommit": "de2828ec1d08fbb2b1ed060c56585c986496eaea",
+    "url": "https://fps.estrasse.fr/",
+    "servedBytes": 13685006,
+    "servedSha256": "74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22",
+    "previousRelease": "/home/ddd/apps/fps/releases/b82379b",
+    "releasePath": "/home/ddd/apps/fps/releases/de2828ec1d08fbb2b1ed060c56585c986496eaea",
+    "macVerification": {
+      "node": "v24.18.0",
+      "npmTest": {
+        "tests": 1396,
+        "pass": 1395,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      }
+    }
+  },
   "reservedFiles": [
     "package.json",
     "tools/build.py",
@@ -72,12 +92,10 @@
     }
   ],
   "nextTests": [
-    "Contrôle Mac du bundle reçu, build et npm test sur le Mac avant push.",
-    "Vérification HTTPS de l'URL réellement servie après déploiement.",
-    "Essais restants non qualifiés : GPU matériel, manette physique, téléphone réel, Safari/Firefox."
+    "Essais restants non qualifiés : GPU matériel, manette physique, téléphone réel, Safari/Firefox.",
+    "Essai humain du cockpit, du piratage maintenu et des sauvegardes anciennes sur un poste de jeu réel."
   ],
   "blockers": [
-    "Aucun blocage technique local connu après la suite npm verte.",
-    "La publication externe doit passer par le Mac pour GitHub et par la procédure VPS/Caddy pour fps.estrasse.fr."
+    "Aucun blocage de publication connu. La branche est poussée, main est avancé et fps.estrasse.fr sert le build vérifié."
   ]
 }
