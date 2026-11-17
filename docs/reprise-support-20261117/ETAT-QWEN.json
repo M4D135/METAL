@@ -8,19 +8,19 @@
   "activeLot": "04 integration",
   "publication": {
     "status": "published",
-    "releaseCommit": "b10a5d3a548317c28ece7ff7cf6a7e27c2682b58",
-    "buildCommit": "b10a5d3a548317c28ece7ff7cf6a7e27c2682b58",
+    "releaseCommit": "9bb45a20ab72710f686a3e859ddb1ece80fdd1d5",
+    "buildCommit": "9bb45a20ab72710f686a3e859ddb1ece80fdd1d5",
     "note": "main peut recevoir des commits de documentation après la bascule ; la release servie reste identifiée par releaseCommit et l'empreinte du bundle.",
     "url": "https://fps.estrasse.fr/",
-    "servedBytes": 13685038,
-    "servedSha256": "65fc54fecac5ef2a8528c93bfa2e8fb061e7b8c205cc4b84d82f3c5b04910ca1",
-    "previousRelease": "/home/ddd/apps/fps/releases/93e110412eece2da9e8aef714013ec89e5680e09",
-    "releasePath": "/home/ddd/apps/fps/releases/b10a5d3a548317c28ece7ff7cf6a7e27c2682b58",
+    "servedBytes": 13685841,
+    "servedSha256": "86b9836afcf08c9f6a6f2421caa4098865469a02944d6fb0e0c4ad9103392714",
+    "previousRelease": "/home/ddd/apps/fps/releases/b10a5d3a548317c28ece7ff7cf6a7e27c2682b58",
+    "releasePath": "/home/ddd/apps/fps/releases/9bb45a20ab72710f686a3e859ddb1ece80fdd1d5",
     "macVerification": {
       "node": "v24.18.0",
       "npmTest": {
-        "tests": 1396,
-        "pass": 1395,
+        "tests": 1397,
+        "pass": 1396,
         "fail": 0,
         "cancelled": 0,
         "skipped": 0
@@ -45,7 +45,8 @@
     "L'overlay développeur affiche des compteurs séparés et laisse le GPU à null/N/D.",
     "Le banc A/B CPU est apparié, avec échauffement, répétitions alternées, médianes et dispersion.",
     "Le rendu est validé 55/55 sur SwiftShader, NVIDIA GB10 et Apple M5.",
-    "Les soaks démo et boss n'ont signalé ni erreur, ni mort, ni arrêt bloqué."
+    "Les soaks démo et boss n'ont signalé ni erreur, ni mort, ni arrêt bloqué.",
+    "Le personnage abandonné est marqué invincible et rendu avec une sphère transparente colorée."
   ],
   "testsExecuted": [
     {

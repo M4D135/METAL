@@ -6,7 +6,7 @@
 
 Branche de travail : `wip/support-drone-cockpit-20261117`.
 Base publiée précédente : `351f2ccda91f0ba3c0f962316e714e9d7c20e8ac` (METAL 0.12.8).
-Release servie : `b10a5d3a548317c28ece7ff7cf6a7e27c2682b58` (bundle vérifié, favicon inline sans asset externe).
+Release servie : `9bb45a20ab72710f686a3e859ddb1ece80fdd1d5` (bouclier du personnage abandonné, bundle vérifié).
 
 Le code en cours a été retrouvé localement puis transmis sous contrôle des empreintes de chaque fichier. Le transport sert uniquement à publier les vrais fichiers du chantier et à reconstruire `dist/index.html` et `SIZE.json`. Après matérialisation, lire `CI-RESULT.json`, `source-manifest.json` et `tests-checkpoint.tap`. Le workflow est volontairement rouge si les tests échouent même lorsque le push du checkpoint a réussi. Ce n'est ni une fusion automatique, ni une tâche récurrente.
 
@@ -41,7 +41,7 @@ HTML local reconstruit : 13 683 662 octets bruts ; gzip 3 216 845 octets ; SHA-2
 - Build courant : `dist/index.html` 13 685 006 octets, gzip 3 217 314 octets, SHA-256 `74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22`.
 - Contrôle Mac : Node v24.18.0, build identique, npm test 1396 tests, 1395 réussites, 0 échec.
 - GPU Spark : `npm run render-check` 55/55 en SwiftShader et 55/55 en ANGLE/NVIDIA GB10 ; validation navigateur locale Vulkan sans erreur console.
-- Publication : branche et `main` poussés via le Mac ; `https://fps.estrasse.fr/` sert la release `b10a5d3a548317c28ece7ff7cf6a7e27c2682b58` (`Version 0.12.9`, SHA-256 `65fc54fecac5ef2a8528c93bfa2e8fb061e7b8c205cc4b84d82f3c5b04910ca1`).
+- Publication : branche et `main` poussés via le Mac ; `https://fps.estrasse.fr/` sert la release `9bb45a20ab72710f686a3e859ddb1ece80fdd1d5` (`Version 0.12.9`, SHA-256 `86b9836afcf08c9f6a6f2421caa4098865469a02944d6fb0e0c4ad9103392714`).
 - Cette reprise qualifie la publication sur les environnements testés, pas les appareils non testés : GPU matériel, manette physique, téléphone réel, Safari/Firefox restent à valider.
 
 ## Lots pour des discussions séparées

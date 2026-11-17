@@ -27,5 +27,6 @@ Captures réellement rendues avec le nouveau code, tests d'entrées/options et d
 - L'aide clavier peut être masquée, réaffichée et persiste après rechargement via `ferro-settings`.
 - Sur les trois viewport, le corps du document n'est pas défilable pendant le jeu.
 - Deuxième passage navigateur sur GPU matériel Spark : `METAL_BROWSER_ANGLE=vulkan`, ANGLE/NVIDIA GB10, `0` message et `0` erreur console, rapport `docs/reprise-support-20261117/browser/browser-report-vulkan.json`.
+- Le personnage abandonné reçoit une sphère transparente colorée (`supportPart='parked-shield'`) et l'état `parkedShield.invincible` ; le lourd est orange, le drone cyan. Les tests vérifient l'état après changement, restauration et rendu du maillage.
 - Le favicon absent provoquait des `404` sur l'URL publique ; une icône vide inline (`data:,`) a été ajoutée dans `src/index.html`. Après redéploiement, `https://fps.estrasse.fr/` est repassé en CDP Vulkan/NVIDIA avec `0` message et `0` erreur console.
 - Limites : pas une manette physique, pas un téléphone réel, pas Safari/Firefox. Les bindings gamepad manquants (`melee`, `leftHand`, `weapon5`) restent conformes au layout approuvé épinglé par `checks/default-controls.test.mjs` ; aucun changement de defaults n'a été fait sans décision explicite.
