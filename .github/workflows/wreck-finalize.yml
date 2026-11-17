@@ -1,0 +1,137 @@
+name: METAL recovered combat final qualification
+on:
+  push:
+    branches: [codex/wrecks-combat-demos-20261117]
+    paths: ['.github/workflows/wreck-finalize.yml']
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: metal-wreck-finalize
+  cancel-in-progress: false
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Recover exact source and independently check prior evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/metal-evidence/previous
+          curl --fail --silent --show-error --location -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' 'https://api.github.com/repos/M4D135/METAL/actions/artifacts/14312332084/zip' -o /tmp/prior.zip
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,zipfile,subprocess,json,re
+          assert hashlib.sha256(Path('/tmp/prior.zip').read_bytes()).hexdigest()=='12ad0169599bfe0b670111f4bd7805892c23cf42302b7724ee0ddcedd998b114'
+          with zipfile.ZipFile('/tmp/prior.zip') as z:
+              for src,dst in [('source.patch','source.patch'),('previous/tests.txt','tests.txt'),('previous/combat-soak.json','combat-soak.json'),('browser/report.json','browser-report.json'),('browser/combat-first-person.png','combat-first-person.png'),('browser/combat-follow-camera.png','combat-follow-camera.png'),('SIZE.json','SIZE.json')]:
+                  (Path('/tmp/metal-evidence/previous')/dst).write_bytes(z.read(src))
+          root=Path('/tmp/metal-evidence/previous')
+          assert hashlib.sha256((root/'source.patch').read_bytes()).hexdigest()=='e571734be30747c5d0cf5b2ca27a158aec5d93ef1ff44763fa00de288f075b7f'
+          text=(root/'tests.txt').read_text();counts={k:int(re.findall(r'^# '+k+r' (\d+)$',text,re.M)[-1]) for k in ['tests','pass','fail','todo']}
+          assert counts=={'tests':1351,'pass':1350,'fail':0,'todo':1}
+          assert json.loads((root/'combat-soak.json').read_text())['ok']
+          assert json.loads((root/'browser-report.json').read_text())['ok']
+          subprocess.run(['git','apply','--check','--unidiff-zero',str(root/'source.patch')],check=True)
+          subprocess.run(['git','apply','--unidiff-zero',str(root/'source.patch')],check=True)
+          # Test viewport only: unchanged game, simulation clocks, inputs and assertions.
+          p=Path('tools/mission-20261117/browser-bindings-smoke.mjs');s=p.read_text()
+          for a,b in [('timeoutMs:120000,launchTimeoutMs:20000,window:[1280,800]','timeoutMs:360000,launchTimeoutMs:20000,window:[480,320]'),('label,ms=90000','label,ms=240000'),('Real headless Chrome, offline standalone game; no hardware FPS claim','Real headless Chrome, offline standalone at 480x320 on software WebGL2; no hardware FPS claim')]:
+              assert s.count(a)==1;s=s.replace(a,b)
+          a="      throw Error('Timed out: '+label+'; state='+await page.evaluate('document.body?.dataset.state'));"
+          b="      report.pageErrors=page.errors;report.loading=await page.evaluate(\"({state:document.body?.dataset.state,detail:document.getElementById('loading-detail')?.textContent,progress:document.getElementById('loading-bar')?.style.width})\");throw Error('Timed out: '+label+'; '+JSON.stringify(report.loading));"
+          assert s.count(a)==1;s=s.replace(a,b);p.write_text(s)
+          p=Path('tools/mission-20261117/browser-combat-smoke.mjs');s=p.read_text()
+          for a,b in [('timeoutMs:180000,launchTimeoutMs:20000,window:[960,640]','timeoutMs:360000,launchTimeoutMs:20000,window:[480,320]'),('label,ms=140000','label,ms=220000'),('Real headless Chrome; offline current standalone, software WebGL2. No hardware FPS claim.','Real headless Chrome; offline standalone, software WebGL2 at 480x320 with 960x640 captures. No hardware FPS claim.')]:
+              assert s.count(a)==1;s=s.replace(a,b)
+          a=" const check=(name,pass)=>{assert(pass,name);report.checks.push(name);};"
+          b=a+"\n const capture=async(name)=>{await page.send('Emulation.setDeviceMetricsOverride',{width:960,height:640,deviceScaleFactor:1,mobile:false});await page.evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');const shot=await page.send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,name),Buffer.from(shot.data,'base64'));await page.send('Emulation.setDeviceMetricsOverride',{width:480,height:320,deviceScaleFactor:1,mobile:false});};"
+          assert s.count(a)==1;s=s.replace(a,b)
+          for var,name in [('shot','combat-first-person.png'),('chase','combat-follow-camera.png')]:
+              a=" const "+var+"=await page.send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'"+name+"'),Buffer.from("+var+".data,'base64'));"
+              assert s.count(a)==1;s=s.replace(a," await capture('"+name+"');")
+          p.write_text(s)
+          print('Verified historical complete suite:',counts)
+          PY
+          git diff --check
+          node --check tools/mission-20261117/browser-bindings-smoke.mjs
+          node --check tools/mission-20261117/browser-combat-smoke.mjs
+      - name: Rebuild identical qualified standalone and verify locked engine
+        run: |
+          set -euo pipefail
+          python3 tools/build.py | tee /tmp/metal-evidence/build.txt
+          cp SIZE.json /tmp/metal-evidence/SIZE.json
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          assert Path('SIZE.json').read_bytes()==Path('/tmp/metal-evidence/previous/SIZE.json').read_bytes()
+          assert hashlib.sha256(Path('dist/index.html').read_bytes()).hexdigest()=='0a08aabba483e79d1717d67c45084e984af68ae3e3997d0cdede8e2be967c8ca'
+          PY
+          node checks/build.test.mjs | tee /tmp/metal-evidence/distribution.txt
+      - name: Real Chrome keyboard regression, with loading diagnostics
+        run: |
+          set -o pipefail
+          node tools/mission-20261117/browser-bindings-smoke.mjs /tmp/metal-evidence/bindings 2>&1 | tee /tmp/metal-evidence/bindings.txt
+      - name: Real Chrome combat and original fragment geometry
+        run: |
+          set -o pipefail
+          node tools/mission-20261117/browser-combat-smoke.mjs /tmp/metal-evidence/browser 2>&1 | tee /tmp/metal-evidence/browser.txt
+      - name: Commit qualified sources and rebuilt game, preserving concurrent work
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          WORK_BRANCH: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          test "$WORK_BRANCH" = 'codex/wrecks-combat-demos-20261117'
+          git fetch origin "$WORK_BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$EXPECTED_SHA"
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,os
+          root=Path('/tmp/metal-evidence');b=json.loads((root/'browser/report.json').read_text());k=json.loads((root/'bindings/report.json').read_text());soak=json.loads((root/'previous/combat-soak.json').read_text());size=json.loads(Path('SIZE.json').read_text())
+          assert b['ok'] and k['ok'] and soak['ok']
+          report='# METAL 0.12.8 : composants originaux et demos de combat\n\nBase : `ba2784517b99b092c404df38a8408f2733cc2221`.\n\n'
+          report+='## Corrections\n\nLes ennemis se separent en groupes de composants de leur modele original : formes, dimensions, couleurs et materiaux conserves. Les boites de collision restent invisibles. Suppression de la pluie de cubes a la mort ; impacts representes par des trainees lumineuses, pas des blocs solides. Corps physiques limites, composants groupes sans remplacement par des cubes, sauvegardes validees.\n\n'
+          report+='Six demos de combats ordinaires utilisant la simulation actuelle, lourd et drone, sans presentation des boss. Camera de jeu puis camera suiveuse avec collisions. Changement de scene apres le combat, sans teleportation ni guerison forcee du personnage pendant une scene.\n\n'
+          report+='Pilote de demonstration : cheminement borne tenant compte du gabarit, des obstacles physiques, des pieges et des bords. Anticipation, freinage, contournement et replanification remplacent les coups et dashs de deblocage. Le repere de mouvement est corrige quand la visee tourne avant le deplacement. Ce lot ne remplace pas toute l IA des ennemis.\n\n'
+          report+='## Qualification\n\nSuite complete du meme HTML : **1 350 reussites, zero echec, un TODO historique, 1 351 tests comptes**, execution 44045094131. Les preuves recuperees sont verifiees par empreinte SHA-256, et le HTML reconstruit est strictement identique. Modules FERRO : 34/34 verifies par le build.\n\n'
+          report+='Une verification supplementaire locale de reprise a reussi : 94 tests de geometrie, navigation, ragdoll, commandes, preferences et camera. Aucun changement de code produit apres la suite complete.\n\n'
+          report+='Le controle clavier precedent expirait pendant le chargement a 1280x800 sur GPU logiciel. Le banc utilise maintenant une fenetre 480x320, un delai borne plus large et des diagnostics de chargement ; aucune assertion clavier, horloge ou position du jeu modifiee.\n\n'
+          report+='Nouvelle execution Chrome : **'+str(len(b['checks']))+' controles combat et '+str(len(k['checks']))+' controles clavier reussis**, rendu '+str(b.get('renderer'))+'.\n\n'
+          report+='| Monde | Profil | Secondes | Tirs | Tues | Penetrations | Blocage consecutif max. | Boss visibles | Coups obstacles |\n|---|---|---:|---:|---:|---:|---:|---:|---:|\n'
+          for r in soak['rows']:
+              report+='| '+str(r['world'])+' | '+r['profile']+' | '+str(round(r['seconds'],2))+' | '+str(r['shots'])+' | '+str(r['kills'])+' | '+str(r['collisionFrames'])+' | '+str(r['blockedRunMax'])+' | '+str(r['bossVisibleFrames'])+' | '+str(r['forcedObstacleAttacks'])+' |\n'
+          report+='\nControles navigateur :\n'+''.join('- '+c+'\n' for c in b['checks']+k['checks'])
+          report+='\nHTML : '+str(size['html_bytes'])+' octets bruts ; gzip : '+str(size['gzip_bytes'])+' ; SHA-256 `'+size['sha256']+'`.\n\n'
+          report+='Suite complete : https://github.com/M4D135/METAL/actions/runs/44045094131\n\nValidation finale : https://github.com/M4D135/METAL/actions/runs/'+os.environ['RUN_ID']+'\n\n'
+          report+='## Limites\n\nQualification sur six scenes fixes et cas de regression, pas une garantie universelle d absence de bug. GPU logiciel : aucun gain FPS materiel revendique. Pas de telephone ou manette physique testes. Les deplacements Quake III et le vol quaternion 6DOF ne font pas partie de ce lot. Aucun hebergement externe modifie.\n'
+          Path('docs/audits/wrecks-combat-demos-20261117.md').write_text(report)
+          PY
+          git add -- src/metal-physics.js src/simulation.js src/game.js src/pilot.js src/demo-metal.js checks/wreck-geometry.test.mjs checks/demo-combat.test.mjs checks/ragdoll.test.mjs checks/pilot.test.mjs package.json tools/simulation-modules.json tools/mission-20261117/combat-demo-soak.mjs tools/mission-20261117/browser-combat-smoke.mjs tools/mission-20261117/browser-bindings-smoke.mjs dist/index.html SIZE.json docs/audits/wrecks-combat-demos-20261117.md
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: original enemy fragments, smarter demo navigation and six live firefights (0.12.8)'
+          git push origin "HEAD:refs/heads/$WORK_BRANCH"
+          git rev-parse HEAD > /tmp/metal-evidence/qualified-commit.txt
+      - name: Preserve exact evidence and playable standalone
+        if: always()
+        run: |
+          mkdir -p /tmp/metal-evidence
+          cp dist/index.html /tmp/metal-evidence/METAL-0.12.8.html
+          git diff > /tmp/metal-evidence/uncommitted.patch
+          tar --exclude=.git -czf /tmp/metal-evidence/working-source.tar.gz .
+          git archive --format=tar.gz HEAD > /tmp/metal-evidence/source.tar.gz
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: metal-combat-final-${{ github.run_id }}
+          path: /tmp/metal-evidence
+          retention-days: 7
