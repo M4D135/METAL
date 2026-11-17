@@ -1,0 +1,264 @@
+TAP version 13
+# Subtest: Space/C and A/Cross, B/Round provide held flight controls without repeating heavy dodge; R switches the view
+ok 1 - Space/C and A/Cross, B/Round provide held flight controls without repeating heavy dodge; R switches the view
+  ---
+  duration_ms: 8.61089
+  type: 'test'
+  ...
+# Subtest: former default left fire moves off C without resetting custom bindings
+ok 2 - former default left fire moves off C without resetting custom bindings
+  ---
+  duration_ms: 3.985024
+  type: 'test'
+  ...
+# Subtest: MASTER tuning, first connected pad, full analog magnitude and bounded curves
+ok 3 - MASTER tuning, first connected pad, full analog magnitude and bounded curves
+  ---
+  duration_ms: 2.433295
+  type: 'test'
+  ...
+# Subtest: Analog trigger hysteresis and press fronts do not repeat while held
+ok 4 - Analog trigger hysteresis and press fronts do not repeat while held
+  ---
+  duration_ms: 1.996393
+  type: 'test'
+  ...
+# Subtest: Pause clear suppresses every held button until release, including fire and jump
+ok 5 - Pause clear suppresses every held button until release, including fire and jump
+  ---
+  duration_ms: 2.054041
+  type: 'test'
+  ...
+# Subtest: Pad bindings normalize idempotently and reject conflicts without stealing controls
+ok 6 - Pad bindings normalize idempotently and reject conflicts without stealing controls
+  ---
+  duration_ms: 2.827282
+  type: 'test'
+  ...
+# Subtest: Old Space dodge migrates to jump without stealing a custom R binding
+ok 7 - Old Space dodge migrates to jump without stealing a custom R binding
+  ---
+  duration_ms: 2.916316
+  type: 'test'
+  ...
+# Subtest: Merged host and pad preserve strongest move, add look, and retain every held action
+ok 8 - Merged host and pad preserve strongest move, add look, and retain every held action
+  ---
+  duration_ms: 1.826456
+  type: 'test'
+  ...
+# Subtest: Menu focus excludes disabled, hidden ancestors and zero rectangles; range sends input
+ok 9 - Menu focus excludes disabled, hidden ancestors and zero rectangles; range sends input
+  ---
+  duration_ms: 2.083765
+  type: 'test'
+  ...
+# Subtest: Pad menu directions repeat after delay but A/B are edges only
+ok 10 - Pad menu directions repeat after delay but A/B are edges only
+  ---
+  duration_ms: 3.860717
+  type: 'test'
+  ...
+# Subtest: Rumble requires a gesture, merges pending effects, limits calls, and clears on pause
+ok 11 - Rumble requires a gesture, merges pending effects, limits calls, and clears on pause
+  ---
+  duration_ms: 3.75052
+  type: 'test'
+  ...
+# Subtest: Legacy pulse actuator, refusal and unplug are harmless; zero intensity survives reload
+ok 12 - Legacy pulse actuator, refusal and unplug are harmless; zero intensity survives reload
+  ---
+  duration_ms: 21.279465
+  type: 'test'
+  ...
+# Subtest: X interaction is held for terminal hacking and clears on release or pause
+ok 13 - X interaction is held for terminal hacking and clears on release or pause
+  ---
+  duration_ms: 7.943515
+  type: 'test'
+  ...
+# Subtest: all sixteen standard controller buttons are assigned once, including LB sprint/boost
+ok 14 - all sixteen standard controller buttons are assigned once, including LB sprint/boost
+  ---
+  duration_ms: 2.264679
+  type: 'test'
+  ...
+# Subtest: small wall fragments are actual source cells below .75m, no more than five per object
+ok 15 - small wall fragments are actual source cells below .75m, no more than five per object
+  ---
+  duration_ms: 1.885055
+  type: 'test'
+  ...
+# Subtest: one multi-object blast never bypasses the 16-fragment event budget
+ok 16 - one multi-object blast never bypasses the 16-fragment event budget
+  ---
+  duration_ms: 6.474205
+  type: 'test'
+  ...
+# Subtest: new gameplay budgets remain explicit and frozen
+ok 17 - new gameplay budgets remain explicit and frozen
+  ---
+  duration_ms: 0.195486
+  type: 'test'
+  ...
+# Subtest: heavy owns the collected arsenal; drone only its independent laser slot
+ok 18 - heavy owns the collected arsenal; drone only its independent laser slot
+  ---
+  duration_ms: 103.260061
+  type: 'test'
+  ...
+# Subtest: lasers fire with every ammunition pool empty, leave scenery intact and deal little damage
+ok 19 - lasers fire with every ammunition pool empty, leave scenery intact and deal little damage
+  ---
+  duration_ms: 74.594194
+  type: 'test'
+  ...
+# Subtest: laser heat does not replace the heavy weapon heat; finite ammo is not consumed
+ok 20 - laser heat does not replace the heavy weapon heat; finite ammo is not consumed
+  ---
+  duration_ms: 65.353349
+  type: 'test'
+  ...
+# Subtest: lasers stop at a wall and never remotely activate or destroy a terminal
+ok 21 - lasers stop at a wall and never remotely activate or destroy a terminal
+  ---
+  duration_ms: 66.161754
+  type: 'test'
+  ...
+# Subtest: stationary drone docks by position, heavy and distant drone cannot turn a pad on
+ok 22 - stationary drone docks by position, heavy and distant drone cannot turn a pad on
+  ---
+  duration_ms: 64.149005
+  type: 'test'
+  ...
+# Subtest: hack requires a held action and line of sight; release resets partial progress
+ok 23 - hack requires a held action and line of sight; release resets partial progress
+  ---
+  duration_ms: 52.231858
+  type: 'test'
+  ...
+# Subtest: stamina has bounded consumption, recovery delay and no exhausted sprint flicker
+ok 24 - stamina has bounded consumption, recovery delay and no exhausted sprint flicker
+  ---
+  duration_ms: 0.537113
+  type: 'test'
+  ...
+# Subtest: support checkpoint preserves laser, stamina, partial hack and rejects malformed resources atomically
+ok 25 - support checkpoint preserves laser, stamina, partial hack and rejects malformed resources atomically
+  ---
+  duration_ms: 93.71386
+  type: 'test'
+  ...
+# Subtest: legacy profiles and worlds retain historical defaults and geometry revision
+ok 26 - legacy profiles and worlds retain historical defaults and geometry revision
+  ---
+  duration_ms: 34.868042
+  type: 'test'
+  ...
+# Subtest: narrow overhead passage fits the drone collider but not the heavy; checkpoint inside restores
+ok 27 - narrow overhead passage fits the drone collider but not the heavy; checkpoint inside restores
+  ---
+  duration_ms: 162.097878
+  type: 'test'
+  ...
+# Subtest: all eighteen new worlds expose a real duct, pad, hack terminal and heavy bosses
+ok 28 - all eighteen new worlds expose a real duct, pad, hack terminal and heavy bosses
+  ---
+  duration_ms: 5489.183931
+  type: 'test'
+  ...
+# Subtest: cockpit and mirrored emitter geometry stay procedural, bounded and overlay-only
+ok 29 - cockpit and mirrored emitter geometry stay procedural, bounded and overlay-only
+  ---
+  duration_ms: 1.047913
+  type: 'test'
+  ...
+# Subtest: new support worlds use a compact physical drone proxy; unused heavy proxy is parked
+not ok 30 - new support worlds use a compact physical drone proxy; unused heavy proxy is parked
+  ---
+  duration_ms: 261.689015
+  type: 'test'
+  location: '/home/runner/work/METAL/METAL/checks/support-physics.test.mjs:8:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 3677046859
+    - 3881855396
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 3881855396
+  actual: 3677046859
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/METAL/METAL/checks/support-physics.test.mjs:11:172)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: physical flight crosses the real duct without moving the heavy proxy through the door
+ok 31 - physical flight crosses the real duct without moving the heavy proxy through the door
+  ---
+  duration_ms: 217.311204
+  type: 'test'
+  ...
+# Subtest: all 18 support expedition loadouts and their full rigid checkpoints agree on ownership
+ok 32 - all 18 support expedition loadouts and their full rigid checkpoints agree on ownership
+  ---
+  duration_ms: 4348.660824
+  type: 'test'
+  ...
+# Subtest: a destroyed press stays destroyed through approach, cycles, render and saved continuation
+ok 33 - a destroyed press stays destroyed through approach, cycles, render and saved continuation
+  ---
+  duration_ms: 205.83751
+  type: 'test'
+  ...
+# Subtest: destroyed doors never return, and small pieces never recreate a full door collider
+ok 34 - destroyed doors never return, and small pieces never recreate a full door collider
+  ---
+  duration_ms: 98.506516
+  type: 'test'
+  ...
+# Subtest: support wrecks retain every original named component but at most five bodies per actor
+ok 35 - support wrecks retain every original named component but at most five bodies per actor
+  ---
+  duration_ms: 31.856964
+  type: 'test'
+  ...
+# Subtest: mixing a legacy class loadout into a support world is rejected explicitly
+ok 36 - mixing a legacy class loadout into a support world is rejected explicitly
+  ---
+  duration_ms: 0.597164
+  type: 'test'
+  ...
+# Subtest: Tiles of one broken mesh are joined, then cut into at most five large pieces
+ok 37 - Tiles of one broken mesh are joined, then cut into at most five large pieces
+  ---
+  duration_ms: 8.216498
+  type: 'test'
+  ...
+# Subtest: Chips are dropped, every object keeps a piece and an event stays small
+ok 38 - Chips are dropped, every object keeps a piece and an event stays small
+  ---
+  duration_ms: 2.322456
+  type: 'test'
+  ...
+# Subtest: A grenade on real scenery leaves a few physical pieces, not a hundred fragments
+ok 39 - A grenade on real scenery leaves a few physical pieces, not a hundred fragments
+  ---
+  duration_ms: 2436.247593
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 38
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6368.602161

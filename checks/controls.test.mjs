@@ -84,3 +84,14 @@ test('Legacy pulse actuator, refusal and unplug are harmless; zero intensity sur
   const r=rig({padVibration:.5}),p=r.make(),calls=[];p.hapticActuators=[{pulse(v,t){calls.push([v,t]);return Promise.reject(Error('disconnected'));}}];r.pads.push(p);r.press(p,'A',1);r.tick();r.c.event({name:'profileSwitch'});r.c.flush(100,true);assert.deepEqual(calls[0],[.225,120]);r.pads.length=0;r.tick();r.c.clear();assert.deepEqual(calls[1],[0,0]);await new Promise(resolve=>setImmediate(resolve));
   const zero=rig({padVibration:0}),z=zero.make();z.vibrationActuator={playEffect(){assert.fail('disabled rumble');}};zero.pads.push(z);zero.press(z,'RT',1);zero.tick();zero.c.event({name:'shot',weapon:2});assert.equal(zero.c.flush(100,true),false);
 });
+
+test('X interaction is held for terminal hacking and clears on release or pause',()=>{
+ const r=rig(),p=r.make();r.pads.push(p);r.tick();r.press(p,'X',1);
+ for(let i=0;i<120;i++)assert.equal(r.tick().s.interact,true);
+ r.press(p,'X',0);assert.equal(r.tick().s.interact,false);r.press(p,'X',1);r.tick();r.c.clear();assert.equal(r.tick().s.interact,false);
+ r.press(p,'X',0);r.tick();r.press(p,'X',1);assert.equal(r.tick().s.interact,true);
+});
+test('all sixteen standard controller buttons are assigned once, including LB sprint/boost',()=>{
+ const r=rig(),values=Object.values(r.prefs.padBindings).flat();assert.equal(values.length,16);assert.equal(new Set(values).size,16);assert.deepEqual(plain(r.prefs.padBindings.sprint),['LB']);
+ const p=r.make();r.pads.push(p);r.tick();r.press(p,'LB',1);assert(r.tick().s.sprint);r.press(p,'LB',0);assert(!r.tick().s.sprint);
+});

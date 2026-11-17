@@ -102,11 +102,11 @@ function navigationGraph(cells,width,testEdge){
   function copyArmor(value,capacity=200){
     return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===2&&value.version===1&&Number.isFinite(value.points)&&value.points>=0&&value.points<=capacity&&Number.isFinite(capacity)&&capacity>=0&&capacity<=200?{version:1,points:value.points}:null;
   }
-  function validBossRewards(profile,inventory,ledger,classes){
+  function validBossRewards(profile,inventory,ledger,classes,support=false){
     if(!G.FEconomy?.validate(profile)||profile.version!==2||!Array.isArray(ledger))return false;
     const weapons=[0,0,0,0,0],personal={vitality:0,armor:0,capacity:0,power:0,cooling:0};
     for(const index of ledger){const reward=G.FEconomy.bossReward(index);if(!reward||reward.weapon!==null&&!inventory.weapons[reward.weapon])return false;weapons[reward.weaponUpgrade]++;personal[reward.personalUpgrade]++;}
-    return weapons.every((n,i)=>(classes?classes[G.MetalProfiles.owner(i)].economy:profile).weaponUpgrades[i]+(classes&&i===4?classes.heavy.economy.weaponUpgrades[i]:0)>=n)&&Object.keys(personal).every(key=>(classes?classes.light.economy.upgrades[key]+classes.heavy.economy.upgrades[key]:profile.upgrades[key])>=personal[key]);
+    return weapons.every((n,i)=>(classes?classes[G.MetalProfiles.owner(i,'light',support)].economy:profile).weaponUpgrades[i]+(classes&&!support&&i===4?classes.heavy.economy.weaponUpgrades[i]:0)>=n)&&Object.keys(personal).every(key=>(classes?classes.light.economy.upgrades[key]+classes.heavy.economy.upgrades[key]:profile.upgrades[key])>=personal[key]);
   }
   function campaignPolicy(index,inventory,ceiling=16,version=1){
     if(version===2){const progress=clamp(Number(index)||0,0,17);return {version:2,tier:Math.min(5,progress/3),maxActive:clamp(ceiling,2,16),damageMultiplier:Math.round((.95+progress*.035)*1000)/1000,cadenceMultiplier:Math.round((.95+progress*.0175)*1000)/1000};}
@@ -153,7 +153,7 @@ function navigationGraph(cells,width,testEdge){
   // 16/11/2026). The engine halves big meshes into tiles: the tiles of one
   // mesh are joined again, then every object keeps at most PER_OBJECT pieces
   // of about CHUNK metres, never over the 4 m rigid-body limit.
-  const WRECK={PER_OBJECT:5,PER_EVENT:16,MIN_OBJECTS:24,CHUNK:2.6,LIMIT:4,DENSITY:{metal:65,stone:28,wood:8,glass:25,dirt:12}};
+  const WRECK={PER_OBJECT:5,PER_EVENT:16,MIN_OBJECTS:24,CHUNK:.75,LIMIT:4,DENSITY:{metal:65,stone:28,wood:8,glass:25,dirt:12}};
   function wreckAxes(r){const [x,y,z]=r||[0,0,0],a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);return [[e*c,f*c,-d],[e*d*b-f*a,f*d*b+e*a,c*b],[e*d*a+f*b,f*d*a-e*b,c*a]];}
   function wreckVolume(q){return q.size[0]*q.size[1]*q.size[2]*({sphere:Math.PI/6,cylinder:Math.PI/4,octa:1/6,foliage:.55}[q.shape]||1);}
   function wreckMass(q){return clamp(wreckVolume(q)*(WRECK.DENSITY[q.material]||28),.035,160);}
@@ -175,7 +175,14 @@ function navigationGraph(cells,width,testEdge){
   }
   // Cuts one piece into a grid of chunks: cells stay under the rigid-body
   // limit, then get finer toward CHUNK while the object stays within budget.
-  function wreckChunks(q,budget){
+  function wreckChunks(q,budget,small=false){
+    if(small&&['box','bevel','cylinder'].includes(q.shape)){
+      // Keep at most five actual cut cells of this source; the remainder is dust.
+      // Never weld a destroyed wall back into a near-full-size physics slab.
+      const counts=q.size.map((v,k)=>q.shape==='cylinder'&&k!==1?1:Math.max(1,Math.ceil(v/.75))),total=counts[0]*counts[1]*counts[2],n=Math.min(Math.max(1,budget),5,total),axes=wreckAxes(q.rotation),size=q.size.map((v,k)=>v/counts[k]),out=[];
+      for(let j=0;j<n;j++){const i=Math.floor((j+.5)*total/n),grid=[i%counts[0],Math.floor(i/counts[0])%counts[1],Math.floor(i/(counts[0]*counts[1]))],local=grid.map((g,k)=>((g+.5)/counts[k]-.5)*q.size[k]),offset=[0,1,2].map(k=>axes[0][k]*local[0]+axes[1][k]*local[1]+axes[2][k]*local[2]);out.push({...q,size:size.slice(),p:q.p.map((v,k)=>v+offset[k]),seed:((q.seed||0)+i*131)>>>0});}
+      return out;
+    }
     const split=[0,1,2].map(k=>q.shape==='cylinder'?k===1:['box','bevel'].includes(q.shape)),counts=q.size.map((v,k)=>split[k]?Math.max(1,Math.ceil(v/WRECK.LIMIT-1e-9)):1);
     for(;;){let best=-1,length=WRECK.CHUNK;for(let k=0;k<3;k++)if(split[k]&&q.size[k]/counts[k]>length){length=q.size[k]/counts[k];best=k;}if(best<0||counts[0]*counts[1]*counts[2]/counts[best]*(counts[best]+1)>budget)break;counts[best]++;}
     const total=counts[0]*counts[1]*counts[2];if(total===1)return [q];
@@ -188,7 +195,7 @@ function navigationGraph(cells,width,testEdge){
     }
     return out;
   }
-  function wreckage(list){
+  function wreckage(list,{small=false}={}){
     const objects=new Map(),out=[];
     for(const raw of list||[]){if(raw?.structural!==true)continue;const q=wreckPiece(raw);if(!q)continue;const key=String(q.sourceId);if(!objects.has(key))objects.set(key,[]);objects.get(key).push(q);}
     const plans=[];
@@ -199,13 +206,13 @@ function navigationGraph(cells,width,testEdge){
       // The largest part is always kept whole or cut under the limit; smaller
       // parts that no longer fit the object's budget become dust.
       let spare=WRECK.PER_OBJECT-pieces.length,used=0;const chunks=[];
-      for(const q of pieces){const parts=wreckChunks(q,1+spare);if(used&&used+parts.length>WRECK.PER_OBJECT)continue;spare=Math.max(0,spare-(parts.length-1));used+=parts.length;chunks.push(...parts);}
+      for(const q of pieces){const parts=wreckChunks(q,1+spare,small);if(used&&used+parts.length>WRECK.PER_OBJECT)continue;spare=Math.max(0,spare-(parts.length-1));used+=parts.length;chunks.push(...parts);}
       for(const q of chunks){q.mass=wreckMass(q);q.fragmented=true;}
       chunks.sort((a,b)=>wreckVolume(b)-wreckVolume(a));plans.push(chunks);
     }
     plans.sort((a,b)=>wreckVolume(b[0])-wreckVolume(a[0]));
     // Every broken object shows at least its largest piece.
-    for(const plan of plans.slice(0,WRECK.MIN_OBJECTS))out.push(plan[0]);
+    for(const plan of plans.slice(0,Math.min(WRECK.MIN_OBJECTS,WRECK.PER_EVENT)))out.push(plan[0]);
     for(let round=1;out.length<WRECK.PER_EVENT;round++){let added=false;for(const plan of plans)if(plan[round]&&out.length<WRECK.PER_EVENT){out.push(plan[round]);added=true;}if(!added)break;}
     return out;
   }
@@ -224,15 +231,16 @@ function navigationGraph(cells,width,testEdge){
     let maxCombat=nominalCombat;
     const campaign=world.campaign===true,bossProgression=campaign&&world.campaignVersion===2,arsenal=progression&&(world.progression.weaponSlots===4||campaign&&world.progression.weaponSlots===5),weaponSlots=arsenal?(campaign&&world.progression.weaponSlots===5?5:4):3,weaponIds=Array.from({length:weaponSlots},(_,i)=>i),pistol=campaign&&weaponSlots===5,armorEnabled=campaign||options.armorSystem===true||options.armor!==undefined;
     const brain=advanced&&options.brain&&typeof options.brain.evaluate==='function'?options.brain:null;
-    const profilesEnabled=world.profileVersion===1;
+    const profilesEnabled=world.profileVersion===1,supportDrone=profilesEnabled&&world.supportDroneVersion===1;
+    if(supportDrone&&!G.MetalSupport)throw Error('Support drone rules unavailable');
     if(profilesEnabled&&(!pistol||!G.MetalProfiles))throw new Error("Invalid class expedition");
     let initialEconomy=economyEnabled?(bossProgression?G.FEconomy.campaign:G.FEconomy.copy)(options.economy===undefined?G.FEconomy.fresh({campaignVersion:bossProgression?2:1}):options.economy):null;
     if(economyEnabled&&!initialEconomy||!economyEnabled&&options.economy!==undefined)throw new Error('Invalid economy');
-    const initialProfiles=profilesEnabled?G.MetalProfiles.copy(options.profiles===undefined?G.MetalProfiles.fresh(initialEconomy):options.profiles):null;
-    if(profilesEnabled){if(!initialProfiles)throw new Error('Invalid profiles');initialEconomy=initialProfiles.classes[initialProfiles.active].economy;}
+    const initialProfiles=profilesEnabled?G.MetalProfiles.copy(options.profiles===undefined?G.MetalProfiles.fresh(initialEconomy,'heavy',supportDrone):options.profiles):null;
+    if(profilesEnabled){if(!initialProfiles||initialProfiles.version!==(supportDrone?2:1))throw new Error('Invalid profiles');initialEconomy=initialProfiles.classes[initialProfiles.active].economy;}
     const destructionRules=profilesEnabled?{canDamage:G.MetalProfiles.canDamage}:undefined;
     const baseStats={maxHp:100,damageMultiplier:1,incomingMultiplier:1,coolingMultiplier:1};
-    let ammoCaps=(profilesEnabled?G.MetalProfiles.ammoCaps(initialProfiles.classes):economyEnabled?G.FEconomy.ammoCaps(initialEconomy,{campaign:pistol}):(world.progression?.ammoCaps||(pistol?[180,36,12,16,1]:[180,36,12,16]))).slice(0,weaponSlots),stats=economyEnabled?G.FEconomy.stats(initialEconomy):{...baseStats};
+    let ammoCaps=(profilesEnabled?G.MetalProfiles.ammoCaps(initialProfiles.classes,supportDrone):economyEnabled?G.FEconomy.ammoCaps(initialEconomy,{campaign:pistol}):(world.progression?.ammoCaps||(pistol?[180,36,12,16,1]:[180,36,12,16]))).slice(0,weaponSlots),stats=economyEnabled?G.FEconomy.stats(initialEconomy):{...baseStats};
     const modernMovement=progression||world.generation>=6;
     const motionProfile=modernMovement?{walk:4.2,sprint:7.6,accel:16,friction:9,stop:2.2,dash:15.2,air:1.1,maxSpeed:10.5,gravity:20,jump:6.2}:{walk:4.2,sprint:5.8,accel:20,friction:32,reverse:38,dash:13.2,air:1};
     function inventoryValue(value,caps=ammoCaps){
@@ -246,7 +254,7 @@ function navigationGraph(cells,width,testEdge){
     let initialCampaign=campaign?copyCampaign(options.campaign===undefined?{version:bossProgression?2:1,discovered:CAMPAIGN_GEAR.filter(g=>ownsGear(g,initialInventory)).map(g=>g.key),...(bossProgression?{claimedBossRewards:[]}:{})}:options.campaign,initialInventory):null;
     if(bossProgression&&initialCampaign?.version===1)initialCampaign={...initialCampaign,version:2,claimedBossRewards:[]};
     if(campaign&&(!initialCampaign||initialCampaign.version!==(bossProgression?2:1)))throw new Error('Invalid campaign');
-    if(bossProgression&&!validBossRewards(initialEconomy,initialInventory,initialCampaign.claimedBossRewards,initialProfiles?.classes))throw new Error('Invalid boss rewards');
+    if(bossProgression&&!validBossRewards(initialEconomy,initialInventory,initialCampaign.claimedBossRewards,initialProfiles?.classes,supportDrone))throw new Error('Invalid boss rewards');
     const trophyDefs=campaign?world.trophies||[]:[];
     const initialPolicy=campaign?campaignPolicy(world.index,initialInventory,nominalCombat,bossProgression?2:1):null;
     let bossHpFactor=campaign?campaignBossFactor(world.index,initialPolicy.tier,bossProgression?2:1):1,adaptationKey=campaign?campaignArsenalKey(initialInventory):-1;
@@ -354,7 +362,7 @@ function navigationGraph(cells,width,testEdge){
     const groundAt=(x,z)=>{const y=ground(x,z);return Number.isFinite(y)?y:0;};
     const elevated=floors.some(f=>f.y||f.slopeX||f.slopeZ)||(world.lifts||[]).length>0;
     const p={x:world.spawn.x,y:world.spawn.y??groundAt(world.spawn.x,world.spawn.z),z:world.spawn.z,yaw:world.spawn.yaw,pitch:0,hp:stats.maxHp,heat:0,overheated:false,dash:0,dashing:0,pulseCooldown:0,...freshAir()};
-    const s={world,player:p,time:0,elapsed:0,won:false,dead:false,kills:0,shots:0,hits:0,relays:0,weapon:initialEquipment?.right||0,score:0,combo:0,comboTime:0,pulseVisual:0,
+    const s={world,player:p,...(supportDrone?{support:G.MetalSupport.fresh()}:{}),time:0,elapsed:0,won:false,dead:false,kills:0,shots:0,hits:0,relays:0,weapon:initialEquipment?.right||0,score:0,combo:0,comboTime:0,pulseVisual:0,
       ...(campaign?{campaign:{...initialCampaign,trophies:trophyDefs.map(t=>({id:t.id,phase:'sealed',timer:0}))}}:{}),
       ...(campaign?{adaptation:{...initialPolicy,entryTier:initialPolicy.tier,bossHpFactor}}:{}),
       ...(armorEnabled?{armor:{points:initialArmor.points,capacity:initialArmorCap}}:{}),
@@ -409,7 +417,7 @@ function navigationGraph(cells,width,testEdge){
     let fireWait=0,navWait=0,hazardWait=0,recovery=0,interactHeld=false,encounterWait=0,emptyWait=0;
     const weaponWait=weaponIds.map(()=>0),weaponCarry=new Float64Array(weaponSlots);let thermalSerialized=arsenal;
     if(arsenal){s.weaponCooldowns=weaponWait;s.weaponHeat=weaponIds.map(()=>0);s.weaponOverheated=weaponIds.map(()=>false);}
-    function mirrorHeat(){if(arsenal){p.heat=s.weaponHeat[s.weapon];p.overheated=s.weaponOverheated[s.weapon];}}
+    function mirrorHeat(){if(supportDrone&&s.activeProfile==='light'){p.heat=s.support.heat;p.overheated=s.support.overheated;return;}if(arsenal){p.heat=s.weaponHeat[s.weapon];p.overheated=s.weaponOverheated[s.weapon];}}
     // Neural scores are advisory and never move bodies or apply damage. Pending
     // hardware work belongs to this simulation/epoch, not a later restored save.
     let brainEpoch=0,brainWait=0,brainPending=null,brainReady=null,brainCursor=0,brainDisposed=false;
@@ -494,6 +502,7 @@ function navigationGraph(cells,width,testEdge){
     let fingerprint=2166136261;
     const identity=[world.seed,world.stage,world.spawn,b,world.colliders,world.enemies,world.cores,world.pickups,world.exit,world.hazards||[],world.walkable||[],world.mechanisms||[],world.doors||[],world.lifts||[],world.jumpPads||[],world.destructibles||[],world.pipes||[],world.traps||[],world.horrorSites||[],world.director||null];
     if(progression)identity.push(world.progression,world.encounters||[],world.shops||[]);
+    if(supportDrone)identity.push({supportDroneVersion:1});
     if(world.combatVersion===1)identity.push({combatVersion:1});if(hordes)identity.push({hordeVersion:1});if(rigidEnabled)identity.push({rigidBodiesVersion:1});
     if(world.campaign===true)identity.push({campaign:true,...(bossProgression?{campaignVersion:2}:{}),index:world.index,chapter:world.chapter,trophies:trophyDefs});
     for(const c of JSON.stringify(identity))fingerprint=Math.imul(fingerprint^c.charCodeAt(0),16777619);
@@ -556,11 +565,31 @@ function navigationGraph(cells,width,testEdge){
       if(s.dead||s.won)return false;
       const q=nearestInteraction();if(!q||q.disabled)return false;
       if(q.kind==='mechanism'){
-        const m=s.mechanisms.find(m=>m.id===q.id);activateMechanism(m);if(m.profileRequired)awardProfile(40);return true;
+        const m=s.mechanisms.find(m=>m.id===q.id);if(supportDrone&&m.activation)return false;activateMechanism(m);if(m.profileRequired)awardProfile(40);return true;
       }
       if(q.kind==='shop'){emit('shopOpen',{id:q.id});return true;}
       const l=s.lifts.find(l=>l.id===q.id);l.target=q.target;l.moving=Math.abs(l.target-l.y)>.01;l.carrying=onLift(l,p.x,p.z)&&Math.abs(p.y-l.y)<.25;
       if(l.moving)emit('liftStart',{id:l.id,x:l.x,y:l.y,z:l.z,carrying:l.carrying});return l.moving;
+    }
+    function updateSupport(dt,input){
+      if(!supportDrone)return;
+      const q=s.support;q.cooldown=Math.max(0,q.cooldown-dt);q.heat=Math.max(0,q.heat-dt*G.MetalSupport.RULES.laserCooling);
+      if(q.overheated&&q.heat<.35)q.overheated=false;
+      let target=null;
+      if(s.activeProfile==='light')for(const m of s.mechanisms){
+        if(m.active||!m.activation||m.profileRequired!=='light')continue;
+        const d=Math.hypot(p.x-m.x,p.z-m.z),dy=Math.abs(p.y-(m.y||0)),speed=Math.hypot(p.airVX,p.airVY,p.airVZ);
+        const near=m.activation==='dock'?d<=.48&&dy<=.24&&speed<.45:d<=1.8&&dy<=.8&&input.interact;
+        if(!near)continue;
+        const from=[p.x,p.y+1.42,p.z],to=[m.x,(m.y||0)+1.42,m.z],delta=to.map((v,k)=>v-from[k]),distance=Math.hypot(...delta);
+        if(distance>.05&&ray(from,delta.map(v=>v/distance),distance)<distance-.12)continue;
+        target=m;break;
+      }
+      if(!target){q.target=null;q.progress=0;return;}
+      if(q.target!==target.id){q.target=target.id;q.progress=0;}
+      const duration=target.activation==='dock'?G.MetalSupport.RULES.dockSeconds:G.MetalSupport.RULES.hackSeconds;
+      q.progress=Math.min(duration,q.progress+dt);
+      if(q.progress>=duration-1e-9){activateMechanism(target);awardProfile(40);q.target=null;q.progress=0;}
     }
     function updateSystems(dt){
       for(const d of s.doors){
@@ -892,6 +921,7 @@ function navigationGraph(cells,width,testEdge){
     // like the walking heavy, while jump and dodge climb and descend. Air
     // velocities are part of the checkpoint format, including inertia during a
     // profile switch. Boost spends the tank and nearly doubles the speed.
+    const flightBoxes=[],flightLifts=(world.lifts||[]).map(()=>({}));
     function fly(dt,input){
       if(!(dt>0))return;
       p.airborne=true;p.airTime=0;p.padId=null;p.dashing=0;jumpBuffer=coyote=0;
@@ -911,16 +941,16 @@ function navigationGraph(cells,width,testEdge){
         for(let k=0;k<3;k++)velocity[k]=wish[k]+(velocity[k]-wish[k])*decay;
         const old=[p.x,p.y,p.z],next=old.map((v,k)=>v+delta[k]);
         if(G.FPhysicsGeometry){
-          const boxes=[...localSolids(p.x,p.z),...doorBoxes,...trapBoxes];
-          for(const l of s.lifts)boxes.push({minX:l.x-l.w/2,maxX:l.x+l.w/2,minY:l.y-.22,maxY:l.y,minZ:l.z-l.d/2,maxZ:l.z+l.d/2});
-          const from=[p.x,p.y+.9,p.z],to=[next[0],next[1]+.9,next[2]],q=G.FPhysicsGeometry.clampBox(from,to,[.28,.9,.28],boxes,{skin:.001},{});
-          next[0]=q.x;next[1]=q.y-.9;next[2]=q.z;collided||=q.hit;
+          const boxes=flightBoxes;boxes.length=0;for(const list of [localSolids(p.x,p.z),doorBoxes,trapBoxes])for(const box of list)boxes.push(box);
+          for(let i=0;i<s.lifts.length;i++){const l=s.lifts[i],q=flightLifts[i];q.minX=l.x-l.w/2;q.maxX=l.x+l.w/2;q.minY=l.y-.22;q.maxY=l.y;q.minZ=l.z-l.d/2;q.maxZ=l.z+l.d/2;boxes.push(q);}
+          const centre=supportDrone?1.42:.9,half=supportDrone?.24:.9,from=[p.x,p.y+centre,p.z],to=[next[0],next[1]+centre,next[2]],q=G.FPhysicsGeometry.clampBox(from,to,[.28,half,.28],boxes,{skin:.001},{});
+          next[0]=q.x;next[1]=q.y-centre;next[2]=q.z;collided||=q.hit;
         }
         if(next[1]<p.y){const floor=landingAt(p.x,p.z,p.y,.28);if(next[1]<floor)next[1]=floor;}
-        else if(next[1]>p.y)for(const list of [localSolids(p.x,p.z),doorBoxes,trapBoxes])for(const q of list)if(q.minY>=p.y+1.8-1e-7&&q.minY<next[1]+1.8&&discBox(p.x,p.z,.28,q))next[1]=Math.min(next[1],q.minY-1.8);
+        else if(next[1]>p.y)for(const list of [localSolids(p.x,p.z),doorBoxes,trapBoxes])for(const q of list)if(q.minY>=p.y+(supportDrone?1.66:1.8)-1e-7&&q.minY<next[1]+(supportDrone?1.66:1.8)&&discBox(p.x,p.z,.28,q))next[1]=Math.min(next[1],q.minY-(supportDrone?1.66:1.8));
         if(!actorBlocked(p,p.x,p.z,.28,next[1])&&!rigid?.blocked(p,p.x,p.z,.28,next[1]))putHeight(p,next[1]);
-        if(ground(next[0],p.z)<=p.y+.02&&!blocked(next[0],p.z,.28,p.y)&&!actorBlocked(p,next[0],p.z,.28,p.y))p.x=next[0];
-        if(ground(p.x,next[2])<=p.y+.02&&!blocked(p.x,next[2],.28,p.y)&&!actorBlocked(p,p.x,next[2],.28,p.y))p.z=next[2];
+        if(ground(next[0],p.z)<=p.y+.02&&!blocked(next[0],p.z,.28,p.y+(supportDrone?1.18:0),doorBoxes,solids,trapBoxes,supportDrone?.48:1.8)&&!actorBlocked(p,next[0],p.z,.28,p.y))p.x=next[0];
+        if(ground(p.x,next[2])<=p.y+.02&&!blocked(p.x,next[2],.28,p.y+(supportDrone?1.18:0),doorBoxes,solids,trapBoxes,supportDrone?.48:1.8)&&!actorBlocked(p,p.x,next[2],.28,p.y))p.z=next[2];
         const actual=[p.x,p.y,p.z];for(let k=0;k<3;k++){if(Math.abs(actual[k]-old[k]-delta[k])>1e-7){velocity[k]=0;collided=true;}if(Math.abs(velocity[k])<1e-7)velocity[k]=0;}
         [p.airVX,p.airVY,p.airVZ]=velocity;remaining-=h;
       }
@@ -1040,7 +1070,7 @@ function navigationGraph(cells,width,testEdge){
     function exportProfiles(){
       if(!profilesEnabled)return null;
       const active=s.profiles[s.activeProfile];active.economy=s.economy;active.weapon=s.weapon;active.left=s.equipment.left;active.position=G.MetalProfiles.position(p);
-      return G.MetalProfiles.copy({version:1,active:s.activeProfile,classes:s.profiles,jetpack:s.jetpack});
+      return G.MetalProfiles.copy({version:supportDrone?2:1,active:s.activeProfile,classes:s.profiles,jetpack:s.jetpack});
     }
     function awardProfile(xp,id=s.activeProfile){
       if(!profilesEnabled||!s.profiles[id])return;
@@ -1062,13 +1092,13 @@ function navigationGraph(cells,width,testEdge){
     function syncArmor(){if(armorEnabled){s.armor.capacity=armorCapacity();s.armor.points=Math.min(s.armor.points,s.armor.capacity);}}
     function shopAccessible(q){return economyEnabled&&!s.dead&&!s.won&&p.hp>0&&Math.hypot(p.x-q.x,p.z-q.z)<=2.6&&Math.abs(p.y-(q.y||0))<1.05&&(!q.destructibleId||!destruction||destruction.isAlive(q.destructibleId))&&sight(p.x,p.z,q.x,q.z,p.y+1.4,(q.y||0)+1.4);}
     function economyOptions(){return {campaign:pistol,...(profilesEnabled?{capacities:ammoCaps}:{})};}
-    function profileCaps(){if(!profilesEnabled)return G.FEconomy.ammoCaps(s.economy,{campaign:pistol});s.profiles[s.activeProfile].economy=s.economy;return G.MetalProfiles.ammoCaps(s.profiles);}
-    function shopOffers(id){const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return null;const state={profile:s.economy,inventory:s.inventory,hp:p.hp};return G.FEconomy.catalog().filter(item=>(!profilesEnabled||item.weapon===undefined||G.MetalProfiles.allowed(s.activeProfile,item.weapon))&&(arsenal||item.weapon!==3)&&(!pistol||item.kind!=='weapon'&&(item.kind!=='ammo'||s.inventory.weapons[item.weapon]))).map(item=>({...item,...G.FEconomy.quote(state,item.id,economyOptions())}));}
+    function profileCaps(){if(!profilesEnabled)return G.FEconomy.ammoCaps(s.economy,{campaign:pistol});s.profiles[s.activeProfile].economy=s.economy;return G.MetalProfiles.ammoCaps(s.profiles,supportDrone);}
+    function shopOffers(id){const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return null;const state={profile:s.economy,inventory:s.inventory,hp:p.hp};return G.FEconomy.catalog().filter(item=>(!profilesEnabled||item.weapon===undefined||G.MetalProfiles.allowed(s.activeProfile,item.weapon,supportDrone))&&(arsenal||item.weapon!==3)&&(!pistol||item.kind!=='weapon'&&(item.kind!=='ammo'||s.inventory.weapons[item.weapon]))).map(item=>({...item,...G.FEconomy.quote(state,item.id,economyOptions())}));}
     function buy(id,itemId){
       const shop=(world.shops||[]).find(q=>q.id===id);if(!shop||!shopAccessible(shop))return {ok:false,reason:'Approchez un atelier accessible.',cost:{credits:0,cores:0}};
-      if(profilesEnabled){const item=G.FEconomy.catalog().find(q=>q.id===itemId);if(item?.weapon!==undefined&&!G.MetalProfiles.allowed(s.activeProfile,item.weapon))return {ok:false,reason:'Arme réservée à l’autre profil.',cost:{credits:0,cores:0}};}
+      if(profilesEnabled){const item=G.FEconomy.catalog().find(q=>q.id===itemId);if(item?.weapon!==undefined&&!G.MetalProfiles.allowed(s.activeProfile,item.weapon,supportDrone))return {ok:false,reason:'Arme réservée à l’autre profil.',cost:{credits:0,cores:0}};}
       const result=G.FEconomy.transact({profile:s.economy,inventory:s.inventory,hp:p.hp},itemId,economyOptions());if(!result.ok)return result;
-      const profile=G.FEconomy.copy(result.state.profile),caps=profile&&(profilesEnabled?G.MetalProfiles.ammoCaps({...s.profiles,[s.activeProfile]:{...s.profiles[s.activeProfile],economy:profile}}):G.FEconomy.ammoCaps(profile,{campaign:pistol})).slice(0,weaponSlots),inventory=caps&&inventoryValue(result.state.inventory,caps),nextStats=profile&&G.FEconomy.stats(profile);
+      const profile=G.FEconomy.copy(result.state.profile),caps=profile&&(profilesEnabled?G.MetalProfiles.ammoCaps({...s.profiles,[s.activeProfile]:{...s.profiles[s.activeProfile],economy:profile}},supportDrone):G.FEconomy.ammoCaps(profile,{campaign:pistol})).slice(0,weaponSlots),inventory=caps&&inventoryValue(result.state.inventory,caps),nextStats=profile&&G.FEconomy.stats(profile);
       if(!profile||!inventory||!Number.isFinite(result.state.hp)||result.state.hp<=0||result.state.hp>nextStats.maxHp)return {ok:false,reason:'Transaction invalide.',cost:{credits:0,cores:0}};
       s.economy=profile;if(profilesEnabled)s.profiles[s.activeProfile].economy=profile;s.inventory=inventory;p.hp=result.state.hp;stats=nextStats;ammoCaps=caps;s.maxHp=stats.maxHp;
       refreshAdaptation();
@@ -1076,10 +1106,10 @@ function navigationGraph(cells,width,testEdge){
     }
     // The light drone carries twin cannons of one weapon: it has no left hand.
     function twinMounted(){return profilesEnabled&&s.activeProfile==='light';}
-    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id))return false;if(arsenal){if(twinMounted())s.equipment.left=null;else if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;mirrorHeat();syncArmor();return true;}
+    function selectWeapon(id){if(!Number.isInteger(id)||id<0||id>=weaponSlots||progression&&!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id,supportDrone))return false;if(arsenal){if(twinMounted())s.equipment.left=null;else if(s.equipment.left===id)s.equipment.left=s.weapon;s.equipment.right=id;}s.weapon=id;mirrorHeat();syncArmor();return true;}
     function selectLeftWeapon(id){
       if(!arsenal||s.dead||s.won||id!==null&&twinMounted())return false;
-      if(id!==null&&(!Number.isInteger(id)||id<0||id>=weaponSlots||!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id)))return false;
+      if(id!==null&&(!Number.isInteger(id)||id<0||id>=weaponSlots||!s.inventory.weapons[id]||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,id,supportDrone)))return false;
       if(id===s.weapon){if(!Number.isInteger(s.equipment.left))return false;s.weapon=s.equipment.right=s.equipment.left;}
       s.equipment.left=id;mirrorHeat();syncArmor();return true;
     }
@@ -1118,12 +1148,12 @@ function navigationGraph(cells,width,testEdge){
       const reward=G.FEconomy.bossReward(q.rewardIndex);if(!reward||q.rewardIndex!==world.index)return;
       if(s.campaign.claimedBossRewards.includes(q.rewardIndex)){q.rewardTaken=true;return;}
       let profile=G.FEconomy.grantBossReward(s.economy,q.rewardIndex);if(!profile)return;
-      if(profilesEnabled){const owner=G.MetalProfiles.owner(reward.weaponUpgrade,s.activeProfile);if(owner!==s.activeProfile){profile.weaponUpgrades[reward.weaponUpgrade]=s.economy.weaponUpgrades[reward.weaponUpgrade];const target=s.profiles[owner].economy;target.weaponUpgrades[reward.weaponUpgrade]=Math.min(8,target.weaponUpgrades[reward.weaponUpgrade]+1);}}
+      if(profilesEnabled){const owner=G.MetalProfiles.owner(reward.weaponUpgrade,s.activeProfile,supportDrone);if(owner!==s.activeProfile){profile.weaponUpgrades[reward.weaponUpgrade]=s.economy.weaponUpgrades[reward.weaponUpgrade];const target=s.profiles[owner].economy;target.weaponUpgrades[reward.weaponUpgrade]=Math.min(8,target.weaponUpgrades[reward.weaponUpgrade]+1);}}
       const found=reward.weapon!==null&&!s.inventory.weapons[reward.weapon];
       s.economy=profile;stats=G.FEconomy.stats(profile);ammoCaps=profileCaps();s.maxHp=stats.maxHp;
       if(found){s.inventory.weapons[reward.weapon]=true;selectWeapon(reward.weapon);emit('weaponPickup',{id:q.id,weapon:reward.weapon,amount:0,x:q.x,y:q.y,z:q.z,boss:true});}
       s.campaign.discovered=CAMPAIGN_GEAR.filter(g=>ownsGear(g,s.inventory)).map(g=>g.key);s.campaign.claimedBossRewards.push(q.rewardIndex);s.campaign.claimedBossRewards.sort((a,b)=>a-b);q.rewardTaken=true;refreshAdaptation();
-      emit('bossReward',{id:q.id,bossNumber:q.rewardIndex+1,weapon:found?reward.weapon:null,weaponUpgrade:{weapon:reward.weaponUpgrade,rank:(profilesEnabled?s.profiles[G.MetalProfiles.owner(reward.weaponUpgrade,s.activeProfile)].economy:profile).weaponUpgrades[reward.weaponUpgrade],label:reward.weaponUpgradeLabel},personalUpgrade:{key:reward.personalUpgrade,rank:profile.upgrades[reward.personalUpgrade],label:reward.personalUpgradeLabel},x:q.x,y:q.y,z:q.z});
+      emit('bossReward',{id:q.id,bossNumber:q.rewardIndex+1,weapon:found?reward.weapon:null,weaponUpgrade:{weapon:reward.weaponUpgrade,rank:(profilesEnabled?s.profiles[G.MetalProfiles.owner(reward.weaponUpgrade,s.activeProfile,supportDrone)].economy:profile).weaponUpgrades[reward.weaponUpgrade],label:reward.weaponUpgradeLabel},personalUpgrade:{key:reward.personalUpgrade,rank:profile.upgrades[reward.personalUpgrade],label:reward.personalUpgradeLabel},x:q.x,y:q.y,z:q.z});
     }
     function collectSupplies(){
       for(const q of s.pickups){
@@ -1248,7 +1278,7 @@ function navigationGraph(cells,width,testEdge){
           const wave=q.waves[q.pendingWave].enemyIds.map(id=>s.enemies[id]).filter(e=>e.hp>0),need=wave.filter(e=>!e.encounterReleased);
           let engagedCount=0,local=0;
           for(const e of s.enemies)if(alive(e)&&!giant(e)&&e.encounterReleased&&!e.returning&&(!e.bossWave||e.bossReleased)&&(Math.hypot(e.x-p.x,e.z-p.z)<48||bossProgression&&e.entryGrace>0)){engagedCount++;if(enemyEncounter.get(e.id)===q)local++;}
-          let slots=q.horde?(q.maxActive||16)-local:campaign?Math.min(maxCombat-engagedCount,(q.maxActive||6)-local):Infinity;
+          let slots=q.horde?Math.min(20-engagedCount,(q.maxActive||16)-local):campaign?Math.min(maxCombat-engagedCount,(q.maxActive||6)-local):Infinity;
           if(q.horde?slots<=0:campaign?slots<=0:engagedCount+need.length>maxCombat||local+need.length>(q.maxActive||6))continue;
           // A crowded front cannot accumulate new waves while the player rushes
           // through adjacent triggers. Existing bodies always remain physical.
@@ -1398,7 +1428,7 @@ function navigationGraph(cells,width,testEdge){
       navigate(e,dt);return true;
     }
     function damageEnemy(e,amount,source,weak=false){
-      if(!alive(e))return;const origin=source||{x:p.x,y:p.y+1.45,z:p.z,credit:true,...(profilesEnabled?{profile:s.activeProfile}:{})};if(profilesEnabled&&e.profileRequired&&(!origin.credit||origin.profile!==e.profileRequired)){if(origin.credit&&profileHintWait<=0){emit('profileBlocked',{required:e.profileRequired,boss:e.id});profileHintWait=1;}return;}if(origin.credit)amount*=(profilesEnabled&&origin.profile!==s.activeProfile?G.FEconomy.stats(s.profiles[origin.profile].economy):stats).damageMultiplier;if(giant(e))amount*=e.weakPointOpen&&weak?3.2:.30;if(e.bossWave)e.bossReleased=true;
+      if(!alive(e))return;const origin=source||{x:p.x,y:p.y+1.45,z:p.z,credit:true,...(profilesEnabled?{profile:s.activeProfile}:{})};if(profilesEnabled&&e.profileRequired&&(!origin.credit||origin.profile!==e.profileRequired)){if(origin.credit&&profileHintWait<=0){emit('profileBlocked',{required:e.profileRequired,boss:e.id});profileHintWait=1;}return;}if(origin.credit&&!origin.laser)amount*=(profilesEnabled&&origin.profile!==s.activeProfile?G.FEconomy.stats(s.profiles[origin.profile].economy):stats).damageMultiplier;if(giant(e))amount*=e.weakPointOpen&&weak?3.2:.30;if(e.bossWave)e.bossReleased=true;
       if(bossProgression)e.entryGrace=0;
       if(progression&&enemyEncounter.has(e.id)){e.encounterReleased=true;e.returning=false;e.quietTime=0;const encounter=enemyEncounter.get(e.id);if(encounter.status==='dormant')announceWave(encounter,0);}
       if(jointed(e)&&e.weakPointOpen&&typeof weak==='number'&&e.joints[weak-1]>0){
@@ -1509,7 +1539,7 @@ function navigationGraph(cells,width,testEdge){
     function sceneryResult(result,point,power){
       if(!result)return;
       for(const id of result.pipeLeaks||[]){const q=s.pipes.find(q=>q.id===id);if(q)leakPipe(q);}
-      for(const q of wreckage(result.debris))appendDebris(q);
+      for(const q of wreckage(result.debris,{small:true}))appendDebris(q);
       if(!result.changed){const chip=(result.debris||[]).find(q=>q&&q.structural!==true&&!q.dust);if(chip)appendDebris(chip);}
       for(const e of result.events||[])if(e.name==='materialImpact'||e.name==='materialBreak')emit(e.name,e);
       if(result.changed&&!result.events?.length)emit('creak',{x:point[0],y:point[1],z:point[2],power});
@@ -1523,8 +1553,8 @@ function navigationGraph(cells,width,testEdge){
         const d=s.doors[i];if(d.destroyed||profilesEnabled&&d.profileProtected)continue;const distance=distanceBox(point,doorBoxes[i]);if(distance>(r||.18))continue;if(profilesEnabled&&r===0){emit('materialImpact',{deflected:true,sourceId:'door:'+d.id,x:point[0],y:point[1],z:point[2],material:'metal',power:1});continue;}
         d.hp=Math.max(0,d.hp-power*(r?Math.max(.2,1-distance/r):1));
         if(!d.hp){
-          const across=d.w>d.d,sourceId='door:'+d.id,y=(d.y||0)+d.h/2+d.progress*(d.h+.25),size=[across?d.w/2:d.w,d.h/2,across?d.d:d.d/2];
-          for(const side of [-1,1])for(const row of [-1,1])appendDebris({structural:true,sourceId,shape:'box',material:'metal',mat:0,size,rotation:[0,0,0],angularVelocity:[.28*side,.15*row,.25*side],x:d.x+(across?side*d.w/4:0),y:y+row*d.h/4,z:d.z+(across?0:side*d.d/4),velocity:[across?side*.35:Math.sign(d.x-point[0]||1)*1.3,.6,across?Math.sign(d.z-point[2]||1)*1.3:side*.35],mass:Math.min(160,size.reduce((v,n)=>v*n,1)*65),seed:(i*977+row*131+side*911)>>>0});
+          const sourceId='door:'+d.id,y=(d.y||0)+d.h/2+d.progress*(d.h+.25);
+          for(const piece of wreckage([{structural:true,sourceId,shape:'box',material:'metal',mat:0,size:[d.w,d.h,d.d],rotation:[0,0,0],p:[d.x,y,d.z],velocity:[Math.sign(d.x-point[0]||1)*.6,.6,Math.sign(d.z-point[2]||1)*.6],seed:i*977}],{small:true}))appendDebris(piece);
           d.destroyed=true;d.progress=1;d.open=true;navDirty=true;emit('materialBreak',{sourceId,x:d.x,y,z:d.z,material:'metal',power,seed:i*977});emit('doorOpen',{id:d.id,destroyed:true,x:d.x,y:d.y||0,z:d.z});
         }
       }
@@ -1541,7 +1571,7 @@ function navigationGraph(cells,width,testEdge){
       for(const t of s.traps){
         if(t.destroyed)continue;const q=t.box||{minX:t.x-t.w/2,maxX:t.x+t.w/2,minY:t.y,maxY:t.y+.3,minZ:t.z-t.d/2,maxZ:t.z+t.d/2};
         const d=distanceBox(point,q);if(d>(r||.18))continue;t.hp=Math.max(r?0:1,(t.hp??18)-power*(r?Math.max(.2,1-d/r):1));
-        if(!t.hp){navMark(trapFootprint(t));navDirty=true;t.destroyed=true;t.hot=t.warning=false;t.box=null;emit('trap',{id:t.id,kind:t.kind,destroyed:true,x:t.x,y:t.y,z:t.z});}
+        if(!t.hp){if(t.box){const b=t.box,size=[b.maxX-b.minX,b.maxY-b.minY,b.maxZ-b.minZ],centre=[(b.minX+b.maxX)/2,(b.minY+b.maxY)/2,(b.minZ+b.maxZ)/2];for(const piece of wreckage([{structural:true,sourceId:'trap:'+t.id,shape:'box',size,p:centre,mat:0,material:'metal',velocity:[0,.3,0]}],{small:true}))appendDebris(piece);}navMark(trapFootprint(t));navDirty=true;t.destroyed=true;t.hot=t.warning=false;t.box=null;emit('trap',{id:t.id,kind:t.kind,destroyed:true,x:t.x,y:t.y,z:t.z});}
       }
     }
     function blastExposure(point,x,y,z){
@@ -1774,7 +1804,7 @@ function navigationGraph(cells,width,testEdge){
     }
     function fireArsenal(assist,hand){
       const weapon=hand==='left'?s.equipment.left:s.weapon;
-      if(s.dead||s.won||!Number.isInteger(weapon)||!s.inventory.weapons[weapon]||weaponWait[weapon]>0||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,weapon))return false;
+      if(s.dead||s.won||!Number.isInteger(weapon)||!s.inventory.weapons[weapon]||weaponWait[weapon]>0||profilesEnabled&&!G.MetalProfiles.allowed(s.activeProfile,weapon,supportDrone))return false;
       const handgun=pistol&&weapon===4;
       if(!handgun&&s.inventory.ammo[weapon]<=0){if(emptyWait<=0){emit('empty',{weapon,hand});emptyWait=1;}return melee();}
       const shotgun=weapon===1,rocket=weapon===2,grenade=weapon===3,ordnance=rocket||grenade;
@@ -1810,7 +1840,26 @@ function navigationGraph(cells,width,testEdge){
       syncDestruction();if(twin)s.flash=s.leftFlash=1;else if(hand==='left')s.leftFlash=1;else s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon,hand,shells,...(twin?{twin:true}:{})});hear(p.x,p.z,shotgun?24:18,p.y);reactToShot();
       if(connected){s.hits++;s.hitMarker=.18;emit('hit');}return true;
     }
+    function fireLaser(assist){
+      const q=s.support,r=G.MetalSupport.RULES;
+      if(s.dead||s.won||q.cooldown>1e-9||q.overheated)return false;
+      const sy=Math.sin(p.yaw),cy=Math.cos(p.yaw),cp=Math.cos(p.pitch),sp=Math.sin(p.pitch),dir=[sy*cp,sp,-cy*cp],right=[cy,0,sy],eye=[p.x,p.y+1.62,p.z];
+      let connected=false;
+      for(const side of [-1,1]){
+        const muzzle=playerMuzzle(eye,dir,right,[-sy*sp,cp,cy*sp],side<0?'left':'right'),from=muzzle.point;
+        const hit=hitRay(from,dir,r.laserRange,assist),prop=destruction?.raycast?.(from,dir,hit.distance);
+        if(prop&&prop.distance<hit.distance){hit.distance=prop.distance;hit.victim=null;}
+        if(muzzle.blocked){hit.distance=0;hit.victim=null;}
+        const to=from.map((v,k)=>v+dir[k]*hit.distance);
+        if(hit.victim){connected=true;damageEnemy(hit.victim,r.laserDamage,{x:p.x,y:p.y+1.62,z:p.z,credit:true,profile:'light',laser:true},hit.weak);}
+        emit('laserBeam',{from,to});
+      }
+      q.cooldown=r.laserDelay;q.heat=Math.min(1,q.heat+r.laserHeat);if(q.heat>=.99)q.overheated=true;
+      mirrorHeat();s.flash=s.leftFlash=.6;s.shots++;emit('shot',{weapon:4,hand:'right',twin:true,laser:true});hear(p.x,p.z,9,p.y);reactToShot();
+      if(connected){s.hits++;s.hitMarker=.12;emit('hit');}return true;
+    }
     function fire(assist=false,hand='right'){
+      if(supportDrone&&s.activeProfile==='light')return fireLaser(assist);
       if(arsenal)return fireArsenal(assist,hand==='left'?'left':'right');
       if(s.dead||s.won||fireWait>0)return false;
       if(progression){if(!s.inventory.weapons[s.weapon])return false;if(s.inventory.ammo[s.weapon]<=0){if(emptyWait<=0){emit('empty',{weapon:s.weapon});emptyWait=1;}return melee();}}
@@ -2767,6 +2816,7 @@ function navigationGraph(cells,width,testEdge){
       if(!switched&&Number.isInteger(input.weapon)&&input.weapon>=0&&input.weapon<weaponSlots)selectWeapon(input.weapon);
       if(!switched&&arsenal&&Number.isInteger(input.leftWeapon)&&input.leftWeapon>=-1&&input.leftWeapon<weaponSlots)selectLeftWeapon(input.leftWeapon===-1?null:input.leftWeapon);
       p.yaw+=Number.isFinite(input.lookX)?input.lookX:0;p.pitch=clamp(p.pitch+(Number.isFinite(input.lookY)?input.lookY:0),-1.2,1.2);
+      if(supportDrone){updateSupport(dt,input);const wants=s.activeProfile==='heavy'&&!!input.sprint&&!p.airborne&&Math.hypot(input.moveX||0,input.moveY||0)>.01;const run=G.MetalSupport.sprint(s.support,dt,wants);if(s.activeProfile==='heavy'&&input.sprint&&!run)input={...input,sprint:false};}
       if(arsenal){
         for(let i=0;i<weaponSlots;i++){const equipped=i===s.weapon||i===s.equipment.left,firing=i===s.weapon&&input.fire||i===s.equipment.left&&input.fireLeft,rate=equipped?(firing&&!s.weaponOverheated[i]?.22:.55):weaponWait[i]>0?.1:.35;
           s.weaponHeat[i]=Math.max(0,s.weaponHeat[i]-dt*rate*stats.coolingMultiplier);if(s.weaponOverheated[i]&&s.weaponHeat[i]<.55){s.weaponOverheated[i]=false;emit('cooled',{weapon:i});}}
@@ -2829,8 +2879,8 @@ function navigationGraph(cells,width,testEdge){
       // same routes as a freshly restored world. No actor or gameplay timer moves.
       if(navPending||!graph.ready){pumpNav(Infinity);graph.flush();s.aiStats.navPending=0;}syncArmor();
       invalidateBrain();failedRoutes.clear();approachRoutes.clear();entryComponents.clear();
-      return {version:rigid?2:1,...(rigid?{rigidBodies:rigid.snapshot()}:{}),...(world.combatVersion===1||rigidEnabled?{motion:{version:1,velocityX,velocityZ,dashAge,dashX,dashZ,jumpBuffer,coyote,jumpWasPressed,clipFeedbackWait,clipEscape,profileWasPressed,jetSoundWait,profileHintWait,interactHeld,recovery}}:{}),...(world.combatVersion===1?{combatVersion:1}:{}),...(hordes?{hordeVersion:1}:{}),aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
-        state:{...pick(s,NUMBERS),difficulty:s.difficulty,director:pick(s.director,DIRECTOR),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
+      return {version:rigid?2:1,...(supportDrone?{supportDroneVersion:1}:{}),...(rigid?{rigidBodies:rigid.snapshot()}:{}),...(world.combatVersion===1||rigidEnabled?{motion:{version:1,velocityX,velocityZ,dashAge,dashX,dashZ,jumpBuffer,coyote,jumpWasPressed,clipFeedbackWait,clipEscape,profileWasPressed,jetSoundWait,profileHintWait,interactHeld,recovery}}:{}),...(world.combatVersion===1?{combatVersion:1}:{}),...(hordes?{hordeVersion:1}:{}),aiVersion:3,systemsVersion:1,physicsVersion:profilesEnabled?2:1,...(profilesEnabled?{profileVersion:1}:{}),directorVersion:1,bossVersion:1,destructionVersion:1,rubbleVersion:1,...(bossProgression?{reinforcementVersion:1}:{}),...(progression?{progressionVersion:1}:{}),...(economyEnabled?{economyVersion:bossProgression?2:1}:{}),...(arsenal?{arsenalVersion:pistol?2:1}:{}),...(campaign?{campaignVersion:bossProgression?2:1}:{}),...(armorEnabled?{armorVersion:1}:{}),destruction:destruction?.snapshot()||null,format:'FERRO',seed:world.seed,stage:world.stage||0,fingerprint,
+        state:{...(supportDrone?{support:{...s.support}}:{}),...pick(s,NUMBERS),difficulty:s.difficulty,director:pick(s.director,DIRECTOR),won:s.won,dead:s.dead,bossAlive:s.bossAlive,player:pick(p,PLAYER),
           ...(profilesEnabled?{profiles:exportProfiles()}:{}),
           ...(economyEnabled?{economy:G.FEconomy.copy(s.economy)}:{}),
           ...(campaign?{campaign:{...exportCampaign(),trophies:s.campaign.trophies.map(t=>({...t}))}}:{}),
@@ -2858,7 +2908,8 @@ function navigationGraph(cells,width,testEdge){
         require(profilesEnabled?data.profileVersion===1:data.profileVersion===undefined&&a.profiles===undefined);
         const savedMotion=data.motion;if(savedMotion!==undefined){require((world.combatVersion===1||rigidEnabled)&&savedMotion?.version===1);for(const k of ['velocityX','velocityZ'])require(number(savedMotion[k],-40,40));for(const k of ['dashX','dashZ'])require(number(savedMotion[k],-1,1));for(const k of ['dashAge','jumpBuffer','coyote','clipFeedbackWait','jetSoundWait','profileHintWait','recovery'])require(number(savedMotion[k],0,2));for(const k of ['jumpWasPressed','clipEscape','profileWasPressed','interactHeld'])require(bool(savedMotion[k]));}
         const profiles=profilesEnabled?G.MetalProfiles.copy(a.profiles):null;
-        if(profilesEnabled){require(profiles&&JSON.stringify(profiles.classes[profiles.active].economy)===JSON.stringify(a.economy));for(const id of G.MetalProfiles.names){const q=profiles.classes[id].position;require(q&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-14,1000));}require(JSON.stringify(profiles.classes[profiles.active].position)===JSON.stringify(G.MetalProfiles.position(a.player)));}
+        require(data.supportDroneVersion===(supportDrone?1:undefined));const savedSupport=supportDrone?G.MetalSupport.copy(a.support):null;require(supportDrone?!!savedSupport:a.support===undefined);if(savedSupport?.target!==null&&savedSupport)require(s.mechanisms.some(m=>m.id===savedSupport.target&&m.activation));
+        if(profilesEnabled){require(profiles&&profiles.version===(supportDrone?2:1)&&JSON.stringify(profiles.classes[profiles.active].economy)===JSON.stringify(a.economy));for(const id of G.MetalProfiles.names){const q=profiles.classes[id].position;require(q&&number(q.x,b.minX,b.maxX)&&number(q.z,b.minZ,b.maxZ)&&number(q.y,-14,1000));}require(JSON.stringify(profiles.classes[profiles.active].position)===JSON.stringify(G.MetalProfiles.position(a.player)));}
         require(data.destructionVersion===undefined||data.destructionVersion===1);
         require(data.rubbleVersion===undefined||data.rubbleVersion===1);
         require(bossProgression?data.reinforcementVersion===undefined||data.reinforcementVersion===1:data.reinforcementVersion===undefined);
@@ -2871,7 +2922,7 @@ function navigationGraph(cells,width,testEdge){
         require(campaign?data.campaignVersion===(bossProgression?2:1):data.campaignVersion===undefined);
         require(armorEnabled?(data.armorVersion===undefined||data.armorVersion===1):data.armorVersion===undefined);
         const economy=economyEnabled?G.FEconomy.copy(a.economy):null;if(economyEnabled)require(economy);else require(a.economy===undefined);
-        const savedCaps=profilesEnabled?G.MetalProfiles.ammoCaps(profiles.classes):economyEnabled?G.FEconomy.ammoCaps(economy,{campaign:pistol}).slice(0,weaponSlots):ammoCaps,savedStats=economyEnabled?G.FEconomy.stats(economy):{...baseStats};
+        const savedCaps=profilesEnabled?G.MetalProfiles.ammoCaps(profiles.classes,supportDrone):economyEnabled?G.FEconomy.ammoCaps(economy,{campaign:pistol}).slice(0,weaponSlots):ammoCaps,savedStats=economyEnabled?G.FEconomy.stats(economy):{...baseStats};
         let inventory=exportInventory(),encounters=null,pickupRemaining=null,loot=[],campaignState=null,adaptation=null,savedCombat=nominalCombat,savedBossFactor=1,armor=null,armorRemaining=null;
         if(progression){
           inventory=inventoryValue(a.inventory,savedCaps);require(inventory&&inventory.weapons[a.weapon]);
@@ -2885,7 +2936,7 @@ function navigationGraph(cells,width,testEdge){
         if(campaign){
           const state=a.campaign,profile=state&&copyCampaign({version:state.version,discovered:state.discovered,...(bossProgression?{claimedBossRewards:state.claimedBossRewards}:{})},inventory);
           require(profile&&profile.version===(bossProgression?2:1)&&Object.keys(state).length===(bossProgression?4:3)&&Array.isArray(state.trophies)&&state.trophies.length===trophyDefs.length);
-          if(bossProgression)require(validBossRewards(economy,inventory,profile.claimedBossRewards,profiles?.classes));
+          if(bossProgression)require(validBossRewards(economy,inventory,profile.claimedBossRewards,profiles?.classes,supportDrone));
           const trophies=state.trophies.map((entry,i)=>{const def=trophyDefs[i];require(entry&&Object.keys(entry).length===3&&entry.id===def.id&&TROPHY_PHASES.includes(entry.phase)&&number(entry.timer,0,clamp(Number(def.grace)||3,1,5))&&((entry.phase==='grace')===(entry.timer>0)));if(entry.phase!=='sealed')require(profile.discovered.includes(def.key));return {id:entry.id,phase:entry.phase,timer:entry.timer};});
           campaignState={...profile,trophies};
           const policy=campaignPolicy(world.index,inventory,nominalCombat,bossProgression?2:1),saved=a.adaptation;
@@ -2899,7 +2950,7 @@ function navigationGraph(cells,width,testEdge){
           equipment=equipmentValue(a.equipment,inventory);require(equipment&&equipment.right===a.weapon);
           require(Array.isArray(t.weaponWait)&&t.weaponWait.length===weaponSlots&&weaponIds.every(i=>number(t.weaponWait[i],0,[.125,.98,1.25,.95,.32][i])));savedWeaponWait=t.weaponWait.slice();
           const modernHeat=a.weaponHeat!==undefined||a.weaponOverheated!==undefined;savedThermalFormat=modernHeat;
-          if(modernHeat){require(Array.isArray(a.weaponHeat)&&a.weaponHeat.length===weaponSlots&&a.weaponHeat.every(v=>number(v,0,1))&&Array.isArray(a.weaponOverheated)&&a.weaponOverheated.length===weaponSlots&&a.weaponOverheated.every(bool));require(a.weaponHeat[a.weapon]===a.player.heat&&a.weaponOverheated[a.weapon]===a.player.overheated);savedHeat=a.weaponHeat.slice();savedOverheated=a.weaponOverheated.slice();}
+          if(modernHeat){require(Array.isArray(a.weaponHeat)&&a.weaponHeat.length===weaponSlots&&a.weaponHeat.every(v=>number(v,0,1))&&Array.isArray(a.weaponOverheated)&&a.weaponOverheated.length===weaponSlots&&a.weaponOverheated.every(bool));require(supportDrone&&profiles.active==='light'?savedSupport.heat===a.player.heat&&savedSupport.overheated===a.player.overheated:a.weaponHeat[a.weapon]===a.player.heat&&a.weaponOverheated[a.weapon]===a.player.overheated);savedHeat=a.weaponHeat.slice();savedOverheated=a.weaponOverheated.slice();}
           else{savedHeat=weaponIds.map(()=>a.player.heat);savedOverheated=weaponIds.map(()=>a.player.overheated);}
         }else require(a.equipment===undefined&&t.weaponWait===undefined&&a.weaponHeat===undefined&&a.weaponOverheated===undefined);
         if(armorEnabled){
@@ -2965,7 +3016,7 @@ function navigationGraph(cells,width,testEdge){
           const ids=new Set(),sources=new Set((data.destruction?.states||[]).map(q=>q.id)),doorSources=new Set(doors.filter(d=>d.destroyed).map(d=>'door:'+d.id)),supportBoxes=[...savedSolids,...savedDoors,...savedTrapBoxes,...lifts.map(l=>({minX:l.x-l.w/2,maxX:l.x+l.w/2,minY:l.y-.22,maxY:l.y,minZ:l.z-l.d/2,maxZ:l.z+l.d/2}))];
           rubble=a.rubble.map(q=>{
             require(q&&Object.keys(q).length===RUBBLE_FIELDS.length+3+(q.color===undefined?0:1)&&integer(q.id,1,t.rubbleSerial)&&!ids.has(q.id));ids.add(q.id);
-            require(typeof q.sourceId==='string'&&(sources.has(q.sourceId)||doorSources.has(q.sourceId))&&RUBBLE_SHAPES.includes(q.shape)&&RUBBLE_MATERIALS.includes(q.material)&&integer(q.mat,0,12)&&integer(q.seed,0,4294967295)&&number(q.mass,.035,160));
+            require(typeof q.sourceId==='string'&&(sources.has(q.sourceId)||doorSources.has(q.sourceId)||traps.some(t=>t.destroyed&&'trap:'+t.id===q.sourceId))&&RUBBLE_SHAPES.includes(q.shape)&&RUBBLE_MATERIALS.includes(q.material)&&integer(q.mat,0,12)&&integer(q.seed,0,4294967295)&&number(q.mass,.035,160));
             require(number(q.x,b.minX-80,b.maxX+80)&&number(q.z,b.minZ-80,b.maxZ+80)&&number(q.y,-150,1000)&&number(q.age,0,1e7)&&bool(q.resting)&&number(q.impactWait,0,.16)&&number(q.settleTime,0,.18));
             for(const k of ['vx','vy','vz'])require(number(q[k],-40,40));
             const array=(v,min,max)=>Array.isArray(v)&&v.length===3&&v.every(n=>number(n,min,max));
@@ -2990,7 +3041,7 @@ function navigationGraph(cells,width,testEdge){
           else require(e.airVX===0&&e.airVY===0&&e.airVZ===0&&e.airTime===0&&supported(x,z,y,e.type===3?1.05:e.type===undefined?.28:.38));
         }
         const v=a.player;if(v&&v.y===undefined&&data.systemsVersion===undefined)v.y=0;
-        require(v&&number(v.x,b.minX,b.maxX)&&number(v.z,b.minZ,b.maxZ)&&!blocked(v.x,v.z,.28,v.y,savedDoors,savedSolids,savedTrapBoxes));validAir(v,v.x,v.z,v.y);
+        require(v&&number(v.x,b.minX,b.maxX)&&number(v.z,b.minZ,b.maxZ)&&!blocked(v.x,v.z,.28,v.y+(supportDrone&&profiles.active==='light'?1.18:0),savedDoors,savedSolids,savedTrapBoxes,supportDrone&&profiles.active==='light'?.48:1.8));validAir(v,v.x,v.z,v.y);
         require(a.dead||!beneathTerrain(v.x,v.z,v.y,lifts,traps));
         require(number(v.yaw,-1e6,1e6)&&number(v.pitch,-1.2,1.2)&&number(v.hp,0,savedStats.maxHp)&&number(v.heat,0,1)&&bool(v.overheated));
         require(number(v.dash,0,1.7)&&number(v.dashing,0,.2)&&number(v.pulseCooldown,0,7)&&a.dead===(v.hp===0));
@@ -3110,7 +3161,7 @@ function navigationGraph(cells,width,testEdge){
           if(q.owner!==undefined){require(integer(q.owner,0,Math.max(0,enemies.length-1)));bullet.owner=q.owner;}
           return bullet;
         });
-        rigid=savedRigid;Object.assign(p,pick(v,PLAYER));Object.assign(s,pick(a,NUMBERS),{difficulty,director,economy,inventory,loot,won:a.won,dead:a.dead,bossAlive:a.bossAlive,enemies,bullets,mechanisms,doors,lifts,pipes,traps,projectiles,bossAttacks});stats=savedStats;ammoCaps=savedCaps;s.maxHp=stats.maxHp;
+        rigid=savedRigid;if(supportDrone)s.support=savedSupport;Object.assign(p,pick(v,PLAYER));Object.assign(s,pick(a,NUMBERS),{difficulty,director,economy,inventory,loot,won:a.won,dead:a.dead,bossAlive:a.bossAlive,enemies,bullets,mechanisms,doors,lifts,pipes,traps,projectiles,bossAttacks});stats=savedStats;ammoCaps=savedCaps;s.maxHp=stats.maxHp;
         if(profilesEnabled){s.activeProfile=profiles.active;s.profiles=profiles.classes;s.profiles[s.activeProfile].economy=s.economy;s.jetpack={...profiles.jetpack,capacity:G.MetalProfiles.capacity(profiles.classes.light.xp),active:false};profileWasPressed=false;jetSoundWait=profileHintWait=0;}
         if(campaign){s.campaign=campaignState;s.adaptation=adaptation;maxCombat=savedCombat;bossHpFactor=savedBossFactor;adaptationKey=campaignArsenalKey(inventory);}
         if(armorEnabled)s.armor=armor;

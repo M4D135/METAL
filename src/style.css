@@ -227,3 +227,16 @@ body.touch #toast,body.touch[data-boss=true] #toast{top:auto;height:auto;max-hei
 #intro-audio[hidden]{display:none}
 /* Attract demo: no legend, and no crosshair in the cinematic shots. */
 body[data-state=demo] #controls-hint,body[data-state=demo]:not([data-shot=eyes]) #crosshair{display:none}
+
+/* 0.12.9: compact assistance, readable resources and unobstructed drone optics. */
+#controls-hint{top:auto;left:22px;bottom:190px;transform:none;grid-template-columns:auto 1fr;gap:3px 7px;max-width:270px;font-size:9px;opacity:.42;line-height:1.25;pointer-events:none}
+#controls-hint span{font-size:8px;letter-spacing:.045em}#controls-hint kbd{padding:1px 3px;border-radius:2px;font-size:8px}
+#resource-panel{display:grid;grid-template-columns:1fr auto;gap:4px;margin-top:7px;font-size:9px;letter-spacing:.10em;color:#a5d9dd}#resource-panel>div{grid-column:1/-1;height:5px;background:#17282b}#resource-panel i{display:block;width:100%;height:100%;background:#63cad4;transform-origin:left;transition:transform .10s linear}#resource-panel.depleted{color:#e9a36a}#resource-panel.depleted i{background:#e9a36a}
+#access-hint{position:absolute;left:50%;bottom:190px;transform:translateX(-50%);width:max-content;max-width:65vw;padding:7px 10px;border-left:2px solid #68cdd6;background:#101e20c9;color:#b5e3e4;font-size:10px;letter-spacing:.055em;pointer-events:none;z-index:7;line-height:1.5;text-align:center}#access-hint[data-kind="heavy"]{border-color:#d7a05b;color:#ebd3aa}#access-progress{display:block;height:3px;background:#263b3d;margin-top:4px}#access-progress i{display:block;width:100%;height:100%;transform-origin:left;background:#72dee2}
+body[data-support="true"] #arsenal .weapon-slots,body[data-support="true"] #arsenal .left-hand-strip{display:none}body[data-support="true"] #arsenal{width:auto;min-width:210px}body[data-support="true"] .weapon-status .equipped-label{font-size:0}body[data-support="true"] .weapon-status .equipped-label:after{content:'DRONE · SOUTIEN';font-size:9px;letter-spacing:.12em}body[data-support="true"] .ammo-readout strong{font-size:34px}body[data-support="true"] #weapon-label{font-size:11px}body[data-support="true"] .health .bar i{background:#6dd7df}
+#perf-dev{position:fixed;top:90px;right:18px;max-width:70vw;padding:8px 10px;font:10px/1.6 monospace;color:#bce4de;background:#061416dd;border:1px solid #244142;z-index:90;pointer-events:none;margin:0;white-space:pre-wrap}
+#resource-panel[hidden],#access-hint[hidden],#access-progress[hidden]{display:none!important}
+@media(max-height:700px){#controls-hint{bottom:148px;opacity:.35}#access-hint{bottom:130px}}
+@media(max-width:760px){#controls-hint{display:none}#access-hint{bottom:134px;max-width:76vw;font-size:9px}#resource-panel{font-size:8px;gap:2px;margin-top:4px}#resource-panel>div{height:4px}#perf-dev{top:60px;font-size:8px;max-width:60vw}}
+body.touch #health-panel .bar,body.touch .weapon-status .bar{display:block!important;height:4px!important}body.touch #resource-panel{display:grid}body.touch #resource-panel[hidden]{display:none!important}
+body:not([data-state="playing"]):not([data-state="demo"]) #access-hint{display:none!important}

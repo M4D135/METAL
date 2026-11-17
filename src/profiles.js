@@ -7,21 +7,21 @@
   const capacity=xp=>4+.2*(level(xp)-1);
   // New expeditions start with the heavy (David, 16/11/2026): the walking
   // character is the hero; the light drone is his flying assistant.
-  function fresh(economy,active='heavy'){
-    return {version:1,active:names.includes(active)?active:'heavy',classes:Object.fromEntries(names.map(id=>[id,{xp:0,weapon:4,left:null,position:null,economy:G.FEconomy.campaign(economy||G.FEconomy.fresh())}])),jetpack:{fuel:4,recharge:0}};
+  function fresh(economy,active='heavy',support=false){
+    return {version:support?2:1,active:names.includes(active)?active:'heavy',classes:Object.fromEntries(names.map(id=>[id,{xp:0,weapon:4,left:null,position:null,economy:G.FEconomy.campaign(economy||G.FEconomy.fresh())}])),jetpack:{fuel:4,recharge:0}};
   }
   function copy(value){
-    if(!value||value.version!==1||!names.includes(value.active)||!value.classes)return null;
+    if(!value||![1,2].includes(value.version)||!names.includes(value.active)||!value.classes)return null;
     const classes={};
     for(const id of names){
       const q=value.classes[id],economy=q&&G.FEconomy.campaign(q.economy);
-      if(!q||!Number.isSafeInteger(q.xp)||q.xp<0||q.xp>1e7||!weapons[id].includes(q.weapon)||q.left!==null&&(!weapons[id].includes(q.left)||q.left===q.weapon)||!economy)return null;
+      if(!q||!Number.isSafeInteger(q.xp)||q.xp<0||q.xp>1e7||!allowed(id,q.weapon,value.version===2)||q.left!==null&&(!allowed(id,q.left,value.version===2)||q.left===q.weapon)||!economy)return null;
       const position=q.position==null?null:copyPosition(q.position);if(q.position!=null&&!position)return null;
       classes[id]={xp:q.xp,weapon:q.weapon,left:q.left,position,economy};
     }
     const j=value.jetpack,limit=capacity(classes.light.xp);
     if(!j||!Number.isFinite(j.fuel)||j.fuel<0||j.fuel>limit||!Number.isFinite(j.recharge)||j.recharge<0||j.recharge>.4)return null;
-    return {version:1,active:value.active,classes,jetpack:{fuel:j.fuel,recharge:j.recharge}};
+    return {version:value.version,active:value.active,classes,jetpack:{fuel:j.fuel,recharge:j.recharge}};
   }
   const poseKeys=['x','y','z','yaw','pitch','airborne','airVX','airVY','airVZ','airTime','padCooldown','padId'];
   const position=p=>Object.fromEntries(poseKeys.map(k=>[k,p[k]]));
@@ -36,9 +36,9 @@
     return {x:Math.max(90,Math.min(width-90,x)),y:Math.max(100,Math.min(height-120,y)),distance:Math.hypot(dx,target.y-player.y,dz),height:target.y-player.y,offscreen,direction:depth<=0?(right<0?'←':'→'):x<90?'←':x>width-90?'→':y<100?'↑':y>height-120?'↓':'◇'};
   }
   const owns=(profiles,inventory)=>names.every(id=>{const q=profiles.classes[id];return inventory.weapons[q.weapon]&&(q.left===null||inventory.weapons[q.left]);});
-  const owner=(weapon,active='light')=>weapon===4?active:weapon===2||weapon===3?'heavy':'light';
-  function ammoCaps(classes){const a=G.FEconomy.ammoCaps(classes.light.economy,{campaign:true}),b=G.FEconomy.ammoCaps(classes.heavy.economy,{campaign:true});return a.map((v,i)=>owner(i)==='heavy'?b[i]:v);}
-  const allowed=(profile,weapon)=>weapons[profile]?.includes(weapon)===true;
+  const owner=(weapon,active='light',support=false)=>support?'heavy':weapon===4?active:weapon===2||weapon===3?'heavy':'light';
+  function ammoCaps(classes,support=false){const a=G.FEconomy.ammoCaps(classes.light.economy,{campaign:true}),b=G.FEconomy.ammoCaps(classes.heavy.economy,{campaign:true});return a.map((v,i)=>owner(i,'light',support)==='heavy'?b[i]:v);}
+  const allowed=(profile,weapon,support=false)=>support?(profile==='heavy'?[0,1,2,3,4].includes(weapon):profile==='light'&&weapon===4):weapons[profile]?.includes(weapon)===true;
   function canDamage(group,bullet,source){
     if(group.profileProtected)return false;
     if(group.profileRequired==='heavy')return !bullet&&source?.owner==='player'&&source.profile==='heavy';

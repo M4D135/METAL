@@ -5,11 +5,11 @@ import gzip, hashlib, json
 ROOT=Path(__file__).resolve().parents[1]
 import subprocess,sys
 subprocess.run([sys.executable,str(ROOT/'tools/check-ferro-lock.py'),str(ROOT)],check=True)
-modules=['ferro/engine.js','ferro/physx-runtime.js','ferro/physx.js','fmath.js','passages.js','surface.js','skies.js','gpu-profile.js','reflections.js','renderer.js','profiles.js','world.js','destruction.js','physics-geometry.js','physics.js','metal-physics.js','music.js','imuse.js','music-director.js','audio.js','audio-recipes.js','metal-voices.js','soundscape.js','economy.js','brain.js','simulation.js','motion.js','humanoids.js','actors.js','avatars.js','effects.js','options.js','perf.js','input.js','controls.js','camera.js','loop.js','schedule.js','touch.js','jobs.js','tasks.js','host.js','demo.js','pilot.js','demo-metal.js','replay-metal.js','game.js']
+modules=['ferro/engine.js','ferro/physx-runtime.js','ferro/physx.js','fmath.js','passages.js','surface.js','skies.js','gpu-profile.js','reflections.js','renderer.js','support.js','profiles.js','world.js','destruction.js','physics-geometry.js','physics.js','metal-physics.js','music.js','imuse.js','music-director.js','audio.js','audio-recipes.js','metal-voices.js','soundscape.js','economy.js','brain.js','simulation.js','motion.js','humanoids.js','actors.js','avatars.js','effects.js','options.js','perf.js','input.js','controls.js','camera.js','loop.js','schedule.js','touch.js','jobs.js','tasks.js','host.js','demo.js','pilot.js','demo-metal.js','replay-metal.js','game.js']
 sim_hash=hashlib.sha256(b''.join((ROOT/'src'/n).read_bytes() for n in json.loads((ROOT/'tools/simulation-modules.json').read_text()))).hexdigest()
 css=(ROOT/'src/style.css').read_text()
 code='\n;\n'.join((ROOT/'src'/name).read_text() for name in modules)
-shared={'fmath.js','passages.js','renderer.js','profiles.js','world.js','destruction.js','physics-geometry.js','physics.js','metal-physics.js','music.js','imuse.js','audio.js','audio-recipes.js','economy.js','brain.js','simulation.js','jobs.js','tasks.js'}
+shared={'fmath.js','passages.js','renderer.js','support.js','profiles.js','world.js','destruction.js','physics-geometry.js','physics.js','metal-physics.js','music.js','imuse.js','audio.js','audio-recipes.js','economy.js','brain.js','simulation.js','jobs.js','tasks.js'}
 def module_source(name):
     source=(ROOT/'src'/name).read_text()
     return 'FERRO.initPhysics().then(function(){\n'+source+"\n}).catch(function(error){console.error('FERRO physics initialization failed',error);const notice=document.createElement('p');notice.setAttribute('role','alert');notice.textContent='Impossible de démarrer le jeu. Rechargez la page.';document.body.appendChild(notice);});" if name=='game.js' else source

@@ -1,0 +1,23 @@
+{
+  "base": "351f2ccda91f0ba3c0f962316e714e9d7c20e8ac",
+  "files": {
+    "checks/controls.test.mjs": "58d2b2094a6d91f4076f7c62ebdc31aedee4485d1ecb123a0a8ecb21f9b92322",
+    "checks/wreckage.test.mjs": "56b76b43fda8253f77dbe852282e82f72cecb5d5544cfd81d526cc3b6c7b362f",
+    "package.json": "c21531ea1550ecc0fe45d53d898aa3ccc47d3bf3e0d1627ee6a642b1f4ce1642",
+    "src/controls.js": "844156b6237784e1cb467781b5748f0d40a7a920b9997cf026503ef64ac2c7ea",
+    "src/demo-metal.js": "1a066b8aad601aff19b5d51227b1a9cc2db96bdcd17d0bb653e00d5a5e8a1534",
+    "src/game.js": "d20d8370886279ba47b871cc5be9d1894a4a5c92713bf02cc201d004a5f61f9f",
+    "src/index.html": "d21c3168e280ee24d0a6622452508e4f7d915c72fea03be6d274ebb9a6ee1410",
+    "src/metal-physics.js": "7fe754b5feefd1817af24170aed50bef7d0d9d5a40ae7a3de88aef525838753e",
+    "src/profiles.js": "f0cdb09b38df633c4a628ac12fbbf46e07999b631d8bfd07c7bad14c6e42eecd",
+    "src/simulation.js": "e421491de57eb79327859c4f28cee92c39cb48e15f0e2ed62d1fc5d06e5be2e2",
+    "src/style.css": "6a7429bcbea8ed5bce6678516a63e7546b65ba36d23ec08d3bcd5bbec82655a9",
+    "src/world.js": "91ebcd3043238e04bc8028956401aec38a84f99982f9b3b8ecea260427d85b18",
+    "tools/build.py": "bd2e151121ead1170e4deafa87d8ab0b71749b53f209d0d1bf171f2606903bad",
+    "tools/simulation-modules.json": "255cf70678e18704a74b54f70e18da7ffa1f7e75925474a9e677eddbd4af32db",
+    "src/support.js": "4d3fa31f0ad5fb8174bc46f7aa267f1145dff6457d0bdbb990698a483f49955a",
+    "checks/support-drone.test.mjs": "a7fefa5104f70d713fbe108e31dbe3aa5d7492a3b05f5efdace5607525640532",
+    "checks/support-physics.test.mjs": "e1187c43368b32ccd8303f09c013c8199938f475dd0a803554d96ad8a6c07468",
+    "checks/support-budgets.test.mjs": "ca5f95ecd7f86cc516929cd00e66bcfd03dbcc6a81471e813952a596f5dfb2b4"
+  }
+}

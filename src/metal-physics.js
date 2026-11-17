@@ -55,7 +55,7 @@ function props(world,solids){
 }
 function create(world,solids,host={}){
   const F=G.FPhysics,s=host.state,options={bounded:true,geometry:!!G.FPhysicsGeometry&&host.geometry!==false,bounds:world.bounds,capacity:384,maxStatics:Math.max(4096,solids.length+(world.walkable||[]).length+128),maxContacts:8192,maxJoints:world.hordeVersion===1?96:24,ground:(world.walkable||[]).length?null:0,massMin:3,massMax:150};
-  let phys=F.create(options),rows=[],systems=[],proxies=[],rigs=[],player=0,serial=0,tick=0,dirty=false,latestSolids=solids;
+  let phys=F.create(options),rows=[],systems=[],proxies=[],rigs=[],player=0,dronePlayer=0,serial=0,tick=0,dirty=false,latestSolids=solids;
   const impactAt=new Float64Array((world.enemies?.length||0)+1).fill(-1000),energyBefore=new Float64Array(4096);
   const navMap=new Map(),navBoxes=[],navPending=new Map();
   const byHandle=new Map(),rub=new Map(),near=new Int32Array(384),sample=new Float64Array(18),pose=new Float64Array(7),rotation=new Float64Array(3),box={},hit={},pushed=new Int32Array(4096).fill(-1),soundAt=new Float64Array(4096).fill(-1000);
@@ -72,6 +72,7 @@ function create(world,solids,host={}){
   for(const q of world.lifts||[])system('lift:'+q.id,[q.w,.22,q.d],[q.x,q.minY-.11,q.z]);
   for(const q of world.traps||[])if(q.kind==='blade'||q.kind==='press')system('trap:'+q.id,[q.w,q.h||.3,q.d],[q.x,q.y+50,q.z]);
   if(s)player=phys.addBody({shape:'capsule',radius:.28,height:1.8,pos:[s.player.x,s.player.y+.9,s.player.z],kinematic:true,group:4,mask:18});
+  if(s&&world.supportDroneVersion===1)dronePlayer=phys.addBody({shape:'box',size:[.56,.48,.56],pos:[world.spawn.x,-50,world.spawn.z],kinematic:true,group:4,mask:18});
   if(s)for(let i=0;i<16;i++)proxies.push({handle:phys.addBody({shape:'capsule',radius:.38,height:1.8,pos:[world.spawn.x,-50,world.spawn.z],kinematic:true,group:4,mask:18}),enemy:-1});
   // Optional side-room mechanisms. Keep the access footprint of a previously checked prop.
   if(s)for(const original of rows.slice()){
@@ -90,6 +91,7 @@ function create(world,solids,host={}){
   function remove(q){if(navMap.has(q.handle))navPending.set(q.handle,null);phys.removeBody(q.handle);byHandle.delete(q.handle);if(q.rubbleId!==null)rub.delete(q.rubbleId);const i=rows.indexOf(q);if(i>=0)rows.splice(i,1);}
   function query(x,y,z,r,height){box.minX=x-r;box.maxX=x+r;box.minY=y;box.maxY=y+height;box.minZ=z-r;box.maxZ=z+r;return phys.queryBox(box,near,10);}
   function blocked(actor,x,z,r,y,height=1.8){
+    if(actor===s?.player&&dronePlayer&&s.activeProfile==='light'){y+=1.18;height=.48;}
     const exact=phys.sweepCapsule&&height>=r*2;let n;
     if(exact){capsuleFrom[0]=actor?.x??x;capsuleFrom[1]=y+.025;capsuleFrom[2]=actor?.z??z;capsuleDelta[0]=x-capsuleFrom[0];capsuleDelta[1]=0;capsuleDelta[2]=z-capsuleFrom[2];capsuleOptions.radius=r;capsuleOptions.height=Math.max(r*2,height-.05);capsuleOptions.ignoreInitial=false;capsuleOptions.allowExit=!!actor;phys.sweepCapsule(capsuleFrom,capsuleDelta,capsuleOptions,capsuleHit);n=capsuleHit.hit&&capsuleHit.handle?1:0;if(n)near[0]=capsuleHit.handle;}else n=query(x,y+.025,z,r,height-.05);let blocked=false;
     for(let j=0;j<n;j++){const h=near[j];if(!phys.sample(h,sample))continue;const dx=Math.max(sample[0]-x,0,x-sample[3]),dz=Math.max(sample[2]-z,0,z-sample[5]);if(!exact&&(dx*dx+dz*dz>=r*r||sample[4]<=y+.035||sample[1]>=y+height-.04))continue;
@@ -132,7 +134,7 @@ function create(world,solids,host={}){
   }
   function wreck(enemy,source={}){
     if(!G.FActors)return;
-    const old=rows.filter(q=>q.kind==='wreck'),need=fracture(enemy,s?.time||0),MAX=96;
+    const old=rows.filter(q=>q.kind==='wreck'),need=fracture(enemy,s?.time||0,world.supportDroneVersion===1?5:16),MAX=96;
     if(!need.length)return;
     // Retire complete, sleeping wrecks away from the camera/player, not one
     // visible limb at a time. Fresh or nearby falling bodies are left alone.
@@ -161,7 +163,8 @@ function create(world,solids,host={}){
   function step(dt){
     tick++;if(dirty){phys.updateStatics(latestSolids,world.walkable||[]);dirty=false;}
     if(s){
-      if(player)place(player,s.player.x,s.player.y+.9,s.player.z);let at=0;for(const e of s.enemies)if(e.hp>0&&e.deployed!==false&&!(e.bossScale>1)&&(e.combatEnabled||Math.hypot(e.x-s.player.x,e.z-s.player.z)<25)&&at<proxies.length){const q=proxies[at++];q.enemy=e.id;place(q.handle,e.x,(e.baseY||0)+.9,e.z);}while(at<proxies.length){const q=proxies[at++];q.enemy=-1;place(q.handle,world.spawn.x,-50,world.spawn.z);}
+      if(player)place(player,s.player.x,dronePlayer&&s.activeProfile==='light'?-50:s.player.y+.9,s.player.z);
+      if(dronePlayer)place(dronePlayer,s.player.x,s.activeProfile==='light'?s.player.y+1.42:-50,s.player.z);let at=0;for(const e of s.enemies)if(e.hp>0&&e.deployed!==false&&!(e.bossScale>1)&&(e.combatEnabled||Math.hypot(e.x-s.player.x,e.z-s.player.z)<25)&&at<proxies.length){const q=proxies[at++];q.enemy=e.id;place(q.handle,e.x,(e.baseY||0)+.9,e.z);}while(at<proxies.length){const q=proxies[at++];q.enemy=-1;place(q.handle,world.spawn.x,-50,world.spawn.z);}
       for(const q of systems){if(q.key.startsWith('fixed:'))continue;let x,y,z;if(q.key.startsWith('door:')){const a=s.doors.find(a=>'door:'+a.id===q.key);x=a.x;y=(a.y||0)+a.h/2+(a.destroyed?1000:a.progress*(a.h+.25));z=a.z;}else if(q.key.startsWith('lift:')){const a=s.lifts.find(a=>'lift:'+a.id===q.key);x=a.x;y=a.y-.11;z=a.z;}else{const a=s.traps.find(a=>'trap:'+a.id===q.key),b=a.box;x=b?(b.minX+b.maxX)/2:a.x;y=b?(b.minY+b.maxY)/2:a.y+50;z=b?(b.minZ+b.maxZ)/2:a.z;}phys.setKinematic(q.handle,x,y,z,0,0,0,1);}
     }
     energyBefore.fill(0);for(const q of rows)if(phys.sample(q.handle,sample))energyBefore[q.handle&4095]=.5*sample[15]*(sample[6]*sample[6]+sample[7]*sample[7]+sample[8]*sample[8]);
@@ -170,7 +173,7 @@ function create(world,solids,host={}){
     navigation();const events=phys.events;
     for(let i=0;i<events.count;i++)for(let side=0;side<2;side++){
       const actorHandle=side?events.b[i]:events.a[i],other=side?events.a[i]:events.b[i],row=byHandle.get(other);if(!row||energyBefore[other&4095]<=150)continue;
-      const proxy=proxies.find(q=>q.handle===actorHandle),isPlayer=actorHandle===player,actor=isPlayer?s?.player:proxy&&proxy.enemy>=0?s?.enemies[proxy.enemy]:null;if(!actor||actor.hp<=0)continue;
+      const proxy=proxies.find(q=>q.handle===actorHandle),isPlayer=actorHandle===player||!!dronePlayer&&actorHandle===dronePlayer,actor=isPlayer?s?.player:proxy&&proxy.enemy>=0?s?.enemies[proxy.enemy]:null;if(!actor||actor.hp<=0)continue;
       const id=isPlayer?0:actor.id+1,time=s.time;if(time-impactAt[id]<.5||isPlayer&&time-row.credit<.5)continue;
       const energy=Math.min(events.energy[i],energyBefore[other&4095]);if(energy<=150)continue;impactAt[id]=time;const point={x:events.point[i*3],y:events.point[i*3+1],z:events.point[i*3+2]},damage=Math.min(isPlayer?25:60,Math.sqrt(energy-150)*1.2);
       if(isPlayer)host.hurt?.(damage,true,point);else{host.damageEnemy?.(actor,damage,{...point,credit:time-row.credit<3,profile:row.profile,blast:true});if(actor.hp>0){actor.stun=Math.max(actor.stun,.25);actor.windup=0;actor.burstLeft=0;}}
@@ -196,10 +199,10 @@ function create(world,solids,host={}){
     for(const q of rows){if(q.kind==='rubble'||q.kind==='grenade')continue;phys.pose(q.handle,alpha,pose);if(Math.hypot(pose[0]-camera.pos[0],pose[2]-camera.pos[2])>65)continue;F.quatToEuler(pose[3],pose[4],pose[5],pose[6],rotation);
       if(q.visuals){const basis=wreckRotation(rotation);for(const v of q.visuals){const p=wreckPoint(basis,v.p),r=wreckAngles(wreckProduct(basis,wreckRotation(v.r)));out.push({shape:v.shape,p:[pose[0]+p[0],pose[1]+p[1],pose[2]+p[2]],s:v.s,r,mat:v.mat,color:v.color,emissive:0,surface:'object',actorPart:v.actorPart,wreckActor:q.actorId});}continue;}
       out.push({shape:q.shape==='capsule'?'cylinder':q.shape,p:[pose[0],pose[1],pose[2]],s:q.size,r:Array.from(rotation),mat:q.mat,color:q.color,emissive:0});}}
-  function snapshot(){return {version:1,serial,player,systems:copy(systems),rigs:copy(rigs),proxies:copy(proxies),impacts:Array.from(impactAt),navigation:copy({boxes:navBoxes,pending:Array.from(navPending)}),rows:copy(rows),physics:phys.snapshot()};}
+  function snapshot(){return {version:1,serial,player,...(dronePlayer?{dronePlayer}:{}),systems:copy(systems),rigs:copy(rigs),proxies:copy(proxies),impacts:Array.from(impactAt),navigation:copy({boxes:navBoxes,pending:Array.from(navPending)}),rows:copy(rows),physics:phys.snapshot()};}
   function restore(value){
-    if(!value||value.version!==1||!Number.isInteger(value.serial)||value.serial<0||!Array.isArray(value.rows)||value.rows.length>384||!Array.isArray(value.systems)||JSON.stringify(value.systems)!==JSON.stringify(systems)||value.player!==player||!Array.isArray(value.rigs)||JSON.stringify(value.rigs)!==JSON.stringify(rigs)||!Array.isArray(value.proxies)||value.proxies.length!==proxies.length||!value.proxies.every((q,i)=>q.handle===proxies[i].handle&&Number.isInteger(q.enemy)&&q.enemy>=-1&&q.enemy<(world.enemies?.length||0))||!Array.isArray(value.impacts)||value.impacts.length!==impactAt.length||!value.impacts.every(v=>Number.isFinite(v)&&v>=-1000&&v<=1e9))throw Error('Invalid rigid bodies');
-    const next=F.create({...options,geometry:typeof value.physics?.fp==='string'&&value.physics.fp.endsWith('/G1')});next.setStatics(latestSolids,world.walkable||[]);next.restore(value.physics);const handles=new Set(),ids=new Set(),rubbleIds=new Set(),projectileIds=new Set(),reserved=new Set([player,...systems.map(q=>q.handle),...proxies.map(q=>q.handle)]);for(const h of reserved)if(h&&(!next.sample(h,sample)||!(sample[16]&4)))throw Error('Invalid physical actor');
+    if(!value||value.version!==1||!Number.isInteger(value.serial)||value.serial<0||!Array.isArray(value.rows)||value.rows.length>384||!Array.isArray(value.systems)||JSON.stringify(value.systems)!==JSON.stringify(systems)||value.player!==player||(value.dronePlayer||0)!==dronePlayer||!Array.isArray(value.rigs)||JSON.stringify(value.rigs)!==JSON.stringify(rigs)||!Array.isArray(value.proxies)||value.proxies.length!==proxies.length||!value.proxies.every((q,i)=>q.handle===proxies[i].handle&&Number.isInteger(q.enemy)&&q.enemy>=-1&&q.enemy<(world.enemies?.length||0))||!Array.isArray(value.impacts)||value.impacts.length!==impactAt.length||!value.impacts.every(v=>Number.isFinite(v)&&v>=-1000&&v<=1e9))throw Error('Invalid rigid bodies');
+    const next=F.create({...options,geometry:typeof value.physics?.fp==='string'&&value.physics.fp.endsWith('/G1')});next.setStatics(latestSolids,world.walkable||[]);next.restore(value.physics);const handles=new Set(),ids=new Set(),rubbleIds=new Set(),projectileIds=new Set(),reserved=new Set([player,...(dronePlayer?[dronePlayer]:[]),...systems.map(q=>q.handle),...proxies.map(q=>q.handle)]);for(const h of reserved)if(h&&(!next.sample(h,sample)||!(sample[16]&4)))throw Error('Invalid physical actor');
     for(const q of value.rows){if(!q||!Number.isInteger(q.id)||q.id<1||q.id>value.serial||ids.has(q.id)||handles.has(q.handle)||reserved.has(q.handle)||!next.valid(q.handle)||!['prop','barrel','rubble','wreck','grenade','limb'].includes(q.kind)||!(['box','bevel','sphere','octa','cylinder','capsule','ring'].includes(q.shape)||q.kind==='limb'&&/^metal-hum-[a-z0-9-]+$/.test(q.shape))||!Array.isArray(q.size)||q.size.length!==3||!q.size.every(v=>Number.isFinite(v)&&v>0&&v<=(q.visuals?64:q.kind==='limb'?24:4))||!Number.isFinite(q.hp)||q.hp<0||q.hp>10||!Number.isFinite(q.fuse)||q.fuse<-.1&&q.fuse!==-1||q.fuse>.36||!Number.isFinite(q.credit)||!['light','heavy',null].includes(q.profile))throw Error('Invalid physical metadata');if(!Number.isInteger(q.mat)||q.mat<0||q.mat>(q.kind==='limb'?19:12)||q.color!==undefined&&(!Array.isArray(q.color)||q.color.length!==3||!q.color.every(v=>Number.isFinite(v)&&v>=0&&v<=2)))throw Error('Invalid physical appearance');
       if(q.visuals!==undefined){
         const vector=(v,limit,positive=false)=>Array.isArray(v)&&v.length===3&&v.every(x=>Number.isFinite(x)&&Math.abs(x)<=limit&&(!positive||x>0));
@@ -209,7 +212,7 @@ function create(world,solids,host={}){
       if(q.kind==='grenade'){if(!Number.isInteger(q.projectileId)||q.projectileId<1||projectileIds.has(q.projectileId))throw Error('Invalid projectile reference');projectileIds.add(q.projectileId);}else if(q.projectileId!==null)throw Error('Unexpected projectile reference');
       next.sample(q.handle,sample);if(sample[16]&4)throw Error('Dynamic prop is kinematic');handles.add(q.handle);ids.add(q.id);}
     const nav=value.navigation;if(!nav||!Array.isArray(nav.boxes)||!Array.isArray(nav.pending)||nav.boxes.length>384||nav.pending.length>384)throw Error('Invalid physical navigation');const navValid=q=>q&&Number.isInteger(q.handle)&&q.handle>0&&[q.minX,q.maxX,q.minY,q.maxY,q.minZ,q.maxZ].every(Number.isFinite)&&q.minX<=q.maxX&&q.minY<=q.maxY&&q.minZ<=q.maxZ&&(q.cost===0||q.cost===3)&&typeof q.barrel==='boolean';if(!nav.boxes.every(navValid)||!nav.pending.every(q=>Array.isArray(q)&&q.length===2&&Number.isInteger(q[0])&&q[0]>0&&(q[1]===null||navValid(q[1])&&q[1].handle===q[0])))throw Error('Invalid physical navigation boxes');
-    if(next.stats.bodies!==handles.size+systems.length+proxies.length+(player?1:0))throw Error('Unmapped bodies');phys=next;proxies=copy(value.proxies);impactAt.set(value.impacts);serial=value.serial;rows=copy(value.rows);byHandle.clear();rub.clear();for(const q of rows){byHandle.set(q.handle,q);if(q.rubbleId!==null)rub.set(q.rubbleId,q);}dirty=false;navMap.clear();navPending.clear();for(const q of nav.boxes)navMap.set(q.handle,copy(q));for(const [h,q] of nav.pending)navPending.set(h,copy(q));navBoxes.length=0;navBoxes.push(...navMap.values());
+    if(next.stats.bodies!==handles.size+systems.length+proxies.length+(player?1:0)+(dronePlayer?1:0))throw Error('Unmapped bodies');phys=next;proxies=copy(value.proxies);impactAt.set(value.impacts);serial=value.serial;rows=copy(value.rows);byHandle.clear();rub.clear();for(const q of rows){byHandle.set(q.handle,q);if(q.rubbleId!==null)rub.set(q.rubbleId,q);}dirty=false;navMap.clear();navPending.clear();for(const q of nav.boxes)navMap.set(q.handle,copy(q));for(const [h,q] of nav.pending)navPending.set(h,copy(q));navBoxes.length=0;navBoxes.push(...navMap.values());
   }
   return {limb,get physics(){return phys;},get rows(){return rows;},navigationCost,navigationSegment,get navigationBoxes(){return navBoxes;},grenade,grenadePose,removeGrenade,obstacle:(x,z,r,y,height)=>blocked(null,x,z,r,y,height),blocked,carry,support,shoot,blast,rubble,rubblePose,wreck,step,models,snapshot,restore,hash:()=>phys.hash(),ray:(o,d,far)=>phys.ray(o,d,far,hit,10),digestInto(mix){mix(phys.hash());mix(rows);mix(impactAt);mix(navBoxes);for(const [h,q] of navPending){mix(h);mix(q);}},setSolids(value,area){latestSolids=value;phys.updateStatics(value,world.walkable||[],area);dirty=false;},removeRubble(id){const q=rub.get(id);if(q)remove(q);}};
 }

@@ -27,7 +27,7 @@ test('Chips are dropped, every object keeps a piece and an event stays small',()
   const chips=Array.from({length:12},(_,i)=>({x:0,y:1,z:0,size:[.05,.04,.06],velocity:[1,2,0],life:1,seed:i}));
   assert.equal(S.wreckage(chips).length,0);
   const many=Array.from({length:30},(_,i)=>slab({sourceId:'crate-'+i,size:[.8,1.4,.8],p:[i*2,0.7,0]}));
-  const out=S.wreckage([...chips,...many]);assert.equal(out.length,24,'one piece for each of the first 24 objects');
+  const out=S.wreckage([...chips,...many]);assert.equal(out.length,16,'event cap takes precedence over the old 24-object floor');
   const walls=Array.from({length:6},(_,i)=>slab({sourceId:'wall-'+i,p:[i*8,1.5,-6]}));
   const few=S.wreckage(walls);assert(few.length<=16&&new Set(few.map(q=>q.sourceId)).size===6);
   const tree=[{...slab({sourceId:'tree',shape:'cylinder',size:[.6,8,.6],material:'wood'})},...Array.from({length:22},(_,i)=>slab({sourceId:'tree',shape:'foliage',size:[1.2-i*.03,1,1.2-i*.03],p:[0,6+i*.1,0],material:'wood'}))];

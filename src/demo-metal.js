@@ -1,10 +1,10 @@
 /* METAL — isolated demonstration scenes and views, using ordinary game rules. */
 (function(G){'use strict';
-  function loadout(index,active='light'){
-    const E=G.FEconomy,P=G.MetalProfiles,profiles=P.fresh(),weapons=[false,false,false,index>0,true];
-    for(let i=0;i<index;i++){const id=i%2?'heavy':'light',q=profiles.classes[id],r=E.bossReward(i),owner=P.owner(r.weaponUpgrade,id),old=q.economy;q.economy=E.grantBossReward(old,i);if(owner!==id){q.economy.weaponUpgrades[r.weaponUpgrade]=old.weaponUpgrades[r.weaponUpgrade];profiles.classes[owner].economy.weaponUpgrades[r.weaponUpgrade]++;}if(r.weapon!==null)weapons[r.weapon]=true;}
+  function loadout(index,active='light',support=false){
+    const E=G.FEconomy,P=G.MetalProfiles,profiles=P.fresh(undefined,active,support),weapons=[false,false,false,index>0,true];
+    for(let i=0;i<index;i++){const id=support?'heavy':i%2?'heavy':'light',q=profiles.classes[id],r=E.bossReward(i),owner=P.owner(r.weaponUpgrade,id,support),old=q.economy;q.economy=E.grantBossReward(old,i);if(owner!==id){q.economy.weaponUpgrades[r.weaponUpgrade]=old.weaponUpgrades[r.weaponUpgrade];profiles.classes[owner].economy.weaponUpgrades[r.weaponUpgrade]++;}if(r.weapon!==null)weapons[r.weapon]=true;}
     // The heavy launcher is collected in world one before its mandatory breach.
-    profiles.active=active;const ammo=P.ammoCaps(profiles.classes).map((v,i)=>weapons[i]?v:0);
+    profiles.active=active;const ammo=P.ammoCaps(profiles.classes,support).map((v,i)=>weapons[i]?v:0);
     return {profiles,inventory:{weapons,ammo},economy:profiles.classes[active].economy,equipment:{right:4,left:null},campaign:{version:2,claimedBossRewards:Array.from({length:index},(_,i)=>i),discovered:[['pistol',4],['smg',0],['shotgun',1],['grenade',3],['rocket',2]].filter(([,i])=>weapons[i]).map(([name])=>name)}};
   }
   // Live gameplay with the current simulation, not old prerecorded inputs.
