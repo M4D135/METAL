@@ -1,6 +1,42 @@
 /* METAL — physical props, rubble and machine wrecks. Ordinary game rules only. */
 (function(G){'use strict';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),copy=v=>JSON.parse(JSON.stringify(v));
+// A collision proxy is never a rendered fragment. Every visual below comes
+// from an actual, named component of the living actor, at its original scale.
+function wreckRotation(r){const [x,y,z]=r,a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),d=Math.sin(y),e=Math.cos(z),f=Math.sin(z);return [e*c,e*d*b-f*a,e*d*a+f*b,f*c,f*d*b+e*a,f*d*a-e*b,-d,c*b,c*a];}
+function wreckProduct(a,b){const o=[];for(let r=0;r<3;r++)for(let k=0;k<3;k++)o[r*3+k]=a[r*3]*b[k]+a[r*3+1]*b[k+3]+a[r*3+2]*b[k+6];return o;}
+function wreckAngles(m){const y=Math.asin(clamp(-m[6],-1,1));return Math.abs(Math.cos(y))>1e-6?[Math.atan2(m[7],m[8]),y,Math.atan2(m[3],m[0])]:[Math.atan2(-m[5],m[4]),y,0];}
+function wreckPoint(m,p){return [m[0]*p[0]+m[1]*p[1]+m[2]*p[2],m[3]*p[0]+m[4]*p[1]+m[5]*p[2],m[6]*p[0]+m[7]*p[1]+m[8]*p[2]];}
+function wreckGroup(enemy,m){
+  const n=m.actorPart||'',side=/--1(?:-|$)/.test(n)?'-1':/-1(?:-|$)/.test(n)?'1':null;
+  if(enemy.type===0){const rotor=n.match(/^rotor-(?:arm|duct|motor|blade|pod)-(\d)/);return rotor?'rotor-'+rotor[1]:/camera|optic|gimbal/.test(n)?'head':'body';}
+  if(enemy.type===2){const leg=n.match(/^turret-(?:pad|strut|foot|leg)-(\d)/);if(leg)return 'leg-'+leg[1];if(/barrel|muzzle|bore/.test(n))return 'gun-'+(side||'0');return /optic/.test(n)?'head':'body';}
+  if(/^(?:rifle-|launcher-|rocket-launcher|grenade-launcher|grenade-drum|grenade-range|scope-)/.test(n))return 'gun';
+  if(/helmet|visor|face|skull|jaw|teeth|head|endo-eye|endo-neck/.test(n))return 'head';
+  if(side&&/shoulder|upper-arm|forearm|hum-upper-|hum-fore-|arm-|elbow|hand|liquid-blade|kamikaze-(?:bomb|fuse)|titan-gun/.test(n))return 'arm-'+side;
+  if(side&&/leg-|thigh|shin|boot|foot|toe|knee|hip-|leg-piston/.test(n))return 'leg-'+side;
+  const custodian=n.match(/^custodian-(?:leg|hip|thigh|knee|shin|piston|boot)-(\d)/);if(custodian)return 'leg-'+custodian[1];
+  if(side&&/^custodian-(?:shoulder|barrel|cannon|gun|receiver|muzzle|ammo)/.test(n))return 'arm-'+side;
+  return 'body';
+}
+function wreckCompound(name,parts){
+  const root=parts.reduce((a,m)=>m.s[0]*m.s[1]*m.s[2]>a.s[0]*a.s[1]*a.s[2]?m:a),rotation=(root.r||[0,0,0]).slice(),basis=wreckRotation(rotation),inverse=[basis[0],basis[3],basis[6],basis[1],basis[4],basis[7],basis[2],basis[5],basis[8]],lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
+  const visuals=parts.map(m=>{const p=wreckPoint(inverse,m.p.map((v,k)=>v-root.p[k])),r=wreckProduct(inverse,wreckRotation(m.r||[0,0,0]));for(let k=0;k<3;k++){const half=(Math.abs(r[k*3])*m.s[0]+Math.abs(r[k*3+1])*m.s[1]+Math.abs(r[k*3+2])*m.s[2])/2;lo[k]=Math.min(lo[k],p[k]-half);hi[k]=Math.max(hi[k],p[k]+half);}return {shape:m.shape,p,s:m.s.slice(),r:wreckAngles(r),mat:m.mat||0,...(m.color?{color:m.color.slice()}:{}),actorPart:m.actorPart};});
+  const centre=lo.map((v,k)=>(v+hi[k])/2),offset=wreckPoint(basis,centre);for(const v of visuals)v.p=v.p.map((x,k)=>x-centre[k]);
+  return {name,pos:root.p.map((v,k)=>v+offset[k]),rotation,size:lo.map((v,k)=>Math.max(.04,hi[k]-v)),visuals};
+}
+function fracture(enemy,time=0,limit=16){
+  if(!G.FActors||limit<1)return [];
+  // Close geometry, not the distant box-only LOD. Rings, skulls, barrels,
+  // armour plates and procedural humanoid meshes all retain their identity.
+  const parts=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'high',distance:0,time}).filter(m=>!/(?:spark|stump)/.test(m.actorPart||'')),groups=new Map();
+  for(const m of parts){const name=wreckGroup(enemy,m);if(!groups.has(name))groups.set(name,[]);groups.get(name).push(m);}
+  const list=Array.from(groups,([name,parts])=>({name,parts}));
+  // Under load, join components of this same actor. Never substitute a cube
+  // or discard its head/limbs just to meet the physical-body budget.
+  while(list.length>limit){list.sort((a,b)=>b.parts.length-a.parts.length);const small=list.pop();list[0].parts.push(...small.parts);}
+  return list.map(g=>wreckCompound(g.name,g.parts));
+}
 function props(world,solids){
   const out=[],reserved=[world.spawn,world.exit,...world.cores,...world.enemies,...world.pickups,...world.mechanisms,...world.doors,...world.lifts,...world.jumpPads,...world.traps],types=[['crate',[.8,.8,.8],30,'wood',3],['case',[.6,.6,.6],45,'metal',0],['barrel',[.6,.9,.6],25,'metal',6],['pallet',[1.2,.14,1],15,'wood',3],['pipe',[.22,2,.22],12,'metal',0],['plate',[1.2,.04,.8],8,'metal',1],['block',[.4,.4,.4],60,'stone',2]];
   for(const room of world.rooms||[]){
@@ -28,7 +64,7 @@ function create(world,solids,host={}){
   function add(def,asleep=false){
     const size=def.size,shape=def.body||(def.shape==='capsule'?'capsule':def.shape==='sphere'?'sphere':'box');
     const h=phys.addBody({shape,size,pos:def.pos,rot:def.rotation||[0,0,0],...(shape!=='box'?{radius:def.radius??size[0]/2,height:def.height??size[1]}:{}),mass:def.mass,material:def.material,group:def.group??2,...(def.mask!==undefined?{mask:def.mask}:{}),...(def.restitution!==undefined?{restitution:def.restitution}:{}),vel:def.velocity||[0,0,0],ang:def.angularVelocity||[0,0,0],asleep});if(h<0)return null;
-    const q={id:++serial,handle:h,kind:def.kind,shape:def.shape,size:size.slice(),mat:def.mat??0,color:def.color?.slice(),rubbleId:def.rubbleId??null,projectileId:def.projectileId??null,hp:def.hp||0,fuse:-1,credit:-1000,profile:null};rows.push(q);byHandle.set(h,q);if(q.rubbleId!==null)rub.set(q.rubbleId,q);return q;
+    const q={id:++serial,handle:h,kind:def.kind,shape:def.shape,size:size.slice(),mat:def.mat??0,color:def.color?.slice(),rubbleId:def.rubbleId??null,projectileId:def.projectileId??null,hp:def.hp||0,fuse:-1,credit:-1000,profile:null,...(def.visuals?{visuals:copy(def.visuals),actorId:def.actorId,part:def.part}: {})};rows.push(q);byHandle.set(h,q);if(q.rubbleId!==null)rub.set(q.rubbleId,q);return q;
   }
   for(const q of props(world,solids))add(q,true);
   function system(key,size,pos){const handle=phys.addBody({size,pos,kinematic:true,group:8,mask:18});if(handle>=0)systems.push({key,handle});}
@@ -76,31 +112,7 @@ function create(world,solids,host={}){
   function rubbleBody(q){const s=q.size;if(q.shape==='cylinder'&&s[1]>=Math.min(s[0],s[2])){const radius=Math.min(s[0],s[2])/2;return {body:'capsule',radius,height:Math.max(s[1],2*radius)};}if(q.shape==='sphere'||q.shape==='foliage')return {body:'sphere',radius:Math.max(.02,(s[0]+s[1]+s[2])/6)};return {};}
   function rubble(q){if(rub.has(q.id))return;q.size=q.size.map(v=>Math.min(4,Math.max(.04,v)));q.mass=clamp(q.mass,3,120);add({kind:'rubble',shape:'box',...rubbleBody(q),rubbleId:q.id,size:q.size.map(v=>Math.min(4,Math.max(.04,v))),pos:[q.x,q.y,q.z],rotation:q.rotation,mass:clamp(q.mass,3,120),material:q.material==='stone'||q.material==='wood'||q.material==='glass'?q.material:'metal',mat:q.mat,color:q.color,velocity:[q.vx,q.vy,q.vz],angularVelocity:q.angularVelocity},q.resting);}
   function rubblePose(q){const a=rub.get(q.id);if(!a||!phys.valid(a.handle))return false;phys.pose(a.handle,1,pose);phys.sample(a.handle,sample);F.quatToEuler(pose[3],pose[4],pose[5],pose[6],rotation);q.x=pose[0];q.y=pose[1];q.z=pose[2];q.vx=sample[6];q.vy=sample[7];q.vz=sample[8];for(let k=0;k<3;k++){q.rotation[k]=rotation[k];q.angularVelocity[k]=sample[9+k];}q.resting=phys.isAsleep(a.handle);return true;}
-  // Humanoid machines fall as jointed bodies (David, 16/11/2026): torso,
-  // head, arms and legs held by limited ball joints at the neck, shoulders
-  // and hips, which a hard blow can tear apart. Their parts do not collide
-  // with each other (group 64); the gun drops on its own.
   const RAGDOLL=64;
-  function ragdoll(enemy,source){
-    if(enemy.type!==1||!['endo','blade','kamikaze'].includes(enemy.variant))return false;
-    const parts=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}),pick=name=>parts.find(m=>m.actorPart===name),torso=pick('hum-torso');if(!torso)return false;
-    const limbs=['hum-head','hum-arm--1','hum-arm-1','hum-leg--1','hum-leg-1'].map(pick).filter(Boolean),gun=enemy.horde?null:parts.filter(m=>/^(rifle-receiver|rocket-launcher)$/.test(m.actorPart))[0]||null,need=1+limbs.length+(gun?1:0);
-    let excess=rows.filter(q=>q.kind==='wreck').length+need-48;for(const q of rows.slice())if(excess>0&&q.kind==='wreck'&&phys.isAsleep(q.handle)){remove(q);excess--;}if(excess>0)return true;
-    const dx=enemy.x-source.x,dz=enemy.z-source.z,d=Math.hypot(dx,dz)||1,push=[dx/d*2.4,1.1,dz/d*2.4];
-    // A kamikaze's own charges scatter its parts instead of folding them.
-    const blown=enemy.variant==='kamikaze',middle=torso.p,scatter=m=>{const v=m.p.map((x,i)=>x-middle[i]),l=Math.hypot(v[0],v[2])||1;return [v[0]/l*5.5+push[0],3.2+Math.max(0,v[1])*2,v[2]/l*5.5+push[2]];};
-    const body=(m,mass,spin)=>{const size=m.s.map(v=>Math.min(3,Math.max(.04,v))),q=add({kind:'wreck',shape:m.shape==='sphere'?'sphere':'box',size,pos:m.p,rotation:m.r,mass,material:'metal',mat:m.mat,color:m.color,velocity:blown&&m!==torso?scatter(m):push,angularVelocity:blown?[4,2,-3]:spin,group:RAGDOLL,mask:65535^RAGDOLL});if(q&&source.credit){q.credit=s.time;q.profile=source.profile||s.activeProfile||null;}return q;};
-    const core=body(torso,24,[push[2]*.6,.3,-push[0]*.6]);if(!core)return true;const centre=phys.body(core.handle).pos;
-    for(const m of limbs){
-      const q=body(m,m.shape==='sphere'?4:7,[0,0,0]);if(!q)continue;
-      // The joint sits at the end of the part nearest the torso.
-      const [x,y,z]=m.r,a=Math.cos(x),b=Math.sin(x),c=Math.cos(y),e=Math.sin(y),f=Math.cos(z),g=Math.sin(z),axis=[f*e*b-g*a,g*e*b+f*a,c*b],half=m.shape==='sphere'?m.s[1]/2:m.s[1]/2;
-      const ends=m.shape==='sphere'?[[m.p[0],m.p[1]-half,m.p[2]]]:[-1,1].map(k=>m.p.map((v,i)=>v+axis[i]*half*k)),anchor=ends.sort((u,v)=>Math.hypot(u[0]-centre[0],u[1]-centre[1],u[2]-centre[2])-Math.hypot(v[0]-centre[0],v[1]-centre[1],v[2]-centre[2]))[0];
-      if(!blown)phys.addJoint({type:'ball',a:core.handle,b:q.handle,worldAnchor:anchor,limit:m.shape==='sphere'?.6:1.25,breakImpulse:40});
-    }
-    if(gun)body(gun,6,[1.5,.4,-1]);
-    return true;
-  }
   // A guardian's broken joint drops its limb (David, 16/11/2026): every part
   // of that arm, with its shoulder gun, or of that leg falls at its true size
   // as rigid bodies welded together, and stays on the arena floor.
@@ -118,12 +130,28 @@ function create(world,solids,host={}){
     for(const m of parts){const size=m.s.map(v=>Math.min(24,Math.max(.05,v))),q=add({kind:'limb',shape:m.shape,body:'box',size,pos:m.p,rotation:m.r,mass:clamp(size[0]*size[1]*size[2]*90,20,4000),material:'metal',mat:clamp(Math.round(m.mat||0),0,19),color:m.color,velocity:push,angularVelocity:[dz/d*.5,0,-dx/d*.5],group:RAGDOLL,mask:65535^RAGDOLL});if(q){made.push(q);if(source?.credit){q.credit=s.time;q.profile=source.profile||null;}}}
     for(let i=1;i<made.length;i++){const a=phys.body(made[0].handle),b=phys.body(made[i].handle);try{phys.addJoint({type:'weld',a:a.handle,b:b.handle,worldAnchor:b.pos.slice()});}catch(_){break;}}
   }
-  function wreck(enemy,source){
-    if(!G.FActors)return;if(!(enemy.bossScale>1)&&ragdoll(enemy,source))return;const giant=enemy.bossScale>1,meshes=G.FActors.build({...enemy,hp:1,hurt:0},{quality:'low',distance:1000,time:s.time}).filter(m=>m.shape!=='ring').sort((a,b)=>b.s[0]*b.s[1]*b.s[2]-a.s[0]*a.s[1]*a.s[2]).slice(0,giant?20:enemy.horde?3:5);
-    const count=rows.filter(q=>q.kind==='wreck').length;let excess=count+meshes.length-48;for(const q of rows.slice())if(excess>0&&q.kind==='wreck'&&phys.isAsleep(q.handle)){remove(q);excess--;}
-    let space=48-rows.filter(q=>q.kind==='wreck').length;
-    const pieces=[];for(const m of meshes){if(space--<=0)break;const dx=m.p[0]-source.x,dz=m.p[2]-source.z,d=Math.hypot(dx,dz)||1,size=m.s.map(v=>Math.min(3,Math.max(.04,v))),q=add({kind:'wreck',shape:m.shape,size,pos:m.p,rotation:m.r,mass:clamp(size[0]*size[1]*size[2]*65,3,120),material:'metal',mat:m.mat,color:m.color,velocity:[dx/d*3,1+(space%3)*.3,dz/d*3],angularVelocity:[1+(space%3),.4,space%2?-2:2]});if(q){pieces.push(q);if(source.credit){q.credit=s.time;q.profile=source.profile||s.activeProfile||null;}}}
-    for(let i=1;i<Math.min(pieces.length,giant?6:3);i++){const a=phys.body(pieces[i-1].handle),b=phys.body(pieces[i].handle);if(Math.hypot(a.pos[0]-b.pos[0],a.pos[1]-b.pos[1],a.pos[2]-b.pos[2])>(giant?2.4:1))continue;phys.addJoint({type:'ball',a:a.handle,b:b.handle,worldAnchor:a.pos.map((v,k)=>(v+b.pos[k])/2),breakImpulse:giant?120:45});}
+  function wreck(enemy,source={}){
+    if(!G.FActors)return;
+    const old=rows.filter(q=>q.kind==='wreck'),need=fracture(enemy,s?.time||0),MAX=96;
+    if(!need.length)return;
+    // Retire complete, sleeping wrecks away from the camera/player, not one
+    // visible limb at a time. Fresh or nearby falling bodies are left alone.
+    let space=Math.min(MAX-old.length,380-phys.stats.bodies);
+    const retired=new Set();for(const q of old){
+      if(space>=need.length)break;if(retired.has(q.actorId??-q.id))continue;
+      const group=old.filter(o=>q.actorId===undefined?o===q:o.actorId===q.actorId);retired.add(q.actorId??-q.id);
+      if(!group.every(o=>phys.isAsleep(o.handle)&&(!s||Math.hypot(phys.body(o.handle).pos[0]-s.player.x,phys.body(o.handle).pos[2]-s.player.z)>18)))continue;
+      for(const o of group){remove(o);space++;}
+    }
+    if(space<1)return;
+    const pieces=space<need.length?fracture(enemy,s?.time||0,space):need,dx=enemy.x-(source.x??enemy.x),dz=enemy.z-(source.z??enemy.z),d=Math.hypot(dx,dz)||1,explosive=enemy.variant==='kamikaze'||!!source.blast;
+    const centre=pieces.find(q=>q.name==='body')?.pos||pieces[0].pos;
+    for(let i=0;i<pieces.length;i++){
+      const m=pieces[i],away=m.pos.map((v,k)=>v-centre[k]),length=Math.hypot(away[0],away[2])||1,kick=explosive?3.8:.65;
+      const q=add({kind:'wreck',shape:'box',body:'box',size:m.size,pos:m.pos,rotation:m.rotation,mass:clamp(m.size[0]*m.size[1]*m.size[2]*35,3,150),material:'metal',mat:0,visuals:m.visuals,actorId:enemy.id,part:m.name,
+        velocity:[dx/d*(explosive?2:1.1)+away[0]/length*kick,explosive?2.4+Math.max(0,away[1])*.4:.35,dz/d*(explosive?2:1.1)+away[2]/length*kick],angularVelocity:[(i%3-1)*1.4,.3,(i%2?1:-1)*1.1],group:RAGDOLL,mask:65535^RAGDOLL});
+      if(q&&source.credit){q.credit=s.time;q.profile=source.profile||s.activeProfile||null;}
+    }
   }
   function grenade(q){const row=add({kind:'grenade',projectileId:q.id,shape:'sphere',size:[.34,.34,.34],pos:[q.x,q.y,q.z],mass:3,group:16,material:'metal',mat:0,restitution:.42,velocity:[q.vx,q.vy,q.vz],angularVelocity:[2,1,3]},true);if(row)phys.setVelocity(row.handle,q.vx,q.vy,q.vz,2,1,3);return !!row;}
   function grenadePose(q){const row=rows.find(r=>r.projectileId===q.id);if(!row||!phys.sample(row.handle,sample))return false;q.x=sample[12];q.y=sample[13];q.z=sample[14];q.vx=sample[6];q.vy=sample[7];q.vz=sample[8];q.resting=phys.isAsleep(row.handle);return true;}
@@ -165,12 +193,18 @@ function create(world,solids,host={}){
       if(rig.kind===0){phys.pose(rig.handle,alpha,pose);const a=rig.anchor,b=pose,dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz);if(phys.validJoint(rig.joint))out.push({shape:'cylinder',p:[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],s:[.035,length,.035],r:[Math.acos(clamp(dy/length,-1,1)),Math.atan2(dx,dz),0],mat:0});out.push({shape:'box',p:[a[0],a[1]+.08,a[2]],s:[2.4,.16,.16],r:[0,0,0],mat:0});for(const side of [-1,1])out.push({shape:'box',p:[a[0]+side*1.12,(a[1]+rig.base-1.8)/2,a[2]],s:[.12,a[1]-rig.base+1.8,.12],r:[0,0,0],mat:0});}
       else if(rig.kind===1)out.push({shape:'box',p:rig.anchor,s:[.1,2,.1],r:[0,0,0],mat:0});else if(rig.kind===2)out.push({shape:'box',p:[rig.anchor[0],rig.anchor[1]-.35,rig.anchor[2]],s:[.18,.6,.65],r:[0,0,0],mat:0});
     }
-    for(const q of rows){if(q.kind==='rubble'||q.kind==='grenade')continue;phys.pose(q.handle,alpha,pose);if(Math.hypot(pose[0]-camera.pos[0],pose[2]-camera.pos[2])>65)continue;F.quatToEuler(pose[3],pose[4],pose[5],pose[6],rotation);out.push({shape:q.shape==='capsule'?'cylinder':q.shape,p:[pose[0],pose[1],pose[2]],s:q.size,r:Array.from(rotation),mat:q.mat,color:q.color,emissive:0});}}
+    for(const q of rows){if(q.kind==='rubble'||q.kind==='grenade')continue;phys.pose(q.handle,alpha,pose);if(Math.hypot(pose[0]-camera.pos[0],pose[2]-camera.pos[2])>65)continue;F.quatToEuler(pose[3],pose[4],pose[5],pose[6],rotation);
+      if(q.visuals){const basis=wreckRotation(rotation);for(const v of q.visuals){const p=wreckPoint(basis,v.p),r=wreckAngles(wreckProduct(basis,wreckRotation(v.r)));out.push({shape:v.shape,p:[pose[0]+p[0],pose[1]+p[1],pose[2]+p[2]],s:v.s,r,mat:v.mat,color:v.color,emissive:0,surface:'object',actorPart:v.actorPart,wreckActor:q.actorId});}continue;}
+      out.push({shape:q.shape==='capsule'?'cylinder':q.shape,p:[pose[0],pose[1],pose[2]],s:q.size,r:Array.from(rotation),mat:q.mat,color:q.color,emissive:0});}}
   function snapshot(){return {version:1,serial,player,systems:copy(systems),rigs:copy(rigs),proxies:copy(proxies),impacts:Array.from(impactAt),navigation:copy({boxes:navBoxes,pending:Array.from(navPending)}),rows:copy(rows),physics:phys.snapshot()};}
   function restore(value){
     if(!value||value.version!==1||!Number.isInteger(value.serial)||value.serial<0||!Array.isArray(value.rows)||value.rows.length>384||!Array.isArray(value.systems)||JSON.stringify(value.systems)!==JSON.stringify(systems)||value.player!==player||!Array.isArray(value.rigs)||JSON.stringify(value.rigs)!==JSON.stringify(rigs)||!Array.isArray(value.proxies)||value.proxies.length!==proxies.length||!value.proxies.every((q,i)=>q.handle===proxies[i].handle&&Number.isInteger(q.enemy)&&q.enemy>=-1&&q.enemy<(world.enemies?.length||0))||!Array.isArray(value.impacts)||value.impacts.length!==impactAt.length||!value.impacts.every(v=>Number.isFinite(v)&&v>=-1000&&v<=1e9))throw Error('Invalid rigid bodies');
     const next=F.create({...options,geometry:typeof value.physics?.fp==='string'&&value.physics.fp.endsWith('/G1')});next.setStatics(latestSolids,world.walkable||[]);next.restore(value.physics);const handles=new Set(),ids=new Set(),rubbleIds=new Set(),projectileIds=new Set(),reserved=new Set([player,...systems.map(q=>q.handle),...proxies.map(q=>q.handle)]);for(const h of reserved)if(h&&(!next.sample(h,sample)||!(sample[16]&4)))throw Error('Invalid physical actor');
-    for(const q of value.rows){if(!q||!Number.isInteger(q.id)||q.id<1||q.id>value.serial||ids.has(q.id)||handles.has(q.handle)||reserved.has(q.handle)||!next.valid(q.handle)||!['prop','barrel','rubble','wreck','grenade','limb'].includes(q.kind)||!(['box','bevel','sphere','octa','cylinder','capsule','ring'].includes(q.shape)||q.kind==='limb'&&/^metal-hum-[a-z0-9-]+$/.test(q.shape))||!Array.isArray(q.size)||q.size.length!==3||!q.size.every(v=>Number.isFinite(v)&&v>0&&v<=(q.kind==='limb'?24:4))||!Number.isFinite(q.hp)||q.hp<0||q.hp>10||!Number.isFinite(q.fuse)||q.fuse<-.1&&q.fuse!==-1||q.fuse>.36||!Number.isFinite(q.credit)||!['light','heavy',null].includes(q.profile))throw Error('Invalid physical metadata');if(!Number.isInteger(q.mat)||q.mat<0||q.mat>(q.kind==='limb'?19:12)||q.color!==undefined&&(!Array.isArray(q.color)||q.color.length!==3||!q.color.every(v=>Number.isFinite(v)&&v>=0&&v<=2)))throw Error('Invalid physical appearance');
+    for(const q of value.rows){if(!q||!Number.isInteger(q.id)||q.id<1||q.id>value.serial||ids.has(q.id)||handles.has(q.handle)||reserved.has(q.handle)||!next.valid(q.handle)||!['prop','barrel','rubble','wreck','grenade','limb'].includes(q.kind)||!(['box','bevel','sphere','octa','cylinder','capsule','ring'].includes(q.shape)||q.kind==='limb'&&/^metal-hum-[a-z0-9-]+$/.test(q.shape))||!Array.isArray(q.size)||q.size.length!==3||!q.size.every(v=>Number.isFinite(v)&&v>0&&v<=(q.visuals?64:q.kind==='limb'?24:4))||!Number.isFinite(q.hp)||q.hp<0||q.hp>10||!Number.isFinite(q.fuse)||q.fuse<-.1&&q.fuse!==-1||q.fuse>.36||!Number.isFinite(q.credit)||!['light','heavy',null].includes(q.profile))throw Error('Invalid physical metadata');if(!Number.isInteger(q.mat)||q.mat<0||q.mat>(q.kind==='limb'?19:12)||q.color!==undefined&&(!Array.isArray(q.color)||q.color.length!==3||!q.color.every(v=>Number.isFinite(v)&&v>=0&&v<=2)))throw Error('Invalid physical appearance');
+      if(q.visuals!==undefined){
+        const vector=(v,limit,positive=false)=>Array.isArray(v)&&v.length===3&&v.every(x=>Number.isFinite(x)&&Math.abs(x)<=limit&&(!positive||x>0));
+        if(q.kind!=='wreck'||!Number.isInteger(q.actorId)||q.actorId<0||q.actorId>=(world.enemies?.length||0)||typeof q.part!=='string'||q.part.length>40||!Array.isArray(q.visuals)||!q.visuals.length||q.visuals.length>256||!q.visuals.every(v=>v&&(['box','bevel','sphere','octa','cylinder','ring'].includes(v.shape)||/^metal-hum-[a-z0-9-]+$/.test(v.shape))&&vector(v.p,64)&&vector(v.s,64,true)&&vector(v.r,Math.PI*2)&&Number.isInteger(v.mat)&&v.mat>=0&&v.mat<=19&&(v.color===undefined||vector(v.color,2)&&v.color.every(x=>x>=0))&&typeof v.actorPart==='string'&&v.actorPart.length<=100))throw Error('Invalid original wreck geometry');
+      }
       if(q.kind==='rubble'){if(!Number.isInteger(q.rubbleId)||q.rubbleId<1||rubbleIds.has(q.rubbleId))throw Error('Invalid rubble reference');rubbleIds.add(q.rubbleId);}else if(q.rubbleId!==null)throw Error('Unexpected rubble reference');
       if(q.kind==='grenade'){if(!Number.isInteger(q.projectileId)||q.projectileId<1||projectileIds.has(q.projectileId))throw Error('Invalid projectile reference');projectileIds.add(q.projectileId);}else if(q.projectileId!==null)throw Error('Unexpected projectile reference');
       next.sample(q.handle,sample);if(sample[16]&4)throw Error('Dynamic prop is kinematic');handles.add(q.handle);ids.add(q.id);}
@@ -179,5 +213,5 @@ function create(world,solids,host={}){
   }
   return {limb,get physics(){return phys;},get rows(){return rows;},navigationCost,navigationSegment,get navigationBoxes(){return navBoxes;},grenade,grenadePose,removeGrenade,obstacle:(x,z,r,y,height)=>blocked(null,x,z,r,y,height),blocked,carry,support,shoot,blast,rubble,rubblePose,wreck,step,models,snapshot,restore,hash:()=>phys.hash(),ray:(o,d,far)=>phys.ray(o,d,far,hit,10),digestInto(mix){mix(phys.hash());mix(rows);mix(impactAt);mix(navBoxes);for(const [h,q] of navPending){mix(h);mix(q);}},setSolids(value,area){latestSolids=value;phys.updateStatics(value,world.walkable||[],area);dirty=false;},removeRubble(id){const q=rub.get(id);if(q)remove(q);}};
 }
-G.MetalPhysics={create,props};
+G.MetalPhysics={create,props,fracture};
 })(typeof window!=='undefined'?window:globalThis);

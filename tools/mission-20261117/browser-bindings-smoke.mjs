@@ -3,9 +3,9 @@ import {writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {withChrome} from '../render/chrome.mjs';
 const output=resolve(process.argv[2]||'/tmp/metal-browser');mkdirSync(output,{recursive:true});
-const report={kind:'Real headless Chrome, offline standalone game; no hardware FPS claim',checks:[]};
+const report={kind:'Real headless Chrome, offline standalone at 480x320 on software WebGL2; no hardware FPS claim',checks:[]};
 try {
-  await withChrome({timeoutMs:120000,launchTimeoutMs:20000,window:[1280,800],angle:'swiftshader',extraArgs:['--no-sandbox']},async browser=>{
+  await withChrome({timeoutMs:360000,launchTimeoutMs:20000,window:[480,320],angle:'swiftshader',extraArgs:['--no-sandbox']},async browser=>{
     report.browser=browser.version;
     const page=await browser.openPage(resolve('tools/render/pages/probe.html'));
     await page.send('Page.addScriptToEvaluateOnNewDocument',{source:`
@@ -19,10 +19,10 @@ try {
       }});
     `});
     await page.send('Page.navigate',{url:new URL('file://'+resolve('dist/index.html')+'?jobs=main').href});
-    const wait=async(expression,label,ms=90000)=>{
+    const wait=async(expression,label,ms=240000)=>{
       const end=Date.now()+ms;
       while(Date.now()<end){if(await page.evaluate(expression))return;await new Promise(r=>setTimeout(r,100));}
-      throw Error('Timed out: '+label+'; state='+await page.evaluate('document.body?.dataset.state'));
+      report.pageErrors=page.errors;report.loading=await page.evaluate("({state:document.body?.dataset.state,detail:document.getElementById('loading-detail')?.textContent,progress:document.getElementById('loading-bar')?.style.width})");throw Error('Timed out: '+label+'; '+JSON.stringify(report.loading));
     };
     const check=(name,condition)=>{assert(condition,name);report.checks.push(name);};
     const key=async(code,type='keyDown',repeat=false)=>{

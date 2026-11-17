@@ -1419,7 +1419,7 @@ function navigationGraph(cells,width,testEdge){
         s.kills++;dropLoot(e);if(origin.credit){s.combo++;s.comboTime=4;}
         if(e.variant==='kamikaze')explode([e.x,e.baseY+1.1,e.z],4.4,origin.credit?18:34,12,origin.credit?'player':e.id,false,-1,undefined,'blast',origin.credit?origin.profile:undefined);
         const multiplier=1+Math.min(4,s.combo-1)*.25,points=Math.round([100,150,125,2000][e.type]*multiplier);
-        if(origin.credit){s.score+=points;awardProfile(e.type===3?100:10,origin.profile);}emit('kill',{id:e.id,x:e.x,y:e.y,z:e.z,kind:e.type,boss:e.type===3,points:origin.credit?points:0,credited:!!origin.credit});particles(e.x,e.y,e.z,6,e.type===3?32:18);
+        if(origin.credit){s.score+=points;awardProfile(e.type===3?100:10,origin.profile);}emit('kill',{id:e.id,x:e.x,y:e.y,z:e.z,kind:e.type,boss:e.type===3,points:origin.credit?points:0,credited:!!origin.credit}); // Death leaves only the actor's own components, no added cube burst.
         if(origin.credit&&s.combo>1)emit('combo',{count:s.combo,multiplier});
         if(e.type===3)s.bossAlive=s.enemies.some(q=>q.type===3&&q.hp>0);
       }else bossPhase(e);
@@ -1803,7 +1803,7 @@ function navigationGraph(cells,width,testEdge){
           const dir=aimed.map((v,k)=>v+right[k]*a+up[k]*c),n=Math.hypot(...dir);for(let k=0;k<3;k++)dir[k]/=n;
           if(gun.blocked){damageScenery(from,shotgun?5:2,0,gun.direction);particles(...from,5,1);continue;}
           const hit=hitRay(from,dir,shotgun?24:75,assist),prop=destruction?.raycast?.(from,dir,hit.distance);if(prop&&prop.distance<hit.distance){hit.distance=prop.distance;hit.victim=null;}
-          if(hit.victim){connected=true;damageEnemy(hit.victim,(shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):handgun?1.2:1)*share*calibration.damageMultiplier,{x:p.x,y:p.y+1.62,z:p.z,credit:true,weapon,...(profilesEnabled?{profile:s.activeProfile}:{})},hit.weak);particles(...from.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
+          if(hit.victim){connected=true;damageEnemy(hit.victim,(shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):handgun?1.2:1)*share*calibration.damageMultiplier,{x:p.x,y:p.y+1.62,z:p.z,credit:true,weapon,...(profilesEnabled?{profile:s.activeProfile}:{})},hit.weak);if(hit.victim.hp>0)particles(...from.map((v,k)=>v+dir[k]*hit.distance),5,shotgun?2:5);}
           else{const point=from.map((v,k)=>v+dir[k]*hit.distance);particles(...point,5,shotgun?1:3);if(hit.distance<(shotgun?24:75)-.001)damageScenery(point,shotgun?5:2,0,dir);}
         }
       }
@@ -1831,7 +1831,7 @@ function navigationGraph(cells,width,testEdge){
         const prop=destruction?.raycast?.(origin,dir,hit.distance);if(prop&&prop.distance<hit.distance){hit.distance=prop.distance;hit.victim=null;}
         if(hit.victim){
           connected=true;damageEnemy(hit.victim,shotgun?.82*clamp(1-(hit.distance-5)*.035,.45,1):1,undefined,hit.weak);
-          particles(origin[0]+dir[0]*hit.distance,origin[1]+dir[1]*hit.distance,origin[2]+dir[2]*hit.distance,5,shotgun?3:7);
+          if(hit.victim.hp>0)particles(origin[0]+dir[0]*hit.distance,origin[1]+dir[1]*hit.distance,origin[2]+dir[2]*hit.distance,5,shotgun?3:7);
         }else{const point=origin.map((v,k)=>v+dir[k]*hit.distance);particles(...point,5,shotgun?2:4);if(hit.distance<(shotgun?24:75)-.001)damageScenery(point,shotgun?5:2,0,dir);}
       }
       syncDestruction();s.flash=1;s.shots++;emit(shotgun?'fracture':'shot',{weapon:s.weapon});
@@ -1842,7 +1842,7 @@ function navigationGraph(cells,width,testEdge){
     function melee(){
       if(s.dead||s.won||fireWait>0)return false;fireWait=.72;
       const cp=Math.cos(p.pitch),forward=[Math.sin(p.yaw)*cp,Math.sin(p.pitch),-Math.cos(p.yaw)*cp],origin=[p.x,p.y+1.45,p.z],hit=hitRay(origin,forward,1.8,true);
-      if(hit.victim){damageEnemy(hit.victim,.9,undefined,hit.weak);s.hitMarker=.15;particles(...origin.map((v,k)=>v+forward[k]*hit.distance),5,5);if(hit.victim.hp>0&&!giant(hit.victim)){hit.victim.stun=Math.max(hit.victim.stun,.18);hit.victim.windup=0;hit.victim.burstLeft=0;}}
+      if(hit.victim){damageEnemy(hit.victim,.9,undefined,hit.weak);s.hitMarker=.15;if(hit.victim.hp>0)particles(...origin.map((v,k)=>v+forward[k]*hit.distance),5,5);if(hit.victim.hp>0&&!giant(hit.victim)){hit.victim.stun=Math.max(hit.victim.stun,.18);hit.victim.windup=0;hit.victim.burstLeft=0;}}
       hear(p.x,p.z,7,p.y);emit('melee',{hit:!!hit.victim,x:p.x,y:p.y+1.45,z:p.z});return true;
     }
     function pulse(){
