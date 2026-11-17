@@ -8,13 +8,14 @@
   "activeLot": "04 integration",
   "publication": {
     "status": "published",
-    "mainCommit": "de2828ec1d08fbb2b1ed060c56585c986496eaea",
-    "branchCommit": "de2828ec1d08fbb2b1ed060c56585c986496eaea",
+    "mainCommit": "b985a3009508e300737cb2926641e92244dc9bbe",
+    "branchCommit": "b985a3009508e300737cb2926641e92244dc9bbe",
+    "buildCommit": "de2828ec1d08fbb2b1ed060c56585c986496eaea",
     "url": "https://fps.estrasse.fr/",
     "servedBytes": 13685006,
     "servedSha256": "74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22",
     "previousRelease": "/home/ddd/apps/fps/releases/b82379b",
-    "releasePath": "/home/ddd/apps/fps/releases/de2828ec1d08fbb2b1ed060c56585c986496eaea",
+    "releasePath": "/home/ddd/apps/fps/releases/b985a3009508e300737cb2926641e92244dc9bbe",
     "macVerification": {
       "node": "v24.18.0",
       "npmTest": {
