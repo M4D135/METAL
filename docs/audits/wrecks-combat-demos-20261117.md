@@ -1,66 +1,59 @@
-# METAL 0.12.8 : composants originaux et demos de combat
+# METAL 0.12.8 : composants originaux et démos de combat
 
 Base : `ba2784517b99b092c404df38a8408f2733cc2221`.
+Commit du produit qualifié : `d76a0386c8f60ce813a66c12b5c8dd6d5fe4a25b`.
 
-## Corrections
+## Corrections livrées
 
-Les ennemis se separent en groupes de composants de leur modele original : formes, dimensions, couleurs et materiaux conserves. Les boites de collision restent invisibles. Suppression de la pluie de cubes a la mort ; impacts representes par des trainees lumineuses, pas des blocs solides. Corps physiques limites, composants groupes sans remplacement par des cubes, sauvegardes validees.
+Les ennemis tués se séparent en groupes de composants de leur modèle original. Formes, dimensions, couleurs et matériaux sont conservés ; les boîtes de collision restent invisibles. La pluie de cubes ajoutés à la mort est supprimée. Les impacts sont représentés par des traînées lumineuses, pas par des blocs solides. Les pièces sont simulées physiquement et leur sauvegarde est validée. Le nombre de corps physiques reste borné ; sous charge, les composants d'un même acteur sont regroupés plutôt que remplacés par un cube.
 
-Six demos de combats ordinaires utilisant la simulation actuelle, lourd et drone, sans presentation des boss. Camera de jeu puis camera suiveuse avec collisions. Changement de scene apres le combat, sans teleportation ni guerison forcee du personnage pendant une scene.
+Les six démos sont des combats ordinaires exécutés par la simulation actuelle, avec le lourd et le drone. Elles ne comportent pas de scène de présentation de boss. La vue du joueur alterne avec la caméra suiveuse du jeu, qui tient compte des collisions. Le directeur passe à une autre scène après le combat ; il ne restaure pas un checkpoint, ne téléporte pas et ne soigne pas artificiellement le personnage pendant la scène.
 
-Pilote de demonstration : cheminement borne tenant compte du gabarit, des obstacles physiques, des pieges et des bords. Anticipation, freinage, contournement et replanification remplacent les coups et dashs de deblocage. Le repere de mouvement est corrige quand la visee tourne avant le deplacement. Ce lot ne remplace pas toute l IA des ennemis.
+Le pilote de démonstration utilise un cheminement borné tenant compte du gabarit, des obstacles physiques, des pièges et des bords. Anticipation, freinage, contournement et replanification remplacent les coups et dashs de déblocage. Le repère de déplacement est corrigé lorsque la visée tourne avant le mouvement. Ce lot améliore le pilote des démos, pas l'ensemble de l'IA des ennemis.
 
-## Qualification
+## Qualification et provenance
 
-Suite complete du meme HTML : **1 350 reussites, zero echec, un TODO historique, 1 351 tests comptes**, execution 44045094131. Les preuves recuperees sont verifiees par empreinte SHA-256, et le HTML reconstruit est strictement identique. Modules FERRO : 34/34 verifies par le build.
+La suite complète du même produit a réussi : **1 350 réussites, zéro échec, un TODO historique, 1 351 tests comptés**, exécution `44045094131`. Le test de distribution réussit également. Les preuves récupérées sont vérifiées par SHA-256, et le HTML reconstruit lors de la reprise est strictement identique. Le build vérifie les **34/34 modules FERRO** verrouillés.
 
-Une verification supplementaire locale de reprise a reussi : 94 tests de geometrie, navigation, ragdoll, commandes, preferences et camera. Aucun changement de code produit apres la suite complete.
+La reprise a exécuté en plus **94 tests locaux réussis** : géométrie des fragments, navigation, ragdoll, commandes, préférences et caméra. La reconstruction locale retrouve la même empreinte HTML. Une relance locale supplémentaire du test d'endurance a atteint la limite de 120 secondes sans bilan final ; elle n'est pas comptée comme réussie. Les résultats complets des six scènes ci-dessous proviennent de la qualification CI conservée, et non de cette relance incomplète.
 
-Le controle clavier precedent expirait pendant le chargement a 1280x800 sur GPU logiciel. Le banc utilise maintenant une fenetre 480x320, un delai borne plus large et des diagnostics de chargement ; aucune assertion clavier, horloge ou position du jeu modifiee.
+Le contrôle clavier précédent expirait pendant le chargement à 1280 × 800 sur GPU logiciel. Le banc utilise désormais une fenêtre 480 × 320, un délai borné plus large et des diagnostics de chargement. Aucune assertion clavier, horloge, position ou règle du jeu n'est modifiée. Le banc de combat effectue ses captures en 960 × 640.
 
-Nouvelle execution Chrome : **10 controles combat et 14 controles clavier reussis**, rendu webgl2.
+La nouvelle exécution Chrome `44050130384` est **réussie**, avec **10 contrôles de combat et 14 contrôles clavier**, rendu WebGL2 logiciel. Elle a commité les sources et la distribution uniquement après les contrôles, avec vérification du SHA attendu de la branche, puis push sans force.
 
-| Monde | Profil | Secondes | Tirs | Tues | Penetrations | Blocage consecutif max. | Boss visibles | Coups obstacles |
+## Endurance des six scènes
+
+32 secondes simulées par scène, sans guérison, fausse élimination ni écriture de position du joueur. Au total : **192 secondes simulées, 81 tirs et 16 ennemis abattus**.
+
+| Monde | Profil | Secondes | Tirs | Ennemis abattus | Pénétrations statiques | Images bloquées consécutives, maximum | Images avec boss visible | Coups forcés sur obstacle |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| 8 | heavy | 32.0 | 22 | 3 | 0 | 0 | 0 | 0 |
-| 14 | light | 32.0 | 6 | 3 | 0 | 0 | 0 | 0 |
-| 4 | heavy | 32.0 | 10 | 2 | 0 | 0 | 0 | 0 |
-| 11 | heavy | 32.0 | 13 | 3 | 0 | 0 | 0 | 0 |
-| 17 | heavy | 32.0 | 22 | 3 | 0 | 0 | 0 | 0 |
-| 6 | heavy | 32.0 | 8 | 2 | 0 | 0 | 0 | 0 |
+| 8 | Lourd | 32 | 22 | 3 | 0 | 0 | 0 | 0 |
+| 14 | Drone | 32 | 6 | 3 | 0 | 0 | 0 | 0 |
+| 4 | Lourd | 32 | 10 | 2 | 0 | 0 | 0 | 0 |
+| 11 | Lourd | 32 | 13 | 3 | 0 | 0 | 0 | 0 |
+| 17 | Lourd | 32 | 22 | 3 | 0 | 0 | 0 | 0 |
+| 6 | Lourd | 32 | 8 | 2 | 0 | 0 | 0 | 0 |
 
-Controles navigateur :
-- title demo is actual gameplay with shots
-- six current combat scenes without boss showcases
-- current horde world and correct heavy profile
-- normal combat produces a real kill
-- wrecks render named original geometry, not collision boxes
-- game follow camera used instead of boss orbit shots
-- no boss killed or obstacle attacked
-- no static penetration in observed scene
-- Escape immediately returns to title
-- no uncaught browser exception
-- R view / C dodge defaults
-- versioned preferences
-- heavy starts active
-- R switches view once despite repeat
-- C dodge does not switch view
-- drone descent is held
-- release clears drone descent
-- view rebind persists
-- rebind leaves dodge unchanged
-- conflict is reported
-- conflict preserves prior key
-- keyboard reset restores R/C
-- HUD key labels follow reset
-- no uncaught page exception
+Les tests de régression vérifient aussi un détour autour d'un mur large, pour les deux profils, sans mêlée de déblocage, dash, saut forcé ni téléportation.
 
-HTML : 13660361 octets bruts ; gzip : 3209779 ; SHA-256 `0a08aabba483e79d1717d67c45084e984af68ae3e3997d0cdede8e2be967c8ca`.
+## Contrôles Chrome
 
-Suite complete : https://github.com/M4D135/METAL/actions/runs/44045094131
+Combat : tirs réels de la démo, six scènes ordinaires, génération actuelle, élimination normale d'un ennemi, composants originaux nommés plutôt que boîtes de collision visibles, caméra suiveuse du jeu, absence de boss tué ou d'attaque d'obstacle, absence de pénétration statique observée, retour au titre par Échap, absence d'exception non interceptée.
 
-Validation finale : https://github.com/M4D135/METAL/actions/runs/44050130384
+Clavier : défauts R pour la vue et C pour l'esquive/descente, version des préférences, démarrage en lourd, basculement R sans répétition, esquive C sans changement de vue, maintien puis relâchement de la descente du drone, réaffectation persistante, préservation de C, détection d'un conflit sans perte de l'affectation antérieure, réinitialisation R/C, libellés actualisés, absence d'exception non interceptée.
+
+## Distribution et traçabilité
+
+- HTML autonome : **13 660 361 octets bruts**.
+- Gzip : **3 209 779 octets**.
+- SHA-256 : `0a08aabba483e79d1717d67c45084e984af68ae3e3997d0cdede8e2be967c8ca`.
+- Aucun actif externe ajouté.
+- Suite complète : https://github.com/M4D135/METAL/actions/runs/44045094131
+- Première validation complète du combat dans Chrome : https://github.com/M4D135/METAL/actions/runs/44047773479
+- Validation finale, combat et clavier : https://github.com/M4D135/METAL/actions/runs/44050130384
+
+Les trois workflows ponctuels et les trois fragments de patch de transport sont retirés une fois leur travail terminé. Ils restent dans l'historique Git. Leurs suppressions et la mise en forme de ce rapport ne modifient ni les sources du produit, ni les tests, ni le HTML qualifié. Aucune branche divergente ou documentation historique n'est supprimée.
 
 ## Limites
 
-Qualification sur six scenes fixes et cas de regression, pas une garantie universelle d absence de bug. GPU logiciel : aucun gain FPS materiel revendique. Pas de telephone ou manette physique testes. Les deplacements Quake III et le vol quaternion 6DOF ne font pas partie de ce lot. Aucun hebergement externe modifie.
+Qualification sur les six scènes fixes et les cas de régression, pas une garantie universelle d'absence de bug. Aucun gain de FPS matériel revendiqué à partir des tests CPU ou du GPU logiciel. Pas de téléphone ou de manette physique testés. Le budget d'épaves est borné. Les mouvements Quake III et le vol quaternion 6DOF ne font pas partie de ce lot. Aucun hébergement externe n'est modifié.
