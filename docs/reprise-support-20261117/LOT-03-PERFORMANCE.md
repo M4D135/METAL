@@ -21,3 +21,12 @@ Même monde, seed, inputs, durée et environnement pour A/B. Déferlante complè
 ## Sortie attendue
 
 Module(s), tests, traces brutes, comparaison honnête et limites. Ne pas transformer un banc CPU en annonce de gain FPS matériel. Aucun merge main avant qualification intégrée.
+
+## Résultats du 17/11/2026 (relais Spark)
+
+- Overlay développeur corrigé dans `src/game.js` : particules = débris + particules, voix réelles depuis `audio.stats`, `peakVoices`, corps éveillés/endormis, draw calls, triangles, CPU frame/simulation/rendu. GPU reste `null`/N/D, pas zéro.
+- Test de budget ajouté dans `checks/support-budgets.test.mjs` : plafond de déferlante respecté sur les mondes 0, 8 et 17, vagues déployées, salle nettoyable, aucun éveil au-delà du plafond effectif.
+- Banc A/B honnête ajouté : `tools/reprise-support-20261117/ab-budgets.mjs`. Même monde `FWorld.create(96,0)`, mêmes options, mêmes entrées scriptées, échauffement, répétitions alternées, médianes, dispersion, p95/p99, pire pas, pics de corps/joints/particules, delta tas.
+- Rapport brut : `docs/reprise-support-20261117/ab-budgets-latest.json` et le fichier daté du 17/11/2026.
+- Mesure Spark Node 24.18, Linux arm64, 5 répétitions de 12 s, baseline = tête de branche `9476657`, chantier = correction courante : médiane `0,1749 ms/pas` contre `0,1730 ms/pas`, soit `-1,09 %` de temps CPU de simulation. Ce n'est pas une mesure de FPS matériel.
+- Limites : GPU non mesuré, Chrome headless SwiftShader pour le navigateur, pas de banc apparié WebGL sur GPU NVIDIA ou Apple, pas de téléphone ni manette physique.

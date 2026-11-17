@@ -314,7 +314,7 @@
     renderHUD();return true;
   }
   function restoreRun(v){
-    if(!validSave(v))return false;hordeMode=v.hordeVersion===1;supportDroneMode=v.supportDroneVersion===1;
+    if(!validSave(v))return false;hordeMode=v.hordeVersion===1;supportDroneMode=v.supportDroneVersion===1;profileMode=v.profiles===1;
     if(sim?.state.dead&&world.seed===v.seed&&stage===savedIndex(v)&&sim.restore(v.checkpoint,{recover:true})){if(deferLaunch)renderLoadPending=true;else syncDestruction();return acceptRestoredRun(v);}
     load(savedIndex(v),v.seed,copyLoadout(v.entryLoadout||v.entryInventory),v.version===3,v.campaignRevision||1,false,v.profiles===1,v.combatVersion===1,null,{rigidBodies:!!v.checkpoint?.rigidBodies});
     if((v.generation||3)!==(world.generation||3))return false;
@@ -330,7 +330,7 @@
     return false;
   }
   function resumeSaved(v){
-    writeSave();hordeMode=v?.hordeVersion===1;supportDroneMode=v?.supportDroneVersion===1;
+    writeSave();hordeMode=v?.hordeVersion===1;supportDroneMode=v?.supportDroneVersion===1;profileMode=v?.profiles===1;
     if(restoreRun(v)){start('Signal retrouvé. Reprise au dernier point enregistré.');return;}
     if(validSave(v)){
       // Preserve each refused source before any replacement, even when storage fails temporarily.
@@ -359,7 +359,7 @@
     $('fps-counter').textContent='— FPS';document.body.dataset.fps='';
     mode=value;host.keepAwake(value==='playing'||value==='demo'&&prefs.demoWake);loadoutOpen=false;document.body.classList.remove('loadout-open');$('loadout-toggle').setAttribute('aria-expanded','false');bindingAction=padBindingAction=null;document.body.dataset.state=value;$('intro').hidden=value!=='menu';$('hud').hidden=!['playing','paused','demo'].includes(value);$('pause').hidden=!['paused','options'].includes(value);$('shop').hidden=value!=='shop';$('loading').hidden=value!=='loading';$('result').hidden=!['dead','cleared','complete'].includes(value);clearInput();if(!titleScreen())audio.setTitlePlaying?.(false);audio.setPlaying?.(value==='playing'||value==='demo');audioGate();syncTitle();
     if(value==='paused'||value==='options'){$('pause-kicker').textContent=value==='options'?'CONSOLE DE RÉGLAGE':'SIGNAL EN ATTENTE';$('resume').innerHTML=(value==='options'?'Retour':'Reprendre')+' <span class="arrow-icon" aria-hidden="true"></span>';$('restart').hidden=$('pause-main').hidden=value==='options';selectTab(value==='options'?'image':optionsTab);}
-    if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();}
+    if(value!=='playing'){audio.setMachinery?.(0);audio.setSteam?.(0);if(document.pointerLockElement)document.exitPointerLock();controls.clear();sim?.cancelSupportAction?.();}
   }
   function load(n,newSeed,loadout,asCampaign=campaignMode,revision=campaignRevision,legacyTraps=false,profiles=profileMode,combat=combatMode,prepared=null,simulationOptions={}){
     checkpointPending=false;checkpointWaitAt=-1;impactMarks.length=0;hordeFlashes.length=0;laserBeams.length=0;bursts.length=0;deflectUntil=0;
@@ -1113,10 +1113,10 @@
   function perfReadout(now,frameStart){
     if(!devEnabled||now-devAt<250)return;devAt=now;devTimes.frame=performance.now()-frameStart;
     const r=renderer.stats,p=sim.rigid?.physics?.stats||{},s=sim.state;
-    const q={fps:Number(document.body.dataset.fps)||0,cpuFrameMs:devTimes.frame,cpuSimulationMs:devTimes.simulation,cpuRenderMs:devTimes.draw,gpuMs:null,drawCalls:r.drawCalls??null,triangles:r.triangles??null,bodies:p.bodies??0,awake:p.awake??null,sleeping:p.sleeping??null,joints:p.joints??null,particles:s.debris.length,enemyActive:s.enemies.filter(e=>e.hp>0&&e.deployed!==false&&e.active).length,laserBeams:laserBeams.length,voices:audio.stats?.activeVoices??null,renderer:r.backend,quality,renderScale:prefs.renderScale};
+    const q={fps:Number(document.body.dataset.fps)||0,cpuFrameMs:devTimes.frame,cpuSimulationMs:devTimes.simulation,cpuRenderMs:devTimes.draw,gpuMs:null,drawCalls:r.drawCalls??null,triangles:r.triangles??null,bodies:p.bodies??0,awake:p.awake??null,sleeping:p.sleeping??null,joints:p.joints??null,debris:s.debris.length,particles:s.debris.length+s.particles.length,enemyActive:s.enemies.filter(e=>e.hp>0&&e.deployed!==false&&e.active).length,laserBeams:laserBeams.length,voices:audio.stats?.voices??null,peakVoices:audio.stats?.peakVoices??null,renderer:r.backend,quality,renderScale:prefs.renderScale};
     document.body.dataset.perf=JSON.stringify(q);
     const n=v=>v===null?'n/d':v,ms=v=>Number(v).toFixed(2);
-    devPanel.textContent='DEV · '+q.renderer+' · '+q.fps+' FPS\nCPU '+ms(q.cpuFrameMs)+' ms | simulation '+ms(q.cpuSimulationMs)+' | rendu '+ms(q.cpuRenderMs)+'\nGPU n/d (pas de timer exposé)\nDraw '+n(q.drawCalls)+' | triangles '+n(q.triangles)+'\nCorps '+q.bodies+' | éveillés '+n(q.awake)+' | joints '+n(q.joints)+'\nDébris '+q.particles+' | lasers '+q.laserBeams+' | ennemis actifs '+q.enemyActive+'\nVoix '+n(q.voices)+' | qualité '+quality+' | échelle '+prefs.renderScale;
+    devPanel.textContent='DEV · '+q.renderer+' · '+q.fps+' FPS\nCPU '+ms(q.cpuFrameMs)+' ms | simulation '+ms(q.cpuSimulationMs)+' | rendu '+ms(q.cpuRenderMs)+'\nGPU n/d (pas de timer exposé)\nDraw '+n(q.drawCalls)+' | triangles '+n(q.triangles)+'\nCorps '+q.bodies+' | éveillés '+n(q.awake)+' | endormis '+n(q.sleeping)+' | joints '+n(q.joints)+'\nParticules '+q.particles+' (débris '+q.debris+' + effets '+s.particles.length+') | lasers '+q.laserBeams+' | ennemis actifs '+q.enemyActive+'\nVoix '+n(q.voices)+' | pic '+n(q.peakVoices)+' | qualité '+quality+' | échelle '+prefs.renderScale;
   }
   function frame(now){
     const frameStart=performance.now();requestAnimationFrame(frame);demoAttract?.tick();if(mode!=='demo'&&!demoAttract?.swallowing)pollControls(now);const present=FOptions.frameGate(framePacer,now,cadenceLimit());
@@ -1190,6 +1190,7 @@
     renderPartner(camera);
     const external=mode==='demo'&&demoShot!=='eyes',drawing=demoBench||devEnabled?performance.now():0,drawModels=models(t,isPlay,camera,third||external);document.body.dataset.shot=mode==='demo'?demoShot:'';
     renderer.draw(camera,drawModels,{time:t,flash:Math.max(sim.state.flash,sim.state.leftFlash||0),lights:window.FEffects?.lights(sim.state)||[],damage:sim.state.damage,pulse:clamp((sim.state.pulseVisual||0)/.65,0,1),shake:0,frameMs,brightness:prefs.brightness,vignette:prefs.vignette,shadows:prefs.shadows,bloom:prefs.bloom,reflections:prefs.reflections,horror:sim.state.director,adaptive:mode==='playing'&&(!cadenceLimit()||cadenceLimit()>=60)&&document.hasFocus()});
+    if(devEnabled){const cockpit=drawModels.filter(m=>m.supportPart==='cockpit'||String(m.supportPart||'').startsWith('laser-'));document.body.dataset.cockpit=JSON.stringify({total:cockpit.length,emitters:cockpit.filter(m=>m.supportPart==='laser-emitter').length,lenses:cockpit.filter(m=>m.supportPart==='laser-lens').length,overlay:cockpit.every(m=>m.overlay)});}
     if(devEnabled)devTimes.draw=performance.now()-drawing;
     if(demoBench)demoBench.drawMs.push(performance.now()-drawing);
     sceneDirty=false;

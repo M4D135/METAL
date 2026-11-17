@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root=new URL('../',import.meta.url);
-const modules=['destruction','economy','simulation','motion','actors','avatars','effects','soundscape','options','input','controls','camera','loop','schedule','touch','jobs','tasks','host','game'];
+const modules=['support','destruction','economy','simulation','motion','actors','avatars','effects','soundscape','options','input','controls','camera','loop','schedule','touch','jobs','tasks','host','game'];
 const sources=Object.fromEntries(modules.map(name=>[name,readFileSync(new URL(`src/${name}.js`,root),'utf8')]));
 const noop=()=>{};
 

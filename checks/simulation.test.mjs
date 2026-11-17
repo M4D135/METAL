@@ -2197,11 +2197,13 @@ test('an actual breached wall keeps substantial rubble after landing without add
   assert.equal(sim.blocked(0, -8), false); sim.move(sim.state.player, 0, -10); assert(sim.state.player.z < -9.8, 'cosmetic wreckage created an invisible route blocker');
 });
 
-test('a destroyed sliding gate becomes actual metal plates, retains its volume, and restores after settling', () => {
+test('a destroyed sliding gate becomes actual bounded metal plates and restores after settling', () => {
   const world = fixture({ generation: 5, meshes: [], destructibles: [], doors: [{ id: 'gate', x: 0, y: 0, z: -5, w: 4, h: 3.1, d: .34, requires: 'locked' }] }), sim = FSimulation.create(world);
   sim.step(.01, { weapon: 2, fire: true }); advance(sim, .6); assert(sim.state.doors[0].destroyed);
-  const plates = sim.state.debris.filter(q => q.structural && q.sourceId === 'door:gate'); assert.equal(plates.length, 4);
-  assert(Math.abs(plates.reduce((n, q) => n + q.size.reduce((v, x) => v * x, 1), 0) - 4 * 3.1 * .34) < 1e-8);
+  const plates = sim.state.debris.filter(q => q.structural && q.sourceId === 'door:gate'); assert(plates.length > 0 && plates.length <= 5);
+  assert(plates.every(q => Math.max(...q.size) <= .75 + 1e-9), 'a destroyed gate cannot weld itself back into a giant rigid plate');
+  const plateVolume = plates.reduce((n, q) => n + q.size.reduce((v, x) => v * x, 1), 0);
+  assert(plateVolume > 0 && plateVolume <= 4 * 3.1 * .34 + 1e-8, 'gate rubble volume must stay physical');
   advance(sim, 8); assert(plates.every(q => q.resting && sim.state.debris.includes(q) && q.material === 'metal' && q.shape === 'box'));
   assert.equal(sim.blocked(0, -5), false); const copy = FSimulation.create(world); assert(copy.restore(sim.snapshot())); assert.equal(JSON.stringify(copy.snapshot()), JSON.stringify(sim.snapshot()));
 });

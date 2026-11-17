@@ -7,16 +7,31 @@ const grenade=(sim,x,y,z)=>{const q={id:900,kind:'grenade',owner:'player',profil
 
 test('new support worlds use a compact physical drone proxy; unused heavy proxy is parked',()=>{
  const w=fixture(),s=S.create(w,{rigidBodies:true});assert(s.rigid);s.switchProfile();step(s,3);const q=s.rigid.snapshot();assert(q.dronePlayer>0);assert(s.rigid.physics.body(q.player).pos[1]<-40);const d=s.rigid.physics.body(q.dronePlayer);assert.deepEqual(plain(d.size),[.56,.48,.56]);assert(Math.abs(d.pos[1]-(s.state.player.y+1.42))<.01);
- const copy=S.create(w,{rigidBodies:true});assert(copy.restore(plain(s.snapshot())));assert.deepEqual(plain(copy.snapshot()),plain(s.snapshot()));
- for(let i=0;i<60;i++){const input={moveY:.3,moveX:.2,jumpHeld:i<10,interact:i>20};s.step(1/60,input);copy.step(1/60,input);s.state.events=[];copy.state.events=[];}assert.equal(copy.digest(),s.digest());
+  const copy=S.create(w,{rigidBodies:true});assert(copy.restore(plain(s.snapshot())));assert.deepEqual(plain(copy.snapshot()),plain(s.snapshot()));
+  // The restored world must already agree before a single step is simulated, and
+  // digest() must stay a pure observation of that state.
+  assert.equal(copy.digest(),s.digest(),'digest agrees immediately after restore');
+  const observed=s.snapshot();const first=s.digest();assert.equal(s.digest(),first);assert.equal(s.digest(),first);assert.deepEqual(plain(s.snapshot()),plain(observed));
+  assert.equal(copy.rigid.hash(),s.rigid.hash());
+  // restore() still invalidates the render and AI caches it depends on.
+  const revision=s.state.destructionRevision;const copyRevision=copy.state.destructionRevision;
+  assert(copy.restore(plain(s.snapshot())));assert.equal(copy.state.destructionRevision,copyRevision+1,'restore keeps bumping the invalidation counter');
+  assert(s.restore(plain(s.snapshot())));assert.equal(s.state.destructionRevision,revision+1);
+  // A real perturbation of the drone body or of its own resources is detected.
+  const moved=S.create(w,{rigidBodies:true});assert(moved.restore(plain(observed)));const probe=moved.rigid.snapshot().dronePlayer;
+  const quietBody=moved.digest();moved.rigid.physics.impulse(probe,0,moved.state.player.y+1.4,0,0,60,0);for(let i=0;i<10;i++){moved.step(1/60,{});moved.state.events=[];}
+  assert.notEqual(moved.digest(),quietBody,'a pushed drone body changes the digest');moved.dispose();
+  const drained=S.create(w,{rigidBodies:true});assert(drained.restore(plain(observed)));const quiet=drained.digest();drained.state.support.heat=.5;
+  assert.notEqual(drained.digest(),quiet,'drone heat changes the digest');drained.dispose();
+  for(let i=0;i<60;i++){const input={moveY:.3,moveX:.2,jumpHeld:i<10,interact:i>20};s.step(1/60,input);copy.step(1/60,input);s.state.events=[];copy.state.events=[];}assert.equal(copy.digest(),s.digest());
  s.switchProfile();step(s,3);assert(s.rigid.physics.body(q.dronePlayer).pos[1]<-40);assert(s.rigid.physics.body(q.player).pos[1]>-1);
  const bad=plain(s.snapshot());bad.rigidBodies.dronePlayer=bad.rigidBodies.player;const before=plain(s.snapshot());assert(!s.restore(bad));assert.deepEqual(plain(s.snapshot()),before);s.dispose();copy.dispose();
 });
 test('physical flight crosses the real duct without moving the heavy proxy through the door',()=>{
  const boxes=[{minX:-2,maxX:2,minY:0,maxY:3.55,minZ:-4,maxZ:-3},{minX:-2,maxX:2,minY:4.9,maxY:7,minZ:-4,maxZ:-3}];const w=fixture({colliders:boxes}),s=S.create(w,{rigidBodies:true});s.switchProfile();s.state.player.y=2.8;step(s,80,{moveY:1});assert(s.state.player.z<-4.5);const copy=S.create(w,{rigidBodies:true});assert(copy.restore(s.snapshot()));assert.equal(copy.rigid.hash(),s.rigid.hash());s.dispose();copy.dispose();
 });
-test('all 18 support expedition loadouts and their full rigid checkpoints agree on ownership',()=>{
- for(const index of [0,1,5,10,17])for(const active of ['heavy','light']){const w=W.create(96,index,{campaign:true,campaignVersion:2,profiles:true,combatVersion:1,hordeVersion:1,supportDroneVersion:1}),carry=D.loadout(index,active,true),s=S.create(w,carry);assert(s.rigid);assert.equal(s.state.activeProfile,active);assert.equal(s.exportProfiles().version,2);const copy=S.create(w,carry);assert(copy.restore(s.snapshot()),index+'/'+active);assert.deepEqual(plain(copy.snapshot()),plain(s.snapshot()));s.dispose();copy.dispose();}
+ test('all 18 support expedition loadouts and their full rigid checkpoints agree on ownership',()=>{
+ for(let index=0;index<18;index++)for(const active of ['heavy','light']){const w=W.create(96,index,{campaign:true,campaignVersion:2,profiles:true,combatVersion:1,hordeVersion:1,supportDroneVersion:1}),carry=D.loadout(index,active,true),s=S.create(w,carry);assert(s.rigid);assert.equal(s.state.activeProfile,active,index+'/'+active);assert.equal(s.exportProfiles().version,2);const copy=S.create(w,carry);assert(copy.restore(s.snapshot()),index+'/'+active);assert.deepEqual(plain(copy.snapshot()),plain(s.snapshot()));assert.equal(copy.rigid.hash(),s.rigid.hash(),index+'/'+active);s.dispose();copy.dispose();}
 });
 test('a destroyed press stays destroyed through approach, cycles, render and saved continuation',()=>{
  const w=fixture({traps:[{id:'press',kind:'press',x:0,y:0,z:-8,w:3,d:.8,h:2,travel:3,period:7,phase:0,active:2,hp:18,damage:20}]}),s=S.create(w,{rigidBodies:true});step(s,1);const t=s.state.traps[0],b=t.box;grenade(s,0,(b.minY+b.maxY)/2,-8);assert(t.destroyed);assert(!t.box);assert(s.state.debris.length>0);assert(s.state.debris.length<=5);assert(s.state.debris.every(q=>Math.max(...q.size)<=.75+1e-9));

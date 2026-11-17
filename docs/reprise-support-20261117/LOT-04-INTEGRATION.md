@@ -18,3 +18,12 @@ Lire AGENTS.md, README.md et les bilans des lots. Aucun autre agent ou discussio
 ## État de départ
 
 Le checkpoint 0.12.9 se construit mais possède un échec connu de continuation après snapshot/restore. Il peut être poussé pour éviter de perdre le travail ; cela ne l'autorise pas à remplacer la version stable. Aucune nouvelle récurrence ou mission nocturne ne doit être créée.
+
+## État de qualification du 17/11/2026 (relais Spark)
+
+- Base de travail : `wip/support-drone-cockpit-20261117` à `94766578610fe700df8ac3c1c911882c5e53b695`, base publiée `351f2ccda91f0ba3c0f962316e714e9d7c20e8ac`.
+- Build : `python3 tools/build.py` réussi. `dist/index.html` 13 685 006 octets, gzip 3 217 314 octets, SHA-256 `74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22`, 0 ressource externe.
+- Suite npm complète sur Spark : 1396 tests annoncés, 1395 réussites, 0 échec, 0 annulé, 0 ignoré.
+- Navigateur : Chrome headless 151.0.7922.137, SwiftShader/WebGL2, 0 erreur console, captures et rapport JSON produits.
+- A/B CPU : `-1,09 %` médian de temps de simulation contre la tête de branche, sans annonce de FPS matériel.
+- Publication : branche poussée via le Mac, puis déploiement sur l'hébergement existant uniquement après vérification des empreintes. `main` n'est pas modifié tant que la fusion qualifiée n'est pas explicitement validée.

@@ -21,8 +21,41 @@ test('stationary drone docks by position, heavy and distant drone cannot turn a 
 test('hack requires a held action and line of sight; release resets partial progress',()=>{
  const sim=S.create(fixture({mechanisms:[{id:'hack',x:0,y:1,z:-1,profileRequired:'light',activation:'hack',required:true}]}));sim.switchProfile();assert(!sim.interact());advance(sim,.7,{interact:true});assert(!sim.state.mechanisms[0].active);assert(sim.state.support.progress>.5);advance(sim,.1);assert.equal(sim.state.support.progress,0);advance(sim,1.6,{interact:true});assert(sim.state.mechanisms[0].active);
 });
-test('stamina has bounded consumption, recovery delay and no exhausted sprint flicker',()=>{
- const q=D.fresh();for(let i=0;i<300;i++)D.sprint(q,1/60,true);assert(q.stamina<1e-8);assert(q.exhausted);for(let i=0;i<30;i++)assert(!D.sprint(q,1/60,true));assert.equal(q.stamina,0);for(let i=0;i<120;i++)D.sprint(q,1/60,false);assert(q.stamina>1);assert(D.sprint(q,1/60,true));
+test('switching character cancels hacking immediately, even between simulation steps',()=>{
+ const sim=S.create(fixture({mechanisms:[{id:'hack',x:0,y:1,z:-1,profileRequired:'light',activation:'hack',required:true}]}));sim.switchProfile();advance(sim,.8,{interact:true});
+ assert.equal(sim.state.support.target,'hack');assert(sim.state.support.progress>.5);
+ sim.switchProfile();assert.equal(sim.state.support.target,null);assert.equal(sim.state.support.progress,0);
+ sim.switchProfile();assert.equal(sim.state.support.target,null);assert.equal(sim.state.support.progress,0);
+ advance(sim,1.6,{interact:true});assert(sim.state.mechanisms[0].active,'the terminal is still hackable after the switch');
+});
+test('death by damage cancels the active hack',()=>{
+ const sim=S.create(fixture({mechanisms:[{id:'hack',x:0,y:1,z:-1,profileRequired:'light',activation:'hack',required:true}]}));sim.switchProfile();advance(sim,.8,{interact:true});assert(sim.state.support.progress>.5);
+ sim.hurt(10000,false);assert(sim.state.dead);assert.equal(sim.state.support.target,null);assert.equal(sim.state.support.progress,0);
+ advance(sim,.5,{interact:true});assert(!sim.state.mechanisms[0].active);
+});
+test('death by fall cancels the active hack',()=>{
+ const sim=S.create(fixture({mechanisms:[{id:'hack',x:0,y:1,z:-1,profileRequired:'light',activation:'hack',required:true}]}));sim.switchProfile();advance(sim,.8,{interact:true});assert(sim.state.support.progress>.5);
+ sim.state.player.y=-15;sim.step(1/60,{interact:true});assert(sim.state.dead);assert.equal(sim.state.support.target,null);assert.equal(sim.state.support.progress,0);
+});
+test('pause cancels the held hack so resuming cannot continue a stale action',()=>{
+ const sim=S.create(fixture({mechanisms:[{id:'hack',x:0,y:1,z:-1,profileRequired:'light',activation:'hack',required:true}]}));sim.switchProfile();advance(sim,.8,{interact:true});assert(sim.state.support.progress>.5);
+ sim.cancelSupportAction();assert.equal(sim.state.support.target,null);assert.equal(sim.state.support.progress,0);
+ advance(sim,.4,{interact:true});assert(!sim.state.mechanisms[0].active);assert(sim.state.support.progress<=.4+1e-9);
+});
+test('dock needs the drone inside its volume and forgets progress as soon as it leaves',()=>{
+ const w=fixture({mechanisms:[{id:'pad',x:0,y:1,z:0,profileRequired:'light',activation:'dock',required:true}],doors:[{id:'gate',x:5,y:0,z:0,w:.5,d:4,h:3,requires:'pad'}]});
+ const out=S.create(w);advance(out,1);out.switchProfile();out.state.player.x=.55;advance(out,1.2);assert(!out.state.mechanisms[0].active);assert.equal(out.state.support.target,null);
+ const sim=S.create(w);advance(sim,1);sim.switchProfile();advance(sim,.3);assert.equal(sim.state.support.target,'pad');assert(sim.state.support.progress>0);assert(!sim.state.mechanisms[0].active);
+ sim.state.player.x=6;advance(sim,.05);assert.equal(sim.state.support.target,null);assert.equal(sim.state.support.progress,0);assert(!sim.state.mechanisms[0].active);advance(sim,1.5);assert(!sim.state.mechanisms[0].active);assert(!sim.state.doors[0].open);
+});
+test('a hacked terminal pays its reward once and keeps its door open',()=>{
+ const sim=S.create(fixture({mechanisms:[{id:'hack',x:0,y:1,z:-1,profileRequired:'light',activation:'hack',required:true}],doors:[{id:'gate',x:5,y:0,z:0,w:.5,d:4,h:3,requires:'hack'}]}));sim.switchProfile();
+ const xp=()=>sim.exportProfiles().classes.light.xp,gained=xp();advance(sim,1.6,{interact:true});
+ assert(sim.state.mechanisms[0].active);assert.equal(xp()-gained,40);
+ advance(sim,5,{interact:true});assert(sim.state.mechanisms[0].active);assert.equal(xp()-gained,40,'no duplicated experience');
+ advance(sim,2);assert(sim.state.doors[0].open,'an opened door stays open');
+});
+test('stamina has bounded consumption, recovery delay and no exhausted sprint flicker',()=>{ const q=D.fresh();for(let i=0;i<300;i++)D.sprint(q,1/60,true);assert(q.stamina<1e-8);assert(q.exhausted);for(let i=0;i<30;i++)assert(!D.sprint(q,1/60,true));assert.equal(q.stamina,0);for(let i=0;i<120;i++)D.sprint(q,1/60,false);assert(q.stamina>1);assert(D.sprint(q,1/60,true));
  for(const hz of [20,60,120]){const a=D.fresh();for(let i=0;i<hz*2;i++)D.sprint(a,1/hz,true);assert(Math.abs(a.stamina-3)<1e-10);}
 });
 test('support checkpoint preserves laser, stamina, partial hack and rejects malformed resources atomically',()=>{

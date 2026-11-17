@@ -17,3 +17,13 @@ Conserver les touches approuvées, notamment R/C, les aliases AZERTY/QWERTY et l
 ## Sortie attendue
 
 Captures réellement rendues avec le nouveau code, tests d'entrées/options et de HUD, absence d'exception. Distinguer Chrome logiciel d'un GPU matériel. Ne pas produire d'image générée présentée comme une capture du jeu. Le lancement local précédent a échoué : retester un navigateur autorisé ou utiliser la CI, et documenter ce qui reste non vérifié.
+
+## Résultats du 17/11/2026 (relais Spark)
+
+- Validation navigateur réelle ajoutée : `tools/reprise-support-20261117/browser-check.py`, Chrome headless `151.0.7922.137`, SwiftShader/WebGL2, viewport `1280x720`, `900x600` et `390x844`.
+- Rapport : `docs/reprise-support-20261117/browser/browser-report.json`. Console : 0 message, 0 erreur.
+- Le jeu démarre en `playing`, passe en troisième personne, active le drone, affiche le HUD léger (`BOOST`, chauffe laser, arme laser) et la pause/reprise.
+- Recensement de rendu cockpit en mode drone : 15 maillages overlay, dont 2 émetteurs laser et 2 lentilles. Ce compteur est exposé seulement avec `?dev=1` via `document.body.dataset.cockpit`.
+- L'aide clavier peut être masquée, réaffichée et persiste après rechargement via `ferro-settings`.
+- Sur les trois viewport, le corps du document n'est pas défilable pendant le jeu.
+- Limites : ce n'est pas un GPU matériel, pas une manette physique, pas un téléphone réel. Les bindings gamepad manquants (`melee`, `leftHand`, `weapon5`) restent conformes au layout approuvé épinglé par `checks/default-controls.test.mjs` ; aucun changement de defaults n'a été fait sans décision explicite.

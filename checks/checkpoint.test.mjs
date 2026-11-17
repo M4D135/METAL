@@ -8,7 +8,7 @@ import vm from 'node:vm';
 import {FRenderMesh} from './mesh-fixture.mjs';
 
 const root = new URL('../', import.meta.url), key = 'ferro-expedition-v2';
-const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'profiles', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'avatars', 'effects', 'soundscape', 'options', 'input', 'controls', 'camera', 'loop', 'schedule', 'touch', 'jobs', 'tasks', 'host', 'game'].map(name =>
+const sources = Object.fromEntries(['fmath', 'passages', 'renderer', 'support', 'profiles', 'world', 'destruction', 'economy', 'brain', 'simulation', 'motion', 'actors', 'avatars', 'effects', 'soundscape', 'options', 'input', 'controls', 'camera', 'loop', 'schedule', 'touch', 'jobs', 'tasks', 'host', 'game'].map(name =>
   [name, readFileSync(new URL(`src/${name}.js`, root), 'utf8')]));
 const previousStats = { time: 316, kills: 21, shots: 72, hits: 43, score: 4730 };
 
@@ -60,7 +60,7 @@ function harness(saved, initial = {}, createWorld = world, runtime = {}) {
   };
   if (runtime.idle !== false) context.requestIdleCallback = (callback, options) => idle.push({ callback, options, mode: element('body').dataset.state || 'menu' });
   context.window = context; vm.createContext(context);
-  for (const name of ['profiles', 'destruction', 'economy', 'simulation', 'motion', 'actors', 'avatars', 'effects', 'soundscape', 'options', 'input', 'controls', 'camera', 'loop', 'schedule', 'touch', 'jobs', 'tasks', 'host']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
+  for (const name of ['support', 'profiles', 'destruction', 'economy', 'simulation', 'motion', 'actors', 'avatars', 'effects', 'soundscape', 'options', 'input', 'controls', 'camera', 'loop', 'schedule', 'touch', 'jobs', 'tasks', 'host']) vm.runInContext(sources[name], context, { filename: `${name}.js` });
   if(runtime.brain){vm.runInContext(sources.brain, context, {filename:'brain.js'});const createBrain=context.FBrain.create;context.FBrain.create=options=>{const brain=createBrain(options);brains.push(brain);return brain;};}
   const create = context.FSimulation.create;
   context.FSimulation.create = (value, options) => { const sim = create(value, options); simulations.push(sim); simulationOptions.push(options); if(runtime.step){const step=sim.step;sim.step=(dt,input)=>{runtime.step(dt,input,sim);return step(dt,input);};} return sim; };
@@ -599,8 +599,15 @@ test('LOAD-01: a failed refused-slot write cannot erase the old active point on 
 
 function generatedModules() {
   const previous = globalThis.window, modules = {}; globalThis.window = modules;
-  try { for (const name of ['fmath','passages','renderer','profiles','world','destruction','economy','brain','simulation']) vm.runInThisContext(sources[name], { filename: name + '.js' }); }
+  try { for (const name of ['fmath','passages','renderer','support','profiles','world','destruction','economy','brain','simulation']) vm.runInThisContext(sources[name], { filename: name + '.js' }); }
   finally { if (previous === undefined) delete globalThis.window; else globalThis.window = previous; }
+  // world.js resolves MetalSupport through the ambient global at call time, so the
+  // generated modules keep their own realm object for every later FWorld.create.
+  modules.createWorld = (seed, index, options) => {
+    const held = globalThis.window; globalThis.window = modules;
+    try { return modules.FWorld.create(seed, index, options); }
+    finally { if (held === undefined) delete globalThis.window; else globalThis.window = held; }
+  };
   return modules;
 }
 
@@ -969,7 +976,7 @@ const preMassivePoints=new URL('./fixtures/pre-massive-traps/',import.meta.url);
 const preMassiveManifest=JSON.parse(readFileSync(new URL('manifest.json',preMassivePoints),'utf8'));
 for(const entry of preMassiveManifest.cases)test('pre-massive browser Continue, save and Continue again: '+entry.id,async()=>{
   const {envelope}=JSON.parse(gunzipSync(readFileSync(new URL(entry.id+'.json.gz',preMassivePoints))));
-  const G=generatedModules(),factory=(seed,index,options)=>G.FWorld.create(seed,index,options);
+  const G=generatedModules(),factory=(seed,index,options)=>G.createWorld(seed,index,options);
   const original=JSON.stringify(envelope),app=harness(envelope,{},factory,{geometry:G.FRender,brain:true});
   await app.element('resume-expedition').click();
   assert.equal(app.element('body').dataset.state,'playing');

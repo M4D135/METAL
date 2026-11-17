@@ -34,6 +34,13 @@ Budgets de simulation/rendu, déferlantes bornées, corps et joints endormis ou 
 
 HTML local reconstruit : 13 683 662 octets bruts ; gzip 3 216 845 octets ; SHA-256 `ece7dd3762912ca7211904194ccc8b981f50710e13ee79c1ce2aa00eec55dd3a`. Le numéro 0.12.9 dans package.json est celui du chantier, pas une annonce de livraison.
 
+## Reprise Spark du 17/11/2026
+
+- Les quatre lots ont été repris dans cette branche : digest/restore, annulation du piratage, rejeu CLI, cockpit/HUD validé en navigateur headless, overlay développeur, budget de déferlante et banc A/B CPU.
+- Suite npm complète sur Spark : 1396 tests annoncés, 1395 réussites, 0 échec, 0 annulé, 0 ignoré.
+- Build courant : `dist/index.html` 13 685 006 octets, gzip 3 217 314 octets, SHA-256 `74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22`.
+- Cette reprise qualifie la branche de travail pour publication et intégration, pas les appareils non testés : GPU matériel, manette physique, téléphone réel, Safari/Firefox restent à valider.
+
 ## Lots pour des discussions séparées
 
 | Lot | Mission | Point d'entrée |

@@ -178,7 +178,9 @@ function navigationGraph(cells,width,testEdge){
   function wreckChunks(q,budget,small=false){
     if(small&&['box','bevel','cylinder'].includes(q.shape)){
       // Keep at most five actual cut cells of this source; the remainder is dust.
-      // Never weld a destroyed wall back into a near-full-size physics slab.
+      // Never weld a destroyed wall back into a near-full-size physics slab, but
+      // do not shatter a fragment that is already a single carried piece.
+      if(Math.max(...q.size)<=1)return [q];
       const counts=q.size.map((v,k)=>q.shape==='cylinder'&&k!==1?1:Math.max(1,Math.ceil(v/.75))),total=counts[0]*counts[1]*counts[2],n=Math.min(Math.max(1,budget),5,total),axes=wreckAxes(q.rotation),size=q.size.map((v,k)=>v/counts[k]),out=[];
       for(let j=0;j<n;j++){const i=Math.floor((j+.5)*total/n),grid=[i%counts[0],Math.floor(i/counts[0])%counts[1],Math.floor(i/(counts[0]*counts[1]))],local=grid.map((g,k)=>((g+.5)/counts[k]-.5)*q.size[k]),offset=[0,1,2].map(k=>axes[0][k]*local[0]+axes[1][k]*local[1]+axes[2][k]*local[2]);out.push({...q,size:size.slice(),p:q.p.map((v,k)=>v+offset[k]),seed:((q.seed||0)+i*131)>>>0});}
       return out;
@@ -591,6 +593,10 @@ function navigationGraph(cells,width,testEdge){
       q.progress=Math.min(duration,q.progress+dt);
       if(q.progress>=duration-1e-9){activateMechanism(target);awardProfile(40);q.target=null;q.progress=0;}
     }
+    // Authoritative transitions (profile change, death, pause) must drop the held
+    // support action at once: the next simulation step may never come after a death.
+    // A legitimate checkpoint restore keeps its partial progress; this is not called there.
+    function cancelSupportAction(){if(!supportDrone)return;const q=s.support;q.target=null;q.progress=0;}
     function updateSystems(dt){
       for(const d of s.doors){
         const was=d.open;if(powered(d.requires))d.progress=Math.min(1,d.progress+dt/1.1);
@@ -683,7 +689,7 @@ function navigationGraph(cells,width,testEdge){
     }
     function fatalFall(){
       if(s.dead||s.won)return;
-      p.hp=0;p.dashing=0;Object.assign(p,freshAir());s.dead=true;s.damage=1;s.combo=s.comboTime=0;stopMotion();
+      p.hp=0;p.dashing=0;Object.assign(p,freshAir());s.dead=true;s.damage=1;s.combo=s.comboTime=0;stopMotion();cancelSupportAction();
       emit('dead',{reason:'fall'});
     }
     function checkPlayerBounds(){
@@ -1080,6 +1086,7 @@ function navigationGraph(cells,width,testEdge){
     }
     function switchProfile(){
       if(!profilesEnabled||s.dead||s.won)return false;
+      cancelSupportAction();
       exportProfiles();const from=s.activeProfile,to=from==='light'?'heavy':'light',next=s.profiles[to];
       const healthRatio=p.hp/s.maxHp;s.activeProfile=to;s.economy=next.economy;stats=G.FEconomy.stats(s.economy);s.maxHp=stats.maxHp;p.hp=Math.min(s.maxHp,healthRatio*s.maxHp);
       s.weapon=s.equipment.right=s.inventory.weapons[next.weapon]?next.weapon:4;s.equipment.left=to!=='light'&&next.left!==null&&s.inventory.weapons[next.left]?next.left:null;
@@ -1391,7 +1398,7 @@ function navigationGraph(cells,width,testEdge){
       if(!(amount>0)||p.dashing>0||recovery>0||s.dead||s.won)return false;
       if(armorEnabled){syncArmor();const absorbed=Math.min(s.armor.points,amount/3);s.armor.points-=absorbed;amount-=absorbed;}
       p.hp=Math.max(0,p.hp-amount);s.damage=clamp(.35+amount/25,0,1);s.combo=0;s.comboTime=0;emit('hurt',{amount,...(source&&Number.isFinite(source.x)&&Number.isFinite(source.z)?{x:source.x,z:source.z}:{})});
-      if(!p.hp){s.dead=true;stopMotion();emit('dead');}return true;
+      if(!p.hp){s.dead=true;stopMotion();cancelSupportAction();emit('dead');}return true;
     }
     function bossPhase(e){
       if(giant(e)){if(e.hp>0&&e.bossAwake)bossPhaseChange(e);return;}
@@ -2865,7 +2872,7 @@ function navigationGraph(cells,width,testEdge){
       if(typeof v==='number'){digestBytes.setFloat64(0,v,true);for(let i=0;i<8;i++)digestValue=Math.imul(digestValue^digestBytes.getUint8(i),16777619);}
       else if(typeof v==='string'){for(let i=0;i<v.length;i++){const n=v.charCodeAt(i);digestValue=Math.imul(Math.imul(digestValue^(n&255),16777619)^(n>>>8),16777619);}}
       else if(typeof v==='boolean')digestValue=Math.imul(digestValue^(v?17:23),16777619);
-      else if(v&&typeof v==='object'){for(const k in v){if(k==='world'||k==='events'||v[k]===undefined)continue;digestMix(k);digestMix(v[k]);}digestValue=Math.imul(digestValue^31,16777619);}
+      else if(v&&typeof v==='object'){for(const k in v){if(k==='world'||k==='events'||v[k]===undefined||(v===s&&(k==='destructionRevision'||k==='aiStats')))continue;digestMix(k);digestMix(v[k]);}digestValue=Math.imul(digestValue^31,16777619);}
       else digestValue=Math.imul(digestValue^7,16777619);
     }
     function digest(){
@@ -3180,7 +3187,7 @@ function navigationGraph(cells,width,testEdge){
     if(rigidEnabled)rigid=G.MetalPhysics.create(world,solids,{state:s,emit,explode,blocked,hurt,damageEnemy,navMark});
     if(baked){graph.adopt(baked);navEpoch=baked.epoch;if(rigid)s.aiStats.navPending=0;}else{if(rigid)refreshNav(false);graph.flush();}clipEscape=boundaryAt(p.x,p.z);
     if(!advanced)rebuildNav();else dist.fill(-1);rebuildNeighbors();for(const q of s.pipes)if(!pipeAnchored(q)){q.broken=true;stopLeak(q);}if(progression)encounterCounts();updateHazards(false);updateEnvironment(0,false);
-    return {state:s,get destruction(){return destruction;},weakPoints,get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
+    return {state:s,get destruction(){return destruction;},weakPoints,get rigid(){return rigid;},get ammoCaps(){return ammoCaps.slice();},get stats(){return {...stats};},motionProfile:{...motionProfile},switchProfile,exportProfiles,selectWeapon,selectLeftWeapon,exportInventory,exportLoadout,shopOffers,buy,setDifficulty,step,fire,fireLeft(assist=false){return arsenal?fire(assist,'left'):false;},melee,pulse,interact,nearestInteraction,ground,blocked,move,ray,sight,hurt,cancelSupportAction,digest,snapshot,restore,dispose(){brainDisposed=true;invalidateBrain();},nav:{connected,prepared:!!baked,bake(){if(s.time!==0)throw new Error('Navigation preparation requires a fresh simulation');return {version:1,fingerprint,nx,nz,epoch:navEpoch,cells:nav.slice(),heights:navY.slice(),sub:navSub.slice(),region:navRegion.slice(),weight:navWeight.slice(),known:edgeKnown.slice(),open:edgeOpen.slice(),parent:graph.parent.slice()};},playerCell:i=>navRegion[i]&&!blocked(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,.28,ground(b.minX+(i%nx)*cell,b.minZ+Math.floor(i/nx)*cell,noTraps),doorBoxes,solids,noTraps),playerTraverse:(ax,az,bx,bz,r=.28)=>segmentFree(ax,az,bx,bz,r,ground(ax,az,noTraps),ground(bx,bz,noTraps),noTraps,false),heights:navY,substrate:navSub,edgeTest,component:i=>graph.component(i),get ready(){return graph.ready;},get epoch(){return navEpoch;},cells:nav,edgeKnown,edgeOpen,get dist(){if(advanced)rebuildNav();return dist;},nx,nz,cell,coord,idx,rebuild:rebuildNav,canTraverse:segmentFree}};
   }
   G.FSimulation={create,navigationGraph,clamp,copyCampaign,campaignPolicy,copyArmor,wreckage};
 })(typeof window!=='undefined'?window:globalThis);
