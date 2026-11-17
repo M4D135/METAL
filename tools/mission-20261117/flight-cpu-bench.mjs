@@ -21,6 +21,9 @@ function argumentsOf(argv){
   for(const key of ['steps','warmups','reps']){
     opts[key]=Number(opts[key]);if(!Number.isSafeInteger(opts[key])||opts[key]<(key==='warmups'?0:key==='steps'?6:1)||opts[key]>100000)throw Error('Invalid '+key);
   }
+  // 20 Hz needs one tick per six baseline ticks; four equal input phases also require divisibility by four.
+  // Otherwise a nominal A/B comparison changes simulated duration or input duty cycle across refresh rates.
+  if(opts.steps%24!==0)throw Error('Invalid steps: multiple of 24 required for equal 20/60/120 Hz durations and four input phases');
   opts.root=resolve(opts.root);if(opts.candidate)opts.candidate=resolve(opts.candidate);
   return opts;
 }
@@ -46,7 +49,8 @@ function run(realm,scenario,fps,steps){
   const sim=FSimulation.create(world(scenario),{profiles:MetalProfiles.fresh(undefined,'light')});
   // Keep the simulated duration fixed across 20/60/120 Hz. Generate input
   // objects before the timer so their allocation is not attributed to fly().
-  const ticks=Math.round(steps*fps/120),dt=1/fps;
+  const ticks=steps*fps/120,dt=1/fps;
+  assert(Number.isInteger(ticks),'Benchmark duration must match 20/60/120 Hz exactly');
   const inputs=Array.from({length:ticks},(_,i)=>inputAt(scenario,i,ticks));
   const startCPU=process.cpuUsage(),start=process.hrtime.bigint();
   for(let i=0;i<ticks;i++)sim.step(dt,inputs[i]);
@@ -57,6 +61,7 @@ function run(realm,scenario,fps,steps){
     state:{x:sim.state.player.x,y:sim.state.player.y,z:sim.state.player.z,
       airVX:sim.state.player.airVX,airVY:sim.state.player.airVY,airVZ:sim.state.player.airVZ}};
 }
+function cpuDeltaPercent(a,b){const baseline=median(a.map(x=>x.cpuMs));return baseline>0?100*(median(b.map(x=>x.cpuMs))/baseline-1):null;}
 function summarize(samples){return {medianCPUms:median(samples.map(x=>x.cpuMs)),medianWallMs:median(samples.map(x=>x.wallMs)),
   minCPUms:Math.min(...samples.map(x=>x.cpuMs)),maxCPUms:Math.max(...samples.map(x=>x.cpuMs))};}
 function benchmark(opts){
@@ -76,7 +81,7 @@ function benchmark(opts){
     const sameState=runs.length===1||runs[0][0].digest===runs[1][0].digest;
     report.sameStateAcrossVariants&&=sameState;
     report.results.push({scenario,fps,stable,sameState,variants:runs.map((samples,index)=>({label:index?'B':'A',digest:samples[0].digest,
-      ...summarize(samples),samples})),...(runs.length===2&&sameState?{candidateVsBaselineCPUPercent:100*(runs[1].map(r=>r.cpuMs).reduce((a,b)=>a+b,0)/runs[1].length/ (runs[0].map(r=>r.cpuMs).reduce((a,b)=>a+b,0)/runs[0].length)-1)}:{})});
+      ...summarize(samples),samples})),...(runs.length===2&&sameState?{candidateVsBaselineCPUPercent:cpuDeltaPercent(runs[0],runs[1])}:{})});
   }
   report.allStable=report.results.every(r=>r.stable);
   return report;
@@ -90,7 +95,12 @@ function selfTest(){
   assert.equal(inputAt('obstacles',5,8).descendHeld,true);
   assert.throws(()=>argumentsOf(['--steps','0']),/Invalid steps/);
   assert.throws(()=>argumentsOf(['--candidate']),/incomplete argument/);
-  console.log('flight-cpu-bench self-test: PASS (12 assertions; no game code executed)');
+  assert.throws(()=>argumentsOf(['--steps','841']),/multiple of 24/);
+  assert.throws(()=>argumentsOf(['--steps','6']),/multiple of 24/);
+  assert.equal(argumentsOf(['--steps','840']).steps,840);
+  assert.equal(cpuDeltaPercent([{cpuMs:1},{cpuMs:1},{cpuMs:100}],[{cpuMs:2},{cpuMs:2},{cpuMs:2}]),100);
+  assert.equal(cpuDeltaPercent([{cpuMs:0}],[{cpuMs:1}]),null);
+  console.log('flight-cpu-bench self-test: PASS (17 assertions; no game code executed)');
 }
 const opts=argumentsOf(process.argv.slice(2));
 if(opts.selfTest)selfTest();
