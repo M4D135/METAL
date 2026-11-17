@@ -1,0 +1,93 @@
+name: METAL support checkpoint (WIP, not release)
+on:
+  push:
+    branches: [wip/support-drone-cockpit-20261117]
+    paths: [.github/workflows/checkpoint-support.yml]
+permissions:
+  contents: write
+concurrency:
+  group: metal-support-checkpoint-20261117
+  cancel-in-progress: false
+jobs:
+  checkpoint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Recover exact in-progress files with before-and-after hashes
+        run: |
+          set -euo pipefail
+          python3 tools/reprise-support-20261117/materialize.py
+          git diff --check
+          for f in src/support.js src/controls.js src/demo-metal.js src/game.js src/metal-physics.js src/profiles.js src/simulation.js src/world.js; do node --check "$f"; done
+      - name: Rebuild checkpoint, not a qualified release
+        run: |
+          set -euo pipefail
+          python3 tools/build.py | tee /tmp/metal-checkpoint-evidence/build.txt
+          node checks/build.test.mjs | tee /tmp/metal-checkpoint-evidence/distribution.txt
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          h=hashlib.sha256(pathlib.Path('dist/index.html').read_bytes()).hexdigest()
+          assert h=='ece7dd3762912ca7211904194ccc8b981f50710e13ee79c1ce2aa00eec55dd3a'
+          assert json.loads(pathlib.Path('SIZE.json').read_text())['sha256']==h
+          PY
+      - name: Record focused tests without concealing the known failure
+        id: tests
+        run: |
+          set +e
+          node --test checks/support-drone.test.mjs checks/support-physics.test.mjs checks/support-budgets.test.mjs checks/wreckage.test.mjs checks/controls.test.mjs > /tmp/metal-checkpoint-evidence/tests.txt 2>&1
+          rc=$?
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$rc" > /tmp/metal-checkpoint-evidence/test-exit.txt
+          cat /tmp/metal-checkpoint-evidence/tests.txt
+          exit 0
+      - name: Push WIP source checkpoint only to its dedicated branch
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          WORK_BRANCH: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          test "$WORK_BRANCH" = 'wip/support-drone-cockpit-20261117'
+          git fetch origin "$WORK_BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$EXPECTED_SHA"
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os,re,subprocess
+          root=Path('/tmp/metal-checkpoint-evidence')
+          manifest=json.loads((root/'source-manifest.json').read_text())
+          for name,sha in manifest['files'].items():
+              assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==sha,name
+          text=(root/'tests.txt').read_text()
+          counts={k:int(re.findall(r'^# '+k+r' (\d+)$',text,re.M)[-1]) for k in ['tests','pass','fail','cancelled','skipped','todo']}
+          result={'status':'WIP_NOT_RELEASE','run_id':os.environ['RUN_ID'],'counts':counts,'test_exit':int((root/'test-exit.txt').read_text()),'browser_tested':False,'full_suite_tested':False,'source_base':manifest['base'],'build':json.loads(Path('SIZE.json').read_text())}
+          dest=Path('docs/reprise-support-20261117')
+          (dest/'CI-RESULT.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          (dest/'tests-checkpoint.tap').write_text(text)
+          (dest/'source-manifest.json').write_text((root/'source-manifest.json').read_text())
+          subprocess.run(['git','add','--',*manifest['files'].keys(),'dist/index.html','SIZE.json',str(dest)],check=True)
+          PY
+          git rm -- .github/workflows/checkpoint-support.yml tools/reprise-support-20261117/materialize.py tools/reprise-support-20261117/checkpoint.1.b64 tools/reprise-support-20261117/checkpoint.2.b64 tools/reprise-support-20261117/checkpoint.3.b64 tools/reprise-support-20261117/checkpoint.4.b64
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'wip: preserve support-drone gameplay, cockpit, HUD and budgets with known restore divergence' -m 'Exact recovered source snapshot and rebuilt standalone. This is NOT a qualified release: read docs/reprise-support-20261117/README.md and CI-RESULT.json. Main is untouched. One-shot transport removed; retained in history. No force push.'
+          git push origin "HEAD:refs/heads/$WORK_BRANCH"
+          git rev-parse HEAD | tee /tmp/metal-checkpoint-evidence/published-commit.txt
+      - name: Preserve diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: metal-support-checkpoint-${{ github.run_id }}
+          path: /tmp/metal-checkpoint-evidence
+          retention-days: 7
+          if-no-files-found: error
+      - name: Keep the qualification red when focused tests fail
+        if: always() && steps.tests.outputs.exit_code != ''
+        env:
+          TEST_EXIT: ${{ steps.tests.outputs.exit_code }}
+        run: |
+          echo 'Checkpoint publication and release qualification are separate. See the published commit and test results.' >> "$GITHUB_STEP_SUMMARY"
+          exit "$TEST_EXIT"
