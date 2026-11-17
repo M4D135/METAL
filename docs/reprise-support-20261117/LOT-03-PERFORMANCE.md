@@ -29,4 +29,5 @@ Module(s), tests, traces brutes, comparaison honnête et limites. Ne pas transfo
 - Banc A/B honnête ajouté : `tools/reprise-support-20261117/ab-budgets.mjs`. Même monde `FWorld.create(96,0)`, mêmes options, mêmes entrées scriptées, échauffement, répétitions alternées, médianes, dispersion, p95/p99, pire pas, pics de corps/joints/particules, delta tas.
 - Rapport brut : `docs/reprise-support-20261117/ab-budgets-latest.json` et le fichier daté du 17/11/2026.
 - Mesure Spark Node 24.18, Linux arm64, 5 répétitions de 12 s, baseline = tête de branche `9476657`, chantier = correction courante : médiane `0,1749 ms/pas` contre `0,1730 ms/pas`, soit `-1,09 %` de temps CPU de simulation. Ce n'est pas une mesure de FPS matériel.
-- Limites : GPU non mesuré, Chrome headless SwiftShader pour le navigateur, pas de banc apparié WebGL sur GPU NVIDIA ou Apple, pas de téléphone ni manette physique.
+- `npm run render-check` sur Spark : 55/55 en SwiftShader, puis 55/55 avec `--angle vulkan` sur ANGLE/NVIDIA GB10. Rapport : `docs/reprise-support-20261117/render-spark-vulkan.json`.
+- Limites : le banc A/B reste un mesure CPU Node ; le GPU matériel est validé en rendu et absence d'erreur, pas en FPS GPU horodaté. Pas de banc apparié WebGL sur GPU Apple, pas de téléphone ni manette physique.

@@ -40,6 +40,7 @@ HTML local reconstruit : 13 683 662 octets bruts ; gzip 3 216 845 octets ; SHA-2
 - Suite npm complète sur Spark : 1396 tests annoncés, 1395 réussites, 0 échec, 0 annulé, 0 ignoré.
 - Build courant : `dist/index.html` 13 685 006 octets, gzip 3 217 314 octets, SHA-256 `74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22`.
 - Contrôle Mac : Node v24.18.0, build identique, npm test 1396 tests, 1395 réussites, 0 échec.
+- GPU Spark : `npm run render-check` 55/55 en SwiftShader et 55/55 en ANGLE/NVIDIA GB10 ; validation navigateur locale Vulkan sans erreur console.
 - Publication : branche et `main` poussés via le Mac ; `https://fps.estrasse.fr/` sert la release `b985a3009508e300737cb2926641e92244dc9bbe` (`Version 0.12.9`, SHA-256 `74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22`).
 - Cette reprise qualifie la publication sur les environnements testés, pas les appareils non testés : GPU matériel, manette physique, téléphone réel, Safari/Firefox restent à valider.
 

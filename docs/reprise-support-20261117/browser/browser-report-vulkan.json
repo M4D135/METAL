@@ -1,0 +1,221 @@
+{
+  "url": "file:///home/m4d135/metal-chantier/qwen-support-20261117/dist/index.html?dev=1",
+  "chrome": "Google Chrome 151.0.7922.137",
+  "angle": "vulkan",
+  "screenshots": [
+    "desktop-01-titre.png",
+    "desktop-02-lourd-premiere-personne.png",
+    "desktop-03-lourd-troisieme-personne.png",
+    "desktop-04-drone-cockpit.png",
+    "desktop-05-drone-en-vol.png",
+    "desktop-06-drone-tir.png",
+    "desktop-07-maintenir-interagir.png",
+    "desktop-08-pause.png",
+    "narrow-01-titre.png",
+    "narrow-02-jeu.png",
+    "mobile-01-titre.png",
+    "mobile-02-jeu.png"
+  ],
+  "console": [],
+  "steps": [
+    {
+      "viewport": "desktop",
+      "step": "chargement",
+      "state": "menu"
+    },
+    {
+      "viewport": "desktop",
+      "step": "nouvelle expedition",
+      "state": "playing"
+    },
+    {
+      "viewport": "desktop",
+      "step": "vue troisieme personne",
+      "view": null
+    },
+    {
+      "viewport": "desktop",
+      "step": "drone",
+      "support": "true",
+      "cockpit": {
+        "total": 15,
+        "emitters": 2,
+        "lenses": 2,
+        "overlay": true
+      },
+      "hud": {
+        "health": "100",
+        "armor": "0",
+        "resource": "BOOST=100 %",
+        "heat": "scaleX(0)",
+        "weapon": "LASERS AUXILIAIRES ×2",
+        "hint": "ZQSD/WASD · Sourisvoler · viserClictirer · 2 canonsEspace · Cmonter · descendreMajboostFmaintenir : piraterTlourdRvue 1r",
+        "access": false
+      }
+    },
+    {
+      "viewport": "desktop",
+      "step": "piratage maintenu",
+      "observed": "{\"label\":\"\",\"visible\":false,\"bar\":false}"
+    },
+    {
+      "viewport": "desktop",
+      "step": "pause",
+      "state": "paused"
+    },
+    {
+      "viewport": "desktop",
+      "step": "reprise",
+      "state": "playing"
+    },
+    {
+      "viewport": "desktop",
+      "step": "aide masquee",
+      "hidden": true,
+      "persistee": false
+    },
+    {
+      "viewport": "desktop",
+      "step": "aide reaffichee",
+      "hidden": false,
+      "persistee": true
+    },
+    {
+      "viewport": "desktop",
+      "step": "préférence après rechargement",
+      "persistee": true
+    },
+    {
+      "viewport": "narrow",
+      "step": "chargement",
+      "state": "menu"
+    },
+    {
+      "viewport": "narrow",
+      "step": "jeu en cours",
+      "state": "playing",
+      "defilement": false,
+      "canvas": {
+        "w": null,
+        "h": null
+      },
+      "hud": {
+        "health": "100",
+        "armor": "0",
+        "resource": "ENDURANCE=100 %",
+        "heat": "scaleX(0)",
+        "weapon": "PISTOLET AUTOMATIQUE",
+        "hint": false,
+        "access": false
+      }
+    },
+    {
+      "viewport": "mobile",
+      "step": "chargement",
+      "state": "menu"
+    },
+    {
+      "viewport": "mobile",
+      "step": "jeu en cours",
+      "state": "playing",
+      "defilement": false,
+      "canvas": {
+        "w": null,
+        "h": null
+      },
+      "hud": {
+        "health": "100",
+        "armor": "0",
+        "resource": "ENDURANCE=100 %",
+        "heat": "scaleX(0)",
+        "weapon": "PISTOLET AUTOMATIQUE",
+        "hint": false,
+        "access": false
+      }
+    }
+  ],
+  "viewport": {
+    "desktop": {
+      "state": "playing",
+      "support": "false",
+      "gpuTier": "mid",
+      "perf": "{\"fps\":60,\"cpuFrameMs\":3.099999999627471,\"cpuSimulationMs\":1.599999999627471,\"cpuRenderMs\":0.900000000372529,\"gpuMs\":null,\"drawCalls\":18,\"triangles\":33060,\"bodies\":148,\"awake\":1,\"sleeping\":89,\"joints\":6,\"debris\":0,\"particles\":0,\"enemyActive\":0,\"laserBeams\":0,\"voices\":0,\"peakVoices\":2,\"renderer\":\"webgl2\",\"quality\":\"low\",\"renderScale\":1}",
+      "scrollable": false,
+      "canvas": {
+        "w": null,
+        "h": null
+      },
+      "hud": {
+        "health": "100",
+        "armor": "0",
+        "resource": "ENDURANCE=100 %",
+        "heat": "scaleX(0)",
+        "weapon": "PISTOLET AUTOMATIQUE",
+        "hint": "ZQSD/WASD · Sourisdéplacer · viserClic · Clic droittirer · main gaucheEspace · Csauter · esquiverMajcourirFinteragirTdro",
+        "access": false
+      },
+      "cockpit": {
+        "total": 0,
+        "emitters": 0,
+        "lenses": 0,
+        "overlay": true
+      },
+      "meshes": null
+    },
+    "narrow": {
+      "state": "playing",
+      "support": "false",
+      "gpuTier": "mid",
+      "perf": "{\"fps\":60,\"cpuFrameMs\":3.200000001117587,\"cpuSimulationMs\":1.8999999985098839,\"cpuRenderMs\":0.5,\"gpuMs\":null,\"drawCalls\":18,\"triangles\":32644,\"bodies\":148,\"awake\":2,\"sleeping\":88,\"joints\":6,\"debris\":0,\"particles\":0,\"enemyActive\":0,\"laserBeams\":0,\"voices\":2,\"peakVoices\":2,\"renderer\":\"webgl2\",\"quality\":\"low\",\"renderScale\":1}",
+      "scrollable": false,
+      "canvas": {
+        "w": null,
+        "h": null
+      },
+      "hud": {
+        "health": "100",
+        "armor": "0",
+        "resource": "ENDURANCE=100 %",
+        "heat": "scaleX(0)",
+        "weapon": "PISTOLET AUTOMATIQUE",
+        "hint": false,
+        "access": false
+      },
+      "cockpit": {
+        "total": 0,
+        "emitters": 0,
+        "lenses": 0,
+        "overlay": true
+      },
+      "meshes": null
+    },
+    "mobile": {
+      "state": "playing",
+      "support": "false",
+      "gpuTier": "mid",
+      "perf": "{\"fps\":60,\"cpuFrameMs\":4.200000001117587,\"cpuSimulationMs\":2,\"cpuRenderMs\":1.5,\"gpuMs\":null,\"drawCalls\":18,\"triangles\":26260,\"bodies\":148,\"awake\":2,\"sleeping\":88,\"joints\":6,\"debris\":0,\"particles\":0,\"enemyActive\":0,\"laserBeams\":0,\"voices\":1,\"peakVoices\":2,\"renderer\":\"webgl2\",\"quality\":\"low\",\"renderScale\":1}",
+      "scrollable": false,
+      "canvas": {
+        "w": null,
+        "h": null
+      },
+      "hud": {
+        "health": "100",
+        "armor": "0",
+        "resource": "ENDURANCE=100 %",
+        "heat": "scaleX(0)",
+        "weapon": "PISTOLET AUTOMATIQUE",
+        "hint": false,
+        "access": false
+      },
+      "cockpit": {
+        "total": 0,
+        "emitters": 0,
+        "lenses": 0,
+        "overlay": true
+      },
+      "meshes": null
+    }
+  },
+  "errors": []
+}

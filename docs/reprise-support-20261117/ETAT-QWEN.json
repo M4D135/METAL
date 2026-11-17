@@ -90,10 +90,44 @@
       "chantierMedianMsPerStep": 0.173,
       "percentDelta": -1.09,
       "note": "Temps CPU de simulation Node, pas une mesure de FPS matériel."
+    },
+    {
+      "name": "render-check spark swiftshader",
+      "command": "npm run render-check",
+      "checks": 55,
+      "passed": 55,
+      "failed": 0
+    },
+    {
+      "name": "render-check spark nvidia",
+      "command": "node tools/render/self-check.mjs --angle vulkan --out /tmp/opencode/metal/render-spark-vulkan.json",
+      "checks": 55,
+      "passed": 55,
+      "failed": 0,
+      "gpu": "ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)",
+      "report": "docs/reprise-support-20261117/render-spark-vulkan.json"
+    },
+    {
+      "name": "browser-check local nvidia",
+      "command": "METAL_BROWSER_ANGLE=vulkan python3 tools/reprise-support-20261117/browser-check.py . /tmp/opencode/metal/browser-local-vulkan",
+      "chrome": "Google Chrome 151.0.7922.137",
+      "angle": "vulkan",
+      "consoleMessages": 0,
+      "consoleErrors": 0,
+      "report": "docs/reprise-support-20261117/browser/browser-report-vulkan.json"
+    },
+    {
+      "name": "build favicon fix",
+      "command": "python3 tools/build.py",
+      "htmlBytes": 13685038,
+      "gzipBytes": 3217340,
+      "sha256": "65fc54fecac5ef2a8528c93bfa2e8fb061e7b8c205cc4b84d82f3c5b04910ca1",
+      "externalAssets": 0
     }
   ],
   "nextTests": [
-    "Essais restants non qualifiés : GPU matériel, manette physique, téléphone réel, Safari/Firefox.",
+    "Redéployer le build avec favicon inline et revérifier l'URL publique sans requête 404.",
+    "Essais restants non qualifiés : manette physique, téléphone réel, Safari/Firefox.",
     "Essai humain du cockpit, du piratage maintenu et des sauvegardes anciennes sur un poste de jeu réel."
   ],
   "blockers": [

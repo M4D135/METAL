@@ -26,4 +26,6 @@ Captures réellement rendues avec le nouveau code, tests d'entrées/options et d
 - Recensement de rendu cockpit en mode drone : 15 maillages overlay, dont 2 émetteurs laser et 2 lentilles. Ce compteur est exposé seulement avec `?dev=1` via `document.body.dataset.cockpit`.
 - L'aide clavier peut être masquée, réaffichée et persiste après rechargement via `ferro-settings`.
 - Sur les trois viewport, le corps du document n'est pas défilable pendant le jeu.
-- Limites : ce n'est pas un GPU matériel, pas une manette physique, pas un téléphone réel. Les bindings gamepad manquants (`melee`, `leftHand`, `weapon5`) restent conformes au layout approuvé épinglé par `checks/default-controls.test.mjs` ; aucun changement de defaults n'a été fait sans décision explicite.
+- Deuxième passage navigateur sur GPU matériel Spark : `METAL_BROWSER_ANGLE=vulkan`, ANGLE/NVIDIA GB10, `0` message et `0` erreur console, rapport `docs/reprise-support-20261117/browser/browser-report-vulkan.json`.
+- Le favicon absent provoquait des `404` sur l'URL publique ; une icône vide inline (`data:,`) a été ajoutée dans `src/index.html` pour supprimer cette requête parasite sans asset externe.
+- Limites : pas une manette physique, pas un téléphone réel, pas Safari/Firefox. Les bindings gamepad manquants (`melee`, `leftHand`, `weapon5`) restent conformes au layout approuvé épinglé par `checks/default-controls.test.mjs` ; aucun changement de defaults n'a été fait sans décision explicite.

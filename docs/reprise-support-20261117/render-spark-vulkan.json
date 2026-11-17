@@ -1,0 +1,1292 @@
+{
+  "schema": "metal-render-self-check-v1",
+  "date": "2026-11-17T14:44:37.297Z",
+  "tool": {
+    "node": "v24.18.0",
+    "platform": "linux arm64",
+    "chromePath": "/usr/bin/google-chrome",
+    "angle": "vulkan",
+    "angleSource": "option",
+    "gpuFlags": [
+      "--use-gl=angle",
+      "--use-angle=vulkan"
+    ],
+    "probe": "/home/m4d135/metal-chantier/qwen-support-20261117/tools/render/pages/probe.html"
+  },
+  "diffSynthetic": {
+    "same": {
+      "differentPixels": 0,
+      "psnrDb": null,
+      "verdict": "identical"
+    },
+    "onePixel": {
+      "x": 123,
+      "y": 32,
+      "differentPixels": 1,
+      "maxChannelDelta": 1,
+      "bbox": {
+        "x0": 123,
+        "y0": 32,
+        "x1": 123,
+        "y1": 32
+      },
+      "psnrDb": 92.1695552077731,
+      "verdict": "visually-identical"
+    }
+  },
+  "chrome": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/151.0.7922.137",
+    "revision": "@8f5d36bc16f57115aeeff34baf4ad6aa964d509c",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+    "jsVersion": "15.1.206.17"
+  },
+  "gpu": {
+    "vendor": "WebKit",
+    "renderer": "WebKit WebGL",
+    "unmaskedVendor": "Google Inc. (NVIDIA)",
+    "unmaskedRenderer": "ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA)",
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "shadingLanguage": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+    "system": {
+      "modelName": "",
+      "modelVersion": "",
+      "devices": [
+        {
+          "vendorId": 4318,
+          "deviceId": 11794,
+          "vendorString": "Google Inc. (NVIDIA)",
+          "deviceString": "ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA-580.173.2.0)",
+          "driverVendor": "NVIDIA",
+          "driverVersion": "580.173.2.0"
+        }
+      ],
+      "featureStatus": {
+        "2d_canvas": "enabled",
+        "direct_rendering_display_compositor": "disabled_off_ok",
+        "gpu_compositing": "enabled",
+        "multiple_raster_threads": "enabled_on",
+        "opengl": "enabled_on",
+        "rasterization": "enabled",
+        "raw_draw": "disabled_off_ok",
+        "skia_graphite": "disabled_off",
+        "trees_in_viz": "disabled_off",
+        "video_decode": "enabled",
+        "video_encode": "disabled_software",
+        "vulkan": "disabled_off",
+        "webgl": "enabled",
+        "webgpu": "enabled",
+        "webgpu_on_vk_via_gl_interop": "enabled",
+        "webnn": "disabled_off"
+      },
+      "driverBugWorkarounds": 4
+    }
+  },
+  "extensions": [
+    "EXT_clip_control",
+    "EXT_color_buffer_float",
+    "EXT_color_buffer_half_float",
+    "EXT_conservative_depth",
+    "EXT_depth_clamp",
+    "EXT_disjoint_timer_query_webgl2",
+    "EXT_float_blend",
+    "EXT_polygon_offset_clamp",
+    "EXT_render_snorm",
+    "EXT_texture_compression_bptc",
+    "EXT_texture_compression_rgtc",
+    "EXT_texture_filter_anisotropic",
+    "EXT_texture_mirror_clamp_to_edge",
+    "EXT_texture_norm16",
+    "NV_shader_noperspective_interpolation",
+    "OES_draw_buffers_indexed",
+    "OES_sample_variables",
+    "OES_shader_multisample_interpolation",
+    "OES_texture_float_linear",
+    "OVR_multiview2",
+    "WEBGL_blend_func_extended",
+    "WEBGL_compressed_texture_astc",
+    "WEBGL_compressed_texture_etc",
+    "WEBGL_compressed_texture_etc1",
+    "WEBGL_compressed_texture_s3tc",
+    "WEBGL_compressed_texture_s3tc_srgb",
+    "WEBGL_debug_renderer_info",
+    "WEBGL_debug_shaders",
+    "WEBGL_lose_context",
+    "WEBGL_multi_draw",
+    "WEBGL_polygon_mode",
+    "WEBGL_stencil_texturing"
+  ],
+  "features": {
+    "timerQuery": true,
+    "parallelShaderCompile": false,
+    "colorBufferFloat": true,
+    "floatLinear": true,
+    "anisotropic": true,
+    "multiDraw": true,
+    "debugRendererInfo": true
+  },
+  "limits": {
+    "MAX_TEXTURE_SIZE": 32768,
+    "MAX_RENDERBUFFER_SIZE": 32768,
+    "MAX_VIEWPORT_DIMS": [
+      32768,
+      32768
+    ],
+    "MAX_SAMPLES": 8,
+    "MAX_DRAW_BUFFERS": 8,
+    "MAX_COLOR_ATTACHMENTS": 8,
+    "MAX_3D_TEXTURE_SIZE": 16384,
+    "MAX_ARRAY_TEXTURE_LAYERS": 2048,
+    "MAX_VERTEX_ATTRIBS": 16,
+    "MAX_VERTEX_UNIFORM_VECTORS": 4096,
+    "MAX_FRAGMENT_UNIFORM_VECTORS": 4096,
+    "MAX_UNIFORM_BUFFER_BINDINGS": 72,
+    "MAX_UNIFORM_BLOCK_SIZE": 65536,
+    "MAX_COMBINED_TEXTURE_IMAGE_UNITS": 64,
+    "MAX_TEXTURE_IMAGE_UNITS": 32,
+    "MAX_VARYING_VECTORS": 30
+  },
+  "performanceNow": {
+    "minStepMs": 0.1,
+    "medianStepMs": 0.1,
+    "maxStepMs": 0.3,
+    "changes": 245,
+    "reads": 118164
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+    "userAgentData": {
+      "architecture": "arm",
+      "bitness": "64",
+      "platform": "Linux",
+      "platformVersion": ""
+    },
+    "page": {
+      "innerWidth": 800,
+      "innerHeight": 600,
+      "devicePixelRatio": 1,
+      "screen": [
+        800,
+        600
+      ]
+    },
+    "secureContext": true,
+    "crossOriginIsolated": false,
+    "offlineAudioContext": true,
+    "offlineAudioSampleRate": 48000,
+    "sharedArrayBuffer": false,
+    "webgpu": true,
+    "hardwareConcurrency": 20
+  },
+  "fingerprints": {
+    "legacy-1.5": {
+      "width": 320,
+      "height": 200,
+      "sha256": "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4",
+      "sourceSha256": "fa80458c83e164b2e46464f7692ef9eb04d33bb62d6f975e5ae27bddb90e2e53"
+    },
+    "legacy-2.5": {
+      "width": 320,
+      "height": 200,
+      "sha256": "b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602",
+      "sourceSha256": "0c520620dda64f1ec12115937f23785387f339b96138152b3bffa0b5255d1cb7"
+    },
+    "scene3d": {
+      "width": 480,
+      "height": 270,
+      "sha256": "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb",
+      "sourceSha256": "6123792bd0f4a77dfbaa8bb108cd9fdd8ab4ba338798b36d2b343e0b3145b352"
+    },
+    "scene3d-wide": {
+      "width": 640,
+      "height": 360,
+      "sha256": "905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e",
+      "sourceSha256": "151537b2cd7238b001203ba944f9fef364cbb9d52a9ef9e078e8bd54db0a82d0"
+    },
+    "canvas2d": {
+      "width": 320,
+      "height": 200,
+      "sha256": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88",
+      "sourceSha256": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+    }
+  },
+  "prototype": {
+    "seed": 1.5,
+    "sourceSha256": "1eb2798a7b431f38f04bd2ff0614ba692a3a2a893a42be448e2057a015f86ffe",
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+    "product": "Chrome/157.0.8103.39",
+    "actualSourceSha256": "fa80458c83e164b2e46464f7692ef9eb04d33bb62d6f975e5ae27bddb90e2e53",
+    "applicable": false,
+    "matches": false
+  },
+  "diffScene": {
+    "same": {
+      "differentPixels": 0,
+      "psnrDb": null,
+      "verdict": "identical"
+    },
+    "onePixel": {
+      "x": 123,
+      "y": 45,
+      "differentPixels": 1,
+      "maxChannelDelta": 1,
+      "bbox": {
+        "x0": 123,
+        "y0": 45,
+        "x1": 123,
+        "y1": 45
+      },
+      "psnrDb": 104.02806617122147,
+      "verdict": "visually-identical"
+    },
+    "repeat": "identical"
+  },
+  "launches": [
+    {
+      "index": 1,
+      "pid": 190807,
+      "profileDir": "/tmp/metal-render-190800-8g8kvD",
+      "profileExisted": true,
+      "sweptProfiles": [],
+      "product": "Chrome/151.0.7922.137",
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/151.0.7922.137",
+        "revision": "@8f5d36bc16f57115aeeff34baf4ad6aa964d509c",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "jsVersion": "15.1.206.17"
+      },
+      "args": [
+        "--headless=new",
+        "--ignore-gpu-blocklist",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--metrics-recording-only",
+        "--disable-domain-reliability",
+        "--host-resolver-rules=MAP * ~NOTFOUND",
+        "--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions",
+        "--disable-background-timer-throttling",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
+        "--mute-audio",
+        "--user-data-dir=/tmp/metal-render-190800-8g8kvD",
+        "--use-gl=angle",
+        "--use-angle=vulkan",
+        "--window-size=800,600",
+        "--force-device-scale-factor=1",
+        "--remote-debugging-pipe",
+        "about:blank"
+      ],
+      "launchMs": 309.314877,
+      "openMs": 65.38354099999992,
+      "renderMs": 1429.555191,
+      "scene3dBlocks": {
+        "scene": "scene3d",
+        "width": 480,
+        "height": 270,
+        "warmupFrames": 30,
+        "framesPerBlock": 60,
+        "msPerFrame": [
+          0.02666666666045785,
+          0.025,
+          0.0216666666790843,
+          0.025,
+          0.0216666666790843
+        ],
+        "medianMsPerFrame": 0.025
+      },
+      "processes": [
+        190807,
+        190811,
+        190812,
+        190822,
+        190823,
+        190825,
+        190846,
+        190848,
+        190863,
+        190878,
+        190888,
+        190899,
+        190900,
+        190914,
+        190941
+      ],
+      "sockets": {
+        "tool": "lsof",
+        "pids": [
+          190807,
+          190811,
+          190812,
+          190822,
+          190823,
+          190825,
+          190846,
+          190848,
+          190863,
+          190878,
+          190888,
+          190899,
+          190900,
+          190914,
+          190941
+        ],
+        "lines": []
+      },
+      "commandLine": "/opt/google/chrome/chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=/tmp/metal-render-190800-8g8kvD --use-gl=angle --use-angle=vulkan --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe --noerrdialogs --ozone-platform=headless --ozone-override-screen-size=800,600 about:blank",
+      "system": {
+        "modelName": "",
+        "modelVersion": "",
+        "devices": [
+          {
+            "vendorId": 4318,
+            "deviceId": 11794,
+            "vendorString": "Google Inc. (NVIDIA)",
+            "deviceString": "ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA NVIDIA GB10 (0x00002E12)), NVIDIA-580.173.2.0)",
+            "driverVendor": "NVIDIA",
+            "driverVersion": "580.173.2.0"
+          }
+        ],
+        "featureStatus": {
+          "2d_canvas": "enabled",
+          "direct_rendering_display_compositor": "disabled_off_ok",
+          "gpu_compositing": "enabled",
+          "multiple_raster_threads": "enabled_on",
+          "opengl": "enabled_on",
+          "rasterization": "enabled",
+          "raw_draw": "disabled_off_ok",
+          "skia_graphite": "disabled_off",
+          "trees_in_viz": "disabled_off",
+          "video_decode": "enabled",
+          "video_encode": "disabled_software",
+          "vulkan": "disabled_off",
+          "webgl": "enabled",
+          "webgpu": "enabled",
+          "webgpu_on_vk_via_gl_interop": "enabled",
+          "webnn": "disabled_off"
+        },
+        "driverBugWorkarounds": 4
+      },
+      "userAgentData": {
+        "architecture": "arm",
+        "bitness": "64",
+        "platform": "Linux",
+        "platformVersion": ""
+      },
+      "console": [],
+      "pageErrors": [],
+      "close": {
+        "reason": "close requested",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "profileRemoved": true
+      },
+      "totalMs": 2779.862713,
+      "profileRemoved": true,
+      "processesGone": true
+    },
+    {
+      "index": 2,
+      "pid": 191002,
+      "profileDir": "/tmp/metal-render-190800-HJ2HBc",
+      "profileExisted": true,
+      "sweptProfiles": [],
+      "product": "Chrome/151.0.7922.137",
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/151.0.7922.137",
+        "revision": "@8f5d36bc16f57115aeeff34baf4ad6aa964d509c",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "jsVersion": "15.1.206.17"
+      },
+      "args": [
+        "--headless=new",
+        "--ignore-gpu-blocklist",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--metrics-recording-only",
+        "--disable-domain-reliability",
+        "--host-resolver-rules=MAP * ~NOTFOUND",
+        "--disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions",
+        "--disable-background-timer-throttling",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
+        "--mute-audio",
+        "--user-data-dir=/tmp/metal-render-190800-HJ2HBc",
+        "--use-gl=angle",
+        "--use-angle=vulkan",
+        "--window-size=800,600",
+        "--force-device-scale-factor=1",
+        "--remote-debugging-pipe",
+        "about:blank"
+      ],
+      "launchMs": 316.78491600000007,
+      "openMs": 76.24552900000026,
+      "renderMs": 1511.1939289999996,
+      "scene3dBlocks": {
+        "scene": "scene3d",
+        "width": 480,
+        "height": 270,
+        "warmupFrames": 30,
+        "framesPerBlock": 60,
+        "msPerFrame": [
+          0.08166666667287549,
+          0.034999999993791185,
+          0.0466666666790843,
+          0.041666666666666664,
+          0.04500000001862645
+        ],
+        "medianMsPerFrame": 0.04500000001862645
+      },
+      "processes": [
+        191002,
+        191006,
+        191007,
+        191017,
+        191018,
+        191020,
+        191043,
+        191045,
+        191056,
+        191071,
+        191081,
+        191095,
+        191100,
+        191111,
+        191136
+      ],
+      "sockets": {
+        "tool": "lsof",
+        "pids": [
+          191002,
+          191006,
+          191007,
+          191017,
+          191018,
+          191020,
+          191043,
+          191045,
+          191056,
+          191071,
+          191081,
+          191095,
+          191100,
+          191111,
+          191136
+        ],
+        "lines": []
+      },
+      "commandLine": "/opt/google/chrome/chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=/tmp/metal-render-190800-HJ2HBc --use-gl=angle --use-angle=vulkan --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe --noerrdialogs --ozone-platform=headless --ozone-override-screen-size=800,600 about:blank",
+      "close": {
+        "reason": "close requested",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "profileRemoved": true
+      },
+      "totalMs": 2298.4725460000004,
+      "profileRemoved": true,
+      "processesGone": true
+    }
+  ],
+  "cleanup": {
+    "error": {
+      "pid": 191177,
+      "profileDir": "/tmp/metal-render-190800-usSQAu",
+      "profileExisted": true,
+      "rejected": "erreur volontaire",
+      "profileRemoved": true,
+      "chromeGone": true
+    },
+    "timeout": {
+      "pid": 191333,
+      "profileDir": "/tmp/metal-render-190800-8eUTwy",
+      "profileExisted": true,
+      "rejected": "DevTools timeout: Runtime.evaluate after 500 ms",
+      "code": "TIMEOUT",
+      "ms": 542,
+      "closed": true,
+      "profileRemoved": true,
+      "chromeGone": true
+    },
+    "notFound": {
+      "code": "CHROME_NOT_FOUND",
+      "message": "Chrome not found: /tmp/metal-render-absent/chrome (set CHROME_PATH or chromePath)",
+      "profilesBefore": 0,
+      "profilesAfter": 0
+    },
+    "sigint": {
+      "mode": "signal",
+      "signal": "SIGINT",
+      "chromePid": 191493,
+      "profileDir": "/tmp/metal-render-191486-SHcwXg",
+      "profileExisted": true,
+      "before": {
+        "profileExists": true,
+        "chromeAlive": true,
+        "sockets": {
+          "tool": "lsof",
+          "pids": [
+            191493,
+            191497,
+            191498,
+            191508,
+            191509,
+            191511,
+            191536,
+            191538,
+            191551,
+            191564,
+            191571,
+            191592,
+            191597,
+            191604,
+            191629
+          ],
+          "lines": []
+        }
+      },
+      "exit": {
+        "code": null,
+        "signal": "SIGINT"
+      },
+      "after": {
+        "profileExists": false,
+        "chromeGone": true
+      },
+      "stderrTail": ""
+    },
+    "sigterm": {
+      "mode": "signal",
+      "signal": "SIGTERM",
+      "chromePid": 191670,
+      "profileDir": "/tmp/metal-render-191663-KTuSBr",
+      "profileExisted": true,
+      "before": {
+        "profileExists": true,
+        "chromeAlive": true,
+        "sockets": {
+          "tool": "lsof",
+          "pids": [
+            191670,
+            191674,
+            191675,
+            191685,
+            191686,
+            191688,
+            191710,
+            191712,
+            191725,
+            191739,
+            191749,
+            191761,
+            191765,
+            191779,
+            191801
+          ],
+          "lines": []
+        }
+      },
+      "exit": {
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "after": {
+        "profileExists": false,
+        "chromeGone": true
+      },
+      "stderrTail": ""
+    },
+    "uncaught": {
+      "mode": "crash",
+      "signal": null,
+      "chromePid": 191844,
+      "profileDir": "/tmp/metal-render-191837-4wLGbV",
+      "profileExisted": true,
+      "before": {
+        "profileExists": true,
+        "chromeAlive": true,
+        "sockets": {
+          "tool": "lsof",
+          "pids": [
+            191844,
+            191848,
+            191849,
+            191859,
+            191860,
+            191862,
+            191884,
+            191886,
+            191899,
+            191912,
+            191919,
+            191933,
+            191934,
+            191948,
+            191974
+          ],
+          "lines": []
+        }
+      },
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "after": {
+        "profileExists": false,
+        "chromeGone": true
+      },
+      "stderrTail": "    at process.processTimers (node:internal/timers:541:7)\n\nNode.js v24.18.0"
+    },
+    "dumpDom": {
+      "probe": "metal-render-probe-v1",
+      "images": [
+        {
+          "scene": "legacy",
+          "width": 320,
+          "height": 200,
+          "sha256": "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4"
+        },
+        {
+          "scene": "scene3d",
+          "width": 480,
+          "height": 270,
+          "sha256": "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb"
+        }
+      ]
+    }
+  },
+  "checks": [
+    {
+      "name": "png.roundtrip.synthetic",
+      "ok": true,
+      "detail": {
+        "roundtrips": 30,
+        "failures": []
+      }
+    },
+    {
+      "name": "png.encode.deterministic",
+      "ok": true
+    },
+    {
+      "name": "png.flipRows.involution",
+      "ok": true
+    },
+    {
+      "name": "png.decode.rejectsCorruption",
+      "ok": true
+    },
+    {
+      "name": "png.decode.colourTypes",
+      "ok": true,
+      "detail": {
+        "cases": [
+          "grey+tRNS",
+          "grey+alpha",
+          "rgb+tRNS",
+          "palette+tRNS"
+        ]
+      }
+    },
+    {
+      "name": "png.decode.rejectsUnsupported",
+      "ok": true
+    },
+    {
+      "name": "diff.synthetic.same",
+      "ok": true,
+      "detail": {
+        "differentPixels": 0,
+        "psnrDb": null,
+        "verdict": "identical"
+      }
+    },
+    {
+      "name": "diff.synthetic.onePixel",
+      "ok": true,
+      "detail": {
+        "x": 123,
+        "y": 32,
+        "differentPixels": 1,
+        "maxChannelDelta": 1,
+        "bbox": {
+          "x0": 123,
+          "y0": 32,
+          "x1": 123,
+          "y1": 32
+        },
+        "psnrDb": 92.1695552077731,
+        "verdict": "visually-identical"
+      }
+    },
+    {
+      "name": "diff.synthetic.map",
+      "ok": true,
+      "detail": {
+        "marked": 1
+      }
+    },
+    {
+      "name": "diff.synthetic.alphaOnly",
+      "ok": true,
+      "detail": {
+        "verdict": "different"
+      }
+    },
+    {
+      "name": "diff.synthetic.size",
+      "ok": true
+    },
+    {
+      "name": "launch1.repeat.legacy-1.5",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4",
+          "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4"
+        ]
+      }
+    },
+    {
+      "name": "launch1.repeat.legacy-2.5",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602",
+          "b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602"
+        ]
+      }
+    },
+    {
+      "name": "launch1.repeat.scene3d",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb",
+          "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb"
+        ]
+      }
+    },
+    {
+      "name": "launch1.repeat.scene3d-wide",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e",
+          "905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e"
+        ]
+      }
+    },
+    {
+      "name": "launch1.repeat.canvas2d",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88",
+          "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+        ]
+      }
+    },
+    {
+      "name": "launch1.noInternetSocket",
+      "ok": true,
+      "detail": {
+        "tool": "lsof",
+        "pids": [
+          190807,
+          190811,
+          190812,
+          190822,
+          190823,
+          190825,
+          190846,
+          190848,
+          190863,
+          190878,
+          190888,
+          190899,
+          190900,
+          190914,
+          190941
+        ],
+        "lines": []
+      }
+    },
+    {
+      "name": "launch1.pipeNotPort",
+      "ok": true,
+      "detail": "/opt/google/chrome/chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=/tmp/metal-render-190800-8g8kvD --use-gl=angle --use-angle=vulkan --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe --noerrdialogs --ozone-platform=headless --ozone-override-screen-size=800,600 about:blank"
+    },
+    {
+      "name": "page.exceptionReported",
+      "ok": true,
+      "detail": "Page exception: TypeError: Cannot read properties of undefined (reading 'x')\n    at <anonymous>:1:11"
+    },
+    {
+      "name": "page.refusesNetworkUrl",
+      "ok": true,
+      "detail": "Only file:// pages are allowed: https://example.com/"
+    },
+    {
+      "name": "page.bytes.chunked",
+      "ok": true,
+      "detail": {
+        "length": 3145745
+      }
+    },
+    {
+      "name": "png.chromeDecodesOurs",
+      "ok": true,
+      "detail": {
+        "pngBytes": 33941
+      }
+    },
+    {
+      "name": "png.oursDecodesChrome",
+      "ok": true,
+      "detail": {
+        "pngBytes": 88261,
+        "colourType": 6
+      }
+    },
+    {
+      "name": "png.roundtrip.scenes",
+      "ok": true
+    },
+    {
+      "name": "launch1.cleanup",
+      "ok": true,
+      "detail": {
+        "close": {
+          "reason": "close requested",
+          "exit": {
+            "code": 0,
+            "signal": null
+          },
+          "profileRemoved": true
+        },
+        "profileRemoved": true,
+        "processesGone": true
+      }
+    },
+    {
+      "name": "launch2.repeat.legacy-1.5",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4",
+          "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4"
+        ]
+      }
+    },
+    {
+      "name": "launch2.repeat.legacy-2.5",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602",
+          "b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602"
+        ]
+      }
+    },
+    {
+      "name": "launch2.repeat.scene3d",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb",
+          "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb"
+        ]
+      }
+    },
+    {
+      "name": "launch2.repeat.scene3d-wide",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e",
+          "905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e"
+        ]
+      }
+    },
+    {
+      "name": "launch2.repeat.canvas2d",
+      "ok": true,
+      "detail": {
+        "sha256": [
+          "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88",
+          "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+        ]
+      }
+    },
+    {
+      "name": "launch2.noInternetSocket",
+      "ok": true,
+      "detail": {
+        "tool": "lsof",
+        "pids": [
+          191002,
+          191006,
+          191007,
+          191017,
+          191018,
+          191020,
+          191043,
+          191045,
+          191056,
+          191071,
+          191081,
+          191095,
+          191100,
+          191111,
+          191136
+        ],
+        "lines": []
+      }
+    },
+    {
+      "name": "launch2.pipeNotPort",
+      "ok": true,
+      "detail": "/opt/google/chrome/chrome --headless=new --ignore-gpu-blocklist --no-first-run --no-default-browser-check --disable-extensions --disable-background-networking --disable-component-update --disable-sync --metrics-recording-only --disable-domain-reliability --host-resolver-rules=MAP * ~NOTFOUND --disable-features=Translate,OptimizationHints,MediaRouter,InterestFeedContentSuggestions --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --mute-audio --user-data-dir=/tmp/metal-render-190800-HJ2HBc --use-gl=angle --use-angle=vulkan --window-size=800,600 --force-device-scale-factor=1 --remote-debugging-pipe --noerrdialogs --ozone-platform=headless --ozone-override-screen-size=800,600 about:blank"
+    },
+    {
+      "name": "launch2.cleanup",
+      "ok": true,
+      "detail": {
+        "close": {
+          "reason": "close requested",
+          "exit": {
+            "code": 0,
+            "signal": null
+          },
+          "profileRemoved": true
+        },
+        "profileRemoved": true,
+        "processesGone": true
+      }
+    },
+    {
+      "name": "scenes.distinct",
+      "ok": true
+    },
+    {
+      "name": "diff.seedsDiffer",
+      "ok": true,
+      "detail": {
+        "psnrDb": 13.804392410334426,
+        "differentRatio": 0.6075
+      }
+    },
+    {
+      "name": "diff.scene3d.same",
+      "ok": true,
+      "detail": {
+        "differentPixels": 0,
+        "psnrDb": null,
+        "verdict": "identical"
+      }
+    },
+    {
+      "name": "diff.scene3d.onePixel",
+      "ok": true,
+      "detail": {
+        "x": 123,
+        "y": 45,
+        "differentPixels": 1,
+        "maxChannelDelta": 1,
+        "bbox": {
+          "x0": 123,
+          "y0": 45,
+          "x1": 123,
+          "y1": 45
+        },
+        "psnrDb": 104.02806617122147,
+        "verdict": "visually-identical"
+      }
+    },
+    {
+      "name": "diff.scene3d.map",
+      "ok": true,
+      "detail": {
+        "marked": 1
+      }
+    },
+    {
+      "name": "diff.scene3d.alphaOnly",
+      "ok": true,
+      "detail": {
+        "verdict": "different"
+      }
+    },
+    {
+      "name": "diff.scene3d.size",
+      "ok": true
+    },
+    {
+      "name": "diff.scene3d.repeat",
+      "ok": true
+    },
+    {
+      "name": "launches.legacy-1.5",
+      "ok": true,
+      "detail": {
+        "launch1": "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4",
+        "launch2": "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4"
+      }
+    },
+    {
+      "name": "launches.legacy-2.5",
+      "ok": true,
+      "detail": {
+        "launch1": "b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602",
+        "launch2": "b1dafbdaf65b7ceee42fd408eb5b36a38143aff259caf00d51d9b76ba6257602"
+      }
+    },
+    {
+      "name": "launches.scene3d",
+      "ok": true,
+      "detail": {
+        "launch1": "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb",
+        "launch2": "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb"
+      }
+    },
+    {
+      "name": "launches.scene3d-wide",
+      "ok": true,
+      "detail": {
+        "launch1": "905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e",
+        "launch2": "905e9ef37ebbbced30951b0302fd4d38201e4c897dd107cea54e6b14a164713e"
+      }
+    },
+    {
+      "name": "launches.canvas2d",
+      "ok": true,
+      "detail": {
+        "launch1": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88",
+        "launch2": "251dcba21b48548779a0338c2d35f26d88585f1efd3685bac752d45524faaf88"
+      }
+    },
+    {
+      "name": "cleanup.error",
+      "ok": true,
+      "detail": {
+        "pid": 191177,
+        "profileDir": "/tmp/metal-render-190800-usSQAu",
+        "profileExisted": true,
+        "rejected": "erreur volontaire",
+        "profileRemoved": true,
+        "chromeGone": true
+      }
+    },
+    {
+      "name": "cleanup.timeout",
+      "ok": true,
+      "detail": {
+        "pid": 191333,
+        "profileDir": "/tmp/metal-render-190800-8eUTwy",
+        "profileExisted": true,
+        "rejected": "DevTools timeout: Runtime.evaluate after 500 ms",
+        "code": "TIMEOUT",
+        "ms": 542,
+        "closed": true,
+        "profileRemoved": true,
+        "chromeGone": true
+      }
+    },
+    {
+      "name": "cleanup.notFound",
+      "ok": true,
+      "detail": {
+        "code": "CHROME_NOT_FOUND",
+        "message": "Chrome not found: /tmp/metal-render-absent/chrome (set CHROME_PATH or chromePath)",
+        "profilesBefore": 0,
+        "profilesAfter": 0
+      }
+    },
+    {
+      "name": "launch.refusesPortFlag",
+      "ok": true,
+      "detail": "Refused Chrome argument: --remote-debugging-port=9222 (no debugging port: the launcher talks DevTools over --remote-debugging-pipe)"
+    },
+    {
+      "name": "cleanup.sigint",
+      "ok": true,
+      "detail": {
+        "mode": "signal",
+        "signal": "SIGINT",
+        "chromePid": 191493,
+        "profileDir": "/tmp/metal-render-191486-SHcwXg",
+        "profileExisted": true,
+        "before": {
+          "profileExists": true,
+          "chromeAlive": true,
+          "sockets": {
+            "tool": "lsof",
+            "pids": [
+              191493,
+              191497,
+              191498,
+              191508,
+              191509,
+              191511,
+              191536,
+              191538,
+              191551,
+              191564,
+              191571,
+              191592,
+              191597,
+              191604,
+              191629
+            ],
+            "lines": []
+          }
+        },
+        "exit": {
+          "code": null,
+          "signal": "SIGINT"
+        },
+        "after": {
+          "profileExists": false,
+          "chromeGone": true
+        },
+        "stderrTail": ""
+      }
+    },
+    {
+      "name": "cleanup.sigterm",
+      "ok": true,
+      "detail": {
+        "mode": "signal",
+        "signal": "SIGTERM",
+        "chromePid": 191670,
+        "profileDir": "/tmp/metal-render-191663-KTuSBr",
+        "profileExisted": true,
+        "before": {
+          "profileExists": true,
+          "chromeAlive": true,
+          "sockets": {
+            "tool": "lsof",
+            "pids": [
+              191670,
+              191674,
+              191675,
+              191685,
+              191686,
+              191688,
+              191710,
+              191712,
+              191725,
+              191739,
+              191749,
+              191761,
+              191765,
+              191779,
+              191801
+            ],
+            "lines": []
+          }
+        },
+        "exit": {
+          "code": null,
+          "signal": "SIGTERM"
+        },
+        "after": {
+          "profileExists": false,
+          "chromeGone": true
+        },
+        "stderrTail": ""
+      }
+    },
+    {
+      "name": "cleanup.uncaught",
+      "ok": true,
+      "detail": {
+        "mode": "crash",
+        "signal": null,
+        "chromePid": 191844,
+        "profileDir": "/tmp/metal-render-191837-4wLGbV",
+        "profileExisted": true,
+        "before": {
+          "profileExists": true,
+          "chromeAlive": true,
+          "sockets": {
+            "tool": "lsof",
+            "pids": [
+              191844,
+              191848,
+              191849,
+              191859,
+              191860,
+              191862,
+              191884,
+              191886,
+              191899,
+              191912,
+              191919,
+              191933,
+              191934,
+              191948,
+              191974
+            ],
+            "lines": []
+          }
+        },
+        "exit": {
+          "code": 1,
+          "signal": null
+        },
+        "after": {
+          "profileExists": false,
+          "chromeGone": true
+        },
+        "stderrTail": "    at process.processTimers (node:internal/timers:541:7)\n\nNode.js v24.18.0"
+      }
+    },
+    {
+      "name": "dumpDom.samePixels",
+      "ok": true,
+      "detail": {
+        "probe": "metal-render-probe-v1",
+        "images": [
+          {
+            "scene": "legacy",
+            "width": 320,
+            "height": 200,
+            "sha256": "4b96d86d119569ed2f64496f74ffed9a2e993eb0f4038f704d884960894beab4"
+          },
+          {
+            "scene": "scene3d",
+            "width": 480,
+            "height": 270,
+            "sha256": "00084653750566bf8961209a9ade8c3428cd3ad8b9b7a180aee7b8bac3e34dbb"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cleanup.noProfileLeft",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "summary": {
+    "checks": 55,
+    "passed": 55,
+    "failed": [],
+    "seconds": 15.632
+  },
+  "ok": true
+}

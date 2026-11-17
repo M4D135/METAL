@@ -10,8 +10,9 @@ import websockets
 PORT = int(os.environ.get('METAL_CDP_PORT', '9333'))
 ROOT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
 OUT = os.path.abspath(sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, 'docs/reprise-support-20261117/browser'))
-URL = 'file://' + os.path.join(ROOT, 'dist/index.html') + '?dev=1'
+URL = os.environ.get('METAL_BROWSER_URL') or 'file://' + os.path.join(ROOT, 'dist/index.html') + '?dev=1'
 CHROME = os.environ.get('METAL_CHROME', '/usr/bin/google-chrome')
+ANGLE = os.environ.get('METAL_BROWSER_ANGLE', 'swiftshader')
 VIEWPORTS = {'desktop': (1280, 720), 'narrow': (900, 600), 'mobile': (390, 844)}
 
 
@@ -72,6 +73,10 @@ class CDP:
             elif e['method'] == 'Log.entryAdded':
                 p = e['params']['entry']
                 out.append({'type': p['level'], 'text': p.get('text', '')})
+            elif e['method'] == 'Network.responseReceived':
+                p = e['params']['response']
+                if int(p.get('status', 0)) >= 400:
+                    out.append({'type': 'error', 'text': 'HTTP %s %s' % (p.get('status'), p.get('url', ''))})
         return out
 
 
@@ -138,13 +143,15 @@ async def run():
     os.makedirs(profile, exist_ok=True)
     cmd = [CHROME, '--headless=new', '--no-sandbox', '--disable-dev-shm-usage',
            '--remote-debugging-port=%d' % PORT, '--user-data-dir=' + profile,
-           '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+           '--use-gl=angle', '--use-angle=' + ANGLE,
            '--disable-gpu-sandbox', '--hide-scrollbars', '--allow-file-access-from-files',
            '--autoplay-policy=no-user-gesture-required', '--window-size=1280,720',
            'about:blank']
+    if ANGLE == 'swiftshader':
+        cmd.insert(-1, '--enable-unsafe-swiftshader')
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     report = {'url': URL, 'chrome': subprocess.run([CHROME, '--version'], capture_output=True, text=True).stdout.strip(),
-              'screenshots': [], 'console': [], 'steps': [], 'viewport': {}}
+              'angle': ANGLE, 'screenshots': [], 'console': [], 'steps': [], 'viewport': {}}
     try:
         wait_port()
         with urllib.request.urlopen('http://127.0.0.1:%d/json/version' % PORT) as r:
