@@ -744,7 +744,9 @@
     if(ready)for(let j=0;j<6;j++){const a=t*1.1+j*1.047;out.push(m('octa',[ex+Math.cos(a)*.7,ey+.4+((t*.6+j*.4)%2.4),ez+Math.sin(a)*.7],[.1,.16,.1],4,[0,t,0],2));}
     }
     for(const q of s.bullets)if(nearby(q.x,q.z))out.push(m('sphere',[q.x,q.y,q.z],[.2,.2,.2],6,[0,0,0],2.6));
-    for(const q of s.particles)if(nearby(q.x,q.z)){const v=Math.min(.11,q.life*.17);out.push(m('box',[q.x,q.y,q.z],[v,v,v],q.kind,[t,t,0],1.6));}
+    // Impacts are light streaks, never invented solid cubes. Actual death
+    // fragments are rendered by the physical actor-component adapter.
+    for(const q of s.particles)if(nearby(q.x,q.z)){const speed=Math.hypot(q.vx,q.vy,q.vz)||1,length=Math.min(.22,speed*.045,q.life*.6),width=Math.min(.012,q.life*.03);out.push(m('cylinder',[q.x,q.y,q.z],[width,length,width],q.kind,[Math.acos(clamp(q.vy/speed,-1,1)),Math.atan2(q.vx,q.vz),0],2.1));}
     if(s.pulseVisual>0){
       const progress=1-s.pulseVisual/.65,r=.3+progress*6.2;
       out.push(m('ring',[p.x,(p.y||0)+.16,p.z],[r*2,.13,r*2],4,[0,0,0],1.7*(1-progress)));
@@ -1062,14 +1064,14 @@
     sim?.dispose?.();setMode('demo');$('demo-banner').hidden=false;demoMix(true);
     demoBench=benchSeconds?{seconds:0,steps:0,frames:[],stepMs:[],drawMs:[],scenes:[],started:performance.now()}:null;
     const scenes=MetalDemo.scenes(96,!!benchSeconds);
-    const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,prepare:!scene.boss,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1,hordeVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
-    demoRunner=FDemo.runner({scenes,stallSeconds:50,onError:error=>console.error('METAL demo:',error),onStop:()=>demoAttract?.stop('error'),open:async scene=>{
+    const prepare=scene=>{const key=scene.index+':'+scene.seed;if(!demoCache.has(key)){demoCache.set(key,preparationJobs.request('world',{seed:scene.seed,index:scene.index,prepare:false,options:{campaign:true,campaignVersion:2,profiles:true,combatVersion:1,hordeVersion:1}}));while(demoCache.size>2)demoCache.delete(demoCache.keys().next().value);}return demoCache.get(key);};
+    demoRunner=FDemo.runner({scenes,stallSeconds:10,onError:error=>console.error('METAL demo:',error),onStop:()=>demoAttract?.stop('error'),open:async scene=>{
       document.body.classList.add('demo-loading');const raw=await prepare(scene);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(ticket!==demoSerial)return null;
       const prepared=MetalDemo.world(raw,scene),carry=MetalDemo.loadout(scene.index,MetalDemo.active?.(scene)??(scene.boss&&scene.index%2?'heavy':'light'));
-      load(scene.index,scene.seed,carry,true,2,false,true,true,prepared,{brain:null});sim.setDifficulty(0);demoPilot=FPilot.create(sim,world,{seed:scene.seed});demoCamera=MetalDemo.camera(sim,scene.seed);demoShot='eyes';const current=sim,pilot=demoPilot,point=current.snapshot();
+      load(scene.index,scene.seed,carry,true,2,false,true,true,prepared,{brain:null});sim.setDifficulty(0);demoPilot=FPilot.create(sim,world,{seed:scene.seed,combatOnly:scene.combatOnly,patrol:prepared.attractPatrol});demoCamera=MetalDemo.camera(sim,scene.seed);demoShot='eyes';const current=sim,pilot=demoPilot,activity=MetalDemo.activity(current);
       const benchScene=demoBench?{id:scene.id,step:demoBench.steps}:null;if(benchScene)demoBench.scenes.push(benchScene);$('demo-banner').textContent='DÉMO · MONDE '+(scene.index+1)+' · Touchez ou appuyez pour revenir';document.body.classList.remove('demo-loading');fixedLoop.reset();fixedLoop.observe(performance.now());
       const next=scenes[(scenes.indexOf(scene)+1)%scenes.length];prepare(next).catch(()=>{});
-      return {step(dt){pilot.think(input,dt);const begin=demoBench?performance.now():0;poseView.capture(current.state);current.step(dt,input);if(demoBench){demoBench.steps++;demoBench.seconds+=dt;demoBench.stepMs.push(performance.now()-begin);}musicDirector?.update(current.state,dt);events();},progressKey:()=>MetalDemo.progress(current,pilot),done:()=>current.state.won||scene.boss&&!current.state.bossAlive,dead:()=>current.state.dead,reset:()=>pilot.reset(),recover(){if(!current.restore(point,{recover:true}))return false;pilot.reset();return true;},dispose(){if(benchScene)benchScene.digest=current.digest();current.dispose();}};
+      return {step(dt){pilot.think(input,dt);const begin=demoBench?performance.now():0;poseView.capture(current.state);current.step(dt,input);if(demoBench){demoBench.steps++;demoBench.seconds+=dt;demoBench.stepMs.push(performance.now()-begin);}musicDirector?.update(current.state,dt);events();},progressKey:()=>MetalDemo.progress(current,pilot),done:()=>current.state.won||scene.combatOnly&&activity.done()||scene.boss&&!current.state.bossAlive,dead:()=>current.state.dead,reset:()=>pilot.reset(),recover(){return false;},dispose(){if(benchScene)benchScene.digest=current.digest();current.dispose();}};
     }});demoRunner.next('start');return true;
   }
   const demoAttract=window.FDemo?.attract({idleMs:()=>demoRequested?0:prefs.demoDelay*1000,enabled:()=>prefs.demo&&!demoHold&&!document.body.classList.contains('low-battery'),canStart:()=>mode==='menu'&&!!sim&&!deferLaunch,window,document,start:demoStart,stop:demoStop,onCountdown:ms=>{$('demo-countdown').textContent=ms===null?'':ms<3500?'Démo dans '+Math.ceil(ms/1000)+' s':'';},onPause:()=>{fixedLoop.reset();audioGate();},onResume:elapsed=>{fixedLoop.reset();if(elapsed>60000&&mode==='demo')demoRunner?.next('visibility');audioGate();}});
