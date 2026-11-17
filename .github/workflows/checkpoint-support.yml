@@ -37,7 +37,7 @@ jobs:
         id: tests
         run: |
           set +e
-          node --test checks/support-drone.test.mjs checks/support-physics.test.mjs checks/support-budgets.test.mjs checks/wreckage.test.mjs checks/controls.test.mjs > /tmp/metal-checkpoint-evidence/tests.txt 2>&1
+          node --test --test-reporter=tap checks/support-drone.test.mjs checks/support-physics.test.mjs checks/support-budgets.test.mjs checks/wreckage.test.mjs checks/controls.test.mjs > /tmp/metal-checkpoint-evidence/tests.txt 2>&1
           rc=$?
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
           printf '%s\n' "$rc" > /tmp/metal-checkpoint-evidence/test-exit.txt
@@ -69,8 +69,9 @@ jobs:
           (dest/'source-manifest.json').write_text((root/'source-manifest.json').read_text())
           subprocess.run(['git','add','--',*manifest['files'].keys(),'dist/index.html','SIZE.json',str(dest)],check=True)
           PY
-          git rm -- .github/workflows/checkpoint-support.yml tools/reprise-support-20261117/materialize.py tools/reprise-support-20261117/checkpoint.1.b64 tools/reprise-support-20261117/checkpoint.2.b64 tools/reprise-support-20261117/checkpoint.3.b64 tools/reprise-support-20261117/checkpoint.4.b64
-          git diff --cached --check
+          git rm -- tools/reprise-support-20261117/materialize.py tools/reprise-support-20261117/checkpoint.1.b64 tools/reprise-support-20261117/checkpoint.2.b64 tools/reprise-support-20261117/checkpoint.3.b64 tools/reprise-support-20261117/checkpoint.4.b64
+          # Preserve the exact TAP log, including whitespace in its error diff.
+          git diff --cached --check -- . ':!docs/reprise-support-20261117/tests-checkpoint.tap'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'wip: preserve support-drone gameplay, cockpit, HUD and budgets with known restore divergence' -m 'Exact recovered source snapshot and rebuilt standalone. This is NOT a qualified release: read docs/reprise-support-20261117/README.md and CI-RESULT.json. Main is untouched. One-shot transport removed; retained in history. No force push.'
