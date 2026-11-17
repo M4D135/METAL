@@ -2,9 +2,16 @@ name: METAL flight qualification
 on:
   push:
     branches: [codex/flight-fixes-20261117]
+    paths:
+      - 'src/**'
+      - 'checks/**'
+      - 'package.json'
+      - 'FERRO.lock.json'
+      - 'tools/**'
+      - '.github/workflows/flight-qualification.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: metal-flight-qualification-${{ github.ref }}
   cancel-in-progress: false
@@ -15,8 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          fetch-depth: 1
-          persist-credentials: false
+          fetch-depth: 0
       - name: Preserve exact source snapshot
         run: |
           mkdir -p /tmp/metal-evidence
@@ -34,16 +40,35 @@ jobs:
               assert actual==module['sha256'], module['path']
           print('FERRO lock: %d/%d exact' % (len(lock['modules']),len(lock['modules'])))
           PY
-      - name: Baseline test suite
-        run: |
-          set -o pipefail
-          npm test 2>&1 | tee /tmp/metal-evidence/tests.txt
-      - name: Rebuild standalone game
-        if: always()
+      - name: Rebuild before distribution tests
         run: |
           set -o pipefail
           python3 tools/build.py 2>&1 | tee /tmp/metal-evidence/build.txt
           cp SIZE.json /tmp/metal-evidence/SIZE.json
+      - name: Camera and keyboard regressions
+        run: |
+          set -o pipefail
+          node --test checks/camera-recovery.test.mjs checks/options.test.mjs 2>&1 | tee /tmp/metal-evidence/targeted-tests.txt
+      - name: Full game test suite
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee /tmp/metal-evidence/tests.txt
+      - name: Commit qualified build only on this work branch
+        if: github.ref == 'refs/heads/codex/flight-fixes-20261117'
+        env:
+          WORK_BRANCH: ${{ github.ref_name }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$WORK_BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$EXPECTED_SHA"
+          git add -- dist/index.html SIZE.json
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'build: regenerate qualified METAL camera and keyboard fixes'
+            git push origin "HEAD:refs/heads/$WORK_BRANCH"
+          fi
       - name: Save evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
