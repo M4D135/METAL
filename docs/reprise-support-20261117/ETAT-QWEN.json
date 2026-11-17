@@ -136,30 +136,30 @@
       "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)"
     },
     {
-      "name": "demo-soak 900s",
-      "command": "node --expose-gc tools/demo-soak.mjs 900 /tmp/opencode/metal/demo-soak-900.json",
-      "scenes": 29,
-      "steps": 54000,
+      "name": "demo-soak 1800s",
+      "command": "node --expose-gc tools/demo-soak.mjs 1800 /tmp/opencode/metal/demo-soak-1800.json",
+      "scenes": 57,
+      "steps": 108000,
       "deaths": 0,
       "stalls": 0,
       "errors": 0,
-      "stepP50Ms": 1.640705000005255,
-      "stepP99Ms": 2.9086740000002465,
-      "heapStartBytes": 26452352,
-      "heapEndBytes": 36508232
+      "stepP50Ms": 1.6835200000205077,
+      "stepP99Ms": 4.901777000006405,
+      "heapStartBytes": 26469904,
+      "heapEndBytes": 35529928
     },
     {
-      "name": "boss-soak 300s",
-      "command": "BOSS_ONLY=1 node --expose-gc tools/demo-soak.mjs 300 /tmp/opencode/metal/demo-soak-boss.json",
-      "scenes": 5,
-      "steps": 18000,
-      "bossKills": 4,
+      "name": "boss-soak 600s",
+      "command": "BOSS_ONLY=1 node --expose-gc tools/demo-soak.mjs 600 /tmp/opencode/metal/demo-soak-boss-600.json",
+      "scenes": 10,
+      "steps": 36000,
+      "bossKills": 8,
       "deaths": 0,
       "stalls": 0,
       "errors": 0,
-      "stepP50Ms": 2.093281000001298,
-      "stepP99Ms": 7.4122280000010505,
-      "stepMaxMs": 40.315795000000435
+      "stepP50Ms": 2.131072000003769,
+      "stepP99Ms": 6.713824999998906,
+      "stepMaxMs": 31.409858999999415
     }
   ],
   "nextTests": [
