@@ -309,7 +309,7 @@ test('Four real weapon pickups feed the HUD and both mouse buttons fire independ
   const overlays=app.frames.at(-1).meshes.filter(m=>m.overlay);assert(overlays.length>50);for(const mesh of overlays)assert(mesh.p.concat(mesh.s,mesh.r).every(Number.isFinite));
 });
 
-test('Mouse and touch left inputs fire the paired weapon and R always dashes',()=>{
+test('Mouse and touch left inputs fire the paired weapon and C always dashes',()=>{
   const app=harness(null,{'ferro-settings':JSON.stringify({view:'first'})},arsenalWorld);app.element('start').click();const sim=collectArsenal(app);
   app.element('weapon-slot-0').click();app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');
   assert.equal(sim.state.equipment.left,1);assert.equal(app.element('left-hand-status').textContent,'CLIC DROIT · TIR');
@@ -318,7 +318,7 @@ test('Mouse and touch left inputs fire the paired weapon and R always dashes',()
   const overlays=app.frames.at(-1).meshes.filter(m=>m.overlay);assert(overlays.length>50);for(const mesh of overlays)assert(mesh.p.concat(mesh.s,mesh.r).every(Number.isFinite));
   app.emit('mouseup',{button:2});const afterMouse=sim.state.inventory.ammo[1];for(let i=0;i<60;i++)app.frame(1000/60);
   assert.equal(sim.state.inventory.ammo[1],afterMouse,'a released mouse never keeps firing');
-  app.key('KeyR');app.frame(100);app.key('KeyR',false);assert(sim.state.player.dash>0,'R always dashes, whatever the left hand holds');
+  app.key('KeyC');app.frame(100);app.key('KeyC',false);assert(sim.state.player.dash>0,'C always dashes, whatever the left hand holds');
   assert.equal(app.sounds.some(q=>q.name==='shieldBash'),false);
   app.element('left-fire-button').emit('pointerdown',{pointerId:8,clientX:100,clientY:100,pointerType:'touch'});app.frame(100);
   assert(sim.state.inventory.ammo[1]<afterMouse,'the touch left button fires the paired weapon');
@@ -365,7 +365,7 @@ test('Physical armor pickups update the HUD, retain excess and keep one flat hun
   sim.move(sim.state.player,-6,6);app.frame(100);
   assert.equal(sim.state.armor.points,90);assert.equal(sim.state.pickups.at(-2).taken,true);assert.equal(app.element('armor-bar').style.width,'90%');
   app.element('left-hand-setting').value='1';app.element('left-hand-setting').emit('change');assert.deepEqual(plain(sim.state.armor),{points:90,capacity:100},'a paired weapon changes nothing in the armor pool');
-  app.key('KeyR');app.frame(100);app.key('KeyR',false);assert(sim.state.player.dash>0);assert.equal(sim.state.armor.points,90);
+  app.key('KeyC');app.frame(100);app.key('KeyC',false);assert(sim.state.player.dash>0);assert.equal(sim.state.armor.points,90);
 });
 
 test('The browser shell carries fractional armor through Continue, resume and entry restart without refilling',()=>{
@@ -1020,11 +1020,11 @@ for(const release of ['ready','deadline','pagehide'])test(`navigation maintenanc
  assert.equal(shots.length,1);app.runIdle();assert.equal(JSON.parse(app.memory.get(key)).checkpoint.state.relays,1);
 });
 
-test('First person is the default view; C or the 1P/3P button shows the hero in third person, and the choice is saved',()=>{
+test('First person is the default view; R or the 1P/3P button shows the hero in third person, and the choice is saved',()=>{
   const app=harness(null,{},world);app.element('start').click();app.frame(100);
   let frame=app.frames.at(-1);assert(frame.meshes.filter(m=>m.overlay).length>25,'the hand-held weapon in first person');assert(!frame.meshes.some(m=>m.playerAvatar));
   assert.equal(app.element('view-button').textContent,'1P');
-  app.key('KeyC');app.key('KeyC',false);for(let i=0;i<20;i++)app.frame(1000/60);frame=app.frames.at(-1);
+  app.key('KeyR');app.key('KeyR',false);for(let i=0;i<20;i++)app.frame(1000/60);frame=app.frames.at(-1);
   assert.equal(app.element('view-button').textContent,'3P');assert.equal(frame.meshes.filter(m=>m.overlay).length,0,'no first-person weapon in third person');
   assert(frame.meshes.some(m=>m.playerAvatar==='heavy'),'the hero is visible');
   const p=app.simulations.at(-1).state.player;assert(Math.hypot(frame.camera.pos[0]-p.x,frame.camera.pos[2]-p.z)>2,'the camera follows from behind');
@@ -1034,7 +1034,7 @@ test('First person is the default view; C or the 1P/3P button shows the hero in 
 test('A discreet legend shows the real bindings of the character in control and can be hidden',()=>{
   const app=harness(null,{},world);app.element('start').click();app.frame(100);
   const legend=app.element('controls-hint');assert.equal(legend.hidden,false);
-  for(const text of ['ZQSD/WASD · Souris','Clic · Clic droit','<kbd>Espace · R</kbd>','<kbd>Maj</kbd>','<kbd>T</kbd><span>drone léger','<kbd>C</kbd><span>vue'])assert(legend.innerHTML.includes(text),text+' in '+legend.innerHTML);
+  for(const text of ['ZQSD/WASD · Souris','Clic · Clic droit','<kbd>Espace · C</kbd>','<kbd>Maj</kbd>','<kbd>T</kbd><span>drone léger','<kbd>R</kbd><span>vue'])assert(legend.innerHTML.includes(text),text+' in '+legend.innerHTML);
   app.element('controls-hint-toggle').click();assert.equal(legend.hidden,true);assert.equal(JSON.parse(app.memory.get('ferro-settings')).controlsHint,false);
   app.element('controls-hint-toggle').click();assert.equal(legend.hidden,false);
 });

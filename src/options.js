@@ -8,7 +8,7 @@
   const padDefaults={fire:['RT'],fireLeft:['LT'],sprint:['LB'],jump:['A'],dash:['B'],pulse:['L3'],interact:['X'],weaponNext:['RB'],switchProfile:['Y'],view:['R3'],weapon1:['Up'],weapon2:['Right'],weapon3:['Down'],weapon4:['Left'],map:['Back'],pause:['Start']};
   const padLayout1={sprint:['L3'],pulse:['LB'],melee:['R3'],weaponNext:['Y'],switchProfile:['RB']};
   const allowed=code=>typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space|Enter|Backspace|Tab)$/.test(code);
-  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,view:'first',controlsHint:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,autoTune:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.25,effectsVolume:1,ambienceVolume:1,mixVersion:2,bindingsVersion:2,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:2,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
+  function defaults(touch){return {muted:false,demo:true,demoDelay:5,demoWake:false,quality:'auto',reflections:touch?'off':'probe',difficulty:0,aiAcceleration:'cpu',softMotion:true,view:'first',controlsHint:true,fov:touch?79:74,brightness:1,sensitivity:1,invertY:false,systemPointerAcceleration:false,shadows:true,bloom:true,autoTune:true,showFps:true,crt:false,vignette:true,crosshairScale:1,fpsLimit:-1,renderScale:1,masterVolume:1,musicVolume:.25,effectsVolume:1,ambienceVolume:1,mixVersion:2,bindingsVersion:3,bindings:Object.fromEntries(actions.map(([id,,codes])=>[id,codes.slice()])),padVersion:2,padBindings:Object.fromEntries(actions.map(([id])=>[id,(padDefaults[id]||[]).slice()])),padYaw:300,padPitch:190,padDead:.07,padCurve:1.3,padInvertY:false,padAssist:true,padVibration:1,padSwapSticks:false,touchAccel:1,touchAssist:true,portraitFov:true,gyroMode:'off',gyroSensitivity:1};}
   function normalize(raw,touch){
     const out=defaults(touch),v=raw&&typeof raw==='object'?raw:{};
     for(const id of ['demo','demoWake','muted','softMotion','controlsHint','invertY','systemPointerAcceleration','shadows','bloom','autoTune','showFps','crt','vignette','padInvertY','padAssist','padSwapSticks','touchAssist','portraitFov'])if(typeof v[id]==='boolean')out[id]=v[id];
@@ -26,21 +26,52 @@
     if([-1,0,30,60,120,144].includes(v.fpsLimit))out.fpsLimit=v.fpsLimit;
     if([1,.85,.75,.66,.5].includes(v.renderScale))out.renderScale=v.renderScale;
     if([0,1,2].includes(v.difficulty))out.difficulty=v.difficulty;
-    const bindings=v.bindings&&typeof v.bindings==='object'?{...v.bindings}:null;
-    // R toggles the view (swapped with C, 0.12.5). Migrate the former default left trigger binding.
-    if(bindings&&!bindings.view&&!bindings.descend&&JSON.stringify(bindings.fireLeft)===JSON.stringify(['KeyC'])){const used=new Set(Object.entries(bindings).filter(([id])=>id!=='fireLeft').flatMap(([,codes])=>Array.isArray(codes)?codes:[]));bindings.fireLeft=[['KeyG','KeyH','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>k!=='KeyC'&&!used.has(k))||'KeyG'];}
-    if(bindings&&v.bindingsVersion!==2&&!bindings.jump&&JSON.stringify(bindings.dash)===JSON.stringify(['Space'])){const used=new Set(Object.entries(bindings).filter(([k])=>k!=='dash').flatMap(([,a])=>Array.isArray(a)?a:[]));bindings.dash=[['KeyR','KeyG','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>!used.has(k))||'KeyR'];}
+    const bindings=v.bindings&&typeof v.bindings==='object'&&!Array.isArray(v.bindings)?{...v.bindings}:null;
+    const legacyKeys=v.bindingsVersion===undefined||Number.isInteger(v.bindingsVersion)&&v.bindingsVersion>=0&&v.bindingsVersion<3;
+    const single=(id,code)=>Array.isArray(bindings?.[id])&&bindings[id].length===1&&bindings[id][0]===code;
+    // Only historical tables migrate. An intentional C/R swap saved as version
+    // 3 is a personal binding and must survive the next load unchanged.
+    if(bindings&&legacyKeys){
+      const usedExcept=id=>new Set(actions.filter(([key])=>key!==id).flatMap(([key])=>Array.isArray(bindings[key])?bindings[key]:[]));
+      if(!bindings.view&&!bindings.descend&&single('fireLeft','KeyC')){
+        const used=usedExcept('fireLeft');
+        bindings.fireLeft=[['KeyG','KeyH','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>k!=='KeyC'&&!used.has(k))||'KeyG'];
+      }
+      if(v.bindingsVersion!==2&&!bindings.jump&&single('dash','Space')){
+        const used=usedExcept('dash');
+        bindings.dash=[['KeyC','KeyR','KeyG','KeyB',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(x=>'Key'+x)].find(k=>!used.has(k))||'KeyC'];
+      }
+      if(single('view','KeyC')&&single('dash','KeyR')){
+        bindings.view=['KeyR'];bindings.dash=['KeyC'];
+      }else if(bindings.view===undefined&&single('dash','KeyR')&&!usedExcept('dash').has('KeyC')){
+        bindings.dash=['KeyC'];
+      }
+    }
     if(bindings){
-      const candidate={},seen=new Set();let valid=true;
-      const added=['view','melee','fireLeft','leftHand','weapon4','weapon5','jump','weaponNext','switchProfile'],used=new Set(actions.flatMap(([id])=>Array.isArray(bindings[id])?bindings[id]:added.includes(id)?[]:out.bindings[id]));
-      for(const id of added)if(bindings[id]===undefined){const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:id==='view'?['KeyR','KeyY','KeyB','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];const key=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(key=>!used.has(key));if(key){out.bindings[id]=[key];used.add(key);}}
-      for(const [id] of actions){
-        const codes=bindings[id]??out.bindings[id];
+      const candidate={},used=new Set(),missing=[];let valid=true;
+      // Explicit choices win over missing defaults, never over another explicit
+      // choice. Conflicting or malformed complete tables still fail closed.
+      for(const [id] of actions)if(Object.prototype.hasOwnProperty.call(bindings,id)){
+        const codes=bindings[id];
         if(!Array.isArray(codes)||codes.length<1||codes.length>3){valid=false;break;}
         candidate[id]=codes.slice();
-        for(const code of codes){if(!allowed(code)||seen.has(code))valid=false;seen.add(code);}
+        for(const code of codes){if(!allowed(code)||used.has(code))valid=false;used.add(code);}
       }
-      if(valid)out.bindings=candidate;
+      if(valid){
+        // Reserve every available default before allocating replacements. A
+        // partial import must not steal R from view or reset unrelated choices.
+        for(const [id] of actions)if(!Object.prototype.hasOwnProperty.call(candidate,id)){
+          candidate[id]=out.bindings[id].filter(code=>!used.has(code));
+          for(const code of candidate[id])used.add(code);
+          if(!candidate[id].length)missing.push(id);
+        }
+        for(const id of missing){
+          const preferred=id==='melee'?['KeyV','KeyC','KeyB','KeyN','KeyH']:id==='view'?['KeyR','KeyY','KeyB','KeyH']:[...out.bindings[id],'KeyG','KeyT','KeyY'];
+          const code=[...preferred,...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'1234567890'.split('').map(c=>'Digit'+c)].find(code=>!used.has(code));
+          if(!code){valid=false;break;}candidate[id]=[code];used.add(code);
+        }
+      }
+      if(valid)out.bindings=Object.fromEntries(actions.map(([id])=>[id,candidate[id]]));
     }
     if(v.padBindings&&typeof v.padBindings==='object'){
       const used=new Set(),candidate={};let valid=true;

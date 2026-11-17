@@ -808,11 +808,12 @@ test('E21b — FInput conserve les commandes courantes et historiques normalisé
   // The host migrates saved preferences through FOptions before configuring FInput.
   const same = (old, why) => {
     const o = plain(O.normalize(plain(old)).bindings), n = plain(F.normalize({v: 2, keys: o}, current).keys);
-    for (const id of Object.keys(o)) if (id !== 'dash') assert.equal(json(n[id]), json(o[id]), why + ' : ' + id);
-    assert.equal(json(n.dash), json(['KeyR']), why); assert.equal(json(n.jump), json(['Space']), why);
+    for (const id of Object.keys(o)) assert.equal(json(n[id]), json(o[id]), why + ' : ' + id);
+    assert.equal(json(n.dash), json(o.dash), why); assert.equal(json(n.jump), json(['Space']), why);
     return n;
   };
-  const edit = change => { const old = plain(O.defaults()); change(old.bindings); return old; };
+  // Build genuine historical tables, not v3 tables with intentional duplicate R/C keys.
+  const edit = change => { const old = plain(O.defaults()); old.bindingsVersion=2; old.bindings.view=['KeyC']; old.bindings.dash=['KeyR']; change(old.bindings); return old; };
   const melee = same(edit(b => { for (const id of ['view', 'melee', 'fireLeft', 'leftHand', 'weapon4']) delete b[id]; b.interact = ['KeyV']; b.fire = ['KeyC']; }), 'options.test:31');
   assert.equal(json(melee.melee), json(['KeyB'])); assert.equal(F.assign(current, {v: 2, keys: melee}, 'keyboard', 'melee', 'KeyH').ok, true);
   const pistol = same(edit(b => { delete b.weapon5; b.interact = ['Digit5']; b.fire = ['KeyH']; }), 'options.test:40');
@@ -827,8 +828,10 @@ test('E21b — FInput conserve les commandes courantes et historiques normalisé
     assert.equal(a.ok, false); assert.equal(a.conflict, b.conflict, id); assert.equal(a.reason, b.reason, id);
   }
   for (const code of ['Escape', 'MetaLeft', 'ControlLeft']) assert.equal(F.assign(current, v1, 'keyboard', 'fire', code).reason, O.assign(O.defaults().bindings, 'fire', code).reason);
-  // Planned difference (FEEL-01, FEEL-09): R is the dodge in v2; options.test.mjs:18 puts interact on R, so it takes another free key at the hookup.
-  assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyR').conflict, 'dash'); assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyH').ok, true);
+  // Current host defaults: R belongs to view, C to dodge. The engine-only v2
+  // fixture in E22 intentionally keeps its separate historical R-dodge contract.
+  assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyC').conflict, 'dash');
+  assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyR').conflict, 'view'); assert.equal(F.assign(current, v1, 'keyboard', 'interact', 'KeyH').ok, true);
 });
 
 test('E22 — Migration v1 → v2 : Espace saute, R esquive ; migrate seulement pour un format plus ancien', () => {

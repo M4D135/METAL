@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-const context={window:{}};vm.createContext(context);vm.runInContext(readFileSync(new URL('../src/options.js',import.meta.url),'utf8'),context);
+const context={window:{}};vm.createContext(context);vm.runInContext(readFileSync(process.env.METAL_OPTIONS_SOURCE||new URL('../src/options.js',import.meta.url),'utf8'),context);
 const options=context.window.FOptions;
 test('System mouse acceleration is opt-in and only accepts stored booleans',()=>{
   assert.equal(options.defaults().systemPointerAcceleration,false);
@@ -28,7 +28,7 @@ test('Conflicts and reserved keys never silently disable another action',()=>{
   assert.equal(options.normalize(tampered).bindings.fire[0],'Enter');
 });
 test('Adding melee preserves an existing custom V binding and finds a free default key',()=>{
-  const old=options.defaults();for(const id of ['view','melee','fireLeft','leftHand','weapon4'])delete old.bindings[id];old.bindings.interact=['KeyV'];old.bindings.fire=['KeyC'];
+  const old=options.defaults();old.bindingsVersion=2;old.bindings.dash=['KeyR'];for(const id of ['view','melee','fireLeft','leftHand','weapon4'])delete old.bindings[id];old.bindings.interact=['KeyV'];old.bindings.fire=['KeyC'];
   const v=options.normalize(JSON.parse(JSON.stringify(old)));
   assert.deepEqual(Array.from(v.bindings.interact),['KeyV']);assert.deepEqual(Array.from(v.bindings.fire),['KeyC']);
   assert.deepEqual(Array.from(v.bindings.melee),['KeyB']);
@@ -177,7 +177,7 @@ test('The game starts in first person, accepts only first or third person, and s
   assert.equal(options.normalize({view:'third'}).view,'third');
   for(const value of ['back','3',1,null])assert.equal(options.normalize({view:value}).view,'first');
   assert.equal(options.defaults().controlsHint,true);assert.equal(options.normalize({controlsHint:false}).controlsHint,false);assert.equal(options.normalize({controlsHint:'no'}).controlsHint,true);
-  assert.deepEqual(plainPad(options.defaults().bindings.view),['KeyC']);
+  assert.deepEqual(plainPad(options.defaults().bindings.view),['KeyR']);
 });
 test('Music is quieter by default and the former default level migrates once; chosen levels stay',()=>{
   const d=options.defaults();assert.equal(d.musicVolume,.25);assert.equal(d.effectsVolume,1);assert.equal(d.mixVersion,2);
@@ -185,4 +185,106 @@ test('Music is quieter by default and the former default level migrates once; ch
   assert.equal(options.normalize({musicVolume:.6}).musicVolume,.6,'a personal level stays');
   assert.equal(options.normalize({musicVolume:.45,mixVersion:2}).musicVolume,.45,'a level chosen after the change stays');
   const saved={musicVolume:.45};options.normalize(saved);assert.equal(saved.musicVolume,.45,'the stored object is not modified');
+});
+
+// Keyboard revision 3: R changes view; C dodges (heavy) / descends (drone).
+const cloneKeys=value=>JSON.parse(JSON.stringify(value));
+function assertUniqueBindings(bindings){
+  const keys=Object.values(bindings).flat();assert.equal(new Set(keys).size,keys.length);
+  for(const {id} of options.actions)assert(bindings[id].length>=1&&bindings[id].length<=3,id);
+}
+for(const touch of [false,true])test(`keyboard revision 3 defaults and reset map use R/C, touch=${touch}`,()=>{
+  const d=options.defaults(touch);assert.equal(d.bindingsVersion,3);
+  assert.deepEqual(cloneKeys(d.bindings.view),['KeyR']);assert.deepEqual(cloneKeys(d.bindings.dash),['KeyC']);
+  assert.deepEqual(cloneKeys(d.bindings.forward),['KeyW','KeyZ','ArrowUp']);
+  assert.deepEqual(cloneKeys(d.bindings.left),['KeyA','KeyQ']);
+  assertUniqueBindings(d.bindings);
+  const keys=new Set(['KeyR']);assert(options.down(d.bindings,keys,'view'));assert(!options.down(d.bindings,keys,'dash'));
+  keys.clear();keys.add('KeyC');assert(options.down(d.bindings,keys,'dash'));assert(!options.down(d.bindings,keys,'view'));
+  keys.delete('KeyC');assert(!options.down(d.bindings,keys,'dash'));
+});
+for(const version of [undefined,1,2])test(`old C/R pair migrates once without resetting other choices, version=${version}`,()=>{
+  const old=cloneKeys(options.defaults());old.bindingsVersion=version;
+  Object.assign(old.bindings,{view:['KeyC'],dash:['KeyR'],interact:['KeyH']});old.sensitivity=2;old.musicVolume=.61;
+  const before=JSON.stringify(old),moved=options.normalize(old);
+  assert.deepEqual(cloneKeys(moved.bindings.view),['KeyR']);assert.deepEqual(cloneKeys(moved.bindings.dash),['KeyC']);
+  assert.deepEqual(cloneKeys(moved.bindings.interact),['KeyH']);assert.equal(moved.sensitivity,2);assert.equal(moved.musicVolume,.61);
+  assert.deepEqual(cloneKeys(moved.padBindings),old.padBindings);assert.equal(moved.bindingsVersion,3);assert.equal(JSON.stringify(old),before);
+  assert.equal(JSON.stringify(options.normalize(cloneKeys(moved))),JSON.stringify(moved));assertUniqueBindings(moved.bindings);
+});
+for(const version of [3,4])test(`intentional C/R pair in a current or future table stays personal, version=${version}`,()=>{
+  const raw=cloneKeys(options.defaults());raw.bindingsVersion=version;raw.bindings.view=['KeyC'];raw.bindings.dash=['KeyR'];
+  const kept=options.normalize(raw);assert.deepEqual(cloneKeys(kept.bindings),raw.bindings);
+  assert.deepEqual(cloneKeys(options.normalize(cloneKeys(kept)).bindings),raw.bindings);
+});
+test('old tables predating view gain R for view and C for the former R dodge',()=>{
+  const old=cloneKeys(options.defaults());old.bindingsVersion=2;delete old.bindings.view;old.bindings.dash=['KeyR'];
+  const moved=options.normalize(old);assert.deepEqual(cloneKeys(moved.bindings.view),['KeyR']);assert.deepEqual(cloneKeys(moved.bindings.dash),['KeyC']);assertUniqueBindings(moved.bindings);
+});
+test('an explicit custom C prevents migration from stealing it for a missing action',()=>{
+  const old=cloneKeys(options.defaults());old.bindingsVersion=2;delete old.bindings.view;old.bindings.dash=['KeyR'];old.bindings.fire=['KeyC'];
+  const kept=options.normalize(old);assert.deepEqual(cloneKeys(kept.bindings.fire),['KeyC']);assert.deepEqual(cloneKeys(kept.bindings.dash),['KeyR']);
+  assert(!['KeyR','KeyC'].includes(kept.bindings.view[0]));assertUniqueBindings(kept.bindings);
+});
+test('a noncanonical legacy view binding with extra aliases is not mistaken for a default',()=>{
+  const old=cloneKeys(options.defaults());old.bindingsVersion=2;old.bindings.view=['KeyC','KeyH'];old.bindings.dash=['KeyR'];
+  assert.deepEqual(cloneKeys(options.normalize(old).bindings),old.bindings);
+});
+test('partial custom bindings survive collisions with implied defaults and JSON reload',()=>{
+  const raw={bindingsVersion:3,bindings:{fire:['KeyC'],interact:['KeyH']},musicVolume:.6},kept=options.normalize(raw);
+  assert.deepEqual(cloneKeys(kept.bindings.fire),['KeyC']);assert.deepEqual(cloneKeys(kept.bindings.interact),['KeyH']);
+  assert.deepEqual(cloneKeys(kept.bindings.view),['KeyR']);assert.notEqual(kept.bindings.dash[0],'KeyC');assert.equal(kept.musicVolume,.6);
+  assertUniqueBindings(kept.bindings);assert.equal(JSON.stringify(options.normalize(cloneKeys(kept))),JSON.stringify(kept));
+});
+test('missing movement actions retain free AZERTY/QWERTY aliases rather than wiping the table',()=>{
+  const kept=options.normalize({bindingsVersion:3,bindings:{interact:['KeyW'],fire:['KeyA']}});
+  assert.deepEqual(cloneKeys(kept.bindings.interact),['KeyW']);assert.deepEqual(cloneKeys(kept.bindings.fire),['KeyA']);
+  assert.deepEqual(cloneKeys(kept.bindings.forward),['KeyZ','ArrowUp']);assert.deepEqual(cloneKeys(kept.bindings.left),['KeyQ']);assertUniqueBindings(kept.bindings);
+});
+test('version 3 partial left-fire choices do not run an obsolete migration',()=>{
+  const kept=options.normalize({bindingsVersion:3,bindings:{fireLeft:['KeyC']}});
+  assert.deepEqual(cloneKeys(kept.bindings.fireLeft),['KeyC']);assert.deepEqual(cloneKeys(kept.bindings.view),['KeyR']);assertUniqueBindings(kept.bindings);
+});
+test('historical Space dodge leaves Space for jump without taking a custom key',()=>{
+  const old=cloneKeys(options.defaults());old.bindingsVersion=1;delete old.bindings.jump;old.bindings.dash=['Space'];old.bindings.interact=['KeyH'];
+  const moved=options.normalize(old);assert.deepEqual(cloneKeys(moved.bindings.jump),['Space']);assert.deepEqual(cloneKeys(moved.bindings.dash),['KeyC']);
+  assert.deepEqual(cloneKeys(moved.bindings.view),['KeyR']);assert.deepEqual(cloneKeys(moved.bindings.interact),['KeyH']);assertUniqueBindings(moved.bindings);
+});
+test('real reassignment predicates use the selected key after save and reload',()=>{
+  let p=options.defaults();const r=options.assign(p.bindings,'view','KeyH');assert(r.ok);p=options.normalize(cloneKeys({...p,bindings:r.bindings}));
+  assert(options.matches(p.bindings,'view','KeyH'));assert(!options.matches(p.bindings,'view','KeyR'));assert(options.down(p.bindings,new Set(['KeyC']),'dash'));
+  const reset=options.defaults();p=options.normalize({...p,bindings:reset.bindings,bindingsVersion:reset.bindingsVersion});
+  assert(options.matches(p.bindings,'view','KeyR'));assert(options.matches(p.bindings,'dash','KeyC'));assert(!options.matches(p.bindings,'view','KeyH'));
+});
+test('keyboard-only reset data preserves independent audio and gamepad settings',()=>{
+  const p=cloneKeys(options.defaults());p.musicVolume=.72;p.padYaw=412;p.padBindings.view=['Back'];p.padBindings.map=['R3'];p.bindings.view=['KeyH'];
+  const defaults=options.defaults(),reset=options.normalize({...p,bindings:defaults.bindings,bindingsVersion:defaults.bindingsVersion});
+  assert.deepEqual(cloneKeys(reset.padBindings),p.padBindings);assert.equal(reset.musicVolume,.72);assert.equal(reset.padYaw,412);
+  assert.deepEqual(cloneKeys(reset.bindings.view),['KeyR']);assert.deepEqual(cloneKeys(reset.bindings.dash),['KeyC']);
+});
+test('normalization never mutates frozen imported tables or the independent defaults',()=>{
+  const d=options.defaults(),raw={bindingsVersion:2,bindings:{view:['KeyC'],dash:['KeyR'],interact:['KeyH']}};
+  for(const a of Object.values(raw.bindings))Object.freeze(a);Object.freeze(raw.bindings);Object.freeze(raw);
+  const p=options.normalize(raw);p.bindings.view[0]='KeyO';assert.equal(raw.bindings.view[0],'KeyC');assert.equal(d.bindings.view[0],'KeyR');
+  assert.equal(options.defaults().bindings.view[0],'KeyR');
+});
+test('two explicit conflicting choices and reserved keys are still rejected, not silently swapped',()=>{
+  const defaults=options.defaults(),before=JSON.stringify(defaults);
+  const failed=options.assign(defaults.bindings,'view','KeyC');assert.equal(failed.ok,false);assert.equal(failed.conflict,'dash');assert.equal(JSON.stringify(defaults),before);
+  for(const bindings of [{view:['KeyR'],dash:['KeyR']},{view:['Escape']},{view:[]},{view:['KeyH','KeyH']}]){
+    assert.deepEqual(cloneKeys(options.normalize({bindingsVersion:3,bindings}).bindings),cloneKeys(defaults.bindings));
+  }
+});
+test('1000 valid partial tables preserve explicit choices, unique bindings and stable reloads',()=>{
+  const codes=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c=>'Key'+c),...'0123456789'.split('').map(c=>'Digit'+c),'Space','Enter','Tab','Backspace','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'];
+  let seed=0x13c0ffee;const next=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};
+  for(let sample=0;sample<1000;sample++){
+    const pool=codes.slice(),ids=options.actions.map(a=>a.id),bindings={};
+    for(let i=pool.length-1;i>0;i--){const j=next(i+1);[pool[i],pool[j]]=[pool[j],pool[i]];}
+    for(let i=ids.length-1;i>0;i--){const j=next(i+1);[ids[i],ids[j]]=[ids[j],ids[i]];}
+    for(let i=0,n=1+next(12);i<n;i++)bindings[ids[i]]=pool.splice(0,1+next(2));
+    const raw={bindingsVersion:3,bindings},before=JSON.stringify(raw),p=options.normalize(raw);
+    for(const [id,keys] of Object.entries(bindings))assert.deepEqual(cloneKeys(p.bindings[id]),keys,`sample ${sample}, ${id}`);
+    assertUniqueBindings(p.bindings);assert.equal(JSON.stringify(raw),before);assert.equal(JSON.stringify(options.normalize(cloneKeys(p))),JSON.stringify(p));
+  }
 });
