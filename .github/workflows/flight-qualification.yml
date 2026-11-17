@@ -1,0 +1,54 @@
+name: METAL flight qualification
+on:
+  push:
+    branches: [codex/flight-fixes-20261117]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: metal-flight-qualification-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Preserve exact source snapshot
+        run: |
+          mkdir -p /tmp/metal-evidence
+          git archive --format=tar.gz HEAD > /tmp/metal-evidence/source.tar.gz
+          git rev-parse HEAD > /tmp/metal-evidence/commit.txt
+          node --version
+          python3 --version
+      - name: Verify FERRO lock
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          lock=json.loads(pathlib.Path('FERRO.lock.json').read_text())
+          for module in lock['modules']:
+              actual=hashlib.sha256(pathlib.Path(module['path']).read_bytes()).hexdigest()
+              assert actual==module['sha256'], module['path']
+          print('FERRO lock: %d/%d exact' % (len(lock['modules']),len(lock['modules'])))
+          PY
+      - name: Baseline test suite
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee /tmp/metal-evidence/tests.txt
+      - name: Rebuild standalone game
+        if: always()
+        run: |
+          set -o pipefail
+          python3 tools/build.py 2>&1 | tee /tmp/metal-evidence/build.txt
+          cp SIZE.json /tmp/metal-evidence/SIZE.json
+      - name: Save evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: metal-flight-evidence-${{ github.run_id }}
+          path: /tmp/metal-evidence
+          retention-days: 7
+          if-no-files-found: error
