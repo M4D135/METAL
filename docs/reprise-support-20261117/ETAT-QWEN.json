@@ -8,9 +8,9 @@
   "activeLot": "04 integration",
   "publication": {
     "status": "published",
-    "mainCommit": "b985a3009508e300737cb2926641e92244dc9bbe",
-    "branchCommit": "b985a3009508e300737cb2926641e92244dc9bbe",
+    "releaseCommit": "b985a3009508e300737cb2926641e92244dc9bbe",
     "buildCommit": "de2828ec1d08fbb2b1ed060c56585c986496eaea",
+    "note": "main peut recevoir des commits de documentation après la bascule ; la release servie reste identifiée par releaseCommit et l'empreinte du bundle.",
     "url": "https://fps.estrasse.fr/",
     "servedBytes": 13685006,
     "servedSha256": "74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22",
