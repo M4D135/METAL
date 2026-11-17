@@ -26,7 +26,7 @@ Le checkpoint 0.12.9 se construit mais possède un échec connu de continuation 
 - Suite npm complète sur Spark : 1396 tests annoncés, 1395 réussites, 0 échec, 0 annulé, 0 ignoré.
 - Navigateur : Chrome headless 151.0.7922.137, SwiftShader/WebGL2, 0 erreur console, captures et rapport JSON produits.
 - A/B CPU : `-1,09 %` médian de temps de simulation contre la tête de branche, sans annonce de FPS matériel.
-- Publication : branche et `main` poussés via le Mac ; release servie `b985a3009508e300737cb2926641e92244dc9bbe`, bundle vérifié construit depuis `de2828ec1d08fbb2b1ed060c56585c986496eaea`. Contrôle Mac : Node v24.18.0, build identique, npm test 1396 tests, 1395 réussites, 0 échec.
-- Déploiement : `fps.estrasse.fr` basculé atomiquement sur `/home/ddd/apps/fps/releases/b985a3009508e300737cb2926641e92244dc9bbe`. URL servie : 13 685 006 octets, SHA-256 `74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22`, `Version 0.12.9`.
-- Retour arrière disponible : l'ancienne release `/home/ddd/apps/fps/releases/b82379b` reste en place.
+- Publication : branche et `main` poussés via le Mac ; release servie `93e110412eece2da9e8aef714013ec89e5680e09`. Contrôle Mac : Node v24.18.0, build identique, npm test 1396 tests, 1395 réussites, 0 échec.
+- Déploiement : `fps.estrasse.fr` basculé atomiquement sur `/home/ddd/apps/fps/releases/93e110412eece2da9e8aef714013ec89e5680e09`. URL servie : 13 685 038 octets, SHA-256 `65fc54fecac5ef2a8528c93bfa2e8fb061e7b8c205cc4b84d82f3c5b04910ca1`, `Version 0.12.9`.
+- Retour arrière disponible : l'ancienne release `/home/ddd/apps/fps/releases/b985a3009508e300737cb2926641e92244dc9bbe` reste en place.
 - Suite de qualification : `npm run render-check` Spark 55/55 SwiftShader et 55/55 ANGLE/NVIDIA GB10 ; navigateur local Vulkan sans erreur console ; correction du favicon public en `data:,` pour supprimer les requêtes `404`.

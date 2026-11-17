@@ -8,14 +8,14 @@
   "activeLot": "04 integration",
   "publication": {
     "status": "published",
-    "releaseCommit": "b985a3009508e300737cb2926641e92244dc9bbe",
-    "buildCommit": "de2828ec1d08fbb2b1ed060c56585c986496eaea",
+    "releaseCommit": "93e110412eece2da9e8aef714013ec89e5680e09",
+    "buildCommit": "93e110412eece2da9e8aef714013ec89e5680e09",
     "note": "main peut recevoir des commits de documentation après la bascule ; la release servie reste identifiée par releaseCommit et l'empreinte du bundle.",
     "url": "https://fps.estrasse.fr/",
-    "servedBytes": 13685006,
-    "servedSha256": "74e8f5ba04818b493a0d491ff46d8e3160596cf5247120278a0ed33788110f22",
-    "previousRelease": "/home/ddd/apps/fps/releases/b82379b",
-    "releasePath": "/home/ddd/apps/fps/releases/b985a3009508e300737cb2926641e92244dc9bbe",
+    "servedBytes": 13685038,
+    "servedSha256": "65fc54fecac5ef2a8528c93bfa2e8fb061e7b8c205cc4b84d82f3c5b04910ca1",
+    "previousRelease": "/home/ddd/apps/fps/releases/b985a3009508e300737cb2926641e92244dc9bbe",
+    "releasePath": "/home/ddd/apps/fps/releases/93e110412eece2da9e8aef714013ec89e5680e09",
     "macVerification": {
       "node": "v24.18.0",
       "npmTest": {
@@ -126,7 +126,6 @@
     }
   ],
   "nextTests": [
-    "Redéployer le build avec favicon inline et revérifier l'URL publique sans requête 404.",
     "Essais restants non qualifiés : manette physique, téléphone réel, Safari/Firefox.",
     "Essai humain du cockpit, du piratage maintenu et des sauvegardes anciennes sur un poste de jeu réel."
   ],
