@@ -1,0 +1,145 @@
+{
+  "bindingsVersion": 3,
+  "bindings": {
+    "forward": [
+      "KeyW",
+      "KeyZ",
+      "ArrowUp"
+    ],
+    "back": [
+      "KeyS",
+      "ArrowDown"
+    ],
+    "left": [
+      "KeyA",
+      "KeyQ"
+    ],
+    "right": [
+      "KeyD"
+    ],
+    "turnLeft": [
+      "ArrowLeft"
+    ],
+    "turnRight": [
+      "ArrowRight"
+    ],
+    "fire": [
+      "Enter"
+    ],
+    "fireLeft": [
+      "KeyG"
+    ],
+    "leftHand": [
+      "KeyX"
+    ],
+    "sprint": [
+      "ShiftLeft",
+      "ShiftRight"
+    ],
+    "jump": [
+      "Space"
+    ],
+    "dash": [
+      "KeyC"
+    ],
+    "pulse": [
+      "KeyE"
+    ],
+    "melee": [
+      "KeyV"
+    ],
+    "interact": [
+      "KeyF"
+    ],
+    "weapon1": [
+      "Digit1"
+    ],
+    "weapon2": [
+      "Digit2"
+    ],
+    "weapon3": [
+      "Digit3"
+    ],
+    "weapon4": [
+      "Digit4"
+    ],
+    "weapon5": [
+      "Digit5"
+    ],
+    "map": [
+      "KeyM"
+    ],
+    "view": [
+      "KeyR"
+    ],
+    "pause": [
+      "KeyP"
+    ],
+    "weaponNext": [
+      "KeyN"
+    ],
+    "switchProfile": [
+      "KeyT"
+    ]
+  },
+  "padVersion": 2,
+  "padBindings": {
+    "forward": [],
+    "back": [],
+    "left": [],
+    "right": [],
+    "turnLeft": [],
+    "turnRight": [],
+    "fire": [
+      "RT"
+    ],
+    "fireLeft": [
+      "LT"
+    ],
+    "leftHand": [],
+    "sprint": [
+      "LB"
+    ],
+    "jump": [
+      "A"
+    ],
+    "dash": [
+      "B"
+    ],
+    "pulse": [
+      "L3"
+    ],
+    "melee": [],
+    "interact": [
+      "X"
+    ],
+    "weapon1": [
+      "Up"
+    ],
+    "weapon2": [
+      "Right"
+    ],
+    "weapon3": [
+      "Down"
+    ],
+    "weapon4": [
+      "Left"
+    ],
+    "weapon5": [],
+    "map": [
+      "Back"
+    ],
+    "view": [
+      "R3"
+    ],
+    "pause": [
+      "Start"
+    ],
+    "weaponNext": [
+      "RB"
+    ],
+    "switchProfile": [
+      "Y"
+    ]
+  }
+}
