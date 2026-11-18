@@ -1,10 +1,10 @@
 {
-  "version": "0.12.9",
-  "html_bytes": 13685841,
-  "html_decimal_kb": 13685.84,
-  "html_kib": 13365.08,
-  "gzip_bytes": 3217599,
-  "sha256": "86b9836afcf08c9f6a6f2421caa4098865469a02944d6fb0e0c4ad9103392714",
+  "version": "0.12.10",
+  "html_bytes": 13816794,
+  "html_decimal_kb": 13816.79,
+  "html_kib": 13492.96,
+  "gzip_bytes": 3318235,
+  "sha256": "6ad707c7b084e343633f1c5f115b7762ca8ead73b71f80e952cf7138b548e2f7",
   "external_assets": 0,
   "runtime": "Web browser; WebGL 2 preferred, Canvas 2D software fallback, optional Web Audio; browser size excluded",
   "source_bytes": {
